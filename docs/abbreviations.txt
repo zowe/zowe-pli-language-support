@@ -1,0 +1,160 @@
+Data elements
+  Coded arithmetic data attributes: - 23
+    Abbreviation: BIN for BINARY
+    Abbreviation: CPLX for COMPLEX
+    Abbreviation: DEC for DECIMAL
+    Abbreviation: PREC for PRECISION
+  String data attributes: - 30
+    Abbreviation: CHAR for CHARACTER
+    Abbreviation: G for GRAPHIC
+    Abbreviation: WCHAR for WIDECHAR
+    Abbreviation: NONVAR for NONVARYING
+    Abbreviation: VAR for VARYING
+    Abbreviation: VARZ for VARYINGZ
+    Abbreviation: VAR4 for VARYING4 - xxxiv
+    Abbreviation: PIC for PICTURE
+
+Program organization
+  Procedures
+    PROCEDURE statement
+      Abbreviation: PROC for PROCEDURE
+  Entry data
+    GENERIC entries 
+      GENERIC attribute
+        Abbreviation: OTHER for OTHERWISE
+  PROCEDURE statement OPTIONS
+    Abbreviation: PROC for PROCEDURE
+    Abbreviation: ASM for ASSEMBLER
+    Abbreviation: CHARG for CHARGRAPHIC
+    Abbreviation: NOCHARGRAPHIC for NOCHARG
+    Abbreviation: RED for REDUCIBLE
+    Abbreviation: IRRED for IRREDUCIBLE
+
+Type definitions
+  DEFINE ORDINAL statement
+    Abbreviation: PREC for PRECISION
+  DEFINE STRUCTURE statement
+    Abbreviation: STRUCT for STRUCTURE
+
+Data declarations
+  DECLARE statement
+    Abbreviation: DCL for DECLARE
+  Scope declarations
+    Abbreviations: INT for INTERNAL
+    Abbreviations: EXT for EXTERNAL
+  DEFAULT statement
+    Abbreviation: DFT for DEFAULT
+  DIMENSION attribute
+    Abbreviation: DIM for DIMENSION
+  GO TO statement:
+    Abbreviation: GOTO for GO TO
+  SELECT statement
+    Abbreviation: OTHER for OTHERWISE
+  XPROCEDURE statement
+    Abbreviation: XPROC
+Storage control
+  Automatic storage and attribute
+    Abbreviation: AUTO for AUTOMATIC
+  Controlled storage and attribute
+    Abbreviation: CTL for CONTROLLED
+  ALLOCATE statement for controlled variables
+    Abbreviation: ALLOC for ALLOCATE
+  POINTER variable and attribute
+    Abbreviation: PTR for POINTER
+  ALLOCATE statement for based variables
+    Abbreviation: ALLOC for ALLOCATE
+  ASSIGNABLE and NONASSIGNABLE attributes
+    Abbreviations: ASGN for ASSIGNABLE
+    Abbreviations: NONASGN for NONASSIGNABLE
+  CONNECTED and NONCONNECTED attributes
+    Abbreviations: CONN for CONNECTED
+    Abbreviations: NONCONN for NONCONNECTED
+  DEFINED and POSITION attributes
+    Abbreviations: DEF for DEFINED
+    Abbreviations: POS for POSITION
+  INITIAL attribute
+    Abbreviations: INIT for INITIAL
+    Abbreviations: INIT CALL for INITIAL CALL
+    Abbreviations: INIT TO for INITIAL TO
+
+Input and Output
+  SEQUENTIAL and DIRECT attributes
+    Abbreviation: SEQL for SEQUENTIAL
+  BUFFERED and UNBUFFERED attributes
+    Abbreviations: BUF for BUFFERED
+    Abbreviations: UNBUF for UNBUFFERED
+
+Conditions
+  ANYCONDITION condition
+    Abbreviation: ANYCOND for ANYCONDITION
+  ATTENTION condition
+    Abbreviation: ATTN for ATTENTION
+  CONDITION condition
+    Abbreviation: COND for CONDITION
+  CONVERSION condition
+    Abbreviation: CONV for CONVERSION
+  FIXEDOVERFLOW condition
+    Abbreviation: FOFL for FIXEDOVERFLOW
+  OVERFLOW condition
+    Abbreviation: OFL for OVERFLOW
+  STRINGRANGE condition
+    Abbreviation: STRG for STRINGRANGE
+  STRINGSIZE condition
+    Abbreviation: STRZ for STRINGSIZE
+  SUBSCRIPTRANGE condition
+    Abbreviation: SUBRG for SUBSCRIPTRANGE
+  UNDEFINEDFILE condition
+    Abbreviation: UNDF for UNDEFINEDFILE
+  UNDERFLOW condition
+    Abbreviation: UFL for UNDERFLOW
+  ZERODIVIDE condition
+    Abbreviation: ZDIV for ZERODIVIDE
+
+Builtin functions
+  Abbreviation: ALLOC for ALLOCATE
+  Abbreviation: ALLOCN for ALLOCATION
+  Abbreviation: AUTO for AUTOMATIC
+  Abbreviation: BIN for BINARY
+  Abbreviation: BINVALUE for BINARYVALUE
+  Abbreviation: BITLOC for BITLOCATION
+  Abbreviation: CENTER for CENTERLEFT
+  Abbreviation: CENTRE for CENTRELEFT
+  Abbreviation: CHAR for CHARACTER
+  Abbreviation: CHARG for CHARGRAPHIC
+  Abbreviation: CPLX for COMPLEX
+  Abbreviation: CSTG for CURRENTSTORAGE
+  Abbreviation: DEC for DECIMAL
+  Abbreviation: DIM for DIMENSION
+  Abbreviation: LOC for LOCATION
+  Abbreviation: ONPROC for ONPROCEDURE
+  Abbreviation: PTR for POINTER
+  Abbreviation: PTRADD for POINTERADD
+  Abbreviation: PTRDIFF for POINTERDIFF
+  Abbreviation: PTRSUBTRACT for POINTERSUBTRACT
+  Abbreviation: PTRVALUE for POINTERVALUE
+  Abbreviation: PREC for PRECISION
+  Abbreviation: PROCNAME for PROCEDURENAME
+  Abbreviation: STG for STORAGE
+  Abbreviation: WCHAR for WIDECHAR
+
+Preprocessor facilities
+  %PROCEDURE statement
+    Abbreviation: %PROC for %PROCEDURE
+  Preprocessor ANSWER statement
+    Abbreviation: ANS for ANSWER
+    Abbreviation: COL for COLUMN
+    Abbreviation: MAR for MARGINS
+  Preprocessor built-in functions
+    Abbreviation: DIM for DIMENSION
+  Preprocessor statements
+    %ACTIVATE statement
+      Abbreviation: %ACT for %ACTIVATE
+    %DEACTIVATE statement
+      Abbreviation: %DEACT for %DEACTIVATE
+  %DECLARE statement
+    Abbreviation: %DCL for %DECLARE
+    Abbreviation: CHAR for CHARACTER
+    Abbreviation: INT for INTERNAL
+    Abbreviation: EXT for EXTERNAL
+  %GO TO statement
+    Abbreviation: %GOTO for %GO TO
