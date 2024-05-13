@@ -1,0 +1,15 @@
+{
+    "projectName": "PlOne",
+    "languages": [{
+        "id": "pl-one",
+        "grammar": "src/language/pl-one.langium",
+        "fileExtensions": [".pl1", ".PLI"],
+        "textMate": {
+            "out": "syntaxes/pl-one.tmLanguage.json"
+        },
+        "monarch": {
+            "out": "syntaxes/pl-one.monarch.ts"
+        }
+    }],
+    "out": "src/language/generated"
+}
