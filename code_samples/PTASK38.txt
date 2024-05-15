@@ -1,0 +1,101 @@
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.10 23:29:30   Page     1
+ -                     Options Specified
+ 0  Install:
+ 0  Command: RULES(LAXDCL),SOURCE
+ 0  Install:
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  PTASK38: PROC OPTIONS(MAIN) REORDER ;               2024.05.10 23:29:30   Page     2
+ 0 Compiler Source
+ 0    Line.File
+ 0       1.0      PTASK38: PROC OPTIONS(MAIN) REORDER ;
+         2.0      DCL SYSPRINT FILE PRINT STREAM OUTPUT   ;/* FILE SYSPRINT          */
+         3.0      DCL REP3800  FILE OUTPUT RECORD         ;/* FILE REP3800           */
+         4.0      DCL VSR404   FILE RECORD SEQUENTIAL INPUT ENV(VSAM RECSIZE(64));
+         5.0                                               /*                        */
+         6.0      DCL RETC       FIXED BIN (15) INIT(0)  ; /*                        */
+         7.0      DCL EOF_VSAM   BIT(1) INIT('0'B)       ; /*END OF VSAM    FILE     */
+         8.0      DCL FLAG_VSAM  CHAR(1)  INIT('0')      ; /*VSAM FILE IS EMPTY      */
+         9.0      DCL REC_KEY    CHAR(1) INIT('F')       ; /* THE KEY                */
+        10.0      DCL
+        11.0       1 R404_RECORD           ,               /*   ROOM 404 RECORD      */
+        12.0         2 STATUS     CHAR(1)  ,
+        13.0         2 EMPL     ,
+        14.0           3 SURNAME  CHAR(14) ,
+        15.0           3 NAME     CHAR(11) ,
+        16.0         2 GENDER     CHAR(1) ,
+        17.0         2 SECTOR     CHAR(8) ,
+        18.0         2 PHONE      CHAR(4) ,
+        19.0         2 BOSS ,
+        20.0           3 SURNAME  CHAR(14) ,
+        21.0           3 NAME     CHAR(11) ;
+        22.0      R404_RECORD = '' ;
+        23.0      DCL
+        24.0      1 OUT_RECORD            ,                /* OUT RECORD. LENGTH 37  */
+        25.0        2 EMPLOYEE            ,
+        26.0          3 SURNAME  CHAR(14) ,
+        27.0          3 NAME     CHAR(11) ,
+        28.0        2 SECTOR     CHAR(8)  ,
+        29.0        2 PHONE      CHAR(4)  ;
+        30.0      OUT_RECORD = '' ;
+        31.0      ON KEY(VSR404) RETC = ONCODE       ;     /*                        */
+        32.0      ON ENDFILE (VSR404) BEGIN          ;     /*                        */
+        33.0         EOF_VSAM = '1'B                  ;    /*                        */
+        34.0      END                                 ;    /*                        */
+        35.0      /*-----------------------------------------------------------------*/
+        36.0      /*      ON ERROR   ROUTINE                                         */
+        37.0      /*-----------------------------------------------------------------*/
+        38.0                                               /*                        */
+        39.0      ON ERROR BEGIN                      ;    /*                        */
+        40.0      ON ERROR SYSTEM                     ;    /*                        */
+        41.0       PUT SKIP(2) FILE (SYSPRINT) EDIT                /*                */
+        42.0           ('***  ABNORMAL END OF PTASK38  ***')(A,A); /*                */
+        43.0       CLOSE FILE (VSR404)               ;    /*                        */
+        44.0       CLOSE FILE (REP3800)               ;    /*                        */
+        45.0       CLOSE FILE (SYSPRINT)              ;    /*                        */
+        46.0      END                                 ;    /*                        */
+        47.0      /*-----------------------------------------------------------------*/
+        48.0      /*                         INITIALISATIONS                         */
+        49.0      /*-----------------------------------------------------------------*/
+        50.0
+        51.0      PUT SKIP LIST('PTASK38 STARTED ')   ;    /*                        */
+        52.0                                               /*                        */
+        53.0                                               /*                        */
+        54.0      OPEN FILE(VSR404)                  ;     /*                        */
+        55.0      OPEN FILE(REP3800)                  ;    /*                        */
+        56.0      OPEN FILE(SYSPRINT)                 ;    /*                        */
+        57.0      /*******************************************************************/
+        58.0      /*      MAIN PROCESS                                               */
+        59.0      /*******************************************************************/
+        60.0      READ FILE (VSR404) INTO (R404_RECORD) ;  /* READ THE FIRST RECORD  */
+        61.0      IF EOF_VSAM                              /*                        */
+        62.0      THEN DO                             ;    /*                        */
+        63.0        PUT LIST('VSAM FILE VSR404 IS EMPTY') SKIP ;
+        64.0        FLAG_VSAM = '1'                   ;    /*                        */
+        65.0        SIGNAL ERROR                      ;    /*                        */
+        66.0      END                                 ;    /*                        */
+        67.0      DO WHILE (^EOF_VSAM)                    ;/* WHILE FILE NOT ENDED   */
+        68.0         IF R404_RECORD.GENDER  = 'F'          /* FEMALE ?               */
+        69.0            THEN DO ;
+        70.0                                               /* TO PREPARE THE RECORD  */
+        71.0               OUT_RECORD.EMPLOYEE.SURNAME = R404_RECORD.EMPL.SURNAME ;
+        72.0               OUT_RECORD.EMPLOYEE.NAME = R404_RECORD.EMPL.NAME ;
+        73.0                OUT_RECORD.PHONE = R404_RECORD.PHONE ;
+        74.0                WRITE FILE (REP3800) FROM (OUT_RECORD) ; /* WRITE REPORT */
+        75.0             END ;
+        76.0           READ FILE (VSR404) INTO (R404_RECORD) ; /* READ NEXT RECORD   */
+        77.0       END ;
+        78.0       PUT SKIP(2) FILE (SYSPRINT) EDIT         /*                       */
+        79.0             ('***  NORMAL END OF PTASK38  ***') (A,A);
+        80.0       CLOSE FILE (REP3800)                ;    /*                       */
+        81.0       CLOSE FILE (VSR404)                ;     /*                       */
+        82.0       CLOSE FILE (SYSPRINT)               ;    /*                       */
+        83.0                                                /*                       */
+        84.0      END PTASK38;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  PTASK38: PROC OPTIONS(MAIN) REORDER ;               2024.05.10 23:29:30   Page     3
+ - No Compiler Messages
+ 0 File Reference Table
+ 0   File    Included From  Name
+ 0      0                   AVL.IBAGROUP.PLI(PTASK38)
+ - Component    Return Code    Messages (Total/Suppressed)    Time
+ 0 Compiler         0                1  /  1                   2 secs
+ 0 End of compilation of PTASK38
+ 

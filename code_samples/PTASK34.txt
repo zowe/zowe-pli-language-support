@@ -1,0 +1,156 @@
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.10 23:35:28   Page     1
+ -                     Options Specified
+ 0  Install:
+ 0  Command: PP(CICS("SP")),SOURCE
+ 0  Install:
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  PTASK34: PROC OPTIONS(MAIN) REORDER ;               2024.05.10 23:35:28   Page     2
+ - CICS (Built:20220315) Preprocessor Options Used
+ 0   CICS
+ 0   DEBUG
+ 0   EDF
+ 0   SP
+ 0   NATLANG(EN)
+ 0   NOSYSEIB
+ 0   NOFEPI
+ 0   NOCPSM
+ 0   LENGTH
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  PTASK34: PROC OPTIONS(MAIN) REORDER ;               2024.05.10 23:35:28   Page     3
+ 0 Compiler Source
+ 0    Line.File
+ 0       1.0      PTASK34: PROC( DFHEIPTR )
+         1.0                    OPTIONS(MAIN) REORDER ;
+         2.0      DCL 1 DFHCNSTS  STATIC,  /* CONSTANTS USED BY TRANSLATOR */
+         2.0             2  DFHLDVER CHAR(22) INIT('LD TABLE DFHEITAB 740.'),
+         2.0             2  DFHEIB0 FIXED BIN(15) INIT(0),
+         2.0             2  DFHEID0 FIXED DEC(7) INIT(0),
+         2.0             2  DFHEICB CHAR(8) INIT('        ');
+         2.0      DCL DFHEPI ENTRY, DFHEIPTR PTR;
+         2.0      DCL 1 DFHEIBLK BASED (DFHEIPTR),
+         2.0            02    EIBTIME  FIXED DEC(7),
+         2.0            02    EIBDATE  FIXED DEC(7),
+         2.0            02    EIBTRNID CHAR(4),
+         2.0            02    EIBTASKN FIXED DEC(7),
+         2.0            02    EIBTRMID CHAR(4),
+         2.0            02    EIBFIL01 FIXED BIN(15),
+         2.0            02    EIBCPOSN FIXED BIN(15),
+         2.0            02    EIBCALEN FIXED BIN(15),
+         2.0            02    EIBAID   CHAR(1),
+         2.0            02    EIBFN    CHAR(2),
+         2.0            02    EIBRCODE CHAR(6),
+         2.0            02    EIBDS    CHAR(8),
+         2.0            02    EIBREQID CHAR(8),
+         2.0            02    EIBRSRCE CHAR(8),
+         2.0            02    EIBSYNC  CHAR(1),
+         2.0            02    EIBFREE  CHAR(1),
+         2.0            02    EIBRECV  CHAR(1),
+         2.0            02    EIBFIL02 CHAR(1),
+         2.0            02    EIBATT   CHAR(1),
+         2.0            02    EIBEOC   CHAR(1),
+         2.0            02    EIBFMH   CHAR(1),
+         2.0            02    EIBCOMPL CHAR(1),
+         2.0            02    EIBSIG   CHAR(1),
+         2.0            02    EIBCONF  CHAR(1),
+         2.0            02    EIBERR   CHAR(1),
+         2.0            02    EIBERRCD CHAR(4),
+         2.0            02    EIBSYNRB CHAR(1),
+         2.0            02    EIBNODAT CHAR(1),
+         2.0            02    EIBRESP  FIXED BIN(31),
+         2.0            02    EIBRESP2 FIXED BIN(31),
+         2.0            02    EIBRLDBK CHAR(1);
+         2.0      DCL 1 DFHCNTBS  STATIC,  /* CONSTANTS USED BY TRANSLATOR */
+         2.0             2  DFHLDTBS CHAR(22) INIT('LD TABLE DFHEITBS 740.');
+         2.0       DCL       DFHDUMMY STATIC FIXED BIN(15) INIT(0);
+         2.0       DCL       DFHEI0 ENTRY VARIABLE INIT(DFHEI01) AUTO
+         2.0       OPTIONS(INTER ASSEMBLER);
+         2.0       DCL       DFHEI01 ENTRY OPTIONS(INTER ASSEMBLER);
+         2.0        /*  EXEC CICS HANDLE CONDITION ERROR  */
+         2.0      DO;
+         2.0      DCL DFHENTRY_DF12F649_F94CE040 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+         2.0      LER) ENTRY(*);
+         2.0      CALL DFHENTRY_DF12F649_F94CE040('02_04_00_00_03_01_00_00_00_00_00_00_00
+         2.0      _00_00_00_00_00_00_00_00_00_40_40_40_40_40_F2_4B_F1'X);
+         2.0      END;
+         3.0
+         3.0       /*  EXEC CICS IGNORE CONDITION ENQBUSY FILENOTFOUND NOTFND NOTOPEN DUP
+         3.0      KEY ENDFILE LENGERR DUPREC NOSPACE INVREQ ITEMERR QIDERR PGMIDERR IOERR
+         3.0        */
+         3.0      DO;
+         3.0      DCL DFHENTRY_DF12F649_FA4AFCC0 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+         3.0      LER) ENTRY(*);
+         3.0      CALL DFHENTRY_DF12F649_FA4AFCC0('02_0A_00_00_03_11_1B_2C_1A_10_12_0E_16
+         3.0      _14_0F_13_0D_0C_37_00_00_00_40_40_40_40_40_F3_4B_F1'X);
+         3.0      END;
+        18.0       DCL
+        19.0       1 R404_RECORD  ,                          /* ROOM 404 RECORD  */
+        20.0         2 STATUS     CHAR(1)  ,
+        21.0         2 EMPL     ,
+        22.0           3 SURNAME  CHAR(14) ,
+        23.0           3 NAME     CHAR(11) ,
+        24.0         2 GENDER     CHAR(1) ,
+        25.0         2 SECTOR     CHAR(8) ,
+        26.0         2 PHONE      CHAR(4) ,
+        27.0         2 BOSS ,
+        28.0           3 SURNAME  CHAR(14) ,
+        29.0           3 NAME     CHAR(11) ;
+        30.0       R404_RECORD = '' ;
+        31.0       DCL REC_KEY    CHAR(14) INIT('IVANOVA       ') ; /* THE KEY       */
+        32.0       DCL RECLEN     FIXED BIN(15) INIT(64);
+        33.0       DCL MES        CHAR(75) ;
+        34.0                                               /* TO PREPARE THE RECORD  */
+        35.0       R404_RECORD.STATUS       = 'A';
+        36.0       R404_RECORD.EMPL.SURNAME = 'IVANOVA       ' ;
+        37.0       R404_RECORD.EMPL.NAME ='IVANNA     ' ;
+        38.0       R404_RECORD.GENDER ='F' ;
+        39.0       R404_RECORD.SECTOR ='ESI     ' ;
+        40.0       R404_RECORD.PHONE ='5555' ;
+        41.0       R404_RECORD.BOSS.SURNAME ='AHRIMENKO     ' ;
+        42.0       R404_RECORD.BOSS.NAME ='TATYANA    ' ;
+        43.0
+        43.0       /*  EXEC CICS WRITE FILE ( 'VSR404' ) FROM ( R404_RECORD ) RIDFLD ( RE
+        43.0      C_KEY )  */
+        43.0      DO;
+        43.0      DCL DFHENTRY_DF12F649_FB522580 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+        43.0      LER) ENTRY(*,CHAR(8),*,FIXED BIN(15),*);
+        43.0      CALL DFHENTRY_DF12F649_FB522580('06_04_F0_00_03_28_00_44_00_40_40_40_40
+        43.0      _F4_F3_4B_F1'X,'VSR404',R404_RECORD,CSTG(R404_RECORD),REC_KEY);
+        43.0      END;
+        45.0       IF EIBRESP ^= /* DFHRESP(NORMAL) */ 0
+        45.0                                      THEN
+        46.0         DO ;
+        47.0            /* TO WRITE A MESSOGE ABOUT ERROR     */
+        48.0            MES =  'EIBRESP='|| EIBRESP || 'EIBRESP2=' || EIBRESP2 ;
+        49.0             /*  EXEC CICS WRITEQ TS QUEUE ( 'OLGA' ) FROM ( MES )  */
+        49.0      DO;
+        49.0      DCL DFHENTRY_DF12F649_FD0D8440 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+        49.0      LER) ENTRY(*,CHAR(8),*,FIXED BIN(15));
+        49.0      CALL DFHENTRY_DF12F649_FD0D8440('0A_02_E0_00_03_00_00_41_00_40_40_40_40
+        49.0      _F4_F9_4B_F1'X,'OLGA',MES,CSTG(MES));
+        49.0      END;
+        50.0             /*  EXEC CICS RETURN  */
+        50.0      DO;
+        50.0      DCL DFHENTRY_DF12F649_FDBAA180 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+        50.0      LER) ENTRY(*);
+        50.0      CALL DFHENTRY_DF12F649_FDBAA180('0E_08_00_00_03_00_00_10_00_40_40_40_40
+        50.0      _F5_F0_4B_F1'X);
+        50.0      END;
+        51.0         END ;
+        52.0       ELSE  /*  EXEC CICS RETURN  */
+        52.0      DO;
+        52.0      DCL DFHENTRY_DF12F649_FE5A45C0 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+        52.0      LER) ENTRY(*);
+        52.0      CALL DFHENTRY_DF12F649_FE5A45C0('0E_08_00_00_03_00_00_10_00_40_40_40_40
+        52.0      _F5_F2_4B_F1'X);
+        52.0      END;
+        53.0      END PTASK34;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  PTASK34: PROC OPTIONS(MAIN) REORDER ;               2024.05.10 23:35:28   Page     4
+ - Compiler Messages
+ 0 Message       Line.File Message Description
+ 0 IBM1195I W       1.0    Argument to MAIN PROCEDURE is not CHARACTER VARYING.
+ - File Reference Table
+ 0   File    Included From  Name
+ 0      0                   AVL.IBAGROUP.PLI(PTASK34)
+ - Component    Return Code    Messages (Total/Suppressed)    Time
+ 0 CICS             0                0  /  0                   1 secs
+   Compiler         4                1  /  0                   1 secs
+ 0 End of compilation of PTASK34
+ 

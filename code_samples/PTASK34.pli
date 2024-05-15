@@ -1,0 +1,53 @@
+ PTASK34: PROC OPTIONS(MAIN) REORDER ;
+  EXEC CICS HANDLE CONDITION ERROR;
+  EXEC CICS IGNORE CONDITION
+            ENQBUSY
+            FILENOTFOUND
+            NOTFND
+            NOTOPEN
+            DUPKEY
+            ENDFILE
+            LENGERR
+            DUPREC
+            NOSPACE
+            INVREQ
+            ITEMERR
+            QIDERR
+            PGMIDERR
+            IOERR ;
+  DCL
+  1 R404_RECORD  ,                          /* ROOM 404 RECORD  */
+    2 STATUS     CHAR(1)  ,
+    2 EMPL     ,
+      3 SURNAME  CHAR(14) ,
+      3 NAME     CHAR(11) ,
+    2 GENDER     CHAR(1) ,
+    2 SECTOR     CHAR(8) ,
+    2 PHONE      CHAR(4) ,
+    2 BOSS ,
+      3 SURNAME  CHAR(14) ,
+      3 NAME     CHAR(11) ;
+  R404_RECORD = '' ;
+  DCL REC_KEY    CHAR(14) INIT('IVANOVA       ') ; /* THE KEY       */
+  DCL RECLEN     FIXED BIN(15) INIT(64);
+  DCL MES        CHAR(75) ;
+                                          /* TO PREPARE THE RECORD  */
+  R404_RECORD.STATUS       = 'A';
+  R404_RECORD.EMPL.SURNAME = 'IVANOVA       ' ;
+  R404_RECORD.EMPL.NAME ='IVANNA     ' ;
+  R404_RECORD.GENDER ='F' ;
+  R404_RECORD.SECTOR ='ESI     ' ;
+  R404_RECORD.PHONE ='5555' ;
+  R404_RECORD.BOSS.SURNAME ='AHRIMENKO     ' ;
+  R404_RECORD.BOSS.NAME ='TATYANA    ' ;
+  EXEC CICS WRITE FILE('VSR404') FROM(R404_RECORD)
+            RIDFLD(REC_KEY);
+  IF EIBRESP ^= DFHRESP(NORMAL)  THEN
+    DO ;
+       /* TO WRITE A MESSOGE ABOUT ERROR     */
+       MES =  'EIBRESP='|| EIBRESP || 'EIBRESP2=' || EIBRESP2 ;
+       EXEC CICS WRITEQ TS QUEUE('OLGA') FROM (MES) ;
+       EXEC CICS RETURN ;
+    END ;
+  ELSE EXEC CICS RETURN ;
+ END PTASK34;

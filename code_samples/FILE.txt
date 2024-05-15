@@ -1,0 +1,68 @@
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.10 23:47:59   Page     1
+ -                     Options Specified
+ 0  Install:
+ 0  Command: SOURCE
+ 0  Install:
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  EXAMPLE: PROC OPTIONS(MAIN);                        2024.05.10 23:47:59   Page     2
+ 0 Compiler Source
+ 0    Line.File
+ 0       1.0      EXAMPLE: PROC OPTIONS(MAIN);
+         2.0
+         3.0        DCL 1 REC_INP,
+         4.0          2 NAME   CHAR(10),
+         5.0          2 COUNT  CHAR(2),
+         6.0          2 FILL   CHAR(68);
+         7.0
+         8.0        DCL I            FIXED BIN(31);
+         9.0        DCL APPLE_COUNT  FIXED BIN(31) INIT(0);
+        10.0        DCL CARROT_COUNT FIXED BIN(31) INIT(0);
+        11.0        DCL CHERRY_COUNT FIXED BIN(31) INIT(0);
+        12.0        DCL TOMATO_COUNT FIXED BIN(31) INIT(0);
+        13.0        DCL INPFILE FILE RECORD INPUT;
+        14.0        DCL OUTFILE FILE RECORD OUTPUT;
+        15.0        DCL OUTPUTLINE CHAR(80) INIT('');
+        16.0        DCL EOF BIT(1) INIT('0'B);
+        17.0
+        18.0        ON ENDFILE (INPFILE)
+        19.0          EOF = '1'B;
+        20.0
+        21.0        OPEN FILE (INPFILE);
+        22.0        OPEN FILE (OUTFILE);
+        23.0
+        24.0        READ FILE (INPFILE) INTO (REC_INP);
+        25.0
+        26.0        DO WHILE (^EOF);
+        27.0          SELECT(REC_INP.NAME);
+        28.0            WHEN('APPLE')  APPLE_COUNT=APPLE_COUNT+REC_INP.COUNT;
+        29.0            WHEN('CARROT') CARROT_COUNT=CARROT_COUNT+REC_INP.COUNT;
+        30.0            WHEN('CHERRY') CHERRY_COUNT=CHERRY_COUNT+REC_INP.COUNT;
+        31.0            WHEN('TOMATO') TOMATO_COUNT=TOMATO_COUNT+REC_INP.COUNT;
+        32.0            OTHERWISE
+        33.0              PUT SKIP LIST('Unexpected order ',REC_INP.NAME);
+        34.0          END;
+        35.0          READ FILE (INPFILE) INTO (REC_INP);
+        36.0        END;
+        37.0
+        38.0        CALL FILEWRITE('Apples   quantity: '||APPLE_COUNT);
+        39.0        CALL FILEWRITE('Carrots  quantity: '||CARROT_COUNT);
+        40.0        CALL FILEWRITE('Cherries quantity: '||CHERRY_COUNT);
+        41.0        CALL FILEWRITE('Tomatoes quantity: '||TOMATO_COUNT);
+        42.0
+        43.0        CLOSE FILE(INPFILE);
+        44.0        CLOSE FILE(OUTFILE);
+        45.0
+        46.0        FILEWRITE: PROC(LINE);
+        47.0          DCL LINE CHAR(80);
+        48.0          WRITE FILE(OUTFILE) FROM(LINE);
+        49.0        END;
+        50.0
+        51.0      END;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  EXAMPLE: PROC OPTIONS(MAIN);                        2024.05.10 23:47:59   Page     3
+ - No Compiler Messages
+ 0 File Reference Table
+ 0   File    Included From  Name
+ 0      0                   AVL.IBAGROUP.PLI(FILE)
+ - Component    Return Code    Messages (Total/Suppressed)    Time
+ 0 Compiler         0                5  /  5                   2 secs
+ 0 End of compilation of EXAMPLE
+ 

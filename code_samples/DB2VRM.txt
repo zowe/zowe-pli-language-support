@@ -1,0 +1,193 @@
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.10 22:57:29   Page     1
+ -                     Options Specified
+ 0  Install:
+ 0  Command: PP(SQL()),RULES(LAXDCL),SOURCE
+ 0  Install:
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.05.10 22:57:29   Page     2
+ - SQL (Built:20220822) Preprocessor Options Used
+ 0     CCSID0
+     NOCODEPAGE
+       DEPRECATE( STMT() )
+     NOEMPTYDBRM
+     NOINCONLY
+       LINEONLY
+     NOWARNDECP
+ 0 DB2 for z/OS Coprocessor Options Used
+ 0   APOST
+     APOSTSQL
+     ATTACH(TSO)
+     CCSID(1047)
+     CONNECT(2)
+     DEC(15)
+     DECP(DSNHDECP)
+     FLOAT(S390)
+     SQLLEVEL(V13R1M501)
+     TWOPASS
+     PERIOD
+     STDSQL(NO)
+     SQL(DB2)
+     NOXREF
+     NOSOURCE
+     DSNHDECP LOADED FROM - (DSND10.DBDG.SDSNEXIT(DSNHDECP))
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.05.10 22:57:29   Page     3
+ 0 Compiler Source
+ 0    Line.File
+ 0       1.0      /*********************************************************************/
+         2.0      /* MODULE NAME  : DB2TEST                                            */
+         3.0      /* FUNCTION     : THIS PROGRAM GET DB2 VERSION                       */
+         4.0      /*********************************************************************/
+         5.0      MAIN: PROC OPTIONS(MAIN) REORDER;
+         5.0       DCL DSNHLI   EXT ENTRY OPTIONS(ASM INTER);
+         5.0
+         6.0      DCL SYSPRINT FILE EXT PRINT;
+         7.0      DCL DB2VRM VAR CHAR(20);
+         8.0
+         8.0      /*$*$*$
+         8.0      EXEC SQL INCLUDE SQLCA
+         8.0       $*$*$*/
+         8.0      DCL
+         8.0        1 SQLCA  ,
+         8.0          2 SQLCAID     CHAR(8),
+         8.0          2 SQLCABC     FIXED BIN(31),
+         8.0          2 SQLCODE     FIXED BIN(31),
+         8.0          2 SQLERRM     CHAR(70) VAR,
+         8.0          2 SQLERRP     CHAR(8),
+         8.0          2 SQLERRD(6)  FIXED BIN(31),
+         8.0          2 SQLWARN,
+         8.0            3 SQLWARN0  CHAR(1),
+         8.0            3 SQLWARN1  CHAR(1),
+         8.0            3 SQLWARN2  CHAR(1),
+         8.0            3 SQLWARN3  CHAR(1),
+         8.0            3 SQLWARN4  CHAR(1),
+         8.0            3 SQLWARN5  CHAR(1),
+         8.0            3 SQLWARN6  CHAR(1),
+         8.0            3 SQLWARN7  CHAR(1),
+         8.0          2 SQLEXT,
+         8.0            3 SQLWARN8  CHAR(1),
+         8.0            3 SQLWARN9  CHAR(1),
+         8.0            3 SQLWARNA  CHAR(1),
+         8.0            3 SQLSTATE  CHAR(5);
+         8.0                              /* INCLUDE COMMUNICATION AREA */
+         9.0
+         9.0      /*$*$*$
+         9.0      EXEC SQL WHENEVER SQLWARNING CONTINUE
+         9.0       $*$*$*/
+         9.0
+        10.0
+        10.0      /*$*$*$
+        10.0      EXEC SQL WHENEVER SQLERROR CONTINUE
+        10.0       $*$*$*/
+        10.0
+        11.0
+        11.0      /*$*$*$
+        11.0      EXEC SQL WHENEVER NOT FOUND CONTINUE
+        11.0       $*$*$*/
+        11.0
+        12.0
+        12.0      /*$*$*$
+        12.0      EXEC SQL DECLARE C CURSOR FOR
+        12.0          SELECT GETVARIABLE('SYSIBM.VERSION') FROM SYSIBM.SYSDUMMY1
+        12.0       $*$*$*/
+        13.0
+        14.0
+        14.0      /*$*$*$
+        14.0      EXEC SQL OPEN C
+        14.0       $*$*$*/
+        14.0      DO;
+        14.0      DCL
+        14.0        1 SQLPLIST6 UNALIGNED
+        14.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+        14.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('0000'XN)
+        14.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(50)
+        14.0         ,2 SQLPROGN     CHAR(8) INIT('DB2VRM')
+        14.0         ,2 SQLTIMES     CHAR(8)
+        14.0              INIT('1BE25DB9_11FFCD51'X)
+        14.0         ,2 SQLSECTN     FIXED BIN(15) INIT(1)
+        14.0         ,2 SQLCODEP     POINTER
+        14.0         ,2 SQLVPARMP    POINTER
+        14.0         ,2 SQLAPARMP    POINTER
+        14.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+        14.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(3)
+        14.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(14)
+        14.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+        14.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+        14.0        ;
+        14.0      SQLPLIST6.SQLVPARMP = SYSNULL();
+        14.0      SQLPLIST6.SQLAPARMP = SYSNULL();
+        14.0      SQLPLIST6.SQLCODEP = ADDR(SQLCA);
+        14.0      CALL DSNHLI(SQLPLIST6);
+        14.0      END;
+        14.0
+        15.0      PUT SKIP LIST('OPEN CURSOR '||SQLCODE);
+        16.0
+        16.0      /*$*$*$
+        16.0      EXEC SQL FETCH C INTO :DB2VRM
+        16.0       $*$*$*/
+        16.0      DO;
+        16.0      DCL
+        16.0        1 SQLPLIST7 UNALIGNED
+        16.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+        16.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('0400'XN)
+        16.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(30)
+        16.0         ,2 SQLPROGN     CHAR(8) INIT('DB2VRM')
+        16.0         ,2 SQLTIMES     CHAR(8)
+        16.0              INIT('1BE25DB9_11FFCD51'X)
+        16.0         ,2 SQLSECTN     FIXED BIN(15) INIT(1)
+        16.0         ,2 SQLCODEP     POINTER
+        16.0         ,2 SQLVPARMP    POINTER
+        16.0         ,2 SQLAPARMP    POINTER
+        16.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+        16.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(4)
+        16.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(16)
+        16.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+        16.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+        16.0         ,2 SQLAVARS
+        16.0           ,3 SQLAVDAID  CHAR(8)
+        16.0           ,3 SQLAVDABC  FIXED BIN(31)
+        16.0           ,3 SQLAVN     FIXED BIN(15)
+        16.0           ,3 SQLAVD     FIXED BIN(15)
+        16.0           ,3 SQLAVELT(1)
+        16.0             ,4 SQLAVTYPE  FIXED BIN(15)
+        16.0             ,4 SQLAVLEN   FIXED BIN(15)
+        16.0             ,4 SQLAVADDR  POINTER
+        16.0             ,4 SQLAVIND   POINTER
+        16.0             ,4 SQLAVNAME
+        16.0               ,5 SQLAVNAMELEN FIXED BIN(15)
+        16.0               ,5 * UNION
+        16.0                 ,6 SQLAVNAMEDAT CHAR(30)
+        16.0                 ,6 *
+        16.0                   ,7 SQLAVNAMER0 FIXED BIN(31)
+        16.0                   ,7 SQLAVNAMER1 FIXED BIN(15)
+        16.0                   ,7 SQLAVNAMER2 FIXED BIN(15)
+        16.0                   ,7 SQLAVNAMER3 CHAR(22)
+        16.0        ;
+        16.0      SQLPLIST7.SQLAVARS.SQLAVTYPE(1) = 448;
+        16.0      SQLPLIST7.SQLAVARS.SQLAVLEN(1) = 20;
+        16.0      SQLPLIST7.SQLAVARS.SQLAVADDR(1) = ADDR(DB2VRM);
+        16.0      SQLPLIST7.SQLAVARS.SQLAVIND(1) = SYSNULL();
+        16.0      SQLPLIST7.SQLAVARS.SQLAVNAMELEN(1) = 0;
+        16.0      SQLPLIST7.SQLAVARS.SQLAVDAID = 'SQLDA  ' || '08'X;
+        16.0      SQLPLIST7.SQLAVARS.SQLAVDABC = 60;
+        16.0      SQLPLIST7.SQLAVARS.SQLAVN = 1;
+        16.0      SQLPLIST7.SQLAVARS.SQLAVD = 1;
+        16.0      SQLPLIST7.SQLAPARMP = ADDR(SQLPLIST7.SQLAVARS.SQLAVDAID);
+        16.0      SQLPLIST7.SQLVPARMP = SYSNULL();
+        16.0      SQLPLIST7.SQLCODEP = ADDR(SQLCA);
+        16.0      CALL DSNHLI(SQLPLIST7);
+        16.0      END;
+        16.0
+        17.0      PUT SKIP LIST('FETCH CURSOR '||SQLCODE);
+        18.0      PUT SKIP LIST('DB2 VERSION '||DB2VRM);
+        19.0      RC = 0;
+        20.0      CALL PLIRETC(RC);
+        21.0      END MAIN;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.05.10 22:57:29   Page     4
+ - No Compiler Messages
+ 0 File Reference Table
+ 0   File    Included From  Name
+ 0      0                   AVL.IBAGROUP.PLI(DB2VRM)
+ - Component    Return Code    Messages (Total/Suppressed)    Time
+ 0 SQL              0                2  /  2                   1 secs
+   Compiler         0                1  /  1                   1 secs
+ 0 End of compilation of MAIN
+ 

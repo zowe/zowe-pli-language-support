@@ -1,0 +1,112 @@
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.10 23:52:41   Page     1
+ -                     Options Specified
+ 0  Install:
+ 0  Command: PP(SQL()),SOURCE
+ 0  Install:
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  INSERT: PROC OPTIONS(MAIN);                         2024.05.10 23:52:41   Page     2
+ - SQL (Built:20220822) Preprocessor Options Used
+ 0     CCSID0
+     NOCODEPAGE
+       DEPRECATE( STMT() )
+     NOEMPTYDBRM
+     NOINCONLY
+       LINEONLY
+     NOWARNDECP
+ 0 DB2 for z/OS Coprocessor Options Used
+ 0   APOST
+     APOSTSQL
+     ATTACH(TSO)
+     CCSID(1047)
+     CONNECT(2)
+     DEC(15)
+     DECP(DSNHDECP)
+     FLOAT(S390)
+     SQLLEVEL(V13R1M501)
+     TWOPASS
+     PERIOD
+     STDSQL(NO)
+     SQL(DB2)
+     NOXREF
+     NOSOURCE
+     DSNHDECP LOADED FROM - (DSND10.DBDG.SDSNEXIT(DSNHDECP))
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  INSERT: PROC OPTIONS(MAIN);                         2024.05.10 23:52:41   Page     3
+ 0 Compiler Source
+ 0    Line.File
+ 0       1.0      INSERT: PROC OPTIONS(MAIN);
+         1.0       DCL DSNHLI   EXT ENTRY OPTIONS(ASM INTER);
+         1.0
+         2.0
+         3.0
+         3.0      /*$*$*$
+         3.0        EXEC SQL INCLUDE SQLCA
+         3.0       $*$*$*/
+         3.0      DCL
+         3.0        1 SQLCA  ,
+         3.0          2 SQLCAID     CHAR(8),
+         3.0          2 SQLCABC     FIXED BIN(31),
+         3.0          2 SQLCODE     FIXED BIN(31),
+         3.0          2 SQLERRM     CHAR(70) VAR,
+         3.0          2 SQLERRP     CHAR(8),
+         3.0          2 SQLERRD(6)  FIXED BIN(31),
+         3.0          2 SQLWARN,
+         3.0            3 SQLWARN0  CHAR(1),
+         3.0            3 SQLWARN1  CHAR(1),
+         3.0            3 SQLWARN2  CHAR(1),
+         3.0            3 SQLWARN3  CHAR(1),
+         3.0            3 SQLWARN4  CHAR(1),
+         3.0            3 SQLWARN5  CHAR(1),
+         3.0            3 SQLWARN6  CHAR(1),
+         3.0            3 SQLWARN7  CHAR(1),
+         3.0          2 SQLEXT,
+         3.0            3 SQLWARN8  CHAR(1),
+         3.0            3 SQLWARN9  CHAR(1),
+         3.0            3 SQLWARNA  CHAR(1),
+         3.0            3 SQLSTATE  CHAR(5);
+         3.0
+         4.0
+         5.0
+         5.0      /*$*$*$
+         5.0        EXEC SQL
+         5.0        INSERT INTO STUDENT
+         5.0        (FIRST_NAME,SECOND_NAME,AVG_MARK,GROUP_NUMBER)
+         5.0        VALUES ('Igor','Egorov',NULL,'1')
+         5.0       $*$*$*/
+         5.0      DO;
+         5.0      DCL
+         5.0        1 SQLPLIST2 UNALIGNED
+         5.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+         5.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('0000'XN)
+         5.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(30)
+         5.0         ,2 SQLPROGN     CHAR(8) INIT('INSERT')
+         5.0         ,2 SQLTIMES     CHAR(8)
+         5.0              INIT('1BE25F44_0D2D7B19'X)
+         5.0         ,2 SQLSECTN     FIXED BIN(15) INIT(1)
+         5.0         ,2 SQLCODEP     POINTER
+         5.0         ,2 SQLVPARMP    POINTER
+         5.0         ,2 SQLAPARMP    POINTER
+         5.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+         5.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(232)
+         5.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(5)
+         5.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+         5.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+         5.0        ;
+         5.0      SQLPLIST2.SQLVPARMP = SYSNULL();
+         5.0      SQLPLIST2.SQLAPARMP = SYSNULL();
+         5.0      SQLPLIST2.SQLCODEP = ADDR(SQLCA);
+         5.0      CALL DSNHLI(SQLPLIST2);
+         5.0      END;
+         8.0
+         9.0
+        10.0        PUT SKIP LIST(SQLCA.SQLCODE);
+        11.0
+        12.0      END;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  INSERT: PROC OPTIONS(MAIN);                         2024.05.10 23:52:41   Page     4
+ - No Compiler Messages
+ 0 File Reference Table
+ 0   File    Included From  Name
+ 0      0                   AVL.IBAGROUP.PLI(INSERT)
+ - Component    Return Code    Messages (Total/Suppressed)    Time
+ 0 SQL              0                3  /  3                   0 secs
+   Compiler         0                1  /  1                   3 secs
+ 0 End of compilation of INSERT
+ 

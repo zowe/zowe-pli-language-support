@@ -1,0 +1,84 @@
+ PTASK38: PROC OPTIONS(MAIN) REORDER ;
+ DCL SYSPRINT FILE PRINT STREAM OUTPUT   ;/* FILE SYSPRINT          */
+ DCL REP3800  FILE OUTPUT RECORD         ;/* FILE REP3800           */
+ DCL VSR404   FILE RECORD SEQUENTIAL INPUT ENV(VSAM RECSIZE(64));
+                                          /*                        */
+ DCL RETC       FIXED BIN (15) INIT(0)  ; /*                        */
+ DCL EOF_VSAM   BIT(1) INIT('0'B)       ; /*END OF VSAM    FILE     */
+ DCL FLAG_VSAM  CHAR(1)  INIT('0')      ; /*VSAM FILE IS EMPTY      */
+ DCL REC_KEY    CHAR(1) INIT('F')       ; /* THE KEY                */
+ DCL
+  1 R404_RECORD           ,               /*   ROOM 404 RECORD      */
+    2 STATUS     CHAR(1)  ,
+    2 EMPL     ,
+      3 SURNAME  CHAR(14) ,
+      3 NAME     CHAR(11) ,
+    2 GENDER     CHAR(1) ,
+    2 SECTOR     CHAR(8) ,
+    2 PHONE      CHAR(4) ,
+    2 BOSS ,
+      3 SURNAME  CHAR(14) ,
+      3 NAME     CHAR(11) ;
+ R404_RECORD = '' ;
+ DCL
+ 1 OUT_RECORD            ,                /* OUT RECORD. LENGTH 37  */
+   2 EMPLOYEE            ,
+     3 SURNAME  CHAR(14) ,
+     3 NAME     CHAR(11) ,
+   2 SECTOR     CHAR(8)  ,
+   2 PHONE      CHAR(4)  ;
+ OUT_RECORD = '' ;
+ ON KEY(VSR404) RETC = ONCODE       ;     /*                        */
+ ON ENDFILE (VSR404) BEGIN          ;     /*                        */
+    EOF_VSAM = '1'B                  ;    /*                        */
+ END                                 ;    /*                        */
+ /*-----------------------------------------------------------------*/
+ /*      ON ERROR   ROUTINE                                         */
+ /*-----------------------------------------------------------------*/
+                                          /*                        */
+ ON ERROR BEGIN                      ;    /*                        */
+ ON ERROR SYSTEM                     ;    /*                        */
+  PUT SKIP(2) FILE (SYSPRINT) EDIT                /*                */
+      ('***  ABNORMAL END OF PTASK38  ***')(A,A); /*                */
+  CLOSE FILE (VSR404)               ;    /*                        */
+  CLOSE FILE (REP3800)               ;    /*                        */
+  CLOSE FILE (SYSPRINT)              ;    /*                        */
+ END                                 ;    /*                        */
+ /*-----------------------------------------------------------------*/
+ /*                         INITIALISATIONS                         */
+ /*-----------------------------------------------------------------*/
+
+ PUT SKIP LIST('PTASK38 STARTED ')   ;    /*                        */
+                                          /*                        */
+                                          /*                        */
+ OPEN FILE(VSR404)                  ;     /*                        */
+ OPEN FILE(REP3800)                  ;    /*                        */
+ OPEN FILE(SYSPRINT)                 ;    /*                        */
+ /*******************************************************************/
+ /*      MAIN PROCESS                                               */
+ /*******************************************************************/
+ READ FILE (VSR404) INTO (R404_RECORD) ;  /* READ THE FIRST RECORD  */
+ IF EOF_VSAM                              /*                        */
+ THEN DO                             ;    /*                        */
+   PUT LIST('VSAM FILE VSR404 IS EMPTY') SKIP ;
+   FLAG_VSAM = '1'                   ;    /*                        */
+   SIGNAL ERROR                      ;    /*                        */
+ END                                 ;    /*                        */
+ DO WHILE (^EOF_VSAM)                    ;/* WHILE FILE NOT ENDED   */
+    IF R404_RECORD.GENDER  = 'F'          /* FEMALE ?               */
+       THEN DO ;
+                                          /* TO PREPARE THE RECORD  */
+          OUT_RECORD.EMPLOYEE.SURNAME = R404_RECORD.EMPL.SURNAME ;
+          OUT_RECORD.EMPLOYEE.NAME = R404_RECORD.EMPL.NAME ;
+           OUT_RECORD.PHONE = R404_RECORD.PHONE ;
+           WRITE FILE (REP3800) FROM (OUT_RECORD) ; /* WRITE REPORT */
+        END ;
+      READ FILE (VSR404) INTO (R404_RECORD) ; /* READ NEXT RECORD   */
+  END ;
+  PUT SKIP(2) FILE (SYSPRINT) EDIT         /*                       */
+        ('***  NORMAL END OF PTASK38  ***') (A,A);
+  CLOSE FILE (REP3800)                ;    /*                       */
+  CLOSE FILE (VSR404)                ;     /*                       */
+  CLOSE FILE (SYSPRINT)               ;    /*                       */
+                                           /*                       */
+ END PTASK38;

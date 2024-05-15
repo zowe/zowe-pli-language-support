@@ -1,0 +1,877 @@
+*PROCESS X(S),A(S),LINECOUNT(60);
+ /*          %M%    %I%    %D%    %T%
+     PUNCH ' IDENTIFY **%M%1(''%M%/%I% %D% %T%'')'
+     PUNCH ' ENTRY PLISTART '
+     PUNCH ' NAME %M%(R) '
+ */
+0/*-------------------------------------------------------------------*/
+ /*  PROGRAM      CHART
++/*  _______
+ /*
+ /*  PURPOSE      GENERATES A STRUCTURE CHART FROM A COMPILER LISTING
++/*  _______
+ /*
+ /*  INPUT        SYSUT1 - COMPILER LISTING
++/*  _____
+ /*
+ /*  OUTPUT       SYSPRINT - STRUCTURE CHART
++/*  ______
+ /*               SYSUT2   - COMPILER LISTING (FOR PRINT OPTION)
+ /*
+ /*  PARAMETERS   PROGRAM NAME,OPTION1,OPTION2,...
++/*  __________
+ /*
+ /*  OPTIONS
++/*  _______
+ /*               DUMP        DUMP INTERNAL TABLES
+ /*               NODUMP      DO NOT DUMP INTERNAL TABLES
++/*               ______
+ /*
+ /*               LINK        SET RETURN CODE TO 4 (WARNING)
+ /*                           IF UNDECLARED VARIABLES EXIST
+ /*               NOLINK      SET RETURN CODE TO 12 (ERROR)
++/*               ______
+ /*                           IF UNDECLARED VARIABLES EXIST
+ /*                           (THIS WILL PREVENT EXECUTION OF THE
+ /*                            LINK STEP)
+ /*
+ /*                           NOTE: BUILTIN FUNCTIONS, SYSIN, AND
+ /*                                 SYSPRINT ARE NOT CONSIDERED AS
+ /*                                 VARIABLES
+ /*
+ /*               NEST        SHOW NESTING LEVEL OF ENTRIES
++/*               ____
+ /*                           (E.G. "1.3" FOR THIRD ENTRY AT LEVEL 1)
+ /*               NONEST      SHOW RELATIVE LEVEL OF ENTRIES
+ /*                           (E.G. "3" FOR THIRD ENTRY AT ANY LEVEL)
+ /*
+ /*               PAGE        SKIP TO NEW PAGE FOR EACH MAJOR ENTRY
+ /*               NOPAGE
++/*               ______
+ /*
+ /*               PLIRETC     CHART CALLS TO PLIRETC
+ /*               NOPLIRETC   IGNORE CALLS TO PLIRETC
++/*               _________
+ /*
+ /*               PRINT       PRINT COMPILER LISTING
++/*               _____
+ /*               NOPRINT     DO NOT PRINT COMPILER LISTING
+ /*
+ /*
+1/*  LIMITATIONS  MAXIMUM 1000 ENTRIES AND 1000 REFERENCES
++/*  ___________
+ /*
+ /*               PL/I OPTIMIZING COMPILER SOURCE (3.1 OR 4.0)
+ /*
+ /*               XREF AND ATTRIBUTES (FULL OR SHORT) MUST BE SPECIFIED
+ /*
+ /*  ALGORITHM    (1)  THE ATTRIBUTE AND REFERENCE TABLE IS FOUND
++/*  _________
+ /*               (2)  EACH ENTRY IS EXTRACTED WITH ITS
+ /*                    - NAME
+ /*                    - TYPE (INTERNAL, EXTERNAL, BUILTIN, VARIABLE)
+ /*                    - DCL NUMBER
+ /*                    - REFERENCES
+ /*               (3)  ENTRY TABLE IS SORTED BY DCL NUMBER
+ /*               (4)  EACH REFERENCE IS RESOLVED (FIND CALLER)
+ /*               (5)  CHART IS PRINTED
+ /*
+ /*
+ /*  SAMPLE JCL  (CHANGE "$" TO PROGRAM NAME)
++/*  __________
+ /*
+ /*  //PLIXC    EXEC PLIXC
+ /*  //PLI.SYSPRINT DD DSN=&&PRINT,DISP=(NEW,PASS),
+ /*  //   UNIT=SYSDA,SPACE=(CYL,(1,1))
+ /*  //PLI.SYSIN  DD DSN=USERID.PROJECT.PLI($),DISP=SHR
+ /*  //*
+ /*  //CHART    EXEC PGM=CHART,REGION=500K,PARM='/$,PRINT'
+ /*  //STEPLIB  DD DSN=......,DISP=SHR
+ /*  //SYSPRINT DD SYSOUT=A
+ /*  //SYSUT1   DD DSN=&&PRINT,DISP=(OLD,DELETE)
+ /*  //SYSUT2   DD SYSOUT=A
+ /*
+ /*
+ /*  EXPLANATION OF OUTPUT
++/*  _____________________
+ /*
+ /* "ENTRY START"    THIS COLUMN SHOWS THE STARTING STATEMENT NUMBER
+ /*                  FOR INTERNAL PROCEDURES
+ /*
+ /* "ENTRY TYPE"     INTERNAL - INTERNAL PROCEDURE
+ /*                  EXTERNAL - EXTERNAL PROCEDURE
+ /*                  VARIABLE - ENTRY VARIABLE
+ /*                  BUILTIN  - BUILTIN (E.G. PLIDUMP)
+ /*
+ /* "LEVEL AND NAME" SHOWS THE HIERARCHICAL LEVEL AND PROCEDURE NAME
+ /*
+ /*                  "(N TIMES)" PROCEDURE IS CALLED "N" TIMES
+ /*
+ /*                  "SEE N"     FIRST USE OF PROCEDURE IS AT "N"
+ /*
+ /*-------------------------------------------------------------------*/
+1CHART: PROC (PARM) OPTIONS(MAIN) REORDER;
+0DEFAULT RANGE(*) BUILTIN ALIGNED;
+0DCL
+     TRUE                                   BIT(1) STATIC INIT('1'B),
+     FALSE                                  BIT(1) STATIC INIT('0'B),
+     PLIXOPT                                CHAR(100) VARYING
+                             /*    INIT('ISA(150K)'), */
+           EXTERNAL STATIC INIT('HEAP(64K,64K,ANYWHERE,KEEP,8K,4K)'),
+     END_OF_FILE                            BIT(1) INIT(FALSE),
+     ENTRY_TABLE_COUNT                      BIN FIXED(15) INIT(0),
+     ENTRY_TABLE_SIZE                       BIN FIXED(15) INIT(1000),
+     MATCH_FLAG                             BIT(1) INIT(FALSE),
+     P                                      POINTER,
+     PAGE_NUMBER                            BIN FIXED(15) INIT(0),
+     PARM                                   CHAR(*) VARYING,
+     PRINT_LINE                             CHAR(133) VARYING,
+     PROGRAM_NAME                           CHAR(8) VARYING,
+     REFERENCE_TABLE_COUNT                  BIN FIXED(15) INIT(0),
+     REFERENCE_TABLE_SIZE                   BIN FIXED(15) INIT(1000),
+     SYSPRINT                               FILE PRINT,
+     SYSUT1                                 FILE INPUT,
+     SYSUT2                                 FILE RECORD OUTPUT
+                                            ENV(VB RECSIZE(137) CTLASA),
+     UNDECLARED_COUNT                       BIN FIXED(15) INIT(0),
+0    /* OPTIONS */
+     DUMP_OPTION                            BIT(1) INIT(FALSE),
+     LINK_OPTION                            BIT(1) INIT(FALSE),
+     NEST_OPTION                            BIT(1) INIT(TRUE),
+     PAGE_OPTION                            BIT(1) INIT(FALSE),
+     PLIRETC_OPTION                         BIT(1) INIT(FALSE),
+     PRINT_OPTION                           BIT(1) INIT(TRUE);
+1/*-------------------------------------------------------------------*/
+ /*  DATA STRUCTURES
+ /*
+ /*       ENTRY TABLE
+ /*
+ /*           NAME              NAME OF ENTRY
+ /*           TYPE              ENTRY TYPE
+ /*                             (INTERNAL, EXTERNAL, VARIABLE, BUILTIN)
+ /*           DCL_NUMBER        STATEMENT NUMBER WHERE DECLARED
+ /*                             (99,999,999 FOR EXTERNAL ENTRIES)
+ /*           FIRST_USE#        FIRST INDEX IN REF TABLE  (ARRAY)
+ /*           LAST_USE#         LAST  INDEX IN REF TABLE  (ARRAY)
+ /*           FIRST_CALL#       FIRST INDEX IN REF TABLE  (LINK LIST)
+ /*           LAST_CALL#        LAST  INDEX IN REF TABLE  (LINK LIST)
+ /*           PRINT_FLAG        TRUE IF ALREADY PRINTED
+ /*           FIRST_ID          FIRST LEVEL/SEQUENCE USED (E.G. 3.4.2)
+ /*
+ /*     REFERENCE TABLE
+ /*
+ /*           NAME              SUBROUTINE NAME
+ /*           CALLED_AT_NUMBER  WHERE REFERENCED (STATEMENT)
+ /*           CALL_COUNT        NUMBER OF TIMES CALLED BY ENTRY
+ /*           ENTRY_NUMBER#     INDEX IN ENTRY TABLE FOR SUBROUTINE
+ /*           NEXT_CALL#        NEXT REF ON LIST
+ /*
+ /* NOTE: VARIABLES ENDING IN "#" ARE POINTERS
+ /*-------------------------------------------------------------------*/
+0DCL 1  ENTRY_TABLE,
+        2  ENTRY(0:1000),                   /* 0 IS FOR MAIN PROGRAM */
+           3  NAME                          CHAR(32) VARYING,
+           3  TYPE                          CHAR(8),
+           3  DCL_NUMBER                    BIN FIXED(31),
+           3  FIRST_USE#                    BIN FIXED(15),
+           3  LAST_USE#                     BIN FIXED(15),
+           3  FIRST_CALL#                   BIN FIXED(15),
+           3  LAST_CALL#                    BIN FIXED(15),
+           3  PRINT_FLAG                    BIT(1) ALIGNED,
+           3  FIRST_ID                      CHAR(25) VARYING;
+0DCL 1  REFERENCE_TABLE,
+        2  REF(0:1000),                     /* 0 IS NOT USED */
+           3  NAME                          CHAR(32) VARYING,
+           3  CALLED_AT_NUMBER              BIN FIXED(31),
+           3  CALL_COUNT                    BIN FIXED(31),
+           3  ENTRY_NUMBER#                 BIN FIXED(15),
+           3  NEXT_CALL#                    BIN FIXED(15);
+1/*-------------------------------------------------------------------*/
+ /* ON UNITS
+ /*-------------------------------------------------------------------*/
+-    ON CONVERSION
+         BEGIN;
+             PUT SKIP LIST('***** CONVERSION ERROR *****');
+             PUT SKIP LIST(PRINT_LINE);
+             PUT SKIP LIST('ONSOURCE: ' || ONSOURCE());
+             ONSOURCE = (100)'0';
+         END;
+-    ON ENDPAGE(SYSPRINT)
+         BEGIN;
+             CALL NEW_PAGE;
+             PUT SKIP(2);
+         END;
+-    ON ENDFILE(SYSUT1)  END_OF_FILE = TRUE;
+1/*-------------------------------------------------------------------*/
+ /* MAIN LOGIC
+ /*
+ /* (1) INITIALIZATION
+ /* (2) SKIP TO ATTRIBUTE/XREF TABLE
+ /* (3) SORT ENTRY TABLE
+ /* (4) RESOLVE CALLS
+ /* (5) CHECK IF UNDECALRED VARIABLES WERE FOUND
+ /* (6) PRINT THE CHART
+ /* (7) FINISH PRINTING THE PROGRAM LISTING
+ /*-------------------------------------------------------------------*/
+0    CALL INIT;
+0    CALL SKIP_TO_ATTR_AND_XREF_TABLE;
+0    CALL EXTRACT_ENTRIES;
+0    CALL SORT_ENTRY_TABLE;
+0    IF  DUMP_OPTION
+     THEN
+         CALL DUMP;
+0    CALL RESOLVE_CALLS;
+0    CALL RESOLVE_ENTRY_NUMBERS;
+0    IF  DUMP_OPTION
+     THEN
+         CALL DUMP;
+0    IF  UNDECLARED_COUNT > 0
+     THEN
+         DO;
+             PUT SKIP(3) LIST ('***** ' || $LJ(UNDECLARED_COUNT) ||
+                               ' UNDECLARED VARIABLE(S) *****');
+             IF  LINK_OPTION
+             THEN
+                 CALL PLIRETC(4);
+             ELSE
+                 CALL PLIRETC(12);
+         END;
+0    CALL PRINT_CHART;
+0    IF  PRINT_OPTION  & ^END_OF_FILE
+     THEN
+         CALL FINISH_PRINT;
+1/*-------------------------------------------------------------------*/
+ /*  INIT
+ /*
+ /* (1) GET PROGRAM NAME AND OPTIONS
+ /* (2) PROCESS AND PRINT OPTIONS
+ /*-------------------------------------------------------------------*/
+0INIT: PROC;
+0DCL I BIN FIXED(15),                    /* INDEX OF COMMA IN PARM    */
+     STAMP  CHAR(20),                    /* DATE/TIME STAMP           */
+     TDATE  PIC '(6)9' INIT(DATE());     /* DATE (YYMMDD)             */
+0    OPEN FILE(SYSPRINT) LINESIZE(132);
+0    ENTRY_TABLE     = '';
+     REFERENCE_TABLE = '';
+0    IF  LENGTH(PARM) > 0
+     THEN
+         DO;
+             I = INDEX(PARM, ',');
+             IF  I = 0
+             THEN
+                 PROGRAM_NAME = PARM;
+             ELSE
+                 PROGRAM_NAME = SUBSTR(PARM, 1, I-1);
+         END;
+0    PUT STRING(STAMP) EDIT
+         (SUBSTR(TDATE, 3, 4) || SUBSTR(TDATE, 1, 2),
+          SUBSTR(TIME(), 1, 6))
+         (P'99/99/99', X(2), P'99.99.99');
+0    PUT EDIT
+         ('*****************************************',
+          '*     PL/I STRUCTURE CHART UTILITY      *',
+          '*                                       *',
+          '*',            STAMP,                  '*',
+          '*                                       *',
+          '*',         PROGRAM_NAME,              '*',
+          '*                                       *',
+          '*****************************************')
+         ((3) (COL(35), A),
+               COL(35), A, COL(46), A, COL(75), A,
+               COL(35), A,
+               COL(35), A, COL(52), A, COL(75), A);
+0    IF  I > 0
+     THEN
+         CALL GET_OPTIONS (I);
+0    CALL PRINT_OPTIONS;
+1/*-------------------------------------------------------------------*/
+ /*  GET OPTIONS
+ /*
+ /*  (1) COPY PARM TO WORK PARM
+ /*  (2) EXTRACT AND PROCESS EACH OPTION
+ /*-------------------------------------------------------------------*/
+0GET_OPTIONS: PROC (I);
+0DCL WORK_PARM CHAR(100) VARYING,
+     OPTION    CHAR(100) VARYING,
+     I         BIN FIXED(15);
+-    IF  I = LENGTH(PARM)
+     THEN
+         WORK_PARM = '';
+     ELSE
+         WORK_PARM = SUBSTR(PARM, I + 1);
+0    PUT SKIP(3) EDIT ('OPTIONS SPECIFIED: ' || WORK_PARM) (COL(35), A);
+-    DO WHILE (LENGTH(WORK_PARM) > 0);
+0        I = INDEX(WORK_PARM, ',');
+         IF  I = 0
+         THEN
+             DO;
+                 /* NO COMMA */
+                 OPTION    = WORK_PARM;
+                 WORK_PARM =  '';
+             END;
+         ELSE
+             DO;
+                 /* COMMA */
+                 OPTION = SUBSTR(WORK_PARM, 1,  I-1);
+0                IF  I = LENGTH(WORK_PARM)
+                 THEN
+                     WORK_PARM = '';
+                 ELSE
+                     WORK_PARM = SUBSTR(WORK_PARM, I+1);
+             END;
+1        SELECT (OPTION);
+0            WHEN ('DUMP')       DUMP_OPTION    = TRUE;
+             WHEN ('NODUMP')     DUMP_OPTION    = FALSE;
+0            WHEN ('LINK')       LINK_OPTION    = TRUE;
+             WHEN ('NOLINK')     LINK_OPTION    = FALSE;
+0            WHEN ('NEST')       NEST_OPTION    = TRUE;
+             WHEN ('NONEST')     NEST_OPTION    = FALSE;
+0            WHEN ('PAGE')       PAGE_OPTION    = TRUE;
+             WHEN ('NOPAGE')     PAGE_OPTION    = FALSE;
+0            WHEN ('PLIRETC')    PLIRETC_OPTION = TRUE;
+             WHEN ('NOPLIRETC')  PLIRETC_OPTION = FALSE;
+0            WHEN ('PRINT')      PRINT_OPTION   = TRUE;
+             WHEN ('NOPRINT')    PRINT_OPTION   = FALSE;
+0            OTHERWISE           PUT SKIP(2) EDIT
+                                     ('***** UNKNOWN OPTION: ' ||
+                                       OPTION || ' *****') (A);
+         END;
+0    END;
+0END GET_OPTIONS;
+1/*-------------------------------------------------------------------*/
+ /*  PRINT OPTIONS
+ /*
+ /*  PRINT OPTIONS IN EFFECT AND DESCRIPTION OF AVAILABLE OPTIONS
+ /*-------------------------------------------------------------------*/
+0PRINT_OPTIONS: PROC;
+0    PUT SKIP(2) EDIT ('OPTIONS IN EFFECT: ') (COL(35), A);
+0    IF  LINK_OPTION      THEN PUT EDIT ('LINK')       (A);
+     ELSE                      PUT EDIT ('NOLINK')     (A);
+0    IF  NEST_OPTION      THEN PUT EDIT (',NEST')      (A);
+     ELSE                      PUT EDIT (',NONEST')    (A);
+0    IF  PAGE_OPTION      THEN PUT EDIT (',PAGE')      (A);
+     ELSE                      PUT EDIT (',NOPAGE')    (A);
+0    IF  PLIRETC_OPTION   THEN PUT EDIT (',PLIRETC')   (A);
+     ELSE                      PUT EDIT (',NOPLIRETC') (A);
+0    IF  PRINT_OPTION     THEN PUT EDIT (',PRINT')     (A);
+     ELSE                      PUT EDIT (',NOPRINT')   (A);
+1    PUT SKIP(3) EDIT
+          ('OPTION      DESCRIPTION',
+           '______      _____________________________________________')
+          (COL(35), A, SKIP(0), COL(35), A)
+0         ('LINK        SET RETURN CODE TO 4 (WARNING) IF UNDECLARED',
+           '            VARIABLES ARE FOUND',
+           'NOLINK      SET RETURN CODE TO 12 (ERROR) IF UNDECLARED',
+           '______')
+          (SKIP(2), (3) (COL(35), A), SKIP(0), COL(35), A)
+0         ('            VARIABLES ARE FOUND (PREVENT LINKING)',
+           ' ',
+           '            NOTE:  BUILTIN FUNCTIONS, SYSIN, AND SYSPRINT',
+           '                   ARE NOT CONSIDERED VARIABLES')
+          (COL(35), A)
+0         ('NEST        SHOW NESTING LEVEL OF ENTRIES',
+           '____')
+          (SKIP(2), COL(35), A, SKIP(0), COL(35), A)
+0         ('                 (E.G. "1.3 " FOR THIRD ENTRY AT LEVEL 1)',
+           'NONEST      SHOW RELATIVE LEVEL OF ENTRIES',
+           '                 (E.G. "3" FOR THIRD ENTRY AT ANY LEVEL)')
+          (COL(35), A)
+0         ('PAGE        SKIP TO NEW PAGE FOR EACH MAJOR ENTRY',
+           'NOPAGE      DO NOT SKIP TO NEW PAGE',
+           '______')
+          (SKIP(2), COL(35), A, COL(35), A, SKIP(0), COL(35), A)
+          ('PLIRETC     CHART CALLS TO PLIRETC',
+           'NOPLIRETC   IGNORE CALLS TO PLIRETC',
+           '_________')
+          (SKIP(2), COL(35), A, COL(35), A, SKIP(0), COL(35), A)
+          ('PRINT       PRINT COMPILER LISTING',
+           '_____')
+          (SKIP(2), COL(35), A, SKIP(0), COL(35), A)
+          ('NOPRINT     DO NOT PRINT COMPILER LISTING')
+          (COL(35), A);
+0END PRINT_OPTIONS;
+0END INIT;
+1/*-------------------------------------------------------------------*/
+ /*  SKIP TO ATTR AND XREF TABLE
+ /*
+ /*  READ (AND PRINT IF PRINT_OPTION) LINE FROM LISTING UNTIL
+ /*  "ATTRIBUTES AND REFERENCES" TABLE IS FOUND
+ /*-------------------------------------------------------------------*/
+0SKIP_TO_ATTR_AND_XREF_TABLE: PROC;
+0    READ FILE(SYSUT1) INTO(PRINT_LINE);
+0    DO WHILE (^END_OF_FILE & ^MATCH_FLAG);
+0        IF  PRINT_OPTION
+         THEN
+             WRITE FILE(SYSUT2) FROM(PRINT_LINE);
+0        IF  LENGTH(PRINT_LINE) >= 69
+         THEN
+             IF  SUBSTR(PRINT_LINE, 45, 25) =
+                 'ATTRIBUTES AND REFERENCES'
+             THEN
+                 MATCH_FLAG = TRUE;
+0        READ FILE(SYSUT1) INTO(PRINT_LINE);
+     END;
+0END SKIP_TO_ATTR_AND_XREF_TABLE;
+1/*-------------------------------------------------------------------*/
+ /* EXTRACT ENTRIES
+ /*
+ /* THIS ROUTINE IS CALLED AFTER THE ATTRIBUTE AND XREF TABLE IS FOUND
+ /*
+ /* LINE_COUNT   LINE NUMBER ON CURRENT PAGE OF LISTING
+ /* ENTRY_FLAG   TRUE IF LAST IDENTIFIER WAS AN ENTRY
+ /*-------------------------------------------------------------------*/
+0EXTRACT_ENTRIES: PROC;
+0DCL LINE_COUNT   BIN FIXED(15) INIT(2),
+     ENTRY_FLAG   BIT(1)        INIT(FALSE),
+     END_OF_TABLE BIT(1)        INIT(FALSE);
+0    DO WHILE (^ END_OF_FILE & ^END_OF_TABLE);
+0        IF  PRINT_OPTION
+         THEN
+             WRITE FILE(SYSUT2) FROM(PRINT_LINE);
+0        LINE_COUNT = LINE_COUNT + 1;
+0        SELECT;
+0            WHEN (SUBSTR(PRINT_LINE, 1, 1) = '1')
+                 /* TOP OF NEW PAGE */
+                 LINE_COUNT = 1;
+0            WHEN (LENGTH(PRINT_LINE) < 58);
+                 /* TOO SHORT TO BE AN ENTRY */
+0            WHEN (LINE_COUNT = 2)
+                 /* END OF TABLE CHECK */
+                 IF  SUBSTR(PRINT_LINE, 45, 25) ^=
+                     'ATTRIBUTES AND REFERENCES'
+                 THEN
+                     END_OF_TABLE = TRUE;
+1            WHEN (SUBSTR(PRINT_LINE, 13, 1) ^= ' ')
+                 DO;
+                     /* CHECK FOR UNDECLARED VARIABLES */
+                     IF  (SUBSTR(PRINT_LINE, 2, 1) = '*')         &
+                         (SUBSTR(PRINT_LINE, 45, 7) ^= 'BUILTIN') &
+                         (SUBSTR(PRINT_LINE, 13, 5) ^= 'SYSIN')   &
+                         (SUBSTR(PRINT_LINE, 13, 8) ^= 'SYSPRINT')
+                     THEN
+                         UNDECLARED_COUNT = UNDECLARED_COUNT + 1;
+0                    SELECT;
+                         /* CHECK FOR BUILTIN FUNCTIONS */
+0                        WHEN (SUBSTR(PRINT_LINE,45,7) = 'BUILTIN')
+0                            SELECT (SUBSTR(PRINT_LINE, 13, 7));
+0                                WHEN ('PLIDUMP', 'PLISRTA',
+                                       'PLISRTB', 'PLISRTC',
+                                       'PLISRTD')
+0                                    CALL GET_ENTRY('BUILTIN');
+0                                WHEN ('PLIRETC')
+0                                    IF  PLIRETC_OPTION
+                                     THEN
+                                         CALL GET_ENTRY('BUILTIN');
+                                     ELSE
+                                         ENTRY_FLAG = FALSE;
+0                                OTHERWISE
+                                     ENTRY_FLAG = FALSE;
+                             END;
+0                        WHEN (SUBSTR(PRINT_LINE,45,5) = 'ENTRY')
+                             /* INTERNAL ENTRY */
+0                            CALL GET_ENTRY ('INTERNAL');
+0                        WHEN (SUBSTR(PRINT_LINE,45,14) =
+                               'EXTERNAL ENTRY')
+                             /* EXTERNAL ENTRY */
+0                            CALL GET_ENTRY ('EXTERNAL');
+0                        WHEN (INDEX(PRINT_LINE, 'ENTRY VARIABLE') > 0)
+                             /* ENTRY VARIABLE */
+0                            CALL GET_ENTRY ('VARIABLE');
+0                        OTHERWISE
+0                            ENTRY_FLAG = FALSE;
+                     END;
+                 END;
+1            WHEN (ENTRY_FLAG)
+                 /* COULD BE CONTINUATION OF ENTRY'S ATTRIBUTES */
+                 IF  VERIFY(SUBSTR(PRINT_LINE, 45), '0123456789, ') = 0
+                 THEN
+                     CALL GET_REFERENCES;
+0            OTHERWISE
+                 ENTRY_FLAG = FALSE;
+         END;
+0        READ FILE(SYSUT1) INTO(PRINT_LINE);
+     END;
+1/*-------------------------------------------------------------------*/
+ /*  GET ENTRY
+ /*-------------------------------------------------------------------*/
+0GET_ENTRY: PROC (ENTRY_TYPE);
+0DCL ENTRY_TYPE CHAR(*),
+     I BIN FIXED(15);
+-    ENTRY_FLAG        = TRUE;
+     ENTRY_TABLE_COUNT = ENTRY_TABLE_COUNT + 1;
+0    IF  ENTRY_TABLE_COUNT > ENTRY_TABLE_SIZE
+     THEN
+         CALL ABORT ('ENTRY TABLE OVERFLOW');
+0    I             = ENTRY_TABLE_COUNT;
+     ENTRY(I).NAME = $TRIM(SUBSTR(PRINT_LINE, 13, 31));
+     ENTRY(I).TYPE = ENTRY_TYPE;
+-    IF  (SUBSTR(PRINT_LINE, 2, 1) = '*') | (ENTRY_TYPE ^= 'INTERNAL')
+     THEN
+         ENTRY(I).DCL_NUMBER = 99999999;
+     ELSE
+         ENTRY(I).DCL_NUMBER=
+             SUBSTR(PRINT_LINE, 2, INDEX(PRINT_LINE, ' ') - 2);
+0END GET_ENTRY;
+1/*-------------------------------------------------------------------*/
+ /*  GET REFERENCES
+ /*
+ /*  PROCESS REFERENCE LIST FOR PRECEEDING ENTRY
+ /*
+ /*  FORMAT OF LIST: N1,N2,N3,... WHERE N1 <= N2 <= N3
+ /*
+ /*  IMPORTANT!  REFERENCE = 1 IMPLIES REFERENCE IS IN PROLOGUE CODE
+ /*              (REFERENCE IS IGNORED IN THIS CASE)
+ /*-------------------------------------------------------------------*/
+0GET_REFERENCES: PROC;
+0DCL REFERENCE_LIST    CHAR(100) VARYING,
+     (E, I, NUMBER, R) BIN FIXED(31);
+0    REFERENCE_LIST = SUBSTR(PRINT_LINE, 45);
+     E              = ENTRY_TABLE_COUNT;
+0    DO UNTIL (I = 0 | REFERENCE_LIST = ' ');
+0        I = INDEX (REFERENCE_LIST, ',');
+0        IF  I = 0
+         THEN
+             DO;
+                 NUMBER = REFERENCE_LIST;
+             END;
+         ELSE
+             DO;
+                 NUMBER = SUBSTR(REFERENCE_LIST, 1, I-1);
+0                IF  I = LENGTH(REFERENCE_LIST)
+                 THEN
+                     REFERENCE_LIST = ' ';
+                 ELSE
+                     REFERENCE_LIST = SUBSTR(REFERENCE_LIST, I+1);
+             END;
+1        IF  NUMBER > 1 /* 1 IS PROLOGUE INITIALIZATION */
+         THEN
+             DO;
+                 REFERENCE_TABLE_COUNT = REFERENCE_TABLE_COUNT + 1;
+0                IF  REFERENCE_TABLE_COUNT > REFERENCE_TABLE_SIZE
+                 THEN
+                     CALL ABORT ('REFERENCE TABLE OVERFLOW');
+0                R = REFERENCE_TABLE_COUNT;
+0                REF(R).NAME             = ENTRY(E).NAME;
+                 REF(R).CALLED_AT_NUMBER = NUMBER;
+                 REF(R).CALL_COUNT       = 1;
+0                IF  ENTRY(E).FIRST_USE# = 0
+                 THEN
+                     ENTRY(E).FIRST_USE# = R;
+0                ENTRY(E).LAST_USE# = R;
+             END;
+0    END;
+0END GET_REFERENCES;
+0END EXTRACT_ENTRIES;
+1/*-------------------------------------------------------------------*/
+ /*  SORT ENTRY TABLE (INTERNAL ENTRIES SORT FIRST)
+ /*-------------------------------------------------------------------*/
+0SORT_ENTRY_TABLE: PROC;
+0DCL SORTED BIT(1),
+     (I, J) BIN FIXED(15),
+     1 TEMP LIKE ENTRY;
+0   DO I = ENTRY_TABLE_COUNT TO 2 BY -1 UNTIL (SORTED);
+0       SORTED = TRUE;
+0       DO J = 1 TO I-1;
+0           IF  ENTRY(J).DCL_NUMBER > ENTRY(J+1).DCL_NUMBER
+            THEN
+                DO;
+                    TEMP        = ENTRY(J);
+                    ENTRY(J)    = ENTRY(J+1);
+                    ENTRY(J+1)  = TEMP;
+                    SORTED      = FALSE;
+                END;
+        END;
+    END;
+0END SORT_ENTRY_TABLE;
+1/*-------------------------------------------------------------------*/
+ /*  RESOLVE CALLS
+ /*
+ /*  FIND CORRESPONDING CALLER FOR EACH REFERENCE
+ /*  (LAST INTERNALENTRY WHICH STARTS BEFORE THE CALL)
+ /*-------------------------------------------------------------------*/
+0RESOLVE_CALLS: PROC;
+0DCL (E, I, LAST_REF, R) BIN FIXED(15);
+0    DO R = 1 TO REFERENCE_TABLE_COUNT;
+0        /* FIND LAST INTERNAL ENTRY WHICH STARTS BEFORE THE CALL */
+0        DO E = 1 TO ENTRY_TABLE_COUNT
+             WHILE (ENTRY(E).DCL_NUMBER <= REF(R).CALLED_AT_NUMBER);
+         END;
+0        E = E - 1;
+0        IF  ENTRY(E).FIRST_CALL# = 0
+         THEN
+             DO;
+                 /* FIRST SUBROUTINE */
+                 ENTRY(E).FIRST_CALL# = R;
+                 ENTRY(E).LAST_CALL#  = R;
+             END;
+         ELSE
+             DO;
+                 /* NOT FIRST SUBROUTINE - CHECK LIST */
+                 LAST_REF = 0;
+0                DO I = ENTRY(E).FIRST_CALL# REPEAT REF(I).NEXT_CALL#
+                     WHILE (I > 0                      &
+                            REF(I).NAME ^= REF(R).NAME &
+                            REF(I).CALLED_AT_NUMBER <
+                                REF(R).CALLED_AT_NUMBER);
+0                    LAST_REF = I;
+                 END;
+1                SELECT;
+0                    WHEN (I = 0)
+                         /* NOT ON ENTRY'S LIST AND CALLED AFTER  ALL */
+                         /* PUT AT END OF LIST                        */
+                         DO;
+                             REF(ENTRY(E).LAST_CALL#).NEXT_CALL# = R;
+                             ENTRY(E).LAST_CALL#                 = R;
+                         END;
+-                    WHEN (REF(I).NAME = REF(R).NAME)
+                         /* ALREADY ON ENTRY'S LIST - INCREMENT COUNT */
+                         DO;
+                             REF(I).CALL_COUNT = REF(I).CALL_COUNT + 1;
+                         END;
+-                    WHEN (LAST_REF = 0)
+                         /* NOT ON ENTRY'S LIST AND CALLED BEFORE ALL */
+                         /* PUT AT FRONT OF LIST                      */
+                         DO;
+                             REF(R).NEXT_CALL# = ENTRY(E).FIRST_CALL#;
+                             ENTRY(E).FIRST_CALL# = R;
+                         END;
+-                    OTHERWISE
+                         /* NOT ON ENTRY'S LIST - PUT IN MIDDLE */
+                         DO;
+                             REF(R).NEXT_CALL# =
+                                 REF(LAST_REF).NEXT_CALL#;
+                             REF(LAST_REF).NEXT_CALL# = R;
+                         END;
+                     END;
+             END;
+0    END;
+0END RESOLVE_CALLS;
+1/*-------------------------------------------------------------------*/
+ /*  RESOLVE ENTRY NUMBERS
+ /*
+ /*  THIS ROUTINE IS CALLED AFTER ENTRIES ARE SORTED BY DCL NUMBER
+ /*  AND CALLS ARE RESOLVED
+ /*
+ /*  SET ENTRY_NUMBER# TO CORRESPONDING INDEX IN ENTRY_TABLE FOR EACH
+ /*  REFERENCE (USED IN PRINT ROUTINE TO SEE IF ROUTINE ALREADY PRINTED)
+ /*-------------------------------------------------------------------*/
+0RESOLVE_ENTRY_NUMBERS: PROC;
+0DCL (E, R) BIN FIXED(15),
+     LAST_NAME  CHAR(31) INIT (' ');
+0    DO R = 1 TO REFERENCE_TABLE_COUNT;
+0        IF  REF(R).NAME = LAST_NAME
+         THEN
+             DO;
+                 REF(R).ENTRY_NUMBER# = REF(R-1).ENTRY_NUMBER#;
+             END;
+         ELSE
+             DO;
+0                LAST_NAME = REF(R).NAME;
+0                DO E = 1 TO ENTRY_TABLE_COUNT
+                     UNTIL (ENTRY(E).NAME = LAST_NAME);
+                 END;
+0                IF  E > ENTRY_TABLE_COUNT
+                 THEN
+                     CALL ABORT ('ENTRY NOT FOUND: ' || REF(R).NAME);
+                 ELSE
+                     REF(R).ENTRY_NUMBER# = E;
+             END;
+     END;
+0END RESOLVE_ENTRY_NUMBERS;
+1/*-------------------------------------------------------------------*/
+ /*  PRINT CHART
+ /*-------------------------------------------------------------------*/
+0PRINT_CHART: PROC;
+0DCL E             BIN FIXED(15) INIT(0),
+     LEVEL         BIN FIXED(15) INIT(0),
+     ID_NUMBER     CHAR(255) VARYING INIT(''),
+     ID_STRING     CHAR(255) VARYING INIT(''),
+     COUNT_STRING  CHAR(20)  VARYING INIT(''),
+     NEW_ID_NUMBER CHAR(255) VARYING INIT(''),
+     PRINT_COL     BIN FIXED(15) INIT(22),
+     PRINT_STRING  CHAR(255) VARYING INIT('');
+0    CALL NEW_PAGE;
+-    CALL PRINT_CHART1 (E,
+                        LEVEL,
+                        ID_STRING,
+                        ID_NUMBER,
+                        COUNT_STRING,
+                        PRINT_COL);
+1/*-------------------------------------------------------------------*/
+ /*  PRINT CHART1 - RECURSIVE ROUTINE TO PRINT THE CHART (OUTLINE)
+ /*
+ /*  E              ENTRY TABLE INDEX
+ /*  LEVEL          LEVEL (E.G. 3 IS THIRD)
+ /*  ID_STRING      ENTRY ID (E.G. 1.2.4 IS FIRST CALL  AT LEVEL 1
+ /*                                         SECOND CALL AT LEVEL 2
+ /*                                         FOURTH CALL AT LEVEL 3
+ /*  ID_NUMBER      SEQUENCE NUMBER WITHIN A GIVEN LEVEL
+ /*  COUNT_STRING   CONTAINS NUMBER OF CALLS (E.G. "(5 TIMES)" )
+ /*  PRINT_COL      COLUMN TO PRINT ENTRY AT
+ /*-------------------------------------------------------------------*/
+0PRINT_CHART1: PROC
+              (E, LEVEL, ID_STRING, ID_NUMBER, COUNT_STRING, PRINT_COL)
+               RECURSIVE;
+0DCL (E, LEVEL, PRINT_COL, R, SEQUENCE)   BIN FIXED(15),
+     (ID_STRING, ID_NUMBER, COUNT_STRING) CHAR(*) VARYING;
+0IF  E > 0
+ THEN
+     DO;
+         IF  ENTRY(E).DCL_NUMBER = 99999999
+         THEN
+             ENTRY(E).DCL_NUMBER = 0;
+0        IF  (LEVEL = 1)  &  PAGE_OPTION  &  (ID_STRING ^= '1')
+         THEN
+             CALL NEW_PAGE;
+0        IF  NEST_OPTION
+         THEN
+             PRINT_STRING = ID_STRING;
+         ELSE
+             PRINT_STRING = ID_NUMBER;
+0        IF  MOD(LENGTH(PRINT_STRING), 2) = 0
+         THEN
+             /* EVEN */
+             PUT SKIP(2) EDIT
+                 (ENTRY(E).DCL_NUMBER, ENTRY(E).TYPE)
+                     (P'(6)Z', X(2), A)
+                 (PRINT_STRING, ENTRY(E).NAME, COUNT_STRING)
+                     (COL(PRINT_COL), A, X(1), A, A);
+         ELSE
+             /* ODD */
+             PUT SKIP(2) EDIT
+                 (ENTRY(E).DCL_NUMBER, ENTRY(E).TYPE)
+                     (P'(6)Z', X(2), A)
+                 (PRINT_STRING, ENTRY(E).NAME, COUNT_STRING)
+                     (COL(PRINT_COL), A, X(2), A, A);
+     END;
+1IF  ENTRY(E).PRINT_FLAG
+ THEN
+     DO;
+         /* SUBROUTINE ALREADY PRINTED */
+         PUT EDIT ('- SEE ' || ENTRY(E).FIRST_ID) (X(1), A);
+     END;
+ ELSE
+     DO;
+         /* FIRST TIME PROCESSING SUBROUTINE */
+         ENTRY(E).PRINT_FLAG = TRUE;
+         ENTRY(E).FIRST_ID   = ID_STRING;
+         SEQUENCE = 0;
+0        DO R = ENTRY(E).FIRST_CALL# REPEAT (REF(R).NEXT_CALL#)
+           WHILE (R > 0);
+0            SEQUENCE = SEQUENCE + 1;
+0            IF  REF(R).CALL_COUNT < 2
+             THEN
+                 COUNT_STRING = '';
+             ELSE
+                 COUNT_STRING = ' (' || $LJ(REF(R).CALL_COUNT) ||
+                                ' TIMES)';
+0            NEW_ID_NUMBER = $LJ(SEQUENCE);
+0            SELECT;
+0                WHEN (LEVEL = 0)
+                     CALL PRINT_CHART1
+                         (REF(R).ENTRY_NUMBER#,
+                          LEVEL + 1,
+                          (NEW_ID_NUMBER),
+                          (NEW_ID_NUMBER),
+                          COUNT_STRING,
+                          PRINT_COL);
+0                WHEN (NEST_OPTION)
+                     CALL PRINT_CHART1
+                         (REF(R).ENTRY_NUMBER#,
+                          LEVEL + 1,
+                          (ID_STRING || '.' || NEW_ID_NUMBER),
+                          (NEW_ID_NUMBER),
+                          COUNT_STRING,
+                          (PRINT_COL + LENGTH(ID_STRING) + 1
+                                     + MOD(LENGTH(ID_STRING), 2)));
+0                OTHERWISE
+                     CALL PRINT_CHART1
+                         (REF(R).ENTRY_NUMBER#,
+                          LEVEL + 1,
+                          (ID_STRING || '.' || NEW_ID_NUMBER),
+                          (NEW_ID_NUMBER),
+                          COUNT_STRING,
+                          (PRINT_COL + LENGTH(NEW_ID_NUMBER) + 1
+                                     + MOD(LENGTH(NEW_ID_NUMBER), 2)));
+             END;
+         END;
+     END;
+0END PRINT_CHART1;
+0END PRINT_CHART;
+1/*-------------------------------------------------------------------*/
+ /*  FINISH PRINT
+ /*-------------------------------------------------------------------*/
+0FINISH_PRINT: PROC;
+0    READ FILE(SYSUT1) INTO(PRINT_LINE);
+0    DO WHILE (^END_OF_FILE);
+         WRITE FILE(SYSUT2) FROM(PRINT_LINE);
+         READ FILE(SYSUT1) INTO(PRINT_LINE);
+     END;
+0END FINISH_PRINT;
+-/*-------------------------------------------------------------------*/
+ /* NEW PAGE
+ /*-------------------------------------------------------------------*/
+0NEW_PAGE: PROC;
+0    PAGE_NUMBER = PAGE_NUMBER + 1;
+0    PUT PAGE EDIT
+0        (' ENTRY  ENTRY',
+          ' START  TYPE         LEVEL AND NAME',
+          '- ', PROGRAM_NAME, ' -', 'PAGE', PAGE_NUMBER)
+         (A, SKIP, A, COL(60), A, A, A, COL(125), A, F(3))
+0        (' _____  ________     ______________')
+         (SKIP(0), A);
+0END NEW_PAGE;
+1/*-------------------------------------------------------------------*/
+ /*  ABORT - PRINT ABORT MESSAGE AND STOP
+ /*-------------------------------------------------------------------*/
+0ABORT: PROC (MSG);
+0DCL MSG CHAR(*);
+0    PUT SKIP LIST ('ABORTING: ' || MSG);
+     STOP;
+0END ABORT;
+-/*-------------------------------------------------------------------*/
+ /*  DUMP - DUMP INTERNAL TABLES
+ /*-------------------------------------------------------------------*/
+0DUMP: PROC;
+0DCL I BIN FIXED(15);
+0    PUT SKIP(2) EDIT
+         ('---------- ENTRY TABLE ----------')
+         (A)
+0        ('   I ', CHAR('NAME', 33),
+          'TYPE       DCL  USE1  USE2 CALL1 CALL2')
+0        (SKIP, A, A, A)
+         ((I, ENTRY(I) DO I = 0 TO ENTRY_TABLE_COUNT))
+         (SKIP, F(4), X(1), A(33), A(8), (5) F(6), X(1), A, X(1), A);
+0    PUT SKIP(3) EDIT
+         ('----------- REF TABLE -----------')
+         (A)
+0        ('   I ', CHAR('NAME', 33),' CALL_AT   COUNT  ENTRY#    NEXT#')
+         (SKIP, A, A, A)
+0        ((I, REF(I) DO I = 1 TO REFERENCE_TABLE_COUNT))
+         (SKIP, F(4), X(1), A(33), (4) F(8));
+0END DUMP;
+1/*-------------------------------------------------------------------*/
+ /* $LJ - LEFT JUSTIFY NUMBER WITH NO LEADING/TRAILING BLANKS
+ /*
+ /* EXAMPLE:  -00123 IS RETURNED AS '-123'
+ /*-------------------------------------------------------------------*/
+0 $LJ: PROC (NUMBER) RETURNS (CHAR(14) VARYING);
+0    DCL NUMBER DEC FIXED(11), RESULT CHAR(14);
+0    /* RETURN RESULT STARTING AT FIRST NON-BLANK POSITION */
+     RESULT = NUMBER;
+     RETURN (SUBSTR(RESULT, VERIFY(RESULT, ' ')));
+0END $LJ;
+-/*-------------------------------------------------------------------*/
+ /* $TRIM - REMOVE TRAILING BLANKS (ASSUME NO LEADING/IMBEDDED BLANKS)
+ /*-------------------------------------------------------------------*/
+0$TRIM: PROC (NAME) RETURNS (CHAR(100) VARYING);
+0DCL NAME   CHAR(*),
+     I      BIN FIXED(15);
+0    I = INDEX (NAME, ' ');
+0    SELECT (I);
+         WHEN (0)  RETURN (NAME);
+         WHEN (1)  RETURN ('');
+         OTHERWISE RETURN (SUBSTR(NAME, 1, I-1));
+     END;
+0END $TRIM;
+0END CHART;

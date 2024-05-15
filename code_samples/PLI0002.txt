@@ -1,0 +1,316 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.15 12:12:41   Page     1
+-                     Options Specified
+0  Install:
+0  Command: PP(SQL()),SOURCE
+0  Install:
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  PLI0002: PROCEDURE OPTIONS(MAIN) REORDER;           2024.05.15 12:12:41   Page     2
+- SQL (Built:20220822) Preprocessor Options Used
+0     CCSID0
+    NOCODEPAGE
+      DEPRECATE( STMT() )
+    NOEMPTYDBRM
+    NOINCONLY
+      LINEONLY
+    NOWARNDECP
+0 DB2 for z/OS Coprocessor Options Used
+0   APOST
+    APOSTSQL
+    ATTACH(TSO)
+    CCSID(1047)
+    CONNECT(2)
+    DEC(15)
+    DECP(DSNHDECP)
+    FLOAT(S390)
+    SQLLEVEL(V13R1M501)
+    TWOPASS
+    PERIOD
+    STDSQL(NO)
+    SQL(DB2)
+    NOXREF
+    NOSOURCE
+    DSNHDECP LOADED FROM - (DSND10.DBDG.SDSNEXIT(DSNHDECP))
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  PLI0002: PROCEDURE OPTIONS(MAIN) REORDER;           2024.05.15 12:12:41   Page     3
+0 Compiler Source
+0    Line.File
+0       1.0      PLI0002: PROCEDURE OPTIONS(MAIN) REORDER;
+        1.0
+        1.0       DCL
+        1.0         1 SQL_LOB_FILE BASED,
+        1.0           2 SQL_LOB_FILE_NAME_LEN FIXED BIN(31),
+        1.0           2 SQL_LOB_FILE_DATA_LEN FIXED BIN(31),
+        1.0           2 SQL_LOB_FILE_OPTIONS FIXED BIN(31),
+        1.0           2 SQL_LOB_FILE_NAME CHAR(256);
+        1.0
+        1.0       DCL SQL_FILE_READ      FIXED BIN(31) VALUE(2);
+        1.0       DCL SQL_FILE_CREATE    FIXED BIN(31) VALUE(8);
+        1.0       DCL SQL_FILE_OVERWRITE FIXED BIN(31) VALUE(16);
+        1.0       DCL SQL_FILE_APPEND    FIXED BIN(31) VALUE(32);
+        1.0       DCL DSNHLI   EXT ENTRY OPTIONS(ASM INTER);
+        1.0
+        2.0
+        3.0      /* STANDARD DB2 PROGRAM FOR FORMATTING SQL ERROR MESSAGES    */
+        4.0      DCL DSNTIAR ENTRY OPTIONS (ASM,INTER,RETCODE);
+        5.0
+        6.0      /* DB2 COMMUNICATION AREA (SQLCA) - FOR CHECKING SQL CODES   */
+        7.0
+        7.0      /*$*$*$
+        7.0      EXEC SQL INCLUDE SQLCA
+        7.0       $*$*$*/
+        7.0      DCL
+        7.0        1 SQLCA  ,
+        7.0          2 SQLCAID     CHAR(8),
+        7.0          2 SQLCABC     FIXED BIN(31),
+        7.0          2 SQLCODE     FIXED BIN(31),
+        7.0          2 SQLERRM     CHAR(70) VAR,
+        7.0          2 SQLERRP     CHAR(8),
+        7.0          2 SQLERRD(6)  FIXED BIN(31),
+        7.0          2 SQLWARN,
+        7.0            3 SQLWARN0  CHAR(1),
+        7.0            3 SQLWARN1  CHAR(1),
+        7.0            3 SQLWARN2  CHAR(1),
+        7.0            3 SQLWARN3  CHAR(1),
+        7.0            3 SQLWARN4  CHAR(1),
+        7.0            3 SQLWARN5  CHAR(1),
+        7.0            3 SQLWARN6  CHAR(1),
+        7.0            3 SQLWARN7  CHAR(1),
+        7.0          2 SQLEXT,
+        7.0            3 SQLWARN8  CHAR(1),
+        7.0            3 SQLWARN9  CHAR(1),
+        7.0            3 SQLWARNA  CHAR(1),
+        7.0            3 SQLSTATE  CHAR(5);
+        7.0
+        8.0
+        9.0      /* PROCEDURE FOR PRINTING OUT STANDARD SQL ERROR MESSAGES    */
+       10.0      SQLMSGP: PROC;
+       10.0
+       11.0
+       12.0      /* DECLARE DSNTIAR MESSAGE BUFFER AND ITS SIZES (10X132)     */
+       13.0      DCL DATA_LEN FIXED BIN(31) INIT(132);
+       14.0      DCL DATA_DIM FIXED BIN(31) INIT(10);
+       15.0      DCL 1 ERROR_MESSAGE AUTOMATIC,
+       16.0            3 ERROR_LEN FIXED BIN(15) UNAL INIT((DATA_LEN*DATA_DIM)),
+       17.0            3 ERROR_TEXT(DATA_DIM) CHAR(DATA_LEN);
+       18.0
+       19.0      /* CALL DSNTIAR TO FORMAT ANY MESSAGES */
+       20.0      CALL DSNTIAR(SQLCA,ERROR_MESSAGE,DATA_LEN);
+       21.0
+       22.0      /* PRINT OUT THE DSNTIAR BUFFER                              */
+       23.0      DCL I FIXED BIN(31);
+       24.0      DCL ONE FIXED BIN(31) INIT(1);
+       25.0      DCL BLANK CHAR(1) INIT(' ');
+       26.0      DO I = ONE TO ERROR_LEN
+       27.0      /* PRINT NON BLANK LINES                                     */
+       28.0      WHILE (ERROR_TEXT(I) ^= BLANK);
+       29.0        PUT EDIT(ERROR_TEXT(I))(COL(1),A(DATA_LEN));
+       30.0      END;
+       31.0      PUT SKIP;
+       32.0
+       33.0      END SQLMSGP;
+       34.0
+       35.0      /* DECLARE FILE FOR PRINTING OUT DATA OF QUERY EXECUTION     */
+       36.0      DCL DATAOUT FILE STREAM OUTPUT;
+       37.0
+       38.0      /* DECLARE HOST-VARIABLE                                     */
+       39.0      DCL TIMESTAMP CHAR(26);
+       40.0      DCL BUF1_CLOB
+       40.0       /*$*$*$  SQL TYPE IS CLOB_FILE  $*$*$*/  LIKE SQL_LOB_FILE
+       40.0                                         ;
+       41.0
+       41.0      /*$*$*$
+       41.0      EXEC SQL DECLARE :BUF1_CLOB VARIABLE CCSID EBCDIC
+       41.0       $*$*$*/
+       41.0
+       42.0
+       43.0      DCL I FIXED BIN(31);
+       44.0      DCL J FIXED BIN(31);
+       45.0
+       46.0      /* DECLARE STRING BUFFER                                     */
+       47.0      DCL STRBUF CHAR(255) VARYING;
+       48.0
+       49.0      /* POPULATE STRING BUFFER                                    */
+       50.0      STRBUF = 'STRING BUFFER ==> TESTING CLOB/XML INSERT' ||
+       51.0      '                                                  ' ||
+       52.0      '                                                  ' ||
+       53.0      '                                                  ' ||
+       54.0      '                                                  ';
+       55.0
+       56.0      DO J=1 TO 50 BY 1;
+       57.0
+       58.0      /* OPEN OUTPUT FILE AND START PRINTING OUT DATA              */
+       59.0      OPEN FILE(DATAOUT);
+       60.0
+       61.0      /* PRINT OUT                                                 */
+       62.0      DO I=1 TO 10000 BY 1;
+       63.0         PUT FILE(DATAOUT) EDIT(SUBSTR(STRBUF,1,84))(A(84));
+       64.0      END;
+       65.0
+       66.0      /* EMBEDDED STATIC SQL SELECT QUERY WITH HOST-VARIABLE       */
+       67.0
+       67.0      /*$*$*$
+       67.0      EXEC SQL SELECT CURRENT TIMESTAMP
+       67.0               INTO :TIMESTAMP FROM SYSIBM.SYSDUMMY1
+       67.0       $*$*$*/
+       67.0      DO;
+       67.0      DCL
+       67.0        1 SQLPLIST3 UNALIGNED
+       67.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+       67.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('0400'XN)
+       67.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(30)
+       67.0         ,2 SQLPROGN     CHAR(8) INIT('PLI0002')
+       67.0         ,2 SQLTIMES     CHAR(8)
+       67.0              INIT('1BE314DF_1EECCC5D'X)
+       67.0         ,2 SQLSECTN     FIXED BIN(15) INIT(1)
+       67.0         ,2 SQLCODEP     POINTER
+       67.0         ,2 SQLVPARMP    POINTER
+       67.0         ,2 SQLAPARMP    POINTER
+       67.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+       67.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(231)
+       67.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(67)
+       67.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+       67.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+       67.0         ,2 SQLAVARS
+       67.0           ,3 SQLAVDAID  CHAR(8)
+       67.0           ,3 SQLAVDABC  FIXED BIN(31)
+       67.0           ,3 SQLAVN     FIXED BIN(15)
+       67.0           ,3 SQLAVD     FIXED BIN(15)
+       67.0           ,3 SQLAVELT(1)
+       67.0             ,4 SQLAVTYPE  FIXED BIN(15)
+       67.0             ,4 SQLAVLEN   FIXED BIN(15)
+       67.0             ,4 SQLAVADDR  POINTER
+       67.0             ,4 SQLAVIND   POINTER
+       67.0             ,4 SQLAVNAME
+       67.0               ,5 SQLAVNAMELEN FIXED BIN(15)
+       67.0               ,5 * UNION
+       67.0                 ,6 SQLAVNAMEDAT CHAR(30)
+       67.0                 ,6 *
+       67.0                   ,7 SQLAVNAMER0 FIXED BIN(31)
+       67.0                   ,7 SQLAVNAMER1 FIXED BIN(15)
+       67.0                   ,7 SQLAVNAMER2 FIXED BIN(15)
+       67.0                   ,7 SQLAVNAMER3 CHAR(22)
+       67.0        ;
+       67.0      SQLPLIST3.SQLAVARS.SQLAVTYPE(1) = 452;
+       67.0      SQLPLIST3.SQLAVARS.SQLAVLEN(1) = 26;
+       67.0      SQLPLIST3.SQLAVARS.SQLAVADDR(1) = ADDR(TIMESTAMP);
+       67.0      SQLPLIST3.SQLAVARS.SQLAVIND(1) = SYSNULL();
+       67.0      SQLPLIST3.SQLAVARS.SQLAVNAMELEN(1) = 0;
+       67.0      SQLPLIST3.SQLAVARS.SQLAVDAID = 'SQLDA  ' || '08'X;
+       67.0      SQLPLIST3.SQLAVARS.SQLAVDABC = 60;
+       67.0      SQLPLIST3.SQLAVARS.SQLAVN = 1;
+       67.0      SQLPLIST3.SQLAVARS.SQLAVD = 1;
+       67.0      SQLPLIST3.SQLAPARMP = ADDR(SQLPLIST3.SQLAVARS.SQLAVDAID);
+       67.0      SQLPLIST3.SQLVPARMP = SYSNULL();
+       67.0      SQLPLIST3.SQLCODEP = ADDR(SQLCA);
+       67.0      CALL DSNHLI(SQLPLIST3);
+       67.0      END;
+       68.0
+       69.0
+       70.0      /* CHECK BY SQLCODE IF SQL QUERY RUN SUCCESSFUL OR NOT       */
+       71.0      IF SQLCODE < 0 THEN
+       72.0      DO;
+       73.0         PUT LIST('ERROR MESSAGE WAS RECEIVED');
+       74.0         PUT SKIP;
+       75.0
+       76.0         CALL SQLMSGP;
+       77.0
+       78.0         STOP;
+       79.0      END;
+       80.0
+       81.0      /* CLOSE OUTPUT FILE                                         */
+       82.0      CLOSE FILE(DATAOUT);
+       83.0
+       84.0      /* EMBEDDED STATIC SQL INSERT STATEMENT WITH HOST-VARIABLE   */
+       85.0
+       85.0      /*$*$*$
+       85.0      EXEC SQL INSERT INTO CLOBTBL
+       85.0               (TIME_ID,CLOBCOL)
+       85.0               VALUES
+       85.0               (:TIMESTAMP,:BUF1_CLOB)
+       85.0       $*$*$*/
+       85.0      DO;
+       85.0      DCL
+       85.0        1 SQLPLIST4 UNALIGNED
+       85.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+       85.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('4000'XN)
+       85.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(30)
+       85.0         ,2 SQLPROGN     CHAR(8) INIT('PLI0002')
+       85.0         ,2 SQLTIMES     CHAR(8)
+       85.0              INIT('1BE314DF_1EECCC5D'X)
+       85.0         ,2 SQLSECTN     FIXED BIN(15) INIT(2)
+       85.0         ,2 SQLCODEP     POINTER
+       85.0         ,2 SQLVPARMP    POINTER
+       85.0         ,2 SQLAPARMP    POINTER
+       85.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+       85.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(232)
+       85.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(85)
+       85.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+       85.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+       85.0         ,2 SQLPVARS
+       85.0           ,3 SQLPVDAID  CHAR(8)
+       85.0           ,3 SQLPVDABC  FIXED BIN(31)
+       85.0           ,3 SQLPVN     FIXED BIN(15)
+       85.0           ,3 SQLPVD     FIXED BIN(15)
+       85.0           ,3 SQLPVELT(2)
+       85.0             ,4 SQLPVTYPE  FIXED BIN(15)
+       85.0             ,4 SQLPVLEN   FIXED BIN(15)
+       85.0             ,4 SQLPVADDR  POINTER
+       85.0             ,4 SQLPVIND   POINTER
+       85.0             ,4 SQLPVNAME
+       85.0               ,5 SQLPVNAMELEN FIXED BIN(15)
+       85.0               ,5 * UNION
+       85.0                 ,6 SQLPVNAMEDAT CHAR(30)
+       85.0                 ,6 *
+       85.0                   ,7 SQLPVNAMER0 FIXED BIN(31)
+       85.0                   ,7 SQLPVNAMER1 FIXED BIN(15)
+       85.0                   ,7 SQLPVNAMER2 FIXED BIN(15)
+       85.0                   ,7 SQLPVNAMER3 CHAR(22)
+       85.0        ;
+       85.0      SQLPLIST4.SQLPVARS.SQLPVTYPE(1) = 452;
+       85.0      SQLPLIST4.SQLPVARS.SQLPVLEN(1) = 26;
+       85.0      SQLPLIST4.SQLPVARS.SQLPVADDR(1) = ADDR(TIMESTAMP);
+       85.0      SQLPLIST4.SQLPVARS.SQLPVIND(1) = SYSNULL();
+       85.0      SQLPLIST4.SQLPVARS.SQLPVNAMELEN(1) = 0;
+       85.0      SQLPLIST4.SQLPVARS.SQLPVTYPE(2) = 920;
+       85.0      SQLPLIST4.SQLPVARS.SQLPVLEN(2) = 267;
+       85.0      SQLPLIST4.SQLPVARS.SQLPVADDR(2) = ADDR(BUF1_CLOB);
+       85.0      SQLPLIST4.SQLPVARS.SQLPVIND(2) = SYSNULL();
+       85.0      SQLPLIST4.SQLPVARS.SQLPVNAMELEN(2) = 8;
+       85.0      SQLPLIST4.SQLPVARS.SQLPVNAMEDAT(2) = '0000041700000000'X;
+       85.0      SQLPLIST4.SQLPVARS.SQLPVDAID = 'SQLDA+ ' || '08'X;
+       85.0      SQLPLIST4.SQLPVARS.SQLPVDABC = 104;
+       85.0      SQLPLIST4.SQLPVARS.SQLPVN = 2;
+       85.0      SQLPLIST4.SQLPVARS.SQLPVD = 2;
+       85.0      SQLPLIST4.SQLVPARMP = ADDR(SQLPLIST4.SQLPVARS.SQLPVDAID);
+       85.0      SQLPLIST4.SQLAPARMP = SYSNULL();
+       85.0      SQLPLIST4.SQLCODEP = ADDR(SQLCA);
+       85.0      CALL DSNHLI(SQLPLIST4);
+       85.0      END;
+       88.0
+       89.0
+       90.0      /* CHECK BY SQLCODE IF SQL QUERY RUN SUCCESSFUL OR NOT       */
+       91.0      IF SQLCODE < 0 THEN
+       92.0      DO;
+       93.0         PUT LIST('ERROR MESSAGE WAS RECEIVED');
+       94.0         PUT SKIP;
+       95.0
+       96.0         CALL SQLMSGP;
+       97.0
+       98.0         STOP;
+       99.0      END;
+      100.0
+      101.0      PUT LIST('TIMESTAMP = ',TIMESTAMP);
+      102.0      PUT SKIP;
+      103.0
+      104.0      CALL SQLMSGP;
+      105.0
+      106.0      END;
+      107.0
+      108.0      END PLI0002;
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  PLI0002: PROCEDURE OPTIONS(MAIN) REORDER;           2024.05.15 12:12:41   Page     4
+- No Compiler Messages
+0 File Reference Table
+0   File    Included From  Name
+0      0                   AVL.IBAGROUP.PLI(PLI0002)
+- Component    Return Code    Messages (Total/Suppressed)    Time
+0 SQL              0                3  /  3                   0 secs
+  Compiler         0                3  /  3                   3 secs
+0 End of compilation of PLI0002

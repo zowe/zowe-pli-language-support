@@ -1,0 +1,47 @@
+ PTASK32: PROC OPTIONS(MAIN) REORDER ;
+  EXEC CICS HANDLE CONDITION ERROR;
+  EXEC CICS IGNORE CONDITION
+            ENQBUSY
+            FILENOTFOUND
+            NOTFND
+            NOTOPEN
+            DUPKEY
+            ENDFILE
+            LENGERR
+            DUPREC
+            NOSPACE
+            INVREQ
+            ITEMERR
+            QIDERR
+            PGMIDERR
+            IOERR ;
+  DCL
+  1 R404_RECORD  ,                       /* ROOM 404 RECORD         */
+    2 STATUS     CHAR(1)  ,
+    2 EMPL     ,
+      3 SURNAME  CHAR(14) ,
+      3 NAME     CHAR(11) ,
+    2 GENDER     CHAR(1) ,
+    2 SECTOR     CHAR(8) ,
+    2 PHONE      CHAR(4) ,
+    2 BOSS ,
+      3 SURNAME  CHAR(14) ,
+      3 NAME     CHAR(11) ;
+  R404_RECORD = '' ;
+  DCL REC_KEY    CHAR(14) INIT('');
+  REC_KEY = 'BROUKA        ';            /*  TO PREPARE THE KEY     */
+  EXEC CICS READ FILE('VSR404') INTO(R404_RECORD)
+            RIDFLD(REC_KEY) UPDATE;
+  IF EIBRESP ^= DFHRESP(NORMAL) THEN
+    DO ;
+      /* TO WRITE A MESSOGE ABOUT ERROR     */
+      /* EIBRESP  = ...                     */
+      EXEC CICS RETURN ;
+    END ;
+  ELSE  ;
+    DO ;
+      R404_RECORD.PHONE ='1111' ;            /* TO REPLACE WITH  .. */
+      EXEC CICS REWRITE FILE('VSR404') FROM(R404_RECORD) ;
+      EXEC CICS RETURN ;
+    END ;
+ END PTASK32;

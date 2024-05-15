@@ -1,0 +1,542 @@
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.11 00:50:20   Page     1
+ -                     Options Specified
+ 0  Install:
+ 0  Command: RULES(LAXDCL),SOURCE
+ 0  Line.File Process Statements
+ 0     1.0    *PROCESS NOMAP,NOOFFSET,NUMBER,NOMACRO,N('IMSDBUT'),NX,NA,GONUMBER;     00010001
+ 0  Install:
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS        /*                  I M S D B U T             2024.05.11 00:50:20   Page     2
+ 0 Compiler Source
+ 0    Line.File
+ 0       2.0            /*                  I M S D B U T                                 00020001
+         3.0                                                                              00030001
+         4.0                 AN IMS DATABASE UTILITY FOR USE BY PL/I PROGRAMMERS          00040001
+         5.0                                                                              00050001
+         6.0                                                                              00060001
+         7.0                                 P R E F A C E                                00070001
+         8.0                                                                              00080001
+         9.0                THIS PROGRAM WAS WRITTEN DURING THE DEVELOPMENT OF A          00090001
+        10.0                LARGE BATCH-MODE IMS SYSTEM TO PERMIT MAINTENANCE OF          00100001
+        11.0                DATABASES PRIOR TO THE EXISTENCE OF UPDATE PROGRAMS.          00110001
+        12.0                IT IS ALSO USED TO TEST CALLS TO THE DATABASE.                00120001
+        13.0                                                                              00130001
+        14.0                ITS USE PRESUPPOSES A KNOWLEDGE OF PL/I DATA-DIRECTED         00140001
+        15.0                INPUT, AND OF THE CODING OF IMS SEGMENT SEARCH ARGUMENTS      00150001
+        16.0                WHICH, IN TURN, REQUIRES AN AWARENESS OF THE CAPABILITIES     00160001
+        17.0                AND LIMITATIONS OF THE DBD'S AND THE PSB USED.                00170001
+        18.0                                                                              00180001
+        19.0                THIS PROGRAM HAS BEEN RENDERED INDEPENDENT OF ANY PARTICULAR  00190001
+        20.0                PSBGEN BY USE OF THE ACCOMPANYING ASSEMBLER ROUTINE,          00200001
+        21.0                ARG@ WHICH IDENTIFIES TO THIS MODULE THE ADDRESS OF THE       00210001
+        22.0                PROGRAM SPECIFICATION BLOCK PROVIDED BY DFSRRC00.             00220001
+        23.0                                                                              00230001
+        24.0                THIS PROGRAMMING HAS BEEN COMPILED ON THE OPTIMIZING          00240001
+        25.0                COMPILER VERSION 1 RELEASE 3.1 PTF 70, LINK EDITED            00250001
+        26.0                USING DFSILNK0 WITH ENTRY PLICALLA, AND RUN UNDER             00260001
+        27.0                DFSRRC00, IMS RELEASE 1.1.5 ON S/370 OS/MVS.                  00270001
+        28.0                                                                              00280001
+        29.0                INQUIRIES MAY BE DIRECTED TO:                                 00290001
+        30.0                       G.KUNZ                                                 00300001
+        31.0                       THE B.F.GOODRICH CO.                                   00310001
+        32.0                       500 SOUTH MAIN STREET                                  00320001
+        33.0                       AKRON, OHIO 44318                                      00330001
+        34.0                       PHONE:  (216) 374 3978                                 00340001
+        35.0                                                                              00350001
+        36.0           */                                                                 00360001
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS        /*                  I M S D B U T             2024.05.11 00:50:20   Page     3
+ 0    Line.File
+ 0      38.0          /*                                                                  00380001
+        39.0                                                                              00390001
+        40.0                        F U N C T I O N   A N D   U S E                       00400001
+        41.0                                                                              00410001
+        42.0                                                                              00420001
+        43.0             THIS PROGRAM PERMITS ACCESS TO A DATABASE USING SIMPLY CODED     00430001
+        44.0             INPUTS.  ANY CALL IS PERMITTED USING FROM 0 TO 5 SSAS            00440001
+        45.0             HAVING NO MORE THAN 200 CHARACTERS EACH.  THE UPPER LIMIT        00450001
+        46.0             ON THE LENGTH OF THE IO_AREA IS 2044 BYTES.                      00460001
+        47.0                                                                              00470001
+        48.0             INPUTS ARE READ FROM DDNAME=SYSIN IN A FREE 'DATA DIRECTED'      00480001
+        49.0             FORMAT ((VARIABLE NAME)=(VALUE)) WHERE THE PARENTHESES ARE       00490001
+        50.0             FOR READABILITY AND ARE NOT PART OF THE INPUT.  CHARACTER        00500001
+        51.0             STRING VALUES MUST BE ENCLOSED IN TICS AND BLANKS ARE NOT        00510001
+        52.0             PERMITTED ON EITHER SIDE OF THE EQUAL SIGN.  SUCCESSIVE INPUTS   00520001
+        53.0             FOR ONE EXECUTION MUST BE SEPARATED BY COMMAS AND/OR BLANKS      00530001
+        54.0             AND MUST END WITH A SEMI-COLON.  INPUTS MAY BE CONTINUED FROM    00540001
+        55.0             ONE CARD TO THE NEXT TAKING DUE CARE NOT TO INTRODUCE EXTRAN-    00550001
+        56.0             EOUS BLANKS.                                                     00560001
+        57.0                                                                              00570001
+        58.0             ANY CALL IS PERMITTED AND THE CONTENTS OF THE PCB, THE INPUT     00580001
+        59.0             VALUES AND THE IO_AREA (LESS TRAILING BLANKS) ARE PRINTED        00590001
+        60.0             AFTER EACH CALL.  THE IO_AREA IS PRINTED BOTH AS CHARACTER       00600001
+        61.0             AND AS HEX.  SYSPRINT IS USED AS THE OUTPUT FILE.                00610001
+        62.0             REPETITIVE CALLS ARE SUPPORTED SO THAT 'GET NEXT' TYPE           00620001
+        63.0             CALLS THROUGH THE DATABASE CAN BE DONE EASILY.                   00630001
+        64.0                                                                              00640001
+        65.0             BECAUSE THIS PROGRAM CANNOT KNOW THE LENGTH OF THE SEGMENT       00650001
+        66.0             RETRIEVED, THE LENGTH OF THE IO_AREA DATA PRINTED WILL           00660001
+        67.0             REMAIN AS LONG AS THE LONGEST SEGMENT RETRIEVED UNTIL THE        00670001
+        68.0             DATABASE REFERENCE IS CHANGED.  IT IS ANTICIPATED THAT THE       00680001
+        69.0             USER IS SUFFICIENTLY FAMILIAR WITH HIS DATABASE SEGMENTS         00690001
+        70.0             TO BE ABLE TO DISREGARD ANY RESIDUAL GARBAGE AT THE END OF       00700001
+        71.0             THE PRINTOUT. IF THIS PROVES TO BE TROUBLESOME, THE              00710001
+        72.0             IO_AREA CAN BE REINITIALIZED TO A NULL STRING.                   00720001
+        73.0                                                                              00730001
+        74.0             THE POSSIBLE INPUTS TO THE PROGRAM AND THEIR DEFAULTS            00740001
+        75.0             ARE AS FOLLOWS: (ALTERNATES SHOWN BELOW ARE TO ACCOMMODATE       00750001
+        76.0             FREQUENT SPELLING ERRORS)                                        00760001
+        77.0                                                                              00770001
+        78.0                  #_OF_CALLS      THE NUMBER OF TIMES EACH CALL IS TO BE MADE 00780001
+        79.0                                  DEFAULT IS 1.  PROCESSING OF A SET OF INPUT 00790001
+        80.0                                  DATA WILL END WHEN THE FIRST BYTE OF THE    00800001
+        81.0                                  STATUS CODE IS NOT BLANK OR 'G' OR THE      00810001
+        82.0                                  STATUS CODE IS 'GE' OR 'GB'.                00820001
+        83.0                                                                              00830001
+        84.0                  FUNC,FUNCTION   THE FUNCTION CALL. DEFAULT IS 'GN  '        00840001
+        85.0                                  A VALUE OF '    ' WILL NOT EXECUTE A CALL,  00850001
+        86.0                                  AND WILL THEREBY LEAVE THE IO AREA          00860001
+        87.0                                  UNCHANGED. THIS IS USEFUL WHEN NEEDED       00870001
+        88.0                                  REVISIONS TO THE IO_AREA REQUIRE MORE THAN  00880001
+        89.0                                  ONE SET OF INPUTS IN PREPARATION FOR        00890001
+        90.0                                  'ISRT' OR 'REPL' CALLS.                     00900001
+        91.0                                                                              00910001
+        92.0                  D_B,DB          THE NAME OF THE DATABASE TO BE USED         00920001
+        93.0                                  IN SELECTING THE PCB AS IT APPEARS IN       00930001
+        94.0                                  THE PCB (8 CHARACTERS). ONLY THE FIRST PCB  00940001
+        95.0                                  IN THE PSB WHICH USES A PARTICULAR          00950001
+        96.0                                  DATABASE NAME CAN BE ACCESSED.              00960001
+        97.0                                                                              00970001
+        98.0                  SSA1,SSA2,      THESE ARE THE SEGMENT SEARCH ARGUMENTS.     00980001
+        99.0                  SSA3,SSA4,SSA5  THE DEFAULT IS A NULL STRING.  MAXIMUM      00990001
+       100.0                                  LENGTH IS 200 CHARACTERS.                   01000001
+       101.0                                                                              01010001
+       102.0                  IO_AREA         THE I/O AREA.  IT IS A CHARACTER STRING     01020001
+       103.0                                  2044 BYTES LONG WHICH IS THE MAXIMUM        01030001
+       104.0                                  LENGTH OF DATA TO BE RETRIEVED OR           01040001
+       105.0                                  INSERTED WITHOUT PROGRAM MODIFICATION.      01050001
+       106.0                                                                              01060001
+       107.0                  CHARLOC         INTEGER LOCATION IN IO_AREA WHERE CHNG_CHAR 01070001
+       108.0                                  IS TO BE INSERTED.  THE INITIAL VALUE IS    01080001
+       109.0                                  ZERO.  INSERTION WILL OCCUR WHENEVER        01090001
+       110.0                                  ITS VALUE IS GREATER THAN ZERO.             01100001
+       111.0                                                                              01110001
+       112.0                  CHNG_CHAR       A VARYING CHARACTER STRING WHICH CAN BE     01120001
+       113.0                                  USED TO ALTER THE CONTENTS OF THE IO_AREA   01130001
+       114.0                                  STARTING IN POSITION CHARLOC.               01140001
+       115.0                                                                              01150001
+       116.0                  INTLOC          INTEGER LOCATION IN IO_AREA WHERE           01160001
+       117.0                                  A TWO-BYTE INTEGER 'INTEGER'' IS TO BE      01170001
+       118.0                                  INSERTED. INSERTION WILL OCCUR WHENEVER     01180001
+       119.0                                  ITS VALUE IS GREATER THAN ZERO.             01190001
+       120.0                                                                              01200001
+       121.0                  INTEGER         THE VALUE TO BE PLACED IN A TWO-BYTE        01210001
+       122.0                                  INTEGER FIELD IN THE IO_AREA.               01220001
+       123.0                                                                              01230001
+       124.0                  INTLOC4         INTEGER LOCATION IN IO_AREA WHERE           01240001
+       125.0                                  THE FOUR-BYTE INTEGER 'INTEGER4' IS TO BE   01250001
+       126.0                                  INSERTED. INSERTION WILL OCCUR WHENEVER     01260001
+       127.0                                  ITS VALUE IS GREATER THAN ZERO.             01270001
+       128.0                                                                              01280001
+       129.0                  INTEGER4        THE VALUE TO BE PLACED IN A FOUR-BYTE       01290001
+       130.0                                  INTEGER FIELD.                              01300001
+       131.0                                                                              01310001
+       132.0                  FLTLOC          INTEGER LOCATION IN IO_AREA WHERE           01320001
+       133.0                                  THE FLOATING POINT NUMBER 'FLOAT' IS TO BE  01330001
+       134.0                                  INSERTED. INSERTION WILL OCCUR WHENEVER     01340001
+       135.0                                  ITS VALUE IS GREATER THAN ZERO.             01350001
+       136.0                                                                              01360001
+       137.0                  FLOAT           THE VALUE TO BE PLACED IN A FOUR-BYTE       01370001
+       138.0                                  FLOATING POINT FIELD.                       01380001
+       139.0                                                                              01390001
+       140.0                  FB15_7_LOC      INTEGER LOCATION IN IO_AREA WHERE A         01400001
+       141.0                                  NUMBER WITH THE ATTRIBUTES  FIXED BIN(15,7) 01410001
+       142.0                                  IS TO BE INSERTED. INSERTION WILL OCCUR     01420001
+       143.0                                  WHENEVER ITS VALUE IS GREATER THAN ZERO.    01430001
+       144.0                                                                              01440001
+       145.0                  FB15_7_VALUE    THE VALUE TO BE PLACED IN A TWO-BYTE        01450001
+       146.0                                  FIXED BIN(15,7) FIELD.                      01460001
+       147.0                                                                              01470001
+       148.0                                                                              01480001
+       149.0             NOTA BENE:  INPUT IS THROUGH THE USE OF THE PL/I GET DATA        01490001
+       150.0                         STATEMENT.  CONVENTIONS TO BE FOLLOWED ARE GIVEN     01500001
+       151.0                         IN THE LANGUAGE REFERENCE MANUAL.  VALUES            01510001
+       152.0                         UNCHANGED BY ASSIGNMENT(INPUT) REMAIN AS THEY        01520001
+       153.0                         LAST WERE (EXCEPT FOR IO_AREA WHICH MAY BE           01530001
+       154.0                         CHANGED BY A SUCCESSFUL RETRIEVAL CALL).  EACH       01540001
+       155.0                         SET OF INPUTS MUST END WITH A SEMICOLON.             01550001
+       156.0                                                                              01560001
+       157.0                                                                              01570001
+       158.0                  EXAMPLE OF INPUT DATA WHICH WOULD RETRIEVE THE FIRST FOUR   01580001
+       159.0                  OCCURRENCES OF THE SEGMENT NAMED THISSEG1 FROM THE          01590001
+       160.0                  DATABASE NAMED MYDABA01:                                    01600001
+       161.0                                                                              01610001
+       162.0                    D_B='MYDABA01',SSA1='THISSEG1 ',#_OF_CALLS=1,FUNC='GU  '; 01620001
+       163.0                    #_OF_CALLS=3,FUNC='GN  ';                                 01630001
+       164.0                                                                              01640001
+       165.0          */                                                                  01650001
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS        /*                  I M S D B U T             2024.05.11 00:50:20   Page     4
+ 0    Line.File
+ 0     167.0          /*             F L O W C H A R T                                    01670001
+       168.0                                                                              01680001
+       169.0                             *********                                        01690001
+       170.0                            *  START  *                                       01700001
+       171.0                             *********                                        01710001
+       172.0                                 *                                            01720001
+       173.0                                 *                                            01730001
+       174.0                           *************                                      01740001
+       175.0                           *   COUNT   *                                      01750001
+       176.0                           *   PCB'S   *                                      01760001
+       177.0                           *************                                      01770001
+       178.0                                 *                                            01780001
+       179.0                                 * <****************************************  01790001
+       180.0                                 *                                         *  01800001
+       181.0                           *************                                   *  01810001
+       182.0                           *   READ    *                                   *  01820001
+       183.0                           *  INPUTS   *                                   *  01830001
+       184.0                           *************                                   *  01840001
+       185.0                                 *                                         *  01850001
+       186.0                                 *                                         *  01860001
+       187.0                                 *                                         *  01870001
+       188.0                              *     *                                      *  01880001
+       189.0          ********  YES    *           *                                   *  01890001
+       190.0         * RETURN * <** *   END OF FILE   *                                *  01900001
+       191.0          ********         *     ?     *                                   *  01910001
+       192.0                              *     *                                      *  01920001
+       193.0                                 *                                         *  01930001
+       194.0                                 *                                         *  01940001
+       195.0                                 *                                         *  01950001
+       196.0                                 *                                         *  01960001
+       197.0                              *     *                                      *  01970001
+       198.0                           *    PCB    *        NO    **************       *  01980001
+       199.0                        *      VALID      ***********>*  FIND PCB  *       *  01990001
+       200.0                           *     ?     *              **************       *  02000001
+       201.0                              *     *                        *             *  02010001
+       202.0                                 *           YES          *     *     NO   *  02020001
+       203.0                                 *<******************* *   FOUND?  * *****>*  02030001
+       204.0                                 *                        *     *          *  02040001
+       205.0                                 *                           *             *  02050001
+       206.0                              *     *                                      *  02060001
+       207.0                           *   IO AREA  *    YES                           *  02070001
+       208.0                        *   MODIFICATIONS  **************                  *  02080001
+       209.0                           * REQUESTED? *               *                  *  02090001
+       210.0                              *     *                   *                  *  02100001
+       211.0                                 *               *****************         *  02110001
+       212.0                                 *<***************   MODIFY IO   *         *  02120001
+       213.0         **********************> *               *      AREA     *         *  02130001
+       214.0         *                       *               *****************         *  02140001
+       215.0         *              ********************                               *  02150001
+       216.0         *              * *              * *                               *  02160001
+       217.0         *              * *    CALL      * *                               *  02170001
+       218.0         *              * *  ASMTDLI     * *                               *  02180001
+       219.0         *              * *              * *                               *  02190001
+       220.0         *              ********************                               *  02200001
+       221.0         *                       *                                         *  02210001
+       222.0         *                       *                                         *  02220001
+       223.0         *                 ******************                              *  02230001
+       224.0         *                *                *                               *  02240001
+       225.0         *               *  PRINT OUTPUT  *                                *  02250001
+       226.0         *              *                *                                 *  02260001
+       227.0         *             ******************                                  *  02270001
+       228.0         *                       *                                         *  02280001
+       229.0         *                       *                                         *  02290001
+       230.0         *                    *      *                                     *  02300001
+       231.0         *                 *   MORE     *        NO                        *  02310001
+       232.0         *              *    CALLS TO      *******************************>*  02320001
+       233.0         *                 *    DO?     *                                  *  02330001
+       234.0         *                    *      *                                     *  02340001
+       235.0         *                       *                                         *  02350001
+       236.0         *                       *                                         *  02360001
+       237.0         *                       *                                         *  02370001
+       238.0         *                    *      *                                     *  02380001
+       239.0         *        YES      *   STATUS   *        NO                        *  02390001
+       240.0         *<**************       CODE       *******************************>*  02400001
+       241.0                           *    OK?     *                                     02410001
+       242.0                              *      *                                        02420001
+       243.0                                 *                                            02430001
+       244.0                                                                              02440001
+       245.0          */                                                                  02450001
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS        /*                  I M S D B U T             2024.05.11 00:50:20   Page     5
+ 0    Line.File
+ 0     247.0      IMSDBUT:                                                                02470001
+       248.0      PROCEDURE OPTIONS (MAIN) REORDER;                                       02480001
+       249.0        DECLARE ARG@ EXTERNAL ENTRY, /* THIS IS AN ASSEMBLER ROUTINE          02490001
+       250.0                                        WHICH RETURNS THE CONTENTS OF         02500001
+       251.0                                        REGISTER 1.                   */      02510001
+       252.0                #_OF_PCBS  FIXED BIN(15) INIT(0) STATIC,                      02520001
+       253.0                #_OF_CALLS FIXED BIN(15) INIT(1) STATIC,                      02530001
+       254.0                FUNC CHAR(4) INIT('GN') STATIC,                               02540001
+       255.0                FUNCTION CHAR(4) DEFINED FUNC,                                02550001
+       256.0                D_B CHAR(8)  STATIC INIT(''),                                 02560001
+       257.0                DB CHAR(8) DEFINED D_B,                                       02570001
+       258.0                AREA_USED_TO_ALIGN_IO_AREA AREA(2048) INTERNAL                02580001
+       259.0                                INIT(EMPTY),                                  02590001
+       260.0                AREA_PTR PTR INIT(ADDR(AREA_USED_TO_ALIGN_IO_AREA)),          02600001
+       261.0                IO_AREA CHAR(2044) BASED (AREA_PTR),                          02610001
+       262.0                IO_RAY (2044) CHAR(1) BASED (AREA_PTR),                       02620001
+       263.0                PLIDUMP BUILTIN,                                              02630001
+       264.0                UNSPEC  BUILTIN,                                              02640001
+       265.0                (I,I1,I2,I3,J,K,L) FIXED BIN(15) STATIC INIT(0),              02650001
+       266.0                SYSIN EXTERNAL FILE STREAM INPUT,                             02660001
+       267.0                SYSPRINT EXTERNAL FILE PRINT,                                 02670001
+       268.0                CHNG_CHAR CHAR(100) VARYING,                                  02680001
+       269.0                CHARLOC FIXED BIN(15) INIT(0) STATIC,                         02690001
+       270.0                INTLOC  FIXED BIN(15) INIT(0) STATIC,                         02700001
+       271.0                INTLOC4 FIXED BIN(15) INIT(0) STATIC,                         02710001
+       272.0                FLTLOC  FIXED BIN(15) INIT(0) STATIC,                         02720001
+       273.0                INT2 FIXED BIN(15) BASED,                                     02730001
+       274.0                FB15_7_LOC FIXED BIN(15) INIT(0) STATIC,                      02740001
+       275.0                INT4 FIXED BIN(31) BASED,                                     02750001
+       276.0                INT_15_7 FIXED BIN(15,7) BASED,                               02760001
+       277.0                FLOT FLOAT BASED,                                             02770001
+       278.0                INTEGER FIXED BIN(15) INIT(0) STATIC,                         02780001
+       279.0                INTEGER4 FIXED BIN(31) INIT(0) STATIC,                        02790001
+       280.0                FLOAT FIXED BIN(31,10) INIT(0) STATIC,                        02800001
+       281.0                FB15_7_VALUE FIXED BIN(15,7) INIT(0) STATIC,                  02810001
+       282.0               (SSA1,SSA2,SSA3,SSA4,SSA5) CHAR(200) VARYING INIT('') STATIC,  02820001
+       283.0                ASMTDLI EXTERNAL ENTRY OPTIONS (ASSEMBLER INTER NOMAP),       02830001
+       284.0        /*        PLIXOPT CHAR(24) VARYING STATIC EXTERNAL */                 02840001
+       285.0        /*           INIT('ISASIZE(6K),NOREPORT/'), */                        02850001
+       286.0                PLIXOPT CHAR(33) VARYING STATIC EXTERNAL                      02840002
+       287.0                   INIT('HEAP(64K,64K,ANYWHERE,KEEP,8K,4K)'),                 02850002
+       288.0               (LENGTH,EMPTY,NULL,SUBSTR) BUILTIN,                            02860001
+       289.0                PSB@ PTR INIT CALL ARG@(PSB@),                                02870001
+       290.0                PCB@ (17) PTR BASED(PSB@),                                    02880001
+       291.0                TRUE BIT(1) STATIC INIT('1'B),                                02890001
+       292.0                BIT_CHECK (255,32) BIT(1) BASED (PSB@),                       02900001
+       293.0                CURRENT_PCB PTR INIT(NULL);                                   02910001
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS        /*                  I M S D B U T             2024.05.11 00:50:20   Page     6
+ 0    Line.File
+ 0     295.0        DECLARE 1 PCB ALIGNED BASED(CURRENT_PCB),                             02930001
+       296.0                  3 DBD_NAME CHAR(8),                                         02940001
+       297.0                  3 SEG_LEVEL CHAR(2),                                        02950001
+       298.0                  3 STATUS_CODE CHAR(2),                                      02960001
+       299.0                  3 PROC_OPTIONS CHAR(4),                                     02970001
+       300.0                  3 RESERVED_DLI FIXED BINARY(31),                            02980001
+       301.0                  3 SEG_NAME CHAR(8),                                         02990001
+       302.0                  3 LENGTH_FB_KEY FIXED BINARY(31),                           03000001
+       303.0                  3 #_SENSE_SEGS FIXED BINARY(31),                            03010001
+       304.0                  3 KEY_FB_AREA CHAR(DUMMY REFER(PCB.LENGTH_FB_KEY));         03020001
+       305.0                                                                              03030001
+       306.0       DECLARE                                                                03040001
+       307.0               WORK_PAIRS (1)      BIT (16)   BASED (AREA_PTR),               03050001
+       308.0               HEX_DATA            CHAR(4088) STATIC INIT((4088)' '),         03060001
+       309.0               OUTPUT_PTR          PTR INIT(ADDR(HEX_DATA)),                  03070001
+       310.0               HEX_BYTE (1)        CHAR(1) BASED(OUTPUT_PTR),                 03080001
+       311.0               ADDR                BUILTIN,                                   03090001
+       312.0               MOD                 BUILTIN,                                   03100001
+       313.0               HEX_DIGIT (0:15)    CHARACTER(1) STATIC INIT('0','1','2','3',  03110001
+       314.0                                                            '4','5','6','7',  03120001
+       315.0                                                            '8','9','A','B',  03130001
+       316.0                                                            'C','D','E','F'); 03140001
+       317.0                                                                              03150001
+       318.0        ON ERROR SNAP                                                         03160001
+       319.0          BEGIN;                                                              03170001
+       320.0            DECLARE TEMPFYL FILE PRINT;                                       03180001
+       321.0            ON UNDEFINEDFILE(TEMPFYL) GO TO EOJ;                              03190001
+       322.0            BIT_CHECK(#_OF_PCBS,1) = '1'B;                                    03200001
+       323.0            OPEN FILE(TEMPFYL) TITLE('PLIDUMP');                              03210001
+       324.0            CALL PLIDUMP('TFBHC');                                            03220001
+       325.0            CLOSE FILE(TEMPFYL) ;                                             03230001
+       326.0            GO TO EOJ;                                                        03240001
+       327.0          END;                                                                03250001
+       328.0        ON NAME(SYSIN)                                                        03260001
+       329.0          BEGIN;                                                              03270001
+       330.0            DECLARE DATAFIELD BUILTIN;                                        03280001
+       331.0            FUNC = '';                                                        03290001
+       332.0            PUT SKIP LIST('*****WARNING***** AN INVALID CONDITION HAS BEEN '  03300001
+       333.0                || 'IDENTIFIED IN THE INPUT.  DATAFIELD = ',DATAFIELD);       03310001
+       334.0            PUT SKIP LIST('                  INVALID INPUT WILL BE '          03320001
+       335.0                || 'DISREGARDED, FUNCTION SET TO BLANKS, AND PROCESSING '     03330001
+       336.0                || 'WILL CONTINUE.');                                         03340001
+       337.0        END;                                                                  03350001
+       338.0        ON ENDFILE (SYSIN) GO TO EOJ;                                         03360001
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS        /*                  I M S D B U T             2024.05.11 00:50:20   Page     7
+ 0    Line.File
+ 0     340.0            /*  COUNT THE NO. OF PCB'S AVAILABLE TO A GIVEN EXECUTION         03380001
+       341.0                AND TURN OFF THE FIRST BIT OF THE LAST POINTER PASSED.  */    03390001
+       342.0                                                                              03400001
+       343.0        DO #_OF_PCBS = 1 BY 1 WHILE ( ^ BIT_CHECK(#_OF_PCBS,1));              03410001
+       344.0        END;                                                                  03420001
+       345.0        BIT_CHECK(#_OF_PCBS,1) = '0'B;                                        03430001
+       346.0                                                                              03440001
+       347.0                                                                              03450001
+       348.0                                                                              03460001
+       349.0                                                                              03470001
+       350.0        DO WHILE (TRUE); /*  UNCONDITIONAL LOOP WHICH TERMINATES WITH         03480001
+       351.0                             AN ENDFILE CONDITION FOR FILE SYSIN      */      03490001
+       352.0                                                                              03500001
+       353.0                 /*  READ A SET OF INPUT DATA  */                             03510001
+       354.0                                                                              03520001
+       355.0          GET DATA(#_OF_CALLS,FUNC,FUNCTION,D_B,DB,SSA1,SSA2,SSA3,SSA4,SSA5,  03530001
+       356.0                   IO_AREA,CHNG_CHAR,INTLOC,INTEGER,CHARLOC,INTEGER4,INTLOC4, 03540001
+       357.0                   FLTLOC,FLOAT,FB15_7_LOC,FB15_7_VALUE);                     03550001
+       358.0                                                                              03560001
+       359.0                 /*  TEST PCB FOR CONSISTENCY WITH INPUT DATA  */             03570001
+       360.0                                                                              03580001
+       361.0          IF CURRENT_PCB = NULL | DBD_NAME ^= D_B                             03590001
+       362.0            THEN /* THIS IS EITHER THE FIRST TIME THROUGH THE LOOP OR         03600001
+       363.0                 WE HAVE ASKED TO USE A DIFFERENT PCB FROM THE LAST TIME.*/   03610001
+       364.0                                                                              03620001
+       365.0              DO; /*  FIND THE REQUIRED PCB IN THE PSB  */                    03630001
+       366.0                CURRENT_PCB = NULL;                                           03640001
+       367.0                DO J = 1 TO #_OF_PCBS WHILE(CURRENT_PCB = NULL);              03650001
+       368.0                  IF PCB@(J)->DBD_NAME = D_B                                  03660001
+       369.0                    THEN    /*  THIS IS THE PCB WE ASKED FOR  */              03670001
+       370.0                         CURRENT_PCB = PCB@(J);                               03680001
+       371.0                END;                                                          03690001
+       372.0                IF CURRENT_PCB = NULL                                         03700001
+       373.0                  THEN                                                        03710001
+       374.0                    DO;                                                       03720001
+       375.0                      PUT SKIP EDIT('PCB NOT FOUND FOR DATABASE=',D_B)(A,A);  03730001
+       376.0                      PUT DATA(FUNC,IO_AREA,SSA1,SSA2,SSA3,SSA4,SSA5);        03740001
+       377.0                      GO TO END_LOOP;                                         03750001
+       378.0                    END;                                                      03760001
+       379.0                                                                              03770001
+       380.0                        /*  INITIALIZE IO_AREA  */                            03780001
+       381.0                IO_AREA = '';                                                 03790001
+       382.0              END;                                                            03800001
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS        /*                  I M S D B U T             2024.05.11 00:50:20   Page     8
+ 0    Line.File
+ 0     384.0               /*  DO REQUESTED MODIFICATIONS TO THE IO_AREA  */              03820001
+       385.0                                                                              03830001
+       386.0          IF CHARLOC > 0 /*  WE ARE ASKING TO INSERT A CHARACTER STRING       03840001
+       387.0                             INTO THE IO_AREA PRIOR TO AN IMS CALL.  */       03850001
+       388.0            THEN SUBSTR(IO_AREA,CHARLOC,LENGTH(CHNG_CHAR)) = CHNG_CHAR;       03860001
+       389.0          IF INTLOC > 0 /*  WE ARE ASKING TO INSERT A FIXED BIN(15) INTEGER   03870001
+       390.0                            INTO THE IO_AREA PRIOR TO AN IMS CALL.  */        03880001
+       391.0            THEN ADDR(IO_RAY(INTLOC)) -> INT2 = INTEGER;                      03890001
+       392.0          IF INTLOC4 > 0 /*  WE ARE ASKING TO INSERT A FIXED BIN(31) INTEGER  03900001
+       393.0                             INTO THE IO_AREA PRIOR TO AN IMS CALL.  */       03910001
+       394.0            THEN ADDR(IO_RAY(INTLOC4)) -> INT4 = INTEGER4;                    03920001
+       395.0          IF FLTLOC > 0 /*  WE ARE ASKING TO INSERT A FLOAT DECIMAL(6) VALUE  03930001
+       396.0                            INTO THE IO_AREA PRIOR TO AN IMS CALL.   */       03940001
+       397.0            THEN ADDR(IO_RAY(FLTLOC)) -> FLOT = FLOAT;                        03950001
+       398.0          IF FB15_7_LOC > 0 /*  WE ARE ASKING TO INSERT A FIXED BIN(15,7)     03960001
+       399.0                                VALUE INTO THE IO_AREA PRIOR TO AN IMS CALL*/ 03970001
+       400.0            THEN ADDR(IO_RAY(FB15_7_LOC)) -> INT_15_7 = FB15_7_VALUE;         03980001
+       401.0                                                                              03990001
+       402.0             /*  REPEAT SUBROUTINE CALL FOR THE REQUIRED NUMBER OF            04000001
+       403.0                 TIMES SO LONG AS THE STATUS CODE INDICATES A VALID           04010001
+       404.0                 CONDITION.   */                                              04020001
+       405.0                                                                              04030001
+       406.0          DO J = 1,2 TO #_OF_CALLS WHILE                                      04040001
+       407.0             (STATUS_CODE='  '| (STATUS_CODE^='GE' & SUBSTR(STATUS_CODE,1,1)  04050001
+       408.0                        = 'G'  & STATUS_CODE ^= 'GB'));                       04060001
+       409.0            CALL FIX ((SSA1),(SSA2),(SSA3),(SSA4),(SSA5));                    04070001
+       410.0          END;                                                                04080001
+       411.0      END_LOOP:                                                               04090001
+       412.0        END;                                                                  04100001
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS        /*                  I M S D B U T             2024.05.11 00:50:20   Page     9
+ 0    Line.File
+ 0     414.0      FIX:                                                                    04120001
+       415.0        PROCEDURE (SSA1,SSA2,SSA3,SSA4,SSA5);                                 04130001
+       416.0          DECLARE                                                             04140001
+       417.0                  (SSA1,SSA2,SSA3,SSA4,SSA5) CHAR(*),                         04150001
+       418.0                  (THREE INIT(3),FOUR INIT(4),FIVE INIT(5),SIX INIT(6),       04160001
+       419.0                   SEVEN INIT(7),EIGHT INIT(8)) FIXED BIN(31),                04170001
+       420.0                   J FIXED BIN(31) STATIC INIT(0),                            04180001
+       421.0                   FULL_WORD_BIN FIXED BIN(31) STATIC INIT(0),                04190001
+       422.0                   LOW_BITS BIT(16) STATIC INIT((16)'0'B),                    04200001
+       423.0                  1 HEX_STRUCT (2044) BASED (OUTPUT_PTR),                     04210001
+       424.0                    2 TOP CHAR(1),                                            04220001
+       425.0                    2 BOT CHAR(1);                                            04230001
+ 0     427.0          IF FUNC ^= ''                                                       04250001
+       428.0            THEN /*  DO THE REQUIRED IMS CALL  */                             04260001
+       429.0              SELECT;                                                         04270001
+       430.0                WHEN (LENGTH(SSA5) > 0)                                       04280001
+       431.0                   CALL ASMTDLI                                               04290001
+       432.0                          (EIGHT,FUNC,PCB,IO_AREA,SSA1,SSA2,SSA3,SSA4,SSA5);  04300001
+       433.0                WHEN (LENGTH(SSA4) > 0)                                       04310001
+       434.0                   CALL ASMTDLI(SEVEN,FUNC,PCB,IO_AREA,SSA1,SSA2,SSA3,SSA4);  04320001
+       435.0                WHEN (LENGTH(SSA3) > 0)                                       04330001
+       436.0                   CALL ASMTDLI(SIX,FUNC,PCB,IO_AREA,SSA1,SSA2,SSA3);         04340001
+       437.0                WHEN (LENGTH(SSA2) > 0)                                       04350001
+       438.0                   CALL ASMTDLI(FIVE,FUNC,PCB,IO_AREA,SSA1,SSA2);             04360001
+       439.0                WHEN (LENGTH(SSA1) > 0)                                       04370001
+       440.0                   CALL ASMTDLI(FOUR,FUNC,PCB,IO_AREA,SSA1);                  04380001
+       441.0                OTHERWISE                                                     04390001
+       442.0                   CALL ASMTDLI(THREE,FUNC,PCB,IO_AREA);                      04400001
+       443.0              END;                                                            04410001
+       444.0                                                                              04420001
+       445.0          DO K = LENGTH(IO_AREA) TO 1 BY -1 WHILE (IO_RAY(K) = ' ');          04430001
+       446.0          END; /*  THIS LOOP FINDS THE END OF SIGNIFICANT DATA  */            04440001
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS        /*                  I M S D B U T             2024.05.11 00:50:20   Page    10
+ 0    Line.File
+ 0     448.0                  /*  PRINT THE OUTPUT DATA  */                               04460001
+       449.0                                                                              04470001
+       450.0                      /*  PRINT THE PCB  */                                   04480001
+       451.0                                                                              04490001
+       452.0          CALL PRINT_PCB(PCB);                                                04500001
+       453.0                                                                              04510001
+       454.0                      /*  PRINT THE INPUT DATA  */                            04520001
+       455.0                                                                              04530001
+       456.0          PUT SKIP DATA(FUNC,D_B,SSA1,SSA2,SSA3,SSA4,SSA5);                   04540001
+       457.0          PUT SKIP DATA(CHNG_CHAR,CHARLOC,INTLOC,INTEGER,INTEGER4,INTLOC4,    04550001
+       458.0                    FLTLOC,FLOAT,#_OF_CALLS);                                 04560001
+       459.0                                                                              04570001
+       460.0                      /*  FORMAT THE IO_AREA IN HEX  */                       04580001
+       461.0                                                                              04590001
+       462.0          DO J = 1 TO (2 * K) BY 4;                                           04600001
+       463.0            UNSPEC(FULL_WORD_BIN) = LOW_BITS || WORK_PAIRS((J+3)/4);          04610001
+       464.0            DO L = 3 TO 0 BY -1;            /*  MASK OFF 4 LOW-ORDER BITS  */ 04620001
+       465.0              HEX_BYTE(J + L) =             /*  (ONE HEX DIGIT).  PLACE    */ 04630001
+       466.0                HEX_DIGIT(MOD(FULL_WORD_BIN,/*  EBCDIC EQUIVALENT IN COR-  */ 04640001
+       467.0                       16));                /*  RESPONDING POSITION IN     */ 04650001
+       468.0                                            /*  RETURNED STRING.           */ 04660001
+       469.0              FULL_WORD_BIN = FULL_WORD_BIN / 16; /* ZERO HALF-BYTE JUST      04670001
+       470.0                                                     TRANSLATED.           */ 04680001
+       471.0            END;                                                              04690001
+       472.0          END;                                                                04700001
+       473.0                                                                              04710001
+       474.0                 /*  PRINT THE IO_AREA IN BOTH EBCDIC AND HEX                 04720001
+       475.0                     UNTIL ONLY BLANKS REMAIN AT THE END.      */             04730001
+       476.0                                                                              04740001
+       477.0          PUT SKIP(2) EDIT('IO_AREA:')(A);                                    04750001
+       478.0          DO I = 1 TO K/120+1;                                                04760001
+       479.0            I2 = 120 * I;                                                     04770001
+       480.0            I1 = I2 - 119;                                                    04780001
+       481.0            IF I2 > K                                                         04790001
+       482.0              THEN                                                            04800001
+       483.0                DO;                                                           04810001
+       484.0                  I2 = K;                                                     04820001
+       485.0                  I1 = (I - 1) * 120 + 1;                                     04830001
+       486.0                END;                                                          04840001
+       487.0            PUT SKIP EDIT(SUBSTR(IO_AREA,I1,I2 - I1 + 1))(A);                 04850001
+       488.0            PUT SKIP EDIT((TOP(I3) DO I3 = I1 TO I2))(A);                     04860001
+       489.0            PUT SKIP EDIT((BOT(I3) DO I3 = I1 TO I2))(A);                     04870001
+       490.0          END;                                                                04880001
+       491.0          PUT SKIP(3);                                                        04890001
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS        /*                  I M S D B U T             2024.05.11 00:50:20   Page    11
+ 0    Line.File
+ 0     493.0      PRINT_PCB:                                                              04910001
+       494.0        PROCEDURE(PCB);                                                       04920001
+       495.0          DECLARE 1 PCB ALIGNED,                                              04930001
+       496.0                    3 DBD_NAME CHAR(8),                                       04940001
+       497.0                    3 SEG_LEVEL CHAR(2),                                      04950001
+       498.0                    3 STATUS_CODE CHAR(2),                                    04960001
+       499.0                    3 PROC_OPTIONS CHAR(4),                                   04970001
+       500.0                    3 RESERVED_DLI FIXED BINARY(31),                          04980001
+       501.0                    3 SEG_NAME CHAR(8),                                       04990001
+       502.0                    3 LENGTH_FB_KEY FIXED BINARY(31),                         05000001
+       503.0                    3 #_SENSE_SEGS FIXED BINARY(31),                          05010001
+       504.0                    3 KEY_FB_AREA CHAR(*);                                    05020001
+       505.0          PUT SKIP DATA(PCB);                                                 05030001
+       506.0        END;                                                                  05040001
+       507.0        END;                                                                  05050001
+       508.0      EOJ:                                                                    05060001
+       509.0               /*  RESTORE THE FIRST BIT OF THE POINTER TO THE LAST PCB  */   05070001
+       510.0        BIT_CHECK(#_OF_PCBS,1) = '1'B;                                        05080001
+       511.0      END IMSDBUT;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS        /*                  I M S D B U T             2024.05.11 00:50:20   Page    12
+ - Compiler Messages
+ 0 Message       Line.File Message Description
+ 0 IBM2621I W     318.0    ON ERROR block does not start with ON ERROR SYSTEM. An error inside the block may lead to an
+                           infinite loop.
+   IBM1181I W     406.0    A WHILE or UNTIL option at the end of a series of DO specifications applies only to the last
+                           specification.
+ - File Reference Table
+ 0   File    Included From  Name
+ 0      0                   AVL.IBAGROUP.PLI(IMSDBUT)
+ - Component    Return Code    Messages (Total/Suppressed)    Time
+ 0 Compiler         4               18  /  16                  3 secs
+ 0 End of compilation of IMSDBUT
+ 
