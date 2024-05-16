@@ -1,0 +1,192 @@
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.10 20:43:56   Page     1
+ -                     Options Specified
+ 0  Install:
+ 0  Command: PP(SQL()),SOURCE
+ 0  Install:
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.05.10 20:43:56   Page     2
+ - SQL (Built:20220822) Preprocessor Options Used
+ 0     CCSID0
+     NOCODEPAGE
+       DEPRECATE( STMT() )
+     NOEMPTYDBRM
+     NOINCONLY
+       LINEONLY
+     NOWARNDECP
+ 0 DB2 for z/OS Coprocessor Options Used
+ 0   APOST
+     APOSTSQL
+     ATTACH(TSO)
+     CCSID(1047)
+     CONNECT(2)
+     DEC(15)
+     DECP(DSNHDECP)
+     FLOAT(S390)
+     SQLLEVEL(V13R1M501)
+     TWOPASS
+     PERIOD
+     STDSQL(NO)
+     SQL(DB2)
+     NOXREF
+     NOSOURCE
+     DSNHDECP LOADED FROM - (DSND10.DBDG.SDSNEXIT(DSNHDECP))
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.05.10 20:43:56   Page     3
+ 0 Compiler Source
+ 0    Line.File
+ 0       1.0      /*************************************************************/
+         2.0      /* SAMPLE OF DB2 PL/I SIMPLE PROGRAM WITH ONE SELECT QUERY   */
+         3.0      /*                                                           */
+         4.0      /* SYSPRINT DD STATEMENT IS NEEDED                           */
+         5.0      /*************************************************************/
+         6.0
+         7.0      PLI0000: PROCEDURE OPTIONS(MAIN) REORDER;
+         7.0       DCL DSNHLI   EXT ENTRY OPTIONS(ASM INTER);
+         7.0
+         8.0
+         9.0      /* STANDARD DB2 PROGRAM FOR FORMATTING SQL ERROR MESSAGES    */
+        10.0      DCL DSNTIAR ENTRY OPTIONS (ASM,INTER,RETCODE);
+        11.0
+        12.0      /* DB2 COMMUNICATION AREA (SQLCA) - FOR CHECKING SQL CODES   */
+        13.0
+        13.0      /*$*$*$
+        13.0      EXEC SQL INCLUDE SQLCA
+        13.0       $*$*$*/
+        13.0      DCL
+        13.0        1 SQLCA  ,
+        13.0          2 SQLCAID     CHAR(8),
+        13.0          2 SQLCABC     FIXED BIN(31),
+        13.0          2 SQLCODE     FIXED BIN(31),
+        13.0          2 SQLERRM     CHAR(70) VAR,
+        13.0          2 SQLERRP     CHAR(8),
+        13.0          2 SQLERRD(6)  FIXED BIN(31),
+        13.0          2 SQLWARN,
+        13.0            3 SQLWARN0  CHAR(1),
+        13.0            3 SQLWARN1  CHAR(1),
+        13.0            3 SQLWARN2  CHAR(1),
+        13.0            3 SQLWARN3  CHAR(1),
+        13.0            3 SQLWARN4  CHAR(1),
+        13.0            3 SQLWARN5  CHAR(1),
+        13.0            3 SQLWARN6  CHAR(1),
+        13.0            3 SQLWARN7  CHAR(1),
+        13.0          2 SQLEXT,
+        13.0            3 SQLWARN8  CHAR(1),
+        13.0            3 SQLWARN9  CHAR(1),
+        13.0            3 SQLWARNA  CHAR(1),
+        13.0            3 SQLSTATE  CHAR(5);
+        13.0
+        14.0
+        15.0      /* PROCEDURE FOR PRINTING OUT STANDARD SQL ERROR MESSAGES    */
+        16.0      SQLMSGP: PROC;
+        16.0
+        17.0
+        18.0      /* DECLARE DSNTIAR MESSAGE BUFFER AND ITS SIZES (10X132)     */
+        19.0      DCL DATA_LEN FIXED BIN(31) INIT(132);
+        20.0      DCL DATA_DIM FIXED BIN(31) INIT(10);
+        21.0      DCL 1 ERROR_MESSAGE AUTOMATIC,
+        22.0            3 ERROR_LEN FIXED BIN(15) UNAL INIT((DATA_LEN*DATA_DIM)),
+        23.0            3 ERROR_TEXT(DATA_DIM) CHAR(DATA_LEN);
+        24.0
+        25.0      /* CALL DSNTIAR TO FORMAT ANY MESSAGES */
+        26.0      CALL DSNTIAR(SQLCA,ERROR_MESSAGE,DATA_LEN);
+        27.0
+        28.0      /* PRINT OUT THE DSNTIAR BUFFER                              */
+        29.0      DCL I FIXED BIN(31);
+        30.0      DCL ONE FIXED BIN(31) INIT(1);
+        31.0      DCL BLANK CHAR(1) INIT(' ');
+        32.0      DO I = ONE TO ERROR_LEN
+        33.0      /* PRINT NON BLANK LINES                                     */
+        34.0      WHILE (ERROR_TEXT(I) ^= BLANK);
+        35.0        PUT EDIT(ERROR_TEXT(I))(COL(1),A(DATA_LEN));
+        36.0      END;
+        37.0
+        38.0      END SQLMSGP;
+        39.0
+        40.0      /* DECLARE HOST-VARIABLE                                     */
+        41.0      DCL TIMESTAMP CHAR(26);
+        42.0
+        43.0      /* EMBEDDED STATIC SQL SELECT QUERY WITH HOST-VARIABLE       */
+        44.0
+        44.0      /*$*$*$
+        44.0      EXEC SQL SELECT CURRENT TIMESTAMP
+        44.0               INTO :TIMESTAMP FROM SYSIBM.SYSDUMMY1
+        44.0       $*$*$*/
+        44.0      DO;
+        44.0      DCL
+        44.0        1 SQLPLIST2 UNALIGNED
+        44.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+        44.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('0400'XN)
+        44.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(30)
+        44.0         ,2 SQLPROGN     CHAR(8) INIT('PLI0000')
+        44.0         ,2 SQLTIMES     CHAR(8)
+        44.0              INIT('1BE259FE_08234FA3'X)
+        44.0         ,2 SQLSECTN     FIXED BIN(15) INIT(1)
+        44.0         ,2 SQLCODEP     POINTER
+        44.0         ,2 SQLVPARMP    POINTER
+        44.0         ,2 SQLAPARMP    POINTER
+        44.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+        44.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(231)
+        44.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(44)
+        44.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+        44.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+        44.0         ,2 SQLAVARS
+        44.0           ,3 SQLAVDAID  CHAR(8)
+        44.0           ,3 SQLAVDABC  FIXED BIN(31)
+        44.0           ,3 SQLAVN     FIXED BIN(15)
+        44.0           ,3 SQLAVD     FIXED BIN(15)
+        44.0           ,3 SQLAVELT(1)
+        44.0             ,4 SQLAVTYPE  FIXED BIN(15)
+        44.0             ,4 SQLAVLEN   FIXED BIN(15)
+        44.0             ,4 SQLAVADDR  POINTER
+        44.0             ,4 SQLAVIND   POINTER
+        44.0             ,4 SQLAVNAME
+        44.0               ,5 SQLAVNAMELEN FIXED BIN(15)
+        44.0               ,5 * UNION
+        44.0                 ,6 SQLAVNAMEDAT CHAR(30)
+        44.0                 ,6 *
+        44.0                   ,7 SQLAVNAMER0 FIXED BIN(31)
+        44.0                   ,7 SQLAVNAMER1 FIXED BIN(15)
+        44.0                   ,7 SQLAVNAMER2 FIXED BIN(15)
+        44.0                   ,7 SQLAVNAMER3 CHAR(22)
+        44.0        ;
+        44.0      SQLPLIST2.SQLAVARS.SQLAVTYPE(1) = 452;
+        44.0      SQLPLIST2.SQLAVARS.SQLAVLEN(1) = 26;
+        44.0      SQLPLIST2.SQLAVARS.SQLAVADDR(1) = ADDR(TIMESTAMP);
+        44.0      SQLPLIST2.SQLAVARS.SQLAVIND(1) = SYSNULL();
+        44.0      SQLPLIST2.SQLAVARS.SQLAVNAMELEN(1) = 0;
+        44.0      SQLPLIST2.SQLAVARS.SQLAVDAID = 'SQLDA  ' || '08'X;
+        44.0      SQLPLIST2.SQLAVARS.SQLAVDABC = 60;
+        44.0      SQLPLIST2.SQLAVARS.SQLAVN = 1;
+        44.0      SQLPLIST2.SQLAVARS.SQLAVD = 1;
+        44.0      SQLPLIST2.SQLAPARMP = ADDR(SQLPLIST2.SQLAVARS.SQLAVDAID);
+        44.0      SQLPLIST2.SQLVPARMP = SYSNULL();
+        44.0      SQLPLIST2.SQLCODEP = ADDR(SQLCA);
+        44.0      CALL DSNHLI(SQLPLIST2);
+        44.0      END;
+        45.0
+        46.0
+        47.0      /* CHECK BY SQLCODE IF SQL QUERY RUN SUCCESSFUL OR NOT       */
+        48.0      IF SQLCODE < 0 THEN
+        49.0      DO;
+        50.0         PUT LIST('ERROR MESSAGE WAS RECEIVED');
+        51.0         PUT SKIP;
+        52.0
+        53.0         CALL SQLMSGP;
+        54.0
+        55.0         STOP;
+        56.0      END;
+        57.0
+        58.0      PUT LIST('TIMESTAMP = ',TIMESTAMP);
+        59.0      PUT SKIP;
+        60.0
+        61.0      CALL SQLMSGP;
+        62.0
+        63.0      END PLI0000;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.05.10 20:43:56   Page     4
+ - No Compiler Messages
+ 0 File Reference Table
+ 0   File    Included From  Name
+ 0      0                   AVL.IBAGROUP.PLI(PLI0000)
+ - Component    Return Code    Messages (Total/Suppressed)    Time
+ 0 SQL              0                2  /  2                   0 secs
+   Compiler         0                3  /  3                   2 secs
+ 0 End of compilation of PLI0000
+ 

@@ -1,0 +1,43 @@
+ /* ************************************************************** */
+ /* PGM: PTASKTS  - WORK WITH TEMPORARY STORAGE QUEUE - TSQ        */
+ /* ************************************************************** */
+ /* IT WRITES A LIST OF EMPLOYEES OF THE SECTOR ESI INTO TSQ 'OLGA'*/
+ /* FORMAT:                                                        */
+ /* EMPLOYEE : SURNAME NAME, PHONE : PHONE                         */
+ /* ************************************************************** */
+ PTASKTS:  PROC OPTIONS(MAIN) REORDER ;
+  EXEC CICS IGNORE CONDITION LENGERR;
+  EXEC CICS IGNORE CONDITION QZERO ;
+  DCL
+  1 R404_RECORD           ,                    /* ROOM 404 RECORD */
+    2 STATUS     CHAR(1)  ,
+    2 EMPL                ,
+      3 SURNAME  CHAR(14) ,
+      3 NAME     CHAR(11) ,
+    2 GENDER     CHAR(1)  ,
+    2 SECTOR     CHAR(8)  ,
+    2 PHONE      CHAR(4)  ,
+    2 BOSS                ,
+      3 SURNAME  CHAR(14) ,
+      3 NAME     CHAR(11) ;
+  R404_RECORD = '' ;
+  DCL RESI_RECORD CHAR(50) ;                /* OUT RECORD FOR TSQ */
+  RESI_RECORD = '' ;
+  EXEC CICS SET TDQUEUE('R404') OPEN ;
+  EXEC CICS READQ TD QUEUE('R404') INTO (R404_RECORD) ;
+                               /*     WHILE TDQ IS NOT EMPTY      */
+  DO WHILE(EIBRESP ^= DFHRESP(QZERO) &
+           EIBRESP = DFHRESP(NORMAL)) ;
+    IF R404_RECORD.SECTOR = 'ESI     '
+      THEN DO ;
+        RESI_RECORD = 'EMPLOYEE : '|| R404_RECORD.EMPL.SURNAME ||
+                      R404_RECORD.EMPL.NAME || ', ' ||
+                      'PHONE : '|| R404_RECORD.PHONE ;
+        EXEC CICS WRITEQ TS QUEUE('OLGA') FROM (RESI_RECORD) ;
+      END ;
+    IF EIBRESP = DFHRESP(NORMAL) THEN
+    EXEC CICS READQ TD QUEUE('R404') INTO (R404_RECORD) ;
+  END ;
+  EXEC CICS SET TDQUEUE('R404') CLOSED ;
+  EXEC CICS RETURN ;
+ END PTASKTS  ;

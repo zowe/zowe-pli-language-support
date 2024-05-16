@@ -1,0 +1,112 @@
+ X501AA: PROC(EPARM) OPTIONS(MAIN) REORDER;
+ /*++TLDS-OPTIONS: ***** X501  *************************************
+  *PROCESS MACRO,OPTIMIZE(TIME);
+  *COMMENT=Write console msg with optinal reply
+  *-------------------------------------------------------
+  *SRCETYPE=M
+  *LANG=PLI
+  *ENV=BA
+  *-------------------------------------------------------
+  *LOADNAME=X501
+  *-------------------------------------------------------
+  *FUTURE1=N
+  *FUTURE2=N
+ *++TLDS-END: ******************************************/
+ /*********************************************************************/
+ /*                                                                   */
+ /*   Dato    INIT   Beskrivelse                                      */
+ /* --------  ----   -----------                                      */
+ /* 25012016  XXX    First version                                    */
+ /*********************************************************************/
+ /* Pre Proc vars                                                    */
+ /*                                                                   */
+ %DECLARE ENVIR CHAR;
+ %ENVIR='D';    /* D for Danish, any other for English */
+ /*********************************************************************/
+ DCL SYSPRINT       File;
+ DCL SYSIN          File;
+ DCL EPARM          Char(*) Var;   /* Exec parm fra main proc   */
+ DCL msg            Char(200) Var; /* Message to display        */
+ DCL DEL            Char(1);       /* Reply delimiter           */
+ DCL OPEREP         CHAR(6);       /* Operator Reply (Input)    */
+ DCL POSREP         Char(100) Var; /* Possible replies          */
+ DCL REPTAB(0:20)   CHAR(6) VAR;   /* Reply table               */
+ DCL  i             BIN FIXED(31); /* Loop variable             */
+ DCL ir             pic '9'      ; /* Invalid replies countdown */
+
+  DEL = '';
+  REPTAB(*) = '';
+  POSREP = '';
+
+  IF EPARM = 'SYSIN'
+  THEN DO;
+
+    GET DATA;
+    DO I = 0 to 20;
+     IF REPTAB(I) ^= ''
+     Then Do;
+       POSREP = POSREP !! DEL !! REPTAB(I);
+       DEL = '/';
+     END;
+    End;
+    IF POSREP = ''
+    THEN DO;
+       DISPLAY(msg);
+    END;
+    ELSE DO;
+
+ Displaymsg:
+       DISPLAY(msg!!POSREP) REPLY(OPEREP);
+
+       Do I = 0 to 20 until(OPEREP = REPTAB(I));
+       END;
+       IF I > 20
+       Then Do;
+         DISPLAY(msg !! ' INVALID REPLY !');
+         Goto Displaymsg;
+       End;
+       Else do;
+         CALL Pliretc(i);
+       END;
+    END;
+
+  End;
+  ELSE DO;
+    msg = EPARM;
+    ir = 2;
+    IF Index(msg,'#GISCA') > 0
+    THEN DO;
+ SetDisp:
+      %IF ENVIR = 'D'
+      %THEN %DO;
+       DISPLAY(substr(msg,1,length(msg)-6)
+               !!' GÅ/IGNORER/STOP/CANCEL/AFSLUT') REPLY(OPEREP);
+      %END;
+      %Else %DO;
+       DISPLAY(substr(msg,1,length(msg)-6)
+               !!' GO/IGNORE/STOP/CANCEL/ABORT') REPLY(OPEREP);
+      %END;
+       SELECT(SUBSTR(OPEREP,1,1));
+         WHEN('G','') CALL PLIRETC(0);
+         WHEN('I') CALL PLIRETC(4);
+         WHEN('S') CALL PLIRETC(8);
+         WHEN('C') CALL PLIRETC(12);
+         WHEN('A') CALL PLIRETC(16);
+        Otherwise do;
+         if ir = 0 then do;
+           Display( ' 3 Invalid replies. Step end CC=20');
+           CALL PLIRETC(20);
+         end;
+         else do;
+           Display( ' Invalid reply: '!!operep!!
+                    ' ('!!ir!!' Tries left' );
+           ir = ir -1;
+           Go To SetDisp;
+         End;
+        end;
+       END ; /*SELECT */
+    END;
+    ELSE DISPLAY(msg);
+  END;
+ END X501AA;
+

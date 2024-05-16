@@ -1,0 +1,1332 @@
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.11 01:08:33   Page     1
+ -                     Options Specified
+ 0  Install:
+ 0  Command: SOURCE
+ 0  Line.File Process Statements
+ 0     1.0    *PROCESS X(S),A(S),LINECOUNT(60);
+ 0  Install:
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page     2
+ 0 Compiler Source
+ 0    Line.File
+ 0       2.0      /*          %M%    %I%    %D%    %T%
+         3.0          PUNCH ' IDENTIFY **%M%1(''%M%/%I% %D% %T%'')'
+         4.0          PUNCH ' ENTRY PLISTART '
+         5.0          PUNCH ' NAME %M%(R) '
+         6.0      */
+         7.0    0 /*-------------------------------------------------------------------*/
+         8.0      /*  PROGRAM      CHART
+         9.0    + /*  _______
+        10.0      /*
+        11.0      /*  PURPOSE      GENERATES A STRUCTURE CHART FROM A COMPILER LISTING
+        12.0    + /*  _______
+        13.0      /*
+        14.0      /*  INPUT        SYSUT1 - COMPILER LISTING
+        15.0    + /*  _____
+        16.0      /*
+        17.0      /*  OUTPUT       SYSPRINT - STRUCTURE CHART
+        18.0    + /*  ______
+        19.0      /*               SYSUT2   - COMPILER LISTING (FOR PRINT OPTION)
+        20.0      /*
+        21.0      /*  PARAMETERS   PROGRAM NAME,OPTION1,OPTION2,...
+        22.0    + /*  __________
+        23.0      /*
+        24.0      /*  OPTIONS
+        25.0    + /*  _______
+        26.0      /*               DUMP        DUMP INTERNAL TABLES
+        27.0      /*               NODUMP      DO NOT DUMP INTERNAL TABLES
+        28.0    + /*               ______
+        29.0      /*
+        30.0      /*               LINK        SET RETURN CODE TO 4 (WARNING)
+        31.0      /*                           IF UNDECLARED VARIABLES EXIST
+        32.0      /*               NOLINK      SET RETURN CODE TO 12 (ERROR)
+        33.0    + /*               ______
+        34.0      /*                           IF UNDECLARED VARIABLES EXIST
+        35.0      /*                           (THIS WILL PREVENT EXECUTION OF THE
+        36.0      /*                            LINK STEP)
+        37.0      /*
+        38.0      /*                           NOTE: BUILTIN FUNCTIONS, SYSIN, AND
+        39.0      /*                                 SYSPRINT ARE NOT CONSIDERED AS
+        40.0      /*                                 VARIABLES
+        41.0      /*
+        42.0      /*               NEST        SHOW NESTING LEVEL OF ENTRIES
+        43.0    + /*               ____
+        44.0      /*                           (E.G. "1.3" FOR THIRD ENTRY AT LEVEL 1)
+        45.0      /*               NONEST      SHOW RELATIVE LEVEL OF ENTRIES
+        46.0      /*                           (E.G. "3" FOR THIRD ENTRY AT ANY LEVEL)
+        47.0      /*
+        48.0      /*               PAGE        SKIP TO NEW PAGE FOR EACH MAJOR ENTRY
+        49.0      /*               NOPAGE
+        50.0    + /*               ______
+        51.0      /*
+        52.0      /*               PLIRETC     CHART CALLS TO PLIRETC
+        53.0      /*               NOPLIRETC   IGNORE CALLS TO PLIRETC
+        54.0    + /*               _________
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page     3
+ 0    Line.File
+ 0      55.0      /*
+        56.0      /*               PRINT       PRINT COMPILER LISTING
+        57.0    + /*               _____
+        58.0      /*               NOPRINT     DO NOT PRINT COMPILER LISTING
+        59.0      /*
+        60.0      /*
+        61.0    1 /*  LIMITATIONS  MAXIMUM 1000 ENTRIES AND 1000 REFERENCES
+        62.0    + /*  ___________
+        63.0      /*
+        64.0      /*               PL/I OPTIMIZING COMPILER SOURCE (3.1 OR 4.0)
+        65.0      /*
+        66.0      /*               XREF AND ATTRIBUTES (FULL OR SHORT) MUST BE SPECIFIED
+        67.0      /*
+        68.0      /*  ALGORITHM    (1)  THE ATTRIBUTE AND REFERENCE TABLE IS FOUND
+        69.0    + /*  _________
+        70.0      /*               (2)  EACH ENTRY IS EXTRACTED WITH ITS
+        71.0      /*                    - NAME
+        72.0      /*                    - TYPE (INTERNAL, EXTERNAL, BUILTIN, VARIABLE)
+        73.0      /*                    - DCL NUMBER
+        74.0      /*                    - REFERENCES
+        75.0      /*               (3)  ENTRY TABLE IS SORTED BY DCL NUMBER
+        76.0      /*               (4)  EACH REFERENCE IS RESOLVED (FIND CALLER)
+        77.0      /*               (5)  CHART IS PRINTED
+        78.0      /*
+        79.0      /*
+        80.0      /*  SAMPLE JCL  (CHANGE "$" TO PROGRAM NAME)
+        81.0    + /*  __________
+        82.0      /*
+        83.0      /*  //PLIXC    EXEC PLIXC
+        84.0      /*  //PLI.SYSPRINT DD DSN=&&PRINT,DISP=(NEW,PASS),
+        85.0      /*  //   UNIT=SYSDA,SPACE=(CYL,(1,1))
+        86.0      /*  //PLI.SYSIN  DD DSN=USERID.PROJECT.PLI($),DISP=SHR
+        87.0      /*  //*
+        88.0      /*  //CHART    EXEC PGM=CHART,REGION=500K,PARM='/$,PRINT'
+        89.0      /*  //STEPLIB  DD DSN=......,DISP=SHR
+        90.0      /*  //SYSPRINT DD SYSOUT=A
+        91.0      /*  //SYSUT1   DD DSN=&&PRINT,DISP=(OLD,DELETE)
+        92.0      /*  //SYSUT2   DD SYSOUT=A
+        93.0      /*
+        94.0      /*
+        95.0      /*  EXPLANATION OF OUTPUT
+        96.0    + /*  _____________________
+        97.0      /*
+        98.0      /* "ENTRY START"    THIS COLUMN SHOWS THE STARTING STATEMENT NUMBER
+        99.0      /*                  FOR INTERNAL PROCEDURES
+       100.0      /*
+       101.0      /* "ENTRY TYPE"     INTERNAL - INTERNAL PROCEDURE
+       102.0      /*                  EXTERNAL - EXTERNAL PROCEDURE
+       103.0      /*                  VARIABLE - ENTRY VARIABLE
+       104.0      /*                  BUILTIN  - BUILTIN (E.G. PLIDUMP)
+       105.0      /*
+       106.0      /* "LEVEL AND NAME" SHOWS THE HIERARCHICAL LEVEL AND PROCEDURE NAME
+       107.0      /*
+       108.0      /*                  "(N TIMES)" PROCEDURE IS CALLED "N" TIMES
+       109.0      /*
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page     4
+ 0    Line.File
+ 0     110.0      /*                  "SEE N"     FIRST USE OF PROCEDURE IS AT "N"
+       111.0      /*
+       112.0      /*-------------------------------------------------------------------*/
+       113.0    1 CHART: PROC (PARM) OPTIONS(MAIN) REORDER;
+       114.0    0 DEFAULT RANGE(*) BUILTIN ALIGNED;
+       115.0    0 DCL
+       116.0          TRUE                                   BIT(1) STATIC INIT('1'B),
+       117.0          FALSE                                  BIT(1) STATIC INIT('0'B),
+       118.0          PLIXOPT                                CHAR(100) VARYING
+       119.0                                  /*    INIT('ISA(150K)'), */
+       120.0                EXTERNAL STATIC INIT('HEAP(64K,64K,ANYWHERE,KEEP,8K,4K)'),
+       121.0          END_OF_FILE                            BIT(1) INIT(FALSE),
+       122.0          ENTRY_TABLE_COUNT                      BIN FIXED(15) INIT(0),
+       123.0          ENTRY_TABLE_SIZE                       BIN FIXED(15) INIT(1000),
+       124.0          MATCH_FLAG                             BIT(1) INIT(FALSE),
+       125.0          P                                      POINTER,
+       126.0          PAGE_NUMBER                            BIN FIXED(15) INIT(0),
+       127.0          PARM                                   CHAR(*) VARYING,
+       128.0          PRINT_LINE                             CHAR(133) VARYING,
+       129.0          PROGRAM_NAME                           CHAR(8) VARYING,
+       130.0          REFERENCE_TABLE_COUNT                  BIN FIXED(15) INIT(0),
+       131.0          REFERENCE_TABLE_SIZE                   BIN FIXED(15) INIT(1000),
+       132.0          SYSPRINT                               FILE PRINT,
+       133.0          SYSUT1                                 FILE INPUT,
+       134.0          SYSUT2                                 FILE RECORD OUTPUT
+       135.0                                                 ENV(VB RECSIZE(137) CTLASA),
+       136.0          UNDECLARED_COUNT                       BIN FIXED(15) INIT(0),
+       137.0    0     /* OPTIONS */
+       138.0          DUMP_OPTION                            BIT(1) INIT(FALSE),
+       139.0          LINK_OPTION                            BIT(1) INIT(FALSE),
+       140.0          NEST_OPTION                            BIT(1) INIT(TRUE),
+       141.0          PAGE_OPTION                            BIT(1) INIT(FALSE),
+       142.0          PLIRETC_OPTION                         BIT(1) INIT(FALSE),
+       143.0          PRINT_OPTION                           BIT(1) INIT(TRUE);
+       144.0    1 /*-------------------------------------------------------------------*/
+       145.0      /*  DATA STRUCTURES
+       146.0      /*
+       147.0      /*       ENTRY TABLE
+       148.0      /*
+       149.0      /*           NAME              NAME OF ENTRY
+       150.0      /*           TYPE              ENTRY TYPE
+       151.0      /*                             (INTERNAL, EXTERNAL, VARIABLE, BUILTIN)
+       152.0      /*           DCL_NUMBER        STATEMENT NUMBER WHERE DECLARED
+       153.0      /*                             (99,999,999 FOR EXTERNAL ENTRIES)
+       154.0      /*           FIRST_USE#        FIRST INDEX IN REF TABLE  (ARRAY)
+       155.0      /*           LAST_USE#         LAST  INDEX IN REF TABLE  (ARRAY)
+       156.0      /*           FIRST_CALL#       FIRST INDEX IN REF TABLE  (LINK LIST)
+       157.0      /*           LAST_CALL#        LAST  INDEX IN REF TABLE  (LINK LIST)
+       158.0      /*           PRINT_FLAG        TRUE IF ALREADY PRINTED
+       159.0      /*           FIRST_ID          FIRST LEVEL/SEQUENCE USED (E.G. 3.4.2)
+       160.0      /*
+       161.0      /*     REFERENCE TABLE
+       162.0      /*
+       163.0      /*           NAME              SUBROUTINE NAME
+       164.0      /*           CALLED_AT_NUMBER  WHERE REFERENCED (STATEMENT)
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page     5
+ 0    Line.File
+ 0     165.0      /*           CALL_COUNT        NUMBER OF TIMES CALLED BY ENTRY
+       166.0      /*           ENTRY_NUMBER#     INDEX IN ENTRY TABLE FOR SUBROUTINE
+       167.0      /*           NEXT_CALL#        NEXT REF ON LIST
+       168.0      /*
+       169.0      /* NOTE: VARIABLES ENDING IN "#" ARE POINTERS
+       170.0      /*-------------------------------------------------------------------*/
+       171.0    0 DCL 1  ENTRY_TABLE,
+       172.0             2  ENTRY(0:1000),                   /* 0 IS FOR MAIN PROGRAM */
+       173.0                3  NAME                          CHAR(32) VARYING,
+       174.0                3  TYPE                          CHAR(8),
+       175.0                3  DCL_NUMBER                    BIN FIXED(31),
+       176.0                3  FIRST_USE#                    BIN FIXED(15),
+       177.0                3  LAST_USE#                     BIN FIXED(15),
+       178.0                3  FIRST_CALL#                   BIN FIXED(15),
+       179.0                3  LAST_CALL#                    BIN FIXED(15),
+       180.0                3  PRINT_FLAG                    BIT(1) ALIGNED,
+       181.0                3  FIRST_ID                      CHAR(25) VARYING;
+       182.0    0 DCL 1  REFERENCE_TABLE,
+       183.0             2  REF(0:1000),                     /* 0 IS NOT USED */
+       184.0                3  NAME                          CHAR(32) VARYING,
+       185.0                3  CALLED_AT_NUMBER              BIN FIXED(31),
+       186.0                3  CALL_COUNT                    BIN FIXED(31),
+       187.0                3  ENTRY_NUMBER#                 BIN FIXED(15),
+       188.0                3  NEXT_CALL#                    BIN FIXED(15);
+       189.0    1 /*-------------------------------------------------------------------*/
+       190.0      /* ON UNITS
+       191.0      /*-------------------------------------------------------------------*/
+       192.0    -     ON CONVERSION
+       193.0              BEGIN;
+       194.0                  PUT SKIP LIST('***** CONVERSION ERROR *****');
+       195.0                  PUT SKIP LIST(PRINT_LINE);
+       196.0                  PUT SKIP LIST('ONSOURCE: ' || ONSOURCE());
+       197.0                  ONSOURCE = (100)'0';
+       198.0              END;
+       199.0    -     ON ENDPAGE(SYSPRINT)
+       200.0              BEGIN;
+       201.0                  CALL NEW_PAGE;
+       202.0                  PUT SKIP(2);
+       203.0              END;
+       204.0    -     ON ENDFILE(SYSUT1)  END_OF_FILE = TRUE;
+       205.0    1 /*-------------------------------------------------------------------*/
+       206.0      /* MAIN LOGIC
+       207.0      /*
+       208.0      /* (1) INITIALIZATION
+       209.0      /* (2) SKIP TO ATTRIBUTE/XREF TABLE
+       210.0      /* (3) SORT ENTRY TABLE
+       211.0      /* (4) RESOLVE CALLS
+       212.0      /* (5) CHECK IF UNDECALRED VARIABLES WERE FOUND
+       213.0      /* (6) PRINT THE CHART
+       214.0      /* (7) FINISH PRINTING THE PROGRAM LISTING
+       215.0      /*-------------------------------------------------------------------*/
+       216.0    0     CALL INIT;
+       217.0    0     CALL SKIP_TO_ATTR_AND_XREF_TABLE;
+       218.0    0     CALL EXTRACT_ENTRIES;
+       219.0    0     CALL SORT_ENTRY_TABLE;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page     6
+ 0    Line.File
+ 0     220.0    0     IF  DUMP_OPTION
+       221.0          THEN
+       222.0              CALL DUMP;
+       223.0    0     CALL RESOLVE_CALLS;
+       224.0    0     CALL RESOLVE_ENTRY_NUMBERS;
+       225.0    0     IF  DUMP_OPTION
+       226.0          THEN
+       227.0              CALL DUMP;
+       228.0    0     IF  UNDECLARED_COUNT > 0
+       229.0          THEN
+       230.0              DO;
+       231.0                  PUT SKIP(3) LIST ('***** ' || $LJ(UNDECLARED_COUNT) ||
+       232.0                                    ' UNDECLARED VARIABLE(S) *****');
+       233.0                  IF  LINK_OPTION
+       234.0                  THEN
+       235.0                      CALL PLIRETC(4);
+       236.0                  ELSE
+       237.0                      CALL PLIRETC(12);
+       238.0              END;
+       239.0    0     CALL PRINT_CHART;
+       240.0    0     IF  PRINT_OPTION  & ^END_OF_FILE
+       241.0          THEN
+       242.0              CALL FINISH_PRINT;
+       243.0    1 /*-------------------------------------------------------------------*/
+       244.0      /*  INIT
+       245.0      /*
+       246.0      /* (1) GET PROGRAM NAME AND OPTIONS
+       247.0      /* (2) PROCESS AND PRINT OPTIONS
+       248.0      /*-------------------------------------------------------------------*/
+       249.0    0 INIT: PROC;
+       250.0    0 DCL I BIN FIXED(15),                    /* INDEX OF COMMA IN PARM    */
+       251.0          STAMP  CHAR(20),                    /* DATE/TIME STAMP           */
+       252.0          TDATE  PIC '(6)9' INIT(DATE());     /* DATE (YYMMDD)             */
+       253.0    0     OPEN FILE(SYSPRINT) LINESIZE(132);
+       254.0    0     ENTRY_TABLE     = '';
+       255.0          REFERENCE_TABLE = '';
+       256.0    0     IF  LENGTH(PARM) > 0
+       257.0          THEN
+       258.0              DO;
+       259.0                  I = INDEX(PARM, ',');
+       260.0                  IF  I = 0
+       261.0                  THEN
+       262.0                      PROGRAM_NAME = PARM;
+       263.0                  ELSE
+       264.0                      PROGRAM_NAME = SUBSTR(PARM, 1, I-1);
+       265.0              END;
+       266.0    0     PUT STRING(STAMP) EDIT
+       267.0              (SUBSTR(TDATE, 3, 4) || SUBSTR(TDATE, 1, 2),
+       268.0               SUBSTR(TIME(), 1, 6))
+       269.0              (P'99/99/99', X(2), P'99.99.99');
+       270.0    0     PUT EDIT
+       271.0              ('*****************************************',
+       272.0               '*     PL/I STRUCTURE CHART UTILITY      *',
+       273.0               '*                                       *',
+       274.0               '*',            STAMP,                  '*',
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page     7
+ 0    Line.File
+ 0     275.0               '*                                       *',
+       276.0               '*',         PROGRAM_NAME,              '*',
+       277.0               '*                                       *',
+       278.0               '*****************************************')
+       279.0              ((3) (COL(35), A),
+       280.0                    COL(35), A, COL(46), A, COL(75), A,
+       281.0                    COL(35), A,
+       282.0                    COL(35), A, COL(52), A, COL(75), A);
+       283.0    0     IF  I > 0
+       284.0          THEN
+       285.0              CALL GET_OPTIONS (I);
+       286.0    0     CALL PRINT_OPTIONS;
+       287.0    1 /*-------------------------------------------------------------------*/
+       288.0      /*  GET OPTIONS
+       289.0      /*
+       290.0      /*  (1) COPY PARM TO WORK PARM
+       291.0      /*  (2) EXTRACT AND PROCESS EACH OPTION
+       292.0      /*-------------------------------------------------------------------*/
+       293.0    0 GET_OPTIONS: PROC (I);
+       294.0    0 DCL WORK_PARM CHAR(100) VARYING,
+       295.0          OPTION    CHAR(100) VARYING,
+       296.0          I         BIN FIXED(15);
+       297.0    -     IF  I = LENGTH(PARM)
+       298.0          THEN
+       299.0              WORK_PARM = '';
+       300.0          ELSE
+       301.0              WORK_PARM = SUBSTR(PARM, I + 1);
+       302.0    0     PUT SKIP(3) EDIT ('OPTIONS SPECIFIED: ' || WORK_PARM) (COL(35), A);
+       303.0    -     DO WHILE (LENGTH(WORK_PARM) > 0);
+       304.0    0         I = INDEX(WORK_PARM, ',');
+       305.0              IF  I = 0
+       306.0              THEN
+       307.0                  DO;
+       308.0                      /* NO COMMA */
+       309.0                      OPTION    = WORK_PARM;
+       310.0                      WORK_PARM =  '';
+       311.0                  END;
+       312.0              ELSE
+       313.0                  DO;
+       314.0                      /* COMMA */
+       315.0                      OPTION = SUBSTR(WORK_PARM, 1,  I-1);
+       316.0    0                 IF  I = LENGTH(WORK_PARM)
+       317.0                      THEN
+       318.0                          WORK_PARM = '';
+       319.0                      ELSE
+       320.0                          WORK_PARM = SUBSTR(WORK_PARM, I+1);
+       321.0                  END;
+       322.0    1         SELECT (OPTION);
+       323.0    0             WHEN ('DUMP')       DUMP_OPTION    = TRUE;
+       324.0                  WHEN ('NODUMP')     DUMP_OPTION    = FALSE;
+       325.0    0             WHEN ('LINK')       LINK_OPTION    = TRUE;
+       326.0                  WHEN ('NOLINK')     LINK_OPTION    = FALSE;
+       327.0    0             WHEN ('NEST')       NEST_OPTION    = TRUE;
+       328.0                  WHEN ('NONEST')     NEST_OPTION    = FALSE;
+       329.0    0             WHEN ('PAGE')       PAGE_OPTION    = TRUE;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page     8
+ 0    Line.File
+ 0     330.0                  WHEN ('NOPAGE')     PAGE_OPTION    = FALSE;
+       331.0    0             WHEN ('PLIRETC')    PLIRETC_OPTION = TRUE;
+       332.0                  WHEN ('NOPLIRETC')  PLIRETC_OPTION = FALSE;
+       333.0    0             WHEN ('PRINT')      PRINT_OPTION   = TRUE;
+       334.0                  WHEN ('NOPRINT')    PRINT_OPTION   = FALSE;
+       335.0    0             OTHERWISE           PUT SKIP(2) EDIT
+       336.0                                          ('***** UNKNOWN OPTION: ' ||
+       337.0                                            OPTION || ' *****') (A);
+       338.0              END;
+       339.0    0     END;
+       340.0    0 END GET_OPTIONS;
+       341.0    1 /*-------------------------------------------------------------------*/
+       342.0      /*  PRINT OPTIONS
+       343.0      /*
+       344.0      /*  PRINT OPTIONS IN EFFECT AND DESCRIPTION OF AVAILABLE OPTIONS
+       345.0      /*-------------------------------------------------------------------*/
+       346.0    0 PRINT_OPTIONS: PROC;
+       347.0    0     PUT SKIP(2) EDIT ('OPTIONS IN EFFECT: ') (COL(35), A);
+       348.0    0     IF  LINK_OPTION      THEN PUT EDIT ('LINK')       (A);
+       349.0          ELSE                      PUT EDIT ('NOLINK')     (A);
+       350.0    0     IF  NEST_OPTION      THEN PUT EDIT (',NEST')      (A);
+       351.0          ELSE                      PUT EDIT (',NONEST')    (A);
+       352.0    0     IF  PAGE_OPTION      THEN PUT EDIT (',PAGE')      (A);
+       353.0          ELSE                      PUT EDIT (',NOPAGE')    (A);
+       354.0    0     IF  PLIRETC_OPTION   THEN PUT EDIT (',PLIRETC')   (A);
+       355.0          ELSE                      PUT EDIT (',NOPLIRETC') (A);
+       356.0    0     IF  PRINT_OPTION     THEN PUT EDIT (',PRINT')     (A);
+       357.0          ELSE                      PUT EDIT (',NOPRINT')   (A);
+       358.0    1     PUT SKIP(3) EDIT
+       359.0               ('OPTION      DESCRIPTION',
+       360.0                '______      _____________________________________________')
+       361.0               (COL(35), A, SKIP(0), COL(35), A)
+       362.0    0          ('LINK        SET RETURN CODE TO 4 (WARNING) IF UNDECLARED',
+       363.0                '            VARIABLES ARE FOUND',
+       364.0                'NOLINK      SET RETURN CODE TO 12 (ERROR) IF UNDECLARED',
+       365.0                '______')
+       366.0               (SKIP(2), (3) (COL(35), A), SKIP(0), COL(35), A)
+       367.0    0          ('            VARIABLES ARE FOUND (PREVENT LINKING)',
+       368.0                ' ',
+       369.0                '            NOTE:  BUILTIN FUNCTIONS, SYSIN, AND SYSPRINT',
+       370.0                '                   ARE NOT CONSIDERED VARIABLES')
+       371.0               (COL(35), A)
+       372.0    0          ('NEST        SHOW NESTING LEVEL OF ENTRIES',
+       373.0                '____')
+       374.0               (SKIP(2), COL(35), A, SKIP(0), COL(35), A)
+       375.0    0          ('                 (E.G. "1.3 " FOR THIRD ENTRY AT LEVEL 1)',
+       376.0                'NONEST      SHOW RELATIVE LEVEL OF ENTRIES',
+       377.0                '                 (E.G. "3" FOR THIRD ENTRY AT ANY LEVEL)')
+       378.0               (COL(35), A)
+       379.0    0          ('PAGE        SKIP TO NEW PAGE FOR EACH MAJOR ENTRY',
+       380.0                'NOPAGE      DO NOT SKIP TO NEW PAGE',
+       381.0                '______')
+       382.0               (SKIP(2), COL(35), A, COL(35), A, SKIP(0), COL(35), A)
+       383.0               ('PLIRETC     CHART CALLS TO PLIRETC',
+       384.0                'NOPLIRETC   IGNORE CALLS TO PLIRETC',
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page     9
+ 0    Line.File
+ 0     385.0                '_________')
+       386.0               (SKIP(2), COL(35), A, COL(35), A, SKIP(0), COL(35), A)
+       387.0               ('PRINT       PRINT COMPILER LISTING',
+       388.0                '_____')
+       389.0               (SKIP(2), COL(35), A, SKIP(0), COL(35), A)
+       390.0               ('NOPRINT     DO NOT PRINT COMPILER LISTING')
+       391.0               (COL(35), A);
+       392.0    0 END PRINT_OPTIONS;
+       393.0    0 END INIT;
+       394.0    1 /*-------------------------------------------------------------------*/
+       395.0      /*  SKIP TO ATTR AND XREF TABLE
+       396.0      /*
+       397.0      /*  READ (AND PRINT IF PRINT_OPTION) LINE FROM LISTING UNTIL
+       398.0      /*  "ATTRIBUTES AND REFERENCES" TABLE IS FOUND
+       399.0      /*-------------------------------------------------------------------*/
+       400.0    0 SKIP_TO_ATTR_AND_XREF_TABLE: PROC;
+       401.0    0     READ FILE(SYSUT1) INTO(PRINT_LINE);
+       402.0    0     DO WHILE (^END_OF_FILE & ^MATCH_FLAG);
+       403.0    0         IF  PRINT_OPTION
+       404.0              THEN
+       405.0                  WRITE FILE(SYSUT2) FROM(PRINT_LINE);
+       406.0    0         IF  LENGTH(PRINT_LINE) >= 69
+       407.0              THEN
+       408.0                  IF  SUBSTR(PRINT_LINE, 45, 25) =
+       409.0                      'ATTRIBUTES AND REFERENCES'
+       410.0                  THEN
+       411.0                      MATCH_FLAG = TRUE;
+       412.0    0         READ FILE(SYSUT1) INTO(PRINT_LINE);
+       413.0          END;
+       414.0    0 END SKIP_TO_ATTR_AND_XREF_TABLE;
+       415.0    1 /*-------------------------------------------------------------------*/
+       416.0      /* EXTRACT ENTRIES
+       417.0      /*
+       418.0      /* THIS ROUTINE IS CALLED AFTER THE ATTRIBUTE AND XREF TABLE IS FOUND
+       419.0      /*
+       420.0      /* LINE_COUNT   LINE NUMBER ON CURRENT PAGE OF LISTING
+       421.0      /* ENTRY_FLAG   TRUE IF LAST IDENTIFIER WAS AN ENTRY
+       422.0      /*-------------------------------------------------------------------*/
+       423.0    0 EXTRACT_ENTRIES: PROC;
+       424.0    0 DCL LINE_COUNT   BIN FIXED(15) INIT(2),
+       425.0          ENTRY_FLAG   BIT(1)        INIT(FALSE),
+       426.0          END_OF_TABLE BIT(1)        INIT(FALSE);
+       427.0    0     DO WHILE (^ END_OF_FILE & ^END_OF_TABLE);
+       428.0    0         IF  PRINT_OPTION
+       429.0              THEN
+       430.0                  WRITE FILE(SYSUT2) FROM(PRINT_LINE);
+       431.0    0         LINE_COUNT = LINE_COUNT + 1;
+       432.0    0         SELECT;
+       433.0    0             WHEN (SUBSTR(PRINT_LINE, 1, 1) = '1')
+       434.0                      /* TOP OF NEW PAGE */
+       435.0                      LINE_COUNT = 1;
+       436.0    0             WHEN (LENGTH(PRINT_LINE) < 58);
+       437.0                      /* TOO SHORT TO BE AN ENTRY */
+       438.0    0             WHEN (LINE_COUNT = 2)
+       439.0                      /* END OF TABLE CHECK */
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    10
+ 0    Line.File
+ 0     440.0                      IF  SUBSTR(PRINT_LINE, 45, 25) ^=
+       441.0                          'ATTRIBUTES AND REFERENCES'
+       442.0                      THEN
+       443.0                          END_OF_TABLE = TRUE;
+       444.0    1             WHEN (SUBSTR(PRINT_LINE, 13, 1) ^= ' ')
+       445.0                      DO;
+       446.0                          /* CHECK FOR UNDECLARED VARIABLES */
+       447.0                          IF  (SUBSTR(PRINT_LINE, 2, 1) = '*')         &
+       448.0                              (SUBSTR(PRINT_LINE, 45, 7) ^= 'BUILTIN') &
+       449.0                              (SUBSTR(PRINT_LINE, 13, 5) ^= 'SYSIN')   &
+       450.0                              (SUBSTR(PRINT_LINE, 13, 8) ^= 'SYSPRINT')
+       451.0                          THEN
+       452.0                              UNDECLARED_COUNT = UNDECLARED_COUNT + 1;
+       453.0    0                     SELECT;
+       454.0                              /* CHECK FOR BUILTIN FUNCTIONS */
+       455.0    0                         WHEN (SUBSTR(PRINT_LINE,45,7) = 'BUILTIN')
+       456.0    0                             SELECT (SUBSTR(PRINT_LINE, 13, 7));
+       457.0    0                                 WHEN ('PLIDUMP', 'PLISRTA',
+       458.0                                            'PLISRTB', 'PLISRTC',
+       459.0                                            'PLISRTD')
+       460.0    0                                     CALL GET_ENTRY('BUILTIN');
+       461.0    0                                 WHEN ('PLIRETC')
+       462.0    0                                     IF  PLIRETC_OPTION
+       463.0                                          THEN
+       464.0                                              CALL GET_ENTRY('BUILTIN');
+       465.0                                          ELSE
+       466.0                                              ENTRY_FLAG = FALSE;
+       467.0    0                                 OTHERWISE
+       468.0                                          ENTRY_FLAG = FALSE;
+       469.0                                  END;
+       470.0    0                         WHEN (SUBSTR(PRINT_LINE,45,5) = 'ENTRY')
+       471.0                                  /* INTERNAL ENTRY */
+       472.0    0                             CALL GET_ENTRY ('INTERNAL');
+       473.0    0                         WHEN (SUBSTR(PRINT_LINE,45,14) =
+       474.0                                    'EXTERNAL ENTRY')
+       475.0                                  /* EXTERNAL ENTRY */
+       476.0    0                             CALL GET_ENTRY ('EXTERNAL');
+       477.0    0                         WHEN (INDEX(PRINT_LINE, 'ENTRY VARIABLE') > 0)
+       478.0                                  /* ENTRY VARIABLE */
+       479.0    0                             CALL GET_ENTRY ('VARIABLE');
+       480.0    0                         OTHERWISE
+       481.0    0                             ENTRY_FLAG = FALSE;
+       482.0                          END;
+       483.0                      END;
+       484.0    1             WHEN (ENTRY_FLAG)
+       485.0                      /* COULD BE CONTINUATION OF ENTRY'S ATTRIBUTES */
+       486.0                      IF  VERIFY(SUBSTR(PRINT_LINE, 45), '0123456789, ') = 0
+       487.0                      THEN
+       488.0                          CALL GET_REFERENCES;
+       489.0    0             OTHERWISE
+       490.0                      ENTRY_FLAG = FALSE;
+       491.0              END;
+       492.0    0         READ FILE(SYSUT1) INTO(PRINT_LINE);
+       493.0          END;
+       494.0    1 /*-------------------------------------------------------------------*/
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    11
+ 0    Line.File
+ 0     495.0      /*  GET ENTRY
+       496.0      /*-------------------------------------------------------------------*/
+       497.0    0 GET_ENTRY: PROC (ENTRY_TYPE);
+       498.0    0 DCL ENTRY_TYPE CHAR(*),
+       499.0          I BIN FIXED(15);
+       500.0    -     ENTRY_FLAG        = TRUE;
+       501.0          ENTRY_TABLE_COUNT = ENTRY_TABLE_COUNT + 1;
+       502.0    0     IF  ENTRY_TABLE_COUNT > ENTRY_TABLE_SIZE
+       503.0          THEN
+       504.0              CALL ABORT ('ENTRY TABLE OVERFLOW');
+       505.0    0     I             = ENTRY_TABLE_COUNT;
+       506.0          ENTRY(I).NAME = $TRIM(SUBSTR(PRINT_LINE, 13, 31));
+       507.0          ENTRY(I).TYPE = ENTRY_TYPE;
+       508.0    -     IF  (SUBSTR(PRINT_LINE, 2, 1) = '*') | (ENTRY_TYPE ^= 'INTERNAL')
+       509.0          THEN
+       510.0              ENTRY(I).DCL_NUMBER = 99999999;
+       511.0          ELSE
+       512.0              ENTRY(I).DCL_NUMBER=
+       513.0                  SUBSTR(PRINT_LINE, 2, INDEX(PRINT_LINE, ' ') - 2);
+       514.0    0 END GET_ENTRY;
+       515.0    1 /*-------------------------------------------------------------------*/
+       516.0      /*  GET REFERENCES
+       517.0      /*
+       518.0      /*  PROCESS REFERENCE LIST FOR PRECEEDING ENTRY
+       519.0      /*
+       520.0      /*  FORMAT OF LIST: N1,N2,N3,... WHERE N1 <= N2 <= N3
+       521.0      /*
+       522.0      /*  IMPORTANT!  REFERENCE = 1 IMPLIES REFERENCE IS IN PROLOGUE CODE
+       523.0      /*              (REFERENCE IS IGNORED IN THIS CASE)
+       524.0      /*-------------------------------------------------------------------*/
+       525.0    0 GET_REFERENCES: PROC;
+       526.0    0 DCL REFERENCE_LIST    CHAR(100) VARYING,
+       527.0          (E, I, NUMBER, R) BIN FIXED(31);
+       528.0    0     REFERENCE_LIST = SUBSTR(PRINT_LINE, 45);
+       529.0          E              = ENTRY_TABLE_COUNT;
+       530.0    0     DO UNTIL (I = 0 | REFERENCE_LIST = ' ');
+       531.0    0         I = INDEX (REFERENCE_LIST, ',');
+       532.0    0         IF  I = 0
+       533.0              THEN
+       534.0                  DO;
+       535.0                      NUMBER = REFERENCE_LIST;
+       536.0                  END;
+       537.0              ELSE
+       538.0                  DO;
+       539.0                      NUMBER = SUBSTR(REFERENCE_LIST, 1, I-1);
+       540.0    0                 IF  I = LENGTH(REFERENCE_LIST)
+       541.0                      THEN
+       542.0                          REFERENCE_LIST = ' ';
+       543.0                      ELSE
+       544.0                          REFERENCE_LIST = SUBSTR(REFERENCE_LIST, I+1);
+       545.0                  END;
+       546.0    1         IF  NUMBER > 1 /* 1 IS PROLOGUE INITIALIZATION */
+       547.0              THEN
+       548.0                  DO;
+       549.0                      REFERENCE_TABLE_COUNT = REFERENCE_TABLE_COUNT + 1;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    12
+ 0    Line.File
+ 0     550.0    0                 IF  REFERENCE_TABLE_COUNT > REFERENCE_TABLE_SIZE
+       551.0                      THEN
+       552.0                          CALL ABORT ('REFERENCE TABLE OVERFLOW');
+       553.0    0                 R = REFERENCE_TABLE_COUNT;
+       554.0    0                 REF(R).NAME             = ENTRY(E).NAME;
+       555.0                      REF(R).CALLED_AT_NUMBER = NUMBER;
+       556.0                      REF(R).CALL_COUNT       = 1;
+       557.0    0                 IF  ENTRY(E).FIRST_USE# = 0
+       558.0                      THEN
+       559.0                          ENTRY(E).FIRST_USE# = R;
+       560.0    0                 ENTRY(E).LAST_USE# = R;
+       561.0                  END;
+       562.0    0     END;
+       563.0    0 END GET_REFERENCES;
+       564.0    0 END EXTRACT_ENTRIES;
+       565.0    1 /*-------------------------------------------------------------------*/
+       566.0      /*  SORT ENTRY TABLE (INTERNAL ENTRIES SORT FIRST)
+       567.0      /*-------------------------------------------------------------------*/
+       568.0    0 SORT_ENTRY_TABLE: PROC;
+       569.0    0 DCL SORTED BIT(1),
+       570.0          (I, J) BIN FIXED(15),
+       571.0          1 TEMP LIKE ENTRY;
+       572.0    0    DO I = ENTRY_TABLE_COUNT TO 2 BY -1 UNTIL (SORTED);
+       573.0    0        SORTED = TRUE;
+       574.0    0        DO J = 1 TO I-1;
+       575.0    0            IF  ENTRY(J).DCL_NUMBER > ENTRY(J+1).DCL_NUMBER
+       576.0                 THEN
+       577.0                     DO;
+       578.0                         TEMP        = ENTRY(J);
+       579.0                         ENTRY(J)    = ENTRY(J+1);
+       580.0                         ENTRY(J+1)  = TEMP;
+       581.0                         SORTED      = FALSE;
+       582.0                     END;
+       583.0             END;
+       584.0         END;
+       585.0    0 END SORT_ENTRY_TABLE;
+       586.0    1 /*-------------------------------------------------------------------*/
+       587.0      /*  RESOLVE CALLS
+       588.0      /*
+       589.0      /*  FIND CORRESPONDING CALLER FOR EACH REFERENCE
+       590.0      /*  (LAST INTERNALENTRY WHICH STARTS BEFORE THE CALL)
+       591.0      /*-------------------------------------------------------------------*/
+       592.0    0 RESOLVE_CALLS: PROC;
+       593.0    0 DCL (E, I, LAST_REF, R) BIN FIXED(15);
+       594.0    0     DO R = 1 TO REFERENCE_TABLE_COUNT;
+       595.0    0         /* FIND LAST INTERNAL ENTRY WHICH STARTS BEFORE THE CALL */
+       596.0    0         DO E = 1 TO ENTRY_TABLE_COUNT
+       597.0                  WHILE (ENTRY(E).DCL_NUMBER <= REF(R).CALLED_AT_NUMBER);
+       598.0              END;
+       599.0    0         E = E - 1;
+       600.0    0         IF  ENTRY(E).FIRST_CALL# = 0
+       601.0              THEN
+       602.0                  DO;
+       603.0                      /* FIRST SUBROUTINE */
+       604.0                      ENTRY(E).FIRST_CALL# = R;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    13
+ 0    Line.File
+ 0     605.0                      ENTRY(E).LAST_CALL#  = R;
+       606.0                  END;
+       607.0              ELSE
+       608.0                  DO;
+       609.0                      /* NOT FIRST SUBROUTINE - CHECK LIST */
+       610.0                      LAST_REF = 0;
+       611.0    0                 DO I = ENTRY(E).FIRST_CALL# REPEAT REF(I).NEXT_CALL#
+       612.0                          WHILE (I > 0                      &
+       613.0                                 REF(I).NAME ^= REF(R).NAME &
+       614.0                                 REF(I).CALLED_AT_NUMBER <
+       615.0                                     REF(R).CALLED_AT_NUMBER);
+       616.0    0                     LAST_REF = I;
+       617.0                      END;
+       618.0    1                 SELECT;
+       619.0    0                     WHEN (I = 0)
+       620.0                              /* NOT ON ENTRY'S LIST AND CALLED AFTER  ALL */
+       621.0                              /* PUT AT END OF LIST                        */
+       622.0                              DO;
+       623.0                                  REF(ENTRY(E).LAST_CALL#).NEXT_CALL# = R;
+       624.0                                  ENTRY(E).LAST_CALL#                 = R;
+       625.0                              END;
+       626.0    -                     WHEN (REF(I).NAME = REF(R).NAME)
+       627.0                              /* ALREADY ON ENTRY'S LIST - INCREMENT COUNT */
+       628.0                              DO;
+       629.0                                  REF(I).CALL_COUNT = REF(I).CALL_COUNT + 1;
+       630.0                              END;
+       631.0    -                     WHEN (LAST_REF = 0)
+       632.0                              /* NOT ON ENTRY'S LIST AND CALLED BEFORE ALL */
+       633.0                              /* PUT AT FRONT OF LIST                      */
+       634.0                              DO;
+       635.0                                  REF(R).NEXT_CALL# = ENTRY(E).FIRST_CALL#;
+       636.0                                  ENTRY(E).FIRST_CALL# = R;
+       637.0                              END;
+       638.0    -                     OTHERWISE
+       639.0                              /* NOT ON ENTRY'S LIST - PUT IN MIDDLE */
+       640.0                              DO;
+       641.0                                  REF(R).NEXT_CALL# =
+       642.0                                      REF(LAST_REF).NEXT_CALL#;
+       643.0                                  REF(LAST_REF).NEXT_CALL# = R;
+       644.0                              END;
+       645.0                          END;
+       646.0                  END;
+       647.0    0     END;
+       648.0    0 END RESOLVE_CALLS;
+       649.0    1 /*-------------------------------------------------------------------*/
+       650.0      /*  RESOLVE ENTRY NUMBERS
+       651.0      /*
+       652.0      /*  THIS ROUTINE IS CALLED AFTER ENTRIES ARE SORTED BY DCL NUMBER
+       653.0      /*  AND CALLS ARE RESOLVED
+       654.0      /*
+       655.0      /*  SET ENTRY_NUMBER# TO CORRESPONDING INDEX IN ENTRY_TABLE FOR EACH
+       656.0      /*  REFERENCE (USED IN PRINT ROUTINE TO SEE IF ROUTINE ALREADY PRINTED)
+       657.0      /*-------------------------------------------------------------------*/
+       658.0    0 RESOLVE_ENTRY_NUMBERS: PROC;
+       659.0    0 DCL (E, R) BIN FIXED(15),
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    14
+ 0    Line.File
+ 0     660.0          LAST_NAME  CHAR(31) INIT (' ');
+       661.0    0     DO R = 1 TO REFERENCE_TABLE_COUNT;
+       662.0    0         IF  REF(R).NAME = LAST_NAME
+       663.0              THEN
+       664.0                  DO;
+       665.0                      REF(R).ENTRY_NUMBER# = REF(R-1).ENTRY_NUMBER#;
+       666.0                  END;
+       667.0              ELSE
+       668.0                  DO;
+       669.0    0                 LAST_NAME = REF(R).NAME;
+       670.0    0                 DO E = 1 TO ENTRY_TABLE_COUNT
+       671.0                          UNTIL (ENTRY(E).NAME = LAST_NAME);
+       672.0                      END;
+       673.0    0                 IF  E > ENTRY_TABLE_COUNT
+       674.0                      THEN
+       675.0                          CALL ABORT ('ENTRY NOT FOUND: ' || REF(R).NAME);
+       676.0                      ELSE
+       677.0                          REF(R).ENTRY_NUMBER# = E;
+       678.0                  END;
+       679.0          END;
+       680.0    0 END RESOLVE_ENTRY_NUMBERS;
+       681.0    1 /*-------------------------------------------------------------------*/
+       682.0      /*  PRINT CHART
+       683.0      /*-------------------------------------------------------------------*/
+       684.0    0 PRINT_CHART: PROC;
+       685.0    0 DCL E             BIN FIXED(15) INIT(0),
+       686.0          LEVEL         BIN FIXED(15) INIT(0),
+       687.0          ID_NUMBER     CHAR(255) VARYING INIT(''),
+       688.0          ID_STRING     CHAR(255) VARYING INIT(''),
+       689.0          COUNT_STRING  CHAR(20)  VARYING INIT(''),
+       690.0          NEW_ID_NUMBER CHAR(255) VARYING INIT(''),
+       691.0          PRINT_COL     BIN FIXED(15) INIT(22),
+       692.0          PRINT_STRING  CHAR(255) VARYING INIT('');
+       693.0    0     CALL NEW_PAGE;
+       694.0    -     CALL PRINT_CHART1 (E,
+       695.0                             LEVEL,
+       696.0                             ID_STRING,
+       697.0                             ID_NUMBER,
+       698.0                             COUNT_STRING,
+       699.0                             PRINT_COL);
+       700.0    1 /*-------------------------------------------------------------------*/
+       701.0      /*  PRINT CHART1 - RECURSIVE ROUTINE TO PRINT THE CHART (OUTLINE)
+       702.0      /*
+       703.0      /*  E              ENTRY TABLE INDEX
+       704.0      /*  LEVEL          LEVEL (E.G. 3 IS THIRD)
+       705.0      /*  ID_STRING      ENTRY ID (E.G. 1.2.4 IS FIRST CALL  AT LEVEL 1
+       706.0      /*                                         SECOND CALL AT LEVEL 2
+       707.0      /*                                         FOURTH CALL AT LEVEL 3
+       708.0      /*  ID_NUMBER      SEQUENCE NUMBER WITHIN A GIVEN LEVEL
+       709.0      /*  COUNT_STRING   CONTAINS NUMBER OF CALLS (E.G. "(5 TIMES)" )
+       710.0      /*  PRINT_COL      COLUMN TO PRINT ENTRY AT
+       711.0      /*-------------------------------------------------------------------*/
+       712.0    0 PRINT_CHART1: PROC
+       713.0                   (E, LEVEL, ID_STRING, ID_NUMBER, COUNT_STRING, PRINT_COL)
+       714.0                    RECURSIVE;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    15
+ 0    Line.File
+ 0     715.0    0 DCL (E, LEVEL, PRINT_COL, R, SEQUENCE)   BIN FIXED(15),
+       716.0          (ID_STRING, ID_NUMBER, COUNT_STRING) CHAR(*) VARYING;
+       717.0    0 IF  E > 0
+       718.0      THEN
+       719.0          DO;
+       720.0              IF  ENTRY(E).DCL_NUMBER = 99999999
+       721.0              THEN
+       722.0                  ENTRY(E).DCL_NUMBER = 0;
+       723.0    0         IF  (LEVEL = 1)  &  PAGE_OPTION  &  (ID_STRING ^= '1')
+       724.0              THEN
+       725.0                  CALL NEW_PAGE;
+       726.0    0         IF  NEST_OPTION
+       727.0              THEN
+       728.0                  PRINT_STRING = ID_STRING;
+       729.0              ELSE
+       730.0                  PRINT_STRING = ID_NUMBER;
+       731.0    0         IF  MOD(LENGTH(PRINT_STRING), 2) = 0
+       732.0              THEN
+       733.0                  /* EVEN */
+       734.0                  PUT SKIP(2) EDIT
+       735.0                      (ENTRY(E).DCL_NUMBER, ENTRY(E).TYPE)
+       736.0                          (P'(6)Z', X(2), A)
+       737.0                      (PRINT_STRING, ENTRY(E).NAME, COUNT_STRING)
+       738.0                          (COL(PRINT_COL), A, X(1), A, A);
+       739.0              ELSE
+       740.0                  /* ODD */
+       741.0                  PUT SKIP(2) EDIT
+       742.0                      (ENTRY(E).DCL_NUMBER, ENTRY(E).TYPE)
+       743.0                          (P'(6)Z', X(2), A)
+       744.0                      (PRINT_STRING, ENTRY(E).NAME, COUNT_STRING)
+       745.0                          (COL(PRINT_COL), A, X(2), A, A);
+       746.0          END;
+       747.0    1 IF  ENTRY(E).PRINT_FLAG
+       748.0      THEN
+       749.0          DO;
+       750.0              /* SUBROUTINE ALREADY PRINTED */
+       751.0              PUT EDIT ('- SEE ' || ENTRY(E).FIRST_ID) (X(1), A);
+       752.0          END;
+       753.0      ELSE
+       754.0          DO;
+       755.0              /* FIRST TIME PROCESSING SUBROUTINE */
+       756.0              ENTRY(E).PRINT_FLAG = TRUE;
+       757.0              ENTRY(E).FIRST_ID   = ID_STRING;
+       758.0              SEQUENCE = 0;
+       759.0    0         DO R = ENTRY(E).FIRST_CALL# REPEAT (REF(R).NEXT_CALL#)
+       760.0                WHILE (R > 0);
+       761.0    0             SEQUENCE = SEQUENCE + 1;
+       762.0    0             IF  REF(R).CALL_COUNT < 2
+       763.0                  THEN
+       764.0                      COUNT_STRING = '';
+       765.0                  ELSE
+       766.0                      COUNT_STRING = ' (' || $LJ(REF(R).CALL_COUNT) ||
+       767.0                                     ' TIMES)';
+       768.0    0             NEW_ID_NUMBER = $LJ(SEQUENCE);
+       769.0    0             SELECT;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    16
+ 0    Line.File
+ 0     770.0    0                 WHEN (LEVEL = 0)
+       771.0                          CALL PRINT_CHART1
+       772.0                              (REF(R).ENTRY_NUMBER#,
+       773.0                               LEVEL + 1,
+       774.0                               (NEW_ID_NUMBER),
+       775.0                               (NEW_ID_NUMBER),
+       776.0                               COUNT_STRING,
+       777.0                               PRINT_COL);
+       778.0    0                 WHEN (NEST_OPTION)
+       779.0                          CALL PRINT_CHART1
+       780.0                              (REF(R).ENTRY_NUMBER#,
+       781.0                               LEVEL + 1,
+       782.0                               (ID_STRING || '.' || NEW_ID_NUMBER),
+       783.0                               (NEW_ID_NUMBER),
+       784.0                               COUNT_STRING,
+       785.0                               (PRINT_COL + LENGTH(ID_STRING) + 1
+       786.0                                          + MOD(LENGTH(ID_STRING), 2)));
+       787.0    0                 OTHERWISE
+       788.0                          CALL PRINT_CHART1
+       789.0                              (REF(R).ENTRY_NUMBER#,
+       790.0                               LEVEL + 1,
+       791.0                               (ID_STRING || '.' || NEW_ID_NUMBER),
+       792.0                               (NEW_ID_NUMBER),
+       793.0                               COUNT_STRING,
+       794.0                               (PRINT_COL + LENGTH(NEW_ID_NUMBER) + 1
+       795.0                                          + MOD(LENGTH(NEW_ID_NUMBER), 2)));
+       796.0                  END;
+       797.0              END;
+       798.0          END;
+       799.0    0 END PRINT_CHART1;
+       800.0    0 END PRINT_CHART;
+       801.0    1 /*-------------------------------------------------------------------*/
+       802.0      /*  FINISH PRINT
+       803.0      /*-------------------------------------------------------------------*/
+       804.0    0 FINISH_PRINT: PROC;
+       805.0    0     READ FILE(SYSUT1) INTO(PRINT_LINE);
+       806.0    0     DO WHILE (^END_OF_FILE);
+       807.0              WRITE FILE(SYSUT2) FROM(PRINT_LINE);
+       808.0              READ FILE(SYSUT1) INTO(PRINT_LINE);
+       809.0          END;
+       810.0    0 END FINISH_PRINT;
+       811.0    - /*-------------------------------------------------------------------*/
+       812.0      /* NEW PAGE
+       813.0      /*-------------------------------------------------------------------*/
+       814.0    0 NEW_PAGE: PROC;
+       815.0    0     PAGE_NUMBER = PAGE_NUMBER + 1;
+       816.0    0     PUT PAGE EDIT
+       817.0    0         (' ENTRY  ENTRY',
+       818.0               ' START  TYPE         LEVEL AND NAME',
+       819.0               '- ', PROGRAM_NAME, ' -', 'PAGE', PAGE_NUMBER)
+       820.0              (A, SKIP, A, COL(60), A, A, A, COL(125), A, F(3))
+       821.0    0         (' _____  ________     ______________')
+       822.0              (SKIP(0), A);
+       823.0    0 END NEW_PAGE;
+       824.0    1 /*-------------------------------------------------------------------*/
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    17
+ 0    Line.File
+ 0     825.0      /*  ABORT - PRINT ABORT MESSAGE AND STOP
+       826.0      /*-------------------------------------------------------------------*/
+       827.0    0 ABORT: PROC (MSG);
+       828.0    0 DCL MSG CHAR(*);
+       829.0    0     PUT SKIP LIST ('ABORTING: ' || MSG);
+       830.0          STOP;
+       831.0    0 END ABORT;
+       832.0    - /*-------------------------------------------------------------------*/
+       833.0      /*  DUMP - DUMP INTERNAL TABLES
+       834.0      /*-------------------------------------------------------------------*/
+       835.0    0 DUMP: PROC;
+       836.0    0 DCL I BIN FIXED(15);
+       837.0    0     PUT SKIP(2) EDIT
+       838.0              ('---------- ENTRY TABLE ----------')
+       839.0              (A)
+       840.0    0         ('   I ', CHAR('NAME', 33),
+       841.0               'TYPE       DCL  USE1  USE2 CALL1 CALL2')
+       842.0    0         (SKIP, A, A, A)
+       843.0              ((I, ENTRY(I) DO I = 0 TO ENTRY_TABLE_COUNT))
+       844.0              (SKIP, F(4), X(1), A(33), A(8), (5) F(6), X(1), A, X(1), A);
+       845.0    0     PUT SKIP(3) EDIT
+       846.0              ('----------- REF TABLE -----------')
+       847.0              (A)
+       848.0    0         ('   I ', CHAR('NAME', 33),' CALL_AT   COUNT  ENTRY#    NEXT#')
+       849.0              (SKIP, A, A, A)
+       850.0    0         ((I, REF(I) DO I = 1 TO REFERENCE_TABLE_COUNT))
+       851.0              (SKIP, F(4), X(1), A(33), (4) F(8));
+       852.0    0 END DUMP;
+       853.0    1 /*-------------------------------------------------------------------*/
+       854.0      /* $LJ - LEFT JUSTIFY NUMBER WITH NO LEADING/TRAILING BLANKS
+       855.0      /*
+       856.0      /* EXAMPLE:  -00123 IS RETURNED AS '-123'
+       857.0      /*-------------------------------------------------------------------*/
+       858.0    0  $LJ: PROC (NUMBER) RETURNS (CHAR(14) VARYING);
+       859.0    0     DCL NUMBER DEC FIXED(11), RESULT CHAR(14);
+       860.0    0     /* RETURN RESULT STARTING AT FIRST NON-BLANK POSITION */
+       861.0          RESULT = NUMBER;
+       862.0          RETURN (SUBSTR(RESULT, VERIFY(RESULT, ' ')));
+       863.0    0 END $LJ;
+       864.0    - /*-------------------------------------------------------------------*/
+       865.0      /* $TRIM - REMOVE TRAILING BLANKS (ASSUME NO LEADING/IMBEDDED BLANKS)
+       866.0      /*-------------------------------------------------------------------*/
+       867.0    0 $TRIM: PROC (NAME) RETURNS (CHAR(100) VARYING);
+       868.0    0 DCL NAME   CHAR(*),
+       869.0          I      BIN FIXED(15);
+       870.0    0     I = INDEX (NAME, ' ');
+       871.0    0     SELECT (I);
+       872.0              WHEN (0)  RETURN (NAME);
+       873.0              WHEN (1)  RETURN ('');
+       874.0              OTHERWISE RETURN (SUBSTR(NAME, 1, I-1));
+       875.0          END;
+       876.0    0 END $TRIM;
+       877.0    0 END CHART;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    18
+ -                    Attribute/Xref Table
+ -     Line.File Identifier                      Attributes
+ 0      858.0    $LJ                             CONSTANT
+                                                 ENTRY( BYADDR FIXED DEC(11,0) )
+                                                 RETURNS( BYADDR CHARACTER(14) VARYING )
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 231.0 766.0 768.0
+        867.0    $TRIM                           CONSTANT
+                                                 ENTRY( BYADDR CHARACTER(*) )
+                                                 RETURNS( BYADDR CHARACTER(100) VARYING )
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 506.0
+        193.0    _ON_Begin_193_Blk_2             CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+        200.0    _ON_Begin_200_Blk_3             CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+        204.0    _ON_Begin_204_Blk_4             CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+        827.0    ABORT                           CONSTANT
+                                                 ENTRY( BYADDR CHARACTER(*) )
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 504.0 552.0 675.0
+        186.0    CALL_COUNT                      MEMBER IN REF IN REFERENCE_TABLE DIM(0:1000) FIXED BIN(31,0)
+                                                 Refs: 629.0 762.0 766.0 845.0
+                                                 Sets: 255.0 556.0 629.0
+        185.0    CALLED_AT_NUMBER                MEMBER IN REF IN REFERENCE_TABLE DIM(0:1000) FIXED BIN(31,0)
+                                                 Refs: 596.0 611.0 611.0 845.0
+                                                 Sets: 255.0 555.0
+        +++++++  CHAR                            BUILTIN
+                                                 Refs: 837.0 845.0
+        689.0    COUNT_STRING                    AUTOMATIC CHARACTER(20) VARYING INITIAL
+                                                 Refs: 694.0
+        716.0    COUNT_STRING                    PARAMETER BYADDR CHARACTER(*) VARYING
+                                                 Refs: 734.0 741.0 771.0 779.0 788.0
+                                                 Sets: 764.0 766.0
+        +++++++  DATE                            BUILTIN
+                                                 Refs: 250.0
+        175.0    DCL_NUMBER                      MEMBER IN ENTRY IN ENTRY_TABLE DIM(0:1000) FIXED BIN(31,0)
+                                                 Refs: 575.0 575.0 578.0 579.0 596.0 720.0 734.0 741.0 837.0
+                                                 Sets: 254.0 510.0 512.0 579.0 580.0 722.0
+        571.0    DCL_NUMBER                      MEMBER IN TEMP FIXED BIN(31,0)
+                                                 Refs: 580.0
+                                                 Sets: 578.0
+        835.0    DUMP                            CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 222.0 227.0
+        138.0    DUMP_OPTION                     AUTOMATIC BIT(1) INITIAL
+                                                 Refs: 220.0 225.0
+                                                 Sets: 323.0 324.0
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    19
+ 0     Line.File Identifier                      Attributes
+ 0      527.0    E                               AUTOMATIC FIXED BIN(31,0)
+                                                 Refs: 554.0 557.0 559.0 560.0
+                                                 Sets: 529.0
+        593.0    E                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 596.0 599.0 600.0 604.0 605.0 611.0 623.0 624.0 635.0 636.0
+                                                 Sets: 596.0 599.0
+        659.0    E                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 670.0 673.0 677.0
+                                                 Sets: 670.0
+        685.0    E                               AUTOMATIC FIXED BIN(15,0) INITIAL
+                                                 Refs: 694.0
+        715.0    E                               PARAMETER BYADDR FIXED BIN(15,0)
+                                                 Refs: 717.0 720.0 722.0 734.0 734.0 734.0 741.0 741.0 741.0 747.0 751.0 756.0
+                                                       757.0 759.0
+        121.0    END_OF_FILE                     AUTOMATIC BIT(1) INITIAL
+                                                 Refs: 240.0 402.0 427.0 806.0
+                                                 Sets: 204.0
+        426.0    END_OF_TABLE                    AUTOMATIC BIT(1) INITIAL
+                                                 Refs: 427.0
+                                                 Sets: 443.0
+        172.0    ENTRY                           STRUCTURE MEMBER IN ENTRY_TABLE DIM(0:1000)
+                                                 Refs: 578.0 579.0 837.0
+                                                 Sets: 254.0 579.0 580.0
+        425.0    ENTRY_FLAG                      AUTOMATIC BIT(1) INITIAL
+                                                 Refs: 484.0
+                                                 Sets: 466.0 468.0 481.0 490.0 500.0
+        187.0    ENTRY_NUMBER#                   MEMBER IN REF IN REFERENCE_TABLE DIM(0:1000) FIXED BIN(15,0)
+                                                 Refs: 665.0 771.0 779.0 788.0 845.0
+                                                 Sets: 255.0 665.0 677.0
+        171.0    ENTRY_TABLE                     STRUCTURE AUTOMATIC
+                                                 Sets: 254.0
+        122.0    ENTRY_TABLE_COUNT               AUTOMATIC FIXED BIN(15,0) INITIAL
+                                                 Refs: 501.0 502.0 505.0 529.0 572.0 596.0 670.0 673.0 837.0
+                                                 Sets: 501.0
+        123.0    ENTRY_TABLE_SIZE                AUTOMATIC FIXED BIN(15,0) INITIAL
+                                                 Refs: 502.0
+        498.0    ENTRY_TYPE                      PARAMETER BYADDR CHARACTER(*)
+                                                 Refs: 507.0 508.0
+        423.0    EXTRACT_ENTRIES                 CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 218.0
+        117.0    FALSE                           STATIC BIT(1) INITIAL
+                                                 Refs: 115.0 115.0 115.0 115.0 115.0 115.0 324.0 326.0 328.0 330.0 332.0 334.0
+                                                       424.0 424.0 466.0 468.0 481.0 490.0 581.0
+        804.0    FINISH_PRINT                    CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 242.0
+        178.0    FIRST_CALL#                     MEMBER IN ENTRY IN ENTRY_TABLE DIM(0:1000) FIXED BIN(15,0)
+                                                 Refs: 578.0 579.0 600.0 611.0 635.0 759.0 837.0
+                                                 Sets: 254.0 579.0 580.0 604.0 636.0
+        571.0    FIRST_CALL#                     MEMBER IN TEMP FIXED BIN(15,0)
+                                                 Refs: 580.0
+                                                 Sets: 578.0
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    20
+ 0     Line.File Identifier                      Attributes
+ 0      181.0    FIRST_ID                        MEMBER IN ENTRY IN ENTRY_TABLE DIM(0:1000) CHARACTER(25) VARYING
+                                                 Refs: 578.0 579.0 751.0 837.0
+                                                 Sets: 254.0 579.0 580.0 757.0
+        571.0    FIRST_ID                        MEMBER IN TEMP CHARACTER(25) VARYING
+                                                 Refs: 580.0
+                                                 Sets: 578.0
+        176.0    FIRST_USE#                      MEMBER IN ENTRY IN ENTRY_TABLE DIM(0:1000) FIXED BIN(15,0)
+                                                 Refs: 557.0 578.0 579.0 837.0
+                                                 Sets: 254.0 559.0 579.0 580.0
+        571.0    FIRST_USE#                      MEMBER IN TEMP FIXED BIN(15,0)
+                                                 Refs: 580.0
+                                                 Sets: 578.0
+        497.0    GET_ENTRY                       CONSTANT
+                                                 ENTRY( BYADDR CHARACTER(*) )
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 460.0 464.0 472.0 476.0 479.0
+        293.0    GET_OPTIONS                     CONSTANT
+                                                 ENTRY( BYADDR FIXED BIN(15,0) )
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 285.0
+        525.0    GET_REFERENCES                  CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 488.0
+        250.0    I                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 260.0 264.0 283.0 285.0
+                                                 Sets: 259.0
+        296.0    I                               PARAMETER BYADDR FIXED BIN(15,0)
+                                                 Refs: 297.0 301.0 305.0 315.0 316.0 320.0
+                                                 Sets: 304.0
+        499.0    I                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 506.0 507.0 510.0 512.0
+                                                 Sets: 505.0
+        527.0    I                               AUTOMATIC FIXED BIN(31,0)
+                                                 Refs: 530.0 532.0 539.0 540.0 544.0
+                                                 Sets: 531.0
+        570.0    I                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 574.0
+                                                 Sets: 572.0
+        593.0    I                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 611.0 611.0 611.0 611.0 616.0 619.0 626.0 629.0 629.0
+                                                 Sets: 611.0
+        836.0    I                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 837.0 837.0 845.0 845.0
+                                                 Sets: 837.0 845.0
+        869.0    I                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 871.0 874.0
+                                                 Sets: 870.0
+        687.0    ID_NUMBER                       AUTOMATIC CHARACTER(255) VARYING INITIAL
+                                                 Refs: 694.0
+        716.0    ID_NUMBER                       PARAMETER BYADDR CHARACTER(*) VARYING
+                                                 Refs: 730.0
+        688.0    ID_STRING                       AUTOMATIC CHARACTER(255) VARYING INITIAL
+                                                 Refs: 694.0
+        716.0    ID_STRING                       PARAMETER BYADDR CHARACTER(*) VARYING
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    21
+ 0     Line.File Identifier                      Attributes
+ 0                                               Refs: 723.0 728.0 757.0 779.0 779.0 779.0 788.0
+        +++++++  INDEX                           BUILTIN
+                                                 Refs: 259.0 304.0 477.0 512.0 531.0 870.0
+        249.0    INIT                            CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 216.0
+        570.0    J                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 575.0 575.0 578.0 579.0 579.0 580.0
+                                                 Sets: 574.0
+        179.0    LAST_CALL#                      MEMBER IN ENTRY IN ENTRY_TABLE DIM(0:1000) FIXED BIN(15,0)
+                                                 Refs: 578.0 579.0 623.0 837.0
+                                                 Sets: 254.0 579.0 580.0 605.0 624.0
+        571.0    LAST_CALL#                      MEMBER IN TEMP FIXED BIN(15,0)
+                                                 Refs: 580.0
+                                                 Sets: 578.0
+        660.0    LAST_NAME                       AUTOMATIC CHARACTER(31) INITIAL
+                                                 Refs: 662.0 670.0
+                                                 Sets: 669.0
+        593.0    LAST_REF                        AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 631.0 641.0 643.0
+                                                 Sets: 610.0 616.0
+        177.0    LAST_USE#                       MEMBER IN ENTRY IN ENTRY_TABLE DIM(0:1000) FIXED BIN(15,0)
+                                                 Refs: 578.0 579.0 837.0
+                                                 Sets: 254.0 560.0 579.0 580.0
+        571.0    LAST_USE#                       MEMBER IN TEMP FIXED BIN(15,0)
+                                                 Refs: 580.0
+                                                 Sets: 578.0
+        +++++++  LENGTH                          BUILTIN
+                                                 Refs: 256.0 297.0 303.0 316.0 406.0 436.0 540.0 731.0 779.0 779.0 788.0 788.0
+        686.0    LEVEL                           AUTOMATIC FIXED BIN(15,0) INITIAL
+                                                 Refs: 694.0
+        715.0    LEVEL                           PARAMETER BYADDR FIXED BIN(15,0)
+                                                 Refs: 723.0 770.0 771.0 779.0 788.0
+        424.0    LINE_COUNT                      AUTOMATIC FIXED BIN(15,0) INITIAL
+                                                 Refs: 431.0 438.0
+                                                 Sets: 431.0 435.0
+        139.0    LINK_OPTION                     AUTOMATIC BIT(1) INITIAL
+                                                 Refs: 233.0 348.0
+                                                 Sets: 325.0 326.0
+        124.0    MATCH_FLAG                      AUTOMATIC BIT(1) INITIAL
+                                                 Refs: 402.0
+                                                 Sets: 411.0
+        +++++++  MOD                             BUILTIN
+                                                 Refs: 731.0 779.0 788.0
+        828.0    MSG                             PARAMETER BYADDR CHARACTER(*)
+                                                 Refs: 829.0
+        173.0    NAME                            MEMBER IN ENTRY IN ENTRY_TABLE DIM(0:1000) CHARACTER(32) VARYING
+                                                 Refs: 554.0 578.0 579.0 670.0 734.0 741.0 837.0
+                                                 Sets: 254.0 506.0 579.0 580.0
+        184.0    NAME                            MEMBER IN REF IN REFERENCE_TABLE DIM(0:1000) CHARACTER(32) VARYING
+                                                 Refs: 611.0 611.0 626.0 626.0 662.0 669.0 675.0 845.0
+                                                 Sets: 255.0 554.0
+        571.0    NAME                            MEMBER IN TEMP CHARACTER(32) VARYING
+                                                 Refs: 580.0
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    22
+ 0     Line.File Identifier                      Attributes
+ 0                                               Sets: 578.0
+        868.0    NAME                            PARAMETER BYADDR CHARACTER(*)
+                                                 Refs: 870.0 872.0 874.0
+        140.0    NEST_OPTION                     AUTOMATIC BIT(1) INITIAL
+                                                 Refs: 350.0 726.0 778.0
+                                                 Sets: 327.0 328.0
+        690.0    NEW_ID_NUMBER                   AUTOMATIC CHARACTER(255) VARYING INITIAL
+                                                 Refs: 771.0 771.0 779.0 779.0 788.0 788.0 788.0 788.0
+                                                 Sets: 768.0
+        814.0    NEW_PAGE                        CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 201.0 693.0 725.0
+        188.0    NEXT_CALL#                      MEMBER IN REF IN REFERENCE_TABLE DIM(0:1000) FIXED BIN(15,0)
+                                                 Refs: 611.0 641.0 759.0 845.0
+                                                 Sets: 255.0 623.0 635.0 641.0 643.0
+        527.0    NUMBER                          AUTOMATIC FIXED BIN(31,0)
+                                                 Refs: 546.0 555.0
+                                                 Sets: 535.0 539.0
+        859.0    NUMBER                          PARAMETER BYADDR FIXED DEC(11,0)
+                                                 Refs: 861.0
+        +++++++  ONSOURCE                        BUILTIN
+                                                 Refs: 196.0
+                                                 Sets: 197.0
+        295.0    OPTION                          AUTOMATIC CHARACTER(100) VARYING
+                                                 Refs: 322.0 335.0
+                                                 Sets: 309.0 315.0
+        126.0    PAGE_NUMBER                     AUTOMATIC FIXED BIN(15,0) INITIAL
+                                                 Refs: 815.0 816.0
+                                                 Sets: 815.0
+        141.0    PAGE_OPTION                     AUTOMATIC BIT(1) INITIAL
+                                                 Refs: 352.0 723.0
+                                                 Sets: 329.0 330.0
+        127.0    PARM                            PARAMETER BYADDR CHARACTER(*) VARYING
+                                                 Refs: 256.0 259.0 262.0 264.0 297.0 301.0
+        +++++++  PLIRETC                         BUILTIN
+                                                 Refs: 235.0 237.0
+        142.0    PLIRETC_OPTION                  AUTOMATIC BIT(1) INITIAL
+                                                 Refs: 354.0 462.0
+                                                 Sets: 331.0 332.0
+        684.0    PRINT_CHART                     CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 239.0
+        712.0    PRINT_CHART1                    CONSTANT
+                                                 ENTRY( BYADDR FIXED BIN(15,0),
+                                                        BYADDR FIXED BIN(15,0),
+                                                        BYADDR CHARACTER(*) VARYING,
+                                                        BYADDR CHARACTER(*) VARYING,
+                                                        BYADDR CHARACTER(*) VARYING,
+                                                        BYADDR FIXED BIN(15,0) )
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 694.0 771.0 779.0 788.0
+        691.0    PRINT_COL                       AUTOMATIC FIXED BIN(15,0) INITIAL
+                                                 Refs: 694.0
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    23
+ 0     Line.File Identifier                      Attributes
+ 0      715.0    PRINT_COL                       PARAMETER BYADDR FIXED BIN(15,0)
+                                                 Refs: 734.0 741.0 771.0 779.0 788.0
+        180.0    PRINT_FLAG                      MEMBER IN ENTRY IN ENTRY_TABLE DIM(0:1000) BIT(1)
+                                                 Refs: 578.0 579.0 747.0 837.0
+                                                 Sets: 254.0 579.0 580.0 756.0
+        571.0    PRINT_FLAG                      MEMBER IN TEMP BIT(1)
+                                                 Refs: 580.0
+                                                 Sets: 578.0
+        128.0    PRINT_LINE                      AUTOMATIC CHARACTER(133) VARYING
+                                                 Refs: 195.0 405.0 406.0 408.0 430.0 433.0 436.0 440.0 444.0 447.0 447.0 447.0
+                                                       447.0 455.0 456.0 470.0 473.0 477.0 486.0 506.0 508.0 512.0 512.0 528.0
+                                                       807.0
+                                                 Sets: 401.0 412.0 492.0 805.0 808.0
+        143.0    PRINT_OPTION                    AUTOMATIC BIT(1) INITIAL
+                                                 Refs: 240.0 356.0 403.0 428.0
+                                                 Sets: 333.0 334.0
+        346.0    PRINT_OPTIONS                   CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 286.0
+        692.0    PRINT_STRING                    AUTOMATIC CHARACTER(255) VARYING INITIAL
+                                                 Refs: 731.0 734.0 741.0
+                                                 Sets: 728.0 730.0
+        129.0    PROGRAM_NAME                    AUTOMATIC CHARACTER(8) VARYING
+                                                 Refs: 270.0 816.0
+                                                 Sets: 262.0 264.0
+        527.0    R                               AUTOMATIC FIXED BIN(31,0)
+                                                 Refs: 554.0 555.0 556.0 559.0 560.0
+                                                 Sets: 553.0
+        593.0    R                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 596.0 604.0 605.0 611.0 611.0 623.0 624.0 626.0 635.0 636.0 641.0 643.0
+                                                 Sets: 594.0
+        659.0    R                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 662.0 665.0 665.0 669.0 675.0 677.0
+                                                 Sets: 661.0
+        715.0    R                               AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 759.0 759.0 762.0 766.0 771.0 779.0 788.0
+                                                 Sets: 759.0
+        183.0    REF                             STRUCTURE MEMBER IN REFERENCE_TABLE DIM(0:1000)
+                                                 Refs: 845.0
+                                                 Sets: 255.0
+        526.0    REFERENCE_LIST                  AUTOMATIC CHARACTER(100) VARYING
+                                                 Refs: 530.0 531.0 535.0 539.0 540.0 544.0
+                                                 Sets: 528.0 542.0 544.0
+        182.0    REFERENCE_TABLE                 STRUCTURE AUTOMATIC
+                                                 Sets: 255.0
+        130.0    REFERENCE_TABLE_COUNT           AUTOMATIC FIXED BIN(15,0) INITIAL
+                                                 Refs: 549.0 550.0 553.0 594.0 661.0 845.0
+                                                 Sets: 549.0
+        131.0    REFERENCE_TABLE_SIZE            AUTOMATIC FIXED BIN(15,0) INITIAL
+                                                 Refs: 550.0
+        592.0    RESOLVE_CALLS                   CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 223.0
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    24
+ 0     Line.File Identifier                      Attributes
+ 0      658.0    RESOLVE_ENTRY_NUMBERS           CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 224.0
+        859.0    RESULT                          AUTOMATIC CHARACTER(14)
+                                                 Refs: 862.0 862.0
+                                                 Sets: 861.0
+        715.0    SEQUENCE                        AUTOMATIC FIXED BIN(15,0)
+                                                 Refs: 761.0 768.0
+                                                 Sets: 758.0 761.0
+        400.0    SKIP_TO_ATTR_AND_XREF_TABLE     CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 217.0
+        568.0    SORT_ENTRY_TABLE                CONSTANT
+                                                 ENTRY()
+                                                 OPTIONS( LINKAGE ( OPTLINK ) )
+                                                 Refs: 219.0
+        569.0    SORTED                          AUTOMATIC BIT(1)
+                                                 Refs: 572.0
+                                                 Sets: 573.0 581.0
+        251.0    STAMP                           AUTOMATIC CHARACTER(20)
+                                                 Refs: 266.0 270.0
+        +++++++  SUBSTR                          BUILTIN
+                                                 Refs: 264.0 266.0 266.0 266.0 301.0 315.0 320.0 408.0 433.0 440.0 444.0 447.0
+                                                       447.0 447.0 447.0 455.0 456.0 470.0 473.0 486.0 506.0 508.0 512.0 528.0
+                                                       539.0 544.0 862.0 874.0
+        132.0    SYSPRINT                        CONSTANT EXTERNAL FILE STREAM OUTPUT PRINT
+                                                 Refs: 194.0 195.0 196.0 199.0 202.0 231.0 253.0 270.0 302.0 335.0 347.0 348.0
+                                                       349.0 350.0 351.0 352.0 353.0 354.0 355.0 356.0 357.0 358.0 734.0 741.0
+                                                       751.0 816.0 829.0 837.0 845.0
+        133.0    SYSUT1                          CONSTANT EXTERNAL FILE INPUT
+                                                 Refs: 204.0 401.0 412.0 492.0 805.0 808.0
+        134.0    SYSUT2                          CONSTANT EXTERNAL FILE RECORD OUTPUT ENV ( VB CTLASA RECSIZE ( 137 ) )
+                                                 Refs: 405.0 430.0 807.0
+        252.0    TDATE                           AUTOMATIC PICTURE '(6)9' INITIAL
+                                                 Refs: 266.0 266.0
+        571.0    TEMP                            STRUCTURE AUTOMATIC
+                                                 Refs: 580.0
+                                                 Sets: 578.0
+        +++++++  TIME                            BUILTIN
+                                                 Refs: 266.0
+        116.0    TRUE                            STATIC BIT(1) INITIAL
+                                                 Refs: 115.0 115.0 204.0 323.0 325.0 327.0 329.0 331.0 333.0 411.0 443.0 500.0
+                                                       573.0 756.0
+        174.0    TYPE                            MEMBER IN ENTRY IN ENTRY_TABLE DIM(0:1000) CHARACTER(8)
+                                                 Refs: 578.0 579.0 734.0 741.0 837.0
+                                                 Sets: 254.0 507.0 579.0 580.0
+        571.0    TYPE                            MEMBER IN TEMP CHARACTER(8)
+                                                 Refs: 580.0
+                                                 Sets: 578.0
+        136.0    UNDECLARED_COUNT                AUTOMATIC FIXED BIN(15,0) INITIAL
+                                                 Refs: 228.0 231.0 452.0
+                                                 Sets: 452.0
+        +++++++  VERIFY                          BUILTIN
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    25
+ 0     Line.File Identifier                      Attributes
+ 0                                               Refs: 486.0 862.0
+        294.0    WORK_PARM                       AUTOMATIC CHARACTER(100) VARYING
+                                                 Refs: 302.0 303.0 304.0 309.0 315.0 316.0 320.0
+                                                 Sets: 299.0 301.0 310.0 318.0 320.0
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /*          %M%    %I%    %D%    %T%                2024.05.11 01:08:33   Page    26
+ - Compiler Messages
+ 0 Message       Line.File Message Description
+ 0 IBM1214I W     231.0    A dummy argument will be created for argument number 1 in ENTRY reference $LJ.
+   IBM1200I W     252.0    Use of DATE built-in function may cause problems.
+   IBM1214I W     766.0    A dummy argument will be created for argument number 1 in ENTRY reference $LJ.
+   IBM1214I W     768.0    A dummy argument will be created for argument number 1 in ENTRY reference $LJ.
+ - File Reference Table
+ 0   File    Included From  Name
+ 0      0                   AVL.IBAGROUP.PLI(CHART)
+ - Component    Return Code    Messages (Total/Suppressed)    Time
+ 0 Compiler         4               32  /  28                  6 secs
+ 0 End of compilation of CHART
+ 

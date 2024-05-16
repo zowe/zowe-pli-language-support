@@ -1,0 +1,173 @@
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.10 23:19:27   Page     1
+ -                     Options Specified
+ 0  Install:
+ 0  Command: PP(CICS("SP")),SOURCE
+ 0  Install:
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /* ****************************************         2024.05.10 23:19:27   Page     2
+ - CICS (Built:20220315) Preprocessor Options Used
+ 0   CICS
+ 0   DEBUG
+ 0   EDF
+ 0   SP
+ 0   NATLANG(EN)
+ 0   NOSYSEIB
+ 0   NOFEPI
+ 0   NOCPSM
+ 0   LENGTH
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /* ****************************************         2024.05.10 23:19:27   Page     3
+ 0 Compiler Source
+ 0    Line.File
+ 0       1.0      /* ************************************************************** */
+         2.0      /* PGM: PTASKTS  - WORK WITH TEMPORARY STORAGE QUEUE - TSQ        */
+         3.0      /* ************************************************************** */
+         4.0      /* IT WRITES A LIST OF EMPLOYEES OF THE SECTOR ESI INTO TSQ 'OLGA'*/
+         5.0      /* FORMAT:                                                        */
+         6.0      /* EMPLOYEE : SURNAME NAME, PHONE : PHONE                         */
+         7.0      /* ************************************************************** */
+         8.0      PTASKTS:  PROC( DFHEIPTR )
+         8.0                     OPTIONS(MAIN) REORDER ;
+         9.0      DCL 1 DFHCNSTS  STATIC,  /* CONSTANTS USED BY TRANSLATOR */
+         9.0             2  DFHLDVER CHAR(22) INIT('LD TABLE DFHEITAB 740.'),
+         9.0             2  DFHEIB0 FIXED BIN(15) INIT(0),
+         9.0             2  DFHEID0 FIXED DEC(7) INIT(0),
+         9.0             2  DFHEICB CHAR(8) INIT('        ');
+         9.0      DCL DFHEPI ENTRY, DFHEIPTR PTR;
+         9.0      DCL 1 DFHEIBLK BASED (DFHEIPTR),
+         9.0            02    EIBTIME  FIXED DEC(7),
+         9.0            02    EIBDATE  FIXED DEC(7),
+         9.0            02    EIBTRNID CHAR(4),
+         9.0            02    EIBTASKN FIXED DEC(7),
+         9.0            02    EIBTRMID CHAR(4),
+         9.0            02    EIBFIL01 FIXED BIN(15),
+         9.0            02    EIBCPOSN FIXED BIN(15),
+         9.0            02    EIBCALEN FIXED BIN(15),
+         9.0            02    EIBAID   CHAR(1),
+         9.0            02    EIBFN    CHAR(2),
+         9.0            02    EIBRCODE CHAR(6),
+         9.0            02    EIBDS    CHAR(8),
+         9.0            02    EIBREQID CHAR(8),
+         9.0            02    EIBRSRCE CHAR(8),
+         9.0            02    EIBSYNC  CHAR(1),
+         9.0            02    EIBFREE  CHAR(1),
+         9.0            02    EIBRECV  CHAR(1),
+         9.0            02    EIBFIL02 CHAR(1),
+         9.0            02    EIBATT   CHAR(1),
+         9.0            02    EIBEOC   CHAR(1),
+         9.0            02    EIBFMH   CHAR(1),
+         9.0            02    EIBCOMPL CHAR(1),
+         9.0            02    EIBSIG   CHAR(1),
+         9.0            02    EIBCONF  CHAR(1),
+         9.0            02    EIBERR   CHAR(1),
+         9.0            02    EIBERRCD CHAR(4),
+         9.0            02    EIBSYNRB CHAR(1),
+         9.0            02    EIBNODAT CHAR(1),
+         9.0            02    EIBRESP  FIXED BIN(31),
+         9.0            02    EIBRESP2 FIXED BIN(31),
+         9.0            02    EIBRLDBK CHAR(1);
+         9.0      DCL 1 DFHCNTBS  STATIC,  /* CONSTANTS USED BY TRANSLATOR */
+         9.0             2  DFHLDTBS CHAR(22) INIT('LD TABLE DFHEITBS 740.');
+         9.0       DCL       DFHDUMMY STATIC FIXED BIN(15) INIT(0);
+         9.0       DCL       DFHEI0 ENTRY VARIABLE INIT(DFHEI01) AUTO
+         9.0       OPTIONS(INTER ASSEMBLER);
+         9.0       DCL       DFHEI01 ENTRY OPTIONS(INTER ASSEMBLER);
+         9.0        /*  EXEC CICS IGNORE CONDITION LENGERR  */
+         9.0      DO;
+         9.0      DCL DFHENTRY_DF12F2B5_2AD95180 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+         9.0      LER) ENTRY(*);
+         9.0      CALL DFHENTRY_DF12F2B5_2AD95180('02_0A_00_00_03_16_00_00_00_00_00_00_00
+         9.0      _00_00_00_00_00_00_00_00_00_40_40_40_40_40_F9_4B_F1'X);
+         9.0      END;
+        10.0        /*  EXEC CICS IGNORE CONDITION QZERO  */
+        10.0      DO;
+        10.0      DCL DFHENTRY_DF12F2B5_2BE07DC0 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+        10.0      LER) ENTRY(*);
+        10.0      CALL DFHENTRY_DF12F2B5_2BE07DC0('02_0A_00_00_03_17_00_00_00_00_00_00_00
+        10.0      _00_00_00_00_00_00_00_00_00_40_40_40_40_F1_F0_4B_F1'X);
+        10.0      END;
+        11.0       DCL
+        12.0       1 R404_RECORD           ,                    /* ROOM 404 RECORD */
+        13.0         2 STATUS     CHAR(1)  ,
+        14.0         2 EMPL                ,
+        15.0           3 SURNAME  CHAR(14) ,
+        16.0           3 NAME     CHAR(11) ,
+        17.0         2 GENDER     CHAR(1)  ,
+        18.0         2 SECTOR     CHAR(8)  ,
+        19.0         2 PHONE      CHAR(4)  ,
+        20.0         2 BOSS                ,
+        21.0           3 SURNAME  CHAR(14) ,
+        22.0           3 NAME     CHAR(11) ;
+        23.0       R404_RECORD = '' ;
+        24.0       DCL RESI_RECORD CHAR(50) ;                /* OUT RECORD FOR TSQ */
+        25.0       RESI_RECORD = '' ;
+        26.0        /*  EXEC CICS SET TDQUEUE ( 'R404' ) OPEN  */
+        26.0      DO;
+        26.0      DCL DFHENTRY_DF12F2B5_2CCA4680 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+        26.0      LER) ENTRY(*,CHAR(4),*,*,*,*,*,*,FIXED BIN(31));
+        26.0      CALL DFHENTRY_DF12F2B5_2CCA4680('5C_04_81_00_03_81_00_00_00_00_00_00_00
+        26.0      _40_40_40_40_F2_F6_4B_F1'X,'R404',DFHDUMMY    ,DFHDUMMY    ,DFHDUMMY
+        26.0       ,DFHDUMMY    ,DFHDUMMY    ,DFHDUMMY    ,18);
+        26.0      END;
+        27.0        /*  EXEC CICS READQ TD QUEUE ( 'R404' ) INTO ( R404_RECORD )  */
+        27.0      DO;
+        27.0      DCL DFHENTRY_DF12F2B5_2DE48C40 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+        27.0      LER) ENTRY(*,CHAR(4),*,FIXED BIN(15));
+        27.0      CALL DFHENTRY_DF12F2B5_2DE48C40('08_04_E0_00_03_00_00_80_00_40_40_40_40
+        27.0      _F2_F7_4B_F1'X,'R404',R404_RECORD,STG(R404_RECORD));
+        27.0      END;
+        28.0                                    /*     WHILE TDQ IS NOT EMPTY      */
+        29.0       DO WHILE(EIBRESP ^= /* DFHRESP(QZERO) */ 23
+        29.0                                          &
+        30.0                EIBRESP = /* DFHRESP(NORMAL) */ 0
+        30.0                                         ) ;
+        31.0         IF R404_RECORD.SECTOR = 'ESI     '
+        32.0           THEN DO ;
+        33.0             RESI_RECORD = 'EMPLOYEE : '|| R404_RECORD.EMPL.SURNAME ||
+        34.0                           R404_RECORD.EMPL.NAME || ', ' ||
+        35.0                           'PHONE : '|| R404_RECORD.PHONE ;
+        36.0
+        36.0       /*  EXEC CICS WRITEQ TS QUEUE ( 'OLGA' ) FROM ( RESI_RECORD )  */
+        36.0      DO;
+        36.0      DCL DFHENTRY_DF12F2B5_30C18540 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+        36.0      LER) ENTRY(*,CHAR(8),*,FIXED BIN(15));
+        36.0      CALL DFHENTRY_DF12F2B5_30C18540('0A_02_E0_00_03_00_00_41_00_40_40_40_40
+        36.0      _F3_F6_4B_F1'X,'OLGA',RESI_RECORD,CSTG(RESI_RECORD));
+        36.0      END;
+        37.0           END ;
+        38.0         IF EIBRESP = /* DFHRESP(NORMAL) */ 0
+        38.0                                      THEN
+        39.0          /*  EXEC CICS READQ TD QUEUE ( 'R404' ) INTO ( R404_RECORD )  */
+        39.0      DO;
+        39.0      DCL DFHENTRY_DF12F2B5_321FFE00 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+        39.0      LER) ENTRY(*,CHAR(4),*,FIXED BIN(15));
+        39.0      CALL DFHENTRY_DF12F2B5_321FFE00('08_04_E0_00_03_00_00_80_00_40_40_40_40
+        39.0      _F3_F9_4B_F1'X,'R404',R404_RECORD,STG(R404_RECORD));
+        39.0      END;
+        40.0       END ;
+        41.0        /*  EXEC CICS SET TDQUEUE ( 'R404' ) CLOSED  */
+        41.0      DO;
+        41.0      DCL DFHENTRY_DF12F2B5_32C7B540 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+        41.0      LER) ENTRY(*,CHAR(4),*,*,*,*,*,*,FIXED BIN(31));
+        41.0      CALL DFHENTRY_DF12F2B5_32C7B540('5C_04_81_00_03_81_00_00_00_00_00_00_00
+        41.0      _40_40_40_40_F4_F1_4B_F1'X,'R404',DFHDUMMY    ,DFHDUMMY    ,DFHDUMMY
+        41.0       ,DFHDUMMY    ,DFHDUMMY    ,DFHDUMMY    ,19);
+        41.0      END;
+        42.0        /*  EXEC CICS RETURN  */
+        42.0      DO;
+        42.0      DCL DFHENTRY_DF12F2B5_335FB040 BASED(ADDR(DFHEI0)) OPTIONS(INTER ASSEMB
+        42.0      LER) ENTRY(*);
+        42.0      CALL DFHENTRY_DF12F2B5_335FB040('0E_08_00_00_03_00_00_10_00_40_40_40_40
+        42.0      _F4_F2_4B_F1'X);
+        42.0      END;
+        43.0      END PTASKTS  ;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /* ****************************************         2024.05.10 23:19:27   Page     4
+ - Compiler Messages
+ 0 Message       Line.File Message Description
+ 0 IBM1195I W       8.0    Argument to MAIN PROCEDURE is not CHARACTER VARYING.
+ - File Reference Table
+ 0   File    Included From  Name
+ 0      0                   AVL.IBAGROUP.PLI(PTASKTS)
+ - Component    Return Code    Messages (Total/Suppressed)    Time
+ 0 CICS             0                0  /  0                   0 secs
+   Compiler         4                1  /  0                   2 secs
+ 0 End of compilation of PTASKTS
+ 

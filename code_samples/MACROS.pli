@@ -1,0 +1,2040 @@
+*PROCESS MI(':'),NEST,X,AG,A,MAR(2,72,1),GN,NUM,STG;
+
+  /***     (CHECK):     ***/
+
+  /***  03/27/85  15:47:04  ***   "MACRO PROCESSOR"  PDSPROC     */
+  PDSPROC: PROC (PARM) OPTIONS(MAIN);          /*  ALIAS:  MACROS
+
+   ***************************************************************
+   ***************************************************************
+   ***************************************************************
+   ***                                                         ***
+   ***           COPYRIGHT   1981    HANS J. BECKER            ***
+   ***                                                         ***
+   ***************************************************************
+   ***************************************************************
+   ***                                                         ***
+   ***    THIS PROGRAM HAS BEEN CONTRIBUTED TO SHARE,  AND     ***
+   ***    IT MAY BE USED BY IT'S MEMBERS ANY WAY THEY WISH.    ***
+   ***                                                         ***
+   ***                                                         ***
+   ***************************************************************
+   ***************************************************************
+   ***************************************************************
+
+    AUTHOR:    HANS J. BECKER      (202-252-6874)
+               ENERGY INFORMATION ADMINISTRATION
+               WASHINGTON, D.C.   20585
+
+
+        MACROS  is  a  partitioned  data  set  utility program.
+   Members are invoked via control data  records.   Invocations
+   may  be  nested  and  recurrent.   Invocations  may  also be
+   qualified using special qualification  verbs,  and  patterns
+   within each member may be altered. Fixed Block, Variable
+   Blocked and Superwylbur data sets are supported.
+
+
+1  JCL:
+
+   //MACROS  EXEC PGM=MACROS,REGION=330K,
+   // PARM='/RC=''&'',NAME,INTRDR,NEST,ANYPDS,PROFILE,PRINT,REWRITE,
+   //   NOOPNT,CN=''+'',LIST,NONUM,SHORT,AND,OR,WYLFMT,CUTOFF=50'
+   //STEPLIB  DD  DISP=SHR,DSN=FEA.LINKLIB
+   //SYSPRINT DD  SYSOUT=A
+   //SYSOUT   DD  SYSOUT=A,DCB=BLKSIZE=80
+   //MACROS   DD  DISP=SHR,DSN=CNaaaa.uuu.ANY.PDS    ***LIBRARY***
+   //SYSIN DD *
+
+   CONTROL CARD SYNTAX:
+
+   OPTION 1:
+
+      |&MEMBER| |PDSNAME| |T1=R1| |,T2=R2| ... |,S=(Q)|
+
+   OPTION 2:
+
+      |&MEMBER| CHANGE |'TARGET'| |COL1||/COL2|
+                TO 'REPLACEMENT' |IN LINE1||/LINE2|
+ NOTES:
+
+         1.   Control cards are coded on card image records.  To
+    continue an instruction, code a  CONTINUATION  character  as
+    the  last  nonblank character of a card.  The maximun number
+    of  characters  in  an  instruction  is  255.   The  default
+    CONTINUATION character is '+'.
+    THE  CONTINUATION  CHARACTER WILL BE RECOGNIZED  ONLY IN THE
+    CONTROL CARDS IN THE SYSIN STREAM.
+
+         2.    The  default  reference  character  (RC)  is  the
+    ampersand.  When used it is coded in column  1.   It  causes
+    the invocation of a member.
+
+         3.   Records  that do not have a reference character in
+    column 1 are passed to the output file  undisturbed,  except
+    as noted below.
+
+         4.  The NAME option causes the member name to appear in
+    columns 73 thru 80 in the output file.  (default = NONAME)
+
+         5.  The INTRDR option causes the output to be submitted
+    as a job.  (default = NOINTRDR)
+
+         6.  The NONEST option inhibits the resolution of nested
+    members.  (default = NEST)
+
+1        7.   When  the ANYPDS option is used, then the data set
+    name is obtained from the PDSNAME of the control card.  This
+    allows the user to access members from various pds'.
+
+         8.  The PROFILE option causes the automatic  processing
+    of all members of the pds in turn.  It is highly recommended
+    that the NONEST option be specified.
+
+         9.  Target patterns (T1,T2..) will be replaced by their
+    corresponding  replacement  patterns  (R1,R2..). Any pattern
+    that contains a blank, equal sign or comma must be  enclosed
+    in single or double quotes.
+
+         10.   The selection criteria (S) can take several forms
+    as   follows:    FROM=(any   pattern),   TO=(any   pattern),
+    EXTRACT=(any       pattern),      DELETE=(any      pattern),
+    INCLUDE=(lines), EXCLUDE=(lines).
+
+         11.  The order of  processing  the  selection  criteria
+    should  be  as  follows:
+           a) INCLUDE, EXCLUDE or EXTRACT
+           b) FROM and/or TO
+           c) DELETE
+
+         12.  The following  are  valid  abbreviations  for  the
+    selection criteria:  INC, EXC, EXTR, DEL.
+
+         13.   LIST,  FIND,  SEL,  SELECT  are  synonyms for the
+    EXTRACT selection criteria.
+
+         14.  The REWRITE option is used in conjuction with  the
+    PROFILE  option.  The user specifies changes he/she wants to
+    apply to every member, and after the changes have been  made,
+    the member will be re-written into the pds. for superwylbur
+    files, the member will be written onto a PDS where ddname=EDIT.
+
+         15.   The  PRINT  option causes the output to appear on
+    sysprint rather than sysout, and after  a  member  has  been
+    invoked, a page eject will occur.
+
+         16.   When  using  the  PROFILE  option,  the selection
+    criteria  may  appear  on  several  lines.    The   criteria
+    appearing  on  the  same  line  are  always  ORed, but those
+    appearing on seperate lines may be ANDed by  using  the  AND
+    option in the parm.
+
+1        17.   A  special  case  of  a  control  card has the
+    following format:
+
+         &PARM="NEW OR CHANGED PROCESSING OPTIONS"
+
+         In other words, any options that can be set in the  JCL
+    may be changed using this special control card.
+
+         18.  At times it is desirable to process only the first
+    few  records of the invoked member.  The variable CUTOFF can
+    be assigned a new value, and if  the  read  counter  exceeds
+    this value, then the reading loop is terminated.
+
+         19.   The WYLFMT option causes the output to be written
+    onto a file assigned to the ddname=EDIT.  The format will be
+    in Superwylbur.   Note  that  the  REWRITE  option  will  be
+    automatically set to NOREWRITE.
+
+         20.   Neither  GLOBAL  nor PARM  are generally names of
+    members.  But they are coded in the same  manner,  and  this
+    could  result in a conflict.  Set the NOOPTN parameter in
+    order that these names may be used as member names.
+
+         21.  Assignments made to the GLOBAL variable remain  in
+    effect  until  changed  by  another  GLOBAL assignment.  The
+    contents of the GLOBAL variable will be concatenated to each
+    invocation of a pds member.
+
+         22.   If  the  ddname=MEMBERS exists, then only selected
+    members will be processed by the LISTPDS and PROFILE options.
+
+         23.  If the ddname=PDSCOPY exists, then the COPY  option
+    is  set  on, and the invoked members will be copied into that
+    PDS.
+
+         24.  Use NOBLANKLINE to bypass blank lines on input from
+    DD=MACROS.
+
+         25.  RENUM causes renumbering of wylbur datasets on input.
+    This is necessary to be able to concatenate wylbur datasets.
+
+         26.  The UNLOAD option causes IEBUPDT control cards to be
+    placed into the output stream at the beginning of each member.
+
+         27.  The LOAD option allows you to load a sequential file
+    with IEBUPDT control cards into a pds.
+
+
+
+1
+    PROGRAM MODIFICATIONS:
+
+    AUG 83:   USE LIST PROCESSING INSTEAD OF A STACK AND AN ARRAY;
+    9/16/83:  SIGNAL ERROR WHEN NESTLVL > 5.
+    9/26/83:  WYLFMT OPTION.
+    11/3/83:  ADD "PGSIZE=60" WHEN OPENING PDSLIST
+              ALLOW FOR CONTINUATIONS WHEN PROFILE IS USED
+    11/30/83: INCORPORATE THE "CHANGE_RTN" INTO THE PROGRAM.
+    01/15/84: PUT IN "TEST" INTO THE ON ERROR BLOCK IN OPTIONS PROC
+    01/17/84: PUT IN MORE FEEDBACK IN THE DYRTN PROCEDURE
+    01/19/84: GLOBAL VARIABLE
+    01/29/84: CH MEMBER TO DYMEMBER
+    03/07/84: SHORTLST - SUBSET OF ALL THE MEMBERS
+    03/07/84: COPY OTION
+    03/25/84: CALL SVC99 FOR DYNAMIC ALLOCATIONS
+    05/16/84: ADDED RENUM AND BLANKLINE AND SHOMEM
+              REVISED "ALL_MEMBERS" ROUTINE
+    05/30/84: FIX PRESS ROUTINE, IE DONT WRITE "EMPTY" BLOCKS
+    08/10/84: CH RELATIVE NUMBERS TO LINE NUMBERS FOR INC/EXC
+              ADD SOME MORE DIAGNOSTICS
+    08/15/84: PUT IN FLOW & SNAP OPTIONS
+    09/12/84: CAUSE "SHOMEM" TO DISPLAY MEMBERS ON ENTRY OF MACPROC
+    09/21/84: CH DDN TO "MACROS" FOR REWRITE
+    09/26/84: TAKE "FLOW" OUT
+    10/01/84: CH KNT TO KNT*1000 IN UNPRESS
+              PUT IN "WHOAMI" FOR THE CHECK MODE
+              ELIMINATE EXTRANEOUS "KNT" TO GET RID OF 0C4 PROBLEM
+              SIGNAL ERROR WHEN EXTENT=0
+    10/03/84: PUT "KNT" BACK,  CALL IT "UPZKNT"
+              ADD "UNLOAD" IEBUPDT OPTION
+              GET RID OF MOST OF THE COMPILER WARNINGS
+    11/13/84: LOAD OPTION
+    12/05/84: ISSUE WARNING WHEN PROCESSING "INVALID" RECORDS
+    12/10/84: FIX PROBLEMS INTRODUCED 12/5
+    12/28/84: PUT IN "FILE2" AS A PRINT FILE
+    03/21/85: DO THE INITIAL SYSIN READ AS PART OF INITIALIZATION
+              EXPAND PDSLIST OPTION TO FUNCTION LIKE THE PROFILE OPTN
+              PROVIDE 1 "APPLICATION" WHEN SYSIN IS EMPTY
+    03/27/85: ADDED "EXCLUDE" TO SET_BIT PROC, ADDED "Q(65)"
+              IF WYLBUR THEN 1000X LINE NUMBERS IN INC_EXC_RANGE
+
+
+
+
+
+   *****************************************************************/
+1     ON ERROR SNAP BEGIN; ON ERROR SYSTEM;
+         IF TEST  THEN PUT SKIP DATA; END;
+
+      ON CONDITION(DYNALOC)         /* RETURN DYNALLOC INFORMATION */
+         BEGIN;  ON ERROR SYSTEM;
+            DCL ZONES                   CHAR(2000);
+            DCL DIGITS                  CHAR(2000);
+            PUT SKIP(2) EDIT('-------ALLOCATION DATA--------')(A);
+            PUT SKIP(2) DATA(DSNAME,OUTFILE);
+            PUT SKIP(2) DATA(INFORMATION);
+            PUT SKIP(2) DATA(DD);
+            ZONES = TRANSLATE(WRKAREA,
+                        (  (16)'0' ||(16)'1' ||(16)'2' ||(16)'3'
+                         ||(16)'4' ||(16)'5' ||(16)'6' ||(16)'7'
+                         ||(16)'8' ||(16)'9' ||(16)'A' ||(16)'B'
+                         ||(16)'C' ||(16)'D' ||(16)'E' ||(16)'F'));
+            DIGITS = TRANSLATE(WRKAREA,(16)'0123456789ABCDEF');
+            DO I = 1 TO 300 BY 100;
+               PUT SKIP(2) EDIT(SUBSTR(WRKAREA,I,100))(A);
+               PUT SKIP    EDIT(SUBSTR(ZONES  ,I,100))(A);
+               PUT SKIP    EDIT(SUBSTR(DIGITS ,I,100))(A);
+            END;
+         END;
+
+      ON CONVERSION
+         BEGIN;
+            PUT SKIP EDIT('CONVERSION ERROR IN ',ONLOC,
+                ', ONCODE=',ONCODE,', ONSOURCE=',ONSOURCE)(A);  END;
+
+      ON STRINGRANGE
+         BEGIN;
+            IF TEST THEN DO;
+               PUT SKIP EDIT('STRINGRANGE ERROR IN ',ONLOC,
+                ', ONCODE=',ONCODE,', ONSOURCE=',ONSOURCE)(A);
+               PUT SKIP DATA; END; END;
+
+      ON STRINGSIZE
+         BEGIN;
+            IF TEST THEN DO;
+               PUT SKIP EDIT('STRINGSIZE ERROR IN ',ONLOC,
+                ', ONCODE=',ONCODE,', ONSOURCE=',ONSOURCE)(A);
+               PUT SKIP DATA; END; END;
+
+      ON ENDFILE(SYSIN)   BEGIN; END_OF_FILE = TRUE; END;
+      ON ENDFILE(INPUT)   BEGIN; E_O_F       = TRUE; END;
+      ON ENDFILE(BLOCKS)  BEGIN; MORE        = FALSE;END;
+      ON ENDFILE(MACROS)  BEGIN; MORE        = FALSE;END;
+      ON ENDFILE(MEMBERS) BEGIN; MORE        = FALSE;END;
+
+1     ON ENDPAGE(PDSLIST)
+         BEGIN;
+         IF SHORT
+            THEN DO;
+                 PUT FILE(PDSLIST) PAGE EDIT
+                     (MEM_NAME_HDR)      (COL(1),A)
+                     (MEMNAME)           (COL(15),A)
+                     ('TIME:')           (COL(28),A)
+                     (NOW)               (COL(34),A)
+                     ('DATE:')           (COL(48),A)
+                     (TODAY)             (COL(54),A)
+                     ('PAGE:')           (COL(68),A)
+                     (PAGE_KNT)          (COL(75),P'ZZZZ');
+                 PUT FILE(PDSLIST) SKIP(2) EDIT
+                     ('PDS=')            (COL(1),A)
+                     (DSNAME)            (COL(5),A)
+                     (MEMNAME)           (COL(68),A)
+                     ((80) '_')          (COL(1),A)
+                     ((80) ' ')          (COL(1),A);
+                 END;
+            ELSE DO;
+                 PUT FILE(PDSLIST) PAGE EDIT
+                     (MEM_NAME_HDR)      (COL(1),A)
+                     (MEMNAME)           (COL(15),A)
+                     ('TIME:')           (COL(56),A)
+                     (NOW)               (COL(63),A)
+                     ('DATE:')           (COL(84),A)
+                     (TODAY)             (COL(90),A)
+                     ('PAGE:')           (COL(120),A)
+                     (PAGE_KNT)          (COL(126),P'ZZZZ');
+                 PUT FILE(PDSLIST) SKIP(2) EDIT
+                     ('PDS=')            (COL(1),A)
+                     (DSNAME)            (COL(5),A)
+                     (MEMNAME)           (COL(68),A)
+                     ((132) '_')         (COL(1),A)
+                     ((132) ' ')         (COL(1),A);
+                 END;
+         PAGE_KNT = PAGE_KNT + 1;
+         END;
+1
+      DCL  ALLOW_INPUT       BIT      INIT(1B);
+      DCL  ALLOW_OUTPUT      BIT      INIT(1B);
+      DCL  AND               BIT      INIT(0B);
+      DCL  ANYPDS            BIT      INIT(0B);
+      DCL  BLANKLINE         BIT      INIT(1B);
+      DCL  BUMMER            BIT      INIT(0B);
+      DCL  CONTINUED         BIT      INIT(0B);
+      DCL  COPY              BIT      INIT(0B);
+      DCL  DTS               BIT      INIT(0B);
+      DCL  DUMP              BIT      INIT(0B);
+      DCL  END_OF_FILE       BIT      INIT(0B);
+      DCL  EOF               BIT      INIT(0B);
+      DCL  E_O_F             BIT      INIT(0B);
+      DCL  FALSE             BIT      INIT(0B);
+      DCL  FIRST_TIME        BIT      INIT(1B);
+      DCL  INTRDR            BIT      INIT(0B);
+      DCL  LIST              BIT      INIT(0B);
+      DCL  LISTPDS           BIT      INIT(0B);
+      DCL  LOAD              BIT      INIT(0B);
+      DCL  LONG              BIT      INIT(1B);
+      DCL  MATCH             BIT      INIT(0B);
+      DCL  MASK_SWITCH       BIT;
+      DCL  MORE              BIT      INIT(1B);
+      DCL  NAME              BIT      INIT(0B);
+      DCL  NEST              BIT      INIT(1B);
+      DCL  NUM               BIT      INIT(1B);
+      DCL  OBS               BIT      INIT(0B);
+      DCL  OPTN              BIT      INIT(1B);
+      DCL  OR                BIT      INIT(1B);
+      DCL  PRINT             BIT      INIT(0B);
+      DCL  PROFILE           BIT      INIT(0B);
+      DCL  RENUM             BIT      INIT(0B);
+      DCL  REWRITE           BIT      INIT(0B);
+      DCL  SHOMEM            BIT      INIT(0B);
+      DCL  SHORT             BIT      INIT(0B);
+      DCL  SHORTLST          BIT      INIT(0B);
+      DCL  TEST              BIT      INIT(0B);
+      DCL  TRUE              BIT      INIT(1B);
+      DCL  UNLOAD            BIT      INIT(0B);
+      DCL  WYLBUR            BIT      INIT(0B);
+      DCL  WYLFMT            BIT      INIT(0B);
+      DCL  Q(200)            BIT;
+
+1     DCL  BLOCKS            RECORD FILE ENV(U RECSIZE(256));
+      DCL  MACROS            RECORD FILE;
+      DCL  READER            FILE  ENV(FB RECSIZE(80));
+      DCL  EDIT              STREAM FILE ENV(U  BLKSIZE(6233));
+      DCL  MEMBERS           STREAM FILE;
+      DCL  PDSCOPY           STREAM FILE;
+      DCL  INPUT             RECORD FILE;
+      DCL  PDSLIST           PRINT  FILE;
+      DCL  SYSOUT            STREAM FILE;
+      DCL  SYSIN             STREAM FILE;
+      DCL  SYSPRINT          STREAM FILE;
+
+      DCL  SVC99             ENTRY OPTIONS(ASM INTER RETCODE);
+      DCL  DDINFO            ENTRY;
+
+      DCL  (ALLOCATION,INDEX,ONLOC,ONCODE,ONCHAR,ONSOURCE)  BUILTIN;
+      DCL  (VERIFY,HBOUND,LENGTH,REPEAT,SUBSTR,UNSPEC,TIME) BUILTIN;
+      DCL  (DATE,ADDR,HIGH,TRANSLATE,ABS,NULL,PLIRETV,LOW)  BUILTIN;
+      DCL  WHAT_HEX          BIT(16);
+      DCL  BIT8              BIT(8);
+      DCL  BIT16             BIT(16);
+
+      DCL  APPLICATION(EXTENT)CHAR(255) CONTROLLED;
+      DCL  BLANK             CHAR      INIT(' ');
+      DCL  BLK_OVFLOW        FIXED BIN INIT(6226);
+      DCL  BLOCK             CHAR(6233)VAR;
+      DCL  BLOCK_LENGTH      FIXED BIN;
+      DCL  BLOCKLENGTH       FIXED BIN(15)  BASED(PTR);
+      DCL  CN                CHAR DEF CONTINUATION;
+      DCL  COMMA             CHAR      INIT(',');
+      DCL  CONTINUATION      CHAR      INIT('+');
+      DCL  CONTINUE_AREA     CHAR(255) VAR;
+      DCL  CUTOFF            FIXED BIN INIT(32000);
+      DCL  DASH              CHAR      INIT('-');
+      DCL  DDNAME            CHAR(8)   INIT('MACROS  ');
+      DCL  DIRECTORY         CHAR(256);
+      DCL  DOUBLE_QUOTE      CHAR      INIT('"');
+      DCL  DSNAME            CHAR(44)  VAR;
+      DCL  DYNALOC           CONDITION;
+      DCL  EIGHTY            FIXED BIN(31) INIT(80);
+      DCL  ERR               FIXED BIN(31);
+      DCL  ERRCODE           FIXED BIN(31);
+      DCL  EXTENT            FIXED BIN;
+      DCL  FIELDLENGTH       FIXED BIN;
+      DCL  FILE              FILE  VARIABLE INIT(MACROS);
+      DCL  FILE2             FILE  VARIABLE INIT(SYSPRINT);
+      DCL  GLOBAL            CHAR(255)  VAR;
+      DCL  INSTRUCTION       CHAR(265)  VAR;
+      /*      DCL  INSTRUCTION       CHAR(255)  DEF LINE(1); */
+      DCL  LDSN              FIXED BIN(15);
+      DCL  LEFT_PAREN        CHAR      INIT('(');
+      DCL  LENTH             FIXED BIN(31) INIT(8);
+      DCL  LINE(255)         CHAR STATIC;
+      DCL  LINE_KNT          FIXED BIN(31);
+      DCL  MARKER            CHAR(2)   INIT('./');
+      DCL  MATRIX(EXTENT)    CHAR(8)   CONTROLLED;
+      DCL  MEM_NAME_HDR      CHAR(13)  INIT('MEMBER NAME =');
+      DCL  MEMBER_NAME       CHAR(8)   CONTROLLED VAR;
+      DCL  MEMNAME           CHAR(8)   INIT(' ');
+      DCL  MRECFM            CHAR(4);
+      DCL  MINUS3            FIXED BIN INIT(-3);
+      DCL  NESTLVL           FIXED BIN INIT(0);
+      DCL  NESTOVFLO         FIXED BIN INIT(5);
+      DCL  NOW               CHAR(8);
+      DCL  OCCURS            FIXED BIN INIT(1);
+      DCL  ONE               FIXED BIN INIT(1);
+      DCL  OVFLO             FIXED BIN(15);
+      DCL  OUTFILE           CHAR(44)  VAR;
+      DCL  OUTLENGTH         FIXED BIN(15);
+      DCL  P                 POINTER;
+      DCL  PAGE_KNT          FIXED BIN INIT(1);
+      DCL  PAGE_NUMBER(EXTENT)FIXED BIN CONTROLLED;
+      DCL  PARM              CHAR(255)  VAR;
+      DCL  PHRASE            CHAR(255);
+      DCL  PGSIZE            FIXED BIN  INIT(60);
+      DCL  PTR               POINTER;
+      DCL  QUOTE             CHAR      INIT('''');
+      DCL  RBERR             CHAR(2);
+      DCL  RC                CHAR DEF REFERENCE_CHAR;
+      DCL  REFERENCE_CHAR    CHAR      INIT('&');
+      DCL  REPLACEMENT       CHAR(255)  VAR INIT(' ');
+      DCL  RIGHT_PAREN       CHAR      INIT(')');
+      DCL  RTNCODE           FIXED BIN  INIT(60);
+      DCL  SLASH             CHAR      INIT('/');
+      DCL  STACK             CHAR(255) CONTROLLED;
+      DCL  SVCWRK            FIXED BIN(31) INIT(0);
+      DCL  TARGET            CHAR(255)  VAR INIT(' ');
+      DCL  TODAY             CHAR(12);
+      DCL  VALID             CHAR(40)  INIT
+           (' 1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@');
+      DCL  VECTOR            FIXED BIN(31) CONTROLLED;
+
+1     DCL 1 BLOCKDATA        BASED(P),
+          2  BLOCKSIZE       CHAR(2),
+           2 BLOCK_DATA,
+            3 MEMBR          CHAR(8),
+            3 TTR            CHAR(3),
+            3 JUNK           CHAR,
+            3 FILLER         CHAR(5),
+            3 JULIAN_DATE    CHAR(3),
+            3 FILLER2        CHAR(40);
+
+      DCL 1 INFORMATION      UNALIGNED,
+           2  DD_NAME        CHAR(8),
+           2  DSN            CHAR(44),
+           2  MEMBER         CHAR(8),
+           2  STATUS         BIT(8),
+           2  NORM_DISP      BIT(8),
+           2  COND_DISP      BIT(8),
+           2  DSORG          BIT(16),
+           2  LIMIT          FIXED BIN(15),
+           2  ATTRIBUTE      BIT(8),
+           2  LAST_ENTRY     BIT(8),
+           2  TYPE           BIT(8);
+
+      DCL 1 WORK,
+          2 WRKLENGTH             FIXED BIN(31) INIT(2000),
+          2 WRKAREA               CHAR(2000);
+
+      DCL 1 ALLOC_DATA,
+          2 ALLOC_DD              CHAR(3)  INIT('DD='),
+          2 ALLOC_DDN             CHAR(9),
+          2 ALLOC_DSN             CHAR(4)  INIT('DSN='),
+          2 ALLOC_DSNAME          CHAR(80),
+          2 ALLOC_SGN             CHAR     INIT(';');
+
+      DCL 1 MEMBER_DATA,
+          2 MEMBER_DD             CHAR(3)  INIT('DD='),
+          2 MEMBER_DDN            CHAR(9),
+          2 MEMBER_DSN            CHAR(4)  INIT('DSN='),
+          2 MEMBER_DSNAME         CHAR(80),
+          2 MEMBER_MEMBR          CHAR(7)  INIT('MEMBER='),
+          2 MEMBER_NAM            CHAR(8),
+          2 MEMBER_SGN            CHAR     INIT(';');
+
+1
+      DCL 1 DD,
+            2 R_CODE               FIXED BIN(31) INIT(-3),
+            2 DDN                  CHAR(8) INIT('PDSCOPY '),
+            2 INFO,
+               3 OSNAME            CHAR(44),
+               3 MEMBER            CHAR(8),
+               3 DSORG             CHAR(2),
+               3 RECFM             CHAR(4),
+               3 LRECL             FIXED BIN(15),
+               3 BLKSIZE           FIXED BIN(15),
+               3 CATALOGED         CHAR(1),
+               3 CREATED           PIC'99999';
+
+
+  /*  DCL   WHOAMI            EXTERNAL OPTIONS(ASM  INTER  RETCODE)
+            ENTRY(01,
+                  02  CHAR(4),
+                  02  CHAR(8),
+                  02  CHAR(8),
+                  02  CHAR(8),
+                  02  CHAR(6))*/
+
+      DCL 1 PROFILE_AREA,
+                  2  FILL1                     CHAR(4)     INIT(' '),
+                  2  JOBNAME                   CHAR(8)     INIT(' '),
+                  2  FILL2                     CHAR(8)     INIT(' '),
+                  2  FILL3                     CHAR(8)     INIT(' '),
+                  2  FILL4                     CHAR(6)     INIT(' ');
+
+1  INITIALIZE:BEGIN;
+      TODAY=
+         SUBSTR(DATE,3,2)||'/'||SUBSTR(DATE,5)||'/'||SUBSTR(DATE,1);
+      NOW=SUBSTR(TIME,1,2)||'.'||SUBSTR(TIME,3,2)||'.'||
+          SUBSTR(TIME,5,2);
+      IF LENGTH(PARM) > 0  THEN CALL OPTIONS(PARM);  /*RESOLVE PARM*/
+
+   /* CALL  WHOAMI(PROFILE_AREA)*/              /* EXTERNAL CALL   */
+   /* IF SUBSTR(JOBNAME,1,3) ^= 'HB2' THEN RETURN; /*  <========   */
+
+      IF TEST & Q(1) THEN PUT SKIP DATA(Q);
+      IF DTS THEN PUT SKIP EDIT
+             ('PROGRAM DATE-TIME-STAMP: 03/27/85 15:47:04')(A);
+
+
+      IF REWRITE THEN NEST = FALSE;
+      IF UNLOAD  THEN PROFILE = TRUE;
+      IF LOAD    THEN COPY = TRUE;
+      IF SHORT        THEN LONG  = 0B;
+      IF AND          THEN OR = 0B;
+      IF WYLFMT
+         THEN DO;
+              REWRITE = FALSE;
+              FILE = EDIT;
+              END;
+      IF INTRDR
+         THEN CALL SVC99(WORK,'ALLOC',
+                        'DD=READER SYSOUT=A SYSOPROG=INTRDR;');
+      CALL GET_MACRO_DSN;
+      IF COPY
+         THEN DO;
+              FILE    = PDSCOPY;
+              DDNAME  = 'PDSCOPY ';
+              REWRITE = FALSE;
+              INTRDR  = FALSE;
+              END;
+
+      IF TEST & Q(6) THEN PUT SKIP DATA
+         (AND,ANYPDS,BLANKLINE,COPY,DTS,INTRDR,LIST,LISTPDS,
+          LONG,NAME,NEST,NUM,OPTN,OR,PRINT,PROFILE,RENUM,
+          REWRITE,SHOMEM,SHORTLST,TEST,WYLFMT);
+      IF TEST & Q(9) THEN PUT SKIP DATA;
+
+
+      GET FILE(SYSIN) EDIT(INSTRUCTION)(A(80));    /* INITIAL READ */
+
+   END INITIALIZE;
+
+1  #OPTION1:BEGIN;
+      IF LIST | LISTPDS                       /* PRODUCE A PDSLIST */
+         THEN DO;
+                FILE, FILE2 = PDSLIST;
+                NEST = FALSE;
+                IF SHORT THEN OPEN FILE(PDSLIST) LINESIZE(80)
+                                              PAGESIZE(PGSIZE);
+                         ELSE OPEN FILE(PDSLIST) LINESIZE(132)
+                                              PAGESIZE(PGSIZE);
+                CALL ALL_MEMBERS;
+                DO I = 1 TO HBOUND(MATRIX,1);    /*FOR ALL MEMBERS*/
+                   MEMNAME = MATRIX(I);
+                   SIGNAL ENDPAGE(PDSLIST);
+                   LINE_KNT = 0;
+                   PAGE_NUMBER(I) = PAGE_KNT - 1;
+                   ALLOW_INPUT  = TRUE;
+                   ALLOW_OUTPUT = FALSE;
+                   DO J = 1 TO HBOUND(APPLICATION,1);
+                      IF J = HBOUND(APPLICATION,1)
+                         THEN ALLOW_OUTPUT = TRUE;
+                      INSTRUCTION=RC||MATRIX(I)||' '||APPLICATION(J);
+                      IF VERIFY(MATRIX(I),VALID) > 0
+                         THEN PUT SKIP(2) FILE(PDSLIST)
+                                  EDIT('INVALID MEMBER ',
+                                  'NAME "',MATRIX(I),'"')(A);
+                         ELSE IF MATRIX(I) ^= '        ' THEN
+                                 CALL MACPROC(J);
+                      ALLOW_INPUT  = FALSE;
+                   END;
+                   CLOSE FILE(MACROS);
+                END;
+1               MEM_NAME_HDR = 'MEMBER INDEX';
+                SIGNAL ENDPAGE(PDSLIST);
+                J = 0;
+                EXTENT = HBOUND(MATRIX,1);
+                DO WHILE(J <= EXTENT);              /* INDEX PAGES */
+                   DO K = 1 TO 50  WHILE(J <= EXTENT);
+                      J = J + 1; J50 = J + 50; J100 = J + 100;
+                      IF J100 <= EXTENT THEN
+                         PUT SKIP FILE(PDSLIST) EDIT
+                             (MATRIX(J))        (COL(5),A)
+                             (PAGE_NUMBER(J))   (COL(15),P'ZZZZZ')
+                             (MATRIX(J50))     (COL(30),A)
+                             (PAGE_NUMBER(J50))(COL(40),P'ZZZZZ')
+                             (MATRIX(J100))    (COL(55),A)
+                             (PAGE_NUMBER(J100))(COL(65),P'ZZZZZ');
+                      ELSE
+                      IF J50  <= EXTENT THEN
+                         PUT SKIP FILE(PDSLIST) EDIT
+                             (MATRIX(J))        (COL(5),A)
+                             (PAGE_NUMBER(J))   (COL(15),P'ZZZZZ')
+                             (MATRIX(J50))     (COL(30),A)
+                             (PAGE_NUMBER(J50))(COL(40),P'ZZZZZ');
+                      ELSE
+                      IF J    <= EXTENT THEN
+                         PUT SKIP FILE(PDSLIST) EDIT
+                             (MATRIX(J))        (COL(5),A)
+                             (PAGE_NUMBER(J))   (COL(15),P'ZZZZZ');
+                   END;
+                   J = J + 100;
+                   IF J < EXTENT THEN SIGNAL ENDPAGE(PDSLIST);
+                END;
+                RETURN;
+              END;
+   END #OPTION1;
+
+
+1  #OPTION2:BEGIN;
+      IF PROFILE                 /* PROCESS ALL MEMBERS OF THE PDS */
+         THEN DO;
+                CALL ALL_MEMBERS;
+                DO I = 1 TO HBOUND(MATRIX,1);   /*NUMBER OF MEMBERS*/
+                   ALLOW_INPUT  = TRUE;
+                   ALLOW_OUTPUT = FALSE;
+                   DO J = 1 TO HBOUND(APPLICATION,1);
+                      IF J = HBOUND(APPLICATION,1)
+                         THEN ALLOW_OUTPUT = TRUE;
+                      INSTRUCTION=RC||MATRIX(I)||' '||APPLICATION(J);
+                      IF VERIFY(MATRIX(I),VALID) > 0
+                         THEN PUT SKIP(2) EDIT('INVALID MEMBER ',
+                                  'NAME "',MATRIX(I),'"')(A);
+                         ELSE IF MATRIX(I) ^= '        ' THEN
+                                 CALL MACPROC(J);
+                      ALLOW_INPUT  = FALSE;
+                   END;
+                END;
+                RETURN;
+              END;
+   END #OPTION2;
+
+
+   #OPTION3:BEGIN;
+      IF LOAD                 /* LOAD A SEQUENTIAL FILE INTO A PDS */
+         THEN DO;
+              READ FILE(INPUT) INTO(BLOCK);
+              DO WHILE(^E_O_F);
+                 CALL MACPROC(ONE);
+              END;
+              RETURN;
+              END;
+   END #OPTION3;
+1
+   #OPTION4:BEGIN;
+      DO WHILE(^END_OF_FILE);                /* produce a "stream" */
+         SELECT(LINE(1));
+            WHEN(RC)
+               DO;
+                 DO J = 80 TO 1 BY -1 WHILE(LINE(J)=' ');END;
+                 IF LINE(J) = CONTINUATION
+                    THEN DO;
+                           CONTINUED = 1B;
+                           CONTINUE_AREA = SUBSTR(INSTRUCTION,1,J-1);
+                           DO WHILE(CONTINUED);
+                             GET FILE(SYSIN)EDIT(INSTRUCTION)(A(80));
+                             DO J = 80 TO 1 BY -1
+                                WHILE(LINE(J)=' ');END;
+                             IF LINE(J) ^= CONTINUATION
+                                THEN DO;
+                                     CONTINUE_AREA = CONTINUE_AREA ||
+                                                     INSTRUCTION;
+                                     CONTINUED = 0B;
+                                     END;
+                                ELSE CONTINUE_AREA = CONTINUE_AREA ||
+                                           SUBSTR(INSTRUCTION,1,J-1);
+                           END;
+                           INSTRUCTION = CONTINUE_AREA;
+                         END;
+                  IF OPTN
+                   & (SUBSTR(INSTRUCTION,2,4) = 'PARM'   |
+                      SUBSTR(INSTRUCTION,2,6) = 'GLOBAL')
+                     THEN CALL CHANGE_OPTN;
+                     ELSE CALL MACPROC(ONE);
+                END;
+            OTHERWISE CALL OUTPUT_RTN(LINE_KNT);
+         END;
+         GET FILE(SYSIN) EDIT(INSTRUCTION)(A(80));
+      END;
+   END #OPTION4;
+  /*****************************************************************/
+1 MACPROC:PROCEDURE(CNTL)         RECURSIVE;
+      ON ERROR SNAP BEGIN; ON ERROR SYSTEM;
+         IF TEST  THEN PUT SKIP DATA; END;
+
+      DCL  (CNTL,I,J,K,L,M,N,LM)  FIXED BIN;
+      DCL  (KNT,EXTENT)           FIXED BIN;
+      DCL  UPZKNT                 FIXED BIN(31);
+      DCL  LINE(255)              CHAR;
+      DCL  ARG                    CHAR(255)  DEF LINE(1);
+      DCL  PARM                   CHAR(255)  VAR;
+      DCL  MASK(EXTENT,OCCURS)    BIT        CONTROLLED;
+      DCL  (START,HOLD,CURRENT)   PTR;
+      DCL 1  ARRAY                BASED(CURRENT),
+          11 LINE_NUMBER          FIXED BIN(31),
+          11 TEXT                 CHAR(255)  VAR,
+          11 (NEXT,PRIOR)         POINTER;
+
+      IF TEST & Q(20) THEN PUT SKIP DATA(INSTRUCTION);
+      NESTLVL = NESTLVL + 1;
+      IF NESTLVL > NESTOVFLO
+         THEN DO;
+              PUT SKIP(2) LIST('*** EXCESSIVE NESTING ***');
+              SIGNAL ERROR;
+              END;
+      PARM = INSTRUCTION;
+      DO I = 255 TO 1 BY -1 WHILE(SUBSTR(PARM,I,1)=' ');END;
+      IF LENGTH(GLOBAL) > 1
+         THEN DO;
+              IF INDEX(PARM,'=') > 0
+                 THEN PARM = SUBSTR(PARM,1,I)||','||GLOBAL;
+                 ELSE PARM = SUBSTR(PARM,1,I)||' '||GLOBAL;
+              DO I = 255 TO 1 BY -1 WHILE(SUBSTR(PARM,I,1)=' ');END;
+              IF TEST & Q(24) THEN PUT SKIP DATA(PARM);
+              END;
+      ARG,PARM = SUBSTR(PARM,1,I);
+      IF SUBSTR(PARM,LENGTH(PARM)) ^= QUOTE  THEN PARM = PARM || ',';
+      DO M = 2 TO 255 WHILE(LINE(M)^=' ' & M<LENGTH(PARM));END;
+      MEMNAME = SUBSTR(ARG,2,M-2);
+      IF SHOMEM THEN PUT SKIP LIST('CURRENT MEMBER:',MEMNAME);
+      IF ANYPDS                      /*OBTAIN THE DSN FROM THE DATA*/
+         THEN DO;
+              L = LENGTH(PARM);
+              DO I = M TO L WHILE(LINE(I)=' ');END;
+              DO M = I TO L WHILE(LINE(M)^=' ');END;
+              LDSN = M;
+              DSNAME = SUBSTR(ARG,I,M-I);
+              END;
+      ARG =  PARM;
+1
+      IF ALLOW_INPUT  THEN
+   #STACKIT:BEGIN;
+      EXTENT = 0;
+      START = NULL;
+      KNT = 1;
+      IF LOAD
+         THEN DO;
+              ARG = ' ';
+              IF SUBSTR(BLOCK,1,2) = MARKER
+                 THEN I = INDEX(BLOCK,'NAME=');
+                 ELSE SIGNAL ERROR;
+              MEMNAME = SUBSTR(BLOCK,I+5,8);
+              READ FILE(INPUT) INTO(BLOCK);
+              DO WHILE(^E_O_F & SUBSTR(BLOCK,1,2) ^= MARKER);
+                 ALLOC ARRAY;
+                 EXTENT = EXTENT + 1;
+                 LINE_NUMBER = KNT;
+                 TEXT = BLOCK;
+                 IF START = NULL
+                    THEN START = CURRENT;
+                    ELSE HOLD->NEXT = CURRENT;
+                 HOLD = CURRENT;
+                 NEXT = NULL;
+                 READ FILE(INPUT) INTO(BLOCK);
+                 KNT = KNT + 1;
+                 IF KNT > CUTOFF THEN MORE = 0B;
+              END;
+              END;
+         ELSE DO;
+              MEMBER_DDN = 'MACROS';
+              MEMBER_DSNAME = DSNAME || ' SHR';
+              MEMBER_NAM = MEMNAME;
+              CALL SVC99(WORK,'ALLOC',MEMBER_DATA);
+              IF PLIRETV ^= 0  THEN SIGNAL CONDITION(DYNALOC);
+              IF PRINT  THEN PUT PAGE;
+              MORE = 1B;
+              READ FILE(MACROS) INTO(BLOCK);
+              UPZKNT = 0;
+              DO WHILE(MORE);
+                 BIT16 = UNSPEC(SUBSTR(BLOCK,1,2));
+                 UNSPEC(BIT16)=UNSPEC(BIT16)&'0111111111111111'B;
+                 BLOCK_LENGTH = BIT16;
+                 IF BLOCK_LENGTH = LENGTH(BLOCK)
+                  | OBS  THEN CALL UNPRESS;
+                 ELSE IF MRECFM = 'U'
+                         THEN DO;
+                              PUT SKIP FILE(FILE2) EDIT
+                                 ('***ERROR: INVALID ' ||
+                                 'RECORD FORMAT - ' || MEMNAME)(A);
+                              MORE = 0B;
+                              BUMMER = TRUE;
+                              END;
+                         ELSE DO;
+                              IF ^BLANKLINE
+                               & VERIFY(BLOCK,BLANK) = 0  THEN;
+                                 ELSE DO;
+                                      ALLOC ARRAY;
+                                      EXTENT = EXTENT + 1;
+                                      LINE_NUMBER = KNT;
+                                      TEXT = BLOCK;
+                                      IF START = NULL
+                                         THEN START = CURRENT;
+                                         ELSE HOLD->NEXT = CURRENT;
+                                      HOLD = CURRENT;
+                                      NEXT = NULL;
+                                      END;
+                              END;
+                READ FILE(MACROS) INTO(BLOCK);
+                 KNT = KNT + 1;
+                 IF KNT > CUTOFF THEN MORE = 0B;
+              END;
+              END;
+
+      LM = EXTENT;
+      CLOSE FILE(MACROS);
+      IF ^LOAD THEN CALL SVC99(WORK,'UNALLOC','DD=MACROS UNALLOC;');
+      IF EXTENT > 0
+         THEN DO;
+              ALLOC MASK;
+              MASK(*,*) = 1B;
+              MASK_SWITCH = 1B;
+              END;
+         ELSE IF ^BUMMER THEN SIGNAL ERROR;
+   END #STACKIT;
+1
+      DO N = M TO 255 WHILE(LINE(N)=' ');/*SKIP BLANKS*/END;
+      IF SUBSTR(ARG,N,6) = 'CHANGE'
+       | SUBSTR(ARG,N,2) = 'CH'
+         THEN CALL CHANGE_RTN(SUBSTR(PARM,N));
+         ELSE
+            IF INDEX(ARG,'=') > 0   THEN
+   /*(STRINGRANGE,STRINGSIZE):CHANGES:BEGIN;*/
+   #CHANGES:BEGIN; /*..........PARSE  CHANGES/SELECTION CRITEIA....*/
+      DO N = M TO 255 WHILE(LINE(N)=' ');/*SKIP BLANKS*/END;
+      DO WHILE(N < LENGTH(PARM));
+         M = INDEX(SUBSTR(ARG,N),'=') + N - 1;
+         SELECT(LINE(N));                           /* FIND TARGET */
+            WHEN(DOUBLE_QUOTE)
+                 DO;
+                 M = INDEX(SUBSTR(ARG,N+1),DOUBLE_QUOTE);
+                 M = (1)*(M=0) + (M)*(M>0);
+                 TARGET = SUBSTR(ARG,N+1,M-1);
+                 DO M = N+M+1 TO 255 WHILE(LINE(M)=' ');END;
+                 END;
+            WHEN(QUOTE)
+                 DO;
+                 M = INDEX(SUBSTR(ARG,N+1),QUOTE);
+                 M = (1)*(M=0) + (M)*(M>0);
+                 TARGET = SUBSTR(ARG,N+1,M-1);
+                 DO M = N+M+1 TO 255 WHILE(LINE(M)=' ');END;
+                 END;
+            OTHERWISE
+                 DO;
+                 TARGET = SUBSTR(ARG,N,M-N);
+                 DO WHILE(SUBSTR(TARGET,LENGTH(TARGET))=' ');
+                    TARGET = SUBSTR(TARGET,1,LENGTH(TARGET)-1);
+                 END;
+                 END;
+         END;
+         N = M + 1;
+         DO M = N TO 255 WHILE(LINE(M)=' ');/*SKIP BLANK*/END;
+         SELECT(LINE(M));                      /* FIND REPLACEMENT */
+            WHEN(LEFT_PAREN)
+                 DO;
+                 N = INDEX(SUBSTR(ARG,M+1),RIGHT_PAREN);
+                 N = (1)*(N=0) + (N)*(N>0);
+                 REPLACEMENT = SUBSTR(ARG,M,N+1);
+                 DO M = N+M+1 TO 255 WHILE(LINE(M)=' ');END;
+                 END;
+            WHEN(DOUBLE_QUOTE)
+                 DO;
+                 N = INDEX(SUBSTR(ARG,M+1),DOUBLE_QUOTE);
+                 N = (1)*(N=0) + (N)*(N>0);
+                 REPLACEMENT = SUBSTR(ARG,M+1,N-1);
+                 DO M = N+M+1 TO 255 WHILE(LINE(M)=' ');END;
+                 END;
+            WHEN(QUOTE)
+                 DO;
+                 N = INDEX(SUBSTR(ARG,M+1),QUOTE);
+                 N = (1)*(N=0) + (N)*(N>0);
+                 REPLACEMENT = SUBSTR(ARG,M+1,N-1);
+                 DO M = N+M+1 TO 255 WHILE(LINE(M)=' ');END;
+                 END;
+            OTHERWISE
+                 DO;
+                 N = INDEX(SUBSTR(ARG,M),',');
+                 N = (1)*(N=0) + (N)*(N>0);
+                 REPLACEMENT = SUBSTR(ARG,M,N-1);
+                 DO M = N+M TO 255 WHILE(LINE(M)=' ');END;
+                 END;
+         END;
+         IF LINE(M) = ','
+            THEN DO;
+                 N = M + 1;
+                 DO M = N TO 255 WHILE(LINE(M)=' ');END;
+                 END;
+         N = M;
+         IF Q(33) THEN PUT SKIP DATA(TARGET,REPLACEMENT);
+1
+    /*...............  APPLY  CHANGES /  SELECTION CRITERIA  ......*/
+         HOLD = START;
+         IF SUBSTR(REPLACEMENT,LENGTH(REPLACEMENT)) = RIGHT_PAREN
+         &  SUBSTR(REPLACEMENT,1,1) = LEFT_PAREN  THEN
+            SELECT(TARGET);
+               WHEN('FROM')
+                    DO;
+                      REPLACEMENT =
+                      SUBSTR(REPLACEMENT,2,LENGTH(REPLACEMENT)-2);
+                      MATCH = FALSE;
+                      HOLD = START;
+                      DO I = 1 TO LM  WHILE(^MATCH & HOLD^=NULL);
+                         IF INDEX(HOLD->TEXT,REPLACEMENT) > 0
+                            THEN MATCH = TRUE;
+                         HOLD = HOLD->NEXT;
+                      END;
+                      I = I - 2;
+                      TARGET = 'DELETE';
+                      DO K = 1 TO I;
+                         CALL SET_BIT(K,CNTL);
+                      END;
+                    END;
+               WHEN('TO')
+                    DO;
+                      REPLACEMENT =
+                      SUBSTR(REPLACEMENT,2,LENGTH(REPLACEMENT)-2);
+                      MATCH = FALSE;
+                      HOLD = START;
+                      DO I = 1 TO LM  WHILE(^MATCH & HOLD^=NULL);
+                         IF INDEX(HOLD->TEXT,REPLACEMENT) > 0
+                            THEN MATCH = TRUE;
+                         HOLD = HOLD->NEXT;
+                      END;
+                      I = I + 2;
+                      TARGET = 'DELETE';
+                      DO K = I TO LM;
+                         CALL SET_BIT(K,CNTL);
+                      END;
+                    END;
+               WHEN('INC','EXC','EXCLUDE','INCLUDE')
+                    CALL INC_EXC_RANGE(CNTL);
+               WHEN('DEL','DELETE')
+                    DO;
+                      HOLD = START;
+                      REPLACEMENT =
+                      SUBSTR(REPLACEMENT,2,LENGTH(REPLACEMENT)-2);
+                      DO I = 1 TO EXTENT WHILE(HOLD^=NULL);
+                         IF INDEX(HOLD->TEXT,REPLACEMENT)>0
+                            THEN MASK(I,CNTL)=0B;
+                         HOLD = HOLD->NEXT;
+                      END;
+                    END;
+               WHEN('LIST','SELECT','SEL','FIND','EXTR','EXTRACT')
+                    DO;
+                      HOLD = START;
+                      IF MASK_SWITCH THEN MASK(*,*) = 0B;
+                      MASK_SWITCH = 0B;
+                      REPLACEMENT =
+                      SUBSTR(REPLACEMENT,2,LENGTH(REPLACEMENT)-2);
+                      DO I = 1 TO EXTENT WHILE(HOLD^=NULL);
+                         IF Q(37) THEN PUT SKIP EDIT
+                            (MASK(I,CNTL), REPLACEMENT, HOLD->TEXT)
+                            (COL(1),A,     COL(11),A,   COL(21),A);
+                         IF INDEX(HOLD->TEXT,REPLACEMENT)>0
+                            THEN MASK(I,CNTL)=1B;
+                         HOLD = HOLD->NEXT;
+                      END;
+                    END;
+               OTHERWISE;
+               END;
+            ELSE DO I = 1 TO EXTENT WHILE(HOLD^=NULL);
+                    LT = LENGTH(TARGET);
+                    LC = LENGTH(REPLACEMENT);
+                    K = 0;
+                    MORE = 1B;
+                    MM = 1;
+                    DO WHILE(MORE & HOLD^=NULL);
+                       KK = INDEX(SUBSTR(HOLD->TEXT,MM),TARGET);
+                       K  = KK + MM - 1;
+                       IF KK = 0  THEN MORE = FALSE;
+                       ELSE HOLD->TEXT = SUBSTR(HOLD->TEXT,1,K-1) ||
+                            REPLACEMENT || SUBSTR(HOLD->TEXT,LT+K);
+                       MM = K + LC;
+                    END;
+                    HOLD = HOLD->NEXT;
+                 END;
+      END;
+   END #CHANGES;/* .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  */
+1
+      IF ALLOW_OUTPUT  THEN
+   #PUTITOUT:BEGIN;
+      IF UNLOAD
+         THEN DO;
+              INSTRUCTION = MARKER||'      ADD   NAME='||MEMNAME;
+              CALL OUTPUT_RTN(0);
+              END;
+
+      HOLD = START;
+      IF ^WYLFMT & ^COPY
+         THEN DO K = 1 TO EXTENT WHILE(HOLD^=NULL);
+                 LINE_KNT = HOLD->LINE_NUMBER;
+                 INSTRUCTION = HOLD->TEXT;
+                 IF LOGICAL_MASK(K) THEN
+                    IF SUBSTR(INSTRUCTION,1,1) = REFERENCE_CHAR
+                       THEN IF NEST THEN CALL MACPROC(CNTL);
+                            ELSE CALL OUTPUT_RTN(LINE_KNT);
+                       ELSE CALL OUTPUT_RTN(LINE_KNT);
+                 PTR = HOLD;
+                 HOLD = HOLD->NEXT;
+                 IF ^REWRITE THEN FREE PTR->ARRAY;
+              END;
+
+      IF WYLFMT & ^COPY
+         THEN DO;
+                DO K = 1 TO EXTENT WHILE(HOLD^=NULL);
+                   IF LOGICAL_MASK(K)
+                      THEN CALL PRESS(HOLD->LINE_NUMBER,
+                                      HOLD->TEXT,EOF);
+                   PTR = HOLD;
+                   HOLD = HOLD->NEXT;
+                   FREE PTR->ARRAY;
+                END;
+                EOF = 1B;
+                CALL PRESS(HOLD->LINE_NUMBER,HOLD->TEXT,EOF);
+                EOF = 0B;
+              END;
+
+      HOLD = START;
+      IF COPY    & ^WYLFMT
+         THEN DO;
+                MEMBER_DDN = 'PDSCOPY';
+                MEMBER_DSNAME = OUTFILE || ' OLD KEEP';
+                MEMBER_NAM = MEMNAME;
+                CALL SVC99(WORK,'ALLOC',MEMBER_DATA);
+                IF PLIRETV ^= 0  THEN SIGNAL CONDITION(DYNALOC);
+                DO K = 1 TO EXTENT WHILE(HOLD^=NULL);
+                   IF LOGICAL_MASK(K) THEN
+                      PUT SKIP FILE(FILE) EDIT(HOLD->TEXT)(A(LRECL));
+                   PTR = HOLD;
+                   HOLD = HOLD->NEXT;
+                   FREE PTR->ARRAY;
+                END;
+                CLOSE FILE(FILE);
+                CALL SVC99(WORK,'UNALLOC','DD=PDSCOPY UNALLOC;');
+              END;
+
+      IF COPY    & WYLFMT
+         THEN DO;
+                MEMBER_DDN = 'PDSCOPY';
+                MEMBER_DSNAME = OUTFILE || ' OLD KEEP';
+                MEMBER_NAM = MEMNAME;
+                CALL SVC99(WORK,'ALLOC',MEMBER_DATA);
+                IF PLIRETV ^= 0  THEN SIGNAL CONDITION(DYNALOC);
+                DO K = 1 TO EXTENT WHILE(HOLD^=NULL);
+                   IF LOGICAL_MASK(K)
+                      THEN CALL PRESS(HOLD->LINE_NUMBER,
+                                      HOLD->TEXT,EOF);
+                   PTR = HOLD;
+                   HOLD = HOLD->NEXT;
+                   FREE PTR->ARRAY;
+                END;
+                EOF = 1B;
+                CALL PRESS(HOLD->LINE_NUMBER,HOLD->TEXT,EOF);
+                EOF = 0B;
+                CLOSE FILE(FILE);
+                CALL SVC99(WORK,'UNALLOC','DD=PDSCOPY UNALLOC;');
+              END;
+
+      HOLD = START;
+      IF REWRITE & ^WYLBUR
+         THEN DO;
+                MEMBER_DDN = 'MACROS';
+                MEMBER_DSNAME = OUTFILE || ' OLD KEEP';
+                MEMBER_NAM = MEMNAME;
+                CALL SVC99(WORK,'ALLOC',MEMBER_DATA);
+                IF PLIRETV ^= 0  THEN SIGNAL CONDITION(DYNALOC);
+                DO K = 1 TO EXTENT WHILE(HOLD^=NULL);
+                   IF LOGICAL_MASK(K) THEN
+                      WRITE FILE(FILE) FROM(HOLD->TEXT);
+                   PTR = HOLD;
+                   HOLD = HOLD->NEXT;
+                   FREE PTR->ARRAY;
+                END;
+                CLOSE FILE(FILE);
+                CALL SVC99(WORK,'UNALLOC','DD=MACROS UNALLOC;');
+              END;
+
+      IF REWRITE & WYLBUR
+         THEN DO;
+                MEMBER_DDN = 'MACROS';
+                MEMBER_DSNAME = OUTFILE || ' OLD KEEP';
+                MEMBER_NAM = MEMNAME;
+                CALL SVC99(WORK,'ALLOC',MEMBER_DATA);
+                IF PLIRETV ^= 0  THEN SIGNAL CONDITION(DYNALOC);
+                DO K = 1 TO EXTENT WHILE(HOLD^=NULL);
+                   IF LOGICAL_MASK(K)
+                      THEN CALL PRESS(HOLD->LINE_NUMBER,
+                                      HOLD->TEXT,EOF);
+                   PTR = HOLD;
+                   HOLD = HOLD->NEXT;
+                   FREE PTR->ARRAY;
+                END;
+                EOF = 1B;
+                CALL PRESS(HOLD->LINE_NUMBER,HOLD->TEXT,EOF);
+                EOF = 0B;
+                CLOSE FILE(FILE);
+                CALL SVC99(WORK,'UNALLOC','DD=MACROS UNALLOC;');
+              END;
+      IF Q(52) THEN PUT SKIP DATA(ALLOW_OUTPUT,CNTL,MASK);
+      FREE  MASK;
+   END #PUTITOUT;
+
+   MEMNAME = BLANK;
+   NESTLVL = NESTLVL - 1;
+   BUMMER = FALSE;
+
+   IF TEST & Q(56) THEN PUT PAGE DATA;
+   RETURN;
+  /**.............................................................**/
+1
+
+  UNPRESS: PROC;
+      DCL  TRUE              BIT      INIT(1B);
+      DCL  FALSE             BIT      INIT(0B);
+      DCL  MORE              BIT      INIT(1B);
+      DCL  BIT8              BIT(8);
+      DCL  BIT16             BIT(16);
+      DCL  BIT24             BIT(24);
+      DCL  BIT32             BIT(32);
+      DCL  CNTL              BIT(4)   DEF BIT32 POS(1);
+      DCL  BIT28             BIT(28)  DEF BIT32 POS(5);
+      DCL  HEX_C             BIT(4)   INIT(1100B);
+      DCL  HEX_0             BIT(4)   INIT(0000B);
+      DCL  HEX_4             BIT(4)   INIT(0100B);
+      DCL  SW_LINE_NUMBER    FIXED BIN(31);
+      DCL  STRING_LENGTH     FIXED BIN;
+      DCL  (I,J,K,L)         FIXED BIN;
+      DCL  (BUFFER,LINE)     CHAR(256)   VAR;
+
+      WYLBUR = TRUE;
+      BIT32 = UNSPEC(SUBSTR(BLOCK,3,4));
+      SW_LINE_NUMBER = BIT28;
+      I = 7;
+      DO WHILE(I < BLOCK_LENGTH+1);
+         BIT8 = UNSPEC( SUBSTR(BLOCK,I,1));
+         J, STRING_LENGTH = BIT8;
+         BUFFER = SUBSTR(BLOCK,I+1,J);
+         IF DUMP THEN
+            PUT SKIP EDIT(BIN_HEX(UNSPEC(BIT32)),J,'  ',BUFFER)(A);
+         IF CNTL = HEX_C | CNTL = '1000'B
+            THEN DO;
+                 IF BLANKLINE | STRING_LENGTH > 0
+                    THEN DO;
+                         ALLOC ARRAY;
+                         EXTENT = EXTENT + 1;
+                         TEXT = BUFFER;
+                         UPZKNT = UPZKNT + 1000;
+                         LINE_NUMBER = SW_LINE_NUMBER;
+                         IF RENUM THEN LINE_NUMBER = UPZKNT;
+                         IF START = NULL
+                            THEN START = CURRENT;
+                            ELSE HOLD->NEXT = CURRENT;
+                         HOLD = CURRENT;
+                         NEXT = NULL;
+                         IF TEST & Q(57)
+                            THEN PUT SKIP DATA(EXTENT,BUFFER);
+                         END;
+                 END;
+            ELSE IF CNTL = HEX_4 | CNTL = HEX_0
+                    THEN DO;
+                         CALL INSERT_BLANKS(J);
+                         IF TEST & Q(57)
+                            THEN PUT SKIP DATA(EXTENT,LINE);
+                         END;
+                    ELSE PUT SKIP EDIT('***ERROR IN:')(A)
+                                      (BUFFER)(A);
+         I = I + J + 1;
+         BIT32 = UNSPEC(SUBSTR(BLOCK,I,4));
+         SW_LINE_NUMBER = BIT28;
+         I = I + 4;
+      END;
+      RETURN;
+
+1 INSERT_BLANKS:PROC(L);
+      DCL  BIT8      BIT(8);
+      DCL  BIT1      BIT(4)  DEF BIT8 POS(1);
+      DCL  BIT5      BIT(4)  DEF BIT8 POS(5);
+      DCL  (I,J,K,L,N) FIXED BIN;
+
+      I = 1;
+      LINE = '';
+      DO WHILE(I < L);
+         K = 0;
+         BIT8 = UNSPEC(SUBSTR(BUFFER,I,1));
+         DO WHILE(BIT5 = '0000'B);
+            N = BIT1;
+            K = K + N;                              /*NO OF BLANKS */
+            I = I + 1;
+            BIT8 = UNSPEC(SUBSTR(BUFFER,I,1));
+         END;
+         N = BIT1;
+         K = K + N;                                 /*NO OF BLANKS */
+         J = BIT5;                                  /* NO OF CHAR  */
+         IF K = 0
+            THEN LINE=LINE||SUBSTR(BUFFER,I+1,J);
+            ELSE LINE=LINE||REPEAT(' ',K-1)||SUBSTR(BUFFER,I+1,J);
+         I = I + J + 1;
+      END;
+      LINE = LINE || BLANK;
+    IF BLANKLINE | STRING_LENGTH > 0
+        THEN DO;
+             ALLOC ARRAY;
+             EXTENT = EXTENT + 1;
+             TEXT = LINE;
+             LINE_NUMBER = SW_LINE_NUMBER;
+             UPZKNT = UPZKNT + 1000;
+             IF RENUM THEN LINE_NUMBER = UPZKNT;
+             IF START = NULL
+                THEN START = CURRENT;
+                ELSE HOLD->NEXT = CURRENT;
+             HOLD = CURRENT;
+             NEXT = NULL;
+             END;
+  END INSERT_BLANKS;
+  END UNPRESS;/*...................................................*/
+1
+  INC_EXC_RANGE:PROC(CNTL);
+      DCL  (CNTL,I,J,K,L,M,N,LM)FIXED BIN;
+      DCL  MIN             BUILTIN;
+      DCL  PHRASE          CHAR(15)VAR;
+      DCL  (WORD1,WORD2)   CHAR(15)VAR;
+
+      HOLD = START;
+      LM = HBOUND(MASK,1);
+      IF MASK_SWITCH
+       & TARGET = 'INC' | TARGET = 'INCLUDE'
+         THEN MASK(*,*) = 0B;
+      MASK_SWITCH = 0B;
+      REPLACEMENT = SUBSTR(REPLACEMENT,2,LENGTH(REPLACEMENT)-2)
+                    || COMMA || BLANK;                  /*NO PARENS*/
+      L = LENGTH(REPLACEMENT);
+      DO J = 1 TO L WHILE(SUBSTR(REPLACEMENT,J,1)^=COMMA);END;
+      I = 1;
+      DO WHILE(J < L);
+         PHRASE = SUBSTR(REPLACEMENT,I,J-I);
+         K = INDEX(PHRASE,DASH) + INDEX(PHRASE,SLASH);
+         IF K = 0
+            THEN M, N = CONVERTED(PHRASE);
+            ELSE DO;
+                 WORD1 = SUBSTR(PHRASE,1,K-1);
+                 WORD2 = SUBSTR(PHRASE,K+1);
+                 N = CONVERTED(WORD1);
+                 M = CONVERTED(WORD2);
+                 END;
+         IF WYLBUR
+            THEN DO;
+                 N = N * 1000;
+                 M = M * 1000;
+                 END;
+         HOLD = START;
+         IF TEST & Q(65)
+            THEN PUT SKIP DATA(REPLACEMENT,N,M);
+         DO K = 1 TO EXTENT WHILE(HOLD^=NULL);
+            IF HOLD->LINE_NUMBER >= N & HOLD->LINE_NUMBER <= M
+               THEN CALL SET_BIT(K,CNTL);
+            HOLD = HOLD->NEXT;
+         END;
+         I = J + 1;
+         DO J = I TO L WHILE(SUBSTR(REPLACEMENT,J,1)^=COMMA);END;
+      END;
+  END INC_EXC_RANGE;/*.............................................*/
+
+
+1
+  SET_BIT:PROC(I,J);
+      DCL  (I,J,K,L,M,N,LM)FIXED BIN;
+      IF TARGET = 'DELETE' | TARGET = 'DEL'
+       | TARGET = 'EXC'    | TARGET = 'EXCLUDE'
+         THEN MASK(I,J) = 0B;
+         ELSE MASK(I,J) = 1B;
+  END SET_BIT;/*...................................................*/
+
+
+
+  LOGICAL_MASK:PROC(ROW)         RETURNS(BIT);
+      DCL ROW                    FIXED BIN;
+      DCL LINENUMBER             FIXED BIN(31);
+      DCL TXT                    CHAR(255)  VAR;
+      DCL ANSWER                 BIT;
+      ANSWER = 0B;
+      LINENUMBER = HOLD->LINE_NUMBER;
+      TXT = HOLD->TEXT;
+      IF TEST & Q(69)
+         THEN PUT SKIP DATA(EXTENT,ROW,LINENUMBER,TXT);
+      IF AND & ALL(MASK(ROW,*)) THEN ANSWER = 1B;
+      IF OR  & ANY(MASK(ROW,*)) THEN ANSWER = 1B;
+      RETURN(ANSWER);
+  END LOGICAL_MASK;/*..............................................*/
+
+1 CHANGE_RTN:PROC(PARM);
+     /**************************************************************
+
+        PURPOSE - ANALYZE AND EXECUTE THE CHANGE COMMAND
+        SYNTAX  - CHANGE 'TARGET' C1/C2 TO 'REPLACEMENT' IN L1/L2
+                  1       2       3     4   5            6  7
+
+        COLUMNS OPTIONS WHEN LENGTH(TARGET)=0
+          12345678            TEXT         T=LENGTH(TEXT)
+                *             F <= T        SINGLE
+                      *       T < F
+               *              F = L <= T   ^SINGLE
+               **             F <= L <= T
+                ****          F <= T < L
+                 ****         T <= F <= L
+                    ****      T < F
+
+     **************************************************************/
+
+     ON ERROR BEGIN; ON ERROR SYSTEM; END;
+     DCL  (I,J,K,KK,LL,LR,LT,L,M,N)   FIXED BIN INIT(0);
+     DCL  CHANGE_COMMAND         CHAR(255)  INIT((255)' ');
+     DCL  CURRENT_POINTER        FIXED BIN;
+     DCL  ENDCOL                 FIXED BIN;
+     DCL  FILLER                 CHAR(*)    CONTROLLED;
+     DCL  FIRSTCOLM              FIXED BIN(31);
+     DCL  FIRSTLINE              FIXED BIN(31);
+     DCL  LASTCOLM               FIXED BIN(31);
+     DCL  LASTLINE               FIXED BIN(31);
+     DCL  LINE_OVFLO             FIXED BIN  INIT(255);
+     DCL  MORE                   BIT        INIT(0B);
+     DCL  PARM                   CHAR(255)  VAR;
+     DCL  REPLACEMENT            CHAR(80)   VAR;
+     DCL  SCREWEDUP              BIT        INIT(0B);
+     DCL  SINGLE                 BIT        INIT(0B);
+     DCL  STRT                   FIXED BIN;
+     DCL  TARGET                 CHAR(80)   VAR;
+
+     FIRSTLINE = 0;
+     LASTLINE  = 99999;
+     FIRSTCOLM = 1;
+     LASTCOLM  = 0;
+     IF SUBSTR(PARM,LENGTH(PARM)) = COMMA
+        THEN PARM = SUBSTR(PARM,1,LENGTH(PARM)-1);
+     CHANGE_COMMAND = PARM;
+     SCREWEDUP = PARSE_COMMAND(CHANGE_COMMAND);
+     IF WYLBUR
+        THEN DO;
+             FIRSTLINE = FIRSTLINE * 1000;
+             LASTLINE  = LASTLINE  * 1000;
+             END;
+     IF TEST & Q(72)
+        THEN DO;
+             PUT SKIP EDIT('FIRSTLINE')     (COL(01),A)
+                          (FIRSTLINE)       (COL(11),P'ZZZZZZ')
+                          ('LASTLINE ')     (COL(21),A)
+                          (LASTLINE)        (COL(31),P'ZZZZZZ')
+                          ('FIRSTCOLM')     (COL(41),A)
+                          (FIRSTCOLM)       (COL(51),P'ZZZZZZ')
+                          ('LASTCOLM ')     (COL(61),A)
+                          (LASTCOLM)        (COL(71),P'ZZZZZZ');
+             PUT SKIP DATA(TARGET,REPLACEMENT);
+             END;
+     HOLD = START;
+     LT = LENGTH(TARGET);
+     LR = LENGTH(REPLACEMENT);
+
+     DO WHILE(HOLD ^= NULL & ^SCREWEDUP);
+        IF TEST & Q(76)
+           THEN PUT SKIP EDIT(HOLD->LINE_NUMBER,' ',HOLD->TEXT)(A);
+        IF HOLD->LINE_NUMBER >= FIRSTLINE &
+           HOLD->LINE_NUMBER <= LASTLINE
+           THEN DO;
+                ENDCOL = LASTCOLM;
+                IF SINGLE & LT = 0 THEN ENDCOL = LENGTH(HOLD->TEXT);
+                IF LT > 0 & LASTCOLM = 0
+                   THEN ENDCOL = LENGTH(HOLD->TEXT);
+                K = 0;
+                MORE = 1B;
+                M,STRT = FIRSTCOLM;
+
+                DO WHILE(MORE & K <= ENDCOL & LT ^= 0);
+                   IF TEST & Q(80)
+                      THEN PUT SKIP(2) EDIT('KK=',KK,' K=',K,
+                               ' STRT=',STRT,' ENCOL=',ENDCOL)(A);
+                   IF LENGTH(HOLD->TEXT) < FIRSTCOLM
+                      THEN MORE = 0B;         /***  CANT DO THAT ***/
+                      ELSE DO;
+                           KK= INDEX(SUBSTR(HOLD->TEXT,STRT),TARGET);
+                           K = KK + STRT - 1;/* POS RELATIVE TO 1 */
+                           IF KK = 0            /* NO REAL TARGET */
+                              THEN MORE = 0B;
+                           IF MORE & K <= ENDCOL
+                              THEN HOLD->TEXT =
+                                   SUBSTR(HOLD->TEXT,1,K-1) ||
+                                   REPLACEMENT ||
+                                   SUBSTR(HOLD->TEXT,LT+K);
+                           STRT = K + LR;
+                           ENDCOL = ENDCOL + LR - LT;
+                           END;
+                END;
+
+                DO WHILE(MORE & LT = 0 & SINGLE);
+                   MORE = 0B;
+                   IF FIRSTCOLM < LENGTH(HOLD->TEXT)
+                      THEN HOLD->TEXT = SUBSTR(HOLD->TEXT,1,M)
+                           ||REPLACEMENT ||SUBSTR(HOLD->TEXT,M+1);
+                      ELSE DO;
+                           N = FIRSTCOLM - LENGTH(HOLD->TEXT);
+                           ALLOC FILLER CHAR(N);
+                           FILLER = (200)' ';
+                           HOLD->TEXT = HOLD->TEXT ||
+                           FILLER ||REPLACEMENT;
+                           FREE FILLER;
+                           END;
+                END;
+
+                DO WHILE(MORE & LT = 0 & ^SINGLE);
+                   MORE = 0B;
+                   IF FIRSTCOLM = LASTCOLM
+                    & LASTCOLM <= LENGTH(HOLD->TEXT)
+                      THEN HOLD->TEXT = SUBSTR(HOLD->TEXT,1,M-1)
+                           ||REPLACEMENT
+                           ||SUBSTR(HOLD->TEXT,ENDCOL+1);
+                   ELSE
+                   IF FIRSTCOLM < LASTCOLM
+                    & LASTCOLM <= LENGTH(HOLD->TEXT)
+                      THEN HOLD->TEXT = SUBSTR(HOLD->TEXT,1,M-1)
+                           ||REPLACEMENT
+                           ||SUBSTR(HOLD->TEXT,ENDCOL+1);
+                   ELSE
+                   IF FIRSTCOLM <= LENGTH(HOLD->TEXT)
+                    & LENGTH(HOLD->TEXT) < LASTCOLM
+                      THEN HOLD->TEXT =
+                           SUBSTR(HOLD->TEXT,1,M-1) || REPLACEMENT;
+                   ELSE
+                   IF LENGTH(HOLD->TEXT) <= FIRSTCOLM
+                      THEN DO;
+                           N = FIRSTCOLM - LENGTH(HOLD->TEXT) - 1;
+                           ALLOC FILLER CHAR(N);
+                           FILLER = (200)' ';
+                           HOLD->TEXT = HOLD->TEXT
+                           || FILLER || REPLACEMENT;
+                           FREE FILLER;
+                           END;
+                END;
+                END;
+        HOLD = HOLD->NEXT;
+     END;
+     IF SCREWEDUP THEN MASK(*,*) = 0B;             /*INHIBIT OUTPUT*/
+     IF TEST & Q(84) THEN PUT PAGE DATA;
+     RETURN;
+
+
+  PARSE_COMMAND:PROC(COMMAND)      RETURNS(BIT); /* . . . . . . . */
+      DCL DOUBLEQUOTE  CHAR INIT('"');
+      DCL QUOTE        CHAR INIT('''');
+      DCL CMD(255)     CHAR DEF COMMAND;
+      DCL COMMAND      CHAR(255);
+      DCL WORD(7)      CHAR(80) VAR;
+      /*
+      /*           123456789A123456789B123456789C
+      /*    1.     CH 'A1' TO 'B1'
+      /*    2.     CH'A2'TO'B2'
+      /*    3.     CH 'A3' 10 TO'B3'
+      /*    4.     CH 'A4'10 TO 'B4'
+      /*    5.     CH 'A5' TO'B5'IN 69
+      /*    6.     CH'A6' 6/9 TO 'B6'
+      /*    7.       CH'A7' 6/9 TO 'B7' IN 10/20
+      /*    8.     CH 6  TO 'B8'
+      /*    9.     CH 6/9 TO 'B9' IN 23/34
+      */
+      WORD(*) = '';
+      CURRENT_POINTER = 0;
+      LL = LENGTH(PARM);
+      DO I = 1 TO LL WHILE(CMD(I)=' ');END;   /*ELIM LEADING BLANKS*/
+      J = NEXT_DELIMITER(I,CMD);
+      WORD(1)=SUBSTR(COMMAND,I,J-I);   /*SHOULD BE "CHANGE" COMMAND*/
+      IF WORD(1) ^= 'CHANGE' & WORD(1) ^= 'CH'
+         THEN DO;
+              PUT SKIP EDIT('INVALID SYNTAX:: ',COMMAND)(A);
+              RETURN(1B);
+              END;
+      I,CURRENT_POINTER = J;
+      IF CMD(I) = QUOTE
+         THEN DO;
+              J = I + INDEX(SUBSTR(COMMAND,I+1),QUOTE);
+              WORD(2) = SUBSTR(COMMAND,I+1,J-I-1);
+              END;
+         ELSE DO;                        /* CMD(I) MUST BE A BLANK */
+              I = NEXT_CHAR(CURRENT_POINTER,CMD);
+              IF CMD(I) = QUOTE
+                 THEN DO;
+                      J = I + INDEX(SUBSTR(COMMAND,I+1),QUOTE);
+                      WORD(2) = SUBSTR(COMMAND,I+1,J-I-1);
+                      END;
+                 ELSE DO;                       /* MUST BE NUMERIC */
+                      WORD(2) = '';
+                      J = I + INDEX(SUBSTR(COMMAND,I+1),'TO');
+                      WORD(3) = SUBSTR(COMMAND,I,J-I);
+                      WORD(4) = 'TO';
+                      END;
+              END;
+      CURRENT_POINTER = J;
+      I = NEXT_CHAR(CURRENT_POINTER,CMD);
+      IF SUBSTR(COMMAND,I,2) = 'TO'
+         THEN DO;
+              I = I + 2;
+              WORD(4) = 'TO';
+              END;
+         ELSE IF VERIFY(CMD(I),'0123456789') = 0      /* NUMERIC ? */
+                 THEN DO;
+                      J = I + INDEX(SUBSTR(COMMAND,I+1),'TO');
+                      WORD(3) = SUBSTR(COMMAND,I,J-I);
+                      WORD(4) = 'TO';
+                      I = J + 2;
+                      END;
+      IF WORD(4) ^= 'TO'
+         THEN DO;
+              PUT SKIP EDIT('INVALID SYNTAX:: ',COMMAND)(A);
+              RETURN(1B);
+              END;
+      CURRENT_POINTER = I;
+      I = I-1+INDEX(SUBSTR(COMMAND,I),QUOTE);
+      IF CMD(I) ^= QUOTE
+         THEN DO;
+              PUT SKIP EDIT('INVALID SYNTAX:: ',COMMAND)(A);
+              RETURN(1B);
+              END;
+      J = I + INDEX(SUBSTR(COMMAND,I+1),QUOTE);
+      WORD(5) = SUBSTR(COMMAND,I+1,J-I-1);
+      I,CURRENT_POINTER = J;
+      SINGLE = 0B;
+      IF WORD(3) ^= ''                /* COLUMNS OPTION BEING USED */
+         THEN DO;
+              L = INDEX(WORD(3),'/');
+              IF L = 0                              /*SINGLE COLUMN*/
+                 THEN DO;
+                      FIRSTCOLM, LASTCOLM = WORD(3);
+                      SINGLE =  1B;
+                      END;
+                 ELSE DO;                          /* MULTICOLUMNS */
+                      FIRSTCOLM = SUBSTR(WORD(3),1,L-1);
+                      LASTCOLM = SUBSTR(WORD(3),L+1);
+                      END;
+               END;
+      TARGET  = WORD(2);
+      REPLACEMENT = WORD(5);
+      IF LL <= CURRENT_POINTER  THEN RETURN(0B);/* NO LINES OPTION */
+      I = NEXT_CHAR(CURRENT_POINTER,CMD);
+      WORD(6) = CMD(I) || CMD(I+1);
+      I = I + 3;
+      WORD(7) = SUBSTR(COMMAND,I,LL-I+1);
+      L = INDEX(WORD(7),'/');
+      IF L = 0                                        /*SINGLE LINE*/
+         THEN FIRSTLINE, LASTLINE = WORD(7);
+         ELSE DO;                                   /* MULTI LINES */
+              FIRSTLINE = SUBSTR(WORD(7),1,L-1);
+              LASTLINE = SUBSTR(WORD(7),L+1);
+              END;
+      RETURN(0B);
+  END PARSE_COMMAND;
+
+  NEXT_DELIMITER:PROC(CURRENT_POINTER,CMD)/*....*/RETURNS(FIXED BIN);
+  /* DELIMITERS ARE: BLANKS OR QUOTE OR DOUBLEQUOTE                */
+      DCL CURRENT_POINTER FIXED BIN, CMD(*) CHAR;
+      DO N = CURRENT_POINTER+1 TO LL
+         WHILE(CMD(N)^=' ' & CMD(N) ^=QUOTE);
+      END;
+      RETURN(N);
+  END NEXT_DELIMITER;
+
+  NEXT_CHAR:PROC(CURRENT_POINTER,CMD)/*.........*/RETURNS(FIXED BIN);
+  /* FIND THE NEXT NON-BLANK CHARACTER                             */
+      DCL CURRENT_POINTER FIXED BIN, CMD(*) CHAR;
+      IF CMD(CURRENT_POINTER) ^= ' '
+         THEN CURRENT_POINTER = CURRENT_POINTER + 1;
+      DO N = CURRENT_POINTER TO LL WHILE(CMD(N) = ' ');END;
+      RETURN(N);
+  END NEXT_CHAR;
+  END CHANGE_RTN;
+  END MACPROC;/*****************************************************/
+
+
+1
+  PRESS: PROC(NUMBER,WORK,EOF);
+      DCL NUMBER             FIXED BIN(31);
+      DCL WORK               CHAR(255)  VAR;
+      DCL EOF                BIT;
+      DCL BLOCK              CHAR(6233) VAR STATIC;
+      DCL LINE               CHAR(256)  VAR;
+      DCL CURRENT_LINE       CHAR(256)  VAR;
+      DCL SW_LINE            CHAR(256)  VAR;
+      DCL BLANK              CHAR       INIT(' ');
+      DCL ONEBYTE            CHAR;
+      DCL TWOBYTE            CHAR(2);
+      DCL FOURBYTE           CHAR(4);
+      DCL BIT32              BIT(32);
+      DCL CNTL               BIT(4);
+      DCL LINE_NUMBER        FIXED BIN(31);
+      DCL SW_LINE_NUMBER     FIXED BIN(31);
+      DCL STR_LENGTH         FIXED BIN(15);
+      DCL BLOCK_LENGTH       FIXED BIN(15);
+      DCL OVFLOW             FIXED BIN(15)  INIT(6225);
+      DCL (I,J,K,L,M)        FIXED BIN;
+      DCL (INDEX,LENGTH,SUBSTR,UNSPEC)BUILTIN;
+
+      IF EOF                       /* SHORT BLOCK  -  FORCE IT OUT */
+         THEN DO;
+              CALL OUTPUT_RTN;
+              RETURN;
+              END;
+      L = LENGTH(WORK);
+      DO I = L TO 1 BY -1                 /* STRIP TRAILING BLANKS */
+         WHILE(SUBSTR(WORK,I,1) = ' ');END;
+      CURRENT_LINE, LINE = SUBSTR(WORK,1,I);
+      IF DUMP THEN
+         PUT SKIP EDIT(NUMBER,' ',LINE)(A);
+      IF INDEX(LINE,'  ') = 0
+         THEN CNTL = '1000'B;   /* LINES WITHOUT CONTIGUOUS BLANKS */
+         ELSE DO;               /* PROCESS LINES WITH CONT BLANKS  */
+                CNTL = '0000'B;
+                SW_LINE = '';
+                CALL DELETE_BLANKS;/* AND PUT IN CONTROL CHARACTERS*/
+                IF LENGTH(SW_LINE) > LENGTH(CURRENT_LINE)
+                   THEN CNTL = '1000'B;   /*USE CURRENT LINE ANYWAY*/
+                   ELSE CURRENT_LINE = SW_LINE;
+              END;
+      STR_LENGTH = LENGTH(CURRENT_LINE);   /* ONE BYTE LINE LENGTH */
+      UNSPEC(TWOBYTE) = UNSPEC(STR_LENGTH);
+      ONEBYTE = SUBSTR(TWOBYTE,2);      /* THIS IS THE LINE LENGTH */
+      LINE_NUMBER = NUMBER;         /* THE SUPERWYLBUR LINE NUMBER */
+      UNSPEC(FOURBYTE) = UNSPEC(LINE_NUMBER);
+      UNSPEC(FOURBYTE) = UNSPEC(FOURBYTE) | CNTL;   /*SET HIGH BITS*/
+      BLOCK_LENGTH = LENGTH(BLOCK);
+      L = BLOCK_LENGTH + STR_LENGTH;
+      IF L > OVFLOW  THEN CALL OUTPUT_RTN;
+      BLOCK = BLOCK||FOURBYTE||ONEBYTE||CURRENT_LINE;
+      RETURN;
+  OUTPUT_RTN:PROC;/*  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  */
+      L, BLOCK_LENGTH = LENGTH(BLOCK) + 2;   /* FINAL BLOCK LENGTH */
+      IF L < 5 THEN RETURN;                         /* EMPTY BLOCK */
+      UNSPEC(TWOBYTE) = UNSPEC(BLOCK_LENGTH)|1B;     /* MAKE IT SW */
+      BLOCK = TWOBYTE || BLOCK;         /* SW PRESSED FORMAT BLOCK */
+      IF REWRITE
+         THEN WRITE FILE(FILE) FROM(BLOCK);
+         ELSE PUT SKIP FILE(FILE) EDIT(BLOCK)(A(L));
+      BLOCK = '';
+  END OUTPUT_RTN;
+  DELETE_BLANKS:PROC;/* TAKE OUT BLANKS AND  PUT IN CONTROL CHAR   */
+      DCL (I,J,K,L,M,N)      FIXED BIN;
+      DCL BIT16              BIT(16);
+      DCL BIT9               BIT(4)  DEF BIT16 POS(9);
+      DCL BIT13              BIT(4)  DEF BIT16 POS(13);
+      DCL BIT4               BIT(4);
+
+      BIT16 = '0000000000000000'B;
+      DO WHILE(LENGTH(LINE)>0);
+         L = LENGTH(LINE);
+         IF SUBSTR(LINE,1,1) = ' '
+            THEN DO;                             /* PROCESS BLANKS */
+                    DO J = 1 TO L WHILE(SUBSTR(LINE,J,1)=' ');END;
+                    I = J - 1;                 /* NUMBER OF BLANKS */
+                    DO WHILE(I > 15);
+                       BIT9 = '1111'B;
+                       UNSPEC(TWOBYTE) = BIT16;
+                       ONEBYTE = SUBSTR(TWOBYTE,2);
+                       SW_LINE = SW_LINE || ONEBYTE;
+                       I = I - 15;
+                    END;
+                    UNSPEC(TWOBYTE) = UNSPEC(I);
+                    ONEBYTE = SUBSTR(TWOBYTE,2);
+                    UNSPEC(BIT4) = SUBSTR(UNSPEC(ONEBYTE),5);
+                    SUBSTR(BIT16,9,4) = BIT4;/* SET THE BLANK COUNT*/
+                    LINE = SUBSTR(LINE,J);         /* PURGE BLANKS */
+                 END;
+            ELSE DO;               /* PROCESS NON-BLANK CHARACTERS */
+                    J = INDEX(LINE,BLANK);
+                    IF J = 0  THEN I = L;      /*EXHAUSTED THE LINE*/
+                              ELSE I = J - 1;   /* CHARACTER COUNT */
+                    DO WHILE(I > 15);
+                       BIT13 = '1111'B;
+                       UNSPEC(TWOBYTE) = BIT16;
+                       ONEBYTE = SUBSTR(TWOBYTE,2);
+                       SW_LINE = SW_LINE || ONEBYTE;
+                       SW_LINE = SW_LINE || SUBSTR(LINE,1,15);
+                       I = I - 15;
+                       BIT16 = '0000000000000000'B;
+                       LINE = SUBSTR(LINE,16);
+                    END;
+                    UNSPEC(TWOBYTE) = UNSPEC(I);
+                    ONEBYTE = SUBSTR(TWOBYTE,2);
+                    UNSPEC(BIT4) = SUBSTR(UNSPEC(ONEBYTE),5);
+                    SUBSTR(BIT16,13) = BIT4; /* SET THE CHAR COUNT */
+                    UNSPEC(ONEBYTE) = SUBSTR(UNSPEC(BIT16),9);
+                    SW_LINE = SW_LINE || ONEBYTE;  /* CONTROL CHAR */
+                    SW_LINE = SW_LINE || SUBSTR(LINE,1,I); /* DATA */
+                    BIT16 = '0000000000000000'B;
+                    LINE = SUBSTR(LINE,I+1);   /* PURGE CHARACTERS */
+                 END;
+      END;
+  END DELETE_BLANKS;
+  END PRESS;/*******************************************************/
+
+
+  CONVERTED:PROC(CHARITEM) RETURNS(FIXED BIN);
+      DCL  NUMERIC FIXED BIN,CHARITEM CHAR(15) VAR;
+      ON CONVERSION ONSOURCE=(10)'0';
+      NUMERIC = CHARITEM;
+      RETURN(NUMERIC);
+  END CONVERTED;/***************************************************/
+
+1
+  OPTIONS:   PROCEDURE   (PARM);
+      ON ERROR BEGIN; ON ERROR SYSTEM;
+         IF TEST & Q(112) THEN PUT SKIP DATA(PARM); END;
+  DCL PARM CHAR(255) VAR;
+  DCL COMMAND CHAR(255) VAR, (I,J,L) FIXED BIN;
+  DCL (LENGTH,INDEX,SUBSTR)          BUILTIN;
+  DCL COMMA CHAR INIT(','), WORD CHAR(24) VAR;
+  IF ^OPTN THEN RETURN;         /* 1/15/84  A ONE_TIME_SWITCH */
+  WORD,COMMAND = '';
+  I = 1; L = LENGTH(PARM);
+  DO WHILE(I < L);
+     J = INDEX(SUBSTR(PARM,I),COMMA);
+     IF J = 0
+        THEN DO;
+             J = 1 + L;
+             WORD = SUBSTR(PARM,I,J-I);
+             IF INDEX(WORD,'=') > 0
+                THEN COMMAND = COMMAND || WORD;
+                ELSE IF SUBSTR(WORD,1,2) = 'NO'
+                        THEN COMMAND = COMMAND || SUBSTR(WORD,3)
+                                               || '=0B';
+                        ELSE COMMAND = COMMAND || WORD || '=1B';
+             END;
+        ELSE DO;
+             J = J + I - 1;
+             WORD = SUBSTR(PARM,I,J-I);
+             IF INDEX(WORD,'=') > 0
+                THEN COMMAND = COMMAND || WORD || ',';
+                ELSE IF SUBSTR(WORD,1,2) = 'NO'
+                        THEN COMMAND = COMMAND || SUBSTR(WORD,3)
+                                               || '=0B,';
+                        ELSE COMMAND = COMMAND || WORD || '=1B,';
+             END;
+      I = J + 1;
+  END;
+  IF LENGTH(COMMAND) > 0
+     THEN DO;
+          COMMAND = COMMAND || ';';
+          GET STRING(COMMAND) DATA;
+          END;
+  IF TEST & Q(118) THEN PUT SKIP DATA;
+  END OPTIONS;/*****************************************************/
+
+1
+  CHANGE_OPTN:PROC;
+      DCL  (I,J,K,L,M,N)               FIXED BIN;
+      DCL  PARM                        CHAR(255)   VAR;
+      DCL  GLBL                        BIT;
+
+      GLBL = 0B;
+      PARM = INSTRUCTION;
+      IF SUBSTR(PARM,2,6) = 'GLOBAL'
+         THEN DO;                            /* SKIP KEY_WORD */
+              PARM = SUBSTR(PARM,8);
+              GLBL = 1B;
+              END;
+         ELSE PARM = SUBSTR(PARM,7);
+
+      DO I = 1 TO LENGTH(PARM)
+         WHILE(SUBSTR(PARM,I,1)=' '  | SUBSTR(PARM,I,1)='=');END;
+      IF LENGTH(PARM) = 0 THEN PARM = ' ';
+         ELSE  PARM = SUBSTR(PARM,I);  /* SKIP INITIAL  ' ' & '=' */
+      DO I = LENGTH(PARM) TO 1 BY -1
+         WHILE(SUBSTR(PARM,I,1)=' ');END;
+      PARM = SUBSTR(PARM,1,I);           /* SKIP TRAILING BLANKS */
+
+      IF ^GLBL & SUBSTR(PARM,1,1) = DOUBLE_QUOTE
+         THEN PARM = SUBSTR(PARM,2,LENGTH(PARM)-2);
+      IF LENGTH(PARM) = 0 THEN PARM = ' ';
+      IF TEST & Q(126) THEN PUT SKIP DATA(PARM);
+      IF GLBL THEN GLOBAL = PARM;
+              ELSE CALL OPTIONS(PARM);
+  END CHANGE_OPTN;/*************************************************/
+1
+  BIN_HEX:PROC(BINARY)       RETURNS(CHAR(8));
+      DCL BINARY             BIT(*);
+      DCL (I,K,J,L,N)        FIXED BIN;
+      DCL HEXCHAR            CHAR(256) VAR INIT('');
+      DCL HEX                CHAR;
+      N = LENGTH(BINARY)/4;
+      DO I = 1 TO N;
+         SELECT(SUBSTR(BINARY,I*4-3,4));
+            WHEN('0001')  HEX = '1';
+            WHEN('0010')  HEX = '2';
+            WHEN('0011')  HEX = '3';
+            WHEN('0100')  HEX = '4';
+            WHEN('0101')  HEX = '5';
+            WHEN('0110')  HEX = '6';
+            WHEN('0111')  HEX = '7';
+            WHEN('1000')  HEX = '8';
+            WHEN('1001')  HEX = '9';
+            WHEN('1010')  HEX = 'A';
+            WHEN('1011')  HEX = 'B';
+            WHEN('1100')  HEX = 'C';
+            WHEN('1101')  HEX = 'D';
+            WHEN('1110')  HEX = 'E';
+            WHEN('1111')  HEX = 'F';
+            OTHERWISE     HEX = '0';
+         END;
+         HEXCHAR = HEXCHAR || HEX;
+      END;
+      RETURN(HEXCHAR);
+  END BIN_HEX;/*****************************************************/
+
+1 OUTPUT_RTN:PROC(KNT);
+      DCL (I,K,J,L,N,KNT)    FIXED BIN(31);
+      DCL  NUMERIC_FIELD     CHAR(9);
+      DCL  DECIMAL           CHAR(3) DEF NUMERIC_FIELD POS(7);
+      IF Q(130) THEN PUT SKIP DATA(ALLOW_OUTPUT);
+      IF ^ALLOW_OUTPUT & ^TEST  THEN RETURN;
+      IF NAME THEN SUBSTR(INSTRUCTION,73) = MEMNAME;
+      DO I = 255 TO 1 BY -1 WHILE(SUBSTR(INSTRUCTION,I,1)=' ');END;
+      IF LIST | LISTPDS  THEN
+         IF NUM
+            THEN DO;
+                 IF WYLBUR
+                    THEN DO;
+                         PUT STRING(NUMERIC_FIELD)
+                             EDIT(KNT)(P'ZZZZ9.999');
+                         IF SUBSTR(DECIMAL,3)='0'
+                            THEN SUBSTR(DECIMAL,3)=' ';
+                         IF SUBSTR(DECIMAL,2)='0 '
+                            THEN SUBSTR(DECIMAL,2)='  ';
+                         IF DECIMAL = '0  '
+                            THEN DECIMAL = '   ';
+                         END;
+                    ELSE DO;
+                         LINE_KNT = LINE_KNT + 1;
+                         PUT STRING(NUMERIC_FIELD)
+                             EDIT(KNT)(P'ZZZZZV.BBB');
+                         END;
+                 PUT SKIP FILE(FILE) EDIT
+                     (NUMERIC_FIELD)          (COL(1),A)
+                     (SUBSTR(INSTRUCTION,1,I))(COL(11),A);
+                 RETURN;
+                 END;
+            ELSE DO;
+                 PUT SKIP FILE(PDSLIST) EDIT
+                     (SUBSTR(INSTRUCTION,1,I))  (COL(1),A);
+                 RETURN;
+                 END;
+      IF PRINT
+         THEN DO;
+              PUT SKIP EDIT(SUBSTR(INSTRUCTION,1,I))(A);
+              RETURN;
+              END;
+      IF INTRDR
+         THEN DO;
+              PUT SKIP FILE(READER)EDIT(INSTRUCTION)(A(80));
+              RETURN;
+              END;
+      PUT SKIP FILE(SYSOUT)EDIT(SUBSTR(INSTRUCTION,1,I))(A);
+  END OUTPUT_RTN;/**************************************************/
+1
+
+  GET_MACRO_DSN:PROC;
+      IF ^FIRST_TIME  THEN RETURN;
+      FIRST_TIME = FALSE;
+
+      CALL SVC99(WORK,'INFO',INFORMATION,'DD=MEMBERS  ;');
+      RTNCODE = PLIRETV;
+      IF DD_NAME ^= LOW(8) THEN SHORTLST, PROFILE = TRUE;
+      IF TEST & Q(134) THEN SIGNAL CONDITION(DYNALOC);
+
+      CALL SVC99(WORK,'INFO',INFORMATION,'DD=MACROS   ;');
+      RTNCODE = PLIRETV;
+      DSNAME = DSN;
+      IF TEST & Q(146) THEN SIGNAL CONDITION(DYNALOC);
+      IF DD_NAME ^= LOW(8)
+         THEN DO;
+              OPEN FILE(MACROS);
+              DD.DDN = 'MACROS';
+              CALL DDINFO(DD);
+              MRECFM = RECFM;
+              CLOSE FILE(MACROS);
+              CALL SVC99(WORK,'UNALLOC','DD=MACROS UNALLOC;');
+              END;
+      RTNCODE = PLIRETV;
+      IF TEST & Q(142) THEN SIGNAL CONDITION(DYNALOC);
+
+      CALL SVC99(WORK,'INFO',INFORMATION,'DD=PDSCOPY  ;');
+      IF TEST & Q(138) THEN SIGNAL CONDITION(DYNALOC);
+      IF DD_NAME ^= LOW(8)
+         THEN DO;
+              COPY = TRUE;
+              OPEN FILE(PDSCOPY);
+              DD.DDN = 'PDSCOPY';
+              CALL DDINFO(DD);
+              CLOSE FILE(PDSCOPY);
+              OUTFILE = DSN;
+              CALL SVC99(WORK,'UNALLOC','DD=PDSCOPY UNALLOC;');
+              RTNCODE = PLIRETV;
+              IF RECFM = 'U' & BLKSIZE = 6233  THEN WYLFMT =1B;
+              END;
+         ELSE COPY = FALSE;
+      IF TEST & Q(150)
+       | R_CODE > 4   THEN SIGNAL CONDITION(DYNALOC);
+
+      IF ^COPY  THEN OUTFILE = DSNAME;
+  END GET_MACRO_DSN;/***********************************************/
+
+1 /* (CHECK): */
+  ALL_MEMBERS:PROC;
+      IF SHORTLST                        /* DDNAME=MEMBERS EXISTS */
+         THEN DO;
+              MORE = TRUE;
+              ALLOC MEMBER_NAME;
+              GET FILE(MEMBERS) EDIT(MEMBER_NAME)(A(8));
+              IF MEMBER_NAME = ' ' THEN FREE MEMBER_NAME;
+              DO WHILE(MORE);
+                 ALLOC MEMBER_NAME;
+                 GET FILE(MEMBERS) EDIT(MEMBER_NAME)(A(8));
+                 IF MEMBER_NAME = ' ' THEN FREE MEMBER_NAME;
+              END;
+              END;
+         ELSE DO;
+              ALLOC_DDN = 'BLOCKS';
+              ALLOC_DSNAME = DSNAME || ' OLD LRECL=256 DSORG=PS';
+              CALL SVC99(WORK, 'ALLOC',ALLOC_DATA);
+              IF PLIRETV ^= 0  THEN SIGNAL ERROR;
+              READ FILE(BLOCKS) INTO(BLOCK);
+              PTR = ADDR(BLOCK);
+              OVFLO = BLOCKLENGTH;
+              DO WHILE(MORE);
+                 I = 3;
+                 J = 1;
+                 DO WHILE(MORE & J+3 < OVFLO);
+                    BLOCK = SUBSTR(BLOCK,I);
+                    P = ADDR(BLOCK);
+                    IF MEMBR = HIGH(8)
+                       THEN MORE = 0B;
+                       ELSE IF VERIFY(MEMBR,VALID) = 0
+                               THEN DO;
+                                    ALLOC MEMBER_NAME;
+                                    MEMBER_NAME = MEMBR;
+                                    IF TEST & Q(164)
+                                       THEN PUT SKIP DATA(MEMBER_NAME);
+                                     END;
+                    BIT8 = UNSPEC(JUNK);
+                    FIELDLENGTH = SUBSTR(BIT8,4);
+                    I = FIELDLENGTH*2 + 13;
+                    J = J + I - 1;
+                 END;
+                 READ FILE(BLOCKS) INTO(BLOCK);
+                 PTR = ADDR(BLOCK);
+                 OVFLO = BLOCKLENGTH;
+              END;
+              CLOSE FILE(BLOCKS);
+              END;
+
+      EXTENT = ALLOCATION(MEMBER_NAME);
+      IF TEST & Q(168) THEN PUT SKIP DATA(EXTENT);
+      IF EXTENT > 0
+         THEN DO;
+                ALLOC MATRIX;
+                ALLOC PAGE_NUMBER;
+                DO J = EXTENT TO 1 BY -1;
+                MATRIX(J) = MEMBER_NAME;
+                IF TEST & Q(172)
+                   THEN PUT SKIP DATA(J,MEMBER_NAME,MATRIX(J));
+                FREE MEMBER_NAME;
+                END;
+              END;
+      IF SHOMEM
+         THEN DO I = 1 TO EXTENT;
+              PUT SKIP LIST( MATRIX(I) );
+              END;
+
+                DO WHILE(^END_OF_FILE);
+1                DO J = 80 TO 1 BY -1 WHILE(LINE(J)=' ');END;
+                 IF LINE(J) = CONTINUATION
+                    THEN DO;
+                           CONTINUED = 1B;
+                           CONTINUE_AREA = SUBSTR(INSTRUCTION,1,J-1);
+                           DO WHILE(CONTINUED);
+                             GET FILE(SYSIN)EDIT(INSTRUCTION)(A(80));
+                             DO J = 80 TO 1 BY -1
+                                WHILE(LINE(J)=' ');END;
+                             IF LINE(J) ^= CONTINUATION
+                                THEN DO;
+                                     CONTINUE_AREA = CONTINUE_AREA ||
+                                                     INSTRUCTION;
+                                     CONTINUED = 0B;
+                                     END;
+                                ELSE CONTINUE_AREA = CONTINUE_AREA ||
+                                           SUBSTR(INSTRUCTION,1,J-1);
+                           END;
+                           INSTRUCTION = CONTINUE_AREA;
+                         END;
+                   ALLOC STACK;
+                   STACK = INSTRUCTION;
+                   GET FILE(SYSIN) EDIT(INSTRUCTION)(A(80));
+                END;
+                OCCURS, EXTENT = ALLOCATION(STACK);
+                IF EXTENT > 0
+                   THEN DO;
+                        ALLOC APPLICATION;
+                          DO J = EXTENT TO 1 BY -1;
+                             APPLICATION(J) = STACK;
+                             FREE STACK;
+                          END;
+                        END;
+                   ELSE DO;           /* IN CASE OF NO SYSIN INPUT */
+                        OCCURS,EXTENT = 1;
+                        ALLOC APPLICATION;
+                        INSTRUCTION, APPLICATION(1) = (255)' ';
+                        END;
+  END ALL_MEMBERS;/*************************************************/
+  END  PDSPROC;/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/

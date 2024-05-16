@@ -1,0 +1,722 @@
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.10 20:36:06   Page     1
+ -                     Options Specified
+ 0  Install:
+ 0  Command: PP(SQL()),SOURCE
+ 0  Install:
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.05.10 20:36:06   Page     2
+ - SQL (Built:20220822) Preprocessor Options Used
+ 0     CCSID0
+     NOCODEPAGE
+       DEPRECATE( STMT() )
+     NOEMPTYDBRM
+     NOINCONLY
+       LINEONLY
+     NOWARNDECP
+ 0 DB2 for z/OS Coprocessor Options Used
+ 0   APOST
+     APOSTSQL
+     ATTACH(TSO)
+     CCSID(1047)
+     CONNECT(2)
+     DEC(15)
+     DECP(DSNHDECP)
+     FLOAT(S390)
+     SQLLEVEL(V13R1M501)
+     TWOPASS
+     PERIOD
+     STDSQL(NO)
+     SQL(DB2)
+     NOXREF
+     NOSOURCE
+     DSNHDECP LOADED FROM - (DSND10.DBDG.SDSNEXIT(DSNHDECP))
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.05.10 20:36:06   Page     3
+ 0 Compiler Source
+ 0    Line.File
+ 0       1.0      /*************************************************************/
+         2.0      /* THE SAMPLE OF DB2 PL/I PROGRAM WHICH USES AN              */
+         3.0      /* SQL DESCRIPTOR AREA (SQLDA) FOR EXECUTING ANY             */
+         4.0      /* DYNAMIC VARYING-LIST SELECT QUERY LIKES                   */
+         5.0      /* "SELECT * FROM ... ;"                                     */
+         6.0      /*                                                           */
+         7.0      /* ONLY FOR THE NEXT SQL TYPES:                              */
+         8.0      /* SMALLINT, INTEGER, FLOAT, CHAR, VARCHAR,                  */
+         9.0      /* TIME, DATA, TIMESTAMP                                     */
+        10.0      /*                                                           */
+        11.0      /* SYSIN, SYSPRINT, DATAOUT DD STATEMENTS ARE NEEDED         */
+        12.0      /* FOR RUNNING THIS PROGRAM                                  */
+        13.0      /*                                                           */
+        14.0      /* INDICATE DB2 TABLE NAME WHICH YOU'D LIKE TO PRINT OUT     */
+        15.0      /* IN SYSIN INPUT STREAM                                     */
+        16.0      /*************************************************************/
+        17.0
+        18.0      PLI0001: PROCEDURE OPTIONS(MAIN) REORDER;
+        18.0       DCL DSNHLI   EXT ENTRY OPTIONS(ASM INTER);
+        18.0
+        19.0
+        20.0      /* STANDARD DB2 PROGRAM FOR FORMATTING SQL ERROR MESSAGES    */
+        21.0      DCL DSNTIAR ENTRY OPTIONS (ASM,INTER,RETCODE);
+        22.0
+        23.0      /* DB2 COMMUNICATION AREA (SQLCA) - FOR CHECKING SQL CODES   */
+        24.0
+        24.0      /*$*$*$
+        24.0      EXEC SQL INCLUDE SQLCA
+        24.0       $*$*$*/
+        24.0      DCL
+        24.0        1 SQLCA  ,
+        24.0          2 SQLCAID     CHAR(8),
+        24.0          2 SQLCABC     FIXED BIN(31),
+        24.0          2 SQLCODE     FIXED BIN(31),
+        24.0          2 SQLERRM     CHAR(70) VAR,
+        24.0          2 SQLERRP     CHAR(8),
+        24.0          2 SQLERRD(6)  FIXED BIN(31),
+        24.0          2 SQLWARN,
+        24.0            3 SQLWARN0  CHAR(1),
+        24.0            3 SQLWARN1  CHAR(1),
+        24.0            3 SQLWARN2  CHAR(1),
+        24.0            3 SQLWARN3  CHAR(1),
+        24.0            3 SQLWARN4  CHAR(1),
+        24.0            3 SQLWARN5  CHAR(1),
+        24.0            3 SQLWARN6  CHAR(1),
+        24.0            3 SQLWARN7  CHAR(1),
+        24.0          2 SQLEXT,
+        24.0            3 SQLWARN8  CHAR(1),
+        24.0            3 SQLWARN9  CHAR(1),
+        24.0            3 SQLWARNA  CHAR(1),
+        24.0            3 SQLSTATE  CHAR(5);
+        24.0
+        25.0
+        26.0      /* DB2 DESCRIPTOR AREA (SQLDA) - FOR COMMUNICATING WITH DB2  */
+        27.0
+        27.0      /*$*$*$
+        27.0      EXEC SQL INCLUDE SQLDA
+        27.0       $*$*$*/
+        27.0      DCL
+        27.0        1 SQLDA BASED(SQLDAPTR),
+        27.0          2 SQLDAID      CHAR(8),
+        27.0          2 SQLDABC      FIXED BIN(31),
+        27.0          2 SQLN         FIXED BIN(15),
+        27.0          2 SQLD         FIXED BIN(15),
+        27.0          2 SQLVAR(SQLSIZE REFER(SQLN)),
+        27.0            3 SQLTYPE    FIXED BIN(15),
+        27.0            3 SQLLEN     FIXED BIN(15),
+        27.0            3 SQLDATA    POINTER,
+        27.0            3 SQLIND     POINTER,
+        27.0            3 SQLNAME    CHAR(30) VAR;
+        27.0
+        27.0      DCL
+        27.0        1 SQLDA2 BASED(SQLDAPTR),
+        27.0          2 SQLDAID2     CHAR(8),
+        27.0          2 SQLDABC2     FIXED BIN(31),
+        27.0          2 SQLN2        FIXED BIN(15),
+        27.0          2 SQLD2        FIXED BIN(15),
+        27.0          2 SQLVAR2(SQLSIZE REFER(SQLN2)),
+        27.0            3 SQLBIGLEN,
+        27.0              4 SQLLONGL FIXED BIN(31),
+        27.0              4 SQLRSVDL FIXED BIN(31),
+        27.0            3 SQLDATAL   POINTER,
+        27.0            3 SQLTNAME   CHAR(30) VAR;
+        27.0      DCL SQLSIZE    FIXED BIN(15);
+        27.0      DCL SQLDAPTR   POINTER;
+        27.0      DCL SQLTRIPLED CHAR(1) VALUE('3');
+        27.0      DCL SQLDOUBLED CHAR(1) VALUE('2');
+        27.0      DCL SQLSINGLED CHAR(1) VALUE(' ');
+        27.0
+        27.0
+        28.0
+        29.0      /* DECLARE FILE FOR PRINTING OUT DATA OF QUERY EXECUTION     */
+        30.0      DCL DATAOUT FILE STREAM OUTPUT;
+        31.0
+        32.0      /* PROCEDURE FOR PRINTING OUT STANDARD SQL ERROR MESSAGES    */
+        33.0      SQLMSGP: PROC;
+        33.0
+        34.0
+        35.0      /* DECLARE DSNTIAR MESSAGE BUFFER AND ITS SIZES (10X132)     */
+        36.0      DCL DATA_LEN FIXED BIN(31) INIT(132);
+        37.0      DCL DATA_DIM FIXED BIN(31) INIT(10);
+        38.0      DCL 1 ERROR_MESSAGE AUTOMATIC,
+        39.0            3 ERROR_LEN FIXED BIN(15) UNAL INIT((DATA_LEN*DATA_DIM)),
+        40.0            3 ERROR_TEXT(DATA_DIM) CHAR(DATA_LEN);
+        41.0
+        42.0      /* CALL DSNTIAR TO FORMAT ANY MESSAGES */
+        43.0      CALL DSNTIAR(SQLCA,ERROR_MESSAGE,DATA_LEN);
+        44.0
+        45.0      /* PRINT OUT THE DSNTIAR BUFFER                              */
+        46.0      DCL I FIXED BIN(31);
+        47.0      DCL ONE FIXED BIN(31) INIT(1);
+        48.0      DCL BLANK CHAR(1) INIT(' ');
+        49.0      DO I = ONE TO ERROR_LEN
+        50.0      /* PRINT NON BLANK LINES                                     */
+        51.0      WHILE (ERROR_TEXT(I) ^= BLANK);
+        52.0        PUT EDIT(ERROR_TEXT(I))(COL(1),A(DATA_LEN));
+        53.0      END;
+        54.0
+        55.0      END SQLMSGP;
+        56.0
+        57.0      /* PROCEDURE WHICH REALIZES THE UNIVERSAL ALGORITHM          */
+        58.0      /* OF USING SQL DESCRIPTOR AREA (SQLDA)                      */
+        59.0      DYNSQL: PROC;
+        59.0
+        60.0
+        61.0      /* AUXILIARY PROCEDURE FOR FORMATTING OUTPUT DATA            */
+        62.0      GETLEN: PROC;
+        62.0
+        63.0
+        64.0      SELECT (SQLVAR(I).SQLTYPE);
+        65.0         WHEN (500,501) /* SMALLINT */
+        66.0            LEN = 6;
+        67.0         WHEN (496,497) /* INTEGER */
+        68.0            LEN = 11;
+        69.0         WHEN (480,481) /* FLOAT */
+        70.0            IF SQLVAR(I).SQLLEN = 4 THEN
+        71.0               LEN = 8; ELSE /* SQLVAR(I).SQLLEN = 8 */
+        72.0               LEN = 18;
+        73.0         WHEN (384,385,388,389,392,393,452,453,448,449,456,457)
+        74.0         /* TIME, DATE, TIMESTAMP, CHAR, VARCHAR */
+        75.0            LEN = SQLVAR(I).SQLLEN;
+        76.0         OTHERWISE LEN = 4;
+        77.0      END;
+        78.0      IF LEN < 4 THEN LEN = 4;
+        79.0
+        80.0      END GETLEN;
+        81.0
+        82.0      /* DECLARE HOST-VARIABLE                                     */
+        83.0      DCL STATEMENT CHAR(255) VARYING;
+        84.0
+        85.0      /* DECLARE PROGRAM VARIABLE                                  */
+        86.0      DCL STR CHAR(80);
+        87.0
+        88.0      /* GET THE TABLE NAME FROM INPUT STREAM                      */
+        89.0      GET EDIT(STR)(A(80));
+        90.0
+        91.0      /* POPULATE HOST-VARIABLE WITH SQL STATEMENT                 */
+        92.0      STATEMENT = 'SELECT * FROM ' || STR;
+        93.0
+        94.0      /* PREPARE DYNAMIC SQL QUERY. ACCESS PLAN IS CALCULATED      */
+        95.0
+        95.0      /*$*$*$
+        95.0      EXEC SQL PREPARE STATEMENT FROM :STATEMENT
+        95.0       $*$*$*/
+        95.0      DO;
+        95.0      DCL
+        95.0        1 SQLPLIST4 UNALIGNED
+        95.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+        95.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('4000'XN)
+        95.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(35)
+        95.0         ,2 SQLPROGN     CHAR(8) INIT('PLI0001')
+        95.0         ,2 SQLTIMES     CHAR(8)
+        95.0              INIT('1BE259C6_08AFFE2C'X)
+        95.0         ,2 SQLSECTN     FIXED BIN(15) INIT(1)
+        95.0         ,2 SQLCODEP     POINTER
+        95.0         ,2 SQLVPARMP    POINTER
+        95.0         ,2 SQLAPARMP    POINTER
+        95.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+        95.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(14)
+        95.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(95)
+        95.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+        95.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+        95.0         ,2 SQLPVARS
+        95.0           ,3 SQLPVDAID  CHAR(8)
+        95.0           ,3 SQLPVDABC  FIXED BIN(31)
+        95.0           ,3 SQLPVN     FIXED BIN(15)
+        95.0           ,3 SQLPVD     FIXED BIN(15)
+        95.0           ,3 SQLPVELT(2)
+        95.0             ,4 SQLPVTYPE  FIXED BIN(15)
+        95.0             ,4 SQLPVLEN   FIXED BIN(15)
+        95.0             ,4 SQLPVADDR  POINTER
+        95.0             ,4 SQLPVIND   POINTER
+        95.0             ,4 SQLPVNAME
+        95.0               ,5 SQLPVNAMELEN FIXED BIN(15)
+        95.0               ,5 * UNION
+        95.0                 ,6 SQLPVNAMEDAT CHAR(30)
+        95.0                 ,6 *
+        95.0                   ,7 SQLPVNAMER0 FIXED BIN(31)
+        95.0                   ,7 SQLPVNAMER1 FIXED BIN(15)
+        95.0                   ,7 SQLPVNAMER2 FIXED BIN(15)
+        95.0                   ,7 SQLPVNAMER3 CHAR(22)
+        95.0        ;
+        95.0      SQLPLIST4.SQLPVARS.SQLPVTYPE(1) = 452;
+        95.0      SQLPLIST4.SQLPVARS.SQLPVLEN(1) = 0;
+        95.0      SQLPLIST4.SQLPVARS.SQLPVADDR(1) = SYSNULL();
+        95.0      SQLPLIST4.SQLPVARS.SQLPVNAMELEN(1) = 0;
+        95.0      SQLPLIST4.SQLPVARS.SQLPVTYPE(2) = 448;
+        95.0      SQLPLIST4.SQLPVARS.SQLPVLEN(2) = 255;
+        95.0      SQLPLIST4.SQLPVARS.SQLPVADDR(2) = ADDR(STATEMENT);
+        95.0      SQLPLIST4.SQLPVARS.SQLPVIND(2) = SYSNULL();
+        95.0      SQLPLIST4.SQLPVARS.SQLPVNAMELEN(2) = 0;
+        95.0      SQLPLIST4.SQLPVARS.SQLPVDAID = 'SQLDA  ' || '08'X;
+        95.0      SQLPLIST4.SQLPVARS.SQLPVDABC = 104;
+        95.0      SQLPLIST4.SQLPVARS.SQLPVN = 2;
+        95.0      SQLPLIST4.SQLPVARS.SQLPVD = 2;
+        95.0      SQLPLIST4.SQLVPARMP = ADDR(SQLPLIST4.SQLPVARS.SQLPVDAID);
+        95.0      SQLPLIST4.SQLAPARMP = SYSNULL();
+        95.0      SQLPLIST4.SQLCODEP = ADDR(SQLCA);
+        95.0      CALL DSNHLI(SQLPLIST4);
+        95.0      END;
+        95.0
+        96.0
+        97.0      /* CHECK BY SQLCODE IF SQL QUERY RUN SUCCESSFUL OR NOT       */
+        98.0      IF SQLCODE < 0 THEN
+        99.0      DO;
+       100.0         CALL SQLMSGP;
+       101.0         STOP;
+       102.0      END;
+       103.0
+       104.0      /* ALLOCATE MINIMUM SQLDA. THE ONLY HIDER IS ALLOCATED       */
+       105.0      SQLSIZE = 0; ALLOCATE SQLDA;
+       106.0
+       107.0      /* POPULATE MINIMUM SQLDA. NOW SQLD KEEPS                    */
+       108.0      /* THE NUMBER OF COLUMNS IN A RESULT SET                     */
+       109.0
+       109.0      /*$*$*$
+       109.0      EXEC SQL DESCRIBE STATEMENT INTO :SQLDA
+       109.0       $*$*$*/
+       109.0      DO;
+       109.0      DCL
+       109.0        1 SQLPLIST5 UNALIGNED
+       109.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+       109.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('0400'XN)
+       109.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(40)
+       109.0         ,2 SQLPROGN     CHAR(8) INIT('PLI0001')
+       109.0         ,2 SQLTIMES     CHAR(8)
+       109.0              INIT('1BE259C6_08AFFE2C'X)
+       109.0         ,2 SQLSECTN     FIXED BIN(15) INIT(1)
+       109.0         ,2 SQLCODEP     POINTER
+       109.0         ,2 SQLVPARMP    POINTER
+       109.0         ,2 SQLAPARMP    POINTER
+       109.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+       109.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(17)
+       109.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(109)
+       109.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+       109.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+       109.0        ;
+       109.0      SQLPLIST5.SQLAPARMP = ADDR(SQLDA);
+       109.0      SQLPLIST5.SQLVPARMP = SYSNULL();
+       109.0      SQLPLIST5.SQLCODEP = ADDR(SQLCA);
+       109.0      CALL DSNHLI(SQLPLIST5);
+       109.0      END;
+       109.0
+       110.0
+       111.0      /* CHECK BY SQLCODE IF SQL QUERY RUN SUCCESSFUL OR NOT       */
+       112.0      IF SQLCODE < 0 THEN
+       113.0      DO;
+       114.0         CALL SQLMSGP;
+       115.0         STOP;
+       116.0      END;
+       117.0
+       118.0      /* REALLOCATE SQLDA WITH SQLVAR MEMBERS. THE NUMBER OF       */
+       119.0      /* SQLVAR IS TAKEN FROM SQLD AND SET INTO SQLN (SQLSIZE)     */
+       120.0      SQLSIZE = SQLD; FREE SQLDA; ALLOCATE SQLDA;
+       121.0
+       122.0      /* POPULATE FULL SQLDA. NOW SQLVAR MEMBERS KEEP              */
+       123.0      /* THE COLUMN INFORMATION (NAME, TYPE, LENGTH)               */
+       124.0
+       124.0      /*$*$*$
+       124.0      EXEC SQL DESCRIBE STATEMENT INTO :SQLDA
+       124.0       $*$*$*/
+       124.0      DO;
+       124.0      DCL
+       124.0        1 SQLPLIST6 UNALIGNED
+       124.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+       124.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('0400'XN)
+       124.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(40)
+       124.0         ,2 SQLPROGN     CHAR(8) INIT('PLI0001')
+       124.0         ,2 SQLTIMES     CHAR(8)
+       124.0              INIT('1BE259C6_08AFFE2C'X)
+       124.0         ,2 SQLSECTN     FIXED BIN(15) INIT(1)
+       124.0         ,2 SQLCODEP     POINTER
+       124.0         ,2 SQLVPARMP    POINTER
+       124.0         ,2 SQLAPARMP    POINTER
+       124.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+       124.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(17)
+       124.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(124)
+       124.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+       124.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+       124.0        ;
+       124.0      SQLPLIST6.SQLAPARMP = ADDR(SQLDA);
+       124.0      SQLPLIST6.SQLVPARMP = SYSNULL();
+       124.0      SQLPLIST6.SQLCODEP = ADDR(SQLCA);
+       124.0      CALL DSNHLI(SQLPLIST6);
+       124.0      END;
+       124.0
+       125.0
+       126.0      /* CHECK BY SQLCODE IF SQL QUERY RUN SUCCESSFUL OR NOT       */
+       127.0      IF SQLCODE < 0 THEN
+       128.0      DO;
+       129.0         CALL SQLMSGP;
+       130.0         STOP;
+       131.0      END;
+       132.0
+       133.0      /* OPEN OUTPUT FILE AND START PRINTING OUT DATA              */
+       134.0      OPEN FILE(DATAOUT);
+       135.0
+       136.0      DCL LEN FIXED BIN(31) INIT(0);
+       137.0      DCL I FIXED BIN(15), J FIXED BIN(15);
+       138.0
+       139.0      /* PRINT OUT THE FORMATTED TITLE WITH COLUMN NAMES           */
+       140.0      DO I=1 TO SQLD BY 1;
+       141.0         DO J=1 TO LENGTH(SQLVAR(I).SQLNAME) BY 1;
+       142.0            PUT FILE(DATAOUT) EDIT(SUBSTR(SQLVAR(I).SQLNAME,J,1))(A(1));
+       143.0         END;
+       144.0         CALL GETLEN;
+       145.0         IF LEN > LENGTH(SQLVAR(I).SQLNAME) THEN
+       146.0            DO;
+       147.0               DO J=1 TO LEN -
+       148.0                  LENGTH(SQLVAR(I).SQLNAME) BY 1;
+       149.0               PUT FILE(DATAOUT) EDIT(' ')(A(1));
+       150.0               END;
+       151.0            END;
+       152.0         PUT FILE(DATAOUT) EDIT(' ')(A(1));
+       153.0      END;
+       154.0      PUT FILE(DATAOUT) SKIP;
+       155.0
+       156.0      DCL L FIXED BIN(15);
+       157.0      DO I=1 TO SQLD BY 1;
+       158.0         CALL GETLEN;
+       159.0         IF LEN > LENGTH(SQLVAR(I).SQLNAME) THEN
+       160.0            L = LEN; ELSE
+       161.0            L = LENGTH(SQLVAR(I).SQLNAME);
+       162.0         DO J=1 TO L BY 1;
+       163.0            PUT FILE(DATAOUT) EDIT('=')(A(1));
+       164.0         END;
+       165.0         PUT FILE(DATAOUT) EDIT(' ')(A(1));
+       166.0      END;
+       167.0      PUT FILE(DATAOUT) SKIP;
+       168.0
+       169.0      /* ALLOCATE MEMORY AND POPULATE SQLDATA AND SQLIND           */
+       170.0      /* MEMBERS OF SQLVAR WITH ADDRESSES OF MEMORY                */
+       171.0      DO I=1 TO SQLD BY 1;
+       172.0         SELECT (SQLVAR(I).SQLTYPE);
+       173.0            WHEN (500,501) /* SMALLINT */
+       174.0            DO;
+       175.0               DCL CSMALLINT FIXED BIN(15) CONTROLLED;
+       176.0               ALLOCATE CSMALLINT;
+       177.0               SQLVAR(I).SQLDATA = ADDR(CSMALLINT);
+       178.0            END;
+       179.0            WHEN (496,497) /* INTEGER */
+       180.0            DO;
+       181.0               DCL CINTEGER FIXED BIN(31) CONTROLLED;
+       182.0               ALLOCATE CINTEGER;
+       183.0               SQLVAR(I).SQLDATA = ADDR(CINTEGER);
+       184.0            END;
+       185.0            WHEN (480,481) /* FLOAT */
+       186.0               IF SQLVAR(I).SQLLEN = 4 THEN
+       187.0               DO;
+       188.0                  DCL CFLOAT DEC FLOAT(6) CONTROLLED;
+       189.0                  ALLOCATE CFLOAT;
+       190.0                  SQLVAR(I).SQLDATA = ADDR(CFLOAT);
+       191.0               END; ELSE /* SQLVAR(I).SQLLEN = 8 */
+       192.0               DO;
+       193.0                  DCL CDOUBLE DEC FLOAT(16) CONTROLLED;
+       194.0                  ALLOCATE CDOUBLE;
+       195.0                  SQLVAR(I).SQLDATA = ADDR(CDOUBLE);
+       196.0               END;
+       197.0            WHEN (384,385,388,389,392,393,452,453)
+       198.0            /* TIME, DATE, TIMESTAMP, CHAR */
+       199.0            DO;
+       200.0               DCL CFSTRING CHAR(*) CONTROLLED;
+       201.0               ALLOCATE CFSTRING CHARACTER(SQLVAR(I).SQLLEN);
+       202.0               SQLVAR(I).SQLDATA = ADDR(CFSTRING);
+       203.0            END;
+       204.0            WHEN (448,449,456,457) /* VARCHAR */
+       205.0            DO;
+       206.0               DCL CVSTRING CHAR(*) VARYING CONTROLLED;
+       207.0               ALLOCATE CVSTRING CHARACTER(SQLVAR(I).SQLLEN);
+       208.0               SQLVAR(I).SQLDATA = ADDR(CVSTRING);
+       209.0            END;
+       210.0            OTHERWISE
+       211.0            DO;
+       212.0               PUT SKIP LIST('UNKNOWN SQLTYPE = ',SQLVAR(I).SQLTYPE);
+       213.0               STOP;
+       214.0            END;
+       215.0         END;
+       216.0      DCL CINDIC FIXED BIN(15) CONTROLLED;
+       217.0      ALLOCATE CINDIC;
+       218.0      SQLVAR(I).SQLIND = ADDR(CINDIC);
+       219.0      END;
+       220.0
+       221.0      /* DECLARE CURSOR. IT NEEDS EVEN IF ONLY 1 ROW IS EXPECTED   */
+       222.0
+       222.0      /*$*$*$
+       222.0      EXEC SQL DECLARE CUR1 CURSOR FOR STATEMENT
+       222.0       $*$*$*/
+       222.0
+       223.0
+       224.0      /* OPEN CURSOR FOR PREPARED STATEMENT                        */
+       225.0
+       225.0      /*$*$*$
+       225.0      EXEC SQL OPEN CUR1
+       225.0       $*$*$*/
+       225.0      DO;
+       225.0      DCL
+       225.0        1 SQLPLIST7 UNALIGNED
+       225.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+       225.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('0000'XN)
+       225.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(50)
+       225.0         ,2 SQLPROGN     CHAR(8) INIT('PLI0001')
+       225.0         ,2 SQLTIMES     CHAR(8)
+       225.0              INIT('1BE259C6_08AFFE2C'X)
+       225.0         ,2 SQLSECTN     FIXED BIN(15) INIT(1)
+       225.0         ,2 SQLCODEP     POINTER
+       225.0         ,2 SQLVPARMP    POINTER
+       225.0         ,2 SQLAPARMP    POINTER
+       225.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+       225.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(3)
+       225.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(225)
+       225.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+       225.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+       225.0        ;
+       225.0      SQLPLIST7.SQLVPARMP = SYSNULL();
+       225.0      SQLPLIST7.SQLAPARMP = SYSNULL();
+       225.0      SQLPLIST7.SQLCODEP = ADDR(SQLCA);
+       225.0      CALL DSNHLI(SQLPLIST7);
+       225.0      END;
+       225.0
+       226.0
+       227.0      /* CHECK BY SQLCODE IF SQL QUERY RUN SUCCESSFUL OR NOT       */
+       228.0      IF SQLCODE < 0 THEN
+       229.0      DO;
+       230.0         CALL SQLMSGP;
+       231.0         STOP;
+       232.0      END;
+       233.0
+       234.0      /* DEFINE LABEL FOR LEAVING IN CASE OF                       */
+       235.0      /* THE LAST ROW IS FETCHED (NOT FOUND CONDITION)             */
+       236.0
+       236.0      /*$*$*$
+       236.0      EXEC SQL WHENEVER NOT FOUND GO TO CLOSE_CUR1
+       236.0       $*$*$*/
+       236.0
+       237.0
+       238.0      DCL C FIXED BIN(31) INIT(0), N FIXED BIN(31) INIT(2500);
+       239.0      DO C=1 TO N BY 1;
+       240.0
+       241.0      /* FETCH THE NEXT ROW USING SQLDA AS DESCRIPTOR.             */
+       242.0      /* DATA ARE PLACED BY DB2 INTO MEMORY IN ACCORDANCE WITH     */
+       243.0      /* THE ADDRESSES IN SQLDATA, SQLIND                          */
+       244.0
+       244.0      /*$*$*$
+       244.0      EXEC SQL FETCH CUR1 USING DESCRIPTOR :SQLDA
+       244.0       $*$*$*/
+       244.0      DO;
+       244.0      DCL
+       244.0        1 SQLPLIST9 UNALIGNED
+       244.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+       244.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('0400'XN)
+       244.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(30)
+       244.0         ,2 SQLPROGN     CHAR(8) INIT('PLI0001')
+       244.0         ,2 SQLTIMES     CHAR(8)
+       244.0              INIT('1BE259C6_08AFFE2C'X)
+       244.0         ,2 SQLSECTN     FIXED BIN(15) INIT(1)
+       244.0         ,2 SQLCODEP     POINTER
+       244.0         ,2 SQLVPARMP    POINTER
+       244.0         ,2 SQLAPARMP    POINTER
+       244.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+       244.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(4)
+       244.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(244)
+       244.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+       244.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+       244.0        ;
+       244.0      SQLPLIST9.SQLAPARMP = ADDR(SQLDA);
+       244.0      SQLPLIST9.SQLVPARMP = SYSNULL();
+       244.0      SQLPLIST9.SQLCODEP = ADDR(SQLCA);
+       244.0      CALL DSNHLI(SQLPLIST9);
+       244.0      IF SQLCA.SQLCODE = 100 THEN
+       244.0          DO;
+       244.0            GOTO
+       244.0      CLOSE_CUR1;
+       244.0          END;
+       244.0        ELSE;
+       244.0      END;
+       244.0
+       245.0
+       246.0      /* CHECK BY SQLCODE IF SQL QUERY RUN SUCCESSFUL OR NOT       */
+       247.0      IF SQLCODE < 0 THEN
+       248.0      DO;
+       249.0         CALL SQLMSGP;
+       250.0         STOP;
+       251.0      END;
+       252.0
+       253.0
+       254.0      /* PRINT OUT THE FORMATTED ROW DATA OF THE RESULT SET        */
+       255.0      DO I=1 TO SQLD BY 1;
+       256.0         CALL GETLEN;
+       257.0         IF LEN > LENGTH(SQLVAR(I).SQLNAME) THEN
+       258.0            L = LEN; ELSE
+       259.0            L = LENGTH(SQLVAR(I).SQLNAME);
+       260.0         DCL BINDIC FIXED BIN(15) BASED(SQLVAR(I).SQLIND);
+       261.0         IF BINDIC < 0 THEN
+       262.0            PUT FILE(DATAOUT) EDIT('NULL')(A(L)); ELSE
+       263.0         SELECT (SQLVAR(I).SQLTYPE);
+       264.0            WHEN (500,501) /* SMALLINT */
+       265.0            DO;
+       266.0               DCL BSMALLINT FIXED BIN(15) BASED(SQLVAR(I).SQLDATA);
+       267.0               PUT FILE(DATAOUT) EDIT(BSMALLINT)(F(L));
+       268.0            END;
+       269.0            WHEN (496,497) /* INTEGER */
+       270.0            DO;
+       271.0               DCL BINTEGER FIXED BIN(31) BASED(SQLVAR(I).SQLDATA);
+       272.0               PUT FILE(DATAOUT) EDIT(BINTEGER)(F(L));
+       273.0            END;
+       274.0            WHEN (480,481) /* FLOAT */
+       275.0               IF SQLVAR(I).SQLLEN = 4 THEN
+       276.0               DO;
+       277.0                  DCL BFLOAT DEC FLOAT(6) BASED(SQLVAR(I).SQLDATA);
+       278.0                  PUT FILE(DATAOUT) EDIT(BFLOAT)(F(L));
+       279.0               END; ELSE /* SQLVAR(I).SQLLEN = 8 */
+       280.0               DO;
+       281.0                  DCL BDOUBLE DEC FLOAT(16) BASED(SQLVAR(I).SQLDATA);
+       282.0                  PUT FILE(DATAOUT) EDIT(BDOUBLE)(F(L));
+       283.0               END;
+       284.0            WHEN (384,385,388,389,392,393,452,453)
+       285.0            /* TIME, DATE, TIMESTAMP, CHAR */
+       286.0            DO;
+       287.0               DCL BFSTRING CHAR(255) BASED(SQLVAR(I).SQLDATA);
+       288.0               PUT FILE(DATAOUT) EDIT(BFSTRING)(A(L));
+       289.0            END;
+       290.0            WHEN (448,449,456,457) /* VARCHAR */
+       291.0            DO;
+       292.0               DCL BVSTRING CHAR(255) VARYING BASED(SQLVAR(I).SQLDATA);
+       293.0               PUT FILE(DATAOUT) EDIT(BVSTRING)(A(L));
+       294.0            END;
+       295.0         END;
+       296.0         PUT FILE(DATAOUT) EDIT(' ')(A(1));
+       297.0      END;
+       298.0      PUT FILE(DATAOUT) SKIP;
+       299.0
+       300.0      END;
+       301.0
+       302.0      CLOSE_CUR1:
+       303.0
+       304.0      /* CLOSE CURSOR. ALL RESOURCES ARE RELEASED                  */
+       305.0
+       305.0      /*$*$*$
+       305.0      EXEC SQL CLOSE CUR1
+       305.0       $*$*$*/
+       305.0      DO;
+       305.0      DCL
+       305.0        1 SQLPLIST10 UNALIGNED
+       305.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+       305.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('0000'XN)
+       305.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(45)
+       305.0         ,2 SQLPROGN     CHAR(8) INIT('PLI0001')
+       305.0         ,2 SQLTIMES     CHAR(8)
+       305.0              INIT('1BE259C6_08AFFE2C'X)
+       305.0         ,2 SQLSECTN     FIXED BIN(15) INIT(1)
+       305.0         ,2 SQLCODEP     POINTER
+       305.0         ,2 SQLVPARMP    POINTER
+       305.0         ,2 SQLAPARMP    POINTER
+       305.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+       305.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(5)
+       305.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(305)
+       305.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+       305.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+       305.0        ;
+       305.0      SQLPLIST10.SQLVPARMP = SYSNULL();
+       305.0      SQLPLIST10.SQLAPARMP = SYSNULL();
+       305.0      SQLPLIST10.SQLCODEP = ADDR(SQLCA);
+       305.0      CALL DSNHLI(SQLPLIST10);
+       305.0      IF SQLCA.SQLCODE = 100 THEN
+       305.0          DO;
+       305.0            GOTO
+       305.0      CLOSE_CUR1;
+       305.0          END;
+       305.0        ELSE;
+       305.0      END;
+       305.0
+       306.0
+       307.0      /* CHECK BY SQLCODE IF SQL QUERY RUN SUCCESSFUL OR NOT       */
+       308.0      IF SQLCODE < 0 THEN
+       309.0      DO;
+       310.0         CALL SQLMSGP;
+       311.0         STOP;
+       312.0      END;
+       313.0
+       314.0      /* EXPLICITLY COMMIT THE CURRENT TRANSACTION                 */
+       315.0
+       315.0      /*$*$*$
+       315.0      EXEC SQL COMMIT
+       315.0       $*$*$*/
+       315.0      DO;
+       315.0      DCL
+       315.0        1 SQLPLIST11 UNALIGNED
+       315.0         ,2 SQLPLLEN     FIXED BIN(15) INIT(64)
+       315.0         ,2 SQLFLAGS     FIXED BIN(15) INIT('0000'XN)
+       315.0         ,2 SQLCTYPE     FIXED BIN(15) INIT(150)
+       315.0         ,2 SQLPROGN     CHAR(8) INIT('PLI0001')
+       315.0         ,2 SQLTIMES     CHAR(8)
+       315.0              INIT('1BE259C6_08AFFE2C'X)
+       315.0         ,2 SQLSECTN     FIXED BIN(15) INIT(0)
+       315.0         ,2 SQLCODEP     POINTER
+       315.0         ,2 SQLVPARMP    POINTER
+       315.0         ,2 SQLAPARMP    POINTER
+       315.0         ,2 SQLCCSID     FIXED BIN(16) UNSIGNED INIT( 1047)
+       315.0         ,2 SQLSTYPE     FIXED BIN(15) INIT(310)
+       315.0         ,2 SQLSTNUM     FIXED BIN(32) UNSIGNED INIT(315)
+       315.0         ,2 SQLFLGS2     FIXED BIN(15) INIT('0000'XN)
+       315.0         ,2 SQLRESRV     CHAR(18) INIT('00'X)
+       315.0        ;
+       315.0      SQLPLIST11.SQLVPARMP = SYSNULL();
+       315.0      SQLPLIST11.SQLAPARMP = SYSNULL();
+       315.0      SQLPLIST11.SQLCODEP = ADDR(SQLCA);
+       315.0      CALL DSNHLI(SQLPLIST11);
+       315.0      IF SQLCA.SQLCODE = 100 THEN
+       315.0          DO;
+       315.0            GOTO
+       315.0      CLOSE_CUR1;
+       315.0          END;
+       315.0        ELSE;
+       315.0      END;
+       315.0
+       316.0
+       317.0      /* CHECK BY SQLCODE IF SQL QUERY RUN SUCCESSFUL OR NOT       */
+       318.0      IF SQLCODE < 0 THEN
+       319.0      DO;
+       320.0         CALL SQLMSGP;
+       321.0         STOP;
+       322.0      END;
+       323.0
+       324.0      /* PRINT OUT THE NUMBER OF FETCHED ROWS                      */
+       325.0      IF C ^= 0 THEN C = C-1;
+       326.0      PUT FILE(DATAOUT) EDIT('ROW COUNT = ',C)(A(12),F(4));
+       327.0
+       328.0      /* FREE UNUSED MEMORY TO ADDRESSES IN SQLDATA, SQLIND        */
+       329.0      DO I=1 TO SQLD BY 1;
+       330.0         SELECT (SQLVAR(I).SQLTYPE);
+       331.0            WHEN (500,501) /* SMALLINT */
+       332.0               FREE CSMALLINT;
+       333.0            WHEN (496,497) /* INTEGER */
+       334.0               FREE CINTEGER;
+       335.0            WHEN (480,481) /* FLOAT */
+       336.0               IF SQLVAR(I).SQLLEN = 4 THEN
+       337.0                  FREE CFLOAT;
+       338.0               ELSE /* SQLVAR(I).SQLLEN = 8 */
+       339.0                  FREE CDOUBLE;
+       340.0            WHEN (384,385,388,389,392,393,452,453)
+       341.0            /* TIME, DATE, TIMESTAMP, CHAR */
+       342.0               FREE CFSTRING;
+       343.0            WHEN (448,449,456,457) /* VARCHAR */
+       344.0               FREE CVSTRING;
+       345.0         END;
+       346.0      FREE CINDIC;
+       347.0      END;
+       348.0
+       349.0      CLOSE FILE(DATAOUT);
+       350.0
+       351.0      /* FREE UNUSED MEMORY OF DB2 DESCRIPTOR AREA                 */
+       352.0      FREE SQLDA;
+       353.0
+       354.0      END DYNSQL;
+       355.0
+       356.0      CALL DYNSQL;
+       357.0
+       358.0      END PLI0001;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.05.10 20:36:06   Page     4
+ - No Compiler Messages
+ 0 File Reference Table
+ 0   File    Included From  Name
+ 0      0                   AVL.IBAGROUP.PLI(PLI0001)
+ - Component    Return Code    Messages (Total/Suppressed)    Time
+ 0 SQL              0                2  /  2                   0 secs
+   Compiler         0                6  /  6                   4 secs
+ 0 End of compilation of PLI0001
+ 

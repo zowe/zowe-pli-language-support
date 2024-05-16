@@ -1,0 +1,511 @@
+*PROCESS NOMAP,NOOFFSET,NUMBER,NOMACRO,N('IMSDBUT'),NX,NA,GONUMBER;     00010001
+       /*                  I M S D B U T                                00020001
+                                                                        00030001
+            AN IMS DATABASE UTILITY FOR USE BY PL/I PROGRAMMERS         00040001
+                                                                        00050001
+                                                                        00060001
+                            P R E F A C E                               00070001
+                                                                        00080001
+           THIS PROGRAM WAS WRITTEN DURING THE DEVELOPMENT OF A         00090001
+           LARGE BATCH-MODE IMS SYSTEM TO PERMIT MAINTENANCE OF         00100001
+           DATABASES PRIOR TO THE EXISTENCE OF UPDATE PROGRAMS.         00110001
+           IT IS ALSO USED TO TEST CALLS TO THE DATABASE.               00120001
+                                                                        00130001
+           ITS USE PRESUPPOSES A KNOWLEDGE OF PL/I DATA-DIRECTED        00140001
+           INPUT, AND OF THE CODING OF IMS SEGMENT SEARCH ARGUMENTS     00150001
+           WHICH, IN TURN, REQUIRES AN AWARENESS OF THE CAPABILITIES    00160001
+           AND LIMITATIONS OF THE DBD'S AND THE PSB USED.               00170001
+                                                                        00180001
+           THIS PROGRAM HAS BEEN RENDERED INDEPENDENT OF ANY PARTICULAR 00190001
+           PSBGEN BY USE OF THE ACCOMPANYING ASSEMBLER ROUTINE,         00200001
+           ARG@ WHICH IDENTIFIES TO THIS MODULE THE ADDRESS OF THE      00210001
+           PROGRAM SPECIFICATION BLOCK PROVIDED BY DFSRRC00.            00220001
+                                                                        00230001
+           THIS PROGRAMMING HAS BEEN COMPILED ON THE OPTIMIZING         00240001
+           COMPILER VERSION 1 RELEASE 3.1 PTF 70, LINK EDITED           00250001
+           USING DFSILNK0 WITH ENTRY PLICALLA, AND RUN UNDER            00260001
+           DFSRRC00, IMS RELEASE 1.1.5 ON S/370 OS/MVS.                 00270001
+                                                                        00280001
+           INQUIRIES MAY BE DIRECTED TO:                                00290001
+                  G.KUNZ                                                00300001
+                  THE B.F.GOODRICH CO.                                  00310001
+                  500 SOUTH MAIN STREET                                 00320001
+                  AKRON, OHIO 44318                                     00330001
+                  PHONE:  (216) 374 3978                                00340001
+                                                                        00350001
+      */                                                                00360001
+ %PAGE;                                                                 00370001
+     /*                                                                 00380001
+                                                                        00390001
+                   F U N C T I O N   A N D   U S E                      00400001
+                                                                        00410001
+                                                                        00420001
+        THIS PROGRAM PERMITS ACCESS TO A DATABASE USING SIMPLY CODED    00430001
+        INPUTS.  ANY CALL IS PERMITTED USING FROM 0 TO 5 SSAS           00440001
+        HAVING NO MORE THAN 200 CHARACTERS EACH.  THE UPPER LIMIT       00450001
+        ON THE LENGTH OF THE IO_AREA IS 2044 BYTES.                     00460001
+                                                                        00470001
+        INPUTS ARE READ FROM DDNAME=SYSIN IN A FREE 'DATA DIRECTED'     00480001
+        FORMAT ((VARIABLE NAME)=(VALUE)) WHERE THE PARENTHESES ARE      00490001
+        FOR READABILITY AND ARE NOT PART OF THE INPUT.  CHARACTER       00500001
+        STRING VALUES MUST BE ENCLOSED IN TICS AND BLANKS ARE NOT       00510001
+        PERMITTED ON EITHER SIDE OF THE EQUAL SIGN.  SUCCESSIVE INPUTS  00520001
+        FOR ONE EXECUTION MUST BE SEPARATED BY COMMAS AND/OR BLANKS     00530001
+        AND MUST END WITH A SEMI-COLON.  INPUTS MAY BE CONTINUED FROM   00540001
+        ONE CARD TO THE NEXT TAKING DUE CARE NOT TO INTRODUCE EXTRAN-   00550001
+        EOUS BLANKS.                                                    00560001
+                                                                        00570001
+        ANY CALL IS PERMITTED AND THE CONTENTS OF THE PCB, THE INPUT    00580001
+        VALUES AND THE IO_AREA (LESS TRAILING BLANKS) ARE PRINTED       00590001
+        AFTER EACH CALL.  THE IO_AREA IS PRINTED BOTH AS CHARACTER      00600001
+        AND AS HEX.  SYSPRINT IS USED AS THE OUTPUT FILE.               00610001
+        REPETITIVE CALLS ARE SUPPORTED SO THAT 'GET NEXT' TYPE          00620001
+        CALLS THROUGH THE DATABASE CAN BE DONE EASILY.                  00630001
+                                                                        00640001
+        BECAUSE THIS PROGRAM CANNOT KNOW THE LENGTH OF THE SEGMENT      00650001
+        RETRIEVED, THE LENGTH OF THE IO_AREA DATA PRINTED WILL          00660001
+        REMAIN AS LONG AS THE LONGEST SEGMENT RETRIEVED UNTIL THE       00670001
+        DATABASE REFERENCE IS CHANGED.  IT IS ANTICIPATED THAT THE      00680001
+        USER IS SUFFICIENTLY FAMILIAR WITH HIS DATABASE SEGMENTS        00690001
+        TO BE ABLE TO DISREGARD ANY RESIDUAL GARBAGE AT THE END OF      00700001
+        THE PRINTOUT. IF THIS PROVES TO BE TROUBLESOME, THE             00710001
+        IO_AREA CAN BE REINITIALIZED TO A NULL STRING.                  00720001
+                                                                        00730001
+        THE POSSIBLE INPUTS TO THE PROGRAM AND THEIR DEFAULTS           00740001
+        ARE AS FOLLOWS: (ALTERNATES SHOWN BELOW ARE TO ACCOMMODATE      00750001
+        FREQUENT SPELLING ERRORS)                                       00760001
+                                                                        00770001
+             #_OF_CALLS      THE NUMBER OF TIMES EACH CALL IS TO BE MADE00780001
+                             DEFAULT IS 1.  PROCESSING OF A SET OF INPUT00790001
+                             DATA WILL END WHEN THE FIRST BYTE OF THE   00800001
+                             STATUS CODE IS NOT BLANK OR 'G' OR THE     00810001
+                             STATUS CODE IS 'GE' OR 'GB'.               00820001
+                                                                        00830001
+             FUNC,FUNCTION   THE FUNCTION CALL. DEFAULT IS 'GN  '       00840001
+                             A VALUE OF '    ' WILL NOT EXECUTE A CALL, 00850001
+                             AND WILL THEREBY LEAVE THE IO AREA         00860001
+                             UNCHANGED. THIS IS USEFUL WHEN NEEDED      00870001
+                             REVISIONS TO THE IO_AREA REQUIRE MORE THAN 00880001
+                             ONE SET OF INPUTS IN PREPARATION FOR       00890001
+                             'ISRT' OR 'REPL' CALLS.                    00900001
+                                                                        00910001
+             D_B,DB          THE NAME OF THE DATABASE TO BE USED        00920001
+                             IN SELECTING THE PCB AS IT APPEARS IN      00930001
+                             THE PCB (8 CHARACTERS). ONLY THE FIRST PCB 00940001
+                             IN THE PSB WHICH USES A PARTICULAR         00950001
+                             DATABASE NAME CAN BE ACCESSED.             00960001
+                                                                        00970001
+             SSA1,SSA2,      THESE ARE THE SEGMENT SEARCH ARGUMENTS.    00980001
+             SSA3,SSA4,SSA5  THE DEFAULT IS A NULL STRING.  MAXIMUM     00990001
+                             LENGTH IS 200 CHARACTERS.                  01000001
+                                                                        01010001
+             IO_AREA         THE I/O AREA.  IT IS A CHARACTER STRING    01020001
+                             2044 BYTES LONG WHICH IS THE MAXIMUM       01030001
+                             LENGTH OF DATA TO BE RETRIEVED OR          01040001
+                             INSERTED WITHOUT PROGRAM MODIFICATION.     01050001
+                                                                        01060001
+             CHARLOC         INTEGER LOCATION IN IO_AREA WHERE CHNG_CHAR01070001
+                             IS TO BE INSERTED.  THE INITIAL VALUE IS   01080001
+                             ZERO.  INSERTION WILL OCCUR WHENEVER       01090001
+                             ITS VALUE IS GREATER THAN ZERO.            01100001
+                                                                        01110001
+             CHNG_CHAR       A VARYING CHARACTER STRING WHICH CAN BE    01120001
+                             USED TO ALTER THE CONTENTS OF THE IO_AREA  01130001
+                             STARTING IN POSITION CHARLOC.              01140001
+                                                                        01150001
+             INTLOC          INTEGER LOCATION IN IO_AREA WHERE          01160001
+                             A TWO-BYTE INTEGER 'INTEGER'' IS TO BE     01170001
+                             INSERTED. INSERTION WILL OCCUR WHENEVER    01180001
+                             ITS VALUE IS GREATER THAN ZERO.            01190001
+                                                                        01200001
+             INTEGER         THE VALUE TO BE PLACED IN A TWO-BYTE       01210001
+                             INTEGER FIELD IN THE IO_AREA.              01220001
+                                                                        01230001
+             INTLOC4         INTEGER LOCATION IN IO_AREA WHERE          01240001
+                             THE FOUR-BYTE INTEGER 'INTEGER4' IS TO BE  01250001
+                             INSERTED. INSERTION WILL OCCUR WHENEVER    01260001
+                             ITS VALUE IS GREATER THAN ZERO.            01270001
+                                                                        01280001
+             INTEGER4        THE VALUE TO BE PLACED IN A FOUR-BYTE      01290001
+                             INTEGER FIELD.                             01300001
+                                                                        01310001
+             FLTLOC          INTEGER LOCATION IN IO_AREA WHERE          01320001
+                             THE FLOATING POINT NUMBER 'FLOAT' IS TO BE 01330001
+                             INSERTED. INSERTION WILL OCCUR WHENEVER    01340001
+                             ITS VALUE IS GREATER THAN ZERO.            01350001
+                                                                        01360001
+             FLOAT           THE VALUE TO BE PLACED IN A FOUR-BYTE      01370001
+                             FLOATING POINT FIELD.                      01380001
+                                                                        01390001
+             FB15_7_LOC      INTEGER LOCATION IN IO_AREA WHERE A        01400001
+                             NUMBER WITH THE ATTRIBUTES  FIXED BIN(15,7)01410001
+                             IS TO BE INSERTED. INSERTION WILL OCCUR    01420001
+                             WHENEVER ITS VALUE IS GREATER THAN ZERO.   01430001
+                                                                        01440001
+             FB15_7_VALUE    THE VALUE TO BE PLACED IN A TWO-BYTE       01450001
+                             FIXED BIN(15,7) FIELD.                     01460001
+                                                                        01470001
+                                                                        01480001
+        NOTA BENE:  INPUT IS THROUGH THE USE OF THE PL/I GET DATA       01490001
+                    STATEMENT.  CONVENTIONS TO BE FOLLOWED ARE GIVEN    01500001
+                    IN THE LANGUAGE REFERENCE MANUAL.  VALUES           01510001
+                    UNCHANGED BY ASSIGNMENT(INPUT) REMAIN AS THEY       01520001
+                    LAST WERE (EXCEPT FOR IO_AREA WHICH MAY BE          01530001
+                    CHANGED BY A SUCCESSFUL RETRIEVAL CALL).  EACH      01540001
+                    SET OF INPUTS MUST END WITH A SEMICOLON.            01550001
+                                                                        01560001
+                                                                        01570001
+             EXAMPLE OF INPUT DATA WHICH WOULD RETRIEVE THE FIRST FOUR  01580001
+             OCCURRENCES OF THE SEGMENT NAMED THISSEG1 FROM THE         01590001
+             DATABASE NAMED MYDABA01:                                   01600001
+                                                                        01610001
+               D_B='MYDABA01',SSA1='THISSEG1 ',#_OF_CALLS=1,FUNC='GU  ';01620001
+               #_OF_CALLS=3,FUNC='GN  ';                                01630001
+                                                                        01640001
+     */                                                                 01650001
+ %PAGE;                                                                 01660001
+     /*             F L O W C H A R T                                   01670001
+                                                                        01680001
+                        *********                                       01690001
+                       *  START  *                                      01700001
+                        *********                                       01710001
+                            *                                           01720001
+                            *                                           01730001
+                      *************                                     01740001
+                      *   COUNT   *                                     01750001
+                      *   PCB'S   *                                     01760001
+                      *************                                     01770001
+                            *                                           01780001
+                            * <**************************************** 01790001
+                            *                                         * 01800001
+                      *************                                   * 01810001
+                      *   READ    *                                   * 01820001
+                      *  INPUTS   *                                   * 01830001
+                      *************                                   * 01840001
+                            *                                         * 01850001
+                            *                                         * 01860001
+                            *                                         * 01870001
+                         *     *                                      * 01880001
+     ********  YES    *           *                                   * 01890001
+    * RETURN * <** *   END OF FILE   *                                * 01900001
+     ********         *     ?     *                                   * 01910001
+                         *     *                                      * 01920001
+                            *                                         * 01930001
+                            *                                         * 01940001
+                            *                                         * 01950001
+                            *                                         * 01960001
+                         *     *                                      * 01970001
+                      *    PCB    *        NO    **************       * 01980001
+                   *      VALID      ***********>*  FIND PCB  *       * 01990001
+                      *     ?     *              **************       * 02000001
+                         *     *                        *             * 02010001
+                            *           YES          *     *     NO   * 02020001
+                            *<******************* *   FOUND?  * *****>* 02030001
+                            *                        *     *          * 02040001
+                            *                           *             * 02050001
+                         *     *                                      * 02060001
+                      *   IO AREA  *    YES                           * 02070001
+                   *   MODIFICATIONS  **************                  * 02080001
+                      * REQUESTED? *               *                  * 02090001
+                         *     *                   *                  * 02100001
+                            *               *****************         * 02110001
+                            *<***************   MODIFY IO   *         * 02120001
+    **********************> *               *      AREA     *         * 02130001
+    *                       *               *****************         * 02140001
+    *              ********************                               * 02150001
+    *              * *              * *                               * 02160001
+    *              * *    CALL      * *                               * 02170001
+    *              * *  ASMTDLI     * *                               * 02180001
+    *              * *              * *                               * 02190001
+    *              ********************                               * 02200001
+    *                       *                                         * 02210001
+    *                       *                                         * 02220001
+    *                 ******************                              * 02230001
+    *                *                *                               * 02240001
+    *               *  PRINT OUTPUT  *                                * 02250001
+    *              *                *                                 * 02260001
+    *             ******************                                  * 02270001
+    *                       *                                         * 02280001
+    *                       *                                         * 02290001
+    *                    *      *                                     * 02300001
+    *                 *   MORE     *        NO                        * 02310001
+    *              *    CALLS TO      *******************************>* 02320001
+    *                 *    DO?     *                                  * 02330001
+    *                    *      *                                     * 02340001
+    *                       *                                         * 02350001
+    *                       *                                         * 02360001
+    *                       *                                         * 02370001
+    *                    *      *                                     * 02380001
+    *        YES      *   STATUS   *        NO                        * 02390001
+    *<**************       CODE       *******************************>* 02400001
+                      *    OK?     *                                    02410001
+                         *      *                                       02420001
+                            *                                           02430001
+                                                                        02440001
+     */                                                                 02450001
+ %PAGE;                                                                 02460001
+ IMSDBUT:                                                               02470001
+ PROCEDURE OPTIONS (MAIN) REORDER;                                      02480001
+   DECLARE ARG@ EXTERNAL ENTRY, /* THIS IS AN ASSEMBLER ROUTINE         02490001
+                                   WHICH RETURNS THE CONTENTS OF        02500001
+                                   REGISTER 1.                   */     02510001
+           #_OF_PCBS  FIXED BIN(15) INIT(0) STATIC,                     02520001
+           #_OF_CALLS FIXED BIN(15) INIT(1) STATIC,                     02530001
+           FUNC CHAR(4) INIT('GN') STATIC,                              02540001
+           FUNCTION CHAR(4) DEFINED FUNC,                               02550001
+           D_B CHAR(8)  STATIC INIT(''),                                02560001
+           DB CHAR(8) DEFINED D_B,                                      02570001
+           AREA_USED_TO_ALIGN_IO_AREA AREA(2048) INTERNAL               02580001
+                           INIT(EMPTY),                                 02590001
+           AREA_PTR PTR INIT(ADDR(AREA_USED_TO_ALIGN_IO_AREA)),         02600001
+           IO_AREA CHAR(2044) BASED (AREA_PTR),                         02610001
+           IO_RAY (2044) CHAR(1) BASED (AREA_PTR),                      02620001
+           PLIDUMP BUILTIN,                                             02630001
+           UNSPEC  BUILTIN,                                             02640001
+           (I,I1,I2,I3,J,K,L) FIXED BIN(15) STATIC INIT(0),             02650001
+           SYSIN EXTERNAL FILE STREAM INPUT,                            02660001
+           SYSPRINT EXTERNAL FILE PRINT,                                02670001
+           CHNG_CHAR CHAR(100) VARYING,                                 02680001
+           CHARLOC FIXED BIN(15) INIT(0) STATIC,                        02690001
+           INTLOC  FIXED BIN(15) INIT(0) STATIC,                        02700001
+           INTLOC4 FIXED BIN(15) INIT(0) STATIC,                        02710001
+           FLTLOC  FIXED BIN(15) INIT(0) STATIC,                        02720001
+           INT2 FIXED BIN(15) BASED,                                    02730001
+           FB15_7_LOC FIXED BIN(15) INIT(0) STATIC,                     02740001
+           INT4 FIXED BIN(31) BASED,                                    02750001
+           INT_15_7 FIXED BIN(15,7) BASED,                              02760001
+           FLOT FLOAT BASED,                                            02770001
+           INTEGER FIXED BIN(15) INIT(0) STATIC,                        02780001
+           INTEGER4 FIXED BIN(31) INIT(0) STATIC,                       02790001
+           FLOAT FIXED BIN(31,10) INIT(0) STATIC,                       02800001
+           FB15_7_VALUE FIXED BIN(15,7) INIT(0) STATIC,                 02810001
+          (SSA1,SSA2,SSA3,SSA4,SSA5) CHAR(200) VARYING INIT('') STATIC, 02820001
+           ASMTDLI EXTERNAL ENTRY OPTIONS (ASSEMBLER INTER NOMAP),      02830001
+   /*        PLIXOPT CHAR(24) VARYING STATIC EXTERNAL */                02840001
+   /*           INIT('ISASIZE(6K),NOREPORT/'), */                       02850001
+           PLIXOPT CHAR(33) VARYING STATIC EXTERNAL                     02840002
+              INIT('HEAP(64K,64K,ANYWHERE,KEEP,8K,4K)'),                02850002
+          (LENGTH,EMPTY,NULL,SUBSTR) BUILTIN,                           02860001
+           PSB@ PTR INIT CALL ARG@(PSB@),                               02870001
+           PCB@ (17) PTR BASED(PSB@),                                   02880001
+           TRUE BIT(1) STATIC INIT('1'B),                               02890001
+           BIT_CHECK (255,32) BIT(1) BASED (PSB@),                      02900001
+           CURRENT_PCB PTR INIT(NULL);                                  02910001
+ %PAGE;                                                                 02920001
+   DECLARE 1 PCB ALIGNED BASED(CURRENT_PCB),                            02930001
+             3 DBD_NAME CHAR(8),                                        02940001
+             3 SEG_LEVEL CHAR(2),                                       02950001
+             3 STATUS_CODE CHAR(2),                                     02960001
+             3 PROC_OPTIONS CHAR(4),                                    02970001
+             3 RESERVED_DLI FIXED BINARY(31),                           02980001
+             3 SEG_NAME CHAR(8),                                        02990001
+             3 LENGTH_FB_KEY FIXED BINARY(31),                          03000001
+             3 #_SENSE_SEGS FIXED BINARY(31),                           03010001
+             3 KEY_FB_AREA CHAR(DUMMY REFER(PCB.LENGTH_FB_KEY));        03020001
+                                                                        03030001
+  DECLARE                                                               03040001
+          WORK_PAIRS (1)      BIT (16)   BASED (AREA_PTR),              03050001
+          HEX_DATA            CHAR(4088) STATIC INIT((4088)' '),        03060001
+          OUTPUT_PTR          PTR INIT(ADDR(HEX_DATA)),                 03070001
+          HEX_BYTE (1)        CHAR(1) BASED(OUTPUT_PTR),                03080001
+          ADDR                BUILTIN,                                  03090001
+          MOD                 BUILTIN,                                  03100001
+          HEX_DIGIT (0:15)    CHARACTER(1) STATIC INIT('0','1','2','3', 03110001
+                                                       '4','5','6','7', 03120001
+                                                       '8','9','A','B', 03130001
+                                                       'C','D','E','F');03140001
+                                                                        03150001
+   ON ERROR SNAP                                                        03160001
+     BEGIN;                                                             03170001
+       DECLARE TEMPFYL FILE PRINT;                                      03180001
+       ON UNDEFINEDFILE(TEMPFYL) GO TO EOJ;                             03190001
+       BIT_CHECK(#_OF_PCBS,1) = '1'B;                                   03200001
+       OPEN FILE(TEMPFYL) TITLE('PLIDUMP');                             03210001
+       CALL PLIDUMP('TFBHC');                                           03220001
+       CLOSE FILE(TEMPFYL) ;                                            03230001
+       GO TO EOJ;                                                       03240001
+     END;                                                               03250001
+   ON NAME(SYSIN)                                                       03260001
+     BEGIN;                                                             03270001
+       DECLARE DATAFIELD BUILTIN;                                       03280001
+       FUNC = '';                                                       03290001
+       PUT SKIP LIST('*****WARNING***** AN INVALID CONDITION HAS BEEN ' 03300001
+           || 'IDENTIFIED IN THE INPUT.  DATAFIELD = ',DATAFIELD);      03310001
+       PUT SKIP LIST('                  INVALID INPUT WILL BE '         03320001
+           || 'DISREGARDED, FUNCTION SET TO BLANKS, AND PROCESSING '    03330001
+           || 'WILL CONTINUE.');                                        03340001
+   END;                                                                 03350001
+   ON ENDFILE (SYSIN) GO TO EOJ;                                        03360001
+ %PAGE;                                                                 03370001
+       /*  COUNT THE NO. OF PCB'S AVAILABLE TO A GIVEN EXECUTION        03380001
+           AND TURN OFF THE FIRST BIT OF THE LAST POINTER PASSED.  */   03390001
+                                                                        03400001
+   DO #_OF_PCBS = 1 BY 1 WHILE ( ^ BIT_CHECK(#_OF_PCBS,1));             03410001
+   END;                                                                 03420001
+   BIT_CHECK(#_OF_PCBS,1) = '0'B;                                       03430001
+                                                                        03440001
+                                                                        03450001
+                                                                        03460001
+                                                                        03470001
+   DO WHILE (TRUE); /*  UNCONDITIONAL LOOP WHICH TERMINATES WITH        03480001
+                        AN ENDFILE CONDITION FOR FILE SYSIN      */     03490001
+                                                                        03500001
+            /*  READ A SET OF INPUT DATA  */                            03510001
+                                                                        03520001
+     GET DATA(#_OF_CALLS,FUNC,FUNCTION,D_B,DB,SSA1,SSA2,SSA3,SSA4,SSA5, 03530001
+              IO_AREA,CHNG_CHAR,INTLOC,INTEGER,CHARLOC,INTEGER4,INTLOC4,03540001
+              FLTLOC,FLOAT,FB15_7_LOC,FB15_7_VALUE);                    03550001
+                                                                        03560001
+            /*  TEST PCB FOR CONSISTENCY WITH INPUT DATA  */            03570001
+                                                                        03580001
+     IF CURRENT_PCB = NULL | DBD_NAME ^= D_B                            03590001
+       THEN /* THIS IS EITHER THE FIRST TIME THROUGH THE LOOP OR        03600001
+            WE HAVE ASKED TO USE A DIFFERENT PCB FROM THE LAST TIME.*/  03610001
+                                                                        03620001
+         DO; /*  FIND THE REQUIRED PCB IN THE PSB  */                   03630001
+           CURRENT_PCB = NULL;                                          03640001
+           DO J = 1 TO #_OF_PCBS WHILE(CURRENT_PCB = NULL);             03650001
+             IF PCB@(J)->DBD_NAME = D_B                                 03660001
+               THEN    /*  THIS IS THE PCB WE ASKED FOR  */             03670001
+                    CURRENT_PCB = PCB@(J);                              03680001
+           END;                                                         03690001
+           IF CURRENT_PCB = NULL                                        03700001
+             THEN                                                       03710001
+               DO;                                                      03720001
+                 PUT SKIP EDIT('PCB NOT FOUND FOR DATABASE=',D_B)(A,A); 03730001
+                 PUT DATA(FUNC,IO_AREA,SSA1,SSA2,SSA3,SSA4,SSA5);       03740001
+                 GO TO END_LOOP;                                        03750001
+               END;                                                     03760001
+                                                                        03770001
+                   /*  INITIALIZE IO_AREA  */                           03780001
+           IO_AREA = '';                                                03790001
+         END;                                                           03800001
+ %PAGE;                                                                 03810001
+          /*  DO REQUESTED MODIFICATIONS TO THE IO_AREA  */             03820001
+                                                                        03830001
+     IF CHARLOC > 0 /*  WE ARE ASKING TO INSERT A CHARACTER STRING      03840001
+                        INTO THE IO_AREA PRIOR TO AN IMS CALL.  */      03850001
+       THEN SUBSTR(IO_AREA,CHARLOC,LENGTH(CHNG_CHAR)) = CHNG_CHAR;      03860001
+     IF INTLOC > 0 /*  WE ARE ASKING TO INSERT A FIXED BIN(15) INTEGER  03870001
+                       INTO THE IO_AREA PRIOR TO AN IMS CALL.  */       03880001
+       THEN ADDR(IO_RAY(INTLOC)) -> INT2 = INTEGER;                     03890001
+     IF INTLOC4 > 0 /*  WE ARE ASKING TO INSERT A FIXED BIN(31) INTEGER 03900001
+                        INTO THE IO_AREA PRIOR TO AN IMS CALL.  */      03910001
+       THEN ADDR(IO_RAY(INTLOC4)) -> INT4 = INTEGER4;                   03920001
+     IF FLTLOC > 0 /*  WE ARE ASKING TO INSERT A FLOAT DECIMAL(6) VALUE 03930001
+                       INTO THE IO_AREA PRIOR TO AN IMS CALL.   */      03940001
+       THEN ADDR(IO_RAY(FLTLOC)) -> FLOT = FLOAT;                       03950001
+     IF FB15_7_LOC > 0 /*  WE ARE ASKING TO INSERT A FIXED BIN(15,7)    03960001
+                           VALUE INTO THE IO_AREA PRIOR TO AN IMS CALL*/03970001
+       THEN ADDR(IO_RAY(FB15_7_LOC)) -> INT_15_7 = FB15_7_VALUE;        03980001
+                                                                        03990001
+        /*  REPEAT SUBROUTINE CALL FOR THE REQUIRED NUMBER OF           04000001
+            TIMES SO LONG AS THE STATUS CODE INDICATES A VALID          04010001
+            CONDITION.   */                                             04020001
+                                                                        04030001
+     DO J = 1,2 TO #_OF_CALLS WHILE                                     04040001
+        (STATUS_CODE='  '| (STATUS_CODE^='GE' & SUBSTR(STATUS_CODE,1,1) 04050001
+                   = 'G'  & STATUS_CODE ^= 'GB'));                      04060001
+       CALL FIX ((SSA1),(SSA2),(SSA3),(SSA4),(SSA5));                   04070001
+     END;                                                               04080001
+ END_LOOP:                                                              04090001
+   END;                                                                 04100001
+ %PAGE;                                                                 04110001
+ FIX:                                                                   04120001
+   PROCEDURE (SSA1,SSA2,SSA3,SSA4,SSA5);                                04130001
+     DECLARE                                                            04140001
+             (SSA1,SSA2,SSA3,SSA4,SSA5) CHAR(*),                        04150001
+             (THREE INIT(3),FOUR INIT(4),FIVE INIT(5),SIX INIT(6),      04160001
+              SEVEN INIT(7),EIGHT INIT(8)) FIXED BIN(31),               04170001
+              J FIXED BIN(31) STATIC INIT(0),                           04180001
+              FULL_WORD_BIN FIXED BIN(31) STATIC INIT(0),               04190001
+              LOW_BITS BIT(16) STATIC INIT((16)'0'B),                   04200001
+             1 HEX_STRUCT (2044) BASED (OUTPUT_PTR),                    04210001
+               2 TOP CHAR(1),                                           04220001
+               2 BOT CHAR(1);                                           04230001
+ %SKIP;                                                                 04240001
+     IF FUNC ^= ''                                                      04250001
+       THEN /*  DO THE REQUIRED IMS CALL  */                            04260001
+         SELECT;                                                        04270001
+           WHEN (LENGTH(SSA5) > 0)                                      04280001
+              CALL ASMTDLI                                              04290001
+                     (EIGHT,FUNC,PCB,IO_AREA,SSA1,SSA2,SSA3,SSA4,SSA5); 04300001
+           WHEN (LENGTH(SSA4) > 0)                                      04310001
+              CALL ASMTDLI(SEVEN,FUNC,PCB,IO_AREA,SSA1,SSA2,SSA3,SSA4); 04320001
+           WHEN (LENGTH(SSA3) > 0)                                      04330001
+              CALL ASMTDLI(SIX,FUNC,PCB,IO_AREA,SSA1,SSA2,SSA3);        04340001
+           WHEN (LENGTH(SSA2) > 0)                                      04350001
+              CALL ASMTDLI(FIVE,FUNC,PCB,IO_AREA,SSA1,SSA2);            04360001
+           WHEN (LENGTH(SSA1) > 0)                                      04370001
+              CALL ASMTDLI(FOUR,FUNC,PCB,IO_AREA,SSA1);                 04380001
+           OTHERWISE                                                    04390001
+              CALL ASMTDLI(THREE,FUNC,PCB,IO_AREA);                     04400001
+         END;                                                           04410001
+                                                                        04420001
+     DO K = LENGTH(IO_AREA) TO 1 BY -1 WHILE (IO_RAY(K) = ' ');         04430001
+     END; /*  THIS LOOP FINDS THE END OF SIGNIFICANT DATA  */           04440001
+ %PAGE;                                                                 04450001
+             /*  PRINT THE OUTPUT DATA  */                              04460001
+                                                                        04470001
+                 /*  PRINT THE PCB  */                                  04480001
+                                                                        04490001
+     CALL PRINT_PCB(PCB);                                               04500001
+                                                                        04510001
+                 /*  PRINT THE INPUT DATA  */                           04520001
+                                                                        04530001
+     PUT SKIP DATA(FUNC,D_B,SSA1,SSA2,SSA3,SSA4,SSA5);                  04540001
+     PUT SKIP DATA(CHNG_CHAR,CHARLOC,INTLOC,INTEGER,INTEGER4,INTLOC4,   04550001
+               FLTLOC,FLOAT,#_OF_CALLS);                                04560001
+                                                                        04570001
+                 /*  FORMAT THE IO_AREA IN HEX  */                      04580001
+                                                                        04590001
+     DO J = 1 TO (2 * K) BY 4;                                          04600001
+       UNSPEC(FULL_WORD_BIN) = LOW_BITS || WORK_PAIRS((J+3)/4);         04610001
+       DO L = 3 TO 0 BY -1;            /*  MASK OFF 4 LOW-ORDER BITS  */04620001
+         HEX_BYTE(J + L) =             /*  (ONE HEX DIGIT).  PLACE    */04630001
+           HEX_DIGIT(MOD(FULL_WORD_BIN,/*  EBCDIC EQUIVALENT IN COR-  */04640001
+                  16));                /*  RESPONDING POSITION IN     */04650001
+                                       /*  RETURNED STRING.           */04660001
+         FULL_WORD_BIN = FULL_WORD_BIN / 16; /* ZERO HALF-BYTE JUST     04670001
+                                                TRANSLATED.           */04680001
+       END;                                                             04690001
+     END;                                                               04700001
+                                                                        04710001
+            /*  PRINT THE IO_AREA IN BOTH EBCDIC AND HEX                04720001
+                UNTIL ONLY BLANKS REMAIN AT THE END.      */            04730001
+                                                                        04740001
+     PUT SKIP(2) EDIT('IO_AREA:')(A);                                   04750001
+     DO I = 1 TO K/120+1;                                               04760001
+       I2 = 120 * I;                                                    04770001
+       I1 = I2 - 119;                                                   04780001
+       IF I2 > K                                                        04790001
+         THEN                                                           04800001
+           DO;                                                          04810001
+             I2 = K;                                                    04820001
+             I1 = (I - 1) * 120 + 1;                                    04830001
+           END;                                                         04840001
+       PUT SKIP EDIT(SUBSTR(IO_AREA,I1,I2 - I1 + 1))(A);                04850001
+       PUT SKIP EDIT((TOP(I3) DO I3 = I1 TO I2))(A);                    04860001
+       PUT SKIP EDIT((BOT(I3) DO I3 = I1 TO I2))(A);                    04870001
+     END;                                                               04880001
+     PUT SKIP(3);                                                       04890001
+ %PAGE;                                                                 04900001
+ PRINT_PCB:                                                             04910001
+   PROCEDURE(PCB);                                                      04920001
+     DECLARE 1 PCB ALIGNED,                                             04930001
+               3 DBD_NAME CHAR(8),                                      04940001
+               3 SEG_LEVEL CHAR(2),                                     04950001
+               3 STATUS_CODE CHAR(2),                                   04960001
+               3 PROC_OPTIONS CHAR(4),                                  04970001
+               3 RESERVED_DLI FIXED BINARY(31),                         04980001
+               3 SEG_NAME CHAR(8),                                      04990001
+               3 LENGTH_FB_KEY FIXED BINARY(31),                        05000001
+               3 #_SENSE_SEGS FIXED BINARY(31),                         05010001
+               3 KEY_FB_AREA CHAR(*);                                   05020001
+     PUT SKIP DATA(PCB);                                                05030001
+   END;                                                                 05040001
+   END;                                                                 05050001
+ EOJ:                                                                   05060001
+          /*  RESTORE THE FIRST BIT OF THE POINTER TO THE LAST PCB  */  05070001
+   BIT_CHECK(#_OF_PCBS,1) = '1'B;                                       05080001
+ END IMSDBUT;

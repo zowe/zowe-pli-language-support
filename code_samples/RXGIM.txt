@@ -1,0 +1,505 @@
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20230320)                           2024.05.10 22:43:53   Page     1
+ -                     Options Specified
+ 0  Install:
+ 0  Command: SOURCE
+ 0  Install:
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /* REXX interface to SMP/E API (GIMAPI) */          2024.05.10 22:43:53   Page     2
+ 0 Compiler Source
+ 0    Line.File
+ 0       1.0      /* REXX interface to SMP/E API (GIMAPI) */
+         2.0      /*
+         3.0         Module Name: RXGIM
+         4.0
+         5.0         Syntax:      LINKMVS RXGIM [hlq]
+         6.0
+         7.0         Input:       The following REXX variables:
+         8.0                      hlq
+         9.0                      hlq.CSI
+        10.0                      hlq.ZONE
+        11.0                      hlq.ENTRY
+        12.0                      hlq.SUBENTRY
+        13.0                      hlq.FILTER
+        14.0                      [hlq.DEBUG]
+        15.0
+        16.0         Output:      The following REXX stems and variables:
+        17.0                      hlq.REPLY.
+        18.0                      hlq.ERROR.
+        19.0                      hlq.VERSION
+        20.0                      hlq.REASON
+        21.0
+        22.0         Author:      Gregori Bliznets GregoryTwin@gmail.com
+        23.0
+        24.0         History:     18.10.2005 initial version
+        25.0                      22.03.2007 locate ENVBLOCK via IRXINIT instead of
+        26.0                                 chasing pointers (RH)
+        27.0                      29.08.2021 adopted for CBTTAPE
+        28.0
+        29.0      */
+        30.0      MAIN: PROC(PARM) OPTIONS(MAIN) REORDER;
+        31.0
+        32.0      DCL ENVBLOCKPTR PTR;
+        33.0      DCL SHVBLOCKPTR PTR;
+        34.0
+        35.0      DCL 1 ENVBLOCK BASED(ENVBLOCKPTR),
+        36.0          2 ENVID    CHAR(8),
+        37.0          2 ENVVER   CHAR(4),
+        38.0          2 ENVLEN   BIN FIXED(31),
+        39.0          2 ENVPARM  PTR,
+        40.0          2 ENVUSER  CHAR(4),
+        41.0          2 ENVWEXT  PTR,
+        42.0          2 ENVEXTE  PTR,
+        43.0          2 ENVERR   PTR,
+        44.0          2 ENVFILL  CHAR(4),
+        45.0          2 ENVMSGID CHAR(8),
+        46.0          2 ENVPMSG  CHAR(80),
+        47.0          2 ENVAMSG  CHAR(160),
+        48.0          2 ENVPGMTB PTR,
+        49.0          2 ENVFLAGS CHAR(4);
+        50.0
+        51.0      DCL SHV CHAR(32);
+        52.0      DCL 1 SHVBLOCK BASED(ADDR(SHV)),
+        53.0          2 SHVNEXT  PTR,
+        54.0          2 SHVUSER  CHAR(4),
+        55.0          2 SHVCODE  CHAR(1),
+        56.0          2 SHVRET   BIT(8),
+        57.0          2 SHVFILL  CHAR(2),
+        58.0          2 SHVBUFL  BIN FIXED(31),
+        59.0          2 SHVNAMA  PTR,
+        60.0          2 SHVNAML  BIN FIXED(31),
+        61.0          2 SHVVALA  PTR,
+        62.0          2 SHVVALL  BIN FIXED(31);
+        63.0
+        64.0      /* SHVCODE Function Codes */
+        65.0      DCL SHVFETCH CHAR(1) INIT('F'); /* Fetch value of variable */
+        66.0      DCL SHVSTORE CHAR(1) INIT('S'); /* Set variable from given value */
+        67.0      DCL SHVDROPV CHAR(1) INIT('D'); /* Drop variable */
+        68.0      DCL SHVSYSET CHAR(1) INIT('s'); /* Symbolic name Set variable */
+        69.0      DCL SHVSYFET CHAR(1) INIT('f'); /* Symbolic name Fetch variable */
+        70.0      DCL SHVSYDRO CHAR(1) INIT('d'); /* Symbolic name Drop variable */
+        71.0      DCL SHVNEXTV CHAR(1) INIT('N'); /* Fetch next variable */
+        72.0      DCL SHVPRIV  CHAR(1) INIT('P'); /* Fetch private information */
+        73.0
+        74.0      /* SHVRET Return Code Flags */
+        75.0      DCL SHVCLEAN BIT(8) INIT('00000000'B); /* Execution was OK */
+        76.0      DCL SHVNEWV  BIT(8) INIT('00000001'B); /* Variable did not exist */
+        77.0      DCL SHVLVAR  BIT(8) INIT('00000010'B); /* Last variable ("N") */
+        78.0      DCL SHVTRUNC BIT(8) INIT('00000100'B); /* Truncature occurs ("F") */
+        79.0      DCL SHVBADN  BIT(8) INIT('00001000'B); /* Invalid variable name */
+        80.0      DCL SHVBADV  BIT(8) INIT('00010000'B); /* Value too long */
+        81.0      DCL SHVBADF  BIT(8) INIT('10000000'B); /* Invalid function code */
+        82.0
+        83.0      DCL IRXINIT  ENTRY(CHAR(8),CHAR(8),PTR,PTR,BIN FIXED(31),PTR,
+        84.0                     BIN FIXED(31),BIN FIXED(31),BIN FIXED(31),PTR)
+        85.0                   EXTERNAL OPTIONS(ASSEMBLER,INTER);
+        86.0
+        87.0      DCL IRXEXCOM ENTRY(CHAR(8),PTR,PTR,CHAR(32),PTR,BIN FIXED(31))
+        88.0                   EXTERNAL OPTIONS(ASSEMBLER,INTER);
+        89.0
+        90.0      DCL PARM     VAR CHAR(100);
+        91.0      DCL HLQ      VAR CHAR(100);
+        92.0      DCL DEBUG    VAR CHAR(255);
+        93.0      DCL RXVAR    CHAR(255);
+        94.0      DCL RXVAL    CHAR(255);
+        95.0      DCL SYSNULL  BUILTIN;
+        96.0      DCL ADDR     BUILTIN;
+        97.0      DCL SUBSTR   BUILTIN;
+        98.0      DCL TRANSLATE BUILTIN;
+        99.0      DCL LENGTH   BUILTIN;
+       100.0      DCL PLIRETC  BUILTIN;
+       101.0      DCL LANG     CHAR(3) INIT('ENU');
+       102.0      %INCLUDE GIMMPLI;
+                  /*** Begin %include DD:SYSLIB(GIMMPLI) ***/
+         1.1      /****************************** MODULE HEADER ***********************/
+         2.1      /*                                                                  */
+         3.1      /* Module Name: GIMMPLI                                             */
+         4.1      /*                                                                  */
+         5.1      /* SMP/E API Macro for PL/I                                         */
+         6.1      /*                                                                  */
+         7.1      /* Licensed Materials - Property of IBM                             */
+         8.1      /* 5650-ZOS                                                         */
+         9.1      /* Copyright IBM Corp. 1997, 2018                                   */
+        10.1      /********************************************************************/
+        11.1      /*                                                                  */
+        12.1      /* ---------------------------------------------------------------- */
+        13.1      /* FLAG REASON  RELEASE   DATE   ORG  DESCRIPTION                   */
+        14.1      /* ---- ------- ------- -------- ---  ----------------------------- */
+        15.1      /* $L0= SV1001A  1A.00  06/10/96 KAK: GIMAPI SUPPORT                */
+        16.1      /* $L1= SVV001B  1B.00  10/14/96 DMM: API VERSION SUPPORT           */
+        17.1      /* $01= IO26243  36.96  05/08/18 KAP: Allow 3 characters for PTF    */
+        18.1      /*                                    value in SMP/E level          */
+        19.1      /*                                                                  */
+        20.1      /********************************************************************/
+        21.1      /*   CHANGE FLAG KEY: M@PNC                                         */
+        22.1      /*   WHERE:                                                         */
+        23.1      /*                                                                  */
+        24.1      /* M= MULTIPLE    P= DCRS = D,E,F,G    N= 0-9,A-Z     C= A = ADD    */
+        25.1      /*    FOR DELETE     RMPS = H,I,J,K    (USE '0' ONLY     C = CHANGE */
+        26.1      /*    FLAGS ONLY     LINE = L,M,N,O     WHEN ELEMENT     P = COPY   */
+        27.1      /*                   PTMS = P,Q,R,S     IS BEING         M = MOVE   */
+        28.1      /*                   APARS = 0-9        CREATED)         D = DELETE */
+        29.1      /********************************************************************/
+        30.1      DCL LEN_ETYPE FIXED BIN(31) INIT(12);
+        31.1      DCL LEN_MSG   FIXED BIN(31) INIT(256);
+        32.1
+        33.1      DCL
+        34.1       1 QUERY_PARMS UNALIGNED,          /* Parameters for QUERY command  */
+        35.1           2 CSI          POINTER,       /* PTR to global CSI dataset     */
+        36.1           2 CSILEN       FIXED BIN(31), /* Length of data set name       */
+        37.1           2 ZONE         POINTER,       /* PTR to list of zones          */
+        38.1           2 ZONELEN      FIXED BIN(31), /* Length of zone list           */
+        39.1           2 ENTRYTYPE    POINTER,       /* PTR to list of entries        */
+        40.1           2 ENTRYLEN     FIXED BIN(31), /* Length of entry list          */
+        41.1           2 SUBENTRYTYPE POINTER,       /* PTR to list of subentries     */
+        42.1           2 SUBENTRYLEN  FIXED BIN(31), /* Length of subentry list       */
+        43.1           2 FILTER       POINTER,       /* PTR to query filter           */
+        44.1           2 FILTERLEN    FIXED BIN(31); /* Length of filter              */
+        45.1      DCL
+        46.1       1 ENTRY_LIST BASED UNALIGNED,  /* List of entry types              */
+        47.1          2 NEXT      POINTER,        /* PTR to next item in linked list  */
+        48.1          2 ENTRIES   POINTER,        /* PTR to head of linked list of    */
+        49.1                                      /*  CSI_ENTRY structures listing    */
+        50.1                                      /*  the instances of this entry type*/
+        51.1          2 TYPE      CHAR(12);       /* Entry type                       */
+        52.1      DCL
+        53.1       1 CSI_ENTRY BASED UNALIGNED,   /* Description of a specific entry  */
+        54.1          2 NEXT       POINTER,       /* PTR to next item in linked list  */
+        55.1          2 SUBENTRIES POINTER,       /* PTR to head of linked list of    */
+        56.1                                      /*  SUBENTRY structures listing the */
+        57.1                                      /*  subentry values returned for    */
+        58.1                                      /*  this entry                      */
+        59.1          2 ENTRYNAME  CHAR(8),       /* Name of entry                    */
+        60.1          2 ZONENAME   CHAR(7);       /* Zone where entry was retrieved   */
+        61.1      DCL
+        62.1       1 SUBENTRY BASED UNALIGNED,    /* Contains subentry data           */
+        63.1          2 NEXT          POINTER,    /* PTR to next item in linked list  */
+        64.1          2 SUBENTRYDATA  POINTER,    /* PTR to head of linked list of    */
+        65.1                                      /*  data values for this subentry   */
+        66.1          2 TYPE          CHAR(12);   /* Subentry type                    */
+        67.1
+        68.1      DCL
+        69.1       1 VER BASED UNALIGNED,         /* Place holder for subentries      */
+        70.1                                      /*  associated with ++VER records   */
+        71.1                                      /*  of a sysmod                     */
+        72.1          2 NEXT          POINTER,    /* PTR to next item in linked list  */
+        73.1          2 VERDATA       POINTER,    /* PTR to head of linked list of    */
+        74.1                                      /*  subentries associated with ++VER*/
+        75.1          2 VERNUM        CHAR(3);    /* ++VER statement number           */
+        76.1
+        77.1      DCL
+        78.1       1 ITEM_LIST BASED UNALIGNED,   /* Holds piece of subentry data     */
+        79.1          2 NEXT       POINTER,       /* PTR to next item in linked list  */
+        80.1          2 DATALEN    FIXED BIN(31), /* Number of characters of real data*/
+        81.1          2 DATA       POINTER;       /* PTR to storage containing data   */
+        82.1
+        83.1      DECLARE                         /* API VERSION command output       */
+        84.1       1 API_VERSION BASED UNALIGNED, /* structure                        */
+        85.1          2 APIVER CHAR(2),           /* current SMP/E level for version  */
+        86.1          2 APIREL CHAR(2),           /* "              "        release  */
+        87.1          2 APIMOD CHAR(2),           /* "              "   modification  */
+        88.1          2 APIPTF CHAR(2),           /* "              "   PTF       @L1A*/
+        89.1                                      /* Will never exceed 99.        @01A*/
+        90.1          2 APIEPTF CHAR(3);          /* "              "   extended  @01A*/
+        91.1                                      /* PTF value.  This is the true @01A*/
+        92.1                                      /* PTF  when the PTF level      @01A*/
+        93.1                                      /* exceeds 99.                  @01A*/
+                  /*** End   %include DD:SYSLIB(GIMMPLI) ***/
+       102.0
+       103.0
+       104.0      DCL GIMAPI ENTRY(CHAR(8),PTR,PTR,CHAR(3),FIXED BIN(31),
+       105.0                      FIXED BIN(31),PTR) EXTERNAL OPTIONS(ASSEMBLER,INTER);
+       106.0
+       107.0      DCL (RC,CC,QC) FIXED BIN(31) INIT(0);
+       108.0      DCL QPARMS    PTR;
+       109.0      DCL MSGBUFF   PTR;
+       110.0      DCL QRESULT   PTR;
+       111.0      DCL NIL       PTR;
+       112.0      DCL PGMVPTR   PTR;
+       113.0      DCL APIVPTR   PTR;
+       114.0      DCL CSISTR    CHAR(44);
+       115.0      DCL ZONESTR   CHAR(100);
+       116.0      DCL ENTRYSTR  CHAR(100);
+       117.0      DCL SUBENTSTR CHAR(100);
+       118.0      DCL FILTERSTR CHAR(255);
+       119.0      DCL UPPERCASE CHAR(26) INIT('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+       120.0      DCL LOWERCASE CHAR(26) INIT('abcdefghijklmnopqrstuvwxyz');
+       121.0      DCL RXAPIV    CHAR(2) INIT('02'); /* Version of this module */
+       122.0      DCL RSNCODE   BIN FIXED(31) INIT(0);
+       123.0      DCL RETCODE   BIN FIXED(31) INIT(0);
+       124.0
+       125.0      START:
+       126.0      FETCH IRXINIT;
+       127.0      FETCH IRXEXCOM;
+       128.0      FETCH GIMAPI;
+       129.0      CC = -1;
+       130.0      HLQ = STRIP(PARM);
+       131.0      IF HLQ = ''
+       132.0      THEN HLQ = 'RXGIM';
+       133.0      /* Get the address of ENVBLOCK */
+       134.0      CALL IRXINIT('FINDENVB','',NIL,NIL,0,ENVBLOCKPTR,RSNCODE,0,RETCODE,
+       135.0                   NIL);
+       136.0      IF ENVID ^= 'ENVBLOCK'
+       137.0      THEN DO; /* ENVBLOCK not found */
+       138.0        RC = -3;
+       139.0        GOTO EXIT;
+       140.0        END;
+       141.0
+       142.0      NIL = SYSNULL;
+       143.0      SHVBLOCKPTR = ADDR(SHVBLOCK);
+       144.0      SHVNEXT = SYSNULL;
+       145.0      SHVBUFL = 255;
+       146.0      SHVNAMA = ADDR(RXVAR);
+       147.0      SHVVALA = ADDR(RXVAL);
+       148.0      SHVVALL = 255;
+       149.0
+       150.0      /* Get GIMAPI REXX input variables */
+       151.0      RC = GETVAR(HLQ||'.DEBUG'); /* RXGIMAPI.DEBUG (optional) */
+       152.0      DEBUG = TRANSLATE(SUBSTR(RXVAL,1,SHVVALL), UPPERCASE, LOWERCASE);
+       153.0
+       154.0      RC = GETVAR(HLQ||'.CSI'); /* GIMAPI.CSI */
+       155.0      IF RC ^= 0
+       156.0      THEN GOTO EXIT;
+       157.0      CSI = ADDR(CSISTR);
+       158.0      CSISTR = SUBSTR(RXVAL,1,SHVVALL);
+       159.0      CSILEN = SHVVALL;
+       160.0
+       161.0      RC = GETVAR(HLQ||'.ZONE'); /* GIMAPI.ZONE */
+       162.0      IF RC ^= 0
+       163.0      THEN GOTO EXIT;
+       164.0      ZONE = ADDR(ZONESTR);
+       165.0      ZONESTR = SUBSTR(RXVAL,1,SHVVALL);
+       166.0      ZONELEN = SHVVALL;
+       167.0
+       168.0      RC = GETVAR(HLQ||'.ENTRY'); /* GIMAPI.ENTRY */
+       169.0      IF RC ^= 0
+       170.0      THEN GOTO EXIT;
+       171.0      ENTRYTYPE = ADDR(ENTRYSTR);
+       172.0      ENTRYSTR = SUBSTR(RXVAL,1,SHVVALL);
+       173.0      ENTRYLEN = SHVVALL;
+       174.0
+       175.0      RC = GETVAR(HLQ||'.SUBENTRY'); /* GIMAPI.SUBENTRY */
+       176.0      IF RC ^= 0
+       177.0      THEN GOTO EXIT;
+       178.0      SUBENTRYTYPE = ADDR(SUBENTSTR);
+       179.0      SUBENTSTR = SUBSTR(RXVAL,1,SHVVALL);
+       180.0      SUBENTRYLEN = SHVVALL;
+       181.0
+       182.0      RC = GETVAR(HLQ||'.FILTER'); /* GIMAPI.FILTER */
+       183.0      IF RC ^= 0
+       184.0      THEN GOTO EXIT;
+       185.0      FILTER = ADDR(FILTERSTR);
+       186.0      FILTERSTR = SUBSTR(RXVAL,1,SHVVALL);
+       187.0      FILTERLEN = SHVVALL;
+       188.0
+       189.0      /* Get GIMAPI version */
+       190.0      QPARMS = ADDR(QUERY_PARMS);
+       191.0      ALLOC API_VERSION SET(PGMVPTR);
+       192.0      CALL GIMAPI('VERSION', NIL, APIVPTR, LANG, RC, CC, MSGBUFF);
+       193.0      IF RC ^= 0
+       194.0      THEN DO;
+       195.0        CALL SETMSGS;
+       196.0        GOTO EXIT;
+       197.0        END;
+       198.0      RC = SETVAR(HLQ||'.VERSION', APIVPTR->APIVER || APIVPTR->APIREL ||
+       199.0             APIVPTR->APIMOD || APIVPTR->APIPTF || RXAPIV);
+       200.0      IF RC ^= 0
+       201.0      THEN GOTO EXIT;
+       202.0
+       203.0      /* Run GIMAPI query */
+       204.0      CALL GIMAPI('QUERY', QPARMS, QRESULT, LANG, RC, CC, MSGBUFF);
+       205.0      QC = RC;
+       206.0      SELECT(RC);
+       207.0      WHEN(0) DO;
+       208.0        RC = SETVAR(HLQ||'.ERROR.0', '0');
+       209.0        CALL SETRESULT;
+       210.0        END;
+       211.0      WHEN(4) DO;
+       212.0        CALL SETMSGS;
+       213.0        CALL SETRESULT;
+       214.0        END;
+       215.0      OTHERWISE DO;
+       216.0        RC = SETVAR(HLQ||'.REPLY.0', '0');
+       217.0        CALL SETMSGS;
+       218.0        END;
+       219.0      END;
+       220.0
+       221.0      /* Internal subroutines */
+       222.0      GETVAR: PROCEDURE(VARNAME) RETURNS(BIN FIXED(31));
+       223.0        DCL VARNAME VAR CHAR(255);
+       224.0        DCL RETCODE BIN FIXED(31);
+       225.0        SHVCODE = SHVFETCH;
+       226.0        RXVAR = VARNAME;
+       227.0        SHVNAML = LENGTH(VARNAME);
+       228.0        RXVAL = '';
+       229.0        CALL IRXEXCOM('IRXEXCOM', NIL, NIL, SHV, ENVBLOCKPTR, RETCODE);
+       230.0        IF RETCODE > 0
+       231.0        THEN RETCODE = 0 - RETCODE;
+       232.0        IF DEBUG = 'Y'
+       233.0        THEN PUT SKIP LIST('GET '||VARNAME||'='||SUBSTR(RXVAL,1,SHVVALL));
+       234.0        RETURN(RETCODE);
+       235.0        END GETVAR;
+       236.0
+       237.0      SETVAR: PROCEDURE(VARNAME, VARVALUE) RETURNS(BIN FIXED(31));
+       238.0        DCL VARNAME VAR CHAR(255);
+       239.0        DCL VARVALUE VAR CHAR(255);
+       240.0        DCL RETCODE BIN FIXED(31);
+       241.0        SHVCODE = SHVSTORE;
+       242.0        RXVAR = VARNAME;
+       243.0        SHVNAML = LENGTH(VARNAME);
+       244.0        RXVAL = VARVALUE;
+       245.0        SHVVALL = LENGTH(VARVALUE);
+       246.0        CALL IRXEXCOM('IRXEXCOM', NIL, NIL, SHV, ENVBLOCKPTR, RETCODE);
+       247.0        IF RETCODE > 0
+       248.0        THEN RETCODE = 0 - RETCODE;
+       249.0        IF DEBUG = 'Y'
+       250.0        THEN PUT SKIP LIST('SET '||VARNAME||'='||VARVALUE);
+       251.0        RETURN(RETCODE);
+       252.0        END SETVAR;
+       253.0
+       254.0      STRIP: PROCEDURE(S) RETURNS(VAR CHAR(255));
+       255.0        DCL S VAR CHAR(255);
+       256.0        DCL P BIN FIXED(31);
+       257.0        DCL T BIN FIXED(31);
+       258.0        DCL L BIN FIXED(31);
+       259.0        L = LENGTH(S);
+       260.0        P = 1;
+       261.0        DO WHILE(SUBSTR(S, P, 1) = ' ');
+       262.0          P = P + 1;
+       263.0        END;
+       264.0        T = 0;
+       265.0        DO WHILE(SUBSTR(S, L-T, 1) = ' ');
+       266.0          T = T + 1;
+       267.0        END;
+       268.0        RETURN(SUBSTR(S, P, L-P-T+1));
+       269.0        END STRIP;
+       270.0
+       271.0      C2D: PROCEDURE(B) RETURNS(VAR CHAR(255));
+       272.0        DCL B BIN FIXED(31);
+       273.0        DCL P PIC 'ZZZZZZZ9';
+       274.0        DCL S VAR CHAR(8);
+       275.0        P = B;
+       276.0        S = P;
+       277.0        RETURN(STRIP(S));
+       278.0        END C2D;
+       279.0
+       280.0      SETRESULT: PROCEDURE;
+       281.0        DCL CURETYPE  POINTER;
+       282.0        DCL CURVER    POINTER;
+       283.0        DCL CURVSUB   POINTER;
+       284.0        DCL ITEM      POINTER;
+       285.0        DCL CNTENTRY  BIN FIXED(31); /* Entry count */
+       286.0        DCL CNTSUBENT BIN FIXED(31); /* Subentry count */
+       287.0        DCL CURENTRY  PTR; /* Pointer to the entry */
+       288.0        DCL CURSUBENT PTR; /* Pointer to the subentry */
+       289.0        CNTENTRY = 0;
+       290.0        CURETYPE = QRESULT;             /* Point to head of list */
+       291.0        DO WHILE (CURETYPE ^= SYSNULL); /* Loop through each entry type */
+       292.0          CURENTRY = CURETYPE->ENTRIES;
+       293.0          DO WHILE (CURENTRY ^= SYSNULL);
+       294.0            CNTENTRY = CNTENTRY + 1;
+       295.0            CNTSUBENT = 0;
+       296.0            RC = SETVAR(HLQ||'.REPLY.'||C2D(CNTENTRY),
+       297.0                   CURENTRY->CSI_ENTRY.ENTRYNAME || ' ' || /* ENAME */
+       298.0                   CURETYPE->ENTRY_LIST.TYPE || ' ' ||     /* ETYPE */
+       299.0                   CURENTRY->CSI_ENTRY.ZONENAME);          /* EZONE */
+       300.0            CURSUBENT = CURENTRY->SUBENTRIES;
+       301.0            DO WHILE (CURSUBENT ^= SYSNULL);
+       302.0              CNTSUBENT = CNTSUBENT + 1;
+       303.0              IF CURSUBENT->SUBENTRY.TYPE = 'VER         '
+       304.0              THEN DO; /* VER type subentries */
+       305.0                CURVER = CURSUBENT->SUBENTRYDATA;
+       306.0                DO WHILE (CURVER ^= SYSNULL);
+       307.0                  CURVSUB = CURVER->VERDATA;
+       308.0                  DO WHILE (CURVSUB^=SYSNULL);
+       309.0                    ITEM = CURVSUB->SUBENTRYDATA;
+       310.0                    CALL SETITEMS(HLQ||'.REPLY.'||C2D(CNTENTRY)||'.'||
+       311.0                           C2D(CNTSUBENT),ITEM);
+       312.0                    CURVSUB = CURVSUB->SUBENTRY.NEXT;
+       313.0                  END;
+       314.0                  CURVER = CURVER->VER.NEXT;
+       315.0                END;
+       316.0                END; /* VER type subentries */
+       317.0              ELSE DO; /* non-VER type subentries */
+       318.0                ITEM = CURSUBENT->SUBENTRYDATA;
+       319.0                CALL SETITEMS(HLQ||'.REPLY.'||C2D(CNTENTRY)||'.'||
+       320.0                       C2D(CNTSUBENT),ITEM);
+       321.0                END; /* non-VER type subentries */
+       322.0              RC = SETVAR(HLQ||'.REPLY.'||C2D(CNTENTRY)||'.'||
+       323.0                     C2D(CNTSUBENT), CURSUBENT->SUBENTRY.TYPE);
+       324.0              CURSUBENT = CURSUBENT->SUBENTRY.NEXT;
+       325.0            END; /* End of subentry type loop */
+       326.0            RC = SETVAR(HLQ||'.REPLY.'||C2D(CNTENTRY)||'.0',
+       327.0                   C2D(CNTSUBENT)); /* Number of subentries */
+       328.0            CURENTRY = CURENTRY->CSI_ENTRY.NEXT; /* Next entry */
+       329.0          END; /* END ENTRY LOOP */
+       330.0          CURETYPE = CURETYPE->ENTRY_LIST.NEXT; /* Next entry type */
+       331.0        END; /* END ENTRY TYPE LOOP */
+       332.0        RC = SETVAR(HLQ||'.REPLY.0', C2D(CNTENTRY)); /* Entry count */
+       333.0        END SETRESULT;
+       334.0
+       335.0      SETITEMS: PROCEDURE(STEM,ITEMPTR);
+       336.0        DCL STEM VAR CHAR(255);
+       337.0        DCL ITEMPTR  POINTER;
+       338.0        DCL CURITEM  POINTER;
+       339.0        DCL BUFFPTR  POINTER;
+       340.0        DCL CNTITEMS BIN FIXED(31);
+       341.0        DCL DATABUFF CHAR(500) BASED(BUFFPTR);
+       342.0        CURITEM = ITEMPTR;
+       343.0        CNTITEMS = 0;
+       344.0        DO WHILE (CURITEM ^= SYSNULL);
+       345.0          BUFFPTR = CURITEM->DATA;
+       346.0          CNTITEMS = CNTITEMS + 1;
+       347.0          RC = SETVAR(STEM||'.'||C2D(CNTITEMS),
+       348.0                 SUBSTR(BUFFPTR->DATABUFF,1,CURITEM->DATALEN));
+       349.0          CURITEM = CURITEM->ITEM_LIST.NEXT; /* Get next data value */
+       350.0        END; /* END DATA ITEM LOOP */
+       351.0        RC = SETVAR(STEM||'.0', C2D(CNTITEMS));
+       352.0        END SETITEMS;
+       353.0
+       354.0      SETMSGS: PROCEDURE;
+       355.0        DCL CURMSG POINTER;
+       356.0        DCL TEXTPTR POINTER;
+       357.0        DCL MSGTEXT CHAR(256) BASED(TEXTPTR);
+       358.0        DCL CNTMSG BIN FIXED(31); /* Message count */
+       359.0        DCL RESULT BIN FIXED(31);
+       360.0        CNTMSG = 0;
+       361.0        IF MSGBUFF ^= SYSNULL
+       362.0        THEN DO;
+       363.0          CURMSG = MSGBUFF;
+       364.0          DO WHILE (CURMSG ^= SYSNULL);
+       365.0            TEXTPTR = CURMSG->DATA;
+       366.0            CNTMSG = CNTMSG + 1;
+       367.0            RESULT = SETVAR(HLQ||'.ERROR.'||C2D(CNTMSG),
+       368.0                       SUBSTR(TEXTPTR->MSGTEXT,1,CURMSG->DATALEN));
+       369.0            CURMSG = CURMSG->ITEM_LIST.NEXT;
+       370.0          END;
+       371.0          END;
+       372.0        RESULT = SETVAR(HLQ||'.ERROR.0', C2D(CNTMSG));
+       373.0        END SETMSGS;
+       374.0
+       375.0      /* That's all. Clean-up and exit */
+       376.0      EXIT:
+       377.0      CALL PLIRETC(QC);
+       378.0      IF CC >= 0
+       379.0      THEN DO;
+       380.0         RC = SETVAR(HLQ||'.REASON', C2D(CC));
+       381.0         CALL GIMAPI('FREE', NIL, NIL, LANG, RC, CC, MSGBUFF);
+       382.0         END;
+       383.0      RELEASE GIMAPI;
+       384.0      RELEASE IRXEXCOM;
+       385.0      RELEASE IRXINIT;
+       386.0      END MAIN;
+ 15655-PL6  IBM(R) Enterprise PL/I for z/OS  /* REXX interface to SMP/E API (GIMAPI) */          2024.05.10 22:43:53   Page     3
+ - Compiler Messages
+ 0 Message       Line.File Message Description
+ 0 IBM2670I W      30.0    The parameter to MAIN should be declared as CHAR(*) VARYING.
+   IBM1214I W     130.0    A dummy argument will be created for argument number 1 in ENTRY reference STRIP.
+   IBM1214I W     277.0    A dummy argument will be created for argument number 1 in ENTRY reference STRIP.
+   IBM1214I W     322.0    A dummy argument will be created for argument number 2 in ENTRY reference SETVAR.
+ - File Reference Table
+ 0   File    Included From  Name
+ 0      0                   AVL.IBAGROUP.PLI(RXGIM)
+        1         102.0     SYS1.MACLIB(GIMMPLI)
+ - Component    Return Code    Messages (Total/Suppressed)    Time
+ 0 Compiler         4                8  /  4                   4 secs
+ 0 End of compilation of MAIN
+ 
