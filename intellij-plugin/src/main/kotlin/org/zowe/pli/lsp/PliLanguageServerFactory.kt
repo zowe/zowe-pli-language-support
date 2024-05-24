@@ -14,21 +14,25 @@ import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
-import org.eclipse.lsp4j.services.LanguageServer
+import kotlinx.coroutines.runBlocking
+import org.zowe.pli.init.InitializationOnly
+import org.zowe.pli.init.PliPluginState
 
 // TODO: doc
+@OptIn(InitializationOnly::class)
 class PliLanguageServerFactory : LanguageServerFactory {
 
   override fun createConnectionProvider(project: Project): StreamConnectionProvider {
-    return PliLanguageServerDefinition(project)
+    val pliPluginState = PliPluginState.getPluginState(project)
+    runBlocking {
+      pliPluginState.unpackVSIX()
+    }
+    return pliPluginState.loadLanguageServerDefinition()
   }
 
   override fun createLanguageClient(project: Project): LanguageClientImpl {
-    return PliLanguageClientDefinition(project)
-  }
-
-  override fun getServerInterface(): Class<out LanguageServer> {
-    return super.getServerInterface()
+    val pliPluginState = PliPluginState.getPluginState(project)
+    return pliPluginState.loadLanguageClientDefinition(project)
   }
 
 }

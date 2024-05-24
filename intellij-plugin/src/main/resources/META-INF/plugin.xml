@@ -23,13 +23,6 @@
   <depends>com.redhat.devtools.lsp4ij</depends>
   <depends>org.jetbrains.plugins.textmate</depends>
 
-  <!-- Extension points defined by the plugin.
-       Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
-  <extensions defaultExtensionNs="com.intellij">
-    <!-- register a post startup activity. You need to init IntellijLanguageClient with your config, see readme -->
-    <postStartupActivity implementation="org.zowe.pli.init.PliPluginStartupActivity"/>
-  </extensions>
-
   <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
     <server id="org.zowe.pli.lsp.PliLanguageServerFactory"
             name="PL/I Language Server"

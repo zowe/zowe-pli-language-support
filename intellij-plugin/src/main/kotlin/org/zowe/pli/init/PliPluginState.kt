@@ -17,6 +17,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.ZipUtil
 import com.jetbrains.rd.util.firstOrNull
+import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
+import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.textmate.TextMateService
@@ -24,6 +26,7 @@ import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings
 import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.pathString
 import kotlin.io.path.readText
 
 private const val VSIX_NAME = "pli-language-support"
@@ -67,7 +70,7 @@ class PliPluginState private constructor() : Disposable {
     vsixPlacingRootPath = PathManager.getConfigDir().resolve(VSIX_NAME)
     vsixUnpackedPath = vsixPlacingRootPath.resolve("extension")
     packageJsonPath = vsixUnpackedPath.resolve("package.json")
-    lspServerPath = vsixUnpackedPath.resolve("out").resolve("language")
+    lspServerPath = vsixUnpackedPath.resolve("out").resolve("language").resolve("main.cjs")
     val syntaxesPath = vsixUnpackedPath.resolve("syntaxes")
     return vsixUnpackedPath.exists() && packageJsonPath.exists() && lspServerPath.exists() && syntaxesPath.exists()
   }
@@ -107,7 +110,7 @@ class PliPluginState private constructor() : Disposable {
    * loaded to the IDE stays there
    */
   @InitializationOnly
-  fun loadTextMateBundle() {
+  fun loadLanguageClientDefinition(project: Project): LanguageClientImpl {
     if (currState < InitStates.VSIX_UNPACKED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.VSIX_UNPACKED}, current: $currState")
     currState = InitStates.TEXTMATE_BUNDLE_LOAD_TRIGGERED
     val emptyBundleName = "$TEXTMATE_BUNDLE_NAME-0.0.0"
@@ -124,6 +127,7 @@ class PliPluginState private constructor() : Disposable {
       TextMateService.getInstance().reloadEnabledBundles()
     }
     currState = InitStates.TEXTMATE_BUNDLE_LOADED
+    return LanguageClientImpl(project)
   }
 
   /** Extract PL/I language extensions, supported for recognition, from package.json in resources */
@@ -167,36 +171,22 @@ class PliPluginState private constructor() : Disposable {
     return cobolExtensions
   }
 
-//  // TODO: finish, doc
-//  /** Initialize LSP server and client, setup their communication */
-//  @InitializationOnly
-//  fun loadLSP() {
-//    if (currState < InitStates.VSIX_UNPACKED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.VSIX_UNPACKED}, current: $currState")
-//    currState = InitStates.LSP_LOAD_TRIGGERED
-//    val lspServerPathString = lspServerPath.pathString
+  /** Initialize language server definition. Will run the LSP server command */
+  @InitializationOnly
+  fun loadLanguageServerDefinition(): ProcessStreamConnectionProvider {
+    if (currState < InitStates.VSIX_UNPACKED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.VSIX_UNPACKED}, current: $currState")
+    currState = InitStates.LSP_LOAD_TRIGGERED
+    val lspServerPathString = lspServerPath.pathString
 //    val extensions = extractExtensionsFromPackageJson()
-//    val manager = CobolLSPExtensionManager()
-//
-//    IntellijLanguageClient
-//      .addServerDefinition(
-//        CobolServerDefinition(
-//          extensions.joinToString(","),
-//          arrayOf(
-//            "java",
-//            "-jar",
-//            "\"$lspServerPathString\"",
-//            "pipeEnabled"
-//          )
-//        )
-//      )
-//    extensions.forEach { extension -> IntellijLanguageClient.addExtensionManager(extension, manager) }
-//    currState = InitStates.LSP_LOADED
-//  }
+    val commands = listOf("node", lspServerPathString, "--stdio")
+    currState = InitStates.LSP_LOADED
+    return object : ProcessStreamConnectionProvider(commands) {}
+  }
 
   /** Initialization final step, no direct purposes for now */
   @InitializationOnly
   fun finishInitialization(project: Project) {
-    if (currState < InitStates.LSP_LOADED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.LSP_LOADED}, current: $currState")
+    if (currState != InitStates.LSP_LOADED || currState != InitStates.TEXTMATE_BUNDLE_LOADED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.LSP_LOADED}, current: $currState")
     stateProject = project
     currState = InitStates.UP
   }
