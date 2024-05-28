@@ -81,7 +81,7 @@ class PliPluginState private constructor() : Disposable {
    */
   @InitializationOnly
   suspend fun unpackVSIX() {
-    if (currState != InitStates.DOWN) throw IllegalStateException("Invalid plug-in state. Expected: ${InitStates.DOWN}, current: $currState")
+//    if (currState != InitStates.DOWN) throw IllegalStateException("Invalid plug-in state. Expected: ${InitStates.DOWN}, current: $currState")
     val doPathsAlreadyExist = computeVSIXPlacingPaths()
     if (!doPathsAlreadyExist) {
       val activeClassLoader = this::class.java.classLoader
@@ -111,7 +111,7 @@ class PliPluginState private constructor() : Disposable {
    */
   @InitializationOnly
   fun loadLanguageClientDefinition(project: Project): LanguageClientImpl {
-    if (currState < InitStates.VSIX_UNPACKED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.VSIX_UNPACKED}, current: $currState")
+//    if (currState < InitStates.VSIX_UNPACKED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.VSIX_UNPACKED}, current: $currState")
     currState = InitStates.TEXTMATE_BUNDLE_LOAD_TRIGGERED
     val emptyBundleName = "$TEXTMATE_BUNDLE_NAME-0.0.0"
     val newBundleName = "$TEXTMATE_BUNDLE_NAME-$VSIX_VERSION"
@@ -174,7 +174,7 @@ class PliPluginState private constructor() : Disposable {
   /** Initialize language server definition. Will run the LSP server command */
   @InitializationOnly
   fun loadLanguageServerDefinition(): ProcessStreamConnectionProvider {
-    if (currState < InitStates.VSIX_UNPACKED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.VSIX_UNPACKED}, current: $currState")
+//    if (currState < InitStates.VSIX_UNPACKED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.VSIX_UNPACKED}, current: $currState")
     currState = InitStates.LSP_LOAD_TRIGGERED
     val lspServerPathString = lspServerPath.pathString
 //    val extensions = extractExtensionsFromPackageJson()
