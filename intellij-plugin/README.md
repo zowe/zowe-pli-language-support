@@ -4,7 +4,7 @@
 
 - Java v17
 - Node.js v18 and later
-- IntelliJ v2023.2 (the latest release unfortunately is not yet supported by the LSP client we use)
+- IntelliJ v2023.2
 
 ## How to run (user)
 
