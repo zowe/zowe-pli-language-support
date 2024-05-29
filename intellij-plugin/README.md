@@ -8,7 +8,7 @@
 
 ## How to run (user)
 
-- Open the folder with the project, run ./gradlew buildPlugin (or run "Package plugin" configuration)
+- Open the folder with the project, run `./gradlew buildPlugin` (for Unix-like) or `.\gradlew.bat buildPlugin` (for Windows) to build the plugin (or run "Package plugin" configuration)
 - The built plug-in will be at the `build/distributions` in .zip format, install it with Settings -> Plugins -> Install plugin from disk
 - Reload your IDE
 
