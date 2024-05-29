@@ -5,12 +5,11 @@
 - Java v17
 - Node.js v18 and later
 - IntelliJ v2023.2 (the latest release unfortunately is not yet supported by the LSP client we use)
-- [LSP4IJ plug-in by RedHat](https://github.com/redhat-developer/lsp4ij/releases/tag/0.0.1) (needs to be preinstalled manually right now as the base for our plug-in, later will be automated)
 
 ## How to run (user)
 
 - Open the folder with the project, run ./gradlew buildPlugin (or run "Package plugin" configuration)
-- The built plug-in will be at the `build/distributions` in .zip format, install it with Settings -> Plugins -> Install plugin from disk (don't forget to install [LSP4IJ plug-in by RedHat](https://github.com/redhat-developer/lsp4ij/releases/tag/0.0.1) first)
+- The built plug-in will be at the `build/distributions` in .zip format, install it with Settings -> Plugins -> Install plugin from disk
 - Reload your IDE
 
 ## How to run (developer)
