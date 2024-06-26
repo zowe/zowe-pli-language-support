@@ -1,0 +1,12 @@
+{
+    "projectName": "Pl1",
+    "languages": [{
+        "id": "pli",
+        "grammar": "src/pli.langium",
+        "fileExtensions": [".pli"],
+        "textMate": {
+            "out": "../extension/syntaxes/pli.tmLanguage.json"
+        }
+    }],
+    "out": "src/generated"
+}
