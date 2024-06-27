@@ -4,6 +4,7 @@
         "id": "pli",
         "grammar": "src/pli.langium",
         "fileExtensions": [".pli"],
+        "caseInsensitive": true,
         "textMate": {
             "out": "../extension/syntaxes/pli.tmLanguage.json"
         }
