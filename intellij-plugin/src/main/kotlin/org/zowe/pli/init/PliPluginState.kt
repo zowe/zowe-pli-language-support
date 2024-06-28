@@ -33,7 +33,10 @@ private const val VSIX_NAME = "pli-language-support"
 private const val VSIX_VERSION = "0.0.1"
 private const val TEXTMATE_BUNDLE_NAME = "pli"
 
-// TODO: doc
+/**
+ * State of the PL/I plug-in. Provides initialization methods to set up all the things before the correct usage of
+ * the syntax highlighting and the LSP features
+ */
 class PliPluginState private constructor() : Disposable {
 
   companion object {
