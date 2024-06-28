@@ -1,0 +1,35 @@
+ S99VIN: PROC(DDN,DSN,MRN,INFO,S99RC,S99ERROR,S99INFO);                 00001
+      DCL (DDN,DSN,MRN,INFO) CHAR(*) VAR;                               00002
+      DCL (S99RC,S99ERROR,S99INFO,I1) FIXED BIN(15);                    00003
+      DCL 1 S99RB,                                                      00004
+            2 VERB FIXED BIN(15) INIT(5127),                            00005
+            2 FLAGS1 FIXED BIN(15) INIT(0),                             00006
+            2 ERRORCODE FIXED BIN(15) INIT(0),                          00007
+            2 INFOCODE FIXED BIN(15) INIT(0),                           00008
+            2 S99TXTPP POINTER,                                         00009
+            2 RESERVED FIXED BIN(31) INIT(0),                           00010
+            2 FLAGS2 FIXED BIN(31) INIT(0);                             00011
+      DCL S99TUPL(11) POINTER;                                          00012
+      DCL 1 S99TUNIT(11),                                               00013
+            2 KEY FIXED BIN(15) INIT(1,5,6,7,8,9,10,11,12,13,14),       00014
+            2 NUM FIXED BIN(15) INIT((11) 1),                           00015
+            2 PARM CHAR(44) VAR INIT(DDN,(44)' ',(8)' ',(3)(1)' ',      00016
+                                     (2)(2)' ',(3)(1)' ');              00017
+      DCL X80 BIT(8) BASED(X80PTR);                                     00018
+      DCL SVC99 EXTERNAL ENTRY(FIXED BIN(15)) RETURNS(FIXED BIN(15));   00019
+      S99TXTPP=ADDR(S99TUPL(1));                                        00020
+      DO I1=1 TO 11;                                                    00021
+      S99TUPL(I1)=ADDR(S99TUNIT(I1).KEY);                               00022
+      END;                                                              00023
+      X80PTR=ADDR(S99TUPL(11));                                         00024
+      X80='10000000'B;                                                  00025
+      S99RC=SVC99(S99RB.VERB);                                          00026
+      DSN=S99TUNIT(2).PARM;                                             00027
+      MRN=S99TUNIT(3).PARM;                                             00028
+      INFO='';                                                          00029
+      DO I1=4 TO 11;                                                    00030
+      INFO=INFO||S99TUNIT(I1).PARM;                                     00031
+      END;                                                              00032
+      S99ERROR=S99RB.ERRORCODE;                                         00033
+      S99INFO=S99RB.INFOCODE;                                           00034
+      END S99VIN;                                                       00035

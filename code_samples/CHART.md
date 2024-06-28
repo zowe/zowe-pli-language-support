@@ -8,5 +8,6 @@
     - INPUT        SYSUT1 - COMPILER LISTING
     - OUTPUT       SYSPRINT - STRUCTURE CHART
     - OUTPUT       SYSUT2   - COMPILER LISTING (FOR PRINT OPTION)
+    - Program compilation: [CHART.txt](CHART.txt)
 5. Expected instructions to be highlighted / supported by LSP:
     - see [CHART.png](CHART.png)

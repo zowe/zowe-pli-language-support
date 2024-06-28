@@ -1,0 +1,109 @@
+ S99VAL:PROCEDURE(CBUF,RCC,S99RC,S99ERR,S99INF,DDN,DSN,DSG,VOL) REORDER;00010000
+    DECLARE                                                             00020000
+      CBUF               CHAR(*) VARYING,                               00030000
+      RCC                FIXED BIN(15,0),                               00040000
+      S99RC              FIXED BIN(15,0),                               00050000
+      S99ERR             FIXED BIN(15,0),                               00060000
+      S99INF             FIXED BIN(15,0),                               00070000
+      DDN                CHAR(*) VARYING,                               00080000
+      DSN                CHAR(*) VARYING,                               00090000
+      DSG                CHAR(*) VARYING,                               00100000
+      VOL                CHAR(*) VARYING,                               00110000
+      SCANNER            ENTRY(ENTRY,CHAR(*) VARYING,)                  00120001
+                            RETURNS(FIXED BIN(15,0)),                   00130000
+      SVC99              ENTRY(FIXED BIN(15,0))                         00140000
+                            RETURNS(FIXED BIN(15,0)),                   00150000
+      S99TUPL#           FIXED BIN(15,0) INIT(5),                       00160000
+      1 S99RB,                                                          00170000
+        2 S99VERB        FIXED BIN(15,0) INIT(5121),                    00180000
+        2 S99FLAG1       FIXED BIN(15,0) INIT(0),                       00190000
+        2 S99ERROR       FIXED BIN(15,0) INIT(0),                       00200000
+        2 S99INFO        FIXED BIN(15,0) INIT(0),                       00210000
+        2 S99TXTPP       POINTER         INIT((ADDR(S99TUPL(1)))),      00220000
+        2 RESERVED       FIXED BIN(31,0) INIT(0),                       00230000
+        2 S99FLAG2       FIXED BIN(31,0) INIT(0),                       00240000
+      S99TUPL(100)       POINTER INIT(                                  00250000
+          (ADDR(KEY(1))),(ADDR(KEY(2))),(ADDR(KEY(3))),                 00260000
+          (ADDR(KEY(4))),(ADDR(KEY(5)))),                               00270000
+      1 S99TUNIT(100),                                                  00280000
+        2 KEY            FIXED BIN(15,0) INIT(82,85,86,87,93),          00290000
+        2 #              FIXED BIN(15,0) INIT(0,1,1,1,1),               00300000
+        2 PARM           CHAR(44) VARYING INIT(                         00310000
+             '',(8)' ',(44)' ','  ',(6)' '),                            00320000
+      X80                BIT(8) BASED(X80PTR),                          00330000
+      X80PTR             POINTER,                                       00340000
+      ALPHA              CHAR(26) INIT(                                 00350000
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZ'),                                00360000
+      DIG                CHAR(10) INIT(                                 00370000
+          '0123456789'),                                                00380000
+      ALPHANUM           CHAR(36) INIT((ALPHA || DIG)),                 00390000
+      (HBOUND,                                                          00400000
+       LENGTH,                                                          00410000
+       UNSPEC,                                                          00420000
+       VERIFY,                                                          00430000
+       INDEX,                                                           00440000
+       SUBSTR,                                                          00450000
+       ADDR)             BUILTIN,                                       00460000
+      TMP                CHAR(1) VARYING INIT(' '),                     00470000
+      TM                 CHAR(26) VARYING INIT(''),                     00480000
+      TMD                CHAR(2) VARYING INIT('  '),                    00490000
+      TMB                BIT(8) INIT('0'B),                             00500000
+      (I,RC)             FIXED BIN(15,0) INIT(0),                       00510000
+      LABEL(8)           CHAR(3) INIT(                                  00520000
+          'NL','SL','NSL','SUL','BLP','LTM','AL','AUL'),                00530000
+      LABTYP(8)          BIT(8) INIT(                                   00540000
+          '00000001'B,'00000010'B,'00000100'B,'00001010'B,              00550000
+          '00010000'B,'00100001'B,'01000000'B,'01001000'B),             00560000
+      EROPT(3)           CHAR(3) INIT(                                  00570000
+          'ABE','SKP','ACC'),                                           00580000
+      EROTYP(3)          BIT(8) INIT(                                   00590000
+          '00100000'B,'01000000'B,'10000000'B),                         00600000
+      DSORG(6)           CHAR(3) INIT(                                  00610000
+          'PO','POU','DA','DAU','PS','PSU'),                            00620000
+      DSTYP(6)           BIT(16) INIT(                                  00630000
+          '0000001000000000'B,'0000001100000000'B,                      00640000
+          '0010000000000000'B,'0010000100000000'B,                      00650000
+          '0100000000000000'B,'0100000100000000'B),                     00660000
+      DEN(5)             CHAR(1) INIT('0','1','2','3','4'),             00670005
+      DENTYP(5)          BIT(8) INIT(                                   00680000
+          '00000011'B,'01000011'B,'10000011'B,                          00690000
+          '11000011'B,'11010011'B),                                     00700000
+      MAXTUPL#           FIXED BIN(15,0) INIT(100),                     00710000
+      1 KWORDS STATIC,                                                  00720001
+        2 TYPE(40)       BIT(1) INIT('1'B,'1'B,(38)(1)'0'B),            00730005
+        2 WORDS(40)      CHAR(3) VARYING INIT(                          00740000
+             'DA','DSN','F','DD','DU','OL','NE',                        00750000
+             'SH','M','KEE','DEL','CA','UNC','SY',                      00760000
+             'V','SP','BLO','T','CY','DI','DES',                        00770000
+             'H','NOH','UNI','LA','P','REL','BLK',                      00780000
+             'BU','LR','IN','OU','EX','OP','ER',                        00790000
+             'REC','DSO','DEN','KEY','ELF'),                            00800001
+        2 TRANS          BIT(1) INIT('1'B),                             00810003
+      1 KW1 STATIC,                                                     00820003
+        2 TYP1(1)        BIT(1) INIT('0'B),                             00830003
+        2 WORD1(1)       CHAR(1) VARYING INIT(' '),                     00840003
+        2 TRAN1          BIT(1) INIT('1'B);                             00850003
+    RCC = SCANNER(S99VAL1,CBUF,KWORDS);                                 00860001
+    IF RCC ^= 0                                                         00870000
+       THEN RETURN;                                                     00880000
+    ELSE;                                                               00890000
+    CALL VALID;                                                         00900001
+    X80PTR = ADDR(S99TUPL(S99TUPL#));                                   00910000
+    X80 = '10000000'B;                                                  00920000
+    S99RC = SVC99(S99VERB);                                             00930000
+    S99ERR = S99ERROR;                                                  00940000
+    S99INF = S99INFO;                                                   00950000
+    IF S99RC ^= 0 | S99ERR ^= 0                                         00960000
+       THEN RETURN;                                                     00970000
+    ELSE;                                                               00980000
+    DDN = PARM(2);                                                      00990000
+    DSN = PARM(3);                                                      01000000
+    DSG = PARM(4);                                                      01010000
+    VOL = PARM(5);                                                      01020000
+    RETURN;                                                             01030000
+    %INCLUDE (S99VAL1);                                                 01040000
+    %INCLUDE (SETUPL);                                                  01050000
+    %INCLUDE (NUM);                                                     01060000
+    %INCLUDE (VALID);                                                   01070001
+    %INCLUDE (S99VAL2);                                                 01080004
+ END S99VAL;                                                            01090000

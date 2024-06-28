@@ -1,0 +1,31 @@
+ S99VDC: PROCEDURE (DDN,S99RC,S99ERR,S99INF) REORDER;                   00010000
+    DECLARE                                                             00020000
+      1 S99RB,                                                          00030000
+        2 S99VERB        FIXED BIN(15,0) INIT(5124),                    00040000
+        2 S99FLAG1       FIXED BIN(15,0) INIT(0),                       00050000
+        2 S99ERROR       FIXED BIN(15,0) INIT(0),                       00060000
+        2 S99INFO        FIXED BIN(15,0) INIT(0),                       00070000
+        2 S99TXTPP       POINTER         INIT((ADDR(S99TUPL))),         00080000
+        2 RESERVED       FIXED BIN(31,0) INIT(0),                       00090000
+        2 S99FLAG2       FIXED BIN(31,0) INIT(0),                       00100000
+      S99TUPL            POINTER INIT(                                  00110000
+          (ADDR(KEY))),                                                 00120000
+      1 S99TUNIT,                                                       00130000
+        2 KEY            FIXED BIN(15,0) INIT(1),                       00140000
+        2 #              FIXED BIN(15,0) INIT(1),                       00150000
+        2 PARM           CHAR(8) VARYING INIT(DDN),                     00160000
+      S80XPTR            BIT(8)          BASED(S80PTR),                 00170000
+      S80PTR             POINTER,                                       00180000
+      ADDR               BUILTIN,                                       00190000
+      DDN                CHAR(*) VARYING,                               00200000
+      (S99RC,                                                           00210000
+       S99ERR,                                                          00220000
+       S99INF)           FIXED BIN(15,0),                               00230000
+      SVC99              ENTRY(FIXED BIN(15,0))                         00240000
+                            RETURNS(FIXED BIN(15,0));                   00250000
+    S80PTR  = ADDR(S99TUPL);                                            00260000
+    S80XPTR = '10000000'B;                                              00270000
+    S99RC   = SVC99(S99VERB);                                           00280000
+    S99ERR  = S99ERROR;                                                 00290000
+    S99INF  = S99INFO;                                                  00300000
+ END S99VDC;                                                            00310000

@@ -1,0 +1,68 @@
+1S99VFR1: PROCEDURE(OP,COM) RETURNS(FIXED BIN(15,0)) REORDER;           00010000
+    DECLARE                                                             00020000
+      ACT(12)            LABEL,                                         00030000
+      OP                 FIXED BIN(15,0),                               00040000
+      COM                CHAR(*) VARYING;                               00050000
+    OP = OP - 4;                                                        00060000
+    IF S99TUPL# >= MAXTUPL#                                             00070000
+       THEN RETURN(12);                                                 00080000
+    ELSE S99TUPL# = S99TUPL# + 1;                                       00090000
+    IF OP > 12 | OP < 1                                                 00100000
+       THEN RETURN(20);                                                 00110000
+    ELSE GO TO ACT(OP);                                                 00120000
+-ACT(1):  /*  DSNAME(MEMBER NAME)  */                                   00130000
+ ACT(2):                                                                00140000
+    IF SUBSTR(COM,1,44) = ' ' | INDEX(COM,',') > 0                      00150000
+       THEN RETURN(16);                                                 00160000
+    ELSE CALL SETUPL(2,1,SUBSTR(COM,1,44));                             00170000
+    IF SUBSTR(COM,45,8) ^= ' '                                          00180000
+       THEN DO;                                                         00190000
+         IF S99TUPL# >= MAXTUPL#                                        00200000
+            THEN RETURN(12);                                            00210000
+         ELSE S99TUPL# = S99TUPL# + 1;                                  00220000
+         CALL SETUPL(3,1,SUBSTR(COM,45,8));                             00230000
+       END;                                                             00240000
+    ELSE;                                                               00250000
+    RETURN(0);                                                          00260000
+-ACT(3):  /*  DDNAME  */                                                00270000
+ ACT(4):                                                                00280000
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 8 | VERIFY(COM,ALPHANUM || '@#$')00290000
+           > 0 | VERIFY(SUBSTR(COM,1,1),ALPHA || '@#$') > 0             00300000
+       THEN RETURN(16);                                                 00310000
+    ELSE CALL SETUPL(1,1,COM);                                          00320000
+    RETURN(0);                                                          00330000
+-ACT(5): /*  KEEP  */                                                   00340000
+    UNSPEC(TMP) = '0000000000000001'B || '00001000'B;                   00350000
+0ACT5A:                                                                 00360000
+    CALL SETUPL(5,1,TMP);                                               00370000
+    RETURN(0);                                                          00380000
+-ACT(6): /*  DELETE  */                                                 00390000
+    UNSPEC(TMP) = '0000000000000001'B || '00000100'B;                   00400000
+    GO TO ACT5A;                                                        00410000
+1ACT(7): /*  CATALOG  */                                                00420001
+    UNSPEC(TMP) = '0000000000000001'B || '00000010'B;                   00430000
+    GO TO ACT5A;                                                        00440000
+-ACT(8): /*  UNCATALOG  */                                              00450000
+    UNSPEC(TMP) = '0000000000000001'B || '00000001'B;                   00460000
+    GO TO ACT5A;                                                        00470000
+-ACT(9): /*  SYSOUT  */                                                 00480001
+    IF LENGTH(COM) = 0                                                  00490000
+       THEN DO;                                                         00500000
+         CALL SETUPL(24,0,'');                                          00510000
+         RETURN(0);                                                     00520000
+       END;                                                             00530000
+    ELSE;                                                               00540000
+    CALL SETUPL(24,1,COM);                                              00550000
+    RETURN(0);                                                          00560000
+-ACT(10): /*  DESTINATION  */                                           00570000
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 8 | VERIFY(COM,ALPHANUM) > 0     00580000
+       THEN RETURN(16);                                                 00590000
+    ELSE CALL SETUPL(88,1,COM);                                         00600000
+    RETURN(0);                                                          00610000
+-ACT(11): /*  HOLD  */                                                  00620000
+    CALL SETUPL(89,0,'');                                               00630000
+    RETURN(0);                                                          00640000
+-ACT(12): /*  NOHOLD  */                                                00650000
+    CALL SETUPL(10,0,'');                                               00660000
+    RETURN(0);                                                          00670000
+ END S99VFR1;                                                           00680000

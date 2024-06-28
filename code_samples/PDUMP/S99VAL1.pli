@@ -1,0 +1,312 @@
+1S99VAL1: PROCEDURE(OP,COM) RETURNS(FIXED BIN(15,0)) REORDER;           00010000
+    DECLARE                                                             00020000
+      ACT(40)            LABEL,                                         00030002
+      OP                 FIXED BIN(15,0),                               00040000
+      COM                CHAR(*) VARYING;                               00050000
+    OP = OP - 4;                                                        00060001
+    IF S99TUPL# >= MAXTUPL#                                             00070000
+       THEN RETURN(12);                                                 00080000
+    ELSE S99TUPL# = S99TUPL# + 1;                                       00090000
+    IF OP > 40 | OP < 1                                                 00100002
+       THEN RETURN(20);                                                 00110000
+    ELSE GO TO ACT(OP);                                                 00120000
+-ACT(1):  /*  DSNAME, MEMBER NAME, AND PASSWORD  */                     00130000
+ ACT(2):                                                                00140002
+    IF INDEX(SUBSTR(COM,1,44),'*') > 0                                  00150000
+       THEN DO;                                                         00160000
+         CALL SETUPL(40,0,'');                                          00170000
+         RETURN(0);                                                     00180000
+       END;                                                             00190000
+    ELSE;                                                               00200000
+    IF SUBSTR(COM,1,44) = ' ' | INDEX(COM,',') > 0                      00210000
+       THEN RETURN(16);                                                 00220000
+    ELSE CALL SETUPL(2,1,SUBSTR(COM,1,44));                             00230000
+    IF SUBSTR(COM,45,8) ^= ' '                                          00240000
+       THEN DO;                                                         00250000
+         IF S99TUPL# >= MAXTUPL#                                        00260000
+            THEN RETURN(12);                                            00270000
+         ELSE S99TUPL# = S99TUPL# + 1;                                  00280000
+         CALL SETUPL(3,1,SUBSTR(COM,45,8));                             00290000
+       END;                                                             00300000
+    ELSE;                                                               00310000
+    IF SUBSTR(COM,53,8) ^= ' '                                          00320000
+       THEN DO;                                                         00330000
+         IF S99TUPL# >= MAXTUPL#                                        00340000
+            THEN RETURN(12);                                            00350000
+         ELSE S99TUPL# = S99TUPL# + 1;                                  00360000
+         CALL SETUPL(80,1,SUBSTR(COM,53,8));                            00370000
+       END;                                                             00380000
+    ELSE;                                                               00390000
+    RETURN(0);                                                          00400000
+-ACT(3):  /*  DDNAME  */                                                00410002
+ ACT(4):                                                                00420002
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 8 | VERIFY(COM,ALPHANUM || '@#$')00430000
+           > 0 | VERIFY(SUBSTR(COM,1,1),ALPHA || '@#$') > 0             00440000
+       THEN RETURN(16);                                                 00450000
+    ELSE CALL SETUPL(1,1,COM);                                          00460000
+    RETURN(0);                                                          00470000
+1ACT(5):  /*  DUMMY  */                                                 00480005
+    CALL SETUPL(36,0,'');                                               00490000
+    RETURN(0);                                                          00500000
+-ACT(6):  /*  OLD  */                                                   00510002
+    UNSPEC(TMP) = '0000000000000001'B || '00000001'B;                   00520000
+0ACT6A:                                                                 00530002
+    CALL SETUPL(4,1,TMP);                                               00540000
+    RETURN(0);                                                          00550000
+-ACT(7):  /*  NEW  */                                                   00560002
+    UNSPEC(TMP) = '0000000000000001'B || '00000100'B;                   00570000
+    GO TO ACT6A;                                                        00580002
+-ACT(8):  /*  SHR  */                                                   00590002
+    UNSPEC(TMP) = '0000000000000001'B || '00001000'B;                   00600000
+    GO TO ACT6A;                                                        00610002
+-ACT(9):  /*  MOD  */                                                   00620002
+    UNSPEC(TMP) = '0000000000000001'B || '00000010'B;                   00630000
+    GO TO ACT6A;                                                        00640002
+-ACT(10): /*  KEEP  */                                                  00650002
+    UNSPEC(TMP) = '0000000000000001'B || '00001000'B;                   00660000
+0ACT10A:                                                                00670002
+    CALL SETUPL(5,1,TMP);                                               00680000
+    RETURN(0);                                                          00690000
+-ACT(11): /*  DELETE  */                                                00700002
+    UNSPEC(TMP) = '0000000000000001'B || '00000100'B;                   00710000
+    GO TO ACT10A;                                                       00720002
+-ACT(12): /*  CATALOG  */                                               00730002
+    UNSPEC(TMP) = '0000000000000001'B || '00000010'B;                   00740000
+    GO TO ACT10A;                                                       00750002
+-ACT(13): /*  UNCATALOG  */                                             00760002
+    UNSPEC(TMP) = '0000000000000001'B || '00000001'B;                   00770000
+    GO TO ACT10A;                                                       00780002
+1ACT(14): /*  SYSOUT  */                                                00790004
+    IF LENGTH(COM) = 0                                                  00800000
+       THEN DO;                                                         00810000
+         CALL SETUPL(24,0,'');                                          00820000
+         RETURN(0);                                                     00830000
+       END;                                                             00840000
+    ELSE I = 0;                                                         00850004
+    RC = SCANNER(S99VAL2,COM,KW1);                                      00860004
+    RETURN(RC);                                                         00870004
+-ACT(15): /*  VOLUME  */                                                00880002
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 6 | VERIFY(COM,ALPHANUM|| '@#$-')00890000
+           > 0                                                          00900000
+       THEN RETURN(16);                                                 00910000
+    ELSE CALL SETUPL(16,1,COM);                                         00920000
+    RETURN(0);                                                          00930000
+-ACT(16): /*  SPACE  */                                                 00940002
+    I = INDEX(COM,',');                                                 00950000
+    IF I = 1 | VERIFY(COM,DIG||',') > 0 | LENGTH(COM) = 0 |             00960000
+           I = LENGTH(COM)                                              00970000
+       THEN RETURN(16);                                                 00980000
+    ELSE;                                                               00990000
+    IF I = 0                                                            01000000
+       THEN I = LENGTH(COM) + 1;                                        01010000
+    ELSE;                                                               01020000
+    CALL SETUPL(10,1,NUM(SUBSTR(COM,1,I-1),3));                         01030000
+    IF I > LENGTH(COM)                                                  01040000
+       THEN RETURN(0);                                                  01050000
+    ELSE;                                                               01060000
+    IF INDEX(SUBSTR(COM,I+1),',') > 0                                   01070000
+       THEN RETURN(16);                                                 01080000
+    ELSE;                                                               01090000
+    IF S99TUPL# >= MAXTUPL#                                             01100000
+       THEN RETURN(12);                                                 01110000
+    ELSE S99TUPL# = S99TUPL# + 1;                                       01120000
+    CALL SETUPL(11,1,NUM(SUBSTR(COM,I+1),3));                           01130000
+    RETURN(0);                                                          01140000
+1ACT(17): /*  BLOCK  */                                                 01150004
+    IF LENGTH(COM) = 0 | VERIFY(COM,DIG) > 0                            01160000
+       THEN RETURN(16);                                                 01170000
+    ELSE CALL SETUPL(9,1,NUM(COM,3));                                   01180000
+    RETURN(0);                                                          01190000
+-ACT(18): /*  TRACKS  */                                                01200002
+    CALL SETUPL(7,0,'');                                                01210000
+    RETURN(0);                                                          01220000
+-ACT(19): /*  CYLINDERS  */                                             01230002
+    CALL SETUPL(8,0,'');                                                01240000
+    RETURN(0);                                                          01250000
+-ACT(20): /*  DIRECTORY  */                                             01260002
+    IF LENGTH(COM) = 0 | VERIFY(COM,DIG) > 0                            01270000
+       THEN RETURN(16);                                                 01280000
+    ELSE CALL SETUPL(12,1,NUM(COM,3));                                  01290000
+    RETURN(0);                                                          01300000
+-ACT(21): /*  DESTINATION  */                                           01310002
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 8 | VERIFY(COM,ALPHANUM) > 0     01320000
+       THEN RETURN(16);                                                 01330000
+    ELSE CALL SETUPL(88,1,COM);                                         01340000
+    RETURN(0);                                                          01350000
+-ACT(22): /*  HOLD  */                                                  01360002
+    CALL SETUPL(89,0,'');                                               01370000
+    RETURN(0);                                                          01380000
+-ACT(23): /*  NOHOLD  */                                                01390002
+    S99TUPL# = S99TUPL# - 1;                                            01400000
+    RETURN(0);                                                          01410000
+-ACT(24): /*  UNIT  */                                                  01420002
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 8 | VERIFY(COM,ALPHANUM||'-') > 001430000
+       THEN RETURN(16);                                                 01440000
+    ELSE CALL SETUPL(21,1,COM);                                         01450000
+    RETURN(0);                                                          01460000
+1ACT(25): /*  LABEL  */                                                 01470005
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 3 | VERIFY(COM,ALPHA) > 0        01480000
+       THEN RETURN(16);                                                 01490000
+    ELSE;                                                               01500000
+    DO I = 1 TO 8;                                                      01510000
+       IF COM = LABEL(I)                                                01520000
+          THEN LEAVE;                                                   01530000
+       ELSE;                                                            01540000
+    END;                                                                01550000
+    IF I = 9                                                            01560000
+       THEN RETURN(16);                                                 01570000
+    ELSE UNSPEC(TMP) = '0000000000000001'B || LABTYP(I);                01580000
+    CALL SETUPL(30,1,TMP);                                              01590000
+    RETURN(0);                                                          01600000
+-ACT(26): /*  POSITION  */                                              01610002
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 3 |                              01620000
+           VERIFY(COM,DIG) > 0                                          01630000
+       THEN RETURN(16);                                                 01640000
+    ELSE CALL SETUPL(31,1,NUM(COM,2));                                  01650003
+    RETURN(0);                                                          01660000
+-ACT(27): /*  RELEASE  */                                               01670002
+    CALL SETUPL(13,0,'');                                               01680003
+    RETURN(0);                                                          01690000
+-ACT(28): /*  BLKSIZE  */                                               01700002
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 5 |                              01710000
+           VERIFY(COM,DIG) > 0                                          01720000
+       THEN RETURN(16);                                                 01730000
+    ELSE CALL SETUPL(48,1,NUM(COM,2));                                  01740000
+    RETURN(0);                                                          01750000
+-ACT(29): /*  BUFNO  */                                                 01760002
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 3 |                              01770000
+           VERIFY(COM,DIG) > 0                                          01780000
+       THEN RETURN(16);                                                 01790000
+    ELSE CALL SETUPL(52,1,NUM(COM,1));                                  01800000
+    RETURN(0);                                                          01810000
+-ACT(30): /*  LRECL  */                                                 01820002
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 5 |                              01830000
+           VERIFY(COM,DIG) > 0                                          01840000
+       THEN RETURN(16);                                                 01850000
+    ELSE CALL SETUPL(66,1,NUM(COM,2));                                  01860000
+    RETURN(0);                                                          01870000
+1ACT(31): /*  INPUT  */                                                 01880005
+    UNSPEC(TMP) = '0000000000000001'B || '10000000'B;                   01890000
+0ACT31A:                                                                01900002
+    CALL SETUPL(33,1,TMP);                                              01910000
+    RETURN(0);                                                          01920000
+-ACT(32): /*  OUTPUT  */                                                01930002
+    UNSPEC(TMP) = '0000000000000001'B || '01000000'B;                   01940000
+    GO TO ACT31A;                                                       01950002
+-ACT(33): /*  EXPDT  */                                                 01960002
+    IF LENGTH(COM) ^= 5 | VERIFY(COM,DIG) > 0                           01970000
+       THEN RETURN(16);                                                 01980000
+    ELSE CALL SETUPL(34,1,COM);                                         01990000
+    RETURN(0);                                                          02000000
+-ACT(34): /*  OPTCD  */                                                 02010002
+    IF LENGTH(COM) = 0 | VERIFY(COM,ALPHA||',') > 0                     02020000
+       THEN RETURN(16);                                                 02030000
+    ELSE TM = '';                                                       02040000
+    DO I = 1 TO LENGTH(COM);                                            02050000
+       IF SUBSTR(COM,I,1) ^= ','                                        02060000
+          THEN TM = TM || SUBSTR(COM,I,1);                              02070000
+       ELSE;                                                            02080000
+    END;                                                                02090000
+    TMB = '0'B;                                                         02100000
+    RC = 0;                                                             02110000
+    DO I = 1 TO LENGTH(TM);                                             02120000
+       SELECT(SUBSTR(TM,I,1));                                          02130000
+          WHEN('R')     TMB = TMB | '00000001'B;                        02140000
+          WHEN('T')     TMB = TMB | '00000010'B;                        02150000
+          WHEN('Z')     TMB = TMB | '00000100'B;                        02160000
+          WHEN('A','Q') TMB = TMB | '00001000'B;                        02170000
+          WHEN('F','H') TMB = TMB | '00010000'B;                        02180000
+          WHEN('C','E') TMB = TMB | '00100000'B;                        02190000
+          WHEN('B')     TMB = TMB | '01000000'B;                        02200000
+          WHEN('W')     TMB = TMB | '10000000'B;                        02210000
+          OTHERWISE RC = 16;                                            02220000
+       END;                                                             02230000
+    END;                                                                02240000
+    IF RC > 0                                                           02250000
+       THEN RETURN(16);                                                 02260000
+    ELSE UNSPEC(TMP) = '0000000000000001'B || TMB;                      02270000
+    CALL SETUPL(69,1,TMP);                                              02280000
+    RETURN(0);                                                          02290000
+1ACT(35): /*  EROPT  */                                                 02300005
+    IF LENGTH(COM) ^= 3 | VERIFY(COM,ALPHA) > 0                         02310000
+       THEN RETURN(16);                                                 02320000
+    ELSE;                                                               02330000
+    DO I = 1 TO 3;                                                      02340000
+       IF COM = EROPT(I)                                                02350000
+          THEN LEAVE;                                                   02360000
+       ELSE;                                                            02370000
+    END;                                                                02380000
+    IF I = 4                                                            02390000
+       THEN RETURN(16);                                                 02400000
+    ELSE UNSPEC(TMP) = '0000000000000001'B || EROTYP(I);                02410000
+    CALL SETUPL(61,1,TMP);                                              02420000
+    RETURN(0);                                                          02430000
+-ACT(36): /*  RECFM  */                                                 02440002
+    IF LENGTH(COM) = 0 | VERIFY(COM,ALPHA||',') > 0                     02450000
+       THEN RETURN(8);                                                  02460000
+    ELSE TM = '';                                                       02470000
+    DO I = 1 TO LENGTH(COM);                                            02480000
+       IF SUBSTR(COM,I,1) ^= ','                                        02490000
+          THEN TM = TM || SUBSTR(COM,I,1);                              02500000
+       ELSE;                                                            02510000
+    END;                                                                02520000
+    TMB = '0'B;                                                         02530000
+    RC = 0;                                                             02540000
+    DO I = 1 TO LENGTH(TM);                                             02550000
+       SELECT(SUBSTR(TM,I,1));                                          02560000
+          WHEN('M') TMB = TMB | '00000010'B;                            02570000
+          WHEN('A') TMB = TMB | '00000100'B;                            02580000
+          WHEN('S') TMB = TMB | '00001000'B;                            02590000
+          WHEN('B') TMB = TMB | '00010000'B;                            02600000
+          WHEN('D') TMB = TMB | '00100000'B;                            02610000
+          WHEN('T') TMB = TMB | '00100000'B;                            02620000
+          WHEN('V') TMB = TMB | '01000000'B;                            02630000
+          WHEN('F') TMB = TMB | '10000000'B;                            02640000
+          WHEN('U') TMB = TMB | '11000000'B;                            02650000
+          OTHERWISE RC = 16;                                            02660000
+       END;                                                             02670000
+    END;                                                                02680000
+    IF RC > 0                                                           02690000
+       THEN RETURN(16);                                                 02700000
+    ELSE UNSPEC(TMP) = '0000000000000001'B || TMB;                      02710000
+    CALL SETUPL(73,1,TMP);                                              02720000
+    RETURN(0);                                                          02730000
+1ACT(37): /*  DSORG  */                                                 02740005
+    IF LENGTH(COM) = 0 | VERIFY(COM,ALPHA) > 0                          02750000
+       THEN RETURN(16);                                                 02760000
+    ELSE;                                                               02770000
+    DO I = 1 TO 6;                                                      02780000
+       IF COM = DSORG(I)                                                02790000
+          THEN LEAVE;                                                   02800000
+       ELSE;                                                            02810000
+    END;                                                                02820000
+    IF I = 7                                                            02830000
+       THEN RETURN(16);                                                 02840000
+    ELSE UNSPEC(TMD) = '0000000000000010'B || DSTYP(I);                 02850000
+    CALL SETUPL(60,1,TMD);                                              02860000
+    RETURN(0);                                                          02870000
+-ACT(38): /*  DEN  */                                                   02880002
+    IF LENGTH(COM) ^= 1 | VERIFY(COM,DIG) > 0                           02890000
+       THEN RETURN(16);                                                 02900000
+    ELSE;                                                               02910000
+    DO I = 1 TO 5;                                                      02920000
+       IF COM = DEN(I)                                                  02930000
+          THEN LEAVE;                                                   02940000
+       ELSE;                                                            02950000
+    END;                                                                02960000
+    IF I = 6                                                            02970000
+       THEN RETURN(16);                                                 02980000
+    ELSE UNSPEC(TMP) = '0000000000000001'B || DENTYP(I);                02990000
+    CALL SETUPL(59,1,TMP);                                              03000000
+    RETURN(0);                                                          03010000
+-ACT(39): /*  KEYLEN  */                                                03020002
+    IF LENGTH(COM) = 0 | LENGTH(COM) > 3 |                              03030000
+           VERIFY(COM,DIG) > 0                                          03040000
+       THEN RETURN(16);                                                 03050000
+    ELSE CALL SETUPL(64,1,NUM(COM,1));                                  03060000
+    RETURN(0);                                                          03070000
+-ACT(40): /*  FABLE ENVIRONMENT  */                                     03080002
+    S99TUPL# = S99TUPL# - 1;                                            03090000
+    S99FLAG1 = 8192;                                                    03100000
+    RETURN(0);                                                          03110000
+ END S99VAL1;                                                           03120000

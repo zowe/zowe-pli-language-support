@@ -6,5 +6,6 @@
     - IBM z/OS v 2.5
 4. Brief inputs and outputs of the program:
     - Input is a DATA FILE CONTAINS SEVERAL SECTIONS. See the source file for details
+    - Program compilation: [ADVNTOPT.txt](ADVNTOPT.txt)
 5. Expected instructions to be highlighted / supported by LSP:
     - see [ADVNTOPT.png](ADVNTOPT.png)

@@ -1,0 +1,10 @@
+1SETUPL: PROCEDURE(KY,##,PR) REORDER;                                   00010000
+    DECLARE                                                             00020000
+      KY                 FIXED BIN(15,0),                               00030000
+      ##                 FIXED BIN(15,0),                               00040000
+      PR                 CHAR(*) VARYING;                               00050000
+    S99TUPL(S99TUPL#) = ADDR(KEY(S99TUPL#));                            00060000
+    KEY(S99TUPL#)  = KY;                                                00070000
+    #(S99TUPL#)    = ##;                                                00080000
+    PARM(S99TUPL#) = PR;                                                00090000
+ END SETUPL;                                                            00100000

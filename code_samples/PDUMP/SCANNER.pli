@@ -1,0 +1,257 @@
+ SCANNER: PROCEDURE(VALID,CBUF,KWORDS) RETURNS(FIXED BIN(15,0)) REORDER 00010009
+         RECURSIVE;                                                     00020009
+ /*                                                                     00030009
+    SCANNER IS A GENERAL PURPOSE CONTROL CARD/COMMAND STRING            00040009
+    SCANNER.                                                            00050009
+0   THE INPUT ARGUMENTS ARE:-                                           00060009
+0      VALID   -   THE ADDRESS OF A PL/I PROCEDURE THAT IS CALLED       00070009
+                   WHENEVER A KEYWORD OR POSITIONAL PARAMETER IS        00080009
+                   ENCOUNTERED.                                         00090009
+0      CBUF    -   IS THE STRING TO BE SCANNED.                         00100009
+0      KWORDS  -   IS A STRUCTURE CONTAINING                            00110009
+         TYPE  - ON/OFF SWITCH. OFF = NOT A DSN, ON = DSN               00120009
+         WORD  - KEYWORDS TO BE SEARCHED FOR                            00130009
+         TRANS - ON/OFF SWITCH. OFF = DON'T TRANSLATE CBUF,             00140009
+                                ON  = TRANSLATE FROM LOWER TO UPPER     00150009
+0   IF TYPE = ON, THE KEYWORD IS ASSUMED TO HAVE A VALUE FIELD          00160009
+    WHICH CONTAINS A DSN IN TSO FORMAT (I.E. NAME(MEMBER)/PASSWORD).    00170009
+0   VALID IS CALLED WITH 2 ARGUMENTS:-                                  00180009
+0      1. OP   -   CONTAINS THE POSITIONAL PARAMETER OR KEYWORD #       00190009
+             0 - VAL IS EMPTY                                           00200009
+             1 - VAL IS ENCLOSED IN APOSTROPHES                         00210009
+             2 - VAL IS ENCLOSED IN PARENTHESIS                         00220009
+             3 - VAL IS NUMERIC                                         00230009
+             4 - VAL IS CHARACTER                                       00240009
+             5 - 1ST KEYWORD IN WORD                                    00250009
+             :          :                                               00260009
+             N - LAST KEYWORD IN WORD                                   00270009
+0      2. VAL  -   CHARACTER STRING CONTAINING THE VALUE FIELD          00280009
+0   SCANNER RETURNS A NUMBER INDICATING THE RETURN CODE:-               00290009
+0      0  -  SCAN SUCCESSFUL                                            00300009
+       4  -  CBUF WAS EMPTY                                             00310009
+       8  -  CBUF CONTAINED UNMATCHED PARENTHESIS OR APOSTROPHES        00320009
+      12  -  SYNTAX ERROR (MOST LIKELY CAUSED BY AN INVALID DSN KEYWORD)00330011
+       N  -  ANY NONZERO RETURN CODE FROM VALID. (CAUSES AN             00340009
+             IMMEDIATE TERMINATION OF THE SCAN OF CBUF.                 00350009
+0                                                                    */ 00360009
+1   DECLARE                                                             00370009
+      RC                 FIXED BIN(15,0) INIT(0),                       00380009
+      (ACT,POS)          FIXED BIN(15,0) INIT(0),                       00390009
+      CBUF               CHAR(*) VARYING,                               00400009
+      1 KWORDS,                                                         00410009
+        2 TYPE(*)        BIT(*),                                        00420009
+        2 WORD(*)        CHAR(*) VARYING,                               00430009
+        2 TRANS          BIT(*),                                        00440009
+-     (HBOUND,                                                          00450010
+       TRANSLATE,                                                       00460009
+       VERIFY,                                                          00470009
+       SUBSTR,                                                          00480009
+       INDEX,LOW,                                                       00490009
+       LENGTH)           BUILTIN,                                       00500009
+-     UPPER              CHAR(26) STATIC INIT(                          00510010
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZ'),                                00520009
+      LOWER              CHAR(26) STATIC INIT(                          00530009
+          'abcdefghijklmnopqrstuvwxyz'),                                00540009
+      DIG                CHAR(10) STATIC INIT('0123456789'),            00550009
+-     VALUE              CHAR(256) VARYING INIT(''),                    00560010
+      SZ                 FIXED BIN(15,0) INIT((HBOUND(TYPE,1))),        00570009
+-     VALID              ENTRY(FIXED BIN(15,0),CHAR(*) VARYING)         00580010
+                            RETURNS(FIXED BIN(15,0)),                   00590009
+-     KEY                CHAR(256) VARYING INIT(''),                    00600010
+      BUFF               CHAR(LENGTH(CBUF)+2) VARYING INIT(''),         00610009
+      BUF                CHAR(LENGTH(CBUF)+2) VARYING INIT(''),         00620009
+      CH                 CHAR(1) INIT(' '),                             00630009
+      QUOTE              BIT(1) INIT('0'B),                             00640009
+      (PAR,SEP,I)        FIXED BIN(15,0) INIT(0);                       00650009
+1   QUOTE = '0'B;                                                       00660010
+    BUF = ' ';                                                          00670009
+-   DO I = 1 TO LENGTH(CBUF);                                           00680010
+       CH = SUBSTR(CBUF,I,1);                                           00690009
+-      SELECT;                                                          00700010
+0         WHEN(CH = '''') DO;                                           00710010
+            QUOTE = ^QUOTE;                                             00720009
+            BUF = BUF || CH;                                            00730009
+          END;                                                          00740009
+0         WHEN((CH = ' ' | CH = ',') & ^QUOTE) DO;                      00750010
+            IF CH = ' '                                                 00760009
+               THEN                                                     00770009
+                 IF SUBSTR(BUF,LENGTH(BUF),1) = ' ' |                   00780009
+                        SUBSTR(BUF,LENGTH(BUF),1) = ','                 00790009
+                    THEN;                                               00800009
+                 ELSE BUF = BUF || CH;                                  00810009
+            ELSE                                                        00820009
+              IF SUBSTR(BUF,LENGTH(BUF),1) = ' '                        00830009
+                 THEN SUBSTR(BUF,LENGTH(BUF),1) = CH;                   00840009
+              ELSE BUF = BUF || CH;                                     00850009
+          END;                                                          00860009
+0         OTHERWISE BUF = BUF || CH;                                    00870010
+       END;                                                             00880009
+    END;                                                                00890009
+0   IF SUBSTR(BUF,1,1) = ' '                                            00900010
+       THEN BUF = SUBSTR(BUF,2);                                        00910009
+    ELSE;                                                               00920009
+0   PAR = 0;                                                            00930010
+    QUOTE = '0'B;                                                       00940009
+    BUFF = LOW(1);                                                      00950009
+1   DO I = 1 TO LENGTH(BUF);                                            00960010
+       CH = SUBSTR(BUF,I,1);                                            00970009
+0      SELECT;                                                          00980010
+0         WHEN(CH = '(' & ^ QUOTE) DO;                                  00990010
+            PAR = PAR + 1;                                              01000009
+            BUFF = BUFF || CH;                                          01010009
+          END;                                                          01020009
+0         WHEN(CH = ')' & ^ QUOTE) DO;                                  01030010
+            PAR = PAR - 1;                                              01040009
+            BUFF = BUFF || CH;                                          01050009
+          END;                                                          01060009
+0         WHEN(CH = '''') DO;                                           01070010
+            QUOTE = ^ QUOTE;                                            01080009
+            BUFF = BUFF || CH;                                          01090009
+          END;                                                          01100009
+0         WHEN((CH = ' ' | CH = ',') & ^ QUOTE) DO;                     01110010
+            IF PAR = 0                                                  01120009
+               THEN                                                     01130009
+                 IF SUBSTR(BUFF,LENGTH(BUFF),1) ^= LOW(1) | CH = ','    01140009
+                    THEN BUFF = BUFF || LOW(1);                         01150009
+                 ELSE;                                                  01160009
+            ELSE                                                        01170009
+              IF SUBSTR(BUFF,LENGTH(BUFF),1) ^= ',' | CH = ','          01180009
+                 THEN BUFF = BUFF || ',';                               01190009
+              ELSE;                                                     01200009
+          END;                                                          01210009
+0         OTHERWISE BUFF = BUFF || CH;                                  01220010
+       END;                                                             01230009
+    END;                                                                01240009
+0   IF QUOTE | PAR ^= 0                                                 01250010
+       THEN RETURN(8);                                                  01260009
+    ELSE;                                                               01270009
+0   IF LENGTH(BUFF) = 1                                                 01280010
+       THEN RETURN(4);                                                  01290009
+    ELSE BUFF = SUBSTR(BUFF,2);                                         01300009
+0   IF SUBSTR(BUFF,LENGTH(BUFF),1) ^= LOW(1)                            01310010
+       THEN BUFF = BUFF || LOW(1);                                      01320009
+    ELSE;                                                               01330009
+1   DO WHILE(LENGTH(BUFF) > 0);                                         01340010
+       POS = INDEX(BUFF,LOW(1));                                        01350009
+0      IF POS = 0                                                       01360010
+          THEN RETURN(12);                                              01370009
+       ELSE;                                                            01380009
+0      IF POS = 1                                                       01390010
+          THEN DO;                                                      01400009
+            VALUE = '';                                                 01410009
+            ACT = 0;                                                    01420009
+            GO TO VALIDATE;                                             01430009
+          END;                                                          01440009
+       ELSE KEY = SUBSTR(BUFF,1,POS-1);                                 01450009
+0      IF SUBSTR(KEY,1,1) = '''' | SUBSTR(KEY,1,1) = '('                01460010
+          THEN DO;                                                      01470009
+            VALUE = KEY;                                                01480009
+0           IF SUBSTR(KEY,1,1) = ''''                                   01490010
+               THEN ACT = 1;                                            01500009
+            ELSE ACT = 2;                                               01510009
+0           GO TO VALIDATE;                                             01520010
+          END;                                                          01530009
+       ELSE;                                                            01540009
+0      IF TRANS                                                         01550010
+          THEN KEY = TRANSLATE(KEY,UPPER,LOWER);                        01560009
+       ELSE;                                                            01570009
+-      DO I = 1 TO SZ;                                                  01580010
+0         IF LENGTH(KEY) >= LENGTH(WORD(I)) & LENGTH(WORD(I)) ^= 0      01590010
+             THEN                                                       01600009
+0              IF WORD(I) = SUBSTR(KEY,1,LENGTH(WORD(I)))               01610010
+                  THEN LEAVE;                                           01620009
+               ELSE;                                                    01630009
+          ELSE;                                                         01640009
+       END;                                                             01650009
+1      IF I = SZ + 1                                                    01660010
+          THEN DO;                                                      01670009
+            VALUE = KEY;                                                01680009
+0           IF VERIFY(KEY,DIG) = 0                                      01690010
+               THEN ACT = 3;                                            01700009
+            ELSE ACT = 4;                                               01710009
+0           GO TO VALIDATE;                                             01720010
+          END;                                                          01730009
+       ELSE ACT = I + 4;                                                01740009
+0      VALUE = BREAK(KEY,TYPE(I));                                      01750010
+0      IF RC ^= 0                                                       01760010
+          THEN RETURN(12);                                              01770009
+       ELSE;                                                            01780009
+0VALIDATE:                                                              01790010
+       RC = VALID(ACT,VALUE);                                           01800009
+0      IF RC ^= 0                                                       01810010
+          THEN RETURN(RC);                                              01820009
+       ELSE;                                                            01830009
+0NEXT:                                                                  01840010
+0      IF LENGTH(BUFF) > POS + 1                                        01850010
+          THEN BUFF = SUBSTR(BUFF,POS+1);                               01860009
+       ELSE BUFF = '';                                                  01870009
+    END;                                                                01880009
+0   RETURN(0);                                                          01890010
+1BREAK: PROCEDURE(KY,TY) RETURNS(CHAR(256) VARYING) REORDER;            01900009
+    DECLARE                                                             01910009
+      KY                 CHAR(*) VARYING,                               01920009
+      TY                 BIT(*),                                        01930009
+      (VA,TM)            CHAR(256) VARYING INIT(''),                    01940009
+      (ME,PA)            CHAR(8) INIT(''),                              01950009
+      (J,J1,J2,J3)       FIXED BIN(15,0) INIT(0);                       01960009
+-   RC = 0;                                                             01970010
+0   SELECT(TY);                                                         01980010
+0      WHEN('0'B) DO;                                                   01990010
+         J = INDEX(KY,'(');                                             02000009
+0        IF J = 0                                                       02010010
+            THEN DO;                                                    02020009
+              J = INDEX(KY,'=');                                        02030009
+0             IF J = 0 | LENGTH(KY) = J                                 02040010
+                 THEN RETURN('');                                       02050009
+              ELSE RETURN(SUBSTR(KY,J+1));                              02060009
+            END;                                                        02070009
+         ELSE;                                                          02080009
+0        VA = SUBSTR(KY,J+1);                                           02090010
+0        IF LENGTH(VA) = 1                                              02100010
+            THEN VA = '';                                               02110009
+         ELSE VA = SUBSTR(VA,1,LENGTH(VA)-1);                           02120009
+       END;                                                             02130009
+0      WHEN('1'B) DO;                                                   02140010
+         J = INDEX(KY,'(');                                             02150009
+0        IF J = 0                                                       02160010
+            THEN DO;                                                    02170009
+              RC = 4;                                                   02180009
+              RETURN('');                                               02190009
+             END;                                                       02200009
+         ELSE TM = SUBSTR(KY,J+1);                                      02210009
+0        TM = SUBSTR(TM,1,LENGTH(TM)-1);                                02220010
+         J1 = INDEX(TM,'/');                                            02230009
+0        IF J1 = 1 | J1 = LENGTH(TM) | (LENGTH(TM) - J1 > 8 & J1 ^= 0)  02240010
+            THEN DO;                                                    02250009
+              RC = 4;                                                   02260009
+              RETURN('');                                               02270009
+            END;                                                        02280009
+         ELSE;                                                          02290009
+1        IF J1 > 0                                                      02300010
+            THEN DO;                                                    02310009
+              PA = SUBSTR(TM,J1+1);                                     02320009
+              TM = SUBSTR(TM,1,J1-1);                                   02330009
+            END;                                                        02340009
+         ELSE PA = ' ';                                                 02350009
+0        J = INDEX(TM,'(');                                             02360010
+0        IF J ^= 0 & LENGTH(TM) - J - 1 > 8                             02370010
+            THEN DO;                                                    02380009
+              RC = 4;                                                   02390009
+              RETURN('');                                               02400009
+            END;                                                        02410009
+         ELSE;                                                          02420009
+0        IF J > 0                                                       02430010
+            THEN DO;                                                    02440009
+              ME = SUBSTR(TM,J+1,LENGTH(TM)-J-1);                       02450009
+0             IF J = 1                                                  02460010
+                 THEN VA = (44)' ';                                     02470009
+              ELSE VA = SUBSTR(SUBSTR(TM,1,J-1) || (44)' ',1,44);       02480009
+            END;                                                        02490009
+         ELSE VA = SUBSTR(TM || (44)' ',1,44);                          02500009
+         VA = VA || ME || PA;                                           02510009
+       END;                                                             02520009
+0      OTHERWISE RC = 4;                                                02530010
+    END;                                                                02540009
+0   RETURN(VA);                                                         02550010
+0END BREAK;                                                             02560010
+0END SCANNER;                                                           02570010
