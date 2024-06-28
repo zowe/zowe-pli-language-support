@@ -1,0 +1,204 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20220429)                           2024.06.19 03:45:45   Page     1
+-                     Options Specified
+0  Install:
+0  Command: SOURCE
+0  Install:
+15655-PL6  IBM(R) Enterprise PL/I for z/OS   DDINFO:/*RETURN JFCB INFORMATION FROM A GI         2024.06.19 03:45:45   Page     2
+0 Compiler Source
+0    Line.File
+0       1.0       DDINFO:/*RETURN JFCB INFORMATION FROM A GIVEN DDCARD*/
+        2.0              PROCEDURE(DD);
+        3.0
+        4.0                    /* DECLARE INPUT PARAMETERS */
+        5.0
+        6.0       DCL 1 DD,
+        7.0                /************************************************/
+        8.0                /*  IF R_CODE PASSED IS NOT 0,1, OR -1, DDINFO  */
+        9.0                /*  PRINTS A COMPLETE DUMP OF THE JFCB.  IF     */
+       10.0                /*  RETURN CODE BACK IS NOT ZERO SOMETHING WENT */
+       11.0                /*  WRONG.                                      */
+       12.0                /*                                              */
+       13.0                /*  IF R_CODE IS 1 OR -1, RELEASE INFORMATION   */
+       14.0                /*  IS PRINTED.                                 */
+       15.0                /*                                              */
+       16.0                /*  IF R_CODE = -3 SUPPRESS PRINTING            */
+       17.0                /*                                              */
+       18.0                /*                                              */
+       19.0                /*                                              */
+       20.0                /************************************************/
+       21.0             2 R_CODE                FIXED BIN(31),  /*ACTION&RETURNCODE*/
+       22.0             2 NAME                  CHAR(8),        /*PASSES DDNAME*/
+       23.0
+       24.0             2 INFO,
+       25.0                3 $DSNAME            CHAR(44),
+       26.0                3 $MEMBER            CHAR(8),
+       27.0                3 $DSORG             CHAR(2),
+       28.0                3 $RECFM             CHAR(4),
+       29.0                3 $LRECL             FIXED BIN(15),
+       30.0                3 $BLKSIZE           FIXED BIN(15),
+       31.0                3 $CATALOGED         CHAR(1),             /* Y=YES N=NO */
+       32.0                3 $CREATED           PIC'99999';          /* YYDDD      */
+       33.0          DCL     DONTPRINT          BIT   INIT(0B);
+       34.0
+       35.0       IF R_CODE = -3  THEN DONTPRINT = 1B;
+       36.0
+       37.0       IF ABS(R_CODE) = 1 THEN
+       38.0       DO;
+       39.0          CALL JOURNAL('SUBROUTINE=DDINFO',3);
+       40.0          CALL JOURNAL('   RELEASE=27AUG80',1);
+       41.0          CALL JOURNAL('   PURPOSE=PRINT DCB INFORMATION FROM DD CARD',1);
+       42.0       END;
+       43.0
+       44.0                    /* DECLARE ASSEMBLER ENTRY POINT TO PASS JFCB INFO */
+       45.0
+       46.0       DCL JFCB ENTRY(FIXED BIN(31),FIXED BIN(31))
+       47.0                        OPTIONS(ASSEMBLER INTER);
+       48.0
+       49.0                    /* SET UP PARAMETERS FOR PASS TO ASSEMBLER */
+       50.0
+       51.0       DCL (P1,P2) STATIC POINTER;
+       52.0
+       53.0       DCL JFCBPASS CHAR(176)     BASED(P1);
+       54.0       DCL JFCBBASE FIXED BIN(31) BASED(P1);
+       55.0       ALLOCATE JFCBPASS;
+       56.0       JFCBPASS = ' ';
+       57.0
+       58.0       DCL   DDPASS CHAR(8)       BASED(P2);
+       59.0       DCL   DDBASE FIXED BIN(31) BASED(P2);
+       60.0       ALLOCATE DDPASS;
+       61.0       DDPASS = DD.NAME;
+       62.0
+       63.0    1               /* DECLARE INCIDENTAL WORKING VARIABLES */
+       64.0
+       65.0       DCL (BYTE1,BYTE2,BYTE3) STATIC CHAR(2) VAR INIT(' ');
+       66.0       BYTE1,BYTE2 = '';  BYTE3 = '?';
+       67.0
+       68.0       DCL (JFCBZONE,JFCBDIGIT) CHAR(176) INIT(' ');
+       69.0
+       70.0       DCL $I STATIC FIXED BIN(31) INIT(0);
+       71.0
+       72.0    1               /* MAINLINE */
+       73.0
+       74.0       CALL JFCB(DDBASE,JFCBBASE);
+       75.0       DD.INFO = '';
+       76.0
+       77.0       IF VERIFY(JFCBPASS,' ')=0 THEN
+       78.0       DO;
+       79.0          CALL JOURNAL('SUBROUTINE JFCB FAILED TO RETURN JFCB',2);
+       80.0          CALL DUMP;
+       81.0          R_CODE=16;
+       82.0          RETURN;
+       83.0       END;
+       84.0
+       85.0       JFCBZONE = TRANSLATE(JFCBPASS,
+       86.0                           (  (16)'0' ||(16)'1' ||(16)'2' ||(16)'3'
+       87.0                            ||(16)'4' ||(16)'5' ||(16)'6' ||(16)'7'
+       88.0                            ||(16)'8' ||(16)'9' ||(16)'A' ||(16)'B'
+       89.0                            ||(16)'C' ||(16)'D' ||(16)'E' ||(16)'F'));
+       90.0
+       91.0       JFCBDIGIT= TRANSLATE(JFCBPASS,(16)'0123456789ABCDEF');
+       92.0
+       93.0       $DSNAME = SUBSTR(JFCBPASS,1,44);
+       94.0
+       95.0       IF SUBSTR(JFCBZONE,53,1) > '7' THEN $CATALOGED='Y';
+       96.0                                      ELSE $CATALOGED='N';
+       97.0
+       98.0            IF SUBSTR(JFCBZONE ,99,1) = '8' THEN $DSORG = 'IS';
+       99.0       ELSE IF SUBSTR(JFCBZONE ,99,1) = '4' THEN $DSORG = 'PS';
+      100.0       ELSE IF SUBSTR(JFCBZONE ,99,1) = '2' THEN $DSORG = 'DA';
+      101.0       ELSE IF SUBSTR(JFCBDIGIT,99,1) = '2' THEN $DSORG = 'PO';
+      102.0       ELSE
+      103.0       DO;
+      104.0          R_CODE = MAX(R_CODE,2);
+      105.0          CALL JOURNAL('*****UNEXPECTED DSORG',1);
+      106.0          $DSORG = '??';
+      107.0       END;
+      108.0
+      109.0       IF $DSORG='PO' THEN $MEMBER = SUBSTR(JFCBPASS,45,8);
+      110.0                      ELSE $MEMBER = ' ';
+      111.0
+      112.0            IF SUBSTR(JFCBZONE,101,1)='C' THEN BYTE1='U';
+      113.0       ELSE IF VERIFY(SUBSTR(JFCBZONE,101,1),'89')=0 THEN BYTE1='F';
+      114.0       ELSE IF VERIFY(SUBSTR(JFCBZONE,101,1),'45')=0 THEN BYTE1='V';
+      115.0
+      116.0       IF VERIFY(SUBSTR(JFCBZONE,101,1),'59')=0 THEN BYTE2='B';
+      117.0
+      118.0            IF SUBSTR(JFCBDIGIT,101,1)='8' THEN BYTE3='S';
+      119.0       ELSE IF SUBSTR(JFCBDIGIT,101,1)='C' THEN BYTE3='SA';
+      120.0       ELSE IF SUBSTR(JFCBDIGIT,101,1)='A' THEN BYTE3='SM';
+      121.0       ELSE IF SUBSTR(JFCBDIGIT,101,1)='4' THEN BYTE3='A';
+      122.0       ELSE IF SUBSTR(JFCBDIGIT,101,1)='2' THEN BYTE3='M';
+      123.0       ELSE IF SUBSTR(JFCBDIGIT,101,1)='0' THEN BYTE3='';
+      124.0
+      125.0       $RECFM = BYTE1 || BYTE2 || BYTE3;
+      126.0
+      127.0       SELECT($RECFM);
+      128.0          WHEN('U   ','FB  ','FBS ','FBA ','FA  ',
+      129.0               'V   ','VB  ','VBA ','VBS ','VS  ')  /*NOTHING*/;
+      130.0
+      131.0          OTHERWISE
+      132.0          DO;
+      133.0             R_CODE = MAX(R_CODE,4);
+      134.0             CALL JOURNAL('*****UNEXPECTED RECFM',1);
+      135.0          END;
+      136.0       END;
+      137.0
+      138.0       UNSPEC($LRECL)   = UNSPEC(SUBSTR(JFCBPASS,105,2));
+      139.0       UNSPEC($BLKSIZE) = UNSPEC(SUBSTR(JFCBPASS,103,2));
+      140.0
+      141.0       UNSPEC($I) = UNSPEC(SUBSTR(JFCBPASS,81,3));
+      142.0       $CREATED = 1000*($I/65536) + MOD($I/256,65536);
+      143.0
+      144.0
+      145.0       IF ABS(R_CODE)>1 THEN CALL DUMP;
+      146.0
+      147.0       FREE DDPASS;  FREE JFCBPASS;
+      148.0
+      149.0       RETURN;
+      150.0    1               /* DECLARE JOURNAL FOR LOGGING MESSAGES */
+      151.0
+      152.0       JOURNAL: PROCEDURE(MESSAGE,SKIP#);
+      153.0          DCL MESSAGE CHAR(*);
+      154.0          DCL SKIP#   FIXED BIN(15);
+      155.0          IF DONTPRINT THEN RETURN;
+      156.0          PUT FILE(SYSPRINT) EDIT(MESSAGE)(SKIP(SKIP#),COL(6),A);
+      157.0       END JOURNAL;
+      158.0
+      159.0    -               /* SUBROUTINE TO DUMP THE PASSED JFCB */
+      160.0
+      161.0       DUMP: PROCEDURE;
+      162.0          IF DONTPRINT THEN RETURN;
+      163.0          CALL JOURNAL('DUMP OF JFCB',4);
+      164.0          DCL (I,J,K) STATIC FIXED BIN(15);
+      165.0
+      166.0          PUT FILE(SYSPRINT) EDIT
+      167.0                  ('|',(('---+++---',K) DO K=1 TO 10),'|')
+      168.0                  (SKIP(2),COL(6),A(1),(10)(A(9),F(1)),A(1));
+      169.0
+      170.0          PUT FILE(SYSPRINT) EDIT
+      171.0                  ('|',JFCBPASS ,'|',
+      172.0                   '|',JFCBZONE ,'|',
+      173.0                   '|',JFCBDIGIT,'|')
+      174.0                  (SKIP(1),COL(6),A(1),A(100),A(1));
+      175.0
+      176.0          PUT FILE(SYSPRINT) SKIP(2);
+      177.0          PUT FILE(SYSPRINT) EDIT
+      178.0                  ('|',SUBSTR(JFCBPASS ,101),'|',
+      179.0                   '|',SUBSTR(JFCBZONE ,101),'|',
+      180.0                   '|',SUBSTR(JFCBDIGIT,101),'|')
+      181.0                  (SKIP(1),COL(6),A(1),A(100),A(1));
+      182.0
+      183.0          PUT FILE(SYSPRINT) EDIT
+      184.0                  ('|',(('---+++---',K) DO K=1 TO 10),'|')
+      185.0                  (SKIP(1),COL(6),A(1),(10)(A(9),F(1)),A(1));
+      186.0       END DUMP;
+      187.0       END DDINFO;
+15655-PL6  IBM(R) Enterprise PL/I for z/OS   DDINFO:/*RETURN JFCB INFORMATION FROM A GI         2024.06.19 03:45:45   Page     3
+- No Compiler Messages
+0 File Reference Table
+0   File    Included From  Name
+0      0                   AVL.USER.PLI(DDINFO)
+- Component    Return Code    Messages (Total/Suppressed)    Time
+0 Compiler         0                1  /  1                   2 secs
+0 End of compilation of DDINFO
+

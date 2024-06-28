@@ -1,0 +1,913 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20220429)                           2024.06.18 16:16:59   Page     1
+-                     Options Specified
+0  Install:
+0  Command: SOURCE,RULES(LAXDCL)
+0  Line.File Process Statements
+0     1.0    *PROCESS INC NOLIST;
+0  Install:
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  /* Reformat a PLI program                           2024.06.18 16:16:59   Page     2
+0 Compiler Source
+0    Line.File
+0       2.0      /* Reformat a PLI program                             version 0.1   */
+        3.0      (subrg,strg,size):
+        4.0      reform: proc(parm) options(main);
+        5.0
+        6.0
+        7.0      /* Notes:                                                            */
+        8.0      /* This program is NOT designed to demonstrate super-efficient or    */
+        9.0      /* otherwise whizzy PLI.                                             */
+       10.0      /*                                                                   */
+       11.0      /* This program will be baffled by                                   */
+       12.0      /* 1): condition code prefix and statement labels on an internal     */
+       13.0      /*     procedure which span more than one line                       */
+       14.0      /* 2): multiple block closure,   e.g. end x;   where the presence    */
+       15.0      /*     of the label name adds more   end;  statements.               */
+       16.0      /* 3): Code that is NOT in columns 2-72                              */
+       17.0      /* 4): Pre-processor code                                            */
+       18.0      /*                                                                   */
+       19.0      /*_____________________ FILES _______________________________ d:f  _**/
+       20.0      dcl source        file record input;
+       21.0      dcl sourcen       file record output;
+       22.0      /*_____________________ Builtin functions ___________________ d:bif_**/
+       23.0
+       24.0                                  /* string handling                       */
+       25.0      dcl (bit,bool,char,graphic,high,index,length,low,
+       26.0           mpstr,repeat,string,substr,translate,unspec,verify
+       27.0                 )           builtin;
+       28.0                                  /* arithmetic                            */
+       29.0      dcl (abs,add,binary,ceil,complex,conjg,decimal,divide,fixed,
+       30.0           float,floor,imag,max,min,mod,multiply,precision,
+       31.0           real,round,sign
+       32.0                 )           builtin;
+       33.0                                  /* mathematical                          */
+       34.0      dcl (acos,asin,atan,atand,atanh,cos,cosd,cosh,erf,erfc,exp,log,
+       35.0           log2,log10,sin,sind,sinh,sqrt,tan,tand,tanh
+       36.0                 )           builtin;
+       37.0                                  /* array handling                        */
+       38.0      dcl (all,any,dim,hbound,lbound,poly,prod,sum
+       39.0                 )           builtin;
+       40.0                                  /* condition handling                    */
+       41.0      dcl (datafield,onchar,oncode,oncount,onfile,onkey,onloc,onsource
+       42.0                 )           builtin;
+       43.0                                  /* storage control                       */
+       44.0      dcl (addr,allocation,binaryvalue,currentstorage,empty,entryaddr,
+       45.0           null,offset,pointer,pointeradd,pointervalue,storage,sysnull
+       46.0                 )           builtin;
+       47.0                                  /* event, multitasking, I/O, others      */
+       48.0      dcl (completion,status,count,lineno,samekey,date,datetime,pliretv,
+       49.0           time,plicanc,plickpt,plicommit,plidump,plirest,pliretc,
+       50.0           plisrta,plisrtb,plisrtc,plisrtd,plitest
+       51.0                 )           builtin;
+       52.0
+       53.0      /*_____________________ External entry ______________________ d:e  _**/
+       54.0
+       55.0      dcl subword           entry(char(*),bin fixed(15),bin fixed(15))
+       56.0                                           returns(char(32767) var);
+       57.0      dcl strip             entry(char(*)) returns(char(32767) var);
+       58.0      /*_____________________ General declarations (aggregates)_____d:ag _**/
+       59.0      dcl  (SourceL(*),
+       60.0            SourceU(*),
+       61.0            codeOnly(*),
+       62.0            commOnly(*),
+       63.0             OutPut(*))  char(80) ctl;
+       64.0      dcl  char1            char(1)  def(sourceU(i)) pos(j);
+       65.0      dcl  char2            char(2)  def(sourceU(i)) pos(j);
+       66.0      dcl  char1mixed       char(1)  def(sourceL(i)) pos(j);
+       67.0      dcl  char2mixed       char(2)  def(sourceL(i)) pos(j);
+       68.0      dcl  commchar1        char(1)  def(commonly(i)) pos(j);
+       69.0      dcl  commchar2        char(2)  def(commonly(i)) pos(j);
+       70.0      dcl  codechar1        char(1)  def(codeonly(i)) pos(j);
+       71.0      dcl  codechar2        char(2)  def(codeonly(i)) pos(j);
+       72.0      dcl  Uline            char(80) def(sourceU(i)) pos(j);
+       73.0      dcl  CodeLine         char(80) def(CodeOnly(i)) pos(j);
+       74.0      dcl  CommLine         char(80) def(CommOnly(i)) pos(j);
+       75.0      dcl  OutPutLine       char(80) def(  OutPut(i)) pos(j);
+       76.0
+       77.0      dcl 1 properties(*) ctl,
+       78.0              2 (stmt_start,
+       79.0                 stmt_end,
+       80.0                 all_comment,
+       81.0                 nest_change)      bit(1) aligned,
+       82.0              2 stmt_kwd           char(8),
+       83.0              2 stmt_kwd_pos       bin fixed(15),
+       84.0              2 nest               bin fixed(15);
+       85.0      dcl 1 print,
+       86.0              2 line#              pic'zzz9b',
+       87.0              2 Properties,
+       88.0                3 (stmt_start,
+       89.0                   stmt_end,
+       90.0                   all_comment,
+       91.0                   nest_change)      char(1),
+       92.0                3 nest               pic'zz9b',
+       93.0                3 stmt_kwd           char(9),
+       94.0              2 start              char(1) init('>'),
+       95.0              2 outline            char(80);
+       96.0                                  /* We may want to put in PROC and        */
+       97.0                                  /* BEGIN later, so make arrarys.         */
+       98.0      dcl  kwd_l1(2)         char(11) var init ('DO',
+       99.0                                                'SELECT');
+      100.0      dcl  kwd_l2(1)         char(11) var init ('END');
+      101.0                                  /* delimiters that may appear before or  */
+      102.0                                  /* after a PLI keyword                   */
+      103.0      dcl dlm_b4            (5) char(1) init(' ',';',')','/',':');
+      104.0      dcl dlm_af            (4) char(1) init(' ',';','(','/');
+      105.0      dcl nest_kwds         (4) char(8) var
+      106.0                              init('DO','SELECT','BEGIN','END');
+      107.0      dcl nest_chg_now      (4) bit(1) aligned init(
+      108.0                                   '0'b,'0'b,'0'b,'1'b);
+      109.0      dcl nest_value        (4) bin fixed(15) init(1,1,1,-1);
+      110.0      dcl left_padding      (0:25) char(250) var;
+      111.0      dcl left_padding_L    (0:25) bin fixed(15);
+      112.0      /*_____________________ General declarations (elements)_______d:lm _**/
+      113.0
+      114.0      dcl (i,j,k,l,m,n)      bin fixed(15) init(0);
+      115.0      dcl (lines,
+      116.0           #keywords,
+      117.0           lastCode,
+      118.0           commE,
+      119.0           commL,
+      120.0           commS,
+      121.0           first_nb,
+      122.0           second_nb,
+      123.0           nest_level,
+      124.0           leadblanksL,
+      125.0           shift,
+      126.0           kwd_subsc,
+      127.0           MaxErr)           bin fixed(15) init(0);
+      128.0      dcl  (commcharcount,
+      129.0            codecharcount)   dec fixed(7) init(0);
+      130.0      dcl  NewP              pic'zzz9';
+      131.0      dcl (eofSource,
+      132.0           linewritten,
+      133.0           xcomments)        bit(1) aligned init('0'b);
+      134.0      dcl (Line,
+      135.0           TmpLine
+      136.0               )             char(80);
+      137.0      dcl Longtext           char(32767) var init('');
+      138.0      dcl (lower,
+      139.0           lowerc,
+      140.0           pm,
+      141.0           po,
+      142.0           pp,
+      143.0           pc,
+      144.0           pu)               char(3);
+      145.0      dcl keyword            char(8) var;
+      146.0      dcl datec              char(6);
+      147.0      dcl timec              char(9);
+      148.0      dcl asa                char(1);
+      149.0      dcl (scol,
+      150.0           colrqd,
+      151.0           bc,
+      152.0           lc,
+      153.0           indent)           fixed(3) init(0);
+      154.0      dcl (e0,
+      155.0           e4,
+      156.0           e8,
+      157.0           e12)              char(*) var ctl;
+      158.0      dcl  parm              char(100) var;
+      159.0      dcl  varstr            char(200) var;
+      160.0      dcl  var8              char(8)   var;
+      161.0      dcl  leadblanks        char(80)  var;
+      162.0      dcl (lbox,
+      163.0           sbox,
+      164.0           ol1,
+      165.0           ol2 )             char(80);
+      166.0      dcl (p1,
+      167.0           p2,
+      168.0           p3,
+      169.0           p4)               pic 'zzz9';
+      170.0                                  /*****************************************/
+      171.0                                  /* Line counts for each file             */
+      172.0                                  /*****************************************/
+      173.0       datec = date();
+      174.0       timec = time();
+      175.0       put skip(1) edit('PLI reformatter Version 01 ' ||
+      176.0          substr(datec,1,2) || '/' ||
+      177.0          substr(datec,3,2) || '/' ||
+      178.0          substr(datec,5,2) || ' ' ||
+      179.0          substr(timec,1,2) || ':' ||
+      180.0          substr(timec,3,2) || ':' ||
+      181.0          substr(timec,5,2) || ' ')(a);
+      182.0
+      183.0       get string(parm) data(pm,pu,po,scol,indent,bc,lc,pp,pc,lower,lowerc);
+      184.0
+      185.0       on endfile(source) eofSource = '1'b;
+      186.0                                  /* Determine number of source lines      */
+      187.0       open  file(source);
+      188.0       read file(source) into(Line);
+      189.0       do while(^eofSource);
+      190.0          lines = lines+1;
+      191.0          read file(source) into(Line);
+      192.0       end;
+      193.0       eofSource = '0'b;
+      194.0       close file(source);
+      195.0
+      196.0       alloc SourceL(lines);
+      197.0       alloc SourceU(lines);
+      198.0       alloc  OutPut(lines);
+      199.0       alloc Properties(lines);
+      200.0       alloc codeOnly(lines);
+      201.0       alloc commOnly(lines);
+      202.0       Properties = '';
+      203.0       codeOnly   = '';
+      204.0       commOnly   = '';
+      205.0                                  /* Initialise left_padding for each nest */
+      206.0                                  /* level                                 */
+      207.0       call Emsg(2,0,'','Column Starts');
+      208.0       do i = lbound(left_padding,1) to hbound(left_padding,1);
+      209.0          left_padding(i)   = substr((100)' ',1,(scol-1)+(indent*i));
+      210.0          left_padding_L(i) = length(left_padding(i));
+      211.0          call Emsg(2,0,'','Nest:' || i || ' Column:' || left_padding_l(i));
+      212.0       end;
+      213.0                                  /* Read source file into correctly sized */
+      214.0                                  /* variable                              */
+      215.0       open  file(source);
+      216.0
+      217.0       call Emsg(1,0,'','Source');
+      218.0       do i = 1 to lines;
+      219.0          read file(source) into(SourceL(i));
+      220.0                                  /* remove line numbers                   */
+      221.0          SourceL(i) = Substr(Sourcel(i),1,72);
+      222.0          OutPut(i) = SourceL(i);
+      223.0                                  /* form upper-case version               */
+      224.0          SourceU(i) = translate(SourceL(i),'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      225.0                                            'abcdefghijklmnopqrstuvwxyz');
+      226.0          if pm = 'YES'
+      227.0          then put skip(1) edit(i,SourceL(i))(f(5),a);
+      228.0       end;
+      229.0
+      230.0                                  /* take out comments and literals in the */
+      231.0                                  /* upper-case version                    */
+      232.0       do i = 1 to hbound(sourceU,1);
+      233.0                                  /* assume PLI columns 1-72               */
+      234.0          do j = 1 to 72;
+      235.0                                  /* blank out all comments                */
+      236.0             if char2 = '/*' then
+      237.0         comloop:
+      238.0             do i = i to hbound(SourceU,1);
+      239.0                do j = j to 72;
+      240.0                   if char2 = '*/' then
+      241.0                   do;
+      242.0                      commchar2 = char2mixed;
+      243.0                      codechar2 = '  ';
+      244.0                      char2     = '  ';
+      245.0                      j=j+2;
+      246.0                      leave comloop;
+      247.0                   end;
+      248.0                   if char1 ^= '' & char2 ^= '/*' & char1 ^= '*'
+      249.0                   then commcharcount = commcharcount+1;
+      250.0                   commchar1 = char1mixed;
+      251.0                   char1 = '';
+      252.0                end;
+      253.0                j = 1;
+      254.0             end;
+      255.0             if lower = 'YES'
+      256.0             then  codechar1 = translate(char1mixed,
+      257.0                                        'abcdefghijklmnopqrstuvwxyz',
+      258.0                                        'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+      259.0             else  codechar1 = char1mixed;
+      260.0                                  /* null string special case              */
+      261.0             if char2 = '''''' then char2 = '  ';
+      262.0                                  /* blank out all literal strings         */
+      263.0             if char1 = '''' then
+      264.0             litloop:
+      265.0             do i = i to hbound(SourceU,1);
+      266.0                codechar1 = char1mixed;
+      267.0                char1 = '';
+      268.0                do j = j+1 to 72;
+      269.0                                  /* quote in the string!                  */
+      270.0                   if char2 = '''''' then
+      271.0                   do;
+      272.0                      codechar2 = char2mixed;
+      273.0                      char2 = '';
+      274.0                   end;
+      275.0
+      276.0                   if char1 = '''' then
+      277.0                   do;
+      278.0                      codechar1 = char1mixed;
+      279.0                      char1 = '';
+      280.0                      leave litloop;
+      281.0                   end;
+      282.0                   codechar1 = char1mixed;
+      283.0                   char1 = '';
+      284.0                end;
+      285.0                j = 1;
+      286.0             end;
+      287.0             if char1 ^= '' then codecharcount = codecharcount+1;
+      288.0          end;
+      289.0       end;
+      290.0                                  /* detect statement start/end and kwd    */
+      291.0       do i = 1 to hbound(sourceU,1)-1;
+      292.0          if rightmostNB(Uline) = ';' then
+      293.0          do;
+      294.0             properties.stmt_end(i)     = '1';
+      295.0             properties.stmt_start(i+1) = '1';
+      296.0          end;
+      297.0          if properties.stmt_start(i) = '1' then
+      298.0          do;
+      299.0                                  /* make sure stmt-start is correct       */
+      300.0                                  /* (comments blanked out at this point)  */
+      301.0             if Uline = '' then
+      302.0             do;
+      303.0                properties.stmt_end(i)     = '0';
+      304.0                properties.stmt_start(i+1) = '1';
+      305.0             end;
+      306.0                                  /* pick out statement keyword            */
+      307.0             else call firstkw(i);
+      308.0          end;
+      309.0       end;
+      310.0                                  /* determine the nest level of each line */
+      311.0       do i = 1 to hbound(sourceU,1)-1;
+      312.0          properties.nest(i) = nest_level;
+      313.0                                  /* is there a statement keyword?         */
+      314.0          call change_level(SourceU(i),i);
+      315.0       end;
+      316.0                                  /* Move the code about                   */
+      317.0
+      318.0       do i = 1 to hbound(CodeOnly,1);
+      319.0                                  /* beginning of a statement?             */
+      320.0          if properties.stmt_kwd(i) ^= '' then
+      321.0          do;
+      322.0                                  /* stop ASA char messing up searches     */
+      323.0             asa = substr(codeLine,1,1);
+      324.0             substr(codeLine,1,1) = '';
+      325.0                                  /* find where code starts                */
+      326.0             first_nb   = verify(CodeLine,' ');
+      327.0             shift      =  first_nb - (left_padding_L(properties(i).nest)+1);
+      328.0             leadblanks  =  left_padding(properties(i).nest);
+      329.0             leadblanksL =  length(leadblanks);
+      330.0                                  /* restore ASA char to code line         */
+      331.0             substr(codeLine,1,1) = asa;
+      332.0             asa = '';
+      333.0                                  /* line up the code                      */
+      334.0      shift_statement:
+      335.0             do while(i < hbound(CodeOnly,1));
+      336.0                asa = substr(codeLine,1,1);
+      337.0                substr(codeLine,1,1) = '';
+      338.0
+      339.0                if shift > 0 then
+      340.0                                  /* code must be shifted to the LEFT..    */
+      341.0                do j = 1 to shift
+      342.0                            while(substr(CodeLine,1,leadBlanksL+1) = ' ');
+      343.0                   codeline = substr(codeLine,2);
+      344.0                end;
+      345.0                else
+      346.0                if shift < 0 then
+      347.0                                  /* code must be shifted to the RIGHT.    */
+      348.0                do j = 1 to abs(shift) while(substr(CodeLine,72,1) = ' ');
+      349.0                   codeline = ' ' || codeLine;
+      350.0                end;
+      351.0                                  /* try and line up DO-END-SELECT         */
+      352.0                call line_up;
+      353.0                                  /* restore ASA char to code line         */
+      354.0                substr(codeLine,1,1) = asa;
+      355.0                asa = '';
+      356.0
+      357.0                if properties(i+1).stmt_kwd ^= '' then
+      358.0                   leave shift_statement;
+      359.0                i = i+1;
+      360.0             end;
+      361.0          end;
+      362.0       end;
+      363.0                                  /* reformat comment lines                */
+      364.0       longtext = '';
+      365.0       Lbox = repeat(' ',lc-1) || '/' || (80)'*';
+      366.0       substr(lbox,72) = '/';
+      367.0       Sbox = repeat(' ',bc-1) || '/' || (80)'*';
+      368.0       substr(sbox,72) = '/';
+      369.0
+      370.0       do i = 1 to hbound(CommOnly,1);
+      371.0                                  /* optionally change comments in all     */
+      372.0                                  /* upper case to all lower case          */
+      373.0          if   commLine ^= ''    then
+      374.0          if   lowerc   =  'YES' then
+      375.0          if (translate(commline,
+      376.0              '                                                            '
+      377.0              || (10)' ',
+      378.0              '/*ABCDEFGHIJKLMNOPQRSTUVWXYZ^!"$?%?&*()_+`-=??{};''#:@?<>,.\|'
+      379.0              || '0123456789')
+      380.0             = ' ')
+      381.0          then commLine = translate(Commline,
+      382.0              'abcdefghijklmnopqrstuvwxyz',
+      383.0              'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+      384.0                                  /* Check for single-line only            */
+      385.0          commS = index(commLine,'/*');
+      386.0          commE = index(commLine,'*/');
+      387.0                                  /* Push it over to the right             */
+      388.0          if CommE ^= 71 & CommE > 0 then
+      389.0          do;
+      390.0             do j = 1 to 80 while(substr(commline,72,1) = '');
+      391.0                commline = ' ' || commline;
+      392.0             end;
+      393.0          end;
+      394.0          commS = index(commLine,'/*');
+      395.0          commE = index(commLine,'*/');
+      396.0          commL = CommE - CommS + 2;
+      397.0
+      398.0          if   commLine ^= ''
+      399.0                                  /* Only reformat single-line comments    */
+      400.0            &   (commS ^= 0 & commE > CommS)
+      401.0          then
+      402.0          do;
+      403.0                                  /* rightmost code byte..                 */
+      404.0             do j = 72 to 2 by -1 while(substr(CodeLine,j,1) = '');
+      405.0             end;
+      406.0             lastCode = j+2;
+      407.0                                  /* code & coment don't overlap           */
+      408.0             if   (lastCode < CommS)
+      409.0                                  /* comment is not too long               */
+      410.0               &  (67-lc > CommL)
+      411.0             then
+      412.0             do;
+      413.0                varstr = substr(commline,CommS+2);
+      414.0                k = index(varstr,'*/');
+      415.0                varstr = substr(varstr,1,k-2);
+      416.0                Commline = repeat(' ',max(lc,lastcode)-2) || '/*' || varstr;
+      417.0                substr(commLine,71) = '*/';
+      418.0             end;
+      419.0          end;
+      420.0       end;
+      421.0      /*********************************************************************/
+      422.0                                  /* create new program lines              */
+      423.0       longtext = '';
+      424.0       do i = 1 to hbound(CodeOnly,1);
+      425.0
+      426.0          select;
+      427.0             when (CodeLine = '' &
+      428.0                   CommLine = '')  OutPutLine = '';
+      429.0             when (CodeLine = '')  OutPutLine = Commline;
+      430.0             when (CommLine = '')  OutPutLine = Codeline;
+      431.0             otherwise
+      432.0             do;
+      433.0                                  /* code and comment on the line          */
+      434.0                OutPutLine = CodeLine;
+      435.0                                  /* rightmost code byte..                 */
+      436.0                do j = 72 to 2 by -1 while(substr(CodeLine,j,1) = '');
+      437.0                end;
+      438.0                                  /* leftmost comment byte                 */
+      439.0                k = verify(commline,' ');
+      440.0                if k>j then
+      441.0                do;
+      442.0                                  /* code does not overlap comment         */
+      443.0                   Substr(OutPutLine,k) = Substr(Commline,k);
+      444.0                end;
+      445.0                else
+      446.0                do;
+      447.0                                  /* code does overlap comment...          */
+      448.0                   substr(OutPutLine,j+1) = Substr(commline,k);
+      449.0                   if substr(OutPutLine,73,8) ^= '' then
+      450.0                   do;
+      451.0                                  /* ...and there is truncation            */
+      452.0                      substr(OutPutLine,71) = '*/';
+      453.0                      call addtext(i);
+      454.0                   end;
+      455.0                end;
+      456.0             end;
+      457.0          end;
+      458.0       end;
+      459.0       if length(longtext) > 0 then Call Emsg(3,4,'S',
+      460.0               'Comments truncated on these lines:' || longtext);
+      461.0      /*********************************************************************/
+      462.0                                  /* write output lines to file            */
+      463.0       do i = 1 to hbound(OutPut,1);
+      464.0          if i < hbound(OutPut,1) then
+      465.0          do;
+      466.0             if properties.nest(i+1) > properties.nest(i) then
+      467.0             do;
+      468.0                j = find_keyword(CodeOnly(i));
+      469.0                if j > left_padding_L(properties.nest(i)) then
+      470.0                do;
+      471.0                                  /* line to be split                      */
+      472.0                   ol1 = substr(codeOnly(i),1,j-1);
+      473.0                   if CommOnly(i) ^= '' then
+      474.0                   do k = 1 to 72;
+      475.0                      if substr(codeOnly(i),k,1) = ''
+      476.0                      then substr(ol1,k,1) = substr(CommOnly(i),k,1);
+      477.0                   end;
+      478.0                   write file(sourceN) from(Ol1);
+      479.0
+      480.0                   ol2 = left_padding(properties.nest(i)) ||
+      481.0                         substr(CodeOnly(i),j);
+      482.0                   write file(sourceN) from(Ol2);
+      483.0                   linewritten = '1'b;
+      484.0                end;
+      485.0             end;
+      486.0          end;
+      487.0          if ^linewritten
+      488.0          then write file(sourceN) from(OutPutLine);
+      489.0          linewritten = '0'b;
+      490.0       end;
+      491.0                                  /* print output lines                    */
+      492.0       if po = 'YES' then
+      493.0       do;
+      494.0          put skip(1) edit('   Line number (output)')(a);
+      495.0          put skip(1) edit('   | 1=Statement starts on this line')(a);
+      496.0          put skip(1) edit('   | |1=Statement ends  on this line')(a);
+      497.0          put skip(1) edit('   | ||1=Line is all comment')(a);
+      498.0          put skip(1) edit('   | |||1=Nest level change')(a);
+      499.0          put skip(1) edit('   | ||||  Nest level')(a);
+      500.0          put skip(1) edit('   | ||||  | statement keyword')(a);
+      501.0          put skip(1) edit('   | ||||  | |')(a);
+      502.0          do i = 1 to lines;
+      503.0             print.line#      = i;
+      504.0             print.properties = properties(i),by name;
+      505.0             print.outline    = OutPut(i);
+      506.0             put skip(1) edit(String(print))(a);
+      507.0          end;
+      508.0       end;
+      509.0                                  /* print comment-only lines              */
+      510.0       if pc = 'YES' then
+      511.0       do;
+      512.0          put skip(1) edit('   Line number (Comments-only)')(a);
+      513.0          put skip(1) edit('   | 1=Statement starts on this line')(a);
+      514.0          put skip(1) edit('   | |1=Statement endss on this line')(a);
+      515.0          put skip(1) edit('   | ||1=Line is all comment')(a);
+      516.0          put skip(1) edit('   | |||1=Nest level change')(a);
+      517.0          put skip(1) edit('   | ||||  Nest level')(a);
+      518.0          put skip(1) edit('   | ||||  | statement keyword')(a);
+      519.0          put skip(1) edit('   | ||||  | |')(a);
+      520.0          do i = 1 to lines;
+      521.0             print.line#      = i;
+      522.0             print.properties = properties(i),by name;
+      523.0             print.outline    = commOnly(i);
+      524.0             put skip(1) edit(String(print))(a);
+      525.0          end;
+      526.0       end;
+      527.0                                  /* print PLI-only lines                  */
+      528.0       if pp = 'YES' then
+      529.0       do;
+      530.0          put skip(1) edit('   Line number (Code-only)')(a);
+      531.0          put skip(1) edit('   | 1=Statement starts on this line')(a);
+      532.0          put skip(1) edit('   | |1=Statement endss on this line')(a);
+      533.0          put skip(1) edit('   | ||1=Line is all comment')(a);
+      534.0          put skip(1) edit('   | |||1=Nest level change')(a);
+      535.0          put skip(1) edit('   | ||||  Nest level')(a);
+      536.0          put skip(1) edit('   | ||||  | statement keyword')(a);
+      537.0          put skip(1) edit('   | ||||  | |')(a);
+      538.0          do i = 1 to lines;
+      539.0             print.line#      = i;
+      540.0             print.properties = properties(i),by name;
+      541.0             print.outline    = codeOnly(i);
+      542.0             put skip(1) edit(String(print))(a);
+      543.0          end;
+      544.0       end;
+      545.0                                  /* print upper case, modified text       */
+      546.0       if pu = 'YES' then
+      547.0       do;
+      548.0          put skip(1) edit('   Line number (upper case)')(a);
+      549.0          put skip(1) edit('   | 1=Statement starts on this line')(a);
+      550.0          put skip(1) edit('   | |1=Statement endss on this line')(a);
+      551.0          put skip(1) edit('   | ||1=Line is all comment')(a);
+      552.0          put skip(1) edit('   | |||1=Nest level change')(a);
+      553.0          put skip(1) edit('   | ||||  Nest level')(a);
+      554.0          put skip(1) edit('   | ||||  | statement keyword')(a);
+      555.0          put skip(1) edit('   | ||||  | |')(a);
+      556.0          do i = 1 to lines;
+      557.0             print.line#      = i;
+      558.0             print.properties = properties(i),by name;
+      559.0             print.outline    = SourceU(i);
+      560.0             put skip(1) edit(String(print))(a);
+      561.0          end;
+      562.0       end;
+      563.0      qquit:
+      564.0
+      565.0       if allocation(e0)  > 0 then call Prt(e0 ,'I');
+      566.0       if allocation(e4)  > 0 then call Prt(e4 ,'W');
+      567.0       if allocation(e8)  > 0 then call Prt(e8 ,'E');
+      568.0       if allocation(e12) > 0 then call Prt(e12,'S');
+      569.0
+      570.0       newp = maxErr;
+      571.0       call Emsg(1,0,'',newp || ' was maximum error code');
+      572.0       put skip(1) edit('PLI reformatter - complete')(a);
+      573.0       call pliretc(maxErr);
+      574.0      /*********************************************************************/
+      575.0      set_line: proc;
+      576.0       if length(varstr) >= 73 then
+      577.0       do while(substr(varstr,73) ^= '');
+      578.0          varstr = substr(varstr,2);
+      579.0       end;
+      580.0       codeLine = varstr;
+      581.0      end;
+      582.0      /*********************************************************************/
+      583.0      line_up: proc;
+      584.0       dcl non_blank   bin fixed(15);
+      585.0                                  /* try and line up DO-END-SELECT         */
+      586.0       non_blank = verify(CodeLine,' ');
+      587.0       if non_blank > 0
+      588.0       then
+      589.0       if substr(codeLine,non_blank,2) = 'DO' |
+      590.0          substr(codeLine,non_blank,6) = 'SELECT' |
+      591.0          substr(codeLine,non_blank,3) = 'END'
+      592.0       then
+      593.0       do;
+      594.0          tmpLine = leadblanks || substr(CodeLine,non_blank);
+      595.0          if substr(tmpline,73) = ''
+      596.0          then codeline = tmpline;
+      597.0       end;
+      598.0      end;
+      599.0      /*********************************************************************/
+      600.0      find_keyword: proc(kwline) returns(bin fixed(15));
+      601.0       dcl kwline      char(80);
+      602.0       dcl Fkeyword    char(11) var;
+      603.0
+      604.0       dcl xl_kwline   char(80);
+      605.0       dcl (i,j,k,l,m,n) bin fixed(15);
+      606.0
+      607.0       xl_kwline = translate(kwline,
+      608.0              'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      609.0              'abcdefghijklmnopqrstuvwxyz');
+      610.0
+      611.0       l = 0;
+      612.0      find:
+      613.0       do i = lbound(nest_kwds,1) to hbound(nest_kwds,1);
+      614.0          do j = lbound(dlm_b4,1) to hbound(dlm_b4,1);
+      615.0             do k = lbound(dlm_af,1) to hbound(dlm_af,1);
+      616.0
+      617.0                Fkeyword = dlm_b4(j) || nest_kwds(i) || dlm_af(k);
+      618.0                kwd_subsc = i;
+      619.0
+      620.0                l = index(xl_kwline,Fkeyword);
+      621.0                if l > 0 then
+      622.0                do;
+      623.0                                  /* say where the actual keyword is       */
+      624.0                   l = l+1;
+      625.0                   leave find;
+      626.0                end;
+      627.0             end;
+      628.0          end;
+      629.0       end;
+      630.0       return(l);
+      631.0       end find_keyword;
+      632.0      /*********************************************************************/
+      633.0      change_level: proc(thisline,thisline#);
+      634.0       dcl thisline    char(80);
+      635.0       dcl thisline#   bin fixed(15);
+      636.0
+      637.0       dcl (i,j,k,l,m,n) bin fixed(15);
+      638.0
+      639.0                                  /* find keyword with allowed delimiters  */
+      640.0       l = find_keyword(thisline);
+      641.0       if l > 0 then
+      642.0       do;
+      643.0          nest_level = nest_level + nest_value(kwd_subsc);
+      644.0          properties.stmt_kwd_pos(thisline#) = l;
+      645.0                         /* cater for procedure-ends              */
+      646.0          if nest_level < 0 then nest_level = 0;
+      647.0                         /* test whether the nest level changes   */
+      648.0                         /* on this statement or the next         */
+      649.0          if nest_chg_now(kwd_subsc) then
+      650.0              properties.nest(thisline#) = nest_level;
+      651.0       end;
+      652.0
+      653.0       end change_level;
+      654.0      /*********************************************************************/
+      655.0      firstkw: proc(lineno);
+      656.0      /*********************************************************************/
+      657.0      /* return 1st pli keyword                                            */
+      658.0      /* As of March 2000 this subroutine assumes that:                    */
+      659.0      /*                                                                   */
+      660.0      /* (condition-code-prefixes):label: keyword                          */
+      661.0      /*                                                                   */
+      662.0      /* are all on the same line. This is a bold assumption.              */
+      663.0      /*********************************************************************/
+      664.0       dcl kwstring char(80) var;
+      665.0       dcl xword    char(80) var;
+      666.0       dcl lineno   bin fixed(15);
+      667.0
+      668.0       kwstring = strip(uline);
+      669.0       if substr(kwstring,1,1) = '(' then
+      670.0       do;
+      671.0                                  /* condition code prefix                 */
+      672.0                                  /* (assume closed on this line)          */
+      673.0           j = index(kwstring,'):');
+      674.0           kwstring = substr(kwstring,j+1);
+      675.0       end;
+      676.0                                  /* label (assume ONE ONLY - ooh missus)  */
+      677.0       xword = subword(kwstring,1,1);
+      678.0       if substr(xword,length(xword),1) = ':'
+      679.0       then kwstring = substr(kwstring,length(xword)+1);
+      680.0                                  /* get 1st word of string                */
+      681.0       keyword = subword(kwstring,1,1);
+      682.0       if length(keyword) > 0 then
+      683.0       if substr(keyword,1,1) = '%' then keyword = '';
+      684.0                                  /* keyword null, look on next line       */
+      685.0       if keyword ^= ''
+      686.0       then properties.stmt_kwd(i) = keyword;
+      687.0       else
+      688.0       do;
+      689.0          properties.stmt_start(i)   = '0';
+      690.0          properties.stmt_start(i+1) = '1';
+      691.0       end;
+      692.0      end;
+      693.0      /*********************************************************************/
+      694.0                                  /* find rightmost non-blank in 2-72      */
+      695.0      rightmostNB: proc(str) returns(char(1));
+      696.0       dcl str char(80);
+      697.0       dcl (i,j,k,l,m,n) bin fixed(15);
+      698.0
+      699.0       do i = 72 to 2 by -1 while(substr(str,i,1) = '');
+      700.0       end;
+      701.0       if i<2
+      702.0       then return('');
+      703.0       else return(substr(str,i,1));
+      704.0      end;
+      705.0      /*********************************************************************/
+      706.0      addtext: proc(i);
+      707.0      dcl p1     pic '9';
+      708.0      dcl p2     pic '99';
+      709.0      dcl p3     pic '999';
+      710.0      dcl p4     pic '9999';
+      711.0      dcl i      bin fixed(15);
+      712.0
+      713.0       select;
+      714.0          when (i<10)
+      715.0          do;
+      716.0             p1 = i;
+      717.0             if longtext = ''
+      718.0             then longtext = char(p1);
+      719.0             else longtext = longtext || ',' || char(p1);
+      720.0          end;
+      721.0          when (i<100)
+      722.0          do;
+      723.0             p2 = i;
+      724.0             if longtext = ''
+      725.0             then longtext = char(p2);
+      726.0             else longtext = longtext || ',' || char(p2);
+      727.0          end;
+      728.0          when (i<1000)
+      729.0          do;
+      730.0             p3 = i;
+      731.0             if longtext = ''
+      732.0             then longtext = char(p3);
+      733.0             else longtext = longtext || ',' || char(p3);
+      734.0          end;
+      735.0          otherwise
+      736.0          do;
+      737.0             p4 = i;
+      738.0             if longtext = ''
+      739.0             then longtext = char(p4);
+      740.0             else longtext = longtext || ',' || char(p4);
+      741.0          end;
+      742.0       end;
+      743.0      end;
+      744.0      /*********************************************************************/
+      745.0      prt: proc(echar,level);
+      746.0       dcl echar        char(*) var ctl;
+      747.0       dcl level        char(1);
+      748.0       dcl printline    char(80) var;
+      749.0                                  /* array for error messages              */
+      750.0       dcl eback        char(*) var ctl;
+      751.0       dcl (i,j)        bin fixed(15);
+      752.0       dcl linelen      bin fixed(15) init(70);
+      753.0       dcl first        bit(1) auto init('1'b);
+      754.0
+      755.0       put skip(1) edit(level || '-level messages')(a);
+      756.0
+      757.0       do i = allocation(echar) to 1 by -1;
+      758.0                                  /* put error messages in reverse order   */
+      759.0          alloc eback char(10+length(echar)) init(echar);
+      760.0          free echar;
+      761.0       end;
+      762.0                                  /* now print messages in correct order   */
+      763.0       do i = 1 to allocation(eback);
+      764.0                                  /* some error lines may need multiple    */
+      765.0                                  /* lines to print out in full            */
+      766.0      printloop:
+      767.0          do k = 1 to 100 while(eback ^= '');
+      768.0             if length(eback) <= linelen then
+      769.0             do;
+      770.0                put skip(1) edit((05)' ' || eback)(a);
+      771.0                leave printloop;
+      772.0             end;
+      773.0             do j = linelen to 1 by -1
+      774.0                            while(  substr(eback,j,1) ^= ','
+      775.0                                  & substr(eback,j,1) ^= ' ');
+      776.0             end;
+      777.0             put skip(1) edit((05)' ' || substr(eback,1,j))(a);
+      778.0
+      779.0             eback =      substr(eback,j+1);
+      780.0          end;
+      781.0          if k > 100 then put skip(1) edit('Limit exceeded')(a);
+      782.0          free eback;
+      783.0       end;
+      784.0      end prt;
+      785.0      /*********************************************************************/
+      786.0      Emsg: proc(Enum,Ecode,Estore,Etext);
+      787.0
+      788.0      dcl Enum          pic'999';
+      789.0      dcl Ecode         pic'99';
+      790.0      dcl Estore        char(1);
+      791.0      dcl etext         char(*);
+      792.0      dcl vtext         char(10+length(etext)) var auto;
+      793.0      dcl i             bin fixed(15);
+      794.0       vtext =  'PRF' || enum || ' ' || ecode || ' ' || etext;
+      795.0       i = length(vtext);
+      796.0       maxerr = max(maxerr,ecode);
+      797.0
+      798.0       if estore = ''
+      799.0       then
+      800.0          put skip(1) edit(vtext)(a);
+      801.0       else
+      802.0       do;
+      803.0
+      804.0          select(ecode);
+      805.0                                  /* store error messages for each error   */
+      806.0                                  /* level - there may be any number       */
+      807.0             when(0)
+      808.0             do;
+      809.0                alloc e0 char(i);
+      810.0                e0 =  vtext;
+      811.0             end;
+      812.0             when(4)
+      813.0             do;
+      814.0                alloc e4 char(i);
+      815.0                e4 =  vtext;
+      816.0             end;
+      817.0             when(8)
+      818.0             do;
+      819.0                alloc e8 char(i);
+      820.0                e8 =  vtext;
+      821.0             end;
+      822.0             when(12)
+      823.0             do;
+      824.0                alloc e12 char(i);
+      825.0                e12 =  vtext;
+      826.0             end;
+      827.0          end;
+      828.0       end;
+      829.0
+      830.0       end emsg;
+      831.0       END reform;
+      832.0    * process gs nolist nomap noesd;
+      833.0      strip:   proc (instring)  returns(char(32767) var);
+      834.0       dcl instring                 char(*);
+      835.0       dcl (i,j)                    bin fixed(15);
+      836.0       dcl (length,substr,string)   builtin;
+      837.0
+      838.0       do i = 1 to length(instring) while(substr(instring,i,1) = ' ');
+      839.0       end;
+      840.0       do j = length(instring) to 1 by -1 while(substr(instring,j,1) = ' ');
+      841.0       end;
+      842.0
+      843.0       return ( substr(instring,i,j - i+1)  );
+      844.0       end strip;
+      845.0    * process gs nolist nomap;
+      846.0      subword: proc (instring,wordno,words) returns(char(32767) var);
+      847.0       dcl instring        char(*);
+      848.0       dcl (wordno,words)  bin fixed(15);
+      849.0       dcl (i,j,k)         bin fixed(15);
+      850.0       dcl start           bin fixed(15);
+      851.0       dcl (length,substr) builtin;
+      852.0       j = 1;
+      853.0       k = 0;
+      854.0       if words < 1 | wordno < 1 then return('');
+      855.0                                  /* search until the wordcount is met     */
+      856.0       do i = 1 to length(instring) until (k = words);
+      857.0
+      858.0                                  /* ignore intermediate blanks            */
+      859.0          do i = i to length(instring) while (substr(instring,i,1) = ' ');
+      860.0          end;
+      861.0                                  /* store 1st relevant word's  position   */
+      862.0          if j = wordno then start = i;
+      863.0                                  /* count the relevant words found        */
+      864.0          if j >= wordno then k = k + 1;
+      865.0                                  /* count words found so far              */
+      866.0          j = j + 1;
+      867.0                                  /* find the end of the current word      */
+      868.0          do i = i to length(instring) until (substr(instring,i,1)  = ' ');
+      869.0          end;
+      870.0       end;
+      871.0       return(substr(instring,start,i-start));
+      872.0       end subword;
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  /* Reformat a PLI program                           2024.06.18 16:16:59   Page     3
+- Compiler Messages
+0 Message       Line.File Message Description
+0 IBM2670I W       3.0    The parameter to MAIN should be declared as CHAR(*) VARYING.
+  IBM2677I W     103.0    Generated code would be better if the declare for DLM_B4 were changed from AUTOMATIC to
+                          STATIC NONASSIGNABLE.
+  IBM2677I W     104.0    Generated code would be better if the declare for DLM_AF were changed from AUTOMATIC to
+                          STATIC NONASSIGNABLE.
+  IBM2677I W     105.0    Generated code would be better if the declare for NEST_KWDS were changed from AUTOMATIC to
+                          STATIC NONASSIGNABLE.
+  IBM2677I W     107.0    Generated code would be better if the declare for NEST_CHG_NOW were changed from AUTOMATIC to
+                          STATIC NONASSIGNABLE.
+  IBM2677I W     109.0    Generated code would be better if the declare for NEST_VALUE were changed from AUTOMATIC to
+                          STATIC NONASSIGNABLE.
+  IBM1200I W     173.0    Use of DATE built-in function may cause problems.
+  IBM1211I W     349.0    Source with length 81 in string assignment has length greater than the length 80 of the
+                          target CODELINE.
+  IBM1221I W     365.0    Statement uses 65550 bytes for temporaries.
+  IBM1221I W     367.0    Statement uses 65550 bytes for temporaries.
+  IBM1211I W     391.0    Source with length 81 in string assignment has length greater than the length 80 of the
+                          target COMMLINE.
+  IBM1221I W     416.0    Statement uses 65570 bytes for temporaries.
+  IBM1213I W     575.0    The procedure SET_LINE is not referenced.
+  IBM1214I W     677.0    A dummy argument will be created for argument number 1 in entry reference SUBWORD.
+  IBM1214I W     681.0    A dummy argument will be created for argument number 1 in entry reference SUBWORD.
+- File Reference Table
+0   File    Included From  Name
+0      0                   AVL.USER.PLI(FORM01)
+- Component    Return Code    Messages (Total/Suppressed)    Time
+0 Compiler         4               18  /  3                  10 secs
+0 End of compilation of REFORM
+

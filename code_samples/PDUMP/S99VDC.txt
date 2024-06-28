@@ -1,0 +1,48 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20220429)                           2024.06.20 11:21:09   Page     1
+-                     Options Specified
+0  Install:
+0  Command: SOURCE,RULES(LAXDCL)
+0  Install:
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  S99VDC: PROCEDURE (DDN,S99RC,S99ERR,S99INF)         2024.06.20 11:21:09   Page     2
+0 Compiler Source
+0    Line.File
+0       1.0      S99VDC: PROCEDURE (DDN,S99RC,S99ERR,S99INF) REORDER;                    00010000
+        2.0         DECLARE                                                              00020000
+        3.0           1 S99RB,                                                           00030000
+        4.0             2 S99VERB        FIXED BIN(15,0) INIT(5124),                     00040000
+        5.0             2 S99FLAG1       FIXED BIN(15,0) INIT(0),                        00050000
+        6.0             2 S99ERROR       FIXED BIN(15,0) INIT(0),                        00060000
+        7.0             2 S99INFO        FIXED BIN(15,0) INIT(0),                        00070000
+        8.0             2 S99TXTPP       POINTER         INIT((ADDR(S99TUPL))),          00080000
+        9.0             2 RESERVED       FIXED BIN(31,0) INIT(0),                        00090000
+       10.0             2 S99FLAG2       FIXED BIN(31,0) INIT(0),                        00100000
+       11.0           S99TUPL            POINTER INIT(                                   00110000
+       12.0               (ADDR(KEY))),                                                  00120000
+       13.0           1 S99TUNIT,                                                        00130000
+       14.0             2 KEY            FIXED BIN(15,0) INIT(1),                        00140000
+       15.0             2 #              FIXED BIN(15,0) INIT(1),                        00150000
+       16.0             2 PARM           CHAR(8) VARYING INIT(DDN),                      00160000
+       17.0           S80XPTR            BIT(8)          BASED(S80PTR),                  00170000
+       18.0           S80PTR             POINTER,                                        00180000
+       19.0           ADDR               BUILTIN,                                        00190000
+       20.0           DDN                CHAR(*) VARYING,                                00200000
+       21.0           (S99RC,                                                            00210000
+       22.0            S99ERR,                                                           00220000
+       23.0            S99INF)           FIXED BIN(15,0),                                00230000
+       24.0           SVC99              ENTRY(FIXED BIN(15,0))                          00240000
+       25.0                                 RETURNS(FIXED BIN(15,0));                    00250000
+       26.0         S80PTR  = ADDR(S99TUPL);                                             00260000
+       27.0         S80XPTR = '10000000'B;                                               00270000
+       28.0         S99RC   = SVC99(S99VERB);                                            00280000
+       29.0         S99ERR  = S99ERROR;                                                  00290000
+       30.0         S99INF  = S99INFO;                                                   00300000
+       31.0      END S99VDC;                                                             00310000
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  S99VDC: PROCEDURE (DDN,S99RC,S99ERR,S99INF)         2024.06.20 11:21:09   Page     3
+- No Compiler Messages
+0 File Reference Table
+0   File    Included From  Name
+0      0                   AVL.PDUMP.PLI(S99VDC)
+- Component    Return Code    Messages (Total/Suppressed)    Time
+0 Compiler         0                0  /  0                   1 secs
+0 End of compilation of S99VDC
+

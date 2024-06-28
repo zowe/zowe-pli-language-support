@@ -497,7 +497,7 @@
    IBM1214I W     322.0    A dummy argument will be created for argument number 2 in ENTRY reference SETVAR.
  - File Reference Table
  0   File    Included From  Name
- 0      0                   AVL.IBAGROUP.PLI(RXGIM)
+ 0      0                   AVL.USER.PLI(RXGIM)
         1         102.0     SYS1.MACLIB(GIMMPLI)
  - Component    Return Code    Messages (Total/Suppressed)    Time
  0 Compiler         4                8  /  4                   4 secs

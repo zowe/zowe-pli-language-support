@@ -1,0 +1,11 @@
+-NUM: PROCEDURE(ST,LN) RETURNS(CHAR(3) VARYING) REORDER;                00010000
+    DECLARE                                                             00020000
+      ST                 CHAR(*) VARYING,                               00030000
+      LN                 FIXED BIN(15,0),                               00040000
+      NM                 FIXED BIN(31,0) INIT(0),                       00050000
+      STR                CHAR(3) VARYING INIT('');                      00060000
+    NM = ST;                                                            00070000
+    STR = SUBSTR('   ',1,LN);                                           00080000
+    UNSPEC(STR) = UNSPEC(LN) || SUBSTR(UNSPEC(NM),33-8*LN);             00090000
+    RETURN(STR);                                                        00100000
+ END NUM;                                                               00110000

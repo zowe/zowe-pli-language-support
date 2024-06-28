@@ -1,0 +1,232 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20220429)                           2024.06.19 07:55:33   Page     1
+-                     Options Specified
+0  Install:
+0  Command: SOURCE,RULES(LAXDCL)
+0  Install:
+15655-PL6  IBM(R) Enterprise PL/I for z/OS   SCANNER: /* PDS SCAN ROUTINE */                    2024.06.19 07:55:33   Page     2
+0 Compiler Source
+0    Line.File
+0       1.0       SCANNER: /* PDS SCAN ROUTINE */                                        00001000
+        2.0                PROC OPTIONS(MAIN) REORDER;                                   00002000
+        3.0       DECLARE                                                                00003000
+        4.0          SPDSGET EXTERNAL ENTRY,                                             00004000
+        5.0          CONTROL  FILE EXTERNAL INPUT,                                       00005000
+        6.0          STRINGS  FILE EXTERNAL INPUT,                                       00006000
+        7.0          PRINT    FILE EXTERNAL OUTPUT PRINT,                                00007000
+        8.0          PRINT2   FILE EXTERNAL OUTPUT PRINT,                                00008000
+        9.0          PRINT3   FILE EXTERNAL OUTPUT PRINT,                                00009000
+       10.0          (LENGTH,SUBSTR,INDEX,HIGH,DATAFIELD,ONSOURCE) BUILTIN,              00010000
+       11.0          NOMEMS   PIC'ZZZ9'     INIT(0),                                     00011000
+       12.0          COUNT    PIC'ZZZ9'     INIT(0),                                     00012000
+       13.0          TOTHITS  PIC'ZZZ9'     INIT(0),                                     00013000
+       14.0          LINE     CHAR(80)      INIT (' '),                                  00014000
+       15.0          SPLATS   CHAR(80)      INIT((80)'*'),                               00015000
+       16.0          PRT2TITL CHAR(80)      INIT(                                        00016000
+       17.0           '* CROSS REFERENCE OF MEMBERS WITH HITS ON MULTIPLE STRINGS'),     00017000
+       18.0          PRT3TITL CHAR(80)      INIT(                                        00018000
+       19.0           '* LIST OF ALL MEMBERS WITH HITS ON ANY STRINGS'),                 00019000
+       20.0          (MEMBER,STRTMEMBER,ENDMEMBER,LASTMEMBER,YREFMEMBER)                 00020000
+       21.0                   CHAR(8)       INIT(' ')        STATIC,                     00021000
+       22.0          STR(20)  CHAR(80)      INIT(' ')        VARYING,                    00022000
+       23.0          STX(20)  CHAR(80)      INIT(' ')        VARYING,                    00023000
+       24.0          LASTHIT  CHAR(80)      INIT('BRQFMLTZ') VARYING,                    00024000
+       25.0          (SUBSCAN,NCMT,NEW,XREF,YREF,ZREF,NEW2,NEW3,SCANON)                  00025000
+       26.0                   BIT(1)        INIT('0'B)       STATIC,                     00026000
+       27.0          BEGIN    FIXED BIN(15) INIT(1)          STATIC,                     00027000
+       28.0          END      FIXED BIN(15) INIT(80)         STATIC,                     00028000
+       29.0          (I,J,IP) FIXED BIN(15) INIT(0)          STATIC,                     00029000
+       30.0          K        FIXED BIN(15) INIT(0),                                     00030000
+       31.0          MEMHITS  FIXED BIN(15) INIT(0),                                     00031000
+       32.0          COMMENTS CHAR(3)       INIT('NO')       STATIC;                     00032000
+       33.0      /*                                                                      00033000
+       34.0      */                                                                      00034000
+       35.0                                                                              00035000
+       36.0       ON ENDFILE(CONTROL)  GO TO READSTR;                                    00036000
+       37.0                                                                              00037000
+       38.0       ON NAME(CONTROL)                                                       00038000
+       39.0          BEGIN;                                                              00039000
+       40.0          PUT FILE(PRINT)                                                     00040000
+       41.0          SKIP EDIT('*** ERROR - UNRECOGNIZED KEYWORD ',DATAFIELD)            00041000
+       42.0                    (A,A);                                                    00042000
+       43.0          STOP;                                                               00043000
+       44.0          END;                                                                00044000
+       45.0                                                                              00045000
+       46.0       ON UNDEFINEDFILE(CONTROL) GO TO READSTR;                               00046000
+       47.0                                                                              00047000
+       48.0       ON CONVERSION                                                          00048000
+       49.0          BEGIN;                                                              00049000
+       50.0          PUT FILE(PRINT)                                                     00050000
+       51.0          SKIP EDIT('*** ERROR PROCESSING  ',ONSOURCE,                        00051000
+       52.0               'POSSIBLE MISSING DELIMITER (QUOTE MARK).')(A,A,SKIP,A);       00052000
+       53.0          STOP;                                                               00053000
+       54.0          END;                                                                00054000
+       55.0                                                                              00055000
+       56.0       ON ENDFILE(STRINGS)                                                    00056000
+       57.0          BEGIN;                                                              00057000
+       58.0          IF NCMT THEN PUT FILE(PRINT) SKIP(2)                                00058000
+       59.0               LIST('NO '' * COMMENT '' CARDS WERE SEARCHED');                00059000
+       60.0          IF   STRTMEMBER = '        '                                        00060000
+       61.0          THEN SCANON = '1'B;                                                 00061000
+       62.0          ELSE PUT FILE(PRINT) SKIP EDIT('STARTING MEMBER - ',STRTMEMBER)(A); 00062000
+       63.0          IF   ENDMEMBER ^= '        '                                        00063000
+       64.0          THEN PUT FILE(PRINT) SKIP EDIT('ENDING   MEMBER - ',ENDMEMBER)(A);  00064000
+       65.0          ELSE ENDMEMBER = '99999999';                                        00065000
+       66.0          PUT FILE(PRINT)                                                     00066000
+       67.0          EDIT('   MEMBER',                                                   00067000
+       68.0                        'STRING','SCAN RANGE',BEGIN,'-',END+BEGIN-1,(80)'_')  00068000
+       69.0            (COL(1),A,COL(10),A,COL(20),A,F(2),A,F(2),COL(1+BEGIN),A(END));   00069000
+       70.0          IF J > 0 THEN GO TO READCARDS;   ELSE STOP;                         00070000
+       71.0          END;                                                                00071000
+       72.0                                                                              00072000
+       73.0          GET FILE(CONTROL)  DATA(BEGIN,END,COMMENTS,STRTMEMBER,ENDMEMBER);   00073000
+       74.0                                                                              00074000
+       75.0       READSTR:                                                               00075000
+       76.0          END = END - BEGIN + 1;                                              00076000
+       77.0          IF COMMENTS = 'NO' THEN NCMT = '1'B;                                00077000
+       78.0          IF BEGIN ^= 1  |  END ^= 80  THEN SUBSCAN = '1'B;                   00078000
+       79.0          CLOSE FILE(CONTROL);                                                00079000
+       80.0          PUT FILE(PRINT)                                                     00080000
+       81.0          SKIP(3) LIST('THE SEARCH IS FOR THE FOLLOWING STRINGS');            00081000
+       82.0          PUT FILE(PRINT)                                                     00082000
+       83.0          SKIP;                                                               00083000
+       84.0          DO I = 1 TO 20;                                                     00084000
+       85.0          GET FILE(STRINGS) LIST(STR(I));                                     00085000
+       86.0           J = I;                                                             00086000
+       87.0          PUT FILE(PRINT)                                                     00087000
+       88.0          SKIP EDIT('''',STR(I),'''')(COL(5),A,A,A);                          00088000
+       89.0          END;                                                                00089000
+       90.0                                                                              00090000
+       91.0        READCARDS:                                                            00091000
+       92.0          MEMBER = STRTMEMBER;                                                00092000
+       93.0          DO  WHILE ((MEMBER ^= HIGH(8))                                      00093000
+       94.0                    &(MEMBER <= ENDMEMBER));                                  00094000
+       95.0            CALL SPDSGET(MEMBER,LINE);                                        00095000
+       96.0            IF   MEMBER >= STRTMEMBER                                         00096000
+       97.0            THEN SCANON = '1'B;                                               00097000
+       98.0            IF   SCANON = '1'B                                                00098000
+       99.0            THEN DO;                                                          00099000
+      100.0              IF MEMBER ^= LASTMEMBER                                         00100000
+      101.0              THEN DO;                                                        00101000
+      102.0                 NOMEMS = NOMEMS + 1;                                         00102000
+      103.0                 IF   (^NEW)                                                  00103000
+      104.0                 THEN DO;                                                     00104000
+      105.0                   YREF = XREF;                                               00105000
+      106.0                   YREFMEMBER = LASTMEMBER;                                   00106000
+      107.0                 END;                                                         00107000
+      108.0                 XREF = '0'B;                                                 00108000
+      109.0                 LASTHIT = 'BRQFMLTZ';                                        00109000
+      110.0                 NEW = '1'B;                                                  00110000
+      111.0                 LASTMEMBER = MEMBER;                                         00111000
+      112.0                 END;                                                         00112000
+      113.0            IF SUBSTR(LINE,1,1) = '*' & NCMT THEN;                            00113000
+      114.0            ELSE DO I = 1 TO J;                                               00114000
+      115.0                 IF SUBSCAN                                                   00115000
+      116.0                 THEN IP = INDEX(SUBSTR(LINE,BEGIN,END),STR(I));              00116000
+      117.0                 ELSE IP = INDEX(LINE,STR(I));                                00117000
+      118.0                 IF IP > 0                                                    00118000
+      119.0                 THEN DO;                                                     00119000
+      120.0                      TOTHITS = TOTHITS + 1;                                  00120000
+      121.0                      IF   (STR(I) ^= LASTHIT & LASTHIT ^= 'BRQFMLTZ')        00121000
+      122.0                      THEN DO;                                                00122000
+      123.0                        XREF = '1'B;                                          00123000
+      124.0                      END;                                                    00124000
+      125.0                      LASTHIT = STR(I);                                       00125000
+      126.0                      IF NEW                                                  00126000
+      127.0                      THEN DO;                                                00127000
+      128.0                        IF   YREF                                             00128000
+      129.0                        THEN DO;                                              00129000
+      130.0                          PUT FILE(PRINT) SKIP(1) EDIT                        00130000
+      131.0                            ('+++++   ',                                      00131000
+      132.0                             YREFMEMBER,' HAD HITS ON ',MEMHITS,' STRING(S)', 00132000
+      133.0                             '   +++++')                                      00133000
+      134.0                            (A(8),A(8),A(13),F(2),A(10));                     00134000
+      135.0                           PUT FILE(PRINT) SKIP(2);                           00135000
+      136.0                           IF ^(NEW2) THEN DO;                                00136000
+      137.0                             NEW2 = '1'B;                                     00137000
+      138.0                             PUT FILE(PRINT2) PAGE    EDIT                    00138000
+      139.0                                 (SPLATS,PRT2TITL,SPLATS)                     00139000
+      140.0                                 ((3)(COL(1),A(80)));                         00140000
+      141.0                           END;                                               00141000
+      142.0                           PUT FILE(PRINT2) SKIP(1) EDIT                      00142000
+      143.0                            (YREFMEMBER,' HAD HITS ON ',MEMHITS,' STRING(S)') 00143000
+      144.0                            (A(8),A(13),F(2),A(10));                          00144000
+      145.0                           DO K = 1 TO MEMHITS;                               00145000
+      146.0                             PUT FILE(PRINT2) SKIP EDIT(STX(K))(X(21),A(8));  00146000
+      147.0                           END;                                               00147000
+      148.0                         END;                                                 00148000
+      149.0                         STX = (20)' ';                                       00149000
+      150.0                         MEMHITS = 0;                                         00150000
+      151.0                         NEW = '0'B;                                          00151000
+      152.0                         COUNT = COUNT + 1;                                   00152000
+      153.0                         PUT FILE(PRINT)                                      00153000
+      154.0                         SKIP(2) EDIT('-> ',MEMBER,' <-')(A(3),A(8),A(3));    00154000
+      155.0                         IF ^(NEW3) THEN DO;                                  00155000
+      156.0                              NEW3 = '1'B;                                    00156000
+      157.0                              PUT FILE(PRINT3) PAGE    EDIT                   00157000
+      158.0                                 (SPLATS,PRT3TITL,SPLATS)                     00158000
+      159.0                                 ((3)(COL(1),A(80)));                         00159000
+      160.0                         END;                                                 00160000
+      161.0                         PUT FILE(PRINT3) SKIP    EDIT                        00161000
+      162.0                                 (MEMBER)(A);                                 00162000
+      163.0                      END;                                                    00163000
+      164.0                      ZREF = '1'B;                                            00164000
+      165.0                      DO K = 1 TO MEMHITS;                                    00165000
+      166.0                        IF   STX(K) = STR(I)                                  00166000
+      167.0                        THEN ZREF = '0'B;                                     00167000
+      168.0                      END;                                                    00168000
+      169.0                      IF ZREF THEN DO;                                        00169000
+      170.0                        MEMHITS = MEMHITS + 1;                                00170000
+      171.0                        STX(MEMHITS) = STR(I);                                00171000
+      172.0                      END;                                                    00172000
+      173.0                                                                              00173000
+      174.0                      PUT FILE(PRINT) SKIP EDIT(LINE)                         00174000
+      175.0                           (COL(1),A(80));                                    00175000
+      176.0                      PUT FILE(PRINT) SKIP EDIT((80)'"')                      00176000
+      177.0                           (COL(1+BEGIN+IP-2),A(LENGTH(STR(I))));             00177000
+      178.0                      END;                                                    00178000
+      179.0                 END;                                                         00179000
+      180.0             END; /* SCANON ON */                                             00180000
+      181.0          END; /* MEMBER ^= HIGH(8) */                                        00181000
+      182.0                                                                              00182000
+      183.0          IF   YREF                                                           00183000
+      184.0          THEN DO;                                                            00184000
+      185.0            PUT FILE(PRINT) SKIP(1) EDIT                                      00185000
+      186.0              ('+++++   ',                                                    00186000
+      187.0               YREFMEMBER,' HAD HITS ON ',MEMHITS,' STRING(S)',               00187000
+      188.0               '   +++++')                                                    00188000
+      189.0              (A(8),A(8),A(13),F(2),A(10));                                   00189000
+      190.0            PUT FILE(PRINT) SKIP(2);                                          00190000
+      191.0            IF ^(NEW2) THEN DO;                                               00191000
+      192.0              NEW2 = '1'B;                                                    00192000
+      193.0              PUT FILE(PRINT2) PAGE    EDIT                                   00193000
+      194.0                  (SPLATS,PRT2TITL,SPLATS)                                    00194000
+      195.0                  ((3)(COL(1),A(80)));                                        00195000
+      196.0            END;                                                              00196000
+      197.0            PUT FILE(PRINT2) SKIP(1) EDIT                                     00197000
+      198.0              (YREFMEMBER,' HAD HITS ON ',MEMHITS,' STRING(S)')               00198000
+      199.0              (A(8),A(13),F(2),A(10));                                        00199000
+      200.0            DO K = 1 TO MEMHITS;                                              00200000
+      201.0              PUT FILE(PRINT2) SKIP EDIT(STX(K))(X(21),A(8));                 00201000
+      202.0            END;                                                              00202000
+      203.0          END;                                                                00203000
+      204.0                                                                              00204000
+      205.0          PUT SKIP(2) FILE(PRINT) LIST                                        00205000
+      206.0            ('TOTAL MEMBERS SCANNED   - '||NOMEMS);                           00206000
+      207.0          PUT SKIP(1) FILE(PRINT) LIST                                        00207000
+      208.0            ('TOTAL HITS              - '||TOTHITS);                          00208000
+      209.0          PUT SKIP(1) FILE(PRINT) LIST                                        00209000
+      210.0            ('TOTAL MEMBERS WITH HITS - '||COUNT);                            00210000
+      211.0                                                                              00211000
+      212.0          END;                                                                00212000
+15655-PL6  IBM(R) Enterprise PL/I for z/OS   SCANNER: /* PDS SCAN ROUTINE */                    2024.06.19 07:55:33   Page     3
+- Compiler Messages
+0 Message       Line.File Message Description
+0 IBM1208I W      23.0    INITIAL list for the array STX contains only one item.
+  IBM1208I W      22.0    INITIAL list for the array STR contains only one item.
+- File Reference Table
+0   File    Included From  Name
+0      0                   AVL.USER.PLI(SCANNER)
+- Component    Return Code    Messages (Total/Suppressed)    Time
+0 Compiler         4                3  /  1                   4 secs
+0 End of compilation of SCANNER
+

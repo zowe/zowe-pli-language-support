@@ -185,7 +185,7 @@
  - No Compiler Messages
  0 File Reference Table
  0   File    Included From  Name
- 0      0                   AVL.IBAGROUP.PLI(DB2VRM)
+ 0      0                   AVL.USER.PLI(DB2VRM)
  - Component    Return Code    Messages (Total/Suppressed)    Time
  0 SQL              0                2  /  2                   1 secs
    Compiler         0                1  /  1                   1 secs

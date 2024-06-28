@@ -1,0 +1,125 @@
+  SCANCMS: PROC(INPARM) OPTIONS(MAIN) REORDER;                          SCA00080
+  DECLARE                                                               SCA00090
+     INPARM CHAR(80) VAR,                                               SCA00100
+     LINE CHAR(80) INIT(' '),                                           SCA00110
+     X$   CHAR(72) VAR INIT(' '),                                       SCA00120
+     PLIXOPT CHAR(100) VAR INIT(' ') STATIC EXTERNAL,                   SCA00130
+     (FN,FT,LASTFN,LASTFT)  CHAR(8)  STATIC  INIT(' '),                 SCA00140
+     (FM,LASTFM)  CHAR(2)  STATIC  INIT(' '),                           SCA00150
+     STR(20) CHAR(72) VARYING INIT(' '),                                SCA00160
+     ENDDIR CHAR(1) INIT('0'),                                          SCA00170
+     (NEW) BIT(1) STATIC INIT('0'B),                                    SCA00180
+     (I,J,IP) FIXED BIN(15) INIT(0),                                    SCA00190
+     BEGIN    FIXED BIN(15) INIT(1),                                    SCA00200
+     END      FIXED BIN(15) INIT(80),                                   SCA00210
+     MSG      FIXED BIN(15) INIT(0),                                    SCA00220
+     GT256    FIXED BIN(15) INIT(0),                                    SCA00230
+     NOFILES  PIC'ZZZ9'     INIT(0),                                    SCA00240
+     COUNT    PIC'ZZZ9'     INIT(0),                                    SCA00250
+     TOTHITS  PIC'ZZZ9'     INIT(0),                                    SCA00260
+     HITS     PIC'ZZ9'      INIT(0),                                    SCA00270
+     (MOD,ADDR,SUBSTR,LENGTH,INDEX,ONSOURCE) BUILTIN,                   SCA00280
+     ENDSTR EXTERNAL CONDITION,                                         SCA00290
+     PRINT  EXTERNAL FILE PRINT,                                        SCA00300
+     SYSPRINT  EXTERNAL FILE PRINT,                                     SCA00310
+     SCANEX EXTERNAL FILE,                                              SCA00320
+     SCANCMA EXTERNAL ENTRY OPTIONS(ASM,INTER);                         SCA00330
+                                                                        SCA00340
+  ON CONDITION(ENDSTR)                                                  SCA00350
+     BEGIN;                                                             SCA00360
+  /* PUT FILE(PRINT)                                                    SCA00370
+     EDIT('FILEID',                                                     SCA00380
+                   'STRING','SCAN RANGE',BEGIN,'-',END,(80)'_')         SCA00390
+       (COL(1),A,COL(20),A,COL(30),A,F(2),A,F(2),COL(1+BEGIN),A(END))*  SCA00400
+  */                                                                    SCA00410
+     IF J > 0 THEN GO TO READCARDS;   ELSE STOP;                        SCA00420
+     END;                                                               SCA00430
+                                                                        SCA00440
+  ON ERROR                                                              SCA00450
+     BEGIN;                                                             SCA00460
+       PUT DATA;                                                        SCA00470
+     END;                                                               SCA00480
+                                                                        SCA00490
+     IF INPARM ^= '' THEN MSG = 1;                                      SCA00500
+     PUT FILE(PRINT)                                                    SCA00510
+     LIST('THE SEARCH IS FOR THE FOLLOWING STRINGS');                   SCA00520
+     PUT FILE(PRINT)                                                    SCA00530
+     SKIP;                                                              SCA00540
+     DISPLAY ('ENTER ONE STRING AT A TIME - NULL TO END');              SCA00550
+     DO I = 1 TO 20;                                                    SCA00560
+       DISPLAY(' ')                                                     SCA00570
+       REPLY(STR(I));                                                   SCA00580
+       IF STR(I) = '' THEN SIGNAL CONDITION(ENDSTR);                    SCA00590
+       J = I;                                                           SCA00600
+       PUT FILE(PRINT)                                                  SCA00610
+       SKIP EDIT('''',STR(I),'''')(COL(5),A,A,A);                       SCA00620
+     END;                                                               SCA00630
+                                                                        SCA00640
+   READCARDS:                                                           SCA00650
+     CALL SCANCMA(FN,FT,FM,LINE);                                       SCA00660
+     DO  WHILE (FN ^= '99999EOF');                                      SCA00670
+       IF SUBSTR(LINE,1,8) ^= '99999BAD'                                SCA00680
+       THEN DO;                                                         SCA00690
+         IF FN ^= LASTFN | FT ^= LASTFT | FM ^= LASTFM                  SCA00700
+         THEN DO;                                                       SCA00710
+           NOFILES = NOFILES + 1;                                       SCA00720
+           X$ = LASTFN||' '||LASTFT||' '||LASTFM;                       SCA00730
+           IF   (HITS > 0)                                              SCA00740
+           THEN X$ = X$||' - STRING(S) FOUND '||HITS||' TIMES';         SCA00750
+           IF   (GT256 > 0)                                             SCA00760
+           THEN X$ = X$||' - LRECL > 256 - NOT SCANNED';                SCA00770
+           IF MSG = 0 THEN                                              SCA00780
+           DISPLAY(X$);                                                 SCA00790
+           HITS   = 0;                                                  SCA00800
+           GT256  = 0;                                                  SCA00810
+           NEW    = '1'B;                                               SCA00820
+           LASTFN = FN;                                                 SCA00830
+           LASTFT = FT;                                                 SCA00840
+           LASTFM = FM;                                                 SCA00850
+         END;                                                           SCA00860
+                                                                        SCA00870
+         IF   SUBSTR(LINE,1,4) = '>256'                                 SCA00880
+         THEN GT256 = 1;                                                SCA00890
+                                                                        SCA00900
+         ELSE DO;                                                       SCA00910
+           DO I = 1 TO J;                                               SCA00920
+             IP = INDEX(LINE,STR(I));                                   SCA00930
+             IF IP > 0                                                  SCA00940
+             THEN DO;                                                   SCA00950
+               IF NEW                                                   SCA00960
+               THEN DO;                                                 SCA00970
+                 NEW = '0'B;                                            SCA00980
+                 COUNT = COUNT + 1;                                     SCA00990
+                 PUT FILE(SCANEX)                                       SCA01000
+                  SKIP    EDIT(' &1',' &2 ',FN,' ',FT,' ',FM)           SCA01010
+                              (A(3),A(4),A(8),A(1),A(8),A(1),A(2));     SCA01020
+                 PUT FILE(PRINT)                                        SCA01030
+                  SKIP(3) EDIT(FN,' ',FT,' ',FM,' ',(59)'=')            SCA01040
+                              (A(8),A(1),A(8),A(1),A(2),A(1),A(59));    SCA01050
+                 PUT FILE(PRINT) SKIP;                                  SCA01060
+               END;                                                     SCA01070
+               HITS    = HITS    + 1;                                   SCA01080
+               TOTHITS = TOTHITS + 1;                                   SCA01090
+               PUT FILE(PRINT) SKIP EDIT(LINE)                          SCA01100
+                 (COL(1),A(80));                                        SCA01110
+               PUT FILE(PRINT) SKIP EDIT((80)'"')                       SCA01120
+                 (COL(IP),A(LENGTH(STR(I))));                           SCA01130
+             END;                                                       SCA01140
+           END;                                                         SCA01150
+         END;                                                           SCA01160
+       END;                                                             SCA01170
+       CALL SCANCMA(FN,FT,FM,LINE);                                     SCA01180
+     END;                                                               SCA01190
+                                                                        SCA01200
+     X$ = LASTFN||' '||LASTFT||' '||LASTFM;                             SCA01210
+     IF   (HITS > 0)                                                    SCA01220
+     THEN X$ = X$||' - STRING(S) FOUND '||HITS||' TIMES';               SCA01230
+     IF   (GT256 > 0)                                                   SCA01240
+     THEN X$ = X$||' - LRECL > 256 - NOT SCANNED';                      SCA01250
+     IF MSG = 0 THEN                                                    SCA01260
+     DISPLAY(X$);                                                       SCA01270
+                                                                        SCA01280
+     X$ = 'TOTAL FILES SCANNED   - '||NOFILES;  DISPLAY(X$);            SCA01290
+     X$ = 'TOTAL FILES WITH HITS - '||COUNT;    DISPLAY(X$);            SCA01300
+     X$ = 'TOTAL HITS            - '||TOTHITS;  DISPLAY(X$);            SCA01310
+     END SCANCMS;                                                       SCA01320

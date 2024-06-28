@@ -1,0 +1,133 @@
+   CALC: PROCEDURE(X$) OPTIONS (MAIN);                                  CAL00080
+                                                                        CAL00090
+      DCL X$ CHAR(72) VAR;                                              CAL00100
+      DCL IHESARC ENTRY(FIXED BIN(31));                                 CAL00110
+      DCL XANS FIXED BIN(15);                                           CAL00120
+      DCL (OT1,OT2,OT3,OT4,OT5) CHAR(80) VAR;                           CAL00130
+      DCL AOP CHAR(2) ;                                                 CAL00140
+      DCL POA CHAR(3) ;                                                 CAL00150
+      DCL TRG_FLG CHAR (3) INIT ('ON') ;                                CAL00160
+      DCL XFLAG FIXED BIN(15) INIT(0);                                  CAL00170
+                                                                        CAL00180
+      ON CONVERSION BEGIN;                                              CAL00190
+        DISPLAY('INVALID INPUT');                                       CAL00200
+        GO TO EXIT;                                                     CAL00210
+        END;                                                            CAL00220
+                                                                        CAL00230
+      ON ZERODIVIDE BEGIN;                                              CAL00240
+        DISPLAY('DIVISION BY ZERO NOT ALLOWED');                        CAL00250
+        GO TO EXIT;                                                     CAL00260
+        END;                                                            CAL00270
+                                                                        CAL00280
+      IF SUBSTR(X$,1,1) = '?' THEN DO;                                  CAL00290
+        DISPLAY('CALC WILL PERFORM THE FOLLOWING OPERATIONS:    ');     CAL00300
+        DISPLAY(' X + Y                                         ');     CAL00310
+        DISPLAY(' X - Y                                         ');     CAL00320
+        DISPLAY(' X * Y                                         ');     CAL00330
+        DISPLAY(' X / Y                                         ');     CAL00340
+        DISPLAY(' X MO Y (MODULUS OF X BY Y)                    ');     CAL00350
+        DISPLAY(' X ** Y (X TO THE POWER Y)                     ');     CAL00360
+        DISPLAY(' X SQ ( SQUARE ROOT)                           ');     CAL00370
+        DISPLAY(' X SI ( SIN OF X IN DEGREES)                   ');     CAL00380
+        DISPLAY(' X CO ( COS OF X IN DEGREES)                   ');     CAL00390
+        DISPLAY(' X TA ( TAN OF X IN DEGREES)                   ');     CAL00400
+        DISPLAY('                                               ');     CAL00410
+        DISPLAY(' RESULT TYPED. IF ARGUMENT X IS PRECEEDED BY   ');     CAL00420
+        DISPLAY(' THE LETTER X, I.E. CALC X3 * 4, THE RESULT    ');     CAL00430
+        DISPLAY(' WILL BE AN INTEGER IN THE RETURN CODE.        ');     CAL00440
+        GOTO EXIT;                                                      CAL00450
+        END;                                                            CAL00460
+                                                                        CAL00470
+      J = 72;                                                           CAL00480
+      DO I = 1 TO J BY 1 WHILE (SUBSTR(X$,1,1) = ' ');                  CAL00490
+        X$ = SUBSTR (X$,2,J-1);                                         CAL00500
+        J = J - 1;                                                      CAL00510
+        END;                                                            CAL00520
+                                                                        CAL00530
+      A1 = INDEX ( X$, ' ') ;                                           CAL00540
+      AX = INDEX ( X$, 'X') ;                                           CAL00550
+      IF AX ^= 0 THEN DO;                                               CAL00560
+        XFLAG = 1;                                                      CAL00570
+        A1 = A1 - 1;                                                    CAL00580
+        X$ = SUBSTR(X$,2,A1);                                           CAL00590
+        END;                                                            CAL00600
+      ARG1 = SUBSTR (X$,1,A1) ;                                         CAL00610
+      X$ = SUBSTR (X$,A1+1,J-A1);                                       CAL00620
+                                                                        CAL00630
+      DO I = 1 TO J BY 1 WHILE (SUBSTR(X$,1,1) = ' ');                  CAL00640
+        X$ = SUBSTR (X$,2,J-1);                                         CAL00650
+        J = J - 1 ;                                                     CAL00660
+        END;                                                            CAL00670
+                                                                        CAL00680
+      AOP  = SUBSTR (X$,1,2) ;                                          CAL00690
+      POA  = SUBSTR (X$,1,3) ;                                          CAL00700
+      X$ = SUBSTR (X$,3,J-2);                                           CAL00710
+                                                                        CAL00720
+      IF (AOP = '+ ') |                                                 CAL00730
+          (AOP = '- ') |                                                CAL00740
+           (AOP = '* ') |                                               CAL00750
+             (AOP = '/ ') |                                             CAL00760
+              (AOP = 'MO') |                                            CAL00770
+               (AOP = '**') THEN TRG_FLG = 'OFF';                       CAL00780
+                 DO I = 1 TO J BY 1 WHILE (SUBSTR(X$,1,1) = ' ');       CAL00790
+                   X$ = SUBSTR (X$,2,J-1);                              CAL00800
+                   J = J - 1 ;                                          CAL00810
+                   END;                                                 CAL00820
+                                                                        CAL00830
+                 A1 = INDEX ( X$, ' ') ;                                CAL00840
+                 ARG2 = SUBSTR (X$,1,A1) ;                              CAL00850
+                                                                        CAL00860
+      IF AOP = '+ ' THEN                                                CAL00870
+        ANS = ARG1 + ARG2;                                              CAL00880
+                                                                        CAL00890
+        ELSE IF AOP = '- ' THEN                                         CAL00900
+               ANS = ARG1 - ARG2;                                       CAL00910
+                                                                        CAL00920
+          ELSE IF AOP = '* ' THEN                                       CAL00930
+                 ANS = ARG1 * ARG2;                                     CAL00940
+                                                                        CAL00950
+            ELSE IF AOP = '/ ' THEN                                     CAL00960
+                   ANS = ARG1 / ARG2;                                   CAL00970
+                                                                        CAL00980
+             ELSE IF AOP = 'MO' THEN                                    CAL00990
+                    ANS = MOD(ARG1,ARG2);                               CAL01000
+                                                                        CAL01010
+              ELSE IF AOP = '**' THEN                                   CAL01020
+                     ANS = ARG1 ** ARG2;                                CAL01030
+                                                                        CAL01040
+                ELSE IF AOP = 'SI' THEN                                 CAL01050
+                       ANS = SIND(ARG1) * ARG2 ;                        CAL01060
+                                                                        CAL01070
+                  ELSE IF AOP = 'CO' THEN                               CAL01080
+                         ANS = COSD(ARG1) * ARG2 ;                      CAL01090
+                                                                        CAL01100
+                    ELSE IF AOP = 'TA' THEN                             CAL01110
+                           ANS = TAND(ARG1) ;                           CAL01120
+                                                                        CAL01130
+                      ELSE IF AOP = 'SQ' THEN                           CAL01140
+                             ANS = SQRT(ABS(ARG1)) ;                    CAL01150
+                                                                        CAL01160
+              ELSE DO;                                                  CAL01170
+                     DISPLAY('INVALID OPERATOR');                       CAL01180
+                     GO TO EXIT;                                        CAL01190
+                     END;                                               CAL01200
+                                                                        CAL01210
+        PUT STRING(OT1) EDIT (ARG1) (F(13,4));                          CAL01220
+        PUT STRING(OT3) EDIT (ANS) (F(17,5));                           CAL01230
+                                                                        CAL01240
+        IF ( XFLAG = 0 ) THEN DO;                                       CAL01250
+          IF ( TRG_FLG = 'ON' ) THEN                                    CAL01260
+              DISPLAY (POA||' OF '||OT1||' = '||OT3) ;                  CAL01270
+          ELSE DO ;                                                     CAL01280
+              PUT STRING(OT2) EDIT (ARG2) (F(13,4));                    CAL01290
+              DISPLAY (OT1||'   '||AOP||OT2||'    ='||OT3);             CAL01300
+          END ;                                                         CAL01310
+        END ;                                                           CAL01320
+        ELSE DO;                                                        CAL01330
+          XANS = ANS;                                                   CAL01340
+          CALL IHESARC(XANS);                                           CAL01350
+        END;                                                            CAL01360
+                                                                        CAL01370
+                                                                        CAL01380
+  EXIT:                                                                 CAL01390
+      END CALC;                                                         CAL01400

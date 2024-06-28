@@ -1,0 +1,47 @@
+1CLRSCN: PROCEDURE (PGSW) REORDER;                                      00010000
+    DECLARE                                                             00020000
+      PGSW               FIXED BIN(15,0);                               00030000
+    IF PAG# >= #PAGES                                                   00040000
+       THEN FRM = PAH;                                                  00050000
+    ELSE FRM = PAR;                                                     00060000
+    IF PGSW = AUTO                                                      00070000
+       THEN DO;                                                         00080000
+         KEY = MOD(PAG#,#PAGES);                                        00090000
+         PBUFF = SCREEN;                                                00100000
+         PSCR = SCR;                                                    00110000
+         IF PAGE                                                        00150000
+            THEN WRITE FILE(SYSPAGE) FROM(PBUF) KEYFROM(KEY);           00160000
+         ELSE DO;                                                       00170000
+           FRM = PAI;                                                   00180000
+           CALL SELECT(1);                                              00190000
+           RETURN;                                                      00200000
+         END;                                                           00210000
+         SCREEN = '';                                                   00211005
+         SIND = 0;                                                      00212005
+         SCR(*,*) = 0;                                                  00213005
+         PAG# = PAG# + 1;                                               00220000
+         RPAG# = PAG#;                                                  00230000
+         RC = TPUT(ESC || WRITE || 'C' || INDIC ||                      00240003
+                   SELPAG || RESSCNC);                                  00250001
+         RETURN;                                                        00260000
+       END;                                                             00270000
+    ELSE;                                                               00280000
+    IF PGSW = OFF                                                       00290000
+       THEN DO;                                                         00300000
+         FRM = PAI;                                                     00310000
+         CALL SELECT(1);                                                00320000
+         SCREEN = '';                                                   00330000
+         RETURN;                                                        00340000
+       END;                                                             00350000
+    ELSE;                                                               00360000
+    KEY = MOD(PAG#,#PAGES);                                             00370000
+    PBUFF = SCREEN;                                                     00380000
+    PSCR = SCR;                                                         00390000
+    IF PAGE                                                             00430000
+       THEN WRITE FILE(SYSPAGE) FROM(PBUF) KEYFROM(KEY);                00440000
+    ELSE FRM = PAI;                                                     00450000
+    CALL SELECT(1);                                                     00460000
+    SCREEN = '';                                                        00461004
+    SIND = 0;                                                           00462004
+    SCR(*,*) = 0;                                                       00463004
+ END CLRSCN;                                                            00470000

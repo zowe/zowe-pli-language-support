@@ -6,5 +6,6 @@
     - IBM z/OS v 2.5
 4. Brief inputs and outputs of the program:
     - Output is a Db2 Version
+    - Program compilation: [DB2VRM.txt](DB2VRM.txt)
 5. Expected instructions to be highlighted / supported by LSP:
     - see [DB2VRM.png](DB2VRM.png)

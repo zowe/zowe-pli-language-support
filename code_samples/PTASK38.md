@@ -6,5 +6,6 @@
     - IBM z/OS v 2.5
 4. Brief inputs and outputs of the program:
     - Input is the CICS VSAM VSR404 dataset, output is the REP3800 dataset
+    - Program compilation: [PTASK38.txt](PTASK38.txt)
 5. Expected instructions to be highlighted / supported by LSP:
     - see [PTASK38.png](PTASK38.png)

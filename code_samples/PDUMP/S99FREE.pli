@@ -1,0 +1,61 @@
+ S99FREE:PROCEDURE(CBUF,RCC,S99RC,S99ERR,S99INF) REORDER;               00010000
+    DECLARE                                                             00020000
+      CBUF               CHAR(*) VARYING,                               00030000
+      RCC                FIXED BIN(15,0),                               00040000
+      S99RC              FIXED BIN(15,0),                               00050000
+      S99ERR             FIXED BIN(15,0),                               00060000
+      S99INF             FIXED BIN(15,0),                               00070000
+      SCANNER            ENTRY(ENTRY,CHAR(*) VARYING,)                  00080000
+                            RETURNS(FIXED BIN(15,0)),                   00090000
+      SVC99              ENTRY(FIXED BIN(15,0))                         00100000
+                            RETURNS(FIXED BIN(15,0)),                   00110000
+      S99TUPL#           FIXED BIN(15,0) INIT(0),                       00120000
+      1 S99RB,                                                          00130000
+        2 S99VERB        FIXED BIN(15,0) INIT(5122),                    00140000
+        2 S99FLAG1       FIXED BIN(15,0) INIT(0),                       00150000
+        2 S99ERROR       FIXED BIN(15,0) INIT(0),                       00160000
+        2 S99INFO        FIXED BIN(15,0) INIT(0),                       00170000
+        2 S99TXTPP       POINTER         INIT((ADDR(S99TUPL(1)))),      00180000
+        2 RESERVED       FIXED BIN(31,0) INIT(0),                       00190000
+        2 S99FLAG2       FIXED BIN(31,0) INIT(0),                       00200000
+      S99TUPL(100)       POINTER INIT((NULL())),                        00210000
+      1 S99TUNIT(100),                                                  00220000
+        2 KEY            FIXED BIN(15,0) INIT(0),                       00230000
+        2 #              FIXED BIN(15,0) INIT(0),                       00240000
+        2 PARM           CHAR(44) VARYING INIT(''),                     00250000
+      X80                BIT(8) BASED(X80PTR),                          00260000
+      X80PTR             POINTER,                                       00270000
+      ALPHANUM           CHAR(36) STATIC INIT(                          00280003
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'),                      00290003
+      ALPHA              CHAR(26) DEFINED ALPHANUM POS(1),              00300003
+      DIG                CHAR(10) DEFINED ALPHANUM POS(27),             00310003
+      (HBOUND,                                                          00320000
+       LENGTH,                                                          00330000
+       UNSPEC,                                                          00340000
+       VERIFY,                                                          00350000
+       INDEX,                                                           00360000
+       SUBSTR,                                                          00370000
+       ADDR,NULL)        BUILTIN,                                       00380003
+      TMP                CHAR(1) VARYING INIT(' '),                     00390000
+      (I,RC)             FIXED BIN(15,0) INIT(0),                       00400000
+      MAXTUPL#           FIXED BIN(15,0) INIT(100),                     00410000
+      1 KWORDS STATIC,                                                  00420000
+        2 TYPE(12)       BIT(1) INIT('1'B,'1'B,(10)(1)'0'B),            00430000
+        2 WORDS(12)      CHAR(3) VARYING INIT(                          00440000
+             'DA','DSN','F','DD',                                       00450004
+             'KE','DEL','CA','UN',                                      00460004
+             'SY','DES','H','NOH'),                                     00470004
+        2 TRANS          BIT(1) INIT('1'B);                             00480000
+1   RCC = SCANNER(S99VFR1,CBUF,KWORDS);                                 00490005
+    IF RCC ^= 0                                                         00500000
+       THEN RETURN;                                                     00510000
+    ELSE S99TUPL# = S99TUPL# + 1;                                       00520005
+    CALL SETUPL(7,0,'');                                                00530000
+    X80PTR = ADDR(S99TUPL(S99TUPL#));                                   00540000
+    X80 = '10000000'B;                                                  00550000
+    S99RC = SVC99(S99VERB);                                             00560000
+    S99ERR = S99ERROR;                                                  00570000
+    S99INF = S99INFO;                                                   00580000
+    %INCLUDE (SETUPL);                                                  00590005
+    %INCLUDE (S99VFR1);                                                 00600000
+ END S99FREE;                                                           00610000

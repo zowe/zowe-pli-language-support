@@ -6,5 +6,6 @@
     - IBM z/OS v 2.5
 4. Brief inputs and outputs of the program:
     - Input is a SYSIN CONTROL CARD. See the source file for details
+    - Program compilation: [MACROS.txt](MACROS.txt)
 5. Expected instructions to be highlighted / supported by LSP:
     - see [MACROS.png](MACROS.png)

@@ -5,6 +5,6 @@
 3. Operating system, where the code is possible to run + the version of the OS:
     - IBM z/OS v 2.5
 4. Brief inputs and outputs of the program:
-    - None
+    - Program compilation: [INSERT.txt](INSERT.txt)
 5. Expected instructions to be highlighted / supported by LSP:
     - see [INSERT.png](INSERT.png)
