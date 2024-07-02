@@ -6,5 +6,6 @@
     - IBM z/OS v 2.5
 4. Brief inputs and outputs of the program:
     - Input is the CICS TEMPORARY STORAGE QUEUE R404
+    - Program compilation: [PTASKTS.txt](PTASKTS.txt)
 5. Expected instructions to be highlighted / supported by LSP:
     - see [PTASKTS.png](PTASKTS.png)

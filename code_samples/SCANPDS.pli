@@ -1,0 +1,334 @@
+  SCANPDS: PROC(INP) OPTIONS(MAIN) REORDER;                             00001000
+  DECLARE                                                               00002000
+     INP      CHAR(100)    VAR          ,                               00003000
+     INP2     CHAR(80)     VAR          ,                               00004000
+     LINE     CHAR(80)         INIT(' '),                               00005000
+     SPLATS   CHAR(80)         INIT((80)'*'),                           00006000
+     PRT2TITL CHAR(80)         INIT(                                    00007000
+      '* CROSS REFERENCE OF MEMBERS WITH HITS ON MULTIPLE STRINGS'),    00008000
+     PRT3TITL CHAR(80)         INIT(                                    00009000
+      '* SUMMARY OF ALL MEMBERS WITH HITS ON ANY STRING'),              00010000
+     X$   CHAR(72)         VAR INIT(' '),                               00011000
+     PLIXOPT  CHAR(100)    VAR INIT(' ') STATIC EXTERNAL,               00012000
+     (MEMBER,                                                           00013000
+      STRTMEMBER,                                                       00014000
+      ENDMEMBER,                                                        00015000
+      LASTMEMBER,                                                       00016000
+      XREFMEMBER)  CHAR(8)  STATIC  INIT(' '),                          00017000
+     NOSTR      FIXED BIN(15)    INIT(100),                             00018000
+     STR(NOSTR) CHAR(72) VARYING INIT(' '),                             00019000
+     STX(NOSTR) CHAR(72) VARYING INIT(' '),                             00020000
+     LASTHIT    CHAR(72) VARYING INIT('BRQFMLTZ'),                      00021000
+     ENDDIR     CHAR(1) INIT('0'),                                      00022000
+     (XREF,XREF1,ZREF,NEW2,SCANON,NEW3,                                 00023000
+      NCMT,NEW)  BIT(1) STATIC INIT('0'B),                              00024000
+     (I,J,IP) FIXED BIN(15) INIT(0),                                    00025000
+     K        FIXED BIN(15) INIT(0),                                    00026000
+     BEGIN    FIXED BIN(15) INIT(1),                                    00027000
+     END      FIXED BIN(15) INIT(80),                                   00028000
+     MEMHITS  FIXED BIN(15) INIT(0),                                    00029000
+     NOMEMS   PIC'ZZZ9'     INIT(0),                                    00030000
+     COUNT    PIC'ZZZ9'     INIT(0),                                    00031000
+     TOTHITS  PIC'ZZZ9'     INIT(0),                                    00032000
+     HITS     PIC'ZZ9'      INIT(0),                                    00033000
+     (MOD,ADDR,HIGH,SUBSTR,LENGTH,INDEX,ONSOURCE) BUILTIN,              00034000
+     ENDSTR  EXTERNAL CONDITION,                                        00035000
+     DISKSTR EXTERNAL CONDITION,                                        00036000
+     PRINT   EXTERNAL FILE PRINT,                                       00037000
+     PRINT2  EXTERNAL FILE PRINT,                                       00038000
+     PRINT3  EXTERNAL FILE PRINT,                                       00039000
+     SPDSGET EXTERNAL ENTRY,                                            00041000
+     COMMENTS   CHAR(3)  STATIC  INIT('NO');                            00042000
+                                                                        00043000
+     DCL STRINGS STREAM     INPUT;                                      00044000
+     DCL SUBSET FILE RECORD INPUT ENV(BLKSIZE(80));                     00045000
+     DCL SUBMEM0     CHAR(80) STATIC INIT('');                          00046000
+     DCL SUBMEM(999) CHAR(8)  STATIC INIT('');                          00047000
+     DCL SUBMEMN     FIXED BIN(15)       INIT(0);                       00048000
+     DCL SUBNUM      FIXED BIN(15)       INIT(0);                       00049000
+     DCL SUBPROMPT   FIXED BIN(15)       INIT(0);                       00050000
+     DCL DISKSTR_FLG FIXED BIN(15)       INIT(0);                       00051000
+                                                                        00052000
+  ON ENDFILE(SUBSET) BEGIN;                                             00053000
+    GO TO GETTERM;                                                      00054000
+  END;                                                                  00055000
+                                                                        00056000
+  ON UNDEFINEDFILE(SUBSET) BEGIN;                                       00057000
+    GO TO GETTERM;                                                      00058000
+  END;                                                                  00059000
+                                                                        00060000
+  ON UNDEFINEDFILE(STRINGS) BEGIN;                                      00061000
+    DISPLAY('FILE ''SCANPDS STRINGS A'' NOT FOUND');                    00062000
+    STOP;                                                               00063000
+  END;                                                                  00064000
+                                                                        00065000
+  ON ENDFILE(STRINGS) BEGIN;                                            00066000
+    SIGNAL CONDITION(ENDSTR);                                           00067000
+  END;                                                                  00068000
+                                                                        00069000
+  ON CONDITION(DISKSTR)                                                 00070000
+     BEGIN;                                                             00071000
+       OPEN  FILE(STRINGS) INPUT;                                       00072000
+       DISKSTR_FLG = 1;                                                 00073000
+     END;                                                               00074000
+                                                                        00075000
+  ON CONDITION(ENDSTR)                                                  00076000
+     BEGIN;                                                             00077000
+     IF   DISKSTR_FLG = 1                                               00078000
+     THEN CLOSE FILE(STRINGS);                                          00079000
+     IF NCMT THEN PUT FILE(PRINT) SKIP(2)                               00080000
+          LIST('NO '' * COMMENT '' CARDS WERE SEARCHED');               00081000
+                                                                        00082000
+     IF  SUBMEMN = 0                                                    00085000
+     THEN DO;                                                           00086000
+       STRTMEMBER = '';                                                 00087000
+       ENDMEMBER  = HIGH(8);                                            00088000
+                                                                        00089000
+       DISPLAY ('ENTER STARTING MEMBER') REPLY(X$);                     00090000
+       IF   X$ ^= ''                                                    00091000
+       THEN STRTMEMBER = X$;                                            00092000
+       IF   X$ = ''                                                     00093000
+       THEN SCANON = '1'B;                                              00094000
+       ELSE PUT FILE(PRINT) SKIP EDIT('STARTING MEMBER - ',STRTMEMBER)  00095000
+                                     (A);                               00096000
+       DISPLAY ('ENTER ENDING MEMBER') REPLY(X$);                       00097000
+       IF   X$ ^= ''                                                    00098000
+       THEN ENDMEMBER = X$;                                             00099000
+       IF   X$ ^= ''                                                    00100000
+       THEN PUT FILE(PRINT) SKIP EDIT('ENDING   MEMBER - ',ENDMEMBER)   00101000
+                                     (A);                               00102000
+     END;                                                               00103000
+     ELSE DO;                                                           00104000
+       PUT FILE(PRINT) SKIP EDIT('MEMBER SUBSET GIVEN')(A);             00105000
+       STRTMEMBER = SUBMEM(1);                                          00106000
+       ENDMEMBER = SUBMEM(SUBMEMN);                                     00107000
+       LINE = '$INGLE';                                                 00108000
+     END;                                                               00109000
+                                                                        00110000
+     PUT FILE(PRINT) SKIP                                               00111000
+     EDIT('MEMBER',                                                     00112000
+                   'STRING','SCAN RANGE',BEGIN,'-',END,(80)'_')         00113000
+       (COL(1),A,COL(10),A,COL(20),A,F(2),A,F(2),COL(1+BEGIN),A(END));  00114000
+     IF J > 0 THEN GO TO READCARDS;   ELSE STOP;                        00115000
+     END; /* ENDFILE STRINGS*/                                          00116000
+                                                                        00117000
+     IF   SUBSTR(INP,1,8) = 'SUBSTERM'                                  00118000
+     THEN DO;                                                           00119000
+       SUBPROMPT = 1;                                                   00120000
+       INP = SUBSTR(INP,9,(LENGTH(INP)-8));                             00121000
+     END;                                                               00122000
+                                                                        00123000
+     SUBSTR(PRT2TITL,80,1) = '*';                                       00124000
+     SUBSTR(PRT3TITL,80,1) = '*';                                       00125000
+     INP2 = 'SCAN ON PDS WITH DSN= '||INP;                              00126000
+     IF   LENGTH(INP2) > 80                                             00127000
+     THEN INP2 = SUBSTR(INP2,1,80);                                     00128000
+     PUT FILE(PRINT) EDIT(INP2)(A);                                     00129000
+                                                                        00130000
+     DO I = 1 TO 999;                                                   00131000
+       IF   SUBPROMPT = 1                                               00132000
+       THEN DISPLAY('ENTER MEMBER OR NULL TO END');                     00133000
+       READ  FILE(SUBSET) INTO(SUBMEM0);                                00134000
+       SUBMEM(I) = SUBSTR(SUBMEM0,1,8);                                 00135000
+       SUBMEMN = I;                                                     00136000
+     END;                                                               00137000
+                                                                        00138000
+  GETTERM:                                                              00139000
+     DISPLAY                                                            00140000
+     ('ENTER COMMENTS (YES OR NO - DEFAULT IS NO)') REPLY(COMMENTS);    00141000
+     IF COMMENTS = '' THEN COMMENTS = 'NO';                             00142000
+                                                                        00144000
+     IF COMMENTS = 'NO' THEN NCMT = '1'B;                               00145000
+     PUT FILE(PRINT)                                                    00146000
+     SKIP(3) LIST('THE SEARCH IS FOR THE FOLLOWING STRINGS');           00147000
+     PUT FILE(PRINT)                                                    00148000
+     SKIP;                                                              00149000
+     DISPLAY ('ENTER ONE STRING AT A TIME - NULL TO END');              00150000
+     DISPLAY ('OR ENTER STRDISK IF STRINGS ARE ON A CMS');              00151000
+     DISPLAY ('FILE CALLED SCANPDS STRINGS A1.');                       00152000
+     DO I = 1 TO NOSTR;                                                 00153000
+       IF DISKSTR_FLG = 0                                               00154000
+       THEN DO;                                                         00155000
+         DISPLAY(' ')                                                   00156000
+         REPLY(STR(I));                                                 00157000
+       END;                                                             00158000
+                                                                        00159000
+       IF STR(I) = 'STRDISK' & I = 1 THEN SIGNAL CONDITION(DISKSTR);    00160000
+       IF DISKSTR_FLG = 1                                               00161000
+       THEN GET FILE(STRINGS) LIST(STR(I));                             00162000
+                                                                        00163000
+       IF STR(I) = '' THEN SIGNAL CONDITION(ENDSTR);                    00164000
+       IF   SUBSTR(STR(I),LENGTH(STR(I)),1) = '&'                       00165000
+       THEN SUBSTR(STR(I),LENGTH(STR(I)),1) = ' ';                      00166000
+       J = I;                                                           00167000
+       PUT FILE(PRINT)                                                  00168000
+       SKIP EDIT('''',STR(I),'''')(COL(5),A,A,A);                       00169000
+     END;                                                               00170000
+                                                                        00171000
+   READCARDS:                                                           00172000
+                                                                        00174000
+     SUBNUM  = 1;                                                       00175000
+     MEMBER = STRTMEMBER;                                               00176000
+                                                                        00177000
+     DO  WHILE ((MEMBER ^= HIGH(8))                                     00178000
+               &(MEMBER <= ENDMEMBER));                                 00179000
+       CALL SPDSGET(MEMBER,LINE);                                       00180000
+       IF   SUBMEMN > 0                                                 00181000
+       &    SUBSTR(LINE,1,6) = '$INGLE'                                 00182000
+       THEN DO;                                                         00183000
+         IF   SUBNUM < SUBMEMN                                          00184000
+         THEN DO;                                                       00185000
+           SUBNUM = SUBNUM + 1;                                         00186000
+           MEMBER = SUBMEM(SUBNUM);                                     00187000
+           CALL SPDSGET(MEMBER,LINE);                                   00188000
+         END;                                                           00189000
+         ELSE DO;                                                       00190000
+           MEMBER = HIGH(8);                                            00191000
+         END;                                                           00192000
+       END;                                                             00193000
+                                                                        00194000
+       IF   MEMBER >= STRTMEMBER                                        00195000
+       &    MEMBER <= ENDMEMBER                                         00196000
+       THEN SCANON = '1'B;                                              00197000
+                                                                        00198000
+       IF   SCANON = '1'B                                               00199000
+       THEN DO;                                                         00200000
+         IF   MEMBER ^= LASTMEMBER                                      00201000
+         THEN CALL NEWMEM;                                              00202000
+                                                                        00203000
+         IF   SUBSTR(LINE,1,1) = '*' & NCMT THEN;                       00204000
+         ELSE CALL SCANLINE;                                            00205000
+       END;                                                             00206000
+     END;                                                               00207000
+     IF   MEMHITS > 0                                                   00208000
+     THEN CALL PRINTSUM;                                                00209000
+     NOMEMS = NOMEMS - 1;                                               00210000
+                                                                        00211000
+     IF   XREF1                                                         00212000
+     THEN CALL PRINTXRF;                                                00213000
+                                                                        00214000
+     X$ = 'TOTAL MEMBERS SCANNED   - '||NOMEMS;   DISPLAY(X$);          00216000
+     X$ = 'TOTAL MEMBERS WITH HITS - '||COUNT;    DISPLAY(X$);          00217000
+     X$ = 'TOTAL HITS              - '||TOTHITS;  DISPLAY(X$);          00218000
+                                                                        00219000
+1/***************************************************************/      00220000
+ /*  NEWMEM                                                     */      00221000
+ /***************************************************************/      00222000
+   NEWMEM : PROC;                                                       00223000
+           NOMEMS = NOMEMS + 1;                                         00224000
+                                                                        00227000
+           X$ = LASTMEMBER;                                             00228000
+                                                                        00229000
+           IF   (HITS > 0)                                              00230000
+           THEN X$ = X$||' - '||HITS||' HITS';                          00231000
+                                                                        00232000
+           IF   (XREF)                                                  00233000
+           THEN X$ = X$||' - '||MEMHITS||' STRINGS';                    00234000
+                                                                        00235000
+           IF   LASTMEMBER ^= '        '                                00236000
+           THEN DISPLAY (X$);                                           00237000
+                                                                        00238000
+           HITS = 0;                                                    00239000
+           IF   (^NEW)                                                  00240000
+           THEN DO;                                                     00241000
+             XREF1 = XREF;                                              00242000
+             XREFMEMBER = LASTMEMBER;                                   00243000
+           END;                                                         00244000
+           XREF = '0'B;                                                 00245000
+           LASTHIT = 'BRQFMLTZ';                                        00246000
+           LASTMEMBER = MEMBER;                                         00247000
+           NEW = '1'B;                                                  00248000
+   END NEWMEM ;                                                         00249000
+1/***************************************************************/      00250000
+ /*  SCANLINE                                                   */      00251000
+ /***************************************************************/      00252000
+   SCANLINE : PROC;                                                     00253000
+     DO I = 1 TO J;                                                     00254000
+       IP = INDEX(LINE,STR(I));                                         00255000
+       IF IP > 0                                                        00256000
+       THEN DO;                                                         00257000
+                                                                        00258000
+         HITS = HITS + 1;                                               00259000
+         TOTHITS = TOTHITS + 1;                                         00260000
+         IF   (STR(I) ^= LASTHIT & LASTHIT ^= 'BRQFMLTZ')               00261000
+         THEN DO;                                                       00262000
+           XREF = '1'B;                                                 00263000
+         END;                                                           00264000
+                                                                        00265000
+         LASTHIT = STR(I);                                              00266000
+         IF NEW                                                         00267000
+         THEN DO;                                                       00268000
+           IF   XREF1                                                   00269000
+           THEN CALL PRINTXRF;                                          00270000
+                                                                        00271000
+           IF   MEMHITS > 0                                             00272000
+           THEN CALL PRINTSUM;                                          00273000
+                                                                        00274000
+           STX = (' ');                                                 00275000
+           MEMHITS = 0;                                                 00276000
+           NEW = '0'B;                                                  00277000
+           COUNT = COUNT + 1;                                           00278000
+           PUT FILE(PRINT)                                              00279000
+              SKIP(2) EDIT(MEMBER,' ',(71)'=')(A(8),A(1),A(71));        00280000
+         END;                                                           00281000
+                                                                        00282000
+         ZREF = '1'B;                                                   00283000
+         DO K = 1 TO MEMHITS;                                           00284000
+           IF   STX(K) = STR(I)                                         00285000
+           THEN ZREF = '0'B;                                            00286000
+         END;                                                           00287000
+         IF ZREF THEN DO;                                               00288000
+           MEMHITS = MEMHITS + 1;                                       00289000
+           STX(MEMHITS) = STR(I);                                       00290000
+         END;                                                           00291000
+                                                                        00292000
+         PUT FILE(PRINT) SKIP EDIT(LINE)                                00293000
+             (COL(1),A(80));                                            00294000
+         PUT FILE(PRINT) SKIP EDIT((80)'"')                             00295000
+             (COL(IP),A(LENGTH(STR(I))));                               00296000
+       END;                                                             00297000
+     END;                                                               00298000
+   END SCANLINE ;                                                       00299000
+1/***************************************************************/      00300000
+ /*  PRINTXRF                                                   */      00301000
+ /***************************************************************/      00302000
+   PRINTXRF : PROC;                                                     00303000
+     PUT FILE(PRINT) SKIP(1) EDIT                                       00304000
+       ('+++++   ',                                                     00305000
+        XREFMEMBER,' HAD HITS ON ',MEMHITS,' STRING(S)',                00306000
+        '   +++++')                                                     00307000
+       (A(8),A(8),A(13),F(2),A(10));                                    00308000
+     PUT FILE(PRINT) SKIP(2);                                           00309000
+                                                                        00310000
+     IF ^(NEW2) THEN DO;                                                00311000
+       NEW2 = '1'B;                                                     00312000
+       PUT FILE(PRINT2) PAGE    EDIT                                    00313000
+           (SPLATS,PRT2TITL,SPLATS)                                     00314000
+           ((3)(COL(1),A(80)));                                         00315000
+     END;                                                               00316000
+     PUT FILE(PRINT2) SKIP(1) EDIT                                      00317000
+       (XREFMEMBER,' HAD HITS ON ',MEMHITS,' STRING(S)')                00318000
+       (A(8),A(13),F(2),A(10));                                         00319000
+     DO K = 1 TO MEMHITS;                                               00320000
+       PUT FILE(PRINT2) SKIP EDIT(STX(K))(X(21),A(8));                  00321000
+     END;                                                               00322000
+                                                                        00323000
+   END PRINTXRF ;                                                       00324000
+1/***************************************************************/      00325000
+ /*  PRINTSUM                                                   */      00326000
+ /***************************************************************/      00327000
+   PRINTSUM : PROC;                                                     00328000
+     IF ^(NEW3) THEN DO;                                                00329000
+       NEW3 = '1'B;                                                     00330000
+       PUT FILE(PRINT3) PAGE    EDIT                                    00331000
+           (SPLATS,PRT3TITL,SPLATS)                                     00332000
+           ((3)(COL(1),A(80)));                                         00333000
+     END;                                                               00334000
+     PUT FILE(PRINT3) SKIP(1) EDIT                                      00335000
+           (XREFMEMBER,' HAD HITS ON ',MEMHITS,' STRING(S)')            00336000
+           (A(8),A(13),F(2),A(10));                                     00337000
+     DO K = 1 TO MEMHITS;                                               00338000
+       PUT FILE(PRINT3) SKIP EDIT(STX(K))(X(21),A);                     00339000
+     END;                                                               00340000
+   END PRINTSUM ;                                                       00341000
+   END SCANPDS;                                                         00342000

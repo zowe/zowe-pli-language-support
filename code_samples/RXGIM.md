@@ -6,5 +6,6 @@
     - IBM z/OS v 2.5
 4. Brief inputs and outputs of the program:
     - Input and output are REXX variables. See the source file for details
+    - Program compilation: [RXGIM.txt](RXGIM.txt)
 5. Expected instructions to be highlighted / supported by LSP:
     - see [RXGIM.png](RXGIM.png)

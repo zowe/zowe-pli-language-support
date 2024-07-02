@@ -1,0 +1,147 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20220429)                           2024.06.19 07:39:45   Page     1
+-                     Options Specified
+0  Install:
+0  Command: SOURCE,RULES(LAXDCL)
+0  Install:
+15655-PL6  IBM(R) Enterprise PL/I for z/OS   SCANCMS: PROC(INPARM) OPTIONS(MAIN) REORDE         2024.06.19 07:39:45   Page     2
+0 Compiler Source
+0    Line.File
+0       1.0       SCANCMS: PROC(INPARM) OPTIONS(MAIN) REORDER;                           SCA00080
+        2.0       DECLARE                                                                SCA00090
+        3.0          INPARM CHAR(80) VAR,                                                SCA00100
+        4.0          LINE CHAR(80) INIT(' '),                                            SCA00110
+        5.0          X$   CHAR(72) VAR INIT(' '),                                        SCA00120
+        6.0          PLIXOPT CHAR(100) VAR INIT(' ') STATIC EXTERNAL,                    SCA00130
+        7.0          (FN,FT,LASTFN,LASTFT)  CHAR(8)  STATIC  INIT(' '),                  SCA00140
+        8.0          (FM,LASTFM)  CHAR(2)  STATIC  INIT(' '),                            SCA00150
+        9.0          STR(20) CHAR(72) VARYING INIT(' '),                                 SCA00160
+       10.0          ENDDIR CHAR(1) INIT('0'),                                           SCA00170
+       11.0          (NEW) BIT(1) STATIC INIT('0'B),                                     SCA00180
+       12.0          (I,J,IP) FIXED BIN(15) INIT(0),                                     SCA00190
+       13.0          BEGIN    FIXED BIN(15) INIT(1),                                     SCA00200
+       14.0          END      FIXED BIN(15) INIT(80),                                    SCA00210
+       15.0          MSG      FIXED BIN(15) INIT(0),                                     SCA00220
+       16.0          GT256    FIXED BIN(15) INIT(0),                                     SCA00230
+       17.0          NOFILES  PIC'ZZZ9'     INIT(0),                                     SCA00240
+       18.0          COUNT    PIC'ZZZ9'     INIT(0),                                     SCA00250
+       19.0          TOTHITS  PIC'ZZZ9'     INIT(0),                                     SCA00260
+       20.0          HITS     PIC'ZZ9'      INIT(0),                                     SCA00270
+       21.0          (MOD,ADDR,SUBSTR,LENGTH,INDEX,ONSOURCE) BUILTIN,                    SCA00280
+       22.0          ENDSTR EXTERNAL CONDITION,                                          SCA00290
+       23.0          PRINT  EXTERNAL FILE PRINT,                                         SCA00300
+       24.0          SYSPRINT  EXTERNAL FILE PRINT,                                      SCA00310
+       25.0          SCANEX EXTERNAL FILE,                                               SCA00320
+       26.0          SCANCMA EXTERNAL ENTRY OPTIONS(ASM,INTER);                          SCA00330
+       27.0                                                                              SCA00340
+       28.0       ON CONDITION(ENDSTR)                                                   SCA00350
+       29.0          BEGIN;                                                              SCA00360
+       30.0       /* PUT FILE(PRINT)                                                     SCA00370
+       31.0          EDIT('FILEID',                                                      SCA00380
+       32.0                        'STRING','SCAN RANGE',BEGIN,'-',END,(80)'_')          SCA00390
+       33.0            (COL(1),A,COL(20),A,COL(30),A,F(2),A,F(2),COL(1+BEGIN),A(END))*   SCA00400
+       34.0       */                                                                     SCA00410
+       35.0          IF J > 0 THEN GO TO READCARDS;   ELSE STOP;                         SCA00420
+       36.0          END;                                                                SCA00430
+       37.0                                                                              SCA00440
+       38.0       ON ERROR                                                               SCA00450
+       39.0          BEGIN;                                                              SCA00460
+       40.0            PUT DATA;                                                         SCA00470
+       41.0          END;                                                                SCA00480
+       42.0                                                                              SCA00490
+       43.0          IF INPARM ^= '' THEN MSG = 1;                                       SCA00500
+       44.0          PUT FILE(PRINT)                                                     SCA00510
+       45.0          LIST('THE SEARCH IS FOR THE FOLLOWING STRINGS');                    SCA00520
+       46.0          PUT FILE(PRINT)                                                     SCA00530
+       47.0          SKIP;                                                               SCA00540
+       48.0          DISPLAY ('ENTER ONE STRING AT A TIME - NULL TO END');               SCA00550
+       49.0          DO I = 1 TO 20;                                                     SCA00560
+       50.0            DISPLAY(' ')                                                      SCA00570
+       51.0            REPLY(STR(I));                                                    SCA00580
+       52.0            IF STR(I) = '' THEN SIGNAL CONDITION(ENDSTR);                     SCA00590
+       53.0            J = I;                                                            SCA00600
+       54.0            PUT FILE(PRINT)                                                   SCA00610
+       55.0            SKIP EDIT('''',STR(I),'''')(COL(5),A,A,A);                        SCA00620
+       56.0          END;                                                                SCA00630
+       57.0                                                                              SCA00640
+       58.0        READCARDS:                                                            SCA00650
+       59.0          CALL SCANCMA(FN,FT,FM,LINE);                                        SCA00660
+       60.0          DO  WHILE (FN ^= '99999EOF');                                       SCA00670
+       61.0            IF SUBSTR(LINE,1,8) ^= '99999BAD'                                 SCA00680
+       62.0            THEN DO;                                                          SCA00690
+       63.0              IF FN ^= LASTFN | FT ^= LASTFT | FM ^= LASTFM                   SCA00700
+       64.0              THEN DO;                                                        SCA00710
+       65.0                NOFILES = NOFILES + 1;                                        SCA00720
+       66.0                X$ = LASTFN||' '||LASTFT||' '||LASTFM;                        SCA00730
+       67.0                IF   (HITS > 0)                                               SCA00740
+       68.0                THEN X$ = X$||' - STRING(S) FOUND '||HITS||' TIMES';          SCA00750
+       69.0                IF   (GT256 > 0)                                              SCA00760
+       70.0                THEN X$ = X$||' - LRECL > 256 - NOT SCANNED';                 SCA00770
+       71.0                IF MSG = 0 THEN                                               SCA00780
+       72.0                DISPLAY(X$);                                                  SCA00790
+       73.0                HITS   = 0;                                                   SCA00800
+       74.0                GT256  = 0;                                                   SCA00810
+       75.0                NEW    = '1'B;                                                SCA00820
+       76.0                LASTFN = FN;                                                  SCA00830
+       77.0                LASTFT = FT;                                                  SCA00840
+       78.0                LASTFM = FM;                                                  SCA00850
+       79.0              END;                                                            SCA00860
+       80.0                                                                              SCA00870
+       81.0              IF   SUBSTR(LINE,1,4) = '>256'                                  SCA00880
+       82.0              THEN GT256 = 1;                                                 SCA00890
+       83.0                                                                              SCA00900
+       84.0              ELSE DO;                                                        SCA00910
+       85.0                DO I = 1 TO J;                                                SCA00920
+       86.0                  IP = INDEX(LINE,STR(I));                                    SCA00930
+       87.0                  IF IP > 0                                                   SCA00940
+       88.0                  THEN DO;                                                    SCA00950
+       89.0                    IF NEW                                                    SCA00960
+       90.0                    THEN DO;                                                  SCA00970
+       91.0                      NEW = '0'B;                                             SCA00980
+       92.0                      COUNT = COUNT + 1;                                      SCA00990
+       93.0                      PUT FILE(SCANEX)                                        SCA01000
+       94.0                       SKIP    EDIT(' &1',' &2 ',FN,' ',FT,' ',FM)            SCA01010
+       95.0                                   (A(3),A(4),A(8),A(1),A(8),A(1),A(2));      SCA01020
+       96.0                      PUT FILE(PRINT)                                         SCA01030
+       97.0                       SKIP(3) EDIT(FN,' ',FT,' ',FM,' ',(59)'=')             SCA01040
+       98.0                                   (A(8),A(1),A(8),A(1),A(2),A(1),A(59));     SCA01050
+       99.0                      PUT FILE(PRINT) SKIP;                                   SCA01060
+      100.0                    END;                                                      SCA01070
+      101.0                    HITS    = HITS    + 1;                                    SCA01080
+      102.0                    TOTHITS = TOTHITS + 1;                                    SCA01090
+      103.0                    PUT FILE(PRINT) SKIP EDIT(LINE)                           SCA01100
+      104.0                      (COL(1),A(80));                                         SCA01110
+      105.0                    PUT FILE(PRINT) SKIP EDIT((80)'"')                        SCA01120
+      106.0                      (COL(IP),A(LENGTH(STR(I))));                            SCA01130
+      107.0                  END;                                                        SCA01140
+      108.0                END;                                                          SCA01150
+      109.0              END;                                                            SCA01160
+      110.0            END;                                                              SCA01170
+      111.0            CALL SCANCMA(FN,FT,FM,LINE);                                      SCA01180
+      112.0          END;                                                                SCA01190
+      113.0                                                                              SCA01200
+      114.0          X$ = LASTFN||' '||LASTFT||' '||LASTFM;                              SCA01210
+      115.0          IF   (HITS > 0)                                                     SCA01220
+      116.0          THEN X$ = X$||' - STRING(S) FOUND '||HITS||' TIMES';                SCA01230
+      117.0          IF   (GT256 > 0)                                                    SCA01240
+      118.0          THEN X$ = X$||' - LRECL > 256 - NOT SCANNED';                       SCA01250
+      119.0          IF MSG = 0 THEN                                                     SCA01260
+      120.0          DISPLAY(X$);                                                        SCA01270
+      121.0                                                                              SCA01280
+      122.0          X$ = 'TOTAL FILES SCANNED   - '||NOFILES;  DISPLAY(X$);             SCA01290
+      123.0          X$ = 'TOTAL FILES WITH HITS - '||COUNT;    DISPLAY(X$);             SCA01300
+      124.0          X$ = 'TOTAL HITS            - '||TOTHITS;  DISPLAY(X$);             SCA01310
+      125.0          END SCANCMS;                                                        SCA01320
+15655-PL6  IBM(R) Enterprise PL/I for z/OS   SCANCMS: PROC(INPARM) OPTIONS(MAIN) REORDE         2024.06.19 07:39:45   Page     3
+- Compiler Messages
+0 Message       Line.File Message Description
+0 IBM2670I W       1.0    The parameter to MAIN should be declared as CHAR(*) VARYING.
+  IBM1208I W       9.0    INITIAL list for the array STR contains only one item.
+  IBM2621I W      38.0    ON ERROR block does not start with ON ERROR SYSTEM. An error inside the block may lead to an
+                          infinite loop.
+- File Reference Table
+0   File    Included From  Name
+0      0                   AVL.USER.PLI(SCANCMS)
+- Component    Return Code    Messages (Total/Suppressed)    Time
+0 Compiler         4                4  /  1                  10 secs
+0 End of compilation of SCANCMS
+

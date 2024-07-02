@@ -1,0 +1,35 @@
+1S99VAL2: PROCEDURE (OP,VAL) RETURNS(FIXED BIN(15,0)) REORDER;          00010000
+    DECLARE                                                             00020000
+      OP                 FIXED BIN(15,0),                               00030000
+      VAL                CHAR(*) VARYING,                               00040000
+      RC                 FIXED BIN(15,0) INIT(0);                       00050000
+-   I = I + 1;                                                          00060002
+-   SELECT(OP);                                                         00070002
+0      WHEN(0)                                                          00080002
+         IF I = 1                                                       00090000
+            THEN CALL SETUPL(24,0,'');                                  00100000
+         ELSE;                                                          00110000
+0      WHEN(1,2) RC = 16;                                               00120002
+0      WHEN(3,4)                                                        00130002
+         SELECT(I);                                                     00140000
+0           WHEN(1) CALL SETUPL(24,1,VAL);                              00150002
+0           WHEN(2)                                                     00160002
+              IF S99TUPL# >= MAXTUPL#                                   00170002
+                 THEN RC = 12;                                          00180002
+              ELSE DO;                                                  00190002
+                S99TUPL# = S99TUPL# + 1;                                00200002
+                CALL SETUPL(25,1,VAL);                                  00210002
+              END;                                                      00220002
+0           WHEN(3)                                                     00230002
+              IF S99TUPL# >= MAXTUPL#                                   00240002
+                 THEN RC = 12;                                          00250002
+              ELSE DO;                                                  00260002
+                S99TUPL# = S99TUPL# + 1;                                00270002
+                CALL SETUPL(26,1,VAL);                                  00280002
+              END;                                                      00290002
+0           OTHERWISE RC = 16;                                          00300002
+         END;                                                           00310000
+0      OTHERWISE RC = 16;                                               00320002
+    END;                                                                00330000
+0   RETURN(RC);                                                         00340002
+ END S99VAL2;                                                           00350000

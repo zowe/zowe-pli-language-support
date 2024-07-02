@@ -6,5 +6,6 @@
     - IBM z/OS v 2.5
 4. Brief inputs and outputs of the program:
     - Input is a INPFILE DD, an output is a OUTFILE DD
+    - Program compilation: [FILE.txt](FILE.txt)
 5. Expected instructions to be highlighted / supported by LSP:
     - see [FILE.png](FILE.png)

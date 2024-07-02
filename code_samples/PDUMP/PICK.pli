@@ -1,0 +1,45 @@
+1PICK: PROCEDURE (TMA,TMB,BUF,POS,RW,CL,ACT) REORDER;                   00010000
+    DECLARE                                                             00020000
+      TMA                CHAR(*) VARYING,                               00030000
+      TMB                CHAR(*),                                       00040000
+      BUF                CHAR(*) VARYING,                               00050000
+      POS(*,*)           FIXED BIN(15,0),                               00060000
+      RW                 FIXED BIN(15,0),                               00070000
+      CL                 FIXED BIN(15,0),                               00080000
+      ACT                FIXED BIN(15,0),                               00090000
+      (PLC,LEN,I)        FIXED BIN(15,0) INIT(0);                       00100000
+    IF ACT = 2                                                          00110000
+       THEN GO TO PUT;                                                  00120000
+    ELSE BUF = '';                                                      00130000
+    DO I = 1 TO 39;                                                     00140000
+       IF RW <= POS(I,1)                                                00150000
+          THEN GO TO FOUND;                                             00160000
+       ELSE;                                                            00170000
+    END;                                                                00180000
+    IF I >= SROW - 3                                                    00190000
+       THEN RETURN;                                                     00200000
+    ELSE;                                                               00210000
+ FOUND:                                                                 00220000
+    PLC = 1 + (RW - 1) * 80;                                            00230000
+    IF POS(I,1) = RW                                                    00240000
+       THEN LEN = POS(I,2);                                             00250000
+    ELSE LEN = POS(I-1,2) - 80 * (RW - POS(I-1,1));                     00260000
+    IF LEN > 160                                                        00270000
+       THEN LEN = 160;                                                  00280000
+    ELSE;                                                               00290000
+    IF ACT = 0                                                          00300000
+       THEN DO;                                                         00310000
+         BUF = SUBSTR(TMB,PLC,LEN);                                     00320000
+         RETURN;                                                        00330000
+       END;                                                             00340000
+    ELSE;                                                               00350000
+    BUF = SUBSTR(TMA,PLC,LEN);                                          00360000
+ PUT:                                                                   00370000
+    IF CL > LENGTH(BUF) & LENGTH(BUF) < 80                              00380000
+       THEN CL = 1 + LENGTH(BUF);                                       00390000
+    ELSE;                                                               00400000
+    RC = TPUT(ESC || WRITE || 'C' || SBA || BUFADE(SROW-2,1) ||         00410004
+              RA || BUFADE(SROW,1) || ' ' || SBA || BUFADE(SROW-3,80) ||00420001
+              SF || ATTR(0,0,0,1) || SUBSTR(BUF || LOW(160),1,160) ||   00430002
+              SBA || BUFADE(SROW-2,CL) || IC);                          00440001
+ END PICK;                                                              00450000

@@ -6,5 +6,6 @@
     - IBM z/OS v 2.5
 4. Brief inputs and outputs of the program:
     - Input is the CICS VSAM VSR404 dataset
+    - Program compilation: [PTASK34.txt](PTASK34.txt)
 5. Expected instructions to be highlighted / supported by LSP:
     - see [PTASK34.png](PTASK34.png)

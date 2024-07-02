@@ -1,0 +1,187 @@
+  DDINFO:/*RETURN JFCB INFORMATION FROM A GIVEN DDCARD*/
+         PROCEDURE(DD);
+
+               /* DECLARE INPUT PARAMETERS */
+
+  DCL 1 DD,
+           /************************************************/
+           /*  IF R_CODE PASSED IS NOT 0,1, OR -1, DDINFO  */
+           /*  PRINTS A COMPLETE DUMP OF THE JFCB.  IF     */
+           /*  RETURN CODE BACK IS NOT ZERO SOMETHING WENT */
+           /*  WRONG.                                      */
+           /*                                              */
+           /*  IF R_CODE IS 1 OR -1, RELEASE INFORMATION   */
+           /*  IS PRINTED.                                 */
+           /*                                              */
+           /*  IF R_CODE = -3 SUPPRESS PRINTING            */
+           /*                                              */
+           /*                                              */
+           /*                                              */
+           /************************************************/
+        2 R_CODE                FIXED BIN(31),  /*ACTION&RETURNCODE*/
+        2 NAME                  CHAR(8),        /*PASSES DDNAME*/
+
+        2 INFO,
+           3 $DSNAME            CHAR(44),
+           3 $MEMBER            CHAR(8),
+           3 $DSORG             CHAR(2),
+           3 $RECFM             CHAR(4),
+           3 $LRECL             FIXED BIN(15),
+           3 $BLKSIZE           FIXED BIN(15),
+           3 $CATALOGED         CHAR(1),             /* Y=YES N=NO */
+           3 $CREATED           PIC'99999';          /* YYDDD      */
+     DCL     DONTPRINT          BIT   INIT(0B);
+
+  IF R_CODE = -3  THEN DONTPRINT = 1B;
+
+  IF ABS(R_CODE) = 1 THEN
+  DO;
+     CALL JOURNAL('SUBROUTINE=DDINFO',3);
+     CALL JOURNAL('   RELEASE=27AUG80',1);
+     CALL JOURNAL('   PURPOSE=PRINT DCB INFORMATION FROM DD CARD',1);
+  END;
+
+               /* DECLARE ASSEMBLER ENTRY POINT TO PASS JFCB INFO */
+
+  DCL JFCB ENTRY(FIXED BIN(31),FIXED BIN(31))
+                   OPTIONS(ASSEMBLER INTER);
+
+               /* SET UP PARAMETERS FOR PASS TO ASSEMBLER */
+
+  DCL (P1,P2) STATIC POINTER;
+
+  DCL JFCBPASS CHAR(176)     BASED(P1);
+  DCL JFCBBASE FIXED BIN(31) BASED(P1);
+  ALLOCATE JFCBPASS;
+  JFCBPASS = ' ';
+
+  DCL   DDPASS CHAR(8)       BASED(P2);
+  DCL   DDBASE FIXED BIN(31) BASED(P2);
+  ALLOCATE DDPASS;
+  DDPASS = DD.NAME;
+
+1              /* DECLARE INCIDENTAL WORKING VARIABLES */
+
+  DCL (BYTE1,BYTE2,BYTE3) STATIC CHAR(2) VAR INIT(' ');
+  BYTE1,BYTE2 = '';  BYTE3 = '?';
+
+  DCL (JFCBZONE,JFCBDIGIT) CHAR(176) INIT(' ');
+
+  DCL $I STATIC FIXED BIN(31) INIT(0);
+
+1              /* MAINLINE */
+
+  CALL JFCB(DDBASE,JFCBBASE);
+  DD.INFO = '';
+
+  IF VERIFY(JFCBPASS,' ')=0 THEN
+  DO;
+     CALL JOURNAL('SUBROUTINE JFCB FAILED TO RETURN JFCB',2);
+     CALL DUMP;
+     R_CODE=16;
+     RETURN;
+  END;
+
+  JFCBZONE = TRANSLATE(JFCBPASS,
+                      (  (16)'0' ||(16)'1' ||(16)'2' ||(16)'3'
+                       ||(16)'4' ||(16)'5' ||(16)'6' ||(16)'7'
+                       ||(16)'8' ||(16)'9' ||(16)'A' ||(16)'B'
+                       ||(16)'C' ||(16)'D' ||(16)'E' ||(16)'F'));
+
+  JFCBDIGIT= TRANSLATE(JFCBPASS,(16)'0123456789ABCDEF');
+
+  $DSNAME = SUBSTR(JFCBPASS,1,44);
+
+  IF SUBSTR(JFCBZONE,53,1) > '7' THEN $CATALOGED='Y';
+                                 ELSE $CATALOGED='N';
+
+       IF SUBSTR(JFCBZONE ,99,1) = '8' THEN $DSORG = 'IS';
+  ELSE IF SUBSTR(JFCBZONE ,99,1) = '4' THEN $DSORG = 'PS';
+  ELSE IF SUBSTR(JFCBZONE ,99,1) = '2' THEN $DSORG = 'DA';
+  ELSE IF SUBSTR(JFCBDIGIT,99,1) = '2' THEN $DSORG = 'PO';
+  ELSE
+  DO;
+     R_CODE = MAX(R_CODE,2);
+     CALL JOURNAL('*****UNEXPECTED DSORG',1);
+     $DSORG = '??';
+  END;
+
+  IF $DSORG='PO' THEN $MEMBER = SUBSTR(JFCBPASS,45,8);
+                 ELSE $MEMBER = ' ';
+
+       IF SUBSTR(JFCBZONE,101,1)='C' THEN BYTE1='U';
+  ELSE IF VERIFY(SUBSTR(JFCBZONE,101,1),'89')=0 THEN BYTE1='F';
+  ELSE IF VERIFY(SUBSTR(JFCBZONE,101,1),'45')=0 THEN BYTE1='V';
+
+  IF VERIFY(SUBSTR(JFCBZONE,101,1),'59')=0 THEN BYTE2='B';
+
+       IF SUBSTR(JFCBDIGIT,101,1)='8' THEN BYTE3='S';
+  ELSE IF SUBSTR(JFCBDIGIT,101,1)='C' THEN BYTE3='SA';
+  ELSE IF SUBSTR(JFCBDIGIT,101,1)='A' THEN BYTE3='SM';
+  ELSE IF SUBSTR(JFCBDIGIT,101,1)='4' THEN BYTE3='A';
+  ELSE IF SUBSTR(JFCBDIGIT,101,1)='2' THEN BYTE3='M';
+  ELSE IF SUBSTR(JFCBDIGIT,101,1)='0' THEN BYTE3='';
+
+  $RECFM = BYTE1 || BYTE2 || BYTE3;
+
+  SELECT($RECFM);
+     WHEN('U   ','FB  ','FBS ','FBA ','FA  ',
+          'V   ','VB  ','VBA ','VBS ','VS  ')  /*NOTHING*/;
+
+     OTHERWISE
+     DO;
+        R_CODE = MAX(R_CODE,4);
+        CALL JOURNAL('*****UNEXPECTED RECFM',1);
+     END;
+  END;
+
+  UNSPEC($LRECL)   = UNSPEC(SUBSTR(JFCBPASS,105,2));
+  UNSPEC($BLKSIZE) = UNSPEC(SUBSTR(JFCBPASS,103,2));
+
+  UNSPEC($I) = UNSPEC(SUBSTR(JFCBPASS,81,3));
+  $CREATED = 1000*($I/65536) + MOD($I/256,65536);
+
+
+  IF ABS(R_CODE)>1 THEN CALL DUMP;
+
+  FREE DDPASS;  FREE JFCBPASS;
+
+  RETURN;
+1              /* DECLARE JOURNAL FOR LOGGING MESSAGES */
+
+  JOURNAL: PROCEDURE(MESSAGE,SKIP#);
+     DCL MESSAGE CHAR(*);
+     DCL SKIP#   FIXED BIN(15);
+     IF DONTPRINT THEN RETURN;
+     PUT FILE(SYSPRINT) EDIT(MESSAGE)(SKIP(SKIP#),COL(6),A);
+  END JOURNAL;
+
+-              /* SUBROUTINE TO DUMP THE PASSED JFCB */
+
+  DUMP: PROCEDURE;
+     IF DONTPRINT THEN RETURN;
+     CALL JOURNAL('DUMP OF JFCB',4);
+     DCL (I,J,K) STATIC FIXED BIN(15);
+
+     PUT FILE(SYSPRINT) EDIT
+             ('|',(('---+++---',K) DO K=1 TO 10),'|')
+             (SKIP(2),COL(6),A(1),(10)(A(9),F(1)),A(1));
+
+     PUT FILE(SYSPRINT) EDIT
+             ('|',JFCBPASS ,'|',
+              '|',JFCBZONE ,'|',
+              '|',JFCBDIGIT,'|')
+             (SKIP(1),COL(6),A(1),A(100),A(1));
+
+     PUT FILE(SYSPRINT) SKIP(2);
+     PUT FILE(SYSPRINT) EDIT
+             ('|',SUBSTR(JFCBPASS ,101),'|',
+              '|',SUBSTR(JFCBZONE ,101),'|',
+              '|',SUBSTR(JFCBDIGIT,101),'|')
+             (SKIP(1),COL(6),A(1),A(100),A(1));
+
+     PUT FILE(SYSPRINT) EDIT
+             ('|',(('---+++---',K) DO K=1 TO 10),'|')
+             (SKIP(1),COL(6),A(1),(10)(A(9),F(1)),A(1));
+  END DUMP;
+  END DDINFO;

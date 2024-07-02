@@ -1,0 +1,52 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20220429)                           2024.06.20 11:25:23   Page     1
+-                     Options Specified
+0  Install:
+0  Command: SOURCE,RULES(LAXDCL)
+0  Install:
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  S99VIN: PROC(DDN,DSN,MRN,INFO,S99RC,S99ERRO         2024.06.20 11:25:23   Page     2
+0 Compiler Source
+0    Line.File
+0       1.0      S99VIN: PROC(DDN,DSN,MRN,INFO,S99RC,S99ERROR,S99INFO);                  00001
+        2.0           DCL (DDN,DSN,MRN,INFO) CHAR(*) VAR;                                00002
+        3.0           DCL (S99RC,S99ERROR,S99INFO,I1) FIXED BIN(15);                     00003
+        4.0           DCL 1 S99RB,                                                       00004
+        5.0                 2 VERB FIXED BIN(15) INIT(5127),                             00005
+        6.0                 2 FLAGS1 FIXED BIN(15) INIT(0),                              00006
+        7.0                 2 ERRORCODE FIXED BIN(15) INIT(0),                           00007
+        8.0                 2 INFOCODE FIXED BIN(15) INIT(0),                            00008
+        9.0                 2 S99TXTPP POINTER,                                          00009
+       10.0                 2 RESERVED FIXED BIN(31) INIT(0),                            00010
+       11.0                 2 FLAGS2 FIXED BIN(31) INIT(0);                              00011
+       12.0           DCL S99TUPL(11) POINTER;                                           00012
+       13.0           DCL 1 S99TUNIT(11),                                                00013
+       14.0                 2 KEY FIXED BIN(15) INIT(1,5,6,7,8,9,10,11,12,13,14),        00014
+       15.0                 2 NUM FIXED BIN(15) INIT((11) 1),                            00015
+       16.0                 2 PARM CHAR(44) VAR INIT(DDN,(44)' ',(8)' ',(3)(1)' ',       00016
+       17.0                                          (2)(2)' ',(3)(1)' ');               00017
+       18.0           DCL X80 BIT(8) BASED(X80PTR);                                      00018
+       19.0           DCL SVC99 EXTERNAL ENTRY(FIXED BIN(15)) RETURNS(FIXED BIN(15));    00019
+       20.0           S99TXTPP=ADDR(S99TUPL(1));                                         00020
+       21.0           DO I1=1 TO 11;                                                     00021
+       22.0           S99TUPL(I1)=ADDR(S99TUNIT(I1).KEY);                                00022
+       23.0           END;                                                               00023
+       24.0           X80PTR=ADDR(S99TUPL(11));                                          00024
+       25.0           X80='10000000'B;                                                   00025
+       26.0           S99RC=SVC99(S99RB.VERB);                                           00026
+       27.0           DSN=S99TUNIT(2).PARM;                                              00027
+       28.0           MRN=S99TUNIT(3).PARM;                                              00028
+       29.0           INFO='';                                                           00029
+       30.0           DO I1=4 TO 11;                                                     00030
+       31.0           INFO=INFO||S99TUNIT(I1).PARM;                                      00031
+       32.0           END;                                                               00032
+       33.0           S99ERROR=S99RB.ERRORCODE;                                          00033
+       34.0           S99INFO=S99RB.INFOCODE;                                            00034
+       35.0           END S99VIN;                                                        00035
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  S99VIN: PROC(DDN,DSN,MRN,INFO,S99RC,S99ERRO         2024.06.20 11:25:23   Page     3
+- No Compiler Messages
+0 File Reference Table
+0   File    Included From  Name
+0      0                   AVL.PDUMP.PLI(S99VIN)
+- Component    Return Code    Messages (Total/Suppressed)    Time
+0 Compiler         0                1  /  1                   1 secs
+0 End of compilation of S99VIN
+

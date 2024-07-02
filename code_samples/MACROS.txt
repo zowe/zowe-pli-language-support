@@ -3425,7 +3425,7 @@
    IBM1206I W    1661.0    BIT operators should be applied only to BIT operands.
  - File Reference Table
  0   File    Included From  Name
- 0      0                   AVL.IBAGROUP.PLI(MACROS)
+ 0      0                   AVL.USER.PLI(MACROS)
  - Component    Return Code    Messages (Total/Suppressed)    Time
  0 Compiler         4               53  /  44                 13 secs
  0 End of compilation of PDSPROC

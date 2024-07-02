@@ -1325,7 +1325,7 @@
    IBM1214I W     768.0    A dummy argument will be created for argument number 1 in ENTRY reference $LJ.
  - File Reference Table
  0   File    Included From  Name
- 0      0                   AVL.IBAGROUP.PLI(CHART)
+ 0      0                   AVL.USER.PLI(CHART)
  - Component    Return Code    Messages (Total/Suppressed)    Time
  0 Compiler         4               32  /  28                  6 secs
  0 End of compilation of CHART

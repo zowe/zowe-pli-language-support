@@ -61,7 +61,7 @@
  - No Compiler Messages
  0 File Reference Table
  0   File    Included From  Name
- 0      0                   AVL.IBAGROUP.PLI(FILE)
+ 0      0                   AVL.USER.PLI(FILE)
  - Component    Return Code    Messages (Total/Suppressed)    Time
  0 Compiler         0                5  /  5                   2 secs
  0 End of compilation of EXAMPLE

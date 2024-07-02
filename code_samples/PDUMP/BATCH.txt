@@ -1,0 +1,585 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20220429)                           2024.06.20 04:06:22   Page     1
+-                     Options Specified
+0  Install:
+0  Command: SOURCE,RULES(LAXDCL)
+0  Install:
+15655-PL6  IBM(R) Enterprise PL/I for z/OS       /*  PDUMP V5L0  CL269  DATE OF LAST RE         2024.06.20 04:06:22   Page     2
+0 Compiler Source
+0    Line.File
+0       1.0           /*  PDUMP V5L0  CL269  DATE OF LAST REVISION JAN 1982  */          00010001
+        2.0      LIST50: PROC(PARM) OPTIONS(MAIN) REORDER;                               00020021
+        3.0           DCL (PAGE,POS,LEN,A,TOP,B,W,S,F,T,BUFRL,CNTRL,FROM,TO,PMAX,        00030001
+        4.0                RCSCAN,OPT#,L,M#,C#,E#,PP   ) FIXED BIN(15) INIT(0);          00040020
+        5.0           DCL (RECORD,NLIST,SKIP,STOPAFT,PREVOFFSET                          00050012
+        6.0                                            ) FIXED BIN(31) INIT(0);          00060001
+        7.0           DCL OPTION(21) CHAR(8) VAR INIT('RECL','HEXT','HEX','DUMP',        00070008
+        8.0                          'SKIP','STOPAFT','COPYDD','DSORG','PRINTKEY',       00080014
+        9.0                          'NOLIST','INDD','COPY','KEYDD','CNTRL','COL',       00090014
+       10.0                          'COMPRESS','CCHAR','EXPAND','ECHAR','PAGES',        00100008
+       11.0                          'PASSWORD');                                        00110008
+       12.0           DCL (HEX,DUMP,NOLIST,PRINTKEY,COPY,HEXT,COMPRESS,EXPAND            00120002
+       13.0                                                  ) BIT(1) INIT('0'B);        00130002
+       14.0           DCL (VERIFY,SUBSTR,LENGTH,INDEX,DATE,TIME,ADDR,MIN,REPEAT,         00140004
+       15.0                LINENO,MOD,UNSPEC,NULL              ) BUILTIN;                00150013
+       16.0           DCL SYSPRINT FILE STREAM OUTPUT PRINT;                             00160001
+       17.0           DCL KEYS     FILE STREAM INPUT;                                    00170001
+       18.0           DCL SYSOUT   FILE RECORD OUTPUT;                                   00180001
+       19.0           DCL SYSXX    FILE VARIABLE INIT(SYSPS);                            00190013
+       20.0           DCL SYSPS    FILE RECORD INPUT;                                    00200001
+       21.0           DCL SYSIS    FILE RECORD INPUT KEYED ENV(ORGANIZATION(INDEXED));   00210005
+       22.0           DCL SYSR1    FILE RECORD INPUT KEYED ENV(REGIONAL(1));             00220005
+       23.0           DCL SYSVS    FILE RECORD INPUT KEYED ENV(VSAM PASSWORD(VSPW));     00250008
+       24.0           DCL FCBLOC   EXTERNAL ENTRY(FILE,POINTER);                         00260010
+       25.0           DCL SCANNER  ENTRY(ENTRY,CHAR(*) VAR,) RETURNS(FIXED BIN(15));     00270001
+       26.0           DCL HEXOUT   EXTERNAL ENTRY(CHAR(*) VAR , CHAR(*));                00280001
+       27.0           DCL TRANS32  EXTERNAL ENTRY(CHAR(*));                              00290004
+       28.0           DCL ALP      CHAR(26) INIT('ABCDEFGHIJKLMNOPQRSTUVWXYZ');          00300004
+       29.0           DCL NUM      CHAR(10) INIT('0123456789');                          00310004
+       30.0           DCL NAT      CHAR(3) INIT('@$#');                                  00320004
+       31.0           DCL HEXCHARS CHAR(16) INIT('0123456789ABCDEF');                    00330009
+       32.0           DCL INDD     CHAR(8) INIT('SYSIN');                                00340004
+       33.0           DCL COPYDD   CHAR(8) INIT('SYSOUT');                               00350004
+       34.0           DCL KEYDD    CHAR(8) INIT('KEYS');                                 00360004
+       35.0           DCL KEAY     CHAR(264) VAR INIT('');                               00370004
+       36.0           DCL DSORG    CHAR(2) INIT('PS');                                   00380004
+       37.0           DCL TIMEX    CHAR(9) INIT(' ');                                    00390004
+       38.0           DCL VSPW     CHAR(8) STATIC INIT(' ');                             00400008
+       39.0           DCL HEADER1  CHAR(7) INIT(' ');                                    00410004
+       40.0           DCL HEADER2  CHAR(8) INIT(' ');                                    00420004
+       41.0           DCL COL      CHAR(20) VAR INIT('');                                00430004
+       42.0           DCL PARM     CHAR(100) VAR;                                        00440004
+       43.0           DCL R        CHAR(100) VAR INIT('');                               00450004
+       44.0           DCL O        CHAR(100) VAR INIT('');                               00460015
+       45.0           DCL CR       CHAR(11) INIT(' ');                                   00470004
+       46.0           DCL OPTVAL   CHAR(20) VAR INIT('');                                00480004
+       47.0           DCL (ECHAR,CCHAR) CHAR(1) INIT(' ');                               00490004
+       48.0           DCL LINE50 CHAR(50) VAR INIT('');                                  00500012
+       49.0           DCL LINE CHAR(100) INIT(' ');                                      00510012
+       50.0           DCL P POINTER INIT((ADDR(Y)));                                     00520012
+       51.0           DCL Q POINTER INIT((ADDR(YY)));                                    00530012
+       52.0           DCL OUTREC CHAR(*) VAR CONTROLLED INIT('');                        00540013
+       53.0           DCL DATA   CHAR(*) VAR CONTROLLED INIT('');                        00550013
+       54.0           DCL HEX64 CHAR(64) INIT(' ');                                      00560012
+       55.0           DCL LINE32 CHAR(32) VAR INIT('');                                  00570012
+       56.0           DCL Y CHAR(4) INIT(' ');                                           00580012
+       57.0           DCL BIN FIXED BIN(31) BASED(P);                                    00590012
+       58.0           DCL WORK CHAR(3) VAR INIT('');                                     00600012
+       59.0           DCL 1 DUMPLINE,                                                    00610012
+       60.0                 2 OFFSET CHAR(6) INIT(' '),                                  00620012
+       61.0                 2 WORDS(8) CHAR(8) INIT((8)(1)' '),                          00630012
+       62.0                 2 STAR1 CHAR(1) INIT('*'),                                   00640012
+       63.0                 2 INFO CHAR(32) INIT(' '),                                   00650012
+       64.0                 2 STAR2 CHAR(1) INIT('*');                                   00660012
+       65.0           DCL YY CHAR(4) INIT(' ');                                          00670012
+       66.0           DCL WARK CHAR(3) VAR INIT('');                                     00680012
+       67.0           DCL BAN FIXED BIN(31) BASED(Q);                                    00690012
+       68.0           DCL (OFFSET1,OFFSET2) CHAR(6) INIT(' ');                           00700012
+       69.0           DCL PREVINFO CHAR(32) VAR INIT('');                                00710012
+       70.0           DCL 1 PLITABS STATIC EXT,                                          00720001
+       71.0               2 (OFFSET INIT(6),                                             00730001
+       72.0                 PAGESIZE INIT(60),                                           00740001
+       73.0                 LINESIZE INIT(132),                                          00750001
+       74.0                 NO_OF_TABS INIT(5),                                          00760001
+       75.0                 TAB1 INIT(25),                                               00770001
+       76.0                 TAB2 INIT(49),                                               00780001
+       77.0                 TAB3 INIT(73),                                               00790001
+       78.0                 TAB4 INIT(97),                                               00800001
+       79.0                 TAB5 INIT(121)) FIXED BIN(15,0);                             00810001
+       80.0           DCL 1 ACTION,  /* SCANNER ACTION TABLE FOR PARM */                 00820002
+       81.0                 2 TYPE(21) BIT(1) INIT((21)(1)'0'B),                         00830012
+       82.0                 2 KW(21) CHAR(8) VAR INIT('R','HEXT','HEX','DU',             00840008
+       83.0                          'SK','ST','COPYDD','DS','PR','NOL','INDD',          00850014
+       84.0                          'COPY','KEYDD','CN','COL','COM','CC',               00860014
+       85.0                          'EXP','EC','PAG','PAS'),                            00870008
+       86.0                 2 TRANS BIT(1) INIT('0'B);                                   00880002
+       87.0           DCL 1 FCB BASED(FCBPTR),                                           00890016
+       88.0                    2 F111 CHAR(20),                                          00900016
+       89.0                    2 FADB POINTER,  /* ADDRESS OF DCB OR ACB */              00910016
+       90.0                    2 F222 CHAR(16),                                          00920016
+       91.0                    2 FFLA BIT(8),  /* RECORD FORMAT */                       00930016
+       92.0                           /* BIT(1) F-FORMAT                                 00940016
+       93.0                              BIT(2) V-FORMAT                                 00950016
+       94.0                              BIT(3) U-FORMAT                                 00960016
+       95.0                              BIT(4) BLOCKED                                  00970016
+       96.0                              BIT(5) SPANNED */                               00980016
+       97.0                    2 FFLB BIT(8),  /* FILE ORGANIZATION */                   00990016
+       98.0                           /* BIT(1) CONSECUTIVE                              01000016
+       99.0                              BIT(2) INDEXED                                  01010016
+      100.0                              BIT(3) REGIONAL(1)                              01020016
+      101.0                              BIT(4) REGIONAL(2)                              01030016
+      102.0                              BIT(5) REGIONAL(3)                              01040016
+      103.0                              BIT(6) TP(M)                                    01050016
+      104.0                              BIT(7) TP(R)                                    01060016
+      105.0                              BIT(8) OTHER */                                 01070016
+      106.0                    2 FFLC BIT(8),  /* ACCESS METHOD */                       01080016
+      107.0                           /* X'00'  QSAM                                     01090016
+      108.0                              X'04'  BSAM                                     01100016
+      109.0                              X'08'  BSAM(LOAD)                               01110016
+      110.0                              X'0C'  TCAM                                     01120016
+      111.0                              X'10'  QISAM                                    01130016
+      112.0                              X'14'  BISAM                                    01140016
+      113.0                              X'18'  BDAM                                     01150016
+      114.0                              X'1C'  VSAM  */                                 01160016
+      115.0                    2 FFLD BIT(8),                                            01170016
+      116.0                    2 F333 CHAR(4),                                           01180016
+      117.0                    2 FBKZ FIXED BIN(15),  /* BLOCKSIZE */                    01190016
+      118.0                    2 FKYL FIXED BIN(15),  /* KEYLENGTH */                    01200016
+      119.0                    2 FRCL FIXED BIN(31),  /* RECORD LENGTH */                01210016
+      120.0                    2 F444 CHAR(20),                                          01220016
+      121.0                      /* BEGIN RECORD I/O OR STREAM I/O SECTION */            01230016
+      122.0                    2 F555 CHAR(24),                                          01240016
+      123.0                    2 FFNC BIT(8),                                            01250016
+      124.0                    2 FELV BIT(8);  /* VSAM FLAGS */                          01260016
+      125.0                           /* BIT(1) KSDS                                     01270016
+      126.0                              BIT(2) ESDS                                     01280016
+      127.0                              BIT(3) RRDS                                     01290016
+      128.0                              BIT(4) ALTERNATE INDEX PATH                     01300016
+      129.0                              BIT(5) ALTERNATE INDEX PATH (NON-UNIQUE)        01310016
+      130.0                              BIT(6) SKIP */                                  01320016
+      131.0           DCL FCBPTR POINTER INIT((NULL));                                   01330016
+      132.0           DCL QSAM  BIT(8) INIT('00000000'B);                                01340016
+      133.0           DCL BSAM  BIT(8) INIT('00000100'B);                                01350016
+      134.0           DCL BSAML BIT(8) INIT('00001000'B);                                01360016
+      135.0           DCL VSAM  BIT(8) INIT('00011100'B);                                01370016
+      136.0      TODAY: PROC RETURNS(CHAR(7));                                           01380001
+      137.0           DCL X CHAR(7) , N FIXED BIN(15) , MO CHAR(36) , Y CHAR(6);         01390001
+      138.0           Y=DATE;                                                            01400001
+      139.0           GET STRING(Y) EDIT(N) (X(2),F(2));                                 01410001
+      140.0           MO='JANFEBMARAPRMAYJUNJULAUGSEPOCTNOVDEC';                         01420001
+      141.0           SUBSTR(X,1,2)=SUBSTR(Y,5,2);                                       01430001
+      142.0           SUBSTR(X,3,3)=SUBSTR(MO,3*N-2,3);                                  01440001
+      143.0           SUBSTR(X,6,2)=SUBSTR(Y,1,2);                                       01450001
+      144.0           RETURN(X);                                                         01460001
+      145.0           END TODAY;                                                         01470001
+      146.0           FROM=1;  /* DEFAULT "FROM" VALUE */                                01480002
+      147.0           C#=1;    /* DEFAULT "COMPRESS" VALUE */                            01490018
+      148.0           RCSCAN=SCANNER(EXIT,PARM,ACTION);                                  01500001
+      149.0           SELECT(RCSCAN);                                                    01510003
+      150.0           WHEN(8)  R='MISMATCHED PARENTHESES IN PARM';                       01520003
+      151.0           WHEN(12) R='PARM SYNTAX ERROR';                                    01530003
+      152.0           WHEN(98) R='INVALID OPTION: '||OPTVAL;                             01540003
+      153.0           WHEN(99) R='INVALID PARAMETER TO OPTION '||OPTION(OPT#-4);         01550003
+      154.0           OTHERWISE R='SCANNER RETURN CODE'||RCSCAN;                         01560003
+      155.0           END;                                                               01570003
+      156.0           IF RCSCAN>4 THEN GOTO EOJ;                                         01580003
+      157.0      EXIT: PROC(KW#,VALUE) RETURNS(FIXED BIN(15));                           01590002
+      158.0           DCL KW# FIXED BIN(15);                                             01600002
+      159.0           DCL VALUE CHAR(*) VAR;                                             01610002
+      160.0           DCL (RC,L) FIXED BIN(15) INIT(0);                                  01620002
+      161.0           OPT#=KW#;                                                          01630003
+      162.0           OPTVAL=VALUE;                                                      01640003
+      163.0           L=LENGTH(VALUE);                                                   01650005
+      164.0           IF OPT#>4 THEN DO;                                                 01660016
+      165.0              O=O||OPTION(OPT#-4);                                            01670016
+      166.0              SELECT(KW#);                                                    01680016
+      167.0              WHEN(25) O=O||'()';                                             01690016
+      168.0              OTHERWISE IF L>0 THEN O=O||'('||VALUE||')';                     01700016
+      169.0              END;                                                            01710016
+      170.0              O=O||',';                                                       01720016
+      171.0              END;                                                            01730016
+      172.0           SELECT(KW#);                                                       01740002
+      173.0           WHEN(5) DO;  /* RECL */                                            01750002
+      174.0                   IF VERIFY(VALUE,NUM)>0|L=0                                 01760002
+      175.0                      THEN RC=99;                                             01770002
+      176.0                      ELSE DO;                                                01780002
+      177.0                           GET STRING(VALUE) LIST(BUFRL);                     01790002
+      178.0                           IF BUFRL<0 THEN RC=99;                             01800017
+      179.0                           END;                                               01810002
+      180.0                   END;                                                       01820002
+      181.0           WHEN(6) HEXT=^(DUMP|HEX);                                          01830005
+      182.0           WHEN(7) HEX=^(DUMP|HEXT);                                          01840005
+      183.0           WHEN(8) DUMP=^(HEX|HEXT);                                          01850002
+      184.0           WHEN(9) DO;  /* SKIP */                                            01860002
+      185.0                   IF VERIFY(VALUE,NUM)>0|L=0                                 01870002
+      186.0                      THEN RC=99;                                             01880002
+      187.0                      ELSE DO;                                                01890002
+      188.0                           GET STRING(VALUE) LIST(SKIP);                      01900002
+      189.0                           IF SKIP<0 THEN RC=99;                              01910017
+      190.0                           END;                                               01920002
+      191.0                   END;                                                       01930002
+      192.0           WHEN(10) DO;  /* STOPAFT */                                        01940002
+      193.0                    IF VERIFY(VALUE,NUM)>0|L=0                                01950002
+      194.0                       THEN RC=99;                                            01960002
+      195.0                       ELSE DO;                                               01970002
+      196.0                            GET STRING(VALUE) LIST(STOPAFT);                  01980002
+      197.0                            IF STOPAFT<0 THEN RC=99;                          01990017
+      198.0                            END;                                              02000002
+      199.0                    END;                                                      02010002
+      200.0           WHEN(11) COPYDD=VALUE;                                             02020014
+      201.0           WHEN(12) SELECT(VALUE);  /* DSORG */                               02030002
+      202.0                    WHEN('IS') DSORG='IS';                                    02040002
+      203.0                    WHEN('R1') DSORG='R1';                                    02050002
+      204.0                    WHEN('R2') DSORG='R2';                                    02060002
+      205.0                    WHEN('R3') DSORG='R3';                                    02070002
+      206.0                    WHEN('VS') DSORG='VS';                                    02080006
+      207.0                    OTHERWISE  RC=99;                                         02090002
+      208.0                    END;                                                      02100002
+      209.0           WHEN(13) PRINTKEY='1'B;                                            02110002
+      210.0           WHEN(14) NOLIST='1'B;                                              02120002
+      211.0           WHEN(15) INDD=VALUE;                                               02130002
+      212.0           WHEN(16) COPY='1'B;                                                02140014
+      213.0           WHEN(17) KEYDD=VALUE;                                              02150002
+      214.0           WHEN(18) SELECT(VALUE);  /* CNTRL */                               02160002
+      215.0                    WHEN('1') CNTRL=1;                                        02170002
+      216.0                    WHEN('2') CNTRL=2;                                        02180002
+      217.0                    WHEN('3') CNTRL=3;                                        02190002
+      218.0                    OTHERWISE RC=99;                                          02200002
+      219.0                    END;                                                      02210002
+      220.0           WHEN(19) DO;  /* COL */                                            02220002
+      221.0                    IF VERIFY(VALUE,NUM||',')>0|L=0                           02230002
+      222.0                       THEN RC=99;                                            02240002
+      223.0                       ELSE DO;                                               02250002
+      224.0                            COL=VALUE||',,';                                  02260002
+      225.0                            GET STRING(COL) LIST(FROM,TO);                    02270002
+      226.0                            IF FROM<1|TO<0 THEN RC=99;                        02280002
+      227.0                            END;                                              02290002
+      228.0                    END;                                                      02300002
+      229.0           WHEN(20) DO;                                                       02310017
+      230.0                    COMPRESS=^EXPAND;                                         02320017
+      231.0                    IF L>0 THEN DO;                                           02330017
+      232.0                       IF VERIFY(VALUE,NUM)>0                                 02340017
+      233.0                          THEN RC=99;                                         02350017
+      234.0                          ELSE DO;                                            02360017
+      235.0                               GET STRING(VALUE) LIST(C#);                    02370017
+      236.0                               IF C#<1 THEN RC=99;                            02380018
+      237.0                               END;                                           02390017
+      238.0                       END;                                                   02400017
+      239.0                    END;                                                      02410017
+      240.0           WHEN(21) SELECT(L);  /* CCHAR */                                   02420009
+      241.0                    WHEN(0) RC=99;                                            02430009
+      242.0                    WHEN(1) CCHAR=VALUE;                                      02440009
+      243.0                    OTHERWISE SELECT(SUBSTR(VALUE,1,1));                      02450009
+      244.0                              WHEN('''') GET STRING(VALUE) LIST(CCHAR);       02460009
+      245.0                              WHEN('"') DO;                                   02470009
+      246.0                                        IF ^HEXIN(VALUE,CCHAR) THEN RC=99;    02480009
+      247.0                                        END;                                  02490009
+      248.0                              OTHERWISE RC=99;                                02500009
+      249.0                              END;                                            02510009
+      250.0                    END;                                                      02520002
+      251.0           WHEN(22) DO;                                                       02530017
+      252.0                    EXPAND=^COMPRESS;                                         02540017
+      253.0                    IF L>0 THEN DO;                                           02550017
+      254.0                       IF VERIFY(VALUE,NUM)>0                                 02560017
+      255.0                          THEN RC=99;                                         02570017
+      256.0                          ELSE DO;                                            02580017
+      257.0                               GET STRING(VALUE) LIST(E#);                    02590017
+      258.0                               IF E#<1 THEN RC=99;                            02600018
+      259.0                               END;                                           02610017
+      260.0                       END;                                                   02620017
+      261.0                    END;                                                      02630017
+      262.0           WHEN(23) SELECT(L);  /* ECHAR */                                   02640009
+      263.0                    WHEN(0) RC=99;                                            02650009
+      264.0                    WHEN(1) ECHAR=VALUE;                                      02660009
+      265.0                    OTHERWISE SELECT(SUBSTR(VALUE,1,1));                      02670009
+      266.0                              WHEN('''') GET STRING(VALUE) LIST(ECHAR);       02680009
+      267.0                              WHEN('"') DO;                                   02690009
+      268.0                                        IF ^HEXIN(VALUE,ECHAR) THEN RC=99;    02700009
+      269.0                                        END;                                  02710009
+      270.0                              OTHERWISE RC=99;                                02720009
+      271.0                              END;                                            02730009
+      272.0                    END;                                                      02740002
+      273.0           WHEN(24) DO;  /* PAGES */                                          02750002
+      274.0                    IF VERIFY(VALUE,NUM)>0|L=0                                02760002
+      275.0                       THEN RC=99;                                            02770002
+      276.0                       ELSE DO;                                               02780002
+      277.0                            GET STRING(VALUE) LIST(PMAX);                     02790002
+      278.0                            IF PMAX<0 THEN RC=99;                             02800002
+      279.0                            END;                                              02810002
+      280.0                    END;                                                      02820002
+      281.0           WHEN(25) VSPW=VALUE;  /* VSAM PASSWORD */                          02830008
+      282.0           OTHERWISE RC=98;                                                   02840003
+      283.0           END;                                                               02850002
+      284.0           RETURN(RC);                                                        02860002
+      285.0      HEXIN: PROC(V,C) RETURNS(BIT(1));                                       02870009
+      286.0           DCL V CHAR(*) VAR;                                                 02880009
+      287.0           DCL C CHAR(*);                                                     02890009
+      288.0           DCL I FIXED BIN(15) INIT(0);                                       02900009
+      289.0           IF LENGTH(V)^=4 THEN RETURN('0'B);                                 02910009
+      290.0           IF VERIFY(SUBSTR(V,2,2),HEXCHARS)^=0 THEN RETURN('0'B);            02920009
+      291.0           I=16*(INDEX(HEXCHARS,SUBSTR(V,2,1))-1);                            02930009
+      292.0           I= I+(INDEX(HEXCHARS,SUBSTR(V,3,1))-1);                            02940009
+      293.0           UNSPEC(C)=SUBSTR(UNSPEC(I),9,8);                                   02950009
+      294.0           RETURN('1'B);                                                      02960009
+      295.0           END HEXIN;                                                         02970009
+      296.0           END EXIT;                                                          02980002
+      297.0           SELECT(DSORG);                                                     02990007
+      298.0           WHEN('VS') SYSXX=SYSVS;                                            03000007
+      299.0           WHEN('IS') SYSXX=SYSIS;                                            03010007
+      300.0           WHEN('R1') SYSXX=SYSR1;                                            03020007
+      301.0           OTHERWISE  SYSXX=SYSPS;                                            03050007
+      302.0           END;                                                               03060007
+      303.0           IF COPY THEN DO;                                                   03070012
+      304.0              OPEN FILE(SYSOUT) TITLE(COPYDD);                                03080012
+      305.0              M#=RECMAX(SYSOUT);                                              03090012
+      306.0              ALLOCATE OUTREC CHAR(M#);                                       03100012
+      307.0              IF EXPAND THEN DO;                                              03110019
+      308.0                 IF E#=0 THEN E#=M#;                                          03120019
+      309.0                         ELSE E#=MIN(E#,M#);                                  03130019
+      310.0                 END;                                                         03140019
+      311.0              END;                                                            03150012
+      312.0           IF CNTRL=0 THEN DO; IF HEX THEN CNTRL=2; ELSE CNTRL=1; END;        03160001
+      313.0           IF DUMP THEN S=2; ELSE S=CNTRL;                                    03170001
+      314.0           IF DSORG='PS' THEN PRINTKEY='0'B;                                  03180002
+      315.0           HEADER1=TODAY;                                                     03190001
+      316.0           TIMEX=TIME;                                                        03200001
+      317.0           HEADER2 = SUBSTR(TIMEX,1,2)  ||  '.'  ||  SUBSTR(TIMEX,3,2)        03210001
+      318.0              ||  '.'  ||  SUBSTR(TIMEX,5,2)  ;                               03220001
+      319.0           IF NOLIST THEN GOTO NOENDPAGE;                                     03230001
+      320.0           ON ENDPAGE(SYSPRINT) BEGIN;                                        03240001
+      321.0              PAGE=PAGE+1;                                                    03250001
+      322.0              IF PAGE>1 THEN PUT PAGE;                                        03260001
+      323.0              PUT EDIT(HEADER1,HEADER2,'PAGE ',PAGE)                          03270001
+      324.0                      (A,X(4),A,COL(118),A,F(4));                             03280001
+      325.0              IF DUMP THEN  ;                                                 03290001
+      326.0              ELSE IF HEX THEN DO;                                            03300001
+      327.0                   PUT EDIT('1         1         2         2         ' ||     03310001
+      328.0                            '3         3         4         4         5')      03320001
+      329.0                           (SKIP,X(18),A);                                    03330001
+      330.0                   IF PRINTKEY THEN PUT EDIT('KEY OR') (COL(105),A);          03340001
+      331.0                   PUT EDIT('1 . . . ') (SKIP,A);                             03350001
+      332.0                   PUT EDIT(REPEAT('5 . . . . 0 . . . . ',3)) (A);            03360001
+      333.0                   PUT EDIT('5 . . . . 0') (A);                               03370001
+      334.0                   PUT EDIT('RECORD','BYTES','LENGTH')                        03380001
+      335.0                           (COL(105),A,X(5),A,X(4),A);                        03390001
+      336.0                   END;                                                       03400001
+      337.0              ELSE DO;                                                        03410001
+      338.0                   PUT EDIT('1         2         3         4         ' ||     03420001
+      339.0                            '5         6         7         8         9')      03430001
+      340.0                           (SKIP,X(9),A);                                     03440001
+      341.0                   IF PRINTKEY THEN PUT EDIT('KEY OR') (COL(105),A);          03450001
+      342.0                   PUT EDIT(REPEAT('....5....0',9)) (SKIP,A);                 03460001
+      343.0                   PUT EDIT('RECORD','BYTES','LENGTH')                        03470001
+      344.0                           (COL(105),A,X(5),A,X(4),A);                        03480001
+      345.0                   END;                                                       03490001
+      346.0              IF LINENO(SYSPRINT)<5 THEN PUT LINE(5);                         03500001
+      347.0              IF PAGE>PMAX&PMAX>0 THEN DO;                                    03510001
+      348.0                 R='MAXIMUM PAGES EXCEEDED';                                  03520001
+      349.0                 GOTO EOJ;                                                    03530001
+      350.0                 END;                                                         03540001
+      351.0              END;                                                            03550001
+      352.0           SIGNAL ENDPAGE(SYSPRINT);                                          03560001
+      353.0      NOENDPAGE:  ;                                                           03570001
+      354.0           ON UNDEFINEDFILE(KEYS) GOTO OPEN;                                  03580006
+      355.0           IF DSORG^='PS' THEN DO;                                            03590006
+      356.0              OPEN FILE(KEYS) TITLE(KEYDD);                                   03600012
+      357.0              ON ENDFILE(KEYS) GOTO EOJ;                                      03610012
+      358.0              R='END OF FILE IN KEY DATASET   KEYDD='||KEYDD;                 03620012
+      359.0              ON KEY(SYSXX) GOTO NOREC;                                       03630012
+      360.0              OPEN FILE(SYSXX) DIRECT TITLE(INDD);                            03640012
+      361.0              CALL SETREC;                                                    03650012
+      362.0              GOTO KEY_INPUT;                                                 03660012
+      363.0              END;                                                            03670012
+      364.0      OPEN:                                                                   03680001
+      365.0           SELECT(DSORG);                                                     03690007
+      366.0           WHEN('PS') OPEN FILE(SYSXX) TITLE(INDD);                           03700007
+      367.0           OTHERWISE  OPEN FILE(SYSXX) SEQL TITLE(INDD);                      03710007
+      368.0           END;                                                               03720007
+      369.0           CALL SETREC;                                                       03730001
+      370.0           ON ENDFILE(SYSXX) GOTO EOJ;                                        03740007
+      371.0           R='END OF FILE IN INPUT DATASET   INDD='||INDD;                    03750001
+      372.0      LOOP:                                                                   03760001
+      373.0           SELECT(DSORG);                                                     03770007
+      374.0           WHEN('PS') READ FILE(SYSXX) INTO(DATA);                            03780007
+      375.0           OTHERWISE  READ FILE(SYSXX) INTO(DATA) KEYTO(KEAY);                03790007
+      376.0           END;                                                               03800007
+      377.0           RECORD=RECORD+1;                                                   03810001
+      378.0           IF RECORD<=SKIP THEN GOTO LOOP;                                    03820001
+      379.0           NLIST=NLIST+1;                                                     03830001
+      380.0           IF NLIST>STOPAFT&STOPAFT>0 THEN DO;                                03840007
+      381.0              R='NUMBER OF RECORDS PROCESSED EXCEEDED STOPAFT OPTION';        03850001
+      382.0              GOTO EOJ;                                                       03860001
+      383.0              END;                                                            03870001
+      384.0           IF COPY THEN CALL COPYER;                                          03880012
+      385.0           CALL PRINT(DATA,'   RECORD ');                                     03890001
+      386.0           IF PRINTKEY THEN CALL PRINT(KEAY,'      KEY ');                    03900001
+      387.0           GOTO LOOP;                                                         03910001
+      388.0      NOREC:                                                                  03920001
+      389.0           PUT EDIT ('***ERROR*** KEYED RECORD NOT FOUND. KEY=' || KEAY)      03930001
+      390.0                    (SKIP(2),A);                                              03940001
+      391.0      KEY_INPUT:                                                              03950001
+      392.0           GET FILE (KEYS) LIST (KEAY);                                       03960001
+      393.0           READ FILE(SYSXX) INTO(DATA) KEY(KEAY);                             03970007
+      394.0           RECORD=RECORD+1;                                                   03980001
+      395.0           IF COPY THEN CALL COPYER;                                          03990012
+      396.0           CALL PRINT(DATA,'   RECORD ');                                     04000001
+      397.0           IF PRINTKEY THEN CALL PRINT(KEAY,'      KEY ');                    04010001
+      398.0           GOTO KEY_INPUT;                                                    04020001
+      399.0      SETREC: PROC;                                                           04030001
+      400.0           /*********************************************************         04040010
+      401.0           THIS ROUTINE SETS THE LENGTH(BUFRL) OF THE INTERNAL                04050010
+      402.0           CHARACTER STRING(DATA) INTO WHICH WE WILL READ RECORDS FROM        04060001
+      403.0           THE USERS FILE.                                                    04070001
+      404.0           IF THE USER SUPPLIES A VALUE (IE. RECL>0) WE USE IT,               04080010
+      405.0           OTHERWISE WE USE THE MAXIMUM RECORD SIZE GIVEN IN THE              04090011
+      406.0           FILE CONTROL BLOCK (FCB).                                          04100010
+      407.0           *********************************************************/         04110011
+      408.0           IF BUFRL<=0 THEN BUFRL=RECMAX(SYSXX);                              04120016
+      409.0           ALLOCATE DATA CHAR(BUFRL);                                         04130010
+      410.0           END SETREC;                                                        04140001
+      411.0      RECMAX: PROC(FNAME) RETURNS(FIXED BIN(15));                             04150011
+      412.0           /**********************************************************        04160011
+      413.0           DETERMINE THE MAXIMUM RECORD LENGTH FOR THE GIVEN FILE.            04170011
+      414.0           USE THE FCB RECORD LENGTH (FRCL) FOR ALL ACCESS METHODS.           04180011
+      415.0           THE ONLY EXCEPTION TO THIS IS BSAM OR QSAM FILES WITH              04190011
+      416.0           U-FORMAT RECORDS IN WHICH CASE WE USE THE BLOCKSIZE (FBKZ).        04200011
+      417.0           **********************************************************/        04210011
+      418.0           DCL M FIXED BIN(15) INIT(0);                                       04220011
+      419.0           DCL FNAME FILE;                                                    04230011
+      420.0           CALL FCBLOC(FNAME,FCBPTR);                                         04240011
+      421.0           M=FRCL;  /* USE RECORD LENGTH */                                   04250011
+      422.0           IF FFLC=QSAM|FFLC=BSAM|FFLC=BSAML THEN DO;                         04260016
+      423.0              IF SUBSTR(FFLA,3,1)  /* IF RECFM=U */                           04270011
+      424.0                 THEN M=FBKZ;  /* USE BLOCKSIZE */                            04280011
+      425.0              END;                                                            04290011
+      426.0           RETURN(M);                                                         04300011
+      427.0           END RECMAX;                                                        04310011
+      428.0      PRINT: PROC(DODO,X);                                                    04320001
+      429.0           DCL DODO CHAR(*) VAR;  DCL X CHAR(10);                             04330001
+      430.0           IF NOLIST THEN RETURN;                                             04340001
+      431.0           LEN=LENGTH(DODO);                                                  04350001
+      432.0           IF FROM<1|FROM>LEN THEN F=1; ELSE F=FROM;                          04360001
+      433.0           IF TO<F THEN T=LEN; ELSE T=MIN(TO,LEN);                            04370001
+      434.0           IF HEX THEN DO A=F BY 50 TO T;                                     04380001
+      435.0           TOP=A+49;                                                          04390001
+      436.0           TOP=MIN(TOP,T);                                                    04400001
+      437.0           LINE50=SUBSTR(DODO,A,TOP-A+1);                                     04410001
+      438.0           CALL HEXOUT(LINE50,LINE);                                          04420001
+      439.0           IF HEXT THEN DO;                                                   04430001
+      440.0              PUT SKIP(CNTRL-S);                                              04440001
+      441.0              S=0;                                                            04450001
+      442.0              DO B=1 TO LENGTH(LINE50);                                       04460001
+      443.0              PUT EDIT(SUBSTR(LINE50,B,1)||' ') (A);                          04470001
+      444.0              END;                                                            04480001
+      445.0              IF A=F THEN PUT EDIT(LINE,RECORD,RANGE(A,TOP),LEN)              04490001
+      446.0                                  (SKIP,A,X(1),F(9),X(2),A,X(2),F(5));        04500001
+      447.0                     ELSE PUT EDIT(LINE,RANGE(A,TOP)) (SKIP,A,X(12),A);       04510001
+      448.0              END;                                                            04520001
+      449.0           ELSE DO;                                                           04530001
+      450.0              IF A=F THEN DO;                                                 04540001
+      451.0                   PUT EDIT(LINE,RECORD,RANGE(A,TOP),LEN)                     04550001
+      452.0                           (SKIP(CNTRL-S),A,X(1),F(9),X(2),A,X(2),F(5));      04560001
+      453.0                   S=0;                                                       04570001
+      454.0                   END;                                                       04580001
+      455.0              ELSE PUT EDIT(LINE,RANGE(A,TOP)) (SKIP(CNTRL),A,X(12),A);       04590001
+      456.0              END;                                                            04600001
+      457.0           END;                                                               04610001
+      458.0           ELSE IF DUMP THEN DO;                                              04620001
+      459.0           PUT EDIT (X,RECORD,LEN,' BYTES ')                                  04630001
+      460.0           (SKIP(2-S),X(9),A,P'999999',F(13),A);                              04640001
+      461.0           S=0;                                                               04650001
+      462.0           F=F-MOD(F-1,4);  /*  ROUND DOWN TO NEXT FULLWORD  */               04660001
+      463.0           DO A=F BY 32 TO T;                                                 04670001
+      464.0           TOP=A+31;                                                          04680001
+      465.0           TOP=MIN(TOP,T);                                                    04690001
+      466.0           LINE32=SUBSTR(DODO,A,TOP-A+1);                                     04700001
+      467.0           BIN=A-1;                                                           04710001
+      468.0           IF A=F THEN GOTO ZA;                                               04720001
+      469.0           IF A+32<=T & LINE32=PREVINFO THEN GOTO ZB;                         04730001
+      470.0           IF BIN-PREVOFFSET=32 THEN GOTO ZA;                                 04740001
+      471.0           BAN=BIN-32;                                                        04750001
+      472.0           WARK=SUBSTR(YY,2,3);                                               04760001
+      473.0           CALL HEXOUT(WARK,OFFSET2);                                         04770001
+      474.0           IF BIN-PREVOFFSET=64 THEN DO;                                      04780001
+      475.0           PUT EDIT ('LINE ',OFFSET2,' SAME AS ABOVE') (SKIP,X(6),A,A,A);     04790001
+      476.0           END;                                                               04800001
+      477.0           ELSE DO;                                                           04810001
+      478.0           BAN=PREVOFFSET+32;                                                 04820001
+      479.0           WARK=SUBSTR(YY,2,3);                                               04830001
+      480.0           CALL HEXOUT(WARK,OFFSET1);                                         04840001
+      481.0           PUT EDIT ('LINES ',OFFSET1,'-',OFFSET2,' SAME AS ABOVE')           04850001
+      482.0                    (SKIP,X(6),A,A,A,A,A);                                    04860001
+      483.0           END;                                                               04870001
+      484.0      ZA:                                                                     04880001
+      485.0           WORK=SUBSTR(Y,2,3);                                                04890001
+      486.0           CALL HEXOUT(WORK,DUMPLINE.OFFSET);                                 04900013
+      487.0           INFO=LINE32;                                                       04910001
+      488.0           CALL TRANS32(INFO);                                                04920001
+      489.0           CALL  HEXOUT(LINE32,HEX64);                                        04930001
+      490.0           DO B=1 TO 8;                                                       04940001
+      491.0           WORDS(B)=SUBSTR(HEX64,B*8-7);                                      04950001
+      492.0           END;                                                               04960001
+      493.0           PUT EDIT (DUMPLINE)                                                04970001
+      494.0           (SKIP,A,X(2),(4)(X(1),A),X(3),(4)(X(1),A),X(3),A,A,A);             04980001
+      495.0           PREVINFO=LINE32;                                                   04990001
+      496.0           PREVOFFSET=BIN;                                                    05000001
+      497.0      ZB:                                                                     05010001
+      498.0           END;                                                               05020001
+      499.0           END;                                                               05030001
+      500.0           ELSE DO A=F BY 100 TO T;                                           05040001
+      501.0           TOP=A+99;                                                          05050001
+      502.0           TOP=MIN(TOP,T);                                                    05060001
+      503.0           LINE=SUBSTR(DODO,A,TOP-A+1);                                       05070001
+      504.0           IF A=F THEN DO;                                                    05080001
+      505.0           PUT EDIT(LINE,RECORD,RANGE(A,TOP),LEN)                             05090001
+      506.0                   (SKIP(CNTRL-S),A,X(1),F(9),X(2),A,X(2),F(5));              05100001
+      507.0           S=0;                                                               05110001
+      508.0           END;                                                               05120001
+      509.0           ELSE PUT EDIT(LINE,RANGE(A,TOP)) (SKIP(CNTRL),A,X(12),A);          05130001
+      510.0           END;                                                               05140001
+      511.0      RANGE: PROC(N1,N2) RETURNS(CHAR(11));                                   05150001
+      512.0           DCL (N1,N2,I) FIXED BIN(15);                                       05160001
+      513.0           DCL CN2 CHAR(5);                                                   05170001
+      514.0           DCL RSTR CHAR(11);                                                 05180001
+      515.0           PUT STRING(CN2) EDIT(N2) (F(5));                                   05190001
+      516.0           I=VERIFY(CN2,' ');                                                 05200001
+      517.0           IF I>1 THEN CN2=SUBSTR(CN2,I);                                     05210001
+      518.0           PUT STRING(RSTR) EDIT(N1,'-',CN2) (F(5),A(1),A(5));                05220001
+      519.0           RETURN(RSTR);                                                      05230001
+      520.0           END RANGE;                                                         05240001
+      521.0           END PRINT;                                                         05250001
+      522.0      COPYER: PROC;                                                           05260012
+      523.0           IF FROM=1&TO=0&^(COMPRESS|EXPAND) THEN DO;                         05270012
+      524.0              OUTREC=DATA;                                                    05280012
+      525.0              WRITE FILE(SYSOUT) FROM(OUTREC);                                05290012
+      526.0              RETURN;                                                         05300012
+      527.0              END;                                                            05310012
+      528.0           L=LENGTH(DATA);                                                    05320012
+      529.0           IF FROM<1|FROM>L THEN F=1; ELSE F=FROM;                            05330012
+      530.0           IF TO<F THEN T=L; ELSE T=MIN(TO,L);                                05340012
+      531.0           IF ^(COMPRESS|EXPAND) THEN DO;                                     05350012
+      532.0              OUTREC=SUBSTR(DATA,F,T-F+1);                                    05360015
+      533.0              WRITE FILE(SYSOUT) FROM(OUTREC);                                05370012
+      534.0              RETURN;                                                         05380012
+      535.0              END;                                                            05390012
+      536.0           IF COMPRESS THEN DO;                                               05400020
+      537.0              PP=T;                                                           05410020
+      538.0              DO WHILE(SUBSTR(DATA,PP,1)=CCHAR&(C#+F-1)<PP&F<PP);             05420020
+      539.0              PP=PP-1;                                                        05430020
+      540.0              END;                                                            05440020
+      541.0              OUTREC=SUBSTR(DATA,F,PP-F+1);                                   05450020
+      542.0              WRITE FILE(SYSOUT) FROM(OUTREC);                                05460020
+      543.0              RETURN;                                                         05470020
+      544.0              END;                                                            05480020
+      545.0           /* ASSUME EXPAND */                                                05490021
+      546.0           OUTREC=SUBSTR(DATA,F,T-F+1);                                       05500021
+      547.0           IF E#>(T-F+1) THEN OUTREC=OUTREC||REPEAT(ECHAR,E#-T+F-2);          05510021
+      548.0           WRITE FILE(SYSOUT) FROM(OUTREC);                                   05520021
+      549.0           END COPYER;                                                        05530012
+      550.0      EOJ:                                                                    05540001
+      551.0           PUT STRING(CR) EDIT(RECORD) (F(11));                               05550001
+      552.0           W=VERIFY(CR,' ');                                                  05560001
+      553.0           CR=SUBSTR(CR,W);                                                   05570001
+      554.0           PUT EDIT('PDUMP V5L0(CL269) PROCESSING TERMINATING DUE TO ',R)     05580001
+      555.0                   (SKIP(4),A,A);                                             05590001
+      556.0           PUT EDIT('NUMBER OF INPUT DATASET RECORDS READ WAS ',CR)           05600001
+      557.0                   (SKIP,A,A);                                                05610001
+      558.0           L=LENGTH(O);                                                       05620015
+      559.0           IF L>0 THEN PUT EDIT('OPTIONS SPECIFIED: '||SUBSTR(O,1,L-1))       05630015
+      560.0                               (SKIP,A);                                      05640015
+      561.0           PUT EDIT('END OF JOB') (SKIP,A);                                   05650001
+      562.0           END LIST50;                                                        05660021
+15655-PL6  IBM(R) Enterprise PL/I for z/OS       /*  PDUMP V5L0  CL269  DATE OF LAST RE         2024.06.20 04:06:22   Page     3
+- Compiler Messages
+0 Message       Line.File Message Description
+0 IBM2670I W       2.0    The parameter to MAIN should be declared as CHAR(*) VARYING.
+  IBM2677I W       7.0    Generated code would be better if the declare for OPTION were changed from AUTOMATIC to
+                          STATIC NONASSIGNABLE.
+  IBM1200I W     138.0    Use of DATE built-in function may cause problems.
+  IBM1198I W     315.0    A null argument list is assumed for TODAY.
+- File Reference Table
+0   File    Included From  Name
+0      0                   AVL.PDUMP.PLI(BATCH)
+- Component    Return Code    Messages (Total/Suppressed)    Time
+0 Compiler         4               18  /  14                 11 secs
+0 End of compilation of LIST50
+

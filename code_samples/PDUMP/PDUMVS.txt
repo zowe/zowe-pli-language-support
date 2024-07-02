@@ -1,0 +1,2025 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20220429)                           2024.06.20 10:58:15   Page     1
+-                     Options Specified
+0  Install:
+0  Command: SOURCE,RULES(LAXDCL)
+0  Install:
+15655-PL6  IBM(R) Enterprise PL/I for z/OS       /*x PDUMP  -  MVS TSO COMMAND PROCESSO         2024.06.20 10:58:15   Page     2
+0 Compiler Source
+0    Line.File
+0       1.0           /*x PDUMP  -  MVS TSO COMMAND PROCESSOR  */                        00010005
+        2.0      PDUMP: PROC(PARM) OPTIONS(MAIN) REORDER;                                00020000
+        3.0           DCL PARM            CHAR(100) VAR;                                 00030007
+        4.0           DCL FC              CHAR(100) VAR INIT('');                        00040007
+        5.0           DCL (REPLY,TEXT)    CHAR(160) VAR INIT('');                        00050007
+        6.0           DCL (TRTAB1,TRTAB2) CHAR(256) INIT(' ');                           00060007
+        7.0           DCL (I,BUFRL,REC#,LEN,F,FROM,T,TO,TOP,A,N,                         00070000
+        8.0                #W,#B,#H,B,P#                      ) FIXED BIN(31) INIT(0);   00080007
+        9.0           DCL (RC3270,MODE,SALRC,RCSCAN,RCTSOCP,DISPLAY,LNSZ,LNNO,L,         00090009
+       10.0                C#,E#,M#,PP,VUNRC                  ) FIXED BIN(15) INIT(0);   00100017
+       11.0           DCL TT CHAR(4) INIT('2741');                                       00110000
+       12.0           DCL IO3270 EXTERNAL ENTRY(CHAR(*) VAR , FIXED BIN(15))             00120000
+       13.0                             RETURNS(FIXED BIN(15));                          00130000
+       14.0           DCL 1 IOXOPT STATIC EXT,                                           00140000
+       15.0                 2 ISTRING CHAR(30) VAR INIT('CMD'),                          00150000
+       16.0                 2 PFILE FILE VARIABLE INIT(PDPRT),                           00160015
+       17.0                 2 IFLAGS,                                                    00170015
+       18.0                   3 TRANS  BIT(1)  INIT('0'B),                               00180015
+       19.0                   3 ATTFLG BIT(1)  INIT('0'B),                               00190015
+       20.0                   3 IFILL  BIT(14) INIT('0'B),                               00200015
+       21.0                 2 ROWS  FIXED BIN(15) INIT(24),                              00210015
+       22.0                 2 PAGES FIXED BIN(15) INIT(100);                             00220000
+       23.0           DCL SCANNER ENTRY(ENTRY,CHAR(*) VAR,) RETURNS(FIXED BIN(15));      00230000
+       24.0           DCL 1 VS1,  /* SCANNER ACTION TABLE FOR SELECT COMMAND */          00240000
+       25.0                 2 TYPE(6) BIT(1) INIT((6)(1)'0'B),                           00250017
+       26.0                 2 KW(6) CHAR(4) VAR INIT('FI','DS','BUFL','PASS','BACK',     00260017
+       27.0                                          'CL'),                              00270017
+       28.0                 2 TRANS BIT(1) INIT('0'B);                                   00280000
+       29.0           DCL 1 VS2,  /* SCANNER ACTION TABLE FOR FIND COMMAND */            00290000
+       30.0                 2 TYPE(3) BIT(1) INIT((3)(1)'0'B),                           00300026
+       31.0                 2 KW(3) CHAR(4) VAR INIT('LIST','ALL','COPY'),               00310026
+       32.0                 2 TRANS BIT(1) INIT('0'B);                                   00320000
+       33.0           DCL 1 VS3,  /* SCANNER ACTION TABLE FOR SETPFK COMMAND */          00330000
+       34.0                 2 TYPE(2) BIT(1) INIT((2)(1)'0'B),                           00340006
+       35.0                 2 KW(2) CHAR(6) VAR INIT('PREFIX','SUFFIX'),                 00350000
+       36.0                 2 TRANS BIT(1) INIT('0'B);                                   00360000
+       37.0           DCL 1 VS4,  /* SCANNER ACTION TABLE FOR "FI(DDNAME)" */            00370000
+       38.0                 2 TYPE(1) BIT(1) INIT('0'B),                                 00380000
+       39.0                 2 KW(1) CHAR(2) VAR INIT('FI'),                              00390000
+       40.0                 2 TRANS BIT(1) INIT('0'B);                                   00400000
+       41.0           DCL 1 VS5,  /* SCANNER ACTION TABLE FOR SETCOPY COMMAND */         00410000
+       42.0                 2 TYPE(2) BIT(1) INIT((2)(1)'0'B),                           00420006
+       43.0                 2 KW(2) CHAR(2) VAR INIT('FI','CL'),                         00430022
+       44.0                 2 TRANS BIT(1) INIT('0'B);                                   00440000
+       45.0           DCL 1 VS6,  /* SCANNER ACTION TABLE FOR TSO COMMAND */             00450000
+       46.0                 2 TYPE(1) BIT(1) INIT('0'B),                                 00460000
+       47.0                 2 KW(1) CHAR(2) VAR INIT(''),                                00470000
+       48.0                 2 TRANS BIT(1) INIT('0'B);                                   00480000
+       49.0           DCL 1 VS7,  /* SCANNER ACTION TABLE FOR "N" */                     00490000
+       50.0                 2 TYPE(1) BIT(1) INIT('0'B),                                 00500000
+       51.0                 2 KW(1) CHAR(2) VAR INIT(''),                                00510000
+       52.0                 2 TRANS BIT(1) INIT('0'B);                                   00520000
+       53.0           DCL 1 VS8,  /* SCANNER ACTION TABLE FOR FROM COMMAND */            00530000
+       54.0                 2 TYPE(1) BIT(1) INIT('0'B),                                 00540000
+       55.0                 2 KW(1) CHAR(2) VAR INIT('TO'),                              00550000
+       56.0                 2 TRANS BIT(1) INIT('0'B);                                   00560000
+       57.0           DCL 1 VS9,  /* SCANNER ACTION TABLE FOR CCHAR AND ECHAR */         00570009
+       58.0                 2 TYPE(1) BIT(1) INIT('0'B),                                 00580009
+       59.0                 2 KW(1) CHAR(2) VAR INIT(''),                                00590022
+       60.0                 2 TRANS BIT(1) INIT('0'B);                                   00600009
+       61.0           DCL CPPL EXTERNAL ENTRY(POINTER,POINTER,POINTER,POINTER);          00610000
+       62.0           DCL TSOCP ENTRY(POINTER,CHAR(*) VAR) RETURNS(FIXED BIN(15));       00620000
+       63.0           DCL PLIXOPT CHAR(20) VAR INIT('STACK') STATIC EXTERNAL;            00630000
+       64.0           DCL (TA,TB) CHAR(9) INIT(' ');                                     00640007
+       65.0           DCL (HA,HB,MA,MB,SA,SB,TIMEA,TIMEB,PTIME) FIXED BIN(31) INIT(0);   00650000
+       66.0           DCL REF FIXED BIN(15) INIT(5);  /* DEFAULT IS REFLECT */           00670000
+       67.0           DCL PFKEY(24) CHAR(100) VAR INIT('ENTER SELECT MODE','DISPFK',     00680005
+       68.0               'END','PRINT','FIND','OPTIONS','FLIP DUMP',                    00690001
+       69.0               'COPY','INFO','FLIP NUM','FREE','SELECT',(12)(1)'NULL');       00700001
+       70.0           DCL PFKTYPE(24) CHAR(1) INIT((24)(1)'S');                          00710000
+       71.0           DCL PFKCODES CHAR(24) INIT('123456789:#@ABCDEFGHI?.<');            00720000
+       72.0           DCL CH GENERIC (CH31 WHEN(FIXED BIN(31)),                          00730000
+       73.0                           CH15 WHEN(FIXED BIN(15)));                         00740000
+       74.0           DCL PROFILE EXTERNAL ENTRY(FIXED BIN(15), FIXED BIN(15),           00750002
+       75.0                                      FIXED BIN(15), FIXED BIN(15));          00760001
+       76.0           DCL S99VIN EXTERNAL ENTRY(CHAR(*) VAR, CHAR(*) VAR, CHAR(*) VAR,   00770000
+       77.0               CHAR(*) VAR, FIXED BIN(15), FIXED BIN(15), FIXED BIN(15));     00780000
+       78.0           DCL (S99DSN,S99MISC) CHAR(44) VAR INIT('');                        00790009
+       79.0           DCL (S99DDN,S99MEM) CHAR(8) VAR INIT('');                          00800009
+       80.0           DCL (S99RC,S99ERROR,S99INFO) FIXED BIN(15) INIT(0);                00810009
+       81.0           DCL S99VAL ENTRY(CHAR(*) VAR, FIXED BIN(15), FIXED BIN(15),        00820000
+       82.0                            FIXED BIN(15), FIXED BIN(15), CHAR(*) VAR,        00830000
+       83.0                            CHAR(*) VAR, CHAR(*) VAR, CHAR(*) VAR);           00840000
+       84.0           DCL S99FREE ENTRY(CHAR(*) VAR, FIXED BIN(15), FIXED BIN(15),       00850017
+       85.0                            FIXED BIN(15), FIXED BIN(15));                    00860017
+       86.0           DCL DYNALDDN CHAR(8) VAR INIT('');                                 00870008
+       87.0           DCL DYNALDSN CHAR(44) VAR INIT('');                                00880008
+       88.0           DCL DYNALDSG CHAR(2) VAR INIT('');                                 00890008
+       89.0           DCL DYNALVOL CHAR(6) VAR INIT('');                                 00900008
+       90.0           DCL (OPENED,EOF,DUMPFORMAT,COUNTFLAG,PRINTKEY,STOPPER,COMPRESS,    00910007
+       91.0                KIMODE,TSO,PO,AUTO,TERM,ECHO,VFLG,EXPAND,SQ,DQ,IDLE,          00920023
+       92.0                PRTFLG,INTFLG                           ) BIT(1) INIT('0'B);  00930024
+       93.0           DCL CODE PIC'ZZZ9' INIT(0);                                        00940000
+       94.0           DCL VERB CHAR(20) VAR INIT('');                                    00950008
+       95.0           DCL (C,CCHAR,ECHAR) CHAR(1) INIT(' ');                             00960008
+       96.0           DCL (INDD,DDNAME) CHAR(8) VAR INIT('');                            00970008
+       97.0           DCL DSORG CHAR(2) INIT('PS');                                      00980000
+       98.0           DCL VSPW  CHAR(8) STATIC INIT(' ');                                00990001
+       99.0           DCL QSAM  BIT(8) INIT('00000000'B);                                01000003
+      100.0           DCL BSAM  BIT(8) INIT('00000100'B);                                01010003
+      101.0           DCL BSAML BIT(8) INIT('00001000'B);                                01020003
+      102.0           DCL VSAM  BIT(8) INIT('00011100'B);                                01030003
+      103.0           DCL TCAM  BIT(8) INIT('00001100'B);                                01040005
+      104.0           DCL QISAM BIT(8) INIT('00010000'B);                                01050005
+      105.0           DCL BISAM BIT(8) INIT('00010100'B);                                01060005
+      106.0           DCL BDAM  BIT(8) INIT('00011000'B);                                01070005
+      107.0           DCL SYSXX FILE VARIABLE;                                           01080000
+      108.0           DCL SYSPS FILE RECORD INPUT ENV(BUFFERS(1) LEAVE);                 01090000
+      109.0           DCL SYSPB FILE RECORD INPUT ENV(BUFFERS(1) BLKSIZE(256));          01100000
+      110.0           DCL SYSPD FILE RECORD INPUT ENV(BUFFERS(1) U BLKSIZE(256));        01110000
+      111.0           DCL SYSIS FILE RECORD INPUT KEYED ENV(ORGANIZATION(INDEXED)        01120000
+      112.0               BUFFERS(1) GENKEY);                                            01120001
+      113.0           DCL SYSR1 FILE RECORD INPUT KEYED ENV(REGIONAL(1));                01130000
+      114.0           DCL SYSVS FILE RECORD INPUT KEYED ENV(VSAM PASSWORD(VSPW));        01160005
+      115.0           DCL SYSVG FILE RECORD INPUT KEYED ENV(VSAM PASSWORD(VSPW) GENKEY); 01170005
+      116.0           DCL SYSVB FILE RECORD INPUT KEYED ENV(VSAM PASSWORD(VSPW) BKWD);   01180002
+      117.0           DCL (DATA,OUTREC) CHAR(*) VAR CONTROLLED INIT('');                 01190009
+      118.0           DCL (KEAY,KEEY) CHAR(264) VAR INIT('');                            01200009
+      119.0           DCL LS FIXED BIN(31) INIT(80);  /* TERMINAL LINE WIDTH             01210000
+      120.0                  SET OUTSIDE PDUMP BY TERMINAL COMMAND */                    01220000
+      121.0           DCL LINE CHAR(120) VAR INIT('');                                   01230009
+      122.0           DCL LOWER CHAR(26) INIT('abcdefghijklmnopqrstuvwxyz');             01240000
+      123.0           DCL UPPER CHAR(26) INIT('ABCDEFGHIJKLMNOPQRSTUVWXYZ');             01250000
+      124.0           DCL ALP CHAR(26) INIT('ABCDEFGHIJKLMNOPQRSTUVWXYZ');               01260000
+      125.0           DCL NUM CHAR(10) INIT('0123456789');                               01270000
+      126.0           DCL NAT CHAR(3)  INIT('@$#');                                      01280000
+      127.0           DCL MSS CHAR(200) VAR INIT('');                                    01290009
+      128.0           DCL (ONCODE,DATE,TIME,INDEX,ADDR,SUBSTR,TRANSLATE,LENGTH,NULL,     01300000
+      129.0                ALLOCATION,MIN,MOD,VERIFY,MAX,UNSPEC,LOW,PRIORITY,            01310010
+      130.0                REPEAT                                           ) BUILTIN;   01320010
+      131.0           DCL (CVTPTR,DS1PTR,TCBPTR,TCBWPTR,TIOTPTR,DDPTR,UCBPTR,SWAPTR,     01330011
+      132.0                TSBPTR,DS3PTR,FCBPTR,PBUFPTR               ) POINTER;         01340019
+      133.0           DCL FCBLOC EXTERNAL ENTRY(FILE,POINTER);                           01350001
+      134.0           DCL HEXOUT EXTERNAL ENTRY(CHAR(*) VAR , CHAR(*));                  01360000
+      135.0           DCL X CHAR(200) VAR INIT('');                                      01370000
+      136.0           DCL SYSIN    FILE STREAM INPUT;                                    01380015
+      137.0           DCL SYSPRINT FILE STREAM PRINT ENV(BUFFERS(1));                    01390000
+      138.0           DCL PDPRT    FILE STREAM PRINT ENV(BUFFERS(1));                    01400015
+      139.0           DCL SYSOUT   FILE RECORD OUTPUT ENV(BUFFERS(1));                   01410015
+      140.0           DCL COPYDD CHAR(8) VAR INIT('');                                   01420000
+      141.0           DCL DSCBF1 EXTERNAL ENTRY(CHAR(*),CHAR(*),CHAR(*),FIXED BIN(31));  01430000
+      142.0           DCL RDDSCB EXTERNAL ENTRY(CHAR(*),CHAR(*),CHAR(*),FIXED BIN(31));  01440000
+      143.0           DCL 1 DUMPLINE CONTROLLED,                                         01450006
+      144.0                 2 OFFSET CHAR(6),                                            01460006
+      145.0                 2 WORDS(#W) CHAR(8),                                         01470006
+      146.0                 2 STAR1 CHAR(1) INIT('*'),                                   01480006
+      147.0                 2 INFORM CHAR(#B),                                           01490007
+      148.0                 2 STAR2 CHAR(1) INIT('*');                                   01500006
+      149.0           DCL HEX64 CHAR(#H) CONTROLLED;                                     01510006
+      150.0           DCL (LINE32,PREVINFO) CHAR(#B) VAR CONTROLLED;                     01520006
+      151.0           DCL (Y,YY) CHAR(4) INIT(' ');                                      01530007
+      152.0           DCL BIN FIXED BIN(31) BASED(P);                                    01540006
+      153.0           DCL BAN FIXED BIN(31) BASED(Q);                                    01550006
+      154.0           DCL P POINTER INIT((ADDR(Y)));                                     01560006
+      155.0           DCL Q POINTER INIT((ADDR(YY)));                                    01570006
+      156.0           DCL S99WORK CHAR(2) VAR INIT('');                                  01580009
+      157.0           DCL (S99INFOX,S99ERRORX) CHAR(4) INIT(' ');                        01590009
+      158.0           DCL (WORK,WARK) CHAR(3) VAR INIT('');                              01600009
+      159.0           DCL (OFFSET1,OFFSET2) CHAR(6) INIT(' ');                           01610009
+      160.0           DCL PREVOFFSET FIXED BIN(31) INIT(0);                              01620009
+      161.0           DCL 1 CVT BASED(CVTPTR),                                           01630000
+      162.0                 2 CVTTCBP POINTER;  /* POINTER TO TCB ADDRESS */             01640000
+      163.0           DCL 1 DS1 BASED(DS1PTR),  /* FORMAT 1 DSCB */                      01650000
+      164.0                 2 DS1FMTID CHAR(1),  /* IDENTIFIER (X'F1') */                01660000
+      165.0                 2 DS1DSSN CHAR(6),  /* DATA SET SERIAL NUMBER */             01670000
+      166.0                 2 DS1VOLSQ CHAR(2),  /* VOLUME SEQUENCE NUMBER */            01680000
+      167.0                 2 DS1CREDT,  /* CREATION DATE */                             01690000
+      168.0                   3 YEAR BIT(8),  /* 00-99 */                                01700000
+      169.0                   3 DAY BIT(16),  /* 1-366 */                                01710000
+      170.0                 2 DS1EXPDT,  /* EXPIRATION DATE */                           01720000
+      171.0                   3 YEAR BIT(8),  /* 00-99 */                                01730000
+      172.0                   3 DAY BIT(16),  /* 1-366 */                                01740000
+      173.0                 2 DS1NOEPV BIT(8),  /* NO. OF SEPARATE EXTENTS               01750000
+      174.0                   IN WHICH THE DATASET RESIDES ON THIS VOLUME */             01760000
+      175.0                 2 DS1NOBDB BIT(8),  /* NO. BYTES USED IN                     01770000
+      176.0                   THE LAST PDS DIRECTORY BLOCK */                            01780000
+      177.0                 2 FILLER1 BIT(8),  /* RESERVED */                            01790000
+      178.0                 2 DS1SYSCD CHAR(13),  /* SYSTEM CODE */                      01800000
+      179.0                 2 FILLER2 CHAR(7),  /* RESERVED */                           01810000
+      180.0                 2 DS1DSORG BIT(16),  /* DATASET ORGANIZATION                 01820000
+      181.0                   BIT(1) IS ISAM                                             01830000
+      182.0                   BIT(2) PS SEQUENTIAL                                       01840000
+      183.0                   BIT(3) DA DIRECT                                           01850000
+      184.0                   BIT(7) PO PARTITIONED                                      01860000
+      185.0                   BIT(8) U  UNMOVABLE  */                                    01870000
+      186.0                 2 DS1RECFM BIT(8),  /* RECORD FORMAT                         01880000
+      187.0                   10XX XXXX F FIXED                                          01890000
+      188.0                   01XX XXXX V VARIABLE                                       01900000
+      189.0                   11XX XXXX U UNDEFINED                                      01910000
+      190.0                   XX1X XXXX T TRACK OVERFLOW                                 01920000
+      191.0                   XXX1 XXXX B BLOCKED                                        01930000
+      192.0                   XXXX 1XXX S WITH F: STANDARD                               01940000
+      193.0                               WITH V: SPANNED                                01950000
+      194.0                   XXXX X10X A ANSI CONTROL CHAR                              01960000
+      195.0                   XXXX X01X M MACHINE CONTROL CHAR                           01970000
+      196.0                   XXXX X00X   NO CONTROL CHAR */                             01980000
+      197.0                 2 DS1OPTCD BIT(8),  /* OPTION CODE */                        01990000
+      198.0                 2 DS1BLKL FIXED BIN(15),  /* BLOCK SIZE */                   02000000
+      199.0                 2 DS1LRECL FIXED BIN(15),  /* RECORD SIZE */                 02010000
+      200.0                 2 DS1KEYL BIT(8),  /* KEY LENGTH */                          02020000
+      201.0                 2 DS1RKP BIT(16),  /* RELATIVE KEY POSITION */               02030000
+      202.0                 2 DS1DSIND BIT(8),  /* DATA SET INDICATORS */                02040000
+      203.0                 2 DS1SCALO,  /* ALLOCATION PARAMETERS */                     02050000
+      204.0                   3 ALOFLGS BIT(8),  /* FLAGS */                             02060000
+      205.0                   3 QUANTITY BIT(24),  /* SECONDARY ALLOCATION QUANTITY */   02070000
+      206.0                 2 DS1LSTAR FIXED BIN(15) UNAL,  /* LAST BLK PTR (TTRLL) */   02080000
+      207.0                 2 DS1R BIT(8),  /* R PORTION OF TTRLL */                     02090000
+      208.0                 2 DS1TRBAL FIXED BIN(15) UNAL,  /* LL PORTION OF TTRLL */    02100000
+      209.0                 2 FILLER3 BIT(16),  /* RESERVED */                           02110000
+      210.0                 2 DS1EXT(3),  /* EXTENT DESCRIPTORS */                       02120000
+      211.0                   3 TYPE CHAR(1),  /* EXTENT TYPE INDICATOR */               02130000
+      212.0                   3 SEQ CHAR(1),  /* EXTENT SEQUENCE NUMBER (M) */           02140000
+      213.0                   3 LOWER,  /* LOWER LIMIT OF THIS EXTENT (CCHH) */          02150000
+      214.0                     4 CYL FIXED BIN(15) UNAL,  /* CYLINDER ADDRESS (CC) */   02160000
+      215.0                     4 TRK FIXED BIN(15) UNAL,  /* TRACK ADDRESS (HH) */      02170000
+      216.0                   3 UPPER,  /* UPPER LIMIT OF THIS EXTENT (CCHH) */          02180000
+      217.0                     4 CYL FIXED BIN(15) UNAL,  /* CYLINDER ADDRESS (CC) */   02190000
+      218.0                     4 TRK FIXED BIN(15) UNAL,  /* TRACK ADDRESS (HH) */      02200000
+      219.0                 2 DS1PTRDS CHAR(5);  /* PTR TO F2 DSCB (CCHHR) */            02210000
+      220.0           DCL 1 DS3 BASED(DS3PTR),  /* FORMAT 3 DSCB */                      02220000
+      221.0                 2 DS3KEY CHAR(4),  /* X'03030303' */                         02230000
+      222.0                 2 DS3EXTNT(4),  /* EXTENT DESCRIPTORS */                     02240000
+      223.0                   3 TYPE CHAR(1),                                            02250000
+      224.0                   3 SEQ CHAR(1),                                             02260000
+      225.0                   3 LOWER,                                                   02270000
+      226.0                     4 CYL FIXED BIN(15) UNAL,                                02280000
+      227.0                     4 TRK FIXED BIN(15) UNAL,                                02290000
+      228.0                   3 UPPER,                                                   02300000
+      229.0                     4 CYL FIXED BIN(15) UNAL,                                02310000
+      230.0                     4 TRK FIXED BIN(15) UNAL,                                02320000
+      231.0                 2 DS3FMTID CHAR(1),  /* IDENTIFIER (X'F3') */                02330000
+      232.0                 2 DS3ADEXT(9),  /* EXTENT DESCRIPTORS */                     02340000
+      233.0                   3 TYPE CHAR(1),                                            02350000
+      234.0                   3 SEQ CHAR(1),                                             02360000
+      235.0                   3 LOWER,                                                   02370000
+      236.0                     4 CYL FIXED BIN(15) UNAL,                                02380000
+      237.0                     4 TRK FIXED BIN(15) UNAL,                                02390000
+      238.0                   3 UPPER,                                                   02400000
+      239.0                     4 CYL FIXED BIN(15) UNAL,                                02410000
+      240.0                     4 TRK FIXED BIN(15) UNAL,                                02420000
+      241.0                 2 DS3PTRDS CHAR(5);  /* RESERVED - ZERO */                   02430000
+      242.0           DCL 1 TCB BASED(TCBPTR),                                           02440000
+      243.0                 2 TCBRBP POINTER,  /* PTR TO TOP RB ON RB CHAIN */           02450000
+      244.0                 2 TCBPIE POINTER,  /* ADDR OF PGM INT ELEM (PIE) */          02460000
+      245.0                 2 TCBDEB POINTER,  /* ADDR OF THE DEB QUEUE */               02470000
+      246.0                 2 TCBTIO POINTER,  /* ADDR OF TIOT */                        02480000
+      247.0                 2 TCBCMP FIXED BIN(31);  /* TASK COMPLETION CODE */          02490000
+      248.0           DCL 1 TCBWORDS BASED(TCBWPTR),                                     02500000
+      249.0                 2 TCBWNEXT POINTER,  /* ADDR OF NEXT TCB                     02510000
+      250.0                   TO BE DISPATCHED */                                        02520000
+      251.0                 2 TCBWCURR POINTER;  /* ADDR OF CURRENT TCB */               02530000
+      252.0           DCL 1 TIOT BASED(TIOTPTR),                                         02540000
+      253.0                 2 TIOCNJOB CHAR(8),  /* JOB NAME */                          02550000
+      254.0                 2 TIOCSTP CHAR(8),  /* STEP NAME */                          02560000
+      255.0                 2 TIOCSTP2 CHAR(8),  /* PROCEDURE STEP NAME */               02570000
+      256.0                 2 TIODDENT FIXED BIN(31);  /* DD ENTRIES */                  02580000
+      257.0           DCL 1 TIOTDD BASED(DDPTR),                                         02590000
+      258.0                   3 TIOELNGH BIT(8),  /* LENGTH OF DD ENTRY IN BYTES         02600000
+      259.0                     INCLUDING ALL DEVICE ENTRIES */                          02610000
+      260.0                   3 TIOESTTA BIT(8),  /* STATUS BYTE A */                    02620000
+      261.0                   3 TIOERLOC BIT(16),  /* ALLOCATION INFORMATION */          02630000
+      262.0                   3 TIOEDDNM CHAR(8),  /* DD NAME */                         02640000
+      263.0                   3 TIOEJFCB BIT(24),  /* TTR OF JFCB */                     02650012
+      264.0                                        /* POINTS TO 16 BYTES BEFORE DSN */   02660011
+      265.0                   3 TIOESTTC BIT(8),  /* STATUS BYTE C */                    02670000
+      266.0                 2 TIODVENT(200),  /* DEVICE ENTRIES */                       02680000
+      267.0                   3 TIOEUCBA POINTER;  /* UCB ADDRESS */                     02690000
+      268.0           DCL 1 SWA BASED(SWAPTR),                                           02700011
+      269.0                 2 SWAJNK CHAR(16),                                           02710011
+      270.0                 2 SWADSN CHAR(44);                                           02720011
+      271.0           DCL 1 UCB BASED(UCBPTR),                                           02730000
+      272.0                 2 SRTEJBNR BIT(8),  /* INTERNAL JOB IDENT */                 02740000
+      273.0                 2 UCBFLS BIT(8),  /* ALLOCATION CHANNEL MASK */              02750000
+      274.0                 2 UCBID BIT(8),  /* UCB ID (X'FF') */                        02760000
+      275.0                 2 SRTESTAT BIT(8),  /* STATUS BYTE A */                      02770000
+      276.0                 2 UCBCHA BIT(8),  /* CHANNEL ADDRESS AND FLAGS */            02780000
+      277.0                 2 UCBUA BIT(8),  /* UNIT ADDRESS */                          02790000
+      278.0                 2 UCBFL1 BIT(8),  /* FLAG BYTE 1 */                          02800000
+      279.0                 2 UCBDTI BIT(8),  /* INDEX TO DEVICE TABLE */                02810000
+      280.0                 2 UCBETI BIT(8),  /* ERROR ROUTINE ID */                     02820000
+      281.0                 2 UCBSTI BIT(8),  /* STATISTICS TABLE INDEX */               02830000
+      282.0                 2 UCBLCI BIT(8),  /* LOGICAL CHANNEL WORD                    02840000
+      283.0                   TABLE INDEX */                                             02850000
+      284.0                 2 UCBATI BIT(8),  /* ATTENTION TABLE INDEX */                02860000
+      285.0                 2 UCBWGT BIT(8),  /* FLAGS AND MASK */                       02870000
+      286.0                 2 UCBNAME CHAR(3),  /* UNIT NAME (EBCDIC) */                 02880000
+      287.0                 2 UCBTYP,  /* DEVICE TYPE */                                 02890000
+      288.0                   3 UCBTYP1 BIT(8),                                          02900000
+      289.0                   3 UCBTYP2 BIT(8),                                          02910000
+      290.0                   3 UCBTYP3 BIT(8),  /* DEVICE CLASS:                        02920000
+      291.0                     X'08' UNIT RECORD                                        02930000
+      292.0                     X'10' GRAPHICS                                           02940000
+      293.0                     X'20' DIRECT ACCESS STORAGE                              02950000
+      294.0                     X'40' COMMUNICATION EQUIPMENT                            02960000
+      295.0                     X'80' MAGNETIC TAPE */                                   02970000
+      296.0                   3 UCBTYP4 BIT(8),  /* UNIT TYPE */                         02980000
+      297.0                 2 UCBLTS BIT(16),  /* LAST REQUEST ELEMENT */                02990000
+      298.0                 2 UCBSNS BIT(16),  /* SENSE INFORMATION */                   03000000
+      299.0                   /* END COMMON SEGMENT , BEGIN DEVICE VARIABLE SEGMENT */   03010000
+      300.0                   /* THE FOLLOWING IS APPLICABLE ONLY TO MAGNETIC TAPE       03020000
+      301.0                      AND DIRECT ACCESS STORAGE DEVICES (EXCEPT DATA CELL) */ 03030000
+      302.0                 2 UCBSNS2 BIT(32),  /* ADDITIONAL SENSE INFO */              03040000
+      303.0                 2 SRTEVOLI CHAR(6);  /* VOLUME SERIAL NUMBER */              03050000
+      304.0           DCL 1 TSBD BASED(TSBPTR),  /* TERMINAL STATUS BLOCK */             03060000
+      305.0                 2 TSBSTAT BIT(8),  /* STATUS BYTE                            03070000
+      306.0                   BIT(1) TSB IN USE                                          03080000
+      307.0                   BIT(2) KEYBOARD LOCKED DUE TO LACK OF INPUT BUFFERS        03090000
+      308.0                   BIT(3) TSB REPRESENTS A DISPLAY SCREEN                     03100000
+      309.0                   BIT(4) TPUT FOUND NO BUFFERS                               03110000
+      310.0                   BIT(5) PROHIBIT NON-SUPERVISORY INTER-TERMINAL MSGS        03120000
+      311.0                   BIT(6) TSB HAS BEEN THRU LOGOFF                            03130000
+      312.0                   BIT(7) TSB REPRESENTS A 3270 TERMINAL                      03140000
+      313.0                   BIT(8) ATTN FOR INPUT LINE DELETE */                       03150000
+      314.0                 2 TSBASCB BIT(24),  /* POINTER TO ASCB */                    03160000
+      315.0                 2 TSBFLG1 BIT(8),  /* FIRST FLAG BYTE */                     03170000
+      316.0                 2 TSBWTCB BIT(24),  /* ADDR OF TCB OF TASK WAITING ON        03180000
+      317.0                                     TSBECB */                                03190000
+      318.0                 2 TSBLNSZ BIT(8),  /* PHYSICAL LINE SIZE OF TERMINAL */      03200000
+      319.0                 2 TSBOTBFP BIT(24),  /* PTR TO TRAILER BUFFER(S) */          03210000
+      320.0                 2 TSBNOBF BIT(8),  /* NO. OF BUFFERS ON OUTPUT QUEUE */      03220000
+      321.0                 2 TSBOBFP BIT(24),  /* PTR TO OUTPUT BUFFER QUEUE */         03230000
+      322.0                 2 TSBFLG2 BIT(8),  /* SECOND FLAG BYTE */                    03240000
+      323.0                 2 TSBITBFP BIT(24),  /* PTR TO INPUT TRAILER BUFFERS */      03250000
+      324.0                 2 TSBNIBF BIT(8),  /* NO. OF BUFFERS ON INPUT QUEUE */       03260000
+      325.0                 2 TSBIBFP BIT(24),  /* PTR TO INPUT BUFFER QUEUE */          03270000
+      326.0                 2 TSBFLG3 BIT(8),  /* THIRD FLAG BYTE */                     03280000
+      327.0                 2 TSBFLG5 BIT(8),  /* FIFTH FLAG BYTE */                     03290000
+      328.0                 2 TSBTERM1 BIT(8),  /* TERMINAL CHARACTERISTICS BYTE 1       03300000
+      329.0                   BIT(1) TIME-OUT INHIBITED                                  03310000
+      330.0                   BIT(2) BREAK FEATURE                                       03320000
+      331.0                   BIT(3) ATTENTION FEATURE                                   03330000
+      332.0                   BIT(4) LINE IS 5041                                        03340000
+      333.0                   BIT(5) TERMINAL IS 2741 */                                 03350000
+      334.0                 2 TSBTERM2 BIT(8),  /* TERMINAL CHARACTERISTICS BYTE 2       03360000
+      335.0                   BIT(3) TERMINAL IS TWX                                     03370000
+      336.0                   BIT(8) TERMINAL IS 1050 */                                 03380000
+      337.0                 2 TSBECB BIT(32),  /* ECB FOR INTERTERMINAL COMMUNICATION */ 03390000
+      338.0                 2 TSBWTJID CHAR(2),  /* TJID OF TASK WAITING ON TSBECB */    03400000
+      339.0                 2 TSBLNDCC CHAR(1),  /* LINE DELETE CHARACTER */             03410000
+      340.0                 2 TSBCHDCC CHAR(1),  /* CHARACTER DELETE CHARACTER */        03420000
+      341.0                 2 TSBATNLC FIXED BIN(15),  /* NO. OF SUCCESSIVE OUTPUT LINES 03430000
+      342.0                                  BETWEEN ATTENTION SIMULATION */             03440000
+      343.0                 2 TSBATNTC FIXED BIN(15),  /* NO. OF CONTINUOUS 1-SECOND     03450000
+      344.0                                  TIME INTERVALS */                           03460000
+      345.0                 2 TSBLNNO BIT(8),  /* NO. OF LINES ON A DISPLAY SCREEN */    03470000
+      346.0                 2 TSBFLG4 BIT(8),  /* FLAG BYTE */                           03480000
+      347.0                 2 TSBASRCE CHAR(2),  /* TCAM TERMINAL INDEX */               03490000
+      348.0                 2 TSBATNCC CHAR(4),  /* CHARACTER STRING USED FOR            03500000
+      349.0                                      ATTENTION SIMULATION */                 03510000
+      350.0                 2 TSBAUTOS FIXED BIN(31),  /* STARTING AND CURRENT SEQ NO.   03520000
+      351.0                                  FOR AUTO LINE NUMBERING */                  03530000
+      352.0                 2 TSBAUTOI FIXED BIN(31),  /* INCREMENT VALUE                03540000
+      353.0                                  FOR AUTO LINE NUMBERING */                  03550000
+      354.0                 2 TSBERSDS CHAR(4),  /* CHARS USED TO ERASE SCREEN */        03560000
+      355.0                 2 TSBCTCB POINTER,  /* TCB ADDRESS OF TASK                   03570000
+      356.0                                     CURRENTLY DOING A TPUT */                03580000
+      357.0                 2 TSBRCB CHAR(8),  /* TCAM RESOURCE CTL BLK */               03590000
+      358.0                 2 TSBTPOST CHAR(8),  /* TPOSTING COMMUNICATION AREA */       03600000
+      359.0                 2 TSBATTNC BIT(8),  /* NO. OF UNPROCESSED ATTN'S */          03610000
+      360.0                 2 TSBSTAX BIT(8),  /* NO. OF UNSCHEDULED STAX EXITS */       03620000
+      361.0                 2 TSBLINE FIXED BIN(15),  /* LINE ADDRESS OR 3705            03630000
+      362.0                                 RESOURCE I.D. OF THIS TERMINAL */            03640000
+      363.0                 2 TSBMINL FIXED BIN(31),  /* NO. OF MINUTES LEFT BEFORE      03650000
+      364.0                                 A DISCONNECTED USER WILL BE LOGGED OFF */    03660000
+      365.0                 2 TSBPSWD CHAR(8),  /* LOGON PASSWORD */                     03670000
+      366.0                 2 TSBEXTNT POINTER,  /* ADDR OF TSB EXTENTION */             03680000
+      367.0                 2 TSBJUNK CHAR(4),  /* RESERVED */                           03690000
+      368.0                 2 TSBEND CHAR(8);  /* END OF THE TSB */                      03700000
+      369.0           DCL 1 FCB BASED(FCBPTR),                                           03710001
+      370.0                    2 F111 CHAR(20),                                          03720001
+      371.0                    2 FADB POINTER,  /* ADDRESS OF DCB OR ACB */              03730001
+      372.0                    2 F222 CHAR(16),                                          03740001
+      373.0                    2 FFLA BIT(8),  /* RECORD FORMAT */                       03750001
+      374.0                           /* BIT(1) F-FORMAT                                 03760001
+      375.0                              BIT(2) V-FORMAT                                 03770001
+      376.0                              BIT(3) U-FORMAT                                 03780001
+      377.0                              BIT(4) BLOCKED                                  03790001
+      378.0                              BIT(5) SPANNED */                               03800001
+      379.0                    2 FFLB BIT(8),  /* FILE ORGANIZATION */                   03810001
+      380.0                           /* BIT(1) CONSECUTIVE                              03820001
+      381.0                              BIT(2) INDEXED                                  03830001
+      382.0                              BIT(3) REGIONAL(1)                              03840001
+      383.0                              BIT(4) REGIONAL(2)                              03850001
+      384.0                              BIT(5) REGIONAL(3)                              03860001
+      385.0                              BIT(6) TP(M)                                    03870001
+      386.0                              BIT(7) TP(R)                                    03880001
+      387.0                              BIT(8) OTHER */                                 03890001
+      388.0                    2 FFLC BIT(8),  /* ACCESS METHOD */                       03900001
+      389.0                           /* X'00'  QSAM                                     03910001
+      390.0                              X'04'  BSAM                                     03920001
+      391.0                              X'08'  BSAM(LOAD)                               03930001
+      392.0                              X'0C'  TCAM                                     03940001
+      393.0                              X'10'  QISAM                                    03950001
+      394.0                              X'14'  BISAM                                    03960001
+      395.0                              X'18'  BDAM                                     03970001
+      396.0                              X'1C'  VSAM  */                                 03980001
+      397.0                    2 FFLD BIT(8),                                            03990001
+      398.0                    2 F333 CHAR(4),                                           04000001
+      399.0                    2 FBKZ FIXED BIN(15),  /* BLOCKSIZE */                    04010001
+      400.0                    2 FKYL FIXED BIN(15),  /* KEYLENGTH */                    04020001
+      401.0                    2 FRCL FIXED BIN(31),  /* RECORD LENGTH */                04030001
+      402.0                    2 F444 CHAR(20),                                          04040001
+      403.0                      /* BEGIN RECORD I/O OR STREAM I/O SECTION */            04050001
+      404.0                    2 F555 CHAR(24),                                          04060001
+      405.0                    2 FFNC BIT(8),                                            04070001
+      406.0                    2 FELV BIT(8);  /* VSAM FLAGS */                          04080001
+      407.0                           /* BIT(1) KSDS                                     04090001
+      408.0                              BIT(2) ESDS                                     04100001
+      409.0                              BIT(3) RRDS                                     04110001
+      410.0                              BIT(4) ALTERNATE INDEX PATH                     04120001
+      411.0                              BIT(5) ALTERNATE INDEX PATH (NON-UNIQUE)        04130001
+      412.0                              BIT(6) SKIP */                                  04140001
+      413.0           DCL 1 PBUF BASED(PBUFPTR),  /* COMMAND BUFFER TO PDUMP */          04150019
+      414.0                 2 PBLENGTH FIXED BIN(15),                                    04160019
+      415.0                 2 PBOFFSET FIXED BIN(15),                                    04170019
+      416.0                 2 PBTEXT   CHAR(100);                                        04180019
+      417.0           DCL 1 CPPLX,  /* COMMAND PROCESSOR PARAMETER LIST */               04190019
+      418.0                 2 CPPLCBUF POINTER,  /* COMMAND BUFFER */                    04200019
+      419.0                 2 CPPLUPT POINTER,  /* USER PROFILE TABLE */                 04210019
+      420.0                 2 CPPLPSCB POINTER,  /* PROTECTED STEP CONTROL BLOCK */      04220019
+      421.0                 2 CPPLECT POINTER;  /* ENVIRONMENT CONTROL TABLE */          04230019
+      422.0           DCL 1 CBUF,  /* COMMAND BUFFER */                                  04240019
+      423.0                 2 CBLENGTH FIXED BIN(15),                                    04250019
+      424.0                 2 CBOFFSET FIXED BIN(15),                                    04260019
+      425.0                 2 CBTEXT   CHAR(100);                                        04270019
+      426.0           OPEN FILE(SYSIN) , FILE(SYSPRINT);                                 04280001
+      427.0           ON ATTENTION ATTFLG='1'B;                                          04290000
+      428.0           ON ENDFILE(SYSIN) GOTO EOJ;                                        04300000
+      429.0           CALL PROFILE(MODE,DISPLAY,LNSZ,LNNO);                              04310001
+      430.0           TSO=MODE=1;         /* 1=TSO  0=BATCH */                           04320001
+      431.0           /* ALLOW EXECUTION TO CONTINUE IF ERRORS OCCUR IN TSO */           04330000
+      432.0           IF TSO THEN DO;                                                    04340000
+      433.0              ON ERROR BEGIN;                                                 04350000
+      434.0                       CODE=ONCODE;                                           04360000
+      435.0                       GOTO GET_COMMAND;                                      04370000
+      436.0                       END;                                                   04380000
+      437.0              DO SYSXX=SYSIS,SYSR1,SYSPS,SYSPD,                               04390005
+      438.0                       SYSVS,SYSVB,SYSVG;                                     04400005
+      439.0              ON UNDF(SYSXX) BEGIN; CODE=ONCODE; GOTO BADFILE; END;           04410000
+      440.0              END;                                                            04420000
+      441.0              IF DISPLAY=1 THEN DO;                                           04430001
+      442.0                 TT='3270';                                                   04440020
+      443.0                 CALL SPIN(1);                                                04450019
+      444.0                 IOXOPT.ROWS=LNNO;                                            04460001
+      445.0                 /* CHECK TO SEE IF USER REQUESTED THAT                       04470019
+      446.0                    WE COME UP IN 2741 MODE */                                04480019
+      447.0                 CALL CPPL(CPPLCBUF,CPPLUPT,CPPLPSCB,CPPLECT);                04490019
+      448.0                 IF CPPLCBUF=NULL                                             04500019
+      449.0                    THEN DO; /* INVOKED BY TSO CALL */                        04510019
+      450.0                         IF PARM='2741' THEN TT='2741';                       04520019
+      451.0                         END;                                                 04530019
+      452.0                    ELSE DO; /* INVOKED AS TSO COMMAND PROCESSOR */           04540019
+      453.0                         PBUFPTR=CPPLCBUF;                                    04550019
+      454.0                         IF SUBSTR(PBTEXT,PBOFFSET+1)='2741' THEN TT='2741';  04560019
+      455.0                         END;                                                 04570019
+      456.0                 IF TT='3270' THEN RC3270=IO3270(' ',0);                      04580020
+      457.0                 END;                                                         04590001
+      458.0              LS=LNSZ;                                                        04600001
+      459.0              END;                                                            04610000
+      460.0              ELSE DO;                                                        04620000
+      461.0                   LS=120;  /* DEFAULT BATCH LINESIZE IS 120 */               04630000
+      462.0                   ECHO='1'B;  /* ECHO INPUT COMMANDS IN BATCH MODE */        04640000
+      463.0                   END;                                                       04650000
+      464.0           IF LS>=120 THEN #W=8; ELSE #W=4;                                   04660006
+      465.0           #B=#W*4;                                                           04670006
+      466.0           #H=#B*2;                                                           04680006
+      467.0           ALLOCATE DUMPLINE;                                                 04690006
+      468.0           ALLOCATE HEX64;                                                    04700006
+      469.0           ALLOCATE LINE32;                                                   04710006
+      470.0           ALLOCATE PREVINFO;                                                 04720006
+      471.0           TRTAB1=(256)'.';                                                   04730000
+      472.0           SUBSTR(TRTAB1,65,1)=' ';                                           04740000
+      473.0           SUBSTR(TRTAB1,75,7)='?.<(+|&';                                     04750000
+      474.0           SUBSTR(TRTAB1,91,8)='!$*);^-/';                                    04760000
+      475.0           SUBSTR(TRTAB1,108,5)=',%_>?';                                      04770000
+      476.0           SUBSTR(TRTAB1,123,6)=':#@''="';                                    04780000
+      477.0           SUBSTR(TRTAB1,130,9)=SUBSTR(LOWER,1,9);                            04790000
+      478.0           SUBSTR(TRTAB1,146,9)=SUBSTR(LOWER,10,9);                           04800000
+      479.0           SUBSTR(TRTAB1,163,8)=SUBSTR(LOWER,19,8);                           04810000
+      480.0           SUBSTR(TRTAB1,194,9)=SUBSTR(UPPER,1,9);                            04820000
+      481.0           SUBSTR(TRTAB1,210,9)=SUBSTR(UPPER,10,9);                           04830000
+      482.0           SUBSTR(TRTAB1,227,8)=SUBSTR(UPPER,19,8);                           04840000
+      483.0           SUBSTR(TRTAB1,241,10)=NUM;                                         04850000
+      484.0           TRTAB2=TRANSLATE(TRTAB1,' ','.');                                  04860000
+      485.0           SUBSTR(TRTAB2,76,1)='.';                                           04870000
+      486.0           FC='';  /* INDICATE NO PREVIOUS FIND COMMAND */                    04880000
+      487.0           FROM=1; TO=0;  /* DEFAULT "FROM" AND "TO" VALUES */                04890007
+      488.0           C#=1;  /* DEFAULT "COMPRESS" VALUE */                              04900007
+      489.0           DYNALDDN='';  /*  INDICATE NO PREVIOUS SUCCESSFUL                  04910000
+      490.0                                   DYNAMIC ALLOCATION  */                     04920000
+      491.0           CALL PUTMSG(TODAY()||'    '||TIMEX());                             04930000
+      492.0      GET_COMMAND:                                                            04940000
+      493.0           IDLE='1'B;                                                         04950023
+      494.0           IF ATTFLG|INTFLG                                                   04960024
+      495.0              THEN X='';  /* CLEAR INPUT STACK AFTER ATTENTION */             04970024
+      496.0           KIMODE,ATTFLG,INTFLG='0'B;                                         04980024
+      497.0           CALL GETMSG(REPLY);                                                04990000
+      498.0           KIMODE,ATTFLG,INTFLG='0'B;                                         05000024
+      499.0           TEXT,VERB='';                                                      05010000
+      500.0           IF LENGTH(REPLY)=0 THEN ;                                          05020000
+      501.0               ELSE DO I=1 TO LENGTH(REPLY);                                  05030000
+      502.0                    C=SUBSTR(REPLY,I);                                        05040000
+      503.0                    IF C=' '&LENGTH(VERB)>0 THEN LEAVE;                       05050000
+      504.0                    IF C^=' ' THEN VERB=VERB||C;                              05060000
+      505.0                    END;                                                      05070000
+      506.0           IF LENGTH(VERB)>0 THEN DO;                                         05080000
+      507.0              I=INDEX(REPLY,VERB);                                            05090000
+      508.0              IF I+LENGTH(VERB)>LENGTH(REPLY) THEN LEAVE;                     05100000
+      509.0              TEXT=SUBSTR(REPLY,I+LENGTH(VERB));                              05110000
+      510.0              I=VERIFY(TEXT,' ');                                             05120000
+      511.0              IF I=0 THEN TEXT='';                                            05130000
+      512.0                     ELSE TEXT=SUBSTR(TEXT,I);                                05140000
+      513.0              END;                                                            05150000
+      514.0           IF ECHO THEN CALL PUTMSG('CMD: '||VERB||' '||TEXT);                05160000
+      515.0           IF VERB='INT'|VERB='INTERRUPT' THEN GOTO PANIC;                    05170023
+      516.0           IF PTIME>0 THEN DO;                                                05180023
+      517.0              TA=TIME;                                                        05190023
+      518.0              GET STRING(TA) EDIT(HA,MA,SA) ((3)F(2));                        05200023
+      519.0              TIMEA=HA*3600+MA*60+SA;                                         05210023
+      520.0              IDLE='0'B;                                                      05220023
+      521.0              END;                                                            05230023
+      522.0           SELECT(VERB);                                                      05240000
+      523.0           WHEN('H','HELP') CALL HELP;                                        05250000
+      524.0           WHEN('DUMP') DUMPFORMAT='1'B;                                      05260000
+      525.0           WHEN('NODUMP') DUMPFORMAT='0'B;                                    05270000
+      526.0           WHEN('SK','SKIP') CALL SKIP;                                       05280018
+      527.0           WHEN('L','LIST','') CALL LIST;                                     05290000
+      528.0           WHEN('DKEY') PRINTKEY='1'B;                                        05300000
+      529.0           WHEN('NODKEY') PRINTKEY='0'B;                                      05310000
+      530.0           WHEN('S','SELECT') CALL SELECT;                                    05320018
+      531.0           WHEN('O','OPTIONS') CALL OPTIONS;                                  05330000
+      532.0           WHEN('T','TOP') CALL REWIND;                                       05340000
+      533.0           WHEN('END') GOTO EOJ;                                              05350000
+      534.0           WHEN('COUNT') CALL COUNT;                                          05360000
+      535.0           WHEN('F','FIND') CALL FIND;                                        05370000
+      536.0           WHEN('FLIP') CALL FLIP;                                            05380000
+      537.0           WHEN('AC','AUTOCOPY') AUTO='1'B;                                   05390000
+      538.0           WHEN('NOAC','NOAUTOCOPY') AUTO='0'B;                               05400000
+      539.0           WHEN('K','KEY') CALL KEY;                                          05410000
+      540.0           WHEN('NUM') COUNTFLAG='1'B;                                        05420000
+      541.0           WHEN('NONUM') COUNTFLAG='0'B;                                      05430000
+      542.0           WHEN('FROM') CALL FR;                                              05440000
+      543.0           WHEN('ALLOC') CALL ALLOC;                                          05450000
+      544.0           WHEN('INFO') CALL INFO;                                            05460000
+      545.0           WHEN('TIOT') CALL TIOTDISPLAY;                                     05470000
+      546.0           WHEN('TT','TERMTYPE') CALL TTSET;                                  05480000
+      547.0           WHEN('NOR','NOREFLECT') REF=3;                                     05490000
+      548.0           WHEN('R','REFLECT') REF=5;                                         05500000
+      549.0           WHEN('P','PFK') CALL PFK;                                          05510000
+      550.0           WHEN('DISP','DISPFK') CALL SHOWPFKS;                               05520000
+      551.0           WHEN('SETP','SETPFK') CALL SETPFK;                                 05530000
+      552.0           WHEN('NULL') ;                                                     05540000
+      553.0           WHEN('FREE') CALL FREE;                                            05550000
+      554.0           WHEN('TOD') CALL PUTMSG(TODAY()||'    '||TIMEX());                 05560000
+      555.0           WHEN('COPY') CALL COPY;                                            05570000
+      556.0           WHEN('SETC','SETCOPY') CALL SETCOPY;                               05580000
+      557.0           WHEN('TSO') CALL TSOCMD;                                           05590000
+      558.0           WHEN('ECHO') ECHO='1'B;                                            05600000
+      559.0           WHEN('NOECHO') ECHO='0'B;                                          05610000
+      560.0           WHEN('COMP','COMPRESS') CALL COMP;                                 05620007
+      561.0           WHEN('NOCOMP','NOCOMPRESS') COMPRESS='0'B;                         05630007
+      562.0           WHEN('EXP','EXPAND') CALL EXP;                                     05640007
+      563.0           WHEN('NOEXP','NOEXPAND') EXPAND='0'B;                              05650007
+      564.0           WHEN('ECHAR') CALL SETCHAR(ECHAR);                                 05660008
+      565.0           WHEN('CCHAR') CALL SETCHAR(CCHAR);                                 05670008
+      566.0           WHEN('PRINT') CALL SPIN(2);                                        05680016
+      567.0           OTHERWISE DO;                                                      05690000
+      568.0                     X='';  /* CLEAR INPUT STACK AFTER ILLEGAL COMMAND */     05700000
+      569.0                     CALL PUTMSG('ILLEGAL COMMAND');                          05710000
+      570.0                     END;                                                     05720000
+      571.0           END;                                                               05730000
+      572.0           IF INTFLG THEN                                                     05740026
+      573.0              CALL PUTMSG('INTERRUPT TIME EXCEEDED. EXECUTION INTERRUPTED.'); 05750026
+      574.0           GOTO GET_COMMAND;                                                  05760000
+      575.0      BADFILE:                                                                05770000
+      576.0           CALL PUTMSG('INPUT FILE IS UNDEFINED. ONCODE='||CODE);             05780000
+      577.0           GOTO GET_COMMAND;                                                  05790000
+      578.0      SELECT: PROC;                                                           05800000
+      579.0           DCL (BCKFLG,CLSFLG) BIT(1) INIT('0'B);                             05810023
+      580.0           DCL DSORGV CHAR(2) INIT(' ');                                      05820000
+      581.0           DCL BUFRLV FIXED BIN(31) INIT(0);                                  05830000
+      582.0           DDNAME='';                                                         05840000
+      583.0           RCSCAN=SCANNER(VE1,TEXT,VS1);                                      05850000
+      584.0           IF RCSCAN>4 THEN DO;                                               05860000
+      585.0              CALL PUTMSG('SELECT COMMAND SYNTAX ERROR');                     05870000
+      586.0              RETURN;                                                         05880000
+      587.0              END;                                                            05890000
+      588.0           IF LENGTH(DDNAME)=0 THEN DO;                                       05900000
+      589.0              IF LENGTH(DYNALDDN)=0 THEN DO;                                  05910000
+      590.0                 CALL PUTMSG('SELECT INVALID. NO FILE ALLOCATED');            05920000
+      591.0                 RETURN;                                                      05930000
+      592.0                 END;                                                         05940000
+      593.0              DDNAME=DYNALDDN;                                                05950000
+      594.0              END;                                                            05960000
+      595.0           IF CLSFLG THEN DO;                                                 05970023
+      596.0              IF OPENED THEN CALL CLOSE;                                      05980023
+      597.0              RETURN;                                                         05990023
+      598.0              END;                                                            06000023
+      599.0           S99DDN=DDNAME;                                                     06010000
+      600.0           CALL S99VIN(S99DDN,S99DSN,S99MEM,S99MISC,                          06020000
+      601.0                       S99RC,S99ERROR,S99INFO);                               06030000
+      602.0           IF ^S99RCTEST('INFO') THEN DO;                                     06040000
+      603.0              CALL PUTMSG('SELECT COMMAND REJECTED');                         06050000
+      604.0              RETURN;                                                         06060000
+      605.0              END;                                                            06070000
+      606.0           TERM=UNSPEC(SUBSTR(S99MISC,10,1))='01000000'B;                     06080000
+      607.0           PO=SUBSTR(UNSPEC(SUBSTR(S99MISC,4,1)),7,1);                        06090000
+      608.0           INDD=DDNAME;                                                       06100000
+      609.0           IF OPENED THEN CALL CLOSE;                                         06110000
+      610.0           DSORG='PS';SYSXX=SYSPS;                                            06120000
+      611.0           IF PO&LENGTH(S99MEM)=0 THEN DO;                                    06130000
+      612.0              SYSXX=SYSPD;                                                    06140000
+      613.0              BUFRL=256;                                                      06150000
+      614.0              CALL OPEN;                                                      06160000
+      615.0              CALL SETREC;                                                    06170000
+      616.0              REC#=0;EOF='0'B;                                                06180000
+      617.0              CALL PUTMSG('PDS DIRECTORY SELECTED');                          06190000
+      618.0              RETURN;                                                         06200000
+      619.0              END;                                                            06210000
+      620.0           IF DSORGV^=' ' THEN DO;                                            06220000
+      621.0              DSORG=DSORGV;                                                   06230000
+      622.0              SELECT(DSORG);                                                  06240000
+      623.0              WHEN('IS') SYSXX=SYSIS;                                         06250000
+      624.0              WHEN('R1') SYSXX=SYSR1;                                         06260000
+      625.0              WHEN('VS') SYSXX=SYSVS;                                         06290001
+      626.0              OTHERWISE ;                                                     06300000
+      627.0              END;                                                            06310000
+      628.0              END;                                                            06320000
+      629.0              ELSE DO;                                                        06330000
+      630.0              IF SUBSTR(UNSPEC(SUBSTR(S99MISC,4,1)),3,1) THEN DO;             06340000
+      631.0                 DSORG='R1';SYSXX=SYSR1;                                      06350000
+      632.0                 END;                                                         06360000
+      633.0              IF SUBSTR(UNSPEC(SUBSTR(S99MISC,4,1)),1,1) THEN DO;             06370000
+      634.0                 DSORG='IS';SYSXX=SYSIS;                                      06380000
+      635.0                 END;                                                         06390000
+      636.0              IF SUBSTR(UNSPEC(SUBSTR(S99MISC,5,1)),5,1) THEN DO;             06400001
+      637.0                 DSORG='VS';SYSXX=SYSVS;                                      06410001
+      638.0                 END;                                                         06420001
+      639.0              END;                                                            06430000
+      640.0           IF DSORG='PS' THEN SYSXX=SYSPB;                                    06440000
+      641.0           IF DSORG='VS' THEN SYSXX=SYSVB;                                    06450001
+      642.0           BUFRL=BUFRLV;                                                      06460000
+      643.0           CALL OPEN;                                                         06470000
+      644.0           CALL SETREC;                                                       06480000
+      645.0           /* IF THE FILE IS A VSAM KSDS AND BACKWARD PROCESSING HAS NOT      06490005
+      646.0              BEEN REQUESTED, THEN WE CAN USE THE GENKEY OPTION SO THAT       06500005
+      647.0              GENERIC KEYS WILL BE POSSIBLE WHEN IN KEY INPUT MODE */         06510005
+      648.0           IF SYSXX=SYSVS THEN DO;  /* IF VSAM FORWARD PROCESSING */          06520005
+      649.0              CALL FCBLOC(SYSXX,FCBPTR);                                      06530005
+      650.0              IF SUBSTR(FELV,1,1) THEN DO;  /* IF KSDS */                     06540005
+      651.0                 CALL CLOSE;                                                  06550005
+      652.0                 SYSXX=SYSVG;                                                 06560005
+      653.0                 CALL OPEN;                                                   06570005
+      654.0                 END;                                                         06580005
+      655.0              END;                                                            06590005
+      656.0           REC#=0; EOF='0'B;                                                  06600000
+      657.0           CALL ACMETH;                                                       06610005
+      658.0      VE1: PROC(KW#,VALUE) RETURNS(FIXED BIN(15));                            06620000
+      659.0           DCL (KW#,RC) FIXED BIN(15);                                        06630000
+      660.0           DCL VALUE CHAR(*) VAR;                                             06640000
+      661.0           RC=0;                                                              06650000
+      662.0           SELECT(KW#);                                                       06660000
+      663.0           WHEN(5) DDNAME=VALUE;                                              06670000
+      664.0           WHEN(6) SELECT(VALUE);                                             06680000
+      665.0                   WHEN('PS','IS','R1','R2','R3','VS') DSORGV=VALUE;          06690001
+      666.0                   OTHERWISE RC=99;                                           06700000
+      667.0                   END;                                                       06710000
+      668.0           WHEN(7) DO;                                                        06720000
+      669.0                   IF VERIFY(VALUE,NUM)>0|LENGTH(VALUE)>5 THEN RC=99;         06730000
+      670.0                   ELSE DO;                                                   06740000
+      671.0                   GET STRING(VALUE) LIST(BUFRLV);                            06750000
+      672.0                   IF BUFRLV<1|BUFRLV>32767 THEN RC=99;                       06760000
+      673.0                   END;                                                       06770000
+      674.0                   END;                                                       06780000
+      675.0           WHEN(8) VSPW=VALUE;                                                06790001
+      676.0           WHEN(9) BCKFLG='1'B;                                               06800000
+      677.0           WHEN(10) CLSFLG='1'B;                                              06810023
+      678.0           OTHERWISE RC=99;                                                   06820000
+      679.0           END;                                                               06830000
+      680.0           RETURN(RC);                                                        06840000
+      681.0           END VE1;                                                           06850000
+      682.0      SETREC: PROC;                                                           06860001
+      683.0           /*********************************************************         06870001
+      684.0           THIS ROUTINE SETS THE LENGTH(BUFRL) OF THE INTERNAL                06880001
+      685.0           CHARACTER STRING(DATA) INTO WHICH WE WILL READ RECORDS FROM        06890001
+      686.0           THE USERS FILE.                                                    06900001
+      687.0           IF THE USER SUPPLIES A VALUE (IE. BUFL>0) WE USE IT,               06910001
+      688.0           OTHERWISE WE USE THE MAXIMUM RECORD SIZE GIVEN IN THE              06920001
+      689.0           FILE CONTROL BLOCK (FCB).                                          06930001
+      690.0           *********************************************************/         06940001
+      691.0           IF ALLOCATION(DATA)>0 THEN FREE DATA;                              06950011
+      692.0           IF BUFRL<=0 THEN BUFRL=RECMAX(SYSXX);                              06960001
+      693.0           ALLOCATE DATA CHAR(BUFRL);                                         06970001
+      694.0           END SETREC;                                                        06980001
+      695.0           END SELECT;                                                        06990010
+      696.0      RECMAX: PROC(FNAME) RETURNS(FIXED BIN(15));                             07000001
+      697.0           /**********************************************************        07010001
+      698.0           DETERMINE THE MAXIMUM RECORD LENGTH FOR THE GIVEN FILE.            07020001
+      699.0           USE THE FCB RECORD LENGTH (FRCL) FOR ALL ACCESS METHODS.           07030001
+      700.0           THE ONLY EXCEPTION TO THIS IS BSAM OR QSAM FILES WITH              07040001
+      701.0           U-FORMAT RECORDS IN WHICH CASE WE USE THE BLOCKSIZE (FBKZ).        07050001
+      702.0           **********************************************************/        07060001
+      703.0           DCL M FIXED BIN(15) INIT(0);                                       07070001
+      704.0           DCL FNAME FILE;                                                    07080001
+      705.0           CALL FCBLOC(FNAME,FCBPTR);                                         07090001
+      706.0           M=FRCL;  /* USE RECORD LENGTH */                                   07100001
+      707.0           IF FFLC=QSAM|FFLC=BSAM|FFLC=BSAML THEN DO;                         07110001
+      708.0              IF SUBSTR(FFLA,3,1)  /* IF RECFM=U */                           07120001
+      709.0                 THEN M=FBKZ;  /* USE BLOCKSIZE */                            07130001
+      710.0              END;                                                            07140001
+      711.0           RETURN(M);                                                         07150001
+      712.0           END RECMAX;                                                        07160001
+      713.0      ACMETH: PROC;                                                           07170005
+      714.0           DCL M CHAR(20) VAR INIT('');                                       07180005
+      715.0           CALL FCBLOC(SYSXX,FCBPTR);                                         07190005
+      716.0           SELECT(FFLC);                                                      07200005
+      717.0           WHEN(QSAM) M='QSAM';                                               07210005
+      718.0           WHEN(BSAM,BSAML) M='BSAM';                                         07220005
+      719.0           WHEN(TCAM) M='TCAM';                                               07230005
+      720.0           WHEN(QISAM) M='QISAM';                                             07240005
+      721.0           WHEN(BISAM) M='BISAM';                                             07250005
+      722.0           WHEN(BDAM) M='BDAM';                                               07260005
+      723.0           WHEN(VSAM) DO;                                                     07270005
+      724.0                      M='VSAM';                                               07280005
+      725.0                           IF SUBSTR(FELV,1,1) THEN M=M||' (KSDS)';           07290005
+      726.0                      ELSE IF SUBSTR(FELV,2,1) THEN M=M||' (ESDS)';           07300005
+      727.0                      ELSE IF SUBSTR(FELV,3,1) THEN M=M||' (RRDS)';           07310005
+      728.0                      END;                                                    07320005
+      729.0           OTHERWISE M='UNKNOWN';                                             07330005
+      730.0           END;                                                               07340005
+      731.0           CALL PUTMSG('ACCESS METHOD IS '||M);                               07350005
+      732.0           END ACMETH;                                                        07360005
+      733.0      OPEN: PROC;                                                             07370000
+      734.0           IF OPENED THEN RETURN;                                             07380000
+      735.0           OPEN FILE(SYSXX) SEQL TITLE(INDD);                                 07390000
+      736.0           OPENED='1'B;                                                       07400000
+      737.0           END OPEN;                                                          07410000
+      738.0      CLOSE: PROC;                                                            07420000
+      739.0           IF ^OPENED THEN RETURN;                                            07430000
+      740.0           CLOSE FILE(SYSXX);                                                 07440000
+      741.0           OPENED='0'B;                                                       07450000
+      742.0           END CLOSE;                                                         07460000
+      743.0      REWIND: PROC;                                                           07470000
+      744.0           IF ^OPENED THEN DO;                                                07480000
+      745.0                  CALL PUTMSG('FILE NOT OPEN. TOP INVALID');                  07490000
+      746.0                  RETURN;                                                     07500000
+      747.0                  END;                                                        07510000
+      748.0           IF TERM THEN DO;                                                   07520000
+      749.0              CALL PUTMSG('TOP INVALID FOR TERMINAL INPUT FILE');             07530000
+      750.0              RETURN;                                                         07540000
+      751.0              END;                                                            07550000
+      752.0           CALL CLOSE;                                                        07560000
+      753.0           CALL OPEN;                                                         07570000
+      754.0           REC#=0; EOF='0'B;                                                  07580000
+      755.0           END REWIND;                                                        07590000
+      756.0      LIST: PROC;                                                             07600000
+      757.0           ON ENDFILE(SYSXX) GOTO ENDUP;                                      07610000
+      758.0           IF ^OPENED THEN DO;                                                07620000
+      759.0                  CALL PUTMSG('FILE NOT OPEN. ENTER SELECT COMMAND');         07630000
+      760.0                  RETURN;                                                     07640000
+      761.0                  END;                                                        07650000
+      762.0           IF INDEX(TEXT,'*')>0 THEN DO;                                      07660000
+      763.0                    IF REC#=0 THEN DO;                                        07670000
+      764.0                                   CALL PUTMSG('RECORD COUNTER IS ZERO');     07680000
+      765.0                                   RETURN;                                    07690000
+      766.0                                   END;                                       07700000
+      767.0                    CALL PRINT(DATA,'RECORD ');                               07710000
+      768.0                    IF PRINTKEY&DSORG^='PS' THEN CALL PRINT(KEAY,'KEY ');     07720000
+      769.0                    RETURN;                                                   07730000
+      770.0                    END;                                                      07740000
+      771.0           IF EOF THEN GOTO ENDUP;                                            07750000
+      772.0           IF LENGTH(VERB)=0 THEN N=1;                                        07760000
+      773.0              ELSE DO;                                                        07770000
+      774.0                   N=2000000000;                                              07780000
+      775.0                   RCSCAN=SCANNER(VE7,TEXT,VS7);                              07790000
+      776.0                   IF RCSCAN>4 THEN DO;                                       07800000
+      777.0                      CALL PUTMSG('LIST COMMAND SYNTAX ERROR');               07810000
+      778.0                      RETURN;                                                 07820000
+      779.0                      END;                                                    07830000
+      780.0                   END;                                                       07840000
+      781.0           DO I=1 TO N;                                                       07850000
+      782.0           IF ATTFLG|INTFLG THEN RETURN;                                      07860024
+      783.0           SELECT(DSORG);                                                     07870000
+      784.0           WHEN('PS') SELECT;                                                 07880000
+      785.0                      WHEN(TERM) DO;                                          07890000
+      786.0                                 SELECT(TT);                                  07900000
+      787.0                                 WHEN('3270') DO;                             07910000
+      788.0                                            ISTRING='DATA'||(9)' '||TIMEX();  07920000
+      789.0                                            RC3270=IO3270(DATA,3);            07930000
+      790.0                                            IF LENGTH(DATA)<=1 THEN           07940000
+      791.0                                            SIGNAL ENDFILE(SYSXX);            07950000
+      792.0                                            DATA=SUBSTR(DATA,2);              07960000
+      793.0                                            END;                              07970000
+      794.0                                 OTHERWISE DO;                                07980000
+      795.0                                           PUT EDIT('DATA: ') (SKIP,A);       07990000
+      796.0                                           GET EDIT(DATA) (SKIP(0),A(80));    08000000
+      797.0                                           IF DATA=' ' THEN DATA='';          08010000
+      798.0                                           END;                               08020000
+      799.0                                 END;                                         08030000
+      800.0                                 IF LENGTH(DATA)=0|DATA='/*' THEN             08040000
+      801.0                                 SIGNAL ENDFILE(SYSXX);                       08050000
+      802.0                                 END;                                         08060000
+      803.0                      OTHERWISE READ FILE(SYSXX) INTO(DATA);                  08070000
+      804.0                      END;                                                    08080000
+      805.0           OTHERWISE READ FILE(SYSXX) INTO(DATA) KEYTO(KEAY);                 08090000
+      806.0           END;                                                               08100000
+      807.0           REC#=REC#+1;                                                       08110000
+      808.0           IF AUTO THEN CALL COPY;                                            08120000
+      809.0           CALL PRINT(DATA,'RECORD ');                                        08130000
+      810.0           IF PRINTKEY&DSORG^='PS' THEN CALL PRINT(KEAY,'KEY ');              08140000
+      811.0           END;                                                               08150000
+      812.0           RETURN;                                                            08160000
+      813.0      ENDUP: EOF='1'B;                                                        08170000
+      814.0           CALL PUTMSG('END OF FILE IN INPUT DATASET');                       08180000
+      815.0           END LIST;                                                          08190000
+      816.0      PRINT: PROC(DODO,U);                                                    08200000
+      817.0           DCL U CHAR(*);                                                     08210000
+      818.0           DCL DODO CHAR(*) VAR;                                              08220000
+      819.0           IF ATTFLG|INTFLG THEN RETURN;                                      08230024
+      820.0           LEN=LENGTH(DODO);                                                  08240000
+      821.0           IF COUNTFLAG THEN CALL PUTMSG(U||CH(REC#)||                        08250000
+      822.0                                         '  LENGTH '||CH(LEN));               08260000
+      823.0           IF U='KEY ' THEN DO; F=1; T=LEN; END;                              08270000
+      824.0                       ELSE DO;                                               08280000
+      825.0           IF FROM<1|FROM>LEN THEN F=1; ELSE F=FROM;                          08290000
+      826.0           IF TO<F THEN T=LEN; ELSE T=MIN(TO,LEN);                            08300000
+      827.0                            END;                                              08310000
+      828.0           IF DUMPFORMAT                                                      08320007
+      829.0              THEN DO;                                                        08330007
+      830.0                   F=F-MOD(F-1,4);  /* ROUND DOWN TO NEXT FULLWORD */         08340007
+      831.0                   DO A=F BY #B TO T;                                         08350000
+      832.0                   IF ATTFLG|INTFLG THEN RETURN;                              08360024
+      833.0                   TOP=A+#B-1;                                                08370000
+      834.0                   TOP=MIN(TOP,T);                                            08380000
+      835.0                   LINE32=SUBSTR(DODO,A,TOP-A+1);                             08390000
+      836.0                   BIN=A-1;                                                   08400000
+      837.0                   IF A=F THEN GOTO ZA;                                       08410000
+      838.0                   IF A+#B<=T&LINE32=PREVINFO THEN GOTO ZB;                   08420000
+      839.0                   IF BIN-PREVOFFSET=#B THEN GOTO ZA;                         08430000
+      840.0                   BAN=BIN-#B;                                                08440000
+      841.0                   WARK=SUBSTR(YY,2,3);                                       08450000
+      842.0                   CALL HEXOUT(WARK,OFFSET2);                                 08460000
+      843.0                   IF BIN-PREVOFFSET=#H THEN DO;                              08470000
+      844.0                   CALL PUTMSG('LINE '||OFFSET2||' SAME AS ABOVE');           08480000
+      845.0                   END;                                                       08490000
+      846.0                   ELSE DO;                                                   08500000
+      847.0                   BAN=PREVOFFSET+#B;                                         08510000
+      848.0                   WARK=SUBSTR(YY,2,3);                                       08520000
+      849.0                   CALL HEXOUT(WARK,OFFSET1);                                 08530000
+      850.0                   CALL PUTMSG('LINES '||OFFSET1||'-'||OFFSET2||              08540000
+      851.0                               ' SAME AS ABOVE');                             08550000
+      852.0                   END;                                                       08560000
+      853.0                ZA:WORK=SUBSTR(Y,2,3);                                        08570000
+      854.0                   CALL HEXOUT(WORK,OFFSET);                                  08580000
+      855.0                   INFORM=TRANSLATE(LINE32,TRTAB1);                           08590007
+      856.0                   CALL HEXOUT(LINE32,HEX64);                                 08600000
+      857.0                   DO B=1 TO #W;                                              08610000
+      858.0                   WORDS(B)=SUBSTR(HEX64,B*8-7);                              08620000
+      859.0                   END;                                                       08630000
+      860.0                   IF #W=8 THEN PUT STRING(LINE) EDIT(DUMPLINE) (R(F8));      08640000
+      861.0                           ELSE PUT STRING(LINE) EDIT(DUMPLINE) (R(F4));      08650000
+      862.0                F8:FORMAT(A,X(1),(4)(X(1),A),X(3),(4)(X(1),A),X(2),A,A,A);    08660000
+      863.0                F4:FORMAT(A,X(1),(4)(X(1),A),                 X(2),A,A,A);    08670000
+      864.0                   CALL PUTMSG(LINE);                                         08680000
+      865.0                   PREVINFO=LINE32;                                           08690000
+      866.0                   PREVOFFSET=BIN;                                            08700000
+      867.0                ZB:END;                                                       08710000
+      868.0                END;                                                          08720000
+      869.0           ELSE DO A=F BY LS TO T;                                            08730000
+      870.0                IF ATTFLG|INTFLG THEN RETURN;                                 08740024
+      871.0                TOP=A+LS-1;                                                   08750000
+      872.0                TOP=MIN(TOP,T);                                               08760000
+      873.0                LINE=SUBSTR(DODO,A,TOP-A+1);                                  08770000
+      874.0                LINE=TRANSLATE(LINE,TRTAB2);                                  08780000
+      875.0                CALL PUTMSG(LINE);                                            08790000
+      876.0                END;                                                          08800000
+      877.0           END PRINT;                                                         08810000
+      878.0      CH31: PROC(A) RETURNS(CHAR(11) VAR);                                    08820000
+      879.0           DCL B CHAR(11) VAR , (A,W) FIXED BIN(31);                          08830000
+      880.0           PUT STRING(B) EDIT(A) (F(11));                                     08840000
+      881.0           GOTO CHX;                                                          08850000
+      882.0      CH15: ENTRY(C) RETURNS(CHAR(11) VAR);                                   08860000
+      883.0           DCL C FIXED BIN(15);                                               08870000
+      884.0           PUT STRING(B) EDIT(C) (F(11));                                     08880000
+      885.0      CHX: W=VERIFY(B,' ');                                                   08890000
+      886.0           B=SUBSTR(B,W);                                                     08900000
+      887.0           RETURN(B);                                                         08910000
+      888.0           END CH31;                                                          08920000
+      889.0      S99DSTYP: PROC(T,D);                                                    08930000
+      890.0           DCL T CHAR(1) , D CHAR(*) VAR;                                     08940000
+      891.0           SELECT(UNSPEC(T));                                                 08950000
+      892.0           WHEN('10000000'B) CALL PUTMSG('DDNAME '||D||                       08960000
+      893.0                             ' IS A DUMMY DATASET');                          08970000
+      894.0           WHEN('01000000'B) CALL PUTMSG('DDNAME '||D||                       08980000
+      895.0                             ' IS ALLOCATED TO THE TERMINAL');                08990000
+      896.0           OTHERWISE ;                                                        09000000
+      897.0           END;                                                               09010000
+      898.0           END S99DSTYP;                                                      09020000
+      899.0      S99DSORG: PROC(Z);                                                      09030000
+      900.0           DCL Z CHAR(2) , M CHAR(7);                                         09040000
+      901.0           VFLG='0'B;                                                         09050005
+      902.0           SELECT(UNSPEC(Z));                                                 09060000
+      903.0           WHEN('0000000000000100'B) M='TR';                                  09070000
+      904.0           WHEN('0000000000001000'B) DO; M='VSAM'; VFLG='1'B; END;            09080005
+      905.0           WHEN('0000000000100000'B) M='TQ';                                  09090000
+      906.0           WHEN('0000000001000000'B) M='TX';                                  09100000
+      907.0           WHEN('0000000010000000'B) M='GS';                                  09110000
+      908.0           WHEN('0000001000000000'B) M='PO';                                  09120000
+      909.0           WHEN('0000001100000000'B) M='POU';                                 09130000
+      910.0           WHEN('0000010000000000'B) M='MQ';                                  09140000
+      911.0           WHEN('0000100000000000'B) M='CQ';                                  09150000
+      912.0           WHEN('0001000000000000'B) M='CX';                                  09160000
+      913.0           WHEN('0010000000000000'B) M='DA';                                  09170000
+      914.0           WHEN('0010000100000000'B) M='DAU';                                 09180000
+      915.0           WHEN('0100000000000000'B) M='PS';                                  09190000
+      916.0           WHEN('0100000100000000'B) M='PSU';                                 09200000
+      917.0           WHEN('1000000000000000'B) M='IS';                                  09210000
+      918.0           WHEN('1000000100000000'B) M='ISU';                                 09220000
+      919.0           OTHERWISE M='UNKNOWN';                                             09230000
+      920.0           END;                                                               09240000
+      921.0           CALL PUTMSG('DATASET ORGANIZATION IS '||M);                        09250000
+      922.0           END S99DSORG;                                                      09260000
+      923.0      S99RCTEST: PROC(TYPE) RETURNS(BIT(1));                                  09270000
+      924.0           DCL TYPE CHAR(*);                                                  09280000
+      925.0           IF S99RC=0 THEN RETURN('1'B);                                      09290000
+      926.0           CALL PUTMSG('DYNALLOC '||TYPE||' FAILED');                         09300000
+      927.0           BIN=S99ERROR;                                                      09310006
+      928.0           S99WORK=SUBSTR(Y,3,2);                                             09320006
+      929.0           CALL HEXOUT(S99WORK,S99ERRORX);                                    09330006
+      930.0           BIN=S99INFO;                                                       09340006
+      931.0           S99WORK=SUBSTR(Y,3,2);                                             09350006
+      932.0           CALL HEXOUT(S99WORK,S99INFOX);                                     09360006
+      933.0           CALL PUTMSG('DYNAMIC ALLOCATION RETURN CODES ARE: S99RC('||        09370000
+      934.0                       CH(S99RC)||') S99ERROR('||S99ERRORX||                  09380006
+      935.0                       ') S99INFO('||S99INFOX||')');                          09390006
+      936.0           RETURN('0'B);                                                      09400000
+      937.0           END S99RCTEST;                                                     09410000
+      938.0      PUTMSG: PROC(MSG);                                                      09420000
+      939.0           DCL I FIXED BINARY(15);                                            09430000
+      940.0           DCL MSG CHAR(*) VAR;                                               09440000
+      941.0           I=LENGTH(MSG);                                                     09450000
+      942.0           IF I=0 THEN RETURN;                                                09460000
+      943.0           DO WHILE(I>1&SUBSTR(MSG,I,1)=' ');                                 09470000
+      944.0           I=I-1;                                                             09480000
+      945.0           END;                                                               09490000
+      946.0           MSS=SUBSTR(MSG,1,I);                                               09500000
+      947.0           IF TT='3270' THEN RC3270=IO3270(MSS,1);                            09510000
+      948.0                        ELSE PUT EDIT(MSS) (SKIP,A);                          09520000
+      949.0           END PUTMSG;                                                        09530000
+      950.0      GETMSG: PROC(MSG);                                                      09540000
+      951.0           DCL I FIXED BIN(31);                                               09550000
+      952.0           DCL C CHAR(1);                                                     09560000
+      953.0           DCL MSG CHAR(*) VAR;                                               09570000
+      954.0           DCL (F1,F2) BIT(1) INIT('0'B);                                     09580000
+      955.0           DCL AID CHAR(1);                                                   09590000
+      956.0           MSG='';                                                            09600000
+      957.0           IF LENGTH(X)=0 THEN DO;                                            09610000
+      958.0              IF TSO THEN DO;                                                 09620000
+      959.0                 IF TT='3270' THEN DO;                                        09630000
+      960.0                    IF KIMODE THEN ISTRING='KEY'||(10)' '||TIMEX();           09640000
+      961.0                              ELSE ISTRING='CMD'||(10)' '||TIMEX();           09650000
+      962.0                    INPUT3270: RC3270=IO3270(X,REF);                          09660000
+      963.0                    IF ATTFLG THEN DO; ATTFLG='0'B; GOTO INPUT3270; END;      09670024
+      964.0                    AID=X;                                                    09680000
+      965.0                    IF LENGTH(X)>1 THEN X=SUBSTR(X,2); ELSE X='';             09690000
+      966.0                    I=INDEX(PFKCODES,AID);                                    09700000
+      967.0                    IF I>0 THEN DO;                                           09710000
+      968.0                       IF LENGTH(X)>0 THEN DO;                                09720000
+      969.0                          IF PFKTYPE(I)='S' THEN X=X||';P '||CH(I);           09730000
+      970.0                                            ELSE X='P '||CH(I)||';'||X;       09740000
+      971.0                          END;                                                09750000
+      972.0                          ELSE X='P '||CH(I);                                 09760000
+      973.0                       END;                                                   09770000
+      974.0                    END;                                                      09780000
+      975.0                    ELSE DO;                                                  09790000
+      976.0                         IF KIMODE THEN PUT EDIT('KEY: ') (SKIP,A);           09800000
+      977.0                                   ELSE PUT EDIT('CMD: ') (SKIP,A);           09810000
+      978.0                         GET EDIT(X) (SKIP(0),A(200));                        09820000
+      979.0                         END;                                                 09830000
+      980.0                 END;                                                         09840000
+      981.0                 ELSE GET EDIT(X) (A(80));                                    09850000
+      982.0              IF X=' ' THEN DO; X=''; RETURN; END;                            09860000
+      983.0              END;                                                            09870000
+      984.0           DO I=1 TO LENGTH(X);                                               09880000
+      985.0           C=SUBSTR(X,I);                                                     09890000
+      986.0           IF F2 THEN DO;                                                     09900000
+      987.0                      MSG=MSG||C;                                             09910000
+      988.0                      IF C='''' THEN F2='0'B;                                 09920000
+      989.0                      END;                                                    09930000
+      990.0                 ELSE SELECT(C);                                              09940000
+      991.0                      WHEN(' ') DO;                                           09950000
+      992.0                                IF LENGTH(MSG)>0 THEN F1='1'B;                09960000
+      993.0                                END;                                          09970000
+      994.0                      WHEN(';') DO;                                           09980000
+      995.0                                X=SUBSTR(X,I+1);                              09990000
+      996.0                                IF X=' ' THEN X='';                           10000000
+      997.0                                RETURN;                                       10010000
+      998.0                                END;                                          10020000
+      999.0                      OTHERWISE DO;                                           10030000
+     1000.0                                C=TRANSLATE(C,UPPER,LOWER);                   10040000
+     1001.0                                IF C='''' THEN F2='1'B;                       10050000
+     1002.0                                IF F1 THEN DO;                                10060000
+     1003.0                                           MSG=MSG||' '||C;                   10070000
+     1004.0                                           F1='0'B;                           10080000
+     1005.0                                           END;                               10090000
+     1006.0                                      ELSE MSG=MSG||C;                        10100000
+     1007.0                                END;                                          10110000
+     1008.0                      END;                                                    10120000
+     1009.0           END;                                                               10130000
+     1010.0           X='';                                                              10140000
+     1011.0           END GETMSG;                                                        10150000
+     1012.0      HELP: PROC;                                                             10160000
+     1013.0           IF LENGTH(TEXT)=0 THEN DO;                                         10170014
+     1014.0           CALL PUTMSG('AVAILABLE SUBCOMMANDS ARE:');                         10180014
+     1015.0           CALL PUTMSG('ALLOC,AUTOCOPY,CCHAR,COMPRESS,COPY,COUNT,DISPFK,DKEY, 10190014
+     1016.0      DUMP,ECHAR,');                                                          10200014
+     1017.0           CALL PUTMSG('ECHO,END,EXPAND,FIND,FLIP,FREE,FROM,HELP,INFO,INTERRU 10210014
+     1018.0      PT,KEY,LIST,');                                                         10220014
+     1019.0           CALL PUTMSG('NUM,OPTIONS,PFK,PRINT,REFLECT,SELECT,SETCOPY,SETPFK,S 10230014
+     1020.0      KIP,TERMTYPE,');                                                        10240014
+     1021.0           CALL PUTMSG('TIOT,TOD,TOP,TSO');                                   10250014
+     1022.0           CALL PUTMSG('FOR MORE INFORMATION TYPE: HELP SUBCOMMANDNAME');     10260014
+     1023.0           RETURN;                                                            10270014
+     1024.0           END;                                                               10280014
+     1025.0           SELECT(TEXT);                                                      10290014
+     1026.0           WHEN('ALLOC')                                                      10300014
+     1027.0           CALL PUTMSG('COMBINED SYNTAX OF TSO ALLOC AND ATTR COMMANDS');     10310014
+     1028.0           WHEN('AUTOCOPY')                                                   10320014
+     1029.0           CALL PUTMSG('AUTOCOPY|AC<-->NOAUTOCOPY|NOAC');                     10330014
+     1030.0           WHEN('COPY','COUNT','END','TIOT','TOD')                            10340017
+     1031.0           CALL PUTMSG(TEXT);                                                 10350014
+     1032.0           WHEN('DISPFK') CALL PUTMSG('DISPfk <n>');                          10360017
+     1033.0           WHEN('DKEY') CALL PUTMSG('DKEY<-->NODKEY');                        10370014
+     1034.0           WHEN('DUMP') CALL PUTMSG('DUMP<-->NODUMP');                        10380014
+     1035.0           WHEN('FIND') CALL PUTMSG('Find <string> <n> <LIST> <ALL> <COPY>'); 10390017
+     1036.0           WHEN('FLIP') CALL PUTMSG('FLIP DUMP|NUM|REFLECT|AUTOCOPY|DKEY');   10400014
+     1037.0           WHEN('FREE')                                                       10410017
+     1038.0           CALL PUTMSG('SAME SYNTAX AS TSO FREE COMMAND');                    10420018
+     1039.0           WHEN('FROM') CALL PUTMSG('FROM n1 <TO n2>');                       10430017
+     1040.0           WHEN('PRINT')                                                      10440017
+     1041.0           CALL PUTMSG('PRINT <DEST(stationid)> <SYSOUT(class)>'              10450017
+     1042.0                       ||' <HOLD|NOHOLD>');                                   10460017
+     1043.0           WHEN('HELP') CALL PUTMSG('Help <subcommandname>');                 10470017
+     1044.0           WHEN('INFO') CALL PUTMSG('INFO <FI(ddname)>');                     10480017
+     1045.0           WHEN('INTERRUPT') CALL PUTMSG('INTerrupt n');                      10490017
+     1046.0           WHEN('KEY') CALL PUTMSG('Key');                                    10500017
+     1047.0           WHEN('LIST') CALL PUTMSG('List <n|*>');                            10510017
+     1048.0           WHEN('NUM') CALL PUTMSG('NUM<-->NONUM');                           10520014
+     1049.0           WHEN('OPTIONS') CALL PUTMSG('Options');                            10530017
+     1050.0           WHEN('PFK') CALL PUTMSG('Pfk n');                                  10540017
+     1051.0           WHEN('REFLECT') CALL PUTMSG('Reflect<-->NOReflect');               10550017
+     1052.0           WHEN('SELECT') CALL PUTMSG('Select <FI(ddname)> <DSorg(v)>'        10560018
+     1053.0                ||' <BUFL(n)> <PASSword(pw)> <BACKwards> <CLose>');           10570017
+     1054.0           WHEN('SETCOPY') CALL PUTMSG('SETCopy FI(ddname)|CLose');           10580022
+     1055.0           WHEN('SETPFK')                                                     10590014
+     1056.0           CALL PUTMSG('SETPfk n <string> <PREFIX|SUFFIX>');                  10600017
+     1057.0           WHEN('SKIP') CALL PUTMSG('SKip <n>');                              10610018
+     1058.0           WHEN('TERMTYPE') CALL PUTMSG('TERMTYPE|TT 3270|2741');             10620014
+     1059.0           WHEN('TOP') CALL PUTMSG('Top');                                    10630017
+     1060.0           WHEN('TSO') CALL PUTMSG('TSO command');                            10640017
+     1061.0           WHEN('COMPRESS') CALL PUTMSG('COMPress <n> <--> NOCOMPress');      10650017
+     1062.0           WHEN('EXPAND') CALL PUTMSG('EXPand <n> <--> NOEXPand');            10660017
+     1063.0           WHEN('ECHO') CALL PUTMSG('ECHO<-->NOECHO');                        10670014
+     1064.0           WHEN('CCHAR') CALL PUTMSG('CCHAR c ');                             10680017
+     1065.0           WHEN('ECHAR') CALL PUTMSG('ECHAR c ');                             10690017
+     1066.0           OTHERWISE CALL PUTMSG('UNKNOWN SUBCOMMAND');                       10700014
+     1067.0           END;                                                               10710014
+     1068.0           END HELP;                                                          10720000
+     1069.0      SKIP: PROC;                                                             10730000
+     1070.0           ON ENDFILE(SYSXX) GOTO ENDUP;                                      10740000
+     1071.0           IF ^OPENED THEN DO;                                                10750000
+     1072.0                  CALL PUTMSG('FILE NOT OPEN. ENTER SELECT COMMAND');         10760000
+     1073.0                  RETURN;                                                     10770000
+     1074.0                  END;                                                        10780000
+     1075.0           IF TERM THEN DO;                                                   10790000
+     1076.0              CALL PUTMSG('SKIP INVALID FOR TERMINAL INPUT FILE');            10800000
+     1077.0              RETURN;                                                         10810000
+     1078.0              END;                                                            10820000
+     1079.0           IF EOF THEN GOTO ENDUP;                                            10830000
+     1080.0           N=1;                                                               10840000
+     1081.0           RCSCAN=SCANNER(VE7,TEXT,VS7);                                      10850000
+     1082.0           IF RCSCAN>4 THEN DO;                                               10860000
+     1083.0              CALL PUTMSG('SKIP COMMAND SYNTAX ERROR');                       10870000
+     1084.0              RETURN;                                                         10880000
+     1085.0              END;                                                            10890000
+     1086.0           DO I=1 TO N;                                                       10900000
+     1087.0           IF ATTFLG|INTFLG THEN RETURN;                                      10910024
+     1088.0           SELECT(DSORG);                                                     10920000
+     1089.0           WHEN('PS') READ FILE(SYSXX) INTO(DATA);                            10930000
+     1090.0           OTHERWISE  READ FILE(SYSXX) INTO(DATA) KEYTO(KEAY);                10940000
+     1091.0           END;                                                               10950000
+     1092.0           REC#=REC#+1;                                                       10960000
+     1093.0           IF AUTO THEN CALL COPY;                                            10970000
+     1094.0           END;                                                               10980000
+     1095.0           RETURN;                                                            10990000
+     1096.0      ENDUP: EOF='1'B;                                                        11000000
+     1097.0           CALL PUTMSG('END OF FILE IN INPUT DATASET');                       11010000
+     1098.0           END SKIP;                                                          11020000
+     1099.0      COUNT: PROC;                                                            11030000
+     1100.0           DCL TRUE BIT(1) INIT('1'B);                                        11040000
+     1101.0           ON ENDFILE(SYSXX) GOTO ENDUP;                                      11050000
+     1102.0           IF ^OPENED THEN DO;                                                11060000
+     1103.0              CALL PUTMSG('FILE NOT OPEN. ENTER SELECT COMMAND');             11070000
+     1104.0              RETURN;                                                         11080000
+     1105.0              END;                                                            11090000
+     1106.0           IF TERM THEN DO;                                                   11100000
+     1107.0              CALL PUTMSG('COUNT INVALID FOR TERMINAL INPUT FILE');           11110000
+     1108.0              RETURN;                                                         11120000
+     1109.0              END;                                                            11130000
+     1110.0           IF REC#>0|EOF THEN CALL REWIND;                                    11140000
+     1111.0           DO WHILE(TRUE);                                                    11150000
+     1112.0           IF ATTFLG|INTFLG THEN RETURN;                                      11160024
+     1113.0           SELECT(DSORG);                                                     11170000
+     1114.0           WHEN('PS') READ FILE(SYSXX) INTO(DATA);                            11180000
+     1115.0           OTHERWISE  READ FILE(SYSXX) INTO(DATA) KEYTO(KEAY);                11190000
+     1116.0           END;                                                               11200000
+     1117.0           REC#=REC#+1;                                                       11210000
+     1118.0           IF AUTO THEN CALL COPY;                                            11220000
+     1119.0           END;                                                               11230000
+     1120.0      ENDUP: EOF='1'B;                                                        11240000
+     1121.0           CALL PUTMSG(CH(REC#));                                             11250000
+     1122.0           CALL REWIND;                                                       11260000
+     1123.0           END COUNT;                                                         11270000
+     1124.0      FLIP: PROC;                                                             11280000
+     1125.0           SELECT(TEXT);                                                      11290000
+     1126.0           WHEN('DUMP') DUMPFORMAT=^DUMPFORMAT;                               11300000
+     1127.0           WHEN('NUM') COUNTFLAG=^COUNTFLAG;                                  11310000
+     1128.0           WHEN('REFLECT') IF REF=5 THEN REF=3; ELSE REF=5;                   11320000
+     1129.0           WHEN('AUTOCOPY') AUTO=^AUTO;                                       11330000
+     1130.0           WHEN('DKEY') PRINTKEY=^PRINTKEY;                                   11340000
+     1131.0           OTHERWISE CALL PUTMSG('FLIP PARAMETER INVALID');                   11350000
+     1132.0           END;                                                               11360000
+     1133.0           END FLIP;                                                          11370000
+     1134.0      OPTIONS: PROC;                                                          11380000
+     1135.0           DCL O CHAR(100) VAR;                                               11390000
+     1136.0           DCL CIN CHAR(1) VAR;                                               11400008
+     1137.0           DCL COUT CHAR(2);                                                  11410008
+     1138.0           IF OPENED THEN DO;                                                 11420000
+     1139.0              O='FI('||INDD||') DSORG('||DSORG||') BUFL('||CH(BUFRL)||')';    11430000
+     1140.0              IF SYSXX=SYSPB|SYSXX=SYSVB THEN O=O||' BACKWARDS';              11440001
+     1141.0              CALL PUTMSG(O);                                                 11450000
+     1142.0              END;                                                            11460000
+     1143.0           IF DUMPFORMAT THEN O='DUMP;'; ELSE O='NODUMP;';                    11470000
+     1144.0           IF PRINTKEY THEN O=O||'DKEY;'; ELSE O=O||'NODKEY;';                11480000
+     1145.0           IF COUNTFLAG THEN O=O||'NUM;'; ELSE O=O||'NONUM;';                 11490000
+     1146.0           O=O||'FROM '||CH(FROM)||' TO ' ||CH(TO)||';';                      11500000
+     1147.0           O=O||'TT '||TT||';';                                               11510000
+     1148.0           IF REF=3 THEN O=O||'NOREFLECT;';                                   11520000
+     1149.0                    ELSE O=O||'REFLECT;';                                     11530000
+     1150.0           IF AUTO THEN O=O||'AC;'; ELSE O=O||'NOAC;';                        11540000
+     1151.0           O=O||'INT '||CH(P#)||';';                                          11550000
+     1152.0           CALL PUTMSG(O);                                                    11560000
+     1153.0           IF EXPAND THEN O='EXPAND '||CH(E#)||';';                           11570007
+     1154.0                     ELSE O='NOEXPAND'||';';                                  11580007
+     1155.0           IF COMPRESS THEN O=O||'COMPRESS '||CH(C#)||';';                    11590008
+     1156.0                       ELSE O=O||'NOCOMPRESS'||';';                           11600008
+     1157.0           CIN=CCHAR;                                                         11610008
+     1158.0           CALL HEXOUT(CIN,COUT);                                             11620008
+     1159.0           O=O||'CCHAR "'||COUT||'";';                                        11630019
+     1160.0           CIN=ECHAR;                                                         11640008
+     1161.0           CALL HEXOUT(CIN,COUT);                                             11650008
+     1162.0           O=O||'ECHAR "'||COUT||'";';                                        11660019
+     1163.0           CALL PUTMSG(O);                                                    11670007
+     1164.0           IF LENGTH(FC)>0 THEN CALL PUTMSG('LAST FIND COMMAND: FIND '||FC);  11680000
+     1165.0           END OPTIONS;                                                       11690000
+     1166.0      TTSET: PROC;                                                            11700000
+     1167.0           IF ^TSO THEN RETURN;                                               11710000
+     1168.0           IF DISPLAY=0 THEN RETURN;                                          11720019
+     1169.0           RCSCAN=SCANNER(VE7,TEXT,VS7);                                      11730000
+     1170.0           IF RCSCAN>0 THEN DO;                                               11740000
+     1171.0              CALL PUTMSG('TERMTYPE COMMAND SYNTAX ERROR');                   11750000
+     1172.0              RETURN;                                                         11760000
+     1173.0              END;                                                            11770000
+     1174.0           IF N=3270 THEN DO;                                                 11780000
+     1175.0              IF TT='2741' THEN RC3270=IO3270(' ',6);                         11790000
+     1176.0              TT='3270';                                                      11800000
+     1177.0              RC3270=IO3270(' ',0);                                           11810000
+     1178.0              RETURN;                                                         11820000
+     1179.0              END;                                                            11830000
+     1180.0           IF N=2741 THEN DO;                                                 11840000
+     1181.0              IF TT='3270' THEN RC3270=IO3270(' ',4);                         11850000
+     1182.0              TT='2741';                                                      11860000
+     1183.0              RETURN;                                                         11870000
+     1184.0              END;                                                            11880000
+     1185.0           CALL PUTMSG('ILLEGAL TERMINAL TYPE');                              11890000
+     1186.0           END TTSET;                                                         11900000
+     1187.0      PFK: PROC;                                                              11910000
+     1188.0           RCSCAN=SCANNER(VE7,TEXT,VS7);                                      11920000
+     1189.0           IF RCSCAN>0 THEN DO;                                               11930000
+     1190.0              CALL PUTMSG('PFK COMMAND SYNTAX ERROR');                        11940000
+     1191.0              RETURN;                                                         11950000
+     1192.0              END;                                                            11960000
+     1193.0           IF N<2|N>24 THEN CALL PUTMSG('ILLEGAL PFK NUMBER');                11970027
+     1194.0                       ELSE X=PFKEY(N)||';'||X;                               11980000
+     1195.0           END PFK;                                                           11990000
+     1196.0      SHOWPFKS: PROC;                                                         12000000
+     1197.0           N=0;                                                               12010000
+     1198.0           RCSCAN=SCANNER(VE7,TEXT,VS7);                                      12020000
+     1199.0           IF RCSCAN>4 THEN DO;                                               12030000
+     1200.0              CALL PUTMSG('DISPFK COMMAND SYNTAX ERROR');                     12040000
+     1201.0              RETURN;                                                         12050000
+     1202.0              END;                                                            12060000
+     1203.0           IF N<0|N>24 THEN DO;                                               12070000
+     1204.0              CALL PUTMSG('ILLEGAL PFK NUMBER');                              12080000
+     1205.0              RETURN;                                                         12090000
+     1206.0              END;                                                            12100000
+     1207.0           IF N>0 THEN CALL PUTMSG('PFK '||CH(N)||'('||PFKTYPE(N)||'): '||    12110000
+     1208.0                                    PFKEY(N));                                12120000
+     1209.0              ELSE DO N=1 TO 24;                                              12130000
+     1210.0                   IF ATTFLG|INTFLG THEN RETURN;                              12140024
+     1211.0                   IF PFKEY(N)^='NULL' THEN                                   12150000
+     1212.0                   CALL PUTMSG('PFK '||CH(N)||'('||PFKTYPE(N)||'): '||        12160000
+     1213.0                                PFKEY(N));                                    12170000
+     1214.0                   END;                                                       12180000
+     1215.0           END SHOWPFKS;                                                      12190000
+     1216.0      SETPFK: PROC;                                                           12200000
+     1217.0           DCL (PFK#,S#) FIXED BIN(15) INIT(0);                               12210000
+     1218.0           DCL PFKVAL CHAR(100) VAR INIT('');                                 12220000
+     1219.0           DCL PRESUF CHAR(1) INIT(' ');                                      12230000
+     1220.0           RCSCAN=SCANNER(VE3,TEXT,VS3);                                      12240000
+     1221.0           IF RCSCAN>0 THEN DO;                                               12250000
+     1222.0              CALL PUTMSG('SETPFK COMMAND SYNTAX ERROR');                     12260000
+     1223.0              RETURN;                                                         12270000
+     1224.0              END;                                                            12280000
+     1225.0           IF PFK#<2|PFK#>24 THEN DO;                                         12290027
+     1226.0              CALL PUTMSG('ILLEGAL PFK NUMBER');                              12300000
+     1227.0              RETURN;                                                         12310000
+     1228.0              END;                                                            12320000
+     1229.0           IF LENGTH(PFKVAL)>0 THEN PFKEY(PFK#)=PFKVAL;                       12330000
+     1230.0           IF PRESUF^=' ' THEN PFKTYPE(PFK#)=PRESUF;                          12340000
+     1231.0      VE3: PROC(KW#,VALUE) RETURNS(FIXED BIN(15));                            12350000
+     1232.0           DCL (KW#,RC) FIXED BIN(15);                                        12360000
+     1233.0           DCL VALUE CHAR(*) VAR;                                             12370000
+     1234.0           RC=0;                                                              12380000
+     1235.0           SELECT(KW#);                                                       12390000
+     1236.0           WHEN(1,2,3,4) DO;                                                  12400000
+     1237.0                         S#=S#+1;                                             12410000
+     1238.0                         SELECT(S#);                                          12420000
+     1239.0                         WHEN(1) SELECT(KW#);                                 12430000
+     1240.0                                 WHEN(3) GET STRING(VALUE) LIST(PFK#);        12440000
+     1241.0                                 OTHERWISE RC=99;                             12450000
+     1242.0                                 END;                                         12460000
+     1243.0                         WHEN(2) SELECT(KW#);                                 12470000
+     1244.0                                 WHEN(1) GET STRING(VALUE) LIST(PFKVAL);      12480000
+     1245.0                                 OTHERWISE PFKVAL=VALUE;                      12490000
+     1246.0                                 END;                                         12500000
+     1247.0                         OTHERWISE RC=99;                                     12510000
+     1248.0                         END;                                                 12520000
+     1249.0                         END;                                                 12530000
+     1250.0           WHEN(5,6) PRESUF=VS3.KW(KW#-4);                                    12540000
+     1251.0           OTHERWISE RC=99;                                                   12550000
+     1252.0           END;                                                               12560000
+     1253.0           RETURN(RC);                                                        12570000
+     1254.0           END VE3;                                                           12580000
+     1255.0           END SETPFK;                                                        12590000
+     1256.0      TSOCMD: PROC;                                                           12600000
+     1257.0           DCL RTCDE CHAR(8) VAR INIT('');                                    12610021
+     1258.0           DCL I FIXED BIN(15) INIT(0);                                       12620021
+     1259.0           DCL (V1,V2) CHAR(100) VAR INIT('');                                12630021
+     1260.0           IF ^TSO THEN RETURN;                                               12640000
+     1261.0           IF LENGTH(TEXT)=0 THEN RETURN;                                     12650021
+     1262.0           RCSCAN=SCANNER(VE6,TEXT,VS6);                                      12660000
+     1263.0           IF INDEX('LOGON LOGOFF PDUMP TEST',V1)>0|LENGTH(V1)>8              12670021
+     1264.0              THEN DO;                                                        12680021
+     1265.0                   CALL PUTMSG('TSO COMMAND INVALID');                        12690021
+     1266.0                   RETURN;                                                    12700021
+     1267.0                   END;                                                       12710021
+     1268.0           IF I=1 THEN CBOFFSET=LENGTH(V1);                                   12720021
+     1269.0                  ELSE CBOFFSET=INDEX(TEXT,V2)-1;                             12730021
+     1270.0           CBLENGTH=LENGTH(TEXT)+4;                                           12740000
+     1271.0           CBTEXT=TEXT;                                                       12750000
+     1272.0           CALL CPPL(CPPLCBUF,CPPLUPT,CPPLPSCB,CPPLECT);                      12760000
+     1273.0           IF CPPLCBUF=NULL THEN RETURN;  /*  PDUMP INVOKED BY TSO CALL */    12770000
+     1274.0           CPPLCBUF=ADDR(CBLENGTH);                                           12780000
+     1275.0           IF TT='3270' THEN RC3270=IO3270(' ',4);                            12790000
+     1276.0           RCTSOCP=TSOCP(CPPLCBUF,RTCDE);                                     12800000
+     1277.0           IF TT='3270' THEN RC3270=IO3270(' ',6);                            12810000
+     1278.0           IF RCTSOCP>0 THEN CALL PUTMSG('TSO COMMAND NOT FOUND');            12820000
+     1279.0                        ELSE CALL PUTMSG('TSO COMMAND RETURN CODE '||RTCDE);  12830000
+     1280.0      VE6: PROC(KW#,VALUE) RETURNS(FIXED BIN(15));                            12840000
+     1281.0           DCL (KW#,RC) FIXED BIN(15);                                        12850000
+     1282.0           DCL VALUE CHAR(*) VAR;                                             12860000
+     1283.0           RC=0;                                                              12870021
+     1284.0           I=I+1;                                                             12880021
+     1285.0           SELECT(I);                                                         12890021
+     1286.0           WHEN(1) V1=VALUE;                                                  12900021
+     1287.0           WHEN(2) V2=VALUE;                                                  12910021
+     1288.0           OTHERWISE RC=99;                                                   12920021
+     1289.0           END;                                                               12930021
+     1290.0           RETURN(RC);                                                        12940000
+     1291.0           END VE6;                                                           12950000
+     1292.0           END TSOCMD;                                                        12960000
+     1293.0      FREE: PROC;                                                             12970000
+     1294.0           DDNAME='';                                                         12980017
+     1295.0           IF LENGTH(TEXT)=0 THEN DO;                                         12990017
+     1296.0              IF OPENED THEN DO; DDNAME=INDD; CALL CLOSE; END;                13000017
+     1297.0                        ELSE DDNAME=DYNALDDN;                                 13010017
+     1298.0              IF LENGTH(DDNAME)=0 THEN DO;                                    13020017
+     1299.0                 CALL PUTMSG('FREE INVALID. NO FILE SELECTED OR ALLOCATED');  13030017
+     1300.0                 RETURN;                                                      13040017
+     1301.0                 END;                                                         13050017
+     1302.0              TEXT='FI('||DDNAME||')';                                        13060017
+     1303.0              END;                                                            13070017
+     1304.0           CALL S99FREE(TEXT,VUNRC,S99RC,S99ERROR,S99INFO);                   13080017
+     1305.0           IF VUNRC>0 THEN DO;                                                13090020
+     1306.0              CALL PUTMSG('FREE SYNTAX ERROR. SCAN RC='||CH(VUNRC));          13100017
+     1307.0              RETURN;                                                         13110017
+     1308.0              END;                                                            13120017
+     1309.0           IF ^S99RCTEST('FREE') THEN RETURN;                                 13130000
+     1310.0           CALL PUTMSG('FILE '||DDNAME||' FREED');                            13140017
+     1311.0           END FREE;                                                          13150000
+     1312.0      FIND: PROC;                                                             13160000
+     1313.0           DCL (N,S#) FIXED BIN(15) INIT(0);                                  13170000
+     1314.0           DCL (CS,FS,SS) CHAR(100) VAR INIT('');                             13180000
+     1315.0           DCL (HEX,L,ALL,FCOPY) BIT(1) INIT('0'B);                           13190026
+     1316.0           ON ENDFILE(SYSXX) GOTO ENDUP;                                      13200000
+     1317.0           IF ^OPENED THEN DO;                                                13210000
+     1318.0                  CALL PUTMSG('FILE NOT OPEN. ENTER SELECT COMMAND');         13220000
+     1319.0                  RETURN;                                                     13230000
+     1320.0                  END;                                                        13240000
+     1321.0           IF TERM THEN DO;                                                   13250000
+     1322.0              CALL PUTMSG('FIND INVALID FOR TERMINAL INPUT FILE');            13260000
+     1323.0              RETURN;                                                         13270000
+     1324.0              END;                                                            13280000
+     1325.0           IF EOF THEN GOTO ENDUP;                                            13290000
+     1326.0           IF LENGTH(TEXT)=0 THEN TEXT=FC; ELSE FC=TEXT;                      13300000
+     1327.0           RCSCAN=SCANNER(VE2,TEXT,VS2);                                      13310000
+     1328.0           IF RCSCAN>4 THEN DO;                                               13320000
+     1329.0              CALL PUTMSG('FIND COMMAND SYNTAX ERROR');                       13330000
+     1330.0              RETURN;                                                         13340000
+     1331.0              END;                                                            13350000
+     1332.0           IF LENGTH(FS)=0 THEN DO;                                           13360000
+     1333.0              CALL PUTMSG('FIND INVALID. NO SEARCH STRING AVAILABLE');        13370000
+     1334.0              RETURN;                                                         13380000
+     1335.0              END;                                                            13390000
+     1336.0           IF FCOPY&LENGTH(COPYDD)=0 THEN DO;                                 13400000
+     1337.0              FCOPY='0'B;                                                     13410000
+     1338.0              CALL PUTMSG('COPY OPTION IGNORED. NO COPY FILE AVAILABLE');     13420000
+     1339.0              END;                                                            13430000
+     1340.0           IF RCSCAN=0 THEN DO;                                               13440000
+     1341.0              IF HEX THEN DO;                                                 13450000
+     1342.0                 IF ^HEXIN(FS,SS) THEN GOTO HEXERR;                           13460000
+     1343.0                 FS=SS;                                                       13470000
+     1344.0                 END;                                                         13480000
+     1345.0              END;                                                            13490000
+     1346.0      RDLOOP:                                                                 13500000
+     1347.0           IF ATTFLG|INTFLG THEN RETURN;                                      13510024
+     1348.0           SELECT(DSORG);                                                     13520000
+     1349.0           WHEN('PS') READ FILE(SYSXX) INTO(DATA);                            13530000
+     1350.0           OTHERWISE  READ FILE(SYSXX) INTO(DATA) KEYTO(KEAY);                13540000
+     1351.0           END;                                                               13550000
+     1352.0           REC#=REC#+1;                                                       13560000
+     1353.0           IF AUTO THEN CALL COPY;                                            13570000
+     1354.0           SELECT(N);                                                         13580000
+     1355.0           WHEN(0)   DO;                                                      13590000
+     1356.0                     IF INDEX(DATA,FS)>0 THEN GOTO FOUND;                     13600000
+     1357.0                     END;                                                     13610000
+     1358.0           OTHERWISE DO;                                                      13620000
+     1359.0                     IF N>LENGTH(DATA) THEN LEAVE;                            13630000
+     1360.0                     CS=SUBSTR(DATA,N);                                       13640000
+     1361.0                     IF FS=SUBSTR(CS,1,MIN(LENGTH(FS),LENGTH(CS)))            13650000
+     1362.0                                 THEN GOTO FOUND;                             13660000
+     1363.0                     END;                                                     13670000
+     1364.0           END;                                                               13680000
+     1365.0           IF L THEN DO;                                                      13690000
+     1366.0                     CALL PRINT(DATA,'RECORD ');                              13700000
+     1367.0                     IF PRINTKEY&DSORG^='PS' THEN CALL PRINT(KEAY,'KEY ');    13710000
+     1368.0                     END;                                                     13720000
+     1369.0           GOTO RDLOOP;                                                       13730000
+     1370.0      FOUND:                                                                  13740000
+     1371.0           CALL PRINT(DATA,'RECORD ');                                        13750000
+     1372.0           IF PRINTKEY&DSORG^='PS' THEN CALL PRINT(KEAY,'KEY ');              13760000
+     1373.0           IF FCOPY THEN CALL COPY;                                           13770000
+     1374.0           IF ALL THEN GOTO RDLOOP;                                           13780000
+     1375.0           RETURN;                                                            13790000
+     1376.0      VE2: PROC(KW#,VALUE) RETURNS(FIXED BIN(15));                            13800000
+     1377.0           DCL (KW#,RC) FIXED BIN(15);                                        13810000
+     1378.0           DCL VALUE CHAR(*) VAR;                                             13820000
+     1379.0           RC=0;                                                              13830000
+     1380.0           SELECT(KW#);                                                       13840000
+     1381.0           WHEN(1,2,3,4) DO;                                                  13850000
+     1382.0                         S#=S#+1;                                             13860000
+     1383.0                         SELECT(S#);                                          13870000
+     1384.0                         WHEN(1) SELECT(KW#);                                 13880000
+     1385.0                                 WHEN(1) GET STRING(VALUE) LIST(FS);          13890000
+     1386.0                                 OTHERWISE DO;                                13900026
+     1387.0                                           FS=VALUE;                          13910026
+     1388.0                                           IF SUBSTR(FS,1,1)='"'&             13920026
+     1389.0                                           SUBSTR(FS,LENGTH(FS),1)='"'        13930026
+     1390.0                                           THEN DO;                           13940026
+     1391.0                                           HEX='1'B;                          13950026
+     1392.0                                           FS=SUBSTR(FS,2,LENGTH(FS)-2);      13960026
+     1393.0                                           END;                               13970026
+     1394.0                                           END;                               13980026
+     1395.0                                 END;                                         13990000
+     1396.0                         WHEN(2) SELECT(KW#);                                 14000000
+     1397.0                                 WHEN(1,2,4) RC=99;                           14010000
+     1398.0                                 OTHERWISE GET STRING(VALUE) LIST(N);         14020000
+     1399.0                                 END;                                         14030000
+     1400.0                         OTHERWISE RC=99;                                     14040000
+     1401.0                         END;                                                 14050000
+     1402.0                         END;                                                 14060000
+     1403.0           WHEN(5) L='1'B;                                                    14070000
+     1404.0           WHEN(6) ALL='1'B;                                                  14080000
+     1405.0           WHEN(7) FCOPY='1'B;                                                14090026
+     1406.0           OTHERWISE RC=99;                                                   14100000
+     1407.0           END;                                                               14110000
+     1408.0           RETURN(RC);                                                        14120000
+     1409.0           END VE2;                                                           14130000
+     1410.0      HEXERR: CALL PUTMSG('INVALID HEX SEARCH STRING'); RETURN;               14140000
+     1411.0      ENDUP: EOF='1'B;                                                        14150000
+     1412.0           CALL PUTMSG('END OF FILE IN INPUT DATASET');                       14160000
+     1413.0           END FIND;                                                          14170000
+     1414.0      HEXIN: PROC(IS,OS) RETURNS(BIT(1));                                     14180000
+     1415.0           DCL (IS,OS) CHAR(*) VAR;                                           14190000
+     1416.0           DCL SET CHAR(16) INIT('0123456789ABCDEF');                         14200000
+     1417.0           DCL P POINTER;                                                     14210000
+     1418.0           DCL BIN FIXED BIN(31) BASED(P);                                    14220000
+     1419.0           DCL Y(4) CHAR(1);                                                  14230000
+     1420.0           DCL (K,NC1,NC2) FIXED BIN(15) INIT(0);                             14240000
+     1421.0           P=ADDR(Y);                                                         14250000
+     1422.0           OS='';                                                             14260000
+     1423.0           K=1;                                                               14270000
+     1424.0           IF MOD(LENGTH(IS),2)^=0 THEN RETURN('0'B);                         14280000
+     1425.0           DO WHILE(K<LENGTH(IS));                                            14290000
+     1426.0           NC1=INDEX(SET,SUBSTR(IS,K,1))-1;                                   14300000
+     1427.0           NC2=INDEX(SET,SUBSTR(IS,K+1,1))-1;                                 14310000
+     1428.0           IF NC1=-1|NC2=-1 THEN RETURN('0'B);                                14320000
+     1429.0           BIN=NC1*16+NC2;                                                    14330000
+     1430.0           OS=OS||Y(4);                                                       14340000
+     1431.0           K=K+2;                                                             14350000
+     1432.0           END;                                                               14360000
+     1433.0           RETURN('1'B);                                                      14370000
+     1434.0           END HEXIN;                                                         14380000
+     1435.0      KEY: PROC;                                                              14390000
+     1436.0           IF ^OPENED THEN DO;                                                14400000
+     1437.0                  CALL PUTMSG('FILE NOT OPEN. ENTER SELECT COMMAND');         14410000
+     1438.0                  RETURN;                                                     14420000
+     1439.0                  END;                                                        14430000
+     1440.0           SELECT(DSORG);                                                     14440000
+     1441.0           WHEN('PS') DO;                                                     14450000
+     1442.0                      CALL PUTMSG('KEY INPUT MODE INVALID'||                  14460000
+     1443.0                                  ' FOR SEQUENTIAL FILE');                    14470000
+     1444.0                      RETURN;                                                 14480000
+     1445.0                      END;                                                    14490000
+     1446.0           WHEN('IS','VS') ;                                                  14500004
+     1447.0           OTHERWISE DO;                                                      14510000
+     1448.0                     CALL CLOSE;                                              14520000
+     1449.0                     CALL OPEN_DIR;                                           14530000
+     1450.0                     END;                                                     14540000
+     1451.0           END;                                                               14550000
+     1452.0           ON ERROR GOTO GET_KEY;                                             14560000
+     1453.0           ON KEY(SYSXX) GOTO NOREC;                                          14570000
+     1454.0           ON CONVERSION GOTO CONVK;                                          14580000
+     1455.0           CALL PUTMSG('KEY INPUT MODE');                                     14590000
+     1456.0           KIMODE='1'B;                                                       14600000
+     1457.0      GET_KEY:                                                                14610000
+     1458.0           ATTFLG='0'B;                                                       14620022
+     1459.0           CALL GETMSG(REPLY);                                                14630000
+     1460.0           IF LENGTH(REPLY)=0 THEN GOTO S_MODE;                               14640000
+     1461.0           SQ,DQ='0'B;                                                        14650022
+     1462.0           IF LENGTH(REPLY)>1 THEN DO;                                        14660022
+     1463.0              SQ=SUBSTR(REPLY,1,1)=''''&SUBSTR(REPLY,LENGTH(REPLY),1)='''';   14670022
+     1464.0              DQ=SUBSTR(REPLY,1,1)='"' &SUBSTR(REPLY,LENGTH(REPLY),1)='"';    14680022
+     1465.0              END;                                                            14690022
+     1466.0           KEEY=REPLY;                                                        14700022
+     1467.0           IF SQ THEN GET STRING(REPLY) LIST(KEEY);                           14710022
+     1468.0           IF DQ THEN DO;                                                     14720022
+     1469.0                      IF ^HEXIN(SUBSTR(REPLY,2,LENGTH(REPLY)-2),KEEY)         14730022
+     1470.0                         THEN GOTO CONVK;                                     14740022
+     1471.0                      IF ECHO THEN CALL PUTMSG('KEY: '||REPLY);               14750022
+     1472.0                      END;                                                    14760022
+     1473.0                 ELSE IF ECHO THEN CALL PUTMSG('KEY: '||KEEY);                14770022
+     1474.0           READ FILE(SYSXX) INTO(DATA) KEY(KEEY);                             14780000
+     1475.0           KEAY=KEEY;                                                         14790000
+     1476.0           REC#=REC#+1;                                                       14800000
+     1477.0           IF AUTO THEN CALL COPY;                                            14810000
+     1478.0           CALL PRINT(DATA,'RECORD ');                                        14820000
+     1479.0           IF PRINTKEY THEN CALL PRINT(KEEY,'KEY ');                          14830000
+     1480.0           GOTO GET_KEY;                                                      14840000
+     1481.0      NOREC:                                                                  14850000
+     1482.0           CALL PUTMSG('KEYED RECORD NOT FOUND. KEY='||KEEY);                 14860000
+     1483.0           GOTO GET_KEY;                                                      14870000
+     1484.0      CONVK:                                                                  14880000
+     1485.0           CALL PUTMSG('INVALID KEY. RE-ENTER');                              14890000
+     1486.0           GOTO GET_KEY;                                                      14900000
+     1487.0      S_MODE:                                                                 14910000
+     1488.0           IF DSORG='IS'|DSORG='VS' THEN ; ELSE CALL REWIND;                  14920006
+     1489.0           CALL PUTMSG('SEQUENTIAL INPUT MODE');                              14930000
+     1490.0      OPEN_DIR: PROC;                                                         14940000
+     1491.0           IF OPENED THEN RETURN;                                             14950000
+     1492.0           OPEN FILE(SYSXX) DIRECT TITLE(INDD);                               14960000
+     1493.0           OPENED='1'B;                                                       14970000
+     1494.0           END OPEN_DIR;                                                      14980000
+     1495.0           END KEY;                                                           14990000
+     1496.0      FR: PROC;                                                               15000000
+     1497.0           DCL S# FIXED BIN(15) INIT(0);                                      15010000
+     1498.0           DCL (F#,T#) FIXED BIN(31) INIT(0);                                 15020000
+     1499.0           RCSCAN=SCANNER(VE8,TEXT,VS8);                                      15030000
+     1500.0           IF RCSCAN>0 THEN DO;                                               15040000
+     1501.0              CALL PUTMSG('FROM COMMAND SYNTAX ERROR');                       15050000
+     1502.0              RETURN;                                                         15060000
+     1503.0              END;                                                            15070000
+     1504.0           IF F#<1|F#>32760|T#<0|T#>32760|(T#<F#&T#>0) THEN DO;               15080000
+     1505.0              CALL PUTMSG('FROM COMMAND PARAMETER VALUE ERROR');              15090000
+     1506.0              RETURN;                                                         15100000
+     1507.0              END;                                                            15110000
+     1508.0           FROM=F#;                                                           15120000
+     1509.0           TO=T#;                                                             15130000
+     1510.0      VE8: PROC(KW#,VALUE) RETURNS(FIXED BIN(15));                            15140000
+     1511.0           DCL (KW#,RC) FIXED BIN(15);                                        15150000
+     1512.0           DCL VALUE CHAR(*) VAR;                                             15160000
+     1513.0           RC=0;                                                              15170000
+     1514.0           SELECT(KW#);                                                       15180000
+     1515.0           WHEN(3) DO;                                                        15190000
+     1516.0                   S#=S#+1;                                                   15200000
+     1517.0                   SELECT(S#);                                                15210000
+     1518.0                   WHEN(1) GET STRING(VALUE) LIST(F#);                        15220000
+     1519.0                   WHEN(2) GET STRING(VALUE) LIST(T#);                        15230000
+     1520.0                   OTHERWISE RC=99;                                           15240000
+     1521.0                   END;                                                       15250000
+     1522.0                   END;                                                       15260000
+     1523.0           WHEN(5) ;                                                          15270000
+     1524.0           OTHERWISE RC=99;                                                   15280000
+     1525.0           END;                                                               15290000
+     1526.0           RETURN(RC);                                                        15300000
+     1527.0           END VE8;                                                           15310000
+     1528.0           END FR;                                                            15320000
+     1529.0      ALLOC: PROC;                                                            15330000
+     1530.0           DCL DSG CHAR(2);                                                   15340000
+     1531.0           DYNALDSN,DYNALDSG,DYNALVOL='';                                     15350000
+     1532.0           CALL S99VAL(TEXT,SALRC,S99RC,S99ERROR,S99INFO,                     15360000
+     1533.0                       DYNALDDN,DYNALDSN,DYNALDSG,DYNALVOL);                  15370000
+     1534.0           IF SALRC>0 THEN DO;                                                15380020
+     1535.0              CALL PUTMSG('ALLOC SYNTAX ERROR. SCAN RC='||CH(SALRC));         15390000
+     1536.0              RETURN;                                                         15400000
+     1537.0              END;                                                            15410000
+     1538.0           IF ^S99RCTEST('ALLOCATION') THEN RETURN;                           15420000
+     1539.0           CALL PUTMSG('DATASET '||DYNALDSN||' SUCCESSFULLY ALLOCATED '||     15430000
+     1540.0                       'TO DDNAME '||DYNALDDN);                               15440000
+     1541.0           IF DYNALVOL^='' THEN CALL PUTMSG('ON VOLUME '||DYNALVOL);          15450000
+     1542.0           DSG=DYNALDSG;                                                      15460000
+     1543.0           CALL S99DSORG(DSG);                                                15470000
+     1544.0           END ALLOC;                                                         15480000
+     1545.0      INFO: PROC;                                                             15490000
+     1546.0           DCL (P,P2) POINTER;                                                15500000
+     1547.0           DCL I FIXED BIN(31) BASED(P2);                                     15510000
+     1548.0           DCL P1 POINTER BASED(P);                                           15520000
+     1549.0           DCL M CHAR(100) VAR;                                               15530000
+     1550.0           DCL DSCB CHAR(96);                                                 15540000
+     1551.0           DCL RECFM CHAR(5) VAR;                                             15550000
+     1552.0           DCL DSNAME CHAR(44);                                               15560000
+     1553.0           DCL (L,B,ORC) FIXED BIN(31);                                       15570000
+     1554.0           DCL VOLSER CHAR(6);                                                15580000
+     1555.0           DCL UI CHAR(6);                                                    15590011
+     1556.0           DCL DEVTRK(15) FIXED BIN(15) INIT(10,8,10,46,20,8,8,20,            15600000
+     1557.0                          19,12,30,12,19,15,0);  /* TRACKS PER CYLINDER */    15610004
+     1558.0           DCL DASD(15) CHAR(8) VAR INIT('2311','2301','2303','2302',         15620000
+     1559.0           '2321','2305-1','2305-2','2314','3330','3340','3350','3375',       15630001
+     1560.0                   '3330-1','3380','?');                                      15640001
+     1561.0           DCL (#EXT,TPC,UTYPE,TRACKS,Q) FIXED BIN(15);                       15650000
+     1562.0           DCL DSCBF3 CHAR(140);                                              15660000
+     1563.0           DDNAME='';                                                         15670000
+     1564.0           RCSCAN=SCANNER(VE4,TEXT,VS4);                                      15680000
+     1565.0           IF RCSCAN>4 THEN DO;                                               15690000
+     1566.0              CALL PUTMSG('INFO COMMAND SYNTAX ERROR');                       15700000
+     1567.0              RETURN;                                                         15710000
+     1568.0              END;                                                            15720000
+     1569.0           IF LENGTH(DDNAME)=0 THEN DO;                                       15730000
+     1570.0              IF OPENED THEN DDNAME=INDD;                                     15740000
+     1571.0                 ELSE DO;                                                     15750000
+     1572.0                 CALL PUTMSG('INFO INVALID. NO FILE SELECTED');               15760000
+     1573.0                 RETURN;                                                      15770000
+     1574.0                 END;                                                         15780000
+     1575.0              CALL PUTMSG('DDNAME IS '||DDNAME);                              15790000
+     1576.0              END;                                                            15800000
+     1577.0           S99DDN=DDNAME;                                                     15810000
+     1578.0           CALL S99VIN(S99DDN,S99DSN,S99MEM,S99MISC,                          15820000
+     1579.0                       S99RC,S99ERROR,S99INFO);                               15830000
+     1580.0           IF ^S99RCTEST('INFO') THEN RETURN;                                 15840000
+     1581.0           CALL S99DSTYP(SUBSTR(S99MISC,10,1),S99DDN);                        15850000
+     1582.0           CALL S99DSORG(SUBSTR(S99MISC,4,2));                                15860000
+     1583.0           CALL PUTMSG('DSNAME IS '||S99DSN);                                 15870000
+     1584.0           IF LENGTH(S99MEM)>0 THEN CALL PUTMSG('MEMBER NAME IS '||S99MEM);   15880000
+     1585.0           IF ATTFLG|INTFLG THEN RETURN;                                      15890024
+     1586.0           P2=ADDR(P);  /* OVERLAY I WITH P */                                15900000
+     1587.0           I=16;  /* P->(LOC 16=A(CVT)) */                                    15910000
+     1588.0           CVTPTR=P1;  /* SET CVT POINTER */                                  15920000
+     1589.0           TCBWPTR=CVTTCBP;  /* SET POINTER TO TCB WORDS */                   15930000
+     1590.0           TCBPTR=TCBWCURR;  /* SET POINTER TO CURRENT TCB */                 15940000
+     1591.0           TIOTPTR=TCBTIO;  /* SET POINTER TO TIOT */                         15950000
+     1592.0           DDPTR=ADDR(TIODDENT);  /* SET POINTER TO FIRST DD ENTRY */         15960000
+     1593.0           P2=ADDR(DDPTR);                                                    15970000
+     1594.0           DO WHILE(TIOELNGH^='00000000'B);                                   15980000
+     1595.0           IF TIOEDDNM=DDNAME THEN LEAVE;                                     15990000
+     1596.0           I=I+TIOELNGH;                                                      16000000
+     1597.0           END;                                                               16010000
+     1598.0           IF TIOELNGH='00000000'B THEN DO;                                   16020000
+     1599.0              CALL PUTMSG('DDNAME NOT FOUND IN TIOT');                        16030000
+     1600.0              RETURN;                                                         16040000
+     1601.0              END;                                                            16050000
+     1602.0           UCBPTR=TIOTDD.TIODVENT(1).TIOEUCBA;  /* SET PTR TO UCB */          16060000
+     1603.0           IF SUBSTR(UNSPEC(UCBPTR),9)='0'B THEN RETURN;                      16070000
+     1604.0           M='UNIT='||UCBNAME;                                                16080000
+     1605.0           UTYPE=UCBTYP4;  /* UNIT TYPE AS AN INTEGER */                      16090000
+     1606.0           SELECT(UCBTYP3);                                                   16100000
+     1607.0           WHEN('10000000'B) M=M||' (TAPE) VOL=SER='||SRTEVOLI;               16110000
+     1608.0           WHEN('01000000'B) M=M||' (COMMUNICATIONS)';                        16120000
+     1609.0           WHEN('00100000'B) M=M||' (DASD/'||DASD(UTYPE)||') VOL=SER='||      16130000
+     1610.0                                  SRTEVOLI;                                   16140000
+     1611.0           WHEN('00010000'B) M=M||' (DISPLAY)';                               16150000
+     1612.0           WHEN('00001000'B) M=M||' (UNIT RECORD)';                           16160000
+     1613.0           OTHERWISE ;                                                        16170000
+     1614.0           END;                                                               16180000
+     1615.0           CALL PUTMSG(M);                                                    16190000
+     1616.0           IF ATTFLG|INTFLG THEN RETURN;                                      16200024
+     1617.0           IF VFLG THEN RETURN;  /* RETURN IF VSAM */                         16210005
+     1618.0           IF UCBTYP3^='00100000'B THEN RETURN;  /* RETURN IF NOT DASD */     16220005
+     1619.0           DSNAME=S99DSN;                                                     16230000
+     1620.0           VOLSER=SRTEVOLI;                                                   16240000
+     1621.0           CALL DSCBF1(DSNAME,VOLSER,DSCB,ORC);                               16250000
+     1622.0           IF ORC^=0 THEN DO;                                                 16260000
+     1623.0              CALL PUTMSG('FORMAT1 DSCB NOT FOUND. OBTAIN RC='||CH(ORC));     16270000
+     1624.0              RETURN;                                                         16280000
+     1625.0              END;                                                            16290000
+     1626.0           DS1PTR=ADDR(DSCB);                                                 16300000
+     1627.0           SELECT(SUBSTR(DS1RECFM,1,2));                                      16310000
+     1628.0           WHEN('10'B) RECFM='F';                                             16320000
+     1629.0           WHEN('01'B) RECFM='V';                                             16330000
+     1630.0           WHEN('11'B) RECFM='U';                                             16340000
+     1631.0           OTHERWISE RECFM='?';                                               16350000
+     1632.0           END;                                                               16360000
+     1633.0           IF SUBSTR(DS1RECFM,4,1) THEN RECFM=RECFM||'B';                     16370000
+     1634.0           IF SUBSTR(DS1RECFM,5,1) THEN RECFM=RECFM||'S';                     16380000
+     1635.0           IF SUBSTR(DS1RECFM,3,1) THEN RECFM=RECFM||'T';                     16390000
+     1636.0           SELECT(SUBSTR(DS1RECFM,6,2));                                      16400000
+     1637.0           WHEN('10'B) RECFM=RECFM||'A';                                      16410000
+     1638.0           WHEN('01'B) RECFM=RECFM||'M';                                      16420000
+     1639.0           OTHERWISE ;                                                        16430000
+     1640.0           END;                                                               16440000
+     1641.0           L=DS1LRECL; B=DS1BLKL;                                             16450000
+     1642.0           M='F1 DSCB: RECFM('||RECFM;                                        16460000
+     1643.0           M=M||') LRECL('||CH(L);                                            16470000
+     1644.0           M=M||') BLKSIZE('||CH(B)||')';                                     16480000
+     1645.0           CALL PUTMSG(M);                                                    16490000
+     1646.0           TPC=DEVTRK(UTYPE);  /* TRACKS PER CYLINDER */                      16500000
+     1647.0           #EXT=DS1NOEPV;  /* NO. EXTENTS IN THIS DATASET */                  16510000
+     1648.0           TRACKS=0;                                                          16520000
+     1649.0           DO Q=1 TO MIN(3,#EXT);                                             16530000
+     1650.0           TRACKS=TRACKS+(DS1EXT(Q).UPPER.CYL*TPC+DS1EXT(Q).UPPER.TRK)        16540000
+     1651.0                      +1-(DS1EXT(Q).LOWER.CYL*TPC+DS1EXT(Q).LOWER.TRK);       16550000
+     1652.0           END;                                                               16560000
+     1653.0           IF #EXT>3 THEN DO;                                                 16570000
+     1654.0           DS3PTR=ADDR(DSCBF3);                                               16580000
+     1655.0           CALL RDDSCB(DS1PTRDS,VOLSER,DSCBF3,ORC);                           16590000
+     1656.0           IF ORC^=0 THEN GOTO NOF3;                                          16600000
+     1657.0           IF DS3FMTID='2' THEN DO;                                           16610000
+     1658.0              CALL RDDSCB(DS3PTRDS,VOLSER,DSCBF3,ORC);                        16620000
+     1659.0              IF ORC^=0 THEN GOTO NOF3;                                       16630000
+     1660.0              END;                                                            16640000
+     1661.0           DO Q=1 TO MIN(4,#EXT-3);                                           16650000
+     1662.0           TRACKS=TRACKS+(DS3EXTNT(Q).UPPER.CYL*TPC+DS3EXTNT(Q).UPPER.TRK)    16660000
+     1663.0                      +1-(DS3EXTNT(Q).LOWER.CYL*TPC+DS3EXTNT(Q).LOWER.TRK);   16670000
+     1664.0           END;                                                               16680000
+     1665.0           END;                                                               16690000
+     1666.0           IF #EXT>7 THEN DO;                                                 16700000
+     1667.0           DO Q=1 TO #EXT-7;                                                  16710000
+     1668.0           TRACKS=TRACKS+(DS3ADEXT(Q).UPPER.CYL*TPC+DS3ADEXT(Q).UPPER.TRK)    16720000
+     1669.0                      +1-(DS3ADEXT(Q).LOWER.CYL*TPC+DS3ADEXT(Q).LOWER.TRK);   16730000
+     1670.0           END;                                                               16740000
+     1671.0           END;                                                               16750000
+     1672.0           CALL PUTMSG('DATASET OCCUPIES '||VPCT()||CH(TRACKS)||' TRACKS IN ' 16760000
+     1673.0                       ||CH(#EXT)||' EXTENTS');                               16770000
+     1674.0           RETURN;                                                            16780000
+     1675.0      NOF3: CALL PUTMSG('FORMAT3 DSCB NOT FOUND. OBTAIN RC='||CH(ORC));       16790000
+     1676.0           RETURN;                                                            16800000
+     1677.0      VPCT: PROC RETURNS(CHAR(10) VAR);                                       16810000
+     1678.0           DCL TRKSIZE(15) FIXED BIN(31) INIT(3625,20483,4892,4984,2000,      16820004
+     1679.0               14136,14660,7294,13030,8368,19069,35616,13030,47476,0);        16830004
+     1680.0           DCL (PCT,BPT) FIXED BIN(31);                                       16840004
+     1681.0           IF ^(SUBSTR(DS1DSORG,2,1)|SUBSTR(DS1DSORG,7,1))                    16850000
+     1682.0              |DS1LSTAR=0|TRACKS=0 THEN RETURN('');                           16860000
+     1683.0           BPT=TRKSIZE(UTYPE);  /* BYTES PER TRACK */                         16870000
+     1684.0           PCT=(((DS1LSTAR+1)*BPT-MAX(DS1TRBAL,0))*100)/(TRACKS*BPT);         16880000
+     1685.0           RETURN(CH(PCT)||'% OF ');                                          16890000
+     1686.0           END VPCT;                                                          16900000
+     1687.0      TIOTDISPLAY: ENTRY;                                                     16910000
+     1688.0           P2=ADDR(P);                                                        16920000
+     1689.0           I=16;                                                              16930000
+     1690.0           CVTPTR=P1;                                                         16940000
+     1691.0           TCBWPTR=CVTTCBP;                                                   16950000
+     1692.0           TCBPTR=TCBWCURR;                                                   16960000
+     1693.0           TIOTPTR=TCBTIO;                                                    16970000
+     1694.0           CALL PUTMSG('JOB:'||TIOCNJOB||' STEP:'||TIOCSTP||                  16980000
+     1695.0                       ' PROCSTEP:'||TIOCSTP2);                               16990000
+     1696.0           DDPTR=ADDR(TIODDENT);                                              17000000
+     1697.0           P2=ADDR(DDPTR);                                                    17010000
+     1698.0           DO WHILE(TIOELNGH^='00000000'B);                                   17020000
+     1699.0           IF SUBSTR(TIOEDDNM,1,1)^=LOW(1) THEN DO;                           17030000
+     1700.0              /* FREE TIOT SPACE HAS X'00' IN FIRST BYTE OF DDNAME */         17040000
+     1701.0           IF ATTFLG|INTFLG THEN RETURN;                                      17050024
+     1702.0           UI=' ';                                                            17060011
+     1703.0           DSNAME=' ';                                                        17070011
+     1704.0           IF SUBSTR(TIOERLOC,11,1) THEN UI='*';  /* ALLOCATED TO TERMINAL */ 17080014
+     1705.0           ELSE IF SUBSTR(TIOERLOC,15,1) THEN UI='JES';                       17090000
+     1706.0           ELSE IF SUBSTR(TIOERLOC,12,1) THEN UI='DYNAM';                     17100000
+     1707.0           ELSE DO;                                                           17110000
+     1708.0                UCBPTR=TIOTDD.TIODVENT(1).TIOEUCBA;                           17120000
+     1709.0                IF SUBSTR(UNSPEC(UCBPTR),9)^='0'B THEN DO;                    17130000
+     1710.0                   UI=UCBNAME;                                                17140000
+     1711.0                   IF SUBSTR(SRTEJBNR,1,1) THEN LEAVE;  /* BIT FOR VIO */     17150014
+     1712.0                   IF UCBTYP3='10000000'B|UCBTYP3='00100000'B                 17160011
+     1713.0                      THEN UI=SRTEVOLI;  /* GET VOLSER FOR TAPE AND DASD */   17170013
+     1714.0                   END;                                                       17180000
+     1715.0                END;                                                          17190000
+     1716.0           IF TIOEJFCB^='0'B&UI^='*' THEN DO;                                 17200014
+     1717.0              UNSPEC(SWAPTR)=(8)'0'B||TIOEJFCB;                               17210013
+     1718.0              DSNAME=SWADSN;                                                  17220013
+     1719.0              END;                                                            17230013
+     1720.0           CALL PUTMSG(TIOEDDNM||' '||UI||' '||DSNAME);                       17240011
+     1721.0           END;                                                               17250000
+     1722.0           I=I+TIOELNGH;                                                      17260000
+     1723.0           END;                                                               17270000
+     1724.0           END INFO;                                                          17280000
+     1725.0      VE7: PROC(KW#,VALUE) RETURNS(FIXED BIN(15));                            17290000
+     1726.0           DCL (KW#,RC) FIXED BIN(15);                                        17300000
+     1727.0           DCL VALUE CHAR(*) VAR;                                             17310000
+     1728.0           RC=0;                                                              17320000
+     1729.0           IF KW#=3 THEN GET STRING(VALUE) LIST(N);                           17330009
+     1730.0                    ELSE RC=99;                                               17340000
+     1731.0           RETURN(RC);                                                        17350000
+     1732.0           END VE7;                                                           17360000
+     1733.0      PANIC:                                                                  17370000
+     1734.0           RCSCAN=SCANNER(VE7,TEXT,VS7);  /* OBTAIN TIME INTERVAL */          17380023
+     1735.0           IF RCSCAN>0 THEN DO;                                               17390000
+     1736.0              CALL PUTMSG('INTERRUPT COMMAND SYNTAX ERROR');                  17400000
+     1737.0              GOTO GET_COMMAND;                                               17410000
+     1738.0              END;                                                            17420000
+     1739.0           P#=N;                                                              17430000
+     1740.0           IF PTIME>0&P#>0 THEN DO;  /* CHANGE TIME INTERVAL */               17440023
+     1741.0              PTIME=P#;                                                       17450000
+     1742.0              GOTO GET_COMMAND;                                               17460000
+     1743.0              END;                                                            17470000
+     1744.0           IF PTIME=0&P#>0 THEN DO;  /* START SUBTASK */                      17480023
+     1745.0              PTIME=P#;                                                       17490000
+     1746.0              STOPPER='0'B;                                                   17500000
+     1747.0              CALL INT;                                                       17520000
+     1748.0              GOTO GET_COMMAND;                                               17530000
+     1749.0              END;                                                            17540000
+     1750.0           IF PTIME>0&P#=0 THEN DO;  /* STOP SUBTASK */                       17550023
+     1751.0              STOPPER='1'B;                                                   17560000
+     1752.0              PTIME=0;                                                        17580000
+     1753.0              GOTO GET_COMMAND;                                               17590000
+     1754.0              END;                                                            17600000
+     1755.0           GOTO GET_COMMAND;                                                  17610000
+     1756.0      INT: PROC;  /* TIMER INTERRUPT SUBTASK */                               17620023
+     1757.0           /* THE TIMER FIRES EVERY 30 SECONDS.                               17630023
+     1758.0              IF DISABLED (IDLE='1'B), WE IGNORE THE INTERRUPT.               17640023
+     1759.0              IF THE REQUIRED TIME INTERVAL HAS EXPIRED, WE SET               17650023
+     1760.0              THE INTERRUPT FLAG AND DISABLE */                               17660025
+     1761.0      DEL: DELAY(30000);  /* WAIT 30 SECONDS */                               17670023
+     1762.0           IF STOPPER THEN RETURN;  /* TERMINATE IF STOP FLAG IS SET */       17680023
+     1763.0           IF IDLE THEN GOTO DEL;  /* IGNORE INTERRUPT IF DISABLED */         17690023
+     1764.0           TB=TIME;  /* COMPUTE CURRENT TIME */                               17700023
+     1765.0           GET STRING(TB) EDIT(HB,MB,SB) ((3)F(2));                           17710000
+     1766.0           TIMEB=HB*3600+MB*60+SB;                                            17720000
+     1767.0           IF TIMEB-TIMEA>PTIME THEN DO;  /* TEST TIME INTERVAL */            17730023
+     1768.0              IDLE='1'B;  /* DISABLE */                                       17740023
+     1769.0              INTFLG='1'B; /* SET INTERRUPT FLAG */                           17750024
+     1770.0              END;                                                            17760022
+     1771.0           GOTO DEL;                                                          17770000
+     1772.0           END INT;                                                           17780000
+     1773.0      VE4: PROC(KW#,VALUE) RETURNS(FIXED BIN(15));                            17790000
+     1774.0           DCL (KW#,RC) FIXED BIN(15);                                        17800000
+     1775.0           DCL VALUE CHAR(*) VAR;                                             17810000
+     1776.0           RC=0;                                                              17820000
+     1777.0           IF KW#=5 THEN DDNAME=VALUE;                                        17830000
+     1778.0                    ELSE RC=99;                                               17840000
+     1779.0           RETURN(RC);                                                        17850000
+     1780.0           END VE4;                                                           17860000
+     1781.0      SETCOPY: PROC;                                                          17870000
+     1782.0           DCL CFLAG BIT(1) INIT('0'B);                                       17880000
+     1783.0           ON UNDF(SYSOUT) BEGIN; CODE=ONCODE; GOTO OFAIL; END;               17890000
+     1784.0           DDNAME='';                                                         17900000
+     1785.0           RCSCAN=SCANNER(VE5,TEXT,VS5);                                      17910000
+     1786.0           IF RCSCAN>0 THEN DO;                                               17920000
+     1787.0              CALL PUTMSG('SETCOPY COMMAND SYNTAX ERROR');                    17930000
+     1788.0              RETURN;                                                         17940000
+     1789.0              END;                                                            17950000
+     1790.0           IF LENGTH(COPYDD)>0                                                17960011
+     1791.0              THEN DO;                                                        17970011
+     1792.0                   IF ALLOCATION(OUTREC)>0 THEN FREE OUTREC;                  17980011
+     1793.0                   CLOSE FILE(SYSOUT);                                        17990011
+     1794.0                   END;                                                       18000011
+     1795.0           COPYDD='';                                                         18010000
+     1796.0           IF CFLAG THEN RETURN;                                              18020000
+     1797.0           OPEN FILE(SYSOUT) TITLE(DDNAME);                                   18030000
+     1798.0           COPYDD=DDNAME;                                                     18040000
+     1799.0           M#=RECMAX(SYSOUT);                                                 18050009
+     1800.0           ALLOCATE OUTREC CHAR(M#);                                          18060009
+     1801.0           RETURN;                                                            18070000
+     1802.0      OFAIL: CALL PUTMSG('COPY FILE IS UNDEFINED. ONCODE='||CODE);            18080000
+     1803.0      VE5: PROC(KW#,VALUE) RETURNS(FIXED BIN(15));                            18090000
+     1804.0           DCL (KW#,RC) FIXED BIN(15);                                        18100000
+     1805.0           DCL VALUE CHAR(*) VAR;                                             18110000
+     1806.0           RC=0;                                                              18120000
+     1807.0           SELECT(KW#);                                                       18130000
+     1808.0           WHEN(5) DDNAME=VALUE;                                              18140000
+     1809.0           WHEN(6) CFLAG='1'B;                                                18150000
+     1810.0           OTHERWISE RC=99;                                                   18160000
+     1811.0           END;                                                               18170000
+     1812.0           RETURN(RC);                                                        18180000
+     1813.0           END VE5;                                                           18190000
+     1814.0           END SETCOPY;                                                       18200000
+     1815.0      COPY: PROC;                                                             18210000
+     1816.0           IF LENGTH(COPYDD)=0 THEN DO;                                       18220000
+     1817.0              CALL PUTMSG('COPY INVALID. NO COPY FILE AVAILABLE.');           18230000
+     1818.0              IF AUTO THEN DO;                                                18240000
+     1819.0                 AUTO='0'B;                                                   18250000
+     1820.0                 CALL PUTMSG('AUTOCOPY OPTION SUPPRESSED');                   18260000
+     1821.0                 END;                                                         18270000
+     1822.0              RETURN;                                                         18280000
+     1823.0              END;                                                            18290000
+     1824.0           IF ^OPENED THEN DO;                                                18300000
+     1825.0              CALL PUTMSG('COPY INVALID. NO FILE SELECTED.');                 18310000
+     1826.0              RETURN;                                                         18320000
+     1827.0              END;                                                            18330000
+     1828.0           IF REC#=0 THEN DO;                                                 18340000
+     1829.0              CALL PUTMSG('COPY INVALID. RECORD COUNTER IS ZERO.');           18350000
+     1830.0              RETURN;                                                         18360000
+     1831.0              END;                                                            18370000
+     1832.0           IF FROM=1&TO=0&^(COMPRESS|EXPAND) THEN DO;                         18380009
+     1833.0              OUTREC=DATA;                                                    18390009
+     1834.0              WRITE FILE(SYSOUT) FROM(OUTREC);                                18400009
+     1835.0              RETURN;                                                         18410009
+     1836.0              END;                                                            18420009
+     1837.0           L=LENGTH(DATA);                                                    18430009
+     1838.0           IF FROM<1|FROM>L THEN F=1; ELSE F=FROM;                            18440009
+     1839.0           IF TO<F THEN T=L; ELSE T=MIN(TO,L);                                18450009
+     1840.0           IF ^(COMPRESS|EXPAND) THEN DO;                                     18460009
+     1841.0              OUTREC=SUBSTR(DATA,F,T-F+1);                                    18470009
+     1842.0              WRITE FILE(SYSOUT) FROM(OUTREC);                                18480009
+     1843.0              RETURN;                                                         18490009
+     1844.0              END;                                                            18500009
+     1845.0           IF COMPRESS THEN DO;                                               18510009
+     1846.0              PP=T;                                                           18520009
+     1847.0              DO WHILE(SUBSTR(DATA,PP,1)=CCHAR&(C#+F-1)<PP&F<PP);             18530009
+     1848.0              PP=PP-1;                                                        18540009
+     1849.0              END;                                                            18550009
+     1850.0              OUTREC=SUBSTR(DATA,F,PP-F+1);                                   18560009
+     1851.0              WRITE FILE(SYSOUT) FROM(OUTREC);                                18570009
+     1852.0              RETURN;                                                         18580009
+     1853.0              END;                                                            18590009
+     1854.0           /* ASSUME EXPAND */                                                18600009
+     1855.0           IF E#=0 THEN E#=M#;                                                18610009
+     1856.0                   ELSE E#=MIN(E#,M#);                                        18620009
+     1857.0           OUTREC=SUBSTR(DATA,F,T-F+1);                                       18630009
+     1858.0           IF E#>(T-F+1) THEN OUTREC=OUTREC||REPEAT(ECHAR,E#-T+F-2);          18640009
+     1859.0           WRITE FILE(SYSOUT) FROM(OUTREC);                                   18650009
+     1860.0           END COPY;                                                          18660009
+     1861.0      COMP: PROC;                                                             18670007
+     1862.0           IF EXPAND THEN DO;                                                 18680007
+     1863.0              EXPAND='0'B;                                                    18690007
+     1864.0              CALL PUTMSG('NOEXPAND OPTION FORCED');                          18700007
+     1865.0              END;                                                            18710007
+     1866.0           COMPRESS='1'B;                                                     18720007
+     1867.0           IF LENGTH(TEXT)=0 THEN RETURN;                                     18730007
+     1868.0           RCSCAN=SCANNER(VE7,TEXT,VS7);                                      18740007
+     1869.0           IF RCSCAN>4 THEN DO;                                               18750007
+     1870.0              CALL PUTMSG('COMPRESS COMMAND SYNTAX ERROR');                   18760007
+     1871.0              RETURN;                                                         18770007
+     1872.0              END;                                                            18780007
+     1873.0           IF N<1|N>32760 THEN DO;                                            18790007
+     1874.0              N=1;                                                            18800007
+     1875.0              CALL PUTMSG('COMPRESS PARAMETER INVALID.  COMPRESS 1 USED.');   18810007
+     1876.0              END;                                                            18820007
+     1877.0           C#=N;                                                              18830007
+     1878.0           END COMP;                                                          18840007
+     1879.0      EXP: PROC;                                                              18850007
+     1880.0           IF COMPRESS THEN DO;                                               18860007
+     1881.0              COMPRESS='0'B;                                                  18870007
+     1882.0              CALL PUTMSG('NOCOMPRESS OPTION FORCED');                        18880007
+     1883.0              END;                                                            18890007
+     1884.0           EXPAND='1'B;                                                       18900007
+     1885.0           IF LENGTH(TEXT)=0 THEN RETURN;                                     18910007
+     1886.0           RCSCAN=SCANNER(VE7,TEXT,VS7);                                      18920007
+     1887.0           IF RCSCAN>4 THEN DO;                                               18930007
+     1888.0              CALL PUTMSG('EXPAND COMMAND SYNTAX ERROR');                     18940007
+     1889.0              RETURN;                                                         18950007
+     1890.0              END;                                                            18960007
+     1891.0           IF N<0|N>32760 THEN DO;                                            18970007
+     1892.0              N=0;                                                            18980007
+     1893.0              CALL PUTMSG('EXPAND PARAMETER INVALID.  EXPAND 0 USED.');       18990007
+     1894.0              END;                                                            19000007
+     1895.0           E#=N;                                                              19010007
+     1896.0           END EXP;                                                           19020007
+     1897.0      SETCHAR: PROC(INCHAR);                                                  19030008
+     1898.0           DCL INCHAR CHAR(1);                                                19040008
+     1899.0           DCL (VC,VC1) CHAR(10) VAR INIT('');                                19050008
+     1900.0           DCL HEX BIT(1) INIT('0'B);                                         19060008
+     1901.0           RCSCAN=SCANNER(VE9,TEXT,VS9);                                      19070009
+     1902.0           IF RCSCAN>0 THEN DO;                                               19080008
+     1903.0              CALL PUTMSG('CCHAR/ECHAR INVALID PARAMETER');                   19090008
+     1904.0              RETURN;                                                         19100008
+     1905.0              END;                                                            19110008
+     1906.0           IF HEX THEN DO;                                                    19120008
+     1907.0                       IF ^HEXIN(VC,VC1) THEN DO;                             19130008
+     1908.0                          CALL PUTMSG('CCHAR/ECHAR INVALID HEX STRING');      19140008
+     1909.0                          RETURN;                                             19150008
+     1910.0                          END;                                                19160008
+     1911.0                       INCHAR=VC1;                                            19170008
+     1912.0                       END;                                                   19180008
+     1913.0                  ELSE INCHAR=VC;                                             19190008
+     1914.0      VE9: PROC(KW#,VALUE) RETURNS(FIXED BIN(15));                            19200009
+     1915.0           DCL (KW#,RC) FIXED BIN(15);                                        19210008
+     1916.0           DCL VALUE CHAR(*) VAR;                                             19220008
+     1917.0           RC=0;                                                              19230008
+     1918.0           SELECT(KW#);                                                       19240008
+     1919.0           WHEN(1) GET STRING(VALUE) LIST(VC);                                19250008
+     1920.0           WHEN(3) VC=VALUE;                                                  19260022
+     1921.0           WHEN(4) DO;                                                        19270022
+     1922.0                   VC=VALUE;                                                  19280022
+     1923.0                   IF LENGTH(VC)>1 THEN DO;                                   19290022
+     1924.0                      IF SUBSTR(VALUE,1,1)='"'&                               19300022
+     1925.0                         SUBSTR(VALUE,LENGTH(VALUE),1)='"' THEN DO;           19310022
+     1926.0                         VC=SUBSTR(VALUE,2,LENGTH(VALUE)-2);                  19320022
+     1927.0                         HEX='1'B;                                            19330022
+     1928.0                         END;                                                 19340022
+     1929.0                      END;                                                    19350022
+     1930.0                   END;                                                       19360022
+     1931.0           OTHERWISE RC=99;                                                   19370008
+     1932.0           END;                                                               19380008
+     1933.0           RETURN(RC);                                                        19390008
+     1934.0           END VE9;                                                           19400009
+     1935.0           END SETCHAR;                                                       19410008
+     1936.0      SPIN: PROC(OP);                                                         19420016
+     1937.0           DCL OP FIXED BIN(15);                                              19430016
+     1938.0           DCL CMDP CHAR(20) VAR INIT('FI(PDPRT) SYSOUT(A)');                 19440016
+     1939.0           DCL (SPINDDN,SPINDSN,SPINDSG,SPINVOL) CHAR(8) VAR INIT('');        19450016
+     1940.0           IF OP>1&^PRTFLG THEN RETURN;                                       19460016
+     1941.0           SELECT(OP);                                                        19470016
+     1942.0           WHEN(1) DO;  /* START - ALLOCATE PRINT FILE */                     19480017
+     1943.0                   CALL S99VAL(CMDP,SALRC,S99RC,S99ERROR,S99INFO,             19490016
+     1944.0                               SPINDDN,SPINDSN,SPINDSG,SPINVOL);              19500016
+     1945.0                   PRTFLG='1'B;                                               19510016
+     1946.0                   END;                                                       19520016
+     1947.0           WHEN(2) DO;  /* RELEASE - CLOSE/FREE/ALLOCATE */                   19530017
+     1948.0                   CLOSE FILE(PDPRT);                                         19540016
+     1949.0                   IF LENGTH(TEXT)=0 THEN TEXT='FI(PDPRT)';                   19550020
+     1950.0                   CALL S99FREE(TEXT,VUNRC,S99RC,S99ERROR,S99INFO);           19560020
+     1951.0                   IF VUNRC>0                                                 19570020
+     1952.0                      THEN CALL PUTMSG('PRINT COMMAND SYNTAX ERROR. '||       19580020
+     1953.0                                       'SCAN RC='||CH(VUNRC));                19590022
+     1954.0                      ELSE DO;                                                19600020
+     1955.0                           IF S99RCTEST('FREE') THEN DO;                      19610020
+     1956.0                              CALL PUTMSG('PRINT RELEASED');                  19620020
+     1957.0                              CALL S99VAL(CMDP,SALRC,S99RC,S99ERROR,S99INFO,  19630020
+     1958.0                                          SPINDDN,SPINDSN,SPINDSG,SPINVOL);   19640020
+     1959.0                              END;                                            19650020
+     1960.0                           END;                                               19660020
+     1961.0                   END;                                                       19670016
+     1962.0           WHEN(3) DO;  /* STOP - CLOSE AND FREE PRINT FILE */                19680016
+     1963.0                   CLOSE FILE(PDPRT);                                         19690016
+     1964.0                   TEXT='FI(PDPRT)';                                          19700020
+     1965.0                   CALL S99FREE(TEXT,VUNRC,S99RC,S99ERROR,S99INFO);           19710020
+     1966.0                   END;                                                       19720016
+     1967.0           OTHERWISE  ;                                                       19730016
+     1968.0           END;                                                               19740016
+     1969.0           END SPIN;                                                          19750015
+     1970.0      TODAY: PROC RETURNS(CHAR(7));                                           19760000
+     1971.0           DCL X CHAR(7) , N FIXED BIN(15) , MO CHAR(36);                     19770000
+     1972.0           DCL Y CHAR(6);                                                     19780000
+     1973.0           Y=DATE; GET STRING(Y) EDIT(N) (X(2),F(2));                         19790000
+     1974.0           MO='JANFEBMARAPRMAYJUNJULAUGSEPOCTNOVDEC';                         19800000
+     1975.0           SUBSTR(X,1,2)=SUBSTR(Y,5,2);                                       19810000
+     1976.0           SUBSTR(X,3,3)=SUBSTR(MO,3*N-2,3);                                  19820000
+     1977.0           SUBSTR(X,6,2)=SUBSTR(Y,1,2);                                       19830000
+     1978.0           RETURN(X);                                                         19840000
+     1979.0           END TODAY;                                                         19850000
+     1980.0      TIMEX: PROC RETURNS(CHAR(5));                                           19860000
+     1981.0           DCL T CHAR(9);                                                     19870000
+     1982.0           T=TIME;                                                            19880000
+     1983.0           RETURN(SUBSTR(T,1,2)||':'||SUBSTR(T,3,2));                         19890000
+     1984.0           END TIMEX;                                                         19900000
+     1985.0      EOJ:                                                                    19910000
+     1986.0           REVERT ERROR;                                                      19920000
+     1987.0           IF PRTFLG THEN CALL SPIN(3);                                       19930016
+     1988.0           IF OPENED THEN CALL CLOSE;                                         19940000
+     1989.0           IF LENGTH(COPYDD)>0 THEN CLOSE FILE(SYSOUT);                       19950000
+     1990.0           CALL PUTMSG('END OF JOB');                                         19960000
+     1991.0           IF TT='3270' THEN RC3270=IO3270(' ',2);                            19970000
+     1992.0           END PDUMP;                                                         19980000
+15655-PL6  IBM(R) Enterprise PL/I for z/OS       /*x PDUMP  -  MVS TSO COMMAND PROCESSO         2024.06.20 10:58:15   Page     3
+- Compiler Messages
+0 Message       Line.File Message Description
+0 IBM2670I W       2.0    The parameter to MAIN should be declared as CHAR(*) VARYING.
+  IBM2621I W     433.0    ON ERROR block does not start with ON ERROR SYSTEM. An error inside the block may lead to an
+                          infinite loop.
+  IBM1219I W     508.0    LEAVE will exit noniterative DO-group.
+  IBM1219I W    1359.0    LEAVE will exit noniterative DO-group.
+  IBM2621I W    1452.0    ON ERROR block does not start with ON ERROR SYSTEM. An error inside the block may lead to an
+                          infinite loop.
+  IBM2677I W    1556.0    Generated code would be better if the declare for DEVTRK were changed from AUTOMATIC to
+                          STATIC NONASSIGNABLE.
+  IBM2677I W    1558.0    Generated code would be better if the declare for DASD were changed from AUTOMATIC to STATIC
+                          NONASSIGNABLE.
+  IBM2677I W    1678.0    Generated code would be better if the declare for TRKSIZE were changed from AUTOMATIC to
+                          STATIC NONASSIGNABLE.
+  IBM1219I W    1711.0    LEAVE will exit noniterative DO-group.
+  IBM1200I W    1973.0    Use of DATE built-in function may cause problems.
+- File Reference Table
+0   File    Included From  Name
+0      0                   AVL.PDUMP.PLI(PDUMVS)
+- Component    Return Code    Messages (Total/Suppressed)    Time
+0 Compiler         4               53  /  43                 20 secs
+0 End of compilation of PDUMP
+
