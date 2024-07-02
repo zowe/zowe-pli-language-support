@@ -1,0 +1,418 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20220429)                           2024.06.18 15:42:22   Page     1
+-                     Options Specified
+0  Install:
+0  Command: SOURCE,RULES(LAXDCL)
+0  Line.File Process Statements
+0     1.0    *PROCESS MAR(2,72,1);
+0  Install:
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.06.18 15:42:22   Page     2
+0 Compiler Source
+0    Line.File
+0       2.0      /**********************************************************************
+        3.0      *
+        4.0      *  PROGRAM PLEA - PL/I EXECUTION ANALYZER
+        5.0      *
+        6.0      *  THIS PROGRAM PERFORMS CPU OR WALL TIME PERFORMANCE ANALYSIS ON
+        7.0      *  APPLICATION PROGRAMS WRITTEN IN PL/I.  THE VERSION 2 PL/I COMPILER
+        8.0      *  MUST BE USED IN THE APPLICATION.  THE PROGRAM MUST HAVE BEEN
+        9.0      *  COMPILED WITH THE TEST(STMT) OR TEST(ALL) AND GS OPTIONS.
+       10.0      *
+       11.0      *
+       12.0      *   //SAMPLE EXEC PGM=PLEA,
+       13.0      *   //   PARM='/A1,1,TASK,NOSPIE/PGMPARMS'
+       14.0      *               |  |  |     |     |
+       15.0      *               |  |  |     |     +- PARMS TO YOUR PROGRAM
+       16.0      *               |  |  |     +------- PL/I PARMS FOR YOUR PGM
+       17.0      *               |  |  +------------- SAMPLE CPU TIME
+       18.0      *               |  |                 SPECIFY REAL FOR WALL TIME SAMPLES
+       19.0      *               |  +---------------- SAMPLE EVERY 1/100 SECOND
+       20.0      *               +------------------- NAME OF PROGRAM TO EXECUTE
+       21.0      *   //STEPLIB  DD DSN=YOUR.NORMAL.STEPLIBS,DISP=SHR
+       22.0      *   //         DD DSN=YOUR.PLEA.LOAD,DISP=SHR
+       23.0      *   //         DD DSN=EQAW.SEQAMOD,DISP=SHR
+       24.0      *         YOUR.PLEA.LOAD CAN BE THE FIRST OR LAST STEPLIB,
+       25.0      *         EQAW.SEQAMOD IS REQUIRED IF IT IS NOT IN THE LINK LIST
+       26.0      *
+       27.0      *                       PLEA WORK DATASETS
+       28.0      *
+       29.0      *   //CMD$FILE DD  UNIT=SYSVIO,SPACE=(TRK,1),
+       30.0      *   //             DCB=(LRECL=80,RECFM=FB,BLKSIZE=3200)
+       31.0      *   //PLEAPRNT DD  SYSOUT=*
+       32.0      *   //SYSUDUMP DD  SYSOUT=*
+       33.0      *
+       34.0      *        THE SAMPLES END UP IN THE FOLLOWING DATASET
+       35.0      *
+       36.0      *   //TRACE$$  DD  DSN=QC22505.TRACE.DATA,
+       37.0      *   //             DISP=(NEW,CATLG),UNIT=SYSDA,SPACE=(CYL,(50,20),RLSE)
+       38.0      *
+       39.0      *
+       40.0      *
+       41.0      *
+       42.0      *
+       43.0      *
+       44.0      **********************************************************************/
+       45.0
+       46.0      PLEA:
+       47.0         PROCEDURE(MAINPARM) OPTIONS(MAIN) REORDER;
+       48.0         DECLARE  MAINPARM    VARYING CHAR(100);
+       49.0         DECLARE  CARD        CHAR(80);
+       50.0         DECLARE  SYSPRINT    FILE PRINT;
+       51.0         DECLARE  CMDFILE     FILE RECORD OUTPUT
+       52.0                              ENV(TOTAL,RECSIZE(80),FB,BLKSIZE(9040));
+       53.0         DECLARE  CMDFILE_DD  VARYING CHAR(8) STATIC INIT('CMD$FILE');
+       54.0         DECLARE  RC          FIXED BINARY(31) AUTO INIT(0);
+       55.0         DECLARE  I           FIXED BINARY(31) AUTO;
+       56.0         DECLARE  J           FIXED BINARY(31) AUTO;
+       57.0         DECLARE  REASON(2)   FIXED BINARY(15) AUTO;
+       58.0         DECLARE  ABEND_CODE  VARYING CHAR(5)  AUTO;
+       59.0         DECLARE  1  CUR$LOC  AUTO,
+       60.0                     2  STMT    CHAR(8)         INIT('        '),
+       61.0                     2  PROC    CHAR(31)        INIT('        ');
+       62.0         DECLARE  1  LOC_HEADER   AUTO,
+       63.0                     2  STMT    CHAR(8)         INIT(' '),
+       64.0                     2  HEADER  CHAR(4)         INIT(' '),
+       65.0                     2  LOAD    CHAR(8)         INIT(' '),
+       66.0                     2  TYPE    CHAR(4)         INIT(' '),
+       67.0                     2  INT     PIC'ZZZZZZ99'   INIT(0),
+       68.0                     2  SPARE   CHAR(15)        INIT(' ');
+       69.0         DECLARE  1  LOC_TRAILER  AUTO,
+       70.0                     2  STMT    CHAR(8)         INIT(' '),
+       71.0                     2  HEADER  CHAR(4)         INIT(' '),
+       72.0                     2  SP1     CHAR(2)         INIT(' '),
+       73.0                     2  COUNT   PIC'ZZZZZZZ9'   INIT(0),
+       74.0                     2  MINUTES PIC'ZZZZZZZ9'   INIT(0),
+       75.0                     2  STMTS   PIC'ZZZZZZZZ9'  INIT(0),
+       76.0                     2  SPARE   CHAR(8)         INIT(' ');
+       77.0         DECLARE  LOC_HEADER_PTR    POINTER AUTO INIT(ADDR(LOC_HEADER));
+       78.0         DECLARE  LOC_TRAILER_PTR   POINTER AUTO INIT(ADDR(LOC_TRAILER));
+       79.0         DECLARE  REC_LOC      CHAR(8) AUTO;
+       80.0         DECLARE  C            CHAR(1) AUTO;
+       81.0         DECLARE  COUNT        FIXED BINARY(31) AUTO INIT(0);
+       82.0         DECLARE  STMTS        FIXED BINARY(31) AUTO INIT(0);
+       83.0         DECLARE  PROGRAM      CHAR(8)  AUTO;
+       84.0         DECLARE  OS_PARM      VARYING CHAR(256) AUTO;
+       85.0         DECLARE  SAMPLE_TYPE  VARYING CHAR(30)  AUTO;
+       86.0         DECLARE  TIMEINT      FIXED BINARY(31)  AUTO;
+       87.0         DECLARE  TIMEING_TYPE  CHAR(4)           AUTO INIT(' ');
+       88.0         DECLARE  TYPE_REAL_TIME CHAR(4)  STATIC INIT('REAL');
+       89.0         DECLARE  TYPE_CPU_TIME  CHAR(4)  STATIC INIT('CPU ');
+       90.0         DECLARE  START_TIME     CHAR(6)  AUTO;
+       91.0         DECLARE  STOP_TIME      CHAR(6)  AUTO;
+       92.0         DECLARE  PLITEST_CMDS(15) CHAR(80) INIT(
+       93.0                ' DECLARE P12 POINTER;                 ',
+       94.0                ' DECLARE A12(150) POINTER BASED;      ',
+       95.0                ' DECLARE C12(512) CHAR(1) BASED;      ',
+       96.0                ' P12 = %GPR12;                        ',
+       97.0                ' P12->A12(106) = ''XXXXXXXX''PX;      ',
+       98.0                ' P12->C12(429) = ''45''X;             ',
+       99.0                ' P12->C12(430) = ''C0''X;             ',
+      100.0                ' AT STATEMENT * DO;                   ',
+      101.0                ' P12 = %GPR12;                        ',
+      102.0                ' DIM = P12->A12(106);                 ',
+      103.0                ' P12->A12(106) = ''XXXXXXXX''PX;      ',
+      104.0                ' P12->C12(429) = ''45''X;             ',
+      105.0                ' P12->C12(430) = ''C0''X;             ',
+      106.0                ' GO;                                  ',
+      107.0                ' END;                                 ');
+      108.0         OPEN FILE(SYSPRINT) TITLE('PLEAPRNT') OUTPUT;
+      109.0         PUT FILE(SYSPRINT) SKIP EDIT('PLEA - PL/I EXECUTION ANALYZER',
+      110.0                                      'RELEASE 2.4 AS OF ',
+      111.0                                      LINKDTE.LINK_DATE)(A,X(1),A,A);
+      112.0         SAMPLE_TYPE = 'SAMPLING CPU TIME';
+      113.0         TIMEING_TYPE = TYPE_CPU_TIME;
+      114.0         I = INDEX(MAINPARM,',');
+      115.0         IF I ^= 0
+      116.0         THEN
+      117.0            DO;
+      118.0               PROGRAM = SUBSTR(MAINPARM,1,I-1);
+      119.0               MAINPARM = SUBSTR(MAINPARM,I+1);
+      120.0               TIMEINT = 0;
+      121.0               C = SUBSTR(MAINPARM,1,1);
+      122.0               DO WHILE(VERIFY(C,'0123456789') = 0);
+      123.0                  TIMEINT = TIMEINT * 10 + FIXED(C);
+      124.0                  MAINPARM = SUBSTR(MAINPARM,2);
+      125.0                  C = SUBSTR(MAINPARM,1,1);
+      126.0               END;
+      127.0               IF C = ','
+      128.0               THEN
+      129.0                  MAINPARM = SUBSTR(MAINPARM,2);
+      130.0               IF SUBSTR(MAINPARM,1,4) = 'REAL'
+      131.0               THEN
+      132.0                  DO;
+      133.0                     TIMEING_TYPE = TYPE_REAL_TIME;
+      134.0                     SAMPLE_TYPE = 'SAMPLING REAL TIME';
+      135.0                     MAINPARM = SUBSTR(MAINPARM,5);
+      136.0                     IF SUBSTR(MAINPARM,1,1) = ','
+      137.0                     THEN
+      138.0                        MAINPARM = SUBSTR(MAINPARM,2);
+      139.0                  END;
+      140.0               IF SUBSTR(MAINPARM,1,4) = 'TASK'
+      141.0               THEN
+      142.0                  DO;
+      143.0                     TIMEING_TYPE = TYPE_CPU_TIME;
+      144.0                     SAMPLE_TYPE = 'SAMPLING CPU TIME';
+      145.0                     MAINPARM = SUBSTR(MAINPARM,5);
+      146.0                     IF SUBSTR(MAINPARM,1,1) = ','
+      147.0                     THEN
+      148.0                        MAINPARM = SUBSTR(MAINPARM,2);
+      149.0                  END;
+      150.0
+      151.0               OS_PARM = 'TEST(NONE,,''USE '||
+      152.0                         CMDFILE_DD || ';GO;'')'||MAINPARM;
+      153.0               IF TIMEINT = 0
+      154.0               THEN
+      155.0                  TIMEINT = 3;
+      156.0            END;
+      157.0         ELSE
+      158.0            DO;
+      159.0               PROGRAM = MAINPARM;
+      160.0               OS_PARM = 'TEST(NONE,,''USE '||
+      161.0                         CMDFILE_DD || ';GO;'')';
+      162.0               TIMEINT = 3;
+      163.0            END;
+      164.0         PUT FILE(SYSPRINT) SKIP(2) EDIT(
+      165.0                            'RUNNING PROGRAM: ',PROGRAM)(A,A);
+      166.0         PUT FILE(SYSPRINT) SKIP(1) EDIT(
+      167.0                            SAMPLE_TYPE)(A);
+      168.0         PUT FILE(SYSPRINT) SKIP(1) EDIT(
+      169.0                           'SAMPLE TAKEN EVERY ',TIMEINT,'/100 OF A SECOND')
+      170.0                            (A,F(5),A);
+      171.0         PUT FILE(SYSPRINT) SKIP(1) EDIT(
+      172.0                            'USING PARM: ',OS_PARM)(A,A);
+      173.0         PUT FILE(SYSPRINT) SKIP(1) EDIT(
+      174.0             'NOTE: PROGRAM MUST BE COMPILED WITH VERSION 2 PL/I')(A);
+      175.0         PUT FILE(SYSPRINT) SKIP(1) EDIT(
+      176.0             '      PROGRAM MUST BE COMPILED OPTION TEST(STMT) OR TEST(ALL)')
+      177.0             (A);
+      178.0         PUT FILE(SYSPRINT) SKIP(1) EDIT(
+      179.0             '      PROGRAM SHOULD BE COMPILED OPTION GOSTMT')
+      180.0             (A);
+      181.0         IF PROGRAM = ' '
+      182.0         THEN
+      183.0            DO;
+      184.0                PUT FILE(SYSPRINT) SKIP(1) EDIT('NO PROGRAM NAME SPECIFIED')
+      185.0                                               (A);
+      186.0                CALL PLIRETC(16);
+      187.0                RETURN;
+      188.0            END;
+      189.0
+      190.0         OPEN FILE(CMDFILE) TITLE(CMDFILE_DD) RECORD OUTPUT;
+      191.0         GETSAMP_LOC  = HEX(GETSAMP_BIN);
+      192.0         DO I = 1 TO HBOUND(PLITEST_CMDS,1);
+      193.0            J = INDEX(PLITEST_CMDS(I),'XXXXXXXX');
+      194.0            IF J > 0
+      195.0            THEN
+      196.0               SUBSTR(PLITEST_CMDS(I),J,8) = GETSAMP_LOC;
+      197.0            WRITE FILE(CMDFILE) FROM(PLITEST_CMDS(I));
+      198.0         END;
+      199.0         CLOSE FILE(CMDFILE);
+      200.0         LOC_HEADER.STMT   = '        ';
+      201.0         LOC_HEADER.HEADER = '+++1';
+      202.0         LOC_HEADER.LOAD   = PROGRAM;
+      203.0         LOC_HEADER.TYPE   = TIMEING_TYPE;
+      204.0         LOC_HEADER.INT    = TIMEINT;
+      205.0         ON ERROR
+      206.0         BEGIN;
+      207.0            LOC_TRAILER.STMT    = ' ';
+      208.0            LOC_TRAILER.HEADER  = '+++2';
+      209.0            LOC_TRAILER.COUNT   = COUNT;
+      210.0            LOC_TRAILER.STMTS   = STMTS;
+      211.0            CALL STOPSAM(LOC_TRAILER_PTR);
+      212.0         END;
+      213.0         START_TIME = SUBSTR(TIME(),1,6);
+      214.0         CALL SAMPLER(COUNT,STMTS,LOC_HEADER_PTR,TIMEINT,TIMEING_TYPE,
+      215.0                      PROGRAM,OS_PARM,RC);
+      216.0         STOP_TIME  = SUBSTR(TIME(),1,6);
+      217.0         LOC_TRAILER.STMT    = ' ';
+      218.0         LOC_TRAILER.HEADER  = '+++2';
+      219.0         LOC_TRAILER.COUNT   = COUNT;
+      220.0         LOC_TRAILER.STMTS   = STMTS;
+      221.0         LOC_TRAILER.MINUTES = SUBTRACT_TIME(START_TIME,STOP_TIME);
+      222.0         CALL STOPSAM(LOC_TRAILER_PTR);
+      223.0         PUT FILE(SYSPRINT) SKIP EDIT('PROGRAM ',PROGRAM,
+      224.0                                      ' ENDED, RC = ',RC)
+      225.0                                      (A,A,A,F(8));
+      226.0         CALL PLIRETC(RC);
+      227.0         PUT FILE(SYSPRINT) SKIP EDIT(COUNT,' SAMPLES TAKEN')
+      228.0                                      (F(9),A);
+      229.0         PUT FILE(SYSPRINT) SKIP EDIT(STMTS,' PL/I STATEMENTS EXECUTED')
+      230.0                                      (F(9),A);
+      231.0         RETURN;
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.06.18 15:42:22   Page     3
+0    Line.File
+0     232.0
+      233.0      /**********************************************************************
+      234.0      *                                                                     *
+      235.0      * SEGMENT NAME:                                                       *
+      236.0      *                                                                     *
+      237.0      *    SUBTRACT_TIME -- CALCULATE A TIME INTERVAL BASED ON TO CLOCK     *
+      238.0      *       TIMES                                                         *
+      239.0      *                                                                     *
+      240.0      * INPUTS (*TO FUNCTIONS):                                             *
+      241.0      *                                                                     *
+      242.0      *    START_TIME -- START OF TIME INTERVAL TO BE CALCULATED (*1)       *
+      243.0      *       THE FIRST PARM TO THIS ROUTINE IS THE STARTING TIME OF THE    *
+      244.0      *       INTERVAL TO BE CALCULATED IN THE FORM HHMMSS.                 *
+      245.0      *                                                                     *
+      246.0      *    STOP_TIME -- STOP OF TIME INTERVAL TO BE CALCULATED (*1)         *
+      247.0      *       THE SECOND PARM TO THIS ROUTINE IS THE ENDING TIME OF THE     *
+      248.0      *       INTERVAL TO BE CALCULATED IN THE FORM HHMMSS.                 *
+      249.0      *                                                                     *
+      250.0      * FUNCTIONS:                                                          *
+      251.0      *                                                                     *
+      252.0      *    1. CALCULATE THE NUMBER OF SECONDS, MINUTES, AND HOURS BETWEEN   *
+      253.0      *       THE START AND STOP TIMES, CARRYING WHEN NECESSARY.            *
+      254.0      *                                                                     *
+      255.0      *    2. ROUND THE TIME INTERNVAL TO THE NEAREST MINUTES.  ALWAYS      *
+      256.0      *       RETURN AT LEAST 1 MINUTE.                                     *
+      257.0      *                                                                     *
+      258.0      * OUTPUTS (*FROM FUNCTIONS):                                          *
+      259.0      *                                                                     *
+      260.0      *    INTERVAL -- INTERVAL IN MINUTES. (*2)                            *
+      261.0      *       THE RETURNED PICTURE VARIABLE IS THE NUMBER OF MINUTES        *
+      262.0      *       BETWEEN THE START TIME AND THE STOP TIME ROUNDED TO THE       *
+      263.0      *       CLOSEST MINUTE.  THE MINIMUM VALUE RETURNED IN 1.             *
+      264.0      *                                                                     *
+      265.0      **********************************************************************/
+      266.0
+      267.0      SUBTRACT_TIME:
+      268.0         PROCEDURE(START_TIME,STOP_TIME) RETURNS(PIC'ZZZZZZZ9');
+      269.0         DECLARE  START_TIME    CHAR(*);
+      270.0         DECLARE  STOP_TIME     CHAR(*);
+      271.0         DECLARE  01  START_OVLY BASED(ADDR(START_TIME)),
+      272.0                      02  HH    PIC'99',
+      273.0                      02  MM    PIC'99',
+      274.0                      02  SS    PIC'99';
+      275.0         DECLARE  01  STOP_OVLY  BASED(ADDR(STOP_TIME)),
+      276.0                      02  HH    PIC'99',
+      277.0                      02  MM    PIC'99',
+      278.0                      02  SS    PIC'99';
+      279.0         DECLARE  DIFF_MINUTES  PIC'ZZZZZZZ9' AUTO;
+      280.0         /* TAKE CARE OF CROSSING DATE BOUNDARY        */
+      281.0         /* NO MODULE TAKES MORE THAN 1 DAY TO COMPILE */
+      282.0         IF START_OVLY.SS > STOP_OVLY.SS
+      283.0         THEN
+      284.0            DO;  /* CARRY ONE MINUTE IF NECCESSARY */
+      285.0               STOP_OVLY.SS = STOP_OVLY.SS + 60;
+      286.0               STOP_OVLY.MM = STOP_OVLY.MM - 1;
+      287.0            END;
+      288.0         /* WE DON'T SAVE SECONDS, BUT ROUND TO THE NEAREST MINUTE */
+      289.0         IF STOP_OVLY.SS - START_OVLY.SS >= 30
+      290.0         THEN
+      291.0            STOP_OVLY.MM = STOP_OVLY.MM + 1;
+      292.0         IF START_OVLY.MM > STOP_OVLY.MM
+      293.0         THEN
+      294.0            DO;
+      295.0               STOP_OVLY.MM = STOP_OVLY.MM + 60;
+      296.0               STOP_OVLY.HH = STOP_OVLY.HH - 1;
+      297.0            END;
+      298.0         IF STOP_OVLY.HH < START_OVLY.HH
+      299.0         THEN
+      300.0            STOP_OVLY.HH = STOP_OVLY.HH + 24;
+      301.0         DIFF_MINUTES = 60 * (STOP_OVLY.HH - START_OVLY.HH) +
+      302.0                             (STOP_OVLY.MM - START_OVLY.MM);
+      303.0         IF DIFF_MINUTES = 0
+      304.0         THEN
+      305.0            DIFF_MINUTES = 1;
+      306.0         RETURN(DIFF_MINUTES);
+      307.0
+      308.0      END SUBTRACT_TIME;
+      309.0
+      310.0      DEFAULT RANGE(*) ALIGNED FIXED BINARY STATIC,
+      311.0                       DESCRIPTORS ALIGNED;
+      312.0      DECLARE (ABS,
+      313.0               ADDR,
+      314.0               ALLOCATION,
+      315.0               ANY,
+      316.0               BIT,
+      317.0               BINARY,
+      318.0               CHAR,
+      319.0               COMPLETION,
+      320.0               DATE,
+      321.0               DATETIME,
+      322.0               DIM,
+      323.0               DECIMAL,
+      324.0               EMPTY,
+      325.0               FIXED,
+      326.0               HBOUND,
+      327.0               HIGH,
+      328.0               INDEX,
+      329.0               LBOUND,
+      330.0               LENGTH,
+      331.0               LINENO,
+      332.0               LOW,
+      333.0               MAX,
+      334.0               MIN,
+      335.0               MOD,
+      336.0               NULL,
+      337.0               ONCODE,
+      338.0               ONKEY,
+      339.0               PLIRETC,
+      340.0               PLIRETV,
+      341.0               PLISRTA,
+      342.0               PLISRTB,
+      343.0               PLISRTC,
+      344.0               PLISRTD,
+      345.0               REPEAT,
+      346.0               ROUND,
+      347.0               SAMEKEY,
+      348.0               STATUS,
+      349.0               STG,
+      350.0               STORAGE,
+      351.0               STRING,
+      352.0               SUBSTR,
+      353.0               TIME,
+      354.0               TRANSLATE,
+      355.0               TRUNC,
+      356.0               UNSPEC,
+      357.0               VERIFY)            BUILTIN;
+      358.0
+      359.0       DECLARE HEX       ENTRY(FIXED BINARY(31)) RETURNS(CHAR(8)) EXTERNAL;
+      360.0
+      361.0      /*******************************************************************
+      362.0      *
+      363.0      *   DECLARATION FOR THE LINK DATE INFORMATION BUILD BY THE LINKDATE
+      364.0      *   PROGRAM AND LINKED WITH THIS PROGRAM.
+      365.0      *
+      366.0      *    LINKDTE IS A SPECIAL VARIABLE SET UP BY THE LINKDATE PROGRAM
+      367.0      *    WHICH IS PART OF THE RELEASE PROCEDURE AND THE MDLKED CATALOGUED
+      368.0      *    PROCEDURE.  THE LINKDATE PROGRAM GENERATES AN EXTERNAL VARIABLE
+      369.0      *    NAMED LINKDTE WHICH CONTAINS THE CURRENT DATE IN MM/DD/YY FORMAT.
+      370.0      *    NOTE: THAT WHEN USING LINKDTE YOU MUST ALWAYS INCLUDE THE
+      371.0      *    ENTRY PLISTART CARD AS LINKDTE IS THE FIRST CSECT AND WOULD
+      372.0      *    BECOME THE DEFAULT ENTRY POINT.
+      373.0      *
+      374.0      *********************************************************************/
+      375.0         DECLARE  01  LINKDTE  STATIC EXTERNAL ALIGNED,
+      376.0                      02    HEADER_JUNK    CHAR(8) INIT(' '),
+      377.0                      02    LINK_DATE      VARYING CHAR(30) INIT('UNKNOWN');
+      378.0
+      379.0         DECLARE  SAMPLER  ENTRY(FIXED BINARY(31),    /* COUNT OF SAMPLES */
+      380.0                                 FIXED BINARY(31),    /* COUNT OF STMTS   */
+      381.0                                 POINTER,             /* POINTER TO HEADER*/
+      382.0                                 FIXED BINARY(31),    /* TIMER INTERVAL   */
+      383.0                                 CHAR(4),             /* 'CPU ' OR 'REAL' */
+      384.0                                 CHAR(8),             /* LMOD NAME TO CALL*/
+      385.0                                 VARYING CHAR(*),     /* LMOD PARM        */
+      386.0                                 FIXED BINARY(31))    /* RETUNR CODE      */
+      387.0                                 EXTERNAL;
+      388.0         DECLARE  STOPSAM  ENTRY(POINTER) EXTERNAL;
+      389.0         DECLARE  GETSAMP      ENTRY EXTERNAL;
+      390.0         DECLARE  GETSAMP_VAR  ENTRY VARIABLE AUTO INIT(GETSAMP);
+      391.0         DECLARE  GETSAMP_BIN  FIXED BINARY(31) BASED(ADDR(GETSAMP_VAR));
+      392.0         DECLARE  GETSAMP_LOC  CHAR(8) AUTO;
+      393.0
+      394.0      END PLEA;
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  /******************************************         2024.06.18 15:42:22   Page     4
+- Compiler Messages
+0 Message       Line.File Message Description
+0 IBM2670I W      46.0    The parameter to MAIN should be declared as CHAR(*) VARYING.
+  IBM2621I W     205.0    ON ERROR block does not start with ON ERROR SYSTEM. An error inside the block may lead to an
+                          infinite loop.
+- File Reference Table
+0   File    Included From  Name
+0      0                   AVL.USER.PLI(PLEA)
+- Component    Return Code    Messages (Total/Suppressed)    Time
+0 Compiler         4                6  /  4                   3 secs
+0 End of compilation of PLEA
+

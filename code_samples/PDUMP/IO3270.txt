@@ -1,0 +1,766 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20220429)                           2024.06.20 06:27:09   Page     1
+-                     Options Specified
+0  Install:
+0  Command: SOURCE,RULES(LAXDCL)
+0  Install:
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  IO3270: PROCEDURE(LINE,OPT) RETURNS(FIXED B         2024.06.20 06:27:09   Page     2
+0 Compiler Source
+0    Line.File
+0       1.0      IO3270: PROCEDURE(LINE,OPT) RETURNS(FIXED BIN(15,0)) REORDER RECURSIVE; 00010000
+        2.0         DECLARE                                                              00020000
+        3.0           TPUT               ENTRY(CHAR(*) VARYING)                          00030000
+        4.0                                 RETURNS(FIXED BIN(15,0)),                    00040000
+        5.0           TGET               ENTRY(CHAR(*) VARYING)                          00050000
+        6.0                                 RETURNS(FIXED BIN(15,0)),                    00060000
+        7.0           BUFADE             ENTRY(FIXED BIN(15,0),FIXED BIN(15,0))          00070000
+        8.0                                 RETURNS(CHAR(2)),                            00080000
+        9.0           BUFADD             ENTRY(FIXED BIN(15,0),FIXED BIN(15,0),          00090000
+       10.0                                    CHAR(*)),                                 00100000
+       11.0           ATTR               ENTRY(FIXED BIN(15,0),FIXED BIN(15,0),          00110000
+       12.0                                    FIXED BIN(15,0),FIXED BIN(15,0))          00120000
+       13.0                                 RETURNS(CHAR(1)),                            00130000
+       14.0           FULLSCR            ENTRY(FIXED BIN(15,0)),                         00140000
+       15.0           1 IOXOPT STATIC EXTERNAL,                                          00150000
+       16.0             2 ISTR           CHAR(30) VARYING INIT(''),                      00160000
+       17.0             2 PFILE          FILE VARIABLE,                                  00160110
+       18.0             2 IFLAGS,                                                        00161010
+       19.0               3 TRANS        BIT(1) INIT('1'B),                              00170010
+       20.0               3 ATTN         BIT(1) INIT('0'B),                              00180010
+       21.0               3 IFILL        BIT(14) INIT('0'B),                             00181010
+       22.0             2 ROWS           FIXED BIN(15,0) INIT(24),                       00190000
+       23.0             2 #PAGES         FIXED BIN(15,0) INIT(100),                      00200000
+       24.0           UPPER              CHAR(26) STATIC INIT(                           00210000
+       25.0               'ABCDEFGHIJKLMNOPQRSTUVWXYZ'),                                 00220000
+       26.0           LOWER              CHAR(26) STATIC INIT(                           00230000
+       27.0               'abcdefghijklmnopqrstuvwxyz'),                                 00240000
+       28.0           BUFF               CHAR(240) STATIC VARYING INIT(''),              00250000
+       29.0           SCREEN             CHAR(3120) STATIC VARYING INIT(''),             00260000
+       30.0           BLANK              CHAR(79) STATIC VARYING INIT(''),               00270000
+       31.0           LINE               CHAR(*) VARYING,                                00280000
+       32.0           OPT                FIXED BIN(15,0),                                00290000
+       33.0           READY(2)           LABEL INIT(INIT,START),                         00300000
+       34.0           GOTO               FIXED BIN(15,0) STATIC INIT(1),                 00310000
+       35.0           (SUBSTR,REPEAT,                                                    00320011
+       36.0            MOD,LENGTH,                                                       00340011
+       37.0            TRANSLATE,                                                        00350000
+       38.0            UNSPEC,LOW,                                                       00360011
+       39.0            INDEX)            BUILTIN,                                        00380000
+       40.0           (I,J,LI,RC,ACT,                                                    00390000
+       41.0            ROW,COL)          FIXED BIN(15,0) INIT(0),                        00400000
+       42.0           ESC                CHAR(1) STATIC INIT(' '),                       00410000
+       43.0           SBA                CHAR(1) STATIC INIT(' '),                       00420000
+       44.0           IC                 CHAR(1) STATIC INIT(' '),                       00430000
+       45.0           SF                 CHAR(1) STATIC INIT(' '),                       00440000
+       46.0           RA                 CHAR(1) STATIC INIT(' '),                       00450000
+       47.0           EUA                CHAR(1) STATIC INIT(' '),                       00460000
+       48.0           CLEAR              CHAR(1) STATIC INIT('5'),                       00470000
+       49.0           EAU                CHAR(1) STATIC INIT('?'),                       00480000
+       50.0           WRITE              CHAR(1) STATIC INIT('1'),                       00490000
+       51.0           SYSPAGE            FILE DIRECT ENV(REGIONAL(1) F BLKSIZE(3276));   00500000
+       52.0    1    DECLARE                                                              00510000
+       53.0           SELSCN             CHAR(153) STATIC INIT(' '),                     00520000
+       54.0           APAG               CHAR(1) DEFINED SELSCN POS(69),                 00530000
+       55.0           APG#               CHAR(1) DEFINED SELSCN POS(75),                 00540000
+       56.0           SPAG#              PIC'ZZZ9' DEFINED SELSCN POS(76),               00550000
+       57.0           ABACK              CHAR(1) DEFINED SELSCN POS(86),                 00560000
+       58.0           AFRM               CHAR(1) DEFINED SELSCN POS(97),                 00570000
+       59.0           SFRM#              PIC'ZZZ9' DEFINED SELSCN POS(104),              00580000
+       60.0           ATO                CHAR(1) DEFINED SELSCN POS(123),                00590000
+       61.0           STO#               PIC'ZZZ9' DEFINED SELSCN POS(130),              00600000
+       62.0           APNG               CHAR(1) DEFINED SELSCN POS(138),                00610000
+       63.0           SPAGW              CHAR(4) DEFINED SELSCN POS(146),                00620000
+       64.0           RESSCNC            CHAR(118) STATIC INIT(' '),                     00630000
+       65.0           RPAG               CHAR(1) DEFINED RESSCNC POS(86),                00640000
+       66.0           RPG#               CHAR(1) DEFINED RESSCNC POS(92),                00650000
+       67.0           RPAG#              PIC'ZZZ9' DEFINED RESSCNC POS(93),              00660000
+       68.0           RINP               CHAR(1) DEFINED RESSCNC POS(98),                00670000
+       69.0           RSEL               CHAR(1) DEFINED RESSCNC POS(108),               00680000
+       70.0           RESSCNR            CHAR(117) STATIC INIT(' '),                     00690000
+       71.0           EPAG               CHAR(1) DEFINED RESSCNR POS(81),                00700000
+       72.0           EPG#               CHAR(1) DEFINED RESSCNR POS(87),                00710000
+       73.0           EPAG#              PIC'ZZZ9' DEFINED RESSCNR POS(88),              00720000
+       74.0           ESEL               CHAR(1) DEFINED RESSCNR POS(107),               00730000
+       75.0           (PAI,                                                              00740000
+       76.0            FRM,                                                              00750000
+       77.0            PAR,                                                              00760000
+       78.0            TEST,                                                             00770000
+       79.0            PAH,                                                              00780000
+       80.0            UNR,                                                              00790000
+       81.0            UARM)             CHAR(1) STATIC INIT(' '),                       00800000
+       82.0           SINVIG             CHAR(21) STATIC INIT(' '),                      00810000
+       83.0           IMESS              CHAR(7) DEFINED SINVIG POS(6),                  00820000
+       84.0           IPG#               CHAR(1) DEFINED SINVIG POS(17),                 00830000
+       85.0           IPAG#              PIC'ZZZ9' DEFINED SINVIG POS(18),               00840000
+       86.0           SPAGE              CHAR(23) STATIC INIT(' '),                      00850000
+       87.0           PPAGW              CHAR(4) DEFINED SPAGE POS(20),                  00860000
+       88.0           WROUT              CHAR(8) STATIC INIT(' '),                       00870000
+       89.0           BSELSCN            CHAR(14) STATIC INIT(' '),                      00880000
+       90.0           BPAG#              PIC'ZZZ9' DEFINED BSELSCN POS(11),              00890000
+       91.0           OUTPUT             CHAR(123) STATIC INIT(' '),                     00900000
+       92.0           OSEL               CHAR(1) DEFINED OUTPUT POS(10),                 00910000
+       93.0           OPNG               CHAR(1) DEFINED OUTPUT POS(19),                 00920000
+       94.0           OPAGW              CHAR(4) DEFINED OUTPUT POS(27),                 00930000
+       95.0           OPAG               CHAR(1) DEFINED OUTPUT POS(106),                00940000
+       96.0           OPG#               CHAR(1) DEFINED OUTPUT POS(112),                00950000
+       97.0           PAG#               PIC'ZZZ9' DEFINED OUTPUT POS(113),              00960000
+       98.0           PAGING(2)          CHAR(4) STATIC INIT(                            00970000
+       99.0               'ON','AUTO'),                                                  00980000
+      100.0           AUTO               FIXED BIN(15,0) STATIC INIT(2),                 00990000
+      101.0           ON                 FIXED BIN(15,0) STATIC INIT(1),                 01000000
+      102.0           OFF                FIXED BIN(15,0) STATIC INIT(3),                 01010000
+      103.0           PGSW               FIXED BIN(15,0) STATIC INIT(1),                 01020000
+      104.0           SCRSIZE            FIXED BIN(15,0) STATIC INIT(0),                 01030000
+      105.0           SROW               FIXED BIN(15,0) STATIC INIT(0),                 01040000
+      106.0           KEY                FIXED BIN(15,0) STATIC INIT(0),                 01050000
+      107.0           PAGE               BIT(1) STATIC INIT('1'B),                       01060000
+      108.0           INDIC              CHAR(52) STATIC INIT(' '),                      01070000
+      109.0           INRUN              CHAR(7) DEFINED INDIC POS(7),                   01080000
+      110.0           INP                CHAR(5) DEFINED INDIC POS(16),                  01090000
+      111.0           IMEAR              CHAR(30) DEFINED INDIC POS(22),                 01100000
+      112.0           INPUT              CHAR(12) STATIC INIT(' '),                      01110000
+      113.0           RUN                CHAR(13) STATIC INIT(' '),                      01120000
+      114.0           BUFADR             CHAR(2) STATIC INIT(' '),                       01130000
+      115.0           TESTADR            CHAR(2) STATIC INIT(' '),                       01140000
+      116.0           SELPAG             CHAR(25) STATIC INIT(' '),                      01150000
+      117.0           SELS               CHAR(1) DEFINED SELPAG POS(5),                  01160000
+      118.0           SELP               CHAR(1) DEFINED SELPAG POS(14),                 01170000
+      119.0           SELPG              CHAR(4) DEFINED SELPAG POS(22),                 01180000
+      120.0           SCR(39,2)          FIXED BIN(15,0) STATIC INIT((78)0),             01190000
+      121.0           SIND               FIXED BIN(15,0) STATIC INIT(0),                 01200000
+      122.0           PICKUP             BIT(1) STATIC INIT('0'B),                       01210000
+      123.0           1 PBUF STATIC,                                                     01220000
+      124.0             2 PSCR(39,2)     FIXED BIN(15,0) INIT((78)0),                    01230000
+      125.0             2 PBUFF          CHAR(3120) INIT(' ');                           01240000
+      126.0    -    GO TO READY(GOTO);                                                   01250000
+      127.0    1 INIT:                                                                   01260010
+      128.0         GOTO = 2;                                                            01270000
+      129.0         UNSPEC(ESC) = '00100111'B;                                           01280000
+      130.0         UNSPEC(EUA) = '00010010'B;                                           01290000
+      131.0         UNSPEC(SBA) = '00010001'B;                                           01300000
+      132.0         UNSPEC(IC ) = '00010011'B;                                           01310000
+      133.0         UNSPEC(RA ) = '00111100'B;                                           01320000
+      134.0         UNSPEC(SF ) = '00011101'B;                                           01330000
+      135.0         UNSPEC(TEST)= '00000001'B;                                           01340000
+      136.0         PAR = ATTR(1,0,1,0);                                                 01350000
+      137.0         PAI = ATTR(1,0,3,0);                                                 01360000
+      138.0         PAH = ATTR(1,0,2,0);                                                 01370000
+      139.0         UNR = ATTR(0,1,0,0);                                                 01380000
+      140.0         UARM = ATTR(0,0,0,0);                                                01390000
+      141.0         SROW = ROWS;                                                         01400000
+      142.0         SCRSIZE = (ROWS - 4) * 80;                                           01410000
+      143.0         OUTPUT = SBA || BUFADE(ROWS,1) || SF || PAH ||                       01420000
+      144.0                  SBA || BUFADE(ROWS,60) || SF || PAR ||                      01430000
+      145.0                  'SELECT ' || SF || PAR || 'PAGING:ON  ' ||                  01440000
+      146.0                  SF || PAR || SBA || BUFADE(ROWS-3,1) ||                     01450000
+      147.0                  SUBSTR(REPEAT('----5----0',7),1,69) || SF ||                01460000
+      148.0                  PAR || 'PAGE' || SF || PAR || '   1' || SF ||               01470000
+      149.0                  PAR || SBA || BUFADE(ROWS,80) || SF || PAR;                 01480000
+      150.0         SELSCN = SBA || BUFADE(ROWS,1) || SF || PAI ||                       01490000
+      151.0                  SBA || BUFADE(ROWS,60) || SF || PAI ||                      01500000
+      152.0                  SBA || BUFADE(ROWS-3,1) || (40)'-' || ' SELECT' ||          01510000
+      153.0                  RA || BUFADE(ROWS-3,70) || ' ' ||                           01520000
+      154.0                  SBA || BUFADE(ROWS-3,70) || SF || PAR || 'PAGE' ||          01530000
+      155.0                  SF || UNR || '   0' || SF || PAR ||                         01540000
+      156.0                  SBA || BUFADE(ROWS-2,59) || SF || PAR ||                    01550000
+      157.0                  ' <<<<<   ' || SF || PAR || ' FROM    1' ||                 01560000
+      158.0                  SBA || BUFADE(ROWS-1,59) || SF || PAR ||                    01570000
+      159.0                  ' >>>>>   ' || SF || PAR || ' TO      1' ||                 01580000
+      160.0                  SBA || BUFADE(ROWS,68) || SF || PAR ||                      01590000
+      161.0                  'PAGING:ON  ' || SBA || BUFADE(ROWS-1,63) || IC;            01600000
+      162.0         RESSCNC = SBA || BUFADE(1,1) || RA || BUFADE(ROWS,1) || ' ' ||       01610000
+      163.0                   SBA || BUFADE(ROWS,80) || SF || PAR ||                     01620000
+      164.0                   SBA || BUFADE(ROWS-3,1) ||                                 01630000
+      165.0                   SUBSTR(REPEAT('----5----0',7),1,69) || SF || PAR ||        01640000
+      166.0                   'PAGE' || SF || PAR || '   1' || SF || UARM ||             01650000
+      167.0                   SBA || BUFADE(ROWS,1) || SF || PAH || SBA ||               01660000
+      168.0                   BUFADE(ROWS,60) || SF || PAR || SBA || BUFADE(ROWS-2,1) || 01670000
+      169.0                   EUA || BUFADE(ROWS,1) || SBA || BUFADE(ROWS-2,1) || IC;    01680000
+      170.0         RESSCNR = SBA || BUFADE(ROWS-3,1) || RA || BUFADE(ROWS,1) || ' ' ||  01690000
+      171.0                   SBA || BUFADE(ROWS-3,1) || SUBSTR(REPEAT('----5----0',7),  01700000
+      172.0                   1,69) || SF || PAR || 'PAGE' || SF || PAR || '   1' ||     01710000
+      173.0                   SF || UARM || SBA || BUFADE(ROWS,1) || SF ||               01720000
+      174.0                   PAH || RA || BUFADE(ROWS,11) || ' ' ||                     01730000
+      175.0                   SBA || BUFADE(ROWS,60) || SF || PAR ||                     01740000
+      176.0                   SBA || BUFADE(ROWS-2,1) || EUA || BUFADE(ROWS,1) ||        01750000
+      177.0                   SBA || BUFADE(ROWS-2,1) || IC;                             01760000
+      178.0         SINVIG = SBA || BUFADE(ROWS-3,50) || SF || PAH ||                    01770000
+      179.0                  'INVALID' || SBA || BUFADE(ROWS-3,75) || SF ||              01780000
+      180.0                  UNR || '   1';                                              01790000
+      181.0         SPAGE = SBA || BUFADE(ROWS,69) || RA || BUFADE(ROWS,80) || ' ' ||    01800000
+      182.0                 SBA || BUFADE(ROWS,68) || SF || PAR || 'PAGING:ON  ';        01810000
+      183.0         WROUT = SBA || BUFADE(ROWS,80) || SF || PAR || SBA || BUFADE(1,1);   01820000
+      184.0         BSELSCN = SBA || BUFADE(ROWS-3,50) || SF || PAI ||                   01830000
+      185.0                   SBA || BUFADE(ROWS-3,75) || SF || UNR || '   1';           01840000
+      186.0         ON UNDF(SYSPAGE) BEGIN;                                              01850000
+      187.0            PAGE = '0'B;                                                      01860000
+      188.0            GO TO NOPAGE;                                                     01870000
+      189.0         END;                                                                 01880000
+      190.0         PAGE = '1'B;                                                         01890000
+      191.0         OPEN FILE(SYSPAGE) OUTPUT;                                           01900000
+      192.0         IF PAGE                                                              01910000
+      193.0            THEN DO;                                                          01920000
+      194.0              CLOSE FILE(SYSPAGE);                                            01930000
+      195.0              OPEN FILE(SYSPAGE) UPDATE;                                      01940000
+      196.0            END;                                                              01950000
+      197.0         ELSE;                                                                01960000
+      198.0      NOPAGE:                                                                 01970000
+      199.0         IF ^PAGE                                                             01980000
+      200.0            THEN DO;                                                          01990000
+      201.0              APAG,APG#,ABACK = PAI;                                          02000000
+      202.0              IPG#,AFRM,ATO,APNG = PAI;                                       02010000
+      203.0              RPAG,RPG#,RSEL = PAI;                                           02020000
+      204.0              EPAG,EPG#,ESEL = PAI;                                           02030000
+      205.0              OSEL,OPNG,OPAG,OPG# = PAI;                                      02040000
+      206.0              SELS,SELP,FRM = PAI;                                            02050013
+      207.0            END;                                                              02060000
+      208.0         ELSE FRM = PAR;                                                      02070013
+      209.0         OPAGW = PAGING(PGSW);                                                02080000
+      210.0         PAG# = 1;                                                            02090000
+      211.0         INDIC = SBA || BUFADE(ROWS,1) || SF || PAH || (47)' ';               02100000
+      212.0         INPUT = SBA || BUFADE(ROWS-3,80) || SF || UARM || EUA ||             02110000
+      213.0                 BUFADE(ROWS,1) || SBA || BUFADE(ROWS-2,1) || IC;             02120000
+      214.0         RUN = SBA || BUFADE(ROWS-3,80) || SF || PAR || RA ||                 02130000
+      215.0               BUFADE(ROWS,1) || ' ' || SBA || BUFADE(ROWS,10) || IC;         02140000
+      216.0         TESTADR = BUFADE(ROWS-1,63);                                         02150000
+      217.0         SELPAG = SBA || BUFADE(ROWS,60) || SF || PAR || 'SELECT ' ||         02160000
+      218.0                  SF || PAR || 'PAGING:ON  ';                                 02170000
+      219.0         CALL FULLSCR(1);                                                     02180000
+      220.0    1 START:                                                                  02190000
+      221.0         /*  FORMAT/REFORMAT THE SCREEN  */                                   02200000
+      222.0         IF OPT = 0                                                           02210000
+      223.0            THEN DO;                                                          02220000
+      224.0              OPAGW = PAGING(PGSW);                                           02230000
+      225.0              RC = TPUT(ESC || CLEAR || 'B' || OUTPUT ||                      02240008
+      226.0                        SCREEN || '-');                                       02250001
+      227.0              RETURN(RC);                                                     02260000
+      228.0            END;                                                              02270000
+      229.0         ELSE;                                                                02280000
+      230.0         /*  TERMINATE I/O 3270 CONTROL FOR GOOD  */                          02290000
+      231.0         IF OPT = 2                                                           02300000
+      232.0            THEN DO;                                                          02310000
+      233.0              CALL CLRSCN(AUTO);                                              02320000
+      234.0              CALL FULLSCR(0);                                                02330000
+      235.0              IF PAGE                                                         02340000
+      236.0                 THEN CLOSE FILE(SYSPAGE);                                    02350000
+      237.0              ELSE;                                                           02360000
+      238.0              GOTO = 1;                                                       02370000
+      239.0              RC = TPUT(ESC || CLEAR || 'B');                                 02380008
+      240.0              RETURN(0);                                                      02390000
+      241.0            END;                                                              02400000
+      242.0         ELSE;                                                                02410000
+      243.0         /*  WRITE TO THE SCREEN  */                                          02420000
+      244.0         IF OPT = 1                                                           02440000
+      245.0            THEN DO;                                                          02450000
+      246.0              IF LENGTH(LINE) = 0                                             02460000
+      247.0                 THEN RETURN(0);                                              02470000
+      248.0              ELSE;                                                           02480000
+      249.0              IF LENGTH(SCREEN) >= SCRSIZE                                    02490000
+      250.0                 THEN CALL CLRSCN(PGSW);                                      02500000
+      251.0              ELSE;                                                           02510000
+      252.0              LI = (LENGTH(LINE) + 79) / 80;                                  02520000
+      253.0              LI = LI * 80;                                                   02530000
+      254.0              IF LI - LENGTH(LINE) > 0                                        02540000
+      255.0                 THEN BLANK = SUBSTR((79)' ',1,LI-LENGTH(LINE));              02550000
+      256.0              ELSE BLANK = '';                                                02560000
+      257.0              SIND = SIND + 1;                                                02570000
+      258.0              SCR(SIND,1) = 1 + LENGTH(SCREEN) / 80;                          02580000
+      259.0              IF LENGTH(SCREEN) + LI <= SCRSIZE                               02590000
+      260.0                 THEN DO;                                                     02600000
+      261.0                   SCREEN = SCREEN || LINE || BLANK;                          02610000
+      262.0                   SCR(SIND,2) = LENGTH(LINE);                                02620000
+      263.0      WRIT:                                                                   02630000
+      264.0                   RC = TPUT(ESC || WRITE || 'B' || WROUT ||                  02640008
+      265.0                             SCREEN || '-');                                  02650001
+      266.0                   RETURN(RC);                                                02660000
+      267.0                 END;                                                         02670000
+      268.0              ELSE;                                                           02680000
+      269.0              J = SCRSIZE - LENGTH(SCREEN);                                   02690000
+      270.0              SCR(SIND,2) = J;                                                02700000
+      271.0              SCREEN = SCREEN || SUBSTR(LINE,1,J);                            02710000
+      272.0              RC = TPUT(ESC || WRITE || 'B' || WROUT || SCREEN);              02720008
+      273.0              CALL CLRSCN(PGSW);                                              02730000
+      274.0              SCREEN = SUBSTR(LINE,J+1) || BLANK;                             02740000
+      275.0              SIND = SIND + 1;                                                02750000
+      276.0              SCR(SIND,1) = 1;                                                02760000
+      277.0              SCR(SIND,2) = LENGTH(SUBSTR(LINE,J+1));                         02770000
+      278.0              GO TO WRIT;                                                     02780000
+      279.0            END;                                                              02790000
+      280.0         ELSE;                                                                02800000
+      281.0         /*  RELINQUISH CONTROL OF THE SCREEN TEMPORARILY  */                 02810000
+      282.0         IF OPT = 4                                                           02820000
+      283.0            THEN DO;                                                          02830000
+      284.0              RC = TPUT(ESC || CLEAR || 'C');                                 02840008
+      285.0              CALL FULLSCR(0);                                                02850000
+      286.0              RETURN(0);                                                      02860000
+      287.0            END;                                                              02870000
+      288.0         ELSE;                                                                02880000
+      289.0         /*  TAKE BACK CONTROL OF THE SCREEN  */                              02890000
+      290.0         IF OPT = 6                                                           02900000
+      291.0            THEN DO;                                                          02910000
+      292.0              RC = TPUT(ESC || WRITE || 'B' || SBA || BUFADE(24,1) ||         02920004
+      293.0                        SF || PAH || '***' || SF || UARM || IC);              02930005
+      294.0              RC = TGET(BUFF);                                                02940004
+      295.0              CALL FULLSCR(1);                                                02950000
+      296.0              OPT = 0;                                                        02960000
+      297.0              GO TO START;                                                    02970000
+      298.0            END;                                                              02980000
+      299.0         ELSE;                                                                02990000
+      300.0         /*  AT THIS POINT IF OPT ^= 3 | 5 IT'S AN ERROR  */                  03000000
+      301.0         IF OPT ^= 3 & OPT ^= 5                                               03010000
+      302.0            THEN RETURN(24);                                                  03020000
+      303.0         ELSE;                                                                03030000
+      304.0         /*  DO INPUT FROM THE SCREEN  */                                     03040000
+      305.0      READD:                                                                  03050002
+      306.0         INRUN = ' ';                                                         03060000
+      307.0         INP = 'INPUT';                                                       03070000
+      308.0         IMEAR = ISTR;                                                        03080000
+      309.0         RC = TPUT(ESC || WRITE || 'B' || INDIC || INPUT);                    03090008
+      310.0      READ:                                                                   03100000
+      311.0         BUFF = '';                                                           03110000
+      312.0         RC = TGET(BUFF);                                                     03120000
+      313.0         LINE = SUBSTR(BUFF,1,1);                                             03130000
+      314.0         /*  PA1 (ATTN) PRESSED  */                                           03140000
+      315.0         IF LINE = '%'                                                        03150000
+      316.0            THEN DO;                                                          03160000
+      317.0              ATTN = '1'B;                                                    03170000
+      318.0              RETURN(0);                                                      03180000
+      319.0            END;                                                              03190000
+      320.0         ELSE;                                                                03200000
+      321.0         /*  CLEAR PRESSED  */                                                03210000
+      322.0         IF LINE = '_'                                                        03220000
+      323.0            THEN DO;                                                          03230000
+      324.0              CALL CLRSCN(AUTO);                                              03240000
+      325.0              GO TO READ;                                                     03250000
+      326.0            END;                                                              03260000
+      327.0         ELSE;                                                                03270000
+      328.0         /*  PA2 (REFORMAT SCREEN) PRESSED */                                 03271011
+      329.0         IF LINE = '>'                                                        03272011
+      330.0            THEN DO;                                                          03273010
+      331.0              RC = IO3270('',0);                                              03274010
+      332.0              GO TO READD;                                                    03275012
+      333.0            END;                                                              03276010
+      334.0         ELSE;                                                                03277010
+      335.0         /*  REQUEST WAS MADE TO ENTER SELECT MODE  */                        03280000
+      336.0         IF (LINE = TEST | LINE = '1') & PAGE                                 03290011
+      337.0            THEN DO;                                                          03300000
+      338.0              CALL SELECT(0);                                                 03310000
+      339.0              IF PICKUP                                                       03320000
+      340.0                 THEN DO;                                                     03330000
+      341.0                   PICKUP = '0'B;                                             03340000
+      342.0                   CALL PICK('',' ',BUFF,SCR,ROW,COL,2);                      03350000
+      343.0                   GO TO READ;                                                03360000
+      344.0                 END;                                                         03370000
+      345.0              ELSE;                                                           03380000
+      346.0              IF ATTN                                                         03390000
+      347.0                 THEN RETURN(0);                                              03400000
+      348.0              ELSE;                                                           03410000
+      349.0              GO TO READ;                                                     03420000
+      350.0            END;                                                              03430000
+      351.0         ELSE;                                                                03440000
+      352.0         IF LENGTH(BUFF) <= 3 & LINE ^= ''''                                  03450000
+      353.0            THEN GO TO PUTRUN;                                                03460000
+      354.0         ELSE;                                                                03470000
+      355.0         CALL BUFADD(ROW,COL,SUBSTR(BUFF,2,2));                               03480000
+      356.0         IF ROW = SROW                                                        03490000
+      357.0            THEN DO;                                                          03500000
+      358.0              IF ^PAGE                                                        03510000
+      359.0                 THEN DO;                                                     03520000
+      360.0      BADINP:                                                                 03530000
+      361.0                   INRUN = 'INVALID';                                         03540000
+      362.0                   RC = TPUT(ESC || WRITE || 'B' || INDIC ||                  03550008
+      363.0                             SBA || SUBSTR(BUFF,2,2) || IC);                  03560001
+      364.0                   GO TO READ;                                                03570000
+      365.0                 END;                                                         03580000
+      366.0              ELSE;                                                           03590000
+      367.0              IF COL >= 61 & COL <= 66                                        03600000
+      368.0                 THEN DO;                                                     03610000
+      369.0                   CALL SELECT(0);                                            03620000
+      370.0                   IF PICKUP                                                  03630000
+      371.0                      THEN DO;                                                03640000
+      372.0                        PICKUP = '0'B;                                        03650000
+      373.0                        CALL PICK('',' ',BUFF,SCR,ROW,COL,2);                 03660000
+      374.0                        GO TO READ;                                           03670000
+      375.0                      END;                                                    03680000
+      376.0                   ELSE;                                                      03690000
+      377.0                   IF ATTN                                                    03700000
+      378.0                      THEN RETURN(0);                                         03710000
+      379.0                   ELSE;                                                      03720000
+      380.0                   GO TO READ;                                                03730000
+      381.0                 END;                                                         03740000
+      382.0              ELSE GO TO BADINP;                                              03750000
+      383.0            END;                                                              03760000
+      384.0         ELSE;                                                                03770000
+      385.0         IF ROW = SROW - 3                                                    03780000
+      386.0            THEN GO TO BADINP;                                                03790000
+      387.0         ELSE;                                                                03800000
+      388.0         IF ROW <= SROW - 4                                                   03810000
+      389.0            THEN DO;                                                          03820000
+      390.0              CALL PICK(SCREEN,' ',BUFF,SCR,ROW,COL,1);                       03830000
+      391.0              GO TO READ;                                                     03840000
+      392.0            END;                                                              03850000
+      393.0         ELSE;                                                                03860000
+      394.0      PUTRUN:                                                                 03870000
+      395.0         INRUN = 'RUNNING';                                                   03880000
+      396.0         IMEAR = ' ';                                                         03890000
+      397.0         INP = ' ';                                                           03900000
+      398.0         RC = TPUT(ESC || WRITE || 'C' || INDIC || RUN);                      03910008
+      399.0         IF LENGTH(BUFF) > 3                                                  03920000
+      400.0            THEN BUFF = SUBSTR(BUFF,4);                                       03930000
+      401.0         ELSE BUFF = '';                                                      03940000
+      402.0         DO WHILE(LENGTH(BUFF) > 0);                                          03950000
+      403.0            I = INDEX(BUFF,SBA);                                              03960000
+      404.0            IF I = 0                                                          03970000
+      405.0               THEN LEAVE;                                                    03980000
+      406.0            ELSE DO;                                                          03990000
+      407.0              IF LENGTH(BUFF) >= I + 3                                        04000000
+      408.0                 THEN BUFF = SUBSTR(BUFF,I+3);                                04010000
+      409.0              ELSE BUFF = '';                                                 04020000
+      410.0            END;                                                              04030000
+      411.0            I = INDEX(BUFF,SBA);                                              04040000
+      412.0            IF I = 0                                                          04050000
+      413.0               THEN LEAVE;                                                    04060000
+      414.0            ELSE LINE = LINE || SUBSTR(BUFF,1,I-1);                           04070000
+      415.0            BUFF = SUBSTR(BUFF,I);                                            04080000
+      416.0         END;                                                                 04090000
+      417.0         LINE = LINE || BUFF;                                                 04100000
+      418.0         /*  IF OPT = 5 A REQUEST WAS MADE TO WRITE THE INPUT BACK TO THE     04110000
+      419.0             OUTPUT AREA. IT WILL BE DONE IF SOMETHING WAS IN THE INPUT       04120000
+      420.0             AREA ONLY.  */                                                   04130000
+      421.0         IF OPT = 5 & LENGTH(LINE) > 1                                        04140000
+      422.0            THEN I = IO3270(SUBSTR(LINE,2),1);                                04150000
+      423.0         ELSE;                                                                04160000
+      424.0         IF TRANS                                                             04170000
+      425.0            THEN LINE = TRANSLATE(LINE,UPPER,LOWER);                          04180000
+      426.0         ELSE;                                                                04190000
+      427.0         RETURN(RC);                                                          04200000
+      428.0         %INCLUDE CLRSCN;                                                     04210000
+                 /*** Begin %include DD:SYSLIB(CLRSCN) ***/
+        1.1    1 CLRSCN: PROCEDURE (PGSW) REORDER;                                       00010000
+        2.1         DECLARE                                                              00020000
+        3.1           PGSW               FIXED BIN(15,0);                                00030000
+        4.1         IF PAG# >= #PAGES                                                    00040000
+        5.1            THEN FRM = PAH;                                                   00050000
+        6.1         ELSE FRM = PAR;                                                      00060000
+        7.1         IF PGSW = AUTO                                                       00070000
+        8.1            THEN DO;                                                          00080000
+        9.1              KEY = MOD(PAG#,#PAGES);                                         00090000
+       10.1              PBUFF = SCREEN;                                                 00100000
+       11.1              PSCR = SCR;                                                     00110000
+       12.1              IF PAGE                                                         00150000
+       13.1                 THEN WRITE FILE(SYSPAGE) FROM(PBUF) KEYFROM(KEY);            00160000
+       14.1              ELSE DO;                                                        00170000
+       15.1                FRM = PAI;                                                    00180000
+       16.1                CALL SELECT(1);                                               00190000
+       17.1                RETURN;                                                       00200000
+       18.1              END;                                                            00210000
+       19.1              SCREEN = '';                                                    00211005
+       20.1              SIND = 0;                                                       00212005
+       21.1              SCR(*,*) = 0;                                                   00213005
+       22.1              PAG# = PAG# + 1;                                                00220000
+       23.1              RPAG# = PAG#;                                                   00230000
+       24.1              RC = TPUT(ESC || WRITE || 'C' || INDIC ||                       00240003
+       25.1                        SELPAG || RESSCNC);                                   00250001
+       26.1              RETURN;                                                         00260000
+       27.1            END;                                                              00270000
+       28.1         ELSE;                                                                00280000
+       29.1         IF PGSW = OFF                                                        00290000
+       30.1            THEN DO;                                                          00300000
+       31.1              FRM = PAI;                                                      00310000
+       32.1              CALL SELECT(1);                                                 00320000
+       33.1              SCREEN = '';                                                    00330000
+       34.1              RETURN;                                                         00340000
+       35.1            END;                                                              00350000
+       36.1         ELSE;                                                                00360000
+       37.1         KEY = MOD(PAG#,#PAGES);                                              00370000
+       38.1         PBUFF = SCREEN;                                                      00380000
+       39.1         PSCR = SCR;                                                          00390000
+       40.1         IF PAGE                                                              00430000
+       41.1            THEN WRITE FILE(SYSPAGE) FROM(PBUF) KEYFROM(KEY);                 00440000
+       42.1         ELSE FRM = PAI;                                                      00450000
+       43.1         CALL SELECT(1);                                                      00460000
+       44.1         SCREEN = '';                                                         00461004
+       45.1         SIND = 0;                                                            00462004
+       46.1         SCR(*,*) = 0;                                                        00463004
+       47.1      END CLRSCN;                                                             00470000
+                 /*** End   %include DD:SYSLIB(CLRSCN) ***/
+      428.0                                                                              04210000
+      429.0         %INCLUDE SELECT;                                                     04220000
+                 /*** Begin %include DD:SYSLIB(SELECT) ***/
+        1.2    1 SELECT: PROCEDURE (INS) REORDER;                                        00010000
+        2.2         DECLARE                                                              00020000
+        3.2           I                  FIXED BIN(15,0) INIT(0),                        00030000
+        4.2           INS                FIXED BIN(15,0);                                00040000
+        5.2      SELD:                                                                   00050002
+        6.2         I = PAG# - #PAGES;                                                   00060000
+        7.2         IF I <= 0                                                            00070000
+        8.2            THEN SFRM# = 1;                                                   00080000
+        9.2         ELSE SFRM# = I;                                                      00090000
+       10.2         IF PAG# > #PAGES                                                     00100000
+       11.2            THEN SFRM# = SFRM# + 1;                                           00110000
+       12.2         ELSE;                                                                00120000
+       13.2         SPAG# = PAG#;                                                        00130000
+       14.2         AFRM = FRM;                                                          00140000
+       15.2         STO# = PAG#;                                                         00150000
+       16.2         SPAGW = PAGING(PGSW);                                                00160000
+       17.2         RC = TPUT(ESC || WRITE || 'B' || SBA || BUFADE(SROW-2,1) ||          00170004
+       18.2                   RA || BUFADE(SROW,1) || ' ' || SELSCN);                    00180000
+       19.2         IF INS = 0                                                           00190000
+       20.2            THEN DO;                                                          00200000
+       21.2              PBUFF = SCREEN;                                                 00210000
+       22.2              PSCR = SCR;                                                     00220000
+       23.2            END;                                                              00230000
+       24.2         ELSE;                                                                00240000
+       25.2      SELREAD:                                                                00250000
+       26.2         RC = TGET(BUFF);                                                     00260000
+       27.2         IF SUBSTR(BUFF,1,1) = TEST                                           00270000
+       28.2            THEN BUFADR = TESTADR;                                            00280000
+       29.2         ELSE BUFADR = SUBSTR(BUFF,2,2);                                      00290000
+       30.2         CALL BUFADD(ROW,COL,SUBSTR(BUFF,2,2));                               00300000
+       31.2         IF SUBSTR(BUFF,1,1) = '>'                                            00310006
+       32.2            THEN DO;                                                          00320002
+       33.2              RC = IO3270('',0);                                              00330002
+       34.2              GO TO SELD;                                                     00340002
+       35.2            END;                                                              00350002
+       36.2         ELSE;                                                                00360002
+       37.2         IF SUBSTR(BUFF,1,1) = '%'                                            00370000
+       38.2            THEN DO;                                                          00380000
+       39.2              ATTN = '1'B;                                                    00390000
+       40.2              GO TO END;                                                      00400000
+       41.2            END;                                                              00410000
+       42.2         ELSE;                                                                00420000
+       43.2         IF SUBSTR(BUFF,1,1) = '_'                                            00430000
+       44.2            THEN DO;                                                          00440000
+       45.2              INS = 1;                                                        00450000
+       46.2              GO TO END;                                                      00460000
+       47.2            END;                                                              00470000
+       48.2         ELSE;                                                                00480000
+       49.2         IF SUBSTR(BUFF,1,1) = '7' & PAGE                                     00490005
+       50.2            THEN DO;                                                          00500000
+       51.2              ACT = 2;                                                        00510000
+       52.2              GO TO DOSEL;                                                    00520000
+       53.2            END;                                                              00530000
+       54.2         ELSE;                                                                00540000
+       55.2         IF SUBSTR(BUFF,1,1) = '8'                                            00550005
+       56.2            THEN DO;                                                          00560000
+       57.2              ACT = 4;                                                        00570000
+       58.2              GO TO DOSEL;                                                    00580000
+       59.2            END;                                                              00590000
+       60.2         ELSE;                                                                00600000
+       61.2         IF SUBSTR(BUFF,1,1) = '4'                                            00601005
+       62.2            THEN GO TO PPAGE;                                                 00602005
+       63.2         ELSE;                                                                00606005
+       64.2         IF SUBSTR(BUFF,1,1) = '3'                                            00610000
+       65.2            THEN GO TO END;                                                   00620000
+       66.2         ELSE;                                                                00630000
+       67.2         IF SUBSTR(BUFF,1,1) ^= ''''                                          00640000
+       68.2            THEN DO;                                                          00650000
+       69.2      INVALID:                                                                00660000
+       70.2              IPAG# = SPAG#;                                                  00670000
+       71.2              IMESS = 'INVALID';                                              00680000
+       72.2              RC = TPUT(ESC || WRITE || 'C' || SINVIG ||                      00690004
+       73.2                        SBA || BUFADR ||IC);                                  00700001
+       74.2              GO TO SELREAD;                                                  00710000
+       75.2            END;                                                              00720000
+       76.2         ELSE ACT = 0;                                                        00730000
+       77.2         IF ROW = SROW - 3 & (COL >= 76 & COL <= 79) & PAGE                   00740000
+       78.2            THEN                                                              00750000
+       79.2              IF LENGTH(BUFF) <= 3                                            00760000
+       80.2                 THEN DO;                                                     00770000
+       81.2      IGNORED:                                                                00780000
+       82.2                   IPAG# = SPAG#;                                             00790000
+       83.2                   IMESS = 'IGNORED';                                         00800000
+       84.2                   RC = TPUT(ESC || WRITE || 'C' || SINVIG ||                 00810004
+       85.2                             SBA || BUFADR|| IC);                             00820001
+       86.2                   GO TO SELREAD;                                             00830000
+       87.2                 END;                                                         00840000
+       88.2              ELSE ACT = 1;                                                   00850000
+       89.2         ELSE;                                                                00860000
+       90.2         IF ROW = SROW - 2 & PAGE                                             00870000
+       91.2            THEN DO;                                                          00880000
+       92.2              IF COL >= 61 & COL <= 65                                        00890000
+       93.2                 THEN ACT = 2;                                                00900000
+       94.2              ELSE;                                                           00910000
+       95.2              IF COL >= 71 & COL <= 79                                        00920000
+       96.2                 THEN ACT = 3;                                                00930000
+       97.2              ELSE;                                                           00940000
+       98.2            END;                                                              00950000
+       99.2         ELSE;                                                                00960000
+      100.2         IF ROW = SROW - 1                                                    00970000
+      101.2            THEN DO;                                                          00980000
+      102.2              IF COL >= 61 & COL <= 65                                        00990000
+      103.2                 THEN ACT = 4;                                                01000000
+      104.2              ELSE;                                                           01010000
+      105.2              IF COL >= 71 & COL <= 79 & PAGE                                 01020000
+      106.2                 THEN ACT = 5;                                                01030000
+      107.2              ELSE;                                                           01040000
+      108.2            END;                                                              01050000
+      109.2         ELSE;                                                                01060000
+      110.2         IF ROW = SROW & PAGE                                                 01070000
+      111.2            THEN                                                              01080000
+      112.2              IF COL >= 69 & COL <= 79                                        01090000
+      113.2                 THEN ACT = 6;                                                01100000
+      114.2              ELSE;                                                           01110000
+      115.2         ELSE;                                                                01120000
+      116.2         IF ROW <= SROW - 4 & INS = 0                                         01130000
+      117.2            THEN DO;                                                          01140000
+      118.2              CALL PICK('',PBUFF,BUFF,PSCR,ROW,COL,0);                        01150000
+      119.2              PICKUP = '1'B;                                                  01160000
+      120.2              GO TO END;                                                      01170000
+      121.2            END;                                                              01180000
+      122.2         ELSE;                                                                01190000
+      123.2         IF ACT = 0                                                           01200000
+      124.2            THEN GO TO INVALID;                                               01210000
+      125.2         ELSE;                                                                01220000
+      126.2      DOSEL:                                                                  01230000
+      127.2         SELECT(ACT);                                                         01240000
+      128.2            WHEN(1) DO;                                                       01250000
+      129.2              IF SUBSTR(BUFF,4,1) = SBA                                       01260000
+      130.2                 THEN BUFF = SUBSTR(BUFF,7);                                  01270000
+      131.2              ELSE BUFF = SUBSTR(BUFF,4);                                     01280000
+      132.2              GET STRING(BUFF) LIST(I);                                       01290000
+      133.2              IF I > STO# | I < SFRM#                                         01300000
+      134.2                 THEN GO TO IGNORED;                                          01310000
+      135.2              ELSE SPAG# = I;                                                 01320000
+      136.2            END;                                                              01330000
+      137.2            WHEN(2) DO;                                                       01340000
+      138.2              IF SPAG# - 1 < SFRM#                                            01350000
+      139.2                 THEN GO TO IGNORED;                                          01360000
+      140.2              ELSE SPAG# = SPAG# - 1;                                         01370000
+      141.2            END;                                                              01380000
+      142.2            WHEN(3) DO;                                                       01390000
+      143.2              IF SPAG# = SFRM#                                                01400000
+      144.2                 THEN GO TO IGNORED;                                          01410000
+      145.2              ELSE SPAG# = SFRM#;                                             01420000
+      146.2            END;                                                              01430000
+      147.2            WHEN(4) DO;                                                       01440000
+      148.2              IF SPAG# + 1 > STO#                                             01450000
+      149.2                 THEN GO TO END;                                              01460000
+      150.2              ELSE SPAG# = SPAG# + 1;                                         01470000
+      151.2            END;                                                              01480000
+      152.2            WHEN(5) DO;                                                       01490000
+      153.2              IF SPAG# = STO#                                                 01500000
+      154.2                 THEN GO TO IGNORED;                                          01510000
+      155.2              ELSE SPAG# = STO#;                                              01520000
+      156.2            END;                                                              01530000
+      157.2            WHEN(6) DO;                                                       01540000
+      158.2              IF PGSW = 1                                                     01550000
+      159.2                 THEN PGSW = 2;                                               01560000
+      160.2              ELSE PGSW = 1;                                                  01570000
+      161.2              SPAGW = PAGING(PGSW);                                           01580000
+      162.2              PPAGW = SPAGW;                                                  01590000
+      163.2              SELPG = SPAGW;                                                  01600000
+      164.2              RC = TPUT(ESC || WRITE || 'C' || SPAGE ||                       01610004
+      165.2                        SBA || BUFADR || IC);                                 01620001
+      166.2            END;                                                              01630000
+      167.2            OTHERWISE GO TO INVALID;                                          01640000
+      168.2         END;                                                                 01650000
+      169.2         IF ACT = 6                                                           01660000
+      170.2            THEN GO TO SELREAD;                                               01670000
+      171.2         ELSE;                                                                01680000
+      172.2      GETPAGE:                                                                01690000
+      173.2         IF SPAG# = PAG# & INS = 0                                            01700000
+      174.2            THEN DO;                                                          01710000
+      175.2              PBUFF = SCREEN;                                                 01720000
+      176.2              PSCR = SCR;                                                     01730000
+      177.2              GO TO GETP;                                                     01740000
+      178.2            END;                                                              01750000
+      179.2         ELSE;                                                                01760000
+      180.2         KEY = MOD(SPAG#,#PAGES);                                             01770000
+      181.2         READ FILE(SYSPAGE) INTO(PBUF) KEY(KEY);                              01780000
+      182.2      GETP:                                                                   01790000
+      183.2         BPAG# = SPAG#;                                                       01800000
+      184.2         RC = TPUT(ESC || WRITE || 'C' || WROUT ||                            01810004
+      185.2                   SUBSTR(PBUFF,1,SCRSIZE) || BSELSCN || SBA || BUFADR ||     01820001
+      186.2                   IC);                                                       01830001
+      187.2         GO TO SELREAD;                                                       01840000
+      188.2      END:                                                                    01850000
+      189.2         IF INS = 1                                                           01860000
+      190.2            THEN DO;                                                          01870000
+      191.2              PAG# = PAG# + 1;                                                01880000
+      192.2              RPAG# = PAG#;                                                   01890000
+      193.2              RC = TPUT(ESC || WRITE || 'C' || INDIC ||                       01900004
+      194.2                        SELPAG || RESSCNC);                                   01910001
+      195.2            END;                                                              01920000
+      196.2         ELSE DO;                                                             01930000
+      197.2           EPAG# = PAG#;                                                      01940000
+      198.2           RC = TPUT(ESC || WRITE || 'C' ||                                   01950004
+      199.2                     SUBSTR(RESSCNC,1,7) || WROUT || SCREEN || '-' ||         01960001
+      200.2                     RESSCNR);                                                01970001
+      201.2         END;                                                                 01980000
+      202.2         RETURN;                                                              01981005
+      203.2      PPAGE:                                                                  01982005
+      204.2         PUT FILE(PFILE) EDIT(SUBSTR(PBUFF,1,80),'PAGE ',SPAG#)               01982106
+      205.2            (COL(1),A,COL(111),A,P'ZZZ9');                                    01982206
+      206.2         DO I = 81 TO (ROWS - 4) * 80 BY 80;                                  01982307
+      207.2            PUT FILE(PFILE) EDIT(SUBSTR(PBUFF,I,80))(COL(1),A);               01982406
+      208.2         END;                                                                 01982506
+      209.2         IPAG# = SPAG#;                                                       01983006
+      210.2         IMESS = 'PRINTED';                                                   01984006
+      211.2         RC = TPUT(ESC || WRITE || 'C' || SINVIG ||                           01985006
+      212.2                   SBA || BUFADR|| IC);                                       01986006
+      213.2         GO TO SELREAD;                                                       01987006
+      214.2      END SELECT;                                                             01990000
+                 /*** End   %include DD:SYSLIB(SELECT) ***/
+      429.0                                                                              04220000
+      430.0         %INCLUDE PICK;                                                       04230000
+                 /*** Begin %include DD:SYSLIB(PICK) ***/
+        1.3    1 PICK: PROCEDURE (TMA,TMB,BUF,POS,RW,CL,ACT) REORDER;                    00010000
+        2.3         DECLARE                                                              00020000
+        3.3           TMA                CHAR(*) VARYING,                                00030000
+        4.3           TMB                CHAR(*),                                        00040000
+        5.3           BUF                CHAR(*) VARYING,                                00050000
+        6.3           POS(*,*)           FIXED BIN(15,0),                                00060000
+        7.3           RW                 FIXED BIN(15,0),                                00070000
+        8.3           CL                 FIXED BIN(15,0),                                00080000
+        9.3           ACT                FIXED BIN(15,0),                                00090000
+       10.3           (PLC,LEN,I)        FIXED BIN(15,0) INIT(0);                        00100000
+       11.3         IF ACT = 2                                                           00110000
+       12.3            THEN GO TO PUT;                                                   00120000
+       13.3         ELSE BUF = '';                                                       00130000
+       14.3         DO I = 1 TO 39;                                                      00140000
+       15.3            IF RW <= POS(I,1)                                                 00150000
+       16.3               THEN GO TO FOUND;                                              00160000
+       17.3            ELSE;                                                             00170000
+       18.3         END;                                                                 00180000
+       19.3         IF I >= SROW - 3                                                     00190000
+       20.3            THEN RETURN;                                                      00200000
+       21.3         ELSE;                                                                00210000
+       22.3      FOUND:                                                                  00220000
+       23.3         PLC = 1 + (RW - 1) * 80;                                             00230000
+       24.3         IF POS(I,1) = RW                                                     00240000
+       25.3            THEN LEN = POS(I,2);                                              00250000
+       26.3         ELSE LEN = POS(I-1,2) - 80 * (RW - POS(I-1,1));                      00260000
+       27.3         IF LEN > 160                                                         00270000
+       28.3            THEN LEN = 160;                                                   00280000
+       29.3         ELSE;                                                                00290000
+       30.3         IF ACT = 0                                                           00300000
+       31.3            THEN DO;                                                          00310000
+       32.3              BUF = SUBSTR(TMB,PLC,LEN);                                      00320000
+       33.3              RETURN;                                                         00330000
+       34.3            END;                                                              00340000
+       35.3         ELSE;                                                                00350000
+       36.3         BUF = SUBSTR(TMA,PLC,LEN);                                           00360000
+       37.3      PUT:                                                                    00370000
+       38.3         IF CL > LENGTH(BUF) & LENGTH(BUF) < 80                               00380000
+       39.3            THEN CL = 1 + LENGTH(BUF);                                        00390000
+       40.3         ELSE;                                                                00400000
+       41.3         RC = TPUT(ESC || WRITE || 'C' || SBA || BUFADE(SROW-2,1) ||          00410004
+       42.3                   RA || BUFADE(SROW,1) || ' ' || SBA || BUFADE(SROW-3,80) || 00420001
+       43.3                   SF || ATTR(0,0,0,1) || SUBSTR(BUF || LOW(160),1,160) ||    00430002
+       44.3                   SBA || BUFADE(SROW-2,CL) || IC);                           00440001
+       45.3      END PICK;                                                               00450000
+                 /*** End   %include DD:SYSLIB(PICK) ***/
+      430.0                                                                              04230000
+      431.0      END IO3270;                                                             04240000
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  IO3270: PROCEDURE(LINE,OPT) RETURNS(FIXED B         2024.06.20 06:27:09   Page     3
+- No Compiler Messages
+0 File Reference Table
+0   File    Included From  Name
+0      0                   AVL.PDUMP.PLI(IO3270)
+       1         428.0     AVL.PDUMP.PLI(CLRSCN)
+       2         429.0     AVL.PDUMP.PLI(SELECT)
+       3         430.0     AVL.PDUMP.PLI(PICK)
+- Component    Return Code    Messages (Total/Suppressed)    Time
+0 Compiler         0                3  /  3                   6 secs
+0 End of compilation of IO3270
+

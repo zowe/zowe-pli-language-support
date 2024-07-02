@@ -1,0 +1,15 @@
+-VALID: PROCEDURE REORDER;                                              00010002
+    DECLARE                                                             00020000
+      (J,RC)             FIXED BIN(15,0) INIT(0),                       00030003
+      (DSN,DISP)         BIT(1) INIT('0'B);                             00040000
+    DO J = 1 TO S99TUPL#;                                               00050003
+       SELECT(KEY(J));                                                  00060004
+          WHEN(2) DSN = '1'B;                                           00070000
+          WHEN(4) DISP = '1'B;                                          00080000
+          OTHERWISE;                                                    00090000
+       END;                                                             00100000
+    END;                                                                00110000
+    IF DSN & ^DISP                                                      00120000
+       THEN RC = S99VAL1(10,'');                                        00130003
+    ELSE;                                                               00140000
+ END VALID;                                                             00150000
