@@ -19,7 +19,7 @@
         "grammars": [{
             "language": "pli",
             "scopeName": "source.pli",
-            "path": "syntaxes/pli.tmLanguage.json"
+            "path": "syntaxes/pli.merged.json"
         }]
     },
     "activationEvents": [],

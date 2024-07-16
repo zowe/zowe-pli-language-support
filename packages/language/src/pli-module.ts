@@ -13,7 +13,10 @@ import { type Module, inject } from 'langium';
 import { createDefaultModule, createDefaultSharedModule, type DefaultSharedModuleContext, type LangiumServices, type LangiumSharedServices, type PartialLangiumServices } from 'langium/lsp';
 import { Pl1GeneratedModule, Pl1GeneratedSharedModule } from './generated/module.js';
 import { Pl1Validator, registerValidationChecks } from './pli-validator.js';
-import { Pl1Lexer } from './pli-lexer.js';
+import { Pl1Lexer } from './parser/pli-lexer.js';
+import { getPliGrammar } from './parser/pli-grammar.js';
+import { PliTokenBuilder } from './parser/pli-token-builder.js';
+import { PliScopeComputation } from './references/pli-scope-computation.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -36,11 +39,16 @@ export type Pl1Services = LangiumServices & Pl1AddedServices
  * selected services, while the custom services must be fully specified.
  */
 export const Pl1Module: Module<Pl1Services, PartialLangiumServices & Pl1AddedServices> = {
+    Grammar: () => getPliGrammar(),
     validation: {
         Pl1Validator: () => new Pl1Validator()
     },
     parser: {
-        Lexer: services => new Pl1Lexer(services)
+        Lexer: services => new Pl1Lexer(services),
+        TokenBuilder: () => new PliTokenBuilder()
+    },
+    references: {
+        ScopeComputation: services => new PliScopeComputation(services)
     }
 };
 

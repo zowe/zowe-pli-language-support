@@ -1,0 +1,31 @@
+{
+    "patterns": [
+      {
+        "name": "string.quoted.single.pli",
+        "begin": "'",
+        "end": "'",
+        "patterns": [
+          {
+            "include": "#string-character-escape"
+          }
+        ]
+      },
+      {
+        "name": "string.double.single.pli",
+        "begin": "\"",
+        "end": "\"",
+        "patterns": [
+          {
+            "include": "#string-character-escape"
+          }
+        ]
+      }
+    ],
+    "repository": {
+      "string-character-escape": {
+        "name": "constant.character.escape.lox",
+        "match": "\\\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\\{[0-9A-Fa-f]+\\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)"
+      }
+    }
+  }
+  

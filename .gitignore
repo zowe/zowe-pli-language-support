@@ -6,5 +6,5 @@ node_modules/
 dist/
 out/
 **/src/generated
-syntaxes/
+**/syntaxes/pli.tmLanguage.json
 *.tsbuildinfo
