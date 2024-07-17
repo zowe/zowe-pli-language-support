@@ -10,5 +10,5 @@ Before providing the code sample, please, provide a *sample-file-name*.md with t
 1. PL/I language version the source code is applicable to
 2. Compiler used to build the source code / supported by compilers
 3. Operating system, where the code is possible to run + the version of the OS
-4. Brief inputs and outputs of the program
+4. Brief inputs and outputs of the program (those are: direct runtime inputs, possible user inputs, compilation options, program compilation results, program run results, etc.)
 5. Expected instructions to be highlighted / supported by LSP
