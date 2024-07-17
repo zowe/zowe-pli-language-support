@@ -17,6 +17,7 @@ import { Pl1Lexer } from './parser/pli-lexer.js';
 import { getPliGrammar } from './parser/pli-grammar.js';
 import { PliTokenBuilder } from './parser/pli-token-builder.js';
 import { PliScopeComputation } from './references/pli-scope-computation.js';
+import { PliDocumentValidator } from './validation/pli-document-validator.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -41,7 +42,8 @@ export type Pl1Services = LangiumServices & Pl1AddedServices
 export const Pl1Module: Module<Pl1Services, PartialLangiumServices & Pl1AddedServices> = {
     Grammar: () => getPliGrammar(),
     validation: {
-        Pl1Validator: () => new Pl1Validator()
+        Pl1Validator: () => new Pl1Validator(),
+        DocumentValidator: services => new PliDocumentValidator(services)
     },
     parser: {
         Lexer: services => new Pl1Lexer(services),

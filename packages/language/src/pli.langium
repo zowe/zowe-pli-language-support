@@ -12,7 +12,11 @@
 grammar Pl1
 
 entry PliProgram:
-    (packages+=Package | procedures+=ProcedureStatement)*;
+    (statements+=TopLevelStatement)*;
+
+TopLevelStatement: Package | ProcedureStatement | Directives;
+
+Directives: SkipDirective | PopDirective | PushDirective | LineDirective | NoteDirective | PageDirective | PrintDirective | IncludeDirective | NoPrintDirective | ProcessDirective | ProcincDirective;
 
 // Defined on p. 90
 Package: 
@@ -21,7 +25,7 @@ Package:
     reserves=Reserves? 
     options=Options? ';'
     statements+=PackageLevelStatements*
-    'END' endName=FeatureID ';';
+    end=EndStatement ';';
 
 Exports:
     'EXPORTS' '(' (all?='*' | (procedures+=FeatureID (',' procedures+=FeatureID)*)) ')';
@@ -73,7 +77,7 @@ ProcedureStatement:
     ('EXTERNAL' environmentName=FeatureID)?
     scope=ScopeAttribute? ';'
     statements+=ProcedureLevelStatement*
-    ('PROC' | 'PROCEDURE')? 'END' endLabel=FeatureID? ';';
+    ('PROC' | 'PROCEDURE')? end=EndStatement ';';
 
 
 ScopeAttribute returns string: ('STATIC' | 'DYNAMIC');
@@ -93,10 +97,24 @@ ProcedureLevelStatement: Statement | Group | ProcedureStatement | BeginStatement
 // #region Statements
 
 Statement: 
-    (labels+=LabelPrefix)*
-    value=(DeclareStatement | AllocateStatement | AssertStatement | AssignmentStatement | AttachStatement 
+    (labels+=LabelPrefix)* value=Unit;
+
+Unit: DeclareStatement | AllocateStatement | AssertStatement | AssignmentStatement | AttachStatement 
     | BeginStatement | CallStatement | CancelThreadStatement | CloseStatement | DefaultStatement | DefineAliasStatement | DefineOrdinalStatement | DefineStructureStatement
-    | DisplayStatement | DoStatement | IfStatement | ExecStatement | OnStatement | PutStatement);
+    | DelayStatement | DeleteStatement | DetachStatement | DisplayStatement | DoStatement
+    | EntryStatement | ExecStatement | ExitStatement | FetchStatement | FlushStatement | FormatStatement
+    | FreeStatement | GetStatement | GoToStatement
+    | IfStatement | IncludeDirective | IterateStatement
+    | LeaveStatement | LineDirective | LocateStatement
+    | NoPrintDirective | NoteDirective | NullStatement
+    | OnStatement | OpenStatement 
+    | PageDirective | PopDirective | PrintDirective
+    | ProcessDirective | ProcincDirective | PushDirective
+    | PutStatement
+    | QualifyStatement
+    | ReadStatement | ReinitStatement | ReleaseStatement | ResignalStatement
+    | ReturnStatement | RevertStatement | RewriteStatement
+    | SelectStatement | SignalStatement | SkipDirective | StopStatement;
 
 AllocateStatement: 'ALLOCATE' variable=AllocatedVariable ';';
 
@@ -120,21 +138,23 @@ AssertStatement: 'ASSERT' (
     )
     ('TEXT' displayExpression=Expression)?;
 
-AssignmentStatement: refs+=ReferenceItem (',' refs+=ReferenceItem)* operator=AssignmentOperator expression=Expression (',' 'BY' ('NAME' | 'DIMACROSS' dimacrossExpr=Expression))? ';';
+AssignmentStatement: refs+=MemberCall (',' refs+=MemberCall)* operator=AssignmentOperator expression=Expression (',' 'BY' ('NAME' | 'DIMACROSS' dimacrossExpr=Expression))? ';';
 
 AssignmentOperator returns string: '=' | '+=' | '-=' | '*=' | '/=' | '|=' | '&=' | '||=' | '**=' | '¬=' | '^=' | '<>';
 
-AttachStatement: 'ATTACH' reference=ReferenceItem ('THREAD' '(' task=ReferenceItem ')') (environment?='ENVIRONMENT' '(' ('TSTACK' '(' tstack=Expression ')')? ')')? ';';
+AttachStatement: 'ATTACH' reference=MemberCall ('THREAD' '(' task=MemberCall ')') (environment?='ENVIRONMENT' '(' ('TSTACK' '(' tstack=Expression ')')? ')')? ';';
 
 BeginStatement: 'BEGIN' options=Options? recursive?='RECURSIVE'? (order?='ORDER' | reorder?='REORDER')? ';'
     statements+=Statement*
-    ('BEGIN')? 'END' ';';
+    end=EndStatement ';';
+
+EndStatement: (labels+=LabelPrefix)* 'END' label=FeatureID?;
 
 CallStatement: 'CALL' reference=FeatureID ('(' (arguments+=('*' | Expression) (',' arguments+=('*' | Expression))*)? ')')? ';';
 
-CancelThreadStatement: 'CANCEL' 'THREAD' '(' thread=ReferenceItem ')' ';';
+CancelThreadStatement: 'CANCEL' 'THREAD' '(' thread=MemberCall ')' ';';
 
-CloseStatement: 'CLOSE' 'FILE' (file=ReferenceItem | star?='*') ';';
+CloseStatement: 'CLOSE' 'FILE' '(' (file=MemberCall | star?='*') ')' ';';
 
 DefaultStatement: ('DEFAULT' | 'DFT') expressions+=DefaultExpression (',' expressions+=DefaultExpression)* ';';
 
@@ -154,7 +174,7 @@ DefaultAttribute returns string:
     'ABNORMAL' | 'ALIGNED' | 'AREA' | 'ASSIGNABLE' | 'AUTOMATIC' 
     | 'BACKWARDS' | 'BASED' | 'BIT' | 'BUFFERED' | 'BUILTIN' | 'BYADDR' | 'BYVALUE' | 'BIN'
     | 'CHARACTER' | 'CHAR' | 'COMPLEX' | 'CONDITION' | 'CONNECTED' | 'CONSTANT' | 'CONTROLLED'
-    | 'DECIMAL' | 'DEFINED' | 'DIMENSION' 
+    | 'DECIMAL' | 'DEC' | 'DEFINED' | 'DIMENSION' 
     | 'ENTRY' | 'ENVIRONMENT' | 'ENV' | 'EVENT' | 'EXCLUSIVE' | 'EXTERNAL'
     | 'FILE' | 'FIXED' | 'FLOAT' | 'FORMAT'
     | 'GENERIC' | 'GRAPHIC'
@@ -165,7 +185,7 @@ DefaultAttribute returns string:
     | 'MEMBER'
     | 'NATIVE' | 'NONASSIGNABLE' | 'NONCONNECTED' | 'NONNATIVE' | 'NONVARYING' | 'NORMAL'
     | 'OFFSET' | 'OPTIONAL' | 'OPTIONS' | 'OUTONLY' | 'OUTPUT'
-    | 'PARAMETER' | 'PICTURE' | 'POINTER' | 'POSITION' | 'PRECISION' | 'PRINT'
+    | 'PARAMETER' | 'PICTURE' | 'PIC' | 'POINTER' | 'POSITION' | 'PRECISION' | 'PRINT'
     | 'RANGE' | 'REAL' | 'RECORD' | 'RESERVED' | 'RETURNS'
     | 'SEQUENTIAL' | 'SIGNED' | 'STATIC' | 'STREAM' | 'STRUCTURE'
     | 'TASK' | 'TRANSIENT'
@@ -191,8 +211,14 @@ DefineStructureStatement: 'DEFINE' 'STRUCTURE' level=DECIMAL_NUM name=FQN (union
 
 SubStructure: level=DECIMAL_NUM name=FeatureID (attributes+=DeclarationAttribute (',' attributes+=DeclarationAttribute)*)?;
 
+DelayStatement: 'DELAY' '(' delay=Expression ')' ';';
+
+DeleteStatement: 'DELETE' 'FILE' '(' (file=MemberCall) ')' ('KEY' '(' key=Expression ')')? ';';
+
+DetachStatement: 'DETACH' 'THREAD' '(' reference=MemberCall ')' ';';
+
 DisplayStatement: 'DISPLAY' '(' expression=Expression ')' 
-    ('REPLY' reply=ReferenceItem)? 
+    ('REPLY' '(' reply=MemberCall ')')? 
     ('ROUTCDE' '(' rout+=DECIMAL_NUM (',' rout+=DECIMAL_NUM)* ')' ('DESC' '(' desc+=DECIMAL_NUM (',' desc+=DECIMAL_NUM)* ')')?)? ';'
 ;
 
@@ -201,7 +227,7 @@ DoStatement:
     // Note: DoType1 does nothing
     (DoType2 | DoType3)? ';'
         statements+=Statement*
-    ('DO')? 'END' ';';
+    end=EndStatement ';';
 
 DoType2: DoWhile | DoUntil;
 
@@ -209,7 +235,9 @@ DoWhile: 'WHILE' '(' while=Expression ')' ('UNTIL' '(' until=Expression ')')?;
 
 DoUntil: 'UNTIL' '(' until=Expression ')' ('WHILE' '(' while=Expression ')')?;
 
-DoType3: reference=ReferenceItem '=' specifications+=DoSpecification (',' specifications+=DoSpecification)*;
+DoType3: variable=DoType3Variable '=' specifications+=DoSpecification (',' specifications+=DoSpecification)*;
+
+DoType3Variable: name=ID;
 
 DoSpecification: exp1=Expression (
         'TO' to=Expression ('BY' by=Expression)?
@@ -222,7 +250,66 @@ DoSpecification: exp1=Expression (
 
 ExecStatement: 'EXEC' query=ExecFragment ';';
 
+ExitStatement: {infer ExitStatement} 'EXIT' ';';
+
+FetchStatement: 'FETCH' entries+=FetchEntry (',' entries+=FetchEntry)* ';';
+
+FetchEntry: name=FeatureID ('SET' '(' set=MemberCall ')')? ('TITLE' '(' title=Expression ')')?;
+
+FlushStatement: 'FLUSH' 'FILE' '(' file=(MemberCall | '*') ')' ';';
+
+FormatStatement: 'FORMAT' '(' list=FormatList ')' ';';
+
+FormatList: items+=FormatListItem (',' items+=FormatListItem)*;
+
+FormatListItem: level=Expression? (item=FormatItem | '(' list=FormatList ')');
+
+FormatItem: RFormatItem | SkipFormatItem | VFormatItem | XFormatItem;
+
+RFormatItem: 'R' '(' labelReference=FeatureID ')';
+
+SkipFormatItem: 'SKIP' '(' skip=Expression ')';
+
+VFormatItem: {infer VFormatItem} 'V';
+
+XFormatItem: 'X' '(' width=Expression ')';
+
+FreeStatement: 'FREE' references+=MemberCall (',' references+=MemberCall)* ';';
+
+GetStatement: 'GET'
+    ('FILE' '(' file=Expression ')')?
+    (dataSpecification=DataSpecificationOptions)?
+    (copy?='COPY' ('(' /* TODO REFERENCE */ copyReference=FeatureID ')')?)?
+    (skip?='SKIP' ('(' skipExpression=Expression ')'))?
+;
+
+GoToStatement: ('GO' 'TO' | 'GOTO') /* TODO Reference to Label */ label=FeatureID ';';
+
 IfStatement: 'IF' expression=Expression 'THEN' unit=Statement ('ELSE' else=Statement)?;
+
+IncludeDirective: '%INCLUDE' items+=IncludeItem (',' items+=IncludeItem)* ';';
+
+IncludeItem: file=STRING_TERM | ddname?='ddname' '(' file=STRING_TERM ')';
+
+IterateStatement: 'ITERATE' /* TODO Reference to Label */ label=FeatureID ';';
+
+LeaveStatement: 'LEAVE' /* TODO Reference to Label */ label=FeatureID ';';
+
+LineDirective: '%LINE' ('(' line=DECIMAL_NUM ',' file=STRING_TERM ')') ';';
+
+LocateStatement: 
+    'LOCATE' variable=MemberCall 
+    'FILE' '(' file=ReferenceItem ')' 
+    ('SET' '(' set=MemberCall /* TODO Pointer-Reference? */ ')')? 
+    ('KEYFROM' '(' keyfrom=Expression ')')?
+    ';'
+;
+
+NoPrintDirective: {infer NoPrintDirective} '%NOPRINT' ';';
+
+NoteDirective: '%NOTE' '(' message=Expression (',' code=Expression)? ')' ';';
+
+NullStatement: {infer NullStatement} ';';
 
 OnStatement: 'ON' conditions+=Condition (',' conditions+=Condition)* snap?='SNAP'? (system?='SYSTEM' ';' | onUnit=Statement);
 
@@ -245,6 +332,34 @@ NamedCondition: 'CONDITION' '(' name=FeatureID ')';
 
 FileReferenceCondition: keyword=('ENDFILE' | 'ENDPAGE'| 'KEY'|'NAME'|'RECORD'|'TRANSMIT'|'UNDEFINEDFILE'|'UNDF') ('(' fileReference=ReferenceItem ')')?;
 
+OpenStatement: 'OPEN' options+=OpenOptionsGroup (',' options+=OpenOptionsGroup)* ';';
+
+OpenOptionsGroup: 
+    'FILE' '(' file=ReferenceItem ')' 
+    (stream?='STREAM' | record?='RECORD')? 
+    (input?='INPUT' | output?='OUTPUT' | update?='UPDATE')?
+    ((sequential?='SEQUENTIAL' | direct?='DIRECT') (unbuffered?='UNBUFFERED' | buffered?='BUFFERED')?)?
+    keyed?='KEYED'? 
+    print?='PRINT'?
+    ('TITLE' '(' title=Expression ')')?
+    ('LINESIZE' '(' lineSize=Expression ')')?
+    ('PAGESIZE' '(' pageSize=Expression ')')?
+;
+
+PageDirective: {infer PageDirective} '%PAGE' ';';
+
+PopDirective: {infer PopDirective} '%POP' ';';
+
+PrintDirective: {infer PrintDirective} '%PRINT' ';';
+
+ProcessDirective: ('*PROCESS' | '%PROCESS') (compilerOptions+=CompilerOptions (',' compilerOptions+=CompilerOptions))? ';';
+
+CompilerOptions: value='TODO';
+
+ProcincDirective: ('%PROCINC' | '*PROCINC') datasetName=FeatureID ';';
+
+PushDirective: {infer PushDirective} '%PUSH' ';';
+
 PutStatement: 'PUT' ((('FILE' '(' file=ReferenceItem ')')? (dataSpecification=DataSpecificationOptions)?
     (
         page?='PAGE'? ('LINE' '(' line=Expression ')')? 
@@ -261,11 +376,49 @@ DataSpecificationOptions: (
 
 DataSpecificationDataList: items+=(DataSpecificationDataListItem | DataSpecificationDataListItem3DO) (',' items+=(DataSpecificationDataListItem | DataSpecificationDataListItem3DO))*;
 
-DataSpecificationDataListItem: values+=Expression (',' values+=Expression)+;
+DataSpecificationDataListItem: values+=Expression (',' values+=Expression)*;
 
 DataSpecificationDataListItem3DO: {infer DataSpecificationDataListItem3DO} 'TODO';
 
 DataSpecificationFormatList: DataSpecificationDataListItem;
+
+QualifyStatement: {infer QualifyStatement} 'QUALIFY' ';';
+
+ReadStatement: 'READ' 'FILE' '(' fileReference=MemberCall ')' 
+    (
+        'IGNORE' '(' ignore=Expression ')' 
+        | ('INTO' '(' intoRef=MemberCall ')' | 'SET' '(' set=MemberCall ')') ('KEY' '(' key=Expression ')' | 'KEYTO' '(' keyto=MemberCall ')')?
+    )? ';'
+;
+
+ReinitStatement: 'REINIT' reference=MemberCall ';';
+
+ReleaseStatement: 'RELEASE' (star?='*' | references+=FeatureID (',' references+=FeatureID)*) ';';
+
+ResignalStatement: {infer ResignalStatement} 'RESIGNAL' ';';
+
+ReturnStatement: 'RETURN' ('(' expression=Expression ')')? ';';
+
+RevertStatement: 'REVER' conditions+=Condition (',' conditions+=Condition)* ';';
+
+RewriteStatement: 'REWRITE' 'FILE' '(' file=MemberCall ')' ('FROM' '(' from=MemberCall ')')? ('KEY' '(' key=Expression ')')? ';';
+
+// Ensure via validation that `Otherwise` appears last
+SelectStatement: 
+    'SELECT' '(' on=Expression ')' ';' 
+    (statements+=(WhenStatement | OtherwiseStatement))* 
+    end=EndStatement ';'
+;
+
+WhenStatement: 'WHEN' '(' conditions+=Expression (',' conditions+=Expression)* ')' unit=Statement /* maybe? ';' */;
+
+OtherwiseStatement: ('OTHERWISE' | 'OTHER') unit=Statement /* maybe? ';' */;
+
+SignalStatement: 'SIGNAL' condition+=Condition ';';
+
+SkipDirective: '%SKIP' ('(' lines=Expression ')')? ';';
+
+StopStatement: {infer StopStatement} 'STOP' ';';
 
 // #endregion
 
@@ -302,7 +455,7 @@ Group: {infer Group} 'GROUP';
 DeclareStatement: ('DCL' | 'DECLARE') items+=DeclaredItem (',' items+=DeclaredItem)*  ';';
 DeclaredItem: level=DECIMAL_NUM? (elements+=DeclaredVariable | elements+='*' | '(' elements+=DeclaredVariable (',' elements+=DeclaredVariable)* ')') attributes+=DeclarationAttribute*;
 
-type NamedElement = DeclaredVariable | ProcedureParameter;
+type NamedElement = DeclaredVariable | ProcedureParameter | DoType3Variable;
 
 DeclaredVariable: name=ID;
 
@@ -375,10 +528,9 @@ PrimaryExpression infers Expression:
     | MemberCall;
 
 MemberCall:
-    element=ReferenceItem dimensions=Dimensions?
+    element=ReferenceItem
 	({infer MemberCall.previous=current} 
         "." element=ReferenceItem
-        dimensions=Dimensions?
     )*;
 
 UnaryExpression: op=('+' | '-' | '¬' | '^') expr=Expression;
