@@ -33,6 +33,40 @@
                 "${workspaceFolder}/packages/extension/out/**/*.js",
                 "${workspaceFolder}/node_modules/langium"
             ]
+        },
+        {
+            "name": "Vitest: Run All",
+            "type": "node",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**",
+            ],
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npx",
+            "args": [
+                "vitest",
+                "run",
+                "--no-watch"
+            ],
+            "smartStep": true,
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Vitest: Run Selected File",
+            "type": "node",
+            "request": "launch",
+            "autoAttachChildProcesses": true,
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "runtimeExecutable": "npx",
+            "args": [
+                "vitest",
+                "run",
+                "${relativeFile}"
+            ],
+            "smartStep": true,
+            "console": "integratedTerminal"
         }
     ]
 }
