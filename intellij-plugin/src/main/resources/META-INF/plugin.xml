@@ -23,6 +23,11 @@
   <depends>com.redhat.devtools.lsp4ij</depends>
   <depends>org.jetbrains.plugins.textmate</depends>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup displayType="STICKY_BALLOON"
+                       id="org.zowe.pli.PliNotificationId"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
     <server id="org.zowe.pli.lsp.PliLanguageServerFactory"
             name="PL/I Language Server"
@@ -37,5 +42,10 @@
                             serverId="org.zowe.pli.lsp.PliLanguageServerFactory"
                             languageId="pli"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.zowe.pli.PliProjectManagerListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </projectListeners>
 
 </idea-plugin>

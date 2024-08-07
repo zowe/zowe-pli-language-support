@@ -3,9 +3,16 @@ name: Build
 on: [push, workflow_dispatch]
 
 jobs:
-  build:
+  build-intellij:
     runs-on: ubuntu-latest
+    # Changing WORKING_DIRECTORY, don't forget to change defaults.run.working-directory
+    env:
+      WORKING_DIRECTORY: intellij-plugin
+    defaults:
+      run:
+        working-directory: ./intellij-plugin
     steps:
+
       - name: Checkout the plugin GitHub repository
         uses: actions/checkout@v4
 
@@ -24,6 +31,10 @@ jobs:
         shell: bash
         run: pwd && ls -la
 
+      - name: Test plugin
+        shell: bash
+        run: ./gradlew test
+
       - name: Build plugin
         shell: bash
         run: ./gradlew buildPlugin
@@ -32,7 +43,7 @@ jobs:
         id: artifact
         shell: bash
         run: |
-          cd ${{ github.workspace }}/build/distributions
+          cd ${{ github.workspace }}/${{ env.WORKING_DIRECTORY }}/build/distributions
           FILENAME=`ls *.zip`
           unzip "$FILENAME" -d content
           echo "filename=${FILENAME:0:-4}" >> $GITHUB_OUTPUT
@@ -43,4 +54,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifact.outputs.filename }}
-          path: ./build/distributions/content/*/*
+          path: ./${{ env.WORKING_DIRECTORY }}/build/distributions/content/*/*
