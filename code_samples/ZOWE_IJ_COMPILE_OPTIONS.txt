@@ -1,0 +1,296 @@
+15655-PL6  IBM(R) Enterprise PL/I for z/OS  6.1      (Built:20220429)                           2024.07.18 06:05:10   Page     1
+-                     Options Specified
+0  Install:
+0  Command: SOURCE,RULES(LAXDCL),OPTIONS
+0  Install:
+-                     Options Used
+0     NOAGGREGATE
+        ARCH( 10 )
+        ASSERT( ENTRY )
+      NOATTRIBUTES
+        BACKREG( 5 )
+        BIFPREC( 31 )
+        BLANK( '05'X )
+        BLKOFF
+        BRACKETS( '  ' )
+        CASE( UPPER )
+        CASERULES( KEYWORD( MIXED ) )
+        CHECK(
+               NOSTORAGE
+             )
+        CMPAT( V2 )
+        CODEPAGE( 01140 )
+      NOCOMMON
+      NOCOMPILE( S )
+      NOCOPYRIGHT
+        CSECT
+        CSECTCUT( 4 )
+        CURRENCY( '$' )
+      NODBCS
+      NODBRMLIB
+        DD(
+            'SYSPRINT'
+            'SYSIN'
+            'SYSLIB'
+            'SYSPUNCH'
+            'SYSLIN'
+            'SYSADATA'
+            'SYSXMLSD'
+            'SYSDEBUG'
+          )
+        DDSQL( '' )
+        DECIMAL(
+                 NOCHECKFLOAT
+                 NOFOFLONADD
+                 FOFLONASGN
+                 NOFOFLONDIV
+                 NOFOFLONMULT
+                 NOFORCEDSIGN
+                 NOTRUNCFLOAT
+               )
+      NODECOMP
+        DEFAULT(
+                 IBM
+                 ALIGNED
+                 EBCDIC
+                 ASSIGNABLE
+                 BIN1ARG
+                 BYADDR
+                 NONCONNECTED
+                 DESCLOCATOR
+                 DESCRIPTOR
+                 DUMMY( ALIGNED )
+                 E( HEXADEC )
+                 EVENDEC
+                 HEXADEC
+                 NOINITFILL
+                 NOINLINE
+                 LAXQUAL
+                 LINKAGE( OPTLINK )
+                 NATIVE
+                 NATIVEADDR
+                 NULLINIT( NULL )
+                 NULL370
+                 NULLSTRADDR
+                 NULLSTRPTR( NULL )
+                 REORDER
+                 ORDINAL( MIN )
+                 NOOVERLAP
+                 NOPADDING
+                 PSEUDODUMMY
+                 NONRECURSIVE
+                 NORETCODE
+                 RETURNS( BYADDR )
+                 SHORT( HEXADEC )
+               )
+        DEPRECATE(
+                   BUILTIN()
+                   ENTRY()
+                   INCLUDE()
+                   VARIABLE()
+                   STMT()
+                 )
+        DEPRECATENEXT(
+                       BUILTIN()
+                       ENTRY()
+                       INCLUDE()
+                       VARIABLE()
+                       STMT()
+                     )
+        DISPLAY( WTO )
+      NODLL
+      NODLLINIT
+      NOEXIT
+        EXPORTALL
+        EXTRN( FULL )
+        FILEREF
+        FLAG( W )
+        FLOAT( NODFP )
+        FLOATINMATH( ASIS )
+      NOGOFF
+      NOGONUMBER
+      NOGRAPHIC
+        HEADER( SOURCE )
+        HGPR( NOPRESERVE )
+      NOIGNORE
+        INCAFTER( PROCESS( "" ) )
+      NOINCDIR
+        INCLUDE
+      NOINITAUTO
+      NOINITBASED
+      NOINITCTL
+      NOINITSTATIC
+      NOINSOURCE
+      NOINTERRUPT
+        JSON(
+              CASE( UPPER )
+              GET( HEEDCASE )
+              TRIMR
+            )
+        LANGLVL( OS )
+        LIMITS(
+                EXTNAME( 7 )
+                FIXEDBIN( 31, 63 )
+                FIXEDDEC( 15, 31 )
+                NAME( 100 )
+                STRING( 32K )
+              )
+        LINECOUNT( 31415 )
+      NOLINEDIR
+      NOLIST
+        LISTVIEW( SOURCE )
+        LP( 32 )
+      NOMACRO
+      NOMAP
+        MARGINI( ' ' )
+        MARGINS( 2, 72 )
+        MAXBRANCH( 2000 )
+        MAXGEN( 100000 )
+        MAXINIT( 65536 )
+        MAXMEM( 1048576 )
+        MAXMSG( W 250 )
+        MAXNEST(
+                 BLOCK( 17 )
+                 DO( 17 )
+                 IF( 17 )
+               )
+        MAXRUNONIF( 10 )
+        MAXSTMT( 4096, 8192 )
+        MAXTEMP( 50000 )
+      NOMDECK
+      NOMSGSUMMARY
+      NONAME
+        NAMES( '@#$' '@#$' )
+        NATLANG( ENU )
+      NONEST
+        NOT( '¬' )
+      NONULLDATE
+        OBJECT
+      NOOFFSET
+        OFFSETSIZE( 4 )
+      NOONSNAP
+        OPTIMIZE( 0 )
+   +    OPTIONS
+        OR( '|' )
+      NOPP
+      NOPPCICS
+      NOPPINCLUDE
+        PPLIST( KEEP )
+      NOPPMACRO
+      NOPPSQL
+      NOPPTRACE
+        PRECTYPE( ANS )
+        PREFIX(
+                NOCONFORMANCE
+                CONVERSION
+                FIXEDOVERFLOW
+                INVALIDOP
+                OVERFLOW
+                NOSIZE
+                NOSTRINGRANGE
+                NOSTRINGSIZE
+                NOSUBSCRIPTRANGE
+                UNDERFLOW
+                ZERODIVIDE
+              )
+      NOPROCEED( S )
+        PROCESS( DELETE )
+        QUOTE( '"' )
+        REDUCE
+      NORENT
+        RESEXP
+        RESPECT(  )
+        RTCHECK( NONULLPTR )
+        RULES(
+               IBM
+               BYNAME
+               COMPLEX
+               CONTROLLED
+               NODECSIZE
+               ELSEIF
+               EVENDEC
+               GOTO
+               GLOBAL
+               GLOBALDO
+               NOLAXBIF
+               LAXCONV
+               NOLAXCTL
+   +           LAXDCL
+               NOLAXDEF
+               LAXENTRY
+               LAXEXPORTS
+               LAXFIELDS
+               NOLAXIF
+               LAXINOUT
+               LAXINTERFACE
+               LAXLINK
+               LAXMARGINS
+               LAXNESTED
+               LAXOPTIONAL
+               LAXPACKAGE
+               LAXPARMS
+               LAXPUNC
+               LAXQUAL
+               LAXRETURN
+               NOLAXSCALE( LOOSE, ALL )
+               LAXSEMI
+               LAXSTG
+               LAXSTMT
+               NOLAXSTRZ
+               NOMULTICLOSE
+               MULTIENTRY
+               MULTIEXIT
+               MULTISEMI
+               PADDING
+               PROCENDONLY
+               RECURSIVE
+               SELFASSIGN
+               UNREF
+               UNREFBASED
+               UNREFCTL
+               UNREFDEFINED
+               UNREFENTRY
+               UNREFFILE
+               UNREFSTATIC
+               UNSET
+               YY
+             )
+      NOSEMANTIC( S )
+      NOSERVICE
+   +    SOURCE
+        SPILL( 512 )
+        STATIC( SHORT )
+      NOSTDSYS
+      NOSTMT
+      NOSTORAGE
+        STRINGOFGRAPHIC( GRAPHIC )
+      NOSYNTAX( S )
+        SYSPARM( '' )
+        SYSTEM( MVS )
+      NOTEST
+        UNROLL( AUTO )
+        USAGE(
+               HEX( SIZE )
+               REGEX( RESET )
+               ROUND( IBM )
+               SUBSTR( STRICT )
+               UNSPEC( IBM )
+               UUID( UPPER )
+               VALIDDATE( LOOSE )
+             )
+        WIDECHAR( BIGENDIAN )
+        WINDOW( 1950 )
+        WRITABLE
+        XINFO(
+               NODEF
+               NOMSG
+               NOSYM
+               NOSYN
+               NOXML
+             )
+        XML(
+             CASE( UPPER )
+             XMLATTR( APOSTROPHE )
+           )
+      NOXREF
+15655-PL6  IBM(R) Enterprise PL/I for z/OS    CALC: PROCEDURE(X$) OPTIONS (MAIN);               2024.07.18 06:05:10   Page     2
