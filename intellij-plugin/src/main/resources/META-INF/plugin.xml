@@ -1,0 +1,51 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+  <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+  <id>org.zowe.pli</id>
+
+  <!-- Public plugin name should be written in Title Case.
+       Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+  <name>Zowe™ PL/I Language Support</name>
+
+  <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+  <vendor email="zowe.robot@gmail.com" url="https://github.com/zowe/zowe-pli-language-support">Zowe</vendor>
+
+  <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+       Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+       Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+  <description><![CDATA[
+    Zowe™ PL/I Language Support. Provides TextMate syntax highlighting and LSP support for the IBM Enterprise PL/I
+  ]]></description>
+
+  <!-- Product and plugin compatibility requirements.
+       Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.redhat.devtools.lsp4ij</depends>
+  <depends>org.jetbrains.plugins.textmate</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup displayType="STICKY_BALLOON"
+                       id="org.zowe.pli.PliNotificationId"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+    <server id="org.zowe.pli.lsp.PliLanguageServerFactory"
+            name="PL/I Language Server"
+            factoryClass="org.zowe.pli.lsp.PliLanguageServerFactory">
+      <description><![CDATA[
+        PL/I Language Server. Provided as a Node.js application.
+        ]]>
+      </description>
+    </server>
+
+    <fileNamePatternMapping patterns="*.pl1;*.PLI"
+                            serverId="org.zowe.pli.lsp.PliLanguageServerFactory"
+                            languageId="pli"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="org.zowe.pli.PliProjectManagerListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </projectListeners>
+
+</idea-plugin>
