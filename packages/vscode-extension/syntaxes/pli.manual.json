@@ -1,0 +1,79 @@
+{
+  "name": "pli",
+  "scopeName": "source.pli",
+  "fileTypes": [
+    ".pli"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "name": "string.quoted.single.pli",
+      "begin": "'",
+      "end": "'",
+      "patterns": [
+        {
+          "include": "#string-character-escape"
+        }
+      ]
+    },
+    {
+      "name": "string.double.single.pli",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "include": "#string-character-escape"
+        }
+      ]
+    },
+    {
+      "name": "string.exec.pli",
+      "match": "(?<=[eE][xX][eE][cC]\\s*)[a-zA-Z]+\\s[^;]*"
+    },
+    {
+      "name": "constant.numeric.decimal.pli",
+      "match": "([0-9][0-9_]*(\\.[0-9_]+)?)|(\\.[0-9_]+)([ESDQ][-+]?[0-9]+)?([bB]|[iI])*"
+    },
+    {
+      "name": "entity.other.pli",
+      "match": "[a-zA-Z_][a-zA-Z0-9_]*"
+    }
+  ],
+  "repository": {
+    "string-character-escape": {
+      "name": "constant.character.escape.lox",
+      "match": "\\\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\\{[0-9A-Fa-f]+\\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)"
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.pli",
+          "begin": "/\\*",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pli"
+            }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pli"
+            }
+          }
+        },
+        {
+          "begin": "//",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.whitespace.comment.leading.pli"
+            }
+          },
+          "end": "(?=$)",
+          "name": "comment.line.pli"
+        }
+      ]
+    }
+  }
+}
