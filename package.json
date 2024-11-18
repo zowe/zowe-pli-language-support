@@ -1,0 +1,31 @@
+{
+    "name": "pl-one-workspace",
+    "description": "Base workspace package",
+    "version": "0.0.1",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "watch": "tsc -b tsconfig.build.json --watch",
+        "build": "pnpm langium:generate && tsc -b tsconfig.build.json && pnpm --dir packages/vscode-extension build && node ./scripts/merge-tmlanguage.mjs",
+        "build:clean": "pnpm clean && pnpm build",
+        "lint": "eslint src --ext ts",
+        "langium:generate": "pnpm  --dir packages/language langium:generate",
+        "langium:watch": "pnpm --dir packages/language langium:watch",
+        "test": "vitest"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@typescript-eslint/parser": "~7.13.0",
+        "@typescript-eslint/eslint-plugin": "~7.13.0",
+        "eslint": "~8.57.0",
+        "deepmerge": "^1.5.0",
+        "langium": "~3.2.0",
+        "shx": "~0.3.4",
+        "typescript": "~5.4.5",
+        "vitest": "^1.6.0"
+    },
+    "volta": {
+        "node": "18.20.3",
+        "npm": "10.7.0"
+    }
+}

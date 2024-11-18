@@ -1,0 +1,59 @@
+{
+    "name": "pl-one-extension",
+    "description": "The extension specific package",
+    "author": "Zowe",
+    "license": "EPL-2.0",
+    "preview": false,
+    "publisher": "Zowe",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/zowe/zowe-pli-language-support"
+    },
+    "version": "0.0.1",
+    "displayName": "PL/I Language Support",
+    "engines": {
+        "vscode": "^1.67.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "pli",
+            "aliases": ["PL/I", "PLI", "PL1", "PL/1"],
+            "extensions": [".pli"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "pli",
+            "scopeName": "source.pli",
+            "path": "syntaxes/pli.merged.json"
+        }]
+    },
+    "activationEvents": [],
+    "main": "./out/extension/main.cjs",
+    "browser": "./out/extension/main-browser.js",
+    "scripts": {
+        "clean": "shx rm -fr *.tsbuildinfo out",
+        "vscode:prepublish": "npm run build && node esbuild.mjs --minify",
+        "package": "vsce package",
+        "build": "tsc -b tsconfig.json && node esbuild.mjs",
+        "build:clean": "npm run clean && npm run build",
+        "watch": "concurrently -n tsc,esbuild -c blue,yellow \"tsc -b tsconfig.json --watch\" \"node esbuild.mjs --watch\""
+    },
+    "vsce": {
+        "dependencies": false
+    },
+    "dependencies": {
+        "langium": "~3.2.0",
+        "pl-one-language": "workspace:*",
+        "vscode-languageclient": "~9.0.1",
+        "vscode-languageserver": "~9.0.1"
+    },
+    "devDependencies": {
+        "@types/vscode": "~1.67.0",
+        "@vscode/vsce": "^3.0.0",
+        "concurrently": "~8.2.1",
+        "esbuild": "~0.21.5"
+    }
+}
