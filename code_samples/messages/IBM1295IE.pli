@@ -1,0 +1,3 @@
+  TEST: PROCEDURE OPTIONS(MAIN) REORDER;
+    dcl x(-2) fixed bin;  //error: IBM1295IE Sole bound specified is less than 1. An upper bound of 1 is assumed.
+  END TEST;
