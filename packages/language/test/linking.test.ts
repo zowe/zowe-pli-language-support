@@ -9,61 +9,111 @@
  *
  */
 
-import { describe, test } from "vitest";
+import { beforeAll, describe, test } from "vitest";
+import { EmptyFileSystem} from "langium";
+import { ExpectedGoToDefinition, expectGoToDefinition } from "langium/test";
+import { createPliServices } from "../src";
 
-describe("Validating", () => {
-  test("empty test", () => {});
+let services: ReturnType<typeof createPliServices>;
+let gotoDefinition: ReturnType<typeof expectGoToDefinition>;
+
+beforeAll(async () => {
+    services = createPliServices(EmptyFileSystem);
+    const _gotoDefinition = expectGoToDefinition(services.pli);
+
+    /**
+     * Helper function to parse a string of PL/I statements,
+     * wrapping them in a procedure to ensure they are valid
+     */
+    gotoDefinition = (expectedGoToDefinition: ExpectedGoToDefinition) => {
+        const text = ` STARTPR: PROCEDURE OPTIONS (MAIN);
+${expectedGoToDefinition.text}
+ end STARTPR;`;
+
+        return _gotoDefinition({
+            ...expectedGoToDefinition,
+            text
+        })
+    }
+
+    // activate the following if your linking test requires elements from a built-in library, for example
+    await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
 });
-// import { afterEach, beforeAll, describe, expect, test } from "vitest";
-// import { EmptyFileSystem, type LangiumDocument } from "langium";
-// import { expandToString as s } from "langium/generate";
-// import { clearDocuments, parseHelper } from "langium/test";
-// import type { Model } from "pl-one-language";
-// import { createPl1Services, isModel } from "pl-one-language";
-//
-// let services: ReturnType<typeof createPl1Services>;
-// let parse:    ReturnType<typeof parseHelper<Model>>;
-// let document: LangiumDocument<Model> | undefined;
-//
-// beforeAll(async () => {
-//     services = createPl1Services(EmptyFileSystem);
-//     parse = parseHelper<Model>(services.Pl1);
-//
-//     // activate the following if your linking test requires elements from a built-in library, for example
-//     // await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
-// });
-//
-// afterEach(async () => {
-//     document && clearDocuments(services.shared, [ document ]);
-// });
-//
-// describe('Linking tests', () => {
-//
-//     test('linking of greetings', async () => {
-//         document = await parse(`
-//             person Langium
-//             Hello Langium!
-//         `);
-//
-//         expect(
-//             // here we first check for validity of the parsed document object by means of the reusable function
-//             //  'checkDocumentValid()' to sort out (critical) typos first,
-//             // and then evaluate the cross references we're interested in by checking
-//             //  the referenced AST element as well as for a potential error message;
-//             checkDocumentValid(document)
-//                 || document.parseResult.value.greetings.map(g => g.person.ref?.name || g.person.error?.message).join('\n')
-//         ).toBe(s`
-//             Langium
-//         `);
-//     });
-// });
-//
-// function checkDocumentValid(document: LangiumDocument): string | undefined {
-//     return document.parseResult.parserErrors.length && s`
-//         Parser errors:
-//           ${document.parseResult.parserErrors.map(e => e.message).join('\n  ')}
-//     `
-//         || document.parseResult.value === undefined && `ParseResult is 'undefined'.`
-//         || !isModel(document.parseResult.value) && `Root AST object is a ${document.parseResult.value.$type}, expected a 'Model'.`
-//         || undefined;
-// }
+
+describe('Linking tests', () => {
+    describe('Declarations and labels', async () => {
+        const text = `
+ Control: procedure options(main);
+  call <|>A('ok'); // invoke the 'A' subroutine
+ end Control;
+ <|A|>: procedure (VAR1);
+ declare <|VAR1|> char(3);
+ put skip list(V<|>AR1);
+ end <|>A;`;
+
+        test('Must find declared procedure label in CALL', async () => {
+            await gotoDefinition({
+                text: text,
+                index: 0,
+                rangeIndex: 0
+            })
+        });
+
+        test('Must find declared procedure label in END', async () => {
+            await gotoDefinition({
+                text: text,
+                index: 2,
+                rangeIndex: 0
+            })
+        });
+
+        test('Must find declared variable', async () => {
+            await gotoDefinition({
+                text: text,
+                index: 1,
+                rangeIndex: 1
+            })
+        });
+    })
+
+    describe('Qualified names', async () => {
+        const text = `
+0DCL 1  <|TWO_DIM_TABLE|>,
+        2  <|TWO_DIM_TABLE_ENTRY|>               CHAR(32);
+0DCL 1  TABLE_WITH_ARRAY,
+        2  ARRAY_ENTRY(0:1000),
+           3  NAME                          CHAR(32) VARYING,
+           3  <|TYPE#|>                         CHAR(8),
+        2  NON_ARRAY_ENTRY,
+           3  NAME                          CHAR(32) VARYING,
+           3  TYPE#                         CHAR(8);
+                     
+ PUT (<|>TWO_DIM_TABLE);
+ PUT (TWO_DIM_TABLE.<|>TWO_DIM_TABLE_ENTRY);
+ PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|>TYPE#);`;
+
+        test('Must find table name in table', async () => {
+            await gotoDefinition({
+                text: text,
+                index: 0,
+                rangeIndex: 0
+            })
+        })
+
+        test('Must find qualified name in table', async () => {
+            await gotoDefinition({
+                text: text,
+                index: 1,
+                rangeIndex: 1
+            })
+        })
+
+        test('Must find qualified name in array', async () => {
+            await gotoDefinition({
+                text: text,
+                index: 2,
+                rangeIndex: 2
+            })
+        })
+    });
+});
