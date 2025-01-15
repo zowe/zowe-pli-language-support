@@ -41,7 +41,7 @@ ${expectedGoToDefinition.text}
 });
 
 describe('Linking tests', () => {
-    describe('Declarations', async () => {
+    describe('Declarations and labels', async () => {
         const text = `
  Control: procedure options(main);
   call <|>A('ok'); // invoke the 'A' subroutine
@@ -75,4 +75,45 @@ describe('Linking tests', () => {
             })
         });
     })
+
+    describe('Qualified names', async () => {
+        const text = `
+0DCL 1  <|TWO_DIM_TABLE|>,
+        2  <|TWO_DIM_TABLE_ENTRY|>               CHAR(32);
+0DCL 1  TABLE_WITH_ARRAY,
+        2  ARRAY_ENTRY(0:1000),
+           3  NAME                          CHAR(32) VARYING,
+           3  <|TYPE#|>                         CHAR(8),
+        2  NON_ARRAY_ENTRY,
+           3  NAME                          CHAR(32) VARYING,
+           3  TYPE#                         CHAR(8);
+                     
+ PUT (<|>TWO_DIM_TABLE);
+ PUT (TWO_DIM_TABLE.<|>TWO_DIM_TABLE_ENTRY);
+ PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|>TYPE#);`;
+
+        test('Must find table name in table', async () => {
+            await gotoDefinition({
+                text: text,
+                index: 0,
+                rangeIndex: 0
+            })
+        })
+
+        test('Must find qualified name in table', async () => {
+            await gotoDefinition({
+                text: text,
+                index: 1,
+                rangeIndex: 1
+            })
+        })
+
+        test('Must find qualified name in array', async () => {
+            await gotoDefinition({
+                text: text,
+                index: 2,
+                rangeIndex: 2
+            })
+        })
+    });
 });
