@@ -641,14 +641,14 @@ describe("PL/I Parsing tests", () => {
     });
 
     /**
-     * Verifies that numbers like '010101'xn are parsable
+     * Verifies that hex fixed-point constants like '010101'xn (or xu) are parsable
      */
-    // TODO rename this one
-    test('parses xn hex vals', async () => {
+    test('parses xn|xu binary fixed point constants', async () => {
         const doc: LangiumDocument<PliProgram> = await parseStmts(`
  MAINPR: procedure options (main);
     dcl x fixed bin(31) init(0);
     x = '0000ffff'xn;
+    x = '0000ffff'xu;
  end MAINPR;
         `);
         expect(doc.parseResult.lexerErrors).toHaveLength(0);
