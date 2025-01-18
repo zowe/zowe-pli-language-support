@@ -90,7 +90,7 @@ describe('PL/I Parsing tests', () => {
         test('Procedure with call', async () => {
             const doc: LangiumDocument<PliProgram> = await parse(`
  Control: procedure options(main);
-  call A('ok'); // invoke the 'A' subroutine
+  call A('ok!'); // invoke the 'A' subroutine
  end Control;
  A: procedure (VAR1);
  declare VAR1 char(3);
