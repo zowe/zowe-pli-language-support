@@ -507,10 +507,11 @@ DeclaredItem: level=NUMBER? (element=DeclaredVariable | element='*' | '(' items+
 
 type NamedElement = DeclaredVariable | DoType3Variable | ProcedureStatement;
 type NamedType = DefineAliasStatement;
+type OrdinalType = DefineOrdinalStatement;
 
 DeclaredVariable: name=ID;
 
-DeclarationAttribute: InitialAttribute | DateAttribute | HandleAttribute | DefinedAttribute | PictureAttribute | EnvironmentAttribute | DimensionsDataAttribute | ValueAttribute | ValueListFromAttribute | ValueListAttribute | ValueRangeAttribute | ComputationDataAttribute | EntryAttribute | LikeAttribute | TypeAttribute;
+DeclarationAttribute: InitialAttribute | DateAttribute | HandleAttribute | DefinedAttribute | PictureAttribute | EnvironmentAttribute | DimensionsDataAttribute | ValueAttribute | ValueListFromAttribute | ValueListAttribute | ValueRangeAttribute | ComputationDataAttribute | EntryAttribute | LikeAttribute | TypeAttribute | OrdinalTypeAttribute;
 
 DateAttribute: 'DATE' ('(' pattern=STRING_TERM ')')?;
 
@@ -521,6 +522,8 @@ PictureAttribute: ('PICTURE' | 'WIDEPIC' | 'PIC') picture=STRING_TERM?;
 DimensionsDataAttribute: ('DIMENSION' | 'DIM')? dimensions=Dimensions;
 
 TypeAttribute: 'TYPE' (type=[NamedType:ID] | '(' type=[NamedType:ID] ')');
+
+OrdinalTypeAttribute: 'ORDINAL' (type=[OrdinalType:ID] | '(' type=[OrdinalType:ID] ')') byvalue?='BYVALUE';
 
 ComputationDataAttribute: type=DataAttributeType dimensions=Dimensions?;
 
