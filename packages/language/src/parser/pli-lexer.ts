@@ -27,7 +27,7 @@ export class Pl1Lexer implements Lexer {
         this.tokenBuilder = services.parser.TokenBuilder as PliTokenBuilder;
         const vocabulary = this.tokenBuilder.buildTokens(services.Grammar) as TokenType[];
         this.hiddenTokens = vocabulary.filter(v => v.GROUP === 'hidden' || v.GROUP === ChevrotainLexer.SKIPPED);
-        this.normalTokens = vocabulary.filter(v => !this.hiddenTokens.includes(v) && v !== this.percentageToken);
+        this.normalTokens = vocabulary.filter(v => !this.hiddenTokens.includes(v));
     }
     return lines;
   }
