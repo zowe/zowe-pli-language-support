@@ -511,7 +511,7 @@ type OrdinalType = DefineOrdinalStatement;
 
 DeclaredVariable: name=ID;
 
-DeclarationAttribute: InitialAttribute | DateAttribute | HandleAttribute | DefinedAttribute | PictureAttribute | EnvironmentAttribute | DimensionsDataAttribute | ValueAttribute | ValueListFromAttribute | ValueListAttribute | ValueRangeAttribute | ComputationDataAttribute | EntryAttribute | LikeAttribute | TypeAttribute | OrdinalTypeAttribute;
+DeclarationAttribute: InitialAttribute | DateAttribute | HandleAttribute | DefinedAttribute | PictureAttribute | EnvironmentAttribute | DimensionsDataAttribute | ValueAttribute | ValueListFromAttribute | ValueListAttribute | ValueRangeAttribute | ReturnsAttribute | ComputationDataAttribute | EntryAttribute | LikeAttribute | TypeAttribute | OrdinalTypeAttribute;
 
 DateAttribute: 'DATE' ('(' pattern=STRING_TERM ')')?;
 
@@ -523,7 +523,15 @@ DimensionsDataAttribute: ('DIMENSION' | 'DIM')? dimensions=Dimensions;
 
 TypeAttribute: 'TYPE' (type=[NamedType:ID] | '(' type=[NamedType:ID] ')');
 
+// TODO @montymxb Jan. 24th, 2025: This may be too strict w/ regards to byvalue after, I suspect that we can pass much more there
 OrdinalTypeAttribute: 'ORDINAL' (type=[OrdinalType:ID] | '(' type=[OrdinalType:ID] ')') byvalue?='BYVALUE';
+
+/**
+ * Used to specify the attribute of a value that is returned (slightly different from `ReturnsOption`).
+ * Order of contained attributes is not a factor, consider it a set, so duplicates are ignored as well.
+ * All data attrs are valid + aligned/unaligned + non-data attributes BYVALUE/BYADDR, DATE, VALUELIST, and VALUERANGE (see pg. 134 lang-ref 6.1)
+ */
+ReturnsAttribute: 'RETURNS' '(' (attrs+=(ComputationDataAttribute | DateAttribute | ValueListAttribute | ValueRangeAttribute))* ')';
 
 ComputationDataAttribute: type=DataAttributeType dimensions=Dimensions?;
 

@@ -617,8 +617,6 @@ describe("PL/I Parsing tests", () => {
      */
     test('parse returns ordinal by value', async () => {
         const doc: LangiumDocument<PliProgram> = await parseStmts(`
- testpackage: package;
-
  define ordinal day (
     Monday,
     Tuesday,
@@ -629,12 +627,10 @@ describe("PL/I Parsing tests", () => {
     Sunday
  ) prec(15);
 
- /* should be able to parse return w/ ordinal correctly */
+ // should be able to parse return w/ ordinal correctly
  get_day: proc() returns(ordinal day byvalue);
     return( Friday );
  end get_day;
-
- end testpackage;
         `);
         expect(doc.parseResult.lexerErrors).toHaveLength(0);
         expect(doc.parseResult.parserErrors).toHaveLength(0);
@@ -654,4 +650,27 @@ describe("PL/I Parsing tests", () => {
         expect(doc.parseResult.lexerErrors).toHaveLength(0);
         expect(doc.parseResult.parserErrors).toHaveLength(0);
     });
+
+    test("External declaration with returns 'byvalue fixed type'", async () => {
+        const doc: LangiumDocument<PliProgram> = await parseStmts(`
+ MAINPR: procedure options(MAIN);
+ dcl xyz BIN(31);
+ dcl my_external
+        ext('my_external')
+        entry( 
+            pointer byvalue,
+            returns ( fixed byvalue bin(31) )
+        )
+        options ( nodescriptor );
+
+ end MAINPR;
+        `);
+        expect(doc.parseResult.lexerErrors).toHaveLength(0);
+        expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    // TODO @montymxb Jan. 24th, 2025
+    // - test w/ multiple duplicate attrs, should still work
+    // - test w/ different orderings, should also still work
+    // - 
 });
