@@ -40,15 +40,19 @@ import { PliDocumentationProvider } from "./documentation.ts/pli-documentation-p
 import { PliCompletionProvider } from "./lsp/pli-completion-provider.js";
 import { PliIndexManager } from "./workspace/pli-index-manager.js";
 import { PliWorkspaceManager } from "./workspace/pli-workspace-manager.js";
+import { MarginsProcessor, PliMarginsProcessor } from './parser/pli-margins-processor.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
  */
 export type Pl1AddedServices = {
-  validation: {
-    Pl1Validator: Pl1Validator;
-  };
-};
+    validation: {
+        Pl1Validator: Pl1Validator
+    },
+    parser: {
+        MarginsProcessor: MarginsProcessor
+    }
+}
 
 /**
  * Union of Langium default services and your custom services - use this as constructor parameter
@@ -73,6 +77,7 @@ export const PliModule: Module<
     DocumentValidator: (services) => new PliDocumentValidator(services),
   },
   parser: {
+    MarginsProcessor: () => new PliMarginsProcessor(),
     Lexer: (services) => new Pl1Lexer(services),
     TokenBuilder: () => new PliTokenBuilder(),
   },
