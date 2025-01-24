@@ -12,8 +12,3 @@ out/
 *.tsbuildinfo
 *.vsix
 .DS_Store
-
-code-blocks-lang-ref
-code-blocks-prog-guide
-failed-code-blocks
-PLI-course-sample-code
