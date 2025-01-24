@@ -653,9 +653,7 @@ describe("PL/I Parsing tests", () => {
 
     test("External declaration with returns 'byvalue fixed type'", async () => {
         const doc: LangiumDocument<PliProgram> = await parseStmts(`
- dcl xyz BIN(31);
- dcl my_external
-        ext('my_external')
+ dcl my_external ext('my_external')
         entry( 
             pointer byvalue,
             returns ( fixed byvalue bin(31) )
@@ -688,6 +686,17 @@ describe("PL/I Parsing tests", () => {
  return(0);
  end P6;
     `);
+        expect(doc.parseResult.lexerErrors).toHaveLength(0);
+        expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test('align in returns attributes is valid as well', async () => {
+        const doc: LangiumDocument<PliProgram> = await parseStmts(`
+ dcl my_external ext('my_external')
+        entry( 
+            returns ( aligned byvalue bin(7) fixed )
+        );
+        `);
         expect(doc.parseResult.lexerErrors).toHaveLength(0);
         expect(doc.parseResult.parserErrors).toHaveLength(0);
     });
