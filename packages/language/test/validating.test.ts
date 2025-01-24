@@ -9,6 +9,10 @@
  *
  */
 
+// TODO @montymxb Jan. 24th, 2025
+// - test support for alignment attributes, which are mutually exclusive ALIGNED & UNALIGNED (valid in returns attribute context)
+// ex. `xyz: proc returns ( aligned unaligned bit(4) )`
+
 import { describe, test } from "vitest";
 // import { beforeAll, describe, expect, test } from "vitest";
 // import { EmptyFileSystem, type LangiumDocument } from "langium";
