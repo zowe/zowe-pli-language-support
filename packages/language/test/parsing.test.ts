@@ -653,7 +653,6 @@ describe("PL/I Parsing tests", () => {
 
     test("External declaration with returns 'byvalue fixed type'", async () => {
         const doc: LangiumDocument<PliProgram> = await parseStmts(`
- MAINPR: procedure options(MAIN);
  dcl xyz BIN(31);
  dcl my_external
         ext('my_external')
@@ -662,15 +661,34 @@ describe("PL/I Parsing tests", () => {
             returns ( fixed byvalue bin(31) )
         )
         options ( nodescriptor );
-
- end MAINPR;
         `);
         expect(doc.parseResult.lexerErrors).toHaveLength(0);
         expect(doc.parseResult.parserErrors).toHaveLength(0);
     });
 
-    // TODO @montymxb Jan. 24th, 2025
-    // - test w/ multiple duplicate attrs, should still work
-    // - test w/ different orderings, should also still work
-    // - 
+    test('Procedures w/ aligned & unaligned attributes', async () => {
+        // regular parseStmts but with a body that has a procedure w/ align & unaligned attributes
+        const doc: LangiumDocument<PliProgram> = await parseStmts(`
+ P1: proc returns( bit(4) aligned );
+ return(0);
+ end P1;
+ P2: proc returns( bit(4) unaligned );
+ return(0);
+ end P2;
+ P3: proc returns( bit(4) aligned aligned );
+ return(0);
+ end P3;
+ P4: proc returns( bit(4) unaligned unaligned );
+ return(0);
+ end P4;
+ P5: proc returns( aligned bit(4) );
+ return(0);
+ end P5;
+ P6: proc returns( unaligned bit(4) unaligned );
+ return(0);
+ end P6;
+    `);
+        expect(doc.parseResult.lexerErrors).toHaveLength(0);
+        expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
 });
