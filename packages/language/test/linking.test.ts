@@ -11,10 +11,8 @@
 
 import { describe, test } from "vitest";
 
-describe('Validating', () => {
-
-    test('empty test', () => {
-    });
+describe("Validating", () => {
+  test("empty test", () => {});
 });
 // import { afterEach, beforeAll, describe, expect, test } from "vitest";
 // import { EmptyFileSystem, type LangiumDocument } from "langium";
@@ -22,31 +20,31 @@ describe('Validating', () => {
 // import { clearDocuments, parseHelper } from "langium/test";
 // import type { Model } from "pl-one-language";
 // import { createPl1Services, isModel } from "pl-one-language";
-// 
+//
 // let services: ReturnType<typeof createPl1Services>;
 // let parse:    ReturnType<typeof parseHelper<Model>>;
 // let document: LangiumDocument<Model> | undefined;
-// 
+//
 // beforeAll(async () => {
 //     services = createPl1Services(EmptyFileSystem);
 //     parse = parseHelper<Model>(services.Pl1);
-// 
+//
 //     // activate the following if your linking test requires elements from a built-in library, for example
 //     // await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
 // });
-// 
+//
 // afterEach(async () => {
 //     document && clearDocuments(services.shared, [ document ]);
 // });
-// 
+//
 // describe('Linking tests', () => {
-// 
+//
 //     test('linking of greetings', async () => {
 //         document = await parse(`
 //             person Langium
 //             Hello Langium!
 //         `);
-// 
+//
 //         expect(
 //             // here we first check for validity of the parsed document object by means of the reusable function
 //             //  'checkDocumentValid()' to sort out (critical) typos first,
@@ -59,7 +57,7 @@ describe('Validating', () => {
 //         `);
 //     });
 // });
-// 
+//
 // function checkDocumentValid(document: LangiumDocument): string | undefined {
 //     return document.parseResult.parserErrors.length && s`
 //         Parser errors:

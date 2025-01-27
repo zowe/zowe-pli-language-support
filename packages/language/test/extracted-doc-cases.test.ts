@@ -13,9 +13,9 @@
  * Auto-extracted cases from the:
  * - PL/I Language Reference v6.1
  * - PL/I Programming Guide v6.1
- * 
+ *
  * Each case is tagged with a bit of auto-extracted context + a comment referencing the sourcing doc & page number
- * 
+ *
  * All cases have been run through the PL/I compiler and passed, and are now being run through the Langium parser to ensure they pass here as well
  */
 
@@ -29,39 +29,40 @@ let parse: ReturnType<typeof parseHelper<PliProgram>>;
 let parseStmts: ReturnType<typeof parseHelper<PliProgram>>;
 
 beforeAll(async () => {
-    services = createPliServices(EmptyFileSystem);
-    parse = parseHelper<PliProgram>(services.pli);
+  services = createPliServices(EmptyFileSystem);
+  parse = parseHelper<PliProgram>(services.pli);
 
-    /**
-     * Helper function to parse a string of PL/I statements,
-     * wrapping them in a procedure to ensure they are valid
-     */
-    parseStmts = (input: string) => {
-        return parse(` STARTPR: PROCEDURE OPTIONS (MAIN);
+  /**
+   * Helper function to parse a string of PL/I statements,
+   * wrapping them in a procedure to ensure they are valid
+   */
+  parseStmts = (input: string) => {
+    return parse(` STARTPR: PROCEDURE OPTIONS (MAIN);
 ${input}
  end STARTPR;`);
-    }
+  };
 
-    // activate the following if your linking test requires elements from a built-in library, for example
-    await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
+  // activate the following if your linking test requires elements from a built-in library, for example
+  await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
 });
 
-test('Block block-492.pli', async () => {
-    // Context:
-    // 
-    // control. It allows multiple ON-units to get control for the same condition.
-    // The processing continues as if the ON-unit executing the RESIGNAL did not exist and was never given
-    // condition to get control.
-    // The RESIGNAL statement terminates the current ON-unit and allows another ON-unit for the same
-    // RESIGNAL statement
-    // attribute.
-    // Is any condition described in Chapter 16, “Conditions,” on page 349 or defined with the CONDITION
-    // condition
-    // If the specified condition is disabled, the SIGNAL statement becomes equivalent to a null statement.
-    // the condition. The established action is taken unless the condition is disabled.
-    // 
+test("Block block-492.pli", async () => {
+  // Context:
+  //
+  // control. It allows multiple ON-units to get control for the same condition.
+  // The processing continues as if the ON-unit executing the RESIGNAL did not exist and was never given
+  // condition to get control.
+  // The RESIGNAL statement terminates the current ON-unit and allows another ON-unit for the same
+  // RESIGNAL statement
+  // attribute.
+  // Is any condition described in Chapter 16, “Conditions,” on page 349 or defined with the CONDITION
+  // condition
+  // If the specified condition is disabled, the SIGNAL statement becomes equivalent to a null statement.
+  // the condition. The established action is taken unless the condition is disabled.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.398 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.398 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -69,26 +70,27 @@ test('Block block-492.pli', async () => {
  ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-508.pli', async () => {
-    // Context:
-    // 
-    // Example
-    // A reference with the AREA attribute
-    // x
-    // 407
-    // Chapter 18. Built-in functions, pseudovariables, and subroutines  
-    // ATAND
-    // .
-    // x
-    // obtained from the area 
-    //  value that indicates the size of the largest single allocation that can be
-    // 
+test("Block block-508.pli", async () => {
+  // Context:
+  //
+  // Example
+  // A reference with the AREA attribute
+  // x
+  // 407
+  // Chapter 18. Built-in functions, pseudovariables, and subroutines
+  // ATAND
+  // .
+  // x
+  // obtained from the area
+  //  value that indicates the size of the largest single allocation that can be
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.459 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.459 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -103,26 +105,27 @@ test('Block block-508.pli', async () => {
    Alloc C9 in(Uarea);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-400.pli', async () => {
-    // Context:
-    // 
-    // both specify null ON-units for the same file.
-    // L2
-    //  and 
-    // L1
-    // “ON-units for file variables” on page 345). In the following example, the statements labelled 
-    // On-units can be established for a file constant through a file variable that represents its value (see
-    // • As the expression in a RETURN statement.
-    // • To qualify an input/output condition for ON, SIGNAL, and REVERT statements
-    // • As an argument to be passed to a function or subroutine
-    // • In a FILE or COPY option
-    // 
+test("Block block-400.pli", async () => {
+  // Context:
+  //
+  // both specify null ON-units for the same file.
+  // L2
+  //  and
+  // L1
+  // “ON-units for file variables” on page 345). In the following example, the statements labelled
+  // On-units can be established for a file constant through a file variable that represents its value (see
+  // • As the expression in a RETURN statement.
+  // • To qualify an input/output condition for ON, SIGNAL, and REVERT statements
+  // • As an argument to be passed to a function or subroutine
+  // • In a FILE or COPY option
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.331 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.331 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -133,52 +136,54 @@ test('Block block-400.pli', async () => {
    L2:  on endfile(F);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-204.pli', async () => {
-    // Context:
-    // 
-    // "would be the same as this longer declare:
-    // func
-    // The declare for the entry "
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 180
-    // Assignments to UNIONs
-    // description, the member names are not copied. For example, the following declares are valid:
-    // The LIKE attribute is supported in ENTRY descriptions and in parameter declarations. If used in an ENTRY
-    // name with the LIKE attribute.
-    // follows the object variable in the LIKE attribute must be equal to or less than the level-number of the
-    // 
+test("Block block-204.pli", async () => {
+  // Context:
+  //
+  // "would be the same as this longer declare:
+  // func
+  // The declare for the entry "
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 180
+  // Assignments to UNIONs
+  // description, the member names are not copied. For example, the following declares are valid:
+  // The LIKE attribute is supported in ENTRY descriptions and in parameter declarations. If used in an ENTRY
+  // name with the LIKE attribute.
+  // follows the object variable in the LIKE attribute must be equal to or less than the level-number of the
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.232 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.232 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
  dcl func entry( 1, 2 char(20) var, 2 char(10) var, 2 char(30) var );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-658.pli', async () => {
-    // Context:
-    // 
-    // which is a structure declaration:
-    // For example, assume that PAYRL is a member of the data set SYSLIB and contains the following text,
-    // compile-time option.)
-    // %INCLUDE, execution of the preprocessor can be omitted. (This necessitates the use of the INCLUDE
-    // If the preprocessor input and the included text contain no preprocessor statements other than
-    // portion of the preprocessor input.
-    // For example, it is not allowable to have half of a %IF statement in an included text and half in another
-    // Preprocessor statements, DO-groups, SELECT-groups and procedures in included text must be complete.
-    // target label in the %GOTO statement must not precede the %GOTO.
-    // A %GO TO statement in included text can transfer control only to a point within the same include file. The
-    // 
+test("Block block-658.pli", async () => {
+  // Context:
+  //
+  // which is a structure declaration:
+  // For example, assume that PAYRL is a member of the data set SYSLIB and contains the following text,
+  // compile-time option.)
+  // %INCLUDE, execution of the preprocessor can be omitted. (This necessitates the use of the INCLUDE
+  // If the preprocessor input and the included text contain no preprocessor statements other than
+  // portion of the preprocessor input.
+  // For example, it is not allowable to have half of a %IF statement in an included text and half in another
+  // Preprocessor statements, DO-groups, SELECT-groups and procedures in included text must be complete.
+  // target label in the %GOTO statement must not precede the %GOTO.
+  // A %GO TO statement in included text can transfer control only to a point within the same include file. The
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.670 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.670 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -192,26 +197,27 @@ test('Block block-658.pli', async () => {
            2 YTD LIKE CURR;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-297.pli', async () => {
-    // Context:
-    // 
-    // is encountered or until a %POP directive that restores the previous %PRINT directive is encountered.
-    // The %NOPRINT directive causes printing of the source listings to be suspended until a %PRINT directive
-    // %NOPRINT directive
-    // oriented data transmission,” on page 289.
-    // For details about the LOCATE statement, see “LOCATE statement” on page 291 in Chapter 11, “Record-
-    // BUFFERED file for locate mode processing.
-    // to the location of the next record. The LOCATE statement can be used only with an OUTPUT SEQUENTIAL
-    // The LOCATE statement allocates storage within an output buffer for a based variable and sets a pointer
-    // LOCATE statement
-    // The %LINE directive is invalid unless the LINEDIR compiler option is in effect.
-    // 
+test("Block block-297.pli", async () => {
+  // Context:
+  //
+  // is encountered or until a %POP directive that restores the previous %PRINT directive is encountered.
+  // The %NOPRINT directive causes printing of the source listings to be suspended until a %PRINT directive
+  // %NOPRINT directive
+  // oriented data transmission,” on page 289.
+  // For details about the LOCATE statement, see “LOCATE statement” on page 291 in Chapter 11, “Record-
+  // BUFFERED file for locate mode processing.
+  // to the location of the next record. The LOCATE statement can be used only with an OUTPUT SEQUENTIAL
+  // The LOCATE statement allocates storage within an output buffer for a based variable and sets a pointer
+  // LOCATE statement
+  // The %LINE directive is invalid unless the LINEDIR compiler option is in effect.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.278 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.278 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -219,26 +225,27 @@ test('Block block-297.pli', async () => {
  ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-477.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    // Specifies the currency symbol.
-    // currency symbol
-    // type of sign character can appear in each field.
-    // currency symbol) specifies a currency symbol in the character value of numeric character data. Only one
-    // The picture characters S, +, and – specify signs in numeric character data. The picture character $ (or the
-    // Using signs and currency symbols
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 334
-    // Currency symbols
-    // 
+test("Block block-477.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  // Specifies the currency symbol.
+  // currency symbol
+  // type of sign character can appear in each field.
+  // currency symbol) specifies a currency symbol in the character value of numeric character data. Only one
+  // The picture characters S, +, and – specify signs in numeric character data. The picture character $ (or the
+  // Using signs and currency symbols
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 334
+  // Currency symbols
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.386 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.386 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -246,26 +253,27 @@ test('Block block-477.pli', async () => {
    Price = 12.45;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-610.pli', async () => {
-    // Context:
-    // 
-    // Example
-    // 551
-    // Chapter 18. Built-in functions, pseudovariables, and subroutines  
-    // SINH
-    //  have the UNALIGNED attribute.
-    // x
-    // • All other elements in 
-    //  with the NONVARYING and BIT attributes have the ALIGNED attribute.
-    // x
-    // • Elements in 
-    // 
+test("Block block-610.pli", async () => {
+  // Context:
+  //
+  // Example
+  // 551
+  // Chapter 18. Built-in functions, pseudovariables, and subroutines
+  // SINH
+  //  have the UNALIGNED attribute.
+  // x
+  // • All other elements in
+  //  with the NONVARYING and BIT attributes have the ALIGNED attribute.
+  // x
+  // • Elements in
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.603 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.603 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -280,26 +288,27 @@ test('Block block-610.pli', async () => {
    Stg = currentsize (Stg);           /* 4  bytes */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-278.pli', async () => {
-    // Context:
-    // 
-    // UPTHRU and DOWNTHRU are particularly useful with ordinals. Consider the following example:
-    // Similarly, the following loop avoids the problem of decrementing an unsigned value equal to zero:
-    // FIXEDOVERFLOW condition would not be raised by the following loop:
-    // updated; this can be very useful when there is no value after the terminating value. For instance, the
-    // When the UPTHRU option is used, the reference is compared to the terminating value before being
-    //  has the value 5:
-    // i
-    // In the following example, the do-group executes 5 times and at the end of the loop 
-    // terminating value.
-    // The UPTHRU and DOWNTHRU options make successive executions of the do-group dependent upon the
-    // 
+test("Block block-278.pli", async () => {
+  // Context:
+  //
+  // UPTHRU and DOWNTHRU are particularly useful with ordinals. Consider the following example:
+  // Similarly, the following loop avoids the problem of decrementing an unsigned value equal to zero:
+  // FIXEDOVERFLOW condition would not be raised by the following loop:
+  // updated; this can be very useful when there is no value after the terminating value. For instance, the
+  // When the UPTHRU option is used, the reference is compared to the terminating value before being
+  //  has the value 5:
+  // i
+  // In the following example, the do-group executes 5 times and at the end of the loop
+  // terminating value.
+  // The UPTHRU and DOWNTHRU options make successive executions of the do-group dependent upon the
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.270 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.270 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -312,52 +321,54 @@ test('Block block-278.pli', async () => {
                           Violet);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-184.pli', async () => {
-    // Context:
-    // 
-    // precision:
-    // However, the following statement specifies both the FIXED BINARY attribute as a default and the
-    // BINARY:
-    // For example, the following statement specifies precision for identifiers already known to be FIXED
-    // precision for FIXED DECIMAL names is to be (8,3).
-    //  influenced by the default statement, because this statement specifies only that the default
-    // not
-    // It is 
-    // If it is not declared explicitly, I is given the language-specified default attributes FIXED BINARY(15,0).
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 
+test("Block block-184.pli", async () => {
+  // Context:
+  //
+  // precision:
+  // However, the following statement specifies both the FIXED BINARY attribute as a default and the
+  // BINARY:
+  // For example, the following statement specifies precision for identifiers already known to be FIXED
+  // precision for FIXED DECIMAL names is to be (8,3).
+  //  influenced by the default statement, because this statement specifies only that the default
+  // not
+  // It is
+  // If it is not declared explicitly, I is given the language-specified default attributes FIXED BINARY(15,0).
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.222 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.222 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
  DFT RANGE(*) FIXED BINARY VALUE(FIXED BINARY(31));
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-129.pli', async () => {
-    // Context:
-    // 
-    // To return from a subroutine, the RETURN statement syntax is as follows:
-    // Return from a subroutine
-    // of course).
-    // A procedure with the RETURNS option must contains at least one RETURN statement (with an expression,
-    // option.
-    // Conversely, a RETURN statement with an expression is not valid in a procedure without the RETURNS
-    // A RETURN statement without an expression is not valid in a procedure with the RETURNS option.
-    // The RETURN statement with an expression should not be used within a procedure with OPTIONS(MAIN).
-    // immediately following the invocation reference.
-    // the RETURN statement and returns control to the invoking procedure. Control is returned to the point
-    // 
+test("Block block-129.pli", async () => {
+  // Context:
+  //
+  // To return from a subroutine, the RETURN statement syntax is as follows:
+  // Return from a subroutine
+  // of course).
+  // A procedure with the RETURNS option must contains at least one RETURN statement (with an expression,
+  // option.
+  // Conversely, a RETURN statement with an expression is not valid in a procedure without the RETURNS
+  // A RETURN statement without an expression is not valid in a procedure with the RETURNS option.
+  // The RETURN statement with an expression should not be used within a procedure with OPTIONS(MAIN).
+  // immediately following the invocation reference.
+  // the RETURN statement and returns control to the invoking procedure. Control is returned to the point
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.175 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.175 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -365,26 +376,27 @@ test('Block block-129.pli', async () => {
  ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-689.pli', async () => {
-    // Context:
-    // 
-    // Upper limits
-    // Lower limits
-    // (continued)
-    // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 632
-    // Limits
-    // Upper limits
-    // Lower limits
-    // (continued)
-    // 
+test("Block block-689.pli", async () => {
+  // Context:
+  //
+  // Upper limits
+  // Lower limits
+  // (continued)
+  // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 632
+  // Limits
+  // Upper limits
+  // Lower limits
+  // (continued)
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.684 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.684 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -492,26 +504,27 @@ test('Block block-689.pli', async () => {
         ) );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-688.pli', async () => {
-    // Context:
-    // 
-    // Upper limits
-    // Lower limits
-    // (continued)
-    // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
-    // 631
-    // Appendix A. Limits  
-    // Limits
-    // Upper limits
-    // Lower limits
-    // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
-    // 
+test("Block block-688.pli", async () => {
+  // Context:
+  //
+  // Upper limits
+  // Lower limits
+  // (continued)
+  // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
+  // 631
+  // Appendix A. Limits
+  // Limits
+  // Upper limits
+  // Lower limits
+  // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.683 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.683 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -617,26 +630,27 @@ test('Block block-688.pli', async () => {
         ) );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-68.pli', async () => {
-    // Context:
-    // 
-    // them separately. Consider the following example:
-    // necessarily go through more than one. To understand the conversion rules, it is convenient to consider
-    // More than one conversion might be required for a particular operation. The implementation does not
-    // LIMITS(FIXEDDEC(N1,N2)).
-    //  is the maximum precision for FIXED DECIMAL. This is the value N2 from the compiler option
-    //  N
-    // •
-    // LIMITS(FIXEDBIN(M1,M2)).
-    //  is the maximum precision for FIXED BINARY. This is the value M2 from the compiler option
-    //  M
-    // 
+test("Block block-68.pli", async () => {
+  // Context:
+  //
+  // them separately. Consider the following example:
+  // necessarily go through more than one. To understand the conversion rules, it is convenient to consider
+  // More than one conversion might be required for a particular operation. The implementation does not
+  // LIMITS(FIXEDDEC(N1,N2)).
+  //  is the maximum precision for FIXED DECIMAL. This is the value N2 from the compiler option
+  //  N
+  // •
+  // LIMITS(FIXEDBIN(M1,M2)).
+  //  is the maximum precision for FIXED BINARY. This is the value M2 from the compiler option
+  //  M
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.127 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.127 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -645,26 +659,27 @@ test('Block block-68.pli', async () => {
    B = A;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-142.pli', async () => {
-    // Context:
-    // 
-    // the parent structure.
-    // parent structure contains a handle to the child structure, but the child structure also contains a handle to
-    // structure that also contains a handle to the first structure. For instance, in the following example, the
-    // Unspecified structure definitions are useful when a structure definition contains a handle to a second
-    // specify its members.
-    // • An unspecified structure can also be the subject of a later DEFINE STRUCTURE statement that does
-    // course, cannot be dereferenced either.
-    // • An unspecified structure cannot be dereferenced, but it can be used to declare a HANDLE which, of
-    // its members defines an "unspecified structure".
-    // A DEFINE STRUCTURE statement that merely names the structure to be defined without specifying any of
-    // 
+test("Block block-142.pli", async () => {
+  // Context:
+  //
+  // the parent structure.
+  // parent structure contains a handle to the child structure, but the child structure also contains a handle to
+  // structure that also contains a handle to the first structure. For instance, in the following example, the
+  // Unspecified structure definitions are useful when a structure definition contains a handle to a second
+  // specify its members.
+  // • An unspecified structure can also be the subject of a later DEFINE STRUCTURE statement that does
+  // course, cannot be dereferenced either.
+  // • An unspecified structure cannot be dereferenced, but it can be used to declare a HANDLE which, of
+  // its members defines an "unspecified structure".
+  // A DEFINE STRUCTURE statement that merely names the structure to be defined without specifying any of
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.192 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.192 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -680,78 +695,81 @@ test('Block block-142.pli', async () => {
        2 child_data    fixed bin(31);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-21.pli', async () => {
-    // Context:
-    // 
-    // of 16 binary digits.
-    //  represents binary floating-point data with a precision
-    // S
-    // For example, in the following DECLARE statement, 
-    // The data attributes for declaring binary floating-point variables are BINARY and FLOAT.
-    // Binary floating-point data
-    // (4,4)
-    // .0012
-    // (4,0)
-    // 5280
-    // 
+test("Block block-21.pli", async () => {
+  // Context:
+  //
+  // of 16 binary digits.
+  //  represents binary floating-point data with a precision
+  // S
+  // For example, in the following DECLARE statement,
+  // The data attributes for declaring binary floating-point variables are BINARY and FLOAT.
+  // Binary floating-point data
+  // (4,4)
+  // .0012
+  // (4,0)
+  // 5280
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.78 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.78 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    declare S binary float (16);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-20.pli', async () => {
-    // Context:
-    // 
-    //  represents fixed-point data of 3 digits, 2 of which are fractional.
-    // D
-    // The following example specifies that 
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 26
-    // XN (hex) binary constant
-    // range -9999999*100 - 9999999*100, in increments of 100.
-    //  holds 7 digits in the
-    // C
-    //  has a scaling factor of -2. This means that 
-    // 
+test("Block block-20.pli", async () => {
+  // Context:
+  //
+  //  represents fixed-point data of 3 digits, 2 of which are fractional.
+  // D
+  // The following example specifies that
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 26
+  // XN (hex) binary constant
+  // range -9999999*100 - 9999999*100, in increments of 100.
+  //  holds 7 digits in the
+  // C
+  //  has a scaling factor of -2. This means that
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.78 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.78 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    declare D decimal fixed real(3,2);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-389.pli', async () => {
-    // Context:
-    // 
-    // Combined with DIMACROSS, it can become even easier to add elements to this declaration:
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 270
-    // DEFINED and POSITION
-    // Using INITACROSS, you can simplify this declare by writing it as:
-    // For example, consider the declaration:
-    // set of initial values for a structure element in the array.
-    // attribute specifies a series of comma lists of expressions where each comma list in turn specifies the
-    // members are scalars in a way that makes it easy to add or delete elements to those arrays. The
-    // The INITACROSS attribute helps initialize one-dimensional arrays of structures where all the structure
-    // 
+test("Block block-389.pli", async () => {
+  // Context:
+  //
+  // Combined with DIMACROSS, it can become even easier to add elements to this declaration:
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 270
+  // DEFINED and POSITION
+  // Using INITACROSS, you can simplify this declare by writing it as:
+  // For example, consider the declaration:
+  // set of initial values for a structure element in the array.
+  // attribute specifies a series of comma lists of expressions where each comma list in turn specifies the
+  // members are scalars in a way that makes it easy to add or delete elements to those arrays. The
+  // The INITACROSS attribute helps initialize one-dimensional arrays of structures where all the structure
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.322 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.322 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -766,52 +784,54 @@ test('Block block-389.pli', async () => {
                 ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-212.pli', async () => {
-    // Context:
-    // 
-    // This example is based on the following declaration:
-    // This example illustrates the difference between the INDFOR attribute and the LIKE attribute.
-    // Example
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 182
-    // Assignments to UNIONs
-    // the INDFOR attribute is expanded only after all INDFOR attributes have been resolved.
-    // UNALIGNED attributes are applied to the contained elements of the INDFOR object variable. However,
-    // The INDFOR attribute is expanded before the defaults are applied and before the ALIGNED and
-    // attributes are expanded.
-    // 
+test("Block block-212.pli", async () => {
+  // Context:
+  //
+  // This example is based on the following declaration:
+  // This example illustrates the difference between the INDFOR attribute and the LIKE attribute.
+  // Example
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 182
+  // Assignments to UNIONs
+  // the INDFOR attribute is expanded only after all INDFOR attributes have been resolved.
+  // UNALIGNED attributes are applied to the contained elements of the INDFOR object variable. However,
+  // The INDFOR attribute is expanded before the defaults are applied and before the ALIGNED and
+  // attributes are expanded.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.234 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.234 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
                  dcl 1 a, 2 b char(8), 2 c fixed dec(5,0);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-149.pli', async () => {
-    // Context:
-    // 
-    //  is not.
-    // Y
-    //  is a valid reference, but 
-    // B
-    // For example, given the following declares and definitions, 
-    // cannot be referenced by themselves.
-    // names in a typical untyped structure, the names in a typed structure form their own “name space” and
-    // You reference a member of a typed structure using the . operator or a handle with the => operator. Unlike
-    // Typed structure qualification
-    // Example
-    // 
+test("Block block-149.pli", async () => {
+  // Context:
+  //
+  //  is not.
+  // Y
+  //  is a valid reference, but
+  // B
+  // For example, given the following declares and definitions,
+  // cannot be referenced by themselves.
+  // names in a typical untyped structure, the names in a typed structure form their own “name space” and
+  // You reference a member of a typed structure using the . operator or a handle with the => operator. Unlike
+  // Typed structure qualification
+  // Example
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.195 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.195 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -825,52 +845,54 @@ test('Block block-149.pli', async () => {
  dcl S type X;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-192.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    //  has bounds of 1 and 8, and its extent is 8.
-    // List
-    // three digits. The one dimension of 
-    //  is declared as a one-dimensional array of eight elements, each one a fixed-point decimal element of
-    // List
-    // Consider the following declaration:
-    // These examples help you understand declarations of arrays and array dimensions.
-    // Examples of arrays
-    // Declaration 2
-    // 
+test("Block block-192.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  //  has bounds of 1 and 8, and its extent is 8.
+  // List
+  // three digits. The one dimension of
+  //  is declared as a one-dimensional array of eight elements, each one a fixed-point decimal element of
+  // List
+  // Consider the following declaration:
+  // These examples help you understand declarations of arrays and array dimensions.
+  // Examples of arrays
+  // Declaration 2
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.225 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.225 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    declare Table (4,2) fixed dec (3);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-633.pli', async () => {
-    // Context:
-    // 
-    // Example
-    // Name of an ordinal type
-    // t
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 590
-    // BIND
-    // .
-    // t
-    // FIRST returns the first value in the ordinal set 
-    // FIRST
-    // 
+test("Block block-633.pli", async () => {
+  // Context:
+  //
+  // Example
+  // Name of an ordinal type
+  // t
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 590
+  // BIND
+  // .
+  // t
+  // FIRST returns the first value in the ordinal set
+  // FIRST
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.642 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.642 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -884,26 +906,27 @@ test('Block block-633.pli', async () => {
    display (ordinalname( first(Color) ));  /* RED */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-383.pli', async () => {
-    // Context:
-    // 
-    // consists of the elements '9.99' of the picture E.
-    // character string that consists of the elements '999' of the picture E. Z3 is a character-string array that
-    // Z1 is a character string array that consists of all the elements of the decimal numeric picture E. Z2 is a
-    // X is a bit string that consists of 40 elements of C, starting at the 20th element.
-    // Examples
-    // The base variable must refer to data in connected storage.
-    // and the base variable must not be subscripted.
-    // When the defined variable is a bit class aggregate, the POSITION attribute can contain only an integer,
-    // If the POSITION attribute is omitted, POSITION(1) is the default.
-    // The expression is evaluated and converted to an integer value at each reference to the defined item.
-    // 
+test("Block block-383.pli", async () => {
+  // Context:
+  //
+  // consists of the elements '9.99' of the picture E.
+  // character string that consists of the elements '999' of the picture E. Z3 is a character-string array that
+  // Z1 is a character string array that consists of all the elements of the decimal numeric picture E. Z2 is a
+  // X is a bit string that consists of 40 elements of C, starting at the 20th element.
+  // Examples
+  // The base variable must refer to data in connected storage.
+  // and the base variable must not be subscripted.
+  // When the defined variable is a bit class aggregate, the POSITION attribute can contain only an integer,
+  // If the POSITION attribute is omitted, POSITION(1) is the default.
+  // The expression is evaluated and converted to an integer value at each reference to the defined item.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.318 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.318 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -911,26 +934,27 @@ test('Block block-383.pli', async () => {
      B(10) CHAR(5) DEF (A) POSITION(1);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-382.pli', async () => {
-    // Context:
-    // 
-    // X is a bit string that consists of 40 elements of C, starting at the 20th element.
-    // Examples
-    // The base variable must refer to data in connected storage.
-    // and the base variable must not be subscripted.
-    // When the defined variable is a bit class aggregate, the POSITION attribute can contain only an integer,
-    // If the POSITION attribute is omitted, POSITION(1) is the default.
-    // The expression is evaluated and converted to an integer value at each reference to the defined item.
-    // is the number of characters, bits, graphics, uchars, or widechars in the defined variable.
-    // where N(b) is the number of characters, bits, graphics, uchars, or widechars in the base variable, and N(d)
-    //  is defined as follows:
-    // 
+test("Block block-382.pli", async () => {
+  // Context:
+  //
+  // X is a bit string that consists of 40 elements of C, starting at the 20th element.
+  // Examples
+  // The base variable must refer to data in connected storage.
+  // and the base variable must not be subscripted.
+  // When the defined variable is a bit class aggregate, the POSITION attribute can contain only an integer,
+  // If the POSITION attribute is omitted, POSITION(1) is the default.
+  // The expression is evaluated and converted to an integer value at each reference to the defined item.
+  // is the number of characters, bits, graphics, uchars, or widechars in the defined variable.
+  // where N(b) is the number of characters, bits, graphics, uchars, or widechars in the base variable, and N(d)
+  //  is defined as follows:
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.318 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.318 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -940,26 +964,27 @@ test('Block block-382.pli', async () => {
      Z3(4) CHAR(1) DEF (E) POS(2);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-177.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    // null descriptors).
-    // • At least one attribute is already present. (The DESCRIPTORS default attributes are not applied to
-    // same class.
-    // • The inclusion of any such attributes is not prohibited by the presence of alternative attributes of the
-    // an explicit entry declaration, if the following conditions are true:
-    // Specifies that the attributes are included in any parameter descriptors in a parameter descriptor list of
-    // DESCRIPTORS
-    // This statement specifies default attributes REAL PICTURE '99999' for all names.
-    // Specifies all names in the scope of the DEFAULT statement. Consider the following example:
-    // 
+test("Block block-177.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  // null descriptors).
+  // • At least one attribute is already present. (The DESCRIPTORS default attributes are not applied to
+  // same class.
+  // • The inclusion of any such attributes is not prohibited by the presence of alternative attributes of the
+  // an explicit entry declaration, if the following conditions are true:
+  // Specifies that the attributes are included in any parameter descriptors in a parameter descriptor list of
+  // DESCRIPTORS
+  // This statement specifies default attributes REAL PICTURE '99999' for all names.
+  // Specifies all names in the scope of the DEFAULT statement. Consider the following example:
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.220 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.220 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -967,26 +992,27 @@ test('Block block-177.pli', async () => {
  DCL X ENTRY (FIXED, FLOAT);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-87.pli', async () => {
-    // Context:
-    // 
-    // The ENTRY statement can define a secondary entry point to a procedure. Consider the following example:
-    //  of the procedure.
-    // entry point
-    //  and represents the 
-    // Name
-    // example, the name of the procedure is 
-    // An application must have exactly one external procedure that has OPTIONS(MAIN). In the following
-    // statement. A procedure can be a main procedure, a subroutine, or a function.
-    // A procedure is a sequence of statements delimited by a PROCEDURE statement and a corresponding END
-    // Procedures
-    // 
+test("Block block-87.pli", async () => {
+  // Context:
+  //
+  // The ENTRY statement can define a secondary entry point to a procedure. Consider the following example:
+  //  of the procedure.
+  // entry point
+  //  and represents the
+  // Name
+  // example, the name of the procedure is
+  // An application must have exactly one external procedure that has OPTIONS(MAIN). In the following
+  // statement. A procedure can be a main procedure, a subroutine, or a function.
+  // A procedure is a sequence of statements delimited by a PROCEDURE statement and a corresponding END
+  // Procedures
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.145 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.145 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -995,26 +1021,27 @@ test('Block block-87.pli', async () => {
    end Name;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-562.pli', async () => {
-    // Context:
-    // 
-    // Example
-    //  does not occur in the buffer, the result is zero.
-    // x
-    // If 
-    //  is the null string, the result is zero.
-    // x
-    //  is zero or 
-    // n
-    // If either the buffer length 
-    // .
-    // 
+test("Block block-562.pli", async () => {
+  // Context:
+  //
+  // Example
+  //  does not occur in the buffer, the result is zero.
+  // x
+  // If
+  //  is the null string, the result is zero.
+  // x
+  //  is zero or
+  // n
+  // If either the buffer length
+  // .
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.541 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.541 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1027,26 +1054,27 @@ test('Block block-562.pli', async () => {
    pos = memsearchr( addr(wb), stg(wb), '0030_0031'wx );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-563.pli', async () => {
-    // Context:
-    // 
-    // Example
-    // appropriate.
-    // th position onwards, squeezed and trimmed as
-    // n
-    // any collapsing) and then all characters from the 
-    // th character (without
-    // i
-    // • The target buffer will include all the characters in the source buffer before the 
-    // • If the target buffer is large enough, the number of bytes that are written to the buffer is returned.
-    // • If the target buffer is not large enough, a value of -1 is returned.
-    // 
+test("Block block-563.pli", async () => {
+  // Context:
+  //
+  // Example
+  // appropriate.
+  // th position onwards, squeezed and trimmed as
+  // n
+  // any collapsing) and then all characters from the
+  // th character (without
+  // i
+  // • The target buffer will include all the characters in the source buffer before the
+  // • If the target buffer is large enough, the number of bytes that are written to the buffer is returned.
+  // • If the target buffer is not large enough, a value of -1 is returned.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.542 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.542 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1063,26 +1091,27 @@ test('Block block-563.pli', async () => {
   
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-27.pli', async () => {
-    // Context:
-    // 
-    //  in this example do compare as equal:
-    // C
-    //  and 
-    // Z
-    // To the contrary, 
-    //  compare as being equal:
-    // not
-    // the same internal hex representation, they do 
-    // determine the length of the string. Consequently, although the strings in the following declarations have
-    // The null terminator held in a VARYINGZ string is not used in comparisons or assignments, other than to
-    // 
+test("Block block-27.pli", async () => {
+  // Context:
+  //
+  //  in this example do compare as equal:
+  // C
+  //  and
+  // Z
+  // To the contrary,
+  //  compare as being equal:
+  // not
+  // the same internal hex representation, they do
+  // determine the length of the string. Consequently, although the strings in the following declarations have
+  // The null terminator held in a VARYINGZ string is not used in comparisons or assignments, other than to
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.83 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.83 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1090,26 +1119,27 @@ test('Block block-27.pli', async () => {
    dcl C char(3) varyingz init('abc');
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-692.pli', async () => {
-    // Context:
-    // 
-    // Upper limits
-    // Lower limits
-    // (continued)
-    // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
-    // 635
-    // Appendix A. Limits  
-    // Limits
-    // Upper limits
-    // Lower limits
-    // (continued)
-    // 
+test("Block block-692.pli", async () => {
+  // Context:
+  //
+  // Upper limits
+  // Lower limits
+  // (continued)
+  // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
+  // 635
+  // Appendix A. Limits
+  // Limits
+  // Upper limits
+  // Lower limits
+  // (continued)
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.687 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.687 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1155,26 +1185,27 @@ test('Block block-692.pli', async () => {
         ) );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-214.pli', async () => {
-    // Context:
-    // 
-    // twentieth and the twenty-first centuries, it might be declared as follows:
-    // For example, if a structure is used to hold meteorological data for each month of the year for the
-    // levels, and members.
-    // , respectively. The elements of such an array are structures or unions having identical names,
-    // of unions
-    // array
-    //  or an 
-    // array of structures
-    // Specifying the dimension attribute on a structure or union results in an 
-    // Combinations of arrays, structures, and unions
-    // 
+test("Block block-214.pli", async () => {
+  // Context:
+  //
+  // twentieth and the twenty-first centuries, it might be declared as follows:
+  // For example, if a structure is used to hold meteorological data for each month of the year for the
+  // levels, and members.
+  // , respectively. The elements of such an array are structures or unions having identical names,
+  // of unions
+  // array
+  //  or an
+  // array of structures
+  // Specifying the dimension attribute on a structure or union results in an
+  // Combinations of arrays, structures, and unions
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.237 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.237 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1192,26 +1223,27 @@ test('Block block-214.pli', async () => {
             3 * char(0);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-215.pli', async () => {
-    // Context:
-    // 
-    //  are structures:
-    // B
-    //  and 
-    // A
-    // contains members that are arrays. In the following example, both 
-    // The need for subscripted qualified references becomes apparent when an array of structures or unions
-    // qualified reference.
-    // , which refers to the high temperature in March 1991, is a subscripted
-    // Temperature.High(1991,3)
-    // 1991.
-    // 
+test("Block block-215.pli", async () => {
+  // Context:
+  //
+  //  are structures:
+  // B
+  //  and
+  // A
+  // contains members that are arrays. In the following example, both
+  // The need for subscripted qualified references becomes apparent when an array of structures or unions
+  // qualified reference.
+  // , which refers to the high temperature in March 1991, is a subscripted
+  // Temperature.High(1991,3)
+  // 1991.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.237 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.237 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1223,26 +1255,27 @@ test('Block block-215.pli', async () => {
         2 E fixed bin;   
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-286.pli', async () => {
-    // Context:
-    // 
-    // The EXIT statement stops the current thread.
-    // EXIT statement
-    // For details about the ENTRY statement, see “ENTRY statement” on page 96.
-    // The ENTRY statement specifies a secondary entry point of a procedure.
-    // ENTRY statement
-    // Normal termination of a program occurs when control reaches the END statement of the main procedure.
-    // If control reaches an END statement for a procedure, it is treated as a RETURN statement.
-    // “Procedures” on page 94 and “Begin-blocks” on page 112 for more details.)
-    // the only way to terminate a block's execution, even though each block must have an END statement. (See
-    // Execution of a block terminates when control reaches the END statement for the block. However, it is not
-    // 
+test("Block block-286.pli", async () => {
+  // Context:
+  //
+  // The EXIT statement stops the current thread.
+  // EXIT statement
+  // For details about the ENTRY statement, see “ENTRY statement” on page 96.
+  // The ENTRY statement specifies a secondary entry point of a procedure.
+  // ENTRY statement
+  // Normal termination of a program occurs when control reaches the END statement of the main procedure.
+  // If control reaches an END statement for a procedure, it is treated as a RETURN statement.
+  // “Procedures” on page 94 and “Begin-blocks” on page 112 for more details.)
+  // the only way to terminate a block's execution, even though each block must have an END statement. (See
+  // Execution of a block terminates when control reaches the END statement for the block. However, it is not
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.272 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.272 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1250,26 +1283,27 @@ test('Block block-286.pli', async () => {
  ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-329.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    // The asterisk notation can also be used in a DECLARE statement, but has a different meaning there.
-    //  are all character strings of length 5.
-    // X
-    // elements of each generation of 
-    //  has bounds (10,20); the second and third generations have bounds (10,10). The
-    // X
-    // The first generation of 
-    // Consider the following example:
-    // dimension of the array, not just one of them.
-    // 
+test("Block block-329.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  // The asterisk notation can also be used in a DECLARE statement, but has a different meaning there.
+  //  are all character strings of length 5.
+  // X
+  // elements of each generation of
+  //  has bounds (10,20); the second and third generations have bounds (10,10). The
+  // X
+  // The first generation of
+  // Consider the following example:
+  // dimension of the array, not just one of them.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.294 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.294 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1280,26 +1314,27 @@ test('Block block-329.pli', async () => {
  allocate Y;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-194.pli', async () => {
-    // Context:
-    // 
-    // its associated name. For example, the items of a payroll record could be declared as follows:
-    // names are declared with level-numbers greater than 1. A delimiter must separate the level-number and
-    // A major structure name is declared with the level-number 1. Minor structures, unions, and elementary
-    // associated names. Level-numbers must be integers.
-    // A structure is described in a DECLARE statement through the use of level-numbers preceding the
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 176
-    // Cross sections of arrays
-    // represent an elementary variable or an array variable.
-    //  names, which can
-    // 
+test("Block block-194.pli", async () => {
+  // Context:
+  //
+  // its associated name. For example, the items of a payroll record could be declared as follows:
+  // names are declared with level-numbers greater than 1. A delimiter must separate the level-number and
+  // A major structure name is declared with the level-number 1. Minor structures, unions, and elementary
+  // associated names. Level-numbers must be integers.
+  // A structure is described in a DECLARE statement through the use of level-numbers preceding the
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 176
+  // Cross sections of arrays
+  // represent an elementary variable or an array variable.
+  //  names, which can
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.228 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.228 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1315,78 +1350,81 @@ test('Block block-194.pli', async () => {
                3 Overtime fixed dec(3,2);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-317.pli', async () => {
-    // Context:
-    // 
-    // interpreted as fixed-point binary.
-    //  is a reference to a piece of storage that contains a value to be
-    // X
-    // In the following example, a reference to 
-    // required and how it is interpreted.
-    // All variables require storage. The attributes specified for a variable describe the amount of storage
-    // Chapter 9. Storage control
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 236
-    // XPROCEDURE
-    // 
+test("Block block-317.pli", async () => {
+  // Context:
+  //
+  // interpreted as fixed-point binary.
+  //  is a reference to a piece of storage that contains a value to be
+  // X
+  // In the following example, a reference to
+  // required and how it is interpreted.
+  // All variables require storage. The attributes specified for a variable describe the amount of storage
+  // Chapter 9. Storage control
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 236
+  // XPROCEDURE
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.288 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.288 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    dcl X fixed binary(31,0) automatic;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-12.pli', async () => {
-    // Context:
-    // 
-    // DECIMAL with a PRECISION of five digits, four to the right of the decimal point:
-    //  has the programmer-defined data attributes of FIXED and
-    // Pi
-    // In the following example, the variable 
-    // 1E0 (a decimal floating-point constant).
-    // fixed-point constant), '1'B (a bit constant), '1' (a character constant), 1B (binary fixed-point constant), or
-    // The constant 1.0 (a decimal fixed-point constant) is different from the constants 1 (another decimal
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 18
-    // Nondata attributes
-    // 
+test("Block block-12.pli", async () => {
+  // Context:
+  //
+  // DECIMAL with a PRECISION of five digits, four to the right of the decimal point:
+  //  has the programmer-defined data attributes of FIXED and
+  // Pi
+  // In the following example, the variable
+  // 1E0 (a decimal floating-point constant).
+  // fixed-point constant), '1'B (a bit constant), '1' (a character constant), 1B (binary fixed-point constant), or
+  // The constant 1.0 (a decimal fixed-point constant) is different from the constants 1 (another decimal
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 18
+  // Nondata attributes
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.70 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.70 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    declare Pi fixed decimal(5,4) initial(3.1416);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-385.pli', async () => {
-    // Context:
-    // 
-    // containing the names of the weekdays.
-    //  strings
-    // varyingz
-    //  is initialized with the addresses of character 
-    // pdays
-    // In the following example, 
-    // indicated by the TO keyword.
-    // the address of the string specified in the INITIAL LIST. Also specifies that the string has the attributes
-    // Use only with static native pointers. Specifies that the pointer (or array of pointers) is initialized with
-    // INITIAL TO
-    // 
+test("Block block-385.pli", async () => {
+  // Context:
+  //
+  // containing the names of the weekdays.
+  //  strings
+  // varyingz
+  //  is initialized with the addresses of character
+  // pdays
+  // In the following example,
+  // indicated by the TO keyword.
+  // the address of the string specified in the INITIAL LIST. Also specifies that the string has the attributes
+  // Use only with static native pointers. Specifies that the pointer (or array of pointers) is initialized with
+  // INITIAL TO
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.321 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.321 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1400,26 +1438,27 @@ test('Block block-385.pli', async () => {
                     'Saturday'  );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-153.pli', async () => {
-    // Context:
-    // 
-    //  is valid.
-    // x(1).b(2)
-    // However, given the following typed structure, only 
-    // Example 2
-    //  have the same meaning.
-    // a(1,2).b
-    // , and 
-    // a.b(1,2)
-    // , 
-    // a(1).b(2)
-    // 
+test("Block block-153.pli", async () => {
+  // Context:
+  //
+  //  is valid.
+  // x(1).b(2)
+  // However, given the following typed structure, only
+  // Example 2
+  //  have the same meaning.
+  // a(1,2).b
+  // , and
+  // a.b(1,2)
+  // ,
+  // a(1).b(2)
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.196 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.196 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1430,26 +1469,27 @@ test('Block block-153.pli', async () => {
    dcl x(3) type t;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-152.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    // Example 1
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 144
-    // Typed structure qualification
-    // For details, see “Combinations of arrays, structures, and unions” on page 186.
-    // structures or unions that have identical names, levels, and members.
-    // You can specify the dimension attribute on typed structures or unions. The resulting arrays contain
-    // Combinations of arrays and typed structures or unions
-    // attribute” on page 142, the following code obtains the system date and displays the time:
-    // 
+test("Block block-152.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  // Example 1
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 144
+  // Typed structure qualification
+  // For details, see “Combinations of arrays, structures, and unions” on page 186.
+  // structures or unions that have identical names, levels, and members.
+  // You can specify the dimension attribute on typed structures or unions. The resulting arrays contain
+  // Combinations of arrays and typed structures or unions
+  // attribute” on page 142, the following code obtains the system date and displays the time:
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.196 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.196 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1458,26 +1498,27 @@ test('Block block-152.pli', async () => {
          2 c(5) fixed bin;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-31.pli', async () => {
-    // Context:
-    // 
-    // false. However, if the window started at 1950, the comparison would return true.
-    // statement is 'windowed'. This means that if the window started at 1900, the comparison would return
-    // In the following code fragment, if the DATE attribute is honored, the comparison in the second display
-    // WINDOW compile-time option.
-    //  you specify in the
-    // window
-    // comparable representation. This process converts 2-digit years using the 
-    // Implicit commoning means that the compiler generates code to convert the dates to a common,
-    // which are discussed later.
-    // comparand is generally treated as if it had the same DATE attribute, although some exceptions apply
-    // 
+test("Block block-31.pli", async () => {
+  // Context:
+  //
+  // false. However, if the window started at 1950, the comparison would return true.
+  // statement is 'windowed'. This means that if the window started at 1900, the comparison would return
+  // In the following code fragment, if the DATE attribute is honored, the comparison in the second display
+  // WINDOW compile-time option.
+  //  you specify in the
+  // window
+  // comparable representation. This process converts 2-digit years using the
+  // Implicit commoning means that the compiler generates code to convert the dates to a common,
+  // which are discussed later.
+  // comparand is generally treated as if it had the same DATE attribute, although some exceptions apply
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.93 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.93 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1491,26 +1532,27 @@ test('Block block-31.pli', async () => {
      display( a < c );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-629.pli', async () => {
-    // Context:
-    // 
-    // This example is based on the following code fragment:
-    // Example of using XMLCHAR
-    // case in which they were declared.
-    // CASE(ASIS) suboption of the XML compiler option can be used to specify that the names appear in the
-    // By default the names of the variables in the generated XML output are all in upper case. The
-    // Note: 
-    // • Leading and trailing blanks are trimmed wherever possible.
-    // • Numeric and bit data is converted to character.
-    // • When a variable has the XMLOMIT attribute, the field is omitted if it has a null value.
-    // structure.
-    // 
+test("Block block-629.pli", async () => {
+  // Context:
+  //
+  // This example is based on the following code fragment:
+  // Example of using XMLCHAR
+  // case in which they were declared.
+  // CASE(ASIS) suboption of the XML compiler option can be used to specify that the names appear in the
+  // By default the names of the variables in the generated XML output are all in upper case. The
+  // Note:
+  // • Leading and trailing blanks are trimmed wherever possible.
+  // • Numeric and bit data is converted to character.
+  // • When a variable has the XMLOMIT attribute, the field is omitted if it has a null value.
+  // structure.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.634 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.634 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1537,26 +1579,27 @@ test('Block block-629.pli', async () => {
      left -= written;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-291.pli', async () => {
-    // Context:
-    // 
-    // This example is based on the following declarations.
-    // Example
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 224
-    // IF
-    // AND or OR infix operators will also be short-circuited.
-    // Naturally, an expression formed (possibly recursively) from the above and the NOT prefix operator and the
-    // – VALIDDATE
-    // – VALID
-    // – UNALLOCATED
-    // 
+test("Block block-291.pli", async () => {
+  // Context:
+  //
+  // This example is based on the following declarations.
+  // Example
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 224
+  // IF
+  // AND or OR infix operators will also be short-circuited.
+  // Naturally, an expression formed (possibly recursively) from the above and the NOT prefix operator and the
+  // – VALIDDATE
+  // – VALID
+  // – UNALLOCATED
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.276 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.276 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1568,26 +1611,27 @@ test('Block block-291.pli', async () => {
      dcl BX  based fixed bin(31);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-530.pli', async () => {
-    // Context:
-    // 
-    // Example 1
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 448
-    // HBOUNDACROSS
-    // HEXIMAGE built-in function.
-    //  in storage. If an exact image is required, use the
-    // x
-    // This function does not return an exact image of 
-    // Note: 
-    // bytes will be converted.
-    // 
+test("Block block-530.pli", async () => {
+  // Context:
+  //
+  // Example 1
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 448
+  // HBOUNDACROSS
+  // HEXIMAGE built-in function.
+  //  in storage. If an exact image is required, use the
+  // x
+  // This function does not return an exact image of
+  // Note:
+  // bytes will be converted.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.500 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.500 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1605,26 +1649,27 @@ test('Block block-530.pli', async () => {
               /* '10000000' - bytes NOT reversed */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-399.pli', async () => {
-    // Context:
-    // 
-    // file constants. The file constants can subsequently be assigned to the file variable.
-    //  are declared as
-    // Acct2
-    //  and 
-    // Acct1
-    //  is declared as a file variable, and 
-    // Account
-    // In the following declaration, 
-    // 46.
-    // The VARIABLE attribute is implied under the circumstances described in “VARIABLE attribute” on page
-    // 
+test("Block block-399.pli", async () => {
+  // Context:
+  //
+  // file constants. The file constants can subsequently be assigned to the file variable.
+  //  are declared as
+  // Acct2
+  //  and
+  // Acct1
+  //  is declared as a file variable, and
+  // Account
+  // In the following declaration,
+  // 46.
+  // The VARIABLE attribute is implied under the circumstances described in “VARIABLE attribute” on page
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.331 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.331 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1633,26 +1678,27 @@ test('Block block-399.pli', async () => {
      Acc2 file;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-471.pli', async () => {
-    // Context:
-    // 
-    // 329
-    // Chapter 14. Picture specification characters  
-    // Digits and decimal points
-    // each of which is a digit (0 through 9). See the following example:
-    // A string of n 9 picture characters specifies that the item is a nonvarying character-string of length n,
-    // character data because the corresponding character cannot be a blank for character data.)
-    // 9 picture specification character for numeric character data is different from the specification for
-    // Specifies that the associated position in the data item contains a decimal digit. (Note that the
-    // 9
-    // decimal values.
-    // 
+test("Block block-471.pli", async () => {
+  // Context:
+  //
+  // 329
+  // Chapter 14. Picture specification characters
+  // Digits and decimal points
+  // each of which is a digit (0 through 9). See the following example:
+  // A string of n 9 picture characters specifies that the item is a nonvarying character-string of length n,
+  // character data because the corresponding character cannot be a blank for character data.)
+  // 9 picture specification character for numeric character data is different from the specification for
+  // Specifies that the associated position in the data item contains a decimal digit. (Note that the
+  // 9
+  // decimal values.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.381 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.381 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1661,52 +1707,54 @@ test('Block block-471.pli', async () => {
        XYZ picture '(10)9';
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-183.pli', async () => {
-    // Context:
-    // 
-    // BINARY:
-    // For example, the following statement specifies precision for identifiers already known to be FIXED
-    // precision for FIXED DECIMAL names is to be (8,3).
-    //  influenced by the default statement, because this statement specifies only that the default
-    // not
-    // It is 
-    // If it is not declared explicitly, I is given the language-specified default attributes FIXED BINARY(15,0).
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 170
-    // DEFAULT
-    // 
+test("Block block-183.pli", async () => {
+  // Context:
+  //
+  // BINARY:
+  // For example, the following statement specifies precision for identifiers already known to be FIXED
+  // precision for FIXED DECIMAL names is to be (8,3).
+  //  influenced by the default statement, because this statement specifies only that the default
+  // not
+  // It is
+  // If it is not declared explicitly, I is given the language-specified default attributes FIXED BINARY(15,0).
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 170
+  // DEFAULT
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.222 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.222 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
  DFT RANGE(*) VALUE(FIXED BINARY(31));
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-236.pli', async () => {
-    // Context:
-    // 
-    // This code sums up all the row elements:
-    // Example 1
-    // These examples illustrate the structure assignment using the BY DIMACROSS option.
-    // Example of assigning a structure using BY DIMACROSS
-    // The second assignment statement is the same as the following statement:
-    //  2 
-    // The first assignment statement is the same as the following statements:
-    //  1 
-    //  2 
-    //  1 
-    // 
+test("Block block-236.pli", async () => {
+  // Context:
+  //
+  // This code sums up all the row elements:
+  // Example 1
+  // These examples illustrate the structure assignment using the BY DIMACROSS option.
+  // Example of assigning a structure using BY DIMACROSS
+  // The second assignment statement is the same as the following statement:
+  //  2
+  // The first assignment statement is the same as the following statements:
+  //  1
+  //  2
+  //  1
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.257 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.257 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1724,26 +1772,27 @@ test('Block block-236.pli', async () => {
     end;                             
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-209.pli', async () => {
-    // Context:
-    // 
-    //  would be ambiguous:
-    // aa3_array
-    // resolved, otherwise the reference 
-    // The following example is valid, but only because the LIKE references are expanded after they are all
-    // 181
-    // Chapter 7. Data declarations  
-    // Assignments to UNIONs
-    // :
-    // F
-    //  is declared before 
-    // 
+test("Block block-209.pli", async () => {
+  // Context:
+  //
+  //  would be ambiguous:
+  // aa3_array
+  // resolved, otherwise the reference
+  // The following example is valid, but only because the LIKE references are expanded after they are all
+  // 181
+  // Chapter 7. Data declarations
+  // Assignments to UNIONs
+  // :
+  // F
+  //  is declared before
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.233 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.233 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1761,26 +1810,27 @@ test('Block block-209.pli', async () => {
  aa3_array;                                                                           
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-208.pli', async () => {
-    // Context:
-    // 
-    // :
-    // F
-    //  is declared before 
-    // E
-    //  and 
-    // C
-    //  is declared before 
-    // B
-    // The following declarations are valid, but only because 
-    //  have the results shown in the following example:
-    // 
+test("Block block-208.pli", async () => {
+  // Context:
+  //
+  // :
+  // F
+  //  is declared before
+  // E
+  //  and
+  // C
+  //  is declared before
+  // B
+  // The following declarations are valid, but only because
+  //  have the results shown in the following example:
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.232 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.232 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1792,78 +1842,81 @@ test('Block block-208.pli', async () => {
     dcl 1 e  like d;         
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-393.pli', async () => {
-    // Context:
-    // 
-    // .
-    // 3.1416
-    //  is allocated, it is initialized to the value 
-    // Pi
-    // In the following example, when 
-    // (padded on the right to 10 characters) is assigned to it.
-    // 'John Doe'
-    // , the character constant 
-    // Name
-    // In the following example, when storage is allocated for 
-    // 
+test("Block block-393.pli", async () => {
+  // Context:
+  //
+  // .
+  // 3.1416
+  //  is allocated, it is initialized to the value
+  // Pi
+  // In the following example, when
+  // (padded on the right to 10 characters) is assigned to it.
+  // 'John Doe'
+  // , the character constant
+  // Name
+  // In the following example, when storage is allocated for
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.324 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.324 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    dcl Pi fixed dec(5,4) init(3.1416);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-392.pli', async () => {
-    // Context:
-    // 
-    // (padded on the right to 10 characters) is assigned to it.
-    // 'John Doe'
-    // , the character constant 
-    // Name
-    // In the following example, when storage is allocated for 
-    // These examples illustrate how variables are initialized upon allocation.
-    // Examples
-    // the initial values are not assigned; for area variables, the area is not implicitly initialized to EMPTY.
-    // When storage for based variables is allocated through the ALLOCATE or the AUTOMATIC built-in functions,
-    // LOCATE statements for based variables), any specified initial value is assigned with each allocation.
-    // 
+test("Block block-392.pli", async () => {
+  // Context:
+  //
+  // (padded on the right to 10 characters) is assigned to it.
+  // 'John Doe'
+  // , the character constant
+  // Name
+  // In the following example, when storage is allocated for
+  // These examples illustrate how variables are initialized upon allocation.
+  // Examples
+  // the initial values are not assigned; for area variables, the area is not implicitly initialized to EMPTY.
+  // When storage for based variables is allocated through the ALLOCATE or the AUTOMATIC built-in functions,
+  // LOCATE statements for based variables), any specified initial value is assigned with each allocation.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.324 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.324 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    dcl Name char(10) init('John Doe');
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-300.pli', async () => {
-    // Context:
-    // 
-    // The %PAGE directive allows you to start a new page in the compiler source listings.
-    // %PAGE directive
-    // organization,” on page 89.
-    // For details about the PACKAGE statement, see “Packages” on page 91 in Chapter 5, “Program
-    // declarations and procedures contained in the package, unless the names are declared again.
-    // The PACKAGE statement defines a package. A package forms a name scope that is shared by all
-    // PACKAGE statement
-    // For details about the OTHERWISE statement, see “SELECT statement” on page 232.
-    // preceding WHEN statements fails.
-    // In a select-group, the OTHERWISE statement specifies the unit to be executed when every test of the
-    // 
+test("Block block-300.pli", async () => {
+  // Context:
+  //
+  // The %PAGE directive allows you to start a new page in the compiler source listings.
+  // %PAGE directive
+  // organization,” on page 89.
+  // For details about the PACKAGE statement, see “Packages” on page 91 in Chapter 5, “Program
+  // declarations and procedures contained in the package, unless the names are declared again.
+  // The PACKAGE statement defines a package. A package forms a name scope that is shared by all
+  // PACKAGE statement
+  // For details about the OTHERWISE statement, see “SELECT statement” on page 232.
+  // preceding WHEN statements fails.
+  // In a select-group, the OTHERWISE statement specifies the unit to be executed when every test of the
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.279 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.279 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1871,78 +1924,81 @@ test('Block block-300.pli', async () => {
  ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-166.pli', async () => {
-    // Context:
-    // 
-    // See the following example:
-    // to uppercase.
-    // The environment name must be a character string constant, and is used as is without any translation
-    // the compilation unit. The environment name is known instead.
-    // When so specified, the name being declared effectively becomes internal and is not known outside of
-    // Specifies the name by which the procedure or variable is known outside of the compilation unit.
-    // environment-name
-    // : INT for INTERNAL, EXT for EXTERNAL
-    // Abbreviations
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 
+test("Block block-166.pli", async () => {
+  // Context:
+  //
+  // See the following example:
+  // to uppercase.
+  // The environment name must be a character string constant, and is used as is without any translation
+  // the compilation unit. The environment name is known instead.
+  // When so specified, the name being declared effectively becomes internal and is not known outside of
+  // Specifies the name by which the procedure or variable is known outside of the compilation unit.
+  // environment-name
+  // : INT for INTERNAL, EXT for EXTERNAL
+  // Abbreviations
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.206 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.206 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    dcl X entry external ('koala');
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-28.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    // converted to an arithmetic value.
-    // Numeric picture specification describes a character string that can be assigned only data that can be
-    // fixed-point or floating-point value.
-    // attribute with a numeric picture specification. The data item is the character representation of a decimal
-    // A numeric character data item is the value of a variable that has been declared with the PICTURE
-    // Numeric character data
-    // • The use of WX can limit the portability of a program.
-    // '0031'wx (and not as '3100'wx).
-    // format). So, for example, the widechar value for the character '1' should always be specified as
-    // 
+test("Block block-28.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  // converted to an arithmetic value.
+  // Numeric picture specification describes a character string that can be assigned only data that can be
+  // fixed-point or floating-point value.
+  // attribute with a numeric picture specification. The data item is the character representation of a decimal
+  // A numeric character data item is the value of a variable that has been declared with the PICTURE
+  // Numeric character data
+  // • The use of WX can limit the portability of a program.
+  // '0031'wx (and not as '3100'wx).
+  // format). So, for example, the widechar value for the character '1' should always be specified as
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.91 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.91 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    declare Price picture '999V99';
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-29.pli', async () => {
-    // Context:
-    // 
-    // digits, signs, and the location of the assumed decimal point are assigned. Consider the following example:
-    // arithmetic variable, the editing characters are not included in the assignment operation—only the actual
-    // assignment operation. However, if a numeric character item is assigned to another numeric character or
-    // when the item is printed or treated as a character string, the editing characters are included in the
-    // numeric character data item, and such characters are actually stored within the data item. Consequently,
-    // arithmetic items or character strings are processed. Editing characters can be specified for insertion into a
-    // on the decimal point like coded arithmetic data, it is processed differently from the way either coded
-    // Although numeric character data is in character form, like character strings, and although it is aligned
-    // automatically, but they require extra processing time.
-    // be converted either to decimal fixed-point or to decimal floating-point format. Such conversions are done
-    // 
+test("Block block-29.pli", async () => {
+  // Context:
+  //
+  // digits, signs, and the location of the assumed decimal point are assigned. Consider the following example:
+  // arithmetic variable, the editing characters are not included in the assignment operation—only the actual
+  // assignment operation. However, if a numeric character item is assigned to another numeric character or
+  // when the item is printed or treated as a character string, the editing characters are included in the
+  // numeric character data item, and such characters are actually stored within the data item. Consequently,
+  // arithmetic items or character strings are processed. Editing characters can be specified for insertion into a
+  // on the decimal point like coded arithmetic data, it is processed differently from the way either coded
+  // Although numeric character data is in character form, like character strings, and although it is aligned
+  // automatically, but they require extra processing time.
+  // be converted either to decimal fixed-point or to decimal floating-point format. Such conversions are done
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.91 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.91 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1953,26 +2009,27 @@ test('Block block-29.pli', async () => {
    Cost = '$12.28';
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-516.pli', async () => {
-    // Context:
-    // 
-    //  is too short to contain the result.
-    // y
-    // This example shows a conversion from graphic to character. However, 
-    // Example 2
-    // .A.B.C.D.E.F
-    // .A.B.C.D.E.F
-    // .A.B.C.D.E.F
-    // A is assigned
-    // Intermediate Result
-    // For X with value
-    // 
+test("Block block-516.pli", async () => {
+  // Context:
+  //
+  //  is too short to contain the result.
+  // y
+  // This example shows a conversion from graphic to character. However,
+  // Example 2
+  // .A.B.C.D.E.F
+  // .A.B.C.D.E.F
+  // .A.B.C.D.E.F
+  // A is assigned
+  // Intermediate Result
+  // For X with value
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.472 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.472 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1981,26 +2038,27 @@ test('Block block-516.pli', async () => {
    A = char(X,11);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-679.pli', async () => {
-    // Context:
-    // 
-    // preprocessor output generated is as follows:
-    // value replaces the function reference and the result is inserted into the preprocessor output. Thus, the
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 624
-    // Preprocessor examples
-    // and returns the concatenated value, that is, the string Z (3), to the point of invocation. The returned
-    // corresponding parameter. VALUE then performs a concatenation of these arguments and the parentheses
-    // in a previous assignment statement), and 3 is converted to fixed-point to conform to the attribute of its
-    // However, before the arguments A and 3 are passed to VALUE, A is replaced by its value Z (assigned to A
-    // name.
-    // 
+test("Block block-679.pli", async () => {
+  // Context:
+  //
+  // preprocessor output generated is as follows:
+  // value replaces the function reference and the result is inserted into the preprocessor output. Thus, the
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 624
+  // Preprocessor examples
+  // and returns the concatenated value, that is, the string Z (3), to the point of invocation. The returned
+  // corresponding parameter. VALUE then performs a concatenation of these arguments and the parentheses
+  // in a previous assignment statement), and 3 is converted to fixed-point to conform to the attribute of its
+  // However, before the arguments A and 3 are passed to VALUE, A is replaced by its value Z (assigned to A
+  // name.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.676 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.676 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2008,52 +2066,54 @@ test('Block block-679.pli', async () => {
  Q = 6+Z(       3);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-191.pli', async () => {
-    // Context:
-    // 
-    // Consider the following declaration:
-    // These examples help you understand declarations of arrays and array dimensions.
-    // Examples of arrays
-    // Declaration 2
-    // Declaration 1
-    // As an example, the following declarations are equivalent:
-    // built-in functions.
-    // an array in a BY DIMACROSS assignment or as an argument to the LBOUNDACROSS or HBOUNDACROSS
-    // attribute is not an array. The children of the variable are arrays. However, the variable might be used as
-    // Unlike a variable declared with the DIMENSION attribute, a variable declared with the DIMACROSS
-    // 
+test("Block block-191.pli", async () => {
+  // Context:
+  //
+  // Consider the following declaration:
+  // These examples help you understand declarations of arrays and array dimensions.
+  // Examples of arrays
+  // Declaration 2
+  // Declaration 1
+  // As an example, the following declarations are equivalent:
+  // built-in functions.
+  // an array in a BY DIMACROSS assignment or as an argument to the LBOUNDACROSS or HBOUNDACROSS
+  // attribute is not an array. The children of the variable are arrays. However, the variable might be used as
+  // Unlike a variable declared with the DIMENSION attribute, a variable declared with the DIMACROSS
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.225 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.225 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    declare List fixed decimal(3) dimension(8);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-380.pli', async () => {
-    // Context:
-    // 
-    // V is a two-dimensional array that consists of all the elements in the character string A.
-    // Examples
-    // Aggregates of fixed-length widechar variables
-    // Fixed-length widechar variables
-    // • The widechar class, which consists of the following variables:
-    // Aggregates of fixed-length uchar variables
-    // Fixed-length uchar variables
-    // • The uchar class, which consists of the following variables:
-    // Aggregates of fixed-length graphic variables
-    // Fixed-length graphic variables
-    // 
+test("Block block-380.pli", async () => {
+  // Context:
+  //
+  // V is a two-dimensional array that consists of all the elements in the character string A.
+  // Examples
+  // Aggregates of fixed-length widechar variables
+  // Fixed-length widechar variables
+  // • The widechar class, which consists of the following variables:
+  // Aggregates of fixed-length uchar variables
+  // Fixed-length uchar variables
+  // • The uchar class, which consists of the following variables:
+  // Aggregates of fixed-length graphic variables
+  // Fixed-length graphic variables
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.317 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.317 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2061,26 +2121,27 @@ test('Block block-380.pli', async () => {
      W CHAR(10) DEF B;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-528.pli', async () => {
-    // Context:
-    // 
-    // contain the result.
-    // This example shows a conversion from CHARACTER to GRAPHIC. However, the target is too short to
-    // Example 2
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 446
-    // GRAPHIC
-    // b is a DBCS blank.
-    // .
-    // where 
-    // A is assigned
-    // 
+test("Block block-528.pli", async () => {
+  // Context:
+  //
+  // contain the result.
+  // This example shows a conversion from CHARACTER to GRAPHIC. However, the target is too short to
+  // Example 2
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 446
+  // GRAPHIC
+  // b is a DBCS blank.
+  // .
+  // where
+  // A is assigned
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.498 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.498 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2089,26 +2150,27 @@ test('Block block-528.pli', async () => {
    A = graphic(X);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-486.pli', async () => {
-    // Context:
-    // 
-    // Example 1
-    // variable when the ON-unit is established.
-    // An ON statement that specifies a file variable refers to the file constant that is the current value of the
-    // ON-units for file variables
-    // situation, use the following technique:
-    // to be exceeded, a message is printed and the application is terminated. To avoid a loop caused by this
-    // raising the ERROR condition again. In any situation where a loop can cause the maximum nesting level
-    // A loop can occur if an ERROR condition raised in an ERROR ON-unit executes the same ERROR ON-unit,
-    // environment of the ON-unit in which the condition was raised.
-    // descendent ON-unit. A normal return from a dynamically descendent ON-unit reestablishes the
-    // 
+test("Block block-486.pli", async () => {
+  // Context:
+  //
+  // Example 1
+  // variable when the ON-unit is established.
+  // An ON statement that specifies a file variable refers to the file constant that is the current value of the
+  // ON-units for file variables
+  // situation, use the following technique:
+  // to be exceeded, a message is printed and the application is terminated. To avoid a loop caused by this
+  // raising the ERROR condition again. In any situation where a loop can cause the maximum nesting level
+  // A loop can occur if an ERROR condition raised in an ERROR ON-unit executes the same ERROR ON-unit,
+  // environment of the ON-unit in which the condition was raised.
+  // descendent ON-unit. A normal return from a dynamically descendent ON-unit reestablishes the
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.396 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.396 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2119,104 +2181,108 @@ test('Block block-486.pli', async () => {
  L2:  on endfile(F);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-22.pli', async () => {
-    // Context:
-    // 
-    // Consider this example:
-    // The data attributes for declaring decimal floating-point variables are DECIMAL and FLOAT.
-    // Decimal floating-point data
-    // )
-    // z/OS
-    //  (
-    // (109)
-    // 1Q0b
-    // )
-    // AIX
-    // 
+test("Block block-22.pli", async () => {
+  // Context:
+  //
+  // Consider this example:
+  // The data attributes for declaring decimal floating-point variables are DECIMAL and FLOAT.
+  // Decimal floating-point data
+  // )
+  // z/OS
+  //  (
+  // (109)
+  // 1Q0b
+  // )
+  // AIX
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.79 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.79 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    declare Light_years decimal float(5);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-23.pli', async () => {
-    // Context:
-    // 
-    // 15:
-    //  as a variable that can represent character data with a length of
-    // User
-    // The following statement declares 
-    // Examples
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 30
-    // BIT, CHARACTER, GRAPHIC, UCHAR and WIDECHAR
-    // See “REFER option (self-defining data)” on page 251 for the description of the REFER option.
-    // REFER
-    // 
+test("Block block-23.pli", async () => {
+  // Context:
+  //
+  // 15:
+  //  as a variable that can represent character data with a length of
+  // User
+  // The following statement declares
+  // Examples
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 30
+  // BIT, CHARACTER, GRAPHIC, UCHAR and WIDECHAR
+  // See “REFER option (self-defining data)” on page 251 for the description of the REFER option.
+  // REFER
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    declare User character (15);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-115.pli', async () => {
-    // Context:
-    // 
-    // applied only for the second parameter.
-    // Defaults are not applied if an asterisk is specified. For example, in the following declaration, defaults are
-    // order.
-    // parameter, but the structuring must be identical. The attributes for a particular level can appear in any
-    // For a structure-union descriptor, the descriptor level-numbers need not be the same as those of the
-    // structure-union-descr (structure-union-descriptor)
-    // See “OPTIONAL attribute” on page 117.
-    // OPTIONAL
-    // No conversions are done.
-    // • OPTIONAL
-    // 
+test("Block block-115.pli", async () => {
+  // Context:
+  //
+  // applied only for the second parameter.
+  // Defaults are not applied if an asterisk is specified. For example, in the following declaration, defaults are
+  // order.
+  // parameter, but the structuring must be identical. The attributes for a particular level can appear in any
+  // For a structure-union descriptor, the descriptor level-numbers need not be the same as those of the
+  // structure-union-descr (structure-union-descriptor)
+  // See “OPTIONAL attribute” on page 117.
+  // OPTIONAL
+  // No conversions are done.
+  // • OPTIONAL
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.167 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.167 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    dcl X entry(* optional, aligned); /* defaults applied for 2nd parm */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-548.pli', async () => {
-    // Context:
-    // 
-    // Example
-    //  must have the type CHARACTER(1) NONVARYING type.
-    // z
-    // Expression. If specified, 
-    // z
-    // the attributes FIXED BINARY(31,0), it is converted to them.
-    //  does not have
-    // n
-    //  must have a computational type and should have a character type. If 
-    // n
-    // 
+test("Block block-548.pli", async () => {
+  // Context:
+  //
+  // Example
+  //  must have the type CHARACTER(1) NONVARYING type.
+  // z
+  // Expression. If specified,
+  // z
+  // the attributes FIXED BINARY(31,0), it is converted to them.
+  //  does not have
+  // n
+  //  must have a computational type and should have a character type. If
+  // n
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.525 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.525 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2226,26 +2292,27 @@ test('Block block-548.pli', async () => {
               /* 'One Hundred SCIDS Marks*******'               */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-549.pli', async () => {
-    // Context:
-    // 
-    // Example
-    // options, it returns a FIXED BIN(31) value.
-    // Under the CMPAT(V3) compiler option, LOCATION returns a FIXED BIN(63) value. Under all other CMPAT
-    //  that must have a constant value.
-    // y
-    // • The value of a variable 
-    //  that must have constant extents.
-    // y
-    // • The extent of a variable 
-    //  if LOC(x) is used to set either of the following:
-    // 
+test("Block block-549.pli", async () => {
+  // Context:
+  //
+  // Example
+  // options, it returns a FIXED BIN(31) value.
+  // Under the CMPAT(V3) compiler option, LOCATION returns a FIXED BIN(63) value. Under all other CMPAT
+  //  that must have a constant value.
+  // y
+  // • The value of a variable
+  //  that must have constant extents.
+  // y
+  // • The extent of a variable
+  //  if LOC(x) is used to set either of the following:
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.526 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.526 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2273,26 +2340,27 @@ test('Block block-549.pli', async () => {
          2 End char(0);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-436.pli', async () => {
-    // Context:
-    // 
-    // list. Consider the following example:
-    // The variable referenced in the STRING option should not be referenced by name or by alias in the data
-    // .
-    // Outprt
-    // write the record into the file 
-    //  are assigned. The WRITE statement specifies that record transmission is used to
-    // Hours*Rate
-    // expression 
-    //  and of the
-    // Pay#
-    // 
+test("Block block-436.pli", async () => {
+  // Context:
+  //
+  // list. Consider the following example:
+  // The variable referenced in the STRING option should not be referenced by name or by alias in the data
+  // .
+  // Outprt
+  // write the record into the file
+  //  are assigned. The WRITE statement specifies that record transmission is used to
+  // Hours*Rate
+  // expression
+  //  and of the
+  // Pay#
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.354 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.354 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2304,26 +2372,27 @@ test('Block block-436.pli', async () => {
        (A);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-305.pli', async () => {
-    // Context:
-    // 
-    // A common use of %PUSH and %POP directives is in included files and macros.
-    // first-out basis, by using the %POP directive.
-    // a “push down” stack on a last-in, first-out basis. You can restore this saved status later, also on a last-in,
-    // The %PUSH directive allows you to save the current status of the %PRINT and %NOPRINT directives in
-    // %PUSH directive
-    // The %PROCINC directive is used to override compiler options.
-    // “%PROCINC directive” on page 229
-    // Related information
-    // The *PROCINC directive is a synonym for the %PROCINC directive.
-    // *PROCINC directive
-    // 
+test("Block block-305.pli", async () => {
+  // Context:
+  //
+  // A common use of %PUSH and %POP directives is in included files and macros.
+  // first-out basis, by using the %POP directive.
+  // a “push down” stack on a last-in, first-out basis. You can restore this saved status later, also on a last-in,
+  // The %PUSH directive allows you to save the current status of the %PRINT and %NOPRINT directives in
+  // %PUSH directive
+  // The %PROCINC directive is used to override compiler options.
+  // “%PROCINC directive” on page 229
+  // Related information
+  // The *PROCINC directive is a synonym for the %PROCINC directive.
+  // *PROCINC directive
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.281 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.281 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2331,26 +2400,27 @@ test('Block block-305.pli', async () => {
  ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-239.pli', async () => {
-    // Context:
-    // 
-    // :
-    // xa
-    // This code exchanges the entries in the first and seventeenth columns of 
-    // Example 2
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 206
-    // Multiple assignments
-    // The assignment inside the loop is equivalent to the following statements:
-    // This code sums up all the row elements:
-    // Example 1
-    // 
+test("Block block-239.pli", async () => {
+  // Context:
+  //
+  // :
+  // xa
+  // This code exchanges the entries in the first and seventeenth columns of
+  // Example 2
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 206
+  // Multiple assignments
+  // The assignment inside the loop is equivalent to the following statements:
+  // This code sums up all the row elements:
+  // Example 1
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.258 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.258 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2368,26 +2438,27 @@ test('Block block-239.pli', async () => {
     xa = x, by dimacross( 17 );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-403.pli', async () => {
-    // Context:
-    // 
-    // This example illustrates attribute merging for an explicit opening of a file by using a file variable.
-    // Example of file variable
-    // PRINT, OUTPUT, and EXTERNAL.
-    // after implication are STREAM, PRINT, and OUTPUT. Attributes after default application are STREAM,
-    // Attributes after merge caused by execution of the OPEN statement are STREAM and PRINT. Attributes
-    // constant.
-    // This example illustrates attribute merging for an explicit opening of a file that is specified by a file
-    // Example of file constant
-    // RECORD
-    // KEYED
-    // 
+test("Block block-403.pli", async () => {
+  // Context:
+  //
+  // This example illustrates attribute merging for an explicit opening of a file by using a file variable.
+  // Example of file variable
+  // PRINT, OUTPUT, and EXTERNAL.
+  // after implication are STREAM, PRINT, and OUTPUT. Attributes after default application are STREAM,
+  // Attributes after merge caused by execution of the OPEN statement are STREAM and PRINT. Attributes
+  // constant.
+  // This example illustrates attribute merging for an explicit opening of a file that is specified by a file
+  // Example of file constant
+  // RECORD
+  // KEYED
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.336 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.336 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2400,26 +2471,27 @@ test('Block block-403.pli', async () => {
    open file(Account) record unbuf;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-402.pli', async () => {
-    // Context:
-    // 
-    // constant.
-    // This example illustrates attribute merging for an explicit opening of a file that is specified by a file
-    // Example of file constant
-    // RECORD
-    // KEYED
-    // OUTPUT, STREAM
-    // PRINT
-    // RECORD, KEYED
-    // DIRECT
-    // RECORD
-    // 
+test("Block block-402.pli", async () => {
+  // Context:
+  //
+  // constant.
+  // This example illustrates attribute merging for an explicit opening of a file that is specified by a file
+  // Example of file constant
+  // RECORD
+  // KEYED
+  // OUTPUT, STREAM
+  // PRINT
+  // RECORD, KEYED
+  // DIRECT
+  // RECORD
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.336 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.336 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2427,26 +2499,27 @@ test('Block block-402.pli', async () => {
    open file(Listing) print;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-379.pli', async () => {
-    // Context:
-    // 
-    // Examples
-    // Aggregates of fixed-length widechar variables
-    // Fixed-length widechar variables
-    // • The widechar class, which consists of the following variables:
-    // Aggregates of fixed-length uchar variables
-    // Fixed-length uchar variables
-    // • The uchar class, which consists of the following variables:
-    // Aggregates of fixed-length graphic variables
-    // Fixed-length graphic variables
-    // • The graphic class, which consists of the following variables:
-    // 
+test("Block block-379.pli", async () => {
+  // Context:
+  //
+  // Examples
+  // Aggregates of fixed-length widechar variables
+  // Fixed-length widechar variables
+  // • The widechar class, which consists of the following variables:
+  // Aggregates of fixed-length uchar variables
+  // Fixed-length uchar variables
+  // • The uchar class, which consists of the following variables:
+  // Aggregates of fixed-length graphic variables
+  // Fixed-length graphic variables
+  // • The graphic class, which consists of the following variables:
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.317 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.317 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2454,26 +2527,27 @@ test('Block block-379.pli', async () => {
      V(10,10) CHAR(1) DEF A;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-475.pli', async () => {
-    // Context:
-    // 
-    // .
-    // 7.6200
-    // , but its arithmetic value is 
-    // '762.00'
-    // printed, it appears as 
-    //  is
-    // Rate
-    // In the following example, decimal point alignment during assignment occurs on the character V. If 
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 332
-    // 
+test("Block block-475.pli", async () => {
+  // Context:
+  //
+  // .
+  // 7.6200
+  // , but its arithmetic value is
+  // '762.00'
+  // printed, it appears as
+  //  is
+  // Rate
+  // In the following example, decimal point alignment during assignment occurs on the character V. If
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 332
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.384 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.384 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2481,26 +2555,27 @@ test('Block block-475.pli', async () => {
    Rate = 7.62;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-613.pli', async () => {
-    // Context:
-    // 
-    // The following are invalid STRING targets:
-    // The following are valid STRING targets:
-    // STRINGOFGRAPHIC compiler options specifies that it should be CHARACTER.
-    // • If any of the base elements have the GRAPHIC type, then the type returned is GRAPHIC unless the
-    // • If any of the base elements are PICTUREs, then the type returned has CHARACTER type.
-    // The type of string returned has the same type as one of these base elements with these exceptions:
-    // • If applied to an array, all elements in the array are subject to the restrictions as described previously.
-    // – All widechar strings
-    // – All uchar strings
-    // – All graphic strings
-    // 
+test("Block block-613.pli", async () => {
+  // Context:
+  //
+  // The following are invalid STRING targets:
+  // The following are valid STRING targets:
+  // STRINGOFGRAPHIC compiler options specifies that it should be CHARACTER.
+  // • If any of the base elements have the GRAPHIC type, then the type returned is GRAPHIC unless the
+  // • If any of the base elements are PICTUREs, then the type returned has CHARACTER type.
+  // The type of string returned has the same type as one of these base elements with these exceptions:
+  // • If applied to an array, all elements in the array are subject to the restrictions as described previously.
+  // – All widechar strings
+  // – All uchar strings
+  // – All graphic strings
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.606 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.606 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2511,26 +2586,27 @@ test('Block block-613.pli', async () => {
        2 D  bit(8) aligned;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-181.pli', async () => {
-    // Context:
-    // 
-    // These statements are equivalent to the following declaration:
-    // Consider the following example:
-    // integer, and can include the REFER option or can be specified as an asterisk.
-    // The size of AREA data, or length of BIT, CHARACTER, or GRAPHIC data can be an expression or an
-    // default of 15).
-    // attributes of FIXED BINART, but the precision 31 from the VALUE option (rather than the system
-    //  will receive the system default
-    // I
-    // I; and DEFAULT RANGE(*) VALUE( FIXED BIN(31) );, the variable 
-    // attributes, but before the system defaults for size, length and precision. So, for example, given DCL
-    // 
+test("Block block-181.pli", async () => {
+  // Context:
+  //
+  // These statements are equivalent to the following declaration:
+  // Consider the following example:
+  // integer, and can include the REFER option or can be specified as an asterisk.
+  // The size of AREA data, or length of BIT, CHARACTER, or GRAPHIC data can be an expression or an
+  // default of 15).
+  // attributes of FIXED BINART, but the precision 31 from the VALUE option (rather than the system
+  //  will receive the system default
+  // I
+  // I; and DEFAULT RANGE(*) VALUE( FIXED BIN(31) );, the variable
+  // attributes, but before the system defaults for size, length and precision. So, for example, given DCL
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2539,26 +2615,27 @@ test('Block block-181.pli', async () => {
          A AREA(2000);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-180.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    // integer, and can include the REFER option or can be specified as an asterisk.
-    // The size of AREA data, or length of BIT, CHARACTER, or GRAPHIC data can be an expression or an
-    // default of 15).
-    // attributes of FIXED BINART, but the precision 31 from the VALUE option (rather than the system
-    //  will receive the system default
-    // I
-    // I; and DEFAULT RANGE(*) VALUE( FIXED BIN(31) );, the variable 
-    // attributes, but before the system defaults for size, length and precision. So, for example, given DCL
-    // These size, length and precision specifications in a VALUE clause are applied after the system default
-    // 
+test("Block block-180.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  // integer, and can include the REFER option or can be specified as an asterisk.
+  // The size of AREA data, or length of BIT, CHARACTER, or GRAPHIC data can be an expression or an
+  // default of 15).
+  // attributes of FIXED BINART, but the precision 31 from the VALUE option (rather than the system
+  //  will receive the system default
+  // I
+  // I; and DEFAULT RANGE(*) VALUE( FIXED BIN(31) );, the variable
+  // attributes, but before the system defaults for size, length and precision. So, for example, given DCL
+  // These size, length and precision specifications in a VALUE clause are applied after the system default
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2571,26 +2648,27 @@ test('Block block-180.pli', async () => {
          A AREA;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-375.pli', async () => {
-    // Context:
-    // 
-    // Y is a character string that consists of the first 5 characters of B.
-    // element identified by the subscript expressions L, M, and N.
-    // A. X2 is a two-dimensional array that consists of the fifth plane of A. X3 is an element that consists of the
-    // X1 is a three-dimensional array that consists of the first two elements of each row, column and plane of
-    // Examples
-    // defined variable is a varying string of the same maximum length.
-    // A base variable can be, or can contain, a varying string, provided that the corresponding part of the
-    // In simple defining of an area, the size of the defined area must be equal to the size of the base area.
-    // the base string.
-    // In simple defining of a string, the length of the defined string must be less than or equal to the length of
-    // 
+test("Block block-375.pli", async () => {
+  // Context:
+  //
+  // Y is a character string that consists of the first 5 characters of B.
+  // element identified by the subscript expressions L, M, and N.
+  // A. X2 is a two-dimensional array that consists of the fifth plane of A. X3 is an element that consists of the
+  // X1 is a three-dimensional array that consists of the first two elements of each row, column and plane of
+  // Examples
+  // defined variable is a varying string of the same maximum length.
+  // A base variable can be, or can contain, a varying string, provided that the corresponding part of the
+  // In simple defining of an area, the size of the defined area must be equal to the size of the base area.
+  // the base string.
+  // In simple defining of a string, the length of the defined string must be less than or equal to the length of
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.316 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.316 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2598,26 +2676,27 @@ test('Block block-375.pli', async () => {
      Z AREA(500) DEF C;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-374.pli', async () => {
-    // Context:
-    // 
-    // element identified by the subscript expressions L, M, and N.
-    // A. X2 is a two-dimensional array that consists of the fifth plane of A. X3 is an element that consists of the
-    // X1 is a three-dimensional array that consists of the first two elements of each row, column and plane of
-    // Examples
-    // defined variable is a varying string of the same maximum length.
-    // A base variable can be, or can contain, a varying string, provided that the corresponding part of the
-    // In simple defining of an area, the size of the defined area must be equal to the size of the base area.
-    // the base string.
-    // In simple defining of a string, the length of the defined string must be less than or equal to the length of
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 
+test("Block block-374.pli", async () => {
+  // Context:
+  //
+  // element identified by the subscript expressions L, M, and N.
+  // A. X2 is a two-dimensional array that consists of the fifth plane of A. X3 is an element that consists of the
+  // X1 is a three-dimensional array that consists of the first two elements of each row, column and plane of
+  // Examples
+  // defined variable is a varying string of the same maximum length.
+  // A base variable can be, or can contain, a varying string, provided that the corresponding part of the
+  // In simple defining of an area, the size of the defined area must be equal to the size of the base area.
+  // the base string.
+  // In simple defining of a string, the length of the defined string must be less than or equal to the length of
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.316 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.316 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2625,52 +2704,54 @@ test('Block block-374.pli', async () => {
      Y CHAR(5) DEF B;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-506.pli', async () => {
-    // Context:
-    // 
-    // The following example is not a multiple declaration:
-    // scopes.
-    // The abbreviations for built-in functions have separate declarations (explicit or contextual) and name
-    // • Any other qualifications on using the function or pseudovariable
-    // • A description of any arguments
-    // • A description of the value returned or, for a pseudovariable, the value set
-    // • A heading showing the syntax of the reference
-    // In general, each description has the following format:
-    // detailed descriptions for each function, subroutine, and pseudovariable.
-    // This section lists the built-in functions, subroutines, and pseudovariables in alphabetic order and provides
-    // 
+test("Block block-506.pli", async () => {
+  // Context:
+  //
+  // The following example is not a multiple declaration:
+  // scopes.
+  // The abbreviations for built-in functions have separate declarations (explicit or contextual) and name
+  // • Any other qualifications on using the function or pseudovariable
+  // • A description of any arguments
+  // • A description of the value returned or, for a pseudovariable, the value set
+  // • A heading showing the syntax of the reference
+  // In general, each description has the following format:
+  // detailed descriptions for each function, subroutine, and pseudovariable.
+  // This section lists the built-in functions, subroutines, and pseudovariables in alphabetic order and provides
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.452 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.452 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    dcl (Dim, Dimension) builtin;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-594.pli', async () => {
-    // Context:
-    // 
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 538
-    // ROUND
-    // values:
-    // point instructions are used, these successive roundings of 3.1415926d0 would produce the following
-    // what a naive user expects. For example, if compiled with USAGE(ROUND(ANS)) and IEEE binary floating
-    // Note that under USAGE(ROUND(ANS)), the rounding is a base 2 rounding, and the results may not be
-    // where where b = 2 (=radix(x)) and e = exponent(x):
-    // Under the compiler option USAGE(ROUND(ANS)), the value of the result is given by the following formula,
-    // source.
-    // 
+test("Block block-594.pli", async () => {
+  // Context:
+  //
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 538
+  // ROUND
+  // values:
+  // point instructions are used, these successive roundings of 3.1415926d0 would produce the following
+  // what a naive user expects. For example, if compiled with USAGE(ROUND(ANS)) and IEEE binary floating
+  // Note that under USAGE(ROUND(ANS)), the rounding is a base 2 rounding, and the results may not be
+  // where where b = 2 (=radix(x)) and e = exponent(x):
+  // Under the compiler option USAGE(ROUND(ANS)), the value of the result is given by the following formula,
+  // source.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.590 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.590 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2684,78 +2765,81 @@ test('Block block-594.pli', async () => {
      display( round(x,7) );  /* 3.156250000000000E+0000 */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-479.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    // represents negative values. The T can appear anywhere a '9' picture specification character occurs.
-    // 337
-    // Chapter 14. Picture specification characters  
-    // Credit, debit, overpunched and zero replacement
-    // the input data represents positive values, and one of the characters } through R if the input data
-    // On output, T specifies that the associated position contains one of the characters { through I if
-    // values, and that the characters } through R represent negative values.
-    // On input, T specifies that the characters { through I and the digits 0 through 9 represent positive
-    // T
-    // 
+test("Block block-479.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  // represents negative values. The T can appear anywhere a '9' picture specification character occurs.
+  // 337
+  // Chapter 14. Picture specification characters
+  // Credit, debit, overpunched and zero replacement
+  // the input data represents positive values, and one of the characters } through R if the input data
+  // On output, T specifies that the associated position contains one of the characters { through I if
+  // values, and that the characters } through R represent negative values.
+  // On input, T specifies that the characters { through I and the digits 0 through 9 represent positive
+  // T
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.389 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.389 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    dcl Credit picture 'ZZV9T';
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-478.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    // character (-). The rules are identical to those for the currency symbol.
-    // Specifies the plus sign character (+) if the data value is >=0; otherwise, it specifies the minus sign
-    // S
-    // symbols” on page 333.
-    // For information about specifying a character as a currency symbol, refer to “Defining currency
-    // .
-    // 12.45
-    // . Its arithmetic value is 
-    // '$12.45'
-    // 
+test("Block block-478.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  // character (-). The rules are identical to those for the currency symbol.
+  // Specifies the plus sign character (+) if the data value is >=0; otherwise, it specifies the minus sign
+  // S
+  // symbols” on page 333.
+  // For information about specifying a character as a currency symbol, refer to “Defining currency
+  // .
+  // 12.45
+  // . Its arithmetic value is
+  // '$12.45'
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.386 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.386 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    dcl Root picture 'S999';
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-94.pli', async () => {
-    // Context:
-    // 
-    // entry variable that is used in a procedure reference, as in the following example:
-    // ) can also be assigned to an
-    // Readin
-    // . The entry constant (
-    // statement-3
-    //  and execution begins with 
-    // Errt
-    // 99
-    // Chapter 5. Program organization  
-    // Procedure activation
-    // 
+test("Block block-94.pli", async () => {
+  // Context:
+  //
+  // entry variable that is used in a procedure reference, as in the following example:
+  // ) can also be assigned to an
+  // Readin
+  // . The entry constant (
+  // statement-3
+  //  and execution begins with
+  // Errt
+  // 99
+  // Chapter 5. Program organization
+  // Procedure activation
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.151 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.151 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2766,52 +2850,54 @@ test('Block block-94.pli', async () => {
    call Readin;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-299.pli', async () => {
-    // Context:
-    // 
-    // OTHERWISE statements.
-    // execution. It is often used to denote null action for THEN and ELSE clauses and for WHEN and
-    // The null statement causes no operation to be performed and does not modify sequential statement
-    // null statement
-    // 227
-    // Chapter 8. Statements and directives  
-    // %NOPRINT
-    // the setting of various compiler options.
-    // Generated messages of severity S, E, or W might cause termination of compilation, depending upon
-    // Generated messages of severity U cause immediate termination of preprocessing and compilation.
-    // 
+test("Block block-299.pli", async () => {
+  // Context:
+  //
+  // OTHERWISE statements.
+  // execution. It is often used to denote null action for THEN and ELSE clauses and for WHEN and
+  // The null statement causes no operation to be performed and does not modify sequential statement
+  // null statement
+  // 227
+  // Chapter 8. Statements and directives
+  // %NOPRINT
+  // the setting of various compiler options.
+  // Generated messages of severity S, E, or W might cause termination of compilation, depending upon
+  // Generated messages of severity U cause immediate termination of preprocessing and compilation.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.279 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.279 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
  ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-302.pli', async () => {
-    // Context:
-    // 
-    // The %PRINT directive causes printing of the source listings to be resumed.
-    // %PRINT directive
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 228
-    // null
-    // For an example, see “%PUSH directive” on page 230.
-    // The most common use of the %PUSH and %POP directives is in included files and macros.
-    // the most recent %PUSH directive.
-    // The %POP directive allows you to restore the status of the %PRINT and %NOPRINT directives saved by
-    // %POP directive
-    // 
+test("Block block-302.pli", async () => {
+  // Context:
+  //
+  // The %PRINT directive causes printing of the source listings to be resumed.
+  // %PRINT directive
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 228
+  // null
+  // For an example, see “%PUSH directive” on page 230.
+  // The most common use of the %PUSH and %POP directives is in included files and macros.
+  // the most recent %PUSH directive.
+  // The %POP directive allows you to restore the status of the %PRINT and %NOPRINT directives saved by
+  // %POP directive
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.280 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.280 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2819,26 +2905,27 @@ test('Block block-302.pli', async () => {
  ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-165.pli', async () => {
-    // Context:
-    // 
-    // .
-    // X
-    // procedure 
-    // , as declared in
-    // 1
-    //  is 
-    // B
-    // . The output for 
-    // 2
-    // , which is 
-    // 
+test("Block block-165.pli", async () => {
+  // Context:
+  //
+  // .
+  // X
+  // procedure
+  // , as declared in
+  // 1
+  //  is
+  // B
+  // . The output for
+  // 2
+  // , which is
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.204 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.204 */
 
 
    X: proc options(main);
@@ -2853,26 +2940,27 @@ test('Block block-165.pli', async () => {
      end Y;
    end X;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-150.pli', async () => {
-    // Context:
-    // 
-    // a type as a variable name as well.
-    // Type names are also in a separate name space from declared names. Therefore, you can use the name of
-    //  is not.
-    // Y
-    //  is a valid reference, but 
-    // B
-    // For example, given the following declares and definitions, 
-    // cannot be referenced by themselves.
-    // names in a typical untyped structure, the names in a typed structure form their own “name space” and
-    // You reference a member of a typed structure using the . operator or a handle with the => operator. Unlike
-    // 
+test("Block block-150.pli", async () => {
+  // Context:
+  //
+  // a type as a variable name as well.
+  // Type names are also in a separate name space from declared names. Therefore, you can use the name of
+  //  is not.
+  // Y
+  //  is a valid reference, but
+  // B
+  // For example, given the following declares and definitions,
+  // cannot be referenced by themselves.
+  // names in a typical untyped structure, the names in a typed structure form their own “name space” and
+  // You reference a member of a typed structure using the . operator or a handle with the => operator. Unlike
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.195 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.195 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2880,26 +2968,27 @@ test('Block block-150.pli', async () => {
    declare Hps type Hps;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-309.pli', async () => {
-    // Context:
-    // 
-    // Qualify blocks can also be nested. For example, you can nest a qualify block inside the block above:
-    // PAINT.RED, PAINT.ORANGE, and so on. The name of the qualify block must be unique to its block.
-    // means you can declare a variable as having type PAINT.COLOR and that you can refer to the constants
-    // The names inside a qualify block must be unique to that block, but not to their containing blocks. This
-    // etc.
-    // define PAINT as a qualifier to the ORDINAL type COLOR and as a qualifier to the values RED, ORANGE,
-    // For example, the statements:
-    // DECLARE statements in it must specify scalars with the VALUE attribute.
-    // A qualify block can contain only DECLARE, DEFINE, and QUALIFY statements, and the only valid
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 
+test("Block block-309.pli", async () => {
+  // Context:
+  //
+  // Qualify blocks can also be nested. For example, you can nest a qualify block inside the block above:
+  // PAINT.RED, PAINT.ORANGE, and so on. The name of the qualify block must be unique to its block.
+  // means you can declare a variable as having type PAINT.COLOR and that you can refer to the constants
+  // The names inside a qualify block must be unique to that block, but not to their containing blocks. This
+  // etc.
+  // define PAINT as a qualifier to the ORDINAL type COLOR and as a qualifier to the values RED, ORANGE,
+  // For example, the statements:
+  // DECLARE statements in it must specify scalars with the VALUE attribute.
+  // A qualify block can contain only DECLARE, DEFINE, and QUALIFY statements, and the only valid
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.282 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.282 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2911,26 +3000,27 @@ test('Block block-309.pli', async () => {
      end paint;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-532.pli', async () => {
-    // Context:
-    // 
-    // Example 1
-    // HEXIMAGE8 built-in function.
-    //  in storage. If an exact image is required, use the
-    // x
-    // This function does not return an exact image of 
-    // Note: 
-    // 449
-    // Chapter 18. Built-in functions, pseudovariables, and subroutines  
-    // HEX8
-    // bytes will be converted.
-    // 
+test("Block block-532.pli", async () => {
+  // Context:
+  //
+  // Example 1
+  // HEXIMAGE8 built-in function.
+  //  in storage. If an exact image is required, use the
+  // x
+  // This function does not return an exact image of
+  // Note:
+  // 449
+  // Chapter 18. Built-in functions, pseudovariables, and subroutines
+  // HEX8
+  // bytes will be converted.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.501 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.501 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2948,26 +3038,27 @@ test('Block block-532.pli', async () => {
               /* '10000000' - bytes NOT reversed */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-473.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    // The V character cannot appear more than once in a picture specification.
-    // specification. This can cause the assigned value to be truncated, if necessary, to an integer.
-    // of a picture specification of a floating-point decimal value), a V is assumed at the right end of the field
-    // If no V character appears in the picture specification of a fixed-point decimal value (or in the first field
-    // condition is raised if enabled.)
-    // at either end. (If significant digits are truncated on the left, the result is undefined and the SIZE
-    // aligned on the V character. Therefore, an assigned value can be truncated or extended with zero digits
-    // fractional value of the assigned value, after modification by the optional scaling factor F(±x), are
-    // does not specify that an actual decimal point or decimal comma is inserted. The integer value and
-    // 
+test("Block block-473.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  // The V character cannot appear more than once in a picture specification.
+  // specification. This can cause the assigned value to be truncated, if necessary, to an integer.
+  // of a picture specification of a floating-point decimal value), a V is assumed at the right end of the field
+  // If no V character appears in the picture specification of a fixed-point decimal value (or in the first field
+  // condition is raised if enabled.)
+  // at either end. (If significant digits are truncated on the left, the result is undefined and the SIZE
+  // aligned on the V character. Therefore, an assigned value can be truncated or extended with zero digits
+  // fractional value of the assigned value, after modification by the optional scaling factor F(±x), are
+  // does not specify that an actual decimal point or decimal comma is inserted. The integer value and
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.381 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.381 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2977,26 +3068,27 @@ test('Block block-473.pli', async () => {
    Cvalue = Value;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-687.pli', async () => {
-    // Context:
-    // 
-    // Upper limits
-    // Lower limits
-    // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
-    // code page that will be uppercased or lowercased.
-    //  denotes the
-    // c
-    // . 
-    // c
-    //  for the supported values of 
-    // upperc
-    // 
+test("Block block-687.pli", async () => {
+  // Context:
+  //
+  // Upper limits
+  // Lower limits
+  // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
+  // code page that will be uppercased or lowercased.
+  //  denotes the
+  // c
+  // .
+  // c
+  //  for the supported values of
+  // upperc
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.682 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.682 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3082,26 +3174,27 @@ test('Block block-687.pli', async () => {
         ) );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-222.pli', async () => {
-    // Context:
-    // 
-    // Example: The usage of the ASSERT COMPARE statement
-    // that are used in this example.
-    // The following example shows the usage of the ASSERT COMPARE statement. You must code the routines
-    // 197
-    // Chapter 8. Statements and directives  
-    // statements. You must code the routines that are used in this example.
-    // The following example shows the usage of the ASSERT TRUE, ASSERT FALSE and ASSERT UNREACHABLE
-    // Example: The usage of the ASSERT TRUE, ASSERT FALSE and ASSERT UNREACHABLE statements
-    // • Any other type, then the strings will be null strings.
-    // • ORDINALs, then the strings will be their ORDINALNAME values.
-    // 
+test("Block block-222.pli", async () => {
+  // Context:
+  //
+  // Example: The usage of the ASSERT COMPARE statement
+  // that are used in this example.
+  // The following example shows the usage of the ASSERT COMPARE statement. You must code the routines
+  // 197
+  // Chapter 8. Statements and directives
+  // statements. You must code the routines that are used in this example.
+  // The following example shows the usage of the ASSERT TRUE, ASSERT FALSE and ASSERT UNREACHABLE
+  // Example: The usage of the ASSERT TRUE, ASSERT FALSE and ASSERT UNREACHABLE statements
+  // • Any other type, then the strings will be null strings.
+  // • ORDINALs, then the strings will be their ORDINALNAME values.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parse(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.249 */
+  const doc: LangiumDocument<PliProgram> =
+    await parse(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.249 */
 
 
  asserts: package;                                                             
@@ -3163,26 +3256,27 @@ test('Block block-222.pli', async () => {
    end;          
    end;          
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-450.pli', async () => {
-    // Context:
-    // 
-    // Example 2
-    // Output stream:
-    // Input stream:
-    // The following example shows data-directed transmission (both input and output).
-    // Example 1
-    // quotation mark contained within the character string is represented by two successive quotation marks.
-    // For character data, the contents of the character string are written out enclosed in quotation marks. Each
-    // expression.
-    // numeric character variable does not represent a valid optionally signed arithmetic constant or a complex
-    // Data-directed output is not valid for subsequent data-directed input when the character-string value of a
-    // 
+test("Block block-450.pli", async () => {
+  // Context:
+  //
+  // Example 2
+  // Output stream:
+  // Input stream:
+  // The following example shows data-directed transmission (both input and output).
+  // Example 1
+  // quotation mark contained within the character string is represented by two successive quotation marks.
+  // For character data, the contents of the character string are written out enclosed in quotation marks. Each
+  // expression.
+  // numeric character variable does not represent a valid optionally signed arithmetic constant or a complex
+  // Data-directed output is not valid for subsequent data-directed input when the character-string value of a
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.358 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.358 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3195,52 +3289,54 @@ test('Block block-450.pli', async () => {
    put data (A);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-637.pli', async () => {
-    // Context:
-    // 
-    // The preprocessor would produce the output text:
-    // replacement text and regular text. For example, suppose that the input text is as follows:
-    // . Such a null statement can be used to concatenate
-    // %;
-    // statement when it is specified in the form 
-    // Preprocessor statements should be on separate lines from normal text. The one exception is the null
-    // delimiters.
-    // Replacement values must not contain % symbols, unmatched quotation marks, or unmatched comment
-    // been made.
-    // insertion of a value into the preprocessor output takes place only after all possible replacements have
-    // 
+test("Block block-637.pli", async () => {
+  // Context:
+  //
+  // The preprocessor would produce the output text:
+  // replacement text and regular text. For example, suppose that the input text is as follows:
+  // . Such a null statement can be used to concatenate
+  // %;
+  // statement when it is specified in the form
+  // Preprocessor statements should be on separate lines from normal text. The one exception is the null
+  // delimiters.
+  // Replacement values must not contain % symbols, unmatched quotation marks, or unmatched comment
+  // been made.
+  // insertion of a value into the preprocessor output takes place only after all possible replacements have
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.647 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.647 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    dcl BC fixed bin(31);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-196.pli', async () => {
-    // Context:
-    // 
-    // and variant parts. For example, records in a client file can be declared as follows:
-    // Unions can be used to declare variant records that would typically contain a common part, a selector part,
-    // A union, like a structure, is declared through the use of level-numbers preceding the associated names.
-    // programmer determines which member is used.
-    // to the storage required by the largest member. Normally, only one member is used at any time and the
-    // level are members of the union and occupy the same storage. The storage occupied by the union is equal
-    // Like a structure, a union can be at any level including level 1. All elements of a union at the next deeper
-    // 177
-    // Chapter 7. Data declarations  
-    // Unions
-    // 
+test("Block block-196.pli", async () => {
+  // Context:
+  //
+  // and variant parts. For example, records in a client file can be declared as follows:
+  // Unions can be used to declare variant records that would typically contain a common part, a selector part,
+  // A union, like a structure, is declared through the use of level-numbers preceding the associated names.
+  // programmer determines which member is used.
+  // to the storage required by the largest member. Normally, only one member is used at any time and the
+  // level are members of the union and occupy the same storage. The storage occupied by the union is equal
+  // Like a structure, a union can be at any level including level 1. All elements of a union at the next deeper
+  // 177
+  // Chapter 7. Data declarations
+  // Unions
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.229 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.229 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3258,26 +3354,27 @@ test('Block block-196.pli', async () => {
              2 * char(0);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-67.pli', async () => {
-    // Context:
-    // 
-    // Examples
-    // • Type functions: BIND, CAST, FIRST, LAST, RESPEC, SIZE, and VALUE
-    // PROCEDURENAME, RANK, SOURCEFILE, SOURCELINE, and WCHARVAL
-    // – Miscellaneous functions: BYTE, CHARVAL, COLLATE, INDICATORS, PACKAGENAME, POPCNT,
-    // STORAGE, and SYSNULL
-    // – Storage-control functions: BINARYVALUE, LENGTH, NULL, OFFSETVALUE, POINTERVALUE, SIZE,
-    // LBOUNDACROSS
-    // – Array-handling functions: DIMACROSS, DIMENSION, HBOUND, HBOUNDACROSS, LBOUND, and
-    // – Precision-handling
-    // – Integer manipulation
-    // 
+test("Block block-67.pli", async () => {
+  // Context:
+  //
+  // Examples
+  // • Type functions: BIND, CAST, FIRST, LAST, RESPEC, SIZE, and VALUE
+  // PROCEDURENAME, RANK, SOURCEFILE, SOURCELINE, and WCHARVAL
+  // – Miscellaneous functions: BYTE, CHARVAL, COLLATE, INDICATORS, PACKAGENAME, POPCNT,
+  // STORAGE, and SYSNULL
+  // – Storage-control functions: BINARYVALUE, LENGTH, NULL, OFFSETVALUE, POINTERVALUE, SIZE,
+  // LBOUNDACROSS
+  // – Array-handling functions: DIMACROSS, DIMENSION, HBOUND, HBOUNDACROSS, LBOUND, and
+  // – Precision-handling
+  // – Integer manipulation
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.124 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.124 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3300,26 +3397,27 @@ test('Block block-67.pli', async () => {
    dcl Identical_to_Ar( lbound(Ar):hbound(Ar) ) pointer;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-315.pli', async () => {
-    // Context:
-    // 
-    // The STOP statement stops the current application.
-    // STOP statement
-    // %PAGE directive is executed in place of the %SKIP directive.
-    //  is greater than the number of lines remaining on the page, the equivalent of a
-    // n
-    // the default is 1. If 
-    //  is omitted,
-    // n
-    // Specifies the number of lines to be skipped. It must be an integer in the range 1 - 999. If 
-    // n
-    // 
+test("Block block-315.pli", async () => {
+  // Context:
+  //
+  // The STOP statement stops the current application.
+  // STOP statement
+  // %PAGE directive is executed in place of the %SKIP directive.
+  //  is greater than the number of lines remaining on the page, the equivalent of a
+  // n
+  // the default is 1. If
+  //  is omitted,
+  // n
+  // Specifies the number of lines to be skipped. It must be an integer in the range 1 - 999. If
+  // n
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.285 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.285 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3327,26 +3425,27 @@ test('Block block-315.pli', async () => {
  ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-172.pli', async () => {
-    // Context:
-    // 
-    // declaration:
-    // specified for the corresponding parameter in the invoked procedure. For example, consider the following
-    // If no description list is given in an ENTRY declaration, the attributes for the argument must match those
-    // alignment attributes are shown in Table 8 on page 21 and Table 7 on page 19.
-    // precision as indicated in Table 40 on page 168. The language-specified defaults for scope, storage and
-    // If a precision is not specified in an arithmetic declaration, the DEFAULT compiler option determines the
-    // with the attributes FIXED BINARY(p,q).
-    // attributes. Therefore, a declaration with the attributes BINARY(p,q) is always equivalent to a declaration
-    // If a scaling factor is specified in the precision attribute, the attribute FIXED is applied before any other
-    // • If DEFAULT(ANS) is in effect, all variables are given the attributes REAL FIXED BINARY(31,0).
-    // 
+test("Block block-172.pli", async () => {
+  // Context:
+  //
+  // declaration:
+  // specified for the corresponding parameter in the invoked procedure. For example, consider the following
+  // If no description list is given in an ENTRY declaration, the attributes for the argument must match those
+  // alignment attributes are shown in Table 8 on page 21 and Table 7 on page 19.
+  // precision as indicated in Table 40 on page 168. The language-specified defaults for scope, storage and
+  // If a precision is not specified in an arithmetic declaration, the DEFAULT compiler option determines the
+  // with the attributes FIXED BINARY(p,q).
+  // attributes. Therefore, a declaration with the attributes BINARY(p,q) is always equivalent to a declaration
+  // If a scaling factor is specified in the precision attribute, the attribute FIXED is applied before any other
+  // • If DEFAULT(ANS) is in effect, all variables are given the attributes REAL FIXED BINARY(31,0).
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.218 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.218 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3354,26 +3453,27 @@ test('Block block-172.pli', async () => {
    call X( 1 );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-387.pli', async () => {
-    // Context:
-    // 
-    // For example, consider the declaration:
-    // set of initial values for a structure element in the array.
-    // attribute specifies a series of comma lists of expressions where each comma list in turn specifies the
-    // members are scalars in a way that makes it easy to add or delete elements to those arrays. The
-    // The INITACROSS attribute helps initialize one-dimensional arrays of structures where all the structure
-    // INITACROSS
-    //  in the preceding example, the following assignment is illegal:
-    // pdays
-    // in read-only storage and an attempt to change it could result in a protection exception. Given the array
-    // You should not change a value identified by a pointer initialized with INITIAL TO. The value can be placed
-    // 
+test("Block block-387.pli", async () => {
+  // Context:
+  //
+  // For example, consider the declaration:
+  // set of initial values for a structure element in the array.
+  // attribute specifies a series of comma lists of expressions where each comma list in turn specifies the
+  // members are scalars in a way that makes it easy to add or delete elements to those arrays. The
+  // The INITACROSS attribute helps initialize one-dimensional arrays of structures where all the structure
+  // INITACROSS
+  //  in the preceding example, the following assignment is illegal:
+  // pdays
+  // in read-only storage and an attempt to change it could result in a protection exception. Given the array
+  // You should not change a value identified by a pointer initialized with INITIAL TO. The value can be placed
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.321 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.321 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3386,26 +3486,27 @@ test('Block block-387.pli', async () => {
                 ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-25.pli', async () => {
-    // Context:
-    // 
-    // .
-    // Zuser
-    //  and 16 bytes for 
-    // User
-    // bytes for 
-    //  is null-terminated. The storage allocated is 17
-    // Zuser
-    // , 
-    // User
-    // a maximum length of 15. However, unlike 
-    // 
+test("Block block-25.pli", async () => {
+  // Context:
+  //
+  // .
+  // Zuser
+  //  and 16 bytes for
+  // User
+  // bytes for
+  //  is null-terminated. The storage allocated is 17
+  // Zuser
+  // ,
+  // User
+  // a maximum length of 15. However, unlike
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3413,26 +3514,27 @@ test('Block block-25.pli', async () => {
    declare Zuser character (15) varyingz;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-480.pli', async () => {
-    // Context:
-    // 
-    // the following example:
-    // input data represents negative values; otherwise, it contains one of the digits 0 through 9. Consider
-    // On output, R specifies that the associated position contains one of the characters } through R if the
-    // through 9 represent positive values.
-    // On input, R specifies that the characters } through R represent negative values and the digits 0
-    // R
-    // input data represents positive values; otherwise, it contains one of the digits, 0 through 9.
-    // On output, I specifies that the associated position contains one of the characters { through I if the
-    // values.
-    // On input, I specifies that the characters { through I and the digits 0 through 9 represent positive
-    // 
+test("Block block-480.pli", async () => {
+  // Context:
+  //
+  // the following example:
+  // input data represents negative values; otherwise, it contains one of the digits 0 through 9. Consider
+  // On output, R specifies that the associated position contains one of the characters } through R if the
+  // through 9 represent positive values.
+  // On input, R specifies that the characters } through R represent negative values and the digits 0
+  // R
+  // input data represents positive values; otherwise, it contains one of the digits, 0 through 9.
+  // On output, I specifies that the associated position contains one of the characters { through I if the
+  // values.
+  // On input, I specifies that the characters { through I and the digits 0 through 9 represent positive
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.389 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.389 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3440,52 +3542,54 @@ test('Block block-480.pli', async () => {
    get edit (x) (P'R99');
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-24.pli', async () => {
-    // Context:
-    // 
-    // The following example shows the declaration of a bit variable:
-    // 15:
-    //  as a variable that can represent character data with a length of
-    // User
-    // The following statement declares 
-    // Examples
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 30
-    // BIT, CHARACTER, GRAPHIC, UCHAR and WIDECHAR
-    // See “REFER option (self-defining data)” on page 251 for the description of the REFER option.
-    // 
+test("Block block-24.pli", async () => {
+  // Context:
+  //
+  // The following example shows the declaration of a bit variable:
+  // 15:
+  //  as a variable that can represent character data with a length of
+  // User
+  // The following statement declares
+  // Examples
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 30
+  // BIT, CHARACTER, GRAPHIC, UCHAR and WIDECHAR
+  // See “REFER option (self-defining data)” on page 251 for the description of the REFER option.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    declare Symptoms bit (64);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-589.pli', async () => {
-    // Context:
-    // 
-    // substring f in the string x will be replaced by the substring t.
-    // BINARY(31,0). The default value for i is 1. i must be non-negative. If i is 0, all occurrences of the
-    // be replaced by the substring t. i must have a computational type and is converted to FIXED
-    // An optional expression that specifies the maximum number of times that the substring f should
-    // i
-    // STRINGRANGE condition will be raised if enabled, and the result will be a null character string.
-    // BINARY(31,0). The default value for n is 1. If n is less than 1 or greater than the length(x), the
-    // begins searching for the substring f. n must have a computational type and is converted to FIXED
-    // An optional expression that specifies a location within the string x, from where the compiler
-    // n
-    // 
+test("Block block-589.pli", async () => {
+  // Context:
+  //
+  // substring f in the string x will be replaced by the substring t.
+  // BINARY(31,0). The default value for i is 1. i must be non-negative. If i is 0, all occurrences of the
+  // be replaced by the substring t. i must have a computational type and is converted to FIXED
+  // An optional expression that specifies the maximum number of times that the substring f should
+  // i
+  // STRINGRANGE condition will be raised if enabled, and the result will be a null character string.
+  // BINARY(31,0). The default value for n is 1. If n is less than 1 or greater than the length(x), the
+  // begins searching for the substring f. n must have a computational type and is converted to FIXED
+  // An optional expression that specifies a location within the string x, from where the compiler
+  // n
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.587 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.587 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3510,26 +3614,27 @@ test('Block block-589.pli', async () => {
        /* 'reserved from 2018/05/01 till 2018/05/01.' */      
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-147.pli', async () => {
-    // Context:
-    // 
-    // that gets a handle to this typed structure:
-    // ), and declares the C function
-    // tm
-    // The following example defines several named types, a structure type (
-    // Example 2
-    // previous DEFINE ALIAS statement. See the following example:
-    // The TYPE attribute can be used in a DEFINE ALIAS statement to specify an alias for a type defined in a
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 142
-    // HANDLE attribute
-    // 
+test("Block block-147.pli", async () => {
+  // Context:
+  //
+  // that gets a handle to this typed structure:
+  // ), and declares the C function
+  // tm
+  // The following example defines several named types, a structure type (
+  // Example 2
+  // previous DEFINE ALIAS statement. See the following example:
+  // The TYPE attribute can be used in a DEFINE ALIAS statement to specify an alias for a type defined in a
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 142
+  // HANDLE attribute
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.194 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.194 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3555,26 +3660,27 @@ test('Block block-147.pli', async () => {
                 returns( byvalue type time_t );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-321.pli', async () => {
-    // Context:
-    // 
-    // . PL/I does not resolve this type of declaration dependency.
-    // Str2
-    // , but not for 
-    // Str1
-    // allocated is correct for 
-    // either to a restricted expression or to an initialized static variable. In the following example, the length
-    //  be initialized
-    // N
-    // If the declare statements are located in the same block, PL/I requires that the variable 
-    //  is invoked.
-    // 
+test("Block block-321.pli", async () => {
+  // Context:
+  //
+  // . PL/I does not resolve this type of declaration dependency.
+  // Str2
+  // , but not for
+  // Str1
+  // allocated is correct for
+  // either to a restricted expression or to an initialized static variable. In the following example, the length
+  //  be initialized
+  // N
+  // If the declare statements are located in the same block, PL/I requires that the variable
+  //  is invoked.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.290 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.290 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3584,26 +3690,27 @@ test('Block block-321.pli', async () => {
      Str2 char(M);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-146.pli', async () => {
-    // Context:
-    // 
-    // previous DEFINE ALIAS statement. See the following example:
-    // The TYPE attribute can be used in a DEFINE ALIAS statement to specify an alias for a type defined in a
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 142
-    // HANDLE attribute
-    // Consider the following code:
-    // Example 1
-    // Specifies the name of a QUALIFY block.
-    // y
-    // Specifies the name of a previously defined alias, defined structure, or ordinal type.
-    // 
+test("Block block-146.pli", async () => {
+  // Context:
+  //
+  // previous DEFINE ALIAS statement. See the following example:
+  // The TYPE attribute can be used in a DEFINE ALIAS statement to specify an alias for a type defined in a
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 142
+  // HANDLE attribute
+  // Consider the following code:
+  // Example 1
+  // Specifies the name of a QUALIFY block.
+  // y
+  // Specifies the name of a previously defined alias, defined structure, or ordinal type.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.194 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.194 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3611,26 +3718,27 @@ test('Block block-146.pli', async () => {
    define alias Short type word;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-52.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    // A pseudovariable represents a target field.
-    // Pseudovariables
-    // 53
-    // Chapter 3. Expressions and references  
-    // Order of evaluation
-    // and record I/O statements.
-    // assignment symbol (in this case A). Assignment to variables can also occur in stream I/O, DO, DISPLAY,
-    // , the target is the variable on the left of the
-    // A = B;
-    // 
+test("Block block-52.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  // A pseudovariable represents a target field.
+  // Pseudovariables
+  // 53
+  // Chapter 3. Expressions and references
+  // Order of evaluation
+  // and record I/O statements.
+  // assignment symbol (in this case A). Assignment to variables can also occur in stream I/O, DO, DISPLAY,
+  // , the target is the variable on the left of the
+  // A = B;
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.105 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.105 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3639,26 +3747,27 @@ test('Block block-52.pli', async () => {
    substr(A,6,5) = substr(B,20,5);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-690.pli', async () => {
-    // Context:
-    // 
-    // Upper limits
-    // Lower limits
-    // (continued)
-    // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
-    // 633
-    // Appendix A. Limits  
-    // Limits
-    // Upper limits
-    // Lower limits
-    // (continued)
-    // 
+test("Block block-690.pli", async () => {
+  // Context:
+  //
+  // Upper limits
+  // Lower limits
+  // (continued)
+  // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
+  // 633
+  // Appendix A. Limits
+  // Limits
+  // Upper limits
+  // Lower limits
+  // (continued)
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.685 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.685 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3784,26 +3893,27 @@ test('Block block-690.pli', async () => {
         ) );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-691.pli', async () => {
-    // Context:
-    // 
-    // Upper limits
-    // Lower limits
-    // (continued)
-    // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
-    // 634
-    // Limits
-    // Upper limits
-    // Lower limits
-    // (continued)
-    // 
+test("Block block-691.pli", async () => {
+  // Context:
+  //
+  // Upper limits
+  // Lower limits
+  // (continued)
+  // Table 88. Supported code page values for LOWERCASE built-in function and UPPERCASE built-in function
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
+  // 634
+  // Limits
+  // Upper limits
+  // Lower limits
+  // (continued)
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.686 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.686 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3929,26 +4039,27 @@ test('Block block-691.pli', async () => {
         ) );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-216.pli', async () => {
-    // Context:
-    // 
-    // Consider the following union:
-    // member.
-    // the members requires different alignment and therefore different padding before the beginning of the
-    // that the first storage locations for each of the members of a union do not overlay each other if each of
-    // Each of the members, if not a union, is mapped as if it were a member of a structure. This means
-    // Individual members of a union are mapped the same way as members of the structure.
-    // Structure and union mapping
-    // • Storage control and those built-in functions and subroutines that allow structures.
-    // • Parameters and arguments
-    // But references to unions or structures that contain unions are limited to the following contexts:
-    // 
+test("Block block-216.pli", async () => {
+  // Context:
+  //
+  // Consider the following union:
+  // member.
+  // the members requires different alignment and therefore different padding before the beginning of the
+  // that the first storage locations for each of the members of a union do not overlay each other if each of
+  // Each of the members, if not a union, is mapped as if it were a member of a structure. This means
+  // Individual members of a union are mapped the same way as members of the structure.
+  // Structure and union mapping
+  // • Storage control and those built-in functions and subroutines that allow structures.
+  // • Parameters and arguments
+  // But references to unions or structures that contain unions are limited to the following contexts:
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.238 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.238 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3963,52 +4074,54 @@ test('Block block-216.pli', async () => {
           2 H char(8);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-179.pli', async () => {
-    // Context:
-    // 
-    // an attribute specification. Consider the following example:
-    // Attributes that conflict, when applied to a data item, do not necessarily conflict when they appear in
-    // The INITIAL attribute can be specified.
-    // the dimension attribute can be applied by default only to explicitly declared names.
-    // declared explicitly, a subscripted name is contextually declared with the attribute BUILTIN. Therefore,
-    // Although the DEFAULT statement can specify the dimension attribute for names that have not been
-    // following example:
-    // can be specified as an arithmetic constant or an expression and can include the REFER option. See the
-    // The dimension attribute is allowed, but only as the first item in an attribute specification. The bounds
-    // 169
-    // 
+test("Block block-179.pli", async () => {
+  // Context:
+  //
+  // an attribute specification. Consider the following example:
+  // Attributes that conflict, when applied to a data item, do not necessarily conflict when they appear in
+  // The INITIAL attribute can be specified.
+  // the dimension attribute can be applied by default only to explicitly declared names.
+  // declared explicitly, a subscripted name is contextually declared with the attribute BUILTIN. Therefore,
+  // Although the DEFAULT statement can specify the dimension attribute for names that have not been
+  // following example:
+  // can be specified as an arithmetic constant or an expression and can include the REFER option. See the
+  // The dimension attribute is allowed, but only as the first item in an attribute specification. The bounds
+  // 169
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
  DEFAULT RANGE(S) BINARY VARYING;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-178.pli', async () => {
-    // Context:
-    // 
-    // following example:
-    // can be specified as an arithmetic constant or an expression and can include the REFER option. See the
-    // The dimension attribute is allowed, but only as the first item in an attribute specification. The bounds
-    // 169
-    // Chapter 7. Data declarations  
-    // DEFAULT
-    // If FILE is used, it implies the attributes VARIABLE and INTERNAL.
-    // list of attributes.
-    // Only those attributes that are necessary to complete the declaration of a data item are taken from the
-    // range. Attributes in the list can appear in any order and must be separated by blanks.
-    // 
+test("Block block-178.pli", async () => {
+  // Context:
+  //
+  // following example:
+  // can be specified as an arithmetic constant or an expression and can include the REFER option. See the
+  // The dimension attribute is allowed, but only as the first item in an attribute specification. The bounds
+  // 169
+  // Chapter 7. Data declarations
+  // DEFAULT
+  // If FILE is used, it implies the attributes VARIABLE and INTERNAL.
+  // list of attributes.
+  // Only those attributes that are necessary to complete the declaration of a data item are taken from the
+  // range. Attributes in the list can appear in any order and must be separated by blanks.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4016,26 +4129,27 @@ test('Block block-178.pli', async () => {
  DFT RANGE(J) (5,5) FIXED;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-271.pli', async () => {
-    // Context:
-    // 
-    // The following example shows a procedure-specific message filter control block:
-    // information back to the compiler indicating how a particular message should be handled.
-    // The procedure-specific control block contains information about the messages. It is used to pass
-    //  (severity code 4) messages.
-    // WARNING
-    // (severity code 8) or 
-    // ERROR
-    // You can increase the severity of any of the messages but you can decrease the severity only of 
-    // messages.
-    // The message filtering procedure permits you to either suppress messages or alter the severity of
-    // 
+test("Block block-271.pli", async () => {
+  // Context:
+  //
+  // The following example shows a procedure-specific message filter control block:
+  // information back to the compiler indicating how a particular message should be handled.
+  // The procedure-specific control block contains information about the messages. It is used to pass
+  //  (severity code 4) messages.
+  // WARNING
+  // (severity code 8) or
+  // ERROR
+  // You can increase the severity of any of the messages but you can decrease the severity only of
+  // messages.
+  // The message filtering procedure permits you to either suppress messages or alter the severity of
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.518 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.518 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4062,26 +4176,27 @@ test('Block block-271.pli', async () => {
              5 Uex_MFX_Ins_Series_Addr  pointer(32);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-169.pli', async () => {
-    // Context:
-    // 
-    // Table 94. PL/I equivalent for a C file
-    // What is needed is a pointer (or token) for a file, so this translation can be finessed as follows:
-    // Table 93. Start of the C declaration for its FILE type
-    // A C file declaration depends on the platform, but it often starts as follows:
-    // File type equivalence
-    // Table 92. Sample enum type equivalence
-    // .
-    // stdio.h
-    //  from the C header file 
-    // __device_t
-    // 
+test("Block block-169.pli", async () => {
+  // Context:
+  //
+  // Table 94. PL/I equivalent for a C file
+  // What is needed is a pointer (or token) for a file, so this translation can be finessed as follows:
+  // Table 93. Start of the C declaration for its FILE type
+  // A C file declaration depends on the platform, but it often starts as follows:
+  // File type equivalence
+  // Table 92. Sample enum type equivalence
+  // .
+  // stdio.h
+  //  from the C header file
+  // __device_t
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.400 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.400 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4089,26 +4204,27 @@ test('Block block-169.pli', async () => {
       define alias     file_Handle  handle file;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-48.pli', async () => {
-    // Context:
-    // 
-    // positions.
-    // This declaration gives the standard page size, line size, and tabulating
-    // Table 32. Declaration of PLITABS. 
-    // NONASGN attribute can also be specified when compiling with NORENT.
-    // recommended that PLITABS should always be declared with the NONASGN attribute, because the
-    // If compiling with the RENT option, PLITABS must be declared with the NONASGN attribute. It is
-    // tabs set by the structure, and the Enterprise PL/I library code will not work correctly if this is not true.
-    // structure must are all valid. This field is supposed to hold the offset to the field specifying the number of
-    // If your code contains a declare for PLITABS, ensure that the values and the first field in the PLITABS
-    // information about overriding the tab table, see “Overriding the tab control table” on page 241.
-    // 
+test("Block block-48.pli", async () => {
+  // Context:
+  //
+  // positions.
+  // This declaration gives the standard page size, line size, and tabulating
+  // Table 32. Declaration of PLITABS.
+  // NONASGN attribute can also be specified when compiling with NORENT.
+  // recommended that PLITABS should always be declared with the NONASGN attribute, because the
+  // If compiling with the RENT option, PLITABS must be declared with the NONASGN attribute. It is
+  // tabs set by the structure, and the Enterprise PL/I library code will not work correctly if this is not true.
+  // structure must are all valid. This field is supposed to hold the offset to the field specifying the number of
+  // If your code contains a declare for PLITABS, ensure that the values and the first field in the PLITABS
+  // information about overriding the tab table, see “Overriding the tab control table” on page 241.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.223 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.223 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4128,26 +4244,27 @@ test('Block block-48.pli', async () => {
      2    TAB5 INIT (121)) FIXED BIN (15,0);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-187.pli', async () => {
-    // Context:
-    // 
-    // Table 113. Incorrect declaration of qsort
-    // be declared simply as follows:
-    //  function must not
-    // qsort
-    // But because C function pointers are not the same as PL/I ENTRY variables, the C 
-    // Table 112. Sample code to use C qsort function
-    // following code fragment:
-    //  function could be used with this compare routine to sort an array of integers, as in the
-    // qsort
-    // And the C 
-    // 
+test("Block block-187.pli", async () => {
+  // Context:
+  //
+  // Table 113. Incorrect declaration of qsort
+  // be declared simply as follows:
+  //  function must not
+  // qsort
+  // But because C function pointers are not the same as PL/I ENTRY variables, the C
+  // Table 112. Sample code to use C qsort function
+  // following code fragment:
+  //  function could be used with this compare routine to sort an array of integers, as in the
+  // qsort
+  // And the C
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.405 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.405 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4160,26 +4277,27 @@ test('Block block-187.pli', async () => {
                 options( byvalue nodescriptor );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-2.pli', async () => {
-    // Context:
-    // 
-    // Consider the following example:
-    // unprototyped function to a 2-byte FIXED BIN temporary and pass that temporary instead.
-    // But under NOBIN1ARG, the compiler assigns any 1-byte REAL FIXED BIN argument passed to an
-    // 25
-    // Chapter 1. Using compiler options and facilities  
-    // Under BIN1ARG, the compiler passes a FIXED BIN argument as is to an unprototyped function.
-    // unprototyped function.
-    // This suboption controls how the compiler handles 1-byte REAL FIXED BIN arguments passed to an
-    // BIN1ARG | NOBIN1ARG
-    // attribute from a parent.
-    // 
+test("Block block-2.pli", async () => {
+  // Context:
+  //
+  // Consider the following example:
+  // unprototyped function to a 2-byte FIXED BIN temporary and pass that temporary instead.
+  // But under NOBIN1ARG, the compiler assigns any 1-byte REAL FIXED BIN argument passed to an
+  // 25
+  // Chapter 1. Using compiler options and facilities
+  // Under BIN1ARG, the compiler passes a FIXED BIN argument as is to an unprototyped function.
+  // unprototyped function.
+  // This suboption controls how the compiler handles 1-byte REAL FIXED BIN arguments passed to an
+  // BIN1ARG | NOBIN1ARG
+  // attribute from a parent.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.81 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.81 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4189,52 +4307,54 @@ test('Block block-2.pli', async () => {
  call f2( 1b );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-267.pli', async () => {
-    // Context:
-    // 
-    // must execute the statement:
-    // The rules for the restart are the same as for a restart after a system failure. To request the restart, you
-    // You can request a restart at any point in your program.
-    // Automatic restart within a program
-    // automatic step restart without checkpoint processing if another system failure occurs.
-    // by specifying RD=RNC in the EXEC or JOB statement. By specifying RD=RNC, you are requesting an
-    // After a system failure occurs, you can still force automatic restart from the beginning of the job step
-    // of the job step, can still occur if you have specified RD=R in the EXEC or JOB statement.
-    // If a system failure occurs before any checkpoint has been taken, an automatic restart, from the beginning
-    // checkpoint if you have specified RD=R (or omitted the RD parameter) in the EXEC or JOB statement.
-    // 
+test("Block block-267.pli", async () => {
+  // Context:
+  //
+  // must execute the statement:
+  // The rules for the restart are the same as for a restart after a system failure. To request the restart, you
+  // You can request a restart at any point in your program.
+  // Automatic restart within a program
+  // automatic step restart without checkpoint processing if another system failure occurs.
+  // by specifying RD=RNC in the EXEC or JOB statement. By specifying RD=RNC, you are requesting an
+  // After a system failure occurs, you can still force automatic restart from the beginning of the job step
+  // of the job step, can still occur if you have specified RD=R in the EXEC or JOB statement.
+  // If a system failure occurs before any checkpoint has been taken, an automatic restart, from the beginning
+  // checkpoint if you have specified RD=R (or omitted the RD parameter) in the EXEC or JOB statement.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.512 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.512 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
  CALL PLIREST;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-283.pli', async () => {
-    // Context:
-    // 
-    // The declare for a CMPAT(V3) array descriptor is as follows:
-    // 469
-    // Chapter 26. PL/I descriptors  
-    // The declare for a CMPAT(V2) array descriptor is as follows:
-    // The declare for a CMPAT(V1) array descriptor is as follows:
-    // that the actual upper bound will always match the number of dimensions in the array it describes.
-    // In the following declares, the upper bound for the arrays is declared as 15, but it should be understood
-    // Array descriptors
-    // The possible values for the codepage encoding are defined as follows:
-    // The declare for a string descriptor under CMPAT(V3) is as follows:
-    // 
+test("Block block-283.pli", async () => {
+  // Context:
+  //
+  // The declare for a CMPAT(V3) array descriptor is as follows:
+  // 469
+  // Chapter 26. PL/I descriptors
+  // The declare for a CMPAT(V2) array descriptor is as follows:
+  // The declare for a CMPAT(V1) array descriptor is as follows:
+  // that the actual upper bound will always match the number of dimensions in the array it describes.
+  // In the following declares, the upper bound for the arrays is declared as 15, but it should be understood
+  // Array descriptors
+  // The possible values for the codepage encoding are defined as follows:
+  // The declare for a string descriptor under CMPAT(V3) is as follows:
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4247,26 +4367,27 @@ test('Block block-283.pli', async () => {
        3 dso_v3_lbound fixed bin(63);    /*   lbound                */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-137.pli', async () => {
-    // Context:
-    // 
-    // string:
-    //  is an input-only CHAR VARYINGZ
-    // getenv
-    // In the following declaration, for instance, the first parameter to 
-    // (input-only parameters that can be passed in registers are best declared as BYVALUE).
-    // This practice is particularly useful for strings and other parameters that cannot be passed in registers
-    // pass the address of that static area.
-    // later called with a constant for that parameter, the compiler can put that constant in static storage and
-    // as NONASSIGNABLE (rather than letting it get the default attribute of ASSIGNABLE). If that procedure is
-    // If a procedure has a BYADDR parameter that it uses as input only, it is best to declare that parameter
-    // 
+test("Block block-137.pli", async () => {
+  // Context:
+  //
+  // string:
+  //  is an input-only CHAR VARYINGZ
+  // getenv
+  // In the following declaration, for instance, the first parameter to
+  // (input-only parameters that can be passed in registers are best declared as BYVALUE).
+  // This practice is particularly useful for strings and other parameters that cannot be passed in registers
+  // pass the address of that static area.
+  // later called with a constant for that parameter, the compiler can put that constant in static storage and
+  // as NONASSIGNABLE (rather than letting it get the default attribute of ASSIGNABLE). If that procedure is
+  // If a procedure has a BYADDR parameter that it uses as input only, it is best to declare that parameter
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.369 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.369 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4276,52 +4397,54 @@ test('Block block-137.pli', async () => {
                 options( nodescriptor );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-102.pli', async () => {
-    // Context:
-    // 
-    // preceded by a PUT statement as follows:
-    // system prompt by ending your own prompt with a colon. For example, the GET statement could be
-    // If you include output statements that prompt you for input in your program, you can inhibit the initial
-    // your program until you enter two or more lines.
-    // By adding a hyphen to the end of any line that is to continue, you can delay transmission of the data to
-    // GET statement, a further prompt, which is a plus sign followed by a colon (+:), is displayed.
-    // enter the required data. If you enter a line that does not contain enough data to complete execution of the
-    // is executed in the program. The GET statement causes the system to go to the next line. You can then
-    // You are prompted for input to stream files by a colon (:). You will see the colon each time a GET statement
-    // to the terminal.
-    // 
+test("Block block-102.pli", async () => {
+  // Context:
+  //
+  // preceded by a PUT statement as follows:
+  // system prompt by ending your own prompt with a colon. For example, the GET statement could be
+  // If you include output statements that prompt you for input in your program, you can inhibit the initial
+  // your program until you enter two or more lines.
+  // By adding a hyphen to the end of any line that is to continue, you can delay transmission of the data to
+  // GET statement, a further prompt, which is a plus sign followed by a colon (+:), is displayed.
+  // enter the required data. If you enter a line that does not contain enough data to complete execution of the
+  // is executed in the program. The GET statement causes the system to go to the next line. You can then
+  // You are prompted for input to stream files by a colon (:). You will see the colon each time a GET statement
+  // to the terminal.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.298 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.298 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
  PUT SKIP LIST('ENTER NEXT ITEM:');
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-8.pli', async () => {
-    // Context:
-    // 
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
-    // 74
-    // But this code would still be valid under NOLAXCTL:
-    // The following code is illegal under NOLAXCTL:
-    // with a varying extent, that extent must be specified as an asterisk or as a non-constant expression.
-    // allocated with a differing extent. NOLAXCTL requires that if a CONTROLLED variable is to be allocated
-    // Specifying LAXCTL allows a CONTROLLED variable to be declared with a constant extent and yet to be
-    // LAXCTL | NOLAXCTL
-    // The default is RULES(LAXCONV). When you specify RULES(NOLAXCONV), the default is ALL.
-    // Under SOURCE, only those violations that occur in the primary source file are flagged.
-    // 
+test("Block block-8.pli", async () => {
+  // Context:
+  //
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
+  // 74
+  // But this code would still be valid under NOLAXCTL:
+  // The following code is illegal under NOLAXCTL:
+  // with a varying extent, that extent must be specified as an asterisk or as a non-constant expression.
+  // allocated with a differing extent. NOLAXCTL requires that if a CONTROLLED variable is to be allocated
+  // Specifying LAXCTL allows a CONTROLLED variable to be declared with a constant extent and yet to be
+  // LAXCTL | NOLAXCTL
+  // The default is RULES(LAXCONV). When you specify RULES(NOLAXCONV), the default is ALL.
+  // Under SOURCE, only those violations that occur in the primary source file are flagged.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.130 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.130 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4331,26 +4454,27 @@ test('Block block-8.pli', async () => {
      alloc b bit(16);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-289.pli', async () => {
-    // Context:
-    // 
-    // Table 144. Record types encoded as an ordinal value
-    // 473
-    //  Copyright IBM Corp. 1999, 2022
-    // Possible record types are encoded as an ordinal value as shown in Table 144 on page 474.
-    // • Whether the record is continued onto the next record
-    // • Record type
-    // The header also has some fields that vary from record to record:
-    // the number 4.
-    // A number representing the level of SYSADATA that this file format represents. For this product, it is
-    // SYSADATA level
-    // 
+test("Block block-289.pli", async () => {
+  // Context:
+  //
+  // Table 144. Record types encoded as an ordinal value
+  // 473
+  //  Copyright IBM Corp. 1999, 2022
+  // Possible record types are encoded as an ordinal value as shown in Table 144 on page 474.
+  // • Whether the record is continued onto the next record
+  // • Record type
+  // The header also has some fields that vary from record to record:
+  // the number 4.
+  // A number representing the level of SYSADATA that this file format represents. For this product, it is
+  // SYSADATA level
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.529 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.529 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4371,26 +4495,27 @@ test('Block block-289.pli', async () => {
                        prec(15);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-55.pli', async () => {
-    // Context:
-    // 
-    // Here is the sample of the PL/I fetched MAIN program:
-    // Examples
-    // with DEFAULT(LINKAGE(SYSTEM)).
-    // OPTIONS(LINKAGE(SYSTEM)) in its ENTRY declaration for the fetched MAIN routine, or be compiled
-    // • If no parameters are passed to the fetched MAIN program, the fetching program should either specify
-    // passed char varying string is not parsed for the runtime options.
-    // messages regarding invalid runtime options. If NOEXECOPS is specified in the fetched MAIN routine, the
-    // • Avoid passing runtime options because attempts to parse them might produce LE informational
-    // fetched MAIN routine in the fetching program.
-    // • You must not specify OPTIONS(ASM) or OPTIONS(NODESCRIPTOR) in the ENTRY declaration for the
-    // 
+test("Block block-55.pli", async () => {
+  // Context:
+  //
+  // Here is the sample of the PL/I fetched MAIN program:
+  // Examples
+  // with DEFAULT(LINKAGE(SYSTEM)).
+  // OPTIONS(LINKAGE(SYSTEM)) in its ENTRY declaration for the fetched MAIN routine, or be compiled
+  // • If no parameters are passed to the fetched MAIN program, the fetching program should either specify
+  // passed char varying string is not parsed for the runtime options.
+  // messages regarding invalid runtime options. If NOEXECOPS is specified in the fetched MAIN routine, the
+  // • Avoid passing runtime options because attempts to parse them might produce LE informational
+  // fetched MAIN routine in the fetching program.
+  // • You must not specify OPTIONS(ASM) or OPTIONS(NODESCRIPTOR) in the ENTRY declaration for the
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.231 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.231 */
 
 
     FMAIN: proc(parm) options(main,noexecops );
@@ -4402,26 +4527,27 @@ test('Block block-55.pli', async () => {
       Put skip list("FMAIN finished ");
     End FMAIN;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-285.pli', async () => {
-    // Context:
-    // 
-    // These are possible values for the dsc_Type field:
-    // The declare for a descriptor header is as follows:
-    // type.
-    // structure, or union). The remaining three bytes are zero unless they are set by the particular descriptor
-    // Every LE descriptor starts with a 4-byte field. The first byte specifies the descriptor type (scalar, array,
-    // CMPAT(LE) descriptors
-    // The declare for a CMPAT(V3) array descriptor is as follows:
-    // 469
-    // Chapter 26. PL/I descriptors  
-    // The declare for a CMPAT(V2) array descriptor is as follows:
-    // 
+test("Block block-285.pli", async () => {
+  // Context:
+  //
+  // These are possible values for the dsc_Type field:
+  // The declare for a descriptor header is as follows:
+  // type.
+  // structure, or union). The remaining three bytes are zero unless they are set by the particular descriptor
+  // Every LE descriptor starts with a 4-byte field. The first byte specifies the descriptor type (scalar, array,
+  // CMPAT(LE) descriptors
+  // The declare for a CMPAT(V3) array descriptor is as follows:
+  // 469
+  // Chapter 26. PL/I descriptors
+  // The declare for a CMPAT(V2) array descriptor is as follows:
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4433,26 +4559,27 @@ test('Block block-285.pli', async () => {
    dsc_Type_Union                fixed bin(8) value(4);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-284.pli', async () => {
-    // Context:
-    // 
-    // The declare for a descriptor header is as follows:
-    // type.
-    // structure, or union). The remaining three bytes are zero unless they are set by the particular descriptor
-    // Every LE descriptor starts with a 4-byte field. The first byte specifies the descriptor type (scalar, array,
-    // CMPAT(LE) descriptors
-    // The declare for a CMPAT(V3) array descriptor is as follows:
-    // 469
-    // Chapter 26. PL/I descriptors  
-    // The declare for a CMPAT(V2) array descriptor is as follows:
-    // The declare for a CMPAT(V1) array descriptor is as follows:
-    // 
+test("Block block-284.pli", async () => {
+  // Context:
+  //
+  // The declare for a descriptor header is as follows:
+  // type.
+  // structure, or union). The remaining three bytes are zero unless they are set by the particular descriptor
+  // Every LE descriptor starts with a 4-byte field. The first byte specifies the descriptor type (scalar, array,
+  // CMPAT(LE) descriptors
+  // The declare for a CMPAT(V3) array descriptor is as follows:
+  // 469
+  // Chapter 26. PL/I descriptors
+  // The declare for a CMPAT(V2) array descriptor is as follows:
+  // The declare for a CMPAT(V1) array descriptor is as follows:
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4464,26 +4591,27 @@ test('Block block-284.pli', async () => {
      2 *                 fixed bin(8) unsigned;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-131.pli', async () => {
-    // Context:
-    // 
-    // For instance, under RULES(LAXCTL), you can declare a structure as follows:
-    // that you use the RULES(NOLAXCTL) option to disallow such practice.
-    // with different extents. However, this coding practice severely impacts performance. It is recommended
-    // Under RULES(LAXCTL), a CONTROLLED variable can be declared with constant extents and yet allocated
-    // (NO)LAXCTL
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
-    // 308
-    // Improving performance
-    // Specifying RULES(NOGLOBALDO) will cause the compile to flag any code where this is not true.
-    // It is best that JX be declared in the same PROCEDURE that contains this loop.
-    // 
+test("Block block-131.pli", async () => {
+  // Context:
+  //
+  // For instance, under RULES(LAXCTL), you can declare a structure as follows:
+  // that you use the RULES(NOLAXCTL) option to disallow such practice.
+  // with different extents. However, this coding practice severely impacts performance. It is recommended
+  // Under RULES(LAXCTL), a CONTROLLED variable can be declared with constant extents and yet allocated
+  // (NO)LAXCTL
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
+  // 308
+  // Improving performance
+  // Specifying RULES(NOGLOBALDO) will cause the compile to flag any code where this is not true.
+  // It is best that JX be declared in the same PROCEDURE that contains this loop.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.364 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.364 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4493,26 +4621,27 @@ test('Block block-131.pli', async () => {
        2 c char(29);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-11.pli', async () => {
-    // Context:
-    // 
-    // members that are not level 1 and are not dot qualified. Consider the following example:
-    // Specifying RULES(NOLAXQUAL(LOOSE)) causes the compiler to flag any reference to structure
-    // LOOSE
-    // excluded from the NOLAXQUAL checking.
-    // not level 1. References which names start with 'CEE', 'DFH', 'DSN', 'EYU', 'IBM', 'PLI', and 'SQL' are
-    // Specifying NOLAXQUAL causes the compiler to flag any reference to structure members that are
-    // LAXQUAL | NOLAXQUAL
-    // The default is RULES(LAXPUNC).
-    // flagged with an E-level message; otherwise, it will be flagged with a W-level message.
-    // parenthesis is meant before the semicolon. Under RULES(NOLAXPUNC), this statement will be
-    // 
+test("Block block-11.pli", async () => {
+  // Context:
+  //
+  // members that are not level 1 and are not dot qualified. Consider the following example:
+  // Specifying RULES(NOLAXQUAL(LOOSE)) causes the compiler to flag any reference to structure
+  // LOOSE
+  // excluded from the NOLAXQUAL checking.
+  // not level 1. References which names start with 'CEE', 'DFH', 'DSN', 'EYU', 'IBM', 'PLI', and 'SQL' are
+  // Specifying NOLAXQUAL causes the compiler to flag any reference to structure members that are
+  // LAXQUAL | NOLAXQUAL
+  // The default is RULES(LAXPUNC).
+  // flagged with an E-level message; otherwise, it will be flagged with a W-level message.
+  // parenthesis is meant before the semicolon. Under RULES(NOLAXPUNC), this statement will be
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.133 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.133 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4526,26 +4655,27 @@ test('Block block-11.pli', async () => {
  a.c = 17;   /* would not be flagged */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-276.pli', async () => {
-    // Context:
-    // 
-    //  is declared as follows:
-    // sample
-    // For example, suppose that the routine 
-    // address of the string and then the string descriptor itself.
-    // is still such a pair of pointers. But under the other CMPAT options, the locator/descriptor consists of the
-    // the second pointer is the address of the descriptor. For strings, under CMPAT(LE), the locator/descriptor
-    // Except for strings, the locator/descriptor is a pair of pointers. The first pointer is the address of the data;
-    // descriptor, the address of a locator/descriptor for the argument is passed instead.
-    // When arguments and their descriptors are passed by locator/descriptor, whenever an argument requires a
-    // Argument passing by locator/descriptor
-    // 
+test("Block block-276.pli", async () => {
+  // Context:
+  //
+  //  is declared as follows:
+  // sample
+  // For example, suppose that the routine
+  // address of the string and then the string descriptor itself.
+  // is still such a pair of pointers. But under the other CMPAT options, the locator/descriptor consists of the
+  // the second pointer is the address of the descriptor. For strings, under CMPAT(LE), the locator/descriptor
+  // Except for strings, the locator/descriptor is a pair of pointers. The first pointer is the address of the data;
+  // descriptor, the address of a locator/descriptor for the argument is passed instead.
+  // When arguments and their descriptors are passed by locator/descriptor, whenever an argument requires a
+  // Argument passing by locator/descriptor
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.523 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.523 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4553,26 +4683,27 @@ test('Block block-276.pli', async () => {
                 options( byaddr descriptor );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-249.pli', async () => {
-    // Context:
-    // 
-    //  OSRIN is an zFS file, use the following JCL statement instead:
-    // ddname
-    // If the associated 
-    // To run a program by using an OSR in a PDS, you can specify the following DD statement in the JCL:
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
-    // 430
-    // file into the buffer:
-    // If the inbound schema file were in an zFS file instead, you could use the following code to read the OSR
-    // you can increase the initial size of the OSR buffer accordingly.
-    // following example is in a PDS. The initial size of the OSR buffer is set to 4096. If you have a larger OSR file,
-    // 
+test("Block block-249.pli", async () => {
+  // Context:
+  //
+  //  OSRIN is an zFS file, use the following JCL statement instead:
+  // ddname
+  // If the associated
+  // To run a program by using an OSR in a PDS, you can specify the following DD statement in the JCL:
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
+  // 430
+  // file into the buffer:
+  // If the inbound schema file were in an zFS file instead, you could use the following code to read the OSR
+  // you can increase the initial size of the OSR buffer accordingly.
+  // following example is in a PDS. The initial size of the OSR buffer is set to 4096. If you have a larger OSR file,
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.486 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.486 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4580,26 +4711,27 @@ test('Block block-249.pli', async () => {
  //OSRIN DD PATH=&ldquo;/u/HLQ/xml/stock.osr&rdquo;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-94.pli', async () => {
-    // Context:
-    // 
-    // Table 43. Creating a library member in a PL/I program
-    // page 228. It copies all the records of the original member except those that contain only blanks.
-    // The program shown in Table 44 on page 229 updates the member created by the program in Table 43 on
-    // both can be associated with the same DD statement.
-    // originally occupied by the member cannot be used again. You must use two files in your PL/I program, but
-    // the entire member in another part of the library. This is rarely an economic proposition because the space
-    // To use a PL/I program to add or delete one or more records within a member of a library, you must rewrite
-    // Example: Updating a library member
-    // Table 42. Placing a load module in an existing library
-    // load module in the existing library HPU8.CCLM.
-    // 
+test("Block block-94.pli", async () => {
+  // Context:
+  //
+  // Table 43. Creating a library member in a PL/I program
+  // page 228. It copies all the records of the original member except those that contain only blanks.
+  // The program shown in Table 44 on page 229 updates the member created by the program in Table 43 on
+  // both can be associated with the same DD statement.
+  // originally occupied by the member cannot be used again. You must use two files in your PL/I program, but
+  // the entire member in another part of the library. This is rarely an economic proposition because the space
+  // To use a PL/I program to add or delete one or more records within a member of a library, you must rewrite
+  // Example: Updating a library member
+  // Table 42. Placing a load module in an existing library
+  // load module in the existing library HPU8.CCLM.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.283 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.283 */
 
 
   //OPT10#3  JOB
@@ -4627,26 +4759,27 @@ test('Block block-94.pli', async () => {
   //     DCB=(RECFM=FB,BLKSIZE=3600,LRECL=80)
   //GO.IN DD */
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-309.pli', async () => {
-    // Context:
-    // 
-    // Table 162. Declare for the expression kind
-    // • A prefix op, such as a minus for a negation, will have a child node that describes its operand.
-    // (and the sibling node of that operand will describe the righthand operator).
-    // • An infix op, such as a minus for a subtraction, will have a child node that describes its lefthand operand
-    // expression. Some of these records will have nonzero child nodes; for example:
-    // The ordinal xin_Exp_Kind identifies the type of an expression for a syntax record that describes an
-    // • A lexeme record (for the semicolon)
-    // • A keyword record (for the END keyword)
-    // The records for the END statement consists of 2 records:
-    // • A lexeme record (for the semicolon)
-    // 
+test("Block block-309.pli", async () => {
+  // Context:
+  //
+  // Table 162. Declare for the expression kind
+  // • A prefix op, such as a minus for a negation, will have a child node that describes its operand.
+  // (and the sibling node of that operand will describe the righthand operator).
+  // • An infix op, such as a minus for a subtraction, will have a child node that describes its lefthand operand
+  // expression. Some of these records will have nonzero child nodes; for example:
+  // The ordinal xin_Exp_Kind identifies the type of an expression for a syntax record that describes an
+  // • A lexeme record (for the semicolon)
+  // • A keyword record (for the END keyword)
+  // The records for the END statement consists of 2 records:
+  // • A lexeme record (for the semicolon)
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.542 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.542 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4670,26 +4803,27 @@ test('Block block-309.pli', async () => {
                                     )  prec(8) unsigned;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-303.pli', async () => {
-    // Context:
-    // 
-    // Table 157. Declare for the token record kind
-    // The ordinal xin_Tok_Kind identifies the type of the token record.
-    // Table 156. Declare for a token record
-    // on which it started and ended.
-    // recognized by the PL/I compiler. The record also identifies the type of the token plus the column and line
-    // Each token record assigns a number, called a token index, that is used by later records to refer to a token
-    // Token records
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
-    // 482
-    // Table 155. Declare for a source record
-    // 
+test("Block block-303.pli", async () => {
+  // Context:
+  //
+  // Table 157. Declare for the token record kind
+  // The ordinal xin_Tok_Kind identifies the type of the token record.
+  // Table 156. Declare for a token record
+  // on which it started and ended.
+  // recognized by the PL/I compiler. The record also identifies the type of the token plus the column and line
+  // Each token record assigns a number, called a token index, that is used by later records to refer to a token
+  // Token records
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
+  // 482
+  // Table 155. Declare for a source record
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.538 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.538 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4705,26 +4839,27 @@ test('Block block-303.pli', async () => {
                                     )  prec(8) unsigned;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-298.pli', async () => {
-    // Context:
-    // 
-    // Consider the following structure:
-    // • The first child, if any
-    // • The parent, if any
-    // • The first sibling, if any
-    // following:
-    // If the identifier is part of a structure or union, the symbol record contains a symbol index for each of the
-    // file and line in which the symbol was declared.
-    // is indicated by a literal index. Each symbol record contains the file index and source line number for the
-    // For example, the index can be used as the name of a user variable or constant. The name of the identifier
-    // refer to the symbol described by this record.
-    // 
+test("Block block-298.pli", async () => {
+  // Context:
+  //
+  // Consider the following structure:
+  // • The first child, if any
+  // • The parent, if any
+  // • The first sibling, if any
+  // following:
+  // If the identifier is part of a structure or union, the symbol record contains a symbol index for each of the
+  // file and line in which the symbol was declared.
+  // is indicated by a literal index. Each symbol record contains the file index and source line number for the
+  // For example, the index can be used as the name of a user variable or constant. The name of the identifier
+  // refer to the symbol described by this record.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.534 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.534 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4738,26 +4873,27 @@ test('Block block-298.pli', async () => {
         ;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-299.pli', async () => {
-    // Context:
-    // 
-    // Table 154. Data type of a variable
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
-    // 480
-    // The variable's data type is specified by the ordinal shown in Table 154 on page 481.
-    // specified.
-    // the symbol index of that variable is specified here. If its position attribute is constant, it is also
-    // If the variable is declared as defined on another mapped variable that is not an element of an array,
-    // Defined variables
-    // symbol index of that variable is specified.
-    // If the variable is declared as based on another mapped variable that is not an element of an array, the
-    // 
+test("Block block-299.pli", async () => {
+  // Context:
+  //
+  // Table 154. Data type of a variable
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
+  // 480
+  // The variable's data type is specified by the ordinal shown in Table 154 on page 481.
+  // specified.
+  // the symbol index of that variable is specified here. If its position attribute is constant, it is also
+  // If the variable is declared as defined on another mapped variable that is not an element of an array,
+  // Defined variables
+  // symbol index of that variable is specified.
+  // If the variable is declared as based on another mapped variable that is not an element of an array, the
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.536 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.536 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4793,26 +4929,27 @@ test('Block block-299.pli', async () => {
                                     )  prec(8) unsigned;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-101.pli', async () => {
-    // Context:
-    // 
-    // Table 49. PL/I structure PLITABS for modifying the preset tab settings
-    // not be omitted.
-    // the left margin. The first item in the structure is the offset to the NO_OF_TABS field. The FILL fields must
-    // TAB1 identifies the position of the second item printed on a line; the first item on a line always starts at
-    // three tab settings, in positions 30, 60, and 90, and uses the defaults for page size and line size. Note that
-    // procedure. An example of the PL/I structure is shown in Table 49 on page 242. This example creates
-    // you must declare to be STATIC EXTERNAL in your MAIN procedure or in a program linked with your MAIN
-    // To supply this tab table, include a PL/I structure in your source program with the name PLITABS, which
-    // NONASGN attribute can also be specified when compiling with NORENT.
-    // recommended that PLITABS should always be declared with the NONASGN attribute, because the
-    // 
+test("Block block-101.pli", async () => {
+  // Context:
+  //
+  // Table 49. PL/I structure PLITABS for modifying the preset tab settings
+  // not be omitted.
+  // the left margin. The first item in the structure is the offset to the NO_OF_TABS field. The FILL fields must
+  // TAB1 identifies the position of the second item printed on a line; the first item on a line always starts at
+  // three tab settings, in positions 30, 60, and 90, and uses the defaults for page size and line size. Note that
+  // procedure. An example of the PL/I structure is shown in Table 49 on page 242. This example creates
+  // you must declare to be STATIC EXTERNAL in your MAIN procedure or in a program linked with your MAIN
+  // To supply this tab table, include a PL/I structure in your source program with the name PLITABS, which
+  // NONASGN attribute can also be specified when compiling with NORENT.
+  // recommended that PLITABS should always be declared with the NONASGN attribute, because the
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.297 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.297 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4830,26 +4967,27 @@ test('Block block-101.pli', async () => {
        TAB3 INIT(90)) FIXED BIN(15,0);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-21.pli', async () => {
-    // Context:
-    // 
-    //  declared as follows:
-    // A
-    // where it would seem to start. For example, consider the AUTOMATIC structure 
-    // The mapping rules of the PL/I language might require that a structure be offset by up to 8 bytes from
-    // • An "automatic map" that lists, for each block, all AUTOMATIC variables but sorted by hex offset
-    // • A "static map" that lists all STATIC variables but sorted by hex offset
-    // However, specifying the MAP option also causes the compiler to produce the following maps:
-    // This storage offset listing is sorted by block and by variable name, and it also includes only user variables.
-    // variable.
-    // The fourth column in the Storage Offset Listing is unlabeled and tells how to find the location of the
-    // 
+test("Block block-21.pli", async () => {
+  // Context:
+  //
+  //  declared as follows:
+  // A
+  // where it would seem to start. For example, consider the AUTOMATIC structure
+  // The mapping rules of the PL/I language might require that a structure be offset by up to 8 bytes from
+  // • An "automatic map" that lists, for each block, all AUTOMATIC variables but sorted by hex offset
+  // • A "static map" that lists all STATIC variables but sorted by hex offset
+  // However, specifying the MAP option also causes the compiler to produce the following maps:
+  // This storage offset listing is sorted by block and by variable name, and it also includes only user variables.
+  // variable.
+  // The fourth column in the Storage Offset Listing is unlabeled and tells how to find the location of the
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.163 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.163 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4859,26 +4997,27 @@ test('Block block-21.pli', async () => {
               2 C fixed bin(31);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-311.pli', async () => {
-    // Context:
-    // 
-    // Table 164. Declare for the lexeme kind
-    // for instance, as the "concatenate" symbol.
-    // • In these ordinal names, "dbl" means "double", so that dbl_Vrule is a doubled vertical rule that is used,
-    // • In these ordinal names, "vrule" means "vertical rule", which is used, for instance, as the "or" symbol.
-    // The ordinal xin_Lex_Kind identifies the type of a lexeme for a syntax record that describes a lexical unit.
-    // Table 163. Declare for the number kind
-    // The ordinal xin_Number_Kind identifies the type of a number for a syntax record that describes a number.
-    // 487
-    // Appendix A. SYSADATA message information  
-    // Table 162. Declare for the expression kind
-    // 
+test("Block block-311.pli", async () => {
+  // Context:
+  //
+  // Table 164. Declare for the lexeme kind
+  // for instance, as the "concatenate" symbol.
+  // • In these ordinal names, "dbl" means "double", so that dbl_Vrule is a doubled vertical rule that is used,
+  // • In these ordinal names, "vrule" means "vertical rule", which is used, for instance, as the "or" symbol.
+  // The ordinal xin_Lex_Kind identifies the type of a lexeme for a syntax record that describes a lexical unit.
+  // Table 163. Declare for the number kind
+  // The ordinal xin_Number_Kind identifies the type of a number for a syntax record that describes a number.
+  // 487
+  // Appendix A. SYSADATA message information
+  // Table 162. Declare for the expression kind
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.543 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.543 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4924,26 +5063,27 @@ test('Block block-311.pli', async () => {
        ) unsigned prec(16);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-310.pli', async () => {
-    // Context:
-    // 
-    // Table 163. Declare for the number kind
-    // The ordinal xin_Number_Kind identifies the type of a number for a syntax record that describes a number.
-    // 487
-    // Appendix A. SYSADATA message information  
-    // Table 162. Declare for the expression kind
-    // • A prefix op, such as a minus for a negation, will have a child node that describes its operand.
-    // (and the sibling node of that operand will describe the righthand operator).
-    // • An infix op, such as a minus for a subtraction, will have a child node that describes its lefthand operand
-    // expression. Some of these records will have nonzero child nodes; for example:
-    // The ordinal xin_Exp_Kind identifies the type of an expression for a syntax record that describes an
-    // 
+test("Block block-310.pli", async () => {
+  // Context:
+  //
+  // Table 163. Declare for the number kind
+  // The ordinal xin_Number_Kind identifies the type of a number for a syntax record that describes a number.
+  // 487
+  // Appendix A. SYSADATA message information
+  // Table 162. Declare for the expression kind
+  // • A prefix op, such as a minus for a negation, will have a child node that describes its operand.
+  // (and the sibling node of that operand will describe the righthand operator).
+  // • An infix op, such as a minus for a subtraction, will have a child node that describes its lefthand operand
+  // expression. Some of these records will have nonzero child nodes; for example:
+  // The ordinal xin_Exp_Kind identifies the type of an expression for a syntax record that describes an
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.543 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.543 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4962,26 +5102,27 @@ test('Block block-310.pli', async () => {
                                     )  prec(8) unsigned;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-56.pli', async () => {
-    // Context:
-    // 
-    // Here is the sample of the PL/I MAIN program that fetches another PL/I MAIN program:
-    // Here is the sample of the PL/I fetched MAIN program:
-    // Examples
-    // with DEFAULT(LINKAGE(SYSTEM)).
-    // OPTIONS(LINKAGE(SYSTEM)) in its ENTRY declaration for the fetched MAIN routine, or be compiled
-    // • If no parameters are passed to the fetched MAIN program, the fetching program should either specify
-    // passed char varying string is not parsed for the runtime options.
-    // messages regarding invalid runtime options. If NOEXECOPS is specified in the fetched MAIN routine, the
-    // • Avoid passing runtime options because attempts to parse them might produce LE informational
-    // fetched MAIN routine in the fetching program.
-    // 
+test("Block block-56.pli", async () => {
+  // Context:
+  //
+  // Here is the sample of the PL/I MAIN program that fetches another PL/I MAIN program:
+  // Here is the sample of the PL/I fetched MAIN program:
+  // Examples
+  // with DEFAULT(LINKAGE(SYSTEM)).
+  // OPTIONS(LINKAGE(SYSTEM)) in its ENTRY declaration for the fetched MAIN routine, or be compiled
+  // • If no parameters are passed to the fetched MAIN program, the fetching program should either specify
+  // passed char varying string is not parsed for the runtime options.
+  // messages regarding invalid runtime options. If NOEXECOPS is specified in the fetched MAIN routine, the
+  // • Avoid passing runtime options because attempts to parse them might produce LE informational
+  // fetched MAIN routine in the fetching program.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.231 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.231 */
 
 
     MainFet: Proc Options(main);
@@ -4997,26 +5138,27 @@ test('Block block-56.pli', async () => {
         Put skip list("MainFet:testcase finished ");
     End;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-143.pli', async () => {
-    // Context:
-    // 
-    // compiler generates more optimal code for the pair in the union.
-    // , but the
-    // b2
-    //  and 
-    // b1
-    //  perform the same function as 
-    // b4
-    //  and 
-    // b3
-    // In the following example, the pair of variables 
-    // 
+test("Block block-143.pli", async () => {
+  // Context:
+  //
+  // compiler generates more optimal code for the pair in the union.
+  // , but the
+  // b2
+  //  and
+  // b1
+  //  perform the same function as
+  // b4
+  //  and
+  // b3
+  // In the following example, the pair of variables
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.372 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.372 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5028,26 +5170,27 @@ test('Block block-143.pli', async () => {
      2 b4 bit(16);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-281.pli', async () => {
-    // Context:
-    // 
-    // The declare for a CMPAT(V1) array descriptor is as follows:
-    // that the actual upper bound will always match the number of dimensions in the array it describes.
-    // In the following declares, the upper bound for the arrays is declared as 15, but it should be understood
-    // Array descriptors
-    // The possible values for the codepage encoding are defined as follows:
-    // The declare for a string descriptor under CMPAT(V3) is as follows:
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
-    // 468
-    // The declare for a string descriptor under CMPAT(V1) and CMPAT(V2) is as follows:
-    // In a string descriptor for a CHARACTER string, the fourth byte encodes the compiler CODEPAGE option.
-    // 
+test("Block block-281.pli", async () => {
+  // Context:
+  //
+  // The declare for a CMPAT(V1) array descriptor is as follows:
+  // that the actual upper bound will always match the number of dimensions in the array it describes.
+  // In the following declares, the upper bound for the arrays is declared as 15, but it should be understood
+  // Array descriptors
+  // The possible values for the codepage encoding are defined as follows:
+  // The declare for a string descriptor under CMPAT(V3) is as follows:
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
+  // 468
+  // The declare for a string descriptor under CMPAT(V1) and CMPAT(V2) is as follows:
+  // In a string descriptor for a CHARACTER string, the fourth byte encodes the compiler CODEPAGE option.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.524 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.524 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5060,26 +5203,27 @@ test('Block block-281.pli', async () => {
        3 dso_v1_lbound fixed bin(15);    /*   lbound                */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-280.pli', async () => {
-    // Context:
-    // 
-    // The possible values for the codepage encoding are defined as follows:
-    // The declare for a string descriptor under CMPAT(V3) is as follows:
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
-    // 468
-    // The declare for a string descriptor under CMPAT(V1) and CMPAT(V2) is as follows:
-    // In a string descriptor for a CHARACTER string, the fourth byte encodes the compiler CODEPAGE option.
-    // In a string descriptor for a nonvarying bit string, the fourth byte gives the bit offset.
-    // bigendian format).
-    // is held in littleendian or bigendian format or if the data in a WIDECHAR string is held in littleendian or
-    // The third byte contains various flags (to indicate, for example, if the string length in a VARYING string
-    // 
+test("Block block-280.pli", async () => {
+  // Context:
+  //
+  // The possible values for the codepage encoding are defined as follows:
+  // The declare for a string descriptor under CMPAT(V3) is as follows:
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
+  // 468
+  // The declare for a string descriptor under CMPAT(V1) and CMPAT(V2) is as follows:
+  // In a string descriptor for a CHARACTER string, the fourth byte encodes the compiler CODEPAGE option.
+  // In a string descriptor for a nonvarying bit string, the fourth byte gives the bit offset.
+  // bigendian format).
+  // is held in littleendian or bigendian format or if the data in a WIDECHAR string is held in littleendian or
+  // The third byte contains various flags (to indicate, for example, if the string length in a VARYING string
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.524 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.524 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5114,26 +5258,27 @@ test('Block block-280.pli', async () => {
      ) unsigned prec(8);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-135.pli', async () => {
-    // Context:
-    // 
-    // For example, under the DEFAULT( NOOVERLAP ) option, the assignment in this example is invalid:
-    // However, if you use this option, you must ensure that the source and target in assignment do not overlap.
-    // do not overlap, and it can therefore generate smaller and faster code.
-    // The DEFAULT(NOOVERALP) option lets the compiler assume that the source and target in an assignment
-    // NOOVERLAP
-    // Consequently, if your program logic allows, use DEFAULT(REORDER) to generate superior code.
-    // their latest values. This effectively prohibits almost all optimization on such variables.
-    // variables in that block referenced in ON-units (or blocks dynamically descendant from ON-units) have
-    // The DEFAULT(ORDER) option indicates that the ORDER option is applied to every block, meaning that
-    // (RE)ORDER
-    // 
+test("Block block-135.pli", async () => {
+  // Context:
+  //
+  // For example, under the DEFAULT( NOOVERLAP ) option, the assignment in this example is invalid:
+  // However, if you use this option, you must ensure that the source and target in assignment do not overlap.
+  // do not overlap, and it can therefore generate smaller and faster code.
+  // The DEFAULT(NOOVERALP) option lets the compiler assume that the source and target in an assignment
+  // NOOVERLAP
+  // Consequently, if your program logic allows, use DEFAULT(REORDER) to generate superior code.
+  // their latest values. This effectively prohibits almost all optimization on such variables.
+  // variables in that block referenced in ON-units (or blocks dynamically descendant from ON-units) have
+  // The DEFAULT(ORDER) option indicates that the ORDER option is applied to every block, meaning that
+  // (RE)ORDER
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.367 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.367 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5141,26 +5286,27 @@ test('Block block-135.pli', async () => {
    substr(c,2,5) = substr(c,1,5);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-307.pli', async () => {
-    // Context:
-    // 
-    // Table 160. Declare for the syntax record kind
-    // 485
-    // Appendix A. SYSADATA message information  
-    // The ordinal xin_Syn_Kind identifies the type of the syntax record.
-    // Table 159. Declare for a syntax record (continued)
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
-    // 484
-    // Table 159. Declare for a syntax record
-    // Table 158. Node indices assigned to the blocks in a program
-    // The node indices are assigned to the blocks of the preceding program as follows:
-    // 
+test("Block block-307.pli", async () => {
+  // Context:
+  //
+  // Table 160. Declare for the syntax record kind
+  // 485
+  // Appendix A. SYSADATA message information
+  // The ordinal xin_Syn_Kind identifies the type of the syntax record.
+  // Table 159. Declare for a syntax record (continued)
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
+  // 484
+  // Table 159. Declare for a syntax record
+  // Table 158. Node indices assigned to the blocks in a program
+  // The node indices are assigned to the blocks of the preceding program as follows:
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.541 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.541 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5202,26 +5348,27 @@ test('Block block-307.pli', async () => {
                                     )  prec(8) unsigned;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-128.pli', async () => {
-    // Context:
-    // 
-    // .
-    // field12
-    //  and 
-    // field11
-    // For instance, in the following structure, there is one byte of padding between 
-    // 307
-    //  Copyright IBM Corp. 1999, 2022
-    // Improving performance
-    // However, padding bytes might be zeroed out.
-    // structure, and that will usually mean your compilation will be quicker and your code will run much faster.
-    // 
+test("Block block-128.pli", async () => {
+  // Context:
+  //
+  // .
+  // field12
+  //  and
+  // field11
+  // For instance, in the following structure, there is one byte of padding between
+  // 307
+  //  Copyright IBM Corp. 1999, 2022
+  // Improving performance
+  // However, padding bytes might be zeroed out.
+  // structure, and that will usually mean your compilation will be quicker and your code will run much faster.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.363 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.363 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5237,26 +5384,27 @@ test('Block block-128.pli', async () => {
       5  field17          bin fixed(31);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-273.pli', async () => {
-    // Context:
-    // 
-    // Code the termination procedure-specific control block as follows:
-    // message filter procedures and the initialization procedures.
-    // might also want to write out final statistical reports based on information collected during the error
-    // You should use the termination procedure to perform any cleanup required, such as closing files. You
-    // Writing the termination procedure
-    // Abort compilation
-    // 16/n
-    // Reserved for future use
-    // 8/n
-    // Reserved for future use
-    // 
+test("Block block-273.pli", async () => {
+  // Context:
+  //
+  // Code the termination procedure-specific control block as follows:
+  // message filter procedures and the initialization procedures.
+  // might also want to write out final statistical reports based on information collected during the error
+  // You should use the termination procedure to perform any cleanup required, such as closing files. You
+  // Writing the termination procedure
+  // Abort compilation
+  // 16/n
+  // Reserved for future use
+  // 8/n
+  // Reserved for future use
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.520 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.520 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5264,26 +5412,27 @@ test('Block block-273.pli', async () => {
      2 Uex_ISA_Length_fixed bin(31); /* storage(Uex_ISA)       */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-272.pli', async () => {
-    // Context:
-    // 
-    // 463
-    // Chapter 25. Using user exits  
-    // Uex_MFX_Ins_Series_Addr points to this structure:
-    // The following example shows a procedure-specific message filter control block:
-    // information back to the compiler indicating how a particular message should be handled.
-    // The procedure-specific control block contains information about the messages. It is used to pass
-    //  (severity code 4) messages.
-    // WARNING
-    // (severity code 8) or 
-    // ERROR
-    // 
+test("Block block-272.pli", async () => {
+  // Context:
+  //
+  // 463
+  // Chapter 25. Using user exits
+  // Uex_MFX_Ins_Series_Addr points to this structure:
+  // The following example shows a procedure-specific message filter control block:
+  // information back to the compiler indicating how a particular message should be handled.
+  // The procedure-specific control block contains information about the messages. It is used to pass
+  //  (severity code 4) messages.
+  // WARNING
+  // (severity code 8) or
+  // ERROR
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.519 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.519 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5293,26 +5442,27 @@ test('Block block-272.pli', async () => {
             2 series_string( 1 refer(series_Count )  )  pointer(32);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-74.pli', async () => {
-    // Context:
-    // 
-    // how a DD statement should be associated with the value of a file variable:
-    //  be the same as the value of the file reference. The following example illustrates
-    // must
-    // DD statement name 
-    // If the file reference in the statement that explicitly or implicitly opens the file is not a file constant, the
-    //  //DETAIL DD ...
-    // 3.
-    //  //OLDSAMPL DD ...
-    // 2.
-    //  //SAMPLE DD ...
-    // 
+test("Block block-74.pli", async () => {
+  // Context:
+  //
+  // how a DD statement should be associated with the value of a file variable:
+  //  be the same as the value of the file reference. The following example illustrates
+  // must
+  // DD statement name
+  // If the file reference in the statement that explicitly or implicitly opens the file is not a file constant, the
+  //  //DETAIL DD ...
+  // 3.
+  //  //OLDSAMPL DD ...
+  // 2.
+  //  //SAMPLE DD ...
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.250 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.250 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5322,52 +5472,54 @@ test('Block block-74.pli', async () => {
        OPEN FILE(PRICES);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-91.pli', async () => {
-    // Context:
-    // 
-    // For example, you can use redirection in the following program:
-    // You can redirect standard input, standard output, and standard error devices to a file.
-    // Redirecting standard input, output, and error devices under z/OS UNIX
-    // home directory.
-    //  in the user's
-    // .profile
-    // . To set them for a specific user only, add them to the file 
-    // /etc/profile
-    // the file 
-    // 223
-    // 
+test("Block block-91.pli", async () => {
+  // Context:
+  //
+  // For example, you can use redirection in the following program:
+  // You can redirect standard input, standard output, and standard error devices to a file.
+  // Redirecting standard input, output, and error devices under z/OS UNIX
+  // home directory.
+  //  in the user's
+  // .profile
+  // . To set them for a specific user only, add them to the file
+  // /etc/profile
+  // the file
+  // 223
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.279 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.279 */
 
 
  Hello2: proc options(main);
    put list('Hello!');
  end;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-300.pli', async () => {
-    // Context:
-    // 
-    // The type of the extent is encoded by the values:
-    // The type and value of the extent is specified in addition to the symbol index of the returns description.
-    // String and area variables
-    // The symbol index of the underlying type is specified.
-    // Typed variables and handles
-    // The ordinal type index is specified.
-    // Ordinal variables
-    // If the variable has the returns attribute, the symbol index of the returns description is specified.
-    // Entry variables
-    // The literal index of the picture specification is specified.
-    // 
+test("Block block-300.pli", async () => {
+  // Context:
+  //
+  // The type of the extent is encoded by the values:
+  // The type and value of the extent is specified in addition to the symbol index of the returns description.
+  // String and area variables
+  // The symbol index of the underlying type is specified.
+  // Typed variables and handles
+  // The ordinal type index is specified.
+  // Ordinal variables
+  // If the variable has the returns attribute, the symbol index of the returns description is specified.
+  // Entry variables
+  // The literal index of the picture specification is specified.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.536 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.536 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5381,26 +5533,27 @@ test('Block block-300.pli', async () => {
    fixed bin;
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-274.pli', async () => {
-    // Context:
-    // 
-    //  is declared as follows:
-    // sample
-    // For example, suppose the routine 
-    // the descriptor list is set to the address of that argument's descriptor.
-    // descriptor list is set to SYSNULL. For arguments that do require a descriptor, the corresponding pointer in
-    // of arguments passed. For arguments that do not require a descriptor, the corresponding pointer in the
-    // This extra argument is a pointer to a list of pointers. The number of entries in this list equals the number
-    // whenever at least one argument needs a descriptor.
-    // When arguments and their descriptors are passed with a descriptor list, an extra argument is passed
-    // Argument passing by descriptor list
-    // 
+test("Block block-274.pli", async () => {
+  // Context:
+  //
+  //  is declared as follows:
+  // sample
+  // For example, suppose the routine
+  // the descriptor list is set to the address of that argument's descriptor.
+  // descriptor list is set to SYSNULL. For arguments that do require a descriptor, the corresponding pointer in
+  // of arguments passed. For arguments that do not require a descriptor, the corresponding pointer in the
+  // This extra argument is a pointer to a list of pointers. The number of entries in this list equals the number
+  // whenever at least one argument needs a descriptor.
+  // When arguments and their descriptors are passed with a descriptor list, an extra argument is passed
+  // Argument passing by descriptor list
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.522 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.522 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5408,26 +5561,27 @@ test('Block block-274.pli', async () => {
                 options( byaddr descriptor );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-188.pli', async () => {
-    // Context:
-    // 
-    // Table 114. Correct declaration of qsort
-    // function could be declared as follows:
-    // qsort
-    // However, a C function pointer is equivalent to the PL/I type LIMITED ENTRY. Therefore, the C 
-    // only, and so a PL/I ENTRY variable and a C function pointer do not even use the amount of storage.
-    // as well as an entry point address). But a C function pointer is limited in pointing to a non-nested function
-    // Recall that a PL/I ENTRY variable might point to a nested function (and thus requires a backchain address
-    // Table 113. Incorrect declaration of qsort
-    // be declared simply as follows:
-    //  function must not
-    // 
+test("Block block-188.pli", async () => {
+  // Context:
+  //
+  // Table 114. Correct declaration of qsort
+  // function could be declared as follows:
+  // qsort
+  // However, a C function pointer is equivalent to the PL/I type LIMITED ENTRY. Therefore, the C
+  // only, and so a PL/I ENTRY variable and a C function pointer do not even use the amount of storage.
+  // as well as an entry point address). But a C function pointer is limited in pointing to a non-nested function
+  // Recall that a PL/I ENTRY variable might point to a nested function (and thus requires a backchain address
+  // Table 113. Incorrect declaration of qsort
+  // be declared simply as follows:
+  //  function must not
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.405 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.405 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5441,26 +5595,27 @@ test('Block block-188.pli', async () => {
                 options( byvalue nodescriptor );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-220.pli', async () => {
-    // Context:
-    // 
-    // as follows:
-    // For example, to pass a pointer to a singly-linked list of integers, the structure for that list must be declared
-    // storage.
-    // • It is recommended to use the RELEASE function to release the fetched routine and its associated
-    // POINTERs and HANDLEs must have the attributes POINTER(32) and HANDLE(32).
-    // • If a parameter is a POINTER, HANDLE, or an aggregate containing POINTERs or HANDLEs, then those
-    // (not array or structure expressions).
-    // • All array and structure arguments passed to an ENTRY with OPTIONS(AMODE31) must be references
-    // • Any GOTO statement in one AMODE must not cross over any routines in the opposite AMODE.
-    // • Any exception that occurs in one AMODE must be handled in that AMODE.
-    // 
+test("Block block-220.pli", async () => {
+  // Context:
+  //
+  // as follows:
+  // For example, to pass a pointer to a singly-linked list of integers, the structure for that list must be declared
+  // storage.
+  // • It is recommended to use the RELEASE function to release the fetched routine and its associated
+  // POINTERs and HANDLEs must have the attributes POINTER(32) and HANDLE(32).
+  // • If a parameter is a POINTER, HANDLE, or an aggregate containing POINTERs or HANDLEs, then those
+  // (not array or structure expressions).
+  // • All array and structure arguments passed to an ENTRY with OPTIONS(AMODE31) must be references
+  // • Any GOTO statement in one AMODE must not cross over any routines in the opposite AMODE.
+  // • Any exception that occurs in one AMODE must be handled in that AMODE.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.433 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.433 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5470,26 +5625,27 @@ test('Block block-220.pli', async () => {
            2 list_int     fixed bin(31);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-171.pli', async () => {
-    // Context:
-    // 
-    // Table 96. Declarations for filedump program
-    //  are obvious:
-    // filedump
-    // Most of the declarations in the INCLUDE file 
-    // Table 95. Sample code to use fopen and fread to dump a file
-    // 345
-    // Chapter 17. ILC with C  
-    // The code for this program is straightforward:
-    // .
-    // fread
-    // 
+test("Block block-171.pli", async () => {
+  // Context:
+  //
+  // Table 96. Declarations for filedump program
+  //  are obvious:
+  // filedump
+  // Most of the declarations in the INCLUDE file
+  // Table 95. Sample code to use fopen and fread to dump a file
+  // 345
+  // Chapter 17. ILC with C
+  // The code for this program is straightforward:
+  // .
+  // fread
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.401 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.401 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5503,26 +5659,27 @@ test('Block block-171.pli', async () => {
       dcl unprintable    char(32) value( substr(collate(),1,32) );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-287.pli', async () => {
-    // Context:
-    // 
-    // These are the possible values for the dsc_String_Type field:
-    //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
-    // 470
-    // The declare for a string descriptor is as follows:
-    // EBCDIC.
-    // In a string descriptor for a character string, the fourth byte also has a bit indicating if the string data is in
-    // nonnative format.
-    // In a string descriptor for a varying string, the fourth byte has a bit indicating if the string length is held in
-    // CODEPAGE option.
-    // In a string descriptor for a CHARACTER string, the third byte of the header encodes the compiler
-    // 
+test("Block block-287.pli", async () => {
+  // Context:
+  //
+  // These are the possible values for the dsc_String_Type field:
+  //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
+  // 470
+  // The declare for a string descriptor is as follows:
+  // EBCDIC.
+  // In a string descriptor for a character string, the fourth byte also has a bit indicating if the string data is in
+  // nonnative format.
+  // In a string descriptor for a varying string, the fourth byte has a bit indicating if the string length is held in
+  // CODEPAGE option.
+  // In a string descriptor for a CHARACTER string, the third byte of the header encodes the compiler
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.526 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.526 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5549,52 +5706,54 @@ test('Block block-287.pli', async () => {
      dsc_datatype_uchar_varying4         fixed bin(7) value(20);
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-215.pli', async () => {
-    // Context:
-    // 
-    // PLIXOPT variable as follows:
-    //  runtime option. You can declare the
-    // XPLINK=ON
-    // but you must use the PLIXOPT variable to specify the 
-    // are linked with XPLINK and the PL/I modules are not. PL/I can still link to and call XPLINK libraries
-    // Because this PL/I sample program calls Java, the program must link to the Java library. The Java libraries
-    // This section applies to 31-bit only.
-    // Note: 
-    // Linking the PL/I program with the Java library
-    //  include files are provided in the PL/I SIBMZSAM data set.
-    // 
+test("Block block-215.pli", async () => {
+  // Context:
+  //
+  // PLIXOPT variable as follows:
+  //  runtime option. You can declare the
+  // XPLINK=ON
+  // but you must use the PLIXOPT variable to specify the
+  // are linked with XPLINK and the PL/I modules are not. PL/I can still link to and call XPLINK libraries
+  // Because this PL/I sample program calls Java, the program must link to the Java library. The Java libraries
+  // This section applies to 31-bit only.
+  // Note:
+  // Linking the PL/I program with the Java library
+  //  include files are provided in the PL/I SIBMZSAM data set.
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.424 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.424 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
    Dcl PLIXOPT     Char(40) Varying Ext Static Init( 'XPLINK(ON)'e );
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });
 
-test('Block block-12.pli', async () => {
-    // Context:
-    // 
-    // members that do not include the level-1 name. Consider the following example:
-    // Specifying RULES(NOLAXQUAL(STRICT)) causes the compiler to flag any reference to structure
-    // STRICT
-    // members that are not level 1 and are not dot qualified. Consider the following example:
-    // Specifying RULES(NOLAXQUAL(LOOSE)) causes the compiler to flag any reference to structure
-    // LOOSE
-    // excluded from the NOLAXQUAL checking.
-    // not level 1. References which names start with 'CEE', 'DFH', 'DSN', 'EYU', 'IBM', 'PLI', and 'SQL' are
-    // Specifying NOLAXQUAL causes the compiler to flag any reference to structure members that are
-    // LAXQUAL | NOLAXQUAL
-    // 
+test("Block block-12.pli", async () => {
+  // Context:
+  //
+  // members that do not include the level-1 name. Consider the following example:
+  // Specifying RULES(NOLAXQUAL(STRICT)) causes the compiler to flag any reference to structure
+  // STRICT
+  // members that are not level 1 and are not dot qualified. Consider the following example:
+  // Specifying RULES(NOLAXQUAL(LOOSE)) causes the compiler to flag any reference to structure
+  // LOOSE
+  // excluded from the NOLAXQUAL checking.
+  // not level 1. References which names start with 'CEE', 'DFH', 'DSN', 'EYU', 'IBM', 'PLI', and 'SQL' are
+  // Specifying NOLAXQUAL causes the compiler to flag any reference to structure members that are
+  // LAXQUAL | NOLAXQUAL
+  //
 
-    const doc: LangiumDocument<PliProgram> = await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.133 */
+  const doc: LangiumDocument<PliProgram> =
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.133 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5608,6 +5767,6 @@ test('Block block-12.pli', async () => {
  a.c = 17;   /* would not be flagged */
  END MAINTP;
 `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  expect(doc.parseResult.lexerErrors).toHaveLength(0);
+  expect(doc.parseResult.parserErrors).toHaveLength(0);
 });

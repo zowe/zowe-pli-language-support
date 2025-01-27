@@ -20,6 +20,7 @@
         "deepmerge": "^1.5.2",
         "eslint": "~8.57.1",
         "langium": "~3.2.1",
+        "prettier": "^3.4.2",
         "shx": "~0.3.4",
         "typescript": "~5.4.5",
         "vitest": "^1.6.0"

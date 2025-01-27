@@ -1,9 +1,7 @@
 {
   "name": "pli",
   "scopeName": "source.pli",
-  "fileTypes": [
-    ".pli"
-  ],
+  "fileTypes": [".pli"],
   "patterns": [
     {
       "include": "#comments"

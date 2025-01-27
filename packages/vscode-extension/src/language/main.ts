@@ -9,10 +9,13 @@
  *
  */
 
-import { startLanguageServer } from 'langium/lsp';
-import { NodeFileSystem } from 'langium/node';
-import { createConnection, ProposedFeatures } from 'vscode-languageserver/node.js';
-import { createPliServices } from 'pli-language';
+import { startLanguageServer } from "langium/lsp";
+import { NodeFileSystem } from "langium/node";
+import {
+  createConnection,
+  ProposedFeatures,
+} from "vscode-languageserver/node.js";
+import { createPliServices } from "pli-language";
 
 // Create a connection to the client
 const connection = createConnection(ProposedFeatures.all);

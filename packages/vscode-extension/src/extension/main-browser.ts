@@ -9,45 +9,43 @@
  *
  */
 
-import type { LanguageClientOptions } from 'vscode-languageclient/browser.js';
-import * as vscode from 'vscode';
-import { LanguageClient } from 'vscode-languageclient/browser.js';
-import { BuiltinFileSystemProvider } from './builtin-files';
+import type { LanguageClientOptions } from "vscode-languageclient/browser.js";
+import * as vscode from "vscode";
+import { LanguageClient } from "vscode-languageclient/browser.js";
+import { BuiltinFileSystemProvider } from "./builtin-files";
 
 let client: LanguageClient;
 
 // This function is called when the extension is activated.
 export function activate(context: vscode.ExtensionContext): void {
-    BuiltinFileSystemProvider.register(context);
-    client = startLanguageClient(context);
+  BuiltinFileSystemProvider.register(context);
+  client = startLanguageClient(context);
 }
 
 // This function is called when the extension is deactivated.
 export function deactivate(): Thenable<void> | undefined {
-    if (client) {
-        return client.stop();
-    }
-    return undefined;
+  if (client) {
+    return client.stop();
+  }
+  return undefined;
 }
 
 function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
-    const serverModule = vscode.Uri.joinPath(context.extensionUri, 'out/language/main-browser.js');
-    const worker = new Worker(serverModule.toString(true));
+  const serverModule = vscode.Uri.joinPath(
+    context.extensionUri,
+    "out/language/main-browser.js",
+  );
+  const worker = new Worker(serverModule.toString(true));
 
-    // Options to control the language client
-    const clientOptions: LanguageClientOptions = {
-        documentSelector: [{ scheme: '*', language: 'pli' }]
-    };
+  // Options to control the language client
+  const clientOptions: LanguageClientOptions = {
+    documentSelector: [{ scheme: "*", language: "pli" }],
+  };
 
-    // Create the language client and start the client.
-    const client = new LanguageClient(
-        'pli',
-        'PL/I',
-        clientOptions,
-        worker
-    );
+  // Create the language client and start the client.
+  const client = new LanguageClient("pli", "PL/I", clientOptions, worker);
 
-    // Start the client. This will also launch the server
-    client.start();
-    return client;
+  // Start the client. This will also launch the server
+  client.start();
+  return client;
 }
