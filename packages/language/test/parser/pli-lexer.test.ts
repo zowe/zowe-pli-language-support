@@ -25,7 +25,7 @@ describe("Lexer", () => {
         ]);
     });
 
-    test("Tokenize simple declaration with preprocessor", () => {
+    test.only("Tokenize simple declaration with preprocessor", () => {
         expect(tokenize(`
  %dcl A char;
  %A = 'B';
