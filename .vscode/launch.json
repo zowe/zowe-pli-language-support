@@ -15,9 +15,12 @@
             ],
             "sourceMaps": true,
             "outFiles": [
-                "${workspaceFolder}/packages/language/out/**/*.js",
-                "${workspaceFolder}/packages/vscode-extension/out/**/*.js"
-            ]
+                "${workspaceFolder}/packages/language/out/**/*",
+                "${workspaceFolder}/packages/vscode-extension/out/**/*"
+            ],
+            "env": {
+                // "DEBUG_BREAK": "true"
+            }
         },
         {
             "name": "Run Web Extension",
@@ -31,8 +34,8 @@
             ],
             "sourceMaps": true,
             "outFiles": [
-                "${workspaceFolder}/packages/language/out/**/*.js",
-                "${workspaceFolder}/packages/vscode-extension/out/**/*.js"
+                "${workspaceFolder}/packages/language/out/**/*",
+                "${workspaceFolder}/packages/vscode-extension/out/**/*"
             ]
         },
         {
@@ -45,8 +48,8 @@
             ],
             "sourceMaps": true,
             "outFiles": [
-                "${workspaceFolder}/packages/language/out/**/*.js",
-                "${workspaceFolder}/packages/vscode-extension/out/**/*.js",
+                "${workspaceFolder}/packages/language/out/**/*",
+                "${workspaceFolder}/packages/vscode-extension/out/**/*",
                 "${workspaceFolder}/node_modules/langium"
             ]
         },
