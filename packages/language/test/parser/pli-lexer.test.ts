@@ -32,7 +32,7 @@ describe("Lexer", () => {
  dcl A%C fixed bin(31);
 `)).toStrictEqual([
     "dcl:DCL",
-    "BC:BC",
+    "BC:ID",
     "fixed:FIXED",
     "bin:BIN",
     "(:(",

@@ -1,9 +1,9 @@
-import { isRegExp } from "util/types";
 import { Pl1Services } from "../pli-module";
 import { PliTokenBuilder } from "./pli-token-builder";
 import { TokenType, Lexer as ChevrotainLexer, IToken, createToken, createTokenInstance } from "chevrotain";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { PPDeclaration } from "./pli-preprocessor-ast";
+import { isRegExp } from "util/types";
 
 export const PreprocessorTokens = {
     Declare: tokenType("declare", /DCL|DECLARE/yi),
@@ -43,12 +43,14 @@ export class PliPreprocessor {
     private tokens: IToken[] = [];
     private hidden: IToken[] = [];
     private variables = new Map<string, Variable>();
+    private readonly idToken: TokenType;
 
     constructor(services: Pl1Services, text: string) {
         const tokenBuilder = services.parser.TokenBuilder as PliTokenBuilder;
         const vocabulary = tokenBuilder.buildTokens(services.Grammar) as TokenType[];
         this.hiddenTokens = vocabulary.filter(v => v.GROUP === 'hidden' || v.GROUP === ChevrotainLexer.SKIPPED);
         this.normalTokens = vocabulary.filter(v => !this.hiddenTokens.includes(v));
+        this.idToken = this.normalTokens.find(v => v.name === 'ID')!;
         this.text = text;
     }
 
@@ -69,6 +71,7 @@ export class PliPreprocessor {
     private readStatement() {
         this.skip();
         if(this.tryConsume(PreprocessorTokens.Percentage)) {
+            //preprocessor statement
             const { tokens } = this.tokenizeUntilSemicolon(AllPreprocessorTokens);
             const statement = new PliPreprocessorParser(tokens).start();
             switch(statement.type) {
@@ -85,7 +88,7 @@ export class PliPreprocessor {
                     };
                 }
                 case 'assignmentStatement': {
-                    this.variables.get(statement.left)!.value = statement.right;
+                    this.variables.get(statement.left)!.value = this.unpackString(statement.right);
                     return {
                         tokens: [],
                         hidden: [],
@@ -98,9 +101,56 @@ export class PliPreprocessor {
                     };
             }
         } else {
+            //normal statement
             const { tokens, hidden } = this.tokenizeUntilSemicolon([PreprocessorTokens.Percentage].concat(this.normalTokens));
-            //TODO expand variables
-            return { tokens, hidden };
+            return {
+                tokens: this.expandVariables(tokens), 
+                hidden
+            };
+        }
+    }
+    unpackString(literal: string): string {
+        return literal.substring(1, literal.length-1);
+    }
+
+    isIdenifier(token: IToken) {
+        return ["ID", "A", "B", "C", "D", "E", "F"].includes(token.tokenType.name);
+    }
+
+    expandVariables(tokens: IToken[]) {
+        const result: IToken[] = [];
+        for (let index = 0; index < tokens.length; ) {
+            let token = tokens[index];
+            if(this.isIdenifier(token)) {
+                const { startOffset, startColumn, startLine } = token;
+                let { endOffset, endColumn, endLine } = token;
+                const name: string[] = [this.tryExpandVariables(token)];
+                index++;
+                while(tokens[index].tokenType === PreprocessorTokens.Percentage) {
+                    index++;
+                    token = tokens[index];
+                    ({ endOffset, endColumn, endLine } = token);
+                    name.push(this.tryExpandVariables(token))
+                    index++;
+                }
+                result.push(createTokenInstance(this.idToken, name.join(""), startOffset, endOffset!, startLine!, endLine!, startColumn!, endColumn!));
+            } else {
+                result.push(token);
+                index++;
+            }
+        }
+        return result;
+    }
+    tryExpandVariables(token: IToken): string {
+        if(this.variables.has(token.image)) {
+            const variable = this.variables.get(token.image)!;
+            if(typeof variable.value === 'number') {
+                return variable.value.toString();
+            } else {
+                return variable.value ?? "";
+            }
+        } else {
+            return token.image;
         }
     }
 
