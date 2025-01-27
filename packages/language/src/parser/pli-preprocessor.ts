@@ -2,20 +2,35 @@ import { isRegExp } from "util/types";
 import { Pl1Services } from "../pli-module";
 import { PliTokenBuilder } from "./pli-token-builder";
 import { TokenType, Lexer as ChevrotainLexer, IToken, createToken, createTokenInstance } from "chevrotain";
+import { PliPreprocessorParser } from "./pli-preprocessor-parser";
+import { PPDeclaration } from "./pli-preprocessor-ast";
 
-const PreprocessorTokens = {
+export const PreprocessorTokens = {
     Declare: tokenType("declare", /DCL|DECLARE/yi),
+    Eq: tokenType("eq", /=/yi),
     Builtin: tokenType("builtin", /BUILTIN/yi),
     Entry: tokenType("builtin", /ENTRY/yi),
     Character: tokenType("character", /CHAR(ACTER)?/yi),
     Internal: tokenType("internal", /INT(ERNAL)?/yi),
     External: tokenType("external", /EXT(ERNAL)?/yi),
+    Scan: tokenType("scan", /SCAN/yi),
+    Rescan: tokenType("rescan", /RESCAN/yi),
+    Noscan: tokenType("noscan", /NOSCAN/yi),
+    Fixed: tokenType("fixed", /FIXED/yi),
     LParen: tokenType("lparen", /\(/yi),
     RParen: tokenType("rparen", /\)/yi),
     Semicolon: tokenType("semicolon", /;/yi),
     Comma: tokenType("comma", /,/yi),
     Percentage: tokenType("percentage", /%/yi),
-    Id: tokenType("ID", /[a-z_][a-z_0-9]*/yi),
+    String: tokenType("string", /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')([xX]|[aA]|[eE]|[xX][uU]|[xX][nN]|[bB]4|[bB]3|[bB][xX]|[bB]|[gG][xX]|[gG]|[uU][xX]|[wW][xX]|[xX]|[iI])*/y),
+    Id: tokenType("id", /[a-z_][a-z_0-9]*/yi),
+};
+
+const AllPreprocessorTokens = Object.values(PreprocessorTokens);
+
+type Variable = {
+    declaration: PPDeclaration;
+    value: number|string|undefined;
 };
 
 export class PliPreprocessor {
@@ -25,9 +40,9 @@ export class PliPreprocessor {
     private index = 0;
     private line = 1;
     private column = 1;
-    private isNewLine = true;
     private tokens: IToken[] = [];
     private hidden: IToken[] = [];
+    private variables = new Map<string, Variable>();
 
     constructor(services: Pl1Services, text: string) {
         const tokenBuilder = services.parser.TokenBuilder as PliTokenBuilder;
@@ -37,49 +52,75 @@ export class PliPreprocessor {
         this.text = text;
     }
 
-    public start() {
+    start() {
+        const resultHidden: IToken[] = [];
+        const resultTokens: IToken[] = [];
+        while(this.index < this.text.length) {
+            const { tokens, hidden } = this.readStatement();
+            resultTokens.push(...tokens);
+            resultHidden.push(...hidden);
+        }
+        return {
+            tokens: resultTokens,
+            hidden: resultHidden,
+        }
+    }
 
-        
-        for (this.index = 0; this.index < this.text.length;) {
-            this.skip();
-            if (this.skipAndTryConsumeOneOf(...this.normalTokens)) {
-                this.isNewLine = false;
-                continue;
-            } else {
-                if (this.text[this.index] === "%") {
-                    this.index++;
-                    if (this.isNewLine) {
-                        //I am a preprocessor statement!
-                        this.declaration();
-                    } else {
-                        //I am a preprocessor expression that needs to be expanded!
+    private readStatement() {
+        this.skip();
+        if(this.tryConsume(PreprocessorTokens.Percentage)) {
+            const { tokens } = this.tokenizeUntilSemicolon(AllPreprocessorTokens);
+            const statement = new PliPreprocessorParser(tokens).start();
+            switch(statement.type) {
+                case 'declareStatement': {
+                    for (const declaration of statement.declarations) {
+                        this.variables.set(declaration.name, {
+                            declaration,
+                            value: undefined
+                        });
                     }
+                    return {
+                        tokens: [],
+                        hidden: [],
+                    };
                 }
+                case 'assignmentStatement': {
+                    this.variables.get(statement.left)!.value = statement.right;
+                    return {
+                        tokens: [],
+                        hidden: [],
+                    };
+                }
+                default:
+                    return {
+                        tokens: [],
+                        hidden: [],
+                    };
+            }
+        } else {
+            const { tokens, hidden } = this.tokenizeUntilSemicolon([PreprocessorTokens.Percentage].concat(this.normalTokens));
+            //TODO expand variables
+            return { tokens, hidden };
+        }
+    }
+
+    private tokenizeUntilSemicolon(allowedTokens: TokenType[]) {
+        this.tokens = [];
+        this.hidden = [];
+        while(true) {
+            this.skip();
+            if(allowedTokens.some(t => this.tryConsume(t))) {
+                if(this.tokens.length == 0 || this.tokens[this.tokens.length-1].image === ';') {
+                    break;
+                }
+            } else {
+                break;
             }
         }
         return {
             tokens: this.tokens,
-            hidden: this.hidden,
-        }
-    }
-
-    declaration() {
-        if (this.skipAndTryConsumeOneOf(PreprocessorTokens.Declare)) {
-            this.identifierDescription();
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    identifierDescription() {
-        if(this.skipAndTryConsumeOneOf(PreprocessorTokens.LParen)) {
-          
-
-        } else {
-            const id = this.skipAndConsume(PreprocessorTokens.Id);
-            
-        }
+            hidden: this.hidden
+        };
     }
 
     private advanceBy(scanned: string) {
@@ -90,7 +131,6 @@ export class PliPreprocessor {
             if (match) {
                 this.index += match[0].length;
                 this.line = this.line + 1;
-                this.isNewLine = true;
                 this.column = 1;
                 charIndex += match[0].length;
             } else {
@@ -154,14 +194,6 @@ export class PliPreprocessor {
         throw new Error(`Could not consume ${tokenType.name}.`);
     }
 
-    private skipAndTryConsumeOneOf(...tokenTypes: TokenType[]) {
-        this.skip();
-        return tokenTypes.some(t => this.tryConsume(t));
-    }
-    private skipAndConsume(tokenType: TokenType) {
-        this.skip();
-        return this.consume(tokenType);
-    }
     private skip() {
         while (this.hiddenTokens.some(h => this.tryConsume(h)));
     }

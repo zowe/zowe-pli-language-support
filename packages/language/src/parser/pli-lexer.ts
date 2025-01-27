@@ -32,7 +32,8 @@ export class Pl1Lexer implements Lexer {
 
     tokenize(printerText: string): LexerResult {
         const text = this.marginsProcessor.processMargins(printerText);
-        const { tokens, hidden } = new PliPreprocessor(this.services, text).start();
+        const preprocessor = new PliPreprocessor(this.services, text);
+        const { hidden, tokens } = preprocessor.start();
         return {
             tokens,
             errors: [],
