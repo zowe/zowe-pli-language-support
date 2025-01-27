@@ -30,12 +30,17 @@
     "langium:generate": "langium generate"
   },
   "dependencies": {
+    "@chevrotain/regexp-to-ast": "^11.0.3",
+    "@chevrotain/types": "^11.0.3",
+    "@chevrotain/utils": "^11.0.3",
     "chevrotain": "^11.0.3",
+    "lodash-es": "^4.17.21",
     "langium": "~3.3.1",
     "vscode-languageserver": "~9.0.1",
     "vscode-languageserver-types": "^3.17.5"
   },
   "devDependencies": {
     "langium-cli": "~3.3.0"
+    "@types/lodash-es": "^4.17.12"
   }
 }

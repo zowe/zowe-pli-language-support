@@ -40,16 +40,28 @@ import { PliDocumentationProvider } from "./documentation/pli-documentation-prov
 import { PliCompletionProvider } from "./lsp/pli-completion-provider.js";
 import { PliIndexManager } from "./workspace/pli-index-manager.js";
 import { PliWorkspaceManager } from "./workspace/pli-workspace-manager.js";
+import { MarginsProcessor, PliMarginsProcessor } from './parser/pli-margins-processor.js';
+import { PliPreprocessorLexer } from "./parser/pli-preprocessor-lexer.js";
+import { PliPreprocessorParser } from "./parser/pli-preprocessor-parser.js";
+import { PliSmartTokenPickerOptimizer, TokenPickerOptimizer } from "./parser/pli-token-picker-optimizer.js";
+import { PliPreprocessorInterpreter } from "./parser/pli-preprocessor-interpreter.js";
 import { PliDocumentUpdateHandler } from "./lsp/pli-document-update-handler.js";
 
 /**
  * Declaration of custom services - add your own service classes here.
  */
 export type Pl1AddedServices = {
-  validation: {
-    Pl1Validator: Pl1Validator;
-  };
-};
+    validation: {
+        Pl1Validator: Pl1Validator
+    },
+    parser: {
+        MarginsProcessor: MarginsProcessor;
+        TokenPickerOptimizer: TokenPickerOptimizer;
+        PreprocessorLexer: PliPreprocessorLexer;
+        PreprocessorParser: PliPreprocessorParser;
+        PreprocessorInterpreter: PliPreprocessorInterpreter;
+    }
+}
 
 /**
  * Union of Langium default services and your custom services - use this as constructor parameter
@@ -74,6 +86,11 @@ export const PliModule: Module<
     DocumentValidator: (services) => new PliDocumentValidator(services),
   },
   parser: {
+    MarginsProcessor: () => new PliMarginsProcessor(),
+    TokenPickerOptimizer: () => new PliSmartTokenPickerOptimizer(),
+    PreprocessorLexer: (services) => new PliPreprocessorLexer(services),
+    PreprocessorParser: () => new PliPreprocessorParser(),
+    PreprocessorInterpreter: () => new PliPreprocessorInterpreter(),
     Lexer: (services) => new Pl1Lexer(services),
     TokenBuilder: () => new PliTokenBuilder(),
   },
