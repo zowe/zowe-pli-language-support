@@ -1,4 +1,4 @@
-*PROCESS MI(':'),NEST,X,AG,A,MAR(2,72,1),GN,NUM,STG;
+ /*PROCESS MI(':'),NEST,X,AG,A,MAR(2,72,1),GN,NUM,STG; */
 
   /***     (CHECK):     ***/
 

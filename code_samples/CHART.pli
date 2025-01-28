@@ -1,4 +1,4 @@
-*PROCESS X(S),A(S),LINECOUNT(60);
+ /*PROCESS X(S),A(S),LINECOUNT(60); */
  /*          %M%    %I%    %D%    %T%
      PUNCH ' IDENTIFY **%M%1(''%M%/%I% %D% %T%'')'
      PUNCH ' ENTRY PLISTART '

@@ -1,0 +1,2 @@
+0PACK: PACKAGE EXPORTS(TEST, TEST, TEST); //error: TEST has 3 occurences, needed 1
+0END;

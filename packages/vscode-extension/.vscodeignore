@@ -1,0 +1,12 @@
+# Ignore everything
+*
+**/*
+
+# Add what we actually want
+!out/extension/main.cjs
+!out/extension/main-browser.js
+!out/language/main.cjs
+!out/language/main-browser.js
+!language-configuration.json
+!syntaxes/pli.merged.json
+!LICENSE
