@@ -18,9 +18,7 @@
                 "${workspaceFolder}/packages/language/out/**/*",
                 "${workspaceFolder}/packages/vscode-extension/out/**/*"
             ],
-            "env": {
-                // "DEBUG_BREAK": "true"
-            }
+            "envFile": "${workspaceFolder}/.env"
         },
         {
             "name": "Run Web Extension",
@@ -86,6 +84,13 @@
             ],
             "smartStep": true,
             "console": "integratedTerminal"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Extension + Language Server",
+            "configurations": ["Run Extension", "Attach to Language Server"],
+            "stopAll": true
         }
     ]
 }

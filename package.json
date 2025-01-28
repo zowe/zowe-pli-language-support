@@ -1,25 +1,28 @@
 {
-    "name": "pli-workspace",
-    "description": "Base workspace package",
-    "version": "0.0.1",
-    "type": "module",
-    "private": true,
-    "scripts": {
-        "watch": "tsc -b tsconfig.build.json --watch",
-        "build": "pnpm langium:generate && tsc -b tsconfig.build.json && pnpm --dir packages/vscode-extension build && node ./scripts/merge-tmlanguage.mjs",
-        "build:clean": "pnpm clean && pnpm build",
-        "build:playground": "pnpm build && pnpm --dir packages/playground build",
-        "langium:generate": "pnpm  --dir packages/language langium:generate",
-        "langium:watch": "pnpm --dir packages/language langium:watch",
-        "test": "vitest"
-    },
-    "devDependencies": {
-        "@types/node": "^18.19.70",
-        "deepmerge": "^1.5.2",
-        "langium": "~3.2.1",
-        "prettier": "^3.4.2",
-        "shx": "~0.3.4",
-        "typescript": "~5.4.5",
-        "vitest": "^1.6.0"
-    }
+  "name": "pli-workspace",
+  "description": "Base workspace package",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "clean": "pnpm --dir packages/language clean; pnpm --dir packages/vscode-extension clean",
+    "generate": "pnpm  --dir packages/language langium:generate",
+    "compile": "tsc -b tsconfig.build.json",
+    "bundle": "pnpm --dir packages/vscode-extension esbuild:bundle",
+    "merge": "node ./scripts/merge-tmlanguage.mjs",
+    "build": "pnpm clean && pnpm generate && pnpm compile && pnpm bundle && pnpm merge",
+    "test": "vitest",
+    "lint": "prettier -c '**/*.ts'",
+    "pretty": "prettier -w '**/*.ts'",
+    "build:playground": "pnpm build && pnpm --dir packages/playground build"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.70",
+    "deepmerge": "^1.5.2",
+    "langium": "~3.2.1",
+    "prettier": "^3.4.2",
+    "shx": "~0.3.4",
+    "typescript": "~5.4.5",
+    "vitest": "^1.6.0"
+  }
 }

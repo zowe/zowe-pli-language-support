@@ -32,7 +32,7 @@ jobs:
     - name: Build monorepo
       shell: bash
       run: |
-        pnpm install
+        pnpm install --frozen-lockfile
         pnpm build
     - name: Test monorepo
       if: success() || failure()
