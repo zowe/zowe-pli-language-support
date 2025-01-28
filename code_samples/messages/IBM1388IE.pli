@@ -1,0 +1,3 @@
+0a: proc( x ) options(nodescriptor); //error: The NODESCRIPTOR attribute is invalid when any parameters have the NONCONNECTED attribute.
+  dcl x(20) fixed bin nonconnected;
+0end a;

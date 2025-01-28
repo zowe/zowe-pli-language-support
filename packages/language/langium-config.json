@@ -1,0 +1,12 @@
+{
+  "projectName": "Pl1",
+  "languages": [
+    {
+      "id": "pli",
+      "grammar": "src/pli.langium",
+      "fileExtensions": [".pli"],
+      "caseInsensitive": true
+    }
+  ],
+  "out": "src/generated"
+}
