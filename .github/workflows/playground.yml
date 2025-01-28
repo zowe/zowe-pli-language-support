@@ -1,0 +1,36 @@
+name: Publish Playground
+
+permissions:
+  pages: write
+  id-token: write
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  docs:
+    name: Build and Publish PL/I Playground
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build Playground
+        run: |
+          pnpm install
+          pnpm build:playground
+      - name: Upload docs artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/playground/out
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
