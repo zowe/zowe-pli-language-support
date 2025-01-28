@@ -36,7 +36,7 @@ import { PliNameProvider } from "./references/pli-name-provider.js";
 import { PliReferences } from "./references/pli-references.js";
 import { PliScopeProvider } from "./references/pli-scope-provider.js";
 import { PliNodeKindProvider } from "./lsp/pli-node-kind-provider.js";
-import { PliDocumentationProvider } from "./documentation.ts/pli-documentation-provider.js";
+import { PliDocumentationProvider } from "./documentation/pli-documentation-provider.js";
 import { PliCompletionProvider } from "./lsp/pli-completion-provider.js";
 import { PliIndexManager } from "./workspace/pli-index-manager.js";
 import { PliWorkspaceManager } from "./workspace/pli-workspace-manager.js";
