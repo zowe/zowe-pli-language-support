@@ -20,8 +20,7 @@ defaults:
     shell: bash
 
 jobs:
-  build-preview:
-    if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+  preview:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -29,40 +28,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install pnpm
+        if: github.event.action != 'closed'
         uses: pnpm/action-setup@v4
         with:
           version: 9
       - name: Use Node.js
+        if: github.event.action != 'closed'
         uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
       - name: Build PR Preview
+        if: github.event.action != 'closed'
         run: |
           pnpm install --frozen-lockfile
           pnpm build
           pnpm playground
       - uses: rossjrw/pr-preview-action@v1.6.0
         with:
-          action: deploy
           source-dir: ./packages/playground/out
           preview-branch: previews
           umbrella-dir: pr
-
-  # remove the preview page when the PR got closed
-  remove-preview:
-    if: github.event_name == 'pull_request_target' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-      # checkout required for pr-preview-action to succeed,
-      # while the content will not be used
-      - name: Checkout
-        uses: actions/checkout@v4
-      - uses: rossjrw/pr-preview-action@v1.6.0
-        id: deployment
-        with:
-          action: remove
-          preview-branch: previews
-          umbrella-dir: pr
+          token: ${{ secrets.PREVIEW_PAT_TOKEN }}
