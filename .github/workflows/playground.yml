@@ -3,6 +3,7 @@ name: Publish Playground
 permissions:
   pages: write
   id-token: write
+  contents: write
 
 on:
   push:
@@ -19,18 +20,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
         with:
-          node-version: '20'
+          version: 9
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
       - name: Build Playground
         run: |
           pnpm install
           pnpm build:playground
-      - name: Upload docs artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4.7.2
         with:
-          path: packages/playground/out
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          folder: packages/playground/out
+          branch: previews
+          clean-exclude: pr/ # Ensure that we don't delete the pr previews
+          force: false # Ensure that we don't override the pr previews
