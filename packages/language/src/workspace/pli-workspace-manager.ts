@@ -37,4 +37,10 @@ export class PliWorkspaceManager extends DefaultWorkspaceManager {
     );
     _collector(document);
   }
+
+  protected override traverseFolder(): Promise<void> {
+    // Do not load the workspace on language server startup
+    // Files are mostly standalone, and any included files are loaded on demand.
+    return Promise.resolve();
+  }
 }
