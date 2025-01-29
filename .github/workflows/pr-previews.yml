@@ -37,7 +37,7 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
-      - name: Build Playground
+      - name: Build PR Preview
         run: |
           pnpm install --frozen-lockfile
           pnpm build
