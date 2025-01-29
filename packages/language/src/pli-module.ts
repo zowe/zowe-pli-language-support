@@ -95,7 +95,7 @@ export const PliSharedModule: Module<
 > = {
   lsp: {
     NodeKindProvider: () => new PliNodeKindProvider(),
-    DocumentUpdateHandler: services => new PliDocumentUpdateHandler(services)
+    DocumentUpdateHandler: (services) => new PliDocumentUpdateHandler(services),
   },
   workspace: {
     IndexManager: (services) => new PliIndexManager(services),

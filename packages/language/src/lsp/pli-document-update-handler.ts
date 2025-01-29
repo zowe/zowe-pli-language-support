@@ -10,17 +10,21 @@
  */
 
 import { URI } from "langium";
-import { DefaultDocumentUpdateHandler, DocumentUpdateHandler } from "langium/lsp";
+import {
+  DefaultDocumentUpdateHandler,
+  DocumentUpdateHandler,
+} from "langium/lsp";
 import { TextDocument, TextDocumentChangeEvent } from "vscode-languageserver";
 
-export class PliDocumentUpdateHandler extends DefaultDocumentUpdateHandler implements DocumentUpdateHandler {
-
-    didCloseDocument(event: TextDocumentChangeEvent<TextDocument>): void {
-        const uri = URI.parse(event.document.uri);
-        if (uri.scheme !== 'pli-builtin') {
-            // Only remove the file from memory if it is not a built-in file
-            this.fireDocumentUpdate([], [uri]);
-        }
+export class PliDocumentUpdateHandler
+  extends DefaultDocumentUpdateHandler
+  implements DocumentUpdateHandler
+{
+  didCloseDocument(event: TextDocumentChangeEvent<TextDocument>): void {
+    const uri = URI.parse(event.document.uri);
+    if (uri.scheme !== "pli-builtin") {
+      // Only remove the file from memory if it is not a built-in file
+      this.fireDocumentUpdate([], [uri]);
     }
-
+  }
 }
