@@ -56,7 +56,7 @@
     "dependencies": false
   },
   "dependencies": {
-    "langium": "~3.2.0",
+    "langium": "~3.3.1",
     "pli-language": "workspace:*",
     "vscode-languageclient": "~9.0.1",
     "vscode-languageserver": "~9.0.1"

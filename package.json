@@ -8,6 +8,7 @@
         "watch": "tsc -b tsconfig.build.json --watch",
         "build": "pnpm langium:generate && tsc -b tsconfig.build.json && pnpm --dir packages/vscode-extension build && node ./scripts/merge-tmlanguage.mjs",
         "build:clean": "pnpm clean && pnpm build",
+        "build:playground": "pnpm build && pnpm --dir packages/playground build",
         "langium:generate": "pnpm  --dir packages/language langium:generate",
         "langium:watch": "pnpm --dir packages/language langium:watch",
         "test": "vitest"
