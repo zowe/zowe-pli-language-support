@@ -1,0 +1,42 @@
+name: Publish Playground
+
+permissions:
+  pages: write
+  id-token: write
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  docs:
+    name: Build and Publish PL/I Playground
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+      - name: Build Playground
+        run: |
+          pnpm install
+          pnpm build:playground
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4.7.2
+        with:
+          folder: packages/playground/out
+          branch: previews
+          clean-exclude: pr/ # Ensure that we don't delete the pr previews
+          force: false # Ensure that we don't override the pr previews
