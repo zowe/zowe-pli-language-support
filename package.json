@@ -12,8 +12,8 @@
     "merge": "node ./scripts/merge-tmlanguage.mjs",
     "build": "pnpm clean && pnpm generate && pnpm compile && pnpm bundle && pnpm merge",
     "test": "vitest",
-    "lint": "prettier -c '**/*.ts'",
-    "pretty": "prettier -w '**/*.ts'",
+    "lint": "prettier -c \"**/*.ts\"",
+    "pretty": "prettier -w \"**/*.ts\"",
     "playground": "pnpm --dir packages/playground build"
   },
   "devDependencies": {
