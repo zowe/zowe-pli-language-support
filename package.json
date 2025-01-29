@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "clean": "pnpm --dir packages/language clean; pnpm --dir packages/vscode-extension clean",
+    "clean": "pnpm --dir packages/language clean && pnpm --dir packages/vscode-extension clean",
     "generate": "pnpm  --dir packages/language langium:generate",
     "compile": "tsc -b tsconfig.build.json",
     "bundle": "pnpm --dir packages/vscode-extension esbuild:bundle",
