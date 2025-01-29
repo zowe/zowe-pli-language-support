@@ -39,8 +39,9 @@ jobs:
           cache: 'pnpm'
       - name: Build Playground
         run: |
-          pnpm install
-          pnpm build:playground
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm playground
       - uses: rossjrw/pr-preview-action@v1.6.0
         with:
           action: deploy

@@ -14,7 +14,7 @@
     "test": "vitest",
     "lint": "prettier -c '**/*.ts'",
     "pretty": "prettier -w '**/*.ts'",
-    "build:playground": "pnpm build && pnpm --dir packages/playground build"
+    "playground": "pnpm --dir packages/playground build"
   },
   "devDependencies": {
     "@types/node": "^18.19.70",
