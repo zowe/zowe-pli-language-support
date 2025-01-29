@@ -29,10 +29,17 @@ jobs:
       with:
         node-version-file: '.nvmrc'
         cache: 'pnpm'
+    - name: Install node modules
+      shell: bash
+      run: |
+        pnpm install --frozen-lockfile
+    - name: Lint sources
+      shell: bash
+      run: |
+        pnpm lint
     - name: Build monorepo
       shell: bash
       run: |
-        pnpm install
         pnpm build
     - name: Test monorepo
       if: success() || failure()

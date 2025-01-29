@@ -5,6 +5,8 @@
 node_modules/
 dist/
 out/
+.DS_Store
+.env
 **/src/generated
 **/syntaxes/pli.merged.json
 *.tsbuildinfo

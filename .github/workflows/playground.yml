@@ -31,8 +31,9 @@ jobs:
           cache: 'pnpm'
       - name: Build Playground
         run: |
-          pnpm install
-          pnpm build:playground
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm playground
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.7.2
         with:

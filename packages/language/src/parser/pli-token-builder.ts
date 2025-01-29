@@ -57,7 +57,7 @@ export class PliTokenBuilder extends DefaultTokenBuilder {
       }
     });
     const execFragment = tokens.find((e) => e.name === "ExecFragment")!;
-    execFragment.START_CHARS_HINT = ["S", "C"];
+    execFragment.START_CHARS_HINT = ["S", "C"]; // (S)QL, (C)ICS
     return tokens;
   }
 }
