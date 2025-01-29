@@ -9,10 +9,14 @@
  *
  */
 
-import { EmptyFileSystem } from 'langium';
-import { startLanguageServer } from 'langium/lsp';
-import { BrowserMessageReader, BrowserMessageWriter, createConnection } from 'vscode-languageserver/browser.js';
-import { createPliServices } from 'pli-language';
+import { EmptyFileSystem } from "langium";
+import { startLanguageServer } from "langium/lsp";
+import {
+  BrowserMessageReader,
+  BrowserMessageWriter,
+  createConnection,
+} from "vscode-languageserver/browser.js";
+import { createPliServices } from "pli-language";
 
 /* browser specific setup code */
 const messageReader = new BrowserMessageReader(self as any);
