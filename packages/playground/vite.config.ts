@@ -3,7 +3,7 @@ import importMetaUrlPlugin from "@codingame/esbuild-import-meta-url-plugin";
 import type { UserConfig } from "vite";
 
 const config: UserConfig = {
-  base: '',
+  base: "",
   build: {
     target: "ES2022",
     rollupOptions: {
@@ -29,4 +29,3 @@ const config: UserConfig = {
   },
 };
 export default config;
-

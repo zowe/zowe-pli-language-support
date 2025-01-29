@@ -38,11 +38,12 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
-      - name: Build Playground
+      - name: Build PR Preview
         if: github.event.action != 'closed'
         run: |
-          pnpm install
-          pnpm build:playground
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm playground
       - uses: rossjrw/pr-preview-action@v1.6.0
         with:
           source-dir: ./packages/playground/out

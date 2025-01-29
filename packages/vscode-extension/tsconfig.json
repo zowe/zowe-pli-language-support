@@ -1,9 +1,9 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "noEmit": true,
     "rootDir": ".",
-    "lib": ["DOM", "ES2022"]
+    "noEmit": true,
+    "lib": ["DOM", "ESNext"]
   },
   "references": [
     {

@@ -44,7 +44,7 @@ const nodeCtx = await esbuild.context({
   entryPoints: ["src/extension/main.ts", "src/language/main.ts"],
   outdir: "out",
   bundle: true,
-  target: "ES2017",
+  target: "ESNext",
   // VSCode's extension host is still using cjs, so we need to transform the code
   format: "cjs",
   // To prevent confusing node, we explicitly use the `.cjs` extension
@@ -54,7 +54,7 @@ const nodeCtx = await esbuild.context({
   loader: { ".ts": "ts" },
   external: ["vscode"],
   platform: "node",
-  sourcemap: !minify,
+  sourcemap: true,
   minify,
   plugins,
 });
@@ -67,12 +67,12 @@ const browserCtx = await esbuild.context({
   ],
   outdir: "out",
   bundle: true,
-  target: "ES2017",
+  target: "ESNext",
   format: "cjs",
   loader: { ".ts": "ts" },
   external: ["vscode"],
   platform: "browser",
-  sourcemap: !minify,
+  sourcemap: true,
   minify,
   plugins,
 });
