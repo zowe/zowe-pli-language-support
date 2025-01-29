@@ -1,7 +1,9 @@
 import path from "path";
 import importMetaUrlPlugin from "@codingame/esbuild-import-meta-url-plugin";
+import type { UserConfig } from "vite";
 
-export default {
+const config: UserConfig = {
+  base: '',
   build: {
     target: "ES2022",
     rollupOptions: {
@@ -21,8 +23,10 @@ export default {
   },
   optimizeDeps: {
     esbuildOptions: {
-      plugins: [importMetaUrlPlugin],
+      plugins: [importMetaUrlPlugin as any],
     },
     include: ["vscode-textmate", "vscode-oniguruma"],
   },
 };
+export default config;
+
