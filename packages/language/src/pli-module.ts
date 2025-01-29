@@ -40,6 +40,7 @@ import { PliDocumentationProvider } from "./documentation/pli-documentation-prov
 import { PliCompletionProvider } from "./lsp/pli-completion-provider.js";
 import { PliIndexManager } from "./workspace/pli-index-manager.js";
 import { PliWorkspaceManager } from "./workspace/pli-workspace-manager.js";
+import { PliDocumentUpdateHandler } from "./lsp/pli-document-update-handler.js";
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -94,6 +95,7 @@ export const PliSharedModule: Module<
 > = {
   lsp: {
     NodeKindProvider: () => new PliNodeKindProvider(),
+    DocumentUpdateHandler: (services) => new PliDocumentUpdateHandler(services),
   },
   workspace: {
     IndexManager: (services) => new PliIndexManager(services),
