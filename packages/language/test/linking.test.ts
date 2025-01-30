@@ -74,7 +74,6 @@ describe("Linking tests", () => {
     });
 
     describe("Unstructured tests", async () => {
-        
         // https://github.com/zowe/zowe-pli-language-support/issues/29#issuecomment-2623842079
         describe("Nested procedure label tests", async () => {
             const text = `
@@ -111,7 +110,7 @@ describe("Linking tests", () => {
                 inner0: 1,
                 outer1: 2,
                 inner1: 3,
-            }
+            };
 
             const calls = {
                 callOuter0: 0,
@@ -127,7 +126,7 @@ describe("Linking tests", () => {
                 callOuter5: 10,
                 callInner5: 11,
                 callOuter6: 12,
-            }
+            };
 
             const links = {
                 [procedures.outer0]: [
@@ -147,19 +146,16 @@ describe("Linking tests", () => {
                     calls.callOuter3,
                     calls.callOuter4,
                 ],
-                [procedures.inner1]: [
-                    calls.callInner2,
-                    calls.callInner3,
-                ]
-            }
+                [procedures.inner1]: [calls.callInner2, calls.callInner3],
+            };
 
-            for(const [procedure, calls] of Object.entries(links)) {
-                for(const call of calls) {
+            for (const [procedure, calls] of Object.entries(links)) {
+                for (const call of calls) {
                     test("Must find link correct procedure label", async () => {
                         await gotoDefinition({
                             text: text,
                             index: call,
-                            rangeIndex: +procedure
+                            rangeIndex: +procedure,
                         });
                     });
                 }
