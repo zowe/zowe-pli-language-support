@@ -11,6 +11,7 @@ const AllPreprocessorTokens = Object.values(PreprocessorTokens);
 export class PliPreprocessorLexer {
     private readonly hiddenTokenTypes: TokenType[];
     private readonly normalTokenTypes: TokenType[];
+    private readonly idTokenType: TokenType;
     private state: PreprocessorState;
 
     constructor(services: Pl1Services, text: string) {
@@ -18,6 +19,7 @@ export class PliPreprocessorLexer {
         const vocabulary = tokenBuilder.buildTokens(services.Grammar) as TokenType[];
         this.hiddenTokenTypes = vocabulary.filter(v => v.GROUP === 'hidden' || v.GROUP === ChevrotainLexer.SKIPPED);
         this.normalTokenTypes = [PreprocessorTokens.Percentage].concat(vocabulary.filter(v => !this.hiddenTokenTypes.includes(v)));
+        this.idTokenType = this.normalTokenTypes.find(t => t.name === "ID")!;
         this.state = InitialPreprocessorState(text);
     }
 
@@ -56,7 +58,24 @@ export class PliPreprocessorLexer {
                         type: 'replaceVariable',
                         text: variable.value?.toString() ?? ""
                     });
-                    return this.scanInput();
+                    let left = this.scanInput();
+                    if(left && this.canConsume(PreprocessorTokens.Percentage)) {
+                        while(this.canConsume(PreprocessorTokens.Percentage)) {
+                            this.consume("%", PreprocessorTokens.Percentage);
+                            const keepInMind = this.state;
+                            const right = this.scanInput();
+                            if(right && this.isIdentifier(right)) {
+                                left = createTokenInstance(this.idTokenType, left.image+right.image, 0, 0, 0, 0, 0, 0);
+                            } else {
+                                this.state = keepInMind;
+                                return left;
+                            }
+                        }
+                        return left;
+                    } else {
+                        return left;
+                    }
+                    
                 }
             }
             return token;
@@ -132,17 +151,26 @@ export class PliPreprocessorLexer {
         return result;
     }
 
-    private emit(scanned: string, tokenType: TokenType) {
+
+    private tryConsume(tokenType: TokenType): IToken|undefined {
+        const image = this.canConsume(tokenType);
+        if(!image) {
+            return undefined;
+        }
+        return this.consume(image, tokenType);
+    }
+
+    private consume(image: string, tokenType: TokenType) {
         const [startOffset, startLine, startColumn] = Selectors.position(this.state);
         this.applyAction({
             type: "advanceScan",
-            scanned
+            scanned: image
         });
         const [endOffset, endLine, endColumn] = Selectors.position(this.state);
-        return createTokenInstance(tokenType, scanned, startOffset, endOffset, startLine, endLine, startColumn, endColumn);
+        return createTokenInstance(tokenType, image, startOffset, endOffset, startLine, endLine, startColumn, endColumn);
     }
 
-    private tryConsume(tokenType: TokenType): IToken|undefined {
+    private canConsume(tokenType: TokenType): string|undefined {
         if(Selectors.eof(this.state)) {
             return undefined;
         }
@@ -153,12 +181,12 @@ export class PliPreprocessorLexer {
                 pattern.lastIndex = index;
                 const match = pattern.exec(text);
                 if (match) {
-                    return this.emit(match[0], tokenType);
+                    return match[0];
                 }
             } else if (typeof pattern === "string") {
                 const image = text.substring(index, index + pattern.length);
                 if (image.toLowerCase() === pattern.toLowerCase()) {
-                    return this.emit(image, tokenType);
+                    return image;
                 }
             }
         }
