@@ -13,7 +13,7 @@ import { TokenTypeDictionary } from "chevrotain";
 import { Lexer, LexerResult } from "langium";
 import { Pl1Services } from "../pli-module";
 import { MarginsProcessor } from "./pli-margins-processor";
-import { PliPreprocessor } from "./pli-preprocessor";
+import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 
 export class Pl1Lexer implements Lexer {
     private readonly marginsProcessor: MarginsProcessor;
@@ -32,7 +32,7 @@ export class Pl1Lexer implements Lexer {
 
     tokenize(printerText: string): LexerResult {
         const text = this.marginsProcessor.processMargins(printerText);
-        const preprocessor = new PliPreprocessor(this.services, text);
+        const preprocessor = new PliPreprocessorLexer(this.services, text);
         const { hidden, tokens } = preprocessor.start();
         return {
             tokens,

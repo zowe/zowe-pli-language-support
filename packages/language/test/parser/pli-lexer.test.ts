@@ -25,20 +25,36 @@ describe("Lexer", () => {
         ]);
     });
 
-    test.only("Tokenize simple declaration with preprocessor", () => {
+    test("Tokenize simple declaration with preprocessor", () => {
         expect(tokenize(`
- %dcl A char;
- %A = 'B';
- dcl A%C fixed bin(31);
+            %dcl A char;
+            %A = 'B';
+            dcl A%C fixed bin(31);
+        `)).toStrictEqual([
+            "dcl:DCL",
+            "BC:ID",
+            "fixed:FIXED",
+            "bin:BIN",
+            "(:(",
+            "31:NUMBER",
+            "):)",
+            ";:;",
+        ]);
+    });
+
+    test('Example 1 from documentation', () => {
+        expect(tokenize(`
+ %DECLARE A CHARACTER, B FIXED;
+ %A = 'B+C';
+ %B = 2;
+ X = A;
 `)).toStrictEqual([
-    "dcl:DCL",
-    "BC:ID",
-    "fixed:FIXED",
-    "bin:BIN",
-    "(:(",
-    "31:NUMBER",
-    "):)",
-    ";:;",
+    "X:X",
+    "=:=",
+    "2:number",
+    "+:plus",
+    "C:ID",
+    ";:;"
 ]);
     });
 });

@@ -19,7 +19,6 @@ export default defineConfig({
     test: {
         deps: {
             interopDefault: true
-        },
-        include: ['packages/**/test/**/*.test.ts']
+        }
     }
 });

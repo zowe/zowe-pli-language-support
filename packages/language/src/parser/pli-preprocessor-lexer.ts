@@ -1,30 +1,10 @@
 import { Pl1Services } from "../pli-module";
 import { PliTokenBuilder } from "./pli-token-builder";
-import { TokenType, Lexer as ChevrotainLexer, IToken, createToken, createTokenInstance } from "chevrotain";
+import { TokenType, Lexer as ChevrotainLexer, IToken, createTokenInstance } from "chevrotain";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { PPDeclaration } from "./pli-preprocessor-ast";
 import { isRegExp } from "util/types";
-
-export const PreprocessorTokens = {
-    Declare: tokenType("declare", /DCL|DECLARE/yi),
-    Eq: tokenType("eq", /=/yi),
-    Builtin: tokenType("builtin", /BUILTIN/yi),
-    Entry: tokenType("builtin", /ENTRY/yi),
-    Character: tokenType("character", /CHAR(ACTER)?/yi),
-    Internal: tokenType("internal", /INT(ERNAL)?/yi),
-    External: tokenType("external", /EXT(ERNAL)?/yi),
-    Scan: tokenType("scan", /SCAN/yi),
-    Rescan: tokenType("rescan", /RESCAN/yi),
-    Noscan: tokenType("noscan", /NOSCAN/yi),
-    Fixed: tokenType("fixed", /FIXED/yi),
-    LParen: tokenType("lparen", /\(/yi),
-    RParen: tokenType("rparen", /\)/yi),
-    Semicolon: tokenType("semicolon", /;/yi),
-    Comma: tokenType("comma", /,/yi),
-    Percentage: tokenType("percentage", /%/yi),
-    String: tokenType("string", /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')([xX]|[aA]|[eE]|[xX][uU]|[xX][nN]|[bB]4|[bB]3|[bB][xX]|[bB]|[gG][xX]|[gG]|[uU][xX]|[wW][xX]|[xX]|[iI])*/y),
-    Id: tokenType("id", /[a-z_][a-z_0-9]*/yi),
-};
+import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 
 const AllPreprocessorTokens = Object.values(PreprocessorTokens);
 
@@ -33,7 +13,7 @@ type Variable = {
     value: number|string|undefined;
 };
 
-export class PliPreprocessor {
+export class PliPreprocessorLexer {
     private readonly hiddenTokens: TokenType[];
     private readonly normalTokens: TokenType[];
     private readonly text: string;
@@ -88,7 +68,7 @@ export class PliPreprocessor {
                     };
                 }
                 case 'assignmentStatement': {
-                    this.variables.get(statement.left)!.value = this.unpackString(statement.right);
+                    this.variables.get(statement.left)!.value = statement.right.value;
                     return {
                         tokens: [],
                         hidden: [],
@@ -109,12 +89,9 @@ export class PliPreprocessor {
             };
         }
     }
-    unpackString(literal: string): string {
-        return literal.substring(1, literal.length-1);
-    }
-
+    
     isIdenifier(token: IToken) {
-        return ["ID", "A", "B", "C", "D", "E", "F"].includes(token.tokenType.name);
+        return token.tokenType.name === "ID" || (token.tokenType.CATEGORIES && token.tokenType.CATEGORIES.findIndex(t => t.name === "ID") > -1);
     }
 
     expandVariables(tokens: IToken[]) {
@@ -126,14 +103,18 @@ export class PliPreprocessor {
                 let { endOffset, endColumn, endLine } = token;
                 const name: string[] = [this.tryExpandVariables(token)];
                 index++;
-                while(tokens[index].tokenType === PreprocessorTokens.Percentage) {
-                    index++;
-                    token = tokens[index];
-                    ({ endOffset, endColumn, endLine } = token);
-                    name.push(this.tryExpandVariables(token))
-                    index++;
+                if(tokens[index].tokenType === PreprocessorTokens.Percentage) {
+                    do {
+                        index++;
+                        token = tokens[index];
+                        ({ endOffset, endColumn, endLine } = token);
+                        name.push(this.tryExpandVariables(token))
+                        index++;
+                    } while(tokens[index].tokenType === PreprocessorTokens.Percentage);
+                    result.push(createTokenInstance(this.idToken, name.join(""), startOffset, endOffset!, startLine!, endLine!, startColumn!, endColumn!));
+                } else {
+                    result.push(createTokenInstance(token.tokenType, name[0], startOffset, endOffset!, startLine!, endLine!, startColumn!, endColumn!));
                 }
-                result.push(createTokenInstance(this.idToken, name.join(""), startOffset, endOffset!, startLine!, endLine!, startColumn!, endColumn!));
             } else {
                 result.push(token);
                 index++;
@@ -225,33 +206,7 @@ export class PliPreprocessor {
         return false;
     }
 
-    private consume(tokenType: TokenType) {
-        const pattern = tokenType.PATTERN;
-        if (pattern) {
-            if (isRegExp(pattern)) {
-                pattern.lastIndex = this.index;
-                const match = pattern.exec(this.text);
-                if (match) {
-                    return this.emit(match[0], tokenType);
-                }
-            } else if (typeof pattern === "string") {
-                const image = this.text.substring(this.index, this.index + pattern.length);
-                if (image.toLowerCase() === pattern.toLowerCase()) {
-                    return this.emit(image, tokenType);
-                }
-            }
-        }
-        throw new Error(`Could not consume ${tokenType.name}.`);
-    }
-
     private skip() {
         while (this.hiddenTokens.some(h => this.tryConsume(h)));
     }
-}
-
-function tokenType(name: string, pattern: string | RegExp) {
-    return createToken({
-        name,
-        pattern,
-    });
 }

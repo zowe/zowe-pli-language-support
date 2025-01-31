@@ -1,6 +1,6 @@
 import { IToken, TokenType } from "chevrotain";
-import { PreprocessorTokens } from "./pli-preprocessor";
-import { PPStatement, PPDeclareStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPAssignmentStatement } from "./pli-preprocessor-ast";
+import { PPStatement, PPDeclareStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPAssignmentStatement, PPExpression } from "./pli-preprocessor-ast";
+import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 
 export class PliPreprocessorParser {
     private readonly tokens: IToken[];
@@ -12,7 +12,7 @@ export class PliPreprocessorParser {
     }
 
     get current() {
-        return this.tokens[this.index];
+        return this.eos ? undefined : this.tokens[this.index];
     }
 
     get eos() { //end of statement
@@ -20,7 +20,7 @@ export class PliPreprocessorParser {
     }
 
     start(): PPStatement {
-        switch(this.current.tokenType) {
+        switch(this.current?.tokenType) {
             case PreprocessorTokens.Declare: return this.declareStatement();
             case PreprocessorTokens.Id: return this.assignmentStatement();
         }
@@ -30,7 +30,7 @@ export class PliPreprocessorParser {
     assignmentStatement(): PPAssignmentStatement {
         const left = this.consume(PreprocessorTokens.Id).image;
         this.consume(PreprocessorTokens.Eq);
-        const right = this.consume(PreprocessorTokens.String).image;
+        const right = this.expression();
         return {
             type: 'assignmentStatement',
             left,
@@ -88,19 +88,20 @@ export class PliPreprocessorParser {
 
     attributes() {
         let scope: ProcedureScope = 'external';
-        let scanMode: ScanMode = 'rescan'; //TODO corrrect default?
+        //TODO rescan seems to be the corrrect default, looking at example 1 from preprocessor documentation
+        let scanMode: ScanMode = 'rescan';
         let type: VariableType = 'character';
         let lastIndex = 0;
         do {
             lastIndex = this.index;
-            switch(this.current.tokenType) {
+            switch(this.current?.tokenType) {
                 case PreprocessorTokens.Internal: scope = 'internal'; this.index++; break;
                 case PreprocessorTokens.External: scope = 'external'; this.index++; break;
                 case PreprocessorTokens.Character: type = 'character'; this.index++; break;
                 case PreprocessorTokens.Fixed: type = 'fixed'; this.index++; break;
                 case PreprocessorTokens.Scan: scanMode = 'scan'; this.index++; break;
                 case PreprocessorTokens.Rescan: scanMode = 'rescan'; this.index++; break;
-                case PreprocessorTokens.Noscan: scanMode = 'noscan'; this.index++; break;
+                case PreprocessorTokens.Noscan: scanMode = 'scan'; this.index++; break;
             }
         } while(lastIndex != this.index);
         return {
@@ -114,24 +115,48 @@ export class PliPreprocessorParser {
         //TODO
     }
 
-    canConsume(tokenType: TokenType) {
-        return this.current.tokenType === tokenType;
+    expression(): PPExpression {
+        if(this.canConsume(PreprocessorTokens.Number)) {
+            const number = this.consume(PreprocessorTokens.Number);
+            return {
+                type: "fixedLiteral",
+                value: parseInt(number.image, 10), //TODO when to parse binary?
+            };
+        } else if(this.canConsume(PreprocessorTokens.String)) {
+            const character = this.consume(PreprocessorTokens.String);
+            return {
+                type: "characterLiteral",
+                value: this.unpackCharacterValue(character.image)
+            };
+        }
+        throw new Error("Cannot handle this type of preprocessor expression yet!");
     }
 
-    tryConsume(tokenType: TokenType): boolean {
-        if(this.current.tokenType !== tokenType) {
+
+
+    private canConsume(tokenType: TokenType) {
+        return this.current?.tokenType === tokenType;
+    }
+
+    private tryConsume(tokenType: TokenType): boolean {
+        if(this.current?.tokenType !== tokenType) {
             return false;
         }
         this.index++;
         return true;
     }
 
-    consume(tokenType: TokenType) {
-        if(this.current.tokenType !== tokenType) {
+    private consume(tokenType: TokenType) {
+        if(this.current?.tokenType !== tokenType) {
             throw new Error(`Expected token type '${tokenType.name}'.`);
         }
         const token = this.current;
         this.index++;
         return token;
     }
+
+    private unpackCharacterValue(literal: string): string {
+        return literal.substring(1, literal.length-1);
+    }
+
 }

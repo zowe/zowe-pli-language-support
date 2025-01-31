@@ -47,6 +47,13 @@ export class PliTokenBuilder extends DefaultTokenBuilder {
         const terminalTokens: TokenType[] = this.buildTerminalTokens(reachableRules);
         const tokens: TokenType[] = this.buildKeywordTokens(reachableRules, terminalTokens, options);
 
+        const id = terminalTokens.find((e) => e.name === "ID")!;
+        for (const keywordToken of tokens) {
+          if (/[a-zA-Z]/.test(keywordToken.name)) {
+            keywordToken.CATEGORIES = [id];
+          }
+        }
+
         terminalTokens.forEach(terminalToken => {
             const pattern = terminalToken.PATTERN;
             if (typeof pattern === 'object' && pattern && 'test' in pattern && RegExpUtils.isWhitespace(pattern) || terminalToken.name === 'ExecFragment') {
