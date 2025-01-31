@@ -51,9 +51,9 @@ describe("Lexer", () => {
 `)).toStrictEqual([
     "X:X",
     "=:=",
-    "2:number",
-    "+:plus",
-    "C:ID",
+    "2:NUMBER",
+    "+:+",
+    "C:C",
     ";:;"
 ]);
     });

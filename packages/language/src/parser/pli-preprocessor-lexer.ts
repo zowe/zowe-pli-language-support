@@ -2,211 +2,174 @@ import { Pl1Services } from "../pli-module";
 import { PliTokenBuilder } from "./pli-token-builder";
 import { TokenType, Lexer as ChevrotainLexer, IToken, createTokenInstance } from "chevrotain";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
-import { PPDeclaration } from "./pli-preprocessor-ast";
 import { isRegExp } from "util/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
+import { InitialPreprocessorState, PreprocessorAction, PreprocessorState, Selectors, translatePreprocessorState } from "./pli-preprocessor-state";
 
 const AllPreprocessorTokens = Object.values(PreprocessorTokens);
 
-type Variable = {
-    declaration: PPDeclaration;
-    value: number|string|undefined;
-};
-
 export class PliPreprocessorLexer {
-    private readonly hiddenTokens: TokenType[];
-    private readonly normalTokens: TokenType[];
-    private readonly text: string;
-    private index = 0;
-    private line = 1;
-    private column = 1;
-    private tokens: IToken[] = [];
-    private hidden: IToken[] = [];
-    private variables = new Map<string, Variable>();
-    private readonly idToken: TokenType;
+    private readonly hiddenTokenTypes: TokenType[];
+    private readonly normalTokenTypes: TokenType[];
+    private state: PreprocessorState;
 
     constructor(services: Pl1Services, text: string) {
         const tokenBuilder = services.parser.TokenBuilder as PliTokenBuilder;
         const vocabulary = tokenBuilder.buildTokens(services.Grammar) as TokenType[];
-        this.hiddenTokens = vocabulary.filter(v => v.GROUP === 'hidden' || v.GROUP === ChevrotainLexer.SKIPPED);
-        this.normalTokens = vocabulary.filter(v => !this.hiddenTokens.includes(v));
-        this.idToken = this.normalTokens.find(v => v.name === 'ID')!;
-        this.text = text;
+        this.hiddenTokenTypes = vocabulary.filter(v => v.GROUP === 'hidden' || v.GROUP === ChevrotainLexer.SKIPPED);
+        this.normalTokenTypes = [PreprocessorTokens.Percentage].concat(vocabulary.filter(v => !this.hiddenTokenTypes.includes(v)));
+        this.state = InitialPreprocessorState(text);
     }
 
     start() {
-        const resultHidden: IToken[] = [];
-        const resultTokens: IToken[] = [];
-        while(this.index < this.text.length) {
-            const { tokens, hidden } = this.readStatement();
-            resultTokens.push(...tokens);
-            resultHidden.push(...hidden);
+        const result: IToken[] = [];
+        while(!Selectors.eof(this.state)) {
+            this.skip();
+            if(this.tryToReadPreprocessorStatement()) {
+                continue;
+            } else {
+                let token: IToken|undefined;
+                do {
+                    token = this.scanInput();
+                    if(token) {
+                        result.push(token);
+                    }
+                } while(token && token.image !== ';');
+            }
         }
         return {
-            tokens: resultTokens,
-            hidden: resultHidden,
+            tokens: result
         }
     }
 
-    private readStatement() {
+    private scanInput(): IToken|undefined {
         this.skip();
-        if(this.tryConsume(PreprocessorTokens.Percentage)) {
-            //preprocessor statement
-            const { tokens } = this.tokenizeUntilSemicolon(AllPreprocessorTokens);
-            const statement = new PliPreprocessorParser(tokens).start();
-            switch(statement.type) {
-                case 'declareStatement': {
-                    for (const declaration of statement.declarations) {
-                        this.variables.set(declaration.name, {
-                            declaration,
-                            value: undefined
-                        });
+        for (const tokenType of this.normalTokenTypes) {
+            const token = this.tryConsume(tokenType);
+            if(!token) {
+                continue;
+            }
+            if(this.isIdentifier(token) && Selectors.hasVariable(this.state, token.image)) {
+                const variable = Selectors.getVariable(this.state, token.image);
+                if(variable.active) {
+                    this.applyAction({
+                        type: 'replaceVariable',
+                        text: variable.value?.toString() ?? ""
+                    });
+                    return this.scanInput();
+                }
+            }
+            return token;
+        }
+        return undefined;
+    }
+
+    private tryToReadPreprocessorStatement(): boolean {
+        if(Selectors.eof(this.state) || !this.tryConsume(PreprocessorTokens.Percentage)) {
+            return false;
+        }
+        const tokens = this.tokenizeUntilSemicolon(AllPreprocessorTokens);
+        const statement = new PliPreprocessorParser(tokens).start();
+        switch(statement.type) {
+            case 'declareStatement': {
+                for (const declaration of statement.declarations) {
+                    switch(declaration.type) {
+                        case "builtin":
+                        case "entry":
+                            //TODO
+                            break;
+                        case "fixed":
+                        case "character":
+                            this.applyAction({
+                                type: 'declare',
+                                name: declaration.name,
+                                dataType: declaration.type,
+                                scanMode: declaration.scanMode,
+                                value: undefined
+                            });
+                            break;
                     }
-                    return {
-                        tokens: [],
-                        hidden: [],
-                    };
                 }
-                case 'assignmentStatement': {
-                    this.variables.get(statement.left)!.value = statement.right.value;
-                    return {
-                        tokens: [],
-                        hidden: [],
-                    };
-                }
-                default:
-                    return {
-                        tokens: [],
-                        hidden: [],
-                    };
+                break;
             }
-        } else {
-            //normal statement
-            const { tokens, hidden } = this.tokenizeUntilSemicolon([PreprocessorTokens.Percentage].concat(this.normalTokens));
-            return {
-                tokens: this.expandVariables(tokens), 
-                hidden
-            };
-        }
-    }
-    
-    isIdenifier(token: IToken) {
-        return token.tokenType.name === "ID" || (token.tokenType.CATEGORIES && token.tokenType.CATEGORIES.findIndex(t => t.name === "ID") > -1);
-    }
-
-    expandVariables(tokens: IToken[]) {
-        const result: IToken[] = [];
-        for (let index = 0; index < tokens.length; ) {
-            let token = tokens[index];
-            if(this.isIdenifier(token)) {
-                const { startOffset, startColumn, startLine } = token;
-                let { endOffset, endColumn, endLine } = token;
-                const name: string[] = [this.tryExpandVariables(token)];
-                index++;
-                if(tokens[index].tokenType === PreprocessorTokens.Percentage) {
-                    do {
-                        index++;
-                        token = tokens[index];
-                        ({ endOffset, endColumn, endLine } = token);
-                        name.push(this.tryExpandVariables(token))
-                        index++;
-                    } while(tokens[index].tokenType === PreprocessorTokens.Percentage);
-                    result.push(createTokenInstance(this.idToken, name.join(""), startOffset, endOffset!, startLine!, endLine!, startColumn!, endColumn!));
-                } else {
-                    result.push(createTokenInstance(token.tokenType, name[0], startOffset, endOffset!, startLine!, endLine!, startColumn!, endColumn!));
-                }
-            } else {
-                result.push(token);
-                index++;
+            case 'assignmentStatement': {
+                this.applyAction({
+                    type: 'assign',
+                    name: statement.left,
+                    value: statement.right.value
+                })
+                break;
             }
-        }
-        return result;
-    }
-    tryExpandVariables(token: IToken): string {
-        if(this.variables.has(token.image)) {
-            const variable = this.variables.get(token.image)!;
-            if(typeof variable.value === 'number') {
-                return variable.value.toString();
-            } else {
-                return variable.value ?? "";
-            }
-        } else {
-            return token.image;
-        }
-    }
-
-    private tokenizeUntilSemicolon(allowedTokens: TokenType[]) {
-        this.tokens = [];
-        this.hidden = [];
-        while(true) {
-            this.skip();
-            if(allowedTokens.some(t => this.tryConsume(t))) {
-                if(this.tokens.length == 0 || this.tokens[this.tokens.length-1].image === ';') {
-                    break;
-                }
-            } else {
+            default: {
                 break;
             }
         }
-        return {
-            tokens: this.tokens,
-            hidden: this.hidden
-        };
+        return true;
     }
 
-    private advanceBy(scanned: string) {
-        const NL = /\r?\n/y;
-        for (let charIndex = 0; charIndex < scanned.length;) {
-            NL.lastIndex = charIndex;
-            const match = NL.exec(scanned);
-            if (match) {
-                this.index += match[0].length;
-                this.line = this.line + 1;
-                this.column = 1;
-                charIndex += match[0].length;
-            } else {
-                charIndex++;
-                this.column++;
-                this.index++;
+    private isIdentifier(token: IToken) {
+        return token.tokenType.name === "ID" || (token.tokenType.CATEGORIES && token.tokenType.CATEGORIES.findIndex(t => t.name === "ID") > -1);
+    }
+
+    private tokenizeUntilSemicolon(allowedTokenTypes: TokenType[]) {
+        const result: IToken[] = [];
+        let foundAny: boolean;
+        do {
+            foundAny = false;
+            this.skip();
+            for (const tokenType of allowedTokenTypes) {
+                const token = this.tryConsume(tokenType);
+                if(token) {
+                    result.push(token);
+                    foundAny = true;
+                    if(token.image === ';') {
+                        return result;
+                    }
+                    break;
+                }
             }
-        }
+        } while(foundAny);
+        return result;
     }
 
     private emit(scanned: string, tokenType: TokenType) {
-        const [startLine, startColumn, startOffset] = [this.line, this.column, this.index];
-        this.advanceBy(scanned);
-        const [endLine, endColumn, endOffset] = [this.line, this.column, this.index];
-        const token = createTokenInstance(tokenType, scanned, startOffset, endOffset, startLine, endLine, startColumn, endColumn);
-        if (tokenType.GROUP === "hidden" || tokenType.GROUP === ChevrotainLexer.SKIPPED) {
-            this.hidden.push(token);
-        } else {
-            this.tokens.push(token);
-        }
-        return token;
+        const [startOffset, startLine, startColumn] = Selectors.position(this.state);
+        this.applyAction({
+            type: "advanceScan",
+            scanned
+        });
+        const [endOffset, endLine, endColumn] = Selectors.position(this.state);
+        return createTokenInstance(tokenType, scanned, startOffset, endOffset, startLine, endLine, startColumn, endColumn);
     }
 
-    private tryConsume(tokenType: TokenType) {
+    private tryConsume(tokenType: TokenType): IToken|undefined {
+        if(Selectors.eof(this.state)) {
+            return undefined;
+        }
+        const { index, text } = Selectors.top(this.state);
         const pattern = tokenType.PATTERN;
         if (pattern) {
             if (isRegExp(pattern)) {
-                pattern.lastIndex = this.index;
-                const match = pattern.exec(this.text);
+                pattern.lastIndex = index;
+                const match = pattern.exec(text);
                 if (match) {
-                    this.emit(match[0], tokenType);
-                    return true;
+                    return this.emit(match[0], tokenType);
                 }
             } else if (typeof pattern === "string") {
-                const image = this.text.substring(this.index, this.index + pattern.length);
+                const image = text.substring(index, index + pattern.length);
                 if (image.toLowerCase() === pattern.toLowerCase()) {
-                    this.emit(image, tokenType);
-                    return true;
+                    return this.emit(image, tokenType);
                 }
             }
         }
-        return false;
+        return undefined;
     }
 
     private skip() {
-        while (this.hiddenTokens.some(h => this.tryConsume(h)));
+        while (this.hiddenTokenTypes.some(h => this.tryConsume(h) !== undefined));
+    }
+
+    private applyAction(action: PreprocessorAction) {
+        this.state = translatePreprocessorState(this.state, action);
     }
 }

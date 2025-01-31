@@ -27,16 +27,19 @@ export type PPStatement = PPDeclareStatement|PPAssignmentStatement;
 
 export type PPExpression = PPCharacterLiteral | PPFixedLiteral;
 
+export type VariableDataType = 'fixed' | 'character';
+    ;
+
 export type PPDeclaration = {
     name: string;
 } & ({
     type: 'builtin' | 'entry';
 } | {
-    type: 'fixed' | 'character';
+    type: VariableDataType;
     scope: ProcedureScope;
     scanMode: ScanMode;
-})
+});
 
 export type ScanMode = 'noscan' | 'rescan' | 'scan';
 export type ProcedureScope = 'internal' | 'external';
-export type VariableType = 'builtin' | 'entry' | 'fixed' | 'character';
+export type VariableType = 'builtin' | 'entry' | VariableDataType;
