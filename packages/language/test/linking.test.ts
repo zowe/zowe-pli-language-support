@@ -18,65 +18,65 @@ let services: ReturnType<typeof createPliServices>;
 let gotoDefinition: ReturnType<typeof expectGoToDefinition>;
 
 beforeAll(async () => {
-    services = createPliServices(EmptyFileSystem);
-    const _gotoDefinition = expectGoToDefinition(services.pli);
+  services = createPliServices(EmptyFileSystem);
+  const _gotoDefinition = expectGoToDefinition(services.pli);
 
-    /**
-     * Helper function to parse a string of PL/I statements,
-     * wrapping them in a procedure to ensure they are valid
-     */
-    gotoDefinition = (expectedGoToDefinition: ExpectedGoToDefinition) => {
-        const text = ` STARTPR: PROCEDURE OPTIONS (MAIN);
+  /**
+   * Helper function to parse a string of PL/I statements,
+   * wrapping them in a procedure to ensure they are valid
+   */
+  gotoDefinition = (expectedGoToDefinition: ExpectedGoToDefinition) => {
+    const text = ` STARTPR: PROCEDURE OPTIONS (MAIN);
 ${expectedGoToDefinition.text}
  end STARTPR;`;
 
-        return _gotoDefinition({
-            ...expectedGoToDefinition,
-            text,
-        });
-    };
+    return _gotoDefinition({
+      ...expectedGoToDefinition,
+      text,
+    });
+  };
 
-    // activate the following if your linking test requires elements from a built-in library, for example
-    await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
+  // activate the following if your linking test requires elements from a built-in library, for example
+  await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
 });
 
 describe("Linking tests", () => {
-    describe("Structured tests", async () => {
-        describe("NamedType", async () => {
-            test("Must find the type declaration", async () => {
-                const text = `
+  describe("Structured tests", async () => {
+    describe("NamedType", async () => {
+      test("Must find the type declaration", async () => {
+        const text = `
  DEFINE ALIAS <|AAA|>;
  DCL AAA CHAR(1);
  DCL BBB TYPE(<|>AAA);`;
 
-                await gotoDefinition({
-                    text: text,
-                    index: 0,
-                    rangeIndex: 0,
-                });
-            });
+        await gotoDefinition({
+          text: text,
+          index: 0,
+          rangeIndex: 0,
+        });
+      });
 
-            // Didrik: I'm unsure what the expected behavior on the mainframe is here.
-            test("Must find the first type declaration", async () => {
-                const text = `
+      // Didrik: I'm unsure what the expected behavior on the mainframe is here.
+      test("Must find the first type declaration", async () => {
+        const text = `
  DEFINE ALIAS <|AAA|>;
  DEFINE ALIAS <|AAA|>;
  DCL AAA CHAR(1);
  DCL BBB TYPE(<|>AAA); // Should refer to the first type declaration`;
 
-                await gotoDefinition({
-                    text: text,
-                    index: 0,
-                    rangeIndex: 0,
-                });
-            });
+        await gotoDefinition({
+          text: text,
+          index: 0,
+          rangeIndex: 0,
         });
+      });
     });
+  });
 
-    describe("Unstructured tests", async () => {
-        // https://github.com/zowe/zowe-pli-language-support/issues/29#issuecomment-2623842079
-        describe("Nested procedure label tests", async () => {
-            const text = `
+  describe("Unstructured tests", async () => {
+    // https://github.com/zowe/zowe-pli-language-support/issues/29#issuecomment-2623842079
+    describe("Nested procedure label tests", async () => {
+      const text = `
  <|OUTER|>: procedure options (main); // outer0
     <|INNER|>: procedure;             // inner0
         call <|>OUTER;                // callOuter0
@@ -105,67 +105,67 @@ describe("Linking tests", () => {
 
  call <|>OUTER;                       // callOuter6
         `;
-            const procedures = {
-                outer0: 0,
-                inner0: 1,
-                outer1: 2,
-                inner1: 3,
-            };
+      const procedures = {
+        outer0: 0,
+        inner0: 1,
+        outer1: 2,
+        inner1: 3,
+      };
 
-            const calls = {
-                callOuter0: 0,
-                callInner0: 1,
-                callOuter1: 2,
-                callInner1: 3,
-                callOuter2: 4,
-                callInner2: 5,
-                callOuter3: 6,
-                callInner3: 7,
-                callOuter4: 8,
-                callInner4: 9,
-                callOuter5: 10,
-                callInner5: 11,
-                callOuter6: 12,
-            };
+      const calls = {
+        callOuter0: 0,
+        callInner0: 1,
+        callOuter1: 2,
+        callInner1: 3,
+        callOuter2: 4,
+        callInner2: 5,
+        callOuter3: 6,
+        callInner3: 7,
+        callOuter4: 8,
+        callInner4: 9,
+        callOuter5: 10,
+        callInner5: 11,
+        callOuter6: 12,
+      };
 
-            const links = {
-                [procedures.outer0]: [
-                    calls.callOuter0,
-                    calls.callOuter5,
-                    calls.callOuter6,
-                ],
-                [procedures.inner0]: [
-                    calls.callInner0,
-                    calls.callInner1,
-                    calls.callInner4,
-                    calls.callInner5,
-                ],
-                [procedures.outer1]: [
-                    calls.callOuter1,
-                    calls.callOuter2,
-                    calls.callOuter3,
-                    calls.callOuter4,
-                ],
-                [procedures.inner1]: [calls.callInner2, calls.callInner3],
-            };
+      const links = {
+        [procedures.outer0]: [
+          calls.callOuter0,
+          calls.callOuter5,
+          calls.callOuter6,
+        ],
+        [procedures.inner0]: [
+          calls.callInner0,
+          calls.callInner1,
+          calls.callInner4,
+          calls.callInner5,
+        ],
+        [procedures.outer1]: [
+          calls.callOuter1,
+          calls.callOuter2,
+          calls.callOuter3,
+          calls.callOuter4,
+        ],
+        [procedures.inner1]: [calls.callInner2, calls.callInner3],
+      };
 
-            for (const [procedure, calls] of Object.entries(links)) {
-                for (const call of calls) {
-                    test("Must find link correct procedure label", async () => {
-                        await gotoDefinition({
-                            text: text,
-                            index: call,
-                            rangeIndex: +procedure,
-                        });
-                    });
-                }
-            }
-        });
+      for (const [procedure, calls] of Object.entries(links)) {
+        for (const call of calls) {
+          test("Must find link correct procedure label", async () => {
+            await gotoDefinition({
+              text: text,
+              index: call,
+              rangeIndex: +procedure,
+            });
+          });
+        }
+      }
+    });
 
-        describe("Declaration tests", async () => {
-            test("Must find declaration in SELECT/WHEN construct", async () => {
-                // Taken from code_samples/PLI0001.pli
-                const text = `
+    describe("Declaration tests", async () => {
+      test("Must find declaration in SELECT/WHEN construct", async () => {
+        // Taken from code_samples/PLI0001.pli
+        const text = `
  SELECT (123); 
     WHEN (123)
     DO;
@@ -174,16 +174,16 @@ describe("Linking tests", () => {
     END;
  END;`;
 
-                await gotoDefinition({
-                    text: text,
-                    index: 0,
-                    rangeIndex: 0,
-                });
-            });
+        await gotoDefinition({
+          text: text,
+          index: 0,
+          rangeIndex: 0,
         });
+      });
+    });
 
-        describe("Declarations and labels combined", async () => {
-            const text = `
+    describe("Declarations and labels combined", async () => {
+      const text = `
  Control: procedure options(main);
   call <|>A('ok!'); // invoke the 'A' subroutine
  end Control;
@@ -192,33 +192,33 @@ describe("Linking tests", () => {
  put skip list(V<|>AR1);
  end <|>A;`;
 
-            test("Must find declared procedure label in CALL", async () => {
-                await gotoDefinition({
-                    text: text,
-                    index: 0,
-                    rangeIndex: 0,
-                });
-            });
-
-            test("Must find declared procedure label in END", async () => {
-                await gotoDefinition({
-                    text: text,
-                    index: 2,
-                    rangeIndex: 0,
-                });
-            });
-
-            test("Must find declared variable", async () => {
-                await gotoDefinition({
-                    text: text,
-                    index: 1,
-                    rangeIndex: 1,
-                });
-            });
+      test("Must find declared procedure label in CALL", async () => {
+        await gotoDefinition({
+          text: text,
+          index: 0,
+          rangeIndex: 0,
         });
+      });
 
-        describe("Qualified names", async () => {
-            const text = `
+      test("Must find declared procedure label in END", async () => {
+        await gotoDefinition({
+          text: text,
+          index: 2,
+          rangeIndex: 0,
+        });
+      });
+
+      test("Must find declared variable", async () => {
+        await gotoDefinition({
+          text: text,
+          index: 1,
+          rangeIndex: 1,
+        });
+      });
+    });
+
+    describe("Qualified names", async () => {
+      const text = `
 0DCL 1  <|TWO_DIM_TABLE|>,
         2  <|TWO_DIM_TABLE_ENTRY|>               CHAR(32);
 0DCL 1  TABLE_WITH_ARRAY,
@@ -233,29 +233,29 @@ describe("Linking tests", () => {
  PUT (TWO_DIM_TABLE.<|>TWO_DIM_TABLE_ENTRY);
  PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|>TYPE#);`;
 
-            test("Must find table name in table", async () => {
-                await gotoDefinition({
-                    text: text,
-                    index: 0,
-                    rangeIndex: 0,
-                });
-            });
-
-            test("Must find qualified name in table", async () => {
-                await gotoDefinition({
-                    text: text,
-                    index: 1,
-                    rangeIndex: 1,
-                });
-            });
-
-            test("Must find qualified name in array", async () => {
-                await gotoDefinition({
-                    text: text,
-                    index: 2,
-                    rangeIndex: 2,
-                });
-            });
+      test("Must find table name in table", async () => {
+        await gotoDefinition({
+          text: text,
+          index: 0,
+          rangeIndex: 0,
         });
+      });
+
+      test("Must find qualified name in table", async () => {
+        await gotoDefinition({
+          text: text,
+          index: 1,
+          rangeIndex: 1,
+        });
+      });
+
+      test("Must find qualified name in array", async () => {
+        await gotoDefinition({
+          text: text,
+          index: 2,
+          rangeIndex: 2,
+        });
+      });
     });
+  });
 });
