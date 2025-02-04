@@ -67,7 +67,7 @@ export class PliTokenBuilder extends DefaultTokenBuilder {
         return tokens.map(r => this.makeSticky(r));
     }
     makeSticky(tokenType: TokenType): TokenType {
-        if(isRegExp(tokenType.PATTERN)) {
+        if(tokenType.PATTERN instanceof RegExp) {
             return {
                 ...tokenType,
                 PATTERN: new RegExp(tokenType.PATTERN.source, `${tokenType.PATTERN.flags}y`)

@@ -2,7 +2,6 @@ import { Pl1Services } from "../pli-module";
 import { PliTokenBuilder } from "./pli-token-builder";
 import { TokenType, Lexer as ChevrotainLexer, IToken, createTokenInstance } from "chevrotain";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
-import { isRegExp } from "util/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { InitialPreprocessorState, PreprocessorAction, PreprocessorState, Selectors, translatePreprocessorState } from "./pli-preprocessor-state";
 
@@ -177,7 +176,7 @@ export class PliPreprocessorLexer {
         const { index, text } = Selectors.top(this.state);
         const pattern = tokenType.PATTERN;
         if (pattern) {
-            if (isRegExp(pattern)) {
+            if (pattern instanceof RegExp) {
                 pattern.lastIndex = index;
                 const match = pattern.exec(text);
                 if (match) {
