@@ -23,8 +23,6 @@ export class Pl1Lexer implements Lexer {
         this.services = services;
         this.marginsProcessor = services.parser.MarginsProcessor;
     }
-    return lines;
-  }
 
     get definition(): TokenTypeDictionary {
         return {};

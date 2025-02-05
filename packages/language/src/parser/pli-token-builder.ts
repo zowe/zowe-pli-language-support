@@ -9,38 +9,24 @@
  *
  */
 
-import { TokenType, TokenVocabulary } from "chevrotain";
+import { CustomPatternMatcherFunc, Lexer, TokenPattern, TokenType, TokenVocabulary } from "chevrotain";
 import {
-  DefaultTokenBuilder,
+  TokenBuilder,
   Grammar,
   GrammarUtils,
   RegExpUtils,
   stream,
   TokenBuilderOptions,
+  LexingReport,
+  AstUtils,
+  GrammarAST,
+  LexingDiagnostic,
+  Stream,
 } from "langium";
 
-export class PliTokenBuilder extends DefaultTokenBuilder {
-  override buildTokens(
-    grammar: Grammar,
-    options?: TokenBuilderOptions,
-  ): TokenVocabulary {
-    const reachableRules = stream(
-      GrammarUtils.getAllReachableRules(grammar, false),
-    );
-    const terminalTokens: TokenType[] =
-      this.buildTerminalTokens(reachableRules);
-    const tokens: TokenType[] = this.buildKeywordTokens(
-      reachableRules,
-      terminalTokens,
-      options,
-    );
-    const id = terminalTokens.find((e) => e.name === "ID")!;
+export class PliTokenBuilder implements TokenBuilder {
+    private diagnostics: LexingDiagnostic[] = [];
 
-    for (const keywordToken of tokens) {
-      if (/[a-zA-Z]/.test(keywordToken.name)) {
-        keywordToken.CATEGORIES = [id];
-      }
-    }
 
     buildTokens(grammar: Grammar, options?: TokenBuilderOptions): TokenVocabulary {
         const reachableRules = stream(GrammarUtils.getAllReachableRules(grammar, false));
