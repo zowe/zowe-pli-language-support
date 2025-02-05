@@ -54,23 +54,28 @@ export class PliPreprocessorLexer {
                         text: variable.value?.toString() ?? ""
                     });
                     let left = this.scanInput();
-                    if(left && this.canConsume(PreprocessorTokens.Percentage)) {
-                        while(this.canConsume(PreprocessorTokens.Percentage)) {
-                            this.consume("%", PreprocessorTokens.Percentage);
-                            const keepInMind = this.state;
-                            const right = this.scanInput();
-                            if(right && this.isIdentifier(right)) {
-                                left = createTokenInstance(this.idTokenType, left.image+right.image, 0, 0, 0, 0, 0, 0);
-                            } else {
-                                this.state = keepInMind;
-                                return left;
-                            }
+                    if(left) {
+                        while(left && left.tokenType === PreprocessorTokens.Percentage) {
+                            left = this.scanInput();
                         }
-                        return left;
-                    } else {
-                        return left;
+                        if(this.canConsume(PreprocessorTokens.Percentage)) {
+                            while(this.canConsume(PreprocessorTokens.Percentage)) {
+                                this.consume("%", PreprocessorTokens.Percentage);
+                                const keepInMind = this.state;
+                                const right = this.scanInput();
+                                if(right && this.isIdentifier(right)) {
+                                    left = createTokenInstance(this.idTokenType, left.image+right.image, 0, 0, 0, 0, 0, 0);
+                                } else {
+                                    this.state = keepInMind;
+                                    return left;
+                                }
+                            }
+                            return left;
+                        } else {
+                            return left;
+                        }    
                     }
-                    
+                    return undefined;
                 }
             }
             return token;

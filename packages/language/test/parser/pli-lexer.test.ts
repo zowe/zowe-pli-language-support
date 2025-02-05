@@ -47,6 +47,23 @@ describe("Lexer", () => {
         ]);
     });
 
+    test("Replace with empty string", () => {
+        expect(tokenize(`
+            %dcl A char;
+            %A = '';
+            dcl A%C fixed bin(31);
+        `)).toStrictEqual([
+            "dcl:DCL",
+            "C:C",
+            "fixed:FIXED",
+            "bin:BIN",
+            "(:(",
+            "31:NUMBER",
+            "):)",
+            ";:;",
+        ]);
+    });
+
     test('Example 1 from documentation', () => {
         expect(tokenize(`
             %DECLARE A CHARACTER, B FIXED;
