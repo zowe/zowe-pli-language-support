@@ -44,17 +44,17 @@ describe("Lexer", () => {
 
     test('Example 1 from documentation', () => {
         expect(tokenize(`
- %DECLARE A CHARACTER, B FIXED;
- %A = 'B+C';
- %B = 2;
- X = A;
-`)).toStrictEqual([
-    "X:X",
-    "=:=",
-    "2:NUMBER",
-    "+:+",
-    "C:C",
-    ";:;"
-]);
+            %DECLARE A CHARACTER, B FIXED;
+            %A = 'B+C';
+            %B = 2;
+            X = A;
+        `)).toStrictEqual([
+            "X:X",
+            "=:=",
+            "2:NUMBER",
+            "+:+",
+            "C:C",
+            ";:;"
+        ]);
     });
 });
