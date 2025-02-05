@@ -172,7 +172,8 @@ export class PliPreprocessorLexer {
             scanned: image
         });
         const [endOffset, endLine, endColumn] = Selectors.position(this.state);
-        return createTokenInstance(tokenType, image, startOffset, endOffset, startLine, endLine, startColumn, endColumn);
+        //ATTENTION: mind the -1 for end offset and end column, we do not want to consume the next tokens range!
+        return createTokenInstance(tokenType, image, startOffset, endOffset-1, startLine, endLine, startColumn, endColumn-1);
     }
 
     private canConsume(tokenType: TokenType): string|undefined {
@@ -186,6 +187,19 @@ export class PliPreprocessorLexer {
                 pattern.lastIndex = index;
                 const match = pattern.exec(text);
                 if (match) {
+                    if(tokenType.LONGER_ALT) {
+                        //if a "longer" alternative can be detected, deny
+                        const alternatives = Array.isArray(tokenType.LONGER_ALT) ? tokenType.LONGER_ALT : [tokenType.LONGER_ALT];
+                        if(alternatives.some(a => {
+                            const alternative = this.canConsume(a);
+                            if(alternative && alternative.length > match[0].length) {
+                                return alternative;
+                            }
+                            return undefined;
+                        })) {
+                            return undefined;
+                        }
+                    }
                     return match[0];
                 }
             } else if (typeof pattern === "string") {

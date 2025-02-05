@@ -22,7 +22,7 @@ export type PreprocessorState = Readonly<{
 }>;
 
 export const InitialPreprocessorState: (text: string) => PreprocessorState = (text) => ({
-    scanStack: [{
+    scanStack: text.length === 0 ? [] : [{
         column: 1,
         line: 1,
         index: 0,
@@ -171,12 +171,12 @@ export function translatePreprocessorState(state: PreprocessorState, action: Pre
             const { text } = action;
             return {
                 ...state,
-                scanStack: state.scanStack.slice().concat([{
+                scanStack: state.scanStack.slice().concat(text.length > 0 ? [{
                     text,
                     index: 0,
-                    column: 1,
-                    line: 1
-                }])
+                    column: 0,
+                    line: 0
+                }] : [])
             };
         }
         case "advanceScan": {

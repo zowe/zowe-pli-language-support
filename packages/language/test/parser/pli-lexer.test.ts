@@ -13,6 +13,10 @@ describe("Lexer", () => {
         tokenize = (text: string) => services.pli.parser.Lexer.tokenize(text).tokens.map(t => t.image+':'+t.tokenType.name);
     });
 
+    test("Empty", () => {
+        expect(tokenize('')).toStrictEqual([]);
+    });
+
     test("Tokenize simple declaration without preprocessor", () => {
         expect(tokenize(' dcl A fixed bin(31);')).toStrictEqual([
             "dcl:DCL",
