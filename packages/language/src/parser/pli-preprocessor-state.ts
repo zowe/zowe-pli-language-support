@@ -62,6 +62,11 @@ export interface PPAdvanceScan {
     scanned: string;
 }
 
+export interface PPAdvanceLines {
+    type: "advanceLines",
+    lineCount: number;
+}
+
 export interface PPDeclareAction {
     type: "declare";
     name: string;
@@ -87,10 +92,10 @@ export interface PPReplaceVariableAction {
     text: string;
 }
 
-export type PreprocessorAction = PPDeclareAction | PPActivateAction | PPAssignAction | PPAdvanceScan | PPReplaceVariableAction;
+export type PreprocessorAction = PPDeclareAction | PPActivateAction | PPAssignAction | PPAdvanceScan | PPReplaceVariableAction | PPAdvanceLines;
 
 //REDUCER
-
+const NL = /\r?\n/y;
 export function translatePreprocessorState(state: PreprocessorState, action: PreprocessorAction): PreprocessorState {
     switch(action.type) {
         case "declare": {
@@ -178,7 +183,6 @@ export function translatePreprocessorState(state: PreprocessorState, action: Pre
             if(Selectors.eof(state)) {
                 return state;
             }
-            const NL = /\r?\n/y;
             const { scanned } = action;
             let { index, column, line, text } = Selectors.top(state);
             for (let charIndex = 0; charIndex < scanned.length;) {
@@ -186,11 +190,44 @@ export function translatePreprocessorState(state: PreprocessorState, action: Pre
                 const match = NL.exec(scanned);
                 if (match) {
                     index += match[0].length;
-                    line = line + 1;
+                    line++;
                     column = 1;
                     charIndex += match[0].length;
                 } else {
                     charIndex++;
+                    column++;
+                    index++;
+                }
+            }
+            const poppedOnce = state.scanStack.slice(0, state.scanStack.length - 1);
+            if(index < text.length) {
+                const newFrame: PreprocessorScan = { text, index, column, line };
+                return {
+                    ...state,
+                    scanStack: poppedOnce.concat([newFrame])
+                };
+            } else {
+                return {
+                    ...state,
+                    scanStack: poppedOnce
+                };
+            }
+        }
+        case 'advanceLines': {
+            if(Selectors.eof(state)) {
+                return state;
+            }
+            let { lineCount } = action;
+            let { index, column, line, text } = Selectors.top(state);
+            for(; !Selectors.eof(state) && lineCount > 0 && index < text.length; ) {
+                NL.lastIndex = index;
+                const match = NL.exec(text);
+                if (match) {
+                    index += match[0].length;
+                    line++;
+                    lineCount--;
+                    column = 1;
+                } else {
                     column++;
                     index++;
                 }

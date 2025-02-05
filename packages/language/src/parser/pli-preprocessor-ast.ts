@@ -13,6 +13,20 @@ export interface PPAssignmentStatement extends PPAstNode {
     right: PPExpression;
 }
 
+export interface PPPageDirective extends PPAstNode {
+    type: 'pageDirective';
+}
+
+export interface PPIncludeStatement extends PPAstNode {
+    type: 'includeStatement';
+    identifier: string;
+}
+
+export interface PPSkipStatement extends PPAstNode {
+    type: 'skipStatement',
+    lineCount: number;
+}
+
 export interface PPCharacterLiteral extends PPAstNode {
     type: 'characterLiteral';
     value: string;
@@ -23,12 +37,12 @@ export interface PPFixedLiteral extends PPAstNode {
     value: number;
 }
 
-export type PPStatement = PPDeclareStatement|PPAssignmentStatement;
+export type PPStatement = PPDeclareStatement | PPAssignmentStatement | PPPageDirective | PPSkipStatement | PPIncludeStatement;
 
 export type PPExpression = PPCharacterLiteral | PPFixedLiteral;
 
 export type VariableDataType = 'fixed' | 'character';
-    ;
+;
 
 export type PPDeclaration = {
     name: string;

@@ -1,0 +1,4 @@
+ DCL WHAT FIXED;
+ %DECLARE A CHARACTER;
+ %A = '123';
+ WHAT = A;

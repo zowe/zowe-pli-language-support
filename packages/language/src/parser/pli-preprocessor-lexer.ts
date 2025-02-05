@@ -1,5 +1,3 @@
-import { Pl1Services } from "../pli-module";
-import { PliTokenBuilder } from "./pli-token-builder";
 import { TokenType, Lexer as ChevrotainLexer, IToken, createTokenInstance } from "chevrotain";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
@@ -9,13 +7,11 @@ const AllPreprocessorTokens = Object.values(PreprocessorTokens);
 
 export class PliPreprocessorLexer {
     private readonly hiddenTokenTypes: TokenType[];
-    private readonly normalTokenTypes: TokenType[];
+    public readonly normalTokenTypes: TokenType[];
     private readonly idTokenType: TokenType;
     private state: PreprocessorState;
 
-    constructor(services: Pl1Services, text: string) {
-        const tokenBuilder = services.parser.TokenBuilder as PliTokenBuilder;
-        const vocabulary = tokenBuilder.buildTokens(services.Grammar) as TokenType[];
+    constructor(vocabulary: TokenType[], text: string) {
         this.hiddenTokenTypes = vocabulary.filter(v => v.GROUP === 'hidden' || v.GROUP === ChevrotainLexer.SKIPPED);
         this.normalTokenTypes = [PreprocessorTokens.Percentage].concat(vocabulary.filter(v => !this.hiddenTokenTypes.includes(v)));
         this.idTokenType = this.normalTokenTypes.find(t => t.name === "ID")!;
@@ -118,7 +114,18 @@ export class PliPreprocessorLexer {
                 })
                 break;
             }
+            case 'skipStatement': {
+                this.applyAction({
+                    type: "advanceLines",
+                    //+1 also skip the current line!
+                    lineCount: statement.lineCount + 1
+                });
+                break;
+            }
+            case 'pageDirective':
+            case 'includeStatement': //TODO
             default: {
+                //nothing to do
                 break;
             }
         }
@@ -149,7 +156,6 @@ export class PliPreprocessorLexer {
         } while(foundAny);
         return result;
     }
-
 
     private tryConsume(tokenType: TokenType): IToken|undefined {
         const image = this.canConsume(tokenType);

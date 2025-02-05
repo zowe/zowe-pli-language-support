@@ -27,7 +27,6 @@ import {
 export class PliTokenBuilder implements TokenBuilder {
     private diagnostics: LexingDiagnostic[] = [];
 
-
     buildTokens(grammar: Grammar, options?: TokenBuilderOptions): TokenVocabulary {
         const reachableRules = stream(GrammarUtils.getAllReachableRules(grammar, false));
         const terminalTokens: TokenType[] = this.buildTerminalTokens(reachableRules);

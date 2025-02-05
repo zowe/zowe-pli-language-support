@@ -15,6 +15,10 @@ export class PliPreprocessorParser {
         return this.eos ? undefined : this.tokens[this.index];
     }
 
+    get last() {
+        return this.eos ? this.tokens[this.tokens.length] : this.tokens[this.index-1];
+    }
+
     get eos() { //end of statement
         return this.index >= this.tokens.length;
     }
@@ -22,9 +26,43 @@ export class PliPreprocessorParser {
     start(): PPStatement {
         switch(this.current?.tokenType) {
             case PreprocessorTokens.Declare: return this.declareStatement();
+            case PreprocessorTokens.Page: return this.pageDirective();
+            case PreprocessorTokens.Skip: return this.skipStatement();
+            case PreprocessorTokens.Include: return this.includeStatement();
             case PreprocessorTokens.Id: return this.assignmentStatement();
         }
         throw new Error("Unable to parse preprocessor statement.");
+    }
+    includeStatement(): PPStatement {
+        this.consume(PreprocessorTokens.Include);
+        const identifier = this.consume(PreprocessorTokens.Id).image;
+        this.consume(PreprocessorTokens.Semicolon);
+        return {
+            type: "includeStatement",
+            identifier
+        };
+    }
+
+    skipStatement(): PPStatement {
+        this.consume(PreprocessorTokens.Skip);
+        let lineCount: number = 1;
+        if(this.tryConsume(PreprocessorTokens.Number)) {
+            lineCount = parseInt(this.last.image, 10);
+        }
+        this.consume(PreprocessorTokens.Semicolon);
+        return {
+            type: 'skipStatement',
+            //TODO numeric base of 10 ok?
+            lineCount
+        };
+    }
+
+    pageDirective(): PPStatement {
+        this.consume(PreprocessorTokens.Page);
+        this.consume(PreprocessorTokens.Semicolon);
+        return {
+            type: 'pageDirective'
+        }
     }
 
     assignmentStatement(): PPAssignmentStatement {
@@ -148,7 +186,8 @@ export class PliPreprocessorParser {
 
     private consume(tokenType: TokenType) {
         if(this.current?.tokenType !== tokenType) {
-            throw new Error(`Expected token type '${tokenType.name}'.`);
+            //TODO remove Last part...
+            throw new Error(`Expected token type '${tokenType.name}', got '${this.current?.tokenType.name??'???'}' instead. Last was '${this.last.image}'.`);
         }
         const token = this.current;
         this.index++;
