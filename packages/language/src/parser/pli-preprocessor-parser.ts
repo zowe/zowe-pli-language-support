@@ -16,7 +16,7 @@ export class PliPreprocessorParser {
     }
 
     get last() {
-        return this.eos ? this.tokens[this.tokens.length] : this.tokens[this.index-1];
+        return this.eos ? this.tokens[this.tokens.length] : this.tokens[this.index - 1];
     }
 
     get eos() { //end of statement
@@ -24,7 +24,7 @@ export class PliPreprocessorParser {
     }
 
     start(): PPStatement {
-        switch(this.current?.tokenType) {
+        switch (this.current?.tokenType) {
             case PreprocessorTokens.Declare: return this.declareStatement();
             case PreprocessorTokens.Page: return this.pageDirective();
             case PreprocessorTokens.Skip: return this.skipStatement();
@@ -46,7 +46,7 @@ export class PliPreprocessorParser {
     skipStatement(): PPStatement {
         this.consume(PreprocessorTokens.Skip);
         let lineCount: number = 1;
-        if(this.tryConsume(PreprocessorTokens.Number)) {
+        if (this.tryConsume(PreprocessorTokens.Number)) {
             lineCount = parseInt(this.last.image, 10);
         }
         this.consume(PreprocessorTokens.Semicolon);
@@ -81,7 +81,7 @@ export class PliPreprocessorParser {
         this.consume(PreprocessorTokens.Declare);
         const first = this.identifierDescription();
         declarations.push(...first);
-        while(this.canConsume(PreprocessorTokens.Comma)) {
+        while (this.canConsume(PreprocessorTokens.Comma)) {
             this.consume(PreprocessorTokens.Comma);
             const next = this.identifierDescription();
             declarations.push(...next);
@@ -94,18 +94,18 @@ export class PliPreprocessorParser {
     }
 
     identifierDescription(): PPDeclaration[] {
-        if(this.canConsume(PreprocessorTokens.Id)) {
+        if (this.canConsume(PreprocessorTokens.Id)) {
             const id = this.consume(PreprocessorTokens.Id).image;
-            if(this.canConsume(PreprocessorTokens.LParen)) {
+            if (this.canConsume(PreprocessorTokens.LParen)) {
                 this.consume(PreprocessorTokens.LParen);
                 //TODO dimension
                 this.consume(PreprocessorTokens.RParen);
-            } else if(this.tryConsume(PreprocessorTokens.Builtin)) {
+            } else if (this.tryConsume(PreprocessorTokens.Builtin)) {
                 return [{
                     name: id,
                     type: "builtin"
                 }];
-            } else if(this.tryConsume(PreprocessorTokens.Entry)) {
+            } else if (this.tryConsume(PreprocessorTokens.Entry)) {
                 return [{
                     name: id,
                     type: "entry"
@@ -118,7 +118,7 @@ export class PliPreprocessorParser {
                 scanMode,
                 scope
             }];
-        } else if(this.canConsume(PreprocessorTokens.LParen)) {
+        } else if (this.canConsume(PreprocessorTokens.LParen)) {
             //TODO
         }
         return [];
@@ -132,7 +132,7 @@ export class PliPreprocessorParser {
         let lastIndex = 0;
         do {
             lastIndex = this.index;
-            switch(this.current?.tokenType) {
+            switch (this.current?.tokenType) {
                 case PreprocessorTokens.Internal: scope = 'internal'; this.index++; break;
                 case PreprocessorTokens.External: scope = 'external'; this.index++; break;
                 case PreprocessorTokens.Character: type = 'character'; this.index++; break;
@@ -141,26 +141,26 @@ export class PliPreprocessorParser {
                 case PreprocessorTokens.Rescan: scanMode = 'rescan'; this.index++; break;
                 case PreprocessorTokens.Noscan: scanMode = 'scan'; this.index++; break;
             }
-        } while(lastIndex != this.index);
+        } while (lastIndex != this.index);
         return {
             scanMode,
             scope,
             type
         };
-     }
+    }
 
     dimension() {
         //TODO
     }
 
     expression(): PPExpression {
-        if(this.canConsume(PreprocessorTokens.Number)) {
+        if (this.canConsume(PreprocessorTokens.Number)) {
             const number = this.consume(PreprocessorTokens.Number);
             return {
                 type: "fixedLiteral",
                 value: parseInt(number.image, 10), //TODO when to parse binary?
             };
-        } else if(this.canConsume(PreprocessorTokens.String)) {
+        } else if (this.canConsume(PreprocessorTokens.String)) {
             const character = this.consume(PreprocessorTokens.String);
             return {
                 type: "characterLiteral",
@@ -177,7 +177,7 @@ export class PliPreprocessorParser {
     }
 
     private tryConsume(tokenType: TokenType): boolean {
-        if(this.current?.tokenType !== tokenType) {
+        if (this.current?.tokenType !== tokenType) {
             return false;
         }
         this.index++;
@@ -185,9 +185,9 @@ export class PliPreprocessorParser {
     }
 
     private consume(tokenType: TokenType) {
-        if(this.current?.tokenType !== tokenType) {
+        if (this.current?.tokenType !== tokenType) {
             //TODO remove Last part...
-            throw new Error(`Expected token type '${tokenType.name}', got '${this.current?.tokenType.name??'???'}' instead. Last was '${this.last.image}'.`);
+            throw new Error(`Expected token type '${tokenType.name}', got '${this.current?.tokenType.name ?? '???'}' instead. Last was '${this.last.image}'.`);
         }
         const token = this.current;
         this.index++;
@@ -195,7 +195,7 @@ export class PliPreprocessorParser {
     }
 
     private unpackCharacterValue(literal: string): string {
-        return literal.substring(1, literal.length-1);
+        return literal.substring(1, literal.length - 1);
     }
 
 }

@@ -6,7 +6,7 @@ export type PreprocessorVariable = Readonly<{
     scanMode: ScanMode;
     active: boolean;
     dataType: VariableDataType;
-    value: number|string|undefined;
+    value: number | string | undefined;
 }>;
 
 export type PreprocessorScan = Readonly<{
@@ -35,13 +35,13 @@ export const InitialPreprocessorState: (text: string) => PreprocessorState = (te
 
 export namespace Selectors {
     export function top(state: PreprocessorState): PreprocessorScan {
-        return state.scanStack[state.scanStack.length-1];
+        return state.scanStack[state.scanStack.length - 1];
     }
     export function eof(state: PreprocessorState): boolean {
         return state.scanStack.length === 0;
     }
     export function position(state: PreprocessorState): [number, number, number] {
-        if(!eof(state)) {
+        if (!eof(state)) {
             const { index, line, column } = top(state);
             return [index, line, column] as const;
         }
@@ -72,7 +72,7 @@ export interface PPDeclareAction {
     name: string;
     scanMode: ScanMode;
     dataType: VariableDataType;
-    value: number|string|undefined;
+    value: number | string | undefined;
 }
 
 export interface PPActivateAction {
@@ -84,7 +84,7 @@ export interface PPActivateAction {
 export interface PPAssignAction {
     type: "assign";
     name: string;
-    value: number|string;
+    value: number | string;
 }
 
 export interface PPReplaceVariableAction {
@@ -97,9 +97,9 @@ export type PreprocessorAction = PPDeclareAction | PPActivateAction | PPAssignAc
 //REDUCER
 const NL = /\r?\n/y;
 export function translatePreprocessorState(state: PreprocessorState, action: PreprocessorAction): PreprocessorState {
-    switch(action.type) {
+    switch (action.type) {
         case "declare": {
-            const {type, name, ...remainder} = action;
+            const { type, name, ...remainder } = action;
             return {
                 ...state,
                 variables: {
@@ -113,7 +113,7 @@ export function translatePreprocessorState(state: PreprocessorState, action: Pre
         }
         case "assign": {
             const { name, value } = action;
-            if(state.variables[name]) {
+            if (state.variables[name]) {
                 return {
                     ...state,
                     variables: {
@@ -140,8 +140,8 @@ export function translatePreprocessorState(state: PreprocessorState, action: Pre
             }
         }
         case "activate": {
-            const {name, active} = action;
-            if(state.variables[name]) {
+            const { name, active } = action;
+            if (state.variables[name]) {
                 return {
                     ...state,
                     variables: {
@@ -180,7 +180,7 @@ export function translatePreprocessorState(state: PreprocessorState, action: Pre
             };
         }
         case "advanceScan": {
-            if(Selectors.eof(state)) {
+            if (Selectors.eof(state)) {
                 return state;
             }
             const { scanned } = action;
@@ -200,7 +200,7 @@ export function translatePreprocessorState(state: PreprocessorState, action: Pre
                 }
             }
             const poppedOnce = state.scanStack.slice(0, state.scanStack.length - 1);
-            if(index < text.length) {
+            if (index < text.length) {
                 const newFrame: PreprocessorScan = { text, index, column, line };
                 return {
                     ...state,
@@ -214,12 +214,12 @@ export function translatePreprocessorState(state: PreprocessorState, action: Pre
             }
         }
         case 'advanceLines': {
-            if(Selectors.eof(state)) {
+            if (Selectors.eof(state)) {
                 return state;
             }
             let { lineCount } = action;
             let { index, column, line, text } = Selectors.top(state);
-            for(; !Selectors.eof(state) && lineCount > 0 && index < text.length; ) {
+            for (; !Selectors.eof(state) && lineCount > 0 && index < text.length;) {
                 NL.lastIndex = index;
                 const match = NL.exec(text);
                 if (match) {
@@ -233,7 +233,7 @@ export function translatePreprocessorState(state: PreprocessorState, action: Pre
                 }
             }
             const poppedOnce = state.scanStack.slice(0, state.scanStack.length - 1);
-            if(index < text.length) {
+            if (index < text.length) {
                 const newFrame: PreprocessorScan = { text, index, column, line };
                 return {
                     ...state,
