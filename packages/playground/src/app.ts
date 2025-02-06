@@ -52,7 +52,7 @@ export function registerShareButton() {
 
 async function share(content: string): Promise<void> {
   const compressedContent = compressToEncodedURIComponent(content);
-  const url = new URL("", window.origin);
+  const url = new URL(window.location.toString(), window.origin);
   url.searchParams.append("content", compressedContent);
   await navigator.clipboard.writeText(url.toString());
   const shareInfo = document.getElementById("share-info");
