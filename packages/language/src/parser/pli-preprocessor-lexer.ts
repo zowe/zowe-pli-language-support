@@ -168,12 +168,12 @@ export class PliPreprocessorLexer {
     }
 
     private consume(image: string, tokenType: TokenType) {
-        const [startOffset, startLine, startColumn] = Selectors.position(this.state);
+        const { offset: startOffset, line: startLine, column: startColumn} = Selectors.position(this.state);
         this.applyAction({
             type: "advanceScan",
             scanned: image
         });
-        const [endOffset, endLine, endColumn] = Selectors.position(this.state);
+        const {offset: endOffset, line: endLine, column: endColumn} = Selectors.position(this.state);
         //ATTENTION: mind the -1 for end offset and end column, we do not want to consume the next tokens range!
         return createTokenInstance(tokenType, image, startOffset, endOffset - 1, startLine, endLine, startColumn, endColumn - 1);
     }
@@ -182,7 +182,7 @@ export class PliPreprocessorLexer {
         if (Selectors.eof(this.state)) {
             return undefined;
         }
-        const { index, text } = Selectors.top(this.state);
+        const { offset: index, text } = Selectors.top(this.state);
         const pattern = tokenType.PATTERN;
         if (pattern) {
             if (pattern instanceof RegExp) {

@@ -2,6 +2,12 @@ import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 
 // STATE
 
+export type TextPosition = {
+    offset: number;
+    line: number;
+    column: number;
+};
+
 export type PreprocessorVariable = Readonly<{
     scanMode: ScanMode;
     active: boolean;
@@ -11,7 +17,7 @@ export type PreprocessorVariable = Readonly<{
 
 export type PreprocessorScan = Readonly<{
     text: string;
-    index: number;
+    offset: number;
     line: number;
     column: number;
 }>;
@@ -25,7 +31,7 @@ export const InitialPreprocessorState: (text: string) => PreprocessorState = (te
     scanStack: text.length === 0 ? [] : [{
         column: 1,
         line: 1,
-        index: 0,
+        offset: 0,
         text
     }],
     variables: {}
@@ -40,12 +46,20 @@ export namespace Selectors {
     export function eof(state: PreprocessorState): boolean {
         return state.scanStack.length === 0;
     }
-    export function position(state: PreprocessorState): [number, number, number] {
+    export function position(state: PreprocessorState): TextPosition {
         if (!eof(state)) {
-            const { index, line, column } = top(state);
-            return [index, line, column] as const;
+            const { offset: index, line, column } = top(state);
+            return {
+                column,
+                line,
+                offset: index,
+            }
         }
-        return [0, 0, 0] as const;
+        return {
+            offset: 0,
+            column: 0,
+            line: 0,
+        };
     }
     export function hasVariable(state: PreprocessorState, name: string): boolean {
         return name in state.variables;
@@ -93,162 +107,142 @@ export interface PPReplaceVariableAction {
 }
 
 export type PreprocessorAction = PPDeclareAction | PPActivateAction | PPAssignAction | PPAdvanceScan | PPReplaceVariableAction | PPAdvanceLines;
+export type PreprocessorActionType = PreprocessorAction['type'];
 
 //REDUCER
-const NL = /\r?\n/y;
-export function translatePreprocessorState(state: PreprocessorState, action: PreprocessorAction): PreprocessorState {
-    switch (action.type) {
-        case "declare": {
-            const { type, name, ...remainder } = action;
-            return {
-                ...state,
-                variables: {
-                    ...state.variables,
-                    [name]: {
-                        active: true,
-                        ...remainder
-                    }
-                }
-            };
+
+type TranslateActions = {
+    [actionType in PreprocessorActionType]: (state: PreprocessorState, action: Extract<PreprocessorAction, { type: actionType }>) => PreprocessorState;
+};
+const TranslateActions: TranslateActions = {
+    activate: (state, action) => {
+        const { name, active } = action;
+        if (Selectors.hasVariable(state, name)) {
+            const variable = Selectors.getVariable(state, name);
+            return Mutators.assignVariable(state, name, {
+                ...variable,
+                active
+            });
+        } else {
+            return Mutators.assignVariable(state, name, {
+                dataType: "character",
+                scanMode: "rescan",
+                value: "",
+                active
+            });
         }
-        case "assign": {
-            const { name, value } = action;
-            if (state.variables[name]) {
-                return {
-                    ...state,
-                    variables: {
-                        ...state.variables,
-                        [name]: {
-                            ...state.variables[name],
-                            value
-                        }
-                    }
-                };
-            } else {
-                return {
-                    ...state,
-                    variables: {
-                        ...state.variables,
-                        [name]: {
-                            dataType: typeof value === 'string' ? "character" : "fixed",
-                            scanMode: "rescan",
-                            value,
-                            active: false,
-                        }
-                    }
-                };
-            }
-        }
-        case "activate": {
-            const { name, active } = action;
-            if (state.variables[name]) {
-                return {
-                    ...state,
-                    variables: {
-                        ...state.variables,
-                        [name]: {
-                            ...state.variables[name],
-                            active
-                        }
-                    }
-                };
-            } else {
-                return {
-                    ...state,
-                    variables: {
-                        ...state.variables,
-                        [name]: {
-                            dataType: "character",
-                            scanMode: "rescan",
-                            value: "",
-                            active
-                        }
-                    }
-                };
-            }
-        }
-        case "replaceVariable": {
-            const { text } = action;
-            return {
-                ...state,
-                scanStack: state.scanStack.slice().concat(text.length > 0 ? [{
-                    text,
-                    index: 0,
-                    column: 0,
-                    line: 0
-                }] : [])
-            };
-        }
-        case "advanceScan": {
-            if (Selectors.eof(state)) {
-                return state;
-            }
-            const { scanned } = action;
-            let { index, column, line, text } = Selectors.top(state);
-            for (let charIndex = 0; charIndex < scanned.length;) {
-                NL.lastIndex = charIndex;
-                const match = NL.exec(scanned);
-                if (match) {
-                    index += match[0].length;
-                    line++;
-                    column = 1;
-                    charIndex += match[0].length;
-                } else {
-                    charIndex++;
-                    column++;
-                    index++;
-                }
-            }
-            const poppedOnce = state.scanStack.slice(0, state.scanStack.length - 1);
-            if (index < text.length) {
-                const newFrame: PreprocessorScan = { text, index, column, line };
-                return {
-                    ...state,
-                    scanStack: poppedOnce.concat([newFrame])
-                };
-            } else {
-                return {
-                    ...state,
-                    scanStack: poppedOnce
-                };
-            }
-        }
-        case 'advanceLines': {
-            if (Selectors.eof(state)) {
-                return state;
-            }
-            let { lineCount } = action;
-            let { index, column, line, text } = Selectors.top(state);
-            for (; !Selectors.eof(state) && lineCount > 0 && index < text.length;) {
-                NL.lastIndex = index;
-                const match = NL.exec(text);
-                if (match) {
-                    index += match[0].length;
-                    line++;
-                    lineCount--;
-                    column = 1;
-                } else {
-                    column++;
-                    index++;
-                }
-            }
-            const poppedOnce = state.scanStack.slice(0, state.scanStack.length - 1);
-            if (index < text.length) {
-                const newFrame: PreprocessorScan = { text, index, column, line };
-                return {
-                    ...state,
-                    scanStack: poppedOnce.concat([newFrame])
-                };
-            } else {
-                return {
-                    ...state,
-                    scanStack: poppedOnce
-                };
-            }
-        }
-        default: {
+    },
+
+    advanceLines: (state, action) => {
+        if (Selectors.eof(state)) {
             return state;
         }
+        const { lineCount } = action;
+        const { text, ...oldPosition } = Selectors.top(state);
+        const newPosition = Mutators.countNewLinesWhile(oldPosition, text, oldPosition.offset, (newPosition) => newPosition.line-oldPosition.line < lineCount)
+        return Mutators.alterTopOrPop(state, newPosition);
+    },
+
+    advanceScan: (state, action) => {
+        if (Selectors.eof(state)) {
+            return state;
+        }
+        const { scanned } = action;
+        const { text: _, ...oldPosition } = Selectors.top(state);
+        const newPosition = Mutators.countNewLinesWhile(oldPosition, scanned, 0, () => true);
+        return Mutators.alterTopOrPop(state, newPosition);
+    },
+
+    assign: (state, action) => {
+        const { name, value } = action;
+        if (Selectors.hasVariable(state, name)) {
+            const variable = Selectors.getVariable(state, name);
+            return Mutators.assignVariable(state, name, {
+                ...variable,
+                value
+            });
+        } else {
+            return Mutators.assignVariable(state, name, {
+                dataType: typeof value === 'string' ? "character" : "fixed",
+                scanMode: "rescan",
+                value,
+                active: false,
+            });
+        }
+    },
+
+    declare: (state, action) => {
+        const { type, name, ...remainder } = action;
+        return Mutators.assignVariable(state, name, {...remainder, active: true});
+    },
+
+    replaceVariable: (state, action) => {
+        const { text } = action;
+        return Mutators.push(state, text);
     }
+};
+
+
+export function translatePreprocessorState(state: PreprocessorState, action: PreprocessorAction): PreprocessorState {
+    return TranslateActions[action.type](state, action as any);
 }
 
+// MUTATORS
+
+namespace Mutators {
+    export function assignVariable(state: PreprocessorState, name: string, variable: PreprocessorVariable) {
+        return {
+            ...state,
+            variables: {
+                ...state.variables,
+                [name]: variable
+            }
+        };
+    }
+    export function push(state: PreprocessorState, text: string) {
+        return {
+            ...state,
+            scanStack: state.scanStack.slice().concat(text.length > 0 ? [{
+                text,
+                offset: 0,
+                column: 0,
+                line: 0
+            }] : [])
+        };
+    }
+    export function alterTopOrPop(state: PreprocessorState, newPosition: TextPosition) {
+        const { text } = Selectors.top(state);
+        const poppedOnce = state.scanStack.slice(0, state.scanStack.length - 1);
+        if (newPosition.offset < text.length) {
+            const newFrame: PreprocessorScan = { text, ...newPosition };
+            return {
+                ...state,
+                scanStack: poppedOnce.concat([newFrame])
+            };
+        } else {
+            return {
+                ...state,
+                scanStack: poppedOnce
+            };
+        }
+    }
+    export function countNewLinesWhile(initialPosition: TextPosition, text: string, startFrom: number, whilePredicate: (currentPosition: TextPosition, textOffset: number) => boolean): TextPosition {
+        const NL = /\r?\n/y;
+        let { offset, column, line } = initialPosition;
+        for (let charIndex = startFrom; charIndex < text.length && whilePredicate({ offset, column, line }, charIndex);) {
+            NL.lastIndex = charIndex;
+            const match = NL.exec(text);
+            if (match) {
+                offset += match[0].length;
+                line++;
+                column = 1;
+                charIndex += match[0].length;
+            } else {
+                charIndex++;
+                column++;
+                offset++;
+            }
+        }
+        return { offset, column, line };
+    }
+}
