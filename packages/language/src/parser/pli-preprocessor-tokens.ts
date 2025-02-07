@@ -28,6 +28,8 @@ export const PreprocessorTokens = {
     Comma: tokenType("comma", /,/yi),
     Percentage: tokenType("percentage", /%/yi),
     Plus: tokenType("plus", /\+/yi),
+    //This token regexp was taken from the PL/1 Langium grammar
+    //TODO need a way to sync them...
     String: tokenType("string", /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')([xX]|[aA]|[eE]|[xX][uU]|[xX][nN]|[bB]4|[bB]3|[bB][xX]|[bB]|[gG][xX]|[gG]|[uU][xX]|[wW][xX]|[xX]|[iI])*/y),
     Id: tokenType("id", /[a-z_][a-z_0-9]*/yi),
     Number: tokenType("number", /[0-9]+/yi),
