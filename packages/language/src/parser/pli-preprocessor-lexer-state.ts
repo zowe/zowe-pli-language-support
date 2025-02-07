@@ -1,4 +1,89 @@
+import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
+
+
+export class PreprocessorLexerState {
+    private plainState: PlainPreprocessorLexerState;
+
+    constructor(text: string) {
+        this.plainState = initializePreprocessorState(text);
+    }
+
+    top(): PreprocessorScan {
+        return Selectors.top(this.plainState);
+    }
+    eof(): boolean {
+        return Selectors.eof(this.plainState);
+    }
+    position(): TextPosition {
+        return Selectors.position(this.plainState);
+    }
+    hasVariable(name: string): boolean {
+        return Selectors.hasVariable(this.plainState, name);
+    }
+    getVariable(name: string): PreprocessorVariable {
+        return Selectors.getVariable(this.plainState, name);
+    }
+
+    tryConsume(tokenType: TokenType): IToken | undefined {
+        const image = this.canConsume(tokenType);
+        if (!image) {
+            return undefined;
+        }
+        return this.emit(image, tokenType);
+    }
+
+    emit(image: string, tokenType: TokenType) {
+        const { offset: startOffset, line: startLine, column: startColumn } = Selectors.position(this.plainState);
+        this.applyAction({
+            type: "advanceScan",
+            scanned: image
+        });
+        const { offset: endOffset, line: endLine, column: endColumn } = Selectors.position(this.plainState);
+        //ATTENTION: mind the -1 for end offset and end column, we do not want to consume the next tokens range!
+        return createTokenInstance(tokenType, image, startOffset, endOffset - 1, startLine, endLine, startColumn, endColumn - 1);
+    }
+
+    canConsume(tokenType: TokenType): string | undefined {
+        if (Selectors.eof(this.plainState)) {
+            return undefined;
+        }
+        const { offset: index, text } = Selectors.top(this.plainState);
+        const pattern = tokenType.PATTERN;
+        if (pattern) {
+            if (pattern instanceof RegExp) {
+                pattern.lastIndex = index;
+                const match = pattern.exec(text);
+                if (match) {
+                    if (tokenType.LONGER_ALT) {
+                        //if a "longer" alternative can be detected, deny
+                        const alternatives = Array.isArray(tokenType.LONGER_ALT) ? tokenType.LONGER_ALT : [tokenType.LONGER_ALT];
+                        if (alternatives.some(a => {
+                            const alternative = this.canConsume(a);
+                            if (alternative && alternative.length > match[0].length) {
+                                return alternative;
+                            }
+                            return undefined;
+                        })) {
+                            return undefined;
+                        }
+                    }
+                    return match[0];
+                }
+            } else if (typeof pattern === "string") {
+                const image = text.substring(index, index + pattern.length);
+                if (image.toLowerCase() === pattern.toLowerCase()) {
+                    return image;
+                }
+            }
+        }
+        return undefined;
+    }
+
+    applyAction(action: PreprocessorAction) {
+        this.plainState = translatePreprocessorState(this.plainState, action);
+    }
+}
 
 // STATE
 
@@ -22,12 +107,12 @@ export type PreprocessorScan = Readonly<{
     column: number;
 }>;
 
-export type PreprocessorLexerState = Readonly<{
+export type PlainPreprocessorLexerState = Readonly<{
     scanStack: PreprocessorScan[];
     variables: Readonly<Record<string, PreprocessorVariable>>;
 }>;
 
-export const initializePreprocessorState: (text: string) => PreprocessorLexerState = (text) => ({
+export const initializePreprocessorState: (text: string) => PlainPreprocessorLexerState = (text) => ({
     scanStack: text.length === 0 ? [] : [{
         column: 1,
         line: 1,
@@ -39,14 +124,14 @@ export const initializePreprocessorState: (text: string) => PreprocessorLexerSta
 
 // SELECTORS
 
-export namespace Selectors {
-    export function top(state: PreprocessorLexerState): PreprocessorScan {
+namespace Selectors {
+    export function top(state: PlainPreprocessorLexerState): PreprocessorScan {
         return state.scanStack[state.scanStack.length - 1];
     }
-    export function eof(state: PreprocessorLexerState): boolean {
+    export function eof(state: PlainPreprocessorLexerState): boolean {
         return state.scanStack.length === 0;
     }
-    export function position(state: PreprocessorLexerState): TextPosition {
+    export function position(state: PlainPreprocessorLexerState): TextPosition {
         if (!eof(state)) {
             const { offset: index, line, column } = top(state);
             return {
@@ -61,10 +146,10 @@ export namespace Selectors {
             line: 0,
         };
     }
-    export function hasVariable(state: PreprocessorLexerState, name: string): boolean {
+    export function hasVariable(state: PlainPreprocessorLexerState, name: string): boolean {
         return name in state.variables;
     }
-    export function getVariable(state: PreprocessorLexerState, name: string): PreprocessorVariable {
+    export function getVariable(state: PlainPreprocessorLexerState, name: string): PreprocessorVariable {
         return state.variables[name]!;
     }
 }
@@ -112,7 +197,7 @@ export type PreprocessorActionType = PreprocessorAction['type'];
 //REDUCER
 
 type TranslateActions = {
-    [actionType in PreprocessorActionType]: (state: PreprocessorLexerState, action: Extract<PreprocessorAction, { type: actionType }>) => PreprocessorLexerState;
+    [actionType in PreprocessorActionType]: (state: PlainPreprocessorLexerState, action: Extract<PreprocessorAction, { type: actionType }>) => PlainPreprocessorLexerState;
 };
 const TranslateActions: TranslateActions = {
     activate: (state, action) => {
@@ -139,7 +224,7 @@ const TranslateActions: TranslateActions = {
         }
         const { lineCount } = action;
         const { text, ...oldPosition } = Selectors.top(state);
-        const newPosition = Mutators.countNewLinesWhile(oldPosition, text, oldPosition.offset, (newPosition) => newPosition.line-oldPosition.line < lineCount)
+        const newPosition = Mutators.countNewLinesWhile(oldPosition, text, oldPosition.offset, (newPosition) => newPosition.line - oldPosition.line < lineCount)
         return Mutators.alterTopOrPop(state, newPosition);
     },
 
@@ -173,7 +258,7 @@ const TranslateActions: TranslateActions = {
 
     declare: (state, action) => {
         const { type, name, ...remainder } = action;
-        return Mutators.assignVariable(state, name, {...remainder, active: true});
+        return Mutators.assignVariable(state, name, { ...remainder, active: true });
     },
 
     replaceVariable: (state, action) => {
@@ -183,14 +268,14 @@ const TranslateActions: TranslateActions = {
 };
 
 
-export function translatePreprocessorState(state: PreprocessorLexerState, action: PreprocessorAction): PreprocessorLexerState {
+export function translatePreprocessorState(state: PlainPreprocessorLexerState, action: PreprocessorAction): PlainPreprocessorLexerState {
     return TranslateActions[action.type](state, action as any);
 }
 
 // MUTATORS
 
 namespace Mutators {
-    export function assignVariable(state: PreprocessorLexerState, name: string, variable: PreprocessorVariable) {
+    export function assignVariable(state: PlainPreprocessorLexerState, name: string, variable: PreprocessorVariable) {
         return {
             ...state,
             variables: {
@@ -199,7 +284,7 @@ namespace Mutators {
             }
         };
     }
-    export function push(state: PreprocessorLexerState, text: string) {
+    export function push(state: PlainPreprocessorLexerState, text: string) {
         return {
             ...state,
             scanStack: state.scanStack.slice().concat(text.length > 0 ? [{
@@ -210,7 +295,7 @@ namespace Mutators {
             }] : [])
         };
     }
-    export function alterTopOrPop(state: PreprocessorLexerState, newPosition: TextPosition) {
+    export function alterTopOrPop(state: PlainPreprocessorLexerState, newPosition: TextPosition) {
         const { text } = Selectors.top(state);
         const poppedOnce = state.scanStack.slice(0, state.scanStack.length - 1);
         if (newPosition.offset < text.length) {

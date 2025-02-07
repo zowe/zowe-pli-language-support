@@ -1,7 +1,7 @@
 import { TokenType, Lexer as ChevrotainLexer, IToken, createTokenInstance, TokenTypeDictionary } from "chevrotain";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import { initializePreprocessorState, PreprocessorAction, Selectors, translatePreprocessorState } from "./pli-preprocessor-lexer-state";
+import { PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { Pl1Services } from "../pli-module";
 
 const AllPreprocessorTokens = Object.values(PreprocessorTokens);
@@ -34,14 +34,14 @@ export class PliPreprocessorLexer {
      * @returns a set of tokens without preprocessor tokens
      */
     tokenize(text: string) {
-        const hiddenTokenTypes = this.hiddenTokenTypes;
+        const result: IToken[] = [];
         const normalTokenTypes = this.normalTokenTypes;
+        const hiddenTokenTypes = this.hiddenTokenTypes;
         const idTokenType = this.idTokenType;
         const preprocessorParser = this.preprocessorParser;
-        const result: IToken[] = [];
 
-        let state = initializePreprocessorState(text);
-        while (!Selectors.eof(state)) {
+        let state = new PreprocessorLexerState(text);
+        while (!state.eof()) {
             skipHiddenTokens();
             if (tryToReadPreprocessorStatement()) {
                 continue;
@@ -62,14 +62,14 @@ export class PliPreprocessorLexer {
         function scanInput(): IToken | undefined {
             skipHiddenTokens();
             for (const tokenType of normalTokenTypes) {
-                const token = tryConsume(tokenType);
+                const token = state.tryConsume(tokenType);
                 if (!token) {
                     continue;
                 }
-                if (isIdentifier(token) && Selectors.hasVariable(state, token.image)) {
-                    const variable = Selectors.getVariable(state, token.image);
+                if (isIdentifier(token) && state.hasVariable(token.image)) {
+                    const variable = state.getVariable(token.image);
                     if (variable.active) {
-                        applyAction({
+                        state.applyAction({
                             type: 'replaceVariable',
                             text: variable.value?.toString() ?? ""
                         });
@@ -77,9 +77,9 @@ export class PliPreprocessorLexer {
                         while (left && left.tokenType === PreprocessorTokens.Percentage) {
                             left = scanInput();
                         }
-                        if (left && canConsume(PreprocessorTokens.Percentage)) {
-                            while (canConsume(PreprocessorTokens.Percentage)) {
-                                emit("%", PreprocessorTokens.Percentage);
+                        if (left && state.canConsume(PreprocessorTokens.Percentage)) {
+                            while (state.canConsume(PreprocessorTokens.Percentage)) {
+                                state.emit("%", PreprocessorTokens.Percentage);
                                 const keepInMind = state;
                                 const right = scanInput();
                                 if (right && isIdentifier(right)) {
@@ -101,11 +101,11 @@ export class PliPreprocessorLexer {
         };
 
         function skipHiddenTokens() {
-            while (hiddenTokenTypes.some(h => tryConsume(h) !== undefined));
+            while (hiddenTokenTypes.some(h => state.tryConsume(h) !== undefined));
         };
     
         function tryToReadPreprocessorStatement(): boolean {
-            if (Selectors.eof(state) || !tryConsume(PreprocessorTokens.Percentage)) {
+            if (state.eof() || !state.tryConsume(PreprocessorTokens.Percentage)) {
                 return false;
             }
             const tokens = tokenizeUntilSemicolon(AllPreprocessorTokens);
@@ -121,7 +121,7 @@ export class PliPreprocessorLexer {
                                 break;
                             case "fixed":
                             case "character":
-                                applyAction({
+                                state.applyAction({
                                     type: 'declare',
                                     name: declaration.name,
                                     dataType: declaration.type,
@@ -134,7 +134,7 @@ export class PliPreprocessorLexer {
                     break;
                 }
                 case 'assignmentStatement': {
-                    applyAction({
+                    state.applyAction({
                         type: 'assign',
                         name: statement.left,
                         value: statement.right.value
@@ -142,7 +142,7 @@ export class PliPreprocessorLexer {
                     break;
                 }
                 case 'skipStatement': {
-                    applyAction({
+                    state.applyAction({
                         type: "advanceLines",
                         //+1 also skip the current line!
                         lineCount: statement.lineCount + 1
@@ -170,7 +170,7 @@ export class PliPreprocessorLexer {
                 foundAny = false;
                 skipHiddenTokens();
                 for (const tokenType of allowedTokenTypes) {
-                    const token = tryConsume(tokenType);
+                    const token = state.tryConsume(tokenType);
                     if (token) {
                         result.push(token);
                         foundAny = true;
@@ -182,65 +182,6 @@ export class PliPreprocessorLexer {
                 }
             } while (foundAny);
             return result;
-        }
-    
-        function tryConsume(tokenType: TokenType): IToken | undefined {
-            const image = canConsume(tokenType);
-            if (!image) {
-                return undefined;
-            }
-            return emit(image, tokenType);
-        }
-    
-        function emit(image: string, tokenType: TokenType) {
-            const { offset: startOffset, line: startLine, column: startColumn} = Selectors.position(state);
-            applyAction({
-                type: "advanceScan",
-                scanned: image
-            });
-            const {offset: endOffset, line: endLine, column: endColumn} = Selectors.position(state);
-            //ATTENTION: mind the -1 for end offset and end column, we do not want to consume the next tokens range!
-            return createTokenInstance(tokenType, image, startOffset, endOffset - 1, startLine, endLine, startColumn, endColumn - 1);
-        }
-    
-        function canConsume(tokenType: TokenType): string | undefined {
-            if (Selectors.eof(state)) {
-                return undefined;
-            }
-            const { offset: index, text } = Selectors.top(state);
-            const pattern = tokenType.PATTERN;
-            if (pattern) {
-                if (pattern instanceof RegExp) {
-                    pattern.lastIndex = index;
-                    const match = pattern.exec(text);
-                    if (match) {
-                        if (tokenType.LONGER_ALT) {
-                            //if a "longer" alternative can be detected, deny
-                            const alternatives = Array.isArray(tokenType.LONGER_ALT) ? tokenType.LONGER_ALT : [tokenType.LONGER_ALT];
-                            if (alternatives.some(a => {
-                                const alternative = canConsume(a);
-                                if (alternative && alternative.length > match[0].length) {
-                                    return alternative;
-                                }
-                                return undefined;
-                            })) {
-                                return undefined;
-                            }
-                        }
-                        return match[0];
-                    }
-                } else if (typeof pattern === "string") {
-                    const image = text.substring(index, index + pattern.length);
-                    if (image.toLowerCase() === pattern.toLowerCase()) {
-                        return image;
-                    }
-                }
-            }
-            return undefined;
-        }
-    
-        function applyAction(action: PreprocessorAction) {
-            state = translatePreprocessorState(state, action);
         }
     }
 }
