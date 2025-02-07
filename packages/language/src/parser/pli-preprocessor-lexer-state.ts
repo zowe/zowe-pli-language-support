@@ -1,7 +1,11 @@
 import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 
-
+/**
+ * This class is based on the reducer statemachine below.
+ * TODO Maybe we show move everything into the class?
+ * One advantage is the immutability, so you can remember old states or even reset the current state to them.
+ */
 export class PreprocessorLexerState {
     private plainState: PlainPreprocessorLexerState;
 
