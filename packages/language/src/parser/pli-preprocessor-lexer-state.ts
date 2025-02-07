@@ -22,12 +22,12 @@ export type PreprocessorScan = Readonly<{
     column: number;
 }>;
 
-export type PreprocessorState = Readonly<{
+export type PreprocessorLexerState = Readonly<{
     scanStack: PreprocessorScan[];
     variables: Readonly<Record<string, PreprocessorVariable>>;
 }>;
 
-export const InitialPreprocessorState: (text: string) => PreprocessorState = (text) => ({
+export const initializePreprocessorState: (text: string) => PreprocessorLexerState = (text) => ({
     scanStack: text.length === 0 ? [] : [{
         column: 1,
         line: 1,
@@ -40,13 +40,13 @@ export const InitialPreprocessorState: (text: string) => PreprocessorState = (te
 // SELECTORS
 
 export namespace Selectors {
-    export function top(state: PreprocessorState): PreprocessorScan {
+    export function top(state: PreprocessorLexerState): PreprocessorScan {
         return state.scanStack[state.scanStack.length - 1];
     }
-    export function eof(state: PreprocessorState): boolean {
+    export function eof(state: PreprocessorLexerState): boolean {
         return state.scanStack.length === 0;
     }
-    export function position(state: PreprocessorState): TextPosition {
+    export function position(state: PreprocessorLexerState): TextPosition {
         if (!eof(state)) {
             const { offset: index, line, column } = top(state);
             return {
@@ -61,10 +61,10 @@ export namespace Selectors {
             line: 0,
         };
     }
-    export function hasVariable(state: PreprocessorState, name: string): boolean {
+    export function hasVariable(state: PreprocessorLexerState, name: string): boolean {
         return name in state.variables;
     }
-    export function getVariable(state: PreprocessorState, name: string): PreprocessorVariable {
+    export function getVariable(state: PreprocessorLexerState, name: string): PreprocessorVariable {
         return state.variables[name]!;
     }
 }
@@ -112,7 +112,7 @@ export type PreprocessorActionType = PreprocessorAction['type'];
 //REDUCER
 
 type TranslateActions = {
-    [actionType in PreprocessorActionType]: (state: PreprocessorState, action: Extract<PreprocessorAction, { type: actionType }>) => PreprocessorState;
+    [actionType in PreprocessorActionType]: (state: PreprocessorLexerState, action: Extract<PreprocessorAction, { type: actionType }>) => PreprocessorLexerState;
 };
 const TranslateActions: TranslateActions = {
     activate: (state, action) => {
@@ -183,14 +183,14 @@ const TranslateActions: TranslateActions = {
 };
 
 
-export function translatePreprocessorState(state: PreprocessorState, action: PreprocessorAction): PreprocessorState {
+export function translatePreprocessorState(state: PreprocessorLexerState, action: PreprocessorAction): PreprocessorLexerState {
     return TranslateActions[action.type](state, action as any);
 }
 
 // MUTATORS
 
 namespace Mutators {
-    export function assignVariable(state: PreprocessorState, name: string, variable: PreprocessorVariable) {
+    export function assignVariable(state: PreprocessorLexerState, name: string, variable: PreprocessorVariable) {
         return {
             ...state,
             variables: {
@@ -199,7 +199,7 @@ namespace Mutators {
             }
         };
     }
-    export function push(state: PreprocessorState, text: string) {
+    export function push(state: PreprocessorLexerState, text: string) {
         return {
             ...state,
             scanStack: state.scanStack.slice().concat(text.length > 0 ? [{
@@ -210,7 +210,7 @@ namespace Mutators {
             }] : [])
         };
     }
-    export function alterTopOrPop(state: PreprocessorState, newPosition: TextPosition) {
+    export function alterTopOrPop(state: PreprocessorLexerState, newPosition: TextPosition) {
         const { text } = Selectors.top(state);
         const poppedOnce = state.scanStack.slice(0, state.scanStack.length - 1);
         if (newPosition.offset < text.length) {
