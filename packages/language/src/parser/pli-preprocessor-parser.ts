@@ -33,7 +33,7 @@ export class PliPreprocessorParser {
         state.consume(PreprocessorTokens.Skip);
         let lineCount: number = 1;
         if (state.tryConsume(PreprocessorTokens.Number)) {
-            lineCount = parseInt(state.last.image, 10);
+            lineCount = parseInt(state.last!.image, 10);
         }
         state.consume(PreprocessorTokens.Semicolon);
         return {

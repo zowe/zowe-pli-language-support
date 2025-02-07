@@ -10,14 +10,14 @@ export class PreprocessorParserState {
     }
 
     get current() {
-        return this.eos ? undefined : this.tokens[this.index];
+        return this.eof ? undefined : this.tokens[this.index];
     }
 
     get last() {
-        return this.eos ? this.tokens[this.tokens.length] : this.tokens[this.index - 1];
+        return this.eof ? this.tokens.length === 0 ? undefined : this.tokens[this.tokens.length-1] : this.tokens[this.index - 1];
     }
 
-    get eos() { //end of statement
+    get eof() { //end of statement
         return this.index >= this.tokens.length;
     }
 
@@ -26,7 +26,7 @@ export class PreprocessorParserState {
     }
 
     tryConsume(tokenType: TokenType): boolean {
-        if (this.current?.tokenType !== tokenType) {
+        if (!this.canConsume(tokenType)) {
             return false;
         }
         this.index++;
@@ -34,10 +34,10 @@ export class PreprocessorParserState {
     }
 
     consume(tokenType: TokenType) {
-        if (this.current?.tokenType !== tokenType) {
+        if (!this.canConsume(tokenType)) {
             throw new Error(`Expected token type '${tokenType.name}', got '${this.current?.tokenType.name ?? '???'}' instead.`);
         }
-        const token = this.current;
+        const token = this.current!;
         this.index++;
         return token;
     }
