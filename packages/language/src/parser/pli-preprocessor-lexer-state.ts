@@ -2,17 +2,18 @@ import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 
 export interface PreprocessorLexerState {
-    top(): PreprocessorScan;
+    top(): PreprocessorScan | undefined;
     eof(): boolean;
     position(): TextPosition;
+    advanceScan(scanned: string): void;
+    advanceLines(lineCount: number): void;
+    tryConsume(tokenType: TokenType): IToken | undefined;
+    canConsume(tokenType: TokenType): string | undefined;
+    emit(image: string, tokenType: TokenType): IToken;
+    
+    activate(name: string, active: boolean): void;
     hasVariable(name: string): boolean;
     getVariable(name: string): PreprocessorVariable;
-    tryConsume(tokenType: TokenType): IToken | undefined;
-    emit(image: string, tokenType: TokenType): void;
-    canConsume(tokenType: TokenType): string | undefined;
-    activate(name: string, active: boolean): void;
-    advanceLines(lineCount: number): void;
-    advanceScan(scanned: string): void;
     assign(name: string, value: number | string): void;
     declare(name: string, variable: PreprocessorVariable): void;
     replaceVariable(text: string): void;
@@ -25,18 +26,18 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
         this.plainState = initializePreprocessorState(text);
     }
 
-    top(): PreprocessorScan {
+    top(): PreprocessorScan | undefined {
         return Selectors.top(this.plainState);
     }
-    
+
     eof(): boolean {
         return Selectors.eof(this.plainState);
     }
-    
+
     position(): TextPosition {
         return Selectors.position(this.plainState);
     }
-    
+
     hasVariable(name: string): boolean {
         return Selectors.hasVariable(this.plainState, name);
     }
@@ -65,7 +66,7 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
         if (Selectors.eof(this.plainState)) {
             return undefined;
         }
-        const { offset: index, text } = Selectors.top(this.plainState);
+        const { offset: index, text } = Selectors.top(this.plainState)!;
         const pattern = tokenType.PATTERN;
         if (pattern) {
             if (pattern instanceof RegExp) {
@@ -118,7 +119,7 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
         if (Selectors.eof(this.plainState)) {
             return;
         }
-        const { text, ...oldPosition } = Selectors.top(this.plainState);
+        const { text, ...oldPosition } = Selectors.top(this.plainState)!;
         const newPosition = Mutators.countNewLinesWhile(oldPosition, text, oldPosition.offset, (newPosition) => newPosition.line - oldPosition.line < lineCount)
         this.plainState = Mutators.alterTopOrPop(this.plainState, newPosition);
     }
@@ -127,7 +128,7 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
         if (Selectors.eof(this.plainState)) {
             return;
         }
-        const { text: _, ...oldPosition } = Selectors.top(this.plainState);
+        const { text: _, ...oldPosition } = Selectors.top(this.plainState)!;
         const newPosition = Mutators.countNewLinesWhile(oldPosition, scanned, 0, () => true);
         this.plainState = Mutators.alterTopOrPop(this.plainState, newPosition);
     }
@@ -198,7 +199,10 @@ export const initializePreprocessorState: (text: string) => PlainPreprocessorLex
 // SELECTORS
 
 namespace Selectors {
-    export function top(state: PlainPreprocessorLexerState): PreprocessorScan {
+    export function top(state: PlainPreprocessorLexerState): PreprocessorScan | undefined {
+        if (eof(state)) {
+            return undefined;
+        }
         return state.scanStack[state.scanStack.length - 1];
     }
     export function eof(state: PlainPreprocessorLexerState): boolean {
@@ -206,7 +210,7 @@ namespace Selectors {
     }
     export function position(state: PlainPreprocessorLexerState): TextPosition {
         if (!eof(state)) {
-            const { offset: index, line, column } = top(state);
+            const { offset: index, line, column } = top(state)!;
             return {
                 column,
                 line,
@@ -251,7 +255,10 @@ namespace Mutators {
         };
     }
     export function alterTopOrPop(state: PlainPreprocessorLexerState, newPosition: TextPosition) {
-        const { text } = Selectors.top(state);
+        if (Selectors.eof(state)) {
+            return state;
+        }
+        const { text } = Selectors.top(state)!;
         const poppedOnce = state.scanStack.slice(0, state.scanStack.length - 1);
         if (newPosition.offset < text.length) {
             const newFrame: PreprocessorScan = { text, ...newPosition };
