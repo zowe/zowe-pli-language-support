@@ -182,5 +182,37 @@ describe("Lexer", () => {
             "AVERAGE:ID",
             ";:;",
         ]);
-    })
+    });
+
+    test("NodeDescriptor", () => {
+        expect(tokenize(`
+            a: proc( x ) options(nodescriptor);
+              dcl x(20) fixed bin nonconnected;
+            end a;
+        `)).toStrictEqual([
+            "a:A",
+            ":::",
+            "proc:PROC",
+            "(:(",
+            "x:X",
+            "):)",
+            "options:OPTIONS",
+            "(:(",
+            "nodescriptor:NODESCRIPTOR",
+            "):)",
+            ";:;",
+            "dcl:DCL",
+            "x:X",
+            "(:(",
+            "20:NUMBER",
+            "):)",
+            "fixed:FIXED",
+            "bin:BIN",
+            "nonconnected:NONCONNECTED",
+            ";:;",
+            "end:END",
+            "a:A",
+            ";:;",
+        ]);
+    });
 });
