@@ -55,7 +55,7 @@ describe("Error messages", () => {
     });
   });
 
-  test("IBM1388IE_NODESCRIPTOR attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute", async () => {
+  test("IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute", async () => {
     const document = await parse(`
 0a: proc( x ) options(nodescriptor);
   dcl x(20) fixed bin nonconnected;

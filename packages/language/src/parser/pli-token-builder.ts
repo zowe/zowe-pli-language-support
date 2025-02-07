@@ -58,16 +58,16 @@ export class PliTokenBuilder extends DefaultTokenBuilder {
     });
     const execFragment = tokens.find((e) => e.name === "ExecFragment")!;
     execFragment.START_CHARS_HINT = ["S", "C"];
-    
+
     return tokens.map(t => this.makeSticky(t));
   }
 
   private makeSticky(tokenType: TokenType): TokenType {
     if (tokenType.PATTERN instanceof RegExp) {
-        return {
-            ...tokenType,
-            PATTERN: new RegExp(tokenType.PATTERN.source, `${tokenType.PATTERN.flags}y`)
-        }
+      return {
+        ...tokenType,
+        PATTERN: new RegExp(tokenType.PATTERN.source, `${tokenType.PATTERN.flags}y`)
+      }
     }
     return tokenType;
   }

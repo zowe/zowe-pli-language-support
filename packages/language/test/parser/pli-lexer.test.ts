@@ -7,10 +7,10 @@ type TokenizeFunction = (text: string) => string[];
 describe("Lexer", () => {
     let tokenize: TokenizeFunction;
 
-    beforeAll(async() => {
+    beforeAll(async () => {
         const services = createPliServices(EmptyFileSystem);
-        await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
-        tokenize = (text: string) => services.pli.parser.Lexer.tokenize(text).tokens.map(t => t.image+':'+t.tokenType.name);
+        //await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
+        tokenize = (text: string) => services.pli.parser.Lexer.tokenize(text).tokens.map(t => t.image + ':' + t.tokenType.name);
     });
 
     test("Empty", () => {
@@ -155,4 +155,32 @@ describe("Lexer", () => {
             ";:;",
         ]);
     });
+
+    test("Hello World", () => {
+        expect(tokenize(`
+            AVERAGE: PROCEDURE OPTIONS (MAIN);
+                /* Test characters: ^[] € */
+                /* AVERAGE_GRADE = SUM / 5; */
+                PUT LIST ('PROGRAM TO COMPUTE AVERAGE');
+            END AVERAGE;
+        `)).toStrictEqual([
+            "AVERAGE:ID",
+            ":::",
+            "PROCEDURE:PROCEDURE",
+            "OPTIONS:OPTIONS",
+            "(:(",
+            "MAIN:MAIN",
+            "):)",
+            ";:;",
+            "PUT:PUT",
+            "LIST:LIST",
+            "(:(",
+            "'PROGRAM TO COMPUTE AVERAGE':STRING_TERM",
+            "):)",
+            ";:;",
+            "END:END",
+            "AVERAGE:ID",
+            ";:;",
+        ]);
+    })
 });

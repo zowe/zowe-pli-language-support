@@ -73,29 +73,34 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
                 pattern.lastIndex = index;
                 const match = pattern.exec(text);
                 if (match) {
-                    if (tokenType.LONGER_ALT) {
-                        //if a "longer" alternative can be detected, deny
-                        const alternatives = Array.isArray(tokenType.LONGER_ALT) ? tokenType.LONGER_ALT : [tokenType.LONGER_ALT];
-                        if (alternatives.some(a => {
-                            const alternative = this.canConsume(a);
-                            if (alternative && alternative.length > match[0].length) {
-                                return alternative;
-                            }
-                            return undefined;
-                        })) {
-                            return undefined;
-                        }
-                    }
-                    return match[0];
+                    return this.handleLongerAlternative(tokenType, match[0]);
                 }
             } else if (typeof pattern === "string") {
                 const image = text.substring(index, index + pattern.length);
                 if (image.toLowerCase() === pattern.toLowerCase()) {
-                    return image;
+                    return this.handleLongerAlternative(tokenType, image);
                 }
             }
         }
         return undefined;
+    }
+
+    handleLongerAlternative(tokenType: TokenType, match: string) {
+        if (tokenType.LONGER_ALT) {
+            //if a "longer" alternative can be detected, deny
+            const alternatives = Array.isArray(tokenType.LONGER_ALT) ? tokenType.LONGER_ALT : [tokenType.LONGER_ALT];
+            if (alternatives.some(a => this.hasLongerAlternative(a, match))) {
+                return undefined;
+            }
+        }
+        return match;
+    }
+
+    hasLongerAlternative(tokenType: TokenType, match: string): boolean {
+        const alternative = this.canConsume(tokenType);
+        return alternative !== undefined && alternative.length > match.length
+            //TODO this last condition should be implicit. But actually there is a bug and this condition needs to be checked as well.
+            && alternative.startsWith(match);
     }
 
     activate(name: string, active: boolean) {
