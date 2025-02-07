@@ -1,7 +1,7 @@
 import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { describe, expect, test } from "vitest";
 import { PreprocessorTokens } from "../../src/parser/pli-preprocessor-tokens";
-import { PreprocessorParserState } from "../../src/parser/pli-preprocessor-parser-state";
+import { PliPreprocessorParserState } from "../../src/parser/pli-preprocessor-parser-state";
 
 type TokenTypeName = keyof typeof PreprocessorTokens;
 type TokenEncoded = `${string}:${TokenTypeName}`;
@@ -16,7 +16,7 @@ describe("Preprocessor parser state", () => {
     describe("EOF", () => {
         test("Check eof for empty", () => {
             //arrange + act
-            const state = new PreprocessorParserState(Sequences.Empty);
+            const state = new PliPreprocessorParserState(Sequences.Empty);
     
             //assert
             expect(state.eof).toBe(true);
@@ -26,7 +26,7 @@ describe("Preprocessor parser state", () => {
     
         test("Check eof for non-empty", () => {
             //arrange + act
-            const state = new PreprocessorParserState(Sequences.OneToken);
+            const state = new PliPreprocessorParserState(Sequences.OneToken);
     
             //assert
             expect(state.eof).toBe(false);
@@ -39,7 +39,7 @@ describe("Preprocessor parser state", () => {
     describe("canConsume", () => {
         test("canConsume for empty", () => {
             //arrange
-            const state = new PreprocessorParserState(Sequences.Empty);
+            const state = new PliPreprocessorParserState(Sequences.Empty);
             
             //act
             expect(state.canConsume(PreprocessorTokens.Id)).toBeFalsy();
@@ -52,7 +52,7 @@ describe("Preprocessor parser state", () => {
     
         test("canConsume positive for non-empty", () => {
             //arrange
-            const state = new PreprocessorParserState(Sequences.OneToken);
+            const state = new PliPreprocessorParserState(Sequences.OneToken);
             
             //act
             expect(state.canConsume(PreprocessorTokens.Id)).toBeTruthy();
@@ -66,7 +66,7 @@ describe("Preprocessor parser state", () => {
     
         test("canConsume negative for non-empty", () => {
             //arrange
-            const state = new PreprocessorParserState(Sequences.OneToken);
+            const state = new PliPreprocessorParserState(Sequences.OneToken);
             
             //act
             expect(state.canConsume(PreprocessorTokens.Builtin)).toBeFalsy();
@@ -82,7 +82,7 @@ describe("Preprocessor parser state", () => {
     describe("consume", () => {
         test("Consume for empty", () => {
             //arrange
-            const state = new PreprocessorParserState(Sequences.Empty);
+            const state = new PliPreprocessorParserState(Sequences.Empty);
     
             //act + assert
             expect(() => state.consume(PreprocessorTokens.Id)).toThrowError();
@@ -90,7 +90,7 @@ describe("Preprocessor parser state", () => {
     
         test("Consume positive for non-empty", () => {
             //arrange
-            const state = new PreprocessorParserState(Sequences.OneToken);
+            const state = new PliPreprocessorParserState(Sequences.OneToken);
     
             //act
             expect(state.consume(PreprocessorTokens.Id).image).toBe("A");
@@ -104,7 +104,7 @@ describe("Preprocessor parser state", () => {
     
         test("Check Consume negative for non-empty", () => {
             //arrange
-            const state = new PreprocessorParserState(Sequences.OneToken);
+            const state = new PliPreprocessorParserState(Sequences.OneToken);
     
             //act + assert
             expect(() => state.consume(PreprocessorTokens.Builtin)).toThrowError();
@@ -114,7 +114,7 @@ describe("Preprocessor parser state", () => {
     describe("tryConsume", () => {
         test("tryConsume for empty", () => {
             //arrange
-            const state = new PreprocessorParserState(Sequences.Empty);
+            const state = new PliPreprocessorParserState(Sequences.Empty);
     
             //act + assert
             expect(state.tryConsume(PreprocessorTokens.Id)).toBeFalsy();
@@ -122,7 +122,7 @@ describe("Preprocessor parser state", () => {
 
         test("tryConsume positve for non-empty", () => {
             //arrange
-            const state = new PreprocessorParserState(Sequences.OneToken);
+            const state = new PliPreprocessorParserState(Sequences.OneToken);
     
             //act + assert
             expect(state.tryConsume(PreprocessorTokens.Id)).toBeTruthy();
@@ -134,7 +134,7 @@ describe("Preprocessor parser state", () => {
 
         test("tryConsume negative for non-empty", () => {
             //arrange
-            const state = new PreprocessorParserState(Sequences.OneToken);
+            const state = new PliPreprocessorParserState(Sequences.OneToken);
     
             //act + assert
             expect(state.tryConsume(PreprocessorTokens.Builtin)).toBeFalsy();
@@ -146,7 +146,7 @@ describe("Preprocessor parser state", () => {
 
         test("tryConsume positive for two tokens", () => {
             //arrange
-            const state = new PreprocessorParserState(Sequences.TwoTokens);
+            const state = new PliPreprocessorParserState(Sequences.TwoTokens);
     
             //act + assert
             expect(state.tryConsume(PreprocessorTokens.Id)).toBeTruthy();

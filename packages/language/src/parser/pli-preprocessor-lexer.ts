@@ -1,7 +1,7 @@
 import { TokenType, Lexer as ChevrotainLexer, IToken, createTokenInstance, TokenTypeDictionary } from "chevrotain";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import { PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
+import { PliPreprocessorLexerState, PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { Pl1Services } from "../pli-module";
 
 const AllPreprocessorTokens = Object.values(PreprocessorTokens);
@@ -28,7 +28,7 @@ export class PliPreprocessorLexer {
 
     tokenize(text: string) {
         const result: IToken[] = [];
-        let state = new PreprocessorLexerState(text);
+        let state: PreprocessorLexerState = new PliPreprocessorLexerState(text);
         while (!state.eof()) {
             this.skipHiddenTokens(state);
             if (this.tryToReadPreprocessorStatement(state)) {
@@ -58,10 +58,7 @@ export class PliPreprocessorLexer {
             if (this.isIdentifier(token) && state.hasVariable(token.image)) {
                 const variable = state.getVariable(token.image);
                 if (variable.active) {
-                    state.applyAction({
-                        type: 'replaceVariable',
-                        text: variable.value?.toString() ?? ""
-                    });
+                    state.replaceVariable(variable.value?.toString() ?? "");
                     let left = this.scanInput(state);
                     while (left && left.tokenType === PreprocessorTokens.Percentage) {
                         left = this.scanInput(state);
@@ -110,12 +107,11 @@ export class PliPreprocessorLexer {
                             break;
                         case "fixed":
                         case "character":
-                            state.applyAction({
-                                type: 'declare',
-                                name: declaration.name,
+                            state.declare(declaration.name, {
                                 dataType: declaration.type,
                                 scanMode: declaration.scanMode,
-                                value: undefined
+                                value: undefined,
+                                active: true
                             });
                             break;
                     }
@@ -123,19 +119,12 @@ export class PliPreprocessorLexer {
                 break;
             }
             case 'assignmentStatement': {
-                state.applyAction({
-                    type: 'assign',
-                    name: statement.left,
-                    value: statement.right.value
-                })
+                state.assign(statement.left, statement.right.value);
                 break;
             }
             case 'skipStatement': {
-                state.applyAction({
-                    type: "advanceLines",
-                    //+1 also skip the current line!
-                    lineCount: statement.lineCount + 1
-                });
+                //+1 also skip the current line!
+                state.advanceLines(statement.lineCount + 1);
                 break;
             }
             case 'pageDirective':

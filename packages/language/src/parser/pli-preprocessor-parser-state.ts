@@ -1,6 +1,16 @@
 import { IToken, TokenType } from "chevrotain";
 
-export class PreprocessorParserState {
+export interface PreprocessorParserState {
+    index: number;
+    get current(): IToken|undefined;
+    get last(): IToken|undefined;
+    get eof(): boolean;
+    canConsume(tokenType: TokenType): boolean;
+    tryConsume(tokenType: TokenType): boolean;
+    consume(tokenType: TokenType): IToken;
+}
+
+export class PliPreprocessorParserState implements PreprocessorParserState {
     private readonly tokens: IToken[]
     public index: number;
 

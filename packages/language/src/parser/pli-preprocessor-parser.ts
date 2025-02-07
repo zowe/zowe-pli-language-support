@@ -1,11 +1,11 @@
 import { PPStatement, PPDeclareStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPAssignmentStatement, PPExpression } from "./pli-preprocessor-ast";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import { PreprocessorParserState } from "./pli-preprocessor-parser-state";
+import { PliPreprocessorParserState, PreprocessorParserState } from "./pli-preprocessor-parser-state";
 import { IToken } from "chevrotain";
 
 export class PliPreprocessorParser {
     initializeState(tokens: IToken[]): PreprocessorParserState {
-        return new PreprocessorParserState(tokens);
+        return new PliPreprocessorParserState(tokens);
     }
 
     start(state: PreprocessorParserState): PPStatement {

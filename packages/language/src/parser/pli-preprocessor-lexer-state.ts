@@ -1,7 +1,24 @@
 import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 
-export class PreprocessorLexerState {
+export interface PreprocessorLexerState {
+    top(): PreprocessorScan;
+    eof(): boolean;
+    position(): TextPosition;
+    hasVariable(name: string): boolean;
+    getVariable(name: string): PreprocessorVariable;
+    tryConsume(tokenType: TokenType): IToken | undefined;
+    emit(image: string, tokenType: TokenType): void;
+    canConsume(tokenType: TokenType): string | undefined;
+    activate(name: string, active: boolean): void;
+    advanceLines(lineCount: number): void;
+    advanceScan(scanned: string): void;
+    assign(name: string, value: number | string): void;
+    declare(name: string, variable: PreprocessorVariable): void;
+    replaceVariable(text: string): void;
+}
+
+export class PliPreprocessorLexerState implements PreprocessorLexerState {
     private plainState: PlainPreprocessorLexerState;
 
     constructor(text: string) {
@@ -11,15 +28,19 @@ export class PreprocessorLexerState {
     top(): PreprocessorScan {
         return Selectors.top(this.plainState);
     }
+    
     eof(): boolean {
         return Selectors.eof(this.plainState);
     }
+    
     position(): TextPosition {
         return Selectors.position(this.plainState);
     }
+    
     hasVariable(name: string): boolean {
         return Selectors.hasVariable(this.plainState, name);
     }
+
     getVariable(name: string): PreprocessorVariable {
         return Selectors.getVariable(this.plainState, name);
     }
@@ -34,10 +55,7 @@ export class PreprocessorLexerState {
 
     emit(image: string, tokenType: TokenType) {
         const { offset: startOffset, line: startLine, column: startColumn } = Selectors.position(this.plainState);
-        this.applyAction({
-            type: "advanceScan",
-            scanned: image
-        });
+        this.advanceScan(image);
         const { offset: endOffset, line: endLine, column: endColumn } = Selectors.position(this.plainState);
         //ATTENTION: mind the -1 for end offset and end column, we do not want to consume the next tokens range!
         return createTokenInstance(tokenType, image, startOffset, endOffset - 1, startLine, endLine, startColumn, endColumn - 1);
@@ -79,12 +97,68 @@ export class PreprocessorLexerState {
         return undefined;
     }
 
-    applyAction(action: PreprocessorAction) {
-        this.plainState = translatePreprocessorState(this.plainState, action);
+    activate(name: string, active: boolean) {
+        if (Selectors.hasVariable(this.plainState, name)) {
+            const variable = Selectors.getVariable(this.plainState, name);
+            this.plainState = Mutators.assignVariable(this.plainState, name, {
+                ...variable,
+                active
+            });
+        } else {
+            this.plainState = Mutators.assignVariable(this.plainState, name, {
+                dataType: "character",
+                scanMode: "rescan",
+                value: "",
+                active
+            });
+        }
+    }
+
+    advanceLines(lineCount: number) {
+        if (Selectors.eof(this.plainState)) {
+            return;
+        }
+        const { text, ...oldPosition } = Selectors.top(this.plainState);
+        const newPosition = Mutators.countNewLinesWhile(oldPosition, text, oldPosition.offset, (newPosition) => newPosition.line - oldPosition.line < lineCount)
+        this.plainState = Mutators.alterTopOrPop(this.plainState, newPosition);
+    }
+
+    advanceScan(scanned: string) {
+        if (Selectors.eof(this.plainState)) {
+            return;
+        }
+        const { text: _, ...oldPosition } = Selectors.top(this.plainState);
+        const newPosition = Mutators.countNewLinesWhile(oldPosition, scanned, 0, () => true);
+        this.plainState = Mutators.alterTopOrPop(this.plainState, newPosition);
+    }
+
+    assign(name: string, value: number | string) {
+        if (Selectors.hasVariable(this.plainState, name)) {
+            const variable = Selectors.getVariable(this.plainState, name);
+            this.plainState = Mutators.assignVariable(this.plainState, name, {
+                ...variable,
+                value
+            });
+        } else {
+            this.plainState = Mutators.assignVariable(this.plainState, name, {
+                dataType: typeof value === 'string' ? "character" : "fixed",
+                scanMode: "rescan",
+                value,
+                active: false,
+            });
+        }
+    }
+
+    declare(name: string, variable: PreprocessorVariable) {
+        this.plainState = Mutators.assignVariable(this.plainState, name, variable);
+    }
+
+    replaceVariable(text: string) {
+        this.plainState = Mutators.push(this.plainState, text);
     }
 }
 
-// STATE
+// PLAIN STATE
 
 export type TextPosition = {
     offset: number;
@@ -151,124 +225,6 @@ namespace Selectors {
     export function getVariable(state: PlainPreprocessorLexerState, name: string): PreprocessorVariable {
         return state.variables[name]!;
     }
-}
-
-// ACTIONS
-
-export interface PPAdvanceScan {
-    type: "advanceScan",
-    scanned: string;
-}
-
-export interface PPAdvanceLines {
-    type: "advanceLines",
-    lineCount: number;
-}
-
-export interface PPDeclareAction {
-    type: "declare";
-    name: string;
-    scanMode: ScanMode;
-    dataType: VariableDataType;
-    value: number | string | undefined;
-}
-
-export interface PPActivateAction {
-    type: "activate";
-    name: string;
-    active: boolean;
-}
-
-export interface PPAssignAction {
-    type: "assign";
-    name: string;
-    value: number | string;
-}
-
-export interface PPReplaceVariableAction {
-    type: "replaceVariable";
-    text: string;
-}
-
-export type PreprocessorAction = PPDeclareAction | PPActivateAction | PPAssignAction | PPAdvanceScan | PPReplaceVariableAction | PPAdvanceLines;
-export type PreprocessorActionType = PreprocessorAction['type'];
-
-//REDUCER
-
-type TranslateActions = {
-    [actionType in PreprocessorActionType]: (state: PlainPreprocessorLexerState, action: Extract<PreprocessorAction, { type: actionType }>) => PlainPreprocessorLexerState;
-};
-const TranslateActions: TranslateActions = {
-    activate: (state, action) => {
-        const { name, active } = action;
-        if (Selectors.hasVariable(state, name)) {
-            const variable = Selectors.getVariable(state, name);
-            return Mutators.assignVariable(state, name, {
-                ...variable,
-                active
-            });
-        } else {
-            return Mutators.assignVariable(state, name, {
-                dataType: "character",
-                scanMode: "rescan",
-                value: "",
-                active
-            });
-        }
-    },
-
-    advanceLines: (state, action) => {
-        if (Selectors.eof(state)) {
-            return state;
-        }
-        const { lineCount } = action;
-        const { text, ...oldPosition } = Selectors.top(state);
-        const newPosition = Mutators.countNewLinesWhile(oldPosition, text, oldPosition.offset, (newPosition) => newPosition.line - oldPosition.line < lineCount)
-        return Mutators.alterTopOrPop(state, newPosition);
-    },
-
-    advanceScan: (state, action) => {
-        if (Selectors.eof(state)) {
-            return state;
-        }
-        const { scanned } = action;
-        const { text: _, ...oldPosition } = Selectors.top(state);
-        const newPosition = Mutators.countNewLinesWhile(oldPosition, scanned, 0, () => true);
-        return Mutators.alterTopOrPop(state, newPosition);
-    },
-
-    assign: (state, action) => {
-        const { name, value } = action;
-        if (Selectors.hasVariable(state, name)) {
-            const variable = Selectors.getVariable(state, name);
-            return Mutators.assignVariable(state, name, {
-                ...variable,
-                value
-            });
-        } else {
-            return Mutators.assignVariable(state, name, {
-                dataType: typeof value === 'string' ? "character" : "fixed",
-                scanMode: "rescan",
-                value,
-                active: false,
-            });
-        }
-    },
-
-    declare: (state, action) => {
-        const { type, name, ...remainder } = action;
-        return Mutators.assignVariable(state, name, { ...remainder, active: true });
-    },
-
-    replaceVariable: (state, action) => {
-        const { text } = action;
-        return Mutators.push(state, text);
-    }
-};
-
-
-export function translatePreprocessorState(state: PlainPreprocessorLexerState, action: PreprocessorAction): PlainPreprocessorLexerState {
-    return TranslateActions[action.type](state, action as any);
 }
 
 // MUTATORS
