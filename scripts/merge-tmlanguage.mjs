@@ -47,7 +47,8 @@ const controlKeywords = [
     'goto',
     'return',
     'when',
-    'begin'
+    'begin',
+    'process'
 ];
 
 const storageKeywords = keywords.map(e => e.toLowerCase()).exclude(controlKeywords).toArray();

@@ -11,7 +11,7 @@
     },
     {
       "name": "keyword.control.pli",
-      "match": "(?i)\\b(if|else|then|do|end|select|otherwise|on|while|next|go|to|goto|return|when|begin)\\b"
+      "match": "(?i)\\b(if|else|then|do|end|select|otherwise|on|while|next|go|to|goto|return|when|begin|process)\\b"
     },
     {
       "include": "#comments"
