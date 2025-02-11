@@ -20,6 +20,18 @@ import {
 } from "langium";
 
 export class PliTokenBuilder extends DefaultTokenBuilder {
+  or: string = "|";
+  not: string = "¬";
+
+  /**
+   * Flag to enable experimental lexer/parser features.
+   *
+   * Enables the dynamic generation of tokens for the OR and NOT operators.
+   *
+   * `false` by default.
+   */
+  static EXPERIMENTAL = true;
+
   override buildTokens(
     grammar: Grammar,
     options?: TokenBuilderOptions,
@@ -34,7 +46,7 @@ export class PliTokenBuilder extends DefaultTokenBuilder {
       terminalTokens,
       options,
     );
-    const id = terminalTokens.find((e) => e.name === "ID")!;
+    const id = this.findToken(terminalTokens, "ID");
 
     for (const keywordToken of tokens) {
       if (/[a-zA-Z]/.test(keywordToken.name)) {
@@ -56,8 +68,72 @@ export class PliTokenBuilder extends DefaultTokenBuilder {
         tokens.push(terminalToken);
       }
     });
-    const execFragment = tokens.find((e) => e.name === "ExecFragment")!;
-    execFragment.START_CHARS_HINT = ["S", "C"]; // (S)QL, (C)ICS
+    const execFragment = this.findToken(tokens, "ExecFragment");
+    execFragment.START_CHARS_HINT = ["S", "C"];
+    if (PliTokenBuilder.EXPERIMENTAL) {
+      this.overrideNotTokens(tokens);
+      this.overrideOrTokens(tokens);
+    }
     return tokens;
+  }
+
+  protected overrideOrTokens(token: TokenType[]): void {
+    this.overrideToken(this.findToken(token, "OR_TOKEN"), "", () =>
+      this.getOr(),
+    );
+    this.overrideToken(this.findToken(token, "OR_EQUAL"), "=", () =>
+      this.getOr(),
+    );
+    this.overrideToken(this.findToken(token, "CONCAT_TOKEN"), "", () =>
+      this.getOr(true),
+    );
+    this.overrideToken(this.findToken(token, "CONCAT_EQUAL"), "=", () =>
+      this.getOr(true),
+    );
+  }
+
+  protected overrideNotTokens(token: TokenType[]): void {
+    this.overrideToken(this.findToken(token, "NOT_TOKEN"), "", () =>
+      this.getNot(),
+    );
+    this.overrideToken(this.findToken(token, "NOT_SMALLER"), "<", () =>
+      this.getNot(),
+    );
+    this.overrideToken(this.findToken(token, "NOT_EQUAL"), "=", () =>
+      this.getNot(),
+    );
+    this.overrideToken(this.findToken(token, "NOT_LARGER"), ">", () =>
+      this.getNot(),
+    );
+  }
+
+  private getOr(double?: boolean): string {
+    const value = this.or.charAt(0);
+    return double ? value + value : value;
+  }
+
+  private getNot(): string {
+    return this.not.charAt(0);
+  }
+
+  private findToken(tokens: TokenType[], name: string): TokenType {
+    return tokens.find((e) => e.name === name)!;
+  }
+
+  private overrideToken(
+    token: TokenType,
+    end: string,
+    override: () => string,
+  ): void {
+    token.PATTERN = (text, offset) => {
+      const value = override() + end;
+      const check = text.substring(offset, offset + value.length);
+      if (check === value) {
+        return [check];
+      } else {
+        return null;
+      }
+    };
+    token.START_CHARS_HINT = ["!", "|", "^", "¬"];
   }
 }
