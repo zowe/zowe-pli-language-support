@@ -9,13 +9,41 @@
  *
  */
 
-import { DefaultLexer, LexerResult } from "langium";
+import { DefaultLexer, LexerResult, URI } from "langium";
+import {
+  CompilerOptionResult,
+  mergeCompilerOptions,
+} from "../compiler/options";
+import { parseAbstractCompilerOptions } from "../compiler/parser";
+import { translateCompilerOptions } from "../compiler/translator";
+import { PliTokenBuilder } from "./pli-token-builder";
+import { PliServices } from "../pli-module";
+import { PliConfigStorage } from "../workspace/pli-config-storage";
 
 const NEWLINE = "\n".charCodeAt(0);
 
-export class Pl1Lexer extends DefaultLexer {
+export class PliLexer extends DefaultLexer {
+  compilerOptions: CompilerOptionResult = {
+    issues: [],
+    options: {},
+  };
+
+  uri!: URI;
+
+  declare protected readonly tokenBuilder: PliTokenBuilder;
+
+  private readonly configStorage: PliConfigStorage;
+
+  constructor(services: PliServices) {
+    super(services);
+    this.configStorage = services.shared.workspace.PliConfigStorage;
+  }
+
   override tokenize(text: string): LexerResult {
     const lines = this.splitLines(text);
+    this.fillCompilerOptions(lines);
+    this.tokenBuilder.or = this.compilerOptions.options.or || "|";
+    this.tokenBuilder.not = this.compilerOptions.options.not || "^";
     const adjustedLines = lines.map((line) => this.adjustLine(line));
     const adjustedText = adjustedLines.join("");
     return super.tokenize(adjustedText);
@@ -33,29 +61,77 @@ export class Pl1Lexer extends DefaultLexer {
     return lines;
   }
 
-  private adjustLine(line: string): string {
-    let eol = "";
-    if (line.endsWith("\r\n")) {
-      eol = "\r\n";
-    } else if (line.endsWith("\n")) {
-      eol = "\n";
+  private fillCompilerOptions(lines: string[]): CompilerOptionResult {
+    const max = Math.min(lines.length, 100);
+    const globalOptions = this.configStorage.getCompilerOptions(this.uri);
+    let fullText = "";
+    for (let i = 0; i < max; i++) {
+      const line = lines[i];
+      const { length, eol } = this.getLineInfo(line);
+      const process = "*PROCESS";
+      if (line.includes(process)) {
+        const startChar = line.indexOf(process);
+        const startParseChar = startChar + process.length;
+        let endChar = line.lastIndexOf(";");
+        if (endChar < 0) {
+          endChar = length;
+        }
+        const compilerOptionsText = line.substring(startParseChar, endChar);
+        fullText += " ".repeat(startParseChar) + compilerOptionsText;
+        const parsed = parseAbstractCompilerOptions(fullText);
+        this.compilerOptions = mergeCompilerOptions(
+          globalOptions,
+          translateCompilerOptions(parsed),
+        );
+        const newText = " ".repeat(length) + eol;
+        lines[i] = newText;
+        return this.compilerOptions;
+      } else {
+        fullText += " ".repeat(length) + eol;
+      }
     }
+    this.compilerOptions = globalOptions;
+    return this.compilerOptions;
+  }
+
+  private adjustLine(line: string): string {
+    const { length, eol } = this.getLineInfo(line);
     const prefixLength = 1;
-    const lineLength = line.length - eol.length;
-    if (lineLength < prefixLength) {
-      return " ".repeat(lineLength) + eol;
+    if (length < prefixLength) {
+      return " ".repeat(length) + eol;
     }
     const lineEnd = 72;
     const prefix = " ".repeat(prefixLength);
     let postfix = "";
-    if (lineLength > lineEnd) {
-      postfix = " ".repeat(lineLength - lineEnd);
+    if (length > lineEnd) {
+      postfix = " ".repeat(length - lineEnd);
     }
     return (
       prefix +
-      line.substring(prefixLength, Math.min(lineEnd, lineLength)) +
+      line.substring(prefixLength, Math.min(lineEnd, length)) +
       postfix +
       eol
     );
   }
+
+  private getLineInfo(text: string): LineInfo {
+    let eol = "";
+    let length = text.length;
+    if (text.endsWith("\r\n")) {
+      eol = "\r\n";
+      length -= 2;
+    } else if (text.endsWith("\n")) {
+      eol = "\n";
+      length -= 1;
+    }
+    return {
+      eol,
+      length,
+    };
+  }
+}
+
+interface LineInfo {
+  eol: string;
+  length: number;
 }

@@ -151,7 +151,7 @@ AssertStatement: 'ASSERT' (
 
 AssignmentStatement: refs+=LocatorCall (',' refs+=LocatorCall)* operator=AssignmentOperator expression=Expression (',' 'BY' ('NAME' | 'DIMACROSS' dimacrossExpr=Expression))? ';';
 
-AssignmentOperator returns string: '=' | '+=' | '-=' | '*=' | '/=' | '|=' | '&=' | '||=' | '**=' | '¬=' | '^=' | '<>';
+AssignmentOperator returns string: '=' | '+=' | '-=' | '*=' | '/=' | '&=' | '**=' | OR_EQUAL | CONCAT_EQUAL | NOT_EQUAL | '<>';
 
 AttachStatement: 'ATTACH' reference=LocatorCall ('THREAD' '(' task=LocatorCall ')') (environment?='ENVIRONMENT' '(' ('TSTACK' '(' tstack=Expression ')')? ')')? ';';
 
@@ -589,20 +589,17 @@ ReferenceItem: ref=[NamedElement:FeatureID] dimensions=Dimensions?;
 
 Expression: BitOrExpression;
 
-
-// Note for expressions: Documentation uses '¬' to denote inversion or negation. The language actually uses '^'
-
 // Priority 7
-BitOrExpression infers Expression: BitAndExpression ({infer BitOrExpression.left=current} op=('|' | '¬' | '^') right=BitAndExpression)*;
+BitOrExpression infers Expression: BitAndExpression ({infer BitOrExpression.left=current} op=(OR_TOKEN | NOT_TOKEN) right=BitAndExpression)*;
 
 // Priority 6
 BitAndExpression infers Expression: CompExpression ({infer BitAndExpression.left=current} op='&' right=CompExpression)*;
 
 // Priority 5
-CompExpression infers Expression: ConcatExpression ({infer CompExpression.left=current} op=('<' | '¬<' | '<=' | '=' | '¬=' | '^=' | '<>' | '>=' | '>' | '¬>') right=ConcatExpression)*;
+CompExpression infers Expression: ConcatExpression ({infer CompExpression.left=current} op=('<' | NOT_SMALLER | '<=' | '=' | NOT_EQUAL | '<>' | '>=' | '>' | NOT_LARGER) right=ConcatExpression)*;
 
 // Priority 4
-ConcatExpression infers Expression: AddExpression ({infer ConcatExpression.left=current} op=('||' | '!!') right=AddExpression)*;
+ConcatExpression infers Expression: AddExpression ({infer ConcatExpression.left=current} op=CONCAT_TOKEN right=AddExpression)*;
 
 // Priority 3
 AddExpression infers Expression: MultExpression ({infer AddExpression.left=current} op=('+' | '-' ) right=MultExpression)*;
@@ -635,9 +632,7 @@ ProcedureCall: procedure=[ProcedureStatement:ID]  ('(' (args+=(Expression | '*')
 
 LabelReference: label=[LabelPrefix:ID];
 
-UnaryExpression: op=('+' | '-' | '¬' | '^') expr=Expression;
-
-ConstantExpression: Literal;
+UnaryExpression: op=('+' | '-' | NOT_TOKEN) expr=Expression;
 
 Literal: ('(' multiplier=NUMBER ')')? value=(StringLiteral | NumberLiteral);
 
@@ -646,6 +641,17 @@ NumberLiteral: value=NUMBER;
 
 FQN returns string: ID ('.' ID)*;
 FeatureID returns string: ID;
+
+terminal CONCAT_EQUAL: '||=';
+terminal CONCAT_TOKEN: '||';
+terminal OR_EQUAL: '|=';
+terminal OR_TOKEN: '|';
+
+// TODO: Remove all ^ tokens once the lexer is working correctly
+terminal NOT_SMALLER: '¬<' | '^<';
+terminal NOT_EQUAL: '¬=' | '^=';
+terminal NOT_LARGER: '¬>' | '^>';
+terminal NOT_TOKEN: '¬' | '^';
 
 hidden terminal WS: /\s+/;
 terminal ExecFragment: /(?<=EXEC\s*)[a-zA-Z]+\s[^;]*/i;

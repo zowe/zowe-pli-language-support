@@ -9,15 +9,13 @@
  *
  */
 
-import { type Module, inject } from "langium";
+import { DeepPartial, type Module, inject } from "langium";
 import {
   createDefaultModule,
   createDefaultSharedModule,
-  PartialLangiumSharedServices,
   type DefaultSharedModuleContext,
   type LangiumServices,
   type LangiumSharedServices,
-  type PartialLangiumServices,
 } from "langium/lsp";
 import {
   Pl1GeneratedModule,
@@ -27,7 +25,7 @@ import {
   Pl1Validator,
   registerValidationChecks,
 } from "./validation/pli-validator.js";
-import { Pl1Lexer } from "./parser/pli-lexer.js";
+import { PliLexer } from "./parser/pli-lexer.js";
 import { PliTokenBuilder } from "./parser/pli-token-builder.js";
 import { PliScopeComputation } from "./references/pli-scope-computation.js";
 import { PliDocumentValidator } from "./validation/pli-document-validator.js";
@@ -41,31 +39,34 @@ import { PliCompletionProvider } from "./lsp/pli-completion-provider.js";
 import { PliIndexManager } from "./workspace/pli-index-manager.js";
 import { PliWorkspaceManager } from "./workspace/pli-workspace-manager.js";
 import { PliDocumentUpdateHandler } from "./lsp/pli-document-update-handler.js";
+import { PliConfigStorage } from "./workspace/pli-config-storage.js";
+import { PliDocumentFactory } from "./workspace/pli-documents.js";
 
 /**
  * Declaration of custom services - add your own service classes here.
  */
-export type Pl1AddedServices = {
+export type PliAddedServices = {
+  parser: {
+    Lexer: PliLexer;
+  };
   validation: {
     Pl1Validator: Pl1Validator;
   };
+  shared: PliSharedServices;
 };
 
 /**
  * Union of Langium default services and your custom services - use this as constructor parameter
  * of custom service classes.
  */
-export type Pl1Services = LangiumServices & Pl1AddedServices;
+export type PliServices = LangiumServices & PliAddedServices;
 
 /**
  * Dependency injection module that overrides Langium default services and contributes the
  * declared custom services. The Langium defaults can be partially specified to override only
  * selected services, while the custom services must be fully specified.
  */
-export const PliModule: Module<
-  Pl1Services,
-  PartialLangiumServices & Pl1AddedServices
-> = {
+export const PliModule: Module<PliServices, DeepPartial<PliServices>> = {
   documentation: {
     DocumentationProvider: (services) => new PliDocumentationProvider(services),
   },
@@ -74,7 +75,7 @@ export const PliModule: Module<
     DocumentValidator: (services) => new PliDocumentValidator(services),
   },
   parser: {
-    Lexer: (services) => new Pl1Lexer(services),
+    Lexer: (services) => new PliLexer(services),
     TokenBuilder: () => new PliTokenBuilder(),
   },
   references: {
@@ -89,17 +90,27 @@ export const PliModule: Module<
   },
 };
 
+export type PliAddedSharedServices = {
+  workspace: {
+    PliConfigStorage: PliConfigStorage;
+  };
+};
+
+export type PliSharedServices = LangiumSharedServices & PliAddedSharedServices;
+
 export const PliSharedModule: Module<
-  LangiumSharedServices,
-  PartialLangiumSharedServices
+  PliSharedServices,
+  DeepPartial<PliSharedServices>
 > = {
   lsp: {
     NodeKindProvider: () => new PliNodeKindProvider(),
     DocumentUpdateHandler: (services) => new PliDocumentUpdateHandler(services),
   },
   workspace: {
+    LangiumDocumentFactory: (services) => new PliDocumentFactory(services),
     IndexManager: (services) => new PliIndexManager(services),
     WorkspaceManager: (services) => new PliWorkspaceManager(services),
+    PliConfigStorage: (services) => new PliConfigStorage(services),
   },
 };
 
@@ -120,7 +131,7 @@ export const PliSharedModule: Module<
  */
 export function createPliServices(context: DefaultSharedModuleContext): {
   shared: LangiumSharedServices;
-  pli: Pl1Services;
+  pli: PliServices;
 } {
   const shared = inject(
     createDefaultSharedModule(context),
