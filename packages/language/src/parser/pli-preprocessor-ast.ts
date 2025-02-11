@@ -13,8 +13,9 @@ export interface PPAssignmentStatement extends PPAstNode {
     right: PPExpression;
 }
 
-export interface PPPageDirective extends PPAstNode {
-    type: 'pageDirective';
+export interface PPDirective extends PPAstNode {
+    type: 'directive';
+    which: 'page'|'print'|'noprint'|'push'|'pop';
 }
 
 export interface PPIncludeStatement extends PPAstNode {
@@ -37,7 +38,7 @@ export interface PPFixedLiteral extends PPAstNode {
     value: number;
 }
 
-export type PPStatement = PPDeclareStatement | PPAssignmentStatement | PPPageDirective | PPSkipStatement | PPIncludeStatement;
+export type PPStatement = PPDeclareStatement | PPAssignmentStatement | PPDirective | PPSkipStatement | PPIncludeStatement;
 
 export type PPExpression = PPCharacterLiteral | PPFixedLiteral;
 

@@ -127,7 +127,7 @@ export class PliPreprocessorLexer {
                 state.advanceLines(statement.lineCount + 1);
                 break;
             }
-            case 'pageDirective':
+            case 'directive':
             case 'includeStatement': //TODO
             default: {
                 //nothing to do

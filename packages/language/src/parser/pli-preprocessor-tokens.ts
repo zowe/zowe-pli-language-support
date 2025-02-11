@@ -17,7 +17,7 @@ export const PreprocessorTokens = {
     Include: tokenType("include", /INCLUDE/yi),
     Internal: tokenType("internal", /INT(ERNAL)?/yi),
     External: tokenType("external", /EXT(ERNAL)?/yi),
-    Page: tokenType("page", /PAGE/yi),
+    Directive: tokenType("directive", /PAGE|PRINT|NOPRINT|PUSH|POP/yi),
     Skip: tokenType("skip", /SKIP/yi),
     Scan: tokenType("scan", /SCAN/yi),
     Rescan: tokenType("rescan", /RESCAN/yi),

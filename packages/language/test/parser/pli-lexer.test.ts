@@ -10,7 +10,10 @@ describe("Lexer", () => {
     beforeAll(async () => {
         const services = createPliServices(EmptyFileSystem);
         //await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
-        tokenize = (text: string) => services.pli.parser.Lexer.tokenize(text).tokens.map(t => t.image + ':' + t.tokenType.name);
+        tokenize = (text: string) => {
+            const { tokens } = services.pli.parser.Lexer.tokenize(text);
+            return tokens.map(t => t.image + ':' + t.tokenType.name);
+        };
     });
 
     test("Empty", () => {
