@@ -11,7 +11,7 @@
 
 import type { ValidationChecks } from "langium";
 import type { Pl1AstType } from "../generated/ast.js";
-import type { Pl1Services } from "../pli-module.js";
+import type { PliServices } from "../pli-module.js";
 // Remove until grammar support for dimensions work as expected
 // import { IBM1295IE_sole_bound_specified } from './messages/IBM1295IE-sole-bound-specified.js';
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./messages/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
@@ -21,7 +21,7 @@ import { IBM1747IS_Function_cannot_be_used_before_the_functions_descriptor_list_
 /**
  * Register custom validation checks.
  */
-export function registerValidationChecks(services: Pl1Services) {
+export function registerValidationChecks(services: PliServices) {
   const registry = services.validation.ValidationRegistry;
   const validator = services.validation.Pl1Validator;
   const checks: ValidationChecks<Pl1AstType> = {

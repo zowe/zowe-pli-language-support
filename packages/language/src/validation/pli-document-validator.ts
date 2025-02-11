@@ -18,7 +18,9 @@ import {
   LinkingErrorData,
   ValidationOptions,
 } from "langium";
+import { CancellationToken } from "vscode-languageserver";
 import { Diagnostic } from "vscode-languageserver-types";
+import { PliDocument } from "../workspace/pli-documents";
 
 export class PliDocumentValidator extends DefaultDocumentValidator {
   protected override processLinkingErrors(
@@ -45,5 +47,27 @@ export class PliDocumentValidator extends DefaultDocumentValidator {
         );
       }
     }
+  }
+
+  override async validateDocument(
+    document: LangiumDocument,
+    options?: ValidationOptions,
+    cancelToken?: CancellationToken,
+  ): Promise<Diagnostic[]> {
+    const diagnostics = await super.validateDocument(
+      document,
+      options,
+      cancelToken,
+    );
+    const pliDocument = document as PliDocument;
+    const compilerOptions = pliDocument.compilerOptions;
+    for (const issue of compilerOptions.issues) {
+      diagnostics.push({
+        severity: issue.severity,
+        range: issue.range,
+        message: issue.message,
+      });
+    }
+    return diagnostics;
   }
 }

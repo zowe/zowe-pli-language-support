@@ -13,7 +13,7 @@ import type {
   LanguageClientOptions,
   ServerOptions,
 } from "vscode-languageclient/node.js";
-import type * as vscode from "vscode";
+import * as vscode from "vscode";
 import * as path from "node:path";
 import { LanguageClient, TransportKind } from "vscode-languageclient/node.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
@@ -24,6 +24,15 @@ let client: LanguageClient;
 export function activate(context: vscode.ExtensionContext): void {
   BuiltinFileSystemProvider.register(context);
   client = startLanguageClient(context);
+  vscode.workspace.onDidChangeTextDocument((e) => {
+    const uriPath = e.document.uri.path;
+    const fileName = path.basename(uriPath);
+    if (fileName === "pgm_conf.json") {
+      client.sendNotification("pli/pgmConfChanged", {
+        text: e.document.getText(),
+      });
+    }
+  });
 }
 
 // This function is called when the extension is deactivated.
