@@ -3,27 +3,31 @@ import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorLexerState, PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { Pl1Services } from "../pli-module";
+import { TokenPicker } from "./pli-token-picker-optimizer";
 
 const AllPreprocessorTokens = Object.values(PreprocessorTokens);
 
 export class PliPreprocessorLexer {
     private readonly hiddenTokenTypes: TokenType[];
-    private readonly normalTokenTypes: TokenType[];
+    private readonly normalTokenTypePicker: TokenPicker;
     private readonly idTokenType: TokenType;
     private readonly vocabulary: TokenType[];
     private readonly preprocessorParser: PliPreprocessorParser;
     public readonly tokenTypeDictionary: TokenTypeDictionary;
 
     constructor(services: Pl1Services) {
+        const tokenPickerOptimizer = services.parser.TokenPickerOptimizer;
         this.preprocessorParser = services.parser.PreprocessorParser;
-        this.vocabulary = services.parser.TokenBuilder.buildTokens(services.Grammar) as TokenType[];
+        this.vocabulary = services.parser.TokenBuilder.buildTokens(services.Grammar, {caseInsensitive: true}) as TokenType[];
         this.tokenTypeDictionary = {};
         for (const token of this.vocabulary) {
             this.tokenTypeDictionary[token.name] = token;
         }
         this.hiddenTokenTypes = this.vocabulary.filter(v => v.GROUP === 'hidden' || v.GROUP === ChevrotainLexer.SKIPPED);
-        this.normalTokenTypes = [PreprocessorTokens.Percentage].concat(this.vocabulary.filter(v => !this.hiddenTokenTypes.includes(v)));
-        this.idTokenType = this.normalTokenTypes.find(t => t.name === "ID")!;
+        
+        const normalTokenTypes = [PreprocessorTokens.Percentage].concat(this.vocabulary.filter(v => !this.hiddenTokenTypes.includes(v)));
+        this.idTokenType = normalTokenTypes.find(t => t.name === "ID")!;
+        this.normalTokenTypePicker = tokenPickerOptimizer.optimize(normalTokenTypes);
     }
 
     tokenize(text: string) {
@@ -50,7 +54,11 @@ export class PliPreprocessorLexer {
 
     protected scanInput(state: PreprocessorLexerState): IToken | undefined {
         this.skipHiddenTokens(state);
-        for (const tokenType of this.normalTokenTypes) {
+        if(state.eof()) {
+            return undefined;
+        }
+        const topFrame = state.top()!;
+        for (const tokenType of this.normalTokenTypePicker.pickTokenTypes(topFrame.text.charCodeAt(topFrame.offset))) {
             const token = state.tryConsume(tokenType);
             if (!token) {
                 continue;
@@ -60,12 +68,12 @@ export class PliPreprocessorLexer {
                 if (variable.active) {
                     state.replaceVariable(variable.value?.toString() ?? "");
                     let left = this.scanInput(state);
-                    while (left && left.tokenType === PreprocessorTokens.Percentage) {
+                    //ATTENTION: PreprocessorTokens.Percentage is different from any token type within NormalTokenTypes; that is why name is checked
+                    while (left && left.tokenType.name === PreprocessorTokens.Percentage.name) {
                         left = this.scanInput(state);
                     }
                     if (left && state.canConsume(PreprocessorTokens.Percentage)) {
-                        while (state.canConsume(PreprocessorTokens.Percentage)) {
-                            state.emit("%", PreprocessorTokens.Percentage);
+                        while (state.tryConsume(PreprocessorTokens.Percentage)) {
                             const keepInMind = state;
                             const right = this.scanInput(state);
                             if (right && this.isIdentifier(right)) {

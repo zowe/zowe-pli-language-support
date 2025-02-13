@@ -32,12 +32,24 @@ importers:
 
   packages/language:
     dependencies:
+      '@chevrotain/regexp-to-ast':
+        specifier: ^11.0.3
+        version: 11.0.3
+      '@chevrotain/types':
+        specifier: ^11.0.3
+        version: 11.0.3
+      '@chevrotain/utils':
+        specifier: ^11.0.3
+        version: 11.0.3
       chevrotain:
         specifier: ^11.0.3
         version: 11.0.3
       langium:
         specifier: ~3.2.0
         version: 3.2.0
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       vscode-languageserver:
         specifier: ~9.0.1
         version: 9.0.1
@@ -45,6 +57,9 @@ importers:
         specifier: ^3.17.5
         version: 3.17.5
     devDependencies:
+      '@types/lodash-es':
+        specifier: ^4.17.12
+        version: 4.17.12
       langium-cli:
         specifier: ~3.2.0
         version: 3.2.0
@@ -391,6 +406,12 @@ packages:
 
   '@types/estree@1.0.6':
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
+
+  '@types/lodash-es@4.17.12':
+    resolution: {integrity: sha512-0NgftHUcV4v34VhXm8QBSftKVXtbkBG3ViCjs6+eJ5a6y6Mi/jiFGPc1sC7QK+9BFhWrURE3EOggmWaSxL9OzQ==}
+
+  '@types/lodash@4.17.15':
+    resolution: {integrity: sha512-w/P33JFeySuhN6JLkysYUK2gEmy9kHHFN7E8ro0tkfmlDOgxBDzWEZ/J8cWA+fHqFevpswDTFZnDx+R9lbL6xw==}
 
   '@types/node@18.19.70':
     resolution: {integrity: sha512-RE+K0+KZoEpDUbGGctnGdkrLFwi1eYKTlIHNl2Um98mUkGsm1u2Ff6Ltd0e8DktTtC98uy7rSj+hO8t/QuLoVQ==}
@@ -1833,6 +1854,12 @@ snapshots:
   '@sinclair/typebox@0.27.8': {}
 
   '@types/estree@1.0.6': {}
+
+  '@types/lodash-es@4.17.12':
+    dependencies:
+      '@types/lodash': 4.17.15
+
+  '@types/lodash@4.17.15': {}
 
   '@types/node@18.19.70':
     dependencies:
