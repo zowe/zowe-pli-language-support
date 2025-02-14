@@ -5,6 +5,9 @@ export interface MarginsProcessor {
     processMargins(text: string): string;
 }
 
+/**
+ * Helper class to replace text margins with space characters (characters 2-72 are normal program text)
+ */
 export class PliMarginsProcessor implements MarginsProcessor {
     processMargins(text: string): string {
         const lines = this.splitLines(text);

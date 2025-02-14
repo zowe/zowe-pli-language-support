@@ -1,3 +1,7 @@
+/**
+ * This file contains the abstract syntax tree for preprocessor statements and directives.
+ */
+
 export interface PPAstNode {
     type: string;
 }

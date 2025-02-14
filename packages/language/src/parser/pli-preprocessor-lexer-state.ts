@@ -1,7 +1,12 @@
 import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 
+/**
+ * This class contains the state for the preprocessor lexer in order to make the lexer a stateless service.
+ * It has two responsibilities CURRENTLY(!): 1) advancing the lexer cursor, 2) providing a interpreter state with active variables.
+ */
 export interface PreprocessorLexerState {
+    //lexer-related part
     top(): PreprocessorScan | undefined;
     eof(): boolean;
     position(): TextPosition;
@@ -11,6 +16,7 @@ export interface PreprocessorLexerState {
     canConsume(tokenType: TokenType): string | undefined;
     emit(image: string, tokenType: TokenType): IToken;
     
+    //interpreter-related part
     activate(name: string, active: boolean): void;
     hasVariable(name: string): boolean;
     getVariable(name: string): PreprocessorVariable;

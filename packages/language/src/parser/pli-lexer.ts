@@ -15,6 +15,10 @@ import { Pl1Services } from "../pli-module";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 
+/** 
+ * Lexer for PL/I language. It orchestrates a margins processor and a preprocessor. 
+ * The latter creates the desired token stream without preprocessor statements
+ */
 export class Pl1Lexer implements Lexer {
     private readonly marginsProcessor: MarginsProcessor;
     private readonly preprocessorLexer: PliPreprocessorLexer;
