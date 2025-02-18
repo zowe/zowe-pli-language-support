@@ -507,10 +507,11 @@ DeclaredItem: level=NUMBER? (element=DeclaredVariable | element='*' | '(' items+
 
 type NamedElement = DeclaredVariable | DoType3Variable | ProcedureStatement;
 type NamedType = DefineAliasStatement;
+type OrdinalType = DefineOrdinalStatement;
 
 DeclaredVariable: name=ID;
 
-DeclarationAttribute: InitialAttribute | DateAttribute | HandleAttribute | DefinedAttribute | PictureAttribute | EnvironmentAttribute | DimensionsDataAttribute | ValueAttribute | ValueListFromAttribute | ValueListAttribute | ValueRangeAttribute | ComputationDataAttribute | EntryAttribute | LikeAttribute | TypeAttribute;
+DeclarationAttribute: InitialAttribute | DateAttribute | HandleAttribute | DefinedAttribute | PictureAttribute | EnvironmentAttribute | DimensionsDataAttribute | ValueAttribute | ValueListFromAttribute | ValueListAttribute | ValueRangeAttribute | ReturnsAttribute | ComputationDataAttribute | EntryAttribute | LikeAttribute | TypeAttribute | OrdinalTypeAttribute;
 
 DateAttribute: 'DATE' ('(' pattern=STRING_TERM ')')?;
 
@@ -521,6 +522,16 @@ PictureAttribute: ('PICTURE' | 'WIDEPIC' | 'PIC') picture=STRING_TERM?;
 DimensionsDataAttribute: ('DIMENSION' | 'DIM')? dimensions=Dimensions;
 
 TypeAttribute: 'TYPE' (type=[NamedType:ID] | '(' type=[NamedType:ID] ')');
+
+// TODO @montymxb Jan. 24th, 2025: This may be too strict w/ regards to byvalue after, I suspect that we can pass much more there
+OrdinalTypeAttribute: 'ORDINAL' (type=[OrdinalType:ID] | '(' type=[OrdinalType:ID] ')') byvalue?='BYVALUE';
+
+/**
+ * Used to specify the attribute of a value that is returned (slightly different from `ReturnsOption`).
+ * Order of contained attributes is not a factor, consider it a set, so duplicates are ignored as well.
+ * All data attrs are valid + aligned/unaligned + non-data attributes BYVALUE/BYADDR, DATE, VALUELIST, and VALUERANGE (see pg. 134 lang-ref 6.1)
+ */
+ReturnsAttribute: 'RETURNS' '(' (attrs+=(ComputationDataAttribute | DateAttribute | ValueListAttribute | ValueRangeAttribute))* ')';
 
 ComputationDataAttribute: type=DataAttributeType dimensions=Dimensions?;
 
@@ -660,7 +671,7 @@ terminal fragment NUM: /([0-9][0-9_]*(\.[0-9_]+)?)|(\.[0-9_]+)/;
 terminal fragment FULL_NUM: NUM MANTISSA?;
 terminal fragment MANTISSA: /[eEsSdDqQ][-+]?[0-9]+/;
 // This terminal combines WRAPPED_NUM and normal strings
-terminal STRING_TERM: /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')([xX]|[aA]|[eE]|[xX][uU]|[xX][nN]|[bB]4|[bB]3|[bB][xX]|[bB]|[gG][xX]|[gG]|[uU][xX]|[wW][xX]|[xX]|[iI])*/;
+terminal STRING_TERM: /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')([xX][nN]|[xX][uU]|[xX]|[aA]|[eE]|[bB]4|[bB]3|[bB][xX]|[bB]|[gG][xX]|[gG]|[uU][xX]|[wW][xX]|[iI])*/;
 
 hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
 hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;

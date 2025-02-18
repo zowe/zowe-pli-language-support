@@ -11,3 +11,4 @@ out/
 **/syntaxes/pli.merged.json
 *.tsbuildinfo
 *.vsix
+**/*.DS_Store

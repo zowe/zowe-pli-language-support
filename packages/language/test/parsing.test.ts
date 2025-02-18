@@ -611,4 +611,93 @@ describe("PL/I Parsing tests", () => {
     expect(doc.parseResult.lexerErrors).toHaveLength(0);
     expect(doc.parseResult.parserErrors).toHaveLength(0);
   });
+
+  /**
+   * Verifies we can parse 'returns(ordinal `type` byvalue)` cases
+   */
+  test('parse returns ordinal by value', async () => {
+    const doc: LangiumDocument<PliProgram> = await parseStmts(`
+ define ordinal day (
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+    Sunday
+ ) prec(15);
+
+ // should be able to parse return w/ ordinal correctly
+ get_day: proc() returns(ordinal day byvalue);
+    return( Friday );
+ end get_day;
+        `);
+    expect(doc.parseResult.lexerErrors).toHaveLength(0);
+    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  });
+
+  /**
+   * Verifies that hex fixed-point constants like '010101'xn (or xu) are parsable
+   */
+  test('parses xn|xu binary fixed point constants', async () => {
+    const doc: LangiumDocument<PliProgram> = await parseStmts(`
+ MAINPR: procedure options (main);
+    dcl x fixed bin(31) init(0);
+    x = '0000ffff'xn;
+    x = '0000ffff'xu;
+ end MAINPR;
+        `);
+    expect(doc.parseResult.lexerErrors).toHaveLength(0);
+    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  });
+
+  test("External declaration with returns 'byvalue fixed type'", async () => {
+    const doc: LangiumDocument<PliProgram> = await parseStmts(`
+ dcl my_external ext('my_external')
+        entry( 
+            pointer byvalue,
+            returns ( fixed byvalue bin(31) )
+        )
+        options ( nodescriptor );
+        `);
+    expect(doc.parseResult.lexerErrors).toHaveLength(0);
+    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  });
+
+  test('Procedures w/ aligned & unaligned attributes', async () => {
+    // regular parseStmts but with a body that has a procedure w/ align & unaligned attributes
+    const doc: LangiumDocument<PliProgram> = await parseStmts(`
+ P1: proc returns( bit(4) aligned );
+ return(0);
+ end P1;
+ P2: proc returns( bit(4) unaligned );
+ return(0);
+ end P2;
+ P3: proc returns( bit(4) aligned aligned );
+ return(0);
+ end P3;
+ P4: proc returns( bit(4) unaligned unaligned );
+ return(0);
+ end P4;
+ P5: proc returns( aligned bit(4) );
+ return(0);
+ end P5;
+ P6: proc returns( unaligned bit(4) unaligned );
+ return(0);
+ end P6;
+    `);
+    expect(doc.parseResult.lexerErrors).toHaveLength(0);
+    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  });
+
+  test('align in returns attributes is valid as well', async () => {
+    const doc: LangiumDocument<PliProgram> = await parseStmts(`
+ dcl my_external ext('my_external')
+        entry( 
+            returns ( aligned byvalue bin(7) fixed )
+        );
+        `);
+    expect(doc.parseResult.lexerErrors).toHaveLength(0);
+    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  });
 });
