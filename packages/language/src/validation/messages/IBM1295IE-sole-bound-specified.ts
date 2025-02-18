@@ -17,6 +17,7 @@ import {
   isNumberLiteral,
   isUnaryExpression,
 } from "../../generated/ast";
+import { Error } from "./pli-codes";
 
 export function IBM1295IE_sole_bound_specified(
   bound: DimensionBound,
@@ -27,13 +28,14 @@ export function IBM1295IE_sole_bound_specified(
   }
   const upper = bound.bound1;
   if (isBoundNegative(upper) || isBoundZero(upper)) {
+    const code = Error.IBM1295I;
     accept(
       "error",
-      "Sole bound specified is less than 1. An upper bound of 1 is assumed.",
+      code.message,
       {
         node: bound,
         property: "bound1",
-        code: "IBM1295IE",
+        code: code.fullCode,
       },
     );
   }
