@@ -9,8 +9,8 @@
  *
  */
 
-import type { ValidationChecks } from "langium";
-import type { Pl1AstType } from "../generated/ast.js";
+import type { ValidationAcceptor, ValidationChecks } from "langium";
+import type { LabelReference, Pl1AstType } from "../generated/ast.js";
 import type { Pl1Services } from "../pli-module.js";
 // Remove until grammar support for dimensions work as expected
 // import { IBM1295IE_sole_bound_specified } from './messages/IBM1295IE-sole-bound-specified.js';
@@ -33,6 +33,9 @@ export function registerValidationChecks(services: Pl1Services) {
     ProcedureStatement: [
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
     ],
+    LabelReference: [
+      validator.checkLabelReference
+    ]
   };
   registry.register(checks, validator);
 }
@@ -40,4 +43,17 @@ export function registerValidationChecks(services: Pl1Services) {
 /**
  * Implementation of custom validations.
  */
-export class Pl1Validator {}
+export class Pl1Validator {
+  checkLabelReference(node: LabelReference, acceptor: ValidationAcceptor): void {
+    if (!node.label.ref) {
+      acceptor(
+        'error',
+        'The END statement has no matching BEGIN, DO, PACKAGE, PROC, or SELECT. This may indicate a problem with the syntax of a previous statement.',
+        {
+          code: "IBM3332IW",
+          node: node,
+          property: 'label',
+        });
+    }
+  }
+}
