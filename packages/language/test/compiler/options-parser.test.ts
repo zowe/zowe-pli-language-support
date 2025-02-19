@@ -128,13 +128,15 @@ describe("CompilerOptions translator", () => {
     const options = parseAbstractCompilerOptions("CASE(TEST)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
-    expect(issues[0].message).toBe("Expected one of 'UPPER', 'ASIS', but received 'TEST'.");
+    expect(issues[0].message).toBe(
+      "Expected one of 'UPPER', 'ASIS', but received 'TEST'.",
+    );
   });
 
   test("Produce issue for unknown compiler option", () => {
     const options = parseAbstractCompilerOptions("UNKNOWNOPTION");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
-    expect(issues[0].message).toMatch('Unknown compiler option');
+    expect(issues[0].message).toMatch("Unknown compiler option");
   });
 });

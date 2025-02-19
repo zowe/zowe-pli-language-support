@@ -160,18 +160,33 @@ function ensureType(
   value: AbstractCompilerValue,
   type: "option",
 ): asserts value is AbstractCompilerOption;
-function ensureType(value: AbstractCompilerValue, type: "option" | "plainOrString" | "string" | "plain"): void {
+function ensureType(
+  value: AbstractCompilerValue,
+  type: "option" | "plainOrString" | "string" | "plain",
+): void {
   if (isAbstractCompilerOption(value)) {
-    if (type !== 'option') {
-      throw new TranslationError(value.token, `Expected a compiler option with arguments.`, 1);
+    if (type !== "option") {
+      throw new TranslationError(
+        value.token,
+        `Expected a compiler option with arguments.`,
+        1,
+      );
     }
   } else if (isAbstractCompilerOptionText(value)) {
-    if (type !== "plain" && type !== 'plainOrString') {
-      throw new TranslationError(value.token, `Expected a plain text value.`, 1);
+    if (type !== "plain" && type !== "plainOrString") {
+      throw new TranslationError(
+        value.token,
+        `Expected a plain text value.`,
+        1,
+      );
     }
   } else if (isAbstractCompilerOptionString(value)) {
-    if (type !== "string" && type !== 'plainOrString') {
-      throw new TranslationError(value.token, `Expected a string compiler options argument.`, 1);
+    if (type !== "string" && type !== "plainOrString") {
+      throw new TranslationError(
+        value.token,
+        `Expected a string compiler options argument.`,
+        1,
+      );
     }
   }
 }
@@ -490,7 +505,11 @@ translator.rule(
   ["CURRENCY"],
   stringTranslate((options, value) => {
     if (value.value.length === 0) {
-      throw new TranslationError(value.token, "Currency character required.", 1);
+      throw new TranslationError(
+        value.token,
+        "Currency character required.",
+        1,
+      );
     } else if (value.value.length > 1) {
       throw new TranslationError(
         value.token,
