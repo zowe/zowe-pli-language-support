@@ -212,7 +212,6 @@ describe("PL/I Parsing tests", () => {
   DCL NOT_VALUE;  
   END;
   `);
-      __dumpTree(services, doc);
       expect(doc.parseResult.lexerErrors).toHaveLength(0);
       expect(doc.parseResult.parserErrors).toHaveLength(0);
     });
