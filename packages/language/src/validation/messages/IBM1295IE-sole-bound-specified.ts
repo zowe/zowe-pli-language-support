@@ -29,15 +29,11 @@ export function IBM1295IE_sole_bound_specified(
   const upper = bound.bound1;
   if (isBoundNegative(upper) || isBoundZero(upper)) {
     const code = Error.IBM1295I;
-    accept(
-      "error",
-      code.message,
-      {
-        node: bound,
-        property: "bound1",
-        code: code.fullCode,
-      },
-    );
+    accept("error", code.message, {
+      node: bound,
+      property: "bound1",
+      code: code.fullCode,
+    });
   }
 }
 

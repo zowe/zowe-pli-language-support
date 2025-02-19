@@ -615,7 +615,7 @@ describe("PL/I Parsing tests", () => {
   /**
    * Verifies we can parse 'returns(ordinal `type` byvalue)` cases
    */
-  test('parse returns ordinal by value', async () => {
+  test("parse returns ordinal by value", async () => {
     const doc: LangiumDocument<PliProgram> = await parseStmts(`
  define ordinal day (
     Monday,
@@ -639,7 +639,7 @@ describe("PL/I Parsing tests", () => {
   /**
    * Verifies that hex fixed-point constants like '010101'xn (or xu) are parsable
    */
-  test('parses xn|xu binary fixed point constants', async () => {
+  test("parses xn|xu binary fixed point constants", async () => {
     const doc: LangiumDocument<PliProgram> = await parseStmts(`
  MAINPR: procedure options (main);
     dcl x fixed bin(31) init(0);
@@ -664,7 +664,7 @@ describe("PL/I Parsing tests", () => {
     expect(doc.parseResult.parserErrors).toHaveLength(0);
   });
 
-  test('Procedures w/ aligned & unaligned attributes', async () => {
+  test("Procedures w/ aligned & unaligned attributes", async () => {
     // regular parseStmts but with a body that has a procedure w/ align & unaligned attributes
     const doc: LangiumDocument<PliProgram> = await parseStmts(`
  P1: proc returns( bit(4) aligned );
@@ -690,7 +690,7 @@ describe("PL/I Parsing tests", () => {
     expect(doc.parseResult.parserErrors).toHaveLength(0);
   });
 
-  test('align in returns attributes is valid as well', async () => {
+  test("align in returns attributes is valid as well", async () => {
     const doc: LangiumDocument<PliProgram> = await parseStmts(`
  dcl my_external ext('my_external')
         entry( 
