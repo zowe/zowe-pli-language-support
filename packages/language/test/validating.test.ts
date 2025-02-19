@@ -18,21 +18,20 @@ import { createPliServices, PliProgram } from "../src";
 import { Error, Warning } from "../src/validation/messages/pli-codes";
 
 let services: ReturnType<typeof createPliServices>;
-let parse:    ReturnType<typeof parseHelper<PliProgram>>;
+let parse: ReturnType<typeof parseHelper<PliProgram>>;
 let document: LangiumDocument<PliProgram> | undefined;
 
 beforeAll(async () => {
-    services = createPliServices(EmptyFileSystem);
-    const doParse = parseHelper<PliProgram>(services.pli);
-    parse = (input: string) => doParse(input, { validation: true });
+  services = createPliServices(EmptyFileSystem);
+  const doParse = parseHelper<PliProgram>(services.pli);
+  parse = (input: string) => doParse(input, { validation: true });
 
-    // activate the following if your linking test requires elements from a built-in library, for example
-    // await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
+  // activate the following if your linking test requires elements from a built-in library, for example
+  // await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
 });
 
 describe("Validating", () => {
-
-  test('check mismatched end label', async () => {
+  test("check mismatched end label", async () => {
     document = await parse(`
   MYPROC: PROCEDURE OPTIONS (MAIN);
   DCL TRUE BIT(1) INIT(1);
@@ -58,7 +57,6 @@ describe("Validating", () => {
     expect(document.diagnostics?.[2].code).toBe(Error.IBM1316I.fullCode);
     expect(document.diagnostics?.[2].severity).toBe(DiagnosticSeverity.Error);
   });
-
 
   //
   //     test('check no errors', async () => {
@@ -90,7 +88,6 @@ describe("Validating", () => {
   //         );
   //     });
 });
-
 
 // function checkDocumentValid(document: LangiumDocument): string | undefined {
 //     return document.parseResult.parserErrors.length && s`

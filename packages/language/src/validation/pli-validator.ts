@@ -34,9 +34,7 @@ export function registerValidationChecks(services: Pl1Services) {
     ProcedureStatement: [
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
     ],
-    LabelReference: [
-      validator.checkLabelReference
-    ]
+    LabelReference: [validator.checkLabelReference],
   };
   registry.register(checks, validator);
 }
@@ -45,32 +43,26 @@ export function registerValidationChecks(services: Pl1Services) {
  * Implementation of custom validations.
  */
 export class Pl1Validator {
-
   /**
    * Verify label references
    */
-  checkLabelReference(node: LabelReference, acceptor: ValidationAcceptor): void {
+  checkLabelReference(
+    node: LabelReference,
+    acceptor: ValidationAcceptor,
+  ): void {
     if (node.label && !node.label.ref) {
-      acceptor(
-        'warning',
-        Warning.IBM3332I.message,
-        {
-          code: Warning.IBM3332I.fullCode,
-          node,
-          property: 'label',
-        });
-
+      acceptor("warning", Warning.IBM3332I.message, {
+        code: Warning.IBM3332I.fullCode,
+        node,
+        property: "label",
+      });
 
       // add Error.IBM1316I as well
-      acceptor(
-        'error',
-        PLIError.IBM1316I.message,
-        {
-          code: PLIError.IBM1316I.fullCode,
-          node,
-          property: 'label',
-        });
-
+      acceptor("error", PLIError.IBM1316I.message, {
+        code: PLIError.IBM1316I.fullCode,
+        node,
+        property: "label",
+      });
     }
   }
 }

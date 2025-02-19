@@ -37,14 +37,14 @@ ${input}
 });
 
 describe("PL/I Parsing tests", () => {
-    test('empty program parses as valid', async () => {
-        // no parse error, but...
-        // triggers IBM1917IS on the compiler (source has no statements or all stmts are invalid)
-        // later for validation
-        const doc: LangiumDocument<PliProgram> = await parse('');
-        expect(doc.parseResult.lexerErrors).toHaveLength(0);
-        expect(doc.parseResult.parserErrors).toHaveLength(0);
-    });
+  test("empty program parses as valid", async () => {
+    // no parse error, but...
+    // triggers IBM1917IS on the compiler (source has no statements or all stmts are invalid)
+    // later for validation
+    const doc: LangiumDocument<PliProgram> = await parse("");
+    expect(doc.parseResult.lexerErrors).toHaveLength(0);
+    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  });
 
   test("empty program w/ null statement", async () => {
     const doc: LangiumDocument<PliProgram> = await parseStmts(`;`);
@@ -52,11 +52,11 @@ describe("PL/I Parsing tests", () => {
     expect(doc.parseResult.parserErrors).toHaveLength(0);
   });
 
-    test('empty program w/ null %statement', async () => {
-        const doc: LangiumDocument<PliProgram> = await parseStmts(`%;`);
-        expect(doc.parseResult.lexerErrors).toHaveLength(0);
-        expect(doc.parseResult.parserErrors).toHaveLength(0);
-    });
+  test("empty program w/ null %statement", async () => {
+    const doc: LangiumDocument<PliProgram> = await parseStmts(`%;`);
+    expect(doc.parseResult.lexerErrors).toHaveLength(0);
+    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  });
 
   test("Hello World Program", async () => {
     const doc = await parse(`
@@ -201,7 +201,7 @@ describe("PL/I Parsing tests", () => {
       expect(doc.parseResult.parserErrors).toHaveLength(0);
     });
 
-    test('Unassigned closing end is OK', async () => {
+    test("Unassigned closing end is OK", async () => {
       // validating that an 'end' which implcitly closes the prior procedure is valid
       const doc: LangiumDocument<PliProgram> = await parseStmts(`
   MYPROC: PROCEDURE OPTIONS (MAIN);
