@@ -556,6 +556,13 @@ translator.rule(["DD"], (option, options) => {
   for (let i = 0; i < option.values.length; i++) {
     const value = option.values[i];
     ensureType(value, "plain");
+    if (!/^[a-z]+$/i.test(value.value)) {
+      throw new TranslationError(
+        value.token,
+        `Invalid DD name. Expected a text containing only letters, but received '${value.value}'.`,
+        1,
+      );
+    }
     options.dd[dd[i]] = value.value;
   }
 });
@@ -795,7 +802,7 @@ translator.rule(["DEPRECATE", "DEPRECATENEXT"], (option, options) => {
     ) {
       throw new TranslationError(
         opt.token,
-        `Expected BUILTIN, ENTRY, INCLUDE, STMT or VARIABLE, but received '${opt.name}'`,
+        `Invalid DEPRECATE option. Expected one of BUILTIN, ENTRY, INCLUDE, STMT or VARIABLE, but received '${opt.name}'`,
         1,
       );
     }
