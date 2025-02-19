@@ -17,6 +17,7 @@ import type { Pl1Services } from "../pli-module.js";
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./messages/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
 import { IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute } from "./messages/IBM1388IE-NODESCRIPTOR-attribute-is-invalid-when-any-parameter-has-NONCONNECTED-attribute.js";
 import { IBM1747IS_Function_cannot_be_used_before_the_functions_descriptor_list_has_been_scanned } from "./messages/IBM1747IS-Function-cannot-be-used-before-the-functions-descriptor-list-has-been-scanned.js";
+import { Error as PLIError, Warning } from "./messages/pli-codes.js";
 
 /**
  * Register custom validation checks.
@@ -44,16 +45,32 @@ export function registerValidationChecks(services: Pl1Services) {
  * Implementation of custom validations.
  */
 export class Pl1Validator {
+
+  /**
+   * Verify label references
+   */
   checkLabelReference(node: LabelReference, acceptor: ValidationAcceptor): void {
-    if (!node.label.ref) {
+    if (node.label && !node.label.ref) {
       acceptor(
-        'error',
-        'The END statement has no matching BEGIN, DO, PACKAGE, PROC, or SELECT. This may indicate a problem with the syntax of a previous statement.',
+        'warning',
+        Warning.IBM3332I.message,
         {
-          code: "IBM3332IW",
-          node: node,
+          code: Warning.IBM3332I.fullCode,
+          node,
           property: 'label',
         });
+
+
+      // add Error.IBM1316I as well
+      acceptor(
+        'error',
+        PLIError.IBM1316I.message,
+        {
+          code: PLIError.IBM1316I.fullCode,
+          node,
+          property: 'label',
+        });
+
     }
   }
 }

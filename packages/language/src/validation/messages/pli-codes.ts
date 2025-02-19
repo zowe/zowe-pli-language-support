@@ -1053,3566 +1053,3368 @@ export const Info = {
 };
 
 export const Warning = {
-  /**
-   * This message warns that the compiler has detected a statement that can never be run
-   *  as the flow of control must always pass it by.
-   * (see page 9)
-   */
-  IBM1078I: {
-    code: "IBM1078I",
-    severity: "W",
-    message: "Statement may never be executed.",
-    fullCode: "IBM1078IW",
-  } as SimplePLICode,
-
-  /**
-   * The number of arguments should match the number of parameters in the ENTRY declaration
-   * .
-   * (see page 9)
-   */
-  IBM1079I: {
-    code: "IBM1079I",
-    severity: "W",
-    message:
-      "Too few arguments have been specified for the ENTRY  ${ENTRY name } .",
-    fullCode: "IBM1079IW",
-  } as SimplePLICode,
-
-  /**
-   * A PL\/I keyword which could form a complete statement has been used as statement
-   *  label. This usage is accepted, but a colon may have been used where a semicolon
-   *  was intended.
-   * ```pli
-   *      dcl a fixed bin(31) ext;
-   *      if a = 0 then
-   *        put skip list( 'a = 0' )
-   *      else:
-   *      a = a + 1;
-   * ```
-   * (see page 9)
-   */
-  IBM1080I: {
-    code: "IBM1080I",
-    severity: "W",
-    message: (labelname: string) =>
-      `The keyword ${labelname} , which could form a complete statement, is accepted as a label name, but a colon may have been used where a semicolon was meant.`,
-    fullCode: "IBM1080IW",
-  } as ParametricPLICode,
-
-  /**
-   * The expression in the named keyword clause should be a scalar, but an array reference
-   *  was specified.
-   * ```pli
-   *    dcl p     pointer;
-   *    dcl x     based char(10);
-   *    dcl a(10) area(1000);
-   *    allocate x in(a) set(p);
-   * ```
-   * (see page 9)
-   */
-  IBM1081I: {
-    code: "IBM1081I",
-    severity: "W",
-    message: (keyword: string) =>
-      `${keyword} expression should be scalar. Lower bounds assumed for any missing subscripts.`,
-    fullCode: "IBM1081IW",
-  } as ParametricPLICode,
-
-  /**
-   * A scalar may be passed as the argument when a structure is expected, but this require
-   *  building a \"dummy\" structure and assigning the scalar to each field in that structure
-   * .
-   * ```pli
-   *    dcl e entry( 1 2 fixed bin(31), 2 fixed
-   * bin(31) );
-   *    dcl i fixed bin(15);
-   *    call e( i );
-   * ```
-   * (see page 9)
-   */
-  IBM1082I: {
-    code: "IBM1082I",
-    severity: "W",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${entry name }  is a scalar, but its declare specifies a structure.",
-    fullCode: "IBM1082IW",
-  } as SimplePLICode,
-
-  /**
-   * GOTO statements may not jump into DO loops, and the compiler will flag any GOTO whose
-   *  target is a label constant inside a (different) DO loop. However, if a label inside
-   *  a DO loop is assigned to a label variable, then this kind of error may go undetected
-   * .
-   * (see page 9)
-   */
-  IBM1083I: {
-    code: "IBM1083I",
-    severity: "W",
-    message:
-      "Source in label assignment is inside a DO-loop, and an illegal jump into the loop may be attempted. Optimization will also be very inhibited.",
-    fullCode: "IBM1083IW",
-  } as SimplePLICode,
-
-  /**
-   * Under RULES(NOLAXMARGINS), there should be nothing but blanks after the right margin
-   * .
-   * (see page 9)
-   */
-  IBM1084I: {
-    code: "IBM1084I",
-    severity: "W",
-    message:
-      "Nonblanks after right margin are not allowed under RULES(NOLAXMARGINS).",
-    fullCode: "IBM1084IW",
-  } as SimplePLICode,
-
-  /**
-   * The indicated variable may not have been assigned or initialized a value before it
-   *  is used.
-   * (see page 9)
-   */
-  IBM1085I: {
-    code: "IBM1085I",
-    severity: "W",
-    message: (variable: string) => `${variable} may be unset when used.`,
-    fullCode: "IBM1085IW",
-  } as ParametricPLICode,
-
-  /**
-   * The indicated built-in function has an extended float argument, but since the corresponding
-   *  extended routine is not yet available, it will be evaluated using the appropriate
-   *  long routine.
-   * (see page 9)
-   */
-  IBM1086I: {
-    code: "IBM1086I",
-    severity: "W",
-    message: (builtinfunction: string) =>
-      `${builtinfunction} will be evaluated using long rather than extended routines.`,
-    fullCode: "IBM1086IW",
-  } as ParametricPLICode,
-
-  /**
-   * A value larger than HUGE(1s0) cannot be assigned to a short float. Under hexadecimal
-   *  float, the value 3.141592E+40 could be assigned to a short float, but under IEEE,
-   *  the maximum value that a short float can hold is about 3.40281E+38.
-   * (see page 10)
-   */
-  IBM1087I: {
-    code: "IBM1087I",
-    severity: "W",
-    message: (assumedvalue: string) =>
-      `FLOAT source is too big for its target. An appropriate HUGE value of ${assumedvalue} is assumed.`,
-    fullCode: "IBM1087IW",
-  } as ParametricPLICode,
-
-  /**
-   * The precision for a float literal is implied by the number of digits in its mantissa.
-   *  For instance 1e99 is implicitly FLOAT DECIMAL(1), but the value 1e99 is larger than
-   *  the largest value a FLOAT DECIMAL(1) can hold.
-   * (see page 10)
-   */
-  IBM1088I: {
-    code: "IBM1088I",
-    severity: "W",
-    message:
-      "FLOAT literal is too big for its implicit precision. The E in the exponent will be replaced by a D.",
-    fullCode: "IBM1088IW",
-  } as SimplePLICode,
-
-  /**
-   * If the TO value is equal to the maximum value that a FIXED or PICTURE variable can
-   *  hold, then a loop dominated by that variable will run endlessly unless exited inside
-   *  the loop by a LEAVE or GOTO. For example, in the first code fragment below, x can
-   *  never be bigger than 99, and the loop would be infinite. In the second code fragment
-   *  below, y can never be bigger than 32767, and the loop would be infinite.
-   * ```pli
-   *      dcl x pic'99';
-   *      do x = 1 to 99;
-   *        put skip list( x );
-   *      end;
-   *      dcl y fixed bin(15);
-   *      do y = 1 to 32767;
-   *        put skip list( y );
-   *      end;
-   * ```
-   * (see page 10)
-   */
-  IBM1089I: {
-    code: "IBM1089I",
-    severity: "W",
-    message:
-      "Control variable in DO loop cannot exceed TO value, and loop may be infinite.",
-    fullCode: "IBM1089IW",
-  } as SimplePLICode,
-
-  /**
-   * An expression contains a reference to a based variable with a constant value for
-   *  its locator qualifier. This may cause a protection exception on some systems. It
-   *  may also indicate that the variable was declared as based on NULL or SYSNULL and
-   *  that this constant value is being used as its locator qualifier.
-   * ```pli
-   *      dcl a fixed bin(31) based( null() );
-   *      a = 0;
-   * ```
-   * (see page 10)
-   */
-  IBM1090I: {
-    code: "IBM1090I",
-    severity: "W",
-    message: "Constant used as locator qualifier.",
-    fullCode: "IBM1090IW",
-  } as SimplePLICode,
-
-  /**
-   * Except in unusual circumstances, the precision in a FIXED BIN declaration should
-   *  be 7, 15, 31 or 63 if SIGNED and one greater if UNSIGNED. This message may indicate
-   *  that a declare specified, for example, FIXED BIN(8) when UNSIGNED FIXED BIN(8) was
-   *  meant.
-   * (see page 10)
-   */
-  IBM1091I: {
-    code: "IBM1091I",
-    severity: "W",
-    message: "FIXED BIN precision less than storage allows.",
-    fullCode: "IBM1091IW",
-  } as SimplePLICode,
-
-  /**
-   * Try to change the code so that it sets and tests a switch instead, or limit GOTOs
-   *  to very small modules that do not need optimization.
-   * (see page 10)
-   */
-  IBM1092I: {
-    code: "IBM1092I",
-    severity: "W",
-    message:
-      "GOTO whose target is or may be in another block severely limits optimization.",
-    fullCode: "IBM1092IW",
-  } as SimplePLICode,
-
-  /**
-   * The PLIXOPT string could not be parsed. See the cited LE message for more detail
-   * .
-   * (see page 10)
-   */
-  IBM1093I: {
-    code: "IBM1093I",
-    severity: "W",
-    message:
-      "PLIXOPT string is invalid. See related runtime message  ${message number } .",
-    fullCode: "IBM1093IW",
-  } as SimplePLICode,
-
-  /**
-   * The PLIXOPT string contains an invalid item. See the cited LE message for more detail
-   * .
-   * (see page 10)
-   */
-  IBM1094I: {
-    code: "IBM1094I",
-    severity: "W",
-    message: (option: string, messagenumber: string) =>
-      `Element ${option} in PLIXOPT is invalid. See related runtime message ${messagenumber} .`,
-    fullCode: "IBM1094IW",
-  } as ParametricPLICode,
-
-  /**
-   * The PLIXOPT string contains a run-time option which is not supported by LE. See the
-   *  cited LE message for more detail.
-   * (see page 10)
-   */
-  IBM1095I: {
-    code: "IBM1095I",
-    severity: "W",
-    message: (option: string, option2: string, messagenumber: string) =>
-      `Element ${option} in PLIXOPT has been remapped to ${option2} . See related runtime message ${messagenumber} .`,
-    fullCode: "IBM1095IW",
-  } as ParametricPLICode,
-
-  /**
-   * The SPIE and STAE options have been replaced by the TRAP option. TRAP(ON) is equivalent
-   *  to SPIE and STAE; TRAP(OFF) is equivalent to NOSPIE and NOSTAE. The combination
-   *  SPIE and NOSTAE and the combination NOSPIE and STAE are no longer supported. See
-   *  the cited LE message for more detail.
-   * (see page 11)
-   */
-  IBM1096I: {
-    code: "IBM1096I",
-    severity: "W",
-    message: (messagenumber: string) =>
-      `STAE and SPIE in PLIXOPT is not supported. See related runtime message ${messagenumber} .`,
-    fullCode: "IBM1096IW",
-  } as ParametricPLICode,
-
-  /**
-   * Generally, scalars should not be passed where arrays are expected, but in some situations,
-   *  this may be what you want.
-   * ```pli
-   *     dcl a entry( (*) fixed bin )
-   * option(nodescriptor);
-   *     call a( 0 );
-   * ```
-   * (see page 11)
-   */
-  IBM1097I: {
-    code: "IBM1097I",
-    severity: "W",
-    message: (argumentnumber: string, ENTRYname: string) =>
-      `Scalar accepted as argument number ${argumentnumber} in ENTRY reference ${ENTRYname} although parameter description specifies an array.`,
-    fullCode: "IBM1097IW",
-  } as ParametricPLICode,
-
-  /**
-   * A comma was followed by a semicolon rather than by a valid syntactical element (such
-   *  as an identifier). The comma will be ignored in order to make the semicolon valid
-   * .
-   * ```pli
-   *     dcl 1 a, 2 b fixed bin, 2 c fixed bin, ;
-   * ```
-   * (see page 11)
-   */
-  IBM1098I: {
-    code: "IBM1098I",
-    severity: "W",
-    message: "Extraneous comma at end of statement ignored.",
-    fullCode: "IBM1098IW",
-  } as SimplePLICode,
-
-  /**
-   * Under RULES(IBM), when a comparison or arithmetic operation has an operand that is
-   *  FIXED BIN and an operand that is FIXED DEC with a non-zero scale factor, then the
-   *  FIXED DEC operand will be converted to FIXED BIN. Under RULES(ANS), when a comparison
-   *  or arithmetic operation has an operand that is FIXED BIN and an operand that is
-   *  FIXED DEC with a zero scale factor, then the FIXED DEC operand will be converted
-   *  to FIXED BIN. In each case, significant digits may be lost, and if there is a fractional
-   *  part, it may not be exactly represented as binary. For instance, under RULES(IBM),
-   *  the assignment statement below will cause the target to have the value 29.19, and
-   *  in the comparison, C will be converted to FIXED BIN(31,10) and significant digits
-   *  will be lost (in fact, SIZE would be raised, but since it is disabled, this program
-   *  would be in error).
-   * ```pli
-   *      dcl a fixed dec(07,2) init(12.2);
-   *      dcl b fixed bin(31,0) init(17);
-   *      dcl c fixed dec(15,3) init(2097151);
-   *      dcl d fixed bin(31,0) init(0);
-   *      a = a + b;
-   *      if c = d then;
-   * ```
-   * (see page 11)
-   */
-  IBM1099I: {
-    code: "IBM1099I",
-    severity: "W",
-    message: (
-      sourceprecision: string,
-      sourcescale: string,
-      targetprecision: string,
-      targetscale: string,
-    ) =>
-      `FIXED DEC( ${sourceprecision} , ${sourcescale} ) operand will be converted to FIXED BIN( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
-    fullCode: "IBM1099IW",
-  } as ParametricPLICode,
-
-  /**
-   * An attribute (REDUCIBLE in the example below) has been specified in the OPTIONS clause
-   *  on a BEGIN statement, but that attribute is not valid for BEGIN blocks.
-   * ```pli
-   *      begin options( reducible );
-   * ```
-   * (see page 11)
-   */
-  IBM1100I: {
-    code: "IBM1100I",
-    severity: "W",
-    message: (attributeoption: string) =>
-      `The attribute ${attributeoption} is not valid on BEGIN blocks and is ignored.`,
-    fullCode: "IBM1100IW",
-  } as ParametricPLICode,
-
-  /**
-   * An attribute (DATAONLY in the example below) has been specified in the OPTIONS clause
-   *  on a PROCEDURE statement, but that attribute is not valid for PROCEDUREs.
-   * ```pli
-   *      a: proc options( dataonly );
-   * ```  11
-   * (see page 11)
-   */
-  IBM1101I: {
-    code: "IBM1101I",
-    severity: "W",
-    message: (optionname: string) =>
-      `${optionname} is not a known PROCEDURE attribute and is ignored.`,
-    fullCode: "IBM1101IW",
-  } as ParametricPLICode,
-
-  /**
-   * The indicated attribute is valid on PROCEDURE statements, but not on BEGIN statements
-   * .
-   * ```pli
-   *    begin recursive;
-   * ```
-   * (see page 12)
-   */
-  IBM1102I: {
-    code: "IBM1102I",
-    severity: "W",
-    message: (optionname: string) =>
-      `${optionname} is not a known BEGIN attribute and is ignored.`,
-    fullCode: "IBM1102IW",
-  } as ParametricPLICode,
-
-  /**
-   * The compiler option is not supported on this platform.
-   * ```pli
-   *    *process map;
-   * ```
-   * (see page 12)
-   */
-  IBM1103I: {
-    code: "IBM1103I",
-    severity: "W",
-    message: (optionname: string) =>
-      `${optionname} is not a supported compiler option and is ignored.`,
-    fullCode: "IBM1103IW",
-  } as ParametricPLICode,
-
-  /**
-   * Suboptions of the compiler option are not supported on this platform.
-   * ```pli
-   *    *process list(4);
-   * ```
-   * (see page 12)
-   */
-  IBM1104I: {
-    code: "IBM1104I",
-    severity: "W",
-    message: (optionname: string) =>
-      `Suboptions of the compiler option ${optionname} are not supported and are ignored.`,
-    fullCode: "IBM1104IW",
-  } as ParametricPLICode,
-
-  /**
-   * Various compiler options have limits on the size of subfields. Refer to the Programming
-   *  Guide for the limits of specific compiler options.
-   * ```pli
-   *    *process margini( '+-' );
-   * ```
-   * (see page 12)
-   */
-  IBM1105I: {
-    code: "IBM1105I",
-    severity: "W",
-    message: (optionname: string, numberofletters: string) =>
-      `A suboption of the compiler option ${optionname} is too long. It is shortened to length ${numberofletters} .`,
-    fullCode: "IBM1105IW",
-  } as ParametricPLICode,
-
-  /**
-   * Condition prefixes are not allowed on DECLARE, DEFAULT, IF, ELSE, DO, END, SELECT,
-   *  WHEN or OTHERWISE statements.
-   * ```pli
-   *      (nofofl): if (x+y) > 0 then
-   * ```
-   * (see page 12)
-   */
-  IBM1106I: {
-    code: "IBM1106I",
-    severity: "W",
-    message: (keyword: string) =>
-      `Condition prefixes on ${keyword} statements are ignored.`,
-    fullCode: "IBM1106IW",
-  } as ParametricPLICode,
-
-  /**
-   * An attribute (DATAONLY in the example below) has been specified in the OPTIONS clause
-   *  on an ENTRY statement, but that attribute is not valid for ENTRY statements.
-   * ```pli
-   *      a: entry options( dataonly );
-   * ```
-   * (see page 12)
-   */
-  IBM1107I: {
-    code: "IBM1107I",
-    severity: "W",
-    message: (optionname: string) =>
-      `${optionname} is not a known ENTRY statement attribute and is ignored.`,
-    fullCode: "IBM1107IW",
-  } as ParametricPLICode,
-
-  /**
-   * A character specified in the OR, NOT, QUOTE or NAMES compiler option is already defined
-   *  in the PL\/I character set or by another compiler option.
-   * ```pli
-   *    *process not('=');
-   *    *process not('!') or('!');
-   * ```
-   * (see page 12)
-   */
-  IBM1108I: {
-    code: "IBM1108I",
-    severity: "W",
-    message: (char: string, option: string) =>
-      `The character ${char} specified in the ${option} option is already defined and may not be redefined. The redefinition will be ignored.`,
-    fullCode: "IBM1108IW",
-  } as ParametricPLICode,
-
-  /**
-   * If you wish to display the real and imaginary parts of a complex number using different
-   *  formats, use the REAL and IMAG built-in functions and 2 format items.
-   * ```pli
-   *      put edit ( x ) ( c( e(10,6), e(10,6) ) );
-   * ```
-   * (see page 12)
-   */
-  IBM1109I: {
-    code: "IBM1109I",
-    severity: "W",
-    message: "The second argument in the C- format item will be ignored.",
-    fullCode: "IBM1109IW",
-  } as SimplePLICode,
-
-  /**
-   * Split the text into 2 lines.
-   * ```pli
-   *      %include x; %include y;
-   * ```
-   * (see page 12)
-   */
-  IBM1110I: {
-    code: "IBM1110I",
-    severity: "W",
-    message:
-      "The INCLUDE statement should be on a line by itself. The source on the line after the INCLUDE statement is ignored.",
-    fullCode: "IBM1110IW",
-  } as SimplePLICode,
-
-  /**
-   * The CHECK prefix is not part of the SAA PL\/I language.
-   * ```pli
-   *      (check): i = j + 1;
-   * ```
-   * (see page 12)
-   */
-  IBM1111I: {
-    code: "IBM1111I",
-    severity: "W",
-    message: "CHECK prefix is not supported and is ignored.",
-    fullCode: "IBM1111IW",
-  } as SimplePLICode,
-
-  /**
-   * The CHECK and PENDING conditions are not part of the SAA PL\/I language.
-   * ```pli
-   *      on check ...
-   * ```
-   * (see page 13)
-   */
-  IBM1112I: {
-    code: "IBM1112I",
-    severity: "W",
-    message: (conditionname: string) =>
-      `${conditionname} condition is not supported and is ignored.`,
-    fullCode: "IBM1112IW",
-  } as ParametricPLICode,
-
-  /**
-   * The named statement, for example the CHECK statement, is not part of the SAA PL\/I
-   *  language.
-   * (see page 13)
-   */
-  IBM1113I: {
-    code: "IBM1113I",
-    severity: "W",
-    message: (verbname: string) =>
-      `${verbname} statement is not supported and is ignored.`,
-    fullCode: "IBM1113IW",
-  } as ParametricPLICode,
-
-  /**
-   * Both operands in a comparison are constant, and consequently, the result of the comparison
-   *  is also a constant. If this comparison is the expression in an IF clause, for example,
-   *  this means that either the THEN or ELSE clause will never be executed.
-   * (see page 13)
-   */
-  IBM1114I: {
-    code: "IBM1114I",
-    severity: "W",
-    message: "Comparands are both constant.",
-    fullCode: "IBM1114IW",
-  } as SimplePLICode,
-
-  /**
-   * For an array, an INITIAL list should not contain more values than the array has elements
-   * .
-   * ```pli
-   *     dcl a init( 1, 2 ), b(5) init( (10) 0 );
-   * ```
-   * (see page 13)
-   */
-  IBM1115I: {
-    code: "IBM1115I",
-    severity: "W",
-    message: (count: string, variablename: string, arraysize: string) =>
-      `INITIAL list contains ${count} items, but the array ${variablename} contains only ${arraysize} . Excess is ignored.`,
-    fullCode: "IBM1115IW",
-  } as ParametricPLICode,
-
-  /**
-   * A comment ends in a different file than it begins. This may indicate that an end-of-comment
-   *  statement is missing.
-   * (see page 13)
-   */
-  IBM1116I: {
-    code: "IBM1116I",
-    severity: "W",
-    message: "Comment spans more than one file.",
-    fullCode: "IBM1116IW",
-  } as SimplePLICode,
-
-  /**
-   * A string ends in a different file than it begins. This may indicate that a closing
-   *  quote is missing.
-   * (see page 13)
-   */
-  IBM1117I: {
-    code: "IBM1117I",
-    severity: "W",
-    message: "String spans more than one file.",
-    fullCode: "IBM1117IW",
-  } as SimplePLICode,
-
-  /**
-   * A delimiter (for example, a blank or a comma) is required between all identifiers
-   *  and constants.
-   * ```pli
-   *      dcl 1 a, 2 b, 3c;
-   * ```
-   * (see page 13)
-   */
-  IBM1118I: {
-    code: "IBM1118I",
-    severity: "W",
-    message: (nondelimiter: string, nondelimiter2: string) =>
-      `Delimiter missing between ${nondelimiter} and ${nondelimiter2} . A blank is assumed.`,
-    fullCode: "IBM1118IW",
-  } as ParametricPLICode,
-
-  /**
-   * The control variable in the DO loop is a member of an array, a structure or a union,
-   *  and consequently, the code generated for the loop will not be optimal.
-   * (see page 13)
-   */
-  IBM1119I: {
-    code: "IBM1119I",
-    severity: "W",
-    message: (name: string) =>
-      `Code generated for DO group would be more efficient if control variable ${name} were not an aggregate member.`,
-    fullCode: "IBM1119IW",
-  } as ParametricPLICode,
-
-  /**
-   * Using one END statement to close more than one group of statements is permitted,
-   *  but it may indicate a coding error.
-   * (see page 13)
-   */
-  IBM1120I: {
-    code: "IBM1120I",
-    severity: "W",
-    message:
-      "Multiple closure of groups. END statements will be inserted to close intervening groups.",
-    fullCode: "IBM1120IW",
-  } as SimplePLICode,
-
-  /**
-   * The indicated character is missing, and there are no more characters in the source.
-   *  The missing character has been inserted by the parser in order to correct your source
-   * .
-   * (see page 13)
-   */
-  IBM1121I: {
-    code: "IBM1121I",
-    severity: "W",
-    message: (character: string) => `Missing ${character} assumed.`,
-    fullCode: "IBM1121IW",
-  } as ParametricPLICode,
-
-  /**
-   * The indicated character is missing and has been inserted by the parser in order to
-   *  correct your source.
-   * ```pli
-   *      display( 'Program starting' ;
-   * ```
-   * (see page 13)
-   */
-  IBM1122I: {
-    code: "IBM1122I",
-    severity: "W",
-    message: (character: string, character2: string) =>
-      `Missing ${character} assumed before ${character2} .`,
-    fullCode: "IBM1122IW",
-  } as ParametricPLICode,
-
-  /**
-   * Certain ENVIRONMENT options, such as RECSIZE, require suboptions.
-   * ```pli
-   *      dcl f file env( recsize );
-   * ```
-   * (see page 14)
-   */
-  IBM1123I: {
-    code: "IBM1123I",
-    severity: "W",
-    message: (optionname: string, optionname2: string) =>
-      `The ENVIRONMENT option ${optionname} has been specified without a suboption. The option ${optionname2} is ignored.`,
-    fullCode: "IBM1123IW",
-  } as ParametricPLICode,
-
-  /**
-   * Certain ENVIRONMENT options, such as CONSECUTIVE, should be specified without any
-   *  suboptions.
-   * ```pli
-   *      dcl f file env( consecutive(1) );
-   * ```
-   * (see page 14)
-   */
-  IBM1124I: {
-    code: "IBM1124I",
-    severity: "W",
-    message:
-      "A suboption has been specified for the ENVIRONMENT option  ${option name } . The suboption will be ignored.",
-    fullCode: "IBM1124IW",
-  } as SimplePLICode,
-
-  /**
-   * ENVIRONMENT options should not be repeated.
-   * ```pli
-   *      dcl f file env( consecutive consecutive );
-   * ```
-   * (see page 14)
-   */
-  IBM1125I: {
-    code: "IBM1125I",
-    severity: "W",
-    message:
-      "The ENVIRONMENT option  ${option name }  has been specified more than once.",
-    fullCode: "IBM1125IW",
-  } as SimplePLICode,
-
-  /**
-   * The suboption type is incorrect.
-   * ```pli
-   *      dcl f file env( regional(5) );
-   * ```
-   * (see page 14)
-   */
-  IBM1126I: {
-    code: "IBM1126I",
-    severity: "W",
-    message:
-      "The ENVIRONMENT option  ${option name }  has an invalid suboption. The option will be ignored.",
-    fullCode: "IBM1126IW",
-  } as SimplePLICode,
-
-  /**
-   * There is no such supported ENVIRONMENT option.
-   * ```pli
-   *      dcl f file env( unknown );
-   * ```
-   * (see page 14)
-   */
-  IBM1127I: {
-    code: "IBM1127I",
-    severity: "W",
-    message: (optionname: string) =>
-      `${optionname} is not a known ENVIRONMENT option. It will be ignored.`,
-    fullCode: "IBM1127IW",
-  } as ParametricPLICode,
-
-  /**
-   * The indicated option is valid only with LANGLVL(OS).
-   * ```pli
-   *      dcl f file env( fb );
-   * ```
-   * (see page 14)
-   */
-  IBM1128I: {
-    code: "IBM1128I",
-    severity: "W",
-    message:
-      "The ENVIRONMENT option  ${option name }  conflicts with the LANGLVL compiler option. The option will be ignored.",
-    fullCode: "IBM1128IW",
-  } as SimplePLICode,
-
-  /**
-   * An EXEC SQL or EXEC CICS statement has been found in the source program. The compiler
-   *  will ignore these statements.
-   * ```pli
-   *      exec sql ...;
-   * ```
-   * (see page 14)
-   */
-  IBM1129I: {
-    code: "IBM1129I",
-    severity: "W",
-    message: (verbname: string, processorname: string) =>
-      `${verbname} ${processorname} statement ignored up to closing semicolon.`,
-    fullCode: "IBM1129IW",
-  } as ParametricPLICode,
-
-  /**
-   * The maximum length of external names is set by the EXTNAME suboption of the LIMITS
-   *  compiler option.
-   * ```pli
-   *      dcl this_name_is_long  static external
-   * pointer;
-   * ``` 14
-   * (see page 14)
-   */
-  IBM1130I: {
-    code: "IBM1130I",
-    severity: "W",
-    message: (identifier: string, identifier2: string) =>
-      `The external name ${identifier} is too long. It will be shortened to ${identifier2} .`,
-    fullCode: "IBM1130IW",
-  } as ParametricPLICode,
-
-  /**
-   * The name specified in the EXTERNAL attribute in the EXPORTS clause overrides the
-   *  name specified in the EXTERNAL attribute on the PROCEDURE statement.
-   * ```pli
-   *      a: package exports( b ext('_B') );
-   *        b: proc  ext( 'BB' );
-   * ```
-   * (see page 15)
-   */
-  IBM1131I: {
-    code: "IBM1131I",
-    severity: "W",
-    message: (name: string) =>
-      `An EXTERNAL name specification for ${name} has been specified on its PROCEDURE statement and in the EXPORTS clause of the PACKAGE statement. The EXPORTS specification will be used.`,
-    fullCode: "IBM1131IW",
-  } as ParametricPLICode,
-
-  /**
-   * The name specified in the EXTERNAL attribute in the RESERVES clause overrides the
-   *  name specified in the EXTERNAL attribute in the DECLARE statement.
-   * ```pli
-   *      a: package reserves( b ext('_B') );
-   *        dcl b ext( 'BB' ) static ...
-   * ```
-   * (see page 15)
-   */
-  IBM1132I: {
-    code: "IBM1132I",
-    severity: "W",
-    message: (name: string) =>
-      `An EXTERNAL name specification for ${name} has been specified in its declaration and in the RESERVES clause of the PACKAGE statement. The RESERVES specification will be used.`,
-    fullCode: "IBM1132IW",
-  } as ParametricPLICode,
-
-  /**
-   * An element of a FORMAT CONSTANT array has not been defined, for example, f(2) in
-   *  the example below.
-   * ```pli
-   *      f(1): format( x(2), a );
-   *      f(3): format( x(4), a );
-   * ```
-   * (see page 15)
-   */
-  IBM1133I: {
-    code: "IBM1133I",
-    severity: "W",
-    message: (labelname: string) =>
-      `The FORMAT CONSTANT array ${labelname} is not fully initialized.`,
-    fullCode: "IBM1133IW",
-  } as ParametricPLICode,
-
-  /**
-   * The named variable defines a statement label array, but not all the elements in that
-   *  array are labels for statements in the containing procedure.
-   * ```pli
-   *      l(1): display( ... );
-   *      l(3): display( ... );
-   * ```
-   * (see page 15)
-   */
-  IBM1134I: {
-    code: "IBM1134I",
-    severity: "W",
-    message:
-      "The LABEL CONSTANT array  ${label reference }  is not fully initialized.",
-    fullCode: "IBM1134IW",
-  } as SimplePLICode,
-
-  /**
-   * An argument to one of the logical operators (or, and or not) is a constant. The result
-   *  of the operation may also be a constant. If this operation is the expression in
-   *  an IF clause, for example, this means that either the THEN or ELSE clause will never
-   *  be executed.
-   * ```pli
-   *      if a | '1'b then
-   * ```
-   * (see page 15)
-   */
-  IBM1135I: {
-    code: "IBM1135I",
-    severity: "W",
-    message: "Logical operand is constant.",
-    fullCode: "IBM1135IW",
-  } as SimplePLICode,
-
-  /**
-   * A function, for example, a PROCEDURE or ENTRY statement with the RETURNS attribute,
-   *  has been invoked in a CALL statement. The value that is returned by the function
-   *  will be discarded, but the OPTIONAL attribute should be used to indicate that this
-   *  is valid.
-   * (see page 15)
-   */
-  IBM1136I: {
-    code: "IBM1136I",
-    severity: "W",
-    message: "Function invoked as a subroutine.",
-    fullCode: "IBM1136IW",
-  } as SimplePLICode,
-
-  /**
-   * The named attribute is invalid in GENERIC description lists.
-   * ```pli
-   *      dcl g generic ( f1 when( connected ),
-   *                      f2 otherwise );
-   * ```
-   * (see page 15)
-   */
-  IBM1137I: {
-    code: "IBM1137I",
-    severity: "W",
-    message: (attribute: string) =>
-      `The attribute ${attribute} is invalid in GENERIC descriptions and will be ignored.`,
-    fullCode: "IBM1137IW",
-  } as ParametricPLICode,
-
-  /**
-   * The array will be incompletely initialized. If the named variable is part of a structure,
-   *  subsequent elements in  15 that structure with this problem will be flagged with
-   *  message 2602. This may be a programming error (in the example below, 4 should probably
-   *  have been 6) and may cause exceptions when the program is run.
-   * ```pli
-   *      dcl a(8) fixed dec init( 1, 2, (4) 0 );
-   * ```
-   * (see page 15)
-   */
-  IBM1138I: {
-    code: "IBM1138I",
-    severity: "W",
-    message: (count: string, variablename: string, arraysize: string) =>
-      `Number of items in INITIAL list is ${count} for the array ${variablename} which contains ${arraysize} elements.`,
-    fullCode: "IBM1138IW",
-  } as ParametricPLICode,
-
-  /**
-   * The %CONTROL statement must be followed by FORMAT or NOFORMAT option enclosed in
-   *  parentheses and then a semicolon.
-   * (see page 16)
-   */
-  IBM1139I: {
-    code: "IBM1139I",
-    severity: "W",
-    message: "Syntax of the CONTROL statement is incorrect.",
-    fullCode: "IBM1139IW",
-  } as SimplePLICode,
-
-  /**
-   * The LANGLVL option in the %OPTION statement must be specified as either LANGLVL(SAA)
-   *  or LANGLVL(SAA2).
-   * (see page 16)
-   */
-  IBM1140I: {
-    code: "IBM1140I",
-    severity: "W",
-    message:
-      "Syntax of the LANGLVL option in the OPTION statement is incorrect.",
-    fullCode: "IBM1140IW",
-  } as SimplePLICode,
-
-  /**
-   * The %NOPRINT statement must be followed, with optional intervening blanks, by a semicolon
-   * .
-   * (see page 16)
-   */
-  IBM1141I: {
-    code: "IBM1141I",
-    severity: "W",
-    message: "Syntax of the NOPRINT statement is incorrect.",
-    fullCode: "IBM1141IW",
-  } as SimplePLICode,
-
-  /**
-   * The %PAGE statement must be followed, with optional intervening blanks, by a semicolon
-   * .
-   * (see page 16)
-   */
-  IBM1142I: {
-    code: "IBM1142I",
-    severity: "W",
-    message: "Syntax of the PAGE statement is incorrect.",
-    fullCode: "IBM1142IW",
-  } as SimplePLICode,
-
-  /**
-   * The %PRINT statement must be followed, with optional intervening blanks, by a semicolon
-   * .
-   * (see page 16)
-   */
-  IBM1143I: {
-    code: "IBM1143I",
-    severity: "W",
-    message: "Syntax of the PRINT statement is incorrect.",
-    fullCode: "IBM1143IW",
-  } as SimplePLICode,
-
-  /**
-   * Skip amounts greater than 999 are not supported.
-   * ```pli
-   *      %skip(2000);
-   * ```
-   * (see page 16)
-   */
-  IBM1144I: {
-    code: "IBM1144I",
-    severity: "W",
-    message:
-      "Number of lines specified with SKIP must be between 0 and 999 inclusive.",
-    fullCode: "IBM1144IW",
-  } as SimplePLICode,
-
-  /**
-   * The %SKIP statement must be followed by a semicolon with optional intervening blanks
-   *  and a parenthesized integer.
-   * (see page 16)
-   */
-  IBM1145I: {
-    code: "IBM1145I",
-    severity: "W",
-    message: "Syntax of the SKIP statement is incorrect.",
-    fullCode: "IBM1145IW",
-  } as SimplePLICode,
-
-  /**
-   * The TEST option in the %OPTION statement must be specified without any suboptions
-   * .
-   * (see page 16)
-   */
-  IBM1146I: {
-    code: "IBM1146I",
-    severity: "W",
-    message: "Syntax of the TEST option in the OPTION statement is incorrect.",
-    fullCode: "IBM1146IW",
-  } as SimplePLICode,
-
-  /**
-   * The NOTEST option in the %OPTION statement must be specified without any suboptions
-   * .
-   * (see page 16)
-   */
-  IBM1147I: {
-    code: "IBM1147I",
-    severity: "W",
-    message:
-      "Syntax of the NOTEST option in the OPTION statement is incorrect.",
-    fullCode: "IBM1147IW",
-  } as SimplePLICode,
-
-  /**
-   * The %PUSH statement must be followed, with optional intervening blanks, by a semicolon
-   * .
-   * (see page 16)
-   */
-  IBM1148I: {
-    code: "IBM1148I",
-    severity: "W",
-    message: "Syntax of the PUSH statement is incorrect.",
-    fullCode: "IBM1148IW",
-  } as SimplePLICode,
-
-  /**
-   * The %POP statement must be followed, with optional intervening blanks, by a semicolon
-   * .
-   * (see page 16)
-   */
-  IBM1149I: {
-    code: "IBM1149I",
-    severity: "W",
-    message: "Syntax of the POP statement is incorrect.",
-    fullCode: "IBM1149IW",
-  } as SimplePLICode,
-
-  /**
-   * The %NOTE statement must be followed by, in parentheses, a note and an optional return
-   *  code, and then a semicolon.
-   * (see page 16)
-   */
-  IBM1150I: {
-    code: "IBM1150I",
-    severity: "W",
-    message: "Syntax of the NOTE statement is incorrect.",
-    fullCode: "IBM1150IW",
-  } as SimplePLICode,
-
-  /**
-   * The maximum FIXED BIN precision depends on the LIMITS option.
-   * (see page 16)
-   */
-  IBM1151I: {
-    code: "IBM1151I",
-    severity: "W",
-    message: (maximumvalue: string) =>
-      `FIXED BINARY precision is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1151IW",
-  } as ParametricPLICode,
-
-  /**
-   * The maximum FIXED DEC precision depends on the LIMITS option.
-   * (see page 17)
-   */
-  IBM1152I: {
-    code: "IBM1152I",
-    severity: "W",
-    message: (maximumvalue: string) =>
-      `FIXED DECIMAL precision is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1152IW",
-  } as ParametricPLICode,
-
-  /**
-   * The maximum FLOAT BIN precision is 64 on Intel, 106 on AIX and 109 on z\/OS.
-   * (see page 17)
-   */
-  IBM1153I: {
-    code: "IBM1153I",
-    severity: "W",
-    message: (maximumvalue: string) =>
-      `FLOAT BINARY precision is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1153IW",
-  } as ParametricPLICode,
-
-  /**
-   * The maximum FLOAT DEC precision is 18 on Intel, 32 on AIX and 33 on z\/OS except
-   *  for DFP which has a maximum of 34.
-   * (see page 17)
-   */
-  IBM1154I: {
-    code: "IBM1154I",
-    severity: "W",
-    message: (maximumvalue: string) =>
-      `FLOAT DECIMAL precision is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1154IW",
-  } as ParametricPLICode,
-
-  /**
-   * Some members of an aggregate referenced in an I\/O statement are noncomputational.
-   *  The computational members will be correctly processed, but the noncomputational
-   *  ones will be ignored.
-   * ```pli
-   *    dcl 1 x,
-   *          2 y ptr,
-   *          3 fixed bin(31);
-   *    put skip list(x);
-   * ```
-   * (see page 17)
-   */
-  IBM1155I: {
-    code: "IBM1155I",
-    severity: "W",
-    message: (aggregatename: string) =>
-      `The aggregate ${aggregatename} contains noncomputational values. Those values will be ignored.`,
-    fullCode: "IBM1155IW",
-  } as ParametricPLICode,
-
-  /**
-   * Under SYSTEM(CICS), SYSTEM(TSO) and SYSTEM(IMS), the arguments to the MAIN procedure
-   *  should all have type POINTER.
-   * (see page 17)
-   */
-  IBM1156I: {
-    code: "IBM1156I",
-    severity: "W",
-    message: "Arguments to MAIN PROCEDURE are not all POINTER.",
-    fullCode: "IBM1156IW",
-  } as SimplePLICode,
-
-  /**
-   * This message is used by %NOTE statements with a return code of 4.
-   * (see page 17)
-   */
-  IBM1157I: {
-    code: "IBM1157I",
-    severity: "W",
-    message: (note: string) => `${note}`,
-    fullCode: "IBM1157IW",
-  } as ParametricPLICode,
-
-  /**
-   * A closing quote or parenthesis is missing in the specification of a compiler option.
-   *  A quoted string must not cross line boundaries.
-   * (see page 17)
-   */
-  IBM1158I: {
-    code: "IBM1158I",
-    severity: "W",
-    message: (option: string, option2: string) =>
-      `A ${option} is missing in the specification of the ${option2} option. One is assumed.`,
-    fullCode: "IBM1158IW",
-  } as ParametricPLICode,
-
-  /**
-   * An invalid compiler option has been specified.
-   * (see page 17)
-   */
-  IBM1159I: {
-    code: "IBM1159I",
-    severity: "W",
-    message: (option: string) =>
-      `The string ${option} is not recognized as a valid option keyword and is ignored.`,
-    fullCode: "IBM1159IW",
-  } as ParametricPLICode,
-
-  /**
-   * Printer control characters are not supported on input source records.
-   * (see page 17)
-   */
-  IBM1160I: {
-    code: "IBM1160I",
-    severity: "W",
-    message: "The third argument to the MARGINS option is not supported.",
-    fullCode: "IBM1160IW",
-  } as SimplePLICode,
-
-  /**
-   * A suboption of a compiler option is incorrect. The suboption may be unknown or outside
-   *  the allowable range.
-   * ```pli
-   *    *process flag(q)  margins(1002);
-   * ```
-   * (see page 17)
-   */
-  IBM1161I: {
-    code: "IBM1161I",
-    severity: "W",
-    message: (suboption: string, option: string) =>
-      `The suboption ${suboption} is not valid for the ${option} compiler option.`,
-    fullCode: "IBM1161IW",
-  } as ParametricPLICode,
-
-  /**
-   * A required suboption of a compiler option is missing.
-   * ```pli
-   *    *process or;
-   * ```
-   * (see page 17)
-   */
-  IBM1162I: {
-    code: "IBM1162I",
-    severity: "W",
-    message: (suboption: string) =>
-      `A required suboption is missing for the ${suboption} option.`,
-    fullCode: "IBM1162IW",
-  } as ParametricPLICode,
-
-  /**
-   * Required suboptions of a compiler option are missing.  17
-   * ```pli
-   *    *process margins;
-   * ```
-   * (see page 17)
-   */
-  IBM1163I: {
-    code: "IBM1163I",
-    severity: "W",
-    message: (option: string) =>
-      `Required sub-fields are missing for the ${option} option. Default values are assumed.`,
-    fullCode: "IBM1163IW",
-  } as ParametricPLICode,
-
-  /**
-   * The option, for example REORDER, is accepted outside of the OPTIONS attribute, but
-   *  it should be specified within the OPTIONS attribute. This would also conform to
-   *  the ANSI standard.
-   * (see page 18)
-   */
-  IBM1164I: {
-    code: "IBM1164I",
-    severity: "W",
-    message: (optionname: string) =>
-      `${optionname} should be specified within OPTIONS, but is accepted as is.`,
-    fullCode: "IBM1164IW",
-  } as ParametricPLICode,
-
-  /**
-   * The only supported LINKAGE options are OPTLINK and SYSTEM.
-   * (see page 18)
-   */
-  IBM1165I: {
-    code: "IBM1165I",
-    severity: "W",
-    message: (optionname: string) =>
-      `The OPTIONS option ${optionname} has been specified more than once.`,
-    fullCode: "IBM1165IW",
-  } as ParametricPLICode,
-
-  /**
-   * The only supported LINKAGE suboptions are OPTLINK and SYSTEM, and the only supported
-   *  CMPAT suboptions are V1, V2, V3, and LE.
-   * (see page 18)
-   */
-  IBM1166I: {
-    code: "IBM1166I",
-    severity: "W",
-    message: (suboptionname: string, optionname: string, optionname2: string) =>
-      `${suboptionname} is not a known ${optionname} suboption. The ${optionname2} option will be ignored.`,
-    fullCode: "IBM1166IW",
-  } as ParametricPLICode,
-
-  /**
-   * The maximum number of pending %PUSH statements is 63.
-   * (see page 18)
-   */
-  IBM1167I: {
-    code: "IBM1167I",
-    severity: "W",
-    message:
-      "Maximum number of PUSH statements exceeded. The control statement is ignored.",
-    fullCode: "IBM1167IW",
-  } as SimplePLICode,
-
-  /**
-   * A %POP has been issued when no %PUSH statement are pending.
-   * (see page 18)
-   */
-  IBM1168I: {
-    code: "IBM1168I",
-    severity: "W",
-    message:
-      "No PUSH statements are in effect. The POP control statement is ignored.",
-    fullCode: "IBM1168IW",
-  } as SimplePLICode,
-
-  /**
-   * This message applies to the FIXED and FLOAT built- in functions when only one argument
-   *  is given. The precision is not set to a default, but is instead derived from the
-   *  argument. For example, if x is FLOAT BIN(21), FIXED(x) will return a FIXED BIN(21)
-   *  value.
-   * (see page 18)
-   */
-  IBM1169I: {
-    code: "IBM1169I",
-    severity: "W",
-    message: (builtinname: string) =>
-      `No precision was specified for the result of the ${builtinname} built- in function. The precision will be determined from the argument.`,
-    fullCode: "IBM1169IW",
-  } as ParametricPLICode,
-
-  /**
-   * The indicated element of the OPTIONS list is not supported.
-   * ```pli
-   *     dcl a ext entry options( nomap );
-   * ```
-   * (see page 18)
-   */
-  IBM1170I: {
-    code: "IBM1170I",
-    severity: "W",
-    message:
-      "The OPTIONS attribute  ${option attribute }  is not supported and is ignored.",
-    fullCode: "IBM1170IW",
-  } as SimplePLICode,
-
-  /**
-   * WHEN or OTHERWISE clauses are not required on SELECT statements, but their absence
-   *  may indicate a coding error.
-   * (see page 18)
-   */
-  IBM1171I: {
-    code: "IBM1171I",
-    severity: "W",
-    message: "SELECT statement contains no WHEN or OTHERWISE clauses.",
-    fullCode: "IBM1171IW",
-  } as SimplePLICode,
-
-  /**
-   * User-specified string has zero length. This can occur when OR('') has been specified
-   *  on the command line or when the backslash character is specified as the only character
-   *  in the OR string. In the latter case, the backslash character has been interpreted
-   *  as an escape character, and so the string appears to have zero length.
-   * (see page 18)
-   */
-  IBM1172I: {
-    code: "IBM1172I",
-    severity: "W",
-    message: (optionname: string) =>
-      `A zero length string has been entered for the ${optionname} option. The option is ignored.`,
-    fullCode: "IBM1172IW",
-  } as ParametricPLICode,
-
-  /**
-   * SELECT statements do not require WHEN clauses, but their absence may indicate a coding
-   *  error.
-   * (see page 18)
-   */
-  IBM1173I: {
-    code: "IBM1173I",
-    severity: "W",
-    message: "SELECT statement contains no WHEN clauses.",
-    fullCode: "IBM1173IW",
-  } as SimplePLICode,
-
-  /**
-   * The reference specified in the FROM or INTO clause may not be byte-aligned. If the
-   *  reference is indeed not byte-aligned, unpredictable results may occur.
-   * (see page 18)
-   */
-  IBM1174I: {
-    code: "IBM1174I",
-    severity: "W",
-    message:
-      "The reference in the  ${frominto clause }  clause may not be byte- aligned.",
-    fullCode: "IBM1174IW",
-  } as SimplePLICode,
-
-  /**
-   * The maximum precision for FIXED BINARY constants is specified by the FIXEDBIN suboption
-   *  of the LIMITS compiler option.
-   * (see page 19)
-   */
-  IBM1175I: {
-    code: "IBM1175I",
-    severity: "W",
-    message:
-      "FIXED BINARY constant contains too many digits. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM1175IW",
-  } as SimplePLICode,
-
-  /**
-   * The maximum precision for FIXED DECIMAL constants is specified by the FIXEDDEC suboption
-   *  of the LIMITS compiler option.
-   * (see page 19)
-   */
-  IBM1176I: {
-    code: "IBM1176I",
-    severity: "W",
-    message:
-      "FIXED DECIMAL constant contains too many digits. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM1176IW",
-  } as SimplePLICode,
-
-  /**
-   * Float binary constants are limited to 64 digits on Intel, 32 on AIX and 33 on z\/OS
-   * .
-   * (see page 19)
-   */
-  IBM1177I: {
-    code: "IBM1177I",
-    severity: "W",
-    message:
-      "Mantissa in FLOAT BINARY constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM1177IW",
-  } as SimplePLICode,
-
-  /**
-   * Float decimal constants are limited to 18 digits on Intel, 106 on AIX and 109 on
-   *  z\/OS.
-   * (see page 19)
-   */
-  IBM1178I: {
-    code: "IBM1178I",
-    severity: "W",
-    message:
-      "Mantissa in FLOAT DECIMAL constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM1178IW",
-  } as SimplePLICode,
-
-  /**
-   * The precision for a float literal is implied by the number of digits in its mantissa.
-   *  For instance 1e99 is implicitly FLOAT DECIMAL(1), but the value 1e99 is larger than
-   *  the largest value a FLOAT DECIMAL(1) can hold.
-   * (see page 19)
-   */
-  IBM1179I: {
-    code: "IBM1179I",
-    severity: "W",
-    message:
-      "FLOAT literal is too big for its implicit precision. An appropriate HUGE value is assumed.",
-    fullCode: "IBM1179IW",
-  } as SimplePLICode,
-
-  /**
-   * This message applies to the ADDR, CURRENTSTORAGE\/SIZE and STORAGE\/SIZE built-in
-   *  functions. Applying any one of these built-in functions to a variable that is not
-   *  byte-aligned may not produce the results you expect.
-   * (see page 19)
-   */
-  IBM1180I: {
-    code: "IBM1180I",
-    severity: "W",
-    message: (BUILTINname: string) =>
-      `Argument to ${BUILTINname} is not byte aligned.`,
-    fullCode: "IBM1180IW",
-  } as ParametricPLICode,
-
-  /**
-   * In the following code snippet, the WHILE clause applies only to the last DO specification,
-   *  that is only when I = 5;
-   * ```pli
-   *     do i = 1, 3, 5 while( j < 5 );
-   * ```
-   * (see page 19)
-   */
-  IBM1181I: {
-    code: "IBM1181I",
-    severity: "W",
-    message:
-      "A WHILE or UNTIL option at the end of a series of DO specifications applies only to the last specification.",
-    fullCode: "IBM1181IW",
-  } as SimplePLICode,
-
-  /**
-   * A procedure contains code that will cause it to be recursively invoked, but the procedure
-   *  was not declared with RECURSIVE attribute.
-   * ```pli
-   *     a: proc( n );
-   *        ...
-   *        if n > 0 then call a;
-   * ```
-   * (see page 19)
-   */
-  IBM1182I: {
-    code: "IBM1182I",
-    severity: "W",
-    message:
-      "Invocation of a NONRECURSIVE PROCEDURE from within that PROCEDURE is invalid. RECURSIVE attribute is assumed.",
-    fullCode: "IBM1182IW",
-  } as SimplePLICode,
-
-  /**
-   * The SIGNAL statement is ignored if the condition it would raise is disabled. Some
-   *  conditions, like SIZE, are disabled by default.
-   * ```pli
-   *     (nofofl): signal fixedoverflow;
-   * ```  19
-   * (see page 19)
-   */
-  IBM1183I: {
-    code: "IBM1183I",
-    severity: "W",
-    message: (conditionname: string) =>
-      `${conditionname} condition is disabled. Statement is ignored.`,
-    fullCode: "IBM1183IW",
-  } as ParametricPLICode,
-
-  /**
-   * The string in the INITIAL clause ('TooBig' in the example below) will be trimmed
-   *  to fit (to 'TooB').
-   * ```pli
-   *     dcl x char(4) static init('tooBig');
-   * ```
-   * (see page 20)
-   */
-  IBM1184I: {
-    code: "IBM1184I",
-    severity: "W",
-    message: (
-      stringlength: string,
-      variablename: string,
-      stringlength2: string,
-    ) =>
-      `Source with length ${stringlength} in INITIAL clause for ${variablename} has length greater than the length ${stringlength2} of that INITIAL variable.`,
-    fullCode: "IBM1184IW",
-  } as ParametricPLICode,
-
-  /**
-   * The string in the RETURNS clause ('TooBig' in the example below) will be trimmed
-   *  to fit (to 'TooB').
-   * ```pli
-   *     x: proc returns( char(4) );
-   *        ...
-   *        return( 'TooBig' );
-   * ```
-   * (see page 20)
-   */
-  IBM1185I: {
-    code: "IBM1185I",
-    severity: "W",
-    message: (stringlength: string) =>
-      `Source with length ${stringlength} in RETURN statement has length greater than that in the corresponding RETURNS attribute.`,
-    fullCode: "IBM1185IW",
-  } as ParametricPLICode,
-
-  /**
-   * The source in the assignment ('TooBig' in the example below) will be trimmed to fit
-   *  (to 'TooB').
-   * ```pli
-   *     dcl x char(4);
-   *     x = 'TooBig';
-   * ```
-   * (see page 20)
-   */
-  IBM1186I: {
-    code: "IBM1186I",
-    severity: "W",
-    message: (stringlength: string, stringlength2: string) =>
-      `Source with length ${stringlength} in string assignment has length greater than the length ${stringlength2} of the target.`,
-    fullCode: "IBM1186IW",
-  } as ParametricPLICode,
-
-  /**
-   * The source in the entry invocation ('TooBig' in the example below) will be trimmed
-   *  to fit (to 'TooB').
-   * ```pli
-   *     dcl x entry( char(4) );
-   *     call x( 'TooBig' );
-   * ```
-   * (see page 20)
-   */
-  IBM1187I: {
-    code: "IBM1187I",
-    severity: "W",
-    message: (
-      argumentnumber: string,
-      entryname: string,
-      stringlength: string,
-    ) =>
-      `Argument number ${argumentnumber} in ENTRY reference ${entryname} has length ${stringlength} which is greater than that of the corresponding parameter.`,
-    fullCode: "IBM1187IW",
-  } as ParametricPLICode,
-
-  /**
-   * The length of the string produced by concatenating two strings must not be greater
-   *  than the maximum allowed for the derived string type.
-   * (see page 20)
-   */
-  IBM1188I: {
-    code: "IBM1188I",
-    severity: "W",
-    message: "Result of concatenating two strings is too long.",
-    fullCode: "IBM1188IW",
-  } as SimplePLICode,
-
-  /**
-   * If NODESCRIPTOR is specified (or implied) for a procedure, aggregate parameters should
-   *  have the CONNECTED attribute. The CONNECTED attribute can be explicitly coded, or
-   *  it can be implied by the DEFAULT(CONNECTED) compiler option.
-   * (see page 20)
-   */
-  IBM1189I: {
-    code: "IBM1189I",
-    severity: "W",
-    message: (parametername: string) =>
-      `NODESCRIPTOR attribute conflicts with the NONCONNECTED attribute for the parameter ${parametername} . CONNECTED is assumed.`,
-    fullCode: "IBM1189IW",
-  } as ParametricPLICode,
-
-  /**
-   * The named option is not part of the PL\/I language definition as specified in the
-   *  LANGLVL compiler option.
-   * (see page 20)
-   */
-  IBM1190I: {
-    code: "IBM1190I",
-    severity: "W",
-    message: (optionname: string) =>
-      `The OPTIONS option ${optionname} conflicts with the LANGLVL compiler option. The option will be applied.`,
-    fullCode: "IBM1190IW",
-  } as ParametricPLICode,
-
-  /**
-   * When dividing a FIXED BIN(p1,0) value by a FIXED BIN(p2,0) value where 31 > p1, the
-   *  result will have the attributes FIXED BIN(p1,0). With ANSI 76, it would have the
-   *  attributes FIXED BIN(31,31-p1).
-   * (see page 20)
-   */
-  IBM1191I: {
-    code: "IBM1191I",
-    severity: "W",
-    message: "Result of FIXED BIN divide will not be scaled.",
-    fullCode: "IBM1191IW",
-  } as SimplePLICode,
-
-  /**
-   * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
-   *  WHEN clause, the code for the second WHEN clause will never be executed. This message
-   *  will be produced only if the SELECT statement is otherwise suitable for transformation
-   *  into a branch table.
-   * (see page 20)
-   */
-  IBM1192I: {
-    code: "IBM1192I",
-    severity: "W",
-    message: "WHEN clauses contain duplicate values.",
-    fullCode: "IBM1192IW",
-  } as SimplePLICode,
-
-  /**
-   * This message is produced if a block contains more statements than allowed by the
-   *  MAXSTMT compiler option. It may point to blocks that are excessively large.
-   * (see page 20)
-   */
-  IBM1193I: {
-    code: "IBM1193I",
-    severity: "W",
-    message: (statementcount: string, blockname: string) =>
-      `${statementcount} statements in block ${blockname} .`,
-    fullCode: "IBM1193IW",
-  } as ParametricPLICode,
-
-  /**
-   * A MAIN procedure should have at most one argument, except under SYSTEM(CICS) and
-   *  SYSTEM(IMS).
-   * (see page 21)
-   */
-  IBM1194I: {
-    code: "IBM1194I",
-    severity: "W",
-    message: "More than one argument to MAIN PROCEDURE.",
-    fullCode: "IBM1194IW",
-  } as SimplePLICode,
-
-  /**
-   * The argument to the MAIN procedure should be CHARACTER VARYING, except under SYSTEM(CICS),
-   *  SYSTEM(TSO) and SYSTEM(IMS).
-   * (see page 21)
-   */
-  IBM1195I: {
-    code: "IBM1195I",
-    severity: "W",
-    message: "Argument to MAIN PROCEDURE is not CHARACTER VARYING.",
-    fullCode: "IBM1195IW",
-  } as SimplePLICode,
-
-  /**
-   * Any INITIAL attribute specified for an AREA variable is ignored. The variable will,
-   *  instead, be initialized with the EMPTY built-in function.
-   * (see page 21)
-   */
-  IBM1196I: {
-    code: "IBM1196I",
-    severity: "W",
-    message: "AREA initialized with EMPTY - INITIAL attribute is ignored.",
-    fullCode: "IBM1196IW",
-  } as SimplePLICode,
-
-  /**
-   * All file conditions should be qualified with a file reference, but ENDFILE and ENDPAGE
-   *  are accepted without a file reference. SYSIN and SYSPRINT are then assumed, respectively
-   * .
-   * (see page 21)
-   */
-  IBM1197I: {
-    code: "IBM1197I",
-    severity: "W",
-    message: (filename: string) =>
-      `${filename} assumed as file condition reference.`,
-    fullCode: "IBM1197IW",
-  } as ParametricPLICode,
-
-  /**
-   * An ENTRY reference is used where the result of invoking that entry is probably meant
-   *  to be used.
-   * ```pli
-   *    dcl e1 entry returns( ptr );
-   *    dcl q  ptr based;
-   *    e1->q = null();
-   *    dcl e2 entry returns( bit(1) );
-   *    if e2 then ...
-   * ```
-   * (see page 21)
-   */
-  IBM1198I: {
-    code: "IBM1198I",
-    severity: "W",
-    message: (variablename: string) =>
-      `A null argument list is assumed for ${variablename} .`,
-    fullCode: "IBM1198IW",
-  } as ParametricPLICode,
-
-  /**
-   * The %LINE directive must be followed, with optional intervening blanks, by a parenthesis,
-   *  a line number, a comma, a file name and a closing parenthesis.
-   * ```pli
-   *    %line( 19, test.pli );
-   * ```
-   * (see page 21)
-   */
-  IBM1199I: {
-    code: "IBM1199I",
-    severity: "W",
-    message: "Syntax of the LINE directive is incorrect.",
-    fullCode: "IBM1199IW",
-  } as SimplePLICode,
-
-  /**
-   * The DATE built-in returns a two-digit year. It might be better to use the DATETIME
-   *  built-in which returns a four-digit year.
-   * (see page 21)
-   */
-  IBM1200I: {
-    code: "IBM1200I",
-    severity: "W",
-    message: "Use of DATE built-in function may cause problems.",
-    fullCode: "IBM1200IW",
-  } as SimplePLICode,
-
-  /**
-   * There is a conflict of suboptions for the LANGLVL compiler option. The SAA2 and OS
-   *  suboptions are mutually exclusive.
-   * ```pli
-   *    *process langlvl(saa2 os);
-   * ```
-   * (see page 21)
-   */
-  IBM1201I: {
-    code: "IBM1201I",
-    severity: "W",
-    message: (suboption: string, option: string) =>
-      `${suboption} conflicts with a previously specified suboption for the ${option} compiler option.`,
-    fullCode: "IBM1201IW",
-  } as ParametricPLICode,
-
-  /**
-   * The only option supported in the %OPTION statement is the LANGLVL option.
-   * (see page 21)
-   */
-  IBM1202I: {
-    code: "IBM1202I",
-    severity: "W",
-    message: "Syntax of the OPTION statement is incorrect.",
-    fullCode: "IBM1202IW",
-  } as SimplePLICode,
-
-  /**
-   * Change the invocation of PLITEST so that no argument is passed.
-   * (see page 21)
-   */
-  IBM1203I: {
-    code: "IBM1203I",
-    severity: "W",
-    message: "Argument to PLITEST is ignored.",
-    fullCode: "IBM1203IW",
-  } as SimplePLICode,
-
-  /**
-   * LABEL variables require block activation information, and hence they cannot be initialized
-   *  at compile- time. For a STATIC LABEL variable with the INITIAL attribute, if the
-   *  variable is a member of a structure or a union, a severe message will be issued.
-   *  Otherwise, its attributes will be changed to INTERNAL CONSTANT in order to eliminate
-   *  the requirement for block activation  21 information. Such a variable must be initialized
-   *  with LABEL CONSTANTs from containing blocks.
-   * (see page 21)
-   */
-  IBM1204I: {
-    code: "IBM1204I",
-    severity: "W",
-    message: "INTERNAL CONSTANT assumed for initialized STATIC LABEL.",
-    fullCode: "IBM1204IW",
-  } as SimplePLICode,
-
-  /**
-   * If two arguments of the NAMES option are specified, they must be the same length.
-   *  The second argument is the uppercase value of the first. If a character in the first
-   *  string does not have an uppercase value, use the character itself as the uppercase
-   *  value. For example:
-   * ```pli
-   *      names( '$!@' '$!@')
-   * ```
-   * (see page 22)
-   */
-  IBM1205I: {
-    code: "IBM1205I",
-    severity: "W",
-    message: (option: string) =>
-      `Arguments of the ${option} compiler option must be the same length.`,
-    fullCode: "IBM1205IW",
-  } as ParametricPLICode,
-
-  /**
-   * In an expression of the form x & y, x | y, or x ^ y, x and y should both have BIT
-   *  type.
-   * (see page 22)
-   */
-  IBM1206I: {
-    code: "IBM1206I",
-    severity: "W",
-    message: "BIT operators should be applied only to BIT operands.",
-    fullCode: "IBM1206IW",
-  } as SimplePLICode,
-
-  /**
-   * If the operand has a numeric type, the result is the length that value would have
-   *  after it was converted to string. The length of a numeric type is NOT the same as
-   *  its storage requirement.
-   * (see page 22)
-   */
-  IBM1207I: {
-    code: "IBM1207I",
-    severity: "W",
-    message: "Operand to LENGTH built-in function should have string type.",
-    fullCode: "IBM1207IW",
-  } as SimplePLICode,
-
-  /**
-   * The array will be incompletely initialized. If the named variable is part of a structure,
-   *  subsequent elements in that structure with this problem will be flagged with message
-   *  2603. An asterisk can be used as an initialization factor to initialize all the
-   *  elements with one value. In the example below, a(1) is initialized with the value
-   *  13, while the elements a(2) through a(8) are uninitialized. In contrast, all the
-   *  elements in b are initialized to 13.
-   * ```pli
-   *      dcl a(8) fixed bin init( 13 );
-   *      dcl b(8) fixed bin init( (*) 13 );
-   * ```
-   * (see page 22)
-   */
-  IBM1208I: {
-    code: "IBM1208I",
-    severity: "W",
-    message:
-      "INITIAL list for the array  ${variable name }  contains only one item.",
-    fullCode: "IBM1208IW",
-  } as SimplePLICode,
-
-  /**
-   * Since ISAM is not being simulated on the OS\/2 platform, the file will be treated
-   *  in a manner similar to VSAM KSDS. The file specified in the first declaration below
-   *  would be handled in the same manner as the file in the second declaration. Both
-   *  are treated as ORGANIZATION(INDEXED).
-   * ```pli
-   *      dcl f1 file env(indexed);
-   *      dcl f2 file env(organization(indexed));
-   * ```
-   * (see page 22)
-   */
-  IBM1209I: {
-    code: "IBM1209I",
-    severity: "W",
-    message: (filename: string) =>
-      `INDEXED environment option for file ${filename} will be treated as ORGANIZATION(INDEXED).`,
-    fullCode: "IBM1209IW",
-  } as ParametricPLICode,
-
-  /**
-   * The format width will be too small for output if the number is negative. It might
-   *  be valid if the format is being used for input.
-   * (see page 22)
-   */
-  IBM1210I: {
-    code: "IBM1210I",
-    severity: "W",
-    message: (keyword: string) =>
-      `The field width specified in the ${keyword} -format item may be too small for complete output of the data item.`,
-    fullCode: "IBM1210IW",
-  } as ParametricPLICode,
-
-  /**
-   * The source in the assignment ('TooBig' in the example below) will be trimmed to fit
-   *  (to 'TooB'). If the target is a pseudovariable, message 1186 is issued instead.
-   * ```pli
-   *     dcl x char(4);
-   *     x = 'TooBig';
-   * ```
-   * (see page 22)
-   */
-  IBM1211I: {
-    code: "IBM1211I",
-    severity: "W",
-    message: (stringlength: string, stringlength2: string, variable: string) =>
-      `Source with length ${stringlength} in string assignment has length greater than the length ${stringlength2} of the target ${variable} .`,
-    fullCode: "IBM1211IW",
-  } as ParametricPLICode,
-
-  /**
-   * A width must be specified on A format items when specified on a GET statement.
-   * ```pli
-   *      get edit(name) (a);
-   * ```
-   * (see page 22)
-   */
-  IBM1212I: {
-    code: "IBM1212I",
-    severity: "W",
-    message:
-      "The A format item requires an argument when used in GET statement. An L format item is assumed in its place.",
-    fullCode: "IBM1212IW",
-  } as SimplePLICode,
-
-  /**
-   * The named procedure is not external and is never referenced in any live code in the
-   *  compilation unit. This may represent an error (if it was supposed to be called)
-   *  or an opportunity to eliminate some dead code.
-   * (see page 22)
-   */
-  IBM1213I: {
-    code: "IBM1213I",
-    severity: "W",
-    message: (procname: string) =>
-      `The PROCEDURE ${procname} is not referenced.`,
-    fullCode: "IBM1213IW",
-  } as ParametricPLICode,
-
-  /**
-   * An argument passed BYADDR to an entry does not match the corresponding parameter
-   *  in the entry description. The address of the argument will not be passed to the
-   *  entry. Instead, the argument will be assigned to a temporary with attributes that
-   *  do match the parameter in the entry description, and the address of that temporary
-   *  will be passed to the entry. This means that if the entry alters the value of this
-   *  parameter, the alteration will not be visible in the calling routine.
-   * ```pli
-   *    dcl e entry( fixed bin(31) );
-   *    dcl i fixed bin(15);
-   *    call e( i );
-   * ```
-   * (see page 23)
-   */
-  IBM1214I: {
-    code: "IBM1214I",
-    severity: "W",
-    message: (argumentnumber: string, entryname: string) =>
-      `A dummy argument will be created for argument number ${argumentnumber} in ENTRY reference ${entryname} .`,
-    fullCode: "IBM1214IW",
-  } as ParametricPLICode,
-
-  /**
-   * It will be given the default attributes, but this may be because of an error in the
-   *  declare. For instance, in the following example, parentheses may be missing
-   * ```pli
-   *    dcl a, b fixed bin;
-   * ```
-   * (see page 23)
-   */
-  IBM1215I: {
-    code: "IBM1215I",
-    severity: "W",
-    message: (variablename: string) =>
-      `The variable ${variablename} is declared without any data attributes.`,
-    fullCode: "IBM1215IW",
-  } as ParametricPLICode,
-
-  /**
-   * It will be given the default attributes, but this may be because of an error in the
-   *  declare. For instance, in the following example, the level number on c and d should
-   *  probably be 3.
-   * ```pli
-   *    dcl a, b fixed bin;
-   *      1 a,
-   *        2 b,
-   *          2 c,
-   *          2 d;
-   * ```
-   * (see page 23)
-   */
-  IBM1216I: {
-    code: "IBM1216I",
-    severity: "W",
-    message:
-      "The structure member  ${variable name }  is declared without any data attributes. A level number may be incorrect.",
-    fullCode: "IBM1216IW",
-  } as SimplePLICode,
-
-  /**
-   * It will be given the default attributes, but this may be because of an error in the
-   *  declare. For instance, in the following example, the level number on c and d should
-   *  probably be 3.
-   * ```pli
-   *    dcl a, b fixed bin;
-   *      1 a,
-   *        2 *,
-   *          2 c,
-   *          2 d;
-   * ```
-   * (see page 23)
-   */
-  IBM1217I: {
-    code: "IBM1217I",
-    severity: "W",
-    message:
-      "An unnamed structure member is declared without any data attributes. A level number may be incorrect.",
-    fullCode: "IBM1217IW",
-  } as SimplePLICode,
-
-  /**
-   * To eliminate this message, apply the CHAR or BIT built-in function to the first argument
-   * .
-   * ```pli
-   *    dcl i fixed bin;
-   *    display( substr(i,4) );
-   * ```
-   * (see page 23)
-   */
-  IBM1218I: {
-    code: "IBM1218I",
-    severity: "W",
-    message: (BUILTINname: string) =>
-      `First argument to ${BUILTINname} built-in function should have string type.`,
-    fullCode: "IBM1218IW",
-  } as ParametricPLICode,
-
-  /**
-   * This message is not produced if the LEAVE statement specifies a label. In the following
-   *  loop, the LEAVE statement will cause only the immediately enclosing DO-group to
-   *  be exited; the loop will not be exited.
-   * ```pli
-   *    do i = 1 to n;
-   *      if a(i) > 0 then
-   *        do;
-   *          call f;
-   *          leave;
-   *        end;
-   *      else;
-   *    end;
-   * ```
-   * (see page 23)
-   */
-  IBM1219I: {
-    code: "IBM1219I",
-    severity: "W",
-    message: "LEAVE will exit noniterative DO- group.",
-    fullCode: "IBM1219IW",
-  } as SimplePLICode,
-
-  /**
-   * This message is produced when a variable is compared to a constant equal to the largest
-   *  or smallest value that the variable could assume. In the following loop, the variable
-   *  x can never be greater than 99, and hence the implied comparison executed each time
-   *  through the loop will always result in a '1'b.
-   * ```pli
-   *    dcl x pic'99';
-   *    do x = 1 to 99;
-   *    end;
-   * ```
-   * (see page 23)
-   */
-  IBM1220I: {
-    code: "IBM1220I",
-    severity: "W",
-    message: "Result of comparison is always constant.",
-    fullCode: "IBM1220IW",
-  } as SimplePLICode,
-
-  /**
-   * This message is produced if a statement uses more bytes for temporaries than allowed
-   *  by the MAXTEMP compiler option.
-   * (see page 24)
-   */
-  IBM1221I: {
-    code: "IBM1221I",
-    severity: "W",
-    message: (count: string) =>
-      `Statement uses ${count} bytes for temporaries.`,
-    fullCode: "IBM1221IW",
-  } as ParametricPLICode,
-
-  /**
-   * Comparisons involving data containing 2-digit year fields may cause problems if exactly
-   *  one of the years is later than 1999.
-   * (see page 24)
-   */
-  IBM1222I: {
-    code: "IBM1222I",
-    severity: "W",
-    message: "Comparison involving 2-digit year is problematic.",
-    fullCode: "IBM1222IW",
-  } as SimplePLICode,
-
-  /**
-   * In a comparison, if one comparand has the DATE attribute, the other should also.
-   *  If the non-date is a literal with a value that is valid for the date pattern, it
-   *  will be viewed as if it had the same DATE attribute as the date comparand. So, in
-   *  the following code, '670101' will be interpreted as if it had the DATE('YYMMDD')
-   *  attribute.
-   * ```pli
-   *     dcl x char(6) date('YYMMDD');
-   *     if x > '670101' then ...
-   * ```
-   * (see page 24)
-   */
-  IBM1223I: {
-    code: "IBM1223I",
-    severity: "W",
-    message: "Literal in comparison interpreted with DATE attribute.",
-    fullCode: "IBM1223IW",
-  } as SimplePLICode,
-
-  /**
-   * In a comparison, if one comparand has the DATE attribute, the other should also.
-   *  If the non-date is a literal with a value that is not valid for the date pattern,
-   *  the DATE attribute will be ignored. So, in the following code, the comparison will
-   *  be evaluated as if x did not have the DATE attribute.
-   * ```pli
-   *     dcl x char(6) date('YYMMDD');
-   *     if x > '' then ...
-   * ```
-   * (see page 24)
-   */
-  IBM1224I: {
-    code: "IBM1224I",
-    severity: "W",
-    message: "DATE attribute ignored in comparison with non-date literal.",
-    fullCode: "IBM1224IW",
-  } as SimplePLICode,
-
-  /**
-   * If the target in an explicit or implicit assignment has the DATE attribute, the source
-   *  should also. If it does not, the DATE attribute will be ignored. So, in the following
-   *  code, the assignment will be performed as if x did not have the DATE attribute.
-   * ```pli
-   *     dcl x char(6) date('YYMMDD');
-   *     x = '';
-   * ```
-   * (see page 24)
-   */
-  IBM1225I: {
-    code: "IBM1225I",
-    severity: "W",
-    message: "DATE attribute ignored in conversion from literal.",
-    fullCode: "IBM1225IW",
-  } as SimplePLICode,
-
-  /**
-   * Look in STDOUT to see the message issued by the compiler backend.
-   * (see page 24)
-   */
-  IBM2600I: {
-    code: "IBM2600I",
-    severity: "W",
-    message: "Compiler backend issued warning messages to STDOUT.",
-    fullCode: "IBM2600IW",
-  } as SimplePLICode,
-
-  /**
-   * The indicated character is missing and has been inserted by the parser in order to
-   *  correct your source.
-   * ```pli
-   *      xx: dcl test fixed bin;
-   * ```
-   * (see page 24)
-   */
-  IBM2601I: {
-    code: "IBM2601I",
-    severity: "W",
-    message: (character: string, character2: string) =>
-      `Missing ${character} assumed before ${character2} . DECLARE and other nonexecutable statements should not have labels.`,
-    fullCode: "IBM2601IW",
-  } as ParametricPLICode,
-
-  /**
-   * The array will be incompletely initialized. If the named variable is part of a structure,
-   *  the first element in that structure with this problem will be flagged with message
-   *  1138. This may be a programming error (in 24  the example below, 6 should probably
-   *  have been 7) and may cause exceptions when the program is run.
-   * ```pli
-   *      dcl
-   *        1 a,
-   *          2 b(8) fixed bin init( 1, (7) 29 ),
-   *          2 c(8) fixed bin init( 1, (6) 29 );
-   * ```
-   * (see page 24)
-   */
-  IBM2602I: {
-    code: "IBM2602I",
-    severity: "W",
-    message: (count: string, variablename: string, arraysize: string) =>
-      `Number of items in INITIAL list is ${count} for the array ${variablename} which contains ${arraysize} elements.`,
-    fullCode: "IBM2602IW",
-  } as ParametricPLICode,
-
-  /**
-   * The array will be incompletely initialized. If the named variable is part of a structure,
-   *  the first element in that structure with this problem will be flagged with message
-   *  1208. An asterisk can be used as an initialization factor to initialize all the
-   *  elements with one value. In the example below, b(1) and c(1) are initialized with
-   *  the value 13, while the elements b(2) through b(8) and c(2) through c(8) are uninitialized.
-   *  In contrast, all the elements in d are initialized to 13.
-   * ```pli
-   *      dcl
-   *        1 a,
-   *          2 b(8) fixed bin init( 13 ),
-   *          2 d(8) fixed bin init( 13 ),
-   *          2 e(8) fixed bin init( (*) 13 );
-   * ```
-   * (see page 25)
-   */
-  IBM2603I: {
-    code: "IBM2603I",
-    severity: "W",
-    message:
-      "INITIAL list for the array  ${variable name }  contains only one item.",
-    fullCode: "IBM2603IW",
-  } as SimplePLICode,
-
-  /**
-   * If the source in a conversion to FIXED DECIMAL is a FIXED DECIMAL or PICTURE variable
-   *  with a different precision and scale factor, and if the difference between the precisions
-   *  is not as large as the the difference between the scale factors, then significant
-   *  digits may be lost. If the SIZE condition were enabled, code would be generated
-   *  to detect any such occurrence, and this message would not be issued.
-   * ```pli
-   *      dcl a fixed dec(04) init(1009);
-   *      dcl b fixed dec(03);
-   *      b = a;
-   * ```
-   * (see page 25)
-   */
-  IBM2604I: {
-    code: "IBM2604I",
-    severity: "W",
-    message: (
-      sourceprecision: string,
-      sourcescale: string,
-      targetprecision: string,
-      targetscale: string,
-    ) =>
-      `FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
-    fullCode: "IBM2604IW",
-  } as ParametricPLICode,
-
-  /**
-   * The specified line contains an invalid ANS print control character. The valid characters
-   *  are: blank, 0, -, + and 1.
-   * (see page 25)
-   */
-  IBM2605I: {
-    code: "IBM2605I",
-    severity: "W",
-    message: "Invalid carriage control character. Blank assumed.",
-    fullCode: "IBM2605IW",
-  } as SimplePLICode,
-
-  /**
-   * If the REFER object has any other attributes, it will be converted to and from REAL
-   *  FIXED BIN(31,0) via library calls.
-   * (see page 25)
-   */
-  IBM2606I: {
-    code: "IBM2606I",
-    severity: "W",
-    message: (referencename: string) =>
-      `Code generated for the REFER object ${referencename} would be more efficient if the REFER object had the attributes REAL FIXED BIN(p,0).`,
-    fullCode: "IBM2606IW",
-  } as ParametricPLICode,
-
-  /**
-   * If the source in a conversion to FIXED DECIMAL is a PICTURE variable with a different
-   *  precision and scale factor, and if the difference between the precisions is not
-   *  as large as the the difference between the scale factors, then significant digits
-   *  may be lost. If the SIZE condition were enabled, code would be generated to detect
-   *  any such occurrence, and this message would not be issued.
-   * ```pli
-   *      dcl a pic'(4)9' init(1009);
-   *      dcl b fixed dec(03);
-   *      b = a;
-   * ```
-   * (see page 25)
-   */
-  IBM2607I: {
-    code: "IBM2607I",
-    severity: "W",
-    message: (
-      sourceprecision: string,
-      sourcescale: string,
-      targetprecision: string,
-      targetscale: string,
-    ) =>
-      `PICTURE representing FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
-    fullCode: "IBM2607IW",
-  } as ParametricPLICode,
-
-  /**
-   * If the source in a conversion to a PICTURE is a PICTURE variable with a different
-   *  precision and scale factor, and if the difference between the precisions is not
-   *  as large as the the difference between the scale factors, then significant digits
-   *  may be lost. If the SIZE condition were enabled, code would be generated to detect
-   *  any such occurrence, and this message would not be issued.
-   * ```pli
-   * ```  25
-   * ```pli
-   *      dcl a pic'(4)9' init(1009);
-   *      dcl b pic'(3)9';
-   *      b = a;
-   * ```
-   * (see page 25)
-   */
-  IBM2608I: {
-    code: "IBM2608I",
-    severity: "W",
-    message: (
-      sourceprecision: string,
-      sourcescale: string,
-      targetprecision: string,
-      targetscale: string,
-    ) =>
-      `PICTURE representing FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to PICTURE representing FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
-    fullCode: "IBM2608IW",
-  } as ParametricPLICode,
-
-  /**
-   * If a comment contains a semicolon, it may indicate that there is an earlier unintentionally
-   *  unclosed comment that is accidentally commenting out some source as in this exampl
-   * e
-   * ```pli
-   *      \/* start of unclosed comment
-   *      dcl b pic'(3)9';
-   *      \/* next comment *\/
-   * ```
-   * (see page 26)
-   */
-  IBM2609I: {
-    code: "IBM2609I",
-    severity: "W",
-    message: (linenumber: string, filenumber: string) =>
-      `Comment contains a semicolon on line ${linenumber} . ${filenumber} .`,
-    fullCode: "IBM2609IW",
-  } as ParametricPLICode,
-
-  /**
-   * This message applies to the MULTIPLY, DIVIDE, ADD, and SUBTRACT built-in functions:
-   *  if one argument to one of these functions is FIXED DEC while the other is FIXED
-   *  BIN, then the specified precision will not be interpreted as a FIXED DEC precision.
-   *  This may cause improper truncation of data. For example, the result of the following
-   *  multiply will have the attributes FIXED BIN(15), not FIXED DEC(15), and that might
-   *  cause the result to be improperly truncated.
-   * ```pli
-   *      dcl a fixed bin(31);
-   *      dcl b fixed dec(15);
-   *      b = multiply( a, 1000, 15 );
-   * ```
-   * (see page 26)
-   */
-  IBM2610I: {
-    code: "IBM2610I",
-    severity: "W",
-    message: (BUILTINname: string) =>
-      `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FIXED BIN. Compiler will not interpret precision as FIXED DEC.`,
-    fullCode: "IBM2610IW",
-  } as ParametricPLICode,
-
-  /**
-   * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
-   *  WHEN clause, the code for the second WHEN clause will never be executed. This message
-   *  will be produced only if the SELECT statement is otherwise suitable for transformation
-   *  into a branch table.
-   * (see page 26)
-   */
-  IBM2611I: {
-    code: "IBM2611I",
-    severity: "W",
-    message: (binaryvalue: string) =>
-      `The binary value ${binaryvalue} appears in more than one WHEN clause.`,
-    fullCode: "IBM2611IW",
-  } as ParametricPLICode,
-
-  /**
-   * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
-   *  WHEN clause, the code for the second WHEN clause will never be executed. This message
-   *  will be produced only if the SELECT statement is otherwise suitable for transformation
-   *  into a branch table.
-   * (see page 26)
-   */
-  IBM2612I: {
-    code: "IBM2612I",
-    severity: "W",
-    message:
-      "The character string  ${character string }  appears in more than one WHEN clause.",
-    fullCode: "IBM2612IW",
-  } as SimplePLICode,
-
-  /**
-   * The indicated variable may not have been assigned or initialized a value before it
-   *  is used as an INOUT parameter. This is problematic unless it is used only as an
-   *  OUTONLY parameter.
-   * (see page 26)
-   */
-  IBM2613I: {
-    code: "IBM2613I",
-    severity: "W",
-    message: (variable: string) =>
-      `RULES(NOLAXINOUT) violation: ${variable} is being passed as an INOUT parameter, but may be unset.`,
-    fullCode: "IBM2613IW",
-  } as ParametricPLICode,
-
-  /**
-   * This message will flag statements such as the following, where the \"equals\" is
-   *  meant to be an \"and\" or \"or\".
-   * ```pli
-   *      if ( a < b ) = ( c < d ) then
-   * ```
-   * (see page 26)
-   */
-  IBM2614I: {
-    code: "IBM2614I",
-    severity: "W",
-    message: "Both comparands are Booleans.",
-    fullCode: "IBM2614IW",
-  } as SimplePLICode,
-
-  /**
-   * DO-loops should normally be iterative, but if the DO- loop specification consists
-   *  of just one assignment, then it will always excute once and only once. A semicolon
-   *  after the DO may be missing, as in this example
-   * ```pli
-   *      do
-   *        edsaup.tprs =  ads162.tprs;
-   *        edsaup.tops =  ads162.tops;
-   *      end;
-   * ```
-   * (see page 26)
-   */
-  IBM2615I: {
-    code: "IBM2615I",
-    severity: "W",
-    message:
-      "DO-loop will always execute exactly once. A semicolon after the DO may be missing.",
-    fullCode: "IBM2615IW",
-  } as SimplePLICode,
-
-  /**
-   * If the SIZE or STG built-in function is applied to a CHAR(*) VARYING (or VARYINGZ)
-   *  parameter when there is no descriptor available, then the size of the actual storage
-   *  allocated to the variable cannot be determined and only the current size can be
-   *  returned.
-   * (see page 26)
-   */
-  IBM2616I: {
-    code: "IBM2616I",
-    severity: "W",
-    message: (variable: string) =>
-      `Size of parameter ${variable} will return the currentsize value since no descriptor is available.`,
-    fullCode: "IBM2616IW",
-  } as ParametricPLICode,
-
-  /**
-   * It is generally very unwise to pass a label to another routine. It would be good
-   *  to think about redesigning any code doing this. The compiler will issue this message
-   *  when a LABEL is passed to an ENTRY declared with OPTIONS( COBOL ) or OPTIONS( ASM
-   *  ) or OPTIONS( FORTRAN ). The only valid use of this label in the called routine
-   *  would be to pass it on to another PL\/I routine.
-   * (see page 27)
-   */
-  IBM2617I: {
-    code: "IBM2617I",
-    severity: "W",
-    message:
-      "Passing a LABEL to a non-PL/I routine is very poor coding practice and will cause the compiler to generate less than optimal code.",
-    fullCode: "IBM2617IW",
-  } as SimplePLICode,
-
-  /**
-   * A suboption of a suboption of a compiler option is incorrect. The suboption may be
-   *  unknown or outside the allowable range.
-   * ```pli
-   *    *process limits(extname(2000));
-   * ```
-   * (see page 27)
-   */
-  IBM2618I: {
-    code: "IBM2618I",
-    severity: "W",
-    message: (suboption: string, option: string, option2: string) =>
-      `The suboption ${suboption} is not valid for the suboption ${option} of the ${option2} compiler option.`,
-    fullCode: "IBM2618IW",
-  } as ParametricPLICode,
-
-  /**
-   * Changing REFER objects may not produce the expected results. For example, in the
-   *  following example, the assignment will not change any of the elements in the array
-   *  d.
-   * ```pli
-   *      dcl
-   *        1 a based(p),
-   *          2 b     fixed bin(31),
-   *          2 c     fixed bin(31),
-   *          2 d( 10 refer(c) ),
-   *            3 e   fixed bin(31),
-   *            3 f   fixed bin(31);
-   *      a = '';
-   * ```
-   * (see page 27)
-   */
-  IBM2620I: {
-    code: "IBM2620I",
-    severity: "W",
-    message:
-      "Target structure contains REFER objects. Results are undefined if the assignment changes any REFER object.",
-    fullCode: "IBM2620IW",
-  } as SimplePLICode,
-
-  /**
-   * The first statement in an ON ERROR block should usually be an ON ERROR SYSTEM statement.
-   *  This will tend to prevent an infinite loop if there is an error in the rest of the
-   *  code in the ON ERROR block.
-   * (see page 27)
-   */
-  IBM2621I: {
-    code: "IBM2621I",
-    severity: "W",
-    message:
-      "ON ERROR block does not start with ON ERROR SYSTEM. An error inside the block may lead to an infinite loop.",
-    fullCode: "IBM2621IW",
-  } as SimplePLICode,
-
-  /**
-   * If the initial value in a DO loop is set via an ENTRY, then you may get unexpected
-   *  results if that ENTRY also changes the TO or BY value. For example, in the first
-   *  loop below, the function \"first\" should not change the value of the variable \"last\".
-   *  It would be better to change this code into the form of the second loop below.
-   * ```pli
-   *      do x = first() to last;
-   *      end;
-   *      temp = first();
-   *      do x = temp to last;
-   *      end;
-   * ```
-   * (see page 27)
-   */
-  IBM2622I: {
-    code: "IBM2622I",
-    severity: "W",
-    message:
-      "ENTRY used to set the initial value in a DO loop will be invoked after any TO or BY values are set.",
-    fullCode: "IBM2622IW",
-  } as SimplePLICode,
-
-  /**
-   * Under DFP, the conversion of FLOAT DEC to FLOAT BIN requires an expensive library
-   *  call that will lead to poor performance. To avoid this, the DECIMAL built-in function
-   *  can be applied to the FIXED BIN operand. For example, it would be better to change
-   *  the first assignment statement into the form of the second below.
-   * ```pli
-   *      dcl n fixed bin(31);
-   *      dcl f float dec(16);
-   *      f = n + f;
-   *      f = dec(n) + f;
-   * ```
-   * (see page 27)
-   */
-  IBM2623I: {
-    code: "IBM2623I",
-    severity: "W",
-    message:
-      "Mixing FIXED BIN and FLOAT DEC produces a FLOAT BIN result. Under DFP, this will lead to poor performance.",
-    fullCode: "IBM2623IW",
-  } as SimplePLICode,
-
-  /**
-   * Under DFP, the conversion of FLOAT DEC to FLOAT BIN requires an expensive library
-   *  call that will lead to poor performance. To avoid this, the DECIMAL built-in function
-   *  can be applied to the BIT operand. For example, it would be better to change the
-   *  first assignment statement into the form of the second below.
-   * ```pli
-   *      dcl b bit(8);
-   *      dcl f float dec(16);
-   *      f = b + f;
-   *      f = dec(b) + f;
-   * ```
-   * (see page 27)
-   */
-  IBM2624I: {
-    code: "IBM2624I",
-    severity: "W",
-    message:
-      "Mixing BIT and FLOAT DEC produces a FLOAT BIN result.  27 Under DFP, this will lead to poor performance.",
-    fullCode: "IBM2624IW",
-  } as SimplePLICode,
-
-  /**
-   * Under DFP, the conversion of FLOAT DEC to FLOAT BIN requires an expensive library
-   *  call that will lead to poor performance.
-   * (see page 28)
-   */
-  IBM2625I: {
-    code: "IBM2625I",
-    severity: "W",
-    message:
-      "Mixing FLOAT BIN and FLOAT DEC produces a FLOAT BIN result. Under DFP, this will lead to poor performance.",
-    fullCode: "IBM2625IW",
-  } as SimplePLICode,
-
-  /**
-   * While technically valid, a SUBSTR reference with a third argument that is a constant
-   *  of zero probably represents a coding error.
-   * (see page 28)
-   */
-  IBM2626I: {
-    code: "IBM2626I",
-    severity: "W",
-    message:
-      "Use of SUBSTR with a third argument equal to 0 is somewhat pointless since the result will always be a null string.",
-    fullCode: "IBM2626IW",
-  } as SimplePLICode,
-
-  /**
-   * XMI metadata is generated for BASED structures using REFER only if their use of REFER
-   *  is \"simple\".
-   * (see page 28)
-   */
-  IBM2627I: {
-    code: "IBM2627I",
-    severity: "W",
-    message: (identifier: string) =>
-      `No metadata will be generated for the structure ${identifier} since its use of REFER is too complex.`,
-    fullCode: "IBM2627IW",
-  } as ParametricPLICode,
-
-  /**
-   * BYVALUE parameters larger than 32 bytes require too much overhead and are bad for
-   *  performance.
-   * (see page 28)
-   */
-  IBM2628I: {
-    code: "IBM2628I",
-    severity: "W",
-    message: "BYVALUE parameters should ideally be no larger than 32 bytes.",
-    fullCode: "IBM2628IW",
-  } as SimplePLICode,
-
-  /**
-   * No debug symbol information will be generated for the named variable, and hence it
-   *  cannot be referenced when using the debugger.
-   * (see page 28)
-   */
-  IBM2629I: {
-    code: "IBM2629I",
-    severity: "W",
-    message: (identifier: string) =>
-      `No debug symbol information will be generated for ${identifier} .`,
-    fullCode: "IBM2629IW",
-  } as ParametricPLICode,
-
-  /**
-   * If the scale factor for the result of an operation exceeds the precision of the result,
-   *  then unexpected fixedoverflow exceptions may occur. This can happen, for example,
-   *  when multiplying two FIXED DEC(15,8) variables under the LIMITS(FIXEDDEC(15)) option
-   *  because the result of such a multiplication would have the attributes FIXED DEC(15,16).
-   *  To eliminate this message, the PRECISION built-in function could be used to reduce
-   *  the scale factor of one of the operands or the MULTIPLY built-in function could
-   *  be used to override the default attributes for the result.
-   * (see page 28)
-   */
-  IBM2630I: {
-    code: "IBM2630I",
-    severity: "W",
-    message: (
-      operandattributes: string,
-      operandattributes2: string,
-      resultattributes: string,
-    ) =>
-      `The operands in an arithmetic operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is greater than its precision! That may lead to an overflow and unexpected results.`,
-    fullCode: "IBM2630IW",
-  } as ParametricPLICode,
-
-  /**
-   * This message applies to the MULTIPLY, DIVIDE, ADD, and SUBTRACT built-in functions:
-   *  if one argument to one of these functions is FIXED DEC while the other is FLOAT
-   *  BIN, then the specified precision will not be interpreted as a FIXED DEC precision.
-   *  This may cause improper truncation of data. For example, the result of the following
-   *  multiply will have the attributes FLOAT BIN(15), not FIXED DEC(15), and that might
-   *  cause the result to be improperly truncated.
-   * ```pli
-   *      dcl a float bin(31);
-   *      dcl b fixed dec(15);
-   *      b = multiply( a, 1000, 15 );
-   * ``` 28
-   * (see page 28)
-   */
-  IBM2631I: {
-    code: "IBM2631I",
-    severity: "W",
-    message: (BUILTINname: string) =>
-      `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FLOAT BIN. Compiler will not interpret precision as FIXED DEC.`,
-    fullCode: "IBM2631IW",
-  } as ParametricPLICode,
-
-  /**
-   * This message applies to the MULTIPLY, DIVIDE, ADD, and SUBTRACT built-in functions:
-   *  if one argument to one of these functions is FIXED DEC while the other is FLOAT
-   *  DEC, then the specified precision will not be interpreted as a FIXED DEC precision.
-   *  This may cause improper truncation of data. For example, the result of the following
-   *  multiply will have the attributes FLOAT DEC(15), not FIXED DEC(15), and that might
-   *  cause the result to be improperly truncated.
-   * ```pli
-   *      dcl a float dec(15);
-   *      dcl b fixed dec(15);
-   *      b = multiply( a, 1000, 15 );
-   * ```
-   * (see page 29)
-   */
-  IBM2632I: {
-    code: "IBM2632I",
-    severity: "W",
-    message: (BUILTINname: string) =>
-      `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FLOAT DEC. Compiler will not interpret precision as FIXED DEC.`,
-    fullCode: "IBM2632IW",
-  } as ParametricPLICode,
-
-  /**
-   * Code using such variables will work only as long as the size of the POINTER or OFFSET
-   *  variable remains the same as the size of the FIXED BIN variable.
-   * (see page 29)
-   */
-  IBM2633I: {
-    code: "IBM2633I",
-    severity: "W",
-    message:
-      "Given the support for addressing arithmetic, basing a POINTER or OFFSET on a FIXED BIN is unnecessary, and it will also fail to work properly if the size of a POINTER changes.",
-    fullCode: "IBM2633IW",
-  } as SimplePLICode,
-
-  /**
-   * Code using such variables will work only as long as the size of the POINTER or OFFSET
-   *  variable remains the same as the size of the FIXED BIN variable.
-   * (see page 29)
-   */
-  IBM2634I: {
-    code: "IBM2634I",
-    severity: "W",
-    message:
-      "Given the support for addressing arithmetic, basing a FIXED BIN on a POINTER or OFFSET is unnecessary, and it will also fail to work properly if the size of a POINTER changes.",
-    fullCode: "IBM2634IW",
-  } as SimplePLICode,
-
-  /**
-   * If the scale factor for the result of an operation is negative, then the ones digits
-   *  will be lost and that may cause problems. This can happen, for example, when dividing
-   *  a FIXED DEC(11,2) variable by a FIXED DEC(31,29) variable because the result of
-   *  such a division would have the attributes FIXED DEC(31,-7). To eliminate this message,
-   *  the PRECISION built-in function could be used to reduce the scale factor of one
-   *  of the operands or the DIVIDE built-in function could be used to override the default
-   *  attributes for the result.
-   * (see page 29)
-   */
-  IBM2635I: {
-    code: "IBM2635I",
-    severity: "W",
-    message: (
-      operandattributes: string,
-      operandattributes2: string,
-      resultattributes: string,
-    ) =>
-      `The operands in an arithmetic operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is negative! That may lead to the loss of significant digits and unexpected results.`,
-    fullCode: "IBM2635IW",
-  } as ParametricPLICode,
-
-  /**
-   * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
-   *  WHEN clause, the code for the second WHEN clause will never be executed. This message
-   *  will be produced only if the SELECT statement is otherwise suitable for transformation
-   *  into a branch table.
-   * (see page 29)
-   */
-  IBM2636I: {
-    code: "IBM2636I",
-    severity: "W",
-    message: (ordinalname: string) =>
-      `The ordinal ${ordinalname} appears in more than one WHEN clause.`,
-    fullCode: "IBM2636IW",
-  } as ParametricPLICode,
-
-  /**
-   * If an ENTRY is used as a function, it should be declared with the RETURNS attribute.
-   *  The compiler will apply the RETURNS attribute to both of the ENTRYs in this example,
-   *  but for E, the compiler will assume it will return FLOAT DEC while for M, it will
-   *  assume it will return FIXED BIN.
-   * ```pli
-   *     dcl e entry;
-   *     dcl m entry;
-   *     a = e();
-   *     a = m();
-   * ```
-   * (see page 29)
-   */
-  IBM2637I: {
-    code: "IBM2637I",
-    severity: "W",
-    message:
-      "An ENTRY invoked as a function should have the RETURNS attribute.",
-    fullCode: "IBM2637IW",
-  } as SimplePLICode,
-
-  /**
-   * This message is produced if a statement uses more intermediate language instructions.
-   *  than allowed by the MAXGEN compiler option. It may point to statements that are
-   *  excessively complex.
-   * (see page 29)
-   */
-  IBM2638I: {
-    code: "IBM2638I",
-    severity: "W",
-    message: (count: string) =>
-      `Statement used ${count} intermediate language instructions.`,
-    fullCode: "IBM2638IW",
-  } as ParametricPLICode,
-
-  /**
-   * This message is produced if a statement uses more intermediate language instructions.
-   *  than allowed by the MAXGEN compiler option. It may point to statements that are
-   *  excessively complex. This message, rather than message IBM2638, is produced under
-   *  the same situations as message IBM2638 except the STMT number option must also be
-   *  in effect.
-   * (see page 30)
-   */
-  IBM2639I: {
-    code: "IBM2639I",
-    severity: "W",
-    message: (count: string) =>
-      `Previous statement used ${count} intermediate language instructions.`,
-    fullCode: "IBM2639IW",
-  } as ParametricPLICode,
-
-  /**
-   * Changing REFER objects might cause subsequent code to fail. For example, in the following
-   *  code, the first assignment causes the second assignment to overwrite storage.
-   * ```pli
-   *      dcl
-   *        1 a based(p),
-   *          2 b     fixed bin(31),
-   *          2 c     fixed bin(31),
-   *          2 d( 10 refer(c) ),
-   *            3 e   fixed bin(31),
-   *            3 f   fixed bin(31);
-   *      allocate a;
-   *      a.c = 15;
-   *      a.f = 0;;
-   * ```
-   * (see page 30)
-   */
-  IBM2640I: {
-    code: "IBM2640I",
-    severity: "W",
-    message:
-      "Target is a REFER object. Results are undefined if an assignment changes a REFER object.",
-    fullCode: "IBM2640IW",
-  } as SimplePLICode,
-
-  /**
-   * A suboption of a compiler option has been incorrectly specified. It must be followed
-   *  by a left parenthesis and then a (possibly empty) list of items and a closing right
-   *  parenthesis.
-   * ```pli
-   *    *process deprecate(builtin);
-   * ```
-   * (see page 30)
-   */
-  IBM2641I: {
-    code: "IBM2641I",
-    severity: "W",
-    message: (option: string, option2: string) =>
-      `The suboption ${option} of the ${option2} compiler option must be followed by a (possibly empty) parenthesized list.`,
-    fullCode: "IBM2641IW",
-  } as ParametricPLICode,
-
-  /**
-   * Specifying OPTIONS(REENTRANT) on a PROCEDURE or BEGIN block has no effect on the
-   *  generated code. Your code will be reentrant only if it does not alter any STATIC
-   *  variables. You can use the DEFAULT(NONASGN) compiler option to force the compiler
-   *  to flag assignments to STATIC variables.
-   * (see page 30)
-   */
-  IBM2642I: {
-    code: "IBM2642I",
-    severity: "W",
-    message: "OPTIONS(REENTRANT) is ignored.",
-    fullCode: "IBM2642IW",
-  } as SimplePLICode,
-
-  /**
-   * The named built-in function was specified in the BUILTIN suboption of the DEPRECATENEXT
-   *  option, and so any explicit or contextual declaration of it is flagged.
-   * (see page 30)
-   */
-  IBM2643I: {
-    code: "IBM2643I",
-    severity: "W",
-    message: (builtin: string) =>
-      `The built-in function ${builtin} will be deprecated.`,
-    fullCode: "IBM2643IW",
-  } as ParametricPLICode,
-
-  /**
-   * The named INCLUDE file was specified in the INCLUDE suboption of the DEPRECATENEXT
-   *  option, and so any attempt to include it is flagged.
-   * (see page 30)
-   */
-  IBM2644I: {
-    code: "IBM2644I",
-    severity: "W",
-    message: (filename: string) =>
-      `The INCLUDE file ${filename} will be deprecated.`,
-    fullCode: "IBM2644IW",
-  } as ParametricPLICode,
-
-  /**
-   * The named ENTRY was specified in the ENTRY suboption of the DEPRECATENEXT option,
-   *  and so any explicit or contextual declaration of it is flagged.
-   * (see page 30)
-   */
-  IBM2645I: {
-    code: "IBM2645I",
-    severity: "W",
-    message: (entryname: string) =>
-      `The ENTRY named ${entryname} will be deprecated.`,
-    fullCode: "IBM2645IW",
-  } as ParametricPLICode,
-
-  /**
-   * The named VARIABLE was specified in the VARIABLE suboption of the DEPRECATENEXT option,
-   *  and so any explicit or contextual declaration of it is flagged.
-   * (see page 30)
-   */
-  IBM2646I: {
-    code: "IBM2646I",
-    severity: "W",
-    message: (variable: string) =>
-      `The VARIABLE named ${variable} will be deprecated.`,
-    fullCode: "IBM2646IW",
-  } as ParametricPLICode,
-
-  /**
-   * The named statement was specified in the STMT suboption of the DEPRECATENEXT option,
-   *  and so any use of that statement is flagged.
-   * (see page 30)
-   */
-  IBM2647I: {
-    code: "IBM2647I",
-    severity: "W",
-    message: (statementname: string) =>
-      `The ${statementname} statement will be deprecated.`,
-    fullCode: "IBM2647IW",
-  } as ParametricPLICode,
-
-  /**
-   * Change the declaration to STATIC, or remove the INITIAL items and copy the INITIAL
-   *  items from a STATIC variable.
-   * (see page 30)
-   */
-  IBM2648I: {
-    code: "IBM2648I",
-    severity: "W",
-    message: (count: string) => `Declaration contains ${count} INITIAL items.`,
-    fullCode: "IBM2648IW",
-  } as ParametricPLICode,
-
-  /**
-   * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
-   *  produced only if the INLIST function is otherwise suitable for transformation into
-   *  a branch table.
-   * (see page 30)
-   */
-  IBM2649I: {
-    code: "IBM2649I",
-    severity: "W",
-    message: (binaryvalue: string) =>
-      `The binary value ${binaryvalue} appears more than once in the INLIST argument set.`,
-    fullCode: "IBM2649IW",
-  } as ParametricPLICode,
-
-  /**
-   * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
-   *  produced only if the INLIST function is otherwise suitable for transformation into
-   *  a branch table.
-   * (see page 31)
-   */
-  IBM2650I: {
-    code: "IBM2650I",
-    severity: "W",
-    message: (ordinalname: string) =>
-      `The ordinal ${ordinalname} appears more than once in the INLIST argument set.`,
-    fullCode: "IBM2650IW",
-  } as ParametricPLICode,
-
-  /**
-   * This message is produced if a block contains more branches than allowed by the MAXBRANCH
-   *  compiler option. It may point to blocks that are excessively complex.
-   * (see page 31)
-   */
-  IBM2651I: {
-    code: "IBM2651I",
-    severity: "W",
-    message: (blockname: string, count: string) =>
-      `Block ${blockname} contains ${count} branches.`,
-    fullCode: "IBM2651IW",
-  } as ParametricPLICode,
-
-  /**
-   * In the statement REINIT x, x should contain some element with an INITIAL attribute.
-   *  If not, no code will be generated for the statement.
-   * (see page 31)
-   */
-  IBM2652I: {
-    code: "IBM2652I",
-    severity: "W",
-    message: "REINIT reference contains no element with an INITIAL attribute.",
-    fullCode: "IBM2652IW",
-  } as SimplePLICode,
-
-  /**
-   * For example, rather than specifying PP(SQL(VERSION(AUTO))), specify PP(SQL('VERSION(AUTO)'))
-   * .
-   * (see page 31)
-   */
-  IBM2653I: {
-    code: "IBM2653I",
-    severity: "W",
-    message:
-      "The list of preprocessor options must be enclosed in quotation marks.",
-    fullCode: "IBM2653IW",
-  } as SimplePLICode,
-
-  /**
-   * The INITIAL attribute for BASED has an effect only if the BASED variable is used
-   *  in an ALLOCATE statement. But for code such as the following, it has no effect on
-   *  either the variable A or B.
-   * ```pli
-   *      dcl a fixed bin(31);
-   *      dcl b bit(32) based(addr(a)) init(''b);
-   * ```
-   * (see page 31)
-   */
-  IBM2654I: {
-    code: "IBM2654I",
-    severity: "W",
-    message:
-      "INITIAL attribute for BASED on ADDR has no effect on the base variable.",
-    fullCode: "IBM2654IW",
-  } as SimplePLICode,
-
-  /**
-   * If the 2 strings in the IBMZIOP module are equal, then different values for the options
-   *  specified there are not allowed in the +DD options files, the invocation parameter,
-   *  the options environment variable or the PROCESS statements. The conflicting options
-   *  will be ignored.
-   * (see page 31)
-   */
-  IBM2655I: {
-    code: "IBM2655I",
-    severity: "W",
-    message: "Some options conflict with the non-overridable options.",
-    fullCode: "IBM2655IW",
-  } as SimplePLICode,
-
-  /**
-   * In the following example, DEFBUF does not overlay the first 10 bytes of BUFFER. Instead,
-   *  each array element of DEFBUF overlays the first byte of the first byte of the corresponding
-   *  array element of BUFFER.
-   * ```pli
-   *      DCL BUFFER(10)      CHAR (300);
-   *      DCL DEFBUF(10)      CHAR(1) DEF BUFFER;
-   * ```
-   * (see page 31)
-   */
-  IBM2656I: {
-    code: "IBM2656I",
-    severity: "W",
-    message:
-      "Simple defining applies to  ${variable name } . If string-overlay defining is intended, then add POS(1) to its declaration.",
-    fullCode: "IBM2656IW",
-  } as SimplePLICode,
-
-  /**
-   * This is probably a coding error.
-   * (see page 31)
-   */
-  IBM2657I: {
-    code: "IBM2657I",
-    severity: "W",
-    message: "Both logical AND operands are identical.",
-    fullCode: "IBM2657IW",
-  } as SimplePLICode,
-
-  /**
-   * This is probably a coding error.
-   * (see page 31)
-   */
-  IBM2658I: {
-    code: "IBM2658I",
-    severity: "W",
-    message: "Both logical OR operands are identical.",
-    fullCode: "IBM2658IW",
-  } as SimplePLICode,
-
-  /**
-   * If an AUTOMATIC or STATIC structure consists entirely of scalar fields all of which
-   *  have the INITIAL attribute and none of which have their address taken, then the
-   *  compiler could probably generate much better code if all the INITIAL keywords were
-   *  change to VALUE keywords. If the STATIC or AUTOMATIC attribute is  31 explicitly
-   *  specified, it would also have to be removed from the declare.
-   * (see page 31)
-   */
-  IBM2659I: {
-    code: "IBM2659I",
-    severity: "W",
-    message: (variablename: string) =>
-      `Generated code would be better if all the INITIAL attributes in the declare for ${variablename} were changed to VALUE.`,
-    fullCode: "IBM2659IW",
-  } as ParametricPLICode,
-
-  /**
-   * This message warns that the compiler has detected code that could lead to an error
-   *  under some conditions.
-   * ```pli
-   *     oops: proc( x ) returns( fixed bin(31 );
-   *       dcl x fixed bin(31);
-   *       select;
-   *         when( x > 0 ) return( 1 );
-   *         when( x = 0 ) return( 0 );
-   *         otherwise;
-   *       end;
-   *     end;
-   * ``` The compiler will issue this message for E15 sort exits unless the E15 sort exit
-   *  specifies the OPTIONAL attribute as part of the RETURNS option on its PROCEDURE
-   *  statement.
-   * (see page 32)
-   */
-  IBM2660I: {
-    code: "IBM2660I",
-    severity: "W",
-    message: (procedurename: string, procedurename2: string) =>
-      `Program logic may lead to the END statement for ${procedurename} even though ${procedurename2} is a function that should return a value.`,
-    fullCode: "IBM2660IW",
-  } as ParametricPLICode,
-
-  /**
-   * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
-   *  produced only if the INLIST function is otherwise suitable for transformation into
-   *  a branch table.
-   * (see page 32)
-   */
-  IBM2661I: {
-    code: "IBM2661I",
-    severity: "W",
-    message: (stringvalue: string) =>
-      `The string ${stringvalue} appears more than once in the INLIST argument set.`,
-    fullCode: "IBM2661IW",
-  } as ParametricPLICode,
-
-  /**
-   * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
-   *  produced only if the INLIST function is otherwise suitable for transformation into
-   *  a branch table.
-   * (see page 32)
-   */
-  IBM2662I: {
-    code: "IBM2662I",
-    severity: "W",
-    message: "INLIST argument set contains duplicate values.",
-    fullCode: "IBM2662IW",
-  } as SimplePLICode,
-
-  /**
-   * In a SELECT statement, if a WHEN clause has the same expression as the previousr
-   *  expression in the WHEN clauses in that SELECT statement, then the code is probably
-   *  in error. The compiler will not report all such errors, but only those where an
-   *  expression is duplicated in one of the four previous expressions.
-   * (see page 32)
-   */
-  IBM2663I: {
-    code: "IBM2663I",
-    severity: "W",
-    message:
-      "WHEN clause contains an expression that matches the previous expression in the containing SELECT statement.",
-    fullCode: "IBM2663IW",
-  } as SimplePLICode,
-
-  /**
-   * In a SELECT statement, if a WHEN clause has the same expression as one of the earlier
-   *  expressions in the WHEN clauses in that SELECT statement, then the code is probably
-   *  in error. The compiler will not report all such errors, but only those where an
-   *  expression is duplicated in one of the four previous expressions.
-   * (see page 32)
-   */
-  IBM2664I: {
-    code: "IBM2664I",
-    severity: "W",
-    message: (count: string) =>
-      `WHEN clause contains an expression that matches the expression ${count} previous in the containing SELECT statement.`,
-    fullCode: "IBM2664IW",
-  } as ParametricPLICode,
-
-  /**
-   * If an EXTERNAL variable is intended to define LE runtime options, then it must be
-   *  a scalar CHAR VARYING string with an INITIAL value.
-   * (see page 32)
-   */
-  IBM2665I: {
-    code: "IBM2665I",
-    severity: "W",
-    message:
-      "EXTERNAL PLIXOPT declare specifies run-time options only if the variable has the attribute CHARACTER VARYING INITIAL and is not an array.",
-    fullCode: "IBM2665IW",
-  } as SimplePLICode,
-
-  /**
-   * Returning the address of a variable in AUTOMATIC storage is likely to produce code
-   *  that cannot work successfully.
-   * (see page 32)
-   */
-  IBM2666I: {
-    code: "IBM2666I",
-    severity: "W",
-    message:
-      "RETURN expression holds the address of a variable in AUTOMATIC storage.",
-    fullCode: "IBM2666IW",
-  } as SimplePLICode,
-
-  /**
-   * The extents in one declare should not depend on the size of a later declare. The
-   *  compiler will swap the two declares, but this might introduce other problems. It
-   *  might be better to move the first declare after the second.
-   * (see page 32)
-   */
-  IBM2667I: {
-    code: "IBM2667I",
-    severity: "W",
-    message: (first: string, second: string) =>
-      `The string lengths in the declare for ${first} depend on the size of ${second} whose declare comes later in the block. Consider moving the first declare after the second.`,
-    fullCode: "IBM2667IW",
-  } as ParametricPLICode,
-
-  /**
-   * This message is produced if a typed structure with some VALUE attributes needs more
-   *  bytes than allowed by the MAXINIT compiler option. Use of the VALUE type function
-   *  will add a full copy of the structure to the generated object's constant area and
-   *  may lead to binder problems.
-   * (see page 32)
-   */
-  IBM2668I: {
-    code: "IBM2668I",
-    severity: "W",
-    message: (type: string, count: string) =>
-      `Using the VALUE function with the structure type ${type} adds ${count} bytes to the generated object.`,
-    fullCode: "IBM2668IW",
-  } as ParametricPLICode,
-
-  /**
-   * Attributes such as ALIGNED and UNALIGNED may be specified in a DEFINE ALIAS statement,
-   *  but they will be ignored and should be removed.
-   * (see page 33)
-   */
-  IBM2669I: {
-    code: "IBM2669I",
-    severity: "W",
-    message: (attributekeyword: string) =>
-      `The ${attributekeyword} attribute is ignored in an ALIAS definition.`,
-    fullCode: "IBM2669IW",
-  } as ParametricPLICode,
-
-  /**
-   * The parameter to MAIN has a maximum length that depends on the system and should
-   *  not be declared with a fixed maximum length.
-   * (see page 33)
-   */
-  IBM2670I: {
-    code: "IBM2670I",
-    severity: "W",
-    message: "The parameter to MAIN should be declared as CHAR(*) VARYING.",
-    fullCode: "IBM2670IW",
-  } as SimplePLICode,
-
-  /**
-   * Code like this could lead to a protection exception. In the following example, snce
-   *  the variable X is NONASSIGNABLE, the compiler could have passed the address of a
-   *  constant fullword 17 to the routine TEST. If so, if E changed its parameter (as
-   *  the attribute OUTONLY says it could), then a protection exception would result.
-   * ```pli
-   *     call oops( 17 );
-   *     test: proc( x );
-   *       dcl x fixed bin(31) NONASSIGNABLE;
-   *       dcl e ext entry( ASSIGNABLE fixed
-   * bin(31) );
-   *       call e(x);
-   *     end;
-   * ```
-   * (see page 33)
-   */
-  IBM2671I: {
-    code: "IBM2671I",
-    severity: "W",
-    message: (X: string, n: string, E: string, A: string, D: string) =>
-      `The variable ${X} is passed as argument number ${n} to entry ${E} . The corresponding parameter has the ${A} attribute, and hence the variable could be modified despite having the ${D} attribute.`,
-    fullCode: "IBM2671IW",
-  } as ParametricPLICode,
-
-  /**
-   * Named constants should be declared with the VALUE attribute rather than the attributes
-   *  STATIC INIT. This will cause the compiler to generate much better code. For example,
-   *  in the following code, if ASIZE and CLEN are constant, ten it would be much better
-   *  to change their declares.
-   * ```pli
-   *      dcl asize fixed bin(31) static init(100);
-   *      dcl clen  fixed bin(31) static init(20);
-   *      dcl a(asize) char(clen);
-   * ```
-   * (see page 33)
-   */
-  IBM2672I: {
-    code: "IBM2672I",
-    severity: "W",
-    message: (extentvariable: string) =>
-      `If ${extentvariable} is constant, then removing its STATIC attribute and changing its INITIAL attribute to the VALUE attribute would improve the performance of the generated code.`,
-    fullCode: "IBM2672IW",
-  } as ParametricPLICode,
-
-  /**
-   * This message will flag statements such as the following. In the first IF statement,
-   *  it would be better if \"true\" were a named constant, i.e. if it were declared with
-   *  the VALUE attribute rather than STATIC INIT In the second IF statement, the true\/false
-   *  value of (a < b ) is compared to c, and this will be true for any value of c that
-   *  is bigger than 1. The IF clause is probably meant to be (a < b ) & (b < c).
-   * ```pli
-   *      dcl true bit(1) static init('1'b);
-   *      if ( a < b ) = true then
-   *      if a < b < c then
-   * ```
-   * (see page 33)
-   */
-  IBM2673I: {
-    code: "IBM2673I",
-    severity: "W",
-    message:
-      "Boolean is compared with something other than a BIT(1) restricted expression.",
-    fullCode: "IBM2673IW",
-  } as SimplePLICode,
-
-  /**
-   * Defined structures must occupy a number of bytes that is a multiple of the structure
-   *  s alignment. So, for example, if a structure contains an aligned fixed bin(31) (or
-   *  other aligned fullword) field as its most stringently aligned item, then the structure
-   *  must occupy a multiple of 4 bytes. The following structure does not meet this requirement
-   * :
-   * ```pli
-   *     define structure
-   *       1 point,
-   *         2 x  fixed bin(31),
-   * ```  33
-   * ```pli
-   *         2 y  char(1);
-   * ```
-   * (see page 33)
-   */
-  IBM2674I: {
-    code: "IBM2674I",
-    severity: "W",
-    message: (structname: string, alignment: string, storagesize: string) =>
-      `The defined structure ${structname} is ${alignment} byte aligned, but occupies only ${storagesize} bytes of storage. This may lead to addressing problems and data corruption.`,
-    fullCode: "IBM2674IW",
-  } as ParametricPLICode,
-
-  /**
-   * If the control variable in a DO loop is a PICTURE variable, then more code will be
-   *  generated for the loop than if the control variable were a FIXED BIN variable. Moreover,
-   *  such loops may easily be miscoded so that they will loop infinitely.
-   * (see page 34)
-   */
-  IBM2675I: {
-    code: "IBM2675I",
-    severity: "W",
-    message: "Use of PICTURE as DO control variable is not recommended.",
-    fullCode: "IBM2675IW",
-  } as SimplePLICode,
-
-  /**
-   * The control variable in the DO loop has one of the types: scaled fixed binary, nonnative
-   *  fixed binary, fixed decimal, or picture. Consequently, the code generated for the
-   *  loop will not be optimal.
-   * (see page 34)
-   */
-  IBM2676I: {
-    code: "IBM2676I",
-    severity: "W",
-    message:
-      "Code generated for DO group would be more efficient if control variable had type FIXED BIN with zero scale factor.",
-    fullCode: "IBM2676IW",
-  } as SimplePLICode,
-
-  /**
-   * The named variable is an array that is initialized but appears never to be changed.
-   *  If it is constant, the compiler would not generate code to initialize it every time
-   *  the block where it is declared is entered. This change could potentially signiifcantly
-   *  improve performance.
-   * (see page 34)
-   */
-  IBM2677I: {
-    code: "IBM2677I",
-    severity: "W",
-    message: (variablename: string) =>
-      `Generated code would be better if the declare for ${variablename} were changed from AUTOMATIC to STATIC NONASSIGNABLE.`,
-    fullCode: "IBM2677IW",
-  } as ParametricPLICode,
-
-  /**
-   * The DO statement has the form DO x = A to B; where A > B. or the form DO x = A to
-   *  B BY -1; where A < B. This will cause the loop body to be skipped. One or more of
-   *  the values A and B may be incorrect.
-   * ```pli
-   *      do jx = 11 to 10;
-   *        . . .
-   *      end;
-   * ```
-   * (see page 34)
-   */
-  IBM2678I: {
-    code: "IBM2678I",
-    severity: "W",
-    message: "Loop will never be run. TO value may be incorrect.",
-    fullCode: "IBM2678IW",
-  } as SimplePLICode,
-
-  /**
-   * The GONUMBER can be placed in the SEPRATE sidefile only if the TEST options specifies
-   *  that the sidefile should be created.
-   * (see page 34)
-   */
-  IBM2679I: {
-    code: "IBM2679I",
-    severity: "W",
-    message:
-      "GONUMBER(SEPARATE) changed to GONUMBER(NOSEPARATE) since the SEPARATE suboption for the GONUMBER option should be specified only when the TEST option and its SEPARATE suboption are also specified.",
-    fullCode: "IBM2679IW",
-  } as SimplePLICode,
-
-  /**
-   * The control variable in the DO loop should have storage class STATIC or AUTOMATIC
-   *  and not PARAMETER and especially not BASED, DEFINED, or CONTROLLED,
-   * (see page 34)
-   */
-  IBM2680I: {
-    code: "IBM2680I",
-    severity: "W",
-    message:
-      "Code generated for DO group would perform better if control variable was STATIC or AUTOMATIC.",
-    fullCode: "IBM2680IW",
-  } as SimplePLICode,
-
-  /**
-   * In REPATTERN( d, p, q ), if LENGTH( d ) is larger than LENGTH( q ), the code is valid
-   *  only if d starts with as many blanks as the difference in those lengths.
-   * (see page 34)
-   */
-  IBM2681I: {
-    code: "IBM2681I",
-    severity: "W",
-    message: (sourcelength: string, sourcepattern: string) =>
-      `Source has length ${sourcelength} which is greater than the length of the source pattern ${sourcepattern} . Unless the source has enough leading blanks, invoking this REPATTERN will cause the ERROR condition to be raised. The required checking will also cause this REPATTERN not to be inlined.`,
-    fullCode: "IBM2681IW",
-  } as ParametricPLICode,
-
-  /**
-   * This message is produced if a STATIC variable requires more space than allowed by
-   *  the MAXINIT compiler option. 34   2400-2599)
-   * (see page 34)
-   */
-  IBM2682I: {
-    code: "IBM2682I",
-    severity: "W",
-    message: (name: string, count: string) =>
-      `The variable ${name} needs ${count} storage bytes which exceeds the MAXSTATIC limit.`,
-    fullCode: "IBM2682IW",
-  } as ParametricPLICode,
+
+	IBM3332I: {
+		"code": "IBM3332I",
+		"severity": "W",
+		"message": "The END statement has no matching BEGIN, DO, PACKAGE, PROC, or SELECT. This may indicate a problem with the syntax of a previous statement.",
+		"fullCode": "IBM3332IW"
+	} as SimplePLICode,
+
+	/**
+	 * This message warns that the compiler has detected a statement that can never be run
+	 *  as the flow of control must always pass it by.
+	 * (see page 9)
+	 */
+	IBM1078I: {
+		"code": "IBM1078I",
+		"severity": "W",
+		"message": "Statement may never be executed.",
+		"fullCode": "IBM1078IW"
+	} as SimplePLICode,
+
+	/**
+	 * The number of arguments should match the number of parameters in the ENTRY declaration
+	 * .
+	 * (see page 9)
+	 */
+	IBM1079I: {
+		"code": "IBM1079I",
+		"severity": "W",
+		"message": "Too few arguments have been specified for the ENTRY  ${ENTRY name } .",
+		"fullCode": "IBM1079IW"
+	} as SimplePLICode,
+
+	/**
+	 * A PL\/I keyword which could form a complete statement has been used as statement
+	 *  label. This usage is accepted, but a colon may have been used where a semicolon
+	 *  was intended.
+	 * ```pli
+	 *      dcl a fixed bin(31) ext;
+	 *      if a = 0 then
+	 *        put skip list( 'a = 0' )
+	 *      else:
+	 *      a = a + 1;
+	 * ```
+	 * (see page 9)
+	 */
+	IBM1080I: {
+		"code": "IBM1080I",
+		"severity": "W",
+		"message": (labelname: string) => `The keyword ${labelname} , which could form a complete statement, is accepted as a label name, but a colon may have been used where a semicolon was meant.`,
+		"fullCode": "IBM1080IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The expression in the named keyword clause should be a scalar, but an array reference
+	 *  was specified.
+	 * ```pli
+	 *    dcl p     pointer;
+	 *    dcl x     based char(10);
+	 *    dcl a(10) area(1000);
+	 *    allocate x in(a) set(p);
+	 * ```
+	 * (see page 9)
+	 */
+	IBM1081I: {
+		"code": "IBM1081I",
+		"severity": "W",
+		"message": (keyword: string) => `${keyword} expression should be scalar. Lower bounds assumed for any missing subscripts.`,
+		"fullCode": "IBM1081IW"
+	} as ParametricPLICode,
+
+	/**
+	 * A scalar may be passed as the argument when a structure is expected, but this require
+	 *  building a \"dummy\" structure and assigning the scalar to each field in that structure
+	 * .
+	 * ```pli
+	 *    dcl e entry( 1 2 fixed bin(31), 2 fixed 
+	 * bin(31) );
+	 *    dcl i fixed bin(15);
+	 *    call e( i );
+	 * ```
+	 * (see page 9)
+	 */
+	IBM1082I: {
+		"code": "IBM1082I",
+		"severity": "W",
+		"message": "Argument number  ${argument number }  in ENTRY reference  ${entry name }  is a scalar, but its declare specifies a structure.",
+		"fullCode": "IBM1082IW"
+	} as SimplePLICode,
+
+	/**
+	 * GOTO statements may not jump into DO loops, and the compiler will flag any GOTO whose
+	 *  target is a label constant inside a (different) DO loop. However, if a label inside
+	 *  a DO loop is assigned to a label variable, then this kind of error may go undetected
+	 * .
+	 * (see page 9)
+	 */
+	IBM1083I: {
+		"code": "IBM1083I",
+		"severity": "W",
+		"message": "Source in label assignment is inside a DO-loop, and an illegal jump into the loop may be attempted. Optimization will also be very inhibited.",
+		"fullCode": "IBM1083IW"
+	} as SimplePLICode,
+
+	/**
+	 * Under RULES(NOLAXMARGINS), there should be nothing but blanks after the right margin
+	 * .
+	 * (see page 9)
+	 */
+	IBM1084I: {
+		"code": "IBM1084I",
+		"severity": "W",
+		"message": "Nonblanks after right margin are not allowed under RULES(NOLAXMARGINS).",
+		"fullCode": "IBM1084IW"
+	} as SimplePLICode,
+
+	/**
+	 * The indicated variable may not have been assigned or initialized a value before it
+	 *  is used.
+	 * (see page 9)
+	 */
+	IBM1085I: {
+		"code": "IBM1085I",
+		"severity": "W",
+		"message": (variable: string) => `${variable} may be unset when used.`,
+		"fullCode": "IBM1085IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The indicated built-in function has an extended float argument, but since the corresponding
+	 *  extended routine is not yet available, it will be evaluated using the appropriate
+	 *  long routine.
+	 * (see page 9)
+	 */
+	IBM1086I: {
+		"code": "IBM1086I",
+		"severity": "W",
+		"message": (builtinfunction: string) => `${builtinfunction} will be evaluated using long rather than extended routines.`,
+		"fullCode": "IBM1086IW"
+	} as ParametricPLICode,
+
+	/**
+	 * A value larger than HUGE(1s0) cannot be assigned to a short float. Under hexadecimal
+	 *  float, the value 3.141592E+40 could be assigned to a short float, but under IEEE,
+	 *  the maximum value that a short float can hold is about 3.40281E+38.
+	 * (see page 10)
+	 */
+	IBM1087I: {
+		"code": "IBM1087I",
+		"severity": "W",
+		"message": (assumedvalue: string) => `FLOAT source is too big for its target. An appropriate HUGE value of ${assumedvalue} is assumed.`,
+		"fullCode": "IBM1087IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The precision for a float literal is implied by the number of digits in its mantissa.
+	 *  For instance 1e99 is implicitly FLOAT DECIMAL(1), but the value 1e99 is larger than
+	 *  the largest value a FLOAT DECIMAL(1) can hold.
+	 * (see page 10)
+	 */
+	IBM1088I: {
+		"code": "IBM1088I",
+		"severity": "W",
+		"message": "FLOAT literal is too big for its implicit precision. The E in the exponent will be replaced by a D.",
+		"fullCode": "IBM1088IW"
+	} as SimplePLICode,
+
+	/**
+	 * If the TO value is equal to the maximum value that a FIXED or PICTURE variable can
+	 *  hold, then a loop dominated by that variable will run endlessly unless exited inside
+	 *  the loop by a LEAVE or GOTO. For example, in the first code fragment below, x can
+	 *  never be bigger than 99, and the loop would be infinite. In the second code fragment
+	 *  below, y can never be bigger than 32767, and the loop would be infinite.
+	 * ```pli
+	 *      dcl x pic'99';
+	 *      do x = 1 to 99;
+	 *        put skip list( x );
+	 *      end;
+	 *      dcl y fixed bin(15);
+	 *      do y = 1 to 32767;
+	 *        put skip list( y );
+	 *      end;
+	 * ```
+	 * (see page 10)
+	 */
+	IBM1089I: {
+		"code": "IBM1089I",
+		"severity": "W",
+		"message": "Control variable in DO loop cannot exceed TO value, and loop may be infinite.",
+		"fullCode": "IBM1089IW"
+	} as SimplePLICode,
+
+	/**
+	 * An expression contains a reference to a based variable with a constant value for
+	 *  its locator qualifier. This may cause a protection exception on some systems. It
+	 *  may also indicate that the variable was declared as based on NULL or SYSNULL and
+	 *  that this constant value is being used as its locator qualifier.
+	 * ```pli
+	 *      dcl a fixed bin(31) based( null() );
+	 *      a = 0;
+	 * ```
+	 * (see page 10)
+	 */
+	IBM1090I: {
+		"code": "IBM1090I",
+		"severity": "W",
+		"message": "Constant used as locator qualifier.",
+		"fullCode": "IBM1090IW"
+	} as SimplePLICode,
+
+	/**
+	 * Except in unusual circumstances, the precision in a FIXED BIN declaration should
+	 *  be 7, 15, 31 or 63 if SIGNED and one greater if UNSIGNED. This message may indicate
+	 *  that a declare specified, for example, FIXED BIN(8) when UNSIGNED FIXED BIN(8) was
+	 *  meant.
+	 * (see page 10)
+	 */
+	IBM1091I: {
+		"code": "IBM1091I",
+		"severity": "W",
+		"message": "FIXED BIN precision less than storage allows.",
+		"fullCode": "IBM1091IW"
+	} as SimplePLICode,
+
+	/**
+	 * Try to change the code so that it sets and tests a switch instead, or limit GOTOs
+	 *  to very small modules that do not need optimization.
+	 * (see page 10)
+	 */
+	IBM1092I: {
+		"code": "IBM1092I",
+		"severity": "W",
+		"message": "GOTO whose target is or may be in another block severely limits optimization.",
+		"fullCode": "IBM1092IW"
+	} as SimplePLICode,
+
+	/**
+	 * The PLIXOPT string could not be parsed. See the cited LE message for more detail
+	 * .
+	 * (see page 10)
+	 */
+	IBM1093I: {
+		"code": "IBM1093I",
+		"severity": "W",
+		"message": "PLIXOPT string is invalid. See related runtime message  ${message number } .",
+		"fullCode": "IBM1093IW"
+	} as SimplePLICode,
+
+	/**
+	 * The PLIXOPT string contains an invalid item. See the cited LE message for more detail
+	 * .
+	 * (see page 10)
+	 */
+	IBM1094I: {
+		"code": "IBM1094I",
+		"severity": "W",
+		"message": (option: string, messagenumber: string) => `Element ${option} in PLIXOPT is invalid. See related runtime message ${messagenumber} .`,
+		"fullCode": "IBM1094IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The PLIXOPT string contains a run-time option which is not supported by LE. See the
+	 *  cited LE message for more detail.
+	 * (see page 10)
+	 */
+	IBM1095I: {
+		"code": "IBM1095I",
+		"severity": "W",
+		"message": (option: string, option2: string, messagenumber: string) => `Element ${option} in PLIXOPT has been remapped to ${option2} . See related runtime message ${messagenumber} .`,
+		"fullCode": "IBM1095IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The SPIE and STAE options have been replaced by the TRAP option. TRAP(ON) is equivalent
+	 *  to SPIE and STAE; TRAP(OFF) is equivalent to NOSPIE and NOSTAE. The combination
+	 *  SPIE and NOSTAE and the combination NOSPIE and STAE are no longer supported. See
+	 *  the cited LE message for more detail.
+	 * (see page 11)
+	 */
+	IBM1096I: {
+		"code": "IBM1096I",
+		"severity": "W",
+		"message": (messagenumber: string) => `STAE and SPIE in PLIXOPT is not supported. See related runtime message ${messagenumber} .`,
+		"fullCode": "IBM1096IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Generally, scalars should not be passed where arrays are expected, but in some situations,
+	 *  this may be what you want.
+	 * ```pli
+	 *     dcl a entry( (*) fixed bin ) 
+	 * option(nodescriptor);
+	 *     call a( 0 );
+	 * ```
+	 * (see page 11)
+	 */
+	IBM1097I: {
+		"code": "IBM1097I",
+		"severity": "W",
+		"message": (argumentnumber: string, ENTRYname: string) => `Scalar accepted as argument number ${argumentnumber} in ENTRY reference ${ENTRYname} although parameter description specifies an array.`,
+		"fullCode": "IBM1097IW"
+	} as ParametricPLICode,
+
+	/**
+	 * A comma was followed by a semicolon rather than by a valid syntactical element (such
+	 *  as an identifier). The comma will be ignored in order to make the semicolon valid
+	 * .
+	 * ```pli
+	 *     dcl 1 a, 2 b fixed bin, 2 c fixed bin, ;
+	 * ```
+	 * (see page 11)
+	 */
+	IBM1098I: {
+		"code": "IBM1098I",
+		"severity": "W",
+		"message": "Extraneous comma at end of statement ignored.",
+		"fullCode": "IBM1098IW"
+	} as SimplePLICode,
+
+	/**
+	 * Under RULES(IBM), when a comparison or arithmetic operation has an operand that is
+	 *  FIXED BIN and an operand that is FIXED DEC with a non-zero scale factor, then the
+	 *  FIXED DEC operand will be converted to FIXED BIN. Under RULES(ANS), when a comparison
+	 *  or arithmetic operation has an operand that is FIXED BIN and an operand that is
+	 *  FIXED DEC with a zero scale factor, then the FIXED DEC operand will be converted
+	 *  to FIXED BIN. In each case, significant digits may be lost, and if there is a fractional
+	 *  part, it may not be exactly represented as binary. For instance, under RULES(IBM),
+	 *  the assignment statement below will cause the target to have the value 29.19, and
+	 *  in the comparison, C will be converted to FIXED BIN(31,10) and significant digits
+	 *  will be lost (in fact, SIZE would be raised, but since it is disabled, this program
+	 *  would be in error).
+	 * ```pli
+	 *      dcl a fixed dec(07,2) init(12.2);
+	 *      dcl b fixed bin(31,0) init(17);
+	 *      dcl c fixed dec(15,3) init(2097151);
+	 *      dcl d fixed bin(31,0) init(0);
+	 *      a = a + b;
+	 *      if c = d then;
+	 * ```
+	 * (see page 11)
+	 */
+	IBM1099I: {
+		"code": "IBM1099I",
+		"severity": "W",
+		"message": (sourceprecision: string, sourcescale: string, targetprecision: string, targetscale: string) => `FIXED DEC( ${sourceprecision} , ${sourcescale} ) operand will be converted to FIXED BIN( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
+		"fullCode": "IBM1099IW"
+	} as ParametricPLICode,
+
+	/**
+	 * An attribute (REDUCIBLE in the example below) has been specified in the OPTIONS clause
+	 *  on a BEGIN statement, but that attribute is not valid for BEGIN blocks.
+	 * ```pli
+	 *      begin options( reducible );
+	 * ```
+	 * (see page 11)
+	 */
+	IBM1100I: {
+		"code": "IBM1100I",
+		"severity": "W",
+		"message": (attributeoption: string) => `The attribute ${attributeoption} is not valid on BEGIN blocks and is ignored.`,
+		"fullCode": "IBM1100IW"
+	} as ParametricPLICode,
+
+	/**
+	 * An attribute (DATAONLY in the example below) has been specified in the OPTIONS clause
+	 *  on a PROCEDURE statement, but that attribute is not valid for PROCEDUREs.
+	 * ```pli
+	 *      a: proc options( dataonly );
+	 * ```  11
+	 * (see page 11)
+	 */
+	IBM1101I: {
+		"code": "IBM1101I",
+		"severity": "W",
+		"message": (optionname: string) => `${optionname} is not a known PROCEDURE attribute and is ignored.`,
+		"fullCode": "IBM1101IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The indicated attribute is valid on PROCEDURE statements, but not on BEGIN statements
+	 * .
+	 * ```pli
+	 *    begin recursive;
+	 * ```
+	 * (see page 12)
+	 */
+	IBM1102I: {
+		"code": "IBM1102I",
+		"severity": "W",
+		"message": (optionname: string) => `${optionname} is not a known BEGIN attribute and is ignored.`,
+		"fullCode": "IBM1102IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The compiler option is not supported on this platform.
+	 * ```pli
+	 *    *process map;
+	 * ```
+	 * (see page 12)
+	 */
+	IBM1103I: {
+		"code": "IBM1103I",
+		"severity": "W",
+		"message": (optionname: string) => `${optionname} is not a supported compiler option and is ignored.`,
+		"fullCode": "IBM1103IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Suboptions of the compiler option are not supported on this platform.
+	 * ```pli
+	 *    *process list(4);
+	 * ```
+	 * (see page 12)
+	 */
+	IBM1104I: {
+		"code": "IBM1104I",
+		"severity": "W",
+		"message": (optionname: string) => `Suboptions of the compiler option ${optionname} are not supported and are ignored.`,
+		"fullCode": "IBM1104IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Various compiler options have limits on the size of subfields. Refer to the Programming
+	 *  Guide for the limits of specific compiler options.
+	 * ```pli
+	 *    *process margini( '+-' );
+	 * ```
+	 * (see page 12)
+	 */
+	IBM1105I: {
+		"code": "IBM1105I",
+		"severity": "W",
+		"message": (optionname: string, numberofletters: string) => `A suboption of the compiler option ${optionname} is too long. It is shortened to length ${numberofletters} .`,
+		"fullCode": "IBM1105IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Condition prefixes are not allowed on DECLARE, DEFAULT, IF, ELSE, DO, END, SELECT,
+	 *  WHEN or OTHERWISE statements.
+	 * ```pli
+	 *      (nofofl): if (x+y) > 0 then
+	 * ```
+	 * (see page 12)
+	 */
+	IBM1106I: {
+		"code": "IBM1106I",
+		"severity": "W",
+		"message": (keyword: string) => `Condition prefixes on ${keyword} statements are ignored.`,
+		"fullCode": "IBM1106IW"
+	} as ParametricPLICode,
+
+	/**
+	 * An attribute (DATAONLY in the example below) has been specified in the OPTIONS clause
+	 *  on an ENTRY statement, but that attribute is not valid for ENTRY statements.
+	 * ```pli
+	 *      a: entry options( dataonly );
+	 * ```
+	 * (see page 12)
+	 */
+	IBM1107I: {
+		"code": "IBM1107I",
+		"severity": "W",
+		"message": (optionname: string) => `${optionname} is not a known ENTRY statement attribute and is ignored.`,
+		"fullCode": "IBM1107IW"
+	} as ParametricPLICode,
+
+	/**
+	 * A character specified in the OR, NOT, QUOTE or NAMES compiler option is already defined
+	 *  in the PL\/I character set or by another compiler option.
+	 * ```pli
+	 *    *process not('=');
+	 *    *process not('!') or('!');
+	 * ```
+	 * (see page 12)
+	 */
+	IBM1108I: {
+		"code": "IBM1108I",
+		"severity": "W",
+		"message": (char: string, option: string) => `The character ${char} specified in the ${option} option is already defined and may not be redefined. The redefinition will be ignored.`,
+		"fullCode": "IBM1108IW"
+	} as ParametricPLICode,
+
+	/**
+	 * If you wish to display the real and imaginary parts of a complex number using different
+	 *  formats, use the REAL and IMAG built-in functions and 2 format items.
+	 * ```pli
+	 *      put edit ( x ) ( c( e(10,6), e(10,6) ) );
+	 * ```
+	 * (see page 12)
+	 */
+	IBM1109I: {
+		"code": "IBM1109I",
+		"severity": "W",
+		"message": "The second argument in the C- format item will be ignored.",
+		"fullCode": "IBM1109IW"
+	} as SimplePLICode,
+
+	/**
+	 * Split the text into 2 lines.
+	 * ```pli
+	 *      %include x; %include y;
+	 * ```
+	 * (see page 12)
+	 */
+	IBM1110I: {
+		"code": "IBM1110I",
+		"severity": "W",
+		"message": "The INCLUDE statement should be on a line by itself. The source on the line after the INCLUDE statement is ignored.",
+		"fullCode": "IBM1110IW"
+	} as SimplePLICode,
+
+	/**
+	 * The CHECK prefix is not part of the SAA PL\/I language.
+	 * ```pli
+	 *      (check): i = j + 1;
+	 * ```
+	 * (see page 12)
+	 */
+	IBM1111I: {
+		"code": "IBM1111I",
+		"severity": "W",
+		"message": "CHECK prefix is not supported and is ignored.",
+		"fullCode": "IBM1111IW"
+	} as SimplePLICode,
+
+	/**
+	 * The CHECK and PENDING conditions are not part of the SAA PL\/I language.
+	 * ```pli
+	 *      on check ...
+	 * ```
+	 * (see page 13)
+	 */
+	IBM1112I: {
+		"code": "IBM1112I",
+		"severity": "W",
+		"message": (conditionname: string) => `${conditionname} condition is not supported and is ignored.`,
+		"fullCode": "IBM1112IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The named statement, for example the CHECK statement, is not part of the SAA PL\/I
+	 *  language.
+	 * (see page 13)
+	 */
+	IBM1113I: {
+		"code": "IBM1113I",
+		"severity": "W",
+		"message": (verbname: string) => `${verbname} statement is not supported and is ignored.`,
+		"fullCode": "IBM1113IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Both operands in a comparison are constant, and consequently, the result of the comparison
+	 *  is also a constant. If this comparison is the expression in an IF clause, for example,
+	 *  this means that either the THEN or ELSE clause will never be executed.
+	 * (see page 13)
+	 */
+	IBM1114I: {
+		"code": "IBM1114I",
+		"severity": "W",
+		"message": "Comparands are both constant.",
+		"fullCode": "IBM1114IW"
+	} as SimplePLICode,
+
+	/**
+	 * For an array, an INITIAL list should not contain more values than the array has elements
+	 * .
+	 * ```pli
+	 *     dcl a init( 1, 2 ), b(5) init( (10) 0 );
+	 * ```
+	 * (see page 13)
+	 */
+	IBM1115I: {
+		"code": "IBM1115I",
+		"severity": "W",
+		"message": (count: string, variablename: string, arraysize: string) => `INITIAL list contains ${count} items, but the array ${variablename} contains only ${arraysize} . Excess is ignored.`,
+		"fullCode": "IBM1115IW"
+	} as ParametricPLICode,
+
+	/**
+	 * A comment ends in a different file than it begins. This may indicate that an end-of-comment
+	 *  statement is missing.
+	 * (see page 13)
+	 */
+	IBM1116I: {
+		"code": "IBM1116I",
+		"severity": "W",
+		"message": "Comment spans more than one file.",
+		"fullCode": "IBM1116IW"
+	} as SimplePLICode,
+
+	/**
+	 * A string ends in a different file than it begins. This may indicate that a closing
+	 *  quote is missing.
+	 * (see page 13)
+	 */
+	IBM1117I: {
+		"code": "IBM1117I",
+		"severity": "W",
+		"message": "String spans more than one file.",
+		"fullCode": "IBM1117IW"
+	} as SimplePLICode,
+
+	/**
+	 * A delimiter (for example, a blank or a comma) is required between all identifiers
+	 *  and constants.
+	 * ```pli
+	 *      dcl 1 a, 2 b, 3c;
+	 * ```
+	 * (see page 13)
+	 */
+	IBM1118I: {
+		"code": "IBM1118I",
+		"severity": "W",
+		"message": (nondelimiter: string, nondelimiter2: string) => `Delimiter missing between ${nondelimiter} and ${nondelimiter2} . A blank is assumed.`,
+		"fullCode": "IBM1118IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The control variable in the DO loop is a member of an array, a structure or a union,
+	 *  and consequently, the code generated for the loop will not be optimal.
+	 * (see page 13)
+	 */
+	IBM1119I: {
+		"code": "IBM1119I",
+		"severity": "W",
+		"message": (name: string) => `Code generated for DO group would be more efficient if control variable ${name} were not an aggregate member.`,
+		"fullCode": "IBM1119IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Using one END statement to close more than one group of statements is permitted,
+	 *  but it may indicate a coding error.
+	 * (see page 13)
+	 */
+	IBM1120I: {
+		"code": "IBM1120I",
+		"severity": "W",
+		"message": "Multiple closure of groups. END statements will be inserted to close intervening groups.",
+		"fullCode": "IBM1120IW"
+	} as SimplePLICode,
+
+	/**
+	 * The indicated character is missing, and there are no more characters in the source.
+	 *  The missing character has been inserted by the parser in order to correct your source
+	 * .
+	 * (see page 13)
+	 */
+	IBM1121I: {
+		"code": "IBM1121I",
+		"severity": "W",
+		"message": (character: string) => `Missing ${character} assumed.`,
+		"fullCode": "IBM1121IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The indicated character is missing and has been inserted by the parser in order to
+	 *  correct your source.
+	 * ```pli
+	 *      display( 'Program starting' ;
+	 * ```
+	 * (see page 13)
+	 */
+	IBM1122I: {
+		"code": "IBM1122I",
+		"severity": "W",
+		"message": (character: string, character2: string) => `Missing ${character} assumed before ${character2} .`,
+		"fullCode": "IBM1122IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Certain ENVIRONMENT options, such as RECSIZE, require suboptions.
+	 * ```pli
+	 *      dcl f file env( recsize );
+	 * ```
+	 * (see page 14)
+	 */
+	IBM1123I: {
+		"code": "IBM1123I",
+		"severity": "W",
+		"message": (optionname: string, optionname2: string) => `The ENVIRONMENT option ${optionname} has been specified without a suboption. The option ${optionname2} is ignored.`,
+		"fullCode": "IBM1123IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Certain ENVIRONMENT options, such as CONSECUTIVE, should be specified without any
+	 *  suboptions.
+	 * ```pli
+	 *      dcl f file env( consecutive(1) );
+	 * ```
+	 * (see page 14)
+	 */
+	IBM1124I: {
+		"code": "IBM1124I",
+		"severity": "W",
+		"message": "A suboption has been specified for the ENVIRONMENT option  ${option name } . The suboption will be ignored.",
+		"fullCode": "IBM1124IW"
+	} as SimplePLICode,
+
+	/**
+	 * ENVIRONMENT options should not be repeated.
+	 * ```pli
+	 *      dcl f file env( consecutive consecutive );
+	 * ```
+	 * (see page 14)
+	 */
+	IBM1125I: {
+		"code": "IBM1125I",
+		"severity": "W",
+		"message": "The ENVIRONMENT option  ${option name }  has been specified more than once.",
+		"fullCode": "IBM1125IW"
+	} as SimplePLICode,
+
+	/**
+	 * The suboption type is incorrect.
+	 * ```pli
+	 *      dcl f file env( regional(5) );
+	 * ```
+	 * (see page 14)
+	 */
+	IBM1126I: {
+		"code": "IBM1126I",
+		"severity": "W",
+		"message": "The ENVIRONMENT option  ${option name }  has an invalid suboption. The option will be ignored.",
+		"fullCode": "IBM1126IW"
+	} as SimplePLICode,
+
+	/**
+	 * There is no such supported ENVIRONMENT option.
+	 * ```pli
+	 *      dcl f file env( unknown );
+	 * ```
+	 * (see page 14)
+	 */
+	IBM1127I: {
+		"code": "IBM1127I",
+		"severity": "W",
+		"message": (optionname: string) => `${optionname} is not a known ENVIRONMENT option. It will be ignored.`,
+		"fullCode": "IBM1127IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The indicated option is valid only with LANGLVL(OS).
+	 * ```pli
+	 *      dcl f file env( fb );
+	 * ```
+	 * (see page 14)
+	 */
+	IBM1128I: {
+		"code": "IBM1128I",
+		"severity": "W",
+		"message": "The ENVIRONMENT option  ${option name }  conflicts with the LANGLVL compiler option. The option will be ignored.",
+		"fullCode": "IBM1128IW"
+	} as SimplePLICode,
+
+	/**
+	 * An EXEC SQL or EXEC CICS statement has been found in the source program. The compiler
+	 *  will ignore these statements.
+	 * ```pli
+	 *      exec sql ...;
+	 * ```
+	 * (see page 14)
+	 */
+	IBM1129I: {
+		"code": "IBM1129I",
+		"severity": "W",
+		"message": (verbname: string, processorname: string) => `${verbname} ${processorname} statement ignored up to closing semicolon.`,
+		"fullCode": "IBM1129IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The maximum length of external names is set by the EXTNAME suboption of the LIMITS
+	 *  compiler option.
+	 * ```pli
+	 *      dcl this_name_is_long  static external 
+	 * pointer;
+	 * ``` 14
+	 * (see page 14)
+	 */
+	IBM1130I: {
+		"code": "IBM1130I",
+		"severity": "W",
+		"message": (identifier: string, identifier2: string) => `The external name ${identifier} is too long. It will be shortened to ${identifier2} .`,
+		"fullCode": "IBM1130IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The name specified in the EXTERNAL attribute in the EXPORTS clause overrides the
+	 *  name specified in the EXTERNAL attribute on the PROCEDURE statement.
+	 * ```pli
+	 *      a: package exports( b ext('_B') );
+	 *        b: proc  ext( 'BB' );
+	 * ```
+	 * (see page 15)
+	 */
+	IBM1131I: {
+		"code": "IBM1131I",
+		"severity": "W",
+		"message": (name: string) => `An EXTERNAL name specification for ${name} has been specified on its PROCEDURE statement and in the EXPORTS clause of the PACKAGE statement. The EXPORTS specification will be used.`,
+		"fullCode": "IBM1131IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The name specified in the EXTERNAL attribute in the RESERVES clause overrides the
+	 *  name specified in the EXTERNAL attribute in the DECLARE statement.
+	 * ```pli
+	 *      a: package reserves( b ext('_B') );
+	 *        dcl b ext( 'BB' ) static ...
+	 * ```
+	 * (see page 15)
+	 */
+	IBM1132I: {
+		"code": "IBM1132I",
+		"severity": "W",
+		"message": (name: string) => `An EXTERNAL name specification for ${name} has been specified in its declaration and in the RESERVES clause of the PACKAGE statement. The RESERVES specification will be used.`,
+		"fullCode": "IBM1132IW"
+	} as ParametricPLICode,
+
+	/**
+	 * An element of a FORMAT CONSTANT array has not been defined, for example, f(2) in
+	 *  the example below.
+	 * ```pli
+	 *      f(1): format( x(2), a );
+	 *      f(3): format( x(4), a );
+	 * ```
+	 * (see page 15)
+	 */
+	IBM1133I: {
+		"code": "IBM1133I",
+		"severity": "W",
+		"message": (labelname: string) => `The FORMAT CONSTANT array ${labelname} is not fully initialized.`,
+		"fullCode": "IBM1133IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The named variable defines a statement label array, but not all the elements in that
+	 *  array are labels for statements in the containing procedure.
+	 * ```pli
+	 *      l(1): display( ... );
+	 *      l(3): display( ... );
+	 * ```
+	 * (see page 15)
+	 */
+	IBM1134I: {
+		"code": "IBM1134I",
+		"severity": "W",
+		"message": "The LABEL CONSTANT array  ${label reference }  is not fully initialized.",
+		"fullCode": "IBM1134IW"
+	} as SimplePLICode,
+
+	/**
+	 * An argument to one of the logical operators (or, and or not) is a constant. The result
+	 *  of the operation may also be a constant. If this operation is the expression in
+	 *  an IF clause, for example, this means that either the THEN or ELSE clause will never
+	 *  be executed.
+	 * ```pli
+	 *      if a | '1'b then
+	 * ```
+	 * (see page 15)
+	 */
+	IBM1135I: {
+		"code": "IBM1135I",
+		"severity": "W",
+		"message": "Logical operand is constant.",
+		"fullCode": "IBM1135IW"
+	} as SimplePLICode,
+
+	/**
+	 * A function, for example, a PROCEDURE or ENTRY statement with the RETURNS attribute,
+	 *  has been invoked in a CALL statement. The value that is returned by the function
+	 *  will be discarded, but the OPTIONAL attribute should be used to indicate that this
+	 *  is valid.
+	 * (see page 15)
+	 */
+	IBM1136I: {
+		"code": "IBM1136I",
+		"severity": "W",
+		"message": "Function invoked as a subroutine.",
+		"fullCode": "IBM1136IW"
+	} as SimplePLICode,
+
+	/**
+	 * The named attribute is invalid in GENERIC description lists.
+	 * ```pli
+	 *      dcl g generic ( f1 when( connected ),
+	 *                      f2 otherwise );
+	 * ```
+	 * (see page 15)
+	 */
+	IBM1137I: {
+		"code": "IBM1137I",
+		"severity": "W",
+		"message": (attribute: string) => `The attribute ${attribute} is invalid in GENERIC descriptions and will be ignored.`,
+		"fullCode": "IBM1137IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The array will be incompletely initialized. If the named variable is part of a structure,
+	 *  subsequent elements in  15 that structure with this problem will be flagged with
+	 *  message 2602. This may be a programming error (in the example below, 4 should probably
+	 *  have been 6) and may cause exceptions when the program is run.
+	 * ```pli
+	 *      dcl a(8) fixed dec init( 1, 2, (4) 0 );
+	 * ```
+	 * (see page 15)
+	 */
+	IBM1138I: {
+		"code": "IBM1138I",
+		"severity": "W",
+		"message": (count: string, variablename: string, arraysize: string) => `Number of items in INITIAL list is ${count} for the array ${variablename} which contains ${arraysize} elements.`,
+		"fullCode": "IBM1138IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The %CONTROL statement must be followed by FORMAT or NOFORMAT option enclosed in
+	 *  parentheses and then a semicolon.
+	 * (see page 16)
+	 */
+	IBM1139I: {
+		"code": "IBM1139I",
+		"severity": "W",
+		"message": "Syntax of the CONTROL statement is incorrect.",
+		"fullCode": "IBM1139IW"
+	} as SimplePLICode,
+
+	/**
+	 * The LANGLVL option in the %OPTION statement must be specified as either LANGLVL(SAA)
+	 *  or LANGLVL(SAA2).
+	 * (see page 16)
+	 */
+	IBM1140I: {
+		"code": "IBM1140I",
+		"severity": "W",
+		"message": "Syntax of the LANGLVL option in the OPTION statement is incorrect.",
+		"fullCode": "IBM1140IW"
+	} as SimplePLICode,
+
+	/**
+	 * The %NOPRINT statement must be followed, with optional intervening blanks, by a semicolon
+	 * .
+	 * (see page 16)
+	 */
+	IBM1141I: {
+		"code": "IBM1141I",
+		"severity": "W",
+		"message": "Syntax of the NOPRINT statement is incorrect.",
+		"fullCode": "IBM1141IW"
+	} as SimplePLICode,
+
+	/**
+	 * The %PAGE statement must be followed, with optional intervening blanks, by a semicolon
+	 * .
+	 * (see page 16)
+	 */
+	IBM1142I: {
+		"code": "IBM1142I",
+		"severity": "W",
+		"message": "Syntax of the PAGE statement is incorrect.",
+		"fullCode": "IBM1142IW"
+	} as SimplePLICode,
+
+	/**
+	 * The %PRINT statement must be followed, with optional intervening blanks, by a semicolon
+	 * .
+	 * (see page 16)
+	 */
+	IBM1143I: {
+		"code": "IBM1143I",
+		"severity": "W",
+		"message": "Syntax of the PRINT statement is incorrect.",
+		"fullCode": "IBM1143IW"
+	} as SimplePLICode,
+
+	/**
+	 * Skip amounts greater than 999 are not supported.
+	 * ```pli
+	 *      %skip(2000);
+	 * ```
+	 * (see page 16)
+	 */
+	IBM1144I: {
+		"code": "IBM1144I",
+		"severity": "W",
+		"message": "Number of lines specified with SKIP must be between 0 and 999 inclusive.",
+		"fullCode": "IBM1144IW"
+	} as SimplePLICode,
+
+	/**
+	 * The %SKIP statement must be followed by a semicolon with optional intervening blanks
+	 *  and a parenthesized integer.
+	 * (see page 16)
+	 */
+	IBM1145I: {
+		"code": "IBM1145I",
+		"severity": "W",
+		"message": "Syntax of the SKIP statement is incorrect.",
+		"fullCode": "IBM1145IW"
+	} as SimplePLICode,
+
+	/**
+	 * The TEST option in the %OPTION statement must be specified without any suboptions
+	 * .
+	 * (see page 16)
+	 */
+	IBM1146I: {
+		"code": "IBM1146I",
+		"severity": "W",
+		"message": "Syntax of the TEST option in the OPTION statement is incorrect.",
+		"fullCode": "IBM1146IW"
+	} as SimplePLICode,
+
+	/**
+	 * The NOTEST option in the %OPTION statement must be specified without any suboptions
+	 * .
+	 * (see page 16)
+	 */
+	IBM1147I: {
+		"code": "IBM1147I",
+		"severity": "W",
+		"message": "Syntax of the NOTEST option in the OPTION statement is incorrect.",
+		"fullCode": "IBM1147IW"
+	} as SimplePLICode,
+
+	/**
+	 * The %PUSH statement must be followed, with optional intervening blanks, by a semicolon
+	 * .
+	 * (see page 16)
+	 */
+	IBM1148I: {
+		"code": "IBM1148I",
+		"severity": "W",
+		"message": "Syntax of the PUSH statement is incorrect.",
+		"fullCode": "IBM1148IW"
+	} as SimplePLICode,
+
+	/**
+	 * The %POP statement must be followed, with optional intervening blanks, by a semicolon
+	 * .
+	 * (see page 16)
+	 */
+	IBM1149I: {
+		"code": "IBM1149I",
+		"severity": "W",
+		"message": "Syntax of the POP statement is incorrect.",
+		"fullCode": "IBM1149IW"
+	} as SimplePLICode,
+
+	/**
+	 * The %NOTE statement must be followed by, in parentheses, a note and an optional return
+	 *  code, and then a semicolon.
+	 * (see page 16)
+	 */
+	IBM1150I: {
+		"code": "IBM1150I",
+		"severity": "W",
+		"message": "Syntax of the NOTE statement is incorrect.",
+		"fullCode": "IBM1150IW"
+	} as SimplePLICode,
+
+	/**
+	 * The maximum FIXED BIN precision depends on the LIMITS option.
+	 * (see page 16)
+	 */
+	IBM1151I: {
+		"code": "IBM1151I",
+		"severity": "W",
+		"message": (maximumvalue: string) => `FIXED BINARY precision is reduced to ${maximumvalue} .`,
+		"fullCode": "IBM1151IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The maximum FIXED DEC precision depends on the LIMITS option.
+	 * (see page 17)
+	 */
+	IBM1152I: {
+		"code": "IBM1152I",
+		"severity": "W",
+		"message": (maximumvalue: string) => `FIXED DECIMAL precision is reduced to ${maximumvalue} .`,
+		"fullCode": "IBM1152IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The maximum FLOAT BIN precision is 64 on Intel, 106 on AIX and 109 on z\/OS.
+	 * (see page 17)
+	 */
+	IBM1153I: {
+		"code": "IBM1153I",
+		"severity": "W",
+		"message": (maximumvalue: string) => `FLOAT BINARY precision is reduced to ${maximumvalue} .`,
+		"fullCode": "IBM1153IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The maximum FLOAT DEC precision is 18 on Intel, 32 on AIX and 33 on z\/OS except
+	 *  for DFP which has a maximum of 34.
+	 * (see page 17)
+	 */
+	IBM1154I: {
+		"code": "IBM1154I",
+		"severity": "W",
+		"message": (maximumvalue: string) => `FLOAT DECIMAL precision is reduced to ${maximumvalue} .`,
+		"fullCode": "IBM1154IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Some members of an aggregate referenced in an I\/O statement are noncomputational.
+	 *  The computational members will be correctly processed, but the noncomputational
+	 *  ones will be ignored.
+	 * ```pli
+	 *    dcl 1 x,
+	 *          2 y ptr,
+	 *          3 fixed bin(31);
+	 *    put skip list(x);
+	 * ```
+	 * (see page 17)
+	 */
+	IBM1155I: {
+		"code": "IBM1155I",
+		"severity": "W",
+		"message": (aggregatename: string) => `The aggregate ${aggregatename} contains noncomputational values. Those values will be ignored.`,
+		"fullCode": "IBM1155IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Under SYSTEM(CICS), SYSTEM(TSO) and SYSTEM(IMS), the arguments to the MAIN procedure
+	 *  should all have type POINTER.
+	 * (see page 17)
+	 */
+	IBM1156I: {
+		"code": "IBM1156I",
+		"severity": "W",
+		"message": "Arguments to MAIN PROCEDURE are not all POINTER.",
+		"fullCode": "IBM1156IW"
+	} as SimplePLICode,
+
+	/**
+	 * This message is used by %NOTE statements with a return code of 4.
+	 * (see page 17)
+	 */
+	IBM1157I: {
+		"code": "IBM1157I",
+		"severity": "W",
+		"message": (note: string) => `${note}`,
+		"fullCode": "IBM1157IW"
+	} as ParametricPLICode,
+
+	/**
+	 * A closing quote or parenthesis is missing in the specification of a compiler option.
+	 *  A quoted string must not cross line boundaries.
+	 * (see page 17)
+	 */
+	IBM1158I: {
+		"code": "IBM1158I",
+		"severity": "W",
+		"message": (option: string, option2: string) => `A ${option} is missing in the specification of the ${option2} option. One is assumed.`,
+		"fullCode": "IBM1158IW"
+	} as ParametricPLICode,
+
+	/**
+	 * An invalid compiler option has been specified.
+	 * (see page 17)
+	 */
+	IBM1159I: {
+		"code": "IBM1159I",
+		"severity": "W",
+		"message": (option: string) => `The string ${option} is not recognized as a valid option keyword and is ignored.`,
+		"fullCode": "IBM1159IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Printer control characters are not supported on input source records.
+	 * (see page 17)
+	 */
+	IBM1160I: {
+		"code": "IBM1160I",
+		"severity": "W",
+		"message": "The third argument to the MARGINS option is not supported.",
+		"fullCode": "IBM1160IW"
+	} as SimplePLICode,
+
+	/**
+	 * A suboption of a compiler option is incorrect. The suboption may be unknown or outside
+	 *  the allowable range.
+	 * ```pli
+	 *    *process flag(q)  margins(1002);
+	 * ```
+	 * (see page 17)
+	 */
+	IBM1161I: {
+		"code": "IBM1161I",
+		"severity": "W",
+		"message": (suboption: string, option: string) => `The suboption ${suboption} is not valid for the ${option} compiler option.`,
+		"fullCode": "IBM1161IW"
+	} as ParametricPLICode,
+
+	/**
+	 * A required suboption of a compiler option is missing.
+	 * ```pli
+	 *    *process or;
+	 * ```
+	 * (see page 17)
+	 */
+	IBM1162I: {
+		"code": "IBM1162I",
+		"severity": "W",
+		"message": (suboption: string) => `A required suboption is missing for the ${suboption} option.`,
+		"fullCode": "IBM1162IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Required suboptions of a compiler option are missing.  17
+	 * ```pli
+	 *    *process margins;
+	 * ```
+	 * (see page 17)
+	 */
+	IBM1163I: {
+		"code": "IBM1163I",
+		"severity": "W",
+		"message": (option: string) => `Required sub-fields are missing for the ${option} option. Default values are assumed.`,
+		"fullCode": "IBM1163IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The option, for example REORDER, is accepted outside of the OPTIONS attribute, but
+	 *  it should be specified within the OPTIONS attribute. This would also conform to
+	 *  the ANSI standard.
+	 * (see page 18)
+	 */
+	IBM1164I: {
+		"code": "IBM1164I",
+		"severity": "W",
+		"message": (optionname: string) => `${optionname} should be specified within OPTIONS, but is accepted as is.`,
+		"fullCode": "IBM1164IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The only supported LINKAGE options are OPTLINK and SYSTEM.
+	 * (see page 18)
+	 */
+	IBM1165I: {
+		"code": "IBM1165I",
+		"severity": "W",
+		"message": (optionname: string) => `The OPTIONS option ${optionname} has been specified more than once.`,
+		"fullCode": "IBM1165IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The only supported LINKAGE suboptions are OPTLINK and SYSTEM, and the only supported
+	 *  CMPAT suboptions are V1, V2, V3, and LE.
+	 * (see page 18)
+	 */
+	IBM1166I: {
+		"code": "IBM1166I",
+		"severity": "W",
+		"message": (suboptionname: string, optionname: string, optionname2: string) => `${suboptionname} is not a known ${optionname} suboption. The ${optionname2} option will be ignored.`,
+		"fullCode": "IBM1166IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The maximum number of pending %PUSH statements is 63.
+	 * (see page 18)
+	 */
+	IBM1167I: {
+		"code": "IBM1167I",
+		"severity": "W",
+		"message": "Maximum number of PUSH statements exceeded. The control statement is ignored.",
+		"fullCode": "IBM1167IW"
+	} as SimplePLICode,
+
+	/**
+	 * A %POP has been issued when no %PUSH statement are pending.
+	 * (see page 18)
+	 */
+	IBM1168I: {
+		"code": "IBM1168I",
+		"severity": "W",
+		"message": "No PUSH statements are in effect. The POP control statement is ignored.",
+		"fullCode": "IBM1168IW"
+	} as SimplePLICode,
+
+	/**
+	 * This message applies to the FIXED and FLOAT built- in functions when only one argument
+	 *  is given. The precision is not set to a default, but is instead derived from the
+	 *  argument. For example, if x is FLOAT BIN(21), FIXED(x) will return a FIXED BIN(21)
+	 *  value.
+	 * (see page 18)
+	 */
+	IBM1169I: {
+		"code": "IBM1169I",
+		"severity": "W",
+		"message": (builtinname: string) => `No precision was specified for the result of the ${builtinname} built- in function. The precision will be determined from the argument.`,
+		"fullCode": "IBM1169IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The indicated element of the OPTIONS list is not supported.
+	 * ```pli
+	 *     dcl a ext entry options( nomap );
+	 * ```
+	 * (see page 18)
+	 */
+	IBM1170I: {
+		"code": "IBM1170I",
+		"severity": "W",
+		"message": "The OPTIONS attribute  ${option attribute }  is not supported and is ignored.",
+		"fullCode": "IBM1170IW"
+	} as SimplePLICode,
+
+	/**
+	 * WHEN or OTHERWISE clauses are not required on SELECT statements, but their absence
+	 *  may indicate a coding error.
+	 * (see page 18)
+	 */
+	IBM1171I: {
+		"code": "IBM1171I",
+		"severity": "W",
+		"message": "SELECT statement contains no WHEN or OTHERWISE clauses.",
+		"fullCode": "IBM1171IW"
+	} as SimplePLICode,
+
+	/**
+	 * User-specified string has zero length. This can occur when OR('') has been specified
+	 *  on the command line or when the backslash character is specified as the only character
+	 *  in the OR string. In the latter case, the backslash character has been interpreted
+	 *  as an escape character, and so the string appears to have zero length.
+	 * (see page 18)
+	 */
+	IBM1172I: {
+		"code": "IBM1172I",
+		"severity": "W",
+		"message": (optionname: string) => `A zero length string has been entered for the ${optionname} option. The option is ignored.`,
+		"fullCode": "IBM1172IW"
+	} as ParametricPLICode,
+
+	/**
+	 * SELECT statements do not require WHEN clauses, but their absence may indicate a coding
+	 *  error.
+	 * (see page 18)
+	 */
+	IBM1173I: {
+		"code": "IBM1173I",
+		"severity": "W",
+		"message": "SELECT statement contains no WHEN clauses.",
+		"fullCode": "IBM1173IW"
+	} as SimplePLICode,
+
+	/**
+	 * The reference specified in the FROM or INTO clause may not be byte-aligned. If the
+	 *  reference is indeed not byte-aligned, unpredictable results may occur.
+	 * (see page 18)
+	 */
+	IBM1174I: {
+		"code": "IBM1174I",
+		"severity": "W",
+		"message": "The reference in the  ${frominto clause }  clause may not be byte- aligned.",
+		"fullCode": "IBM1174IW"
+	} as SimplePLICode,
+
+	/**
+	 * The maximum precision for FIXED BINARY constants is specified by the FIXEDBIN suboption
+	 *  of the LIMITS compiler option.
+	 * (see page 19)
+	 */
+	IBM1175I: {
+		"code": "IBM1175I",
+		"severity": "W",
+		"message": "FIXED BINARY constant contains too many digits. Excess nonsignificant digits will be ignored.",
+		"fullCode": "IBM1175IW"
+	} as SimplePLICode,
+
+	/**
+	 * The maximum precision for FIXED DECIMAL constants is specified by the FIXEDDEC suboption
+	 *  of the LIMITS compiler option.
+	 * (see page 19)
+	 */
+	IBM1176I: {
+		"code": "IBM1176I",
+		"severity": "W",
+		"message": "FIXED DECIMAL constant contains too many digits. Excess nonsignificant digits will be ignored.",
+		"fullCode": "IBM1176IW"
+	} as SimplePLICode,
+
+	/**
+	 * Float binary constants are limited to 64 digits on Intel, 32 on AIX and 33 on z\/OS
+	 * .
+	 * (see page 19)
+	 */
+	IBM1177I: {
+		"code": "IBM1177I",
+		"severity": "W",
+		"message": "Mantissa in FLOAT BINARY constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
+		"fullCode": "IBM1177IW"
+	} as SimplePLICode,
+
+	/**
+	 * Float decimal constants are limited to 18 digits on Intel, 106 on AIX and 109 on
+	 *  z\/OS.
+	 * (see page 19)
+	 */
+	IBM1178I: {
+		"code": "IBM1178I",
+		"severity": "W",
+		"message": "Mantissa in FLOAT DECIMAL constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
+		"fullCode": "IBM1178IW"
+	} as SimplePLICode,
+
+	/**
+	 * The precision for a float literal is implied by the number of digits in its mantissa.
+	 *  For instance 1e99 is implicitly FLOAT DECIMAL(1), but the value 1e99 is larger than
+	 *  the largest value a FLOAT DECIMAL(1) can hold.
+	 * (see page 19)
+	 */
+	IBM1179I: {
+		"code": "IBM1179I",
+		"severity": "W",
+		"message": "FLOAT literal is too big for its implicit precision. An appropriate HUGE value is assumed.",
+		"fullCode": "IBM1179IW"
+	} as SimplePLICode,
+
+	/**
+	 * This message applies to the ADDR, CURRENTSTORAGE\/SIZE and STORAGE\/SIZE built-in
+	 *  functions. Applying any one of these built-in functions to a variable that is not
+	 *  byte-aligned may not produce the results you expect.
+	 * (see page 19)
+	 */
+	IBM1180I: {
+		"code": "IBM1180I",
+		"severity": "W",
+		"message": (BUILTINname: string) => `Argument to ${BUILTINname} is not byte aligned.`,
+		"fullCode": "IBM1180IW"
+	} as ParametricPLICode,
+
+	/**
+	 * In the following code snippet, the WHILE clause applies only to the last DO specification,
+	 *  that is only when I = 5;
+	 * ```pli
+	 *     do i = 1, 3, 5 while( j < 5 );
+	 * ```
+	 * (see page 19)
+	 */
+	IBM1181I: {
+		"code": "IBM1181I",
+		"severity": "W",
+		"message": "A WHILE or UNTIL option at the end of a series of DO specifications applies only to the last specification.",
+		"fullCode": "IBM1181IW"
+	} as SimplePLICode,
+
+	/**
+	 * A procedure contains code that will cause it to be recursively invoked, but the procedure
+	 *  was not declared with RECURSIVE attribute.
+	 * ```pli
+	 *     a: proc( n );
+	 *        ...
+	 *        if n > 0 then call a;
+	 * ```
+	 * (see page 19)
+	 */
+	IBM1182I: {
+		"code": "IBM1182I",
+		"severity": "W",
+		"message": "Invocation of a NONRECURSIVE PROCEDURE from within that PROCEDURE is invalid. RECURSIVE attribute is assumed.",
+		"fullCode": "IBM1182IW"
+	} as SimplePLICode,
+
+	/**
+	 * The SIGNAL statement is ignored if the condition it would raise is disabled. Some
+	 *  conditions, like SIZE, are disabled by default.
+	 * ```pli
+	 *     (nofofl): signal fixedoverflow;
+	 * ```  19
+	 * (see page 19)
+	 */
+	IBM1183I: {
+		"code": "IBM1183I",
+		"severity": "W",
+		"message": (conditionname: string) => `${conditionname} condition is disabled. Statement is ignored.`,
+		"fullCode": "IBM1183IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The string in the INITIAL clause ('TooBig' in the example below) will be trimmed
+	 *  to fit (to 'TooB').
+	 * ```pli
+	 *     dcl x char(4) static init('tooBig');
+	 * ```
+	 * (see page 20)
+	 */
+	IBM1184I: {
+		"code": "IBM1184I",
+		"severity": "W",
+		"message": (stringlength: string, variablename: string, stringlength2: string) => `Source with length ${stringlength} in INITIAL clause for ${variablename} has length greater than the length ${stringlength2} of that INITIAL variable.`,
+		"fullCode": "IBM1184IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The string in the RETURNS clause ('TooBig' in the example below) will be trimmed
+	 *  to fit (to 'TooB').
+	 * ```pli
+	 *     x: proc returns( char(4) );
+	 *        ...
+	 *        return( 'TooBig' );
+	 * ```
+	 * (see page 20)
+	 */
+	IBM1185I: {
+		"code": "IBM1185I",
+		"severity": "W",
+		"message": (stringlength: string) => `Source with length ${stringlength} in RETURN statement has length greater than that in the corresponding RETURNS attribute.`,
+		"fullCode": "IBM1185IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The source in the assignment ('TooBig' in the example below) will be trimmed to fit
+	 *  (to 'TooB').
+	 * ```pli
+	 *     dcl x char(4);
+	 *     x = 'TooBig';
+	 * ```
+	 * (see page 20)
+	 */
+	IBM1186I: {
+		"code": "IBM1186I",
+		"severity": "W",
+		"message": (stringlength: string, stringlength2: string) => `Source with length ${stringlength} in string assignment has length greater than the length ${stringlength2} of the target.`,
+		"fullCode": "IBM1186IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The source in the entry invocation ('TooBig' in the example below) will be trimmed
+	 *  to fit (to 'TooB').
+	 * ```pli
+	 *     dcl x entry( char(4) );
+	 *     call x( 'TooBig' );
+	 * ```
+	 * (see page 20)
+	 */
+	IBM1187I: {
+		"code": "IBM1187I",
+		"severity": "W",
+		"message": (argumentnumber: string, entryname: string, stringlength: string) => `Argument number ${argumentnumber} in ENTRY reference ${entryname} has length ${stringlength} which is greater than that of the corresponding parameter.`,
+		"fullCode": "IBM1187IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The length of the string produced by concatenating two strings must not be greater
+	 *  than the maximum allowed for the derived string type.
+	 * (see page 20)
+	 */
+	IBM1188I: {
+		"code": "IBM1188I",
+		"severity": "W",
+		"message": "Result of concatenating two strings is too long.",
+		"fullCode": "IBM1188IW"
+	} as SimplePLICode,
+
+	/**
+	 * If NODESCRIPTOR is specified (or implied) for a procedure, aggregate parameters should
+	 *  have the CONNECTED attribute. The CONNECTED attribute can be explicitly coded, or
+	 *  it can be implied by the DEFAULT(CONNECTED) compiler option.
+	 * (see page 20)
+	 */
+	IBM1189I: {
+		"code": "IBM1189I",
+		"severity": "W",
+		"message": (parametername: string) => `NODESCRIPTOR attribute conflicts with the NONCONNECTED attribute for the parameter ${parametername} . CONNECTED is assumed.`,
+		"fullCode": "IBM1189IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The named option is not part of the PL\/I language definition as specified in the
+	 *  LANGLVL compiler option.
+	 * (see page 20)
+	 */
+	IBM1190I: {
+		"code": "IBM1190I",
+		"severity": "W",
+		"message": (optionname: string) => `The OPTIONS option ${optionname} conflicts with the LANGLVL compiler option. The option will be applied.`,
+		"fullCode": "IBM1190IW"
+	} as ParametricPLICode,
+
+	/**
+	 * When dividing a FIXED BIN(p1,0) value by a FIXED BIN(p2,0) value where 31 > p1, the
+	 *  result will have the attributes FIXED BIN(p1,0). With ANSI 76, it would have the
+	 *  attributes FIXED BIN(31,31-p1).
+	 * (see page 20)
+	 */
+	IBM1191I: {
+		"code": "IBM1191I",
+		"severity": "W",
+		"message": "Result of FIXED BIN divide will not be scaled.",
+		"fullCode": "IBM1191IW"
+	} as SimplePLICode,
+
+	/**
+	 * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
+	 *  WHEN clause, the code for the second WHEN clause will never be executed. This message
+	 *  will be produced only if the SELECT statement is otherwise suitable for transformation
+	 *  into a branch table.
+	 * (see page 20)
+	 */
+	IBM1192I: {
+		"code": "IBM1192I",
+		"severity": "W",
+		"message": "WHEN clauses contain duplicate values.",
+		"fullCode": "IBM1192IW"
+	} as SimplePLICode,
+
+	/**
+	 * This message is produced if a block contains more statements than allowed by the
+	 *  MAXSTMT compiler option. It may point to blocks that are excessively large.
+	 * (see page 20)
+	 */
+	IBM1193I: {
+		"code": "IBM1193I",
+		"severity": "W",
+		"message": (statementcount: string, blockname: string) => `${statementcount} statements in block ${blockname} .`,
+		"fullCode": "IBM1193IW"
+	} as ParametricPLICode,
+
+	/**
+	 * A MAIN procedure should have at most one argument, except under SYSTEM(CICS) and
+	 *  SYSTEM(IMS).
+	 * (see page 21)
+	 */
+	IBM1194I: {
+		"code": "IBM1194I",
+		"severity": "W",
+		"message": "More than one argument to MAIN PROCEDURE.",
+		"fullCode": "IBM1194IW"
+	} as SimplePLICode,
+
+	/**
+	 * The argument to the MAIN procedure should be CHARACTER VARYING, except under SYSTEM(CICS),
+	 *  SYSTEM(TSO) and SYSTEM(IMS).
+	 * (see page 21)
+	 */
+	IBM1195I: {
+		"code": "IBM1195I",
+		"severity": "W",
+		"message": "Argument to MAIN PROCEDURE is not CHARACTER VARYING.",
+		"fullCode": "IBM1195IW"
+	} as SimplePLICode,
+
+	/**
+	 * Any INITIAL attribute specified for an AREA variable is ignored. The variable will,
+	 *  instead, be initialized with the EMPTY built-in function.
+	 * (see page 21)
+	 */
+	IBM1196I: {
+		"code": "IBM1196I",
+		"severity": "W",
+		"message": "AREA initialized with EMPTY - INITIAL attribute is ignored.",
+		"fullCode": "IBM1196IW"
+	} as SimplePLICode,
+
+	/**
+	 * All file conditions should be qualified with a file reference, but ENDFILE and ENDPAGE
+	 *  are accepted without a file reference. SYSIN and SYSPRINT are then assumed, respectively
+	 * .
+	 * (see page 21)
+	 */
+	IBM1197I: {
+		"code": "IBM1197I",
+		"severity": "W",
+		"message": (filename: string) => `${filename} assumed as file condition reference.`,
+		"fullCode": "IBM1197IW"
+	} as ParametricPLICode,
+
+	/**
+	 * An ENTRY reference is used where the result of invoking that entry is probably meant
+	 *  to be used.
+	 * ```pli
+	 *    dcl e1 entry returns( ptr );
+	 *    dcl q  ptr based;
+	 *    e1->q = null();
+	 *    dcl e2 entry returns( bit(1) );
+	 *    if e2 then ...
+	 * ```
+	 * (see page 21)
+	 */
+	IBM1198I: {
+		"code": "IBM1198I",
+		"severity": "W",
+		"message": (variablename: string) => `A null argument list is assumed for ${variablename} .`,
+		"fullCode": "IBM1198IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The %LINE directive must be followed, with optional intervening blanks, by a parenthesis,
+	 *  a line number, a comma, a file name and a closing parenthesis.
+	 * ```pli
+	 *    %line( 19, test.pli );
+	 * ```
+	 * (see page 21)
+	 */
+	IBM1199I: {
+		"code": "IBM1199I",
+		"severity": "W",
+		"message": "Syntax of the LINE directive is incorrect.",
+		"fullCode": "IBM1199IW"
+	} as SimplePLICode,
+
+	/**
+	 * The DATE built-in returns a two-digit year. It might be better to use the DATETIME
+	 *  built-in which returns a four-digit year.
+	 * (see page 21)
+	 */
+	IBM1200I: {
+		"code": "IBM1200I",
+		"severity": "W",
+		"message": "Use of DATE built-in function may cause problems.",
+		"fullCode": "IBM1200IW"
+	} as SimplePLICode,
+
+	/**
+	 * There is a conflict of suboptions for the LANGLVL compiler option. The SAA2 and OS
+	 *  suboptions are mutually exclusive.
+	 * ```pli
+	 *    *process langlvl(saa2 os);
+	 * ```
+	 * (see page 21)
+	 */
+	IBM1201I: {
+		"code": "IBM1201I",
+		"severity": "W",
+		"message": (suboption: string, option: string) => `${suboption} conflicts with a previously specified suboption for the ${option} compiler option.`,
+		"fullCode": "IBM1201IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The only option supported in the %OPTION statement is the LANGLVL option.
+	 * (see page 21)
+	 */
+	IBM1202I: {
+		"code": "IBM1202I",
+		"severity": "W",
+		"message": "Syntax of the OPTION statement is incorrect.",
+		"fullCode": "IBM1202IW"
+	} as SimplePLICode,
+
+	/**
+	 * Change the invocation of PLITEST so that no argument is passed.
+	 * (see page 21)
+	 */
+	IBM1203I: {
+		"code": "IBM1203I",
+		"severity": "W",
+		"message": "Argument to PLITEST is ignored.",
+		"fullCode": "IBM1203IW"
+	} as SimplePLICode,
+
+	/**
+	 * LABEL variables require block activation information, and hence they cannot be initialized
+	 *  at compile- time. For a STATIC LABEL variable with the INITIAL attribute, if the
+	 *  variable is a member of a structure or a union, a severe message will be issued.
+	 *  Otherwise, its attributes will be changed to INTERNAL CONSTANT in order to eliminate
+	 *  the requirement for block activation  21 information. Such a variable must be initialized
+	 *  with LABEL CONSTANTs from containing blocks.
+	 * (see page 21)
+	 */
+	IBM1204I: {
+		"code": "IBM1204I",
+		"severity": "W",
+		"message": "INTERNAL CONSTANT assumed for initialized STATIC LABEL.",
+		"fullCode": "IBM1204IW"
+	} as SimplePLICode,
+
+	/**
+	 * If two arguments of the NAMES option are specified, they must be the same length.
+	 *  The second argument is the uppercase value of the first. If a character in the first
+	 *  string does not have an uppercase value, use the character itself as the uppercase
+	 *  value. For example:
+	 * ```pli
+	 *      names( '$!@' '$!@')
+	 * ```
+	 * (see page 22)
+	 */
+	IBM1205I: {
+		"code": "IBM1205I",
+		"severity": "W",
+		"message": (option: string) => `Arguments of the ${option} compiler option must be the same length.`,
+		"fullCode": "IBM1205IW"
+	} as ParametricPLICode,
+
+	/**
+	 * In an expression of the form x & y, x | y, or x ^ y, x and y should both have BIT
+	 *  type.
+	 * (see page 22)
+	 */
+	IBM1206I: {
+		"code": "IBM1206I",
+		"severity": "W",
+		"message": "BIT operators should be applied only to BIT operands.",
+		"fullCode": "IBM1206IW"
+	} as SimplePLICode,
+
+	/**
+	 * If the operand has a numeric type, the result is the length that value would have
+	 *  after it was converted to string. The length of a numeric type is NOT the same as
+	 *  its storage requirement.
+	 * (see page 22)
+	 */
+	IBM1207I: {
+		"code": "IBM1207I",
+		"severity": "W",
+		"message": "Operand to LENGTH built-in function should have string type.",
+		"fullCode": "IBM1207IW"
+	} as SimplePLICode,
+
+	/**
+	 * The array will be incompletely initialized. If the named variable is part of a structure,
+	 *  subsequent elements in that structure with this problem will be flagged with message
+	 *  2603. An asterisk can be used as an initialization factor to initialize all the
+	 *  elements with one value. In the example below, a(1) is initialized with the value
+	 *  13, while the elements a(2) through a(8) are uninitialized. In contrast, all the
+	 *  elements in b are initialized to 13.
+	 * ```pli
+	 *      dcl a(8) fixed bin init( 13 );
+	 *      dcl b(8) fixed bin init( (*) 13 );
+	 * ```
+	 * (see page 22)
+	 */
+	IBM1208I: {
+		"code": "IBM1208I",
+		"severity": "W",
+		"message": "INITIAL list for the array  ${variable name }  contains only one item.",
+		"fullCode": "IBM1208IW"
+	} as SimplePLICode,
+
+	/**
+	 * Since ISAM is not being simulated on the OS\/2 platform, the file will be treated
+	 *  in a manner similar to VSAM KSDS. The file specified in the first declaration below
+	 *  would be handled in the same manner as the file in the second declaration. Both
+	 *  are treated as ORGANIZATION(INDEXED).
+	 * ```pli
+	 *      dcl f1 file env(indexed);
+	 *      dcl f2 file env(organization(indexed));
+	 * ```
+	 * (see page 22)
+	 */
+	IBM1209I: {
+		"code": "IBM1209I",
+		"severity": "W",
+		"message": (filename: string) => `INDEXED environment option for file ${filename} will be treated as ORGANIZATION(INDEXED).`,
+		"fullCode": "IBM1209IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The format width will be too small for output if the number is negative. It might
+	 *  be valid if the format is being used for input.
+	 * (see page 22)
+	 */
+	IBM1210I: {
+		"code": "IBM1210I",
+		"severity": "W",
+		"message": (keyword: string) => `The field width specified in the ${keyword} -format item may be too small for complete output of the data item.`,
+		"fullCode": "IBM1210IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The source in the assignment ('TooBig' in the example below) will be trimmed to fit
+	 *  (to 'TooB'). If the target is a pseudovariable, message 1186 is issued instead.
+	 * ```pli
+	 *     dcl x char(4);
+	 *     x = 'TooBig';
+	 * ```
+	 * (see page 22)
+	 */
+	IBM1211I: {
+		"code": "IBM1211I",
+		"severity": "W",
+		"message": (stringlength: string, stringlength2: string, variable: string) => `Source with length ${stringlength} in string assignment has length greater than the length ${stringlength2} of the target ${variable} .`,
+		"fullCode": "IBM1211IW"
+	} as ParametricPLICode,
+
+	/**
+	 * A width must be specified on A format items when specified on a GET statement.
+	 * ```pli
+	 *      get edit(name) (a);
+	 * ```
+	 * (see page 22)
+	 */
+	IBM1212I: {
+		"code": "IBM1212I",
+		"severity": "W",
+		"message": "The A format item requires an argument when used in GET statement. An L format item is assumed in its place.",
+		"fullCode": "IBM1212IW"
+	} as SimplePLICode,
+
+	/**
+	 * The named procedure is not external and is never referenced in any live code in the
+	 *  compilation unit. This may represent an error (if it was supposed to be called)
+	 *  or an opportunity to eliminate some dead code.
+	 * (see page 22)
+	 */
+	IBM1213I: {
+		"code": "IBM1213I",
+		"severity": "W",
+		"message": (procname: string) => `The PROCEDURE ${procname} is not referenced.`,
+		"fullCode": "IBM1213IW"
+	} as ParametricPLICode,
+
+	/**
+	 * An argument passed BYADDR to an entry does not match the corresponding parameter
+	 *  in the entry description. The address of the argument will not be passed to the
+	 *  entry. Instead, the argument will be assigned to a temporary with attributes that
+	 *  do match the parameter in the entry description, and the address of that temporary
+	 *  will be passed to the entry. This means that if the entry alters the value of this
+	 *  parameter, the alteration will not be visible in the calling routine.
+	 * ```pli
+	 *    dcl e entry( fixed bin(31) );
+	 *    dcl i fixed bin(15);
+	 *    call e( i );
+	 * ```
+	 * (see page 23)
+	 */
+	IBM1214I: {
+		"code": "IBM1214I",
+		"severity": "W",
+		"message": (argumentnumber: string, entryname: string) => `A dummy argument will be created for argument number ${argumentnumber} in ENTRY reference ${entryname} .`,
+		"fullCode": "IBM1214IW"
+	} as ParametricPLICode,
+
+	/**
+	 * It will be given the default attributes, but this may be because of an error in the
+	 *  declare. For instance, in the following example, parentheses may be missing
+	 * ```pli
+	 *    dcl a, b fixed bin;
+	 * ```
+	 * (see page 23)
+	 */
+	IBM1215I: {
+		"code": "IBM1215I",
+		"severity": "W",
+		"message": (variablename: string) => `The variable ${variablename} is declared without any data attributes.`,
+		"fullCode": "IBM1215IW"
+	} as ParametricPLICode,
+
+	/**
+	 * It will be given the default attributes, but this may be because of an error in the
+	 *  declare. For instance, in the following example, the level number on c and d should
+	 *  probably be 3.
+	 * ```pli
+	 *    dcl a, b fixed bin;
+	 *      1 a,
+	 *        2 b,
+	 *          2 c,
+	 *          2 d;
+	 * ```
+	 * (see page 23)
+	 */
+	IBM1216I: {
+		"code": "IBM1216I",
+		"severity": "W",
+		"message": "The structure member  ${variable name }  is declared without any data attributes. A level number may be incorrect.",
+		"fullCode": "IBM1216IW"
+	} as SimplePLICode,
+
+	/**
+	 * It will be given the default attributes, but this may be because of an error in the
+	 *  declare. For instance, in the following example, the level number on c and d should
+	 *  probably be 3.
+	 * ```pli
+	 *    dcl a, b fixed bin;
+	 *      1 a,
+	 *        2 *,
+	 *          2 c,
+	 *          2 d;
+	 * ```
+	 * (see page 23)
+	 */
+	IBM1217I: {
+		"code": "IBM1217I",
+		"severity": "W",
+		"message": "An unnamed structure member is declared without any data attributes. A level number may be incorrect.",
+		"fullCode": "IBM1217IW"
+	} as SimplePLICode,
+
+	/**
+	 * To eliminate this message, apply the CHAR or BIT built-in function to the first argument
+	 * .
+	 * ```pli
+	 *    dcl i fixed bin;
+	 *    display( substr(i,4) );
+	 * ```
+	 * (see page 23)
+	 */
+	IBM1218I: {
+		"code": "IBM1218I",
+		"severity": "W",
+		"message": (BUILTINname: string) => `First argument to ${BUILTINname} built-in function should have string type.`,
+		"fullCode": "IBM1218IW"
+	} as ParametricPLICode,
+
+	/**
+	 * This message is not produced if the LEAVE statement specifies a label. In the following
+	 *  loop, the LEAVE statement will cause only the immediately enclosing DO-group to
+	 *  be exited; the loop will not be exited.
+	 * ```pli
+	 *    do i = 1 to n;
+	 *      if a(i) > 0 then
+	 *        do;
+	 *          call f;
+	 *          leave;
+	 *        end;
+	 *      else;
+	 *    end;
+	 * ```
+	 * (see page 23)
+	 */
+	IBM1219I: {
+		"code": "IBM1219I",
+		"severity": "W",
+		"message": "LEAVE will exit noniterative DO- group.",
+		"fullCode": "IBM1219IW"
+	} as SimplePLICode,
+
+	/**
+	 * This message is produced when a variable is compared to a constant equal to the largest
+	 *  or smallest value that the variable could assume. In the following loop, the variable
+	 *  x can never be greater than 99, and hence the implied comparison executed each time
+	 *  through the loop will always result in a '1'b.
+	 * ```pli
+	 *    dcl x pic'99';
+	 *    do x = 1 to 99;
+	 *    end;
+	 * ```
+	 * (see page 23)
+	 */
+	IBM1220I: {
+		"code": "IBM1220I",
+		"severity": "W",
+		"message": "Result of comparison is always constant.",
+		"fullCode": "IBM1220IW"
+	} as SimplePLICode,
+
+	/**
+	 * This message is produced if a statement uses more bytes for temporaries than allowed
+	 *  by the MAXTEMP compiler option.
+	 * (see page 24)
+	 */
+	IBM1221I: {
+		"code": "IBM1221I",
+		"severity": "W",
+		"message": (count: string) => `Statement uses ${count} bytes for temporaries.`,
+		"fullCode": "IBM1221IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Comparisons involving data containing 2-digit year fields may cause problems if exactly
+	 *  one of the years is later than 1999.
+	 * (see page 24)
+	 */
+	IBM1222I: {
+		"code": "IBM1222I",
+		"severity": "W",
+		"message": "Comparison involving 2-digit year is problematic.",
+		"fullCode": "IBM1222IW"
+	} as SimplePLICode,
+
+	/**
+	 * In a comparison, if one comparand has the DATE attribute, the other should also.
+	 *  If the non-date is a literal with a value that is valid for the date pattern, it
+	 *  will be viewed as if it had the same DATE attribute as the date comparand. So, in
+	 *  the following code, '670101' will be interpreted as if it had the DATE('YYMMDD')
+	 *  attribute.
+	 * ```pli
+	 *     dcl x char(6) date('YYMMDD');
+	 *     if x > '670101' then ...
+	 * ```
+	 * (see page 24)
+	 */
+	IBM1223I: {
+		"code": "IBM1223I",
+		"severity": "W",
+		"message": "Literal in comparison interpreted with DATE attribute.",
+		"fullCode": "IBM1223IW"
+	} as SimplePLICode,
+
+	/**
+	 * In a comparison, if one comparand has the DATE attribute, the other should also.
+	 *  If the non-date is a literal with a value that is not valid for the date pattern,
+	 *  the DATE attribute will be ignored. So, in the following code, the comparison will
+	 *  be evaluated as if x did not have the DATE attribute.
+	 * ```pli
+	 *     dcl x char(6) date('YYMMDD');
+	 *     if x > '' then ...
+	 * ```
+	 * (see page 24)
+	 */
+	IBM1224I: {
+		"code": "IBM1224I",
+		"severity": "W",
+		"message": "DATE attribute ignored in comparison with non-date literal.",
+		"fullCode": "IBM1224IW"
+	} as SimplePLICode,
+
+	/**
+	 * If the target in an explicit or implicit assignment has the DATE attribute, the source
+	 *  should also. If it does not, the DATE attribute will be ignored. So, in the following
+	 *  code, the assignment will be performed as if x did not have the DATE attribute.
+	 * ```pli
+	 *     dcl x char(6) date('YYMMDD');
+	 *     x = '';
+	 * ```
+	 * (see page 24)
+	 */
+	IBM1225I: {
+		"code": "IBM1225I",
+		"severity": "W",
+		"message": "DATE attribute ignored in conversion from literal.",
+		"fullCode": "IBM1225IW"
+	} as SimplePLICode,
+
+	/**
+	 * Look in STDOUT to see the message issued by the compiler backend.
+	 * (see page 24)
+	 */
+	IBM2600I: {
+		"code": "IBM2600I",
+		"severity": "W",
+		"message": "Compiler backend issued warning messages to STDOUT.",
+		"fullCode": "IBM2600IW"
+	} as SimplePLICode,
+
+	/**
+	 * The indicated character is missing and has been inserted by the parser in order to
+	 *  correct your source.
+	 * ```pli
+	 *      xx: dcl test fixed bin;
+	 * ```
+	 * (see page 24)
+	 */
+	IBM2601I: {
+		"code": "IBM2601I",
+		"severity": "W",
+		"message": (character: string, character2: string) => `Missing ${character} assumed before ${character2} . DECLARE and other nonexecutable statements should not have labels.`,
+		"fullCode": "IBM2601IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The array will be incompletely initialized. If the named variable is part of a structure,
+	 *  the first element in that structure with this problem will be flagged with message
+	 *  1138. This may be a programming error (in 24  the example below, 6 should probably
+	 *  have been 7) and may cause exceptions when the program is run.
+	 * ```pli
+	 *      dcl
+	 *        1 a,
+	 *          2 b(8) fixed bin init( 1, (7) 29 ),
+	 *          2 c(8) fixed bin init( 1, (6) 29 );
+	 * ```
+	 * (see page 24)
+	 */
+	IBM2602I: {
+		"code": "IBM2602I",
+		"severity": "W",
+		"message": (count: string, variablename: string, arraysize: string) => `Number of items in INITIAL list is ${count} for the array ${variablename} which contains ${arraysize} elements.`,
+		"fullCode": "IBM2602IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The array will be incompletely initialized. If the named variable is part of a structure,
+	 *  the first element in that structure with this problem will be flagged with message
+	 *  1208. An asterisk can be used as an initialization factor to initialize all the
+	 *  elements with one value. In the example below, b(1) and c(1) are initialized with
+	 *  the value 13, while the elements b(2) through b(8) and c(2) through c(8) are uninitialized.
+	 *  In contrast, all the elements in d are initialized to 13.
+	 * ```pli
+	 *      dcl
+	 *        1 a,
+	 *          2 b(8) fixed bin init( 13 ),
+	 *          2 d(8) fixed bin init( 13 ),
+	 *          2 e(8) fixed bin init( (*) 13 );
+	 * ```
+	 * (see page 25)
+	 */
+	IBM2603I: {
+		"code": "IBM2603I",
+		"severity": "W",
+		"message": "INITIAL list for the array  ${variable name }  contains only one item.",
+		"fullCode": "IBM2603IW"
+	} as SimplePLICode,
+
+	/**
+	 * If the source in a conversion to FIXED DECIMAL is a FIXED DECIMAL or PICTURE variable
+	 *  with a different precision and scale factor, and if the difference between the precisions
+	 *  is not as large as the the difference between the scale factors, then significant
+	 *  digits may be lost. If the SIZE condition were enabled, code would be generated
+	 *  to detect any such occurrence, and this message would not be issued.
+	 * ```pli
+	 *      dcl a fixed dec(04) init(1009);
+	 *      dcl b fixed dec(03);
+	 *      b = a;
+	 * ```
+	 * (see page 25)
+	 */
+	IBM2604I: {
+		"code": "IBM2604I",
+		"severity": "W",
+		"message": (sourceprecision: string, sourcescale: string, targetprecision: string, targetscale: string) => `FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
+		"fullCode": "IBM2604IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The specified line contains an invalid ANS print control character. The valid characters
+	 *  are: blank, 0, -, + and 1.
+	 * (see page 25)
+	 */
+	IBM2605I: {
+		"code": "IBM2605I",
+		"severity": "W",
+		"message": "Invalid carriage control character. Blank assumed.",
+		"fullCode": "IBM2605IW"
+	} as SimplePLICode,
+
+	/**
+	 * If the REFER object has any other attributes, it will be converted to and from REAL
+	 *  FIXED BIN(31,0) via library calls.
+	 * (see page 25)
+	 */
+	IBM2606I: {
+		"code": "IBM2606I",
+		"severity": "W",
+		"message": (referencename: string) => `Code generated for the REFER object ${referencename} would be more efficient if the REFER object had the attributes REAL FIXED BIN(p,0).`,
+		"fullCode": "IBM2606IW"
+	} as ParametricPLICode,
+
+	/**
+	 * If the source in a conversion to FIXED DECIMAL is a PICTURE variable with a different
+	 *  precision and scale factor, and if the difference between the precisions is not
+	 *  as large as the the difference between the scale factors, then significant digits
+	 *  may be lost. If the SIZE condition were enabled, code would be generated to detect
+	 *  any such occurrence, and this message would not be issued.
+	 * ```pli
+	 *      dcl a pic'(4)9' init(1009);
+	 *      dcl b fixed dec(03);
+	 *      b = a;
+	 * ```
+	 * (see page 25)
+	 */
+	IBM2607I: {
+		"code": "IBM2607I",
+		"severity": "W",
+		"message": (sourceprecision: string, sourcescale: string, targetprecision: string, targetscale: string) => `PICTURE representing FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
+		"fullCode": "IBM2607IW"
+	} as ParametricPLICode,
+
+	/**
+	 * If the source in a conversion to a PICTURE is a PICTURE variable with a different
+	 *  precision and scale factor, and if the difference between the precisions is not
+	 *  as large as the the difference between the scale factors, then significant digits
+	 *  may be lost. If the SIZE condition were enabled, code would be generated to detect
+	 *  any such occurrence, and this message would not be issued.
+	 * ```pli
+	 * ```  25
+	 * ```pli
+	 *      dcl a pic'(4)9' init(1009);
+	 *      dcl b pic'(3)9';
+	 *      b = a;
+	 * ```
+	 * (see page 25)
+	 */
+	IBM2608I: {
+		"code": "IBM2608I",
+		"severity": "W",
+		"message": (sourceprecision: string, sourcescale: string, targetprecision: string, targetscale: string) => `PICTURE representing FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to PICTURE representing FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
+		"fullCode": "IBM2608IW"
+	} as ParametricPLICode,
+
+	/**
+	 * If a comment contains a semicolon, it may indicate that there is an earlier unintentionally
+	 *  unclosed comment that is accidentally commenting out some source as in this exampl
+	 * e
+	 * ```pli
+	 *      \/* start of unclosed comment
+	 *      dcl b pic'(3)9';
+	 *      \/* next comment *\/
+	 * ```
+	 * (see page 26)
+	 */
+	IBM2609I: {
+		"code": "IBM2609I",
+		"severity": "W",
+		"message": (linenumber: string, filenumber: string) => `Comment contains a semicolon on line ${linenumber} . ${filenumber} .`,
+		"fullCode": "IBM2609IW"
+	} as ParametricPLICode,
+
+	/**
+	 * This message applies to the MULTIPLY, DIVIDE, ADD, and SUBTRACT built-in functions:
+	 *  if one argument to one of these functions is FIXED DEC while the other is FIXED
+	 *  BIN, then the specified precision will not be interpreted as a FIXED DEC precision.
+	 *  This may cause improper truncation of data. For example, the result of the following
+	 *  multiply will have the attributes FIXED BIN(15), not FIXED DEC(15), and that might
+	 *  cause the result to be improperly truncated.
+	 * ```pli
+	 *      dcl a fixed bin(31);
+	 *      dcl b fixed dec(15);
+	 *      b = multiply( a, 1000, 15 );
+	 * ```
+	 * (see page 26)
+	 */
+	IBM2610I: {
+		"code": "IBM2610I",
+		"severity": "W",
+		"message": (BUILTINname: string) => `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FIXED BIN. Compiler will not interpret precision as FIXED DEC.`,
+		"fullCode": "IBM2610IW"
+	} as ParametricPLICode,
+
+	/**
+	 * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
+	 *  WHEN clause, the code for the second WHEN clause will never be executed. This message
+	 *  will be produced only if the SELECT statement is otherwise suitable for transformation
+	 *  into a branch table.
+	 * (see page 26)
+	 */
+	IBM2611I: {
+		"code": "IBM2611I",
+		"severity": "W",
+		"message": (binaryvalue: string) => `The binary value ${binaryvalue} appears in more than one WHEN clause.`,
+		"fullCode": "IBM2611IW"
+	} as ParametricPLICode,
+
+	/**
+	 * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
+	 *  WHEN clause, the code for the second WHEN clause will never be executed. This message
+	 *  will be produced only if the SELECT statement is otherwise suitable for transformation
+	 *  into a branch table.
+	 * (see page 26)
+	 */
+	IBM2612I: {
+		"code": "IBM2612I",
+		"severity": "W",
+		"message": "The character string  ${character string }  appears in more than one WHEN clause.",
+		"fullCode": "IBM2612IW"
+	} as SimplePLICode,
+
+	/**
+	 * The indicated variable may not have been assigned or initialized a value before it
+	 *  is used as an INOUT parameter. This is problematic unless it is used only as an
+	 *  OUTONLY parameter.
+	 * (see page 26)
+	 */
+	IBM2613I: {
+		"code": "IBM2613I",
+		"severity": "W",
+		"message": (variable: string) => `RULES(NOLAXINOUT) violation: ${variable} is being passed as an INOUT parameter, but may be unset.`,
+		"fullCode": "IBM2613IW"
+	} as ParametricPLICode,
+
+	/**
+	 * This message will flag statements such as the following, where the \"equals\" is
+	 *  meant to be an \"and\" or \"or\".
+	 * ```pli
+	 *      if ( a < b ) = ( c < d ) then
+	 * ```
+	 * (see page 26)
+	 */
+	IBM2614I: {
+		"code": "IBM2614I",
+		"severity": "W",
+		"message": "Both comparands are Booleans.",
+		"fullCode": "IBM2614IW"
+	} as SimplePLICode,
+
+	/**
+	 * DO-loops should normally be iterative, but if the DO- loop specification consists
+	 *  of just one assignment, then it will always excute once and only once. A semicolon
+	 *  after the DO may be missing, as in this example
+	 * ```pli
+	 *      do
+	 *        edsaup.tprs =  ads162.tprs;
+	 *        edsaup.tops =  ads162.tops;
+	 *      end;
+	 * ```
+	 * (see page 26)
+	 */
+	IBM2615I: {
+		"code": "IBM2615I",
+		"severity": "W",
+		"message": "DO-loop will always execute exactly once. A semicolon after the DO may be missing.",
+		"fullCode": "IBM2615IW"
+	} as SimplePLICode,
+
+	/**
+	 * If the SIZE or STG built-in function is applied to a CHAR(*) VARYING (or VARYINGZ)
+	 *  parameter when there is no descriptor available, then the size of the actual storage
+	 *  allocated to the variable cannot be determined and only the current size can be
+	 *  returned.
+	 * (see page 26)
+	 */
+	IBM2616I: {
+		"code": "IBM2616I",
+		"severity": "W",
+		"message": (variable: string) => `Size of parameter ${variable} will return the currentsize value since no descriptor is available.`,
+		"fullCode": "IBM2616IW"
+	} as ParametricPLICode,
+
+	/**
+	 * It is generally very unwise to pass a label to another routine. It would be good
+	 *  to think about redesigning any code doing this. The compiler will issue this message
+	 *  when a LABEL is passed to an ENTRY declared with OPTIONS( COBOL ) or OPTIONS( ASM
+	 *  ) or OPTIONS( FORTRAN ). The only valid use of this label in the called routine
+	 *  would be to pass it on to another PL\/I routine.
+	 * (see page 27)
+	 */
+	IBM2617I: {
+		"code": "IBM2617I",
+		"severity": "W",
+		"message": "Passing a LABEL to a non-PL/I routine is very poor coding practice and will cause the compiler to generate less than optimal code.",
+		"fullCode": "IBM2617IW"
+	} as SimplePLICode,
+
+	/**
+	 * A suboption of a suboption of a compiler option is incorrect. The suboption may be
+	 *  unknown or outside the allowable range.
+	 * ```pli
+	 *    *process limits(extname(2000));
+	 * ```
+	 * (see page 27)
+	 */
+	IBM2618I: {
+		"code": "IBM2618I",
+		"severity": "W",
+		"message": (suboption: string, option: string, option2: string) => `The suboption ${suboption} is not valid for the suboption ${option} of the ${option2} compiler option.`,
+		"fullCode": "IBM2618IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Changing REFER objects may not produce the expected results. For example, in the
+	 *  following example, the assignment will not change any of the elements in the array
+	 *  d.
+	 * ```pli
+	 *      dcl
+	 *        1 a based(p),
+	 *          2 b     fixed bin(31),
+	 *          2 c     fixed bin(31),
+	 *          2 d( 10 refer(c) ),
+	 *            3 e   fixed bin(31),
+	 *            3 f   fixed bin(31);
+	 *      a = '';
+	 * ```
+	 * (see page 27)
+	 */
+	IBM2620I: {
+		"code": "IBM2620I",
+		"severity": "W",
+		"message": "Target structure contains REFER objects. Results are undefined if the assignment changes any REFER object.",
+		"fullCode": "IBM2620IW"
+	} as SimplePLICode,
+
+	/**
+	 * The first statement in an ON ERROR block should usually be an ON ERROR SYSTEM statement.
+	 *  This will tend to prevent an infinite loop if there is an error in the rest of the
+	 *  code in the ON ERROR block.
+	 * (see page 27)
+	 */
+	IBM2621I: {
+		"code": "IBM2621I",
+		"severity": "W",
+		"message": "ON ERROR block does not start with ON ERROR SYSTEM. An error inside the block may lead to an infinite loop.",
+		"fullCode": "IBM2621IW"
+	} as SimplePLICode,
+
+	/**
+	 * If the initial value in a DO loop is set via an ENTRY, then you may get unexpected
+	 *  results if that ENTRY also changes the TO or BY value. For example, in the first
+	 *  loop below, the function \"first\" should not change the value of the variable \"last\".
+	 *  It would be better to change this code into the form of the second loop below.
+	 * ```pli
+	 *      do x = first() to last;
+	 *      end;
+	 *      temp = first();
+	 *      do x = temp to last;
+	 *      end;
+	 * ```
+	 * (see page 27)
+	 */
+	IBM2622I: {
+		"code": "IBM2622I",
+		"severity": "W",
+		"message": "ENTRY used to set the initial value in a DO loop will be invoked after any TO or BY values are set.",
+		"fullCode": "IBM2622IW"
+	} as SimplePLICode,
+
+	/**
+	 * Under DFP, the conversion of FLOAT DEC to FLOAT BIN requires an expensive library
+	 *  call that will lead to poor performance. To avoid this, the DECIMAL built-in function
+	 *  can be applied to the FIXED BIN operand. For example, it would be better to change
+	 *  the first assignment statement into the form of the second below.
+	 * ```pli
+	 *      dcl n fixed bin(31);
+	 *      dcl f float dec(16);
+	 *      f = n + f;
+	 *      f = dec(n) + f;
+	 * ```
+	 * (see page 27)
+	 */
+	IBM2623I: {
+		"code": "IBM2623I",
+		"severity": "W",
+		"message": "Mixing FIXED BIN and FLOAT DEC produces a FLOAT BIN result. Under DFP, this will lead to poor performance.",
+		"fullCode": "IBM2623IW"
+	} as SimplePLICode,
+
+	/**
+	 * Under DFP, the conversion of FLOAT DEC to FLOAT BIN requires an expensive library
+	 *  call that will lead to poor performance. To avoid this, the DECIMAL built-in function
+	 *  can be applied to the BIT operand. For example, it would be better to change the
+	 *  first assignment statement into the form of the second below.
+	 * ```pli
+	 *      dcl b bit(8);
+	 *      dcl f float dec(16);
+	 *      f = b + f;
+	 *      f = dec(b) + f;
+	 * ```
+	 * (see page 27)
+	 */
+	IBM2624I: {
+		"code": "IBM2624I",
+		"severity": "W",
+		"message": "Mixing BIT and FLOAT DEC produces a FLOAT BIN result.  27 Under DFP, this will lead to poor performance.",
+		"fullCode": "IBM2624IW"
+	} as SimplePLICode,
+
+	/**
+	 * Under DFP, the conversion of FLOAT DEC to FLOAT BIN requires an expensive library
+	 *  call that will lead to poor performance.
+	 * (see page 28)
+	 */
+	IBM2625I: {
+		"code": "IBM2625I",
+		"severity": "W",
+		"message": "Mixing FLOAT BIN and FLOAT DEC produces a FLOAT BIN result. Under DFP, this will lead to poor performance.",
+		"fullCode": "IBM2625IW"
+	} as SimplePLICode,
+
+	/**
+	 * While technically valid, a SUBSTR reference with a third argument that is a constant
+	 *  of zero probably represents a coding error.
+	 * (see page 28)
+	 */
+	IBM2626I: {
+		"code": "IBM2626I",
+		"severity": "W",
+		"message": "Use of SUBSTR with a third argument equal to 0 is somewhat pointless since the result will always be a null string.",
+		"fullCode": "IBM2626IW"
+	} as SimplePLICode,
+
+	/**
+	 * XMI metadata is generated for BASED structures using REFER only if their use of REFER
+	 *  is \"simple\".
+	 * (see page 28)
+	 */
+	IBM2627I: {
+		"code": "IBM2627I",
+		"severity": "W",
+		"message": (identifier: string) => `No metadata will be generated for the structure ${identifier} since its use of REFER is too complex.`,
+		"fullCode": "IBM2627IW"
+	} as ParametricPLICode,
+
+	/**
+	 * BYVALUE parameters larger than 32 bytes require too much overhead and are bad for
+	 *  performance.
+	 * (see page 28)
+	 */
+	IBM2628I: {
+		"code": "IBM2628I",
+		"severity": "W",
+		"message": "BYVALUE parameters should ideally be no larger than 32 bytes.",
+		"fullCode": "IBM2628IW"
+	} as SimplePLICode,
+
+	/**
+	 * No debug symbol information will be generated for the named variable, and hence it
+	 *  cannot be referenced when using the debugger.
+	 * (see page 28)
+	 */
+	IBM2629I: {
+		"code": "IBM2629I",
+		"severity": "W",
+		"message": (identifier: string) => `No debug symbol information will be generated for ${identifier} .`,
+		"fullCode": "IBM2629IW"
+	} as ParametricPLICode,
+
+	/**
+	 * If the scale factor for the result of an operation exceeds the precision of the result,
+	 *  then unexpected fixedoverflow exceptions may occur. This can happen, for example,
+	 *  when multiplying two FIXED DEC(15,8) variables under the LIMITS(FIXEDDEC(15)) option
+	 *  because the result of such a multiplication would have the attributes FIXED DEC(15,16).
+	 *  To eliminate this message, the PRECISION built-in function could be used to reduce
+	 *  the scale factor of one of the operands or the MULTIPLY built-in function could
+	 *  be used to override the default attributes for the result.
+	 * (see page 28)
+	 */
+	IBM2630I: {
+		"code": "IBM2630I",
+		"severity": "W",
+		"message": (operandattributes: string, operandattributes2: string, resultattributes: string) => `The operands in an arithmetic operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is greater than its precision! That may lead to an overflow and unexpected results.`,
+		"fullCode": "IBM2630IW"
+	} as ParametricPLICode,
+
+	/**
+	 * This message applies to the MULTIPLY, DIVIDE, ADD, and SUBTRACT built-in functions:
+	 *  if one argument to one of these functions is FIXED DEC while the other is FLOAT
+	 *  BIN, then the specified precision will not be interpreted as a FIXED DEC precision.
+	 *  This may cause improper truncation of data. For example, the result of the following
+	 *  multiply will have the attributes FLOAT BIN(15), not FIXED DEC(15), and that might
+	 *  cause the result to be improperly truncated.
+	 * ```pli
+	 *      dcl a float bin(31);
+	 *      dcl b fixed dec(15);
+	 *      b = multiply( a, 1000, 15 );
+	 * ``` 28
+	 * (see page 28)
+	 */
+	IBM2631I: {
+		"code": "IBM2631I",
+		"severity": "W",
+		"message": (BUILTINname: string) => `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FLOAT BIN. Compiler will not interpret precision as FIXED DEC.`,
+		"fullCode": "IBM2631IW"
+	} as ParametricPLICode,
+
+	/**
+	 * This message applies to the MULTIPLY, DIVIDE, ADD, and SUBTRACT built-in functions:
+	 *  if one argument to one of these functions is FIXED DEC while the other is FLOAT
+	 *  DEC, then the specified precision will not be interpreted as a FIXED DEC precision.
+	 *  This may cause improper truncation of data. For example, the result of the following
+	 *  multiply will have the attributes FLOAT DEC(15), not FIXED DEC(15), and that might
+	 *  cause the result to be improperly truncated.
+	 * ```pli
+	 *      dcl a float dec(15);
+	 *      dcl b fixed dec(15);
+	 *      b = multiply( a, 1000, 15 );
+	 * ```
+	 * (see page 29)
+	 */
+	IBM2632I: {
+		"code": "IBM2632I",
+		"severity": "W",
+		"message": (BUILTINname: string) => `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FLOAT DEC. Compiler will not interpret precision as FIXED DEC.`,
+		"fullCode": "IBM2632IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Code using such variables will work only as long as the size of the POINTER or OFFSET
+	 *  variable remains the same as the size of the FIXED BIN variable.
+	 * (see page 29)
+	 */
+	IBM2633I: {
+		"code": "IBM2633I",
+		"severity": "W",
+		"message": "Given the support for addressing arithmetic, basing a POINTER or OFFSET on a FIXED BIN is unnecessary, and it will also fail to work properly if the size of a POINTER changes.",
+		"fullCode": "IBM2633IW"
+	} as SimplePLICode,
+
+	/**
+	 * Code using such variables will work only as long as the size of the POINTER or OFFSET
+	 *  variable remains the same as the size of the FIXED BIN variable.
+	 * (see page 29)
+	 */
+	IBM2634I: {
+		"code": "IBM2634I",
+		"severity": "W",
+		"message": "Given the support for addressing arithmetic, basing a FIXED BIN on a POINTER or OFFSET is unnecessary, and it will also fail to work properly if the size of a POINTER changes.",
+		"fullCode": "IBM2634IW"
+	} as SimplePLICode,
+
+	/**
+	 * If the scale factor for the result of an operation is negative, then the ones digits
+	 *  will be lost and that may cause problems. This can happen, for example, when dividing
+	 *  a FIXED DEC(11,2) variable by a FIXED DEC(31,29) variable because the result of
+	 *  such a division would have the attributes FIXED DEC(31,-7). To eliminate this message,
+	 *  the PRECISION built-in function could be used to reduce the scale factor of one
+	 *  of the operands or the DIVIDE built-in function could be used to override the default
+	 *  attributes for the result.
+	 * (see page 29)
+	 */
+	IBM2635I: {
+		"code": "IBM2635I",
+		"severity": "W",
+		"message": (operandattributes: string, operandattributes2: string, resultattributes: string) => `The operands in an arithmetic operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is negative! That may lead to the loss of significant digits and unexpected results.`,
+		"fullCode": "IBM2635IW"
+	} as ParametricPLICode,
+
+	/**
+	 * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
+	 *  WHEN clause, the code for the second WHEN clause will never be executed. This message
+	 *  will be produced only if the SELECT statement is otherwise suitable for transformation
+	 *  into a branch table.
+	 * (see page 29)
+	 */
+	IBM2636I: {
+		"code": "IBM2636I",
+		"severity": "W",
+		"message": (ordinalname: string) => `The ordinal ${ordinalname} appears in more than one WHEN clause.`,
+		"fullCode": "IBM2636IW"
+	} as ParametricPLICode,
+
+	/**
+	 * If an ENTRY is used as a function, it should be declared with the RETURNS attribute.
+	 *  The compiler will apply the RETURNS attribute to both of the ENTRYs in this example,
+	 *  but for E, the compiler will assume it will return FLOAT DEC while for M, it will
+	 *  assume it will return FIXED BIN.
+	 * ```pli
+	 *     dcl e entry;
+	 *     dcl m entry;
+	 *     a = e();
+	 *     a = m();
+	 * ```
+	 * (see page 29)
+	 */
+	IBM2637I: {
+		"code": "IBM2637I",
+		"severity": "W",
+		"message": "An ENTRY invoked as a function should have the RETURNS attribute.",
+		"fullCode": "IBM2637IW"
+	} as SimplePLICode,
+
+	/**
+	 * This message is produced if a statement uses more intermediate language instructions.
+	 *  than allowed by the MAXGEN compiler option. It may point to statements that are
+	 *  excessively complex.
+	 * (see page 29)
+	 */
+	IBM2638I: {
+		"code": "IBM2638I",
+		"severity": "W",
+		"message": (count: string) => `Statement used ${count} intermediate language instructions.`,
+		"fullCode": "IBM2638IW"
+	} as ParametricPLICode,
+
+	/**
+	 * This message is produced if a statement uses more intermediate language instructions.
+	 *  than allowed by the MAXGEN compiler option. It may point to statements that are
+	 *  excessively complex. This message, rather than message IBM2638, is produced under
+	 *  the same situations as message IBM2638 except the STMT number option must also be
+	 *  in effect.
+	 * (see page 30)
+	 */
+	IBM2639I: {
+		"code": "IBM2639I",
+		"severity": "W",
+		"message": (count: string) => `Previous statement used ${count} intermediate language instructions.`,
+		"fullCode": "IBM2639IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Changing REFER objects might cause subsequent code to fail. For example, in the following
+	 *  code, the first assignment causes the second assignment to overwrite storage.
+	 * ```pli
+	 *      dcl
+	 *        1 a based(p),
+	 *          2 b     fixed bin(31),
+	 *          2 c     fixed bin(31),
+	 *          2 d( 10 refer(c) ),
+	 *            3 e   fixed bin(31),
+	 *            3 f   fixed bin(31);
+	 *      allocate a;
+	 *      a.c = 15;
+	 *      a.f = 0;;
+	 * ```
+	 * (see page 30)
+	 */
+	IBM2640I: {
+		"code": "IBM2640I",
+		"severity": "W",
+		"message": "Target is a REFER object. Results are undefined if an assignment changes a REFER object.",
+		"fullCode": "IBM2640IW"
+	} as SimplePLICode,
+
+	/**
+	 * A suboption of a compiler option has been incorrectly specified. It must be followed
+	 *  by a left parenthesis and then a (possibly empty) list of items and a closing right
+	 *  parenthesis.
+	 * ```pli
+	 *    *process deprecate(builtin);
+	 * ```
+	 * (see page 30)
+	 */
+	IBM2641I: {
+		"code": "IBM2641I",
+		"severity": "W",
+		"message": (option: string, option2: string) => `The suboption ${option} of the ${option2} compiler option must be followed by a (possibly empty) parenthesized list.`,
+		"fullCode": "IBM2641IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Specifying OPTIONS(REENTRANT) on a PROCEDURE or BEGIN block has no effect on the
+	 *  generated code. Your code will be reentrant only if it does not alter any STATIC
+	 *  variables. You can use the DEFAULT(NONASGN) compiler option to force the compiler
+	 *  to flag assignments to STATIC variables.
+	 * (see page 30)
+	 */
+	IBM2642I: {
+		"code": "IBM2642I",
+		"severity": "W",
+		"message": "OPTIONS(REENTRANT) is ignored.",
+		"fullCode": "IBM2642IW"
+	} as SimplePLICode,
+
+	/**
+	 * The named built-in function was specified in the BUILTIN suboption of the DEPRECATENEXT
+	 *  option, and so any explicit or contextual declaration of it is flagged.
+	 * (see page 30)
+	 */
+	IBM2643I: {
+		"code": "IBM2643I",
+		"severity": "W",
+		"message": (builtin: string) => `The built-in function ${builtin} will be deprecated.`,
+		"fullCode": "IBM2643IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The named INCLUDE file was specified in the INCLUDE suboption of the DEPRECATENEXT
+	 *  option, and so any attempt to include it is flagged.
+	 * (see page 30)
+	 */
+	IBM2644I: {
+		"code": "IBM2644I",
+		"severity": "W",
+		"message": (filename: string) => `The INCLUDE file ${filename} will be deprecated.`,
+		"fullCode": "IBM2644IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The named ENTRY was specified in the ENTRY suboption of the DEPRECATENEXT option,
+	 *  and so any explicit or contextual declaration of it is flagged.
+	 * (see page 30)
+	 */
+	IBM2645I: {
+		"code": "IBM2645I",
+		"severity": "W",
+		"message": (entryname: string) => `The ENTRY named ${entryname} will be deprecated.`,
+		"fullCode": "IBM2645IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The named VARIABLE was specified in the VARIABLE suboption of the DEPRECATENEXT option,
+	 *  and so any explicit or contextual declaration of it is flagged.
+	 * (see page 30)
+	 */
+	IBM2646I: {
+		"code": "IBM2646I",
+		"severity": "W",
+		"message": (variable: string) => `The VARIABLE named ${variable} will be deprecated.`,
+		"fullCode": "IBM2646IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The named statement was specified in the STMT suboption of the DEPRECATENEXT option,
+	 *  and so any use of that statement is flagged.
+	 * (see page 30)
+	 */
+	IBM2647I: {
+		"code": "IBM2647I",
+		"severity": "W",
+		"message": (statementname: string) => `The ${statementname} statement will be deprecated.`,
+		"fullCode": "IBM2647IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Change the declaration to STATIC, or remove the INITIAL items and copy the INITIAL
+	 *  items from a STATIC variable.
+	 * (see page 30)
+	 */
+	IBM2648I: {
+		"code": "IBM2648I",
+		"severity": "W",
+		"message": (count: string) => `Declaration contains ${count} INITIAL items.`,
+		"fullCode": "IBM2648IW"
+	} as ParametricPLICode,
+
+	/**
+	 * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
+	 *  produced only if the INLIST function is otherwise suitable for transformation into
+	 *  a branch table.
+	 * (see page 30)
+	 */
+	IBM2649I: {
+		"code": "IBM2649I",
+		"severity": "W",
+		"message": (binaryvalue: string) => `The binary value ${binaryvalue} appears more than once in the INLIST argument set.`,
+		"fullCode": "IBM2649IW"
+	} as ParametricPLICode,
+
+	/**
+	 * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
+	 *  produced only if the INLIST function is otherwise suitable for transformation into
+	 *  a branch table.
+	 * (see page 31)
+	 */
+	IBM2650I: {
+		"code": "IBM2650I",
+		"severity": "W",
+		"message": (ordinalname: string) => `The ordinal ${ordinalname} appears more than once in the INLIST argument set.`,
+		"fullCode": "IBM2650IW"
+	} as ParametricPLICode,
+
+	/**
+	 * This message is produced if a block contains more branches than allowed by the MAXBRANCH
+	 *  compiler option. It may point to blocks that are excessively complex.
+	 * (see page 31)
+	 */
+	IBM2651I: {
+		"code": "IBM2651I",
+		"severity": "W",
+		"message": (blockname: string, count: string) => `Block ${blockname} contains ${count} branches.`,
+		"fullCode": "IBM2651IW"
+	} as ParametricPLICode,
+
+	/**
+	 * In the statement REINIT x, x should contain some element with an INITIAL attribute.
+	 *  If not, no code will be generated for the statement.
+	 * (see page 31)
+	 */
+	IBM2652I: {
+		"code": "IBM2652I",
+		"severity": "W",
+		"message": "REINIT reference contains no element with an INITIAL attribute.",
+		"fullCode": "IBM2652IW"
+	} as SimplePLICode,
+
+	/**
+	 * For example, rather than specifying PP(SQL(VERSION(AUTO))), specify PP(SQL('VERSION(AUTO)'))
+	 * .
+	 * (see page 31)
+	 */
+	IBM2653I: {
+		"code": "IBM2653I",
+		"severity": "W",
+		"message": "The list of preprocessor options must be enclosed in quotation marks.",
+		"fullCode": "IBM2653IW"
+	} as SimplePLICode,
+
+	/**
+	 * The INITIAL attribute for BASED has an effect only if the BASED variable is used
+	 *  in an ALLOCATE statement. But for code such as the following, it has no effect on
+	 *  either the variable A or B.
+	 * ```pli
+	 *      dcl a fixed bin(31);
+	 *      dcl b bit(32) based(addr(a)) init(''b);
+	 * ```
+	 * (see page 31)
+	 */
+	IBM2654I: {
+		"code": "IBM2654I",
+		"severity": "W",
+		"message": "INITIAL attribute for BASED on ADDR has no effect on the base variable.",
+		"fullCode": "IBM2654IW"
+	} as SimplePLICode,
+
+	/**
+	 * If the 2 strings in the IBMZIOP module are equal, then different values for the options
+	 *  specified there are not allowed in the +DD options files, the invocation parameter,
+	 *  the options environment variable or the PROCESS statements. The conflicting options
+	 *  will be ignored.
+	 * (see page 31)
+	 */
+	IBM2655I: {
+		"code": "IBM2655I",
+		"severity": "W",
+		"message": "Some options conflict with the non-overridable options.",
+		"fullCode": "IBM2655IW"
+	} as SimplePLICode,
+
+	/**
+	 * In the following example, DEFBUF does not overlay the first 10 bytes of BUFFER. Instead,
+	 *  each array element of DEFBUF overlays the first byte of the first byte of the corresponding
+	 *  array element of BUFFER.
+	 * ```pli
+	 *      DCL BUFFER(10)      CHAR (300);
+	 *      DCL DEFBUF(10)      CHAR(1) DEF BUFFER;
+	 * ```
+	 * (see page 31)
+	 */
+	IBM2656I: {
+		"code": "IBM2656I",
+		"severity": "W",
+		"message": "Simple defining applies to  ${variable name } . If string-overlay defining is intended, then add POS(1) to its declaration.",
+		"fullCode": "IBM2656IW"
+	} as SimplePLICode,
+
+	/**
+	 * This is probably a coding error.
+	 * (see page 31)
+	 */
+	IBM2657I: {
+		"code": "IBM2657I",
+		"severity": "W",
+		"message": "Both logical AND operands are identical.",
+		"fullCode": "IBM2657IW"
+	} as SimplePLICode,
+
+	/**
+	 * This is probably a coding error.
+	 * (see page 31)
+	 */
+	IBM2658I: {
+		"code": "IBM2658I",
+		"severity": "W",
+		"message": "Both logical OR operands are identical.",
+		"fullCode": "IBM2658IW"
+	} as SimplePLICode,
+
+	/**
+	 * If an AUTOMATIC or STATIC structure consists entirely of scalar fields all of which
+	 *  have the INITIAL attribute and none of which have their address taken, then the
+	 *  compiler could probably generate much better code if all the INITIAL keywords were
+	 *  change to VALUE keywords. If the STATIC or AUTOMATIC attribute is  31 explicitly
+	 *  specified, it would also have to be removed from the declare.
+	 * (see page 31)
+	 */
+	IBM2659I: {
+		"code": "IBM2659I",
+		"severity": "W",
+		"message": (variablename: string) => `Generated code would be better if all the INITIAL attributes in the declare for ${variablename} were changed to VALUE.`,
+		"fullCode": "IBM2659IW"
+	} as ParametricPLICode,
+
+	/**
+	 * This message warns that the compiler has detected code that could lead to an error
+	 *  under some conditions.
+	 * ```pli
+	 *     oops: proc( x ) returns( fixed bin(31 );
+	 *       dcl x fixed bin(31);
+	 *       select;
+	 *         when( x > 0 ) return( 1 );
+	 *         when( x = 0 ) return( 0 );
+	 *         otherwise;
+	 *       end;
+	 *     end;
+	 * ``` The compiler will issue this message for E15 sort exits unless the E15 sort exit
+	 *  specifies the OPTIONAL attribute as part of the RETURNS option on its PROCEDURE
+	 *  statement.
+	 * (see page 32)
+	 */
+	IBM2660I: {
+		"code": "IBM2660I",
+		"severity": "W",
+		"message": (procedurename: string, procedurename2: string) => `Program logic may lead to the END statement for ${procedurename} even though ${procedurename2} is a function that should return a value.`,
+		"fullCode": "IBM2660IW"
+	} as ParametricPLICode,
+
+	/**
+	 * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
+	 *  produced only if the INLIST function is otherwise suitable for transformation into
+	 *  a branch table.
+	 * (see page 32)
+	 */
+	IBM2661I: {
+		"code": "IBM2661I",
+		"severity": "W",
+		"message": (stringvalue: string) => `The string ${stringvalue} appears more than once in the INLIST argument set.`,
+		"fullCode": "IBM2661IW"
+	} as ParametricPLICode,
+
+	/**
+	 * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
+	 *  produced only if the INLIST function is otherwise suitable for transformation into
+	 *  a branch table.
+	 * (see page 32)
+	 */
+	IBM2662I: {
+		"code": "IBM2662I",
+		"severity": "W",
+		"message": "INLIST argument set contains duplicate values.",
+		"fullCode": "IBM2662IW"
+	} as SimplePLICode,
+
+	/**
+	 * In a SELECT statement, if a WHEN clause has the same expression as the previousr
+	 *  expression in the WHEN clauses in that SELECT statement, then the code is probably
+	 *  in error. The compiler will not report all such errors, but only those where an
+	 *  expression is duplicated in one of the four previous expressions.
+	 * (see page 32)
+	 */
+	IBM2663I: {
+		"code": "IBM2663I",
+		"severity": "W",
+		"message": "WHEN clause contains an expression that matches the previous expression in the containing SELECT statement.",
+		"fullCode": "IBM2663IW"
+	} as SimplePLICode,
+
+	/**
+	 * In a SELECT statement, if a WHEN clause has the same expression as one of the earlier
+	 *  expressions in the WHEN clauses in that SELECT statement, then the code is probably
+	 *  in error. The compiler will not report all such errors, but only those where an
+	 *  expression is duplicated in one of the four previous expressions.
+	 * (see page 32)
+	 */
+	IBM2664I: {
+		"code": "IBM2664I",
+		"severity": "W",
+		"message": (count: string) => `WHEN clause contains an expression that matches the expression ${count} previous in the containing SELECT statement.`,
+		"fullCode": "IBM2664IW"
+	} as ParametricPLICode,
+
+	/**
+	 * If an EXTERNAL variable is intended to define LE runtime options, then it must be
+	 *  a scalar CHAR VARYING string with an INITIAL value.
+	 * (see page 32)
+	 */
+	IBM2665I: {
+		"code": "IBM2665I",
+		"severity": "W",
+		"message": "EXTERNAL PLIXOPT declare specifies run-time options only if the variable has the attribute CHARACTER VARYING INITIAL and is not an array.",
+		"fullCode": "IBM2665IW"
+	} as SimplePLICode,
+
+	/**
+	 * Returning the address of a variable in AUTOMATIC storage is likely to produce code
+	 *  that cannot work successfully.
+	 * (see page 32)
+	 */
+	IBM2666I: {
+		"code": "IBM2666I",
+		"severity": "W",
+		"message": "RETURN expression holds the address of a variable in AUTOMATIC storage.",
+		"fullCode": "IBM2666IW"
+	} as SimplePLICode,
+
+	/**
+	 * The extents in one declare should not depend on the size of a later declare. The
+	 *  compiler will swap the two declares, but this might introduce other problems. It
+	 *  might be better to move the first declare after the second.
+	 * (see page 32)
+	 */
+	IBM2667I: {
+		"code": "IBM2667I",
+		"severity": "W",
+		"message": (first: string, second: string) => `The string lengths in the declare for ${first} depend on the size of ${second} whose declare comes later in the block. Consider moving the first declare after the second.`,
+		"fullCode": "IBM2667IW"
+	} as ParametricPLICode,
+
+	/**
+	 * This message is produced if a typed structure with some VALUE attributes needs more
+	 *  bytes than allowed by the MAXINIT compiler option. Use of the VALUE type function
+	 *  will add a full copy of the structure to the generated object's constant area and
+	 *  may lead to binder problems.
+	 * (see page 32)
+	 */
+	IBM2668I: {
+		"code": "IBM2668I",
+		"severity": "W",
+		"message": (type: string, count: string) => `Using the VALUE function with the structure type ${type} adds ${count} bytes to the generated object.`,
+		"fullCode": "IBM2668IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Attributes such as ALIGNED and UNALIGNED may be specified in a DEFINE ALIAS statement,
+	 *  but they will be ignored and should be removed.
+	 * (see page 33)
+	 */
+	IBM2669I: {
+		"code": "IBM2669I",
+		"severity": "W",
+		"message": (attributekeyword: string) => `The ${attributekeyword} attribute is ignored in an ALIAS definition.`,
+		"fullCode": "IBM2669IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The parameter to MAIN has a maximum length that depends on the system and should
+	 *  not be declared with a fixed maximum length.
+	 * (see page 33)
+	 */
+	IBM2670I: {
+		"code": "IBM2670I",
+		"severity": "W",
+		"message": "The parameter to MAIN should be declared as CHAR(*) VARYING.",
+		"fullCode": "IBM2670IW"
+	} as SimplePLICode,
+
+	/**
+	 * Code like this could lead to a protection exception. In the following example, snce
+	 *  the variable X is NONASSIGNABLE, the compiler could have passed the address of a
+	 *  constant fullword 17 to the routine TEST. If so, if E changed its parameter (as
+	 *  the attribute OUTONLY says it could), then a protection exception would result.
+	 * ```pli
+	 *     call oops( 17 );
+	 *     test: proc( x );
+	 *       dcl x fixed bin(31) NONASSIGNABLE;
+	 *       dcl e ext entry( ASSIGNABLE fixed 
+	 * bin(31) );
+	 *       call e(x);
+	 *     end;
+	 * ```
+	 * (see page 33)
+	 */
+	IBM2671I: {
+		"code": "IBM2671I",
+		"severity": "W",
+		"message": (X: string, n: string, E: string, A: string, D: string) => `The variable ${X} is passed as argument number ${n} to entry ${E} . The corresponding parameter has the ${A} attribute, and hence the variable could be modified despite having the ${D} attribute.`,
+		"fullCode": "IBM2671IW"
+	} as ParametricPLICode,
+
+	/**
+	 * Named constants should be declared with the VALUE attribute rather than the attributes
+	 *  STATIC INIT. This will cause the compiler to generate much better code. For example,
+	 *  in the following code, if ASIZE and CLEN are constant, ten it would be much better
+	 *  to change their declares.
+	 * ```pli
+	 *      dcl asize fixed bin(31) static init(100);
+	 *      dcl clen  fixed bin(31) static init(20);
+	 *      dcl a(asize) char(clen);
+	 * ```
+	 * (see page 33)
+	 */
+	IBM2672I: {
+		"code": "IBM2672I",
+		"severity": "W",
+		"message": (extentvariable: string) => `If ${extentvariable} is constant, then removing its STATIC attribute and changing its INITIAL attribute to the VALUE attribute would improve the performance of the generated code.`,
+		"fullCode": "IBM2672IW"
+	} as ParametricPLICode,
+
+	/**
+	 * This message will flag statements such as the following. In the first IF statement,
+	 *  it would be better if \"true\" were a named constant, i.e. if it were declared with
+	 *  the VALUE attribute rather than STATIC INIT In the second IF statement, the true\/false
+	 *  value of (a < b ) is compared to c, and this will be true for any value of c that
+	 *  is bigger than 1. The IF clause is probably meant to be (a < b ) & (b < c).
+	 * ```pli
+	 *      dcl true bit(1) static init('1'b);
+	 *      if ( a < b ) = true then
+	 *      if a < b < c then
+	 * ```
+	 * (see page 33)
+	 */
+	IBM2673I: {
+		"code": "IBM2673I",
+		"severity": "W",
+		"message": "Boolean is compared with something other than a BIT(1) restricted expression.",
+		"fullCode": "IBM2673IW"
+	} as SimplePLICode,
+
+	/**
+	 * Defined structures must occupy a number of bytes that is a multiple of the structure
+	 *  s alignment. So, for example, if a structure contains an aligned fixed bin(31) (or
+	 *  other aligned fullword) field as its most stringently aligned item, then the structure
+	 *  must occupy a multiple of 4 bytes. The following structure does not meet this requirement
+	 * :
+	 * ```pli
+	 *     define structure
+	 *       1 point,
+	 *         2 x  fixed bin(31),
+	 * ```  33
+	 * ```pli
+	 *         2 y  char(1);
+	 * ```
+	 * (see page 33)
+	 */
+	IBM2674I: {
+		"code": "IBM2674I",
+		"severity": "W",
+		"message": (structname: string, alignment: string, storagesize: string) => `The defined structure ${structname} is ${alignment} byte aligned, but occupies only ${storagesize} bytes of storage. This may lead to addressing problems and data corruption.`,
+		"fullCode": "IBM2674IW"
+	} as ParametricPLICode,
+
+	/**
+	 * If the control variable in a DO loop is a PICTURE variable, then more code will be
+	 *  generated for the loop than if the control variable were a FIXED BIN variable. Moreover,
+	 *  such loops may easily be miscoded so that they will loop infinitely.
+	 * (see page 34)
+	 */
+	IBM2675I: {
+		"code": "IBM2675I",
+		"severity": "W",
+		"message": "Use of PICTURE as DO control variable is not recommended.",
+		"fullCode": "IBM2675IW"
+	} as SimplePLICode,
+
+	/**
+	 * The control variable in the DO loop has one of the types: scaled fixed binary, nonnative
+	 *  fixed binary, fixed decimal, or picture. Consequently, the code generated for the
+	 *  loop will not be optimal.
+	 * (see page 34)
+	 */
+	IBM2676I: {
+		"code": "IBM2676I",
+		"severity": "W",
+		"message": "Code generated for DO group would be more efficient if control variable had type FIXED BIN with zero scale factor.",
+		"fullCode": "IBM2676IW"
+	} as SimplePLICode,
+
+	/**
+	 * The named variable is an array that is initialized but appears never to be changed.
+	 *  If it is constant, the compiler would not generate code to initialize it every time
+	 *  the block where it is declared is entered. This change could potentially signiifcantly
+	 *  improve performance.
+	 * (see page 34)
+	 */
+	IBM2677I: {
+		"code": "IBM2677I",
+		"severity": "W",
+		"message": (variablename: string) => `Generated code would be better if the declare for ${variablename} were changed from AUTOMATIC to STATIC NONASSIGNABLE.`,
+		"fullCode": "IBM2677IW"
+	} as ParametricPLICode,
+
+	/**
+	 * The DO statement has the form DO x = A to B; where A > B. or the form DO x = A to
+	 *  B BY -1; where A < B. This will cause the loop body to be skipped. One or more of
+	 *  the values A and B may be incorrect.
+	 * ```pli
+	 *      do jx = 11 to 10;
+	 *        . . .
+	 *      end;
+	 * ```
+	 * (see page 34)
+	 */
+	IBM2678I: {
+		"code": "IBM2678I",
+		"severity": "W",
+		"message": "Loop will never be run. TO value may be incorrect.",
+		"fullCode": "IBM2678IW"
+	} as SimplePLICode,
+
+	/**
+	 * The GONUMBER can be placed in the SEPRATE sidefile only if the TEST options specifies
+	 *  that the sidefile should be created.
+	 * (see page 34)
+	 */
+	IBM2679I: {
+		"code": "IBM2679I",
+		"severity": "W",
+		"message": "GONUMBER(SEPARATE) changed to GONUMBER(NOSEPARATE) since the SEPARATE suboption for the GONUMBER option should be specified only when the TEST option and its SEPARATE suboption are also specified.",
+		"fullCode": "IBM2679IW"
+	} as SimplePLICode,
+
+	/**
+	 * The control variable in the DO loop should have storage class STATIC or AUTOMATIC
+	 *  and not PARAMETER and especially not BASED, DEFINED, or CONTROLLED,
+	 * (see page 34)
+	 */
+	IBM2680I: {
+		"code": "IBM2680I",
+		"severity": "W",
+		"message": "Code generated for DO group would perform better if control variable was STATIC or AUTOMATIC.",
+		"fullCode": "IBM2680IW"
+	} as SimplePLICode,
+
+	/**
+	 * In REPATTERN( d, p, q ), if LENGTH( d ) is larger than LENGTH( q ), the code is valid
+	 *  only if d starts with as many blanks as the difference in those lengths.
+	 * (see page 34)
+	 */
+	IBM2681I: {
+		"code": "IBM2681I",
+		"severity": "W",
+		"message": (sourcelength: string, sourcepattern: string) => `Source has length ${sourcelength} which is greater than the length of the source pattern ${sourcepattern} . Unless the source has enough leading blanks, invoking this REPATTERN will cause the ERROR condition to be raised. The required checking will also cause this REPATTERN not to be inlined.`,
+		"fullCode": "IBM2681IW"
+	} as ParametricPLICode,
+
+	/**
+	 * This message is produced if a STATIC variable requires more space than allowed by
+	 *  the MAXINIT compiler option. 34   2400-2599)
+	 * (see page 34)
+	 */
+	IBM2682I: {
+		"code": "IBM2682I",
+		"severity": "W",
+		"message": (name: string, count: string) => `The variable ${name} needs ${count} storage bytes which exceeds the MAXSTATIC limit.`,
+		"fullCode": "IBM2682IW"
+	} as ParametricPLICode
 };
 
 export const Error = {
