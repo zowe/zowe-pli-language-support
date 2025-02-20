@@ -1053,6 +1053,14 @@ export const Info = {
 };
 
 export const Warning = {
+  IBM3332I: {
+    code: "IBM3332I",
+    severity: "W",
+    message:
+      "The END statement has no matching BEGIN, DO, PACKAGE, PROC, or SELECT. This may indicate a problem with the syntax of a previous statement.",
+    fullCode: "IBM3332IW",
+  } as SimplePLICode,
+
   /**
    * This message warns that the compiler has detected a statement that can never be run
    *  as the flow of control must always pass it by.

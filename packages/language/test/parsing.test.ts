@@ -37,12 +37,14 @@ ${input}
 });
 
 describe("PL/I Parsing tests", () => {
-  // // Handle as validation error
-  // test.fails('empty program', async () => {
-  //     const doc: LangiumDocument<PliProgram> = await parse(``);
-  //     expect(doc.parseResult.lexerErrors).toHaveLength(0);
-  //     expect(doc.parseResult.parserErrors).toHaveLength(0);
-  // });
+  test("empty program parses as valid", async () => {
+    // no parse error, but...
+    // triggers IBM1917IS on the compiler (source has no statements or all stmts are invalid)
+    // later for validation
+    const doc: LangiumDocument<PliProgram> = await parse("");
+    expect(doc.parseResult.lexerErrors).toHaveLength(0);
+    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  });
 
   test("empty program w/ null statement", async () => {
     const doc: LangiumDocument<PliProgram> = await parseStmts(`;`);
@@ -50,12 +52,11 @@ describe("PL/I Parsing tests", () => {
     expect(doc.parseResult.parserErrors).toHaveLength(0);
   });
 
-  // TODO @montymxb this should pass according to the docs, but doesn't work in practice
-  // test('empty program w/ null %statement', async () => {
-  //     const doc: LangiumDocument<PliProgram> = await parseStmts(`%;`);
-  //     expect(doc.parseResult.lexerErrors).toHaveLength(0);
-  //     expect(doc.parseResult.parserErrors).toHaveLength(0);
-  // });
+  test("empty program w/ null %statement", async () => {
+    const doc: LangiumDocument<PliProgram> = await parseStmts(`%;`);
+    expect(doc.parseResult.lexerErrors).toHaveLength(0);
+    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  });
 
   test("Hello World Program", async () => {
     const doc = await parse(`
@@ -196,6 +197,21 @@ describe("PL/I Parsing tests", () => {
   return( Input*F5(Input-1) );
  end F5;
  `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("Unassigned closing end is OK", async () => {
+      // validating that an 'end' which implcitly closes the prior procedure is valid
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+  MYPROC: PROCEDURE OPTIONS (MAIN);
+  DCL TRUE BIT(1) INIT(1);
+  DCL FALSE BIT(1) INIT(0);
+  DCL OR_VALUE; 
+  OR_VALUE = TRUE | FALSE;
+  DCL NOT_VALUE;  
+  END;
+  `);
       expect(doc.parseResult.lexerErrors).toHaveLength(0);
       expect(doc.parseResult.parserErrors).toHaveLength(0);
     });
