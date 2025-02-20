@@ -14,7 +14,7 @@ import { EmptyFileSystem, type LangiumDocument } from "langium";
 import { parseHelper } from "langium/test";
 import { DiagnosticSeverity } from "vscode-languageserver-types";
 import { createPliServices, PliProgram } from "../src";
-import { Error, Warning } from "../src/validation/messages/pli-codes";
+import { Error, Severe, Warning } from "../src/validation/messages/pli-codes";
 
 let services: ReturnType<typeof createPliServices>;
 let parse: ReturnType<typeof parseHelper<PliProgram>>;
@@ -31,7 +31,8 @@ beforeAll(async () => {
 
 describe("Validating", () => {
   test("check mismatched end label", async () => {
-    document = await parse(`
+    document = await parse(
+      `
   MYPROC: PROCEDURE OPTIONS (MAIN);
   DCL TRUE BIT(1) INIT(1);
   DCL FALSE BIT(1) INIT(0);
@@ -39,7 +40,9 @@ describe("Validating", () => {
   OR_VALUE = TRUE | FALSE;
   DCL NOT_VALUE;  
   END MYPROG;
-    `);
+    `,
+      { validation: true },
+    );
 
     // 2 diagnostics, 1 for a bad link, 2nd for the end statement that's mismatched, 3rd for an end label not associated w/ a group
     // the third comes up just by nature of the issue there being no match anyways
@@ -55,6 +58,68 @@ describe("Validating", () => {
     // verify the 3rd diagnostic is an error w/ the IBM1316IE as the code
     expect(document.diagnostics?.[2].code).toBe(Error.IBM1316I.fullCode);
     expect(document.diagnostics?.[2].severity).toBe(DiagnosticSeverity.Error);
+  });
+
+  describe("Call validations", () => {
+    test("can call function declared by procedure", async () => {
+      document = await parse(
+        `
+       MAINPR: procedure options( main );
+       b: proc() returns( OPTIONAL byvalue fixed bin(31) );
+         return(32);
+       end b;
+       call b();
+       end MAINPR;
+       `,
+        { validation: true },
+      );
+      expect(document.diagnostics?.length).toBe(0);
+    });
+
+    test("can call function declared by entry statement", async () => {
+      document = await parse(
+        `
+        MAINPR: procedure options( main );
+        // calling 'a'
+        dcl a ext('a') entry( fixed bin(31) byvalue )
+          returns( optional bin(31) byvalue );
+        call a(5);
+        end MAINPR;
+         `,
+        { validation: true },
+      );
+      expect(document.diagnostics?.length).toBe(0);
+    });
+
+    test("cannot invoke function from declaration w/out entry (no args)", async () => {
+      document = await parse(
+        `
+        MAINPR: procedure options( main );
+        dcl a fixed bin(31); // not callable
+        call a;
+        end MAINPR;
+         `,
+        { validation: true },
+      );
+      expect(document.diagnostics?.length).toBe(1);
+      expect(document.diagnostics?.[0].code).toBe(Severe.IBM1695I.fullCode);
+    });
+
+    test("cannot invoke function from declaration w/out entry (w/ args)", async () => {
+      document = await parse(
+        `
+          MAINPR: procedure options( main );
+          // calling 'a'
+          dcl a fixed bin(31); // not callable
+          call a();
+          end MAINPR;
+            `,
+        { validation: true },
+      );
+      expect(document.diagnostics?.length).toBe(2);
+      expect(document.diagnostics?.[0].code).toBe(Severe.IBM1695I.fullCode);
+      expect(document.diagnostics?.[1].code).toBe(Error.IBM1231I.fullCode); // since we have parens
+    });
   });
 
   //
