@@ -603,10 +603,10 @@ export const Info = {
   IBM2815I: {
     code: "IBM2815I",
     severity: "I",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  is not recommended to be passed BYVALUE.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} is not recommended to be passed BYVALUE.`,
     fullCode: "IBM2815II",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * A BYVALUE parameter should be one that could reasonably be passed in a register.
@@ -1081,10 +1081,10 @@ export const Warning = {
   IBM1079I: {
     code: "IBM1079I",
     severity: "W",
-    message:
-      "Too few arguments have been specified for the ENTRY  ${ENTRY name } .",
+    message: (entryName: string) =>
+      `Too few arguments have been specified for the ENTRY ${entryName}.`,
     fullCode: "IBM1079IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * A PL\/I keyword which could form a complete statement has been used as statement
@@ -1141,10 +1141,10 @@ export const Warning = {
   IBM1082I: {
     code: "IBM1082I",
     severity: "W",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${entry name }  is a scalar, but its declare specifies a structure.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} is a scalar, but its declare specifies a structure.`,
     fullCode: "IBM1082IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * GOTO statements may not jump into DO loops, and the compiler will flag any GOTO whose
@@ -1307,10 +1307,10 @@ export const Warning = {
   IBM1093I: {
     code: "IBM1093I",
     severity: "W",
-    message:
-      "PLIXOPT string is invalid. See related runtime message  ${message number } .",
+    message: (messageNumber: string) =>
+      `PLIXOPT string is invalid. See related runtime message ${messageNumber}.`,
     fullCode: "IBM1093IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The PLIXOPT string contains an invalid item. See the cited LE message for more detail
@@ -1787,10 +1787,10 @@ export const Warning = {
   IBM1124I: {
     code: "IBM1124I",
     severity: "W",
-    message:
-      "A suboption has been specified for the ENVIRONMENT option  ${option name } . The suboption will be ignored.",
+    message: (optionName: string) =>
+      `A suboption has been specified for the ENVIRONMENT option ${optionName} . The suboption will be ignored.`,
     fullCode: "IBM1124IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * ENVIRONMENT options should not be repeated.
@@ -1802,10 +1802,10 @@ export const Warning = {
   IBM1125I: {
     code: "IBM1125I",
     severity: "W",
-    message:
-      "The ENVIRONMENT option  ${option name }  has been specified more than once.",
+    message: (optionName: string) =>
+      `The ENVIRONMENT option ${optionName} has been specified more than once.`,
     fullCode: "IBM1125IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The suboption type is incorrect.
@@ -1817,10 +1817,10 @@ export const Warning = {
   IBM1126I: {
     code: "IBM1126I",
     severity: "W",
-    message:
-      "The ENVIRONMENT option  ${option name }  has an invalid suboption. The option will be ignored.",
+    message: (optionName: string) =>
+      `The ENVIRONMENT option ${optionName} has an invalid suboption. The option will be ignored.`,
     fullCode: "IBM1126IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * There is no such supported ENVIRONMENT option.
@@ -1847,10 +1847,10 @@ export const Warning = {
   IBM1128I: {
     code: "IBM1128I",
     severity: "W",
-    message:
-      "The ENVIRONMENT option  ${option name }  conflicts with the LANGLVL compiler option. The option will be ignored.",
+    message: (optionName: string) =>
+      `The ENVIRONMENT option ${optionName} conflicts with the LANGLVL compiler option. The option will be ignored.`,
     fullCode: "IBM1128IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * An EXEC SQL or EXEC CICS statement has been found in the source program. The compiler
@@ -1948,10 +1948,10 @@ export const Warning = {
   IBM1134I: {
     code: "IBM1134I",
     severity: "W",
-    message:
-      "The LABEL CONSTANT array  ${label reference }  is not fully initialized.",
+    message: (labelReference: string) =>
+      `The LABEL CONSTANT array ${labelReference} is not fully initialized.`,
     fullCode: "IBM1134IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * An argument to one of the logical operators (or, and or not) is a constant. The result
@@ -2429,10 +2429,10 @@ export const Warning = {
   IBM1170I: {
     code: "IBM1170I",
     severity: "W",
-    message:
-      "The OPTIONS attribute  ${option attribute }  is not supported and is ignored.",
+    message: (optionAttribute: string) =>
+      `The OPTIONS attribute ${optionAttribute} is not supported and is ignored.`,
     fullCode: "IBM1170IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * WHEN or OTHERWISE clauses are not required on SELECT statements, but their absence
@@ -2481,10 +2481,10 @@ export const Warning = {
   IBM1174I: {
     code: "IBM1174I",
     severity: "W",
-    message:
-      "The reference in the  ${frominto clause }  clause may not be byte- aligned.",
+    message: (fromIntoClause: string) =>
+      `The reference in the ${fromIntoClause} clause may not be byte- aligned.`,
     fullCode: "IBM1174IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The maximum precision for FIXED BINARY constants is specified by the FIXEDBIN suboption
@@ -2981,10 +2981,10 @@ export const Warning = {
   IBM1208I: {
     code: "IBM1208I",
     severity: "W",
-    message:
-      "INITIAL list for the array  ${variable name }  contains only one item.",
+    message: (varName: string) =>
+      `INITIAL list for the array ${varName} contains only one item.`,
     fullCode: "IBM1208IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Since ISAM is not being simulated on the OS\/2 platform, the file will be treated
@@ -3118,10 +3118,10 @@ export const Warning = {
   IBM1216I: {
     code: "IBM1216I",
     severity: "W",
-    message:
-      "The structure member  ${variable name }  is declared without any data attributes. A level number may be incorrect.",
+    message: (varName: string) =>
+      `The structure member ${varName} is declared without any data attributes. A level number may be incorrect.`,
     fullCode: "IBM1216IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * It will be given the default attributes, but this may be because of an error in the
@@ -3349,10 +3349,10 @@ export const Warning = {
   IBM2603I: {
     code: "IBM2603I",
     severity: "W",
-    message:
-      "INITIAL list for the array  ${variable name }  contains only one item.",
+    message: (varName: string) =>
+      `INITIAL list for the array ${varName} contains only one item.`,
     fullCode: "IBM2603IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * If the source in a conversion to FIXED DECIMAL is a FIXED DECIMAL or PICTURE variable
@@ -3525,10 +3525,10 @@ export const Warning = {
   IBM2612I: {
     code: "IBM2612I",
     severity: "W",
-    message:
-      "The character string  ${character string }  appears in more than one WHEN clause.",
+    message: (characterString: string) =>
+      `The character string ${characterString} appears in more than one WHEN clause.`,
     fullCode: "IBM2612IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The indicated variable may not have been assigned or initialized a value before it
@@ -4216,10 +4216,10 @@ export const Warning = {
   IBM2656I: {
     code: "IBM2656I",
     severity: "W",
-    message:
-      "Simple defining applies to  ${variable name } . If string-overlay defining is intended, then add POS(1) to its declaration.",
+    message: (varName: string) =>
+      `Simple defining applies to ${varName}. If string-overlay defining is intended, then add POS(1) to its declaration.`,
     fullCode: "IBM2656IW",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * This is probably a coding error.
@@ -4693,7 +4693,7 @@ export const Error = {
     code: "IBM1230I",
     severity: "E",
     message: (variablename: string) =>
-      `Arguments have been specified for the variable ${variablename} , but it is not an entry variable.`,
+      `Arguments have been specified for the variable ${variablename}, but it is not an entry variable.`,
     fullCode: "IBM1230IE",
   } as ParametricPLICode,
 
@@ -4708,10 +4708,10 @@ export const Error = {
   IBM1231I: {
     code: "IBM1231I",
     severity: "E",
-    message:
-      "Arguments/subscripts have been specified for the variable  ${variable name } , but it is neither an entry nor an array variable.",
+    message: (varName: string) =>
+      `Arguments/subscripts have been specified for the variable ${varName}, but it is neither an entry nor an array variable.`,
     fullCode: "IBM1231IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * A comma was followed by a semicolon rather than by a valid syntactical element (such
@@ -4885,10 +4885,10 @@ export const Error = {
   IBM1243I: {
     code: "IBM1243I",
     severity: "E",
-    message:
-      "REGIONAL( ${integerspecification(2 or3) } ) ENVIRONMENT option is not supported.",
+    message: (integerspecification2or3: string) =>
+      `REGIONAL( ${integerspecification2or3} ) ENVIRONMENT option is not supported.`,
     fullCode: "IBM1243IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * This applies to the KEYLENGTH, KEYLOC and RECSIZE suboptions.
@@ -5106,9 +5106,10 @@ export const Error = {
   IBM1294I: {
     code: "IBM1294I",
     severity: "E",
-    message: "BIT extent is reduced to  ${maximum value } .",
+    message: (maximumValue: string) =>
+      `BIT extent is reduced to ${maximumValue}.`,
     fullCode: "IBM1294IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The default lower bound is 1, but the upper bound must be greater than the lower
@@ -5233,10 +5234,10 @@ export const Error = {
   IBM1303I: {
     code: "IBM1303I",
     severity: "E",
-    message:
-      "A second argument to the  ${BUILTIN name }  built-in function must be supplied for arrays with more than one dimension. A value of 1 is assumed.",
+    message: (builtinName: string) =>
+      `A second argument to the ${builtinName} built-in function must be supplied for arrays with more than one dimension. A value of 1 is assumed.`,
     fullCode: "IBM1303IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The DIMENSION, HBOUND and LBOUND built-in functions require that the second argument
@@ -5456,10 +5457,10 @@ export const Error = {
   IBM1318I: {
     code: "IBM1318I",
     severity: "E",
-    message:
-      "The ENVIRONMENT option  ${option name }  conflicts with preceding ENVIRONMENT options. This option will be ignored.",
+    message: (optionName: string) =>
+      `The ENVIRONMENT option ${optionName} conflicts with preceding ENVIRONMENT options. This option will be ignored.`,
     fullCode: "IBM1318IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * During the conversion of a user expression during the compilation, the target string
@@ -5794,10 +5795,10 @@ export const Error = {
   IBM1340I: {
     code: "IBM1340I",
     severity: "E",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  contains BIT data. NOMAP is assumed.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} contains BIT data. NOMAP is assumed.`,
     fullCode: "IBM1340IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * An argument containing UNION data has been found in a call to a COBOL routine. Mapping
@@ -5813,10 +5814,10 @@ export const Error = {
   IBM1341I: {
     code: "IBM1341I",
     severity: "E",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  is or contains a UNION. NOMAP is assumed.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} is or contains a UNION. NOMAP is assumed.`,
     fullCode: "IBM1341IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * An argument containing non-constant extents has been found in a call to a COBOL routine.
@@ -5832,10 +5833,10 @@ export const Error = {
   IBM1342I: {
     code: "IBM1342I",
     severity: "E",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  contains non-constant extents. NOMAP is assumed.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} contains non-constant extents. NOMAP is assumed.`,
     fullCode: "IBM1342IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The suboption should be specified as ARGn where \"n\" is an integer greater than
@@ -6341,10 +6342,10 @@ export const Error = {
   IBM1375I: {
     code: "IBM1375I",
     severity: "E",
-    message:
-      "The DEFINED variable  ${variable name }  does not fit into its base variable.",
+    message: (varName: string) =>
+      `The DEFINED variable ${varName} does not fit into its base variable.`,
     fullCode: "IBM1375IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Only attributes can be factored into declaration lists.
@@ -6371,10 +6372,10 @@ export const Error = {
   IBM1377I: {
     code: "IBM1377I",
     severity: "E",
-    message:
-      "A scale factor has been specified as an argument to the  ${BUILTIN name }  built-in function, but the result of that function has type FLOAT. The scale factor will be ignored.",
+    message: (builtinName: string) =>
+      `A scale factor has been specified as an argument to the ${builtinName} built-in function, but the result of that function has type FLOAT. The scale factor will be ignored.`,
     fullCode: "IBM1377IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * GENERIC entry references are not allowed to contain an arguments or subscripts list
@@ -6982,10 +6983,10 @@ export const Error = {
   IBM1420I: {
     code: "IBM1420I",
     severity: "E",
-    message:
-      "The factor in  ${K/Mconstant }  is too large and is replaced by  ${maximum factor } .",
+    message: (kmConstant: string, maximumFactor: string) =>
+      `The factor in ${kmConstant} is too large and is replaced by ${maximumFactor}.`,
     fullCode: "IBM1420IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The maximum number of dimensions allowed for a variable, including all inherited
@@ -7243,10 +7244,10 @@ export const Error = {
   IBM1439I: {
     code: "IBM1439I",
     severity: "E",
-    message:
-      "Excess arguments for  ${BUILTIN name }  built-in function ignored.",
+    message: (builtinName: string) =>
+      `Excess arguments for ${builtinName} built-in function ignored.`,
     fullCode: "IBM1439IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * In a comparison of two ENTRY variables or constants, the ENTRY and RETURNS description
@@ -7665,10 +7666,10 @@ export const Error = {
   IBM1468I: {
     code: "IBM1468I",
     severity: "E",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${entry name }  has the DATE attribute but the corresponding parameter does not. The DATE attribute will be ignored.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} has the DATE attribute but the corresponding parameter does not. The DATE attribute will be ignored.`,
     fullCode: "IBM1468IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The attributes of the RETURNed expression and in the RETURNS option should match,
@@ -7789,10 +7790,10 @@ export const Error = {
   IBM1477I: {
     code: "IBM1477I",
     severity: "E",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${entry name }  does not have the DATE attribute but the corresponding parameter does. The DATE attribute will be ignored.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} does not have the DATE attribute but the corresponding parameter does. The DATE attribute will be ignored.`,
     fullCode: "IBM1477IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The attributes of the RETURNed expression and in the RETURNS option should match,
@@ -9017,10 +9018,10 @@ export const Error = {
   IBM2476I: {
     code: "IBM2476I",
     severity: "E",
-    message:
-      "Item in OPTIONS list is invalid for ON-unit BEGIN blocks.  ${option name }  is ignored.",
+    message: (optionName: string) =>
+      `Item in OPTIONS list is invalid for ON-unit BEGIN blocks. ${optionName} is ignored.`,
     fullCode: "IBM2476IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Under RULES(NOCOMPLEX), the COMPLEX attributes, the COMPLEX built-in function, and
@@ -9485,10 +9486,10 @@ export const Severe = {
   IBM1501I: {
     code: "IBM1501I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  has a different strong type than the corresponding parameter.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} has a different strong type than the corresponding parameter.`,
     fullCode: "IBM1501IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * An argument must have a type that can be converted to the corresponding parameter's
@@ -9530,10 +9531,10 @@ export const Severe = {
   IBM1504I: {
     code: "IBM1504I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  has type POINTER, which is invalid for an OFFSET parameter without an AREA qualifier.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} has type POINTER, which is invalid for an OFFSET parameter without an AREA qualifier.`,
     fullCode: "IBM1504IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * OFFSET variables can be converted to POINTER only if the OFFSET is declared with
@@ -9543,10 +9544,10 @@ export const Severe = {
   IBM1505I: {
     code: "IBM1505I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  has type POINTER, which is invalid for a POINTER parameter since the OFFSET argument is not an OFFSET variable declared with an AREA qualifier.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} has type POINTER, which is invalid for a POINTER parameter since the OFFSET argument is not an OFFSET variable declared with an AREA qualifier.`,
     fullCode: "IBM1505IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * ORDINALs cannot be passed to other ORDINALs having different ORDINAL types.
@@ -9555,10 +9556,10 @@ export const Severe = {
   IBM1506I: {
     code: "IBM1506I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  has a different ORDINAL type than the corresponding parameter.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} has a different ORDINAL type than the corresponding parameter.`,
     fullCode: "IBM1506IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The array can be assigned to an array of LABEL variables, and that array can be passed
@@ -9585,10 +9586,10 @@ export const Severe = {
   IBM1508I: {
     code: "IBM1508I",
     severity: "S",
-    message:
-      "Too few arguments have been specified for the ENTRY  ${ENTRY name } .",
+    message: (entryName: string) =>
+      `Too few arguments have been specified for the ENTRY ${entryName}.`,
     fullCode: "IBM1508IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The target in an assignment through a pseudovariable must not have the NONASSIGNABLE
@@ -9621,10 +9622,10 @@ export const Severe = {
   IBM1510I: {
     code: "IBM1510I",
     severity: "S",
-    message:
-      "First argument to  ${variable name }  pseudovariable must be ASSIGNABLE.",
+    message: (varName: string) =>
+      `First argument to ${varName} pseudovariable must be ASSIGNABLE.`,
     fullCode: "IBM1510IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Scalars cannot be converted to aggregates.
@@ -9637,10 +9638,10 @@ export const Severe = {
   IBM1511I: {
     code: "IBM1511I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  is an aggregate, but the parameter description specifies a scalar.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} is an aggregate, but the parameter description specifies a scalar.`,
     fullCode: "IBM1511IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Dummy aggregate arguments are not supported except when passing a non-AREA scalar
@@ -9656,10 +9657,10 @@ export const Severe = {
   IBM1512I: {
     code: "IBM1512I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  is a scalar, but the parameter description specifies an aggregate to which it cannot be passed.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} is a scalar, but the parameter description specifies an aggregate to which it cannot be passed.`,
     fullCode: "IBM1512IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Dummy aggregate arguments are not supported. If an entry description describes an
@@ -9670,10 +9671,10 @@ export const Severe = {
   IBM1513I: {
     code: "IBM1513I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  is an aggregate that does not exactly match the corresponding parameter description.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} is an aggregate that does not exactly match the corresponding parameter description.`,
     fullCode: "IBM1513IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Dummy aggregate arguments are not supported. If an entry description describes an
@@ -9684,10 +9685,10 @@ export const Severe = {
   IBM1514I: {
     code: "IBM1514I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  is an aggregate with more members than its corresponding parameter description.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} is an aggregate with more members than its corresponding parameter description.`,
     fullCode: "IBM1514IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Dummy aggregate arguments are not supported. If an entry description describes an
@@ -9698,10 +9699,10 @@ export const Severe = {
   IBM1515I: {
     code: "IBM1515I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  is an aggregate with fewer members than its corresponding parameter description.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} is an aggregate with fewer members than its corresponding parameter description.`,
     fullCode: "IBM1515IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Dummy aggregate arguments are not supported. If an entry description describes an
@@ -9743,10 +9744,10 @@ export const Severe = {
   IBM1518I: {
     code: "IBM1518I",
     severity: "S",
-    message:
-      "The number of dimensions for argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  and in its corresponding parameter description do not match.",
+    message: (argumentNumber: string, entryName: string) =>
+      `The number of dimensions for argument number ${argumentNumber} in ENTRY reference ${entryName} and in its corresponding parameter description do not match.`,
     fullCode: "IBM1518IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Array arguments and parameters must have the same lower and upper bounds.
@@ -9760,10 +9761,10 @@ export const Severe = {
   IBM1519I: {
     code: "IBM1519I",
     severity: "S",
-    message:
-      "The upper and lower bounds for argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  and in its corresponding parameter description do not match.",
+    message: (argumentNumber: string, entryName: string) =>
+      `The upper and lower bounds for argument number ${argumentNumber} in ENTRY reference ${entryName} and in its corresponding parameter description do not match.`,
     fullCode: "IBM1519IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Charset 48 is no longer supported. The source code must be converted to charset 60
@@ -9890,10 +9891,10 @@ export const Severe = {
   IBM1530I: {
     code: "IBM1530I",
     severity: "S",
-    message:
-      "Second argument to  ${BUILTIN name }  built-in function must have derived mode REAL.",
+    message: (builtinName: string) =>
+      `Second argument to ${builtinName} built-in function must have derived mode REAL.`,
     fullCode: "IBM1530IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * An expression contains the reference BINARYVALUE(x) where x has a type other than
@@ -10103,10 +10104,10 @@ export const Severe = {
   IBM1547I: {
     code: "IBM1547I",
     severity: "S",
-    message:
-      "Second argument to  ${BUILTIN name }  built-in function must have computational type.",
+    message: (BUILTINname: string) =>
+      `Second argument to ${BUILTINname} built-in function must have computational type.`,
     fullCode: "IBM1547IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The PLISTSIZE built-in functions may be used only in procedures.
@@ -10205,10 +10206,10 @@ export const Severe = {
   IBM1555I: {
     code: "IBM1555I",
     severity: "S",
-    message:
-      "Second argument to  ${BUILTIN name }  built-in function must have computational type.",
+    message: (BUILTINname: string) =>
+      `Second argument to ${BUILTINname} built-in function must have computational type.`,
     fullCode: "IBM1555IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * If a third argument is given for one of the built-in functions INDEX, SEARCH, VERIFYR,
@@ -10298,10 +10299,10 @@ export const Severe = {
   IBM1563I: {
     code: "IBM1563I",
     severity: "S",
-    message:
-      "Second argument to  ${BUILTIN name }  built-in function must be nonnegative.",
+    message: (builtinName: string) =>
+      `Second argument to ${builtinName} built-in function must be nonnegative.`,
     fullCode: "IBM1563IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Supply the minimum number of arguments required.
@@ -10712,10 +10713,10 @@ export const Severe = {
   IBM1599I: {
     code: "IBM1599I",
     severity: "S",
-    message:
-      "The built-in function  ${variable name }  may not be used as a pseudovariable.",
+    message: (varName: string) =>
+      `The built-in function ${varName} may not be used as a pseudovariable.`,
     fullCode: "IBM1599IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * It is invalid to assign an array, structure, or union to one of the built-in functions
@@ -10826,10 +10827,10 @@ export const Severe = {
   IBM1607I: {
     code: "IBM1607I",
     severity: "S",
-    message:
-      "First argument to  ${variable name }  pseudovariable must be a reference.",
+    message: (varName: string) =>
+      `First argument to ${varName} pseudovariable must be a reference.`,
     fullCode: "IBM1607IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The compiler does not support the named pseudovariable applied to arrays, structures,
@@ -10960,10 +10961,10 @@ export const Severe = {
   IBM1617I: {
     code: "IBM1617I",
     severity: "S",
-    message:
-      "DIRECT attribute for file  ${file name }  needs ENVIRONMENT option specification of INDEXED, REGIONAL, RELATIVE, or VSAM.",
+    message: (fileName: string) =>
+      `DIRECT attribute for file ${fileName} needs ENVIRONMENT option specification of INDEXED, REGIONAL, RELATIVE, or VSAM.`,
     fullCode: "IBM1617IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * %INCLUDE must be followed by a name and either a semicolon or else a second name
@@ -11558,10 +11559,10 @@ export const Severe = {
   IBM1657I: {
     code: "IBM1657I",
     severity: "S",
-    message:
-      "A subscript has been specified for the non-array variable  ${variable name } .",
+    message: (varName: string) =>
+      `A subscript has been specified for the non-array variable ${varName}.`,
     fullCode: "IBM1657IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Temporary arrays of strings are supported only if the string length is known.
@@ -11574,10 +11575,10 @@ export const Severe = {
   IBM1658I: {
     code: "IBM1658I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  is an array expression requiring a temporary array with strings of unknown length.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} is an array expression requiring a temporary array with strings of unknown length.`,
     fullCode: "IBM1658IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The total number of logical levels after LIKE expansion must not exceed 15.
@@ -11828,10 +11829,10 @@ export const Severe = {
   IBM1677I: {
     code: "IBM1677I",
     severity: "S",
-    message:
-      "Assignment of ENTRY to  ${target type }  is invalid. If the ENTRY should be invoked, an argument list must be provided.",
+    message: (targetType: string) =>
+      `Assignment of ENTRY to ${targetType} is invalid. If the ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1677IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The target attributes conflict with the source attributes.
@@ -12140,10 +12141,10 @@ export const Severe = {
   IBM1699I: {
     code: "IBM1699I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  is an aggregate. This conflicts with the BYVALUE option.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} is an aggregate. This conflicts with the BYVALUE option.`,
     fullCode: "IBM1699IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Even AREA variables with constant size must be passed BYADDR.
@@ -12163,10 +12164,10 @@ export const Severe = {
   IBM1701I: {
     code: "IBM1701I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${ENTRY name }  is a string with unknown size. This conflicts with the BYVALUE option.",
+    message: (argumentNumber: string, entryName: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} is a string with unknown size. This conflicts with the BYVALUE option.`,
     fullCode: "IBM1701IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Structures and union may not be returned. The following code example is invalid:
@@ -12648,10 +12649,10 @@ export const Severe = {
   IBM1737I: {
     code: "IBM1737I",
     severity: "S",
-    message:
-      "Comparison of ENTRY to  ${target type }  is invalid. If the ENTRY should be invoked, an argument list must be provided.",
+    message: (targetType: string) =>
+      `Comparison of ENTRY to ${targetType} is invalid. If the ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1737IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * ENTRYs can be compared only with other ENTRYs. If the ENTRY is a function which should
@@ -12829,10 +12830,10 @@ export const Severe = {
   IBM1750I: {
     code: "IBM1750I",
     severity: "S",
-    message:
-      "INITIAL attribute is invalid for the STATIC LABEL variable  ${variable name }  since it has the MEMBER attribute.",
+    message: (varName: string) =>
+      `INITIAL attribute is invalid for the STATIC LABEL variable ${varName} since it has the MEMBER attribute.`,
     fullCode: "IBM1750IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * ENTRY variables that don't have the LIMITED attribute require block activation information,
@@ -12842,10 +12843,10 @@ export const Severe = {
   IBM1751I: {
     code: "IBM1751I",
     severity: "S",
-    message:
-      "INITIAL attribute is valid for the STATIC ENTRY variable  ${variable name }  only if it has the LIMITED attribute.",
+    message: (varName: string) =>
+      `INITIAL attribute is valid for the STATIC ENTRY variable ${varName} only if it has the LIMITED attribute.`,
     fullCode: "IBM1751IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * FORMAT variables require block activation information, and hence they cannot be initialized
@@ -12856,10 +12857,10 @@ export const Severe = {
   IBM1753I: {
     code: "IBM1753I",
     severity: "S",
-    message:
-      "INITIAL attribute is invalid for the STATIC FORMAT variable  ${variable name } .",
+    message: (varName: string) =>
+      `INITIAL attribute is invalid for the STATIC FORMAT variable ${varName} .`,
     fullCode: "IBM1753IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Since an asterisk iteration factor completes the initialization of a variable, it
@@ -12961,10 +12962,10 @@ export const Severe = {
   IBM1759I: {
     code: "IBM1759I",
     severity: "S",
-    message:
-      "Non-null INITIAL values are not supported for the STATIC NONCONNECTED array  ${variable name }  since it has the attributes UNALIGNED BIT.",
+    message: (varName: string) =>
+      `Non-null INITIAL values are not supported for the STATIC NONCONNECTED array ${varName} since it has the attributes UNALIGNED BIT.`,
     fullCode: "IBM1759IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Replace the subscripted LABEL with an unsubscripted one or change the storage class
@@ -13436,10 +13437,10 @@ export const Severe = {
   IBM1795I: {
     code: "IBM1795I",
     severity: "S",
-    message:
-      "The OFFSET variable  ${variable name }  may not be used as a locator qualifier since it was not declared with an AREA specification.",
+    message: (varName: string) =>
+      `The OFFSET variable ${varName} may not be used as a locator qualifier since it was not declared with an AREA specification.`,
     fullCode: "IBM1795IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Arrays, structures, and unions may not be used as locator qualifiers.
@@ -13739,10 +13740,10 @@ export const Severe = {
   IBM1818I: {
     code: "IBM1818I",
     severity: "S",
-    message:
-      "${I/Ooption }  conflicts with previous options on the  ${I/Ostmt }  statement.",
+    message: (ioOption: string, ioStmt: string) =>
+      `${ioOption} conflicts with previous options on the ${ioStmt} statement.`,
     fullCode: "IBM1818IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Each option may be specified only once.
@@ -13754,10 +13755,10 @@ export const Severe = {
   IBM1819I: {
     code: "IBM1819I",
     severity: "S",
-    message:
-      "The  ${I/Ooption }  option is multiply specified on the  ${I/Ostmt } statement.",
+    message: (ioOption: string, ioStmt: string) =>
+      `The ${ioOption} option is multiply specified on the ${ioStmt} statement.`,
     fullCode: "IBM1819IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * A required statement element has not been specified.
@@ -13770,10 +13771,10 @@ export const Severe = {
   IBM1820I: {
     code: "IBM1820I",
     severity: "S",
-    message:
-      "Mandatory  ${I/Ooption }  option not specified on the  ${I/Ostmt } statement.",
+    message: (ioOption: string, ioStmt: string) =>
+      `Mandatory ${ioOption} option not specified on the ${ioStmt} statement.`,
     fullCode: "IBM1820IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * An invalid scalar or aggregate reference has been specified for the FROM or INTO
@@ -13946,10 +13947,10 @@ export const Severe = {
   IBM1831I: {
     code: "IBM1831I",
     severity: "S",
-    message:
-      "The LOCATE reference  ${variable name }  is not implicitly qualified and is invalid without a SET clause.",
+    message: (varName: string) =>
+      `The LOCATE reference ${varName} is not implicitly qualified and is invalid without a SET clause.`,
     fullCode: "IBM1831IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The reference in the SET clause of a FETCH statement must have the POINTER type.
@@ -14007,10 +14008,10 @@ export const Severe = {
   IBM1835I: {
     code: "IBM1835I",
     severity: "S",
-    message:
-      "The LOCATE reference  ${variable name }  is not a level 1 BASED variable.",
+    message: (varName: string) =>
+      `The LOCATE reference ${varName} is not a level 1 BASED variable.`,
     fullCode: "IBM1835IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The INITIAL attribute is valid only for scalars and arrays of scalars.
@@ -14181,9 +14182,10 @@ export const Severe = {
   IBM1848I: {
     code: "IBM1848I",
     severity: "S",
-    message: "The INCLUDE file for  ${includestmt arg }  could not be found.",
+    message: (includeStmtArg: string) =>
+      `The INCLUDE file for ${includeStmtArg} could not be found.`,
     fullCode: "IBM1848IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Under CMPAT(V1), bounds must be between -32768 and 32767 inclusive. To use bounds
@@ -14474,10 +14476,10 @@ export const Severe = {
   IBM1872I: {
     code: "IBM1872I",
     severity: "S",
-    message:
-      "The reference in the  ${condition name }  condition must have type FILE.",
+    message: (conditionName: string) =>
+      `The reference in the ${conditionName} condition must have type FILE.`,
     fullCode: "IBM1872IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * DO statements can be nested only 50 deep. Simplify the program.
@@ -14580,10 +14582,10 @@ export const Severe = {
   IBM1882I: {
     code: "IBM1882I",
     severity: "S",
-    message:
-      "The ALLOCATE reference  ${variable name }  is not a level 1 BASED or CONTROLLED variable.",
+    message: (varName: string) =>
+      `The ALLOCATE reference ${varName} is not a level 1 BASED or CONTROLLED variable.`,
     fullCode: "IBM1882IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Provide a SET clause in the ALLOCATE statement.
@@ -14596,10 +14598,10 @@ export const Severe = {
   IBM1883I: {
     code: "IBM1883I",
     severity: "S",
-    message:
-      "The ALLOCATE reference  ${variable name }  is not implicitly qualified and is invalid without a SET clause.",
+    message: (varName: string) =>
+      `The ALLOCATE reference ${varName} is not implicitly qualified and is invalid without a SET clause.`,
     fullCode: "IBM1883IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * A reference of any other type is invalid.
@@ -14642,9 +14644,10 @@ export const Severe = {
   IBM1886I: {
     code: "IBM1886I",
     severity: "S",
-    message: "The REFER object name  ${reference name }  is ambiguous.",
+    message: (referenceName: string) =>
+      `The REFER object name ${referenceName} is ambiguous.`,
     fullCode: "IBM1886IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The named REFER object cannot be declared in another structure or in the same structure,
@@ -15050,9 +15053,10 @@ export const Severe = {
   IBM1916I: {
     code: "IBM1916I",
     severity: "S",
-    message: "The PROCEDURE/ENTRY  ${proc name }  has already been defined.",
+    message: (procName: string) =>
+      `The PROCEDURE/ENTRY ${procName} has already been defined.`,
     fullCode: "IBM1916IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The source contains either no statements or all statements that it contains are invalid
@@ -15395,10 +15399,10 @@ export const Severe = {
   IBM1944I: {
     code: "IBM1944I",
     severity: "S",
-    message:
-      "The precision specified in  ${BUILTIN name }  built-in function must be a restricted expression with integer type.",
+    message: (builtinName: string) =>
+      `The precision specified in ${builtinName} built-in function must be a restricted expression with integer type.`,
     fullCode: "IBM1944IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Extents in BASED variables must be either constants or specified with the REFER option
@@ -15734,10 +15738,10 @@ export const Severe = {
   IBM1971I: {
     code: "IBM1971I",
     severity: "S",
-    message:
-      "The GENERIC variable  ${variable name }  may not be used as a handle.",
+    message: (varName: string) =>
+      `The GENERIC variable ${varName} may not be used as a handle.`,
     fullCode: "IBM1971IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * x=>y is invalid unless x has the HANDLE attribute
@@ -15959,10 +15963,10 @@ export const Severe = {
   IBM1997I: {
     code: "IBM1997I",
     severity: "S",
-    message:
-      "Internal compiler error: no WHEN clause satisfied within  ${module name}",
+    message: (moduleName: string) =>
+      `Internal compiler error: no WHEN clause satisfied within ${moduleName}`,
     fullCode: "IBM1997IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * This message indicates that there is an error in the front end of the compiler. Please
@@ -16328,10 +16332,10 @@ export const Severe = {
   IBM2026I: {
     code: "IBM2026I",
     severity: "S",
-    message:
-      "The GENERIC variable  ${variable name }  may not be used as a typed structure qualifier.",
+    message: (varName: string) =>
+      `The GENERIC variable ${varName} may not be used as a typed structure qualifier.`,
     fullCode: "IBM2026IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * x.y is invalid unless x is a structure, a union or a function returning a typed structure
@@ -16804,10 +16808,10 @@ export const Severe = {
   IBM2061I: {
     code: "IBM2061I",
     severity: "S",
-    message:
-      "Attributes specified for  ${variable name }  in ALLOCATE statement do not match those in its declaration.",
+    message: (varName: string) =>
+      `Attributes specified for ${varName} in ALLOCATE statement do not match those in its declaration.`,
     fullCode: "IBM2061IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * In an ALLOCATE statement for a structure, all the levels specified in its declaration
@@ -17450,10 +17454,10 @@ export const Severe = {
   IBM2121I: {
     code: "IBM2121I",
     severity: "S",
-    message:
-      "Argument number  ${argument number }  in ENTRY reference  ${entry name }  must have the same size as the corresponding parameter.",
+    message: (entryName: string, argumentNumber: string) =>
+      `Argument number ${argumentNumber} in ENTRY reference ${entryName} must have the same size as the corresponding parameter.`,
     fullCode: "IBM2121IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The IBMUEXIT routine should have a PACKAGE statement that specifies EXPORTS( IBMUEXIT
@@ -17556,10 +17560,10 @@ export const Severe = {
   IBM2127I: {
     code: "IBM2127I",
     severity: "S",
-    message:
-      "The ENTRY named  ${ENTRYvariable name }  matches the reference to the GENERIC variable  ${GENERIC variablename } , but while the GENERIC reference is used as a function, the matching ENTRY does not have the RETURNS attribute.",
+    message: (entryVariableName: string, genericVariableName: string) =>
+      `The ENTRY named ${entryVariableName} matches the reference to the GENERIC variable ${genericVariableName} , but while the GENERIC reference is used as a function, the matching ENTRY does not have the RETURNS attribute.`,
     fullCode: "IBM2127IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * A match for the GENERIC reference has been found, but the match is not suitable because
@@ -17582,10 +17586,10 @@ export const Severe = {
   IBM2128I: {
     code: "IBM2128I",
     severity: "S",
-    message:
-      "The ENTRY named  ${ENTRYvariable name }  matches the reference to the GENERIC variable  ${GENERIC variablename } , but while the GENERIC reference is used as a function acting as a locator qualifier, the matching ENTRY does not return a POINTER.",
+    message: (entryVariableName: string, genericVariableName: string) =>
+      `The ENTRY named ${entryVariableName} matches the reference to the GENERIC variable ${genericVariableName}, but while the GENERIC reference is used as a function acting as a locator qualifier, the matching ENTRY does not return a POINTER.`,
     fullCode: "IBM2128IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * A match for the GENERIC reference has been found, but the match is not suitable because
@@ -17609,10 +17613,10 @@ export const Severe = {
   IBM2129I: {
     code: "IBM2129I",
     severity: "S",
-    message:
-      "The ENTRY named  ${ENTRYvariable name }  matches the reference to the GENERIC variable  ${GENERIC variablename } , but while the GENERIC reference is used as a repeating function reference, the matching ENTRY cannot be so used.",
+    message: (entryVariableName: string, genericVariableName: string) =>
+      `The ENTRY named ${entryVariableName} matches the reference to the GENERIC variable ${genericVariableName} , but while the GENERIC reference is used as a repeating function reference, the matching ENTRY cannot be so used.`,
     fullCode: "IBM2129IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The POSITION attribute can be used only with string overlay defining.
@@ -17784,10 +17788,10 @@ export const Severe = {
   IBM2141I: {
     code: "IBM2141I",
     severity: "S",
-    message:
-      "First argument to the  ${BUILTIN name }  built-in function must be a structure.",
+    message: (builtinName: string) =>
+      `First argument to the ${builtinName} built-in function must be a structure.`,
     fullCode: "IBM2141IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The first argument to the named built-in subroutine must be a structure supplying
@@ -18065,10 +18069,10 @@ export const Severe = {
   IBM2161I: {
     code: "IBM2161I",
     severity: "S",
-    message:
-      "The input structure to the  ${BUILTIN name }  built-in function must not be a UNION or contain any UNIONs.",
+    message: (builtinName: string) =>
+      `The input structure to the ${builtinName} built-in function must not be a UNION or contain any UNIONs.`,
     fullCode: "IBM2161IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The XMLCHAR built-in function cannot be applied to structures containing any GRAPHIC
@@ -18078,10 +18082,10 @@ export const Severe = {
   IBM2162I: {
     code: "IBM2162I",
     severity: "S",
-    message:
-      "The input structure to the  ${BUILTIN name }  built-in function must not contain any GRAPHIC elements.",
+    message: (builtinName: string) =>
+      `The input structure to the ${builtinName} built-in function must not contain any GRAPHIC elements.`,
     fullCode: "IBM2162IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The XMLCHAR built-in function cannot be applied to structures containing any WIDECHAR
@@ -18091,10 +18095,10 @@ export const Severe = {
   IBM2163I: {
     code: "IBM2163I",
     severity: "S",
-    message:
-      "The input structure to the  ${BUILTIN name }  built-in function must not contain any UTF-16 elements.",
+    message: (builtinName: string) =>
+      `The input structure to the ${builtinName} built-in function must not contain any UTF-16 elements.`,
     fullCode: "IBM2163IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The XMLCHAR built-in function cannot be applied to structures containing substructures
@@ -18322,10 +18326,10 @@ export const Severe = {
   IBM2183I: {
     code: "IBM2183I",
     severity: "S",
-    message:
-      "The first argument to  ${BUILTIN name }  built-in function must have constant length equal to that of the second argument.",
+    message: (builtinName: string) =>
+      `The first argument to ${builtinName} built-in function must have constant length equal to that of the second argument.`,
     fullCode: "IBM2183IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Break up the source files into smaller files.
@@ -19317,10 +19321,10 @@ export const Severe = {
   IBM2256I: {
     code: "IBM2256I",
     severity: "S",
-    message:
-      "The result of the  ${BUILTIN name }  built-in function would have a length greater than the the maximum allowed for a CHARACTER string.",
+    message: (builtinName: string) =>
+      `The result of the ${builtinName} built-in function would have a length greater than the the maximum allowed for a CHARACTER string.`,
     fullCode: "IBM2256IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * This message applies to the UTF8 built-in function.
@@ -19453,10 +19457,10 @@ export const Severe = {
   IBM2267I: {
     code: "IBM2267I",
     severity: "S",
-    message:
-      "The first argument to  ${BUILTIN name }  built-in function must have the LOCATES attribute.",
+    message: (builtinName: string) =>
+      `The first argument to ${builtinName} built-in function must have the LOCATES attribute.`,
     fullCode: "IBM2267IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * The LOCVAL pseudovariable can be applied only to variables with the LOCATES attribute

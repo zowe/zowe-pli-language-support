@@ -10,14 +10,21 @@
  */
 
 import type { ValidationAcceptor, ValidationChecks } from "langium";
-import type { LabelReference, Pl1AstType } from "../generated/ast.js";
+import {
+  isDeclaredItem,
+  isDeclaredVariable,
+  isEntryAttribute,
+  type CallStatement,
+  type LabelReference,
+  type Pl1AstType,
+} from "../generated/ast.js";
 import type { Pl1Services } from "../pli-module.js";
 // Remove until grammar support for dimensions work as expected
 // import { IBM1295IE_sole_bound_specified } from './messages/IBM1295IE-sole-bound-specified.js';
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./messages/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
 import { IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute } from "./messages/IBM1388IE-NODESCRIPTOR-attribute-is-invalid-when-any-parameter-has-NONCONNECTED-attribute.js";
 import { IBM1747IS_Function_cannot_be_used_before_the_functions_descriptor_list_has_been_scanned } from "./messages/IBM1747IS-Function-cannot-be-used-before-the-functions-descriptor-list-has-been-scanned.js";
-import { Error as PLIError, Warning } from "./messages/pli-codes.js";
+import { Error as PLIError, Severe, Warning } from "./messages/pli-codes.js";
 
 /**
  * Register custom validation checks.
@@ -35,6 +42,7 @@ export function registerValidationChecks(services: Pl1Services) {
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
     ],
     LabelReference: [validator.checkLabelReference],
+    CallStatement: [validator.checkCallStatement],
   };
   registry.register(checks, validator);
 }
@@ -63,6 +71,40 @@ export class Pl1Validator {
         node,
         property: "label",
       });
+    }
+  }
+
+  /**
+   * Validate call statements to external declarations (requires an entry check)
+   */
+  checkCallStatement(node: CallStatement, acceptor: ValidationAcceptor): void {
+    const ref = node.call.procedure.ref;
+    if (isDeclaredVariable(ref)) {
+      // get the parent of the declared variable
+      const parent = ref.$container;
+      if (isDeclaredItem(parent)) {
+        // check if it has the 'entry' attribute
+        if (!parent.attributes.some((attr) => isEntryAttribute(attr))) {
+          acceptor("error", Severe.IBM1695I.message, {
+            code: Severe.IBM1695I.fullCode,
+            node,
+            property: "call",
+          });
+
+          // also flag when we have any sort of args list (even an empty one) present after the call
+          if (node.call.hasArgs) {
+            acceptor(
+              "error",
+              PLIError.IBM1231I.message(node.call.procedure.$refText),
+              {
+                code: PLIError.IBM1231I.fullCode,
+                node: node.call,
+                property: "args",
+              },
+            );
+          }
+        }
+      }
     }
   }
 }
