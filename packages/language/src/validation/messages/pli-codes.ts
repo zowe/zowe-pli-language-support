@@ -5106,7 +5106,8 @@ export const Error = {
   IBM1294I: {
     code: "IBM1294I",
     severity: "E",
-    message: (maximumValue: string) => `BIT extent is reduced to ${maximumValue}.`,
+    message: (maximumValue: string) =>
+      `BIT extent is reduced to ${maximumValue}.`,
     fullCode: "IBM1294IE",
   } as ParametricPLICode,
 
@@ -14181,7 +14182,8 @@ export const Severe = {
   IBM1848I: {
     code: "IBM1848I",
     severity: "S",
-    message: (includeStmtArg: string) => `The INCLUDE file for ${includeStmtArg} could not be found.`,
+    message: (includeStmtArg: string) =>
+      `The INCLUDE file for ${includeStmtArg} could not be found.`,
     fullCode: "IBM1848IS",
   } as ParametricPLICode,
 
@@ -14642,7 +14644,8 @@ export const Severe = {
   IBM1886I: {
     code: "IBM1886I",
     severity: "S",
-    message: (referenceName: string) => `The REFER object name ${referenceName} is ambiguous.`,
+    message: (referenceName: string) =>
+      `The REFER object name ${referenceName} is ambiguous.`,
     fullCode: "IBM1886IS",
   } as ParametricPLICode,
 
@@ -15050,7 +15053,8 @@ export const Severe = {
   IBM1916I: {
     code: "IBM1916I",
     severity: "S",
-    message: (procName: string) => `The PROCEDURE/ENTRY ${procName} has already been defined.`,
+    message: (procName: string) =>
+      `The PROCEDURE/ENTRY ${procName} has already been defined.`,
     fullCode: "IBM1916IS",
   } as ParametricPLICode,
 

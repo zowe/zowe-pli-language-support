@@ -93,11 +93,15 @@ export class Pl1Validator {
 
           // also flag when we have any sort of args list (even an empty one) present after the call
           if (node.call.hasArgs) {
-            acceptor("error", PLIError.IBM1231I.message(node.call.procedure.$refText), {
-              code: PLIError.IBM1231I.fullCode,
-              node: node.call,
-              property: "args",
-            });
+            acceptor(
+              "error",
+              PLIError.IBM1231I.message(node.call.procedure.$refText),
+              {
+                code: PLIError.IBM1231I.fullCode,
+                node: node.call,
+                property: "args",
+              },
+            );
           }
         }
       }
