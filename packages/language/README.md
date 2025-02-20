@@ -16,18 +16,18 @@ To get started, make sure you have following installed:
 pnpm install
 ```
 
-2. Build the project (will also regenerate the grammar too)
+2. Build the project (will also regenerate the grammar artifacts)
 ```sh
 pnpm build
 ```
 
 ## Development
 
-We have a pair of branches we're using for development currently:
+Two branches are of interest when developing:
 - `main`: The most recent stable state of the project, releases will be built off of this for public use.
 - `development`: The current state of the project, where new features are being developed and tested.
 
-When working on a new feature or issue, make sure to create a new branch off of `development`, and submit a PR against that when it's ready for review.
+When working on a new feature or issue, make sure to create a new branch off of `development`, and submit a PR against that.
 
 ### Running Tests
 
