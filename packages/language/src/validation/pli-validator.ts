@@ -12,6 +12,10 @@
 import type { ValidationAcceptor, ValidationChecks } from "langium";
 import {
   isComputationDataAttribute,
+  isDeclaredItem,
+  isDeclaredVariable,
+  isEntryAttribute,
+  type CallStatement,
   type LabelReference,
   type Pl1AstType,
   type PliProgram,
@@ -43,6 +47,7 @@ export function registerValidationChecks(services: Pl1Services) {
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
     ],
     LabelReference: [validator.checkLabelReference],
+    CallStatement: [validator.checkCallStatement],
   };
   registry.register(checks, validator);
 }
@@ -115,6 +120,37 @@ export class Pl1Validator {
         node,
         property: "label",
       });
+    }
+  }
+
+  /**
+   * Validate call statements to external declarations (requires an entry check)
+   */
+  checkCallStatement(node: CallStatement, acceptor: ValidationAcceptor): void {
+    const ref = node.call.procedure.ref;
+    node.call.procedure
+    if (isDeclaredVariable(ref)) {
+      // get the parent of the declared variable
+      const parent = ref.$container;
+      if (isDeclaredItem(parent)) {
+        // check if it has the 'entry' attribute
+        if (!parent.attributes.some((attr) => isEntryAttribute(attr))) {
+          acceptor("error", Severe.IBM1695I.message, {
+            code: Severe.IBM1695I.fullCode,
+            node,
+            property: "call",
+          });
+
+          // also flag when we have any sort of args list (even an empty one) present after the call
+          if (node.call.hasArgs) {
+            acceptor("error", PLIError.IBM1231I.message(node.call.procedure.$refText), {
+              code: PLIError.IBM1231I.fullCode,
+              node: node.call,
+              property: "args",
+            });
+          }
+        }
+      }
     }
   }
 }
