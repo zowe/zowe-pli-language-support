@@ -5579,7 +5579,7 @@ export const Error = {
     code: "IBM1230I",
     severity: "E",
     message: (variablename: string) =>
-      `Arguments have been specified for the variable ${variablename} , but it is not an entry variable.`,
+      `Arguments have been specified for the variable ${variablename}, but it is not an entry variable.`,
     fullCode: "IBM1230IE",
   } as ParametricPLICode,
 
@@ -5771,10 +5771,10 @@ export const Error = {
   IBM1243I: {
     code: "IBM1243I",
     severity: "E",
-    message:
-      "REGIONAL( ${integerspecification(2or3)} ) ENVIRONMENT option is not supported.",
+    message: (integerSpec2or3: string) =>
+      `REGIONAL(${integerSpec2or3}) ENVIRONMENT option is not supported.`,
     fullCode: "IBM1243IE",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * This applies to the KEYLENGTH, KEYLOC and RECSIZE suboptions.
@@ -16196,10 +16196,10 @@ export const Severe = {
   IBM1818I: {
     code: "IBM1818I",
     severity: "S",
-    message:
-      "${I/Ooption} conflicts with previous options on the ${I/Ostmt} statement.",
+    message: (ioOption: string, ioStmt: string) =>
+      `${ioOption} conflicts with previous options on the ${ioStmt} statement.`,
     fullCode: "IBM1818IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * Each option may be specified only once.
@@ -16211,10 +16211,10 @@ export const Severe = {
   IBM1819I: {
     code: "IBM1819I",
     severity: "S",
-    message:
-      "The ${I/Ooption} option is multiply specified on the ${I/Ostmt} statement.",
+    message: (ioOption: string, ioStmt: string) =>
+      `The ${ioOption} option is multiply specified on the ${ioStmt} statement.`,
     fullCode: "IBM1819IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * A required statement element has not been specified.
@@ -16227,10 +16227,10 @@ export const Severe = {
   IBM1820I: {
     code: "IBM1820I",
     severity: "S",
-    message:
-      "Mandatory ${I/Ooption} option not specified on the ${I/Ostmt} statement.",
+    message: (ioOption: string, ioStmt: string) =>
+      `Mandatory ${ioOption} option not specified on the ${ioStmt} statement.`,
     fullCode: "IBM1820IS",
-  } as SimplePLICode,
+  } as ParametricPLICode,
 
   /**
    * An invalid scalar or aggregate reference has been specified for the FROM or INTO

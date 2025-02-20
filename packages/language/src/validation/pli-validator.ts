@@ -46,6 +46,7 @@ export function registerValidationChecks(): PliValidationChecks {
             IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
         ],
         LabelReference: [validator.checkLabelReference],
+        CallStatement: [validator.checkCallStatement],
     };
 
     return checks;
@@ -127,6 +128,46 @@ export class Pl1Validator {
                 // property: "label",
                 // node
             });
+        }
+    }
+
+    /**
+   * Validate call statements to external declarations (requires an entry check)
+   */
+    checkCallStatement(node: AST.CallStatement, acceptor: PliValidationAcceptor): void {
+        // const ref = node.call.procedure.ref;
+        const ref = node.call?.procedure?.node;
+        // node.call.procedure
+        if (ref && ref.kind === AST.SyntaxKind.DeclaredVariable) {
+            // get the parent of the declared variable
+            const parent = ref.container as AST.DeclaredItem;
+            if (parent.kind === AST.SyntaxKind.DeclaredItem) {
+                // check if it has the 'entry' attribute
+                // if (!parent.attributes.some((attr) => isEntryAttribute(attr))) {
+                if (!parent.attributes.some((attr) => attr.kind === AST.SyntaxKind.EntryAttribute)) {
+                    acceptor(Severity.S, PLICodes.Severe.IBM1695I.message, {
+                        code: PLICodes.Severe.IBM1695I.fullCode,
+                        range: getSyntaxNodeRange(node)!,
+                        uri: "" // TODO @montymxb Still need to supply URI for this document we're working in
+                        // node,
+                        // property: "call",
+                    });
+
+                    // also flag when we have any sort of args list (even an empty one) present after the call
+                    if (node.call?.hasArgs) {
+                        acceptor(Severity.E,
+                            PLICodes.Error.IBM1231I.message(node.call?.procedure?.text!),
+                            {
+                                code: PLICodes.Error.IBM1231I.fullCode,
+                                range: getSyntaxNodeRange(node)!,
+                                uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+                                // node: node.call,
+                                // property: "args"
+                            }
+                        );
+                    }
+                }
+            }
         }
     }
 }

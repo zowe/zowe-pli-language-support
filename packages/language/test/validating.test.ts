@@ -43,7 +43,6 @@ describe("Validating", () => {
         assertNoDiagnostics(doc);
     });
 
-
     test("check empty program", async () => {
         const doc = parseWithValidations(`;`);
         assertDiagnostic(doc, {
@@ -133,6 +132,75 @@ describe("Validating", () => {
         end mypackage;
         `);
         assertNoDiagnostics(doc);
+    });
+
+    describe("Call validations", () => {
+        test("can call function declared by procedure", async () => {
+            const doc = parseWithValidations(
+                `
+           MAINPR: procedure options( main );
+           b: proc() returns( OPTIONAL byvalue fixed bin(31) );
+             return(32);
+           end b;
+           call b();
+           end MAINPR;
+           `,
+            );
+            assertNoDiagnostics(doc);
+        });
+
+        test("can call function declared by entry statement", async () => {
+            const doc = parseWithValidations(
+                `
+            MAINPR: procedure options( main );
+            // calling 'a'
+            dcl a ext('a') entry( fixed bin(31) byvalue )
+              returns( optional bin(31) byvalue );
+            call a(5);
+            end MAINPR;
+             `
+            );
+            assertNoDiagnostics(doc);
+        });
+
+        test("cannot invoke function from declaration w/out entry (no args)", async () => {
+            const doc = parseWithValidations(
+                `
+            MAINPR: procedure options( main );
+            dcl a fixed bin(31); // not callable
+            call a;
+            end MAINPR;
+             `
+            );
+            assertDiagnostic(doc, {
+                code: PLICodes.Severe.IBM1695I.fullCode,
+                severity: Severity.S
+            });
+            // expect(doc.diagnostics?.length).toBe(1);
+            // expect(document.diagnostics?.[0].code).toBe(Severe.IBM1695I.fullCode);
+        });
+
+        test("cannot invoke function from declaration w/out entry (w/ args)", async () => {
+            const doc = parseWithValidations(
+                `
+              MAINPR: procedure options( main );
+              // calling 'a'
+              dcl a fixed bin(31); // not callable
+              call a();
+              end MAINPR;
+                `
+            );
+            assertDiagnostic(doc, {
+                code: PLICodes.Severe.IBM1695I.fullCode,
+                severity: Severity.S
+            });
+            assertDiagnostic(doc, { // since we have parens
+                code: PLICodes.Error.IBM1231I.fullCode,
+                severity: Severity.E
+            });
+            const diagnostics = collectDiagnostics(doc);
+            expect(diagnostics.length).toBe(2);
+        });
     });
 
     //

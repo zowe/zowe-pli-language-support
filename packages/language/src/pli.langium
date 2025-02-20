@@ -714,7 +714,10 @@ LocatorCall:
         (pointer?="->" | handle?="=>") element=MemberCall
     )*;
 
-ProcedureCall: procedure=[ProcedureStatement:ID]  ('(' (args+=(Expression | '*') (',' args+=(Expression | '*'))*)? ')')?;
+/**
+ * Call to a known procedure or external declaration (via a named element), does not necessarily require an arg list
+ */
+ProcedureCall: procedure=[NamedElement:ID] (hasArgs?='(' (args+=(Expression | '*') (',' args+=(Expression | '*'))*)? ')')?;
 
 LabelReference: label=[LabelPrefix:ID];
 
