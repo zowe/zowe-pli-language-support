@@ -21,5 +21,9 @@ export default defineConfig({
       interopDefault: true,
     },
     include: ["packages/**/test/**/*.test.ts"],
+    coverage: {
+      reporter: ['text'],
+      include: ['packages/**/src/**/*.ts'],
+    }
   },
 });
