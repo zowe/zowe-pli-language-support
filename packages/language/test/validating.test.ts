@@ -14,7 +14,7 @@ import { EmptyFileSystem, type LangiumDocument } from "langium";
 import { parseHelper } from "langium/test";
 import { DiagnosticSeverity } from "vscode-languageserver-types";
 import { createPliServices, PliProgram } from "../src";
-import { Error, Warning } from "../src/validation/messages/pli-codes";
+import { Error, Severe, Warning } from "../src/validation/messages/pli-codes";
 
 let services: ReturnType<typeof createPliServices>;
 let parse: ReturnType<typeof parseHelper<PliProgram>>;
@@ -30,6 +30,13 @@ beforeAll(async () => {
 });
 
 describe("Validating", () => {
+  test("check empty program", async () => {
+    document = await parse(`;`);
+    expect(document.diagnostics?.length).toBe(1);
+    expect(document.diagnostics?.[0].severity).toBe(DiagnosticSeverity.Error);
+    expect(document.diagnostics?.[0].code).toBe(Severe.IBM1917I.fullCode);
+  });
+
   test("check mismatched end label", async () => {
     document = await parse(`
   MYPROC: PROCEDURE OPTIONS (MAIN);
