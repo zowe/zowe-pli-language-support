@@ -680,7 +680,7 @@ describe("PL/I Parsing tests", () => {
     expect(doc.parseResult.parserErrors).toHaveLength(0);
   });
 
-  test('parses GET LIST w/ file', async () => {
+  test("parses GET LIST w/ file", async () => {
     const doc: LangiumDocument<PliProgram> = await parseStmts(`
     H: PROC OPTIONS (MAIN);
     DECLARE N BINARY FIXED (31);

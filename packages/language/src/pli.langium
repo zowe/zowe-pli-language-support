@@ -584,7 +584,7 @@ EntryAttribute:
     
 ;
 
-ReturnsOption: 'RETURNS' '(' returnAttribute=DeclarationAttribute* ')';
+ReturnsOption: 'RETURNS' '(' returnAttribute+=DeclarationAttribute* ')';
 
 EntryDescription: EntryParameterDescription | EntryUnionDescription;
 
