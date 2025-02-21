@@ -10,7 +10,11 @@
  */
 
 import type { ValidationAcceptor, ValidationChecks } from "langium";
-import type { LabelReference, Pl1AstType, PliProgram } from "../generated/ast.js";
+import type {
+  LabelReference,
+  Pl1AstType,
+  PliProgram,
+} from "../generated/ast.js";
 import type { Pl1Services } from "../pli-module.js";
 // Remove until grammar support for dimensions work as expected
 // import { IBM1295IE_sole_bound_specified } from './messages/IBM1295IE-sole-bound-specified.js';
@@ -44,7 +48,6 @@ export function registerValidationChecks(services: Pl1Services) {
  * Implementation of custom validations.
  */
 export class Pl1Validator {
-
   /**
    * Verify programs contain at least one parsed statement
    */
@@ -57,7 +60,6 @@ export class Pl1Validator {
       });
     }
   }
-
 
   /**
    * Verify label references
