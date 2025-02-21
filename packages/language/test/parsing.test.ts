@@ -680,6 +680,17 @@ describe("PL/I Parsing tests", () => {
     expect(doc.parseResult.parserErrors).toHaveLength(0);
   });
 
+  test('parses GET LIST w/ file', async () => {
+    const doc: LangiumDocument<PliProgram> = await parseStmts(`
+    H: PROC OPTIONS (MAIN);
+    DECLARE N BINARY FIXED (31);
+    GET LIST (N) FILE(SYSIN);
+    END H;
+    `);
+    expect(doc.parseResult.lexerErrors).toHaveLength(0);
+    expect(doc.parseResult.parserErrors).toHaveLength(0);
+  });
+
   test("Procedures w/ aligned & unaligned attributes", async () => {
     // regular parseStmts but with a body that has a procedure w/ align & unaligned attributes
     const doc: LangiumDocument<PliProgram> = await parseStmts(`
