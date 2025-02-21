@@ -74,14 +74,18 @@ export class Pl1Validator {
         const typ = attr.type.toUpperCase();
         attrSet.add(typ); // dupes are ok
 
-        if (typ === "ALIGNED" && attrSet.has("UNALIGNED")) {
-          acceptor("error", PLIError.IBM2462I.message("ALIGNED", "UNALIGNED"), {
+        // look for a generally negated version of this attribute (there are several)
+        if (attrSet.has(`UN${typ}`)) {
+          acceptor("error", PLIError.IBM2462I.message(typ, `UN${typ}`), {
             code: PLIError.IBM2462I.fullCode,
             node,
             property: "returnAttribute",
           });
-        } else if (typ === "UNALIGNED" && attrSet.has("ALIGNED")) {
-          acceptor("error", PLIError.IBM2462I.message("UNALIGNED", "ALIGNED"), {
+        }
+
+        // look for a non-negated version of this type
+        if (typ.startsWith("UN") && attrSet.has(typ.slice(2))) {
+          acceptor("error", PLIError.IBM2462I.message(typ, typ.slice(2)), {
             code: PLIError.IBM2462I.fullCode,
             node,
             property: "returnAttribute",
