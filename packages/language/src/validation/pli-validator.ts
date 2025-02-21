@@ -10,10 +10,12 @@
  */
 
 import type { ValidationAcceptor, ValidationChecks } from "langium";
-import type {
-  LabelReference,
-  Pl1AstType,
-  PliProgram,
+import {
+  isComputationDataAttribute,
+  type LabelReference,
+  type Pl1AstType,
+  type PliProgram,
+  type ReturnsOption,
 } from "../generated/ast.js";
 import type { Pl1Services } from "../pli-module.js";
 // Remove until grammar support for dimensions work as expected
@@ -33,6 +35,7 @@ export function registerValidationChecks(services: Pl1Services) {
     // DimensionBound: [IBM1295IE_sole_bound_specified],
     PliProgram: [validator.checkPliProgram],
     Exports: [IBM1324IE_name_occurs_more_than_once_within_exports_clause],
+    ReturnsOption: [validator.checkReturnsOption],
     MemberCall: [
       IBM1747IS_Function_cannot_be_used_before_the_functions_descriptor_list_has_been_scanned,
     ],
@@ -58,6 +61,33 @@ export class Pl1Validator {
         node,
         property: "statements",
       });
+    }
+  }
+
+  /**
+   * Checks return options for mutually exclusive attributes
+   */
+  checkReturnsOption(node: ReturnsOption, acceptor: ValidationAcceptor): void {
+    const attrSet = new Set<string>();
+    for (const attr of node.returnAttribute) {
+      if (isComputationDataAttribute(attr)) {
+        const typ = attr.type.toUpperCase();
+        attrSet.add(typ); // dupes are ok
+
+        if (typ === "ALIGNED" && attrSet.has("UNALIGNED")) {
+          acceptor("error", PLIError.IBM2462I.message("ALIGNED", "UNALIGNED"), {
+            code: PLIError.IBM2462I.fullCode,
+            node,
+            property: "returnAttribute",
+          });
+        } else if (typ === "UNALIGNED" && attrSet.has("ALIGNED")) {
+          acceptor("error", PLIError.IBM2462I.message("UNALIGNED", "ALIGNED"), {
+            code: PLIError.IBM2462I.fullCode,
+            node,
+            property: "returnAttribute",
+          });
+        }
+      }
     }
   }
 
