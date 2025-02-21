@@ -672,6 +672,7 @@ terminal fragment FULL_NUM: NUM MANTISSA?;
 terminal fragment MANTISSA: /[eEsSdDqQ][-+]?[0-9]+/;
 // This terminal combines WRAPPED_NUM and normal strings
 terminal STRING_TERM: /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')([xX][nN]|[xX][uU]|[xX]|[aA]|[eE]|[bB]4|[bB]3|[bB][xX]|[bB]|[gG][xX]|[gG]|[uU][xX]|[wW][xX]|[iI])*/;
+// convert to this once ready: (xn|xu|x|a|e|b4|b3|bx|b|gx|g|ux|wx|i)
 
 hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
 hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;

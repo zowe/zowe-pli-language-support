@@ -652,20 +652,42 @@ describe("PL/I Parsing tests", () => {
     expect(doc.parseResult.parserErrors).toHaveLength(0);
   });
 
-  /**
-   * Verifies that hex fixed-point constants like '010101'xn (or xu) are parsable
-   */
-  test("parses xn|xu binary fixed point constants", async () => {
-    const doc: LangiumDocument<PliProgram> = await parseStmts(`
+  describe("PL/I Constants", () => {
+
+    // TODO using this test as a template, break it out into separate cases for each of the constants listed below
+    /**
+     * Verifies that hex fixed-point constants like '010101'xn (or xu) are parsable
+     */
+    test("parses xn|xu binary fixed point constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
  MAINPR: procedure options (main);
     dcl x fixed bin(31) init(0);
     x = '0000ffff'xn;
     x = '0000ffff'xu;
  end MAINPR;
         `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    // xn: (hex) binary fixed-point constant
+    // xu: (hex) binary fixed-point constant
+    // x: (hex) character constant
+    // a: (ascii) character constant
+    // e: (ebcdic) character constant
+    // b3: (octal) hex constant
+    // b4: (hex) bit constant
+    // bx: same as b4
+    // b: bit constant
+    // gx: (hex) graphic constant
+    // g: graphic constant
+    // ux: (hex) uchar constant
+    // wx: (hex) widechar constant
+    // i ????
+    // m: (mixed character constant) '<.I.B.M>'M
   });
+
+  // test various hex constant extensions
 
   test("External declaration with returns 'byvalue fixed type'", async () => {
     const doc: LangiumDocument<PliProgram> = await parseStmts(`
