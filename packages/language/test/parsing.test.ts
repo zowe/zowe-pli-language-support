@@ -653,41 +653,149 @@ describe("PL/I Parsing tests", () => {
   });
 
   describe("PL/I Constants", () => {
-
-    // TODO using this test as a template, break it out into separate cases for each of the constants listed below
-    /**
-     * Verifies that hex fixed-point constants like '010101'xn (or xu) are parsable
-     */
-    test("parses xn|xu binary fixed point constants", async () => {
+    test("xn binary fixed point constants", async () => {
       const doc: LangiumDocument<PliProgram> = await parseStmts(`
- MAINPR: procedure options (main);
-    dcl x fixed bin(31) init(0);
-    x = '0000ffff'xn;
-    x = '0000ffff'xu;
- end MAINPR;
-        `);
+   MAINPR: procedure options (main);
+      dcl x fixed bin(31) init(0);
+      x = '0000ffff'xn;
+   end MAINPR;
+      `);
       expect(doc.parseResult.lexerErrors).toHaveLength(0);
       expect(doc.parseResult.parserErrors).toHaveLength(0);
     });
 
-    // xn: (hex) binary fixed-point constant
-    // xu: (hex) binary fixed-point constant
-    // x: (hex) character constant
-    // a: (ascii) character constant
-    // e: (ebcdic) character constant
-    // b3: (octal) hex constant
-    // b4: (hex) bit constant
-    // bx: same as b4
-    // b: bit constant
-    // gx: (hex) graphic constant
-    // g: graphic constant
-    // ux: (hex) uchar constant
-    // wx: (hex) widechar constant
-    // i ????
-    // m: (mixed character constant) '<.I.B.M>'M
-  });
+    test("xu binary fixed point constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x fixed bin(31) init(0);
+      x = '0000ffff'xu;
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
 
-  // test various hex constant extensions
+    test("x character constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x char(8) init('0000ffff'x);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("a character constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x char(8) init('Hello'a);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("e character constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x char(8) init('Hello'e);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("b3 octal constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x fixed bin(31) init('377'b3);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("b4 hex bit constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x bit(16) init('ffff'b4);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("bx hex bit constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x bit(16) init('ffff'bx);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("b bit constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x bit(8) init('10101010'b);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("gx hex graphic constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x graphic(4) init('81a1'gx);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("g graphic constants", async () => {
+      // TODO @montymxb Feb. 21st, 2025: This one won't take SBCS on the mainframe, still needs work
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x graphic(4) init('<.I.B.M>'g);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("ux hex uchar constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x uchar(4) init('F48FBFBF'ux);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("wx hex widechar constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x WIDECHAR(4) init('0000ffff'wx);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("m mixed character constants", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+   MAINPR: procedure options (main);
+      dcl x char(8) init('<.I.B.M>'m);
+   end MAINPR;
+      `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+  });
 
   test("External declaration with returns 'byvalue fixed type'", async () => {
     const doc: LangiumDocument<PliProgram> = await parseStmts(`
