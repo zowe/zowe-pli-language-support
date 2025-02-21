@@ -1,22 +1,40 @@
 import { PPStatement, PPDeclareStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPAssignmentStatement, PPExpression, PPDirective } from "./pli-preprocessor-ast";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorParserState, PreprocessorParserState } from "./pli-preprocessor-parser-state";
-import { IToken } from "chevrotain";
+import { ILexingError, IToken } from "chevrotain";
+
+export class PreprocessorError extends Error implements ILexingError {
+    private readonly token: IToken;
+    constructor(message: string, token: IToken) {
+        super(message);
+        this.token = token;
+    }
+    get offset(): number { return this.token.startOffset; }
+    get line(): number | undefined { return this.token.startLine; }
+    get column(): number | undefined { return this.token.startColumn; }
+    get length(): number { return this.token.image.length; }
+}
 
 export class PliPreprocessorParser {
     initializeState(tokens: IToken[]): PreprocessorParserState {
         return new PliPreprocessorParserState(tokens);
     }
 
-    start(state: PreprocessorParserState): PPStatement {
-        switch (state.current?.tokenType) {
-            case PreprocessorTokens.Declare: return this.declareStatement(state);
-            case PreprocessorTokens.Directive: return this.directive(state);
-            case PreprocessorTokens.Skip: return this.skipStatement(state);
-            case PreprocessorTokens.Include: return this.includeStatement(state);
-            case PreprocessorTokens.Id: return this.assignmentStatement(state);
+    start(state: PreprocessorParserState): PPStatement|PreprocessorError {
+        try {
+            switch (state.current?.tokenType) {
+                case PreprocessorTokens.Declare: return this.declareStatement(state);
+                case PreprocessorTokens.Directive: return this.directive(state);
+                case PreprocessorTokens.Skip: return this.skipStatement(state);
+                case PreprocessorTokens.Include: return this.includeStatement(state);
+                case PreprocessorTokens.Id: return this.assignmentStatement(state);
+            }
+        } catch(error) {
+            if(error instanceof PreprocessorError) {
+                return error;
+            }
         }
-        throw new Error("Unable to parse preprocessor statement.");
+        return new PreprocessorError('Unexpected state!', state.current!);
     }
 
     includeStatement(state: PreprocessorParserState): PPStatement {
@@ -154,7 +172,7 @@ export class PliPreprocessorParser {
                 value: this.unpackCharacterValue(character.image)
             };
         }
-        throw new Error("Cannot handle this type of preprocessor expression yet!");
+        throw new PreprocessorError("Cannot handle this type of preprocessor expression yet!", state.current!);
     }
 
     private unpackCharacterValue(literal: string): string {

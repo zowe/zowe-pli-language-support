@@ -43,7 +43,7 @@ import { PliWorkspaceManager } from "./workspace/pli-workspace-manager.js";
 import { MarginsProcessor, PliMarginsProcessor } from './parser/pli-margins-processor.js';
 import { PliPreprocessorLexer } from "./parser/pli-preprocessor-lexer.js";
 import { PliPreprocessorParser } from "./parser/pli-preprocessor-parser.js";
-import { PliNaiveTokenPickerOptimizer, PliSmartTokenPickerOptimizer, TokenPickerOptimizer } from "./parser/pli-token-picker-optimizer.js";
+import { PliSmartTokenPickerOptimizer, TokenPickerOptimizer } from "./parser/pli-token-picker-optimizer.js";
 
 /**
  * Declaration of custom services - add your own service classes here.

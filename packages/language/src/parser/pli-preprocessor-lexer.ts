@@ -1,5 +1,5 @@
 import { TokenType, Lexer as ChevrotainLexer, IToken, createTokenInstance, TokenTypeDictionary } from "chevrotain";
-import { PliPreprocessorParser } from "./pli-preprocessor-parser";
+import { PliPreprocessorParser, PreprocessorError } from "./pli-preprocessor-parser";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorLexerState, PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { Pl1Services } from "../pli-module";
@@ -31,24 +31,25 @@ export class PliPreprocessorLexer {
     }
 
     tokenize(text: string) {
-        const result: IToken[] = [];
+        const tokens: IToken[] = [];
         let state: PreprocessorLexerState = new PliPreprocessorLexerState(text);
         while (!state.eof()) {
             this.skipHiddenTokens(state);
-            if (this.tryToReadPreprocessorStatement(state)) {
+            if (this.tryToHandlePreprocessorStatement(state)) {
                 continue;
             } else {
                 let token: IToken | undefined;
                 do {
                     token = this.scanInput(state);
                     if (token) {
-                        result.push(token);
+                        tokens.push(token);
                     }
                 } while (token && token.image !== ';');
             }
         }
         return {
-            tokens: result
+            tokens,
+            errors: state.errors()
         };
     }
 
@@ -98,13 +99,17 @@ export class PliPreprocessorLexer {
         while (this.hiddenTokenTypes.some(h => state.tryConsume(h) !== undefined));
     };
 
-    protected tryToReadPreprocessorStatement(state: PreprocessorLexerState): boolean {
+    protected tryToHandlePreprocessorStatement(state: PreprocessorLexerState): boolean {
         if (state.eof() || !state.tryConsume(PreprocessorTokens.Percentage)) {
             return false;
         }
         const tokens = this.tokenizeUntilSemicolon(state, AllPreprocessorTokens);
         const parserState = this.preprocessorParser.initializeState(tokens);
         const statement = this.preprocessorParser.start(parserState);
+        if(statement instanceof PreprocessorError) {
+            state.addError(statement);
+            return true;
+        }
         switch (statement.type) {
             case 'declareStatement': {
                 for (const declaration of statement.declarations) {

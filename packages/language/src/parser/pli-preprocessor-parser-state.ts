@@ -1,4 +1,5 @@
 import { IToken, TokenType } from "chevrotain";
+import { PreprocessorError } from "./pli-preprocessor-parser";
 
 export interface PreprocessorParserState {
     index: number;
@@ -44,10 +45,11 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     }
 
     consume(tokenType: TokenType) {
-        if (!this.canConsume(tokenType)) {
-            throw new Error(`Expected token type '${tokenType.name}', got '${this.current?.tokenType.name ?? '???'}' instead.`);
-        }
         const token = this.current!;
+        if (!this.canConsume(tokenType)) {
+            const message = `Expected token type '${tokenType.name}', got '${this.current?.tokenType.name ?? '???'}' instead.`;
+            throw new PreprocessorError(message, token);
+        }
         this.index++;
         return token;
     }

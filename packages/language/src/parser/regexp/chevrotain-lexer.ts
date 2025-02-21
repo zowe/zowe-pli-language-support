@@ -257,6 +257,8 @@ export function analyzeTokenTypes(
           : [indexOf(onlyRelevantTypes, longerAltType)];
         return longerAltIdxArr;
       }
+
+      return undefined;
     });
 
     patternIdxToPushMode = map(

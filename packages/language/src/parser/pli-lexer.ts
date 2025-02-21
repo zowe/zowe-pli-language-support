@@ -34,10 +34,10 @@ export class Pl1Lexer implements Lexer {
 
     tokenize(printerText: string): LexerResult {
         const text = this.marginsProcessor.processMargins(printerText);
-        const { tokens } = this.preprocessorLexer.tokenize(text);
+        const { tokens, errors } = this.preprocessorLexer.tokenize(text);
         return {
             tokens,
-            errors: [],
+            errors,
             hidden: [],
             report: undefined!
         };

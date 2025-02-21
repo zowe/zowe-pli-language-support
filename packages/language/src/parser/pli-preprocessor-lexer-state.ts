@@ -1,4 +1,4 @@
-import { createTokenInstance, IToken, TokenType } from "chevrotain";
+import { createTokenInstance, ILexingError, IToken, TokenType } from "chevrotain";
 import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 
 /**
@@ -7,6 +7,8 @@ import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
  */
 export interface PreprocessorLexerState {
     //lexer-related part
+    errors(): ILexingError[];
+    addError(error: ILexingError): void;
     top(): PreprocessorScan | undefined;
     eof(): boolean;
     position(): TextPosition;
@@ -27,9 +29,18 @@ export interface PreprocessorLexerState {
 
 export class PliPreprocessorLexerState implements PreprocessorLexerState {
     private plainState: PlainPreprocessorLexerState;
+    private _errors: ILexingError[] = [];
 
     constructor(text: string) {
         this.plainState = initializePreprocessorState(text);
+    }
+    
+    addError(error: ILexingError): void {
+        this._errors.push(error);
+    }
+
+    errors(): ILexingError[] {
+        return this._errors;
     }
 
     top(): PreprocessorScan | undefined {
