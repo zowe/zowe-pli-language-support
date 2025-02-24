@@ -69,7 +69,7 @@ export class Pl1Validator {
    */
   checkReturnsOption(node: ReturnsOption, acceptor: ValidationAcceptor): void {
     const attrSet = new Set<string>();
-    for (const attr of node.returnAttribute) {
+    for (const attr of node.returnAttributes) {
       if (isComputationDataAttribute(attr)) {
         const typ = attr.type.toUpperCase();
         attrSet.add(typ); // dupes are ok
@@ -79,7 +79,7 @@ export class Pl1Validator {
           acceptor("error", PLIError.IBM2462I.message(typ, `UN${typ}`), {
             code: PLIError.IBM2462I.fullCode,
             node,
-            property: "returnAttribute",
+            property: "returnAttributes",
           });
         }
 
@@ -88,7 +88,7 @@ export class Pl1Validator {
           acceptor("error", PLIError.IBM2462I.message(typ, typ.slice(2)), {
             code: PLIError.IBM2462I.fullCode,
             node,
-            property: "returnAttribute",
+            property: "returnAttributes",
           });
         }
       }

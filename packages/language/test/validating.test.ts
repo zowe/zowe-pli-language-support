@@ -86,6 +86,25 @@ describe("Validating", () => {
     expect(document.diagnostics?.length).toBe(0);
   });
 
+  test("validates ordinal reference", async () => {
+    document = await parse(`
+    define ordinal day (
+      Monday,
+      Tuesday,
+      Wednesday,
+      Thursday,
+      Friday,
+      Saturday,
+      Sunday
+    ) prec(15);
+
+    // should be able to parse return w/ ordinal correctly
+    get_day: proc() returns(ordinal day byvalue);
+      return( Friday );
+    end get_day;`);
+    expect(document.diagnostics?.length).toBe(0);
+  });
+
   //
   //     test('check no errors', async () => {
   //         document = await parse(`

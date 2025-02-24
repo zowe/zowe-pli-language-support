@@ -505,7 +505,7 @@ InitialAttributeSpecificationIterationValue: '(' items+=InitialAttributeItem (',
 DeclareStatement: ('DCL' | 'DECLARE' | xDeclare?='XDECLARE' | xDeclare?='XDCL') items+=DeclaredItem (',' items+=DeclaredItem)*  ';';
 DeclaredItem: level=NUMBER? (element=DeclaredVariable | element='*' | '(' items+=DeclaredItem (',' items+=DeclaredItem)* ')') attributes+=DeclarationAttribute*;
 
-type NamedElement = DeclaredVariable | DoType3Variable | ProcedureStatement;
+type NamedElement = DeclaredVariable | DoType3Variable | ProcedureStatement | OrdinalValue;
 type NamedType = DefineAliasStatement;
 type OrdinalType = DefineOrdinalStatement;
 
@@ -584,7 +584,7 @@ EntryAttribute:
     
 ;
 
-ReturnsOption: 'RETURNS' '(' returnAttribute+=DeclarationAttribute* ')';
+ReturnsOption: 'RETURNS' '(' returnAttributes+=DeclarationAttribute* ')';
 
 EntryDescription: EntryParameterDescription | EntryUnionDescription;
 
