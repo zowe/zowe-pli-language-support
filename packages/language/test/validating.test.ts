@@ -26,7 +26,7 @@ beforeAll(async () => {
   parse = (input: string) => doParse(input, { validation: true });
 
   // activate the following if your linking test requires elements from a built-in library, for example
-  // await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
+  await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
 });
 
 describe("Validating", () => {
@@ -102,6 +102,16 @@ describe("Validating", () => {
     get_day: proc() returns(ordinal day byvalue);
       return( Friday );
     end get_day;`);
+    expect(document.diagnostics?.length).toBe(0);
+  });
+
+  test("Reference to alias types __SIGNED_INT & __UNSIGNED_INT", async () => {
+    document = await parse(`
+    mypackage: package;
+    DCL x type __SIGNED_INT;
+    DCL y type __UNSIGNED_INT;
+    end mypackage;
+    `);
     expect(document.diagnostics?.length).toBe(0);
   });
 

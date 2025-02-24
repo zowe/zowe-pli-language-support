@@ -422,4 +422,6 @@ export const Builtins = ` // Mathematical functions
  END;
  SUCC: PROC (value) RETURNS ();
  END;
+ define alias __SIGNED_INT signed fixed bin(31,0);
+ define alias __UNSIGNED_INT unsigned fixed bin(32,0);
  `;
