@@ -11,9 +11,7 @@
     "build": "vite -c vite.config.ts build",
     "serve": "vite -c vite.config.ts serve",
     "preview": "vite -c vite.config.ts preview",
-    "build:clean": "npm run clean && npm run build",
-    "langium:generate": "langium generate",
-    "langium:watch": "langium generate --watch"
+    "build:clean": "npm run clean && npm run build"
   },
   "dependencies": {
     "@codingame/monaco-vscode-files-service-override": "~11.1.2",
