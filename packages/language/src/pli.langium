@@ -21,7 +21,7 @@ Directives: SkipDirective | PopDirective | PushDirective | LineDirective | NoteD
 // Defined on p. 90
 Package:
     prefix=ConditionPrefix?
-    name=FeatureID ':'
+    name=LabelPrefix
     'PACKAGE'
     exports=Exports? 
     reserves=Reserves? 

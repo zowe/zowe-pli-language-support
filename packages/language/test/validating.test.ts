@@ -78,6 +78,14 @@ describe("Validating", () => {
     expect(document.diagnostics?.[2].severity).toBe(DiagnosticSeverity.Error);
   });
 
+  test("package end label validates", async () => {
+    document = await parse(`
+      baseline: package;
+      end baseline;
+      `);
+    expect(document.diagnostics?.length).toBe(0);
+  });
+
   //
   //     test('check no errors', async () => {
   //         document = await parse(`
