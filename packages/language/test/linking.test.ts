@@ -152,20 +152,13 @@ describe("Linking tests", () => {
 
       for (const [procedure, calls] of Object.entries(links)) {
         for (const call of calls) {
-          test(
-            "Must find link correct procedure label",
-            async () => {
-              await gotoDefinition({
-                text: text,
-                index: call,
-                rangeIndex: +procedure,
-              });
-            },
-            {
-              // TODO: fix scoping
-              skip: true,
-            },
-          );
+          test.skip("Must find link correct procedure label", async () => {
+            await gotoDefinition({
+              text: text,
+              index: call,
+              rangeIndex: +procedure,
+            });
+          });
         }
       }
     });
