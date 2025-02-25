@@ -11,6 +11,7 @@
 
 import type { ValidationAcceptor, ValidationChecks } from "langium";
 import {
+  DefineOrdinalStatement,
   isComputationDataAttribute,
   type LabelReference,
   type Pl1AstType,
@@ -43,6 +44,7 @@ export function registerValidationChecks(services: Pl1Services) {
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
     ],
     LabelReference: [validator.checkLabelReference],
+    DefineOrdinalStatement: [validator.checkDefineOrdinalStatement],
   };
   registry.register(checks, validator);
 }
@@ -115,6 +117,48 @@ export class Pl1Validator {
         node,
         property: "label",
       });
+    }
+  }
+
+  /**
+   * Ensure ordinal statements don't have conflicting attributes, and only 1 precision attribute
+   */
+  checkDefineOrdinalStatement(
+    node: DefineOrdinalStatement,
+    acceptor: ValidationAcceptor,
+  ): void {
+    // get attributes
+    const attrs = node.attributes;
+    const attrSet = new Set<string>();
+    for (const attr of attrs) {
+      const lattr = attr.toLowerCase();
+      if (
+        (lattr === "signed" && attrSet.has("unsigned")) ||
+        (lattr === "unsigned" && attrSet.has("signed"))
+      ) {
+        // mutually exclusive attributes
+        acceptor(
+          "error",
+          "Cannot have both signed & unsigned attributes on an ordinal declaration.",
+          {
+            node,
+            property: "attributes",
+          },
+        );
+      } else if (lattr.match(/prec/) && attrSet.has("prec")) {
+        // don't allow multiple precision attributes
+        acceptor(
+          "error",
+          "Cannot have multiple precision attributes on an ordinal declaration.",
+          {
+            node,
+            property: "attributes",
+          },
+        );
+      } else {
+        // add it in, normalizing precision & prec to 'prec' along the way
+        attrSet.add(lattr.match(/prec/) ? "prec" : lattr);
+      }
     }
   }
 }
