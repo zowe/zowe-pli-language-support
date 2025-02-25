@@ -22,8 +22,8 @@ export default defineConfig({
     },
     include: ["packages/**/test/**/*.test.ts"],
     coverage: {
-      reporter: ['text'],
-      include: ['packages/**/src/**/*.ts'],
-    }
+      reporter: ["text"],
+      include: ["packages/**/src/**/*.ts"],
+    },
   },
 });
