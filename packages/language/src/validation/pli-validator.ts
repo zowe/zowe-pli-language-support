@@ -209,24 +209,24 @@ export class Pl1Validator {
             ) {
                 // mutually exclusive attributes
                 acceptor(
-                    Severity.E,
-                    "Cannot have both signed & unsigned attributes on an ordinal declaration.",
+                    Severity.W,
+                    "Signed & unsigned attributes are mutually exclusive, ideally only one should be specified.",
                     {
                         // node,
                         range: getSyntaxNodeRange(node)!,
                         uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
-                        // property: "attributes",
+                        // property: "attributes"
                     },
                 );
             } else if (lattr.match(/prec/) && attrSet.has("prec")) {
                 // don't allow multiple precision attributes
                 acceptor(
-                    Severity.E,
-                    "Cannot have multiple precision attributes on an ordinal declaration.",
+                    Severity.W,
+                    "Multiple precision attributes will result in only one taking effect, ideally only one should be specified.",
                     {
                         // node,
                         range: getSyntaxNodeRange(node)!,
-                        uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+                        uri: "" // TODO @montymxb Still need to supply URI for this document we're working in
                         // property: "attributes",
                     },
                 );
