@@ -628,28 +628,70 @@ describe("PL/I Parsing tests", () => {
     expect(doc.parseResult.parserErrors).toHaveLength(0);
   });
 
-  /**
-   * Verifies we can parse 'returns(ordinal `type` byvalue)` cases
-   */
-  test("parse returns ordinal by value", async () => {
-    const doc: LangiumDocument<PliProgram> = await parseStmts(`
- define ordinal day (
-    Monday,
-    Tuesday,
-    Wednesday,
-    Thursday,
-    Friday,
-    Saturday,
-    Sunday
- ) prec(15);
+  describe("Ordinal Tests", () => {
+    /**
+     * Verifies we can parse 'returns(ordinal `type` byvalue)` cases
+     */
+    test("parse returns ordinal by value", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+      define ordinal day (
+          Monday,
+          Tuesday,
+          Wednesday,
+          Thursday,
+          Friday,
+          Saturday,
+          Sunday
+      ) prec(15);
 
- // should be able to parse return w/ ordinal correctly
- get_day: proc() returns(ordinal day byvalue);
-    return( Friday );
- end get_day;
+      // should be able to parse return w/ ordinal correctly
+      get_day: proc() returns(ordinal day byvalue);
+          return( Friday );
+      end get_day;
         `);
-    expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    expect(doc.parseResult.parserErrors).toHaveLength(0);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    test("parses ordinals w/ multiple unsigned/signed attributes", async () => {
+      // silly example, but this parses as valid on the compiler
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+      define ordinal day (
+        Monday
+      ) prec(15) signed signed unsigned signed unsigned signed prec(15);
+       `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
+
+    /**
+     * Ensure we can't accidentally add precision onto signed, should be in separate alternatives
+     */
+    test("Cannot specify precision on sign", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+      define ordinal day (
+        Monday
+      ) signed(15);
+       `);
+      expect(doc.parseResult.parserErrors).not.toHaveLength(0);
+    });
+
+    /**
+     * Ensure both forms of precision are parsable
+     */
+    test("PREC & PRECISION are parsable", async () => {
+      const doc: LangiumDocument<PliProgram> = await parseStmts(`
+      define ordinal D1 (
+        Day1
+      ) precision(15) prec(15);
+      
+      define ordinal D2 (
+        Day2
+      ) prec(15);
+       `);
+      expect(doc.parseResult.lexerErrors).toHaveLength(0);
+      expect(doc.parseResult.parserErrors).toHaveLength(0);
+    });
   });
 
   describe("PL/I Constants", () => {
