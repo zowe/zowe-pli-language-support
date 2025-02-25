@@ -138,8 +138,8 @@ export class Pl1Validator {
       ) {
         // mutually exclusive attributes
         acceptor(
-          "error",
-          "Cannot have both signed & unsigned attributes on an ordinal declaration.",
+          "warning",
+          "Signed & unsigned attributes are mutually exclusive, ideally only one should be specified.",
           {
             node,
             property: "attributes",
@@ -148,8 +148,8 @@ export class Pl1Validator {
       } else if (lattr.match(/prec/) && attrSet.has("prec")) {
         // don't allow multiple precision attributes
         acceptor(
-          "error",
-          "Cannot have multiple precision attributes on an ordinal declaration.",
+          "warning",
+          "Multiple precision attributes will result in only one taking effect, ideally only one should be specified.",
           {
             node,
             property: "attributes",
