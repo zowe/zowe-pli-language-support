@@ -2188,8 +2188,7 @@ export class PliParser extends AbstractParser {
       name: null,
       ordinalValues: null,
       xDefine: false,
-      signed: false,
-      unsigned: false,
+      attributes: [],
       precision: null,
     };
   }
@@ -2238,6 +2237,17 @@ export class PliParser extends AbstractParser {
         CstNodeKind.DefineOrdinalStatement_CloseParenValues,
       );
     });
+
+    // originally this is an option, but instead it should be a (a | b)*
+    this.OR2([
+      {
+
+      },
+      {
+
+      }
+    ]);
+
     this.OPTION1(() => {
       this.OR2([
         {
@@ -2248,7 +2258,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.DefineOrdinalStatement_Signed0,
               );
-              element.signed = true;
+              element.attributes.push(token.image as 'SIGNED');
             });
           },
         },
@@ -2260,12 +2270,13 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.DefineOrdinalStatement_Unsigned0,
               );
-              element.unsigned = true;
+              element.attributes.push(token.image as 'UNSIGNED');
             });
           },
         },
       ]);
     });
+
     this.OPTION2(() => {
       this.CONSUME_ASSIGN1(tokens.PRECISION, (token) => {
         this.tokenPayload(
@@ -2297,6 +2308,8 @@ export class PliParser extends AbstractParser {
         );
       });
     });
+
+    // follow-up signed & unsigned stuff
     this.OPTION3(() => {
       this.OR4([
         {

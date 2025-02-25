@@ -71,10 +71,10 @@ export function parse(
  * Helper function to parse a string of PL/I statements,
  * wrapping them in a procedure to ensure they are valid
  */
-export function parseStmts(text: string): CompilationUnit {
+export function parseStmts(text: string, options?: { validate: boolean }): CompilationUnit {
   return parse(` STARTPR: PROCEDURE OPTIONS (MAIN);
 ${text}
- end STARTPR;`);
+ end STARTPR;`, options);
 }
 
 /**

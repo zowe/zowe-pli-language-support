@@ -943,8 +943,7 @@ export interface DefineOrdinalStatement extends AstNode {
   name: FQN | null;
   ordinalValues: OrdinalValueList | null;
   xDefine: boolean;
-  signed: boolean;
-  unsigned: boolean;
+  attributes: ('SIGNED'|'UNSIGNED'|'PRECISION'|'PREC')[];
   precision: string | null;
 }
 export interface DefineStructureStatement extends AstNode {

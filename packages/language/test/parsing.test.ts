@@ -9,7 +9,8 @@
  *
  */
 
-import { describe, test } from "vitest";
+import { describe, expect, test } from "vitest";
+import { collectDiagnostics } from "../src/workspace/source-file";
 import { assertNoParseErrors, parse, parseStmts } from "./utils";
 
 describe("PL/I Parsing tests", () => {
@@ -553,27 +554,68 @@ describe("PL/I Parsing tests", () => {
     assertNoParseErrors(doc);
   });
 
-  /**
-   * Verifies we can parse 'returns(ordinal `type` byvalue)` cases
-   */
-  test("parse returns ordinal by value", () => {
-    const doc = parseStmts(`
- define ordinal day (
-    Monday,
-    Tuesday,
-    Wednesday,
-    Thursday,
-    Friday,
-    Saturday,
-    Sunday
- ) prec(15);
+  describe("Ordinal Tests", () => {
+    /**
+     * Verifies we can parse 'returns(ordinal `type` byvalue)` cases
+     */
+    test("parse returns ordinal by value", async () => {
+      const doc = parseStmts(`
+      define ordinal day (
+          Monday,
+          Tuesday,
+          Wednesday,
+          Thursday,
+          Friday,
+          Saturday,
+          Sunday
+      ) prec(15);
 
- // should be able to parse return w/ ordinal correctly
- get_day: proc() returns(ordinal day byvalue);
-    return( Friday );
- end get_day;
+      // should be able to parse return w/ ordinal correctly
+      get_day: proc() returns(ordinal day byvalue);
+          return( Friday );
+      end get_day;
         `);
-    assertNoParseErrors(doc);
+      assertNoParseErrors(doc);
+    });
+
+    test("parses ordinals w/ multiple unsigned/signed attributes", async () => {
+      // silly example, but this parses as valid on the compiler
+      const doc = parseStmts(`
+      define ordinal day (
+        Monday
+      ) prec(15) signed signed unsigned signed unsigned signed prec(15);
+       `);
+      assertNoParseErrors(doc);
+    });
+
+    /**
+     * Ensure we can't accidentally add precision onto signed, should be in separate alternatives
+     */
+    test("Cannot specify precision on sign", async () => {
+      const doc = parseStmts(`
+      define ordinal day (
+        Monday
+      ) signed(15);
+       `);
+      const diagnostics = collectDiagnostics(doc);
+      expect(diagnostics).not.toHaveLength(0);
+    });
+
+    /**
+     * Ensure both forms of precision are parsable
+     */
+    test("PREC & PRECISION are parsable", async () => {
+      const doc = parseStmts(`
+      define ordinal D1 (
+        Day1
+      ) precision(15) prec(15);
+      
+      define ordinal D2 (
+        Day2
+      ) prec(15);
+       `);
+      assertNoParseErrors(doc);
+    });
   });
 
   describe("PL/I Constants", () => {
