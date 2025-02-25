@@ -12,7 +12,7 @@ importers:
         specifier: ^18.19.70
         version: 18.19.70
       '@vitest/coverage-v8':
-        specifier: 3.0.7
+        specifier: ~3.0.7
         version: 3.0.7(vitest@3.0.7(@types/node@18.19.70))
       deepmerge:
         specifier: ^1.5.2
@@ -30,7 +30,7 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       vitest:
-        specifier: 3.0.7
+        specifier: ~3.0.7
         version: 3.0.7(@types/node@18.19.70)
 
   packages/language:
