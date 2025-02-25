@@ -14,7 +14,7 @@ import { EmptyFileSystem, type LangiumDocument } from "langium";
 import { parseHelper } from "langium/test";
 import { DiagnosticSeverity } from "vscode-languageserver-types";
 import { createPliServices, PliProgram } from "../src";
-import { Error, Warning } from "../src/validation/messages/pli-codes";
+import { Error, Severe, Warning } from "../src/validation/messages/pli-codes";
 
 let services: ReturnType<typeof createPliServices>;
 let parse: ReturnType<typeof parseHelper<PliProgram>>;
@@ -26,10 +26,31 @@ beforeAll(async () => {
   parse = (input: string) => doParse(input, { validation: true });
 
   // activate the following if your linking test requires elements from a built-in library, for example
-  // await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
+  await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
 });
 
 describe("Validating", () => {
+  test("check empty program", async () => {
+    document = await parse(`;`);
+    expect(document.diagnostics?.length).toBe(1);
+    expect(document.diagnostics?.[0].severity).toBe(DiagnosticSeverity.Error);
+    expect(document.diagnostics?.[0].code).toBe(Severe.IBM1917I.fullCode);
+  });
+
+  test("check IBM2462I, unaligned & aligned conflict", async () => {
+    document = await parse(`
+  H: PROC OPTIONS (MAIN);
+  xyz: proc returns ( optional aligned unaligned bit(4) ); // <-- conflicting attributes, second one should be ignored
+  return(0);
+  end xyz;
+  call xyz();
+  END H;
+    `);
+    expect(document.diagnostics?.length).toBe(1);
+    expect(document.diagnostics?.[0].code).toBe(Error.IBM2462I.fullCode);
+    expect(document.diagnostics?.[0].severity).toBe(DiagnosticSeverity.Error);
+  });
+
   test("check mismatched end label", async () => {
     document = await parse(`
   MYPROC: PROCEDURE OPTIONS (MAIN);
@@ -55,6 +76,43 @@ describe("Validating", () => {
     // verify the 3rd diagnostic is an error w/ the IBM1316IE as the code
     expect(document.diagnostics?.[2].code).toBe(Error.IBM1316I.fullCode);
     expect(document.diagnostics?.[2].severity).toBe(DiagnosticSeverity.Error);
+  });
+
+  test("package end label validates", async () => {
+    document = await parse(`
+      baseline: package;
+      end baseline;
+      `);
+    expect(document.diagnostics?.length).toBe(0);
+  });
+
+  test("validates ordinal reference", async () => {
+    document = await parse(`
+    define ordinal day (
+      Monday,
+      Tuesday,
+      Wednesday,
+      Thursday,
+      Friday,
+      Saturday,
+      Sunday
+    ) prec(15);
+
+    // should be able to parse return w/ ordinal correctly
+    get_day: proc() returns(ordinal day byvalue);
+      return( Friday );
+    end get_day;`);
+    expect(document.diagnostics?.length).toBe(0);
+  });
+
+  test("Reference to alias types __SIGNED_INT & __UNSIGNED_INT", async () => {
+    document = await parse(`
+    mypackage: package;
+    DCL x type __SIGNED_INT;
+    DCL y type __UNSIGNED_INT;
+    end mypackage;
+    `);
+    expect(document.diagnostics?.length).toBe(0);
   });
 
   //

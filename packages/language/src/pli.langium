@@ -21,7 +21,7 @@ Directives: SkipDirective | PopDirective | PushDirective | LineDirective | NoteD
 // Defined on p. 90
 Package:
     prefix=ConditionPrefix?
-    name=FeatureID ':'
+    name=LabelPrefix
     'PACKAGE'
     exports=Exports? 
     reserves=Reserves? 
@@ -316,13 +316,13 @@ XFormatItem: 'X' '(' width=Expression ')';
 FreeStatement: 'FREE' references+=LocatorCall (',' references+=LocatorCall)* ';';
 
 GetStatement: 'GET' (
-    {infer GetFileStatement} ('FILE' '(' file=Expression ')')?
+    {infer GetFileStatement} ('LIST' '(' listExpr=Expression ')')? ('FILE' '(' file=Expression ')')?
     (dataSpecification=DataSpecificationOptions)?
     (copy?='COPY' ('(' /* TODO REFERENCE */ copyReference=FeatureID ')')?)?
     (skip?='SKIP' ('(' skipExpression=Expression ')'))?
     |
     {infer GetStringStatement} 'STRING' '(' expression=Expression ')' dataSpecification=DataSpecificationOptions
-    )
+    ) ';'
 ;
 
 GoToStatement: ('GO' 'TO' | 'GOTO') label=LabelReference ';';
@@ -505,7 +505,7 @@ InitialAttributeSpecificationIterationValue: '(' items+=InitialAttributeItem (',
 DeclareStatement: ('DCL' | 'DECLARE' | xDeclare?='XDECLARE' | xDeclare?='XDCL') items+=DeclaredItem (',' items+=DeclaredItem)*  ';';
 DeclaredItem: level=NUMBER? (element=DeclaredVariable | element='*' | '(' items+=DeclaredItem (',' items+=DeclaredItem)* ')') attributes+=DeclarationAttribute*;
 
-type NamedElement = DeclaredVariable | DoType3Variable | ProcedureStatement;
+type NamedElement = DeclaredVariable | DoType3Variable | ProcedureStatement | OrdinalValue;
 type NamedType = DefineAliasStatement;
 type OrdinalType = DefineOrdinalStatement;
 
@@ -584,7 +584,7 @@ EntryAttribute:
     
 ;
 
-ReturnsOption: 'RETURNS' '(' returnAttribute=DeclarationAttribute* ')';
+ReturnsOption: 'RETURNS' '(' returnAttributes+=DeclarationAttribute* ')';
 
 EntryDescription: EntryParameterDescription | EntryUnionDescription;
 
@@ -671,7 +671,7 @@ terminal fragment NUM: /([0-9][0-9_]*(\.[0-9_]+)?)|(\.[0-9_]+)/;
 terminal fragment FULL_NUM: NUM MANTISSA?;
 terminal fragment MANTISSA: /[eEsSdDqQ][-+]?[0-9]+/;
 // This terminal combines WRAPPED_NUM and normal strings
-terminal STRING_TERM: /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')([xX][nN]|[xX][uU]|[xX]|[aA]|[eE]|[bB]4|[bB]3|[bB][xX]|[bB]|[gG][xX]|[gG]|[uU][xX]|[wW][xX]|[iI])*/;
+terminal STRING_TERM: /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')([xX][nN]|[xX][uU]|[xX]|[aA]|[eE]|[bB]4|[bB]3|[bB][xX]|[bB]|[gG][xX]|[gG]|[uU][xX]|[wW][xX]|[iI]|[mM])*/;
 
 hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
 hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;
