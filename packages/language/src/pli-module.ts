@@ -44,6 +44,7 @@ import { MarginsProcessor, PliMarginsProcessor } from './parser/pli-margins-proc
 import { PliPreprocessorLexer } from "./parser/pli-preprocessor-lexer.js";
 import { PliPreprocessorParser } from "./parser/pli-preprocessor-parser.js";
 import { PliSmartTokenPickerOptimizer, TokenPickerOptimizer } from "./parser/pli-token-picker-optimizer.js";
+import { PliPreprocessorInterpreter } from "./parser/pli-preprocessor-interpreter.js";
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -57,6 +58,7 @@ export type Pl1AddedServices = {
         TokenPickerOptimizer: TokenPickerOptimizer;
         PreprocessorLexer: PliPreprocessorLexer;
         PreprocessorParser: PliPreprocessorParser;
+        PreprocessorInterpreter: PliPreprocessorInterpreter;
     }
 }
 
@@ -87,6 +89,7 @@ export const PliModule: Module<
     TokenPickerOptimizer: () => new PliSmartTokenPickerOptimizer(),
     PreprocessorLexer: (services) => new PliPreprocessorLexer(services),
     PreprocessorParser: () => new PliPreprocessorParser(),
+    PreprocessorInterpreter: () => new PliPreprocessorInterpreter(),
     Lexer: (services) => new Pl1Lexer(services),
     TokenBuilder: () => new PliTokenBuilder(),
   },

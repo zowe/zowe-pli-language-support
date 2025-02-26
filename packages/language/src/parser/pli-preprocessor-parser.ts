@@ -1,4 +1,4 @@
-import { PPStatement, PPDeclareStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPAssignmentStatement, PPExpression, PPDirective } from "./pli-preprocessor-ast";
+import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare } from "./pli-preprocessor-ast";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorParserState, PreprocessorParserState } from "./pli-preprocessor-parser-state";
 import { ILexingError, IToken } from "chevrotain";
@@ -9,6 +9,7 @@ export class PreprocessorError extends Error implements ILexingError {
         super(message);
         this.token = token;
     }
+    readonly type = 'error';
     get offset(): number { return this.token.startOffset; }
     get line(): number | undefined { return this.token.startLine; }
     get column(): number | undefined { return this.token.startColumn; }
@@ -24,9 +25,9 @@ export class PliPreprocessorParser {
         try {
             switch (state.current?.tokenType) {
                 case PreprocessorTokens.Declare: return this.declareStatement(state);
-                case PreprocessorTokens.Directive: return this.directive(state);
+                //case PreprocessorTokens.Directive: return this.directive(state);
                 case PreprocessorTokens.Skip: return this.skipStatement(state);
-                case PreprocessorTokens.Include: return this.includeStatement(state);
+                //case PreprocessorTokens.Include: return this.includeStatement(state);
                 case PreprocessorTokens.Id: return this.assignmentStatement(state);
             }
         } catch(error) {
@@ -37,15 +38,15 @@ export class PliPreprocessorParser {
         return new PreprocessorError('Unexpected state!', state.current!);
     }
 
-    includeStatement(state: PreprocessorParserState): PPStatement {
-        state.consume(PreprocessorTokens.Include);
-        const identifier = state.consume(PreprocessorTokens.Id).image;
-        state.consume(PreprocessorTokens.Semicolon);
-        return {
-            type: "includeStatement",
-            identifier
-        };
-    }
+    // includeStatement(state: PreprocessorParserState): PPStatement {
+    //     state.consume(PreprocessorTokens.Include);
+    //     const identifier = state.consume(PreprocessorTokens.Id).image;
+    //     state.consume(PreprocessorTokens.Semicolon);
+    //     return {
+    //         type: "includeStatement",
+    //         identifier
+    //     };
+    // }
 
     skipStatement(state: PreprocessorParserState): PPStatement {
         state.consume(PreprocessorTokens.Skip);
@@ -55,33 +56,33 @@ export class PliPreprocessorParser {
         }
         state.consume(PreprocessorTokens.Semicolon);
         return {
-            type: 'skipStatement',
+            type: 'skip',
             //TODO numeric base of 10 ok?
             lineCount
         };
     }
 
-    directive(state: PreprocessorParserState): PPStatement {
-        const which = state.consume(PreprocessorTokens.Directive).image.toLowerCase() as PPDirective['which'];
-        state.consume(PreprocessorTokens.Semicolon);
-        return {
-            type: 'directive',
-            which
-        }
-    }
+    // directive(state: PreprocessorParserState): PPStatement {
+    //     const which = state.consume(PreprocessorTokens.Directive).image.toLowerCase() as PPDirective['which'];
+    //     state.consume(PreprocessorTokens.Semicolon);
+    //     return {
+    //         type: 'directive',
+    //         which
+    //     }
+    // }
 
-    assignmentStatement(state: PreprocessorParserState): PPAssignmentStatement {
+    assignmentStatement(state: PreprocessorParserState): PPAssign {
         const left = state.consume(PreprocessorTokens.Id).image;
         state.consume(PreprocessorTokens.Eq);
         const right = this.expression(state);
         return {
-            type: 'assignmentStatement',
-            left,
-            right
+            type: 'assign',
+            name: left,
+            value: right
         };
     }
 
-    declareStatement(state: PreprocessorParserState): PPDeclareStatement {
+    declareStatement(state: PreprocessorParserState): PPDeclare {
         const declarations: PPDeclaration[] = [];
         state.consume(PreprocessorTokens.Declare);
         const first = this.identifierDescription(state);
@@ -93,7 +94,7 @@ export class PliPreprocessorParser {
         }
         state.consume(PreprocessorTokens.Semicolon);
         return {
-            type: "declareStatement",
+            type: "declare",
             declarations
         }
     }
@@ -159,16 +160,17 @@ export class PliPreprocessorParser {
     }
 
     expression(state: PreprocessorParserState): PPExpression {
-        if (state.canConsume(PreprocessorTokens.Number)) {
-            const number = state.consume(PreprocessorTokens.Number);
-            return {
-                type: "fixedLiteral",
-                value: parseInt(number.image, 10), //TODO when to parse binary?
-            };
-        } else if (state.canConsume(PreprocessorTokens.String)) {
+        // if (state.canConsume(PreprocessorTokens.Number)) {
+        //     const number = state.consume(PreprocessorTokens.Number);
+        //     return {
+        //         type: "fixedLiteral",
+        //         value: parseInt(number.image, 10), //TODO when to parse binary?
+        //     };
+        // } else 
+        if (state.canConsume(PreprocessorTokens.String)) {
             const character = state.consume(PreprocessorTokens.String);
             return {
-                type: "characterLiteral",
+                type: "string",
                 value: this.unpackCharacterValue(character.image)
             };
         }

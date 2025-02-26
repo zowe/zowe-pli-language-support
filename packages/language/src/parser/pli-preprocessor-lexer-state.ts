@@ -1,4 +1,4 @@
-import { createTokenInstance, ILexingError, IToken, TokenType } from "chevrotain";
+import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 
 /**
@@ -6,9 +6,7 @@ import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
  * It has two responsibilities CURRENTLY(!): 1) advancing the lexer cursor, 2) providing a interpreter state with active variables.
  */
 export interface PreprocessorLexerState {
-    //lexer-related part
-    errors(): ILexingError[];
-    addError(error: ILexingError): void;
+    pushText(text: string): boolean;
     top(): PreprocessorScan | undefined;
     eof(): boolean;
     position(): TextPosition;
@@ -17,30 +15,13 @@ export interface PreprocessorLexerState {
     tryConsume(tokenType: TokenType): IToken | undefined;
     canConsume(tokenType: TokenType): string | undefined;
     emit(image: string, tokenType: TokenType): IToken;
-    
-    //interpreter-related part
-    activate(name: string, active: boolean): void;
-    hasVariable(name: string): boolean;
-    getVariable(name: string): PreprocessorVariable;
-    assign(name: string, value: number | string): void;
-    declare(name: string, variable: PreprocessorVariable): void;
-    replaceVariable(text: string): void;
 }
 
 export class PliPreprocessorLexerState implements PreprocessorLexerState {
-    private plainState: PlainPreprocessorLexerState;
-    private _errors: ILexingError[] = [];
+    private readonly plainState: PlainPreprocessorLexerState;
 
     constructor(text: string) {
         this.plainState = initializePreprocessorState(text);
-    }
-    
-    addError(error: ILexingError): void {
-        this._errors.push(error);
-    }
-
-    errors(): ILexingError[] {
-        return this._errors;
     }
 
     top(): PreprocessorScan | undefined {
@@ -53,14 +34,6 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
 
     position(): TextPosition {
         return Selectors.position(this.plainState);
-    }
-
-    hasVariable(name: string): boolean {
-        return Selectors.hasVariable(this.plainState, name);
-    }
-
-    getVariable(name: string): PreprocessorVariable {
-        return Selectors.getVariable(this.plainState, name);
     }
 
     tryConsume(tokenType: TokenType): IToken | undefined {
@@ -120,30 +93,13 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
             && alternative.startsWith(match);
     }
 
-    activate(name: string, active: boolean) {
-        if (Selectors.hasVariable(this.plainState, name)) {
-            const variable = Selectors.getVariable(this.plainState, name);
-            this.plainState = Mutators.assignVariable(this.plainState, name, {
-                ...variable,
-                active
-            });
-        } else {
-            this.plainState = Mutators.assignVariable(this.plainState, name, {
-                dataType: "character",
-                scanMode: "rescan",
-                value: "",
-                active
-            });
-        }
-    }
-
     advanceLines(lineCount: number) {
         if (Selectors.eof(this.plainState)) {
             return;
         }
         const { text, ...oldPosition } = Selectors.top(this.plainState)!;
         const newPosition = Mutators.countNewLinesWhile(oldPosition, text, oldPosition.offset, (newPosition) => newPosition.line - oldPosition.line < lineCount)
-        this.plainState = Mutators.alterTopOrPop(this.plainState, newPosition);
+        Mutators.setPosition(this.plainState, newPosition);
     }
 
     advanceScan(scanned: string) {
@@ -152,32 +108,15 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
         }
         const { text: _, ...oldPosition } = Selectors.top(this.plainState)!;
         const newPosition = Mutators.countNewLinesWhile(oldPosition, scanned, 0, () => true);
-        this.plainState = Mutators.alterTopOrPop(this.plainState, newPosition);
+        Mutators.setPosition(this.plainState, newPosition);
     }
 
-    assign(name: string, value: number | string) {
-        if (Selectors.hasVariable(this.plainState, name)) {
-            const variable = Selectors.getVariable(this.plainState, name);
-            this.plainState = Mutators.assignVariable(this.plainState, name, {
-                ...variable,
-                value
-            });
-        } else {
-            this.plainState = Mutators.assignVariable(this.plainState, name, {
-                dataType: typeof value === 'string' ? "character" : "fixed",
-                scanMode: "rescan",
-                value,
-                active: false,
-            });
+    pushText(text: string): boolean {
+        if(text.length > 0) {
+            Mutators.push(this.plainState, text);
+            return true;
         }
-    }
-
-    declare(name: string, variable: PreprocessorVariable) {
-        this.plainState = Mutators.assignVariable(this.plainState, name, variable);
-    }
-
-    replaceVariable(text: string) {
-        this.plainState = Mutators.push(this.plainState, text);
+        return false;
     }
 }
 
@@ -189,33 +128,31 @@ export type TextPosition = {
     column: number;
 };
 
-export type PreprocessorVariable = Readonly<{
+export type PreprocessorVariable = {
     scanMode: ScanMode;
     active: boolean;
     dataType: VariableDataType;
     value: number | string | undefined;
-}>;
+};
 
-export type PreprocessorScan = Readonly<{
+export type PreprocessorScan = {
     text: string;
     offset: number;
     line: number;
     column: number;
-}>;
+};
 
-export type PlainPreprocessorLexerState = Readonly<{
+export type PlainPreprocessorLexerState = {
     scanStack: PreprocessorScan[];
-    variables: Readonly<Record<string, PreprocessorVariable>>;
-}>;
+};
 
-export const initializePreprocessorState: (text: string) => PlainPreprocessorLexerState = (text) => ({
+export const initializePreprocessorState: (text: string) => PlainPreprocessorLexerState = (text): PlainPreprocessorLexerState => ({
     scanStack: text.length === 0 ? [] : [{
         column: 1,
         line: 1,
         offset: 0,
         text
     }],
-    variables: {}
 });
 
 // SELECTORS
@@ -245,54 +182,32 @@ namespace Selectors {
             line: 0,
         };
     }
-    export function hasVariable(state: PlainPreprocessorLexerState, name: string): boolean {
-        return name in state.variables;
-    }
-    export function getVariable(state: PlainPreprocessorLexerState, name: string): PreprocessorVariable {
-        return state.variables[name]!;
-    }
 }
 
 // MUTATORS
 
 namespace Mutators {
-    export function assignVariable(state: PlainPreprocessorLexerState, name: string, variable: PreprocessorVariable) {
-        return {
-            ...state,
-            variables: {
-                ...state.variables,
-                [name]: variable
-            }
-        };
-    }
     export function push(state: PlainPreprocessorLexerState, text: string) {
-        return {
-            ...state,
-            scanStack: state.scanStack.slice().concat(text.length > 0 ? [{
+        if(text.length > 0) {
+            state.scanStack.push({
                 text,
                 offset: 0,
                 column: 0,
                 line: 0
-            }] : [])
-        };
-    }
-    export function alterTopOrPop(state: PlainPreprocessorLexerState, newPosition: TextPosition) {
-        if (Selectors.eof(state)) {
-            return state;
+            });
         }
-        const { text } = Selectors.top(state)!;
-        const poppedOnce = state.scanStack.slice(0, state.scanStack.length - 1);
-        if (newPosition.offset < text.length) {
-            const newFrame: PreprocessorScan = { text, ...newPosition };
-            return {
-                ...state,
-                scanStack: poppedOnce.concat([newFrame])
-            };
+    }
+    export function setPosition(state: PlainPreprocessorLexerState, newPosition: TextPosition) {
+        if (Selectors.eof(state)) {
+            return;
+        }
+        const frame = Selectors.top(state)!;
+        if (newPosition.offset < frame.text.length) {
+            frame.offset = newPosition.offset;
+            frame.line = newPosition.line;
+            frame.column = newPosition.column;
         } else {
-            return {
-                ...state,
-                scanStack: poppedOnce
-            };
+            state.scanStack.pop();
         }
     }
     export function countNewLinesWhile(initialPosition: TextPosition, text: string, startFrom: number, whilePredicate: (currentPosition: TextPosition, textOffset: number) => boolean): TextPosition {

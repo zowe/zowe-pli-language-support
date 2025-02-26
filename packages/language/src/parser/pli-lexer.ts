@@ -14,6 +14,7 @@ import { Lexer, LexerResult } from "langium";
 import { Pl1Services } from "../pli-module";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
+import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
 
 /** 
  * Lexer for PL/I language. It orchestrates a margins processor and a preprocessor. 
@@ -22,10 +23,12 @@ import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 export class Pl1Lexer implements Lexer {
     private readonly marginsProcessor: MarginsProcessor;
     private readonly preprocessorLexer: PliPreprocessorLexer;
+    private readonly preprocessorInterpreter: PliPreprocessorInterpreter;
 
     constructor(services: Pl1Services) {
         this.marginsProcessor = services.parser.MarginsProcessor;
         this.preprocessorLexer = services.parser.PreprocessorLexer;
+        this.preprocessorInterpreter = services.parser.PreprocessorInterpreter;
     }
 
     get definition(): TokenTypeDictionary {
@@ -34,7 +37,8 @@ export class Pl1Lexer implements Lexer {
 
     tokenize(printerText: string): LexerResult {
         const text = this.marginsProcessor.processMargins(printerText);
-        const { tokens, errors } = this.preprocessorLexer.tokenize(text);
+        const { program: program, errors } = this.preprocessorLexer.tokenize(text);
+        const tokens = this.preprocessorInterpreter.run(program, this.preprocessorLexer.idTokenType);
         return {
             tokens,
             errors,

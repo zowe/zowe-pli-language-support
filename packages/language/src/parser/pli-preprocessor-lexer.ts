@@ -1,61 +1,166 @@
-import { TokenType, Lexer as ChevrotainLexer, IToken, createTokenInstance, TokenTypeDictionary } from "chevrotain";
-import { PliPreprocessorParser, PreprocessorError } from "./pli-preprocessor-parser";
+import { TokenType, Lexer as ChevrotainLexer, IToken, TokenTypeDictionary, ILexingError, createTokenInstance } from "chevrotain";
+import { PliPreprocessorParser, PreprocessorError as PPError } from "./pli-preprocessor-parser";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorLexerState, PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { Pl1Services } from "../pli-module";
 import { TokenPicker } from "./pli-token-picker-optimizer";
+import { PPInstruction } from "./pli-preprocessor-instructions";
+import { PPStatement } from "./pli-preprocessor-ast";
 
 const AllPreprocessorTokens = Object.values(PreprocessorTokens);
 
 export class PliPreprocessorLexer {
     private readonly hiddenTokenTypes: TokenType[];
     private readonly normalTokenTypePicker: TokenPicker;
-    private readonly idTokenType: TokenType;
     private readonly vocabulary: TokenType[];
     private readonly preprocessorParser: PliPreprocessorParser;
     public readonly tokenTypeDictionary: TokenTypeDictionary;
+    public readonly numberTokenType: TokenType;
+    public readonly idTokenType: TokenType;
 
     constructor(services: Pl1Services) {
         const tokenPickerOptimizer = services.parser.TokenPickerOptimizer;
         this.preprocessorParser = services.parser.PreprocessorParser;
-        this.vocabulary = services.parser.TokenBuilder.buildTokens(services.Grammar, {caseInsensitive: true}) as TokenType[];
+        this.vocabulary = services.parser.TokenBuilder.buildTokens(services.Grammar, { caseInsensitive: true }) as TokenType[];
         this.tokenTypeDictionary = {};
         for (const token of this.vocabulary) {
             this.tokenTypeDictionary[token.name] = token;
         }
         this.hiddenTokenTypes = this.vocabulary.filter(v => v.GROUP === 'hidden' || v.GROUP === ChevrotainLexer.SKIPPED);
-        
+
         const normalTokenTypes = [PreprocessorTokens.Percentage].concat(this.vocabulary.filter(v => !this.hiddenTokenTypes.includes(v)));
-        this.idTokenType = normalTokenTypes.find(t => t.name === "ID")!;
+        this.numberTokenType = normalTokenTypes.find(tk => tk.name === "NUM")!;
+        this.idTokenType = normalTokenTypes.find(tk => tk.name === "ID")!;
         this.normalTokenTypePicker = tokenPickerOptimizer.optimize(normalTokenTypes);
     }
 
     tokenize(text: string) {
-        const tokens: IToken[] = [];
+        const program: Array<PPInstruction> = [];
+        const errors: ILexingError[] = [];
         let state: PreprocessorLexerState = new PliPreprocessorLexerState(text);
         while (!state.eof()) {
             this.skipHiddenTokens(state);
-            if (this.tryToHandlePreprocessorStatement(state)) {
-                continue;
+            const statement = this.readPPStatement(state);
+            if (statement) {
+                if (statement.type === 'skip') {
+                    //+1 also skip the current line!
+                    state.advanceLines(statement.lineCount + 1)
+                } else if (statement.type === 'error') {
+                    errors.push(statement);
+                } else if (statement.type === 'declare') {
+                    for (const decl of statement.declarations) {
+                        switch (decl.type) {
+                            case 'builtin':
+                                //TODO builtin declarations
+                                break;
+                            case 'entry':
+                                //TODO entry declarations
+                                break;
+                            case "character":
+                                program.push({
+                                    type: 'push',
+                                    tokens: [],
+                                });
+                                program.push({
+                                    type: 'set',
+                                    name: decl.name,
+                                });
+                                break;
+                            case "fixed":
+                                program.push({
+                                    type: 'push',
+                                    tokens: [createTokenInstance(this.numberTokenType, "0", 0, 0, 0, 0, 0, 0)],
+                                });
+                                program.push({
+                                    type: 'set',
+                                    name: decl.name,
+                                });
+                                break;
+                        }
+                    }
+                } else if(statement.type === 'assign') {
+                    if(state.pushText(statement.value.value)) {
+                        const tokens: IToken[] = [];
+                        const topFrame = state.top()!;
+                        while(state.top() === topFrame) {
+                            for (const tokenType of this.normalTokenTypePicker.pickTokenTypes(topFrame.text.charCodeAt(topFrame.offset))) {
+                                const token = state.tryConsume(tokenType);
+                                if (!token) {
+                                    continue;
+                                }
+                                tokens.push(token);
+                            }
+                        }
+                        program.push({
+                            type: 'push',
+                            tokens
+                        });
+                    } else {
+                        program.push({
+                            type: 'push',
+                            tokens: []
+                        });
+                    }
+                    program.push({
+                        type: 'set',
+                        name: statement.name,
+                    });
+                } else {
+                    //TODO other preprocessor statements
+                }
             } else {
-                let token: IToken | undefined;
+                let token: IToken | undefined = undefined;
+                let list: IToken[] = [];
+                let hadConcat = false;
                 do {
                     token = this.scanInput(state);
                     if (token) {
-                        tokens.push(token);
+                        if (token.image === '%' || token.image === ';') {
+                            if (token.image === ';') {
+                                list.push(token);
+                            }
+                            program.push({
+                                type: "push",
+                                tokens: list
+                            });
+                            program.push({
+                                type: "scan",
+                            });
+                            if (hadConcat) {
+                                program.push({
+                                    type: "concat",
+                                });
+                                //TODO really needed here?
+                                program.push({
+                                    type: "scan",
+                                });
+                                hadConcat = false;
+                            }
+                            if (token.image === '%') {
+                                hadConcat = true;
+                            } else { // token.image === ';'
+                                program.push({
+                                    type: "print",
+                                });
+                            }
+                            list = [];
+                        } else {
+                            list.push(token);
+                        }
                     }
                 } while (token && token.image !== ';');
             }
         }
+        program.push({ type: 'halt' });
         return {
-            tokens,
-            errors: state.errors()
+            program,
+            errors
         };
     }
 
     protected scanInput(state: PreprocessorLexerState): IToken | undefined {
         this.skipHiddenTokens(state);
-        if(state.eof()) {
+        if (state.eof()) {
             return undefined;
         }
         const topFrame = state.top()!;
@@ -63,32 +168,6 @@ export class PliPreprocessorLexer {
             const token = state.tryConsume(tokenType);
             if (!token) {
                 continue;
-            }
-            if (this.isIdentifier(token) && state.hasVariable(token.image)) {
-                const variable = state.getVariable(token.image);
-                if (variable.active) {
-                    state.replaceVariable(variable.value?.toString() ?? "");
-                    let left = this.scanInput(state);
-                    //ATTENTION: PreprocessorTokens.Percentage is different from any token type within NormalTokenTypes; that is why name is checked
-                    while (left && left.tokenType.name === PreprocessorTokens.Percentage.name) {
-                        left = this.scanInput(state);
-                    }
-                    if (left && state.canConsume(PreprocessorTokens.Percentage)) {
-                        while (state.tryConsume(PreprocessorTokens.Percentage)) {
-                            const keepInMind = state;
-                            const right = this.scanInput(state);
-                            if (right && this.isIdentifier(right)) {
-                                left = createTokenInstance(this.idTokenType, left.image + right.image, 0, 0, 0, 0, 0, 0);
-                            } else {
-                                state = keepInMind;
-                                return left;
-                            }
-                        }
-                        return left;
-                    } else {
-                        return left;
-                    }
-                }
             }
             return token;
         }
@@ -99,55 +178,13 @@ export class PliPreprocessorLexer {
         while (this.hiddenTokenTypes.some(h => state.tryConsume(h) !== undefined));
     };
 
-    protected tryToHandlePreprocessorStatement(state: PreprocessorLexerState): boolean {
+    protected readPPStatement(state: PreprocessorLexerState): PPStatement | PPError | undefined {
         if (state.eof() || !state.tryConsume(PreprocessorTokens.Percentage)) {
-            return false;
+            return undefined;
         }
         const tokens = this.tokenizeUntilSemicolon(state, AllPreprocessorTokens);
         const parserState = this.preprocessorParser.initializeState(tokens);
-        const statement = this.preprocessorParser.start(parserState);
-        if(statement instanceof PreprocessorError) {
-            state.addError(statement);
-            return true;
-        }
-        switch (statement.type) {
-            case 'declareStatement': {
-                for (const declaration of statement.declarations) {
-                    switch (declaration.type) {
-                        case "builtin":
-                        case "entry":
-                            //TODO
-                            break;
-                        case "fixed":
-                        case "character":
-                            state.declare(declaration.name, {
-                                dataType: declaration.type,
-                                scanMode: declaration.scanMode,
-                                value: undefined,
-                                active: true
-                            });
-                            break;
-                    }
-                }
-                break;
-            }
-            case 'assignmentStatement': {
-                state.assign(statement.left, statement.right.value);
-                break;
-            }
-            case 'skipStatement': {
-                //+1 also skip the current line!
-                state.advanceLines(statement.lineCount + 1);
-                break;
-            }
-            case 'directive':
-            case 'includeStatement': //TODO
-            default: {
-                //nothing to do
-                break;
-            }
-        }
-        return true;
+        return this.preprocessorParser.start(parserState);
     }
 
     protected isIdentifier(token: IToken) {
