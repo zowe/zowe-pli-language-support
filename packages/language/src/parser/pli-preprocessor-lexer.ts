@@ -83,7 +83,7 @@ export class PliPreprocessorLexer {
                         const tokens: IToken[] = [];
                         const topFrame = state.top()!;
                         while(state.top() === topFrame) {
-                            for (const tokenType of this.normalTokenTypePicker.pickTokenTypes(topFrame.text.charCodeAt(topFrame.offset))) {
+                            for (const tokenType of this.hiddenTokenTypes.concat(this.normalTokenTypePicker.pickTokenTypes(topFrame.text.charCodeAt(topFrame.offset)))) {
                                 const token = state.tryConsume(tokenType);
                                 if (!token) {
                                     continue;
@@ -159,12 +159,11 @@ export class PliPreprocessorLexer {
     }
 
     protected scanInput(state: PreprocessorLexerState): IToken | undefined {
-        this.skipHiddenTokens(state);
         if (state.eof()) {
             return undefined;
         }
         const topFrame = state.top()!;
-        for (const tokenType of this.normalTokenTypePicker.pickTokenTypes(topFrame.text.charCodeAt(topFrame.offset))) {
+        for (const tokenType of this.hiddenTokenTypes.concat(this.normalTokenTypePicker.pickTokenTypes(topFrame.text.charCodeAt(topFrame.offset)))) {
             const token = state.tryConsume(tokenType);
             if (!token) {
                 continue;

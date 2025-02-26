@@ -9,8 +9,8 @@
  *
  */
 
-import { TokenTypeDictionary } from "chevrotain";
-import { Lexer, LexerResult } from "langium";
+import { IToken, Lexer, TokenTypeDictionary } from "chevrotain";
+import { Lexer as LangiumLexer, LexerResult } from "langium";
 import { Pl1Services } from "../pli-module";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
@@ -20,7 +20,7 @@ import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
  * Lexer for PL/I language. It orchestrates a margins processor and a preprocessor. 
  * The latter creates the desired token stream without preprocessor statements
  */
-export class Pl1Lexer implements Lexer {
+export class Pl1Lexer implements LangiumLexer {
     private readonly marginsProcessor: MarginsProcessor;
     private readonly preprocessorLexer: PliPreprocessorLexer;
     private readonly preprocessorInterpreter: PliPreprocessorInterpreter;
@@ -38,11 +38,20 @@ export class Pl1Lexer implements Lexer {
     tokenize(printerText: string): LexerResult {
         const text = this.marginsProcessor.processMargins(printerText);
         const { program: program, errors } = this.preprocessorLexer.tokenize(text);
-        const tokens = this.preprocessorInterpreter.run(program, this.preprocessorLexer.idTokenType);
+        const tokens: IToken[] = [];
+        const hidden: IToken[] = [];
+        const output = this.preprocessorInterpreter.run(program, this.preprocessorLexer.idTokenType);
+        for (const token of output) {
+            if(token.tokenType.GROUP === 'hidden' || token.tokenType.GROUP === Lexer.SKIPPED) {
+                hidden.push(token);
+            } else {
+                tokens.push(token);
+            }
+        }
         return {
             tokens,
             errors,
-            hidden: [],
+            hidden,
             report: undefined!
         };
     }
