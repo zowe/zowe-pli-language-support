@@ -37,7 +37,7 @@ export class Pl1Lexer implements LangiumLexer {
 
     tokenize(printerText: string): LexerResult {
         const text = this.marginsProcessor.processMargins(printerText);
-        const { program: program, errors } = this.preprocessorLexer.tokenize(text);
+        const { program, errors } = this.preprocessorLexer.tokenize(text);
         const tokens: IToken[] = [];
         const hidden: IToken[] = [];
         const output = this.preprocessorInterpreter.run(program, this.preprocessorLexer.idTokenType);

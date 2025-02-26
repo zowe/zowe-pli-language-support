@@ -29,7 +29,7 @@ export class PliPreprocessorLexer {
         this.hiddenTokenTypes = this.vocabulary.filter(v => v.GROUP === 'hidden' || v.GROUP === ChevrotainLexer.SKIPPED);
 
         const normalTokenTypes = [PreprocessorTokens.Percentage].concat(this.vocabulary.filter(v => !this.hiddenTokenTypes.includes(v)));
-        this.numberTokenType = normalTokenTypes.find(tk => tk.name === "NUM")!;
+        this.numberTokenType = normalTokenTypes.find(tk => tk.name === "NUMBER")!;
         this.idTokenType = normalTokenTypes.find(tk => tk.name === "ID")!;
         this.normalTokenTypePicker = tokenPickerOptimizer.optimize(normalTokenTypes);
     }
