@@ -11,8 +11,19 @@
 
 import { beforeAll, describe, expect, test } from "vitest";
 import { EmptyFileSystem } from "langium";
-import { ExpectedGoToDefinition, expectGoToDefinition, parseHelper } from "langium/test";
-import { createPliServices, FetchStatement, isFetchStatement, PliProgram, ProcedureStatement, Statement } from "../src";
+import {
+  ExpectedGoToDefinition,
+  expectGoToDefinition,
+  parseHelper,
+} from "langium/test";
+import {
+  createPliServices,
+  FetchStatement,
+  isFetchStatement,
+  PliProgram,
+  ProcedureStatement,
+  Statement,
+} from "../src";
 
 let services: ReturnType<typeof createPliServices>;
 let gotoDefinition: ReturnType<typeof expectGoToDefinition>;
@@ -262,7 +273,7 @@ describe("Linking tests", () => {
     });
   });
 
-  test('fetch linking', async () => {
+  test("fetch linking", async () => {
     const doc = await parse(`
         MAINPR: PROCEDURE OPTIONS(MAIN);
         dcl A entry;
@@ -270,7 +281,8 @@ describe("Linking tests", () => {
         end MAINPR;
     `);
 
-    const stmt = (doc.parseResult.value.statements[0] as ProcedureStatement).statements[1] as Statement;
+    const stmt = (doc.parseResult.value.statements[0] as ProcedureStatement)
+      .statements[1] as Statement;
     expect(stmt && isFetchStatement(stmt.value)).toBeTruthy();
     expect((stmt.value as FetchStatement).entries[0].entry.ref).toBeDefined();
   });
