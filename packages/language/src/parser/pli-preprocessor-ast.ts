@@ -36,7 +36,12 @@ export interface PPString extends PPAstNode {
     value: string;
 }
 
-export type PPExpression = PPString;
+export interface PPNumber extends PPAstNode {
+    type: 'number',
+    value: number;
+}
+
+export type PPExpression = PPString | PPNumber;
 
 // export interface PPCharacterLiteral extends PPAstNode {
 //     type: 'characterLiteral';

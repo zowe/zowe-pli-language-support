@@ -68,6 +68,7 @@ describe("Lexer", () => {
     });
 
     test('Example 1 from documentation', () => {
+        //TODO MARKUS!!! 2. assign wird nicht angenommen (%B = 2)
         expect(tokenize(`
             %DECLARE A CHARACTER, B FIXED;
             %A = 'B+C';

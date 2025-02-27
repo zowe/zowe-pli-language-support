@@ -5,15 +5,16 @@ export interface PPInstructionBase {
     type: string;
 }
 
-// export interface PPActivate extends PPInstructionBase {
-//     type: 'activate';
-//     variables: Record<string, ScanMode>;
-// }
+export interface PPActivate extends PPInstructionBase {
+    type: 'activate';
+    name: string;
+    scanMode: ScanMode;
+}
 
-// export interface PPDeactivate extends PPInstructionBase {
-//     type: 'deactivate';
-//     variables: string[];
-// }
+export interface PPDeactivate extends PPInstructionBase {
+    type: 'deactivate';
+    name: string;
+}
 
 export interface PPSet extends PPInstructionBase {
     type: 'set';
@@ -34,7 +35,7 @@ export interface PPScan extends PPInstructionBase {
 
 export interface PPPush extends PPInstructionBase {
     type: 'push';
-    tokens: IToken[];
+    value: IToken[];
 }
 
 // export interface PPPop extends PPInstructionBase {
@@ -60,8 +61,8 @@ export interface PPPrint extends PPInstructionBase {
 export type PPInstruction =
   | PPScan
   | PPPrint
-//   | PPActivate
-//   | PPDeactivate
+  | PPActivate
+  | PPDeactivate
   | PPSet
   | PPPush
   | PPConcat

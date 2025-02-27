@@ -115,6 +115,37 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
     step() {
         const instruction = this.currentInstruction;
         switch (instruction.type) {
+            case 'halt':
+                break;
+            case 'activate': {
+                if(this.hasVariable(instruction.name)) {
+                    const variable = this.plainState.variables[instruction.name];
+                    variable.active = true;
+                    variable.scanMode = instruction.scanMode;
+                } else {
+                    this.plainState.variables[instruction.name] = {
+                        active: true,
+                        dataType: "character",
+                        scanMode: instruction.scanMode,
+                        value: [],
+                    };
+                }
+                this.goTo(prev => prev + 1);
+                break;
+            }
+            case "deactivate": {
+                if(this.hasVariable(instruction.name)) {
+                    this.plainState.variables[instruction.name].active = false;
+                } else {
+                    this.plainState.variables[instruction.name] = {
+                        active: false,
+                        dataType: "character",
+                        scanMode: "rescan",
+                        value: [],
+                    };
+                }
+                this.goTo(prev => prev + 1);
+            }
             case 'set': {
                 if(this.plainState.stack.length > 0) {
                     const tokens = this.plainState.stack.pop()!;
@@ -133,7 +164,7 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
                 break;
             }
             case 'push': {
-                this.plainState.stack.push(instruction.tokens);
+                this.plainState.stack.push(instruction.value);
                 this.goTo(prev => prev + 1);
                 break;
             }
@@ -179,13 +210,28 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
         }
     }
     private scan(tokens: IToken[]) {
-        return tokens.flatMap(tk => {
-            if (this.isIdentifier(tk) && this.hasVariable(tk.image)) {
-                const variable = this.getVariable(tk.image);
-                return variable.value;
+        const activeScanVariables = new Set<string>();
+        const activeRescanVariables = new Set<string>();
+
+        const simpleScan = (tokens: IToken[], activeVariables: Set<string>): IToken[] => {
+            return tokens.flatMap(tk => {
+                if (this.isIdentifier(tk) && activeVariables.has(tk.image)) {
+                    const variable = this.getVariable(tk.image);
+                    return simpleScan(variable.value, activeRescanVariables);
+                }
+                return [tk];
+            });
+        };
+
+        for (const [name, variable] of Object.entries(this.plainState.variables)) {
+            if(variable.active) {
+                activeScanVariables.add(name);
+                if(variable.scanMode === 'rescan') {
+                    activeRescanVariables.add(name);
+                }
             }
-            return [tk];
-        });
+        }
+        return simpleScan(tokens, activeScanVariables);
     }
 }
 

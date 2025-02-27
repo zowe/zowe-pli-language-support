@@ -160,13 +160,13 @@ export class PliPreprocessorParser {
     }
 
     expression(state: PreprocessorParserState): PPExpression {
-        // if (state.canConsume(PreprocessorTokens.Number)) {
-        //     const number = state.consume(PreprocessorTokens.Number);
-        //     return {
-        //         type: "fixedLiteral",
-        //         value: parseInt(number.image, 10), //TODO when to parse binary?
-        //     };
-        // } else 
+        if (state.canConsume(PreprocessorTokens.Number)) {
+            const number = state.consume(PreprocessorTokens.Number);
+            return {
+                type: "number",
+                value: parseInt(number.image, 10), //TODO when to parse binary?
+            };
+        } else 
         if (state.canConsume(PreprocessorTokens.String)) {
             const character = state.consume(PreprocessorTokens.String);
             return {
