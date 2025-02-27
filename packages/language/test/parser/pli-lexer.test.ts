@@ -4,7 +4,7 @@ import { createPliServices } from "../../src";
 
 type TokenizeFunction = (text: string) => string[];
 
-describe("Lexer", () => {
+describe("PL/1 Lexer", () => {
     let tokenize: TokenizeFunction;
 
     beforeAll(async () => {

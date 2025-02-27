@@ -61,7 +61,7 @@ export class PliPreprocessorLexer {
             }
         }
         program.push({ type: 'halt' });
-        this.printProgram(program);
+        //this.printProgram(program);
         return {
             program,
             errors

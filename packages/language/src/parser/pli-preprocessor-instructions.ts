@@ -5,35 +5,35 @@ export interface PPInstructionBase {
     type: string;
 }
 
-export interface PPActivate extends PPInstructionBase {
+export interface PPIActivate extends PPInstructionBase {
     type: 'activate';
     name: string;
     scanMode: ScanMode;
 }
 
-export interface PPDeactivate extends PPInstructionBase {
+export interface PPIDeactivate extends PPInstructionBase {
     type: 'deactivate';
     name: string;
 }
 
-export interface PPSet extends PPInstructionBase {
+export interface PPISet extends PPInstructionBase {
     type: 'set';
     name: string;
 }
 
-export interface PPHalt extends PPInstructionBase {
+export interface PPIHalt extends PPInstructionBase {
     type: 'halt';
 }
 
-export interface PPConcat extends PPInstructionBase {
+export interface PPIConcat extends PPInstructionBase {
     type: 'concat';
 }
 
-export interface PPScan extends PPInstructionBase {
+export interface PPIScan extends PPInstructionBase {
     type: 'scan';
 }
 
-export interface PPPush extends PPInstructionBase {
+export interface PPIPush extends PPInstructionBase {
     type: 'push';
     value: IToken[];
 }
@@ -42,7 +42,7 @@ export interface PPPush extends PPInstructionBase {
 //     type: 'pop';
 // }
 
-export interface PPPrint extends PPInstructionBase {
+export interface PPIPrint extends PPInstructionBase {
     type: 'print';
 }
 
@@ -59,16 +59,14 @@ export interface PPPrint extends PPInstructionBase {
 // }
 
 export type PPInstruction =
-  | PPScan
-  | PPPrint
-  | PPActivate
-  | PPDeactivate
-  | PPSet
-  | PPPush
-  | PPConcat
-//   | PPCompute
-  | PPHalt
-//   | PPGoto
+  | PPIScan
+  | PPIPrint
+  | PPIActivate
+  | PPIDeactivate
+  | PPISet
+  | PPIPush
+  | PPIConcat
+  | PPIHalt
   ;
 
 export type PPProgram = PPInstruction[];
@@ -84,3 +82,51 @@ export type PPDeclaration = {
     scope: ProcedureScope;
     scanMode: ScanMode;
 });
+
+export namespace Instructions {
+    export function scan(): PPIScan {
+        return {
+            type: "scan"
+        };
+    }
+    export function print(): PPIPrint {
+        return {
+            type: "print"
+        };
+    }
+    export function activate(name: string, scanMode: ScanMode = "rescan"): PPIActivate {
+        return {
+            type: 'activate',
+            name,
+            scanMode,
+        };
+    }
+    export function deactivate(name: string): PPIDeactivate {
+        return {
+            type: "deactivate",
+            name,
+        };
+    }
+    export function set(name: string): PPISet {
+        return {
+            type: 'set',
+            name
+        };
+    }
+    export function concat(): PPIConcat {
+        return {
+            type: "concat"
+        };
+    }
+    export function push(value: IToken[]): PPIPush {
+        return {
+            type: "push",
+            value
+        };
+    }
+    export function halt(): PPIHalt {
+        return {
+            type: "halt",
+        };
+    }
+}
