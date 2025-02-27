@@ -51,8 +51,8 @@ jobs:
         with:
           folder: packages/playground/out
           branch: previews
-          clean-exclude: | # Ensure that we don't delete the pr & dev previews
-            dev/
+          clean-exclude: | # Ensure that we don't delete the pr & main previews
+            main/
             pr/
           force: false # Ensure that we don't override the pr previews
           target-folder: dev
