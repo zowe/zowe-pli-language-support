@@ -9,7 +9,7 @@
  *
  */
 
-import { TokenType, TokenVocabulary } from "chevrotain";
+import { Lexer, TokenType, TokenVocabulary } from "chevrotain";
 import {
   DefaultTokenBuilder,
   Grammar,
@@ -57,7 +57,17 @@ export class PliTokenBuilder extends DefaultTokenBuilder {
       }
     });
     const execFragment = tokens.find((e) => e.name === "ExecFragment")!;
-    execFragment.START_CHARS_HINT = ["S", "C"]; // (S)QL, (C)ICS
-    return tokens;
+    execFragment.START_CHARS_HINT = ["S", "C"];
+
+    const stickyTokens = tokens.map(t => this.makeSticky(t));
+    new Lexer(stickyTokens); //needs to be called to get proper token types
+    return stickyTokens;
+  }
+
+  private makeSticky(tokenType: TokenType): TokenType {
+    if (tokenType.PATTERN instanceof RegExp) {
+      tokenType.PATTERN = new RegExp(tokenType.PATTERN.source, `${tokenType.PATTERN.flags}y`);
+    }
+    return tokenType;
   }
 }

@@ -35,12 +35,24 @@ importers:
 
   packages/language:
     dependencies:
+      '@chevrotain/regexp-to-ast':
+        specifier: ^11.0.3
+        version: 11.0.3
+      '@chevrotain/types':
+        specifier: ^11.0.3
+        version: 11.0.3
+      '@chevrotain/utils':
+        specifier: ^11.0.3
+        version: 11.0.3
       chevrotain:
         specifier: ^11.0.3
         version: 11.0.3
       langium:
         specifier: ~3.3.1
         version: 3.3.1
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       vscode-languageserver:
         specifier: ~9.0.1
         version: 9.0.1
@@ -48,6 +60,9 @@ importers:
         specifier: ^3.17.5
         version: 3.17.5
     devDependencies:
+      '@types/lodash-es':
+        specifier: ^4.17.12
+        version: 4.17.12
       langium-cli:
         specifier: ~3.3.0
         version: 3.3.0
@@ -86,10 +101,10 @@ importers:
         version: '@codingame/monaco-vscode-editor-api@11.1.2'
       monaco-editor-wrapper:
         specifier: ~6.1.0
-        version: 6.1.1(monaco-languageclient@9.1.1(@codingame/monaco-vscode-api@11.1.2)(@codingame/monaco-vscode-base-service-override@11.1.2)(@codingame/monaco-vscode-chat-extensions-notebook-common@11.1.2)(@codingame/monaco-vscode-chat-extensions-notebook-task-terminal-testing-common@11.1.2)(@codingame/monaco-vscode-comments-extensions-common@11.1.2)(@codingame/monaco-vscode-configuration-service-override@11.1.2)(@codingame/monaco-vscode-editor-api@11.1.2)(@codingame/monaco-vscode-editor-service-override@11.1.2)(@codingame/monaco-vscode-environment-service-override@11.1.2)(@codingame/monaco-vscode-extensions-service-override@11.1.2)(@codingame/monaco-vscode-files-service-override@11.1.2)(@codingame/monaco-vscode-host-service-override@11.1.2)(@codingame/monaco-vscode-keybindings-service-override@11.1.2)(@codingame/monaco-vscode-language-pack-cs@11.1.2)(@codingame/monaco-vscode-language-pack-de@11.1.2)(@codingame/monaco-vscode-language-pack-es@11.1.2)(@codingame/monaco-vscode-language-pack-fr@11.1.2)(@codingame/monaco-vscode-language-pack-it@11.1.2)(@codingame/monaco-vscode-language-pack-ja@11.1.2)(@codingame/monaco-vscode-language-pack-ko@11.1.2)(@codingame/monaco-vscode-language-pack-pl@11.1.2)(@codingame/monaco-vscode-language-pack-pt-br@11.1.2)(@codingame/monaco-vscode-language-pack-qps-ploc@11.1.2)(@codingame/monaco-vscode-language-pack-ru@11.1.2)(@codingame/monaco-vscode-language-pack-tr@11.1.2)(@codingame/monaco-vscode-language-pack-zh-hans@11.1.2)(@codingame/monaco-vscode-language-pack-zh-hant@11.1.2)(@codingame/monaco-vscode-languages-service-override@11.1.2)(@codingame/monaco-vscode-layout-service-override@11.1.2)(@codingame/monaco-vscode-localization-service-override@11.1.2)(@codingame/monaco-vscode-log-service-override@11.1.2)(@codingame/monaco-vscode-markers-service-override@11.1.2)(@codingame/monaco-vscode-model-service-override@11.1.2)(@codingame/monaco-vscode-monarch-service-override@11.1.2)(@codingame/monaco-vscode-quickaccess-service-override@11.1.2)(@codingame/monaco-vscode-textmate-service-override@11.1.2)(@codingame/monaco-vscode-theme-defaults-default-extension@11.1.2)(@codingame/monaco-vscode-theme-service-override@11.1.2)(@codingame/monaco-vscode-views-service-override@11.1.2)(@codingame/monaco-vscode-workbench-service-override@11.1.2))(vscode-ws-jsonrpc@3.4.0)
+        version: 6.1.1(monaco-languageclient@9.1.1(pr23a6xbqk4pjfo5zls3ianfqe))(vscode-ws-jsonrpc@3.4.0)
       monaco-languageclient:
         specifier: ~9.1.0
-        version: 9.1.1(@codingame/monaco-vscode-api@11.1.2)(@codingame/monaco-vscode-base-service-override@11.1.2)(@codingame/monaco-vscode-chat-extensions-notebook-common@11.1.2)(@codingame/monaco-vscode-chat-extensions-notebook-task-terminal-testing-common@11.1.2)(@codingame/monaco-vscode-comments-extensions-common@11.1.2)(@codingame/monaco-vscode-configuration-service-override@11.1.2)(@codingame/monaco-vscode-editor-api@11.1.2)(@codingame/monaco-vscode-editor-service-override@11.1.2)(@codingame/monaco-vscode-environment-service-override@11.1.2)(@codingame/monaco-vscode-extensions-service-override@11.1.2)(@codingame/monaco-vscode-files-service-override@11.1.2)(@codingame/monaco-vscode-host-service-override@11.1.2)(@codingame/monaco-vscode-keybindings-service-override@11.1.2)(@codingame/monaco-vscode-language-pack-cs@11.1.2)(@codingame/monaco-vscode-language-pack-de@11.1.2)(@codingame/monaco-vscode-language-pack-es@11.1.2)(@codingame/monaco-vscode-language-pack-fr@11.1.2)(@codingame/monaco-vscode-language-pack-it@11.1.2)(@codingame/monaco-vscode-language-pack-ja@11.1.2)(@codingame/monaco-vscode-language-pack-ko@11.1.2)(@codingame/monaco-vscode-language-pack-pl@11.1.2)(@codingame/monaco-vscode-language-pack-pt-br@11.1.2)(@codingame/monaco-vscode-language-pack-qps-ploc@11.1.2)(@codingame/monaco-vscode-language-pack-ru@11.1.2)(@codingame/monaco-vscode-language-pack-tr@11.1.2)(@codingame/monaco-vscode-language-pack-zh-hans@11.1.2)(@codingame/monaco-vscode-language-pack-zh-hant@11.1.2)(@codingame/monaco-vscode-languages-service-override@11.1.2)(@codingame/monaco-vscode-layout-service-override@11.1.2)(@codingame/monaco-vscode-localization-service-override@11.1.2)(@codingame/monaco-vscode-log-service-override@11.1.2)(@codingame/monaco-vscode-markers-service-override@11.1.2)(@codingame/monaco-vscode-model-service-override@11.1.2)(@codingame/monaco-vscode-monarch-service-override@11.1.2)(@codingame/monaco-vscode-quickaccess-service-override@11.1.2)(@codingame/monaco-vscode-textmate-service-override@11.1.2)(@codingame/monaco-vscode-theme-defaults-default-extension@11.1.2)(@codingame/monaco-vscode-theme-service-override@11.1.2)(@codingame/monaco-vscode-views-service-override@11.1.2)(@codingame/monaco-vscode-workbench-service-override@11.1.2)
+        version: 9.1.1(pr23a6xbqk4pjfo5zls3ianfqe)
       pli-language:
         specifier: workspace:*
         version: link:../language
@@ -798,6 +813,12 @@ packages:
 
   '@types/estree@1.0.6':
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
+
+  '@types/lodash-es@4.17.12':
+    resolution: {integrity: sha512-0NgftHUcV4v34VhXm8QBSftKVXtbkBG3ViCjs6+eJ5a6y6Mi/jiFGPc1sC7QK+9BFhWrURE3EOggmWaSxL9OzQ==}
+
+  '@types/lodash@4.17.15':
+    resolution: {integrity: sha512-w/P33JFeySuhN6JLkysYUK2gEmy9kHHFN7E8ro0tkfmlDOgxBDzWEZ/J8cWA+fHqFevpswDTFZnDx+R9lbL6xw==}
 
   '@types/node@18.19.70':
     resolution: {integrity: sha512-RE+K0+KZoEpDUbGGctnGdkrLFwi1eYKTlIHNl2Um98mUkGsm1u2Ff6Ltd0e8DktTtC98uy7rSj+hO8t/QuLoVQ==}
@@ -3008,6 +3029,12 @@ snapshots:
 
   '@types/estree@1.0.6': {}
 
+  '@types/lodash-es@4.17.12':
+    dependencies:
+      '@types/lodash': 4.17.15
+
+  '@types/lodash@4.17.15': {}
+
   '@types/node@18.19.70':
     dependencies:
       undici-types: 5.26.5
@@ -3819,8 +3846,8 @@ snapshots:
   mkdirp-classic@0.5.3:
     optional: true
 
-  ? monaco-editor-wrapper@6.1.1(monaco-languageclient@9.1.1(@codingame/monaco-vscode-api@11.1.2)(@codingame/monaco-vscode-base-service-override@11.1.2)(@codingame/monaco-vscode-chat-extensions-notebook-common@11.1.2)(@codingame/monaco-vscode-chat-extensions-notebook-task-terminal-testing-common@11.1.2)(@codingame/monaco-vscode-comments-extensions-common@11.1.2)(@codingame/monaco-vscode-configuration-service-override@11.1.2)(@codingame/monaco-vscode-editor-api@11.1.2)(@codingame/monaco-vscode-editor-service-override@11.1.2)(@codingame/monaco-vscode-environment-service-override@11.1.2)(@codingame/monaco-vscode-extensions-service-override@11.1.2)(@codingame/monaco-vscode-files-service-override@11.1.2)(@codingame/monaco-vscode-host-service-override@11.1.2)(@codingame/monaco-vscode-keybindings-service-override@11.1.2)(@codingame/monaco-vscode-language-pack-cs@11.1.2)(@codingame/monaco-vscode-language-pack-de@11.1.2)(@codingame/monaco-vscode-language-pack-es@11.1.2)(@codingame/monaco-vscode-language-pack-fr@11.1.2)(@codingame/monaco-vscode-language-pack-it@11.1.2)(@codingame/monaco-vscode-language-pack-ja@11.1.2)(@codingame/monaco-vscode-language-pack-ko@11.1.2)(@codingame/monaco-vscode-language-pack-pl@11.1.2)(@codingame/monaco-vscode-language-pack-pt-br@11.1.2)(@codingame/monaco-vscode-language-pack-qps-ploc@11.1.2)(@codingame/monaco-vscode-language-pack-ru@11.1.2)(@codingame/monaco-vscode-language-pack-tr@11.1.2)(@codingame/monaco-vscode-language-pack-zh-hans@11.1.2)(@codingame/monaco-vscode-language-pack-zh-hant@11.1.2)(@codingame/monaco-vscode-languages-service-override@11.1.2)(@codingame/monaco-vscode-layout-service-override@11.1.2)(@codingame/monaco-vscode-localization-service-override@11.1.2)(@codingame/monaco-vscode-log-service-override@11.1.2)(@codingame/monaco-vscode-markers-service-override@11.1.2)(@codingame/monaco-vscode-model-service-override@11.1.2)(@codingame/monaco-vscode-monarch-service-override@11.1.2)(@codingame/monaco-vscode-quickaccess-service-override@11.1.2)(@codingame/monaco-vscode-textmate-service-override@11.1.2)(@codingame/monaco-vscode-theme-defaults-default-extension@11.1.2)(@codingame/monaco-vscode-theme-service-override@11.1.2)(@codingame/monaco-vscode-views-service-override@11.1.2)(@codingame/monaco-vscode-workbench-service-override@11.1.2))(vscode-ws-jsonrpc@3.4.0)
-  : dependencies:
+  monaco-editor-wrapper@6.1.1(monaco-languageclient@9.1.1(pr23a6xbqk4pjfo5zls3ianfqe))(vscode-ws-jsonrpc@3.4.0):
+    dependencies:
       '@codingame/monaco-vscode-chat-extensions-notebook-task-terminal-testing-common': 11.1.2
       '@codingame/monaco-vscode-configuration-service-override': 11.1.2
       '@codingame/monaco-vscode-editor-service-override': 11.1.2
@@ -3845,14 +3872,14 @@ snapshots:
       '@codingame/monaco-vscode-views-service-override': 11.1.2
       '@codingame/monaco-vscode-workbench-service-override': 11.1.2
       monaco-editor: '@codingame/monaco-vscode-editor-api@11.1.2'
-      monaco-languageclient: 9.1.1(@codingame/monaco-vscode-api@11.1.2)(@codingame/monaco-vscode-base-service-override@11.1.2)(@codingame/monaco-vscode-chat-extensions-notebook-common@11.1.2)(@codingame/monaco-vscode-chat-extensions-notebook-task-terminal-testing-common@11.1.2)(@codingame/monaco-vscode-comments-extensions-common@11.1.2)(@codingame/monaco-vscode-configuration-service-override@11.1.2)(@codingame/monaco-vscode-editor-api@11.1.2)(@codingame/monaco-vscode-editor-service-override@11.1.2)(@codingame/monaco-vscode-environment-service-override@11.1.2)(@codingame/monaco-vscode-extensions-service-override@11.1.2)(@codingame/monaco-vscode-files-service-override@11.1.2)(@codingame/monaco-vscode-host-service-override@11.1.2)(@codingame/monaco-vscode-keybindings-service-override@11.1.2)(@codingame/monaco-vscode-language-pack-cs@11.1.2)(@codingame/monaco-vscode-language-pack-de@11.1.2)(@codingame/monaco-vscode-language-pack-es@11.1.2)(@codingame/monaco-vscode-language-pack-fr@11.1.2)(@codingame/monaco-vscode-language-pack-it@11.1.2)(@codingame/monaco-vscode-language-pack-ja@11.1.2)(@codingame/monaco-vscode-language-pack-ko@11.1.2)(@codingame/monaco-vscode-language-pack-pl@11.1.2)(@codingame/monaco-vscode-language-pack-pt-br@11.1.2)(@codingame/monaco-vscode-language-pack-qps-ploc@11.1.2)(@codingame/monaco-vscode-language-pack-ru@11.1.2)(@codingame/monaco-vscode-language-pack-tr@11.1.2)(@codingame/monaco-vscode-language-pack-zh-hans@11.1.2)(@codingame/monaco-vscode-language-pack-zh-hant@11.1.2)(@codingame/monaco-vscode-languages-service-override@11.1.2)(@codingame/monaco-vscode-layout-service-override@11.1.2)(@codingame/monaco-vscode-localization-service-override@11.1.2)(@codingame/monaco-vscode-log-service-override@11.1.2)(@codingame/monaco-vscode-markers-service-override@11.1.2)(@codingame/monaco-vscode-model-service-override@11.1.2)(@codingame/monaco-vscode-monarch-service-override@11.1.2)(@codingame/monaco-vscode-quickaccess-service-override@11.1.2)(@codingame/monaco-vscode-textmate-service-override@11.1.2)(@codingame/monaco-vscode-theme-defaults-default-extension@11.1.2)(@codingame/monaco-vscode-theme-service-override@11.1.2)(@codingame/monaco-vscode-views-service-override@11.1.2)(@codingame/monaco-vscode-workbench-service-override@11.1.2)
+      monaco-languageclient: 9.1.1(pr23a6xbqk4pjfo5zls3ianfqe)
       vscode: '@codingame/monaco-vscode-api@11.1.2'
       vscode-languageclient: 9.0.1
       vscode-languageserver-protocol: 3.17.5
       vscode-ws-jsonrpc: 3.4.0
 
-  ? monaco-languageclient@9.1.1(@codingame/monaco-vscode-api@11.1.2)(@codingame/monaco-vscode-base-service-override@11.1.2)(@codingame/monaco-vscode-chat-extensions-notebook-common@11.1.2)(@codingame/monaco-vscode-chat-extensions-notebook-task-terminal-testing-common@11.1.2)(@codingame/monaco-vscode-comments-extensions-common@11.1.2)(@codingame/monaco-vscode-configuration-service-override@11.1.2)(@codingame/monaco-vscode-editor-api@11.1.2)(@codingame/monaco-vscode-editor-service-override@11.1.2)(@codingame/monaco-vscode-environment-service-override@11.1.2)(@codingame/monaco-vscode-extensions-service-override@11.1.2)(@codingame/monaco-vscode-files-service-override@11.1.2)(@codingame/monaco-vscode-host-service-override@11.1.2)(@codingame/monaco-vscode-keybindings-service-override@11.1.2)(@codingame/monaco-vscode-language-pack-cs@11.1.2)(@codingame/monaco-vscode-language-pack-de@11.1.2)(@codingame/monaco-vscode-language-pack-es@11.1.2)(@codingame/monaco-vscode-language-pack-fr@11.1.2)(@codingame/monaco-vscode-language-pack-it@11.1.2)(@codingame/monaco-vscode-language-pack-ja@11.1.2)(@codingame/monaco-vscode-language-pack-ko@11.1.2)(@codingame/monaco-vscode-language-pack-pl@11.1.2)(@codingame/monaco-vscode-language-pack-pt-br@11.1.2)(@codingame/monaco-vscode-language-pack-qps-ploc@11.1.2)(@codingame/monaco-vscode-language-pack-ru@11.1.2)(@codingame/monaco-vscode-language-pack-tr@11.1.2)(@codingame/monaco-vscode-language-pack-zh-hans@11.1.2)(@codingame/monaco-vscode-language-pack-zh-hant@11.1.2)(@codingame/monaco-vscode-languages-service-override@11.1.2)(@codingame/monaco-vscode-layout-service-override@11.1.2)(@codingame/monaco-vscode-localization-service-override@11.1.2)(@codingame/monaco-vscode-log-service-override@11.1.2)(@codingame/monaco-vscode-markers-service-override@11.1.2)(@codingame/monaco-vscode-model-service-override@11.1.2)(@codingame/monaco-vscode-monarch-service-override@11.1.2)(@codingame/monaco-vscode-quickaccess-service-override@11.1.2)(@codingame/monaco-vscode-textmate-service-override@11.1.2)(@codingame/monaco-vscode-theme-defaults-default-extension@11.1.2)(@codingame/monaco-vscode-theme-service-override@11.1.2)(@codingame/monaco-vscode-views-service-override@11.1.2)(@codingame/monaco-vscode-workbench-service-override@11.1.2)
-  : dependencies:
+  monaco-languageclient@9.1.1(pr23a6xbqk4pjfo5zls3ianfqe):
+    dependencies:
       '@codingame/monaco-vscode-api': 11.1.2
       '@codingame/monaco-vscode-configuration-service-override': 11.1.2
       '@codingame/monaco-vscode-editor-api': 11.1.2

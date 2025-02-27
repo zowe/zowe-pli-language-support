@@ -70,7 +70,7 @@ export class PliPreprocessorLexer {
             }
         }
         program.push(Instructions.halt());
-        this.printProgram(program);
+        //this.printProgram(program);
         return {
             program,
             errors
@@ -87,7 +87,7 @@ export class PliPreprocessorLexer {
         }
     }
 
-    private printProgram(program: PPInstruction[]) {
+    public printProgram(program: PPInstruction[]) {
         console.log(JSON.stringify(program, (key, value) => {
             if (["", "type", "name", "value", "image"].includes(key)) {
                 return value;

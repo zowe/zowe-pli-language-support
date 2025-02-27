@@ -40,7 +40,7 @@
     "vscode-languageserver-types": "^3.17.5"
   },
   "devDependencies": {
-    "langium-cli": "~3.3.0"
+    "langium-cli": "~3.3.0",
     "@types/lodash-es": "^4.17.12"
   }
 }
