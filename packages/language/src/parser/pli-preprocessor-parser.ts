@@ -1,4 +1,4 @@
-import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective } from "./pli-preprocessor-ast";
+import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective, PPActivate, PPDeactivate } from "./pli-preprocessor-ast";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorParserState, PreprocessorParserState } from "./pli-preprocessor-parser-state";
 import { ILexingError, IToken } from "chevrotain";
@@ -24,6 +24,8 @@ export class PliPreprocessorParser {
     start(state: PreprocessorParserState): PPStatement|PreprocessorError {
         try {
             switch (state.current?.tokenType) {
+                case PreprocessorTokens.Activate: return this.activateStatement(state);
+                case PreprocessorTokens.Deactivate: return this.deactivateStatement(state);
                 case PreprocessorTokens.Declare: return this.declareStatement(state);
                 case PreprocessorTokens.Directive: return this.directive(state);
                 case PreprocessorTokens.Skip: return this.skipStatement(state);
@@ -36,6 +38,51 @@ export class PliPreprocessorParser {
             }
         }
         return new PreprocessorError('Unexpected state!', state.current!);
+    }
+    deactivateStatement(state: PreprocessorParserState): PPDeactivate {
+        state.consume(PreprocessorTokens.Deactivate);
+        const variables: string[] = [];
+        let variable = state.consume(PreprocessorTokens.Id).image;
+        variables.push(variable);
+        while(state.tryConsume(PreprocessorTokens.Comma)) {
+            variable = state.consume(PreprocessorTokens.Id).image;
+            variables.push(variable);
+        }
+        state.consume(PreprocessorTokens.Semicolon);
+        return {
+            type: "deactivate",
+            variables
+        };
+    }
+    activateStatement(state: PreprocessorParserState): PPActivate {
+        state.consume(PreprocessorTokens.Activate);
+        const variables: Record<string, ScanMode|undefined> = {};
+
+        let variableName = state.consume(PreprocessorTokens.Id).image;
+        let scanMode = this.tryScanMode(state);
+        variables[variableName] = scanMode;
+
+        while(state.tryConsume(PreprocessorTokens.Comma)) {
+            variableName = state.consume(PreprocessorTokens.Id).image;
+            scanMode = this.tryScanMode(state);
+            variables[variableName] = scanMode;
+        }
+
+        state.consume(PreprocessorTokens.Semicolon);
+        return {
+            type: "activate",
+            variables
+        }
+    }
+
+    tryScanMode(state: PreprocessorParserState) {
+        let scanMode: ScanMode|undefined = undefined;
+        switch(state.current!.tokenType) {
+            case PreprocessorTokens.Scan: scanMode = 'scan'; state.index++; break;
+            case PreprocessorTokens.Rescan: scanMode = 'rescan'; state.index++; break;
+            case PreprocessorTokens.Noscan: scanMode = 'scan'; state.index++; break;
+        }
+        return scanMode;
     }
 
     // includeStatement(state: PreprocessorParserState): PPStatement {

@@ -4,8 +4,8 @@ import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorLexerState, PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { Pl1Services } from "../pli-module";
 import { TokenPicker } from "./pli-token-picker-optimizer";
-import { PPInstruction } from "./pli-preprocessor-instructions";
-import { PPAssign, PPDeclaration, PPExpression, PPNumber, PPStatement, PPString } from "./pli-preprocessor-ast";
+import { Instructions, PPInstruction } from "./pli-preprocessor-instructions";
+import { PPActivate, PPAssign, PPDeactivate, PPDeclaration, PPExpression, PPNumber, PPStatement, PPString } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 
 const AllPreprocessorTokens = Object.values(PreprocessorTokens);
@@ -54,7 +54,11 @@ export class PliPreprocessorLexer {
                     }
                 } else if (statement.type === 'assign') {
                     this.handleAssignment(state, statement, program);
-                } else if(statement.type === "directive") {
+                } else if (statement.type === "activate") {
+                    this.handleActivate(statement, program);
+                } else if (statement.type === "deactivate") {
+                    this.handleDeactivate(statement, program);
+                } else if (statement.type === "directive") {
                     //do nothing, currently directives are senseless in the preprocessor context
                     //this might change in the future
                 } else {
@@ -65,12 +69,22 @@ export class PliPreprocessorLexer {
                 this.handlePliTokens(state, program);
             }
         }
-        program.push({ type: 'halt' });
-        //this.printProgram(program);
+        program.push(Instructions.halt());
+        this.printProgram(program);
         return {
             program,
             errors
         };
+    }
+    private handleDeactivate(statement: PPDeactivate, program: PPInstruction[]) {
+        for (const name of statement.variables) {
+            program.push(Instructions.deactivate(name));
+        }
+    }
+    private handleActivate(statement: PPActivate, program: PPInstruction[]) {
+        for (const [name, scanMode] of Object.entries(statement.variables)) {
+            program.push(Instructions.activate(name, scanMode));
+        }
     }
 
     private printProgram(program: PPInstruction[]) {
@@ -94,35 +108,24 @@ export class PliPreprocessorLexer {
         let list: IToken[] = [];
         let hadConcat = false;
         do {
-            token = this.scanInput(state);
+            token = this.getNextPliToken(state);
             if (token) {
                 if (token.image === '%' || token.image === ';') {
                     if (token.image === ';') {
                         list.push(token);
                     }
-                    program.push({
-                        type: "push",
-                        value: list
-                    });
-                    program.push({
-                        type: "scan",
-                    });
+                    program.push(Instructions.push(list));
+                    program.push(Instructions.scan());
                     if (hadConcat) {
-                        program.push({
-                            type: "concat",
-                        });
+                        program.push(Instructions.concat());
                         //TODO really needed here?
-                        program.push({
-                            type: "scan",
-                        });
+                        program.push(Instructions.scan());
                         hadConcat = false;
                     }
                     if (token.image === '%') {
                         hadConcat = true;
                     } else { // token.image === ';'
-                        program.push({
-                            type: "print",
-                        });
+                        program.push(Instructions.print());
                     }
                     list = [];
                 } else {
@@ -134,10 +137,7 @@ export class PliPreprocessorLexer {
 
     private handleAssignment(state: PreprocessorLexerState, statement: PPAssign, program: PPInstruction[]) {
         this.handleExpression(state, statement.value, program);
-        program.push({
-            type: 'set',
-            name: statement.name,
-        });
+        program.push(Instructions.set(statement.name));
     }
 
     private handleExpression(state: PreprocessorLexerState, expression: PPExpression, program: PPInstruction[]) {
@@ -155,10 +155,7 @@ export class PliPreprocessorLexer {
     }
 
     private handleNumberLiteral(expression: PPNumber, program: PPInstruction[]) {
-        program.push({
-            type: 'push',
-            value: [createTokenInstance(this.numberTokenType, expression.value.toString(), 0, 0, 0, 0, 0, 0)]
-        });
+        program.push(Instructions.push([createTokenInstance(this.numberTokenType, expression.value.toString(), 0, 0, 0, 0, 0, 0)]));
     }
 
     private handleStringLiteral(state: PreprocessorLexerState, expression: PPString, program: PPInstruction[]) {
@@ -174,15 +171,9 @@ export class PliPreprocessorLexer {
                     tokens.push(token);
                 }
             }
-            program.push({
-                type: 'push',
-                value: tokens
-            });
+            program.push(Instructions.push(tokens));
         } else {
-            program.push({
-                type: 'push',
-                value: []
-            });
+            program.push(Instructions.push([]));
         }
     }
 
@@ -195,39 +186,20 @@ export class PliPreprocessorLexer {
                 //TODO entry declarations
                 break;
             case "character":
-                program.push({
-                    type: 'push',
-                    value: [],
-                });
-                program.push({
-                    type: 'set',
-                    name: decl.name,
-                });
-                program.push({
-                    type: 'activate',
-                    name: decl.name,
-                    scanMode: decl.scanMode,
-                });
+            case "fixed": {
+                program.push(Instructions.push(
+                    decl.type === "character"
+                    ? []
+                    : [createTokenInstance(this.numberTokenType, "0", 0, 0, 0, 0, 0, 0)]
+                ));
+                program.push(Instructions.set(decl.name));
+                program.push(Instructions.activate(decl.name, decl.scanMode));
                 break;
-            case "fixed":
-                program.push({
-                    type: 'push',
-                    value: [createTokenInstance(this.numberTokenType, "0", 0, 0, 0, 0, 0, 0)],
-                });
-                program.push({
-                    type: 'set',
-                    name: decl.name,
-                });
-                program.push({
-                    type: 'activate',
-                    name: decl.name,
-                    scanMode: decl.scanMode,
-                });
-                break;
+            }
         }
     }
 
-    protected scanInput(state: PreprocessorLexerState): IToken | undefined {
+    protected getNextPliToken(state: PreprocessorLexerState): IToken | undefined {
         if (state.eof()) {
             return undefined;
         }

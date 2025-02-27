@@ -121,12 +121,14 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
                 if(this.hasVariable(instruction.name)) {
                     const variable = this.plainState.variables[instruction.name];
                     variable.active = true;
-                    variable.scanMode = instruction.scanMode;
+                    if(instruction.scanMode) {
+                        variable.scanMode = instruction.scanMode;
+                    }
                 } else {
                     this.plainState.variables[instruction.name] = {
                         active: true,
                         dataType: "character",
-                        scanMode: instruction.scanMode,
+                        scanMode: instruction.scanMode ?? 'rescan',
                         value: [],
                     };
                 }
@@ -145,6 +147,7 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
                     };
                 }
                 this.goTo(prev => prev + 1);
+                break;
             }
             case 'set': {
                 if(this.plainState.stack.length > 0) {

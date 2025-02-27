@@ -59,19 +59,19 @@ export type PPExpression = PPString | PPNumber;
 //     statement: PPStatement;
 // }
 
-// export interface PPActivateStatement extends PPAstNode {
-//     type: 'activateStatement';
-//     variables: Record<string, ScanMode>;
-// }
+export interface PPActivate extends PPAstNode {
+    type: 'activate';
+    variables: Record<string, ScanMode|undefined>;
+}
 
-// export interface PPDeactivateStatement extends PPAstNode {
-//     type: 'deactivateStatement';
-//     variables: string[];
-// }
+export interface PPDeactivate extends PPAstNode {
+    type: 'deactivate';
+    variables: string[];
+}
 
 export type PPStatement =
-//   | PPActivateStatement
-//   | PPDeactivateStatement
+  | PPActivate
+  | PPDeactivate
   | PPDirective
   | PPSkip
   | PPDeclare
@@ -79,10 +79,6 @@ export type PPStatement =
 //  | PPIncludeStatement
 //  | PPLabeledStatement
   ;
-
-//export type PPExpression = PPCharacterLiteral | PPFixedLiteral;
-
-
 
 export type VariableDataType = 'fixed' | 'character';
 

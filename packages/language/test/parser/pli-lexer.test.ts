@@ -67,8 +67,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test('Example 1 from documentation', () => {
-        //TODO MARKUS!!! 2. assign wird nicht angenommen (%B = 2)
+    test('Example 1.1 from documentation', () => {
         expect(tokenize(`
             %DECLARE A CHARACTER, B FIXED;
             %A = 'B+C';
@@ -78,6 +77,23 @@ describe("PL/1 Lexer", () => {
             "X:X",
             "=:=",
             "2:NUMBER",
+            "+:+",
+            "C:C",
+            ";:;"
+        ]);
+    });
+
+    test('Example 1.2 from documentation', () => {
+        expect(tokenize(`
+            %DECLARE A CHARACTER, B FIXED;
+            %A = 'B+C';
+            %B = 2;
+            %DEACTIVATE B;
+            X = A;
+        `)).toStrictEqual([
+            "X:X",
+            "=:=",
+            "B:B",
             "+:+",
             "C:C",
             ";:;"

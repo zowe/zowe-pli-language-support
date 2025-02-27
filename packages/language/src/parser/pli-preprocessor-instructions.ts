@@ -8,7 +8,7 @@ export interface PPInstructionBase {
 export interface PPIActivate extends PPInstructionBase {
     type: 'activate';
     name: string;
-    scanMode: ScanMode;
+    scanMode: ScanMode|undefined;
 }
 
 export interface PPIDeactivate extends PPInstructionBase {
@@ -94,7 +94,7 @@ export namespace Instructions {
             type: "print"
         };
     }
-    export function activate(name: string, scanMode: ScanMode = "rescan"): PPIActivate {
+    export function activate(name: string, scanMode?: ScanMode): PPIActivate {
         return {
             type: 'activate',
             name,
