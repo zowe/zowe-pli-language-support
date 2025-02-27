@@ -84,13 +84,55 @@ A program is just a readonly list of instructions.
 The machine has four stateful components:
 
 1. the token stack `S`: the stack is a list of a list of tokens. We will use `x:S` to denote that `x` is on the stack `S` (topmost element). Attention! `x` is again a list of tokens, like `[1,2,3]` or `[A,+,B]`.
-2. the variable heap `V`: a map of variables and their values; the values are token lists again
+2. the variable heap `V`: a map of variables and their values and properties; the values are token lists again; the properties are
+   1. `type`: a string that indicates the type of the variable. It is either `fixed` or `character`.
+   2. `active`: a boolean flag that indicates if the variable is active or not
+   3. `scanmode`: a flag that indicates if the variable can be replaced only once (`SCAN`) or more often (`RESCAN`)
 3. the program counter `PC`: a index pointing into the list of instruction (aka the program)
 4. the output list `O`: a list of tokens that are PRINTed by the machine.
 
 This state is managed in the preprocessor interpreter state class.
 
 ### Instructions
+
+#### Instruction `ACTIVATE`
+
+```plain
+ACTIVATE <VARNAME> [<SCANMODE>];
+```
+
+Activates a variable in the variable heap. The optional `SCANMODE` parameter can be `SCAN` or `RESCAN`. If `SCAN` is set, the variable can be replaced only once. If `RESCAN` is set, the variable can be replaced multiple times.
+
+##### Example Activate
+
+Imagine you execute this instruction: `ACTIVATE A SCAN;`.
+This is how the machine behave before and after the execution of `ACTIVATE`.
+
+| Before | After |
+|--------|-------|
+| S and V={} | S and V={A:[]} and A is active, scan |
+| S and V={A=[1,2,3]} and A active, rescan | S and V={A:[1,2,3]} and A is active, scan |
+| S and V={A=[1,2,3]} and A inactive, scan | S and V={A:[1,2,3]} and A is active, scan |
+
+#### Instruction `DEACTIVATE`
+
+```plain
+DEACTIVATE <VARNAME>;
+```
+
+Deactivates a variable in the variable heap.
+
+##### Example Deactivate
+
+Imagine you execute this instruction: `DEACTIVATE A;`.
+This is how the machine behave before and after the execution of `DEACTIVATE`.
+
+| Before | After |
+|--------|-------|
+| S and V={A:[1,2,3]} and A active, scan | S and V={A:[1,2,3]} and A inactive, scan |
+| S and V={A:[1,2,3]} and A inactive, rescan | S and V={A:[1,2,3]} and A inactive, rescan |
+| S and V={} | S and V={A:[]} and A is inactive, character, rescan |
+
 
 #### Instruction `SCAN`
 
