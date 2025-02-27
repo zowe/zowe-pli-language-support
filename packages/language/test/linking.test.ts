@@ -9,8 +9,10 @@
  *
  */
 
-import { describe, test } from "vitest";
-import { expectGotoDefinition as expectGotoDefinitionRoot } from "./utils";
+import { describe, expect, test } from "vitest";
+import { FetchStatement, ProcedureStatement, Statement, SyntaxKind } from "../src/syntax-tree/ast";
+import { collectDiagnostics } from "../src/workspace/compilation-unit";
+import { expectGotoDefinition as expectGotoDefinitionRoot, parse } from "./utils";
 
 /**
  * Scoping report: https://github.com/zowe/zowe-pli-language-support/issues/94
@@ -320,5 +322,34 @@ describe("Linking tests", async () => {
         });
       });
     });
+  });
+
+  test('fetch linking', async () => {
+    const doc = parse(`
+        MAINPR: PROCEDURE OPTIONS(MAIN);
+        dcl A entry;
+        fetch A;
+        end MAINPR;
+    `, { validate: true });
+    const diagnostics = collectDiagnostics(doc);
+  
+    expect(diagnostics.length).toBe(0);
+  
+    const procedureStatement = doc.ast.statements[0].value as ProcedureStatement;
+    const subStmt = procedureStatement.statements[1] as Statement;
+    expect(subStmt && subStmt.value && subStmt.value.kind === SyntaxKind.FetchStatement).toBeTruthy();
+  
+    // using the new scoping approach, determie that 'fetch A' resolves correctly reference A
+  
+    // look up the symbol
+    const fetchStmt = subStmt.value as FetchStatement;
+    const fetchStmtNameRef = fetchStmt.entries[0].name as string;
+  
+    // TODO needs repairing
+    const refs = doc.references.findReferences(doc.ast.statements[0]);
+    const symbol = doc.references.allReferences().find(ref => {
+      return ref.text === fetchStmtNameRef;
+    });
+    expect(symbol).toBeDefined();
   });
 });
