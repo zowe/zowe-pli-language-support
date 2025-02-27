@@ -9,16 +9,18 @@
  *
  */
 
-import { beforeAll, describe, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vitest";
 import { EmptyFileSystem } from "langium";
-import { ExpectedGoToDefinition, expectGoToDefinition } from "langium/test";
-import { createPliServices } from "../src";
+import { ExpectedGoToDefinition, expectGoToDefinition, parseHelper } from "langium/test";
+import { createPliServices, FetchStatement, isFetchStatement, PliProgram, ProcedureStatement, Statement } from "../src";
 
 let services: ReturnType<typeof createPliServices>;
 let gotoDefinition: ReturnType<typeof expectGoToDefinition>;
+let parse: ReturnType<typeof parseHelper<PliProgram>>;
 
 beforeAll(async () => {
   services = createPliServices(EmptyFileSystem);
+  parse = parseHelper<PliProgram>(services.pli);
   const _gotoDefinition = expectGoToDefinition(services.pli);
 
   /**
@@ -258,5 +260,20 @@ describe("Linking tests", () => {
         });
       });
     });
+  });
+
+  test('fetch linking', async () => {
+    const doc = await parse(`
+        MAINPR: PROCEDURE OPTIONS(MAIN);
+        dcl A entry;
+        fetch A;
+        end MAINPR;
+    `, { validation: true });
+
+    expect(doc.diagnostics?.length).toBe(0);
+
+    const stmt = (doc.parseResult.value.statements[0] as ProcedureStatement).statements[1] as Statement;
+    expect(stmt && isFetchStatement(stmt.value)).toBeTruthy();
+    expect((stmt.value as FetchStatement).entries[0].entry.ref).toBeDefined();
   });
 });
