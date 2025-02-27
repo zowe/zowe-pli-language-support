@@ -6,6 +6,7 @@ import { Pl1Services } from "../pli-module";
 import { TokenPicker } from "./pli-token-picker-optimizer";
 import { PPInstruction } from "./pli-preprocessor-instructions";
 import { PPAssign, PPDeclaration, PPExpression, PPNumber, PPStatement, PPString } from "./pli-preprocessor-ast";
+import { assertUnreachable } from "langium";
 
 const AllPreprocessorTokens = Object.values(PreprocessorTokens);
 
@@ -53,8 +54,12 @@ export class PliPreprocessorLexer {
                     }
                 } else if (statement.type === 'assign') {
                     this.handleAssignment(state, statement, program);
+                } else if(statement.type === "directive") {
+                    //do nothing, currently directives are senseless in the preprocessor context
+                    //this might change in the future
                 } else {
                     //TODO other preprocessor statements
+                    assertUnreachable(statement);
                 }
             } else {
                 this.handlePliTokens(state, program);

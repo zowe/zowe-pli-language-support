@@ -1,4 +1,4 @@
-import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare } from "./pli-preprocessor-ast";
+import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective } from "./pli-preprocessor-ast";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorParserState, PreprocessorParserState } from "./pli-preprocessor-parser-state";
 import { ILexingError, IToken } from "chevrotain";
@@ -25,7 +25,7 @@ export class PliPreprocessorParser {
         try {
             switch (state.current?.tokenType) {
                 case PreprocessorTokens.Declare: return this.declareStatement(state);
-                //case PreprocessorTokens.Directive: return this.directive(state);
+                case PreprocessorTokens.Directive: return this.directive(state);
                 case PreprocessorTokens.Skip: return this.skipStatement(state);
                 //case PreprocessorTokens.Include: return this.includeStatement(state);
                 case PreprocessorTokens.Id: return this.assignmentStatement(state);
@@ -62,14 +62,14 @@ export class PliPreprocessorParser {
         };
     }
 
-    // directive(state: PreprocessorParserState): PPStatement {
-    //     const which = state.consume(PreprocessorTokens.Directive).image.toLowerCase() as PPDirective['which'];
-    //     state.consume(PreprocessorTokens.Semicolon);
-    //     return {
-    //         type: 'directive',
-    //         which
-    //     }
-    // }
+    directive(state: PreprocessorParserState): PPStatement {
+        const which = state.consume(PreprocessorTokens.Directive).image.toLowerCase() as PPDirective['which'];
+        state.consume(PreprocessorTokens.Semicolon);
+        return {
+            type: 'directive',
+            which
+        };
+    }
 
     assignmentStatement(state: PreprocessorParserState): PPAssign {
         const left = state.consume(PreprocessorTokens.Id).image;

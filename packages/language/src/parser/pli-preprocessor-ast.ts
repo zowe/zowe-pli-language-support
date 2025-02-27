@@ -6,10 +6,10 @@ export interface PPAstNode {
     type: string;
 }
 
-// export interface PPDirective extends PPAstNode {
-//     type: 'directive';
-//     which: 'page'|'print'|'noprint'|'push'|'pop';
-// }
+export interface PPDirective extends PPAstNode {
+    type: 'directive';
+    which: 'page'|'print'|'noprint'|'push'|'pop';
+}
 
 // export interface PPIncludeStatement extends PPAstNode {
 //     type: 'includeStatement';
@@ -72,7 +72,7 @@ export type PPExpression = PPString | PPNumber;
 export type PPStatement =
 //   | PPActivateStatement
 //   | PPDeactivateStatement
-//   | PPDirective
+  | PPDirective
   | PPSkip
   | PPDeclare
   | PPAssign
