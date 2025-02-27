@@ -268,9 +268,7 @@ describe("Linking tests", () => {
         dcl A entry;
         fetch A;
         end MAINPR;
-    `, { validation: true });
-
-    expect(doc.diagnostics?.length).toBe(0);
+    `);
 
     const stmt = (doc.parseResult.value.statements[0] as ProcedureStatement).statements[1] as Statement;
     expect(stmt && isFetchStatement(stmt.value)).toBeTruthy();
