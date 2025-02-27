@@ -45,6 +45,7 @@ jobs:
             dev/
             pr/
           force: false # Ensure that we don't override the pr previews
+          target-folder: main
       - name: Deploy Dev 🚀
         if: github.ref == 'refs/heads/development'
         uses: JamesIves/github-pages-deploy-action@v4.7.2

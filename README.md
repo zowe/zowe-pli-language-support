@@ -2,7 +2,7 @@
 
 PL/I Language Support by Zowe Community
 
-See it in an interactive [playground](https://zowe.github.io/zowe-pli-language-support/)!
+See it in an interactive [playground](https://zowe.github.io/zowe-pli-language-support/main/)!
 
 ### Contained Projects
 - [PL/I Language Support](./packages/language/README.md)
