@@ -15,7 +15,7 @@ import { isProcedureStatement } from "../generated/ast";
 export class PliNameProvider extends DefaultNameProvider {
   override getName(node: AstNode): string | undefined {
     if (isProcedureStatement(node)) {
-      const label = node.labels[0];
+      const label = node.$container.labels[0];
       return label?.name || undefined;
     } else {
       return super.getName(node);
@@ -23,7 +23,7 @@ export class PliNameProvider extends DefaultNameProvider {
   }
   override getNameNode(node: AstNode): CstNode | undefined {
     if (isProcedureStatement(node)) {
-      const label = node.labels[0];
+      const label = node.$container.labels[0];
       if (label) {
         return this.getNameNode(label);
       } else {

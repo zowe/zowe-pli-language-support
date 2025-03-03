@@ -31,11 +31,11 @@
   },
   "dependencies": {
     "chevrotain": "^11.0.3",
-    "langium": "~3.3.1",
+    "langium": "~3.4.0",
     "vscode-languageserver": "~9.0.1",
     "vscode-languageserver-types": "^3.17.5"
   },
   "devDependencies": {
-    "langium-cli": "~3.3.0"
+    "langium-cli": "~3.4.0"
   }
 }
