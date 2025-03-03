@@ -316,14 +316,16 @@ XFormatItem: 'X' '(' width=Expression ')';
 FreeStatement: 'FREE' references+=LocatorCall (',' references+=LocatorCall)* ';';
 
 GetStatement: 'GET' (
-    {infer GetFileStatement} ('LIST' '(' listExpr=Expression ')')? ('FILE' '(' file=Expression ')')?
-    (dataSpecification=DataSpecificationOptions)?
-    (copy?='COPY' ('(' /* TODO REFERENCE */ copyReference=FeatureID ')')?)?
-    (skip?='SKIP' ('(' skipExpression=Expression ')'))?
+    {infer GetFileStatement} specifications+=(GetFile|GetCopy|GetSkip|DataSpecificationOptions)+
     |
     {infer GetStringStatement} 'STRING' '(' expression=Expression ')' dataSpecification=DataSpecificationOptions
-    ) ';'
-;
+) ';';
+
+GetFile: 'FILE' '(' file=Expression ')';
+
+GetCopy: 'COPY' ('(' /* TODO REFERENCE */ copyReference=FeatureID ')')?;
+
+GetSkip: 'SKIP' ('(' skipExpression=Expression ')')?;
 
 GoToStatement: ('GO' 'TO' | 'GOTO') label=LabelReference ';';
 
