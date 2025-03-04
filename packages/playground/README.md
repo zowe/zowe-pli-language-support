@@ -1,6 +1,6 @@
 # PL/I Playground
 
-This project contains the source code for the PL/I playground. Which can be visited at https://zowe.github.io/zowe-pli-language-support/. The playground is a monaco-based editor that allows you to write and run PL/I code completely in your browser, without a backend.
+This project contains the source code for the PL/I playground. Which can be visited at https://zowe.github.io/zowe-pli-language-support/main/. The playground is a monaco-based editor that allows you to write and run PL/I code completely in your browser, without a backend.
 
 ### Getting Started
 
