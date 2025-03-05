@@ -1,5 +1,6 @@
 import { IToken } from "chevrotain";
 import { ProcedureScope, ScanMode } from "./pli-preprocessor-ast";
+import { assertUnreachable } from "langium";
 
 export interface PPInstructionBase {
     type: string;
@@ -129,4 +130,38 @@ export namespace Instructions {
             type: "halt",
         };
     }
+}
+
+export function printProgram(program: PPInstruction[]) {
+    const programText: string[] = [];
+    for (const instruction of program) {
+            programText.push(instruction.type.toUpperCase());
+            switch (instruction.type) {
+                case 'activate':
+                    programText.push(...' ', instruction.name);
+                    if(instruction.scanMode) {
+                        programText.push(...' ', instruction.scanMode.toUpperCase());
+                    }
+                    break;
+                case 'deactivate':
+                    programText.push(...' ', instruction.name);
+                    break;
+                case 'concat':
+                case 'scan':
+                case 'print':
+                case 'halt':
+                    //nothing to print
+                    break;
+                case 'set':
+                    programText.push(...' ', instruction.name);
+                    break;
+                case 'push':
+                    programText.push(...' ', '[', instruction.value.map(tk => tk.image+':'+tk.tokenType.name).join(', '), ']');
+                    break;
+                default:
+                    assertUnreachable(instruction);
+            }
+            programText.push('\n');
+    }
+    console.log(programText.join(""));
 }
