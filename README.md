@@ -3,8 +3,8 @@
 PL/I Language Support by Zowe Community
 
 See it in an interactive playground:
-- [main playground](https://zowe.github.io/zowe-pli-language-support/main/)! (stable version of the project)
-- [development playground](https://zowe.github.io/zowe-pli-language-support/development/)! (active development state of the project)
+- [main playground](https://zowe.github.io/zowe-pli-language-support/main)! (stable version of the project)
+- [development playground](https://zowe.github.io/zowe-pli-language-support/dev)! (active development state of the project)
 
 ### Contained Projects
 - [PL/I Language Support](./packages/language/README.md)
