@@ -42,7 +42,7 @@ export class PliDocumentationProvider extends JSDocDocumentationProvider {
     node: ProcedureStatement,
   ): string | undefined {
     let text = "```\n";
-    for (const label of node.labels) {
+    for (const label of node.$container.labels) {
       text += `${label.name} `;
     }
     text += "PROCEDURE ";

@@ -12,21 +12,15 @@
 grammar Pl1
 
 entry PliProgram:
-    (statements+=TopLevelStatement)*;
-
-TopLevelStatement: Package | PackageLevelStatements | Directives;
-
-Directives: SkipDirective | PopDirective | PushDirective | LineDirective | NoteDirective | PageDirective | PrintDirective | IncludeDirective | NoPrintDirective | ProcessDirective | ProcincDirective;
+    (statements+=Statement)*;
 
 // Defined on p. 90
 Package:
-    prefix=ConditionPrefix?
-    name=LabelPrefix
     'PACKAGE'
     exports=Exports? 
     reserves=Reserves? 
     options=Options? ';'
-    statements+=PackageLevelStatements*
+    statements+=Statement*
     end=EndStatement ';';
 
 ConditionPrefix: ('(' items+=ConditionPrefixItem ')' ':')+;
@@ -67,10 +61,7 @@ SimpleOptionsItem: value=(
     'INTER' | 'RECURSIVE'
     );
 
-PackageLevelStatements: DeclareStatement | DefineAliasStatement | DefineOrdinalStatement | DefineStructureStatement | DefaultStatement | ProcedureStatement;
-
 ProcedureStatement:
-    (labels+=LabelPrefix)*
     ('PROC' | 'PROCEDURE' | xProc?='XPROC' | xProc?='XPROCEDURE') 
     ('(' (parameters+=ProcedureParameter (',' parameters+=ProcedureParameter)*)? ')')?
     // These can appear in any order:
@@ -82,7 +73,7 @@ ProcedureStatement:
         (('EXTERNAL' | 'EXT') ('(' environmentName+=Expression ')')?) |
         scope+=ScopeAttribute
     )* ';'
-    statements+=ProcedureLevelStatement*
+    statements+=Statement*
     ('PROC' | 'PROCEDURE')? end=EndStatement ';';
 
 
@@ -98,8 +89,6 @@ EntryStatement:
     limited+='LIMITED' |
     returns+=ReturnsOption |
     options+=Options)* ';';
-
-ProcedureLevelStatement: Statement | ProcedureStatement;
 
 // #region Statements
 
@@ -122,7 +111,9 @@ Unit: DeclareStatement | AllocateStatement | AssertStatement | AssignmentStateme
     | ReadStatement | ReinitStatement | ReleaseStatement | ResignalStatement
     | ReturnStatement | RevertStatement | RewriteStatement
     | SelectStatement | SignalStatement | SkipDirective | StopStatement
-    | WaitStatement | WriteStatement;
+    | WaitStatement | WriteStatement
+    // Validate that these only appear at the expected locations
+    | ProcedureStatement | Package;
 
 AllocateStatement: ('ALLOCATE' | 'ALLOC') variables+=AllocatedVariable (',' variables+=AllocatedVariable)* ';';
 
@@ -169,7 +160,7 @@ CloseStatement: 'CLOSE' 'FILE' '(' (files+=MemberCall | files+='*') ')' (','? 'F
 
 DefaultStatement: ('DEFAULT' | 'DFT') expressions+=DefaultExpression (',' expressions+=DefaultExpression)* ';';
 
-DefaultExpression: expression=DefaultExpressionPart attributes+=DeclarationAttribute*;
+DefaultExpression: expression=DefaultExpressionPart attributes+=DefaultDeclarationAttribute*;
 
 DefaultExpressionPart: 'DESCRIPTORS' expression=DefaultAttributeExpression | ('RANGE' '(' identifiers=DefaultRangeIdentifiers ')' | '(' expression=DefaultAttributeExpression ')');
 
@@ -197,7 +188,7 @@ DefaultAttribute returns string:
     | 'NATIVE' | 'NONASSIGNABLE' | 'NONASGN' | 'NONCONNECTED' | 'NONNATIVE' | 'NONVARYING' | 'NORMAL'
     | 'OFFSET' | 'OPTIONAL' | 'OPTIONS' | 'OUTONLY' | 'OUTPUT'
     | 'PARAMETER' | 'POINTER' | 'PTR' | 'POSITION' | 'PRECISION' | 'PREC' | 'PRINT'
-    | 'RANGE' | 'REAL' | 'RECORD' | 'RESERVED' | 'RETURNS'
+    | 'RANGE' | 'REAL' | 'RECORD' | 'RESERVED'
     | 'SEQUENTIAL' | 'SIGNED' | 'STATIC' | 'STREAM' | 'STRUCTURE'
     | 'TASK' | 'TRANSIENT'
     | 'UNAL' | 'UCHAR' | 'UNALIGNED' | 'UNBUFFERED' | 'UNION' | 'UNSIGNED' | 'UPDATE'
@@ -406,10 +397,10 @@ PushDirective: {infer PushDirective} '%PUSH' ';';
 
 PutStatement: 'PUT' 
     (
-        {infer PutFileStatement} items+=(PutItem | DataSpecificationOptions)* 
+        {infer PutFileStatement} items+=(PutItem | DataSpecificationOptions)+
         | 
         {infer PutStringStatement} ('STRING' '(' stringExpression=Expression ')' dataSpecification=DataSpecificationOptions)
-    ) ';'
+    )? ';'
 ;
 
 PutItem: attribute=PutAttribute ('(' expression=Expression ')')?;
@@ -422,13 +413,9 @@ DataSpecificationOptions: (
     | edit?='EDIT' ('(' dataLists+=DataSpecificationDataList ')' '(' formatLists+=FormatList ')')+
 );
 
-DataSpecificationDataList: items+=DataSpecificationDataListEntry (',' items+=DataSpecificationDataListEntry)*;
-
-DataSpecificationDataListEntry: DataSpecificationDataListItem | DataSpecificationDataListItem3DO;
+DataSpecificationDataList: items+=DataSpecificationDataListItem (',' items+=DataSpecificationDataListItem)*;
 
 DataSpecificationDataListItem: value=Expression;
-
-DataSpecificationDataListItem3DO: '(' list=DataSpecificationDataList 'DO' do=DoType3<false> ')';
 
 QualifyStatement: 
     'QUALIFY' ';'
@@ -494,13 +481,12 @@ CharType returns string: 'CHAR' | 'UCHAR' | 'WCHAR';
 
 InitAcrossExpression: '(' expressions+=Expression (',' expressions+=Expression)* ')';
 
-InitialAttributeItem: InitialAttributeItemStar | InitialAttributeSpecification | InitialAttributeExpression;
+InitialAttributeItem: InitialAttributeItemStar | InitialAttributeSpecification;
 
 InitialAttributeItemStar: {infer InitialAttributeItemStar} '*';
-InitialAttributeExpression: expression=Expression;
-InitialAttributeSpecification: '(' (star?='*' | expression=Expression) ')' item=InitialAttributeSpecificationIteration;
+InitialAttributeSpecification: ('(' (star?='*') ')' | expression=Expression) item=InitialAttributeSpecificationIteration?;
 
-InitialAttributeSpecificationIteration: InitialAttributeItemStar | InitialAttributeExpression | InitialAttributeSpecificationIterationValue;
+InitialAttributeSpecificationIteration: InitialAttributeItemStar | InitialAttributeSpecificationIterationValue;
 
 InitialAttributeSpecificationIterationValue: '(' items+=InitialAttributeItem (',' items+=InitialAttributeItem)* ')';
 
@@ -513,7 +499,43 @@ type OrdinalType = DefineOrdinalStatement;
 
 DeclaredVariable: name=ID;
 
-DeclarationAttribute: InitialAttribute | DateAttribute | HandleAttribute | DefinedAttribute | PictureAttribute | EnvironmentAttribute | DimensionsDataAttribute | ValueAttribute | ValueListFromAttribute | ValueListAttribute | ValueRangeAttribute | ReturnsAttribute | ComputationDataAttribute | EntryAttribute | LikeAttribute | TypeAttribute | OrdinalTypeAttribute;
+DefaultDeclarationAttribute:
+    InitialAttribute
+    | DateAttribute
+    | HandleAttribute
+    | DefinedAttribute
+    | PictureAttribute
+    | EnvironmentAttribute
+    | DimensionsDataAttribute
+    | DefaultValueAttribute
+    | ValueListFromAttribute
+    | ValueListAttribute
+    | ValueRangeAttribute
+    | ReturnsAttribute
+    | ComputationDataAttribute
+    | EntryAttribute
+    | LikeAttribute
+    | TypeAttribute
+    | OrdinalTypeAttribute;
+
+DeclarationAttribute:
+    InitialAttribute
+    | DateAttribute
+    | HandleAttribute
+    | DefinedAttribute
+    | PictureAttribute
+    | EnvironmentAttribute
+    | DimensionsDataAttribute
+    | ValueAttribute
+    | ValueListFromAttribute
+    | ValueListAttribute
+    | ValueRangeAttribute
+    | ReturnsAttribute
+    | ComputationDataAttribute
+    | EntryAttribute
+    | LikeAttribute
+    | TypeAttribute
+    | OrdinalTypeAttribute;
 
 DateAttribute: 'DATE' ('(' pattern=STRING_TERM ')')?;
 
@@ -537,9 +559,11 @@ ReturnsAttribute: 'RETURNS' '(' (attrs+=(ComputationDataAttribute | DateAttribut
 
 ComputationDataAttribute: type=DataAttributeType dimensions=Dimensions?;
 
-ValueAttribute: 'VALUE' '(' (items+=ValueAttributeItem (',' items+=ValueAttributeItem)* | value=Expression) ')';
+DefaultValueAttribute: 'VALUE' '(' (items+=DefaultValueAttributeItem (',' items+=DefaultValueAttributeItem)*) ')';
 
-ValueAttributeItem: attributes+=DeclarationAttribute+;
+ValueAttribute: 'VALUE' '(' (value=Expression) ')';
+
+DefaultValueAttributeItem: attributes+=DeclarationAttribute+;
 
 ValueListAttribute: 'VALUELIST' '(' (values+=Expression (',' values+=Expression)*)? ')';
 
@@ -628,9 +652,14 @@ ExpExpression infers Expression: PrimaryExpression ({infer ExpExpression.left=cu
 
 PrimaryExpression infers Expression: 
     Literal
-    | '(' Expression ')'
+    | ParenthesizedExpression
     | UnaryExpression
     | LocatorCall;
+
+// Performs special handling as a recursive descent parser otherwise cannot handle the 
+// special data-list type-3-DO loop
+// See also language reference pp. 301
+ParenthesizedExpression infers Expression: {infer Parenthesis} '(' value=Expression ('DO' do=DoType3<false>)? ')' ({infer Literal.multiplier=current} value=LiteralValue)?;
 
 MemberCall:
     element=ReferenceItem
@@ -650,9 +679,8 @@ LabelReference: label=[LabelPrefix:ID];
 
 UnaryExpression: op=('+' | '-' | '¬' | '^') expr=Expression;
 
-ConstantExpression: Literal;
-
-Literal: ('(' multiplier=NUMBER ')')? value=(StringLiteral | NumberLiteral);
+Literal: value=LiteralValue;
+LiteralValue: StringLiteral | NumberLiteral;
 
 StringLiteral: value=STRING_TERM;
 NumberLiteral: value=NUMBER;

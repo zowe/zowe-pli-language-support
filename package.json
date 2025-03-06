@@ -20,7 +20,7 @@
   "devDependencies": {
     "@types/node": "^18.19.70",
     "deepmerge": "^1.5.2",
-    "langium": "~3.3.1",
+    "langium": "~3.4.0",
     "prettier": "^3.4.2",
     "shx": "~0.3.4",
     "typescript": "~5.4.5",
