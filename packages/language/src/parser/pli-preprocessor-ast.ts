@@ -2,8 +2,15 @@
  * This file contains the abstract syntax tree for preprocessor statements and directives.
  */
 
+import { IToken } from "chevrotain";
+
 export interface PPAstNode {
     type: string;
+}
+
+export interface PPPliStatement extends PPAstNode {
+    type: 'pli';
+    tokens: IToken[];
 }
 
 export interface PPDirective extends PPAstNode {
@@ -33,7 +40,7 @@ export interface PPAssign extends PPAstNode {
 
 export interface PPString extends PPAstNode {
     type: 'string',
-    value: string;
+    value: IToken[];
 }
 
 export interface PPNumber extends PPAstNode {
@@ -42,22 +49,6 @@ export interface PPNumber extends PPAstNode {
 }
 
 export type PPExpression = PPString | PPNumber;
-
-// export interface PPCharacterLiteral extends PPAstNode {
-//     type: 'characterLiteral';
-//     value: string;
-// }
-
-// export interface PPFixedLiteral extends PPAstNode {
-//     type: 'fixedLiteral';
-//     value: number;
-// }
-
-// export interface PPLabeledStatement extends PPAstNode {
-//     type: 'labeledStatement';
-//     name: string;
-//     statement: PPStatement;
-// }
 
 export interface PPActivate extends PPAstNode {
     type: 'activate';
@@ -69,13 +60,22 @@ export interface PPDeactivate extends PPAstNode {
     variables: string[];
 }
 
+export interface PPIfStatement extends PPAstNode {
+    type: "if",
+    condition: PPExpression;
+    thenUnit: PPStatement;
+    elseUnit?: PPStatement;
+}
+
 export type PPStatement =
+  | PPPliStatement
   | PPActivate
   | PPDeactivate
   | PPDirective
   | PPSkip
   | PPDeclare
   | PPAssign
+  | PPIfStatement
 //  | PPIncludeStatement
 //  | PPLabeledStatement
   ;

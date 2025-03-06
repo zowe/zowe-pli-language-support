@@ -15,6 +15,9 @@ import { Pl1Services } from "../pli-module";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
+import { PliPreprocessorParser, PreprocessorError } from "./pli-preprocessor-parser";
+import { PliPreprocessorGenerator } from "./pli-preprocessor-generator";
+import { printProgram } from "./pli-preprocessor-instructions";
 
 /** 
  * Lexer for PL/I language. It orchestrates a margins processor and a preprocessor. 
@@ -23,11 +26,15 @@ import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
 export class Pl1Lexer implements LangiumLexer {
     private readonly marginsProcessor: MarginsProcessor;
     private readonly preprocessorLexer: PliPreprocessorLexer;
+    private readonly preprocessorParser: PliPreprocessorParser;
+    private readonly preprocessorGenerator: PliPreprocessorGenerator;
     private readonly preprocessorInterpreter: PliPreprocessorInterpreter;
 
     constructor(services: Pl1Services) {
         this.marginsProcessor = services.parser.MarginsProcessor;
         this.preprocessorLexer = services.parser.PreprocessorLexer;
+        this.preprocessorParser = services.parser.PreprocessorParser;
+        this.preprocessorGenerator = services.parser.PreprocessorGenerator;
         this.preprocessorInterpreter = services.parser.PreprocessorInterpreter;
     }
 
@@ -37,9 +44,13 @@ export class Pl1Lexer implements LangiumLexer {
 
     tokenize(printerText: string): LexerResult {
         const text = this.marginsProcessor.processMargins(printerText);
-        const { program, errors } = this.preprocessorLexer.tokenize(text);
+        const state = this.preprocessorParser.initializeState(text);
+        const statements = this.preprocessorParser.start(state);
+        const program = this.preprocessorGenerator.generateProgram(statements);
         const tokens: IToken[] = [];
         const hidden: IToken[] = [];
+        const errors: PreprocessorError[] = []; //TODO
+        printProgram(program);
         const output = this.preprocessorInterpreter.run(program, this.preprocessorLexer.idTokenType);
         for (const token of output) {
             if(token.tokenType.GROUP === 'hidden' || token.tokenType.GROUP === Lexer.SKIPPED) {

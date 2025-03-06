@@ -1,7 +1,10 @@
-import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective, PPActivate, PPDeactivate } from "./pli-preprocessor-ast";
+import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective, PPActivate, PPDeactivate, PPIfStatement } from "./pli-preprocessor-ast";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorParserState, PreprocessorParserState } from "./pli-preprocessor-parser-state";
 import { ILexingError, IToken } from "chevrotain";
+import { Pl1Services } from "../pli-module";
+import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
+import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 
 export class PreprocessorError extends Error implements ILexingError {
     private readonly token: IToken;
@@ -17,11 +20,35 @@ export class PreprocessorError extends Error implements ILexingError {
 }
 
 export class PliPreprocessorParser {
-    initializeState(tokens: IToken[]): PreprocessorParserState {
-        return new PliPreprocessorParserState(tokens);
+    private readonly lexer: PliPreprocessorLexer;
+
+    constructor(services: Pl1Services) {
+        this.lexer = services.parser.PreprocessorLexer;
     }
 
-    start(state: PreprocessorParserState): PPStatement|PreprocessorError {
+    initializeState(text: string): PreprocessorParserState {
+        return new PliPreprocessorParserState(this.lexer, text);
+    }
+
+    start(state: PreprocessorParserState): PPStatement[] {
+        const result: PPStatement[] = [];
+        while(!state.eof) {
+            if(state.isInProcedure() || state.canConsume(PreprocessorTokens.Percentage)) {
+                const statement = this.statement(state);
+                result.push(statement);
+            } else {
+                result.push({
+                    type: 'pli',
+                    tokens: state.consumeUntil(tk => tk.image === ';'),
+                });
+            }
+        }
+        return result;
+    }
+
+    statement(state: PreprocessorParserState): PPStatement {
+        state.consume(PreprocessorTokens.Percentage);
+        state.push('in-statement');
         try {
             switch (state.current?.tokenType) {
                 case PreprocessorTokens.Activate: return this.activateStatement(state);
@@ -29,16 +56,35 @@ export class PliPreprocessorParser {
                 case PreprocessorTokens.Declare: return this.declareStatement(state);
                 case PreprocessorTokens.Directive: return this.directive(state);
                 case PreprocessorTokens.Skip: return this.skipStatement(state);
-                //case PreprocessorTokens.Include: return this.includeStatement(state);
                 case PreprocessorTokens.Id: return this.assignmentStatement(state);
+                case PreprocessorTokens.If: return this.ifStatement(state);
             }
-        } catch(error) {
-            if(error instanceof PreprocessorError) {
-                return error;
-            }
+            throw new PreprocessorError("Unexpected token '"+state.current?.image+"'.", state.current!);
+        } finally {
+            state.pop();
         }
-        return new PreprocessorError('Unexpected state!', state.current!);
     }
+
+    ifStatement(state: PreprocessorParserState): PPIfStatement {
+        state.consume(PreprocessorTokens.If);
+        const condition = this.expression(state);
+        state.consume(PreprocessorTokens.Percentage);
+        state.consume(PreprocessorTokens.Then);
+        const thenUnit = this.statement(state);
+        let elseUnit: PPStatement|undefined = undefined;
+        if(state.canConsume(PreprocessorTokens.Percentage) && state.canConsume(PreprocessorTokens.Else, 2)) {
+            state.consume(PreprocessorTokens.Percentage);
+            state.consume(PreprocessorTokens.Else);
+            elseUnit = this.statement(state);
+        }
+        return {
+            type: 'if',
+            condition,
+            thenUnit,
+            elseUnit,
+        };
+    }
+
     deactivateStatement(state: PreprocessorParserState): PPDeactivate {
         state.consume(PreprocessorTokens.Deactivate);
         const variables: string[] = [];
@@ -85,16 +131,6 @@ export class PliPreprocessorParser {
         return scanMode;
     }
 
-    // includeStatement(state: PreprocessorParserState): PPStatement {
-    //     state.consume(PreprocessorTokens.Include);
-    //     const identifier = state.consume(PreprocessorTokens.Id).image;
-    //     state.consume(PreprocessorTokens.Semicolon);
-    //     return {
-    //         type: "includeStatement",
-    //         identifier
-    //     };
-    // }
-
     skipStatement(state: PreprocessorParserState): PPStatement {
         state.consume(PreprocessorTokens.Skip);
         let lineCount: number = 1;
@@ -102,6 +138,7 @@ export class PliPreprocessorParser {
             lineCount = parseInt(state.last!.image, 10);
         }
         state.consume(PreprocessorTokens.Semicolon);
+        state.advanceLines(lineCount+1);
         return {
             type: 'skip',
             //TODO numeric base of 10 ok?
@@ -122,6 +159,7 @@ export class PliPreprocessorParser {
         const left = state.consume(PreprocessorTokens.Id).image;
         state.consume(PreprocessorTokens.Eq);
         const right = this.expression(state);
+        state.consume(PreprocessorTokens.Semicolon);
         return {
             type: 'assign',
             name: left,
@@ -202,10 +240,6 @@ export class PliPreprocessorParser {
         };
     }
 
-    dimension(state: PreprocessorParserState) {
-        //TODO
-    }
-
     expression(state: PreprocessorParserState): PPExpression {
         if (state.canConsume(PreprocessorTokens.Number)) {
             const number = state.consume(PreprocessorTokens.Number);
@@ -216,12 +250,24 @@ export class PliPreprocessorParser {
         } else 
         if (state.canConsume(PreprocessorTokens.String)) {
             const character = state.consume(PreprocessorTokens.String);
+            const content = this.unpackCharacterValue(character.image);
+            const tokens = this.tokenizePurePliCode(content);
             return {
                 type: "string",
-                value: this.unpackCharacterValue(character.image)
+                value: tokens
             };
         }
         throw new PreprocessorError("Cannot handle this type of preprocessor expression yet!", state.current!);
+    }
+
+    private tokenizePurePliCode(content: string) {
+        const result: IToken[] = [];
+        const lexerState = new PliPreprocessorLexerState(content);
+        while(!lexerState.eof()) {
+            const tokens = this.lexer.tokenizePliTokensUntilSemicolon(lexerState);
+            result.push(...tokens);
+        }
+        return result;
     }
 
     private unpackCharacterValue(literal: string): string {

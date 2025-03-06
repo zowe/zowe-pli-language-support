@@ -11,6 +11,9 @@ export function tokenType(name: string, pattern: string | RegExp) {
 
 export const PreprocessorTokens = {
     Activate: tokenType("activate", /ACT(IVATE)?/yi),
+    If: tokenType("if", /IF/yi),
+    Then: tokenType("then", /THEN/yi),
+    Else: tokenType("else", /ELSE/yi),
     Deactivate: tokenType("deactivate", /DEACT(IVATE)?/yi),
     Declare: tokenType("declare", /DCL|DECLARE/yi),
     Builtin: tokenType("builtin", /BUILTIN/yi),
@@ -40,3 +43,5 @@ export const PreprocessorTokens = {
     Id,
     Number: tokenType("number", /[0-9]+/yi),
 };
+
+export const AllPreprocessorTokens = Object.values(PreprocessorTokens);
