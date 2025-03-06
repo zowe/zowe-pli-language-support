@@ -235,4 +235,25 @@ describe("PL/1 Lexer", () => {
             ";:;",
         ]);
     });
+
+    test('Simple IF-THEN-ELSE', () => {
+        expect(tokenize(`
+            %IF 1 %THEN
+              %A = 123;
+            %ELSE
+              %A = 456;
+            %ACTIVATE A;
+            dcl X fixed;
+            X = A;
+        `)).toStrictEqual([
+            "dcl:DCL",
+            "X:X",
+            "fixed:FIXED",
+            ";:;",
+            "X:X",
+            "=:=",
+            "123:NUMBER",
+            ";:;",
+        ]);
+    });
 });

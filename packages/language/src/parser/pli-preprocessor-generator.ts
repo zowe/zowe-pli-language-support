@@ -1,6 +1,6 @@
 import { IToken, TokenType, createTokenInstance } from "chevrotain";
 import { Pl1Services } from "../pli-module";
-import { Instructions, PPInstruction } from "./pli-preprocessor-instructions";
+import { Instructions, PPInstruction, Values } from "./pli-preprocessor-instructions";
 import { PPActivate, PPAssign, PPDeactivate, PPDeclaration, PPExpression, PPIfStatement, PPNumber, PPPliStatement, PPStatement, PPString } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 
@@ -71,8 +71,33 @@ export class PliPreprocessorGenerator {
     }
 
     handleIf(statement: PPIfStatement, program: PPInstruction[]) {
+        /** with else:                  without else:
+         *  PUSH condition              PUSH condition 
+         *  PUSH [TRUE]                 PUSH [TRUE]
+         *  BRANCHIFNEQ $else$          BRANCHIFNEQ $exit$
+         *  <thenStatement>             <thenStatement>
+         *  GOTO $exit$                 $exit$:   
+         *  $else$:
+         *      <elseStatement>
+         *  $exit$:                      
+         */
         this.handleExpression(statement.condition, program);
-        //TODO
+        program.push(Instructions.push(Values.True()));
+        if(statement.elseUnit) {
+            const $else$ = Instructions.branchIfNotEqual(-1);
+            program.push($else$);
+            this.handleStatement(statement.thenUnit, program);
+            const $exit$ = Instructions.goto(-1);
+            program.push($exit$);
+            $else$.address = program.length;
+            this.handleStatement(statement.elseUnit, program);
+            $exit$.address = program.length;
+        } else {
+            const $exit$ = Instructions.branchIfNotEqual(-1);
+            program.push($exit$);
+            this.handleStatement(statement.thenUnit, program);
+            $exit$.address = program.length;
+        }
     }
 
     handleDeactivate(statement: PPDeactivate, program: PPInstruction[]) {

@@ -1,6 +1,7 @@
-import { IToken } from "chevrotain";
+import { createTokenInstance, IToken } from "chevrotain";
 import { ProcedureScope, ScanMode } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
+import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 
 export interface PPInstructionBase {
     type: string;
@@ -9,7 +10,7 @@ export interface PPInstructionBase {
 export interface PPIActivate extends PPInstructionBase {
     type: 'activate';
     name: string;
-    scanMode: ScanMode|undefined;
+    scanMode: ScanMode | undefined;
 }
 
 export interface PPIDeactivate extends PPInstructionBase {
@@ -47,10 +48,10 @@ export interface PPIPrint extends PPInstructionBase {
     type: 'print';
 }
 
-// export interface PPGoto extends PPInstructionBase {
-//     type: 'goto';
-//     newCounter: number;
-// }
+export interface PPIGoto extends PPInstructionBase {
+    type: 'goto';
+    address: number;
+}
 
 // export interface PPCompute extends PPInstructionBase {
 //     //operation on FIXED
@@ -59,16 +60,23 @@ export interface PPIPrint extends PPInstructionBase {
 //     //TODO more?
 // }
 
+export interface PPIBranchIfNotEqual extends PPInstructionBase {
+    type: 'branchIfNEQ',
+    address: number;
+}
+
 export type PPInstruction =
-  | PPIScan
-  | PPIPrint
-  | PPIActivate
-  | PPIDeactivate
-  | PPISet
-  | PPIPush
-  | PPIConcat
-  | PPIHalt
-  ;
+    | PPIScan
+    | PPIPrint
+    | PPIActivate
+    | PPIDeactivate
+    | PPISet
+    | PPIPush
+    | PPIConcat
+    | PPIBranchIfNotEqual
+    | PPIGoto
+    | PPIHalt
+    ;
 
 export type PPProgram = PPInstruction[];
 
@@ -83,6 +91,18 @@ export type PPDeclaration = {
     scope: ProcedureScope;
     scanMode: ScanMode;
 });
+
+export namespace Values {
+    export function Number(value: number): IToken[] {
+        return [createTokenInstance(PreprocessorTokens.Number, value.toString(), 0, 0, 0, 0, 0, 0)];
+    }
+    export function True(): IToken[] {
+        return Number(1);
+    }
+    export function False(): IToken[] {
+        return Number(0);
+    }
+}
 
 export namespace Instructions {
     export function scan(): PPIScan {
@@ -130,38 +150,55 @@ export namespace Instructions {
             type: "halt",
         };
     }
+    export function branchIfNotEqual(address: number): PPIBranchIfNotEqual {
+        return {
+            type: "branchIfNEQ",
+            address
+        };
+    }
+    export function goto(address: number): PPIGoto {
+        return {
+            type: "goto",
+            address
+        };
+    }
 }
 
 export function printProgram(program: PPInstruction[]) {
     const programText: string[] = [];
-    for (const instruction of program) {
-            programText.push(instruction.type.toUpperCase());
-            switch (instruction.type) {
-                case 'activate':
-                    programText.push(...' ', instruction.name);
-                    if(instruction.scanMode) {
-                        programText.push(...' ', instruction.scanMode.toUpperCase());
-                    }
-                    break;
-                case 'deactivate':
-                    programText.push(...' ', instruction.name);
-                    break;
-                case 'concat':
-                case 'scan':
-                case 'print':
-                case 'halt':
-                    //nothing to print
-                    break;
-                case 'set':
-                    programText.push(...' ', instruction.name);
-                    break;
-                case 'push':
-                    programText.push(...' ', '[', instruction.value.map(tk => tk.image+':'+tk.tokenType.name).join(', '), ']');
-                    break;
-                default:
-                    assertUnreachable(instruction);
-            }
-            programText.push('\n');
-    }
+    program.forEach((instruction, index) => {
+        programText.push(index.toString().padStart(4, ' ')+': ');
+        programText.push(instruction.type.toUpperCase());
+        switch (instruction.type) {
+            case 'activate':
+                programText.push(...' ', instruction.name);
+                if (instruction.scanMode) {
+                    programText.push(...' ', instruction.scanMode.toUpperCase());
+                }
+                break;
+            case 'deactivate':
+                programText.push(...' ', instruction.name);
+                break;
+            case 'concat':
+            case 'scan':
+            case 'print':
+            case 'halt':
+                //nothing to print
+                break;
+            case 'set':
+                programText.push(...' ', instruction.name);
+                break;
+            case 'push':
+                programText.push(...' ', '[', instruction.value.map(tk => tk.image + ':' + tk.tokenType.name).join(', '), ']');
+                break;
+            case 'goto':
+            case 'branchIfNEQ':
+                programText.push(...' ', '@', instruction.address.toString());
+                break;
+            default:
+                assertUnreachable(instruction);
+        }
+        programText.push('\n');
+    });
     console.log(programText.join(""));
 }

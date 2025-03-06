@@ -192,8 +192,31 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
                 this.goTo(prev => prev + 1);
                 break;
             }
+            case 'goto': {
+                this.goTo(() => instruction.address);
+                break;
+            }
+            case 'branchIfNEQ':
+                const rhs = this.plainState.stack.pop()!;
+                const lhs = this.plainState.stack.pop()!;
+                if(this.areEqual(lhs, rhs)) {
+                    this.goTo(prev => prev + 1);
+                } else {
+                    this.goTo(() => instruction.address);
+                }
         }
     }
+
+    private areEqual(lhs: IToken[], rhs: IToken[]): boolean {
+        if(lhs.length !== rhs.length) {
+            return false;
+        }
+        return lhs.every((lv, index) => {
+            const rv = rhs[index];
+            return lv.image === rv.image && lv.tokenType.name.toLowerCase() === rv.tokenType.name.toLowerCase();
+        });
+    }
+
     private concat(lhs: IToken[], rhs: IToken[]): IToken[] {
         if(lhs.length === 0) {
             return rhs;
