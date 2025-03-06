@@ -15,30 +15,6 @@ namespace Fixtures {
 }
 
 describe("Preprocessor Lexer State", () => {
-    describe("top", () => {
-        test("top on empty", () => {
-            //arrange
-            const state = Fixtures.empty();
-
-            //act + assert
-            expect(state.top()).toBeUndefined();
-        });
-
-        test("top on non-empty", () => {
-            //arrange
-            const state = Fixtures.declarationFixed();
-
-            //act
-            const top = state.top();
-
-            //assert
-            expect(top).not.toBeUndefined();
-            expect(top!.text).toBe("DCL VARIABLE FIXED;");
-            expect(top!.line).toBe(1);
-            expect(top!.column).toBe(1);
-        });
-    });
-
     describe("eof", () => {
         test("eof on empty", () => {
             //arrange

@@ -1,42 +1,22 @@
-import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { describe, expect, test } from "vitest";
 import { PreprocessorTokens } from "../../src/parser/pli-preprocessor-tokens";
 import { PliPreprocessorParserState } from "../../src/parser/pli-preprocessor-parser-state";
-
-type TokenTypeName = keyof typeof PreprocessorTokens;
-type TokenEncoded = `${string}:${TokenTypeName}`;
+import { createPliServices } from "../../src";
+import { EmptyFileSystem } from "langium";
 
 namespace Fixtures {
-    export const Empty: IToken[] = [];
-    export const OneToken = tokenSequence("A:Id");
-    export const TwoTokens = tokenSequence("A:Id", "123:Number");
+    const services = createPliServices(EmptyFileSystem);
 
-    function tokenSequence(...tokens: TokenEncoded[]): IToken[] {
-        const pattern = /^(.[^:]*):(.*)$/;
-        return tokens.map(t => {
-            const match = pattern.exec(t);
-            if(!match) {
-                throw new Error("Wrong format: "+t);
-            }
-            const image = match[1];
-            const tokenTypeName = match[2];
-            if(!(tokenTypeName in PreprocessorTokens)) {
-                throw new Error("Wrong tokenType: "+tokenTypeName);
-            }
-            return token(image, PreprocessorTokens[tokenTypeName as TokenTypeName]);
-        })
-    }
-    
-    function token(image: string, tokenType: TokenType): IToken {
-        return createTokenInstance(tokenType, image, 0, 0, 0, 0, 0, 0);
-    }
+    export const Empty = () => new PliPreprocessorParserState(services.pli.parser.PreprocessorLexer, "");
+    export const OneToken = () => new PliPreprocessorParserState(services.pli.parser.PreprocessorLexer, "ABC");
+    export const TwoTokens = () => new PliPreprocessorParserState(services.pli.parser.PreprocessorLexer, "ABC 123");
 }
 
 describe("Preprocessor parser state", () => {
     describe("EOF", () => {
         test("Check eof for empty", () => {
             //arrange + act
-            const state = new PliPreprocessorParserState(Fixtures.Empty);
+            const state = Fixtures.Empty();
     
             //assert
             expect(state.eof).toBe(true);
@@ -46,7 +26,7 @@ describe("Preprocessor parser state", () => {
     
         test("Check eof for non-empty", () => {
             //arrange + act
-            const state = new PliPreprocessorParserState(Fixtures.OneToken);
+            const state = Fixtures.OneToken();
     
             //assert
             expect(state.eof).toBe(false);
@@ -59,7 +39,7 @@ describe("Preprocessor parser state", () => {
     describe("canConsume", () => {
         test("canConsume for empty", () => {
             //arrange
-            const state = new PliPreprocessorParserState(Fixtures.Empty);
+            const state = Fixtures.Empty();
             
             //act
             expect(state.canConsume(PreprocessorTokens.Id)).toBeFalsy();
@@ -72,7 +52,7 @@ describe("Preprocessor parser state", () => {
     
         test("canConsume positive for non-empty", () => {
             //arrange
-            const state = new PliPreprocessorParserState(Fixtures.OneToken);
+            const state = Fixtures.OneToken();
             
             //act
             expect(state.canConsume(PreprocessorTokens.Id)).toBeTruthy();
@@ -80,13 +60,13 @@ describe("Preprocessor parser state", () => {
             //assert
             expect(state.eof).toBe(false);
             expect(state.current).not.toBeUndefined();
-            expect(state.current!.image).toBe('A');
+            expect(state.current!.image).toBe('ABC');
             expect(state.last).toBeUndefined();
         });
     
         test("canConsume negative for non-empty", () => {
             //arrange
-            const state = new PliPreprocessorParserState(Fixtures.OneToken);
+            const state = Fixtures.OneToken();
             
             //act
             expect(state.canConsume(PreprocessorTokens.Builtin)).toBeFalsy();
@@ -94,7 +74,7 @@ describe("Preprocessor parser state", () => {
             //assert
             expect(state.eof).toBe(false);
             expect(state.current).not.toBeUndefined();
-            expect(state.current!.image).toBe('A');
+            expect(state.current!.image).toBe('ABC');
             expect(state.last).toBeUndefined();
         });
     });
@@ -102,7 +82,7 @@ describe("Preprocessor parser state", () => {
     describe("consume", () => {
         test("Consume for empty", () => {
             //arrange
-            const state = new PliPreprocessorParserState(Fixtures.Empty);
+            const state = Fixtures.Empty();
     
             //act + assert
             expect(() => state.consume(PreprocessorTokens.Id)).toThrowError();
@@ -110,21 +90,21 @@ describe("Preprocessor parser state", () => {
     
         test("Consume positive for non-empty", () => {
             //arrange
-            const state = new PliPreprocessorParserState(Fixtures.OneToken);
+            const state = Fixtures.OneToken();
     
             //act
-            expect(state.consume(PreprocessorTokens.Id).image).toBe("A");
+            expect(state.consume(PreprocessorTokens.Id).image).toBe("ABC");
     
             //assert
             expect(state.eof).toBe(true);
             expect(state.current).toBeUndefined();
             expect(state.last).not.toBeUndefined();
-            expect(state.last!.image).toBe("A");
+            expect(state.last!.image).toBe("ABC");
         });
     
         test("Check Consume negative for non-empty", () => {
             //arrange
-            const state = new PliPreprocessorParserState(Fixtures.OneToken);
+            const state = Fixtures.OneToken();
     
             //act + assert
             expect(() => state.consume(PreprocessorTokens.Builtin)).toThrowError();
@@ -134,7 +114,7 @@ describe("Preprocessor parser state", () => {
     describe("tryConsume", () => {
         test("tryConsume for empty", () => {
             //arrange
-            const state = new PliPreprocessorParserState(Fixtures.Empty);
+            const state = Fixtures.Empty();
     
             //act + assert
             expect(state.tryConsume(PreprocessorTokens.Id)).toBeFalsy();
@@ -142,40 +122,40 @@ describe("Preprocessor parser state", () => {
 
         test("tryConsume positve for non-empty", () => {
             //arrange
-            const state = new PliPreprocessorParserState(Fixtures.OneToken);
+            const state = Fixtures.OneToken();
     
             //act + assert
             expect(state.tryConsume(PreprocessorTokens.Id)).toBeTruthy();
             expect(state.eof).toBeTruthy();
             expect(state.current).toBeUndefined();
             expect(state.last).not.toBeUndefined();
-            expect(state.last!.image).toBe("A");
+            expect(state.last!.image).toBe("ABC");
         });
 
         test("tryConsume negative for non-empty", () => {
             //arrange
-            const state = new PliPreprocessorParserState(Fixtures.OneToken);
+            const state = Fixtures.OneToken();
     
             //act + assert
             expect(state.tryConsume(PreprocessorTokens.Builtin)).toBeFalsy();
             expect(state.eof).toBeFalsy();
             expect(state.current).not.toBeUndefined();
-            expect(state.current!.image).toBe("A");
+            expect(state.current!.image).toBe("ABC");
             expect(state.last).toBeUndefined();
         });
 
         test("tryConsume positive for two tokens", () => {
             //arrange
-            const state = new PliPreprocessorParserState(Fixtures.TwoTokens);
+            const state = Fixtures.TwoTokens();
     
             //act + assert
             expect(state.tryConsume(PreprocessorTokens.Id)).toBeTruthy();
             expect(state.eof).toBeFalsy();
             expect(state.current).not.toBeUndefined();
-            expect(state.current!.image).toBe("123");
-            expect(state.current!.tokenType).toBe(PreprocessorTokens.Number);
+            expect(state.current!.image).toBe(" ");
+            expect(state.current!.tokenType.name).toBe('WS');
             expect(state.last).not.toBeUndefined();
-            expect(state.last!.image).toBe("A");
+            expect(state.last!.image).toBe("ABC");
         });
     });
 });

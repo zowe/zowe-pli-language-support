@@ -90,7 +90,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
             }
         }
         const current = this.index + k >= this.tokens.length ? undefined : this.tokens[this.index + k]
-        return current?.tokenType === tokenType;
+        return current?.tokenType.name.toLowerCase() === tokenType.name.toLowerCase();
     }
 
     private fetchNextChunkOfTokens() {
