@@ -2,27 +2,31 @@
 
 ```mermaid
 flowchart TB
+
     subgraph "PliLexer"
-        MarginsProcessor  --> what1[/text without margins/]
-        --> PreprocessorLexer --> |1: for every preprocessor instruction| PreprocessorParser
-        PreprocessorParser -->|2: return instruction| PreprocessorLexer
-        PreprocessorLexer -->|3: interpret instruction| PreprocessorLexer
-        PreprocessorLexer -->|4: generate interpreter instructions| I3
-        PreprocessorInterpreter --> I4
-        I3[/instructions/] --> PreprocessorInterpreter
-        
+        MarginsProcessor  --> I2[/text without margins/]
+        I2 --> PreprocessorParser
+        PreprocessorParser -->|1.request tokens| PreprocessorLexer
+        PreprocessorLexer -->|2.returns tokens| PreprocessorParser
+        PreprocessorParser -->|3.returns program| I3[/statements/]
+        I3 --> PreprocessorGenerator
+        PreprocessorGenerator -->|4.returns instructions| I4[/instructions/]
+        I4 --> PreprocessorInterpreter
     end
+
+    PreprocessorInterpreter -->|5.interprets program| I5[/tokens/]
+    I5 --> PliParser
     I1[/text/] --> MarginsProcessor
-    I4[/tokens/] --> PliParser
 ```
 
-The preprocessor is a tool that allows to modify the source code before it is parsed. So, the preprocessor returns a stream of tokens in the end, without reflecting the preprocessor instructions. The preprocessor instructions get expanded and produce more tokens.
+The preprocessor is a tool that allows to modify the source code before it is parsed. So, the preprocessor returns a stream of tokens in the end. These tokens are then parsed by the PL/I parser.
 
 ## Terms and concepts
 
 * `MarginsProcessor`: a processor that removes margins from the text. The text is replaced with spaces to have the same positions for the remaining text.
-* `PreprocessorLexer`: this concept gets the source code from the margins processor and returns a program as a list of instructions. TODO should be called Generator?
-* `PreprocessorParser`: this parser gets chunks of token sets and returns a single preprocessor statement.
+* `PreprocessorLexer`: this concept gets the source code from the margins processor and returns a list of tokens that represent the preprocessor statements or PL/I source code.
+* `PreprocessorParser`: this parser asks the lexer for tokens and converts them to preprocessor statements. One of these statement types actually represents pure PL/I code.
+* `PreprocessorGenerator`: a tool that generates instructions from the preprocessor statements. These instructions are used in a small virtual machine that interprets the preprocessor program.
 * `PreprocessorInstruction`: a single preprocessor instruction that is returned by the preprocessor lexer, it instructs the `prepocessor interpreter`.
 * `PreprocessorInterpreter`: a tool that interprets the preprocessor instructions and generates new tokens.
 * `PliLexer`: from the ouside: gets text and returns tokens.
@@ -34,19 +38,21 @@ The preprocessor is a tool that allows to modify the source code before it is pa
 
 The preprocessor gets the text from the `MarginsProcessor`. It cleans up the first character of the text and all characters from the 72th column.
 
-### Lexing the margin-processed text
+### Parsing preprocessor statements
 
-The margin-processed text is then lexed IN CHUNKS by the preprocessor lexer. 
+The preprocessor parser works close together with the preprocessor lexer.
 
-That means, that we lex the text from % to the first semicolon. In that case, we handle this chunk of tokens as a preprocessor statement.
+If all hidden tokens from the input were skipped, we look at the current token.
+If the current token is a percentage, we know that we have a preprocessor statement.
+If the current token is not a percentage, we know that we have a PL/I statement.
 
-If the start was not a %, we lex the text until the next semicolon as well, but this chunk is handled as normal PL/1 tokens.
+Percentage sign or not: we tokenize the input until the first semicolon. The parser then returns a single preprocessor statement. But the parser also decides to read more tokens via the lexer if the statement is not complete.
 
-### Parsing the preprocessor statement
+### Generating instructions
 
-We get a chunk of preprocessor tokens and parse them. The parser returns a single preprocessor statement. The statement is then handled by the lexer again to produce interpreter instructions for the interpreter program.
+After the preprocessor parser has returned a list of preprocessor statements, the preprocessor generator generates instructions from these statements. This has the advantage that we have a linear list of instructions that can be addressed via index to perform branching operations.
 
-#### Example
+#### Example for generating instructions
 
 ```plain
 %dcl A fixed;
@@ -55,6 +61,7 @@ We get a chunk of preprocessor tokens and parse them. The parser returns a singl
 
 PUSH []
 SET A
+ACTIVATE A RESCAN
 ```
 
 The entire set of instructions and the corresponding stack machine are described below.
@@ -75,11 +82,11 @@ It is a simple loop of:
 * move the program counter to the next instruction
 * repeat until HALT was detected
 
-## The preprocessor stack machine
+## The preprocessor virtual machine
 
-The preprocessor stack machine is a simple stack machine that executes the preprocessor instructions. The instructions are generated by the preprocessor lexer and are interpreted by the preprocessor interpreter.
+The preprocessor virtual machine is a stack machine that executes the preprocessor instructions. The instructions are generated by the preprocessor generator from the preprocessor statements and are interpreted by the preprocessor interpreter.
 
-A program is just a readonly list of instructions.
+A program is just a immutable list of instructions.
 
 The machine has four stateful components:
 
@@ -225,6 +232,39 @@ Imagine you execute this instruction: `CONCAT;`.
 | [B]:[A]:S | [AB]:S |
 | [1,2,3]:[A,+,B]:S | [A,+,B,1,2,3]:S |
 
+#### Instruction `BRANCHIFNEQ`
+
+```plain
+BRANCHIFNEQ <address>;
+```
+
+Pops the two topmost elements from the stack. If they are not equal, the program counter gets set to the address.
+
+##### Example Branchifneq
+
+Imagine you execute this instruction: `BRANCHIFNEQ 3;`.
+
+| Before | After |
+|--------|-------|
+| [1]:[0]:S and PC=123 | S and PC=3 |
+| [1]:[1]:S and PC=123 | S and PC=124 |
+
+#### Instruction `GOTO`
+
+```plain
+GOTO <address>;
+```
+
+Sets the program counter to the address.
+
+##### Example Goto
+
+Imagine you execute this instruction: `GOTO 3;`.
+
+| Before | After |
+|--------|-------|
+| S and PC=123 | S and PC=3 |
+
 #### Instruction `HALT`
 
 ```plain
@@ -232,3 +272,105 @@ HALT; //no parameters
 ```
 
 Halts the machine.
+
+### Example programs
+
+#### Example without preprocessor statements
+
+```plain
+ dcl A fixed bin(31);
+```
+
+Translation:
+
+```plain
+   0: PUSH [dcl:DCL,  :WS, A:A,  :WS, fixed:FIXED,  :WS, bin:BIN, (:(, 31:NUMBER, ):), ;:;]
+   1: SCAN
+   2: PRINT
+   3: HALT
+```
+
+#### Example with preprocessor statements
+
+```plain
+%dcl A char;
+%A = 'B';
+dcl A%C fixed bin(31);
+```
+
+Translation:
+
+```plain
+   0: PUSH []
+   1: SET A
+   2: ACTIVATE A RESCAN
+   3: PUSH [B:B]
+   4: SET A
+   5: PUSH [dcl:DCL,  :WS, A:A]
+   6: SCAN
+   7: PUSH [C:C,  :WS, fixed:FIXED,  :WS, bin:BIN, (:(, 31:NUMBER, ):), ;:;]
+   8: SCAN
+   9: CONCAT
+  10: SCAN
+  11: PRINT
+  12: HALT
+```
+
+#### Example with preprocessor variable concatenation
+
+```plain
+%dcl A char;
+%A = 'B';
+dcl A%C fixed bin(31);
+```
+
+Translation:
+
+```plain
+   0: PUSH []
+   1: SET A
+   2: ACTIVATE A RESCAN
+   3: PUSH [B:B]
+   4: SET A
+   5: PUSH [dcl:DCL,  :WS, A:A]
+   6: SCAN
+   7: PUSH [C:C,  :WS, fixed:FIXED,  :WS, bin:BIN, (:(, 31:NUMBER, ):), ;:;]
+   8: SCAN
+   9: CONCAT
+  10: SCAN
+  11: PRINT
+  12: HALT
+```
+
+#### Example IF-THEN-ELSE
+
+```plain
+ %IF 1 %THEN
+    %A = 123;
+%ELSE
+    %A = 456;
+%ACTIVATE A;
+dcl X fixed;
+X = A;
+```
+
+will be transplated to:
+
+```plain
+   0: PUSH [1:NUMBER]
+   1: PUSH [1:number]
+   2: BRANCHIFNEQ @6
+   3: PUSH [123:NUMBER]
+   4: SET A
+   5: GOTO @8
+   6: PUSH [456:NUMBER]
+   7: SET A
+   8: ACTIVATE A
+   9: PUSH [dcl:DCL,  :WS, X:X,  :WS, fixed:FIXED, ;:;]
+  10: SCAN
+  11: PRINT
+  12: PUSH [X:X,  :WS, =:=,  :WS, A:A, ;:;]
+  13: SCAN
+  14: PRINT
+  15: HALT
+```
