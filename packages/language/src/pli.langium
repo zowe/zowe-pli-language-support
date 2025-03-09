@@ -28,9 +28,9 @@ ConditionPrefix: ('(' items+=ConditionPrefixItem ')' ':')+;
 ConditionPrefixItem: conditions+=Condition (',' conditions+=Condition)*;
 
 Exports:
-    'EXPORTS' '(' (all?='*' | (procedures+=FeatureID (',' procedures+=FeatureID)*)) ')';
+    'EXPORTS' '(' (all?='*' | (procedures+=ID (',' procedures+=ID)*)) ')';
 
-Reserves: 'RESERVES' '(' (all?='*' | (variables+=FeatureID (',' variables+=FeatureID)*)) ')';
+Reserves: 'RESERVES' '(' (all?='*' | (variables+=ID (',' variables+=ID)*)) ')';
 
 // TODO refine based on p. 126
 Options: 'OPTIONS' '(' items+=OptionsItem (','? items+=OptionsItem)* ')';
@@ -45,7 +45,7 @@ LinkageOptionsItem: 'LINKAGE' '(' value=('CDECL' | 'OPTLINK' | 'STDCALL' | 'SYST
 
 CMPATOptionsItem: 'CMPAT' '(' value=('V1' | 'V2' | 'V3') ')';
 
-NoMapOptionsItem: type=('NOMAP' | 'NOMAPIN' | 'NOMAPOUT') ('(' (parameters+=FeatureID (',' parameters+=FeatureID)*)? ')')?;
+NoMapOptionsItem: type=('NOMAP' | 'NOMAPIN' | 'NOMAPOUT') ('(' (parameters+=ID (',' parameters+=ID)*)? ')')?;
 
 SimpleOptionsItem: value=(
     // BEGIN/PACKAGE statement
@@ -79,7 +79,7 @@ ProcedureStatement:
 
 ScopeAttribute returns string: ('STATIC' | 'DYNAMIC');
 
-LabelPrefix: name=FeatureID ':';
+LabelPrefix: name=ID ':';
 
 EntryStatement:
     'ENTRY'
@@ -121,10 +121,12 @@ AllocatedVariable: level=NUMBER? var=ReferenceItem attribute=AllocateAttribute?;
 
 AllocateAttribute: AllocateDimension
     | AllocateType
-    | AllocateLocationReference
+    | AllocateLocationReferenceIn
+    | AllocateLocationReferenceSet
     | InitialAttribute;
 
-AllocateLocationReference: ('IN' '(' area=LocatorCall ')' ('SET' '(' locatorVariable=LocatorCall ')')? | 'SET' '(' locatorVariable=LocatorCall ')');
+AllocateLocationReferenceIn: 'IN' '(' area=LocatorCall ')';
+AllocateLocationReferenceSet: 'SET' '(' locatorVariable=LocatorCall ')';
 
 AllocateDimension: dimensions=Dimensions;
 
@@ -166,7 +168,7 @@ DefaultExpressionPart: 'DESCRIPTORS' expression=DefaultAttributeExpression | ('R
 
 DefaultRangeIdentifiers: (identifiers+=('*' | DefaultRangeIdentifierItem) (',' identifiers+=('*' | DefaultRangeIdentifierItem))*);
 
-DefaultRangeIdentifierItem: from=FeatureID (':' to=FeatureID)?;
+DefaultRangeIdentifierItem: from=ID (':' to=ID)?;
 
 DefaultAttributeExpression: items+=DefaultAttributeExpressionNot ((operators+=('AND' | 'OR') items+=DefaultAttributeExpressionNot)*)?;
 
@@ -199,7 +201,7 @@ DefaultAttribute returns string:
 
 ;
 
-DefineAliasStatement: ('DEFINE' | xDefine?='XDEFINE') 'ALIAS' name=FeatureID (attributes+=DeclarationAttribute (','? attributes+=DeclarationAttribute)*)? ';';
+DefineAliasStatement: ('DEFINE' | xDefine?='XDEFINE') 'ALIAS' name=ID (attributes+=DeclarationAttribute (','? attributes+=DeclarationAttribute)*)? ';';
 
 DefineOrdinalStatement:
     ('DEFINE' | xDefine?='XDEFINE') 'ORDINAL' name=FQN
@@ -211,11 +213,11 @@ DefineOrdinalStatement:
 
 OrdinalValueList: members+=OrdinalValue (',' members+=OrdinalValue)*;
 
-OrdinalValue: name=FeatureID ('VALUE'  '(' value=NUMBER ')')?;
+OrdinalValue: name=ID ('VALUE'  '(' value=NUMBER ')')?;
 
 DefineStructureStatement: ('DEFINE' | xDefine?='XDEFINE') ('STRUCTURE'|'STRUCT') level=NUMBER name=FQN (union?='UNION')? (',' substructures+=SubStructure)* ';';
 
-SubStructure: level=NUMBER name=FeatureID attributes+=DeclarationAttribute*;
+SubStructure: level=NUMBER name=ID attributes+=DeclarationAttribute*;
 
 DelayStatement: 'DELAY' '(' delay=Expression ')' ';';
 
@@ -231,7 +233,7 @@ DisplayStatement: 'DISPLAY' '(' expression=Expression ')'
 DoStatement:
     'DO'
     // Note: DoType1 does nothing
-    (DoType2 | DoType3<true>)? ';'
+    (doType2=DoType2 | doType3=DoType3<true>)? ';'
         statements+=Statement*
     end=EndStatement ';';
 
@@ -260,7 +262,7 @@ ExitStatement: {infer ExitStatement} 'EXIT' ';';
 
 FetchStatement: 'FETCH' entries+=FetchEntry (',' entries+=FetchEntry)* ';';
 
-FetchEntry: name=FeatureID ('SET' '(' set=LocatorCall ')')? ('TITLE' '(' title=Expression ')')?;
+FetchEntry: name=ID ('SET' '(' set=LocatorCall ')')? ('TITLE' '(' title=Expression ')')?;
 
 FlushStatement: 'FLUSH' 'FILE' '(' file=(LocatorCall | '*') ')' ';';
 
@@ -296,7 +298,7 @@ LineFormatItem: 'LINE' '(' lineNumber=Expression ')';
 
 PageFormatItem: {infer PageFormatItem} 'PAGE';
 
-RFormatItem: 'R' '(' labelReference=FeatureID ')';
+RFormatItem: 'R' '(' labelReference=ID ')';
 
 SkipFormatItem: 'SKIP' ('(' skip=Expression ')')?;
 
@@ -307,6 +309,7 @@ XFormatItem: 'X' '(' width=Expression ')';
 FreeStatement: 'FREE' references+=LocatorCall (',' references+=LocatorCall)* ';';
 
 GetStatement: 'GET' (
+    // The specifications can appear in any order
     {infer GetFileStatement} specifications+=(GetFile|GetCopy|GetSkip|DataSpecificationOptions)+
     |
     {infer GetStringStatement} 'STRING' '(' expression=Expression ')' dataSpecification=DataSpecificationOptions
@@ -314,7 +317,7 @@ GetStatement: 'GET' (
 
 GetFile: 'FILE' '(' file=Expression ')';
 
-GetCopy: 'COPY' ('(' /* TODO REFERENCE */ copyReference=FeatureID ')')?;
+GetCopy: 'COPY' ('(' /* TODO REFERENCE */ copyReference=ID ')')?;
 
 GetSkip: 'SKIP' ('(' skipExpression=Expression ')')?;
 
@@ -333,12 +336,15 @@ LeaveStatement: 'LEAVE' label=LabelReference? ';';
 LineDirective: '%LINE' ('(' line=NUMBER ',' file=STRING_TERM ')') ';';
 
 LocateStatement: 
-    'LOCATE' variable=LocatorCall 
-    'FILE' '(' file=ReferenceItem ')' 
-    ('SET' '(' set=LocatorCall /* TODO Pointer-Reference? */ ')')? 
-    ('KEYFROM' '(' keyfrom=Expression ')')?
+    'LOCATE' variable=LocatorCall
+    // These can appear in any order
+    arguments+=(LocateStatementFile | LocateStatementSet | LocateStatementKeyFrom)*
     ';'
 ;
+
+LocateStatementFile: 'FILE' '(' file=ReferenceItem ')';
+LocateStatementSet: 'SET' '(' set=LocatorCall ')';
+LocateStatementKeyFrom: 'KEYFROM' '(' keyfrom=Expression ')';
 
 NoPrintDirective: {infer NoPrintDirective} '%NOPRINT' ';';
 
@@ -363,23 +369,33 @@ KeywordCondition: keyword=(
     | 'ZERODIVIDE' | 'ZDIV'
 );
 
-NamedCondition: 'CONDITION' '(' name=FeatureID ')';
+NamedCondition: 'CONDITION' '(' name=ID ')';
 
 FileReferenceCondition: keyword=('ENDFILE' | 'ENDPAGE'| 'KEY'|'NAME'|'RECORD'|'TRANSMIT'|'UNDEFINEDFILE'|'UNDF') ('(' fileReference=ReferenceItem ')')?;
 
 OpenStatement: 'OPEN' options+=OpenOptionsGroup (',' options+=OpenOptionsGroup)* ';';
 
-OpenOptionsGroup:
-    'FILE' '(' file=ReferenceItem ')'
-    (stream?='STREAM' | record?='RECORD')?
-    (input?='INPUT' | output?='OUTPUT' | update?='UPDATE')?
-    ((sequential?=('SEQUENTIAL'|'SEQL') | direct?='DIRECT')? (unbuffered?=('UNBUFFERED'|'UNBUF') | buffered?=('BUF'|'BUFFERED'))?)?
-    keyed?='KEYED'?
-    print?='PRINT'?
-    ('TITLE' '(' title=Expression ')')?
-    ('LINESIZE' '(' lineSize=Expression ')')?
-    ('PAGESIZE' '(' pageSize=Expression ')')?
-;
+OpenOptionsGroup: options+=(
+    OpenOptionsFile 
+    | OpenOptionsStream 
+    | OpenOptionsAccess
+    | OpenOptionsBuffering
+    | OpenOptionsKeyed
+    | OpenOptionsPrint
+    | OpenOptionsTitle
+    | OpenOptionsLineSize
+    | OpenOptionsPageSize
+);
+
+OpenOptionsFile: 'FILE' '(' file=ReferenceItem ')';
+OpenOptionsStream: stream?='STREAM' | record?='RECORD';
+OpenOptionsAccess: input?='INPUT' | output?='OUTPUT' | update?='UPDATE';
+OpenOptionsBuffering: (sequential?=('SEQUENTIAL'|'SEQL') | direct?='DIRECT') (unbuffered?=('UNBUFFERED'|'UNBUF') | buffered?=('BUF'|'BUFFERED'))?;
+OpenOptionsKeyed: keyed?='KEYED';
+OpenOptionsPrint: print?='PRINT';
+OpenOptionsTitle: 'TITLE' '(' title=Expression ')';
+OpenOptionsLineSize: 'LINESIZE' '(' lineSize=Expression ')';
+OpenOptionsPageSize: 'PAGESIZE' '(' pageSize=Expression ')';
 
 PageDirective: {infer PageDirective} '%PAGE' ';';
 
@@ -391,7 +407,7 @@ ProcessDirective: ('*PROCESS' | '%PROCESS') (compilerOptions+=CompilerOptions ('
 
 CompilerOptions: value='TODO';
 
-ProcincDirective: ('%PROCINC' | '*PROCINC') datasetName=FeatureID ';';
+ProcincDirective: ('%PROCINC' | '*PROCINC') datasetName=ID ';';
 
 PushDirective: {infer PushDirective} '%PUSH' ';';
 
@@ -423,16 +439,28 @@ QualifyStatement:
     end=EndStatement ';'
 ;
 
-ReadStatement: 'READ' 'FILE' '(' fileReference=LocatorCall ')' 
-    (
-        'IGNORE' '(' ignore=Expression ')' 
-        | ('INTO' '(' intoRef=LocatorCall ')' | 'SET' '(' set=LocatorCall ')') ('KEY' '(' key=Expression ')' | 'KEYTO' '(' keyto=LocatorCall ')')?
-    )? ';'
+ReadStatement: 'READ'
+    // Arguments can appear in any order
+    arguments+=(
+        ReadStatementFile
+        | ReadStatementIgnore
+        | ReadStatementInto
+        | ReadStatementSet
+        | ReadStatementKey
+        | ReadStatementKeyTo
+    ) ';'
 ;
+
+ReadStatementFile: 'FILE' '(' file=LocatorCall ')';
+ReadStatementIgnore: 'IGNORE' '(' ignore=Expression ')';
+ReadStatementInto: 'INTO' '(' intoRef=LocatorCall ')';
+ReadStatementSet: 'SET' '(' set=LocatorCall ')';
+ReadStatementKey: 'KEY' '(' key=Expression ')';
+ReadStatementKeyTo: 'KEYTO' '(' keyto=LocatorCall ')';
 
 ReinitStatement: 'REINIT' reference=LocatorCall ';';
 
-ReleaseStatement: 'RELEASE' (star?='*' | references+=FeatureID (',' references+=FeatureID)*) ';';
+ReleaseStatement: 'RELEASE' (star?='*' | references+=ID (',' references+=ID)*) ';';
 
 ResignalStatement: {infer ResignalStatement} 'RESIGNAL' ';';
 
@@ -440,7 +468,11 @@ ReturnStatement: 'RETURN' ('(' expression=Expression ')')? ';';
 
 RevertStatement: 'REVER' conditions+=Condition (',' conditions+=Condition)* ';';
 
-RewriteStatement: 'REWRITE' 'FILE' '(' file=LocatorCall ')' ('FROM' '(' from=LocatorCall ')')? ('KEY' '(' key=Expression ')')? ';';
+RewriteStatement: 'REWRITE' arguments+=(RewriteStatementFile | RewriteStatementFrom | RewriteStatementKey)* ';';
+
+RewriteStatementFile: 'FILE' '(' file=LocatorCall ')';
+RewriteStatementFrom: 'FROM' '(' from=LocatorCall ')';
+RewriteStatementKey: 'KEY' '(' key=Expression ')';
 
 // Ensure via validation that `Otherwise` appears last
 SelectStatement: 
@@ -461,7 +493,12 @@ StopStatement: {infer StopStatement} 'STOP' ';';
 
 WaitStatement: 'WAIT' 'THREAD' '(' task=LocatorCall ')' ';';
 
-WriteStatement: 'WRITE' 'FILE' '(' fileReference=LocatorCall ')' 'FROM' '(' from=LocatorCall ')' ('KEYFROM' '(' keyfrom=Expression ')' | 'KEYTO' '(' keyto=LocatorCall ')')? ';';
+WriteStatement: 'WRITE' arguments+=(WriteStatementFile | WriteStatementFrom | WriteStatementKeyFrom | WriteStatementKeyTo) ';';
+
+WriteStatementFile: 'FILE' '(' file=LocatorCall ')';
+WriteStatementFrom: 'FROM' '(' from=LocatorCall ')';
+WriteStatementKeyFrom: 'KEYFROM' '(' keyfrom=Expression ')';
+WriteStatementKeyTo: 'KEYTO' '(' keyto=LocatorCall ')';
 
 // #endregion
 
@@ -607,7 +644,6 @@ EntryAttribute:
         returns+=ReturnsOption |
         (('EXTERNAL' | 'EXT') ('(' environmentName+=Expression ')')?)
     )*
-    
 ;
 
 ReturnsOption: 'RETURNS' '(' returnAttributes+=DeclarationAttribute* ')';
@@ -620,9 +656,9 @@ EntryUnionDescription: init=NUMBER attributes+=DeclarationAttribute* ',' prefixe
 
 PrefixedAttribute: level=NUMBER attribute=DeclarationAttribute*;
 
-ProcedureParameter: id=FeatureID;
+ProcedureParameter: id=ID;
 
-ReferenceItem: ref=[NamedElement:FeatureID] dimensions=Dimensions?;
+ReferenceItem: ref=[NamedElement:ID] dimensions=Dimensions?;
 
 Expression: BitOrExpression;
 
@@ -686,7 +722,6 @@ StringLiteral: value=STRING_TERM;
 NumberLiteral: value=NUMBER;
 
 FQN returns string: ID ('.' ID)*;
-FeatureID returns string: ID;
 
 hidden terminal WS: /\s+/;
 terminal ExecFragment: /(?<=EXEC\s*)[a-zA-Z]+\s[^;]*/i;
