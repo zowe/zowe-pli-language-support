@@ -29,13 +29,13 @@ export class PliParser extends AbstractParser {
         const element = this.createPackage();
 
         this.CONSUME1(tokens.PACKAGE);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.Exports);
         });
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.SUBRULE1(this.Reserves);
         });
-        this.option(3, () => {
+        this.OPTION3(() => {
             this.SUBRULE1(this.Options);
         });
         this.CONSUME1(tokens.Semicolon);
@@ -147,7 +147,7 @@ export class PliParser extends AbstractParser {
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.OptionsItem);
         this.MANY1(() => {
-            this.option(1, () => {
+            this.OPTION1(() => {
                 this.CONSUME1(tokens.Comma);
             });
             this.SUBRULE2(this.OptionsItem);
@@ -277,9 +277,9 @@ export class PliParser extends AbstractParser {
                 }
             },
         ]);
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.CONSUME1(tokens.OpenParen);
-            this.option(1, () => {
+            this.OPTION1(() => {
                 this.CONSUME1(tokens.ID);
                 this.MANY1(() => {
                     this.CONSUME1(tokens.Comma);
@@ -482,9 +482,9 @@ export class PliParser extends AbstractParser {
                 }
             },
         ]);
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.CONSUME1(tokens.OpenParen);
-            this.option(1, () => {
+            this.OPTION1(() => {
                 this.SUBRULE1(this.ProcedureParameter);
                 this.MANY1(() => {
                     this.CONSUME1(tokens.Comma);
@@ -540,7 +540,7 @@ export class PliParser extends AbstractParser {
                                 }
                             },
                         ]);
-                        this.option(3, () => {
+                        this.OPTION3(() => {
                             this.CONSUME2(tokens.OpenParen);
                             this.SUBRULE1(this.Expression);
                             this.CONSUME2(tokens.CloseParen);
@@ -558,7 +558,7 @@ export class PliParser extends AbstractParser {
         this.MANY3(() => {
             this.SUBRULE1(this.Statement);
         });
-        this.option(4, () => {
+        this.OPTION4(() => {
             this.OR5([
                 {
                     ALT: () => {
@@ -619,9 +619,9 @@ export class PliParser extends AbstractParser {
         const element = this.createEntryStatement();
 
         this.CONSUME1(tokens.ENTRY);
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.CONSUME1(tokens.OpenParen);
-            this.option(1, () => {
+            this.OPTION1(() => {
                 this.SUBRULE1(this.ProcedureParameter);
                 this.MANY1(() => {
                     this.CONSUME1(tokens.Comma);
@@ -646,7 +646,7 @@ export class PliParser extends AbstractParser {
                                 }
                             },
                         ]);
-                        this.option(3, () => {
+                        this.OPTION3(() => {
                             this.CONSUME2(tokens.OpenParen);
                             this.SUBRULE1(this.Expression);
                             this.CONSUME2(tokens.CloseParen);
@@ -686,7 +686,7 @@ export class PliParser extends AbstractParser {
     Statement = this.RULE('Statement', () => {
         const element = this.createStatement();
 
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.ConditionPrefix);
         });
         this.MANY1(() => {
@@ -1048,11 +1048,11 @@ export class PliParser extends AbstractParser {
     AllocatedVariable = this.RULE('AllocatedVariable', () => {
         const element = this.createAllocatedVariable();
 
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.NUMBER);
         });
         this.SUBRULE1(this.ReferenceItem);
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.SUBRULE1(this.AllocateAttribute);
         });
 
@@ -1078,7 +1078,12 @@ export class PliParser extends AbstractParser {
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.AllocateLocationReference); 
+                    this.SUBRULE1(this.AllocateLocationReferenceIn); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.AllocateLocationReferenceSet); 
                 }
             },
             {
@@ -1090,37 +1095,31 @@ export class PliParser extends AbstractParser {
 
         return element;
     });
-    private createAllocateLocationReference(): ast.AllocateLocationReference {
+    private createAllocateLocationReferenceIn(): ast.AllocateLocationReferenceIn {
         return {} as any;
     }
 
-    AllocateLocationReference = this.RULE('AllocateLocationReference', () => {
-        const element = this.createAllocateLocationReference();
+    AllocateLocationReferenceIn = this.RULE('AllocateLocationReferenceIn', () => {
+        const element = this.createAllocateLocationReferenceIn();
 
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME1(tokens.IN);
-                    this.CONSUME1(tokens.OpenParen);
-                    this.SUBRULE1(this.LocatorCall);
-                    this.CONSUME1(tokens.CloseParen);
-                    this.option(1, () => {
-                        this.CONSUME1(tokens.SET);
-                        this.CONSUME2(tokens.OpenParen);
-                        this.SUBRULE2(this.LocatorCall);
-                        this.CONSUME2(tokens.CloseParen);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME2(tokens.SET);
-                    this.CONSUME3(tokens.OpenParen);
-                    this.SUBRULE3(this.LocatorCall);
-                    this.CONSUME3(tokens.CloseParen);
-                }
-            },
-        ]);
+        this.CONSUME1(tokens.IN);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createAllocateLocationReferenceSet(): ast.AllocateLocationReferenceSet {
+        return {} as any;
+    }
+
+    AllocateLocationReferenceSet = this.RULE('AllocateLocationReferenceSet', () => {
+        const element = this.createAllocateLocationReferenceSet();
+
+        this.CONSUME1(tokens.SET);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME1(tokens.CloseParen);
 
         return element;
     });
@@ -1143,7 +1142,7 @@ export class PliParser extends AbstractParser {
         const element = this.createAllocateType();
 
         this.SUBRULE1(this.AllocateAttributeType);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.Dimensions);
         });
 
@@ -1228,7 +1227,7 @@ export class PliParser extends AbstractParser {
                     this.SUBRULE3(this.Expression);
                     this.CONSUME1(tokens.Comma);
                     this.SUBRULE4(this.Expression);
-                    this.option(1, () => {
+                    this.OPTION1(() => {
                         this.CONSUME2(tokens.Comma);
                         this.CONSUME1(tokens.STRING_TERM);
                     });
@@ -1241,7 +1240,7 @@ export class PliParser extends AbstractParser {
                 }
             },
         ]);
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.CONSUME1(tokens.TEXT);
             this.SUBRULE5(this.Expression);
         });
@@ -1262,7 +1261,7 @@ export class PliParser extends AbstractParser {
         });
         this.SUBRULE1(this.AssignmentOperator);
         this.SUBRULE1(this.Expression);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME2(tokens.Comma);
             this.CONSUME1(tokens.BY);
             this.OR1([
@@ -1368,10 +1367,10 @@ export class PliParser extends AbstractParser {
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE2(this.LocatorCall);
         this.CONSUME1(tokens.CloseParen);
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.CONSUME1(tokens.ENVIRONMENT);
             this.CONSUME2(tokens.OpenParen);
-            this.option(1, () => {
+            this.OPTION1(() => {
                 this.CONSUME1(tokens.TSTACK);
                 this.CONSUME3(tokens.OpenParen);
                 this.SUBRULE1(this.Expression);
@@ -1391,13 +1390,13 @@ export class PliParser extends AbstractParser {
         const element = this.createBeginStatement();
 
         this.CONSUME1(tokens.BEGIN);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.Options);
         });
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.CONSUME1(tokens.RECURSIVE);
         });
-        this.option(3, () => {
+        this.OPTION3(() => {
             this.OR1([
                 {
                     ALT: () => {
@@ -1431,7 +1430,7 @@ export class PliParser extends AbstractParser {
             this.SUBRULE1(this.LabelPrefix);
         });
         this.CONSUME1(tokens.END);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.LabelReference);
         });
 
@@ -1490,7 +1489,7 @@ export class PliParser extends AbstractParser {
         ]);
         this.CONSUME1(tokens.CloseParen);
         this.MANY1(() => {
-            this.option(1, () => {
+            this.OPTION1(() => {
                 this.CONSUME1(tokens.Comma);
             });
             this.CONSUME2(tokens.FILE);
@@ -1639,7 +1638,7 @@ export class PliParser extends AbstractParser {
         const element = this.createDefaultRangeIdentifierItem();
 
         this.CONSUME1(tokens.ID);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.Colon);
             this.CONSUME2(tokens.ID);
         });
@@ -1654,7 +1653,7 @@ export class PliParser extends AbstractParser {
         const element = this.createDefaultAttributeExpression();
 
         this.SUBRULE1(this.DefaultAttributeExpressionNot);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.OR1([
                 {
                     ALT: () => {
@@ -1679,7 +1678,7 @@ export class PliParser extends AbstractParser {
     DefaultAttributeExpressionNot = this.RULE('DefaultAttributeExpressionNot', () => {
         const element = this.createDefaultAttributeExpressionNot();
 
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.NOT);
         });
         this.SUBRULE1(this.DefaultAttribute);
@@ -2189,10 +2188,10 @@ export class PliParser extends AbstractParser {
         ]);
         this.CONSUME1(tokens.ALIAS);
         this.CONSUME1(tokens.ID);
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.SUBRULE1(this.DeclarationAttribute);
             this.MANY1(() => {
-                this.option(1, () => {
+                this.OPTION1(() => {
                     this.CONSUME1(tokens.Comma);
                 });
                 this.SUBRULE2(this.DeclarationAttribute);
@@ -2226,7 +2225,7 @@ export class PliParser extends AbstractParser {
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.OrdinalValueList);
         this.CONSUME1(tokens.CloseParen);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.OR2([
                 {
                     ALT: () => {
@@ -2240,7 +2239,7 @@ export class PliParser extends AbstractParser {
                 },
             ]);
         });
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.OR3([
                 {
                     ALT: () => {
@@ -2257,7 +2256,7 @@ export class PliParser extends AbstractParser {
             this.CONSUME1(tokens.NUMBER);
             this.CONSUME2(tokens.CloseParen);
         });
-        this.option(3, () => {
+        this.OPTION3(() => {
             this.OR4([
                 {
                     ALT: () => {
@@ -2298,7 +2297,7 @@ export class PliParser extends AbstractParser {
         const element = this.createOrdinalValue();
 
         this.CONSUME1(tokens.ID);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.VALUE);
             this.CONSUME1(tokens.OpenParen);
             this.CONSUME1(tokens.NUMBER);
@@ -2340,7 +2339,7 @@ export class PliParser extends AbstractParser {
         ]);
         this.CONSUME1(tokens.NUMBER);
         this.SUBRULE1(this.FQN);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.UNION);
         });
         this.MANY1(() => {
@@ -2393,7 +2392,7 @@ export class PliParser extends AbstractParser {
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.LocatorCall);
         this.CONSUME1(tokens.CloseParen);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.KEY);
             this.CONSUME2(tokens.OpenParen);
             this.SUBRULE1(this.Expression);
@@ -2430,13 +2429,13 @@ export class PliParser extends AbstractParser {
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.Expression);
         this.CONSUME1(tokens.CloseParen);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.REPLY);
             this.CONSUME2(tokens.OpenParen);
             this.SUBRULE1(this.LocatorCall);
             this.CONSUME2(tokens.CloseParen);
         });
-        this.option(3, () => {
+        this.OPTION3(() => {
             this.CONSUME1(tokens.ROUTCDE);
             this.CONSUME3(tokens.OpenParen);
             this.CONSUME1(tokens.NUMBER);
@@ -2445,7 +2444,7 @@ export class PliParser extends AbstractParser {
                 this.CONSUME2(tokens.NUMBER);
             });
             this.CONSUME3(tokens.CloseParen);
-            this.option(2, () => {
+            this.OPTION2(() => {
                 this.CONSUME1(tokens.DESC);
                 this.CONSUME4(tokens.OpenParen);
                 this.CONSUME3(tokens.NUMBER);
@@ -2468,7 +2467,7 @@ export class PliParser extends AbstractParser {
         const element = this.createDoStatement();
 
         this.CONSUME1(tokens.DO);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.OR1([
                 {
                     ALT: () => {
@@ -2524,7 +2523,7 @@ export class PliParser extends AbstractParser {
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.Expression);
         this.CONSUME1(tokens.CloseParen);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.UNTIL);
             this.CONSUME2(tokens.OpenParen);
             this.SUBRULE2(this.Expression);
@@ -2544,7 +2543,7 @@ export class PliParser extends AbstractParser {
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.Expression);
         this.CONSUME1(tokens.CloseParen);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.WHILE);
             this.CONSUME2(tokens.OpenParen);
             this.SUBRULE2(this.Expression);
@@ -2589,13 +2588,13 @@ export class PliParser extends AbstractParser {
         const element = this.createDoSpecification();
 
         this.SUBRULE1(this.Expression);
-        this.option(3, () => {
+        this.OPTION3(() => {
             this.OR1([
                 {
                     ALT: () => {
                         this.CONSUME1(tokens.TO);
                         this.SUBRULE2(this.Expression);
-                        this.option(1, () => {
+                        this.OPTION1(() => {
                             this.CONSUME1(tokens.BY);
                             this.SUBRULE3(this.Expression);
                         });
@@ -2605,7 +2604,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.CONSUME2(tokens.BY);
                         this.SUBRULE4(this.Expression);
-                        this.option(2, () => {
+                        this.OPTION2(() => {
                             this.CONSUME2(tokens.TO);
                             this.SUBRULE5(this.Expression);
                         });
@@ -2631,7 +2630,7 @@ export class PliParser extends AbstractParser {
                 },
             ]);
         });
-        this.option(4, () => {
+        this.OPTION4(() => {
             this.OR2([
                 {
                     ALT: () => {
@@ -2699,13 +2698,13 @@ export class PliParser extends AbstractParser {
         const element = this.createFetchEntry();
 
         this.CONSUME1(tokens.ID);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.SET);
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.LocatorCall);
             this.CONSUME1(tokens.CloseParen);
         });
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.CONSUME1(tokens.TITLE);
             this.CONSUME2(tokens.OpenParen);
             this.SUBRULE1(this.Expression);
@@ -2778,7 +2777,7 @@ export class PliParser extends AbstractParser {
     FormatListItem = this.RULE('FormatListItem', () => {
         const element = this.createFormatListItem();
 
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.FormatListItemLevel);
         });
         this.OR1([
@@ -2917,7 +2916,7 @@ export class PliParser extends AbstractParser {
         const element = this.createAFormatItem();
 
         this.CONSUME1(tokens.A);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.Expression);
             this.CONSUME1(tokens.CloseParen);
@@ -2933,7 +2932,7 @@ export class PliParser extends AbstractParser {
         const element = this.createBFormatItem();
 
         this.CONSUME1(tokens.B);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.Expression);
             this.CONSUME1(tokens.CloseParen);
@@ -2981,10 +2980,10 @@ export class PliParser extends AbstractParser {
         this.CONSUME1(tokens.F);
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.Expression);
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.CONSUME1(tokens.Comma);
             this.SUBRULE2(this.Expression);
-            this.option(1, () => {
+            this.OPTION1(() => {
                 this.CONSUME2(tokens.Comma);
                 this.SUBRULE3(this.Expression);
             });
@@ -3005,7 +3004,7 @@ export class PliParser extends AbstractParser {
         this.SUBRULE1(this.Expression);
         this.CONSUME1(tokens.Comma);
         this.SUBRULE2(this.Expression);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME2(tokens.Comma);
             this.SUBRULE3(this.Expression);
         });
@@ -3058,7 +3057,7 @@ export class PliParser extends AbstractParser {
         const element = this.createGFormatItem();
 
         this.CONSUME1(tokens.G);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.Expression);
             this.CONSUME1(tokens.CloseParen);
@@ -3126,7 +3125,7 @@ export class PliParser extends AbstractParser {
         const element = this.createSkipFormatItem();
 
         this.CONSUME1(tokens.SKIP);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.Expression);
             this.CONSUME1(tokens.CloseParen);
@@ -3252,7 +3251,7 @@ export class PliParser extends AbstractParser {
         const element = this.createGetCopy();
 
         this.CONSUME1(tokens.COPY);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.CONSUME1(tokens.ID);
             this.CONSUME1(tokens.CloseParen);
@@ -3268,7 +3267,7 @@ export class PliParser extends AbstractParser {
         const element = this.createGetSkip();
 
         this.CONSUME1(tokens.SKIP);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.Expression);
             this.CONSUME1(tokens.CloseParen);
@@ -3312,7 +3311,7 @@ export class PliParser extends AbstractParser {
         this.SUBRULE1(this.Expression);
         this.CONSUME1(tokens.THEN);
         this.SUBRULE1(this.Statement);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.ELSE);
             this.SUBRULE2(this.Statement);
         });
@@ -3402,7 +3401,7 @@ export class PliParser extends AbstractParser {
         const element = this.createIterateStatement();
 
         this.CONSUME1(tokens.ITERATE);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.LabelReference);
         });
         this.CONSUME1(tokens.Semicolon);
@@ -3417,7 +3416,7 @@ export class PliParser extends AbstractParser {
         const element = this.createLeaveStatement();
 
         this.CONSUME1(tokens.LEAVE);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.LabelReference);
         });
         this.CONSUME1(tokens.Semicolon);
@@ -3450,23 +3449,68 @@ export class PliParser extends AbstractParser {
 
         this.CONSUME1(tokens.LOCATE);
         this.SUBRULE1(this.LocatorCall);
+        this.MANY1(() => {
+            this.OR1([
+                {
+                    ALT: () => {
+                        this.SUBRULE1(this.LocateStatementFile); 
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE1(this.LocateStatementSet); 
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE1(this.LocateStatementKeyFrom); 
+                    }
+                },
+            ]);
+        });
+        this.CONSUME1(tokens.Semicolon);
+
+        return element;
+    });
+    private createLocateStatementFile(): ast.LocateStatementFile {
+        return {} as any;
+    }
+
+    LocateStatementFile = this.RULE('LocateStatementFile', () => {
+        const element = this.createLocateStatementFile();
+
         this.CONSUME1(tokens.FILE);
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.ReferenceItem);
         this.CONSUME1(tokens.CloseParen);
-        this.option(1, () => {
-            this.CONSUME1(tokens.SET);
-            this.CONSUME2(tokens.OpenParen);
-            this.SUBRULE2(this.LocatorCall);
-            this.CONSUME2(tokens.CloseParen);
-        });
-        this.option(2, () => {
-            this.CONSUME1(tokens.KEYFROM);
-            this.CONSUME3(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME3(tokens.CloseParen);
-        });
-        this.CONSUME1(tokens.Semicolon);
+
+        return element;
+    });
+    private createLocateStatementSet(): ast.LocateStatementSet {
+        return {} as any;
+    }
+
+    LocateStatementSet = this.RULE('LocateStatementSet', () => {
+        const element = this.createLocateStatementSet();
+
+        this.CONSUME1(tokens.SET);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createLocateStatementKeyFrom(): ast.LocateStatementKeyFrom {
+        return {} as any;
+    }
+
+    LocateStatementKeyFrom = this.RULE('LocateStatementKeyFrom', () => {
+        const element = this.createLocateStatementKeyFrom();
+
+        this.CONSUME1(tokens.KEYFROM);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.Expression);
+        this.CONSUME1(tokens.CloseParen);
 
         return element;
     });
@@ -3493,7 +3537,7 @@ export class PliParser extends AbstractParser {
         this.CONSUME1(tokens.PercentNOTE);
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.Expression);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.Comma);
             this.SUBRULE2(this.Expression);
         });
@@ -3527,7 +3571,7 @@ export class PliParser extends AbstractParser {
             this.CONSUME1(tokens.Comma);
             this.SUBRULE2(this.Condition);
         });
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.SNAP);
         });
         this.OR1([
@@ -3763,7 +3807,7 @@ export class PliParser extends AbstractParser {
                 }
             },
         ]);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.ReferenceItem);
             this.CONSUME1(tokens.CloseParen);
@@ -3795,130 +3839,249 @@ export class PliParser extends AbstractParser {
     OpenOptionsGroup = this.RULE('OpenOptionsGroup', () => {
         const element = this.createOpenOptionsGroup();
 
+        this.OR1([
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.OpenOptionsFile); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.OpenOptionsStream); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.OpenOptionsAccess); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.OpenOptionsBuffering); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.OpenOptionsKeyed); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.OpenOptionsPrint); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.OpenOptionsTitle); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.OpenOptionsLineSize); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.OpenOptionsPageSize); 
+                }
+            },
+        ]);
+
+        return element;
+    });
+    private createOpenOptionsFile(): ast.OpenOptionsFile {
+        return {} as any;
+    }
+
+    OpenOptionsFile = this.RULE('OpenOptionsFile', () => {
+        const element = this.createOpenOptionsFile();
+
         this.CONSUME1(tokens.FILE);
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.ReferenceItem);
         this.CONSUME1(tokens.CloseParen);
-        this.option(1, () => {
-            this.OR1([
+
+        return element;
+    });
+    private createOpenOptionsStream(): ast.OpenOptionsStream {
+        return {} as any;
+    }
+
+    OpenOptionsStream = this.RULE('OpenOptionsStream', () => {
+        const element = this.createOpenOptionsStream();
+
+        this.OR1([
+            {
+                ALT: () => {
+                    this.CONSUME1(tokens.STREAM); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.CONSUME1(tokens.RECORD); 
+                }
+            },
+        ]);
+
+        return element;
+    });
+    private createOpenOptionsAccess(): ast.OpenOptionsAccess {
+        return {} as any;
+    }
+
+    OpenOptionsAccess = this.RULE('OpenOptionsAccess', () => {
+        const element = this.createOpenOptionsAccess();
+
+        this.OR1([
+            {
+                ALT: () => {
+                    this.CONSUME1(tokens.INPUT); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.CONSUME1(tokens.OUTPUT); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.CONSUME1(tokens.UPDATE); 
+                }
+            },
+        ]);
+
+        return element;
+    });
+    private createOpenOptionsBuffering(): ast.OpenOptionsBuffering {
+        return {} as any;
+    }
+
+    OpenOptionsBuffering = this.RULE('OpenOptionsBuffering', () => {
+        const element = this.createOpenOptionsBuffering();
+
+        this.OR1([
+            {
+                ALT: () => {
+                    this.OR2([
+                        {
+                            ALT: () => {
+                                this.CONSUME1(tokens.SEQUENTIAL); 
+                            }
+                        },
+                        {
+                            ALT: () => {
+                                this.CONSUME1(tokens.SEQL); 
+                            }
+                        },
+                    ]);
+                }
+            },
+            {
+                ALT: () => {
+                    this.CONSUME1(tokens.DIRECT); 
+                }
+            },
+        ]);
+        this.OPTION1(() => {
+            this.OR3([
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.STREAM); 
+                        this.OR4([
+                            {
+                                ALT: () => {
+                                    this.CONSUME1(tokens.UNBUFFERED); 
+                                }
+                            },
+                            {
+                                ALT: () => {
+                                    this.CONSUME1(tokens.UNBUF); 
+                                }
+                            },
+                        ]);
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.RECORD); 
+                        this.OR5([
+                            {
+                                ALT: () => {
+                                    this.CONSUME1(tokens.BUF); 
+                                }
+                            },
+                            {
+                                ALT: () => {
+                                    this.CONSUME1(tokens.BUFFERED); 
+                                }
+                            },
+                        ]);
                     }
                 },
             ]);
         });
-        this.option(2, () => {
-            this.OR2([
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.INPUT); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.OUTPUT); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.UPDATE); 
-                    }
-                },
-            ]);
-        });
-        this.option(5, () => {
-            this.option(3, () => {
-                this.OR3([
-                    {
-                        ALT: () => {
-                            this.OR4([
-                                {
-                                    ALT: () => {
-                                        this.CONSUME1(tokens.SEQUENTIAL); 
-                                    }
-                                },
-                                {
-                                    ALT: () => {
-                                        this.CONSUME1(tokens.SEQL); 
-                                    }
-                                },
-                            ]);
-                        }
-                    },
-                    {
-                        ALT: () => {
-                            this.CONSUME1(tokens.DIRECT); 
-                        }
-                    },
-                ]);
-            });
-            this.option(4, () => {
-                this.OR5([
-                    {
-                        ALT: () => {
-                            this.OR6([
-                                {
-                                    ALT: () => {
-                                        this.CONSUME1(tokens.UNBUFFERED); 
-                                    }
-                                },
-                                {
-                                    ALT: () => {
-                                        this.CONSUME1(tokens.UNBUF); 
-                                    }
-                                },
-                            ]);
-                        }
-                    },
-                    {
-                        ALT: () => {
-                            this.OR7([
-                                {
-                                    ALT: () => {
-                                        this.CONSUME1(tokens.BUF); 
-                                    }
-                                },
-                                {
-                                    ALT: () => {
-                                        this.CONSUME1(tokens.BUFFERED); 
-                                    }
-                                },
-                            ]);
-                        }
-                    },
-                ]);
-            });
-        });
-        this.option(6, () => {
-            this.CONSUME1(tokens.KEYED);
-        });
-        this.option(7, () => {
-            this.CONSUME1(tokens.PRINT);
-        });
-        this.option(8, () => {
-            this.CONSUME1(tokens.TITLE);
-            this.CONSUME2(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME2(tokens.CloseParen);
-        });
-        this.option(9, () => {
-            this.CONSUME1(tokens.LINESIZE);
-            this.CONSUME3(tokens.OpenParen);
-            this.SUBRULE2(this.Expression);
-            this.CONSUME3(tokens.CloseParen);
-        });
-        this.option(10, () => {
-            this.CONSUME1(tokens.PAGESIZE);
-            this.CONSUME4(tokens.OpenParen);
-            this.SUBRULE3(this.Expression);
-            this.CONSUME4(tokens.CloseParen);
-        });
+
+        return element;
+    });
+    private createOpenOptionsKeyed(): ast.OpenOptionsKeyed {
+        return {} as any;
+    }
+
+    OpenOptionsKeyed = this.RULE('OpenOptionsKeyed', () => {
+        const element = this.createOpenOptionsKeyed();
+
+        this.CONSUME1(tokens.KEYED);
+
+        return element;
+    });
+    private createOpenOptionsPrint(): ast.OpenOptionsPrint {
+        return {} as any;
+    }
+
+    OpenOptionsPrint = this.RULE('OpenOptionsPrint', () => {
+        const element = this.createOpenOptionsPrint();
+
+        this.CONSUME1(tokens.PRINT);
+
+        return element;
+    });
+    private createOpenOptionsTitle(): ast.OpenOptionsTitle {
+        return {} as any;
+    }
+
+    OpenOptionsTitle = this.RULE('OpenOptionsTitle', () => {
+        const element = this.createOpenOptionsTitle();
+
+        this.CONSUME1(tokens.TITLE);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.Expression);
+        this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createOpenOptionsLineSize(): ast.OpenOptionsLineSize {
+        return {} as any;
+    }
+
+    OpenOptionsLineSize = this.RULE('OpenOptionsLineSize', () => {
+        const element = this.createOpenOptionsLineSize();
+
+        this.CONSUME1(tokens.LINESIZE);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.Expression);
+        this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createOpenOptionsPageSize(): ast.OpenOptionsPageSize {
+        return {} as any;
+    }
+
+    OpenOptionsPageSize = this.RULE('OpenOptionsPageSize', () => {
+        const element = this.createOpenOptionsPageSize();
+
+        this.CONSUME1(tokens.PAGESIZE);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.Expression);
+        this.CONSUME1(tokens.CloseParen);
 
         return element;
     });
@@ -3980,7 +4143,7 @@ export class PliParser extends AbstractParser {
                 }
             },
         ]);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.CompilerOptions);
             this.CONSUME1(tokens.Comma);
             this.SUBRULE2(this.CompilerOptions);
@@ -4045,7 +4208,7 @@ export class PliParser extends AbstractParser {
         const element = this.createPutStatement();
 
         this.CONSUME1(tokens.PUT);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.OR1([
                 {
                     ALT: () => {
@@ -4090,7 +4253,7 @@ export class PliParser extends AbstractParser {
         const element = this.createPutItem();
 
         this.SUBRULE1(this.PutAttribute);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.Expression);
             this.CONSUME1(tokens.CloseParen);
@@ -4140,7 +4303,7 @@ export class PliParser extends AbstractParser {
         this.OR1([
             {
                 ALT: () => {
-                    this.option(1, () => {
+                    this.OPTION1(() => {
                         this.CONSUME1(tokens.LIST);
                     });
                     this.CONSUME1(tokens.OpenParen);
@@ -4151,7 +4314,7 @@ export class PliParser extends AbstractParser {
             {
                 ALT: () => {
                     this.CONSUME1(tokens.DATA);
-                    this.option(2, () => {
+                    this.OPTION2(() => {
                         this.CONSUME2(tokens.OpenParen);
                         this.SUBRULE1(this.DataSpecificationDataListItem);
                         this.MANY1(() => {
@@ -4230,65 +4393,123 @@ export class PliParser extends AbstractParser {
         const element = this.createReadStatement();
 
         this.CONSUME1(tokens.READ);
+        this.OR1([
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.ReadStatementFile); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.ReadStatementIgnore); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.ReadStatementInto); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.ReadStatementSet); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.ReadStatementKey); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.ReadStatementKeyTo); 
+                }
+            },
+        ]);
+        this.CONSUME1(tokens.Semicolon);
+
+        return element;
+    });
+    private createReadStatementFile(): ast.ReadStatementFile {
+        return {} as any;
+    }
+
+    ReadStatementFile = this.RULE('ReadStatementFile', () => {
+        const element = this.createReadStatementFile();
+
         this.CONSUME1(tokens.FILE);
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.LocatorCall);
         this.CONSUME1(tokens.CloseParen);
-        this.option(2, () => {
-            this.OR1([
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.IGNORE);
-                        this.CONSUME2(tokens.OpenParen);
-                        this.SUBRULE1(this.Expression);
-                        this.CONSUME2(tokens.CloseParen);
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.OR2([
-                            {
-                                ALT: () => {
-                                    this.CONSUME1(tokens.INTO);
-                                    this.CONSUME3(tokens.OpenParen);
-                                    this.SUBRULE2(this.LocatorCall);
-                                    this.CONSUME3(tokens.CloseParen);
-                                }
-                            },
-                            {
-                                ALT: () => {
-                                    this.CONSUME1(tokens.SET);
-                                    this.CONSUME4(tokens.OpenParen);
-                                    this.SUBRULE3(this.LocatorCall);
-                                    this.CONSUME4(tokens.CloseParen);
-                                }
-                            },
-                        ]);
-                        this.option(1, () => {
-                            this.OR3([
-                                {
-                                    ALT: () => {
-                                        this.CONSUME1(tokens.KEY);
-                                        this.CONSUME5(tokens.OpenParen);
-                                        this.SUBRULE2(this.Expression);
-                                        this.CONSUME5(tokens.CloseParen);
-                                    }
-                                },
-                                {
-                                    ALT: () => {
-                                        this.CONSUME1(tokens.KEYTO);
-                                        this.CONSUME6(tokens.OpenParen);
-                                        this.SUBRULE4(this.LocatorCall);
-                                        this.CONSUME6(tokens.CloseParen);
-                                    }
-                                },
-                            ]);
-                        });
-                    }
-                },
-            ]);
-        });
-        this.CONSUME1(tokens.Semicolon);
+
+        return element;
+    });
+    private createReadStatementIgnore(): ast.ReadStatementIgnore {
+        return {} as any;
+    }
+
+    ReadStatementIgnore = this.RULE('ReadStatementIgnore', () => {
+        const element = this.createReadStatementIgnore();
+
+        this.CONSUME1(tokens.IGNORE);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.Expression);
+        this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createReadStatementInto(): ast.ReadStatementInto {
+        return {} as any;
+    }
+
+    ReadStatementInto = this.RULE('ReadStatementInto', () => {
+        const element = this.createReadStatementInto();
+
+        this.CONSUME1(tokens.INTO);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createReadStatementSet(): ast.ReadStatementSet {
+        return {} as any;
+    }
+
+    ReadStatementSet = this.RULE('ReadStatementSet', () => {
+        const element = this.createReadStatementSet();
+
+        this.CONSUME1(tokens.SET);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createReadStatementKey(): ast.ReadStatementKey {
+        return {} as any;
+    }
+
+    ReadStatementKey = this.RULE('ReadStatementKey', () => {
+        const element = this.createReadStatementKey();
+
+        this.CONSUME1(tokens.KEY);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.Expression);
+        this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createReadStatementKeyTo(): ast.ReadStatementKeyTo {
+        return {} as any;
+    }
+
+    ReadStatementKeyTo = this.RULE('ReadStatementKeyTo', () => {
+        const element = this.createReadStatementKeyTo();
+
+        this.CONSUME1(tokens.KEYTO);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME1(tokens.CloseParen);
 
         return element;
     });
@@ -4354,7 +4575,7 @@ export class PliParser extends AbstractParser {
         const element = this.createReturnStatement();
 
         this.CONSUME1(tokens.RETURN);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.Expression);
             this.CONSUME1(tokens.CloseParen);
@@ -4388,23 +4609,68 @@ export class PliParser extends AbstractParser {
         const element = this.createRewriteStatement();
 
         this.CONSUME1(tokens.REWRITE);
+        this.MANY1(() => {
+            this.OR1([
+                {
+                    ALT: () => {
+                        this.SUBRULE1(this.RewriteStatementFile); 
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE1(this.RewriteStatementFrom); 
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE1(this.RewriteStatementKey); 
+                    }
+                },
+            ]);
+        });
+        this.CONSUME1(tokens.Semicolon);
+
+        return element;
+    });
+    private createRewriteStatementFile(): ast.RewriteStatementFile {
+        return {} as any;
+    }
+
+    RewriteStatementFile = this.RULE('RewriteStatementFile', () => {
+        const element = this.createRewriteStatementFile();
+
         this.CONSUME1(tokens.FILE);
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.LocatorCall);
         this.CONSUME1(tokens.CloseParen);
-        this.option(1, () => {
-            this.CONSUME1(tokens.FROM);
-            this.CONSUME2(tokens.OpenParen);
-            this.SUBRULE2(this.LocatorCall);
-            this.CONSUME2(tokens.CloseParen);
-        });
-        this.option(2, () => {
-            this.CONSUME1(tokens.KEY);
-            this.CONSUME3(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME3(tokens.CloseParen);
-        });
-        this.CONSUME1(tokens.Semicolon);
+
+        return element;
+    });
+    private createRewriteStatementFrom(): ast.RewriteStatementFrom {
+        return {} as any;
+    }
+
+    RewriteStatementFrom = this.RULE('RewriteStatementFrom', () => {
+        const element = this.createRewriteStatementFrom();
+
+        this.CONSUME1(tokens.FROM);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createRewriteStatementKey(): ast.RewriteStatementKey {
+        return {} as any;
+    }
+
+    RewriteStatementKey = this.RULE('RewriteStatementKey', () => {
+        const element = this.createRewriteStatementKey();
+
+        this.CONSUME1(tokens.KEY);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.Expression);
+        this.CONSUME1(tokens.CloseParen);
 
         return element;
     });
@@ -4416,7 +4682,7 @@ export class PliParser extends AbstractParser {
         const element = this.createSelectStatement();
 
         this.CONSUME1(tokens.SELECT);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.Expression);
             this.CONSUME1(tokens.CloseParen);
@@ -4504,7 +4770,7 @@ export class PliParser extends AbstractParser {
         const element = this.createSkipDirective();
 
         this.CONSUME1(tokens.PercentSKIP);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.Expression);
             this.CONSUME1(tokens.CloseParen);
@@ -4550,35 +4816,85 @@ export class PliParser extends AbstractParser {
         const element = this.createWriteStatement();
 
         this.CONSUME1(tokens.WRITE);
+        this.OR1([
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.WriteStatementFile); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.WriteStatementFrom); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.WriteStatementKeyFrom); 
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE1(this.WriteStatementKeyTo); 
+                }
+            },
+        ]);
+        this.CONSUME1(tokens.Semicolon);
+
+        return element;
+    });
+    private createWriteStatementFile(): ast.WriteStatementFile {
+        return {} as any;
+    }
+
+    WriteStatementFile = this.RULE('WriteStatementFile', () => {
+        const element = this.createWriteStatementFile();
+
         this.CONSUME1(tokens.FILE);
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.LocatorCall);
         this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createWriteStatementFrom(): ast.WriteStatementFrom {
+        return {} as any;
+    }
+
+    WriteStatementFrom = this.RULE('WriteStatementFrom', () => {
+        const element = this.createWriteStatementFrom();
+
         this.CONSUME1(tokens.FROM);
-        this.CONSUME2(tokens.OpenParen);
-        this.SUBRULE2(this.LocatorCall);
-        this.CONSUME2(tokens.CloseParen);
-        this.option(1, () => {
-            this.OR1([
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.KEYFROM);
-                        this.CONSUME3(tokens.OpenParen);
-                        this.SUBRULE1(this.Expression);
-                        this.CONSUME3(tokens.CloseParen);
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.KEYTO);
-                        this.CONSUME4(tokens.OpenParen);
-                        this.SUBRULE3(this.LocatorCall);
-                        this.CONSUME4(tokens.CloseParen);
-                    }
-                },
-            ]);
-        });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createWriteStatementKeyFrom(): ast.WriteStatementKeyFrom {
+        return {} as any;
+    }
+
+    WriteStatementKeyFrom = this.RULE('WriteStatementKeyFrom', () => {
+        const element = this.createWriteStatementKeyFrom();
+
+        this.CONSUME1(tokens.KEYFROM);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.Expression);
+        this.CONSUME1(tokens.CloseParen);
+
+        return element;
+    });
+    private createWriteStatementKeyTo(): ast.WriteStatementKeyTo {
+        return {} as any;
+    }
+
+    WriteStatementKeyTo = this.RULE('WriteStatementKeyTo', () => {
+        const element = this.createWriteStatementKeyTo();
+
+        this.CONSUME1(tokens.KEYTO);
+        this.CONSUME1(tokens.OpenParen);
+        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME1(tokens.CloseParen);
 
         return element;
     });
@@ -4667,7 +4983,7 @@ export class PliParser extends AbstractParser {
             {
                 ALT: () => {
                     this.SUBRULE1(this.Varying);
-                    this.option(1, () => {
+                    this.OPTION1(() => {
                         this.SUBRULE1(this.CharType);
                     });
                 }
@@ -4675,7 +4991,7 @@ export class PliParser extends AbstractParser {
             {
                 ALT: () => {
                     this.SUBRULE2(this.CharType);
-                    this.option(2, () => {
+                    this.OPTION2(() => {
                         this.SUBRULE2(this.Varying);
                     });
                 }
@@ -4815,7 +5131,7 @@ export class PliParser extends AbstractParser {
                 }
             },
         ]);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.InitialAttributeSpecificationIteration);
         });
 
@@ -4905,7 +5221,7 @@ export class PliParser extends AbstractParser {
     DeclaredItem = this.RULE('DeclaredItem', () => {
         const element = this.createDeclaredItem();
 
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.NUMBER);
         });
         this.OR1([
@@ -5150,7 +5466,7 @@ export class PliParser extends AbstractParser {
         const element = this.createDateAttribute();
 
         this.CONSUME1(tokens.DATE);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.CONSUME1(tokens.STRING_TERM);
             this.CONSUME1(tokens.CloseParen);
@@ -5191,7 +5507,7 @@ export class PliParser extends AbstractParser {
                 }
             },
         ]);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.OR3([
                 {
                     ALT: () => {
@@ -5235,7 +5551,7 @@ export class PliParser extends AbstractParser {
                 }
             },
         ]);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.STRING_TERM);
         });
 
@@ -5248,7 +5564,7 @@ export class PliParser extends AbstractParser {
     DimensionsDataAttribute = this.RULE('DimensionsDataAttribute', () => {
         const element = this.createDimensionsDataAttribute();
 
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.OR1([
                 {
                     ALT: () => {
@@ -5362,7 +5678,7 @@ export class PliParser extends AbstractParser {
         const element = this.createComputationDataAttribute();
 
         this.SUBRULE1(this.DataAttributeType);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.Dimensions);
         });
 
@@ -5422,7 +5738,7 @@ export class PliParser extends AbstractParser {
 
         this.CONSUME1(tokens.VALUELIST);
         this.CONSUME1(tokens.OpenParen);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.Expression);
             this.MANY1(() => {
                 this.CONSUME1(tokens.Comma);
@@ -5454,7 +5770,7 @@ export class PliParser extends AbstractParser {
 
         this.CONSUME1(tokens.VALUERANGE);
         this.CONSUME1(tokens.OpenParen);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.Expression);
             this.MANY1(() => {
                 this.CONSUME1(tokens.Comma);
@@ -5496,7 +5812,7 @@ export class PliParser extends AbstractParser {
         const element = this.createHandleAttribute();
 
         this.CONSUME1(tokens.HANDLE);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.CONSUME1(tokens.NUMBER);
             this.CONSUME1(tokens.CloseParen);
@@ -5526,7 +5842,7 @@ export class PliParser extends AbstractParser {
         const element = this.createDimensions();
 
         this.CONSUME1(tokens.OpenParen);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.DimensionBound);
             this.MANY1(() => {
                 this.CONSUME1(tokens.Comma);
@@ -5545,7 +5861,7 @@ export class PliParser extends AbstractParser {
         const element = this.createDimensionBound();
 
         this.SUBRULE1(this.Bound);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.Colon);
             this.SUBRULE2(this.Bound);
         });
@@ -5568,7 +5884,7 @@ export class PliParser extends AbstractParser {
             {
                 ALT: () => {
                     this.SUBRULE1(this.Expression);
-                    this.option(1, () => {
+                    this.OPTION1(() => {
                         this.CONSUME1(tokens.REFER);
                         this.CONSUME1(tokens.OpenParen);
                         this.SUBRULE1(this.LocatorCall);
@@ -5615,12 +5931,12 @@ export class PliParser extends AbstractParser {
         const element = this.createEnvironmentAttributeItem();
 
         this.CONSUME1(tokens.ID);
-        this.option(3, () => {
+        this.OPTION3(() => {
             this.CONSUME1(tokens.OpenParen);
-            this.option(2, () => {
+            this.OPTION2(() => {
                 this.SUBRULE1(this.Expression);
                 this.MANY1(() => {
-                    this.option(1, () => {
+                    this.OPTION1(() => {
                         this.CONSUME1(tokens.Comma);
                     });
                     this.SUBRULE2(this.Expression);
@@ -5642,7 +5958,7 @@ export class PliParser extends AbstractParser {
             this.CONSUME1(tokens.LIMITED);
         });
         this.CONSUME1(tokens.ENTRY);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.OpenParen);
             this.SUBRULE1(this.EntryDescription);
             this.MANY2(() => {
@@ -5687,7 +6003,7 @@ export class PliParser extends AbstractParser {
                                 }
                             },
                         ]);
-                        this.option(2, () => {
+                        this.OPTION2(() => {
                             this.CONSUME2(tokens.OpenParen);
                             this.SUBRULE1(this.Expression);
                             this.CONSUME2(tokens.CloseParen);
@@ -5815,7 +6131,7 @@ export class PliParser extends AbstractParser {
         const element = this.createReferenceItem();
 
         this.CONSUME1(tokens.ID);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.SUBRULE1(this.Dimensions);
         });
 
@@ -5828,20 +6144,20 @@ export class PliParser extends AbstractParser {
     Expression = this.RULE('Expression', () => {
         const element = this.createExpression();
 
-        this.SUBRULE1(this.BitOrExpression);
+        this.SUBRULE1(this.BinaryExpression);
 
         return element;
     });
-    private createBitOrExpression(): ast.Expression {
+    private createBinaryExpression(): ast.Expression {
         return {} as any;
     }
 
-    BitOrExpression = this.RULE('BitOrExpression', () => {
-        const element = this.createBitOrExpression();
+    BinaryExpression = this.RULE('BinaryExpression', () => {
+        const element = this.createBinaryExpression();
 
-        this.SUBRULE1(this.BitAndExpression);
+        /* Action: BinaryExpression */
+        this.SUBRULE1(this.PrimaryExpression);
         this.MANY1(() => {
-            /* Action: BitOrExpression.left */
             this.OR1([
                 {
                     ALT: () => {
@@ -5858,39 +6174,11 @@ export class PliParser extends AbstractParser {
                         this.CONSUME1(tokens.Caret); 
                     }
                 },
-            ]);
-            this.SUBRULE2(this.BitAndExpression);
-        });
-
-        return element;
-    });
-    private createBitAndExpression(): ast.Expression {
-        return {} as any;
-    }
-
-    BitAndExpression = this.RULE('BitAndExpression', () => {
-        const element = this.createBitAndExpression();
-
-        this.SUBRULE1(this.CompExpression);
-        this.MANY1(() => {
-            /* Action: BitAndExpression.left */
-            this.CONSUME1(tokens.Ampersand);
-            this.SUBRULE2(this.CompExpression);
-        });
-
-        return element;
-    });
-    private createCompExpression(): ast.Expression {
-        return {} as any;
-    }
-
-    CompExpression = this.RULE('CompExpression', () => {
-        const element = this.createCompExpression();
-
-        this.SUBRULE1(this.ConcatExpression);
-        this.MANY1(() => {
-            /* Action: CompExpression.left */
-            this.OR1([
+                {
+                    ALT: () => {
+                        this.CONSUME1(tokens.Ampersand); 
+                    }
+                },
                 {
                     ALT: () => {
                         this.CONSUME1(tokens.LessThan); 
@@ -5941,23 +6229,6 @@ export class PliParser extends AbstractParser {
                         this.CONSUME1(tokens.NotGreaterThan); 
                     }
                 },
-            ]);
-            this.SUBRULE2(this.ConcatExpression);
-        });
-
-        return element;
-    });
-    private createConcatExpression(): ast.Expression {
-        return {} as any;
-    }
-
-    ConcatExpression = this.RULE('ConcatExpression', () => {
-        const element = this.createConcatExpression();
-
-        this.SUBRULE1(this.AddExpression);
-        this.MANY1(() => {
-            /* Action: ConcatExpression.left */
-            this.OR1([
                 {
                     ALT: () => {
                         this.CONSUME1(tokens.PipePipe); 
@@ -5968,23 +6239,6 @@ export class PliParser extends AbstractParser {
                         this.CONSUME1(tokens.ExclamationMarkExclamationMark); 
                     }
                 },
-            ]);
-            this.SUBRULE2(this.AddExpression);
-        });
-
-        return element;
-    });
-    private createAddExpression(): ast.Expression {
-        return {} as any;
-    }
-
-    AddExpression = this.RULE('AddExpression', () => {
-        const element = this.createAddExpression();
-
-        this.SUBRULE1(this.MultExpression);
-        this.MANY1(() => {
-            /* Action: AddExpression.left */
-            this.OR1([
                 {
                     ALT: () => {
                         this.CONSUME1(tokens.Plus); 
@@ -5995,23 +6249,6 @@ export class PliParser extends AbstractParser {
                         this.CONSUME1(tokens.Minus); 
                     }
                 },
-            ]);
-            this.SUBRULE2(this.MultExpression);
-        });
-
-        return element;
-    });
-    private createMultExpression(): ast.Expression {
-        return {} as any;
-    }
-
-    MultExpression = this.RULE('MultExpression', () => {
-        const element = this.createMultExpression();
-
-        this.SUBRULE1(this.ExpExpression);
-        this.MANY1(() => {
-            /* Action: MultExpression.left */
-            this.OR1([
                 {
                     ALT: () => {
                         this.CONSUME1(tokens.Star); 
@@ -6022,23 +6259,12 @@ export class PliParser extends AbstractParser {
                         this.CONSUME1(tokens.Slash); 
                     }
                 },
+                {
+                    ALT: () => {
+                        this.CONSUME1(tokens.StarStar); 
+                    }
+                },
             ]);
-            this.SUBRULE2(this.ExpExpression);
-        });
-
-        return element;
-    });
-    private createExpExpression(): ast.Expression {
-        return {} as any;
-    }
-
-    ExpExpression = this.RULE('ExpExpression', () => {
-        const element = this.createExpExpression();
-
-        this.SUBRULE1(this.PrimaryExpression);
-        this.MANY1(() => {
-            /* Action: ExpExpression.left */
-            this.CONSUME1(tokens.StarStar);
             this.SUBRULE2(this.PrimaryExpression);
         });
 
@@ -6086,12 +6312,12 @@ export class PliParser extends AbstractParser {
         /* Action: Parenthesis */
         this.CONSUME1(tokens.OpenParen);
         this.SUBRULE1(this.Expression);
-        this.option(1, () => {
+        this.OPTION1(() => {
             this.CONSUME1(tokens.DO);
             this.SUBRULE1(this.DoType3);
         });
         this.CONSUME1(tokens.CloseParen);
-        this.option(2, () => {
+        this.OPTION2(() => {
             /* Action: Literal.multiplier */
             this.SUBRULE1(this.LiteralValue);
         });
@@ -6149,9 +6375,9 @@ export class PliParser extends AbstractParser {
         const element = this.createProcedureCall();
 
         this.CONSUME1(tokens.ID);
-        this.option(2, () => {
+        this.OPTION2(() => {
             this.CONSUME1(tokens.OpenParen);
-            this.option(1, () => {
+            this.OPTION1(() => {
                 this.OR1([
                     {
                         ALT: () => {

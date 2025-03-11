@@ -395,5 +395,5 @@ const cstNames = buildCstNodeNames();
 
 // writeFileSync('./tokens.ts', toString(generateTokenTypes()));
 writeFileSync('./parser.ts', toString(generateParser()));
-// writeFileSync('./ast.ts', toString(generateAst()));
+writeFileSync('./ast.ts', toString(generateAst()));
 // writeFileSync('./cst.ts', toString(generateCst()));

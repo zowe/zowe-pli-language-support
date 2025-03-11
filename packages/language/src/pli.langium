@@ -660,31 +660,33 @@ ProcedureParameter: id=ID;
 
 ReferenceItem: ref=[NamedElement:ID] dimensions=Dimensions?;
 
-Expression: BitOrExpression;
+Expression: BinaryExpression;
 
 
 // Note for expressions: Documentation uses '¬' to denote inversion or negation. The language actually uses '^'
 
-// Priority 7
-BitOrExpression infers Expression: BitAndExpression ({infer BitOrExpression.left=current} op=('|' | '¬' | '^') right=BitAndExpression)*;
-
-// Priority 6
-BitAndExpression infers Expression: CompExpression ({infer BitAndExpression.left=current} op='&' right=CompExpression)*;
-
-// Priority 5
-CompExpression infers Expression: ConcatExpression ({infer CompExpression.left=current} op=('<' | '¬<' | '<=' | '=' | '¬=' | '^=' | '<>' | '>=' | '>' | '¬>') right=ConcatExpression)*;
-
-// Priority 4
-ConcatExpression infers Expression: AddExpression ({infer ConcatExpression.left=current} op=('||' | '!!') right=AddExpression)*;
-
-// Priority 3
-AddExpression infers Expression: MultExpression ({infer AddExpression.left=current} op=('+' | '-' ) right=MultExpression)*;
-
-// Priority 2
-MultExpression infers Expression: ExpExpression ({infer MultExpression.left=current} op=('*' | '/' ) right=ExpExpression)*;
-
-// Priority 1
-ExpExpression infers Expression: PrimaryExpression ({infer ExpExpression.left=current} op='**' right=PrimaryExpression)*;
+BinaryExpression infers Expression: 
+    {infer BinaryExpression} 
+    items+=PrimaryExpression 
+    (
+        op+=(
+            // Priority 7
+            '|' | '¬' | '^' |
+            // Priority 6
+            '&' |
+            // Priority 5
+            '<' | '¬<' | '<=' | '=' | '¬=' | '^=' | '<>' | '>=' | '>' | '¬>' |
+            // Priority 4
+            '||' | '!!' |
+            // Priority 3
+            '+' | '-' |
+            // Priority 2
+            '*' | '/' |
+            // Priority 1
+            '**'
+        ) 
+        items+=PrimaryExpression
+    )*;
 
 PrimaryExpression infers Expression: 
     Literal

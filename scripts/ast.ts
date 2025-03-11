@@ -1,11 +1,11 @@
 import { CstNode } from "./cst-base";
 
 export enum SyntaxKind {
-    AddExpression,
     AFormatItem,
     AllocateDimension,
     AllocatedVariable,
-    AllocateLocationReference,
+    AllocateLocationReferenceIn,
+    AllocateLocationReferenceSet,
     AllocateStatement,
     AllocateType,
     AssertStatement,
@@ -13,8 +13,7 @@ export enum SyntaxKind {
     AttachStatement,
     BeginStatement,
     BFormatItem,
-    BitAndExpression,
-    BitOrExpression,
+    BinaryExpression,
     Bound,
     CallStatement,
     CancelThreadStatement,
@@ -22,10 +21,8 @@ export enum SyntaxKind {
     CloseStatement,
     CMPATOptionsItem,
     ColumnFormatItem,
-    CompExpression,
     CompilerOptions,
     ComputationDataAttribute,
-    ConcatExpression,
     ConditionPrefix,
     ConditionPrefixItem,
     DataSpecificationDataList,
@@ -71,7 +68,6 @@ export enum SyntaxKind {
     EnvironmentAttributeItem,
     ExecStatement,
     ExitStatement,
-    ExpExpression,
     Exports,
     FetchEntry,
     FetchStatement,
@@ -112,9 +108,11 @@ export enum SyntaxKind {
     LinkageOptionsItem,
     Literal,
     LocateStatement,
+    LocateStatementFile,
+    LocateStatementKeyFrom,
+    LocateStatementSet,
     LocatorCall,
     MemberCall,
-    MultExpression,
     NamedCondition,
     NoMapOptionsItem,
     NoPrintDirective,
@@ -122,7 +120,16 @@ export enum SyntaxKind {
     NullStatement,
     NumberLiteral,
     OnStatement,
+    OpenOptionsAccess,
+    OpenOptionsBuffering,
+    OpenOptionsFile,
     OpenOptionsGroup,
+    OpenOptionsKeyed,
+    OpenOptionsLineSize,
+    OpenOptionsPageSize,
+    OpenOptionsPrint,
+    OpenOptionsStream,
+    OpenOptionsTitle,
     OpenStatement,
     Options,
     OrdinalTypeAttribute,
@@ -150,6 +157,12 @@ export enum SyntaxKind {
     PutStringStatement,
     QualifyStatement,
     ReadStatement,
+    ReadStatementFile,
+    ReadStatementIgnore,
+    ReadStatementInto,
+    ReadStatementKey,
+    ReadStatementKeyTo,
+    ReadStatementSet,
     ReferenceItem,
     ReinitStatement,
     ReleaseStatement,
@@ -160,6 +173,9 @@ export enum SyntaxKind {
     ReturnStatement,
     RevertStatement,
     RewriteStatement,
+    RewriteStatementFile,
+    RewriteStatementFrom,
+    RewriteStatementKey,
     RFormatItem,
     SelectStatement,
     SignalStatement,
@@ -180,6 +196,10 @@ export enum SyntaxKind {
     WaitStatement,
     WhenStatement,
     WriteStatement,
+    WriteStatementFile,
+    WriteStatementFrom,
+    WriteStatementKeyFrom,
+    WriteStatementKeyTo,
     XFormatItem
 }
 
@@ -190,11 +210,11 @@ export interface AstNode {
 export type Reference<T> = T;
 
 export type SyntaxNode =
-    AddExpression |
     AFormatItem |
     AllocateDimension |
     AllocatedVariable |
-    AllocateLocationReference |
+    AllocateLocationReferenceIn |
+    AllocateLocationReferenceSet |
     AllocateStatement |
     AllocateType |
     AssertStatement |
@@ -202,8 +222,7 @@ export type SyntaxNode =
     AttachStatement |
     BeginStatement |
     BFormatItem |
-    BitAndExpression |
-    BitOrExpression |
+    BinaryExpression |
     Bound |
     CallStatement |
     CancelThreadStatement |
@@ -211,10 +230,8 @@ export type SyntaxNode =
     CloseStatement |
     CMPATOptionsItem |
     ColumnFormatItem |
-    CompExpression |
     CompilerOptions |
     ComputationDataAttribute |
-    ConcatExpression |
     ConditionPrefix |
     ConditionPrefixItem |
     DataSpecificationDataList |
@@ -260,7 +277,6 @@ export type SyntaxNode =
     EnvironmentAttributeItem |
     ExecStatement |
     ExitStatement |
-    ExpExpression |
     Exports |
     FetchEntry |
     FetchStatement |
@@ -301,9 +317,11 @@ export type SyntaxNode =
     LinkageOptionsItem |
     Literal |
     LocateStatement |
+    LocateStatementFile |
+    LocateStatementKeyFrom |
+    LocateStatementSet |
     LocatorCall |
     MemberCall |
-    MultExpression |
     NamedCondition |
     NoMapOptionsItem |
     NoPrintDirective |
@@ -311,7 +329,16 @@ export type SyntaxNode =
     NullStatement |
     NumberLiteral |
     OnStatement |
+    OpenOptionsAccess |
+    OpenOptionsBuffering |
+    OpenOptionsFile |
     OpenOptionsGroup |
+    OpenOptionsKeyed |
+    OpenOptionsLineSize |
+    OpenOptionsPageSize |
+    OpenOptionsPrint |
+    OpenOptionsStream |
+    OpenOptionsTitle |
     OpenStatement |
     Options |
     OrdinalTypeAttribute |
@@ -339,6 +366,12 @@ export type SyntaxNode =
     PutStringStatement |
     QualifyStatement |
     ReadStatement |
+    ReadStatementFile |
+    ReadStatementIgnore |
+    ReadStatementInto |
+    ReadStatementKey |
+    ReadStatementKeyTo |
+    ReadStatementSet |
     ReferenceItem |
     ReinitStatement |
     ReleaseStatement |
@@ -349,6 +382,9 @@ export type SyntaxNode =
     ReturnStatement |
     RevertStatement |
     RewriteStatement |
+    RewriteStatementFile |
+    RewriteStatementFrom |
+    RewriteStatementKey |
     RFormatItem |
     SelectStatement |
     SignalStatement |
@@ -369,10 +405,14 @@ export type SyntaxNode =
     WaitStatement |
     WhenStatement |
     WriteStatement |
+    WriteStatementFile |
+    WriteStatementFrom |
+    WriteStatementKeyFrom |
+    WriteStatementKeyTo |
     XFormatItem
     ;
 
-export type AllocateAttribute = AllocateDimension | AllocateLocationReference | AllocateType | InitialAttribute;
+export type AllocateAttribute = AllocateDimension | AllocateLocationReferenceIn | AllocateLocationReferenceSet | AllocateType | InitialAttribute;
 export type AllocateAttributeType = 'AREA' | 'BIT' | 'CHAR' | 'CHARACTER' | 'GRAPHIC' | 'UCHAR' | 'WIDECHAR';
 export type AssignmentOperator = '&=' | '**=' | '*=' | '+=' | '-=' | '/=' | '<>' | '=' | '^=' | '|=' | '||=' | '¬=';
 export type CharType = 'CHAR' | 'UCHAR' | 'WCHAR';
@@ -383,7 +423,7 @@ export type DefaultAttribute = 'ABNORMAL' | 'ALIGNED' | 'AREA' | 'ASSIGNABLE' | 
 export type DefaultDeclarationAttribute = ComputationDataAttribute | DateAttribute | DefaultValueAttribute | DefinedAttribute | DimensionsDataAttribute | EntryAttribute | EnvironmentAttribute | HandleAttribute | InitialAttribute | LikeAttribute | OrdinalTypeAttribute | PictureAttribute | ReturnsAttribute | TypeAttribute | ValueListAttribute | ValueListFromAttribute | ValueRangeAttribute;
 export type DoType2 = DoUntil | DoWhile;
 export type EntryDescription = EntryParameterDescription | EntryUnionDescription;
-export type Expression = AddExpression | BitAndExpression | BitOrExpression | CompExpression | ConcatExpression | ExpExpression | Literal | LocatorCall | MultExpression | Parenthesis | UnaryExpression;
+export type Expression = BinaryExpression | Literal | LocatorCall | Parenthesis | UnaryExpression;
 export type FormatItem = AFormatItem | BFormatItem | CFormatItem | ColumnFormatItem | EFormatItem | FFormatItem | GFormatItem | LFormatItem | LineFormatItem | PFormatItem | PageFormatItem | RFormatItem | SkipFormatItem | VFormatItem | XFormatItem;
 export type FQN = string;
 export type GetStatement = GetFileStatement | GetStringStatement;
@@ -400,12 +440,6 @@ export type ScopeAttribute = 'DYNAMIC' | 'STATIC';
 export type Unit = AllocateStatement | AssertStatement | AssignmentStatement | AttachStatement | BeginStatement | CallStatement | CancelThreadStatement | CloseStatement | DeclareStatement | DefaultStatement | DefineAliasStatement | DefineOrdinalStatement | DefineStructureStatement | DelayStatement | DeleteStatement | DetachStatement | DisplayStatement | DoStatement | EntryStatement | ExecStatement | ExitStatement | FetchStatement | FlushStatement | FormatStatement | FreeStatement | GetStatement | GoToStatement | IfStatement | IncludeDirective | IterateStatement | LeaveStatement | LineDirective | LocateStatement | NoPrintDirective | NoteDirective | NullStatement | OnStatement | OpenStatement | Package | PageDirective | PopDirective | PrintDirective | ProcedureStatement | ProcessDirective | ProcincDirective | PushDirective | PutStatement | QualifyStatement | ReadStatement | ReinitStatement | ReleaseStatement | ResignalStatement | ReturnStatement | RevertStatement | RewriteStatement | SelectStatement | SignalStatement | SkipDirective | StopStatement | WaitStatement | WriteStatement;
 export type Varying = 'NONVARYING' | 'VARYING' | 'VARYING4' | 'VARYINGZ';
 
-export interface AddExpression extends AstNode {
-    kind: SyntaxKind.AddExpression;
-    left: Expression;
-    op: '+' | '-';
-    right: Expression;
-}
 export interface AFormatItem extends AstNode {
     kind: SyntaxKind.AFormatItem;
     fieldWidth: Expression;
@@ -420,10 +454,13 @@ export interface AllocatedVariable extends AstNode {
     var: ReferenceItem;
     attribute: AllocateAttribute;
 }
-export interface AllocateLocationReference extends AstNode {
-    kind: SyntaxKind.AllocateLocationReference;
-    locatorVariable: LocatorCall;
+export interface AllocateLocationReferenceIn extends AstNode {
+    kind: SyntaxKind.AllocateLocationReferenceIn;
     area: LocatorCall;
+}
+export interface AllocateLocationReferenceSet extends AstNode {
+    kind: SyntaxKind.AllocateLocationReferenceSet;
+    locatorVariable: LocatorCall;
 }
 export interface AllocateStatement extends AstNode {
     kind: SyntaxKind.AllocateStatement;
@@ -472,17 +509,10 @@ export interface BFormatItem extends AstNode {
     kind: SyntaxKind.BFormatItem;
     fieldWidth: Expression;
 }
-export interface BitAndExpression extends AstNode {
-    kind: SyntaxKind.BitAndExpression;
-    left: Expression;
-    op: '&';
-    right: Expression;
-}
-export interface BitOrExpression extends AstNode {
-    kind: SyntaxKind.BitOrExpression;
-    left: Expression;
-    op: '|' | '¬' | '^';
-    right: Expression;
+export interface BinaryExpression extends AstNode {
+    kind: SyntaxKind.BinaryExpression;
+    items: Expression[];
+    op: ('|' | '¬' | '^' | '&' | '<' | '¬<' | '<=' | '=' | '¬=' | '^=' | '<>' | '>=' | '>' | '¬>' | '||' | '!!' | '+' | '-' | '*' | '/' | '**')[];
 }
 export interface Bound extends AstNode {
     kind: SyntaxKind.Bound;
@@ -513,12 +543,6 @@ export interface ColumnFormatItem extends AstNode {
     kind: SyntaxKind.ColumnFormatItem;
     characterPosition: Expression;
 }
-export interface CompExpression extends AstNode {
-    kind: SyntaxKind.CompExpression;
-    left: Expression;
-    op: '<' | '¬<' | '<=' | '=' | '¬=' | '^=' | '<>' | '>=' | '>' | '¬>';
-    right: Expression;
-}
 export interface CompilerOptions extends AstNode {
     kind: SyntaxKind.CompilerOptions;
     value: 'TODO';
@@ -527,12 +551,6 @@ export interface ComputationDataAttribute extends AstNode {
     kind: SyntaxKind.ComputationDataAttribute;
     type: DataAttributeType;
     dimensions: Dimensions;
-}
-export interface ConcatExpression extends AstNode {
-    kind: SyntaxKind.ConcatExpression;
-    left: Expression;
-    op: '||' | '!!';
-    right: Expression;
 }
 export interface ConditionPrefix extends AstNode {
     kind: SyntaxKind.ConditionPrefix;
@@ -773,12 +791,6 @@ export interface ExecStatement extends AstNode {
 export interface ExitStatement extends AstNode {
     kind: SyntaxKind.ExitStatement;
 }
-export interface ExpExpression extends AstNode {
-    kind: SyntaxKind.ExpExpression;
-    left: Expression;
-    op: '**';
-    right: Expression;
-}
 export interface Exports extends AstNode {
     kind: SyntaxKind.Exports;
     all: boolean;
@@ -961,9 +973,19 @@ export interface Literal extends AstNode {
 export interface LocateStatement extends AstNode {
     kind: SyntaxKind.LocateStatement;
     variable: LocatorCall;
+    arguments: (LocateStatementFile | LocateStatementSet | LocateStatementKeyFrom)[];
+}
+export interface LocateStatementFile extends AstNode {
+    kind: SyntaxKind.LocateStatementFile;
     file: ReferenceItem;
-    set: LocatorCall;
+}
+export interface LocateStatementKeyFrom extends AstNode {
+    kind: SyntaxKind.LocateStatementKeyFrom;
     keyfrom: Expression;
+}
+export interface LocateStatementSet extends AstNode {
+    kind: SyntaxKind.LocateStatementSet;
+    set: LocatorCall;
 }
 export interface LocatorCall extends AstNode {
     kind: SyntaxKind.LocatorCall;
@@ -976,12 +998,6 @@ export interface MemberCall extends AstNode {
     kind: SyntaxKind.MemberCall;
     element: ReferenceItem;
     previous: MemberCall;
-}
-export interface MultExpression extends AstNode {
-    kind: SyntaxKind.MultExpression;
-    left: Expression;
-    op: '*' | '/';
-    right: Expression;
 }
 export interface NamedCondition extends AstNode {
     kind: SyntaxKind.NamedCondition;
@@ -1014,23 +1030,51 @@ export interface OnStatement extends AstNode {
     system: boolean;
     onUnit: Statement;
 }
-export interface OpenOptionsGroup extends AstNode {
-    kind: SyntaxKind.OpenOptionsGroup;
-    file: ReferenceItem;
-    stream: boolean;
-    record: boolean;
+export interface OpenOptionsAccess extends AstNode {
+    kind: SyntaxKind.OpenOptionsAccess;
     input: boolean;
     output: boolean;
     update: boolean;
-    keyed: boolean;
-    print: boolean;
-    title: Expression;
-    lineSize: Expression;
-    pageSize: Expression;
+}
+export interface OpenOptionsBuffering extends AstNode {
+    kind: SyntaxKind.OpenOptionsBuffering;
     sequential: boolean;
     direct: boolean;
     unbuffered: boolean;
     buffered: boolean;
+}
+export interface OpenOptionsFile extends AstNode {
+    kind: SyntaxKind.OpenOptionsFile;
+    file: ReferenceItem;
+}
+export interface OpenOptionsGroup extends AstNode {
+    kind: SyntaxKind.OpenOptionsGroup;
+    options: (OpenOptionsFile | OpenOptionsStream | OpenOptionsAccess | OpenOptionsBuffering | OpenOptionsKeyed | OpenOptionsPrint | OpenOptionsTitle | OpenOptionsLineSize | OpenOptionsPageSize)[];
+}
+export interface OpenOptionsKeyed extends AstNode {
+    kind: SyntaxKind.OpenOptionsKeyed;
+    keyed: boolean;
+}
+export interface OpenOptionsLineSize extends AstNode {
+    kind: SyntaxKind.OpenOptionsLineSize;
+    lineSize: Expression;
+}
+export interface OpenOptionsPageSize extends AstNode {
+    kind: SyntaxKind.OpenOptionsPageSize;
+    pageSize: Expression;
+}
+export interface OpenOptionsPrint extends AstNode {
+    kind: SyntaxKind.OpenOptionsPrint;
+    print: boolean;
+}
+export interface OpenOptionsStream extends AstNode {
+    kind: SyntaxKind.OpenOptionsStream;
+    stream: boolean;
+    record: boolean;
+}
+export interface OpenOptionsTitle extends AstNode {
+    kind: SyntaxKind.OpenOptionsTitle;
+    title: Expression;
 }
 export interface OpenStatement extends AstNode {
     kind: SyntaxKind.OpenStatement;
@@ -1154,12 +1198,31 @@ export interface QualifyStatement extends AstNode {
 }
 export interface ReadStatement extends AstNode {
     kind: SyntaxKind.ReadStatement;
-    fileReference: LocatorCall;
+    arguments: (ReadStatementFile | ReadStatementIgnore | ReadStatementInto | ReadStatementSet | ReadStatementKey | ReadStatementKeyTo)[];
+}
+export interface ReadStatementFile extends AstNode {
+    kind: SyntaxKind.ReadStatementFile;
+    file: LocatorCall;
+}
+export interface ReadStatementIgnore extends AstNode {
+    kind: SyntaxKind.ReadStatementIgnore;
     ignore: Expression;
+}
+export interface ReadStatementInto extends AstNode {
+    kind: SyntaxKind.ReadStatementInto;
     intoRef: LocatorCall;
-    set: LocatorCall;
+}
+export interface ReadStatementKey extends AstNode {
+    kind: SyntaxKind.ReadStatementKey;
     key: Expression;
+}
+export interface ReadStatementKeyTo extends AstNode {
+    kind: SyntaxKind.ReadStatementKeyTo;
     keyto: LocatorCall;
+}
+export interface ReadStatementSet extends AstNode {
+    kind: SyntaxKind.ReadStatementSet;
+    set: LocatorCall;
 }
 export interface ReferenceItem extends AstNode {
     kind: SyntaxKind.ReferenceItem;
@@ -1201,8 +1264,18 @@ export interface RevertStatement extends AstNode {
 }
 export interface RewriteStatement extends AstNode {
     kind: SyntaxKind.RewriteStatement;
+    arguments: (RewriteStatementFile | RewriteStatementFrom | RewriteStatementKey)[];
+}
+export interface RewriteStatementFile extends AstNode {
+    kind: SyntaxKind.RewriteStatementFile;
     file: LocatorCall;
+}
+export interface RewriteStatementFrom extends AstNode {
+    kind: SyntaxKind.RewriteStatementFrom;
     from: LocatorCall;
+}
+export interface RewriteStatementKey extends AstNode {
+    kind: SyntaxKind.RewriteStatementKey;
     key: Expression;
 }
 export interface RFormatItem extends AstNode {
@@ -1289,9 +1362,22 @@ export interface WhenStatement extends AstNode {
 }
 export interface WriteStatement extends AstNode {
     kind: SyntaxKind.WriteStatement;
-    fileReference: LocatorCall;
+    arguments: (WriteStatementFile | WriteStatementFrom | WriteStatementKeyFrom | WriteStatementKeyTo)[];
+}
+export interface WriteStatementFile extends AstNode {
+    kind: SyntaxKind.WriteStatementFile;
+    file: LocatorCall;
+}
+export interface WriteStatementFrom extends AstNode {
+    kind: SyntaxKind.WriteStatementFrom;
     from: LocatorCall;
+}
+export interface WriteStatementKeyFrom extends AstNode {
+    kind: SyntaxKind.WriteStatementKeyFrom;
     keyfrom: Expression;
+}
+export interface WriteStatementKeyTo extends AstNode {
+    kind: SyntaxKind.WriteStatementKeyTo;
     keyto: LocatorCall;
 }
 export interface XFormatItem extends AstNode {

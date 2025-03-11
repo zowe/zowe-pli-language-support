@@ -2,8 +2,11 @@ import { Lexer } from "chevrotain";
 import { all } from "./tokens";
 import { PliParser } from "./parser";
 import { test } from 'vitest';
+import { createPliServices } from '../packages/language/src/pli-module';
+import { EmptyFileSystem } from 'langium';
 
 test('parser', () => {
+    const services = createPliServices({ ...EmptyFileSystem });
     const lexer = new Lexer(all);
     const parser = new PliParser();
 
@@ -83,5 +86,9 @@ test('parser', () => {
     parser.input = lexerResult.tokens;
     parser.PliProgram();
     console.timeEnd('parse');
+    services.pli.parser.LangiumParser.parse(text);
+    console.time('parse2');
+    services.pli.parser.LangiumParser.parse(text);
+    console.timeEnd('parse2');
     console.log('LOC', size);
 });
