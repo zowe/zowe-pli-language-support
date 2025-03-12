@@ -1344,9 +1344,9 @@ export const KEYTO = createToken({
     categories: [ID],
     longer_alt: ID
 });
-export const REVER = createToken({
-    name: 'REVER',
-    pattern: /REVER/i,
+export const REVERT = createToken({
+    name: 'REVERT',
+    pattern: /REVERT/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -2359,7 +2359,7 @@ export const keywords = [
     PercentPAGE,
     PercentPUSH,
     KEYTO,
-    REVER,
+    REVERT,
     OTHER,
     PercentSKIP,
     WRITE,

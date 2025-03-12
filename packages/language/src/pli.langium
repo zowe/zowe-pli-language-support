@@ -466,7 +466,7 @@ ResignalStatement: {infer ResignalStatement} 'RESIGNAL' ';';
 
 ReturnStatement: 'RETURN' ('(' expression=Expression ')')? ';';
 
-RevertStatement: 'REVER' conditions+=Condition (',' conditions+=Condition)* ';';
+RevertStatement: 'REVERT' conditions+=Condition (',' conditions+=Condition)* ';';
 
 RewriteStatement: 'REWRITE' arguments+=(RewriteStatementFile | RewriteStatementFrom | RewriteStatementKey)* ';';
 

@@ -4591,7 +4591,7 @@ export class PliParser extends AbstractParser {
     RevertStatement = this.RULE('RevertStatement', () => {
         const element = this.createRevertStatement();
 
-        this.CONSUME1(tokens.REVER);
+        this.CONSUME1(tokens.REVERT);
         this.SUBRULE1(this.Condition);
         this.MANY1(() => {
             this.CONSUME1(tokens.Comma);
