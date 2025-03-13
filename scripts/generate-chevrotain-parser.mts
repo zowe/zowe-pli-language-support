@@ -410,8 +410,13 @@ function generateInterface(value: InterfaceType): GeneratorNode {
 }
 
 function generateProperty(value: Property): GeneratorNode {
+    let type = generatePropertyType(value.type);
+    if (!type.endsWith('[]') && type !== 'boolean') {
+        // null is marginally faster than undefined
+        type += ' | null';
+    }
     return expandToNode`
-    ${value.name}: ${generatePropertyType(value.type)};
+    ${value.name}: ${type};
     `
 }
 
@@ -455,6 +460,6 @@ function generateCst(): GeneratorNode {
 const cstNames = buildCstNodeNames();
 
 // writeFileSync('./tokens.ts', toString(generateTokenTypes()));
-writeFileSync('./cst.ts', toString(generateCst()));
-writeFileSync('./parser.ts', toString(generateParser()));
+// writeFileSync('./cst.ts', toString(generateCst()));
+// writeFileSync('./parser.ts', toString(generateParser()));
 writeFileSync('./ast.ts', toString(generateAst()));

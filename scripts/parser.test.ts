@@ -24,12 +24,21 @@ test('parser', () => {
         main: proc options(main);                                                    
                                                                                     
         dcl n fixed bin;                                                           
-                                                                                    
+        dcl A fixed bin(15), 
+            B fixed bin(15),
+            Y fixed bin(15),
+            X fixed bin(15);
+        A = 5;
+        B = 10;
+        // will warn about dummy args being gend for ADD, 
+        // but it's valid
+        Y = ADD(A,B);
+        X = Y**3+ADD(A,B);                                                  
         n = 1;                                                                     
         assert compare(n,1);                                                       
         assert compare(n,2) text("n not equal to 2");                                
         assert unreachable;                                                        
-        end;                                                                         
+        end;
                                                                                     
         ibmpasc:                                                                     
         proc( packagename_ptr, procname_ptr, assert_sourceline,                     
@@ -79,21 +88,25 @@ test('parser', () => {
     end;
     `;
     let text = '';
-    for (let i = 0; i < 1600; i++) {
+    for (let i = 0; i < 1450; i++) {
         text += input;
     }
     const size = text.split('\n').length;
     let lexerResult = lexer.tokenize(text);
     parser.input = lexerResult.tokens;
     const result = parser.PliProgram();
-    console.time('parse');
-    lexerResult = lexer.tokenize(text);
-    parser.input = lexerResult.tokens;
-    parser.PliProgram();
-    console.timeEnd('parse');
-    // services.pli.parser.LangiumParser.parse(text);
-    // console.time('parse2');
-    // services.pli.parser.LangiumParser.parse(text);
-    // console.timeEnd('parse2');
+    for (let i = 0; i < 5; i++) {
+        console.time('parse');
+        lexerResult = lexer.tokenize(text);
+        parser.input = lexerResult.tokens;
+        const result = parser.PliProgram();
+        console.timeEnd('parse');
+        result.toString();
+    }
+    services.pli.parser.LangiumParser.parse(text);
+    console.time('parse2');
+    const langiumResult = services.pli.parser.LangiumParser.parse(text);
+    console.timeEnd('parse2');
+    langiumResult.toString();
     console.log('LOC', size);
 }, 100000);

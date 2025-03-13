@@ -12,17 +12,17 @@ export class PliParser extends AbstractParser {
     private createPliProgram(): ast.PliProgram {
         return {
             kind: ast.SyntaxKind.PliProgram,
-            statements: undefined,
-        } as any;
+            statements: [],
+        };
     }
 
     PliProgram = this.RULE('PliProgram', () => {
         let element = this.push(this.createPliProgram());
 
-        this.MANY1(() => {
-            this.SUBRULE_ASSIGN1(this.Statement, {
+        this.MANY(() => {
+            this.SUBRULE_ASSIGN(this.Statement, {
                 assign: result => {
-                    element.statements ??= []; element.statements.push(result);
+                    element.statements.push(result);
                 }
             });
         });
@@ -32,12 +32,12 @@ export class PliParser extends AbstractParser {
     private createPackage(): ast.Package {
         return {
             kind: ast.SyntaxKind.Package,
-            exports: undefined,
-            reserves: undefined,
-            options: undefined,
-            statements: undefined,
-            end: undefined,
-        } as any;
+            exports: null,
+            reserves: null,
+            options: null,
+            statements: [],
+            end: null,
+        };
     }
 
     Package = this.RULE('Package', () => {
@@ -73,7 +73,7 @@ export class PliParser extends AbstractParser {
         this.MANY1(() => {
             this.SUBRULE_ASSIGN1(this.Statement, {
                 assign: result => {
-                    element.statements ??= []; element.statements.push(result);
+                    element.statements.push(result);
                 }
             });
         });
@@ -91,8 +91,8 @@ export class PliParser extends AbstractParser {
     private createConditionPrefix(): ast.ConditionPrefix {
         return {
             kind: ast.SyntaxKind.ConditionPrefix,
-            items: undefined,
-        } as any;
+            items: [],
+        };
     }
 
     ConditionPrefix = this.RULE('ConditionPrefix', () => {
@@ -104,7 +104,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN1(this.ConditionPrefixItem, {
                 assign: result => {
-                    element.items ??= []; element.items.push(result);
+                    element.items.push(result);
                 }
             });
             this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
@@ -120,8 +120,8 @@ export class PliParser extends AbstractParser {
     private createConditionPrefixItem(): ast.ConditionPrefixItem {
         return {
             kind: ast.SyntaxKind.ConditionPrefixItem,
-            conditions: undefined,
-        } as any;
+            conditions: [],
+        };
     }
 
     ConditionPrefixItem = this.RULE('ConditionPrefixItem', () => {
@@ -129,7 +129,7 @@ export class PliParser extends AbstractParser {
 
         this.SUBRULE_ASSIGN1(this.Condition, {
             assign: result => {
-                element.conditions ??= []; element.conditions.push(result);
+                element.conditions.push(result);
             }
         });
         this.MANY1(() => {
@@ -138,7 +138,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.Condition, {
                 assign: result => {
-                    element.conditions ??= []; element.conditions.push(result);
+                    element.conditions.push(result);
                 }
             });
         });
@@ -148,8 +148,8 @@ export class PliParser extends AbstractParser {
     private createExports(): ast.Exports {
         return {
             kind: ast.SyntaxKind.Exports,
-            all: undefined,
-            procedures: undefined,
+            all: false,
+            procedures: [],
         } as any;
     }
 
@@ -175,7 +175,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.Exports_procedures_ID_0);
-                        element.procedures ??= []; element.procedures.push(token.image);
+                        element.procedures.push(token.image);
                     });
                     this.MANY1(() => {
                         this.CONSUME_ASSIGN1(tokens.Comma, token => {
@@ -183,7 +183,7 @@ export class PliParser extends AbstractParser {
                         });
                         this.CONSUME_ASSIGN2(tokens.ID, token => {
                             this.tokenPayload(token, element, CstNodeKind.Exports_procedures_ID_1);
-                            element.procedures ??= []; element.procedures.push(token.image);
+                            element.procedures.push(token.image);
                         });
                     });
                 }
@@ -198,9 +198,9 @@ export class PliParser extends AbstractParser {
     private createReserves(): ast.Reserves {
         return {
             kind: ast.SyntaxKind.Reserves,
-            all: undefined,
-            variables: undefined,
-        } as any;
+            all: false,
+            variables: [],
+        };
     }
 
     Reserves = this.RULE('Reserves', () => {
@@ -225,7 +225,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.Reserves_variables_ID_0);
-                        element.variables ??= []; element.variables.push(token.image);
+                        element.variables.push(token.image);
                     });
                     this.MANY1(() => {
                         this.CONSUME_ASSIGN1(tokens.Comma, token => {
@@ -233,7 +233,7 @@ export class PliParser extends AbstractParser {
                         });
                         this.CONSUME_ASSIGN2(tokens.ID, token => {
                             this.tokenPayload(token, element, CstNodeKind.Reserves_variables_ID_1);
-                            element.variables ??= []; element.variables.push(token.image);
+                            element.variables.push(token.image);
                         });
                     });
                 }
@@ -248,8 +248,8 @@ export class PliParser extends AbstractParser {
     private createOptions(): ast.Options {
         return {
             kind: ast.SyntaxKind.Options,
-            items: undefined,
-        } as any;
+            items: [],
+        };
     }
 
     Options = this.RULE('Options', () => {
@@ -263,7 +263,7 @@ export class PliParser extends AbstractParser {
         });
         this.SUBRULE_ASSIGN1(this.OptionsItem, {
             assign: result => {
-                element.items ??= []; element.items.push(result);
+                element.items.push(result);
             }
         });
         this.MANY1(() => {
@@ -274,7 +274,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.OptionsItem, {
                 assign: result => {
-                    element.items ??= []; element.items.push(result);
+                    element.items.push(result);
                 }
             });
         });
@@ -284,22 +284,20 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createOptionsItem(): ast.OptionsItem {
-        return {
-            
-        } as any;
-    }
 
     OptionsItem = this.RULE('OptionsItem', () => {
-        let element = this.push(this.createOptionsItem());
+        let element = this.push<ast.OptionsItem>(undefined!);
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.SimpleOptionsItem, {
-                        assign: result => {
-                            element = this.replace(result);
-                        }
+                    this.CONSUME_ASSIGN(tokens.SimpleOptions, token => {
+                        // TODO: change node kind
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_AMODE31_0);
+                        element = this.replace({
+                            kind: ast.SyntaxKind.SimpleOptionsItem,
+                            value: token.image as ast.SimpleOptionsItem['value'],
+                        });
                     });
                 }
             },
@@ -332,13 +330,13 @@ export class PliParser extends AbstractParser {
             },
         ]);
 
-        return this.pop();
+        return this.pop<ast.OptionsItem>();
     });
     private createLinkageOptionsItem(): ast.LinkageOptionsItem {
         return {
             kind: ast.SyntaxKind.LinkageOptionsItem,
-            value: undefined,
-        } as any;
+            value: null,
+        };
     }
 
     LinkageOptionsItem = this.RULE('LinkageOptionsItem', () => {
@@ -350,51 +348,24 @@ export class PliParser extends AbstractParser {
         this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
             this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_OpenParen_0);
         });
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CDECL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_value_CDECL_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.OPTLINK, token => {
-                        this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_value_OPTLINK_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.STDCALL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_value_STDCALL_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.SYSTEM, token => {
-                        this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_value_SYSTEM_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-        ]);
+        this.CONSUME_ASSIGN1(tokens.LinkageOption, token => {
+            // LinkageOptionsItem_value_CDECL_0
+            // LinkageOptionsItem_value_OPTLINK_0
+            // LinkageOptionsItem_value_STDCALL_0
+            this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_value_SYSTEM_0);
+            element.value = token.image as 'CDECL' | 'OPTLINK' | 'STDCALL' | 'SYSTEM';
+        });
         this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
             this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_CloseParen_0);
         });
 
-        return this.pop();
+        return this.pop<ast.LinkageOptionsItem>();
     });
     private createCMPATOptionsItem(): ast.CMPATOptionsItem {
         return {
             kind: ast.SyntaxKind.CMPATOptionsItem,
-            value: undefined,
-        } as any;
+            value: null,
+        };
     }
 
     CMPATOptionsItem = this.RULE('CMPATOptionsItem', () => {
@@ -406,75 +377,33 @@ export class PliParser extends AbstractParser {
         this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
             this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_OpenParen_0);
         });
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.V1, token => {
-                        this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_value_V1_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.V2, token => {
-                        this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_value_V2_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.V3, token => {
-                        this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_value_V3_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-        ]);
+        this.CONSUME_ASSIGN1(tokens.VX, token => {
+            this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_value_V3_0);
+            element.value = token.image as "V1" | "V2" | "V3";
+        });
         this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
             this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_CloseParen_0);
         });
 
-        return this.pop();
+        return this.pop<ast.CMPATOptionsItem>();
     });
     private createNoMapOptionsItem(): ast.NoMapOptionsItem {
         return {
             kind: ast.SyntaxKind.NoMapOptionsItem,
-            type: undefined,
-            parameters: undefined,
-        } as any;
+            type: null,
+            parameters: [],
+        };
     }
 
     NoMapOptionsItem = this.RULE('NoMapOptionsItem', () => {
         let element = this.push(this.createNoMapOptionsItem());
 
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NOMAP, token => {
-                        this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_type_NOMAP_0);
-                        element.type = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NOMAPIN, token => {
-                        this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_type_NOMAPIN_0);
-                        element.type = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NOMAPOUT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_type_NOMAPOUT_0);
-                        element.type = token.image;
-                    });
-                }
-            },
-        ]);
+        this.CONSUME_ASSIGN1(tokens.NoMapOption, token => {
+            // NoMapOptionsItem_type_NOMAP_0
+            // NoMapOptionsItem_type_NOMAPIN_0
+            this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_type_NOMAPOUT_0);
+            element.type = token.image as "NOMAP" | "NOMAPIN" | "NOMAPOUT";
+        });
         this.OPTION2(() => {
             this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
                 this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_OpenParen_0);
@@ -499,277 +428,23 @@ export class PliParser extends AbstractParser {
             });
         });
 
-        return this.pop();
+        return this.pop<ast.NoMapOptionsItem>();
     });
-    private createSimpleOptionsItem(): ast.SimpleOptionsItem {
-        return {
-            kind: ast.SyntaxKind.SimpleOptionsItem,
-            value: undefined,
-        } as any;
-    }
 
-    SimpleOptionsItem = this.RULE('SimpleOptionsItem', () => {
-        let element = this.push(this.createSimpleOptionsItem());
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ORDER, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_ORDER_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.REORDER, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_REORDER_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NOCHARGRAPHIC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_NOCHARGRAPHIC_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CHARGRAPHIC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_CHARGRAPHIC_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NOINLINE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_NOINLINE_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.INLINE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_INLINE_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.MAIN, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_MAIN_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NOEXECOPS, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_NOEXECOPS_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.COBOL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_COBOL_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.FORTRAN, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_FORTRAN_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BYADDR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_BYADDR_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BYVALUE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_BYVALUE_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.DESCRIPTOR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_DESCRIPTOR_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NODESCRIPTOR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_NODESCRIPTOR_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.IRREDUCIBLE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_IRREDUCIBLE_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.REDUCIBLE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_REDUCIBLE_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NORETURN, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_NORETURN_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.REENTRANT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_REENTRANT_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.FETCHABLE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_FETCHABLE_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.RENT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_RENT_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.AMODE31, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_AMODE31_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.AMODE64, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_AMODE64_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.DLLINTERNAL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_DLLINTERNAL_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.FROMALIEN, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_FROMALIEN_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.RETCODE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_RETCODE_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ASSEMBLER, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_ASSEMBLER_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ASM, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_ASM_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.WINMAIN, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_WINMAIN_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.INTER, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_INTER_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.RECURSIVE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_RECURSIVE_0);
-                        element.value = token.image;
-                    });
-                }
-            },
-        ]);
-
-        return this.pop();
-    });
     private createProcedureStatement(): ast.ProcedureStatement {
         return {
             kind: ast.SyntaxKind.ProcedureStatement,
-            xProc: undefined,
-            parameters: undefined,
-            statements: undefined,
-            returns: undefined,
-            options: undefined,
-            recursive: undefined,
-            order: undefined,
-            scope: undefined,
-            end: undefined,
-            environmentName: undefined,
-        } as any;
+            xProc: false,
+            parameters: [],
+            statements: [],
+            returns: [],
+            options: [],
+            recursive: [],
+            order: [],
+            scope: [],
+            end: null,
+            environmentName: [],
+        };
     }
 
     ProcedureStatement = this.RULE('ProcedureStatement', () => {
@@ -814,7 +489,7 @@ export class PliParser extends AbstractParser {
             this.OPTION1(() => {
                 this.SUBRULE_ASSIGN1(this.ProcedureParameter, {
                     assign: result => {
-                        element.parameters ??= []; element.parameters.push(result);
+                        element.parameters.push(result);
                     }
                 });
                 this.MANY1(() => {
@@ -823,7 +498,7 @@ export class PliParser extends AbstractParser {
                     });
                     this.SUBRULE_ASSIGN2(this.ProcedureParameter, {
                         assign: result => {
-                            element.parameters ??= []; element.parameters.push(result);
+                            element.parameters.push(result);
                         }
                     });
                 });
@@ -838,7 +513,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.ReturnsOption, {
                             assign: result => {
-                                element.returns ??= []; element.returns.push(result);
+                                element.returns.push(result);
                             }
                         });
                     }
@@ -847,7 +522,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.Options, {
                             assign: result => {
-                                element.options ??= []; element.options.push(result);
+                                element.options.push(result);
                             }
                         });
                     }
@@ -856,7 +531,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.CONSUME_ASSIGN1(tokens.RECURSIVE, token => {
                             this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_recursive_RECURSIVE_0);
-                            element.recursive ??= []; element.recursive.push(token.image);
+                            element.recursive.push(token.image as 'RECURSIVE');
                         });
                     }
                 },
@@ -867,7 +542,7 @@ export class PliParser extends AbstractParser {
                                 ALT: () => {
                                     this.CONSUME_ASSIGN1(tokens.ORDER, token => {
                                         this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_order_ORDER_0);
-                                        element.order ??= []; element.order.push(token.image);
+                                        element.order.push(token.image as 'ORDER');
                                     });
                                 }
                             },
@@ -875,7 +550,7 @@ export class PliParser extends AbstractParser {
                                 ALT: () => {
                                     this.CONSUME_ASSIGN1(tokens.REORDER, token => {
                                         this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_order_REORDER_0);
-                                        element.order ??= []; element.order.push(token.image);
+                                        element.order.push(token.image as 'REORDER');
                                     });
                                 }
                             },
@@ -906,7 +581,7 @@ export class PliParser extends AbstractParser {
                             });
                             this.SUBRULE_ASSIGN1(this.Expression, {
                                 assign: result => {
-                                    element.environmentName ??= []; element.environmentName.push(result);
+                                    element.environmentName.push(result);
                                 }
                             });
                             this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
@@ -917,10 +592,10 @@ export class PliParser extends AbstractParser {
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE_ASSIGN1(this.ScopeAttribute, {
-                            assign: result => {
-                                element.scope ??= []; element.scope.push(result);
-                            }
+                        this.CONSUME_ASSIGN(tokens.ScopeAttribute, token => {
+                            // TODO
+                            this.tokenPayload(token, element, CstNodeKind.ScopeAttribute_DYNAMIC_0);
+                            element.scope.push(token.image as ast.ScopeAttribute);
                         });
                     }
                 },
@@ -965,34 +640,7 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createScopeAttribute(): ast.ScopeAttribute {
-        return {
-            
-        } as any;
-    }
 
-    ScopeAttribute = this.RULE('ScopeAttribute', () => {
-        let element = this.push(this.createScopeAttribute());
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.STATIC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.ScopeAttribute_STATIC_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.DYNAMIC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.ScopeAttribute_DYNAMIC_0);
-                    });
-                }
-            },
-        ]);
-
-        return this.pop();
-    });
     private createLabelPrefix(): ast.LabelPrefix {
         return {
             kind: ast.SyntaxKind.LabelPrefix,
@@ -1016,13 +664,13 @@ export class PliParser extends AbstractParser {
     private createEntryStatement(): ast.EntryStatement {
         return {
             kind: ast.SyntaxKind.EntryStatement,
-            parameters: undefined,
-            variable: undefined,
-            limited: undefined,
-            returns: undefined,
-            options: undefined,
-            environmentName: undefined,
-        } as any;
+            parameters: [],
+            variable: [],
+            limited: [],
+            returns: [],
+            options: [],
+            environmentName: [],
+        };
     }
 
     EntryStatement = this.RULE('EntryStatement', () => {
@@ -1038,7 +686,7 @@ export class PliParser extends AbstractParser {
             this.OPTION1(() => {
                 this.SUBRULE_ASSIGN1(this.ProcedureParameter, {
                     assign: result => {
-                        element.parameters ??= []; element.parameters.push(result);
+                        element.parameters.push(result);
                     }
                 });
                 this.MANY1(() => {
@@ -1047,7 +695,7 @@ export class PliParser extends AbstractParser {
                     });
                     this.SUBRULE_ASSIGN2(this.ProcedureParameter, {
                         assign: result => {
-                            element.parameters ??= []; element.parameters.push(result);
+                            element.parameters.push(result);
                         }
                     });
                 });
@@ -1082,7 +730,7 @@ export class PliParser extends AbstractParser {
                             });
                             this.SUBRULE_ASSIGN1(this.Expression, {
                                 assign: result => {
-                                    element.environmentName ??= []; element.environmentName.push(result);
+                                    element.environmentName.push(result);
                                 }
                             });
                             this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
@@ -1095,7 +743,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.CONSUME_ASSIGN1(tokens.VARIABLE, token => {
                             this.tokenPayload(token, element, CstNodeKind.EntryStatement_variable_VARIABLE_0);
-                            element.variable ??= []; element.variable.push(token.image);
+                            element.variable.push(token.image as 'VARIABLE');
                         });
                     }
                 },
@@ -1103,7 +751,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.CONSUME_ASSIGN1(tokens.LIMITED, token => {
                             this.tokenPayload(token, element, CstNodeKind.EntryStatement_limited_LIMITED_0);
-                            element.limited ??= []; element.limited.push(token.image);
+                            element.limited.push(token.image as 'LIMITED');
                         });
                     }
                 },
@@ -1111,7 +759,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.ReturnsOption, {
                             assign: result => {
-                                element.returns ??= []; element.returns.push(result);
+                                element.returns.push(result);
                             }
                         });
                     }
@@ -1120,7 +768,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.Options, {
                             assign: result => {
-                                element.options ??= []; element.options.push(result);
+                                element.options.push(result);
                             }
                         });
                     }
@@ -1952,10 +1600,10 @@ export class PliParser extends AbstractParser {
     AllocateType = this.RULE('AllocateType', () => {
         let element = this.push(this.createAllocateType());
 
-        this.SUBRULE_ASSIGN1(this.AllocateAttributeType, {
-            assign: result => {
-                element.type = result;
-            }
+        this.CONSUME_ASSIGN(tokens.AllocateAttributeType, token => {
+            // TODO
+            this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_AREA_0);
+            element.type = token.image as ast.AllocateAttributeType;
         });
         this.OPTION1(() => {
             this.SUBRULE_ASSIGN1(this.Dimensions, {
@@ -1967,81 +1615,19 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createAllocateAttributeType(): ast.AllocateAttributeType {
-        return {
-            
-        } as any;
-    }
 
-    AllocateAttributeType = this.RULE('AllocateAttributeType', () => {
-        let element = this.push(this.createAllocateAttributeType());
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CHAR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_CHAR_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CHARACTER, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_CHARACTER_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BIT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_BIT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.GRAPHIC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_GRAPHIC_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UCHAR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_UCHAR_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.WIDECHAR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_WIDECHAR_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.AREA, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_AREA_0);
-                    });
-                }
-            },
-        ]);
-
-        return this.pop();
-    });
     private createAssertStatement(): ast.AssertStatement {
         return {
             kind: ast.SyntaxKind.AssertStatement,
-            true: undefined,
-            actual: undefined,
-            false: undefined,
-            unreachable: undefined,
-            displayExpression: undefined,
-            compare: undefined,
-            expected: undefined,
-            operator: undefined,
-        } as any;
+            true: false,
+            actual: null,
+            false: false,
+            unreachable: false,
+            displayExpression: null,
+            compare: false,
+            expected: null,
+            operator: null,
+        };
     }
 
     AssertStatement = this.RULE('AssertStatement', () => {
@@ -2150,11 +1736,11 @@ export class PliParser extends AbstractParser {
     private createAssignmentStatement(): ast.AssignmentStatement {
         return {
             kind: ast.SyntaxKind.AssignmentStatement,
-            refs: undefined,
-            operator: undefined,
-            expression: undefined,
-            dimacrossExpr: undefined,
-        } as any;
+            refs: [],
+            operator: null,
+            expression: null,
+            dimacrossExpr: null,
+        };
     }
 
     AssignmentStatement = this.RULE('AssignmentStatement', () => {
@@ -2162,7 +1748,7 @@ export class PliParser extends AbstractParser {
 
         this.SUBRULE_ASSIGN1(this.LocatorCall, {
             assign: result => {
-                element.refs ??= []; element.refs.push(result);
+                element.refs.push(result);
             }
         });
         this.MANY1(() => {
@@ -2171,14 +1757,14 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.LocatorCall, {
                 assign: result => {
-                    element.refs ??= []; element.refs.push(result);
+                    element.refs.push(result);
                 }
             });
         });
-        this.SUBRULE_ASSIGN1(this.AssignmentOperator, {
-            assign: result => {
-                element.operator = result;
-            }
+        this.CONSUME_ASSIGN(tokens.AssignmentOperator, token => {
+            // TODO
+            this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_AmpersandEquals_0);
+            element.operator = token.image as ast.AssignmentOperator;
         });
         this.SUBRULE_ASSIGN1(this.Expression, {
             assign: result => {
@@ -2220,112 +1806,15 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createAssignmentOperator(): ast.AssignmentOperator {
-        return {
-            
-        } as any;
-    }
 
-    AssignmentOperator = this.RULE('AssignmentOperator', () => {
-        let element = this.push(this.createAssignmentOperator());
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.Equals, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_Equals_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.PlusEquals, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_PlusEquals_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.MinusEquals, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_MinusEquals_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.StarEquals, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_StarEquals_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.SlashEquals, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_SlashEquals_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.PipeEquals, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_PipeEquals_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.AmpersandEquals, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_AmpersandEquals_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.PipePipeEquals, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_PipePipeEquals_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.StarStarEquals, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_StarStarEquals_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NotEquals, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_NotEquals_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CaretEquals, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_CaretEquals_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.LessThanGreaterThan, token => {
-                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_LessThanGreaterThan_0);
-                    });
-                }
-            },
-        ]);
-
-        return this.pop();
-    });
     private createAttachStatement(): ast.AttachStatement {
         return {
             kind: ast.SyntaxKind.AttachStatement,
-            reference: undefined,
-            task: undefined,
-            environment: undefined,
-            tstack: undefined,
-        } as any;
+            reference: null,
+            task: null,
+            environment: false,
+            tstack: null,
+        };
     }
 
     AttachStatement = this.RULE('AttachStatement', () => {
@@ -2390,13 +1879,13 @@ export class PliParser extends AbstractParser {
     private createBeginStatement(): ast.BeginStatement {
         return {
             kind: ast.SyntaxKind.BeginStatement,
-            options: undefined,
-            recursive: undefined,
-            statements: undefined,
-            end: undefined,
-            order: undefined,
-            reorder: undefined,
-        } as any;
+            options: null,
+            recursive: false,
+            statements: [],
+            end: null,
+            order: false,
+            reorder: false,
+        };
     }
 
     BeginStatement = this.RULE('BeginStatement', () => {
@@ -2444,7 +1933,7 @@ export class PliParser extends AbstractParser {
         this.MANY1(() => {
             this.SUBRULE_ASSIGN1(this.Statement, {
                 assign: result => {
-                    element.statements ??= []; element.statements.push(result);
+                    element.statements.push(result);
                 }
             });
         });
@@ -2462,9 +1951,9 @@ export class PliParser extends AbstractParser {
     private createEndStatement(): ast.EndStatement {
         return {
             kind: ast.SyntaxKind.EndStatement,
-            labels: undefined,
-            label: undefined,
-        } as any;
+            labels: [],
+            label: null,
+        };
     }
 
     EndStatement = this.RULE('EndStatement', () => {
@@ -2473,7 +1962,7 @@ export class PliParser extends AbstractParser {
         this.MANY1(() => {
             this.SUBRULE_ASSIGN1(this.LabelPrefix, {
                 assign: result => {
-                    element.labels ??= []; element.labels.push(result);
+                    element.labels.push(result);
                 }
             });
         });
@@ -2493,8 +1982,8 @@ export class PliParser extends AbstractParser {
     private createCallStatement(): ast.CallStatement {
         return {
             kind: ast.SyntaxKind.CallStatement,
-            call: undefined,
-        } as any;
+            call: null,
+        };
     }
 
     CallStatement = this.RULE('CallStatement', () => {
@@ -2517,8 +2006,8 @@ export class PliParser extends AbstractParser {
     private createCancelThreadStatement(): ast.CancelThreadStatement {
         return {
             kind: ast.SyntaxKind.CancelThreadStatement,
-            thread: undefined,
-        } as any;
+            thread: null,
+        };
     }
 
     CancelThreadStatement = this.RULE('CancelThreadStatement', () => {
@@ -2550,8 +2039,8 @@ export class PliParser extends AbstractParser {
     private createCloseStatement(): ast.CloseStatement {
         return {
             kind: ast.SyntaxKind.CloseStatement,
-            files: undefined,
-        } as any;
+            files: [],
+        };
     }
 
     CloseStatement = this.RULE('CloseStatement', () => {
@@ -2571,7 +2060,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.MemberCall, {
                         assign: result => {
-                            element.files ??= []; element.files.push(result);
+                            element.files.push(result);
                         }
                     });
                 }
@@ -2580,7 +2069,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.Star, token => {
                         this.tokenPayload(token, element, CstNodeKind.CloseStatement_files_Star_0);
-                        element.files ??= []; element.files.push(token.image);
+                        element.files.push(token.image as '*');
                     });
                 }
             },
@@ -2605,7 +2094,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN2(this.MemberCall, {
                             assign: result => {
-                                element.files ??= []; element.files.push(result);
+                                element.files.push(result);
                             }
                         });
                     }
@@ -2614,7 +2103,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.CONSUME_ASSIGN2(tokens.Star, token => {
                             this.tokenPayload(token, element, CstNodeKind.CloseStatement_files_Star_1);
-                            element.files ??= []; element.files.push(token.image);
+                            element.files.push(token.image as '*');
                         });
                     }
                 },
@@ -2632,8 +2121,8 @@ export class PliParser extends AbstractParser {
     private createDefaultStatement(): ast.DefaultStatement {
         return {
             kind: ast.SyntaxKind.DefaultStatement,
-            expressions: undefined,
-        } as any;
+            expressions: [],
+        };
     }
 
     DefaultStatement = this.RULE('DefaultStatement', () => {
@@ -2657,7 +2146,7 @@ export class PliParser extends AbstractParser {
         ]);
         this.SUBRULE_ASSIGN1(this.DefaultExpression, {
             assign: result => {
-                element.expressions ??= []; element.expressions.push(result);
+                element.expressions.push(result);
             }
         });
         this.MANY1(() => {
@@ -2666,7 +2155,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.DefaultExpression, {
                 assign: result => {
-                    element.expressions ??= []; element.expressions.push(result);
+                    element.expressions.push(result);
                 }
             });
         });
@@ -2679,9 +2168,9 @@ export class PliParser extends AbstractParser {
     private createDefaultExpression(): ast.DefaultExpression {
         return {
             kind: ast.SyntaxKind.DefaultExpression,
-            expression: undefined,
-            attributes: undefined,
-        } as any;
+            expression: null,
+            attributes: [],
+        };
     }
 
     DefaultExpression = this.RULE('DefaultExpression', () => {
@@ -2695,7 +2184,7 @@ export class PliParser extends AbstractParser {
         this.MANY1(() => {
             this.SUBRULE_ASSIGN1(this.DefaultDeclarationAttribute, {
                 assign: result => {
-                    element.attributes ??= []; element.attributes.push(result);
+                    element.attributes.push(result);
                 }
             });
         });
@@ -2705,9 +2194,9 @@ export class PliParser extends AbstractParser {
     private createDefaultExpressionPart(): ast.DefaultExpressionPart {
         return {
             kind: ast.SyntaxKind.DefaultExpressionPart,
-            expression: undefined,
-            identifiers: undefined,
-        } as any;
+            expression: null,
+            identifiers: null,
+        };
     }
 
     DefaultExpressionPart = this.RULE('DefaultExpressionPart', () => {
@@ -2772,8 +2261,8 @@ export class PliParser extends AbstractParser {
     private createDefaultRangeIdentifiers(): ast.DefaultRangeIdentifiers {
         return {
             kind: ast.SyntaxKind.DefaultRangeIdentifiers,
-            identifiers: undefined,
-        } as any;
+            identifiers: [],
+        };
     }
 
     DefaultRangeIdentifiers = this.RULE('DefaultRangeIdentifiers', () => {
@@ -2784,7 +2273,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.Star, token => {
                         this.tokenPayload(token, element, CstNodeKind.DefaultRangeIdentifiers_identifiers_Star_0);
-                        element.identifiers ??= []; element.identifiers.push(token.image);
+                        element.identifiers.push(token.image as '*');
                     });
                 }
             },
@@ -2792,7 +2281,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.DefaultRangeIdentifierItem, {
                         assign: result => {
-                            element.identifiers ??= []; element.identifiers.push(result);
+                            element.identifiers.push(result);
                         }
                     });
                 }
@@ -2807,7 +2296,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.CONSUME_ASSIGN2(tokens.Star, token => {
                             this.tokenPayload(token, element, CstNodeKind.DefaultRangeIdentifiers_identifiers_Star_1);
-                            element.identifiers ??= []; element.identifiers.push(token.image);
+                            element.identifiers.push(token.image as '*');
                         });
                     }
                 },
@@ -2815,7 +2304,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN2(this.DefaultRangeIdentifierItem, {
                             assign: result => {
-                                element.identifiers ??= []; element.identifiers.push(result);
+                                element.identifiers.push(result);
                             }
                         });
                     }
@@ -2828,9 +2317,9 @@ export class PliParser extends AbstractParser {
     private createDefaultRangeIdentifierItem(): ast.DefaultRangeIdentifierItem {
         return {
             kind: ast.SyntaxKind.DefaultRangeIdentifierItem,
-            from: undefined,
-            to: undefined,
-        } as any;
+            from: null,
+            to: null,
+        };
     }
 
     DefaultRangeIdentifierItem = this.RULE('DefaultRangeIdentifierItem', () => {
@@ -2855,9 +2344,9 @@ export class PliParser extends AbstractParser {
     private createDefaultAttributeExpression(): ast.DefaultAttributeExpression {
         return {
             kind: ast.SyntaxKind.DefaultAttributeExpression,
-            items: undefined,
-            operators: undefined,
-        } as any;
+            items: [],
+            operators: [],
+        };
     }
 
     DefaultAttributeExpression = this.RULE('DefaultAttributeExpression', () => {
@@ -2865,28 +2354,15 @@ export class PliParser extends AbstractParser {
 
         this.SUBRULE_ASSIGN1(this.DefaultAttributeExpressionNot, {
             assign: result => {
-                element.items ??= []; element.items.push(result);
+                element.items.push(result);
             }
         });
         this.OPTION1(() => {
-            this.OR1([
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.AND, token => {
-                            this.tokenPayload(token, element, CstNodeKind.DefaultAttributeExpression_operators_AND_0);
-                            element.operators ??= []; element.operators.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.OR, token => {
-                            this.tokenPayload(token, element, CstNodeKind.DefaultAttributeExpression_operators_OR_0);
-                            element.operators ??= []; element.operators.push(token.image);
-                        });
-                    }
-                },
-            ]);
+            this.CONSUME_ASSIGN1(tokens.DefaultAttributeBinaryOperator, token => {
+                // todo
+                this.tokenPayload(token, element, CstNodeKind.DefaultAttributeExpression_operators_AND_0);
+                element.operators.push(token.image as ast.DefaultAttributeExpression['operators'][0]);
+            });
             this.SUBRULE_ASSIGN2(this.DefaultAttributeExpressionNot, {
                 assign: result => {
                     element.items ??= []; element.items.push(result);
@@ -2899,9 +2375,9 @@ export class PliParser extends AbstractParser {
     private createDefaultAttributeExpressionNot(): ast.DefaultAttributeExpressionNot {
         return {
             kind: ast.SyntaxKind.DefaultAttributeExpressionNot,
-            not: undefined,
-            value: undefined,
-        } as any;
+            not: false,
+            value: null,
+        };
     }
 
     DefaultAttributeExpressionNot = this.RULE('DefaultAttributeExpressionNot', () => {
@@ -2913,693 +2389,22 @@ export class PliParser extends AbstractParser {
                 element.not = true;
             });
         });
-        this.SUBRULE_ASSIGN1(this.DefaultAttribute, {
-            assign: result => {
-                element.value = result;
-            }
+        this.CONSUME_ASSIGN(tokens.DefaultAttribute, token => {
+            // TODO
+            this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_ABNORMAL_0);
+            element.value = token.image as ast.DefaultAttribute;
         });
 
         return this.pop();
     });
-    private createDefaultAttribute(): ast.DefaultAttribute {
-        return {
-            
-        } as any;
-    }
 
-    DefaultAttribute = this.RULE('DefaultAttribute', () => {
-        let element = this.push(this.createDefaultAttribute());
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ABNORMAL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_ABNORMAL_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ALIGNED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_ALIGNED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.AREA, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_AREA_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ASSIGNABLE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_ASSIGNABLE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.AUTOMATIC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_AUTOMATIC_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BACKWARDS, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BACKWARDS_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BASED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BASED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BIT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BIT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BUFFERED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BUFFERED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BUILTIN, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BUILTIN_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BYADDR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BYADDR_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BYVALUE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BYVALUE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BIN, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BIN_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BINARY, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BINARY_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CHARACTER, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CHARACTER_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CHAR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CHAR_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.COMPLEX, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_COMPLEX_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CONDITION, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CONDITION_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CONNECTED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CONNECTED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CONSTANT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CONSTANT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CONTROLLED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CONTROLLED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CTL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CTL_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.DECIMAL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_DECIMAL_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.DEC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_DEC_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.DIMACROSS, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_DIMACROSS_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.EVENT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_EVENT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.EXCLUSIVE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_EXCLUSIVE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.EXTERNAL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_EXTERNAL_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.EXT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_EXT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.FILE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_FILE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.FIXED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_FIXED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.FLOAT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_FLOAT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.FORMAT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_FORMAT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.GENERIC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_GENERIC_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.GRAPHIC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_GRAPHIC_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.HEX, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_HEX_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.HEXADEC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_HEXADEC_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.IEEE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_IEEE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.INONLY, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_INONLY_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.INOUT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_INOUT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.INTERNAL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_INTERNAL_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.INT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_INT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.IRREDUCIBLE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_IRREDUCIBLE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.INPUT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_INPUT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.KEYED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_KEYED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.LABEL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_LABEL_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.LIST, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_LIST_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.MEMBER, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_MEMBER_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NATIVE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NATIVE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NONASSIGNABLE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NONASSIGNABLE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NONASGN, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NONASGN_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NONCONNECTED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NONCONNECTED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NONNATIVE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NONNATIVE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NONVARYING, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NONVARYING_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NORMAL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NORMAL_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.OFFSET, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_OFFSET_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.OPTIONAL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_OPTIONAL_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.OPTIONS, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_OPTIONS_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.OUTONLY, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_OUTONLY_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.OUTPUT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_OUTPUT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.PARAMETER, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_PARAMETER_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.POINTER, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_POINTER_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.PTR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_PTR_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.POSITION, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_POSITION_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.PRECISION, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_PRECISION_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.PREC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_PREC_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.PRINT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_PRINT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.RANGE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_RANGE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.REAL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_REAL_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.RECORD, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_RECORD_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.RESERVED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_RESERVED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.SEQUENTIAL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_SEQUENTIAL_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.SIGNED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_SIGNED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.STATIC, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_STATIC_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.STREAM, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_STREAM_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.STRUCTURE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_STRUCTURE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.TASK, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_TASK_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.TRANSIENT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_TRANSIENT_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UNAL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UNAL_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UCHAR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UCHAR_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UNALIGNED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UNALIGNED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UNBUFFERED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UNBUFFERED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UNION, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UNION_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UNSIGNED, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UNSIGNED_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UPDATE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UPDATE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.VARIABLE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VARIABLE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.VARYING, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VARYING_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.VAR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VAR_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.VARYING4, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VARYING4_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.VARYINGZ, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VARYINGZ_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.VARZ, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VARZ_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.WIDECHAR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_WIDECHAR_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.BIGENDIAN, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BIGENDIAN_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.LITTLEENDIAN, token => {
-                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_LITTLEENDIAN_0);
-                    });
-                }
-            },
-        ]);
-
-        return this.pop();
-    });
     private createDefineAliasStatement(): ast.DefineAliasStatement {
         return {
             kind: ast.SyntaxKind.DefineAliasStatement,
-            name: undefined,
-            xDefine: undefined,
-            attributes: undefined,
-        } as any;
+            name: null,
+            xDefine: false,
+            attributes: [],
+        };
     }
 
     DefineAliasStatement = this.RULE('DefineAliasStatement', () => {
@@ -3632,7 +2437,7 @@ export class PliParser extends AbstractParser {
         this.OPTION2(() => {
             this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
                 assign: result => {
-                    element.attributes ??= []; element.attributes.push(result);
+                    element.attributes.push(result);
                 }
             });
             this.MANY1(() => {
@@ -3643,7 +2448,7 @@ export class PliParser extends AbstractParser {
                 });
                 this.SUBRULE_ASSIGN2(this.DeclarationAttribute, {
                     assign: result => {
-                        element.attributes ??= []; element.attributes.push(result);
+                        element.attributes.push(result);
                     }
                 });
             });
@@ -3657,13 +2462,13 @@ export class PliParser extends AbstractParser {
     private createDefineOrdinalStatement(): ast.DefineOrdinalStatement {
         return {
             kind: ast.SyntaxKind.DefineOrdinalStatement,
-            name: undefined,
-            ordinalValues: undefined,
-            xDefine: undefined,
-            signed: undefined,
-            unsigned: undefined,
-            precision: undefined,
-        } as any;
+            name: null,
+            ordinalValues: null,
+            xDefine: false,
+            signed: false,
+            unsigned: false,
+            precision: null,
+        };
     }
 
     DefineOrdinalStatement = this.RULE('DefineOrdinalStatement', () => {
@@ -3782,8 +2587,8 @@ export class PliParser extends AbstractParser {
     private createOrdinalValueList(): ast.OrdinalValueList {
         return {
             kind: ast.SyntaxKind.OrdinalValueList,
-            members: undefined,
-        } as any;
+            members: [],
+        };
     }
 
     OrdinalValueList = this.RULE('OrdinalValueList', () => {
@@ -3791,7 +2596,7 @@ export class PliParser extends AbstractParser {
 
         this.SUBRULE_ASSIGN1(this.OrdinalValue, {
             assign: result => {
-                element.members ??= []; element.members.push(result);
+                element.members.push(result);
             }
         });
         this.MANY1(() => {
@@ -3800,7 +2605,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.OrdinalValue, {
                 assign: result => {
-                    element.members ??= []; element.members.push(result);
+                    element.members.push(result);
                 }
             });
         });
@@ -3810,9 +2615,9 @@ export class PliParser extends AbstractParser {
     private createOrdinalValue(): ast.OrdinalValue {
         return {
             kind: ast.SyntaxKind.OrdinalValue,
-            name: undefined,
-            value: undefined,
-        } as any;
+            name: null,
+            value: null,
+        };
     }
 
     OrdinalValue = this.RULE('OrdinalValue', () => {
@@ -3843,12 +2648,12 @@ export class PliParser extends AbstractParser {
     private createDefineStructureStatement(): ast.DefineStructureStatement {
         return {
             kind: ast.SyntaxKind.DefineStructureStatement,
-            xDefine: undefined,
-            level: undefined,
-            name: undefined,
-            union: undefined,
-            substructures: undefined,
-        } as any;
+            xDefine: false,
+            level: null,
+            name: null,
+            union: false,
+            substructures: [],
+        };
     }
 
     DefineStructureStatement = this.RULE('DefineStructureStatement', () => {
@@ -3908,7 +2713,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN1(this.SubStructure, {
                 assign: result => {
-                    element.substructures ??= []; element.substructures.push(result);
+                    element.substructures.push(result);
                 }
             });
         });
@@ -3921,10 +2726,10 @@ export class PliParser extends AbstractParser {
     private createSubStructure(): ast.SubStructure {
         return {
             kind: ast.SyntaxKind.SubStructure,
-            level: undefined,
-            name: undefined,
-            attributes: undefined,
-        } as any;
+            level: null,
+            name: null,
+            attributes: [],
+        };
     }
 
     SubStructure = this.RULE('SubStructure', () => {
@@ -3941,7 +2746,7 @@ export class PliParser extends AbstractParser {
         this.MANY1(() => {
             this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
                 assign: result => {
-                    element.attributes ??= []; element.attributes.push(result);
+                    element.attributes.push(result);
                 }
             });
         });
@@ -4681,7 +3486,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.Star, token => {
                         this.tokenPayload(token, element, CstNodeKind.FlushStatement_file_Star_0);
-                        element.file = token.image;
+                        element.file = token.image as '*';
                     });
                 }
             },
@@ -5473,14 +4278,23 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createGetStatement(): ast.GetStatement {
+    private createGetFileStatement(): ast.GetFileStatement {
         return {
-            
-        } as any;
+            kind: ast.SyntaxKind.GetFileStatement,
+            specifications: []
+        };
+    }
+
+    private createGetStringStatement(): ast.GetStringStatement {
+        return {
+            kind: ast.SyntaxKind.GetStringStatement,
+            dataSpecification: null,
+            expression: null
+        };
     }
 
     GetStatement = this.RULE('GetStatement', () => {
-        let element = this.push(this.createGetStatement());
+        let element: ast.GetStatement = this.push(this.createGetFileStatement());
 
         this.CONSUME_ASSIGN1(tokens.GET, token => {
             this.tokenPayload(token, element, CstNodeKind.GetStatement_GET_0);
@@ -5489,13 +4303,14 @@ export class PliParser extends AbstractParser {
             {
                 ALT: () => {
                     /* Action: GetFileStatement */
+                    const fileStatement = element as ast.GetFileStatement;
                     this.AT_LEAST_ONE1(() => {
                         this.OR2([
                             {
                                 ALT: () => {
                                     this.SUBRULE_ASSIGN1(this.GetFile, {
                                         assign: result => {
-                                            element.specifications ??= []; element.specifications.push(result);
+                                            fileStatement.specifications.push(result);
                                         }
                                     });
                                 }
@@ -5504,7 +4319,7 @@ export class PliParser extends AbstractParser {
                                 ALT: () => {
                                     this.SUBRULE_ASSIGN1(this.GetCopy, {
                                         assign: result => {
-                                            element.specifications ??= []; element.specifications.push(result);
+                                            fileStatement.specifications.push(result);
                                         }
                                     });
                                 }
@@ -5513,7 +4328,7 @@ export class PliParser extends AbstractParser {
                                 ALT: () => {
                                     this.SUBRULE_ASSIGN1(this.GetSkip, {
                                         assign: result => {
-                                            element.specifications ??= []; element.specifications.push(result);
+                                            fileStatement.specifications.push(result);
                                         }
                                     });
                                 }
@@ -5522,7 +4337,7 @@ export class PliParser extends AbstractParser {
                                 ALT: () => {
                                     this.SUBRULE_ASSIGN1(this.DataSpecificationOptions, {
                                         assign: result => {
-                                            element.specifications ??= []; element.specifications.push(result);
+                                            fileStatement.specifications.push(result);
                                         }
                                     });
                                 }
@@ -5534,30 +4349,31 @@ export class PliParser extends AbstractParser {
             {
                 ALT: () => {
                     /* Action: GetStringStatement */
+                    const stringStatement = this.replace(this.createGetStringStatement());
                     this.CONSUME_ASSIGN1(tokens.STRING, token => {
-                        this.tokenPayload(token, element, CstNodeKind.GetStatement_STRING_0);
+                        this.tokenPayload(token, stringStatement, CstNodeKind.GetStatement_STRING_0);
                     });
                     this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
-                        this.tokenPayload(token, element, CstNodeKind.GetStatement_OpenParen_0);
+                        this.tokenPayload(token, stringStatement, CstNodeKind.GetStatement_OpenParen_0);
                     });
                     this.SUBRULE_ASSIGN1(this.Expression, {
                         assign: result => {
-                            element.expression = result;
+                            stringStatement.expression = result;
                         }
                     });
                     this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
-                        this.tokenPayload(token, element, CstNodeKind.GetStatement_CloseParen_0);
+                        this.tokenPayload(token, stringStatement, CstNodeKind.GetStatement_CloseParen_0);
                     });
                     this.SUBRULE_ASSIGN2(this.DataSpecificationOptions, {
                         assign: result => {
-                            element.dataSpecification = result;
+                            stringStatement.dataSpecification = result;
                         }
                     });
                 }
             },
         ]);
         this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
-            this.tokenPayload(token, element, CstNodeKind.GetStatement_Semicolon_0);
+            this.tokenPayload(token, this.peek(), CstNodeKind.GetStatement_Semicolon_0);
         });
 
         return this.pop();
@@ -6252,207 +5068,25 @@ export class PliParser extends AbstractParser {
     private createKeywordCondition(): ast.KeywordCondition {
         return {
             kind: ast.SyntaxKind.KeywordCondition,
-            keyword: undefined,
-        } as any;
+            keyword: null,
+        };
     }
 
     KeywordCondition = this.RULE('KeywordCondition', () => {
         let element = this.push(this.createKeywordCondition());
 
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ANYCONDITION, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ANYCONDITION_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ANYCOND, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ANYCOND_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.AREA, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_AREA_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ASSERTION, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ASSERTION_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ATTENTION, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ATTENTION_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CONFORMANCE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_CONFORMANCE_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CONVERSION, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_CONVERSION_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ERROR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ERROR_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.FINISH, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_FINISH_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.FIXEDOVERFLOW, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_FIXEDOVERFLOW_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.FOFL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_FOFL_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.INVALIDOP, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_INVALIDOP_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.OVERFLOW, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_OVERFLOW_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.OFL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_OFL_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.SIZE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_SIZE_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.STORAGE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_STORAGE_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.STRINGRANGE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_STRINGRANGE_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.STRINGSIZE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_STRINGSIZE_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.SUBSCRIPTRANGE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_SUBSCRIPTRANGE_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UNDERFLOW, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_UNDERFLOW_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UFL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_UFL_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ZERODIVIDE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ZERODIVIDE_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ZDIV, token => {
-                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ZDIV_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-        ]);
+        this.CONSUME_ASSIGN1(tokens.KeywordConditions, token => {
+            this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ANYCONDITION_0);
+            element.keyword = token.image as ast.KeywordCondition['keyword'];
+        });
 
         return this.pop();
     });
     private createNamedCondition(): ast.NamedCondition {
         return {
             kind: ast.SyntaxKind.NamedCondition,
-            name: undefined,
-        } as any;
+            name: null,
+        };
     }
 
     NamedCondition = this.RULE('NamedCondition', () => {
@@ -6474,83 +5108,23 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
+
     private createFileReferenceCondition(): ast.FileReferenceCondition {
         return {
             kind: ast.SyntaxKind.FileReferenceCondition,
-            keyword: undefined,
-            fileReference: undefined,
-        } as any;
+            keyword: null,
+            fileReference: null,
+        };
     }
 
     FileReferenceCondition = this.RULE('FileReferenceCondition', () => {
         let element = this.push(this.createFileReferenceCondition());
 
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ENDFILE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_ENDFILE_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.ENDPAGE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_ENDPAGE_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.KEY, token => {
-                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_KEY_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NAME, token => {
-                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_NAME_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.RECORD, token => {
-                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_RECORD_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.TRANSMIT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_TRANSMIT_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UNDEFINEDFILE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_UNDEFINEDFILE_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UNDF, token => {
-                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_UNDF_0);
-                        element.keyword = token.image;
-                    });
-                }
-            },
-        ]);
+        this.CONSUME_ASSIGN1(tokens.FileReferenceConditions, token => {
+            // TODO: rename
+            this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_ENDFILE_0);
+            element.keyword = token.image as ast.FileReferenceCondition['keyword'];
+        });
         this.OPTION1(() => {
             this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
                 this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_OpenParen_0);
@@ -6570,8 +5144,8 @@ export class PliParser extends AbstractParser {
     private createOpenStatement(): ast.OpenStatement {
         return {
             kind: ast.SyntaxKind.OpenStatement,
-            options: undefined,
-        } as any;
+            options: [],
+        };
     }
 
     OpenStatement = this.RULE('OpenStatement', () => {
@@ -6582,7 +5156,7 @@ export class PliParser extends AbstractParser {
         });
         this.SUBRULE_ASSIGN1(this.OpenOptionsGroup, {
             assign: result => {
-                element.options ??= []; element.options.push(result);
+                element.options.push(result);
             }
         });
         this.MANY1(() => {
@@ -6591,7 +5165,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.OpenOptionsGroup, {
                 assign: result => {
-                    element.options ??= []; element.options.push(result);
+                    element.options.push(result);
                 }
             });
         });
@@ -6604,8 +5178,8 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsGroup(): ast.OpenOptionsGroup {
         return {
             kind: ast.SyntaxKind.OpenOptionsGroup,
-            options: undefined,
-        } as any;
+            options: [],
+        };
     }
 
     OpenOptionsGroup = this.RULE('OpenOptionsGroup', () => {
@@ -6615,81 +5189,63 @@ export class PliParser extends AbstractParser {
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.OpenOptionsFile, {
-                        assign: result => {
-                            element.options ??= []; element.options.push(result);
-                        }
+                        assign: result => element.options.push(result)
                     });
                 }
             },
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.OpenOptionsStream, {
-                        assign: result => {
-                            element.options ??= []; element.options.push(result);
-                        }
+                        assign: result => element.options.push(result)
                     });
                 }
             },
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.OpenOptionsAccess, {
-                        assign: result => {
-                            element.options ??= []; element.options.push(result);
-                        }
+                        assign: result => element.options.push(result)
                     });
                 }
             },
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.OpenOptionsBuffering, {
-                        assign: result => {
-                            element.options ??= []; element.options.push(result);
-                        }
+                        assign: result => element.options.push(result)
                     });
                 }
             },
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.OpenOptionsKeyed, {
-                        assign: result => {
-                            element.options ??= []; element.options.push(result);
-                        }
+                        assign: result => element.options.push(result)
                     });
                 }
             },
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.OpenOptionsPrint, {
-                        assign: result => {
-                            element.options ??= []; element.options.push(result);
-                        }
+                        assign: result => element.options.push(result)
                     });
                 }
             },
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.OpenOptionsTitle, {
-                        assign: result => {
-                            element.options ??= []; element.options.push(result);
-                        }
+                        assign: result => element.options.push(result)
                     });
                 }
             },
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.OpenOptionsLineSize, {
-                        assign: result => {
-                            element.options ??= []; element.options.push(result);
-                        }
+                        assign: result => element.options.push(result)
                     });
                 }
             },
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.OpenOptionsPageSize, {
-                        assign: result => {
-                            element.options ??= []; element.options.push(result);
-                        }
+                        assign: result => element.options.push(result)
                     });
                 }
             },
@@ -6700,8 +5256,8 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsFile(): ast.OpenOptionsFile {
         return {
             kind: ast.SyntaxKind.OpenOptionsFile,
-            file: undefined,
-        } as any;
+            file: null,
+        };
     }
 
     OpenOptionsFile = this.RULE('OpenOptionsFile', () => {
@@ -6727,9 +5283,9 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsStream(): ast.OpenOptionsStream {
         return {
             kind: ast.SyntaxKind.OpenOptionsStream,
-            stream: undefined,
-            record: undefined,
-        } as any;
+            stream: false,
+            record: false,
+        };
     }
 
     OpenOptionsStream = this.RULE('OpenOptionsStream', () => {
@@ -6759,10 +5315,10 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsAccess(): ast.OpenOptionsAccess {
         return {
             kind: ast.SyntaxKind.OpenOptionsAccess,
-            input: undefined,
-            output: undefined,
-            update: undefined,
-        } as any;
+            input: false,
+            output: false,
+            update: false,
+        };
     }
 
     OpenOptionsAccess = this.RULE('OpenOptionsAccess', () => {
@@ -6800,11 +5356,11 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsBuffering(): ast.OpenOptionsBuffering {
         return {
             kind: ast.SyntaxKind.OpenOptionsBuffering,
-            sequential: undefined,
-            direct: undefined,
-            unbuffered: undefined,
-            buffered: undefined,
-        } as any;
+            sequential: false,
+            direct: false,
+            unbuffered: false,
+            buffered: false,
+        };
     }
 
     OpenOptionsBuffering = this.RULE('OpenOptionsBuffering', () => {
@@ -6896,8 +5452,8 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsKeyed(): ast.OpenOptionsKeyed {
         return {
             kind: ast.SyntaxKind.OpenOptionsKeyed,
-            keyed: undefined,
-        } as any;
+            keyed: false,
+        };
     }
 
     OpenOptionsKeyed = this.RULE('OpenOptionsKeyed', () => {
@@ -6910,11 +5466,12 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
+
     private createOpenOptionsPrint(): ast.OpenOptionsPrint {
         return {
             kind: ast.SyntaxKind.OpenOptionsPrint,
-            print: undefined,
-        } as any;
+            print: false,
+        };
     }
 
     OpenOptionsPrint = this.RULE('OpenOptionsPrint', () => {
@@ -6930,8 +5487,8 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsTitle(): ast.OpenOptionsTitle {
         return {
             kind: ast.SyntaxKind.OpenOptionsTitle,
-            title: undefined,
-        } as any;
+            title: null,
+        };
     }
 
     OpenOptionsTitle = this.RULE('OpenOptionsTitle', () => {
@@ -6957,8 +5514,8 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsLineSize(): ast.OpenOptionsLineSize {
         return {
             kind: ast.SyntaxKind.OpenOptionsLineSize,
-            lineSize: undefined,
-        } as any;
+            lineSize: null,
+        };
     }
 
     OpenOptionsLineSize = this.RULE('OpenOptionsLineSize', () => {
@@ -6984,8 +5541,8 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsPageSize(): ast.OpenOptionsPageSize {
         return {
             kind: ast.SyntaxKind.OpenOptionsPageSize,
-            pageSize: undefined,
-        } as any;
+            pageSize: null,
+        };
     }
 
     OpenOptionsPageSize = this.RULE('OpenOptionsPageSize', () => {
@@ -7009,9 +5566,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createPageDirective(): ast.PageDirective {
-        return {
-            
-        } as any;
+        return { kind: ast.SyntaxKind.PageDirective };
     }
 
     PageDirective = this.RULE('PageDirective', () => {
@@ -7028,9 +5583,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createPopDirective(): ast.PopDirective {
-        return {
-            
-        } as any;
+        return { kind: ast.SyntaxKind.PopDirective };
     }
 
     PopDirective = this.RULE('PopDirective', () => {
@@ -7047,9 +5600,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createPrintDirective(): ast.PrintDirective {
-        return {
-            
-        } as any;
+        return { kind: ast.SyntaxKind.PrintDirective };
     }
 
     PrintDirective = this.RULE('PrintDirective', () => {
@@ -7068,8 +5619,8 @@ export class PliParser extends AbstractParser {
     private createProcessDirective(): ast.ProcessDirective {
         return {
             kind: ast.SyntaxKind.ProcessDirective,
-            compilerOptions: undefined,
-        } as any;
+            compilerOptions: [],
+        };
     }
 
     ProcessDirective = this.RULE('ProcessDirective', () => {
@@ -7115,16 +5666,17 @@ export class PliParser extends AbstractParser {
     private createCompilerOptions(): ast.CompilerOptions {
         return {
             kind: ast.SyntaxKind.CompilerOptions,
-            value: undefined,
-        } as any;
+            value: null,
+        };
     }
 
+    // TODO: IMPLEMENT REAL COMPILER OPTIONS SUPPORT IN PARSER
     CompilerOptions = this.RULE('CompilerOptions', () => {
         let element = this.push(this.createCompilerOptions());
 
         this.CONSUME_ASSIGN1(tokens.TODO, token => {
             this.tokenPayload(token, element, CstNodeKind.CompilerOptions_value_TODO_0);
-            element.value = token.image;
+            element.value = token.image as 'TODO';
         });
 
         return this.pop();
@@ -7132,8 +5684,8 @@ export class PliParser extends AbstractParser {
     private createProcincDirective(): ast.ProcincDirective {
         return {
             kind: ast.SyntaxKind.ProcincDirective,
-            datasetName: undefined,
-        } as any;
+            datasetName: null,
+        };
     }
 
     ProcincDirective = this.RULE('ProcincDirective', () => {
@@ -7166,9 +5718,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createPushDirective(): ast.PushDirective {
-        return {
-            
-        } as any;
+        return { kind: ast.SyntaxKind.PushDirective };
     }
 
     PushDirective = this.RULE('PushDirective', () => {
@@ -7184,14 +5734,23 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createPutStatement(): ast.PutStatement {
+    private createPutFileStatement(): ast.PutFileStatement {
         return {
-            
-        } as any;
+            kind: ast.SyntaxKind.PutFileStatement,
+            items: []   
+        };
+    }
+
+    private createPutStringStatement(): ast.PutStringStatement {
+        return {
+            kind: ast.SyntaxKind.PutStringStatement,
+            dataSpecification: null,
+            stringExpression: null
+        };
     }
 
     PutStatement = this.RULE('PutStatement', () => {
-        let element = this.push(this.createPutStatement());
+        let element: ast.PutStatement = this.push(this.createPutFileStatement());
 
         this.CONSUME_ASSIGN1(tokens.PUT, token => {
             this.tokenPayload(token, element, CstNodeKind.PutStatement_PUT_0);
@@ -7200,14 +5759,14 @@ export class PliParser extends AbstractParser {
             this.OR1([
                 {
                     ALT: () => {
-                        /* Action: PutFileStatement */
+                        const putFileStatement = element as ast.PutFileStatement;
                         this.AT_LEAST_ONE1(() => {
                             this.OR2([
                                 {
                                     ALT: () => {
                                         this.SUBRULE_ASSIGN1(this.PutItem, {
                                             assign: result => {
-                                                element.items ??= []; element.items.push(result);
+                                                putFileStatement.items.push(result);
                                             }
                                         });
                                     }
@@ -7216,7 +5775,7 @@ export class PliParser extends AbstractParser {
                                     ALT: () => {
                                         this.SUBRULE_ASSIGN1(this.DataSpecificationOptions, {
                                             assign: result => {
-                                                element.items ??= []; element.items.push(result);
+                                                putFileStatement.items.push(result);
                                             }
                                         });
                                     }
@@ -7227,24 +5786,24 @@ export class PliParser extends AbstractParser {
                 },
                 {
                     ALT: () => {
-                        /* Action: PutStringStatement */
+                        const putStringStatement = this.replace(this.createPutStringStatement());
                         this.CONSUME_ASSIGN1(tokens.STRING, token => {
-                            this.tokenPayload(token, element, CstNodeKind.PutStatement_STRING_0);
+                            this.tokenPayload(token, putStringStatement, CstNodeKind.PutStatement_STRING_0);
                         });
                         this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
-                            this.tokenPayload(token, element, CstNodeKind.PutStatement_OpenParen_0);
+                            this.tokenPayload(token, putStringStatement, CstNodeKind.PutStatement_OpenParen_0);
                         });
                         this.SUBRULE_ASSIGN1(this.Expression, {
                             assign: result => {
-                                element.stringExpression = result;
+                                putStringStatement.stringExpression = result;
                             }
                         });
                         this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
-                            this.tokenPayload(token, element, CstNodeKind.PutStatement_CloseParen_0);
+                            this.tokenPayload(token, putStringStatement, CstNodeKind.PutStatement_CloseParen_0);
                         });
                         this.SUBRULE_ASSIGN2(this.DataSpecificationOptions, {
                             assign: result => {
-                                element.dataSpecification = result;
+                                putStringStatement.dataSpecification = result;
                             }
                         });
                     }
@@ -7252,7 +5811,7 @@ export class PliParser extends AbstractParser {
             ]);
         });
         this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
-            this.tokenPayload(token, element, CstNodeKind.PutStatement_Semicolon_0);
+            this.tokenPayload(token, this.peek(), CstNodeKind.PutStatement_Semicolon_0);
         });
 
         return this.pop();
@@ -7260,18 +5819,17 @@ export class PliParser extends AbstractParser {
     private createPutItem(): ast.PutItem {
         return {
             kind: ast.SyntaxKind.PutItem,
-            attribute: undefined,
-            expression: undefined,
-        } as any;
+            attribute: null,
+            expression: null,
+        };
     }
 
     PutItem = this.RULE('PutItem', () => {
         let element = this.push(this.createPutItem());
 
-        this.SUBRULE_ASSIGN1(this.PutAttribute, {
-            assign: result => {
-                element.attribute = result;
-            }
+        this.CONSUME_ASSIGN(tokens.PutAttribute, token => {
+            this.tokenPayload(token, element, CstNodeKind.PutAttribute_FILE_0);
+            element.attribute = token.image as ast.PutAttribute;
         });
         this.OPTION1(() => {
             this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
@@ -7289,58 +5847,17 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createPutAttribute(): ast.PutAttribute {
-        return {
-            
-        } as any;
-    }
 
-    PutAttribute = this.RULE('PutAttribute', () => {
-        let element = this.push(this.createPutAttribute());
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.PAGE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.PutAttribute_PAGE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.LINE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.PutAttribute_LINE_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.SKIP, token => {
-                        this.tokenPayload(token, element, CstNodeKind.PutAttribute_SKIP_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.FILE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.PutAttribute_FILE_0);
-                    });
-                }
-            },
-        ]);
-
-        return this.pop();
-    });
     private createDataSpecificationOptions(): ast.DataSpecificationOptions {
         return {
             kind: ast.SyntaxKind.DataSpecificationOptions,
-            dataList: undefined,
-            edit: undefined,
-            dataLists: undefined,
-            formatLists: undefined,
-            data: undefined,
-            dataListItems: undefined,
-        } as any;
+            dataList: null,
+            edit: false,
+            dataLists: [],
+            formatLists: [],
+            data: false,
+            dataListItems: [],
+        };
     }
 
     DataSpecificationOptions = this.RULE('DataSpecificationOptions', () => {
@@ -7379,7 +5896,7 @@ export class PliParser extends AbstractParser {
                         });
                         this.SUBRULE_ASSIGN1(this.DataSpecificationDataListItem, {
                             assign: result => {
-                                element.dataListItems ??= []; element.dataListItems.push(result);
+                                element.dataListItems.push(result);
                             }
                         });
                         this.MANY1(() => {
@@ -7388,7 +5905,7 @@ export class PliParser extends AbstractParser {
                             });
                             this.SUBRULE_ASSIGN2(this.DataSpecificationDataListItem, {
                                 assign: result => {
-                                    element.dataListItems ??= []; element.dataListItems.push(result);
+                                    element.dataListItems.push(result);
                                 }
                             });
                         });
@@ -7410,7 +5927,7 @@ export class PliParser extends AbstractParser {
                         });
                         this.SUBRULE_ASSIGN2(this.DataSpecificationDataList, {
                             assign: result => {
-                                element.dataLists ??= []; element.dataLists.push(result);
+                                element.dataLists.push(result);
                             }
                         });
                         this.CONSUME_ASSIGN3(tokens.CloseParen, token => {
@@ -7421,7 +5938,7 @@ export class PliParser extends AbstractParser {
                         });
                         this.SUBRULE_ASSIGN1(this.FormatList, {
                             assign: result => {
-                                element.formatLists ??= []; element.formatLists.push(result);
+                                element.formatLists.push(result);
                             }
                         });
                         this.CONSUME_ASSIGN4(tokens.CloseParen, token => {
@@ -7437,8 +5954,8 @@ export class PliParser extends AbstractParser {
     private createDataSpecificationDataList(): ast.DataSpecificationDataList {
         return {
             kind: ast.SyntaxKind.DataSpecificationDataList,
-            items: undefined,
-        } as any;
+            items: [],
+        };
     }
 
     DataSpecificationDataList = this.RULE('DataSpecificationDataList', () => {
@@ -7446,7 +5963,7 @@ export class PliParser extends AbstractParser {
 
         this.SUBRULE_ASSIGN1(this.DataSpecificationDataListItem, {
             assign: result => {
-                element.items ??= []; element.items.push(result);
+                element.items.push(result);
             }
         });
         this.MANY1(() => {
@@ -7455,7 +5972,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.DataSpecificationDataListItem, {
                 assign: result => {
-                    element.items ??= []; element.items.push(result);
+                    element.items.push(result);
                 }
             });
         });
@@ -7465,8 +5982,8 @@ export class PliParser extends AbstractParser {
     private createDataSpecificationDataListItem(): ast.DataSpecificationDataListItem {
         return {
             kind: ast.SyntaxKind.DataSpecificationDataListItem,
-            value: undefined,
-        } as any;
+            value: null,
+        };
     }
 
     DataSpecificationDataListItem = this.RULE('DataSpecificationDataListItem', () => {
@@ -7483,9 +6000,9 @@ export class PliParser extends AbstractParser {
     private createQualifyStatement(): ast.QualifyStatement {
         return {
             kind: ast.SyntaxKind.QualifyStatement,
-            statements: undefined,
-            end: undefined,
-        } as any;
+            statements: [],
+            end: null,
+        };
     }
 
     QualifyStatement = this.RULE('QualifyStatement', () => {
@@ -7500,7 +6017,7 @@ export class PliParser extends AbstractParser {
         this.MANY1(() => {
             this.SUBRULE_ASSIGN1(this.Statement, {
                 assign: result => {
-                    element.statements ??= []; element.statements.push(result);
+                    element.statements.push(result);
                 }
             });
         });
@@ -7518,8 +6035,8 @@ export class PliParser extends AbstractParser {
     private createReadStatement(): ast.ReadStatement {
         return {
             kind: ast.SyntaxKind.ReadStatement,
-            arguments: undefined,
-        } as any;
+            arguments: [],
+        };
     }
 
     ReadStatement = this.RULE('ReadStatement', () => {
@@ -7528,6 +6045,7 @@ export class PliParser extends AbstractParser {
         this.CONSUME_ASSIGN1(tokens.READ, token => {
             this.tokenPayload(token, element, CstNodeKind.ReadStatement_READ_0);
         });
+        // TODO: REFACTOR EVERYTHING INTO 1 RULE ONLY!
         this.OR1([
             {
                 ALT: () => {
@@ -7588,13 +6106,13 @@ export class PliParser extends AbstractParser {
             this.tokenPayload(token, element, CstNodeKind.ReadStatement_Semicolon_0);
         });
 
-        return this.pop();
+        return this.pop<ast.ReadStatement>();
     });
     private createReadStatementFile(): ast.ReadStatementFile {
         return {
             kind: ast.SyntaxKind.ReadStatementFile,
-            file: undefined,
-        } as any;
+            file: null,
+        };
     }
 
     ReadStatementFile = this.RULE('ReadStatementFile', () => {
@@ -7620,8 +6138,8 @@ export class PliParser extends AbstractParser {
     private createReadStatementIgnore(): ast.ReadStatementIgnore {
         return {
             kind: ast.SyntaxKind.ReadStatementIgnore,
-            ignore: undefined,
-        } as any;
+            ignore: null,
+        };
     }
 
     ReadStatementIgnore = this.RULE('ReadStatementIgnore', () => {
@@ -7647,8 +6165,8 @@ export class PliParser extends AbstractParser {
     private createReadStatementInto(): ast.ReadStatementInto {
         return {
             kind: ast.SyntaxKind.ReadStatementInto,
-            intoRef: undefined,
-        } as any;
+            intoRef: null,
+        };
     }
 
     ReadStatementInto = this.RULE('ReadStatementInto', () => {
@@ -7674,8 +6192,8 @@ export class PliParser extends AbstractParser {
     private createReadStatementSet(): ast.ReadStatementSet {
         return {
             kind: ast.SyntaxKind.ReadStatementSet,
-            set: undefined,
-        } as any;
+            set: null,
+        };
     }
 
     ReadStatementSet = this.RULE('ReadStatementSet', () => {
@@ -7701,8 +6219,8 @@ export class PliParser extends AbstractParser {
     private createReadStatementKey(): ast.ReadStatementKey {
         return {
             kind: ast.SyntaxKind.ReadStatementKey,
-            key: undefined,
-        } as any;
+            key: null,
+        };
     }
 
     ReadStatementKey = this.RULE('ReadStatementKey', () => {
@@ -7728,8 +6246,8 @@ export class PliParser extends AbstractParser {
     private createReadStatementKeyTo(): ast.ReadStatementKeyTo {
         return {
             kind: ast.SyntaxKind.ReadStatementKeyTo,
-            keyto: undefined,
-        } as any;
+            keyto: null,
+        };
     }
 
     ReadStatementKeyTo = this.RULE('ReadStatementKeyTo', () => {
@@ -7755,8 +6273,8 @@ export class PliParser extends AbstractParser {
     private createReinitStatement(): ast.ReinitStatement {
         return {
             kind: ast.SyntaxKind.ReinitStatement,
-            reference: undefined,
-        } as any;
+            reference: null,
+        };
     }
 
     ReinitStatement = this.RULE('ReinitStatement', () => {
@@ -7774,14 +6292,14 @@ export class PliParser extends AbstractParser {
             this.tokenPayload(token, element, CstNodeKind.ReinitStatement_Semicolon_0);
         });
 
-        return this.pop();
+        return this.pop<ast.ReinitStatement>();
     });
     private createReleaseStatement(): ast.ReleaseStatement {
         return {
             kind: ast.SyntaxKind.ReleaseStatement,
-            star: undefined,
-            references: undefined,
-        } as any;
+            star: false,
+            references: [],
+        };
     }
 
     ReleaseStatement = this.RULE('ReleaseStatement', () => {
@@ -7803,7 +6321,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.ReleaseStatement_references_ID_0);
-                        element.references ??= []; element.references.push(token.image);
+                        element.references.push(token.image);
                     });
                     this.MANY1(() => {
                         this.CONSUME_ASSIGN1(tokens.Comma, token => {
@@ -7811,7 +6329,7 @@ export class PliParser extends AbstractParser {
                         });
                         this.CONSUME_ASSIGN2(tokens.ID, token => {
                             this.tokenPayload(token, element, CstNodeKind.ReleaseStatement_references_ID_1);
-                            element.references ??= []; element.references.push(token.image);
+                            element.references.push(token.image);
                         });
                     });
                 }
@@ -7824,9 +6342,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createResignalStatement(): ast.ResignalStatement {
-        return {
-            
-        } as any;
+        return { kind: ast.SyntaxKind.ResignalStatement };
     }
 
     ResignalStatement = this.RULE('ResignalStatement', () => {
@@ -7840,13 +6356,13 @@ export class PliParser extends AbstractParser {
             this.tokenPayload(token, element, CstNodeKind.ResignalStatement_Semicolon_0);
         });
 
-        return this.pop();
+        return this.pop<ast.ResignalStatement>();
     });
     private createReturnStatement(): ast.ReturnStatement {
         return {
             kind: ast.SyntaxKind.ReturnStatement,
-            expression: undefined,
-        } as any;
+            expression: null,
+        };
     }
 
     ReturnStatement = this.RULE('ReturnStatement', () => {
@@ -7877,8 +6393,8 @@ export class PliParser extends AbstractParser {
     private createRevertStatement(): ast.RevertStatement {
         return {
             kind: ast.SyntaxKind.RevertStatement,
-            conditions: undefined,
-        } as any;
+            conditions: [],
+        };
     }
 
     RevertStatement = this.RULE('RevertStatement', () => {
@@ -7889,7 +6405,7 @@ export class PliParser extends AbstractParser {
         });
         this.SUBRULE_ASSIGN1(this.Condition, {
             assign: result => {
-                element.conditions ??= []; element.conditions.push(result);
+                element.conditions.push(result);
             }
         });
         this.MANY1(() => {
@@ -7898,7 +6414,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.Condition, {
                 assign: result => {
-                    element.conditions ??= []; element.conditions.push(result);
+                    element.conditions.push(result);
                 }
             });
         });
@@ -7911,8 +6427,8 @@ export class PliParser extends AbstractParser {
     private createRewriteStatement(): ast.RewriteStatement {
         return {
             kind: ast.SyntaxKind.RewriteStatement,
-            arguments: undefined,
-        } as any;
+            arguments: [],
+        };
     }
 
     RewriteStatement = this.RULE('RewriteStatement', () => {
@@ -7927,7 +6443,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.RewriteStatementFile, {
                             assign: result => {
-                                element.arguments ??= []; element.arguments.push(result);
+                                element.arguments.push(result);
                             }
                         });
                     }
@@ -7936,7 +6452,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.RewriteStatementFrom, {
                             assign: result => {
-                                element.arguments ??= []; element.arguments.push(result);
+                                element.arguments.push(result);
                             }
                         });
                     }
@@ -7945,7 +6461,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.RewriteStatementKey, {
                             assign: result => {
-                                element.arguments ??= []; element.arguments.push(result);
+                                element.arguments.push(result);
                             }
                         });
                     }
@@ -7961,8 +6477,8 @@ export class PliParser extends AbstractParser {
     private createRewriteStatementFile(): ast.RewriteStatementFile {
         return {
             kind: ast.SyntaxKind.RewriteStatementFile,
-            file: undefined,
-        } as any;
+            file: null,
+        };
     }
 
     RewriteStatementFile = this.RULE('RewriteStatementFile', () => {
@@ -7983,13 +6499,13 @@ export class PliParser extends AbstractParser {
             this.tokenPayload(token, element, CstNodeKind.RewriteStatementFile_CloseParen_0);
         });
 
-        return this.pop();
+        return this.pop<ast.RewriteStatementFile>();
     });
     private createRewriteStatementFrom(): ast.RewriteStatementFrom {
         return {
             kind: ast.SyntaxKind.RewriteStatementFrom,
-            from: undefined,
-        } as any;
+            from: null,
+        };
     }
 
     RewriteStatementFrom = this.RULE('RewriteStatementFrom', () => {
@@ -8010,13 +6526,13 @@ export class PliParser extends AbstractParser {
             this.tokenPayload(token, element, CstNodeKind.RewriteStatementFrom_CloseParen_0);
         });
 
-        return this.pop();
+        return this.pop<ast.RewriteStatementFrom>();
     });
     private createRewriteStatementKey(): ast.RewriteStatementKey {
         return {
             kind: ast.SyntaxKind.RewriteStatementKey,
-            key: undefined,
-        } as any;
+            key: null,
+        };
     }
 
     RewriteStatementKey = this.RULE('RewriteStatementKey', () => {
@@ -8042,10 +6558,10 @@ export class PliParser extends AbstractParser {
     private createSelectStatement(): ast.SelectStatement {
         return {
             kind: ast.SyntaxKind.SelectStatement,
-            on: undefined,
-            statements: undefined,
-            end: undefined,
-        } as any;
+            on: null,
+            statements: [],
+            end: null,
+        };
     }
 
     SelectStatement = this.RULE('SelectStatement', () => {
@@ -8076,7 +6592,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.WhenStatement, {
                             assign: result => {
-                                element.statements ??= []; element.statements.push(result);
+                                element.statements.push(result);
                             }
                         });
                     }
@@ -8085,7 +6601,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.OtherwiseStatement, {
                             assign: result => {
-                                element.statements ??= []; element.statements.push(result);
+                                element.statements.push(result);
                             }
                         });
                     }
@@ -8106,9 +6622,9 @@ export class PliParser extends AbstractParser {
     private createWhenStatement(): ast.WhenStatement {
         return {
             kind: ast.SyntaxKind.WhenStatement,
-            conditions: undefined,
-            unit: undefined,
-        } as any;
+            conditions: [],
+            unit: null,
+        };
     }
 
     WhenStatement = this.RULE('WhenStatement', () => {
@@ -8122,7 +6638,7 @@ export class PliParser extends AbstractParser {
         });
         this.SUBRULE_ASSIGN1(this.Expression, {
             assign: result => {
-                element.conditions ??= []; element.conditions.push(result);
+                element.conditions.push(result);
             }
         });
         this.MANY1(() => {
@@ -8131,7 +6647,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.Expression, {
                 assign: result => {
-                    element.conditions ??= []; element.conditions.push(result);
+                    element.conditions.push(result);
                 }
             });
         });
@@ -8149,8 +6665,8 @@ export class PliParser extends AbstractParser {
     private createOtherwiseStatement(): ast.OtherwiseStatement {
         return {
             kind: ast.SyntaxKind.OtherwiseStatement,
-            unit: undefined,
-        } as any;
+            unit: null,
+        };
     }
 
     OtherwiseStatement = this.RULE('OtherwiseStatement', () => {
@@ -8183,8 +6699,8 @@ export class PliParser extends AbstractParser {
     private createSignalStatement(): ast.SignalStatement {
         return {
             kind: ast.SyntaxKind.SignalStatement,
-            condition: undefined,
-        } as any;
+            condition: [],
+        };
     }
 
     SignalStatement = this.RULE('SignalStatement', () => {
@@ -8195,7 +6711,7 @@ export class PliParser extends AbstractParser {
         });
         this.SUBRULE_ASSIGN1(this.Condition, {
             assign: result => {
-                element.condition ??= []; element.condition.push(result);
+                element.condition.push(result);
             }
         });
         this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
@@ -8207,8 +6723,8 @@ export class PliParser extends AbstractParser {
     private createSkipDirective(): ast.SkipDirective {
         return {
             kind: ast.SyntaxKind.SkipDirective,
-            lines: undefined,
-        } as any;
+            lines: null,
+        };
     }
 
     SkipDirective = this.RULE('SkipDirective', () => {
@@ -8237,9 +6753,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createStopStatement(): ast.StopStatement {
-        return {
-            
-        } as any;
+        return { kind: ast.SyntaxKind.StopStatement };
     }
 
     StopStatement = this.RULE('StopStatement', () => {
@@ -8258,8 +6772,8 @@ export class PliParser extends AbstractParser {
     private createWaitStatement(): ast.WaitStatement {
         return {
             kind: ast.SyntaxKind.WaitStatement,
-            task: undefined,
-        } as any;
+            task: null,
+        };
     }
 
     WaitStatement = this.RULE('WaitStatement', () => {
@@ -8291,8 +6805,8 @@ export class PliParser extends AbstractParser {
     private createWriteStatement(): ast.WriteStatement {
         return {
             kind: ast.SyntaxKind.WriteStatement,
-            arguments: undefined,
-        } as any;
+            arguments: [],
+        };
     }
 
     WriteStatement = this.RULE('WriteStatement', () => {
@@ -8301,6 +6815,7 @@ export class PliParser extends AbstractParser {
         this.CONSUME_ASSIGN1(tokens.WRITE, token => {
             this.tokenPayload(token, element, CstNodeKind.WriteStatement_WRITE_0);
         });
+        // TODO: REFACTOR EVERYTHING INTO 1 RULE ONLY!
         this.OR1([
             {
                 ALT: () => {
@@ -8348,8 +6863,8 @@ export class PliParser extends AbstractParser {
     private createWriteStatementFile(): ast.WriteStatementFile {
         return {
             kind: ast.SyntaxKind.WriteStatementFile,
-            file: undefined,
-        } as any;
+            file: null,
+        };
     }
 
     WriteStatementFile = this.RULE('WriteStatementFile', () => {
@@ -8375,8 +6890,8 @@ export class PliParser extends AbstractParser {
     private createWriteStatementFrom(): ast.WriteStatementFrom {
         return {
             kind: ast.SyntaxKind.WriteStatementFrom,
-            from: undefined,
-        } as any;
+            from: null,
+        };
     }
 
     WriteStatementFrom = this.RULE('WriteStatementFrom', () => {
@@ -8402,8 +6917,8 @@ export class PliParser extends AbstractParser {
     private createWriteStatementKeyFrom(): ast.WriteStatementKeyFrom {
         return {
             kind: ast.SyntaxKind.WriteStatementKeyFrom,
-            keyfrom: undefined,
-        } as any;
+            keyfrom: null,
+        };
     }
 
     WriteStatementKeyFrom = this.RULE('WriteStatementKeyFrom', () => {
@@ -8429,8 +6944,8 @@ export class PliParser extends AbstractParser {
     private createWriteStatementKeyTo(): ast.WriteStatementKeyTo {
         return {
             kind: ast.SyntaxKind.WriteStatementKeyTo,
-            keyto: undefined,
-        } as any;
+            keyto: null,
+        };
     }
 
     WriteStatementKeyTo = this.RULE('WriteStatementKeyTo', () => {
@@ -8456,15 +6971,15 @@ export class PliParser extends AbstractParser {
     private createInitialAttribute(): ast.InitialAttribute {
         return {
             kind: ast.SyntaxKind.InitialAttribute,
-            across: undefined,
-            expressions: undefined,
-            direct: undefined,
-            items: undefined,
-            call: undefined,
-            procedureCall: undefined,
-            to: undefined,
-            content: undefined,
-        } as any;
+            across: false,
+            expressions: [],
+            direct: false,
+            items: [],
+            call: false,
+            procedureCall: null,
+            to: false,
+            content: null,
+        };
     }
 
     InitialAttribute = this.RULE('InitialAttribute', () => {
@@ -8498,7 +7013,7 @@ export class PliParser extends AbstractParser {
                                 });
                                 this.SUBRULE_ASSIGN1(this.InitialAttributeItem, {
                                     assign: result => {
-                                        element.items ??= []; element.items.push(result);
+                                        element.items.push(result);
                                     }
                                 });
                                 this.MANY1(() => {
@@ -8507,7 +7022,7 @@ export class PliParser extends AbstractParser {
                                     });
                                     this.SUBRULE_ASSIGN2(this.InitialAttributeItem, {
                                         assign: result => {
-                                            element.items ??= []; element.items.push(result);
+                                            element.items.push(result);
                                         }
                                     });
                                 });
@@ -8551,7 +7066,7 @@ export class PliParser extends AbstractParser {
                                 });
                                 this.SUBRULE_ASSIGN3(this.InitialAttributeItem, {
                                     assign: result => {
-                                        element.items ??= []; element.items.push(result);
+                                        element.items.push(result);
                                     }
                                 });
                                 this.MANY2(() => {
@@ -8560,7 +7075,7 @@ export class PliParser extends AbstractParser {
                                     });
                                     this.SUBRULE_ASSIGN4(this.InitialAttributeItem, {
                                         assign: result => {
-                                            element.items ??= []; element.items.push(result);
+                                            element.items.push(result);
                                         }
                                     });
                                 });
@@ -8583,7 +7098,7 @@ export class PliParser extends AbstractParser {
                     });
                     this.SUBRULE_ASSIGN1(this.InitAcrossExpression, {
                         assign: result => {
-                            element.expressions ??= []; element.expressions.push(result);
+                            element.expressions.push(result);
                         }
                     });
                     this.MANY3(() => {
@@ -8592,7 +7107,7 @@ export class PliParser extends AbstractParser {
                         });
                         this.SUBRULE_ASSIGN2(this.InitAcrossExpression, {
                             assign: result => {
-                                element.expressions ??= []; element.expressions.push(result);
+                                element.expressions.push(result);
                             }
                         });
                     });
@@ -8608,9 +7123,9 @@ export class PliParser extends AbstractParser {
     private createInitialToContent(): ast.InitialToContent {
         return {
             kind: ast.SyntaxKind.InitialToContent,
-            varying: undefined,
-            type: undefined,
-        } as any;
+            varying: null,
+            type: null,
+        };
     }
 
     InitialToContent = this.RULE('InitialToContent', () => {
@@ -8619,110 +7134,29 @@ export class PliParser extends AbstractParser {
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.Varying, {
-                        assign: result => {
-                            element.varying = result;
-                        }
+                    this.CONSUME_ASSIGN1(tokens.Varying, token => {
+                        this.tokenPayload(token, element, CstNodeKind.Varying_VARYING_0);
+                        element.varying = token.image as ast.Varying;
                     });
                     this.OPTION1(() => {
-                        this.SUBRULE_ASSIGN1(this.CharType, {
-                            assign: result => {
-                                element.type = result;
-                            }
+                        this.CONSUME_ASSIGN1(tokens.Char, token => {
+                            this.tokenPayload(token, element, CstNodeKind.CharType_CHAR_0);
+                            element.type = token.image as ast.CharType;
                         });
                     });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE_ASSIGN2(this.CharType, {
-                        assign: result => {
-                            element.type = result;
-                        }
+                    this.CONSUME_ASSIGN2(tokens.Char, token => {
+                        this.tokenPayload(token, element, CstNodeKind.CharType_CHAR_0);
+                        element.type = token.image as ast.CharType;
                     });
                     this.OPTION2(() => {
-                        this.SUBRULE_ASSIGN2(this.Varying, {
-                            assign: result => {
-                                element.varying = result;
-                            }
+                        this.CONSUME_ASSIGN2(tokens.Varying, token => {
+                            this.tokenPayload(token, element, CstNodeKind.Varying_VARYING_0);
+                            element.varying = token.image as ast.Varying;
                         });
-                    });
-                }
-            },
-        ]);
-
-        return this.pop();
-    });
-    private createVarying(): ast.Varying {
-        return {
-            
-        } as any;
-    }
-
-    Varying = this.RULE('Varying', () => {
-        let element = this.push(this.createVarying());
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.VARYING, token => {
-                        this.tokenPayload(token, element, CstNodeKind.Varying_VARYING_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.VARYING4, token => {
-                        this.tokenPayload(token, element, CstNodeKind.Varying_VARYING4_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.VARYINGZ, token => {
-                        this.tokenPayload(token, element, CstNodeKind.Varying_VARYINGZ_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.NONVARYING, token => {
-                        this.tokenPayload(token, element, CstNodeKind.Varying_NONVARYING_0);
-                    });
-                }
-            },
-        ]);
-
-        return this.pop();
-    });
-    private createCharType(): ast.CharType {
-        return {
-            
-        } as any;
-    }
-
-    CharType = this.RULE('CharType', () => {
-        let element = this.push(this.createCharType());
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.CHAR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.CharType_CHAR_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UCHAR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.CharType_UCHAR_0);
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.WCHAR, token => {
-                        this.tokenPayload(token, element, CstNodeKind.CharType_WCHAR_0);
                     });
                 }
             },
@@ -8733,8 +7167,8 @@ export class PliParser extends AbstractParser {
     private createInitAcrossExpression(): ast.InitAcrossExpression {
         return {
             kind: ast.SyntaxKind.InitAcrossExpression,
-            expressions: undefined,
-        } as any;
+            expressions: [],
+        };
     }
 
     InitAcrossExpression = this.RULE('InitAcrossExpression', () => {
@@ -8745,7 +7179,7 @@ export class PliParser extends AbstractParser {
         });
         this.SUBRULE_ASSIGN1(this.Expression, {
             assign: result => {
-                element.expressions ??= []; element.expressions.push(result);
+                element.expressions.push(result);
             }
         });
         this.MANY1(() => {
@@ -8754,7 +7188,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.Expression, {
                 assign: result => {
-                    element.expressions ??= []; element.expressions.push(result);
+                    element.expressions.push(result);
                 }
             });
         });
@@ -8764,14 +7198,9 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createInitialAttributeItem(): ast.InitialAttributeItem {
-        return {
-            
-        } as any;
-    }
 
     InitialAttributeItem = this.RULE('InitialAttributeItem', () => {
-        let element = this.push(this.createInitialAttributeItem());
+        let element = this.push({});
 
         this.OR1([
             {
@@ -8794,12 +7223,11 @@ export class PliParser extends AbstractParser {
             },
         ]);
 
-        return this.pop();
+        return this.pop<ast.InitialAttributeItem>();
     });
+
     private createInitialAttributeItemStar(): ast.InitialAttributeItemStar {
-        return {
-            
-        } as any;
+        return { kind: ast.SyntaxKind.InitialAttributeItemStar }
     }
 
     InitialAttributeItemStar = this.RULE('InitialAttributeItemStar', () => {
@@ -8810,15 +7238,15 @@ export class PliParser extends AbstractParser {
             this.tokenPayload(token, element, CstNodeKind.InitialAttributeItemStar_Star_0);
         });
 
-        return this.pop();
+        return this.pop<ast.InitialAttributeItemStar>();
     });
     private createInitialAttributeSpecification(): ast.InitialAttributeSpecification {
         return {
             kind: ast.SyntaxKind.InitialAttributeSpecification,
-            star: undefined,
-            item: undefined,
-            expression: undefined,
-        } as any;
+            star: false,
+            item: null,
+            expression: null,
+        };
     }
 
     InitialAttributeSpecification = this.RULE('InitialAttributeSpecification', () => {
@@ -8857,16 +7285,11 @@ export class PliParser extends AbstractParser {
             });
         });
 
-        return this.pop();
+        return this.pop<ast.InitialAttributeSpecification>();
     });
-    private createInitialAttributeSpecificationIteration(): ast.InitialAttributeSpecificationIteration {
-        return {
-            
-        } as any;
-    }
 
     InitialAttributeSpecificationIteration = this.RULE('InitialAttributeSpecificationIteration', () => {
-        let element = this.push(this.createInitialAttributeSpecificationIteration());
+        let element = this.push({});
 
         this.OR1([
             {
@@ -8889,13 +7312,13 @@ export class PliParser extends AbstractParser {
             },
         ]);
 
-        return this.pop();
+        return this.pop<ast.InitialAttributeSpecificationIteration>();
     });
     private createInitialAttributeSpecificationIterationValue(): ast.InitialAttributeSpecificationIterationValue {
         return {
             kind: ast.SyntaxKind.InitialAttributeSpecificationIterationValue,
-            items: undefined,
-        } as any;
+            items: [],
+        };
     }
 
     InitialAttributeSpecificationIterationValue = this.RULE('InitialAttributeSpecificationIterationValue', () => {
@@ -8906,7 +7329,7 @@ export class PliParser extends AbstractParser {
         });
         this.SUBRULE_ASSIGN1(this.InitialAttributeItem, {
             assign: result => {
-                element.items ??= []; element.items.push(result);
+                element.items.push(result);
             }
         });
         this.MANY1(() => {
@@ -8915,7 +7338,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.InitialAttributeItem, {
                 assign: result => {
-                    element.items ??= []; element.items.push(result);
+                    element.items.push(result);
                 }
             });
         });
@@ -8928,14 +7351,15 @@ export class PliParser extends AbstractParser {
     private createDeclareStatement(): ast.DeclareStatement {
         return {
             kind: ast.SyntaxKind.DeclareStatement,
-            items: undefined,
-            xDeclare: undefined,
-        } as any;
+            items: [],
+            xDeclare: false,
+        };
     }
 
     DeclareStatement = this.RULE('DeclareStatement', () => {
         let element = this.push(this.createDeclareStatement());
 
+        // TODO: MERGE INTO ONE!
         this.OR1([
             {
                 ALT: () => {
@@ -8970,7 +7394,7 @@ export class PliParser extends AbstractParser {
         ]);
         this.SUBRULE_ASSIGN1(this.DeclaredItem, {
             assign: result => {
-                element.items ??= []; element.items.push(result);
+                element.items.push(result);
             }
         });
         this.MANY1(() => {
@@ -8979,7 +7403,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.DeclaredItem, {
                 assign: result => {
-                    element.items ??= []; element.items.push(result);
+                    element.items.push(result);
                 }
             });
         });
@@ -8992,11 +7416,11 @@ export class PliParser extends AbstractParser {
     private createDeclaredItem(): ast.DeclaredItem {
         return {
             kind: ast.SyntaxKind.DeclaredItem,
-            level: undefined,
-            element: undefined,
-            attributes: undefined,
-            items: undefined,
-        } as any;
+            level: null,
+            element: null,
+            attributes: [],
+            items: [],
+        };
     }
 
     DeclaredItem = this.RULE('DeclaredItem', () => {
@@ -9022,7 +7446,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.Star, token => {
                         this.tokenPayload(token, element, CstNodeKind.DeclaredItem_element_Star_0);
-                        element.element = token.image;
+                        element.element = token.image as '*';
                     });
                 }
             },
@@ -9033,7 +7457,7 @@ export class PliParser extends AbstractParser {
                     });
                     this.SUBRULE_ASSIGN1(this.DeclaredItem, {
                         assign: result => {
-                            element.items ??= []; element.items.push(result);
+                            element.items.push(result);
                         }
                     });
                     this.MANY1(() => {
@@ -9042,7 +7466,7 @@ export class PliParser extends AbstractParser {
                         });
                         this.SUBRULE_ASSIGN2(this.DeclaredItem, {
                             assign: result => {
-                                element.items ??= []; element.items.push(result);
+                                element.items.push(result);
                             }
                         });
                     });
@@ -9055,7 +7479,7 @@ export class PliParser extends AbstractParser {
         this.MANY2(() => {
             this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
                 assign: result => {
-                    element.attributes ??= []; element.attributes.push(result);
+                    element.attributes.push(result);
                 }
             });
         });
@@ -9065,8 +7489,8 @@ export class PliParser extends AbstractParser {
     private createDeclaredVariable(): ast.DeclaredVariable {
         return {
             kind: ast.SyntaxKind.DeclaredVariable,
-            name: undefined,
-        } as any;
+            name: null,
+        };
     }
 
     DeclaredVariable = this.RULE('DeclaredVariable', () => {
@@ -9416,8 +7840,8 @@ export class PliParser extends AbstractParser {
     private createDateAttribute(): ast.DateAttribute {
         return {
             kind: ast.SyntaxKind.DateAttribute,
-            pattern: undefined,
-        } as any;
+            pattern: null,
+        };
     }
 
     DateAttribute = this.RULE('DateAttribute', () => {
@@ -9444,9 +7868,9 @@ export class PliParser extends AbstractParser {
     private createDefinedAttribute(): ast.DefinedAttribute {
         return {
             kind: ast.SyntaxKind.DefinedAttribute,
-            reference: undefined,
-            position: undefined,
-        } as any;
+            reference: null,
+            position: null,
+        };
     }
 
     DefinedAttribute = this.RULE('DefinedAttribute', () => {
@@ -9529,8 +7953,8 @@ export class PliParser extends AbstractParser {
     private createPictureAttribute(): ast.PictureAttribute {
         return {
             kind: ast.SyntaxKind.PictureAttribute,
-            picture: undefined,
-        } as any;
+            picture: null,
+        };
     }
 
     PictureAttribute = this.RULE('PictureAttribute', () => {
@@ -9571,8 +7995,8 @@ export class PliParser extends AbstractParser {
     private createDimensionsDataAttribute(): ast.DimensionsDataAttribute {
         return {
             kind: ast.SyntaxKind.DimensionsDataAttribute,
-            dimensions: undefined,
-        } as any;
+            dimensions: null,
+        };
     }
 
     DimensionsDataAttribute = this.RULE('DimensionsDataAttribute', () => {
@@ -9607,8 +8031,8 @@ export class PliParser extends AbstractParser {
     private createTypeAttribute(): ast.TypeAttribute {
         return {
             kind: ast.SyntaxKind.TypeAttribute,
-            type: undefined,
-        } as any;
+            type: null,
+        };
     }
 
     TypeAttribute = this.RULE('TypeAttribute', () => {
@@ -9647,9 +8071,9 @@ export class PliParser extends AbstractParser {
     private createOrdinalTypeAttribute(): ast.OrdinalTypeAttribute {
         return {
             kind: ast.SyntaxKind.OrdinalTypeAttribute,
-            type: undefined,
-            byvalue: undefined,
-        } as any;
+            type: null,
+            byvalue: false,
+        };
     }
 
     OrdinalTypeAttribute = this.RULE('OrdinalTypeAttribute', () => {
@@ -9692,8 +8116,8 @@ export class PliParser extends AbstractParser {
     private createReturnsAttribute(): ast.ReturnsAttribute {
         return {
             kind: ast.SyntaxKind.ReturnsAttribute,
-            attrs: undefined,
-        } as any;
+            attrs: [],
+        };
     }
 
     ReturnsAttribute = this.RULE('ReturnsAttribute', () => {
@@ -9711,7 +8135,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.ComputationDataAttribute, {
                             assign: result => {
-                                element.attrs ??= []; element.attrs.push(result);
+                                element.attrs.push(result);
                             }
                         });
                     }
@@ -9720,7 +8144,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.DateAttribute, {
                             assign: result => {
-                                element.attrs ??= []; element.attrs.push(result);
+                                element.attrs.push(result);
                             }
                         });
                     }
@@ -9729,7 +8153,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.ValueListAttribute, {
                             assign: result => {
-                                element.attrs ??= []; element.attrs.push(result);
+                                element.attrs.push(result);
                             }
                         });
                     }
@@ -9738,7 +8162,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.ValueRangeAttribute, {
                             assign: result => {
-                                element.attrs ??= []; element.attrs.push(result);
+                                element.attrs.push(result);
                             }
                         });
                     }
@@ -9754,18 +8178,18 @@ export class PliParser extends AbstractParser {
     private createComputationDataAttribute(): ast.ComputationDataAttribute {
         return {
             kind: ast.SyntaxKind.ComputationDataAttribute,
-            type: undefined,
-            dimensions: undefined,
-        } as any;
+            type: null,
+            dimensions: null,
+        };
     }
 
     ComputationDataAttribute = this.RULE('ComputationDataAttribute', () => {
         let element = this.push(this.createComputationDataAttribute());
 
-        this.SUBRULE_ASSIGN1(this.DataAttributeType, {
-            assign: result => {
-                element.type = result;
-            }
+        this.CONSUME_ASSIGN(tokens.DefaultAttribute, token => {
+            // TODO: rename
+            this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_ABNORMAL_0);
+            element.type = token.image as ast.DefaultAttribute;
         });
         this.OPTION1(() => {
             this.SUBRULE_ASSIGN1(this.Dimensions, {
@@ -9780,8 +8204,8 @@ export class PliParser extends AbstractParser {
     private createDefaultValueAttribute(): ast.DefaultValueAttribute {
         return {
             kind: ast.SyntaxKind.DefaultValueAttribute,
-            items: undefined,
-        } as any;
+            items: [],
+        };
     }
 
     DefaultValueAttribute = this.RULE('DefaultValueAttribute', () => {
@@ -9795,7 +8219,7 @@ export class PliParser extends AbstractParser {
         });
         this.SUBRULE_ASSIGN1(this.DefaultValueAttributeItem, {
             assign: result => {
-                element.items ??= []; element.items.push(result);
+                element.items.push(result);
             }
         });
         this.MANY1(() => {
@@ -9804,7 +8228,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN2(this.DefaultValueAttributeItem, {
                 assign: result => {
-                    element.items ??= []; element.items.push(result);
+                    element.items.push(result);
                 }
             });
         });
@@ -9817,8 +8241,8 @@ export class PliParser extends AbstractParser {
     private createValueAttribute(): ast.ValueAttribute {
         return {
             kind: ast.SyntaxKind.ValueAttribute,
-            value: undefined,
-        } as any;
+            value: null,
+        };
     }
 
     ValueAttribute = this.RULE('ValueAttribute', () => {
@@ -9844,8 +8268,8 @@ export class PliParser extends AbstractParser {
     private createDefaultValueAttributeItem(): ast.DefaultValueAttributeItem {
         return {
             kind: ast.SyntaxKind.DefaultValueAttributeItem,
-            attributes: undefined,
-        } as any;
+            attributes: [],
+        };
     }
 
     DefaultValueAttributeItem = this.RULE('DefaultValueAttributeItem', () => {
@@ -9854,7 +8278,7 @@ export class PliParser extends AbstractParser {
         this.AT_LEAST_ONE1(() => {
             this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
                 assign: result => {
-                    element.attributes ??= []; element.attributes.push(result);
+                    element.attributes.push(result);
                 }
             });
         });
@@ -9864,8 +8288,8 @@ export class PliParser extends AbstractParser {
     private createValueListAttribute(): ast.ValueListAttribute {
         return {
             kind: ast.SyntaxKind.ValueListAttribute,
-            values: undefined,
-        } as any;
+            values: [],
+        };
     }
 
     ValueListAttribute = this.RULE('ValueListAttribute', () => {
@@ -9880,7 +8304,7 @@ export class PliParser extends AbstractParser {
         this.OPTION1(() => {
             this.SUBRULE_ASSIGN1(this.Expression, {
                 assign: result => {
-                    element.values ??= []; element.values.push(result);
+                    element.values.push(result);
                 }
             });
             this.MANY1(() => {
@@ -9889,7 +8313,7 @@ export class PliParser extends AbstractParser {
                 });
                 this.SUBRULE_ASSIGN2(this.Expression, {
                     assign: result => {
-                        element.values ??= []; element.values.push(result);
+                        element.values.push(result);
                     }
                 });
             });
@@ -9903,8 +8327,8 @@ export class PliParser extends AbstractParser {
     private createValueListFromAttribute(): ast.ValueListFromAttribute {
         return {
             kind: ast.SyntaxKind.ValueListFromAttribute,
-            from: undefined,
-        } as any;
+            from: null,
+        };
     }
 
     ValueListFromAttribute = this.RULE('ValueListFromAttribute', () => {
@@ -9924,8 +8348,8 @@ export class PliParser extends AbstractParser {
     private createValueRangeAttribute(): ast.ValueRangeAttribute {
         return {
             kind: ast.SyntaxKind.ValueRangeAttribute,
-            values: undefined,
-        } as any;
+            values: [],
+        };
     }
 
     ValueRangeAttribute = this.RULE('ValueRangeAttribute', () => {
@@ -9940,7 +8364,7 @@ export class PliParser extends AbstractParser {
         this.OPTION1(() => {
             this.SUBRULE_ASSIGN1(this.Expression, {
                 assign: result => {
-                    element.values ??= []; element.values.push(result);
+                    element.values.push(result);
                 }
             });
             this.MANY1(() => {
@@ -9949,7 +8373,7 @@ export class PliParser extends AbstractParser {
                 });
                 this.SUBRULE_ASSIGN2(this.Expression, {
                     assign: result => {
-                        element.values ??= []; element.values.push(result);
+                        element.values.push(result);
                     }
                 });
             });
@@ -9960,28 +8384,12 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createDataAttributeType(): ast.DataAttributeType {
-        return {
-            
-        } as any;
-    }
 
-    DataAttributeType = this.RULE('DataAttributeType', () => {
-        let element = this.push(this.createDataAttributeType());
-
-        this.SUBRULE_ASSIGN1(this.DefaultAttribute, {
-            assign: result => {
-                element = this.replace(result);
-            }
-        });
-
-        return this.pop();
-    });
     private createLikeAttribute(): ast.LikeAttribute {
         return {
             kind: ast.SyntaxKind.LikeAttribute,
-            reference: undefined,
-        } as any;
+            reference: null,
+        };
     }
 
     LikeAttribute = this.RULE('LikeAttribute', () => {
@@ -10001,9 +8409,9 @@ export class PliParser extends AbstractParser {
     private createHandleAttribute(): ast.HandleAttribute {
         return {
             kind: ast.SyntaxKind.HandleAttribute,
-            size: undefined,
-            type: undefined,
-        } as any;
+            size: null,
+            type: null,
+        };
     }
 
     HandleAttribute = this.RULE('HandleAttribute', () => {
@@ -10054,8 +8462,8 @@ export class PliParser extends AbstractParser {
     private createDimensions(): ast.Dimensions {
         return {
             kind: ast.SyntaxKind.Dimensions,
-            dimensions: undefined,
-        } as any;
+            dimensions: [],
+        };
     }
 
     Dimensions = this.RULE('Dimensions', () => {
@@ -10067,7 +8475,7 @@ export class PliParser extends AbstractParser {
         this.OPTION1(() => {
             this.SUBRULE_ASSIGN1(this.DimensionBound, {
                 assign: result => {
-                    element.dimensions ??= []; element.dimensions.push(result);
+                    element.dimensions.push(result);
                 }
             });
             this.MANY1(() => {
@@ -10076,7 +8484,7 @@ export class PliParser extends AbstractParser {
                 });
                 this.SUBRULE_ASSIGN2(this.DimensionBound, {
                     assign: result => {
-                        element.dimensions ??= []; element.dimensions.push(result);
+                        element.dimensions.push(result);
                     }
                 });
             });
@@ -10090,9 +8498,9 @@ export class PliParser extends AbstractParser {
     private createDimensionBound(): ast.DimensionBound {
         return {
             kind: ast.SyntaxKind.DimensionBound,
-            bound1: undefined,
-            bound2: undefined,
-        } as any;
+            bound1: null,
+            bound2: null,
+        };
     }
 
     DimensionBound = this.RULE('DimensionBound', () => {
@@ -10119,9 +8527,9 @@ export class PliParser extends AbstractParser {
     private createBound(): ast.Bound {
         return {
             kind: ast.SyntaxKind.Bound,
-            expression: undefined,
-            refer: undefined,
-        } as any;
+            expression: null,
+            refer: null,
+        };
     }
 
     Bound = this.RULE('Bound', () => {
@@ -10132,7 +8540,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.Star, token => {
                         this.tokenPayload(token, element, CstNodeKind.Bound_expression_Star_0);
-                        element.expression = token.image;
+                        element.expression = token.image as '*';
                     });
                 }
             },
@@ -10168,8 +8576,8 @@ export class PliParser extends AbstractParser {
     private createEnvironmentAttribute(): ast.EnvironmentAttribute {
         return {
             kind: ast.SyntaxKind.EnvironmentAttribute,
-            items: undefined,
-        } as any;
+            items: [],
+        };
     }
 
     EnvironmentAttribute = this.RULE('EnvironmentAttribute', () => {
@@ -10197,7 +8605,7 @@ export class PliParser extends AbstractParser {
         this.MANY1(() => {
             this.SUBRULE_ASSIGN1(this.EnvironmentAttributeItem, {
                 assign: result => {
-                    element.items ??= []; element.items.push(result);
+                    element.items.push(result);
                 }
             });
         });
@@ -10210,9 +8618,9 @@ export class PliParser extends AbstractParser {
     private createEnvironmentAttributeItem(): ast.EnvironmentAttributeItem {
         return {
             kind: ast.SyntaxKind.EnvironmentAttributeItem,
-            environment: undefined,
-            args: undefined,
-        } as any;
+            environment: null,
+            args: [],
+        };
     }
 
     EnvironmentAttributeItem = this.RULE('EnvironmentAttributeItem', () => {
@@ -10229,7 +8637,7 @@ export class PliParser extends AbstractParser {
             this.OPTION2(() => {
                 this.SUBRULE_ASSIGN1(this.Expression, {
                     assign: result => {
-                        element.args ??= []; element.args.push(result);
+                        element.args.push(result);
                     }
                 });
                 this.MANY1(() => {
@@ -10240,7 +8648,7 @@ export class PliParser extends AbstractParser {
                     });
                     this.SUBRULE_ASSIGN2(this.Expression, {
                         assign: result => {
-                            element.args ??= []; element.args.push(result);
+                            element.args.push(result);
                         }
                     });
                 });
@@ -10255,13 +8663,13 @@ export class PliParser extends AbstractParser {
     private createEntryAttribute(): ast.EntryAttribute {
         return {
             kind: ast.SyntaxKind.EntryAttribute,
-            limited: undefined,
-            attributes: undefined,
-            options: undefined,
-            variable: undefined,
-            returns: undefined,
-            environmentName: undefined,
-        } as any;
+            limited: [],
+            attributes: [],
+            options: [],
+            variable: [],
+            returns: [],
+            environmentName: [],
+        };
     }
 
     EntryAttribute = this.RULE('EntryAttribute', () => {
@@ -10270,7 +8678,7 @@ export class PliParser extends AbstractParser {
         this.MANY1(() => {
             this.CONSUME_ASSIGN1(tokens.LIMITED, token => {
                 this.tokenPayload(token, element, CstNodeKind.EntryAttribute_limited_LIMITED_0);
-                element.limited ??= []; element.limited.push(token.image);
+                element.limited.push(token.image as 'LIMITED');
             });
         });
         this.CONSUME_ASSIGN1(tokens.ENTRY, token => {
@@ -10282,7 +8690,7 @@ export class PliParser extends AbstractParser {
             });
             this.SUBRULE_ASSIGN1(this.EntryDescription, {
                 assign: result => {
-                    element.attributes ??= []; element.attributes.push(result);
+                    element.attributes.push(result);
                 }
             });
             this.MANY2(() => {
@@ -10291,7 +8699,7 @@ export class PliParser extends AbstractParser {
                 });
                 this.SUBRULE_ASSIGN2(this.EntryDescription, {
                     assign: result => {
-                        element.attributes ??= []; element.attributes.push(result);
+                        element.attributes.push(result);
                     }
                 });
             });
@@ -10305,7 +8713,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.Options, {
                             assign: result => {
-                                element.options ??= []; element.options.push(result);
+                                element.options.push(result);
                             }
                         });
                     }
@@ -10314,7 +8722,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.CONSUME_ASSIGN1(tokens.VARIABLE, token => {
                             this.tokenPayload(token, element, CstNodeKind.EntryAttribute_variable_VARIABLE_0);
-                            element.variable ??= []; element.variable.push(token.image);
+                            element.variable.push(token.image as 'VARIABLE');
                         });
                     }
                 },
@@ -10322,7 +8730,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.CONSUME_ASSIGN2(tokens.LIMITED, token => {
                             this.tokenPayload(token, element, CstNodeKind.EntryAttribute_limited_LIMITED_1);
-                            element.limited ??= []; element.limited.push(token.image);
+                            element.limited.push(token.image as 'LIMITED');
                         });
                     }
                 },
@@ -10330,7 +8738,7 @@ export class PliParser extends AbstractParser {
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.ReturnsOption, {
                             assign: result => {
-                                element.returns ??= []; element.returns.push(result);
+                                element.returns.push(result);
                             }
                         });
                     }
@@ -10359,7 +8767,7 @@ export class PliParser extends AbstractParser {
                             });
                             this.SUBRULE_ASSIGN1(this.Expression, {
                                 assign: result => {
-                                    element.environmentName ??= []; element.environmentName.push(result);
+                                    element.environmentName.push(result);
                                 }
                             });
                             this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
@@ -10376,8 +8784,8 @@ export class PliParser extends AbstractParser {
     private createReturnsOption(): ast.ReturnsOption {
         return {
             kind: ast.SyntaxKind.ReturnsOption,
-            returnAttributes: undefined,
-        } as any;
+            returnAttributes: [],
+        };
     }
 
     ReturnsOption = this.RULE('ReturnsOption', () => {
@@ -10392,7 +8800,7 @@ export class PliParser extends AbstractParser {
         this.MANY1(() => {
             this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
                 assign: result => {
-                    element.returnAttributes ??= []; element.returnAttributes.push(result);
+                    element.returnAttributes.push(result);
                 }
             });
         });
@@ -10402,14 +8810,9 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createEntryDescription(): ast.EntryDescription {
-        return {
-            
-        } as any;
-    }
 
     EntryDescription = this.RULE('EntryDescription', () => {
-        let element = this.push(this.createEntryDescription());
+        let element = this.push({});
 
         this.OR1([
             {
@@ -10432,14 +8835,14 @@ export class PliParser extends AbstractParser {
             },
         ]);
 
-        return this.pop();
+        return this.pop<ast.EntryDescription>();
     });
     private createEntryParameterDescription(): ast.EntryParameterDescription {
         return {
             kind: ast.SyntaxKind.EntryParameterDescription,
-            attributes: undefined,
-            star: undefined,
-        } as any;
+            attributes: [],
+            star: false,
+        };
     }
 
     EntryParameterDescription = this.RULE('EntryParameterDescription', () => {
@@ -10451,7 +8854,7 @@ export class PliParser extends AbstractParser {
                     this.AT_LEAST_ONE1(() => {
                         this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
                             assign: result => {
-                                element.attributes ??= []; element.attributes.push(result);
+                                element.attributes.push(result);
                             }
                         });
                     }); 
@@ -10466,7 +8869,7 @@ export class PliParser extends AbstractParser {
                     this.MANY1(() => {
                         this.SUBRULE_ASSIGN2(this.DeclarationAttribute, {
                             assign: result => {
-                                element.attributes ??= []; element.attributes.push(result);
+                                element.attributes.push(result);
                             }
                         });
                     });
@@ -10479,10 +8882,10 @@ export class PliParser extends AbstractParser {
     private createEntryUnionDescription(): ast.EntryUnionDescription {
         return {
             kind: ast.SyntaxKind.EntryUnionDescription,
-            init: undefined,
-            attributes: undefined,
-            prefixedAttributes: undefined,
-        } as any;
+            init: null,
+            attributes: [],
+            prefixedAttributes: [],
+        };
     }
 
     EntryUnionDescription = this.RULE('EntryUnionDescription', () => {
@@ -10495,7 +8898,7 @@ export class PliParser extends AbstractParser {
         this.MANY1(() => {
             this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
                 assign: result => {
-                    element.attributes ??= []; element.attributes.push(result);
+                    element.attributes.push(result);
                 }
             });
         });
@@ -10505,7 +8908,7 @@ export class PliParser extends AbstractParser {
         this.MANY2(() => {
             this.SUBRULE_ASSIGN1(this.PrefixedAttribute, {
                 assign: result => {
-                    element.prefixedAttributes ??= []; element.prefixedAttributes.push(result);
+                    element.prefixedAttributes.push(result);
                 }
             });
         });
@@ -10515,9 +8918,9 @@ export class PliParser extends AbstractParser {
     private createPrefixedAttribute(): ast.PrefixedAttribute {
         return {
             kind: ast.SyntaxKind.PrefixedAttribute,
-            level: undefined,
-            attribute: undefined,
-        } as any;
+            level: null,
+            attribute: null,
+        };
     }
 
     PrefixedAttribute = this.RULE('PrefixedAttribute', () => {
@@ -10540,8 +8943,8 @@ export class PliParser extends AbstractParser {
     private createProcedureParameter(): ast.ProcedureParameter {
         return {
             kind: ast.SyntaxKind.ProcedureParameter,
-            id: undefined,
-        } as any;
+            id: null,
+        };
     }
 
     ProcedureParameter = this.RULE('ProcedureParameter', () => {
@@ -10557,9 +8960,9 @@ export class PliParser extends AbstractParser {
     private createReferenceItem(): ast.ReferenceItem {
         return {
             kind: ast.SyntaxKind.ReferenceItem,
-            ref: undefined,
-            dimensions: undefined,
-        } as any;
+            ref: null,
+            dimensions: null,
+        };
     }
 
     ReferenceItem = this.RULE('ReferenceItem', () => {
@@ -10579,226 +8982,45 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createExpression(): ast.Expression {
-        return {
-            
-        } as any;
-    }
 
-    Expression = this.RULE('Expression', () => {
-        let element = this.push(this.createExpression());
-
-        this.SUBRULE_ASSIGN1(this.BinaryExpression, {
-            assign: result => {
-                element = this.replace(result);
-            }
-        });
-
-        return this.pop();
-    });
-    private createBinaryExpression(): ast.Expression {
-        return {
-            
-        } as any;
-    }
+    // private createBinaryExpression(): ast.Expression {
+    //     return {
+    //     } as any;
+    // }
 
     BinaryExpression = this.RULE('BinaryExpression', () => {
-        let element = this.push(this.createBinaryExpression());
+        // TODO: binary expression
+        let element = this.push({
+            kind: ast.SyntaxKind.BinaryExpression,
+            items: [] as any[],
+            op: [] as string[]
+        });
 
         /* Action: BinaryExpression */
         this.SUBRULE_ASSIGN1(this.PrimaryExpression, {
             assign: result => {
-                element.items ??= []; element.items.push(result);
+                element.items.push(result);
             }
         });
         this.MANY1(() => {
-            this.OR1([
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.Pipe, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Pipe_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.Not, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Not_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.Caret, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Caret_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.Ampersand, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Ampersand_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.LessThan, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_LessThan_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.NotLessThan, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_NotLessThan_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.LessThanEquals, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_LessThanEquals_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.Equals, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Equals_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.NotEquals, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_NotEquals_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.CaretEquals, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_CaretEquals_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.LessThanGreaterThan, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_LessThanGreaterThan_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.GreaterThanEquals, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_GreaterThanEquals_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.GreaterThan, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_GreaterThan_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.NotGreaterThan, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_NotGreaterThan_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.PipePipe, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_PipePipe_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.ExclamationMarkExclamationMark, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_ExclamationMarkExclamationMark_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.Plus, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Plus_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.Minus, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Minus_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.Star, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Star_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.Slash, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Slash_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME_ASSIGN1(tokens.StarStar, token => {
-                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_StarStar_0);
-                            element.op ??= []; element.op.push(token.image);
-                        });
-                    }
-                },
-            ]);
+            this.CONSUME_ASSIGN(tokens.BinaryOperator, token => {
+                this.tokenPayload(token, element as any, CstNodeKind.BinaryExpression_op_Pipe_0);
+                element.op.push(token.image);
+            });
             this.SUBRULE_ASSIGN2(this.PrimaryExpression, {
                 assign: result => {
-                    element.items ??= []; element.items.push(result);
+                    element.items.push(result);
                 }
             });
         });
 
         return this.pop();
     });
-    private createPrimaryExpression(): ast.Expression {
-        return {
-            
-        } as any;
-    }
+
+    Expression = this.BinaryExpression;
 
     PrimaryExpression = this.RULE('PrimaryExpression', () => {
-        let element = this.push(this.createPrimaryExpression());
+        let element = this.push({});
 
         this.OR1([
             {
@@ -10839,12 +9061,14 @@ export class PliParser extends AbstractParser {
             },
         ]);
 
-        return this.pop();
+        return this.pop<ast.Expression>();
     });
-    private createParenthesizedExpression(): ast.Expression {
+    private createParenthesizedExpression(): ast.Parenthesis {
         return {
-            
-        } as any;
+            kind: ast.SyntaxKind.Parenthesis,
+            value: null,
+            do: null
+        };
     }
 
     ParenthesizedExpression = this.RULE('ParenthesizedExpression', () => {
@@ -10886,9 +9110,9 @@ export class PliParser extends AbstractParser {
     private createMemberCall(): ast.MemberCall {
         return {
             kind: ast.SyntaxKind.MemberCall,
-            element: undefined,
-            previous: undefined,
-        } as any;
+            element: null,
+            previous: null,
+        };
     }
 
     MemberCall = this.RULE('MemberCall', () => {
@@ -10916,11 +9140,11 @@ export class PliParser extends AbstractParser {
     private createLocatorCall(): ast.LocatorCall {
         return {
             kind: ast.SyntaxKind.LocatorCall,
-            element: undefined,
-            previous: undefined,
-            pointer: undefined,
-            handle: undefined,
-        } as any;
+            element: null,
+            previous: null,
+            pointer: false,
+            handle: false,
+        };
     }
 
     LocatorCall = this.RULE('LocatorCall', () => {
@@ -10963,9 +9187,9 @@ export class PliParser extends AbstractParser {
     private createProcedureCall(): ast.ProcedureCall {
         return {
             kind: ast.SyntaxKind.ProcedureCall,
-            procedure: undefined,
-            args: undefined,
-        } as any;
+            procedure: null,
+            args: [],
+        };
     }
 
     ProcedureCall = this.RULE('ProcedureCall', () => {
@@ -10985,7 +9209,7 @@ export class PliParser extends AbstractParser {
                         ALT: () => {
                             this.SUBRULE_ASSIGN1(this.Expression, {
                                 assign: result => {
-                                    element.args ??= []; element.args.push(result);
+                                    element.args.push(result);
                                 }
                             });
                         }
@@ -10994,7 +9218,7 @@ export class PliParser extends AbstractParser {
                         ALT: () => {
                             this.CONSUME_ASSIGN1(tokens.Star, token => {
                                 this.tokenPayload(token, element, CstNodeKind.ProcedureCall_args_Star_0);
-                                element.args ??= []; element.args.push(token.image);
+                                element.args.push(token.image as '*');
                             });
                         }
                     },
@@ -11008,7 +9232,7 @@ export class PliParser extends AbstractParser {
                             ALT: () => {
                                 this.SUBRULE_ASSIGN2(this.Expression, {
                                     assign: result => {
-                                        element.args ??= []; element.args.push(result);
+                                        element.args.push(result);
                                     }
                                 });
                             }
@@ -11017,7 +9241,7 @@ export class PliParser extends AbstractParser {
                             ALT: () => {
                                 this.CONSUME_ASSIGN2(tokens.Star, token => {
                                     this.tokenPayload(token, element, CstNodeKind.ProcedureCall_args_Star_1);
-                                    element.args ??= []; element.args.push(token.image);
+                                    element.args.push(token.image as '*');
                                 });
                             }
                         },
@@ -11051,48 +9275,18 @@ export class PliParser extends AbstractParser {
     private createUnaryExpression(): ast.UnaryExpression {
         return {
             kind: ast.SyntaxKind.UnaryExpression,
-            op: undefined,
-            expr: undefined,
-        } as any;
+            op: null,
+            expr: null,
+        };
     }
 
     UnaryExpression = this.RULE('UnaryExpression', () => {
         let element = this.push(this.createUnaryExpression());
 
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.Plus, token => {
-                        this.tokenPayload(token, element, CstNodeKind.UnaryExpression_op_Plus_0);
-                        element.op = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.Minus, token => {
-                        this.tokenPayload(token, element, CstNodeKind.UnaryExpression_op_Minus_0);
-                        element.op = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.Not, token => {
-                        this.tokenPayload(token, element, CstNodeKind.UnaryExpression_op_Not_0);
-                        element.op = token.image;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.Caret, token => {
-                        this.tokenPayload(token, element, CstNodeKind.UnaryExpression_op_Caret_0);
-                        element.op = token.image;
-                    });
-                }
-            },
-        ]);
+        this.CONSUME_ASSIGN1(tokens.UnaryOperator, token => {
+            this.tokenPayload(token, element, CstNodeKind.UnaryExpression_op_Plus_0);
+            element.op = token.image as ast.UnaryExpression['op'];
+        });
         this.SUBRULE_ASSIGN1(this.Expression, {
             assign: result => {
                 element.expr = result;
@@ -11104,9 +9298,9 @@ export class PliParser extends AbstractParser {
     private createLiteral(): ast.Literal {
         return {
             kind: ast.SyntaxKind.Literal,
-            multiplier: undefined,
-            value: undefined,
-        } as any;
+            multiplier: null,
+            value: null,
+        };
     }
 
     Literal = this.RULE('Literal', () => {
@@ -11155,8 +9349,8 @@ export class PliParser extends AbstractParser {
     private createStringLiteral(): ast.StringLiteral {
         return {
             kind: ast.SyntaxKind.StringLiteral,
-            value: undefined,
-        } as any;
+            value: null,
+        };
     }
 
     StringLiteral = this.RULE('StringLiteral', () => {
@@ -11172,8 +9366,8 @@ export class PliParser extends AbstractParser {
     private createNumberLiteral(): ast.NumberLiteral {
         return {
             kind: ast.SyntaxKind.NumberLiteral,
-            value: undefined,
-        } as any;
+            value: null,
+        };
     }
 
     NumberLiteral = this.RULE('NumberLiteral', () => {

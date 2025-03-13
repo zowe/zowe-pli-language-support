@@ -439,25 +439,25 @@ export type Varying = 'NONVARYING' | 'VARYING' | 'VARYING4' | 'VARYINGZ';
 
 export interface AFormatItem extends AstNode {
     kind: SyntaxKind.AFormatItem;
-    fieldWidth: Expression;
+    fieldWidth: Expression | null;
 }
 export interface AllocateDimension extends AstNode {
     kind: SyntaxKind.AllocateDimension;
-    dimensions: Dimensions;
+    dimensions: Dimensions | null;
 }
 export interface AllocatedVariable extends AstNode {
     kind: SyntaxKind.AllocatedVariable;
-    level: string;
-    var: ReferenceItem;
-    attribute: AllocateAttribute;
+    level: string | null;
+    var: ReferenceItem | null;
+    attribute: AllocateAttribute | null;
 }
 export interface AllocateLocationReferenceIn extends AstNode {
     kind: SyntaxKind.AllocateLocationReferenceIn;
-    area: LocatorCall;
+    area: LocatorCall | null;
 }
 export interface AllocateLocationReferenceSet extends AstNode {
     kind: SyntaxKind.AllocateLocationReferenceSet;
-    locatorVariable: LocatorCall;
+    locatorVariable: LocatorCall | null;
 }
 export interface AllocateStatement extends AstNode {
     kind: SyntaxKind.AllocateStatement;
@@ -465,46 +465,46 @@ export interface AllocateStatement extends AstNode {
 }
 export interface AllocateType extends AstNode {
     kind: SyntaxKind.AllocateType;
-    type: AllocateAttributeType;
-    dimensions: Dimensions;
+    type: AllocateAttributeType | null;
+    dimensions: Dimensions | null;
 }
 export interface AssertStatement extends AstNode {
     kind: SyntaxKind.AssertStatement;
     true: boolean;
-    actual: Expression;
+    actual: Expression | null;
     false: boolean;
     unreachable: boolean;
-    displayExpression: Expression;
+    displayExpression: Expression | null;
     compare: boolean;
-    expected: Expression;
-    operator: string;
+    expected: Expression | null;
+    operator: string | null;
 }
 export interface AssignmentStatement extends AstNode {
     kind: SyntaxKind.AssignmentStatement;
     refs: LocatorCall[];
-    operator: AssignmentOperator;
-    expression: Expression;
-    dimacrossExpr: Expression;
+    operator: AssignmentOperator | null;
+    expression: Expression | null;
+    dimacrossExpr: Expression | null;
 }
 export interface AttachStatement extends AstNode {
     kind: SyntaxKind.AttachStatement;
-    reference: LocatorCall;
-    task: LocatorCall;
+    reference: LocatorCall | null;
+    task: LocatorCall | null;
     environment: boolean;
-    tstack: Expression;
+    tstack: Expression | null;
 }
 export interface BeginStatement extends AstNode {
     kind: SyntaxKind.BeginStatement;
-    options: Options;
+    options: Options | null;
     recursive: boolean;
     statements: Statement[];
-    end: EndStatement;
+    end: EndStatement | null;
     order: boolean;
     reorder: boolean;
 }
 export interface BFormatItem extends AstNode {
     kind: SyntaxKind.BFormatItem;
-    fieldWidth: Expression;
+    fieldWidth: Expression | null;
 }
 export interface BinaryExpression extends AstNode {
     kind: SyntaxKind.BinaryExpression;
@@ -513,20 +513,20 @@ export interface BinaryExpression extends AstNode {
 }
 export interface Bound extends AstNode {
     kind: SyntaxKind.Bound;
-    expression: '*' | Expression;
-    refer: LocatorCall;
+    expression: '*' | Expression | null;
+    refer: LocatorCall | null;
 }
 export interface CallStatement extends AstNode {
     kind: SyntaxKind.CallStatement;
-    call: ProcedureCall;
+    call: ProcedureCall | null;
 }
 export interface CancelThreadStatement extends AstNode {
     kind: SyntaxKind.CancelThreadStatement;
-    thread: LocatorCall;
+    thread: LocatorCall | null;
 }
 export interface CFormatItem extends AstNode {
     kind: SyntaxKind.CFormatItem;
-    item: FFormatItem | EFormatItem | PFormatItem;
+    item: FFormatItem | EFormatItem | PFormatItem | null;
 }
 export interface CloseStatement extends AstNode {
     kind: SyntaxKind.CloseStatement;
@@ -534,20 +534,20 @@ export interface CloseStatement extends AstNode {
 }
 export interface CMPATOptionsItem extends AstNode {
     kind: SyntaxKind.CMPATOptionsItem;
-    value: 'V1' | 'V2' | 'V3';
+    value: 'V1' | 'V2' | 'V3' | null;
 }
 export interface ColumnFormatItem extends AstNode {
     kind: SyntaxKind.ColumnFormatItem;
-    characterPosition: Expression;
+    characterPosition: Expression | null;
 }
 export interface CompilerOptions extends AstNode {
     kind: SyntaxKind.CompilerOptions;
-    value: 'TODO';
+    value: 'TODO' | null;
 }
 export interface ComputationDataAttribute extends AstNode {
     kind: SyntaxKind.ComputationDataAttribute;
-    type: DataAttributeType;
-    dimensions: Dimensions;
+    type: DataAttributeType | null;
+    dimensions: Dimensions | null;
 }
 export interface ConditionPrefix extends AstNode {
     kind: SyntaxKind.ConditionPrefix;
@@ -563,11 +563,11 @@ export interface DataSpecificationDataList extends AstNode {
 }
 export interface DataSpecificationDataListItem extends AstNode {
     kind: SyntaxKind.DataSpecificationDataListItem;
-    value: Expression;
+    value: Expression | null;
 }
 export interface DataSpecificationOptions extends AstNode {
     kind: SyntaxKind.DataSpecificationOptions;
-    dataList: DataSpecificationDataList;
+    dataList: DataSpecificationDataList | null;
     edit: boolean;
     dataLists: DataSpecificationDataList[];
     formatLists: FormatList[];
@@ -576,18 +576,18 @@ export interface DataSpecificationOptions extends AstNode {
 }
 export interface DateAttribute extends AstNode {
     kind: SyntaxKind.DateAttribute;
-    pattern: string;
+    pattern: string | null;
 }
 export interface DeclaredItem extends AstNode {
     kind: SyntaxKind.DeclaredItem;
-    level: string;
-    element: DeclaredVariable | '*';
+    level: string | null;
+    element: DeclaredVariable | '*' | null;
     attributes: DeclarationAttribute[];
     items: DeclaredItem[];
 }
 export interface DeclaredVariable extends AstNode {
     kind: SyntaxKind.DeclaredVariable;
-    name: string;
+    name: string | null;
 }
 export interface DeclareStatement extends AstNode {
     kind: SyntaxKind.DeclareStatement;
@@ -602,22 +602,22 @@ export interface DefaultAttributeExpression extends AstNode {
 export interface DefaultAttributeExpressionNot extends AstNode {
     kind: SyntaxKind.DefaultAttributeExpressionNot;
     not: boolean;
-    value: DefaultAttribute;
+    value: DefaultAttribute | null;
 }
 export interface DefaultExpression extends AstNode {
     kind: SyntaxKind.DefaultExpression;
-    expression: DefaultExpressionPart;
+    expression: DefaultExpressionPart | null;
     attributes: DefaultDeclarationAttribute[];
 }
 export interface DefaultExpressionPart extends AstNode {
     kind: SyntaxKind.DefaultExpressionPart;
-    expression: DefaultAttributeExpression;
-    identifiers: DefaultRangeIdentifiers;
+    expression: DefaultAttributeExpression | null;
+    identifiers: DefaultRangeIdentifiers | null;
 }
 export interface DefaultRangeIdentifierItem extends AstNode {
     kind: SyntaxKind.DefaultRangeIdentifierItem;
-    from: string;
-    to: string;
+    from: string | null;
+    to: string | null;
 }
 export interface DefaultRangeIdentifiers extends AstNode {
     kind: SyntaxKind.DefaultRangeIdentifiers;
@@ -637,49 +637,49 @@ export interface DefaultValueAttributeItem extends AstNode {
 }
 export interface DefineAliasStatement extends AstNode {
     kind: SyntaxKind.DefineAliasStatement;
-    name: string;
+    name: string | null;
     xDefine: boolean;
     attributes: DeclarationAttribute[];
 }
 export interface DefinedAttribute extends AstNode {
     kind: SyntaxKind.DefinedAttribute;
-    reference: MemberCall;
-    position: Expression;
+    reference: MemberCall | null;
+    position: Expression | null;
 }
 export interface DefineOrdinalStatement extends AstNode {
     kind: SyntaxKind.DefineOrdinalStatement;
-    name: FQN;
-    ordinalValues: OrdinalValueList;
+    name: FQN | null;
+    ordinalValues: OrdinalValueList | null;
     xDefine: boolean;
     signed: boolean;
     unsigned: boolean;
-    precision: string;
+    precision: string | null;
 }
 export interface DefineStructureStatement extends AstNode {
     kind: SyntaxKind.DefineStructureStatement;
     xDefine: boolean;
-    level: string;
-    name: FQN;
+    level: string | null;
+    name: FQN | null;
     union: boolean;
     substructures: SubStructure[];
 }
 export interface DelayStatement extends AstNode {
     kind: SyntaxKind.DelayStatement;
-    delay: Expression;
+    delay: Expression | null;
 }
 export interface DeleteStatement extends AstNode {
     kind: SyntaxKind.DeleteStatement;
-    file: LocatorCall;
-    key: Expression;
+    file: LocatorCall | null;
+    key: Expression | null;
 }
 export interface DetachStatement extends AstNode {
     kind: SyntaxKind.DetachStatement;
-    reference: LocatorCall;
+    reference: LocatorCall | null;
 }
 export interface DimensionBound extends AstNode {
     kind: SyntaxKind.DimensionBound;
-    bound1: Bound;
-    bound2: Bound;
+    bound1: Bound | null;
+    bound2: Bound | null;
 }
 export interface Dimensions extends AstNode {
     kind: SyntaxKind.Dimensions;
@@ -687,61 +687,61 @@ export interface Dimensions extends AstNode {
 }
 export interface DimensionsDataAttribute extends AstNode {
     kind: SyntaxKind.DimensionsDataAttribute;
-    dimensions: Dimensions;
+    dimensions: Dimensions | null;
 }
 export interface DisplayStatement extends AstNode {
     kind: SyntaxKind.DisplayStatement;
-    expression: Expression;
-    reply: LocatorCall;
+    expression: Expression | null;
+    reply: LocatorCall | null;
     rout: string[];
     desc: string[];
 }
 export interface DoSpecification extends AstNode {
     kind: SyntaxKind.DoSpecification;
-    exp1: Expression;
-    upthru: Expression;
-    downthru: Expression;
-    repeat: Expression;
-    whileOrUntil: DoWhile | DoUntil;
-    to: Expression;
-    by: Expression;
+    exp1: Expression | null;
+    upthru: Expression | null;
+    downthru: Expression | null;
+    repeat: Expression | null;
+    whileOrUntil: DoWhile | DoUntil | null;
+    to: Expression | null;
+    by: Expression | null;
 }
 export interface DoStatement extends AstNode {
     kind: SyntaxKind.DoStatement;
     statements: Statement[];
-    end: EndStatement;
-    doType2: DoType2;
-    doType3: DoType3;
+    end: EndStatement | null;
+    doType2: DoType2 | null;
+    doType3: DoType3 | null;
 }
 export interface DoType3 extends AstNode {
     kind: SyntaxKind.DoType3;
-    variable: DoType3Variable;
+    variable: DoType3Variable | null;
     specifications: DoSpecification[];
 }
 export interface DoType3Variable extends AstNode {
     kind: SyntaxKind.DoType3Variable;
-    name: string;
+    name: string | null;
 }
 export interface DoUntil extends AstNode {
     kind: SyntaxKind.DoUntil;
-    until: Expression;
-    while: Expression;
+    until: Expression | null;
+    while: Expression | null;
 }
 export interface DoWhile extends AstNode {
     kind: SyntaxKind.DoWhile;
-    while: Expression;
-    until: Expression;
+    while: Expression | null;
+    until: Expression | null;
 }
 export interface EFormatItem extends AstNode {
     kind: SyntaxKind.EFormatItem;
-    fieldWidth: Expression;
-    fractionalDigits: Expression;
-    significantDigits: Expression;
+    fieldWidth: Expression | null;
+    fractionalDigits: Expression | null;
+    significantDigits: Expression | null;
 }
 export interface EndStatement extends AstNode {
     kind: SyntaxKind.EndStatement;
     labels: LabelPrefix[];
-    label: LabelReference;
+    label: LabelReference | null;
 }
 export interface EntryAttribute extends AstNode {
     kind: SyntaxKind.EntryAttribute;
@@ -768,7 +768,7 @@ export interface EntryStatement extends AstNode {
 }
 export interface EntryUnionDescription extends AstNode {
     kind: SyntaxKind.EntryUnionDescription;
-    init: string;
+    init: string | null;
     attributes: DeclarationAttribute[];
     prefixedAttributes: PrefixedAttribute[];
 }
@@ -778,12 +778,12 @@ export interface EnvironmentAttribute extends AstNode {
 }
 export interface EnvironmentAttributeItem extends AstNode {
     kind: SyntaxKind.EnvironmentAttributeItem;
-    environment: string;
+    environment: string | null;
     args: Expression[];
 }
 export interface ExecStatement extends AstNode {
     kind: SyntaxKind.ExecStatement;
-    query: string;
+    query: string | null;
 }
 export interface ExitStatement extends AstNode {
     kind: SyntaxKind.ExitStatement;
@@ -795,9 +795,9 @@ export interface Exports extends AstNode {
 }
 export interface FetchEntry extends AstNode {
     kind: SyntaxKind.FetchEntry;
-    name: string;
-    set: LocatorCall;
-    title: Expression;
+    name: string | null;
+    set: LocatorCall | null;
+    title: Expression | null;
 }
 export interface FetchStatement extends AstNode {
     kind: SyntaxKind.FetchStatement;
@@ -805,18 +805,18 @@ export interface FetchStatement extends AstNode {
 }
 export interface FFormatItem extends AstNode {
     kind: SyntaxKind.FFormatItem;
-    fieldWidth: Expression;
-    fractionalDigits: Expression;
-    scalingFactor: Expression;
+    fieldWidth: Expression | null;
+    fractionalDigits: Expression | null;
+    scalingFactor: Expression | null;
 }
 export interface FileReferenceCondition extends AstNode {
     kind: SyntaxKind.FileReferenceCondition;
-    keyword: 'ENDFILE' | 'ENDPAGE' | 'KEY' | 'NAME' | 'RECORD' | 'TRANSMIT' | 'UNDEFINEDFILE' | 'UNDF';
-    fileReference: ReferenceItem;
+    keyword: 'ENDFILE' | 'ENDPAGE' | 'KEY' | 'NAME' | 'RECORD' | 'TRANSMIT' | 'UNDEFINEDFILE' | 'UNDF' | null;
+    fileReference: ReferenceItem | null;
 }
 export interface FlushStatement extends AstNode {
     kind: SyntaxKind.FlushStatement;
-    file: LocatorCall | '*';
+    file: LocatorCall | '*' | null;
 }
 export interface FormatList extends AstNode {
     kind: SyntaxKind.FormatList;
@@ -824,17 +824,17 @@ export interface FormatList extends AstNode {
 }
 export interface FormatListItem extends AstNode {
     kind: SyntaxKind.FormatListItem;
-    level: FormatListItemLevel;
-    item: FormatItem;
-    list: FormatList;
+    level: FormatListItemLevel | null;
+    item: FormatItem | null;
+    list: FormatList | null;
 }
 export interface FormatListItemLevel extends AstNode {
     kind: SyntaxKind.FormatListItemLevel;
-    level: string | Expression;
+    level: string | Expression | null;
 }
 export interface FormatStatement extends AstNode {
     kind: SyntaxKind.FormatStatement;
-    list: FormatList;
+    list: FormatList | null;
 }
 export interface FreeStatement extends AstNode {
     kind: SyntaxKind.FreeStatement;
@@ -842,11 +842,11 @@ export interface FreeStatement extends AstNode {
 }
 export interface GetCopy extends AstNode {
     kind: SyntaxKind.GetCopy;
-    copyReference: string;
+    copyReference: string | null;
 }
 export interface GetFile extends AstNode {
     kind: SyntaxKind.GetFile;
-    file: Expression;
+    file: Expression | null;
 }
 export interface GetFileStatement extends AstNode {
     kind: SyntaxKind.GetFileStatement;
@@ -854,31 +854,31 @@ export interface GetFileStatement extends AstNode {
 }
 export interface GetSkip extends AstNode {
     kind: SyntaxKind.GetSkip;
-    skipExpression: Expression;
+    skipExpression: Expression | null;
 }
 export interface GetStringStatement extends AstNode {
     kind: SyntaxKind.GetStringStatement;
-    expression: Expression;
-    dataSpecification: DataSpecificationOptions;
+    expression: Expression | null;
+    dataSpecification: DataSpecificationOptions | null;
 }
 export interface GFormatItem extends AstNode {
     kind: SyntaxKind.GFormatItem;
-    fieldWidth: Expression;
+    fieldWidth: Expression | null;
 }
 export interface GoToStatement extends AstNode {
     kind: SyntaxKind.GoToStatement;
-    label: LabelReference;
+    label: LabelReference | null;
 }
 export interface HandleAttribute extends AstNode {
     kind: SyntaxKind.HandleAttribute;
-    size: string;
-    type: Reference<NamedType>;
+    size: string | null;
+    type: Reference<NamedType> | null;
 }
 export interface IfStatement extends AstNode {
     kind: SyntaxKind.IfStatement;
-    expression: Expression;
-    unit: Statement;
-    else: Statement;
+    expression: Expression | null;
+    unit: Statement | null;
+    else: Statement | null;
 }
 export interface IncludeDirective extends AstNode {
     kind: SyntaxKind.IncludeDirective;
@@ -886,7 +886,7 @@ export interface IncludeDirective extends AstNode {
 }
 export interface IncludeItem extends AstNode {
     kind: SyntaxKind.IncludeItem;
-    file: string;
+    file: string | null;
     ddname: boolean;
 }
 export interface InitAcrossExpression extends AstNode {
@@ -900,9 +900,9 @@ export interface InitialAttribute extends AstNode {
     direct: boolean;
     items: InitialAttributeItem[];
     call: boolean;
-    procedureCall: ProcedureCall;
+    procedureCall: ProcedureCall | null;
     to: boolean;
-    content: InitialToContent;
+    content: InitialToContent | null;
 }
 export interface InitialAttributeItemStar extends AstNode {
     kind: SyntaxKind.InitialAttributeItemStar;
@@ -910,8 +910,8 @@ export interface InitialAttributeItemStar extends AstNode {
 export interface InitialAttributeSpecification extends AstNode {
     kind: SyntaxKind.InitialAttributeSpecification;
     star: boolean;
-    item: InitialAttributeSpecificationIteration;
-    expression: Expression;
+    item: InitialAttributeSpecificationIteration | null;
+    expression: Expression | null;
 }
 export interface InitialAttributeSpecificationIterationValue extends AstNode {
     kind: SyntaxKind.InitialAttributeSpecificationIterationValue;
@@ -919,90 +919,90 @@ export interface InitialAttributeSpecificationIterationValue extends AstNode {
 }
 export interface InitialToContent extends AstNode {
     kind: SyntaxKind.InitialToContent;
-    varying: Varying;
-    type: CharType;
+    varying: Varying | null;
+    type: CharType | null;
 }
 export interface IterateStatement extends AstNode {
     kind: SyntaxKind.IterateStatement;
-    label: LabelReference;
+    label: LabelReference | null;
 }
 export interface KeywordCondition extends AstNode {
     kind: SyntaxKind.KeywordCondition;
-    keyword: 'ANYCONDITION' | 'ANYCOND' | 'AREA' | 'ASSERTION' | 'ATTENTION' | 'CONFORMANCE' | 'CONVERSION' | 'ERROR' | 'FINISH' | 'FIXEDOVERFLOW' | 'FOFL' | 'INVALIDOP' | 'OVERFLOW' | 'OFL' | 'SIZE' | 'STORAGE' | 'STRINGRANGE' | 'STRINGSIZE' | 'SUBSCRIPTRANGE' | 'UNDERFLOW' | 'UFL' | 'ZERODIVIDE' | 'ZDIV';
+    keyword: 'ANYCONDITION' | 'ANYCOND' | 'AREA' | 'ASSERTION' | 'ATTENTION' | 'CONFORMANCE' | 'CONVERSION' | 'ERROR' | 'FINISH' | 'FIXEDOVERFLOW' | 'FOFL' | 'INVALIDOP' | 'OVERFLOW' | 'OFL' | 'SIZE' | 'STORAGE' | 'STRINGRANGE' | 'STRINGSIZE' | 'SUBSCRIPTRANGE' | 'UNDERFLOW' | 'UFL' | 'ZERODIVIDE' | 'ZDIV' | null;
 }
 export interface LabelPrefix extends AstNode {
     kind: SyntaxKind.LabelPrefix;
-    name: string;
+    name: string | null;
 }
 export interface LabelReference extends AstNode {
     kind: SyntaxKind.LabelReference;
-    label: Reference<LabelPrefix>;
+    label: Reference<LabelPrefix> | null;
 }
 export interface LeaveStatement extends AstNode {
     kind: SyntaxKind.LeaveStatement;
-    label: LabelReference;
+    label: LabelReference | null;
 }
 export interface LFormatItem extends AstNode {
     kind: SyntaxKind.LFormatItem;
 }
 export interface LikeAttribute extends AstNode {
     kind: SyntaxKind.LikeAttribute;
-    reference: LocatorCall;
+    reference: LocatorCall | null;
 }
 export interface LineDirective extends AstNode {
     kind: SyntaxKind.LineDirective;
-    line: string;
-    file: string;
+    line: string | null;
+    file: string | null;
 }
 export interface LineFormatItem extends AstNode {
     kind: SyntaxKind.LineFormatItem;
-    lineNumber: Expression;
+    lineNumber: Expression | null;
 }
 export interface LinkageOptionsItem extends AstNode {
     kind: SyntaxKind.LinkageOptionsItem;
-    value: 'CDECL' | 'OPTLINK' | 'STDCALL' | 'SYSTEM';
+    value: 'CDECL' | 'OPTLINK' | 'STDCALL' | 'SYSTEM' | null;
 }
 export interface Literal extends AstNode {
     kind: SyntaxKind.Literal;
-    multiplier: Parenthesis;
-    value: LiteralValue;
+    multiplier: Parenthesis | null;
+    value: LiteralValue | null;
 }
 export interface LocateStatement extends AstNode {
     kind: SyntaxKind.LocateStatement;
-    variable: LocatorCall;
+    variable: LocatorCall | null;
     arguments: (LocateStatementFile | LocateStatementSet | LocateStatementKeyFrom)[];
 }
 export interface LocateStatementFile extends AstNode {
     kind: SyntaxKind.LocateStatementFile;
-    file: ReferenceItem;
+    file: ReferenceItem | null;
 }
 export interface LocateStatementKeyFrom extends AstNode {
     kind: SyntaxKind.LocateStatementKeyFrom;
-    keyfrom: Expression;
+    keyfrom: Expression | null;
 }
 export interface LocateStatementSet extends AstNode {
     kind: SyntaxKind.LocateStatementSet;
-    set: LocatorCall;
+    set: LocatorCall | null;
 }
 export interface LocatorCall extends AstNode {
     kind: SyntaxKind.LocatorCall;
-    element: MemberCall;
-    previous: LocatorCall;
+    element: MemberCall | null;
+    previous: LocatorCall | null;
     pointer: boolean;
     handle: boolean;
 }
 export interface MemberCall extends AstNode {
     kind: SyntaxKind.MemberCall;
-    element: ReferenceItem;
-    previous: MemberCall;
+    element: ReferenceItem | null;
+    previous: MemberCall | null;
 }
 export interface NamedCondition extends AstNode {
     kind: SyntaxKind.NamedCondition;
-    name: string;
+    name: string | null;
 }
 export interface NoMapOptionsItem extends AstNode {
     kind: SyntaxKind.NoMapOptionsItem;
-    type: 'NOMAP' | 'NOMAPIN' | 'NOMAPOUT';
+    type: 'NOMAP' | 'NOMAPIN' | 'NOMAPOUT' | null;
     parameters: string[];
 }
 export interface NoPrintDirective extends AstNode {
@@ -1010,22 +1010,22 @@ export interface NoPrintDirective extends AstNode {
 }
 export interface NoteDirective extends AstNode {
     kind: SyntaxKind.NoteDirective;
-    message: Expression;
-    code: Expression;
+    message: Expression | null;
+    code: Expression | null;
 }
 export interface NullStatement extends AstNode {
     kind: SyntaxKind.NullStatement;
 }
 export interface NumberLiteral extends AstNode {
     kind: SyntaxKind.NumberLiteral;
-    value: string;
+    value: string | null;
 }
 export interface OnStatement extends AstNode {
     kind: SyntaxKind.OnStatement;
     conditions: Condition[];
     snap: boolean;
     system: boolean;
-    onUnit: Statement;
+    onUnit: Statement | null;
 }
 export interface OpenOptionsAccess extends AstNode {
     kind: SyntaxKind.OpenOptionsAccess;
@@ -1042,7 +1042,7 @@ export interface OpenOptionsBuffering extends AstNode {
 }
 export interface OpenOptionsFile extends AstNode {
     kind: SyntaxKind.OpenOptionsFile;
-    file: ReferenceItem;
+    file: ReferenceItem | null;
 }
 export interface OpenOptionsGroup extends AstNode {
     kind: SyntaxKind.OpenOptionsGroup;
@@ -1054,11 +1054,11 @@ export interface OpenOptionsKeyed extends AstNode {
 }
 export interface OpenOptionsLineSize extends AstNode {
     kind: SyntaxKind.OpenOptionsLineSize;
-    lineSize: Expression;
+    lineSize: Expression | null;
 }
 export interface OpenOptionsPageSize extends AstNode {
     kind: SyntaxKind.OpenOptionsPageSize;
-    pageSize: Expression;
+    pageSize: Expression | null;
 }
 export interface OpenOptionsPrint extends AstNode {
     kind: SyntaxKind.OpenOptionsPrint;
@@ -1071,7 +1071,7 @@ export interface OpenOptionsStream extends AstNode {
 }
 export interface OpenOptionsTitle extends AstNode {
     kind: SyntaxKind.OpenOptionsTitle;
-    title: Expression;
+    title: Expression | null;
 }
 export interface OpenStatement extends AstNode {
     kind: SyntaxKind.OpenStatement;
@@ -1083,13 +1083,13 @@ export interface Options extends AstNode {
 }
 export interface OrdinalTypeAttribute extends AstNode {
     kind: SyntaxKind.OrdinalTypeAttribute;
-    type: Reference<OrdinalType>;
+    type: Reference<OrdinalType> | null;
     byvalue: boolean;
 }
 export interface OrdinalValue extends AstNode {
     kind: SyntaxKind.OrdinalValue;
-    name: string;
-    value: string;
+    name: string | null;
+    value: string | null;
 }
 export interface OrdinalValueList extends AstNode {
     kind: SyntaxKind.OrdinalValueList;
@@ -1097,15 +1097,15 @@ export interface OrdinalValueList extends AstNode {
 }
 export interface OtherwiseStatement extends AstNode {
     kind: SyntaxKind.OtherwiseStatement;
-    unit: Statement;
+    unit: Statement | null;
 }
 export interface Package extends AstNode {
     kind: SyntaxKind.Package;
-    exports: Exports;
-    reserves: Reserves;
-    options: Options;
+    exports: Exports | null;
+    reserves: Reserves | null;
+    options: Options | null;
     statements: Statement[];
-    end: EndStatement;
+    end: EndStatement | null;
 }
 export interface PageDirective extends AstNode {
     kind: SyntaxKind.PageDirective;
@@ -1115,16 +1115,16 @@ export interface PageFormatItem extends AstNode {
 }
 export interface Parenthesis extends AstNode {
     kind: SyntaxKind.Parenthesis;
-    value: Expression;
-    do: DoType3;
+    value: Expression | null;
+    do: DoType3 | null;
 }
 export interface PFormatItem extends AstNode {
     kind: SyntaxKind.PFormatItem;
-    specification: string;
+    specification: string | null;
 }
 export interface PictureAttribute extends AstNode {
     kind: SyntaxKind.PictureAttribute;
-    picture: string;
+    picture: string | null;
 }
 export interface PliProgram extends AstNode {
     kind: SyntaxKind.PliProgram;
@@ -1135,20 +1135,20 @@ export interface PopDirective extends AstNode {
 }
 export interface PrefixedAttribute extends AstNode {
     kind: SyntaxKind.PrefixedAttribute;
-    level: string;
-    attribute: DeclarationAttribute;
+    level: string | null;
+    attribute: DeclarationAttribute | null;
 }
 export interface PrintDirective extends AstNode {
     kind: SyntaxKind.PrintDirective;
 }
 export interface ProcedureCall extends AstNode {
     kind: SyntaxKind.ProcedureCall;
-    procedure: Reference<ProcedureStatement>;
+    procedure: Reference<ProcedureStatement> | null;
     args: (Expression | '*')[];
 }
 export interface ProcedureParameter extends AstNode {
     kind: SyntaxKind.ProcedureParameter;
-    id: string;
+    id: string | null;
 }
 export interface ProcedureStatement extends AstNode {
     kind: SyntaxKind.ProcedureStatement;
@@ -1160,7 +1160,7 @@ export interface ProcedureStatement extends AstNode {
     recursive: 'RECURSIVE'[];
     order: ('ORDER' | 'REORDER')[];
     scope: ScopeAttribute[];
-    end: EndStatement;
+    end: EndStatement | null;
     environmentName: Expression[];
 }
 export interface ProcessDirective extends AstNode {
@@ -1169,7 +1169,7 @@ export interface ProcessDirective extends AstNode {
 }
 export interface ProcincDirective extends AstNode {
     kind: SyntaxKind.ProcincDirective;
-    datasetName: string;
+    datasetName: string | null;
 }
 export interface PushDirective extends AstNode {
     kind: SyntaxKind.PushDirective;
@@ -1180,18 +1180,18 @@ export interface PutFileStatement extends AstNode {
 }
 export interface PutItem extends AstNode {
     kind: SyntaxKind.PutItem;
-    attribute: PutAttribute;
-    expression: Expression;
+    attribute: PutAttribute | null;
+    expression: Expression | null;
 }
 export interface PutStringStatement extends AstNode {
     kind: SyntaxKind.PutStringStatement;
-    stringExpression: Expression;
-    dataSpecification: DataSpecificationOptions;
+    stringExpression: Expression | null;
+    dataSpecification: DataSpecificationOptions | null;
 }
 export interface QualifyStatement extends AstNode {
     kind: SyntaxKind.QualifyStatement;
     statements: Statement[];
-    end: EndStatement;
+    end: EndStatement | null;
 }
 export interface ReadStatement extends AstNode {
     kind: SyntaxKind.ReadStatement;
@@ -1199,36 +1199,36 @@ export interface ReadStatement extends AstNode {
 }
 export interface ReadStatementFile extends AstNode {
     kind: SyntaxKind.ReadStatementFile;
-    file: LocatorCall;
+    file: LocatorCall | null;
 }
 export interface ReadStatementIgnore extends AstNode {
     kind: SyntaxKind.ReadStatementIgnore;
-    ignore: Expression;
+    ignore: Expression | null;
 }
 export interface ReadStatementInto extends AstNode {
     kind: SyntaxKind.ReadStatementInto;
-    intoRef: LocatorCall;
+    intoRef: LocatorCall | null;
 }
 export interface ReadStatementKey extends AstNode {
     kind: SyntaxKind.ReadStatementKey;
-    key: Expression;
+    key: Expression | null;
 }
 export interface ReadStatementKeyTo extends AstNode {
     kind: SyntaxKind.ReadStatementKeyTo;
-    keyto: LocatorCall;
+    keyto: LocatorCall | null;
 }
 export interface ReadStatementSet extends AstNode {
     kind: SyntaxKind.ReadStatementSet;
-    set: LocatorCall;
+    set: LocatorCall | null;
 }
 export interface ReferenceItem extends AstNode {
     kind: SyntaxKind.ReferenceItem;
-    ref: Reference<NamedElement>;
-    dimensions: Dimensions;
+    ref: Reference<NamedElement> | null;
+    dimensions: Dimensions | null;
 }
 export interface ReinitStatement extends AstNode {
     kind: SyntaxKind.ReinitStatement;
-    reference: LocatorCall;
+    reference: LocatorCall | null;
 }
 export interface ReleaseStatement extends AstNode {
     kind: SyntaxKind.ReleaseStatement;
@@ -1253,7 +1253,7 @@ export interface ReturnsOption extends AstNode {
 }
 export interface ReturnStatement extends AstNode {
     kind: SyntaxKind.ReturnStatement;
-    expression: Expression;
+    expression: Expression | null;
 }
 export interface RevertStatement extends AstNode {
     kind: SyntaxKind.RevertStatement;
@@ -1265,25 +1265,25 @@ export interface RewriteStatement extends AstNode {
 }
 export interface RewriteStatementFile extends AstNode {
     kind: SyntaxKind.RewriteStatementFile;
-    file: LocatorCall;
+    file: LocatorCall | null;
 }
 export interface RewriteStatementFrom extends AstNode {
     kind: SyntaxKind.RewriteStatementFrom;
-    from: LocatorCall;
+    from: LocatorCall | null;
 }
 export interface RewriteStatementKey extends AstNode {
     kind: SyntaxKind.RewriteStatementKey;
-    key: Expression;
+    key: Expression | null;
 }
 export interface RFormatItem extends AstNode {
     kind: SyntaxKind.RFormatItem;
-    labelReference: string;
+    labelReference: string | null;
 }
 export interface SelectStatement extends AstNode {
     kind: SyntaxKind.SelectStatement;
-    on: Expression;
+    on: Expression | null;
     statements: (WhenStatement | OtherwiseStatement)[];
-    end: EndStatement;
+    end: EndStatement | null;
 }
 export interface SignalStatement extends AstNode {
     kind: SyntaxKind.SignalStatement;
@@ -1291,47 +1291,47 @@ export interface SignalStatement extends AstNode {
 }
 export interface SimpleOptionsItem extends AstNode {
     kind: SyntaxKind.SimpleOptionsItem;
-    value: 'ORDER' | 'REORDER' | 'NOCHARGRAPHIC' | 'CHARGRAPHIC' | 'NOINLINE' | 'INLINE' | 'MAIN' | 'NOEXECOPS' | 'COBOL' | 'FORTRAN' | 'BYADDR' | 'BYVALUE' | 'DESCRIPTOR' | 'NODESCRIPTOR' | 'IRREDUCIBLE' | 'REDUCIBLE' | 'NORETURN' | 'REENTRANT' | 'FETCHABLE' | 'RENT' | 'AMODE31' | 'AMODE64' | 'DLLINTERNAL' | 'FROMALIEN' | 'RETCODE' | 'ASSEMBLER' | 'ASM' | 'WINMAIN' | 'INTER' | 'RECURSIVE';
+    value: 'ORDER' | 'REORDER' | 'NOCHARGRAPHIC' | 'CHARGRAPHIC' | 'NOINLINE' | 'INLINE' | 'MAIN' | 'NOEXECOPS' | 'COBOL' | 'FORTRAN' | 'BYADDR' | 'BYVALUE' | 'DESCRIPTOR' | 'NODESCRIPTOR' | 'IRREDUCIBLE' | 'REDUCIBLE' | 'NORETURN' | 'REENTRANT' | 'FETCHABLE' | 'RENT' | 'AMODE31' | 'AMODE64' | 'DLLINTERNAL' | 'FROMALIEN' | 'RETCODE' | 'ASSEMBLER' | 'ASM' | 'WINMAIN' | 'INTER' | 'RECURSIVE' | null;
 }
 export interface SkipDirective extends AstNode {
     kind: SyntaxKind.SkipDirective;
-    lines: Expression;
+    lines: Expression | null;
 }
 export interface SkipFormatItem extends AstNode {
     kind: SyntaxKind.SkipFormatItem;
-    skip: Expression;
+    skip: Expression | null;
 }
 export interface Statement extends AstNode {
     kind: SyntaxKind.Statement;
-    condition: ConditionPrefix;
+    condition: ConditionPrefix | null;
     labels: LabelPrefix[];
-    value: Unit;
+    value: Unit | null;
 }
 export interface StopStatement extends AstNode {
     kind: SyntaxKind.StopStatement;
 }
 export interface StringLiteral extends AstNode {
     kind: SyntaxKind.StringLiteral;
-    value: string;
+    value: string | null;
 }
 export interface SubStructure extends AstNode {
     kind: SyntaxKind.SubStructure;
-    level: string;
-    name: string;
+    level: string | null;
+    name: string | null;
     attributes: DeclarationAttribute[];
 }
 export interface TypeAttribute extends AstNode {
     kind: SyntaxKind.TypeAttribute;
-    type: Reference<NamedType>;
+    type: Reference<NamedType> | null;
 }
 export interface UnaryExpression extends AstNode {
     kind: SyntaxKind.UnaryExpression;
-    op: '+' | '-' | '¬' | '^';
-    expr: Expression;
+    op: '+' | '-' | '¬' | '^' | null;
+    expr: Expression | null;
 }
 export interface ValueAttribute extends AstNode {
     kind: SyntaxKind.ValueAttribute;
-    value: Expression;
+    value: Expression | null;
 }
 export interface ValueListAttribute extends AstNode {
     kind: SyntaxKind.ValueListAttribute;
@@ -1339,7 +1339,7 @@ export interface ValueListAttribute extends AstNode {
 }
 export interface ValueListFromAttribute extends AstNode {
     kind: SyntaxKind.ValueListFromAttribute;
-    from: LocatorCall;
+    from: LocatorCall | null;
 }
 export interface ValueRangeAttribute extends AstNode {
     kind: SyntaxKind.ValueRangeAttribute;
@@ -1350,12 +1350,12 @@ export interface VFormatItem extends AstNode {
 }
 export interface WaitStatement extends AstNode {
     kind: SyntaxKind.WaitStatement;
-    task: LocatorCall;
+    task: LocatorCall | null;
 }
 export interface WhenStatement extends AstNode {
     kind: SyntaxKind.WhenStatement;
     conditions: Expression[];
-    unit: Statement;
+    unit: Statement | null;
 }
 export interface WriteStatement extends AstNode {
     kind: SyntaxKind.WriteStatement;
@@ -1363,21 +1363,21 @@ export interface WriteStatement extends AstNode {
 }
 export interface WriteStatementFile extends AstNode {
     kind: SyntaxKind.WriteStatementFile;
-    file: LocatorCall;
+    file: LocatorCall | null;
 }
 export interface WriteStatementFrom extends AstNode {
     kind: SyntaxKind.WriteStatementFrom;
-    from: LocatorCall;
+    from: LocatorCall | null;
 }
 export interface WriteStatementKeyFrom extends AstNode {
     kind: SyntaxKind.WriteStatementKeyFrom;
-    keyfrom: Expression;
+    keyfrom: Expression | null;
 }
 export interface WriteStatementKeyTo extends AstNode {
     kind: SyntaxKind.WriteStatementKeyTo;
-    keyto: LocatorCall;
+    keyto: LocatorCall | null;
 }
 export interface XFormatItem extends AstNode {
     kind: SyntaxKind.XFormatItem;
-    width: Expression;
+    width: Expression | null;
 }

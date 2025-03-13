@@ -43,12 +43,12 @@ export class AbstractParser extends EmbeddedActionsParser {
         return this.stack[this.stack.length - 1];
     }
 
-    protected replace(value: any): any {
+    protected replace<T>(value: T): T {
         this.stack[this.stack.length - 1] = value;
         return value;
     }
 
-    protected pop() {
+    protected pop<T>(): T {
         return this.stack.pop();
     }
 
