@@ -3,6 +3,7 @@ import { PreprocessorError } from "./pli-preprocessor-parser";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorLexerState, PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
+import { Values } from "./pli-preprocessor-instructions";
 
 type ParserLocation = 'in-statement' | 'in-procedure';
 
@@ -11,7 +12,7 @@ export interface PreprocessorParserState {
     get current(): IToken | undefined;
     get last(): IToken | undefined;
     get eof(): boolean;
-    canConsume(tokenType: TokenType, k?: number): boolean;
+    canConsume(...tokenType: TokenType[]): boolean;
     tryConsume(tokenType: TokenType): boolean;
     consume(tokenType: TokenType): IToken;
     consumeUntil(predicate: (token: IToken) => boolean): IToken[];
@@ -81,16 +82,16 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
         return this.index >= this.tokens.length;
     }
 
-    canConsume(tokenType: TokenType, k?: number) {
-        k ??= 1;
-        k = k - 1;
-        if (this.index + k >= this.tokens.length) {
+    canConsume(...tokenTypes: TokenType[]) {
+        if(this.index+tokenTypes.length-1 >= this.tokens.length) {
             if (!this.lexerState.eof()) {
                 this.fetchNextChunkOfTokens();
             }
         }
-        const current = this.index + k >= this.tokens.length ? undefined : this.tokens[this.index + k]
-        return current?.tokenType.name.toLowerCase() === tokenType.name.toLowerCase();
+        if(this.index+tokenTypes.length-1 >= this.tokens.length) {
+            return false;
+        }
+        return tokenTypes.every((t, index) => Values.sameType(t, this.tokens[this.index+index].tokenType));
     }
 
     private fetchNextChunkOfTokens() {

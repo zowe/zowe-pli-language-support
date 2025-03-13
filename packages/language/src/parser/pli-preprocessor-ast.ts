@@ -27,6 +27,11 @@ export interface PPDeclare extends PPAstNode {
     type: 'declare';
     declarations: PPDeclaration[];
 }
+
+export interface PPEmptyStatement extends PPAstNode {
+    type: 'empty',
+}
+
 export interface PPSkip extends PPAstNode {
     type: 'skip',
     lineCount: number;
@@ -57,7 +62,21 @@ export interface PPBinaryExpression extends PPAstNode {
     type: 'binary',
     lhs: PPExpression;
     rhs: PPExpression;
-    operator: '+'|'-';
+    operator:
+      | '**'
+      | '*' | '/'
+      | '+' | '-'
+      | '||'
+      | '<' | '<=' | '>' | '>=' | '=' | '<>'
+      | '&'
+      | '|'
+      ;
+}
+
+export interface PPUnaryExpression extends PPAstNode {
+    type: 'unary',
+    operand: PPExpression;
+    operator: '+' | '-';
 }
 
 export type PPExpression = PPString | PPNumber | PPBinaryExpression | PPVariableUsage;
@@ -84,8 +103,23 @@ export interface PPDoGroup extends PPAstNode {
     statements: PPStatement[];
 }
 
+export interface PPDoWhileUntil extends PPAstNode {
+    type: 'do-while-until',
+    conditionWhile: PPExpression;
+    conditionUntil?: PPExpression;
+    body: PPStatement[];
+}
+
+export interface PPDoUntilWhile extends PPAstNode {
+    type: 'do-until-while',
+    conditionUntil: PPExpression;
+    conditionWhile?: PPExpression;
+    body: PPStatement[];
+}
+
 export type PPStatement =
   | PPPliStatement
+  | PPEmptyStatement
   | PPActivate
   | PPDeactivate
   | PPDirective
@@ -94,6 +128,8 @@ export type PPStatement =
   | PPAssign
   | PPIfStatement
   | PPDoGroup
+  | PPDoWhileUntil
+  | PPDoUntilWhile
   ;
 
 export type VariableDataType = 'fixed' | 'character';

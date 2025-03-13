@@ -278,4 +278,55 @@ describe("PL/1 Lexer", () => {
             ";:;",
         ]);
     });
+
+    test('DO WHILE', () => {
+        expect(tokenize(`
+            %DCL X FIXED;
+            %X = 1;
+            %DO
+                %WHILE(%X <= 3);
+                DCL Variable%X FIXED;
+                %X = %X + 1;
+            %END;
+        `)).toStrictEqual([
+            "DCL:DCL",
+            "Variable1:ID",
+            "FIXED:FIXED",
+            ";:;",
+            "DCL:DCL",
+            "Variable2:ID",
+            "FIXED:FIXED",
+            ";:;",
+            "DCL:DCL",
+            "Variable3:ID",
+            "FIXED:FIXED",
+            ";:;",
+        ]);
+    });
+
+    test('DO WHILE UNTIL', () => {
+        expect(tokenize(`
+            %DCL X FIXED;
+            %X = 1;
+            %DO
+                %WHILE(%X > 0)
+                %UNTIL(%X > 3);
+                DCL Variable%X FIXED;
+                %X = %X + 1;
+            %END;
+        `)).toStrictEqual([
+            "DCL:DCL",
+            "Variable1:ID",
+            "FIXED:FIXED",
+            ";:;",
+            "DCL:DCL",
+            "Variable2:ID",
+            "FIXED:FIXED",
+            ";:;",
+            "DCL:DCL",
+            "Variable3:ID",
+            "FIXED:FIXED",
+            ";:;",
+        ]);
+    });
 });

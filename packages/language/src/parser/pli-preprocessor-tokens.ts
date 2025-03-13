@@ -12,6 +12,8 @@ export function tokenType(name: string, pattern: string | RegExp) {
 export const PreprocessorTokens = {
     Activate: tokenType("activate", /ACT(IVATE)?/yi),
     If: tokenType("if", /IF/yi),
+    While: tokenType("while", /WHILE/yi),
+    Until: tokenType("until", /UNTIL/yi),
     Do: tokenType("do", /DO/yi),
     End: tokenType("end", /END/yi),
     Then: tokenType("then", /THEN/yi),
@@ -38,7 +40,18 @@ export const PreprocessorTokens = {
     Percentage: tokenType("percentage", /%/yi),
     Plus: tokenType("plus", /\+/yi),
     Minus: tokenType("minus", /\-/yi),
+    Divide: tokenType("divide", /\//yi),
+    Power: tokenType("pow", /\*\*/yi),
+    Multiply: tokenType("multiply", /\*/yi),
+    Concat: tokenType("concat", /\|\|/yi),
+    Or: tokenType("or", /\|/yi),
+    And: tokenType("and", /\&/yi),
     Eq: tokenType("eq", /=/yi),
+    Neq: tokenType("neq", /<>/yi),
+    LE: tokenType("le", /<=/yi),
+    GE: tokenType("ge", />=/yi),
+    GT: tokenType("gt", />/yi),
+    LT: tokenType("lt", /</yi),
     
     //This token regexp was taken from the PL/1 Langium grammar
     //TODO need a way to sync them...

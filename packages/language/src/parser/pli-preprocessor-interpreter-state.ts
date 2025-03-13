@@ -2,6 +2,7 @@ import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 import { PPInstruction, Values } from "./pli-preprocessor-instructions";
 import { assertUnreachable } from "langium";
+import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 
 export interface PreprocessorInterpreterState {
     currentInstruction: PPInstruction;
@@ -156,12 +157,20 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
                     const lhs = this.plainState.stack.pop()!;
                     let value: IToken[] = [];
                     switch (instruction.operator) {
-                        case "+":
-                            value = Values.add(lhs, rhs);
-                            break;
-                        case "-":
-                            value = Values.subtract(lhs, rhs);
-                            break;
+                        case "+": value = Values.add(lhs, rhs); break;
+                        case "-": value = Values.subtract(lhs, rhs); break;
+                        case '*': value = Values.multiply(lhs, rhs); break;
+                        case '/': value = Values.divide(lhs, rhs); break;
+                        case "**": value = Values.power(lhs, rhs); break;
+                        case "||": value = Values.concat(lhs, rhs); break;
+                        case "<": value = Values.lt(lhs, rhs); break;
+                        case "<=": value = Values.le(lhs, rhs); break;
+                        case ">": value = Values.gt(lhs, rhs); break;
+                        case ">=": value = Values.ge(lhs, rhs); break;
+                        case "=": value = Values.eq(lhs, rhs); break;
+                        case "<>": value = Values.neq(lhs, rhs); break;
+                        case "&": value = Values.and(lhs, rhs); break;
+                        case "|": value = Values.or(lhs, rhs); break;
                         default:
                             assertUnreachable(instruction.operator);
                     }
@@ -257,7 +266,7 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
         } else {
             const last = lhs[lhs.length - 1];
             const first = rhs[0];
-            if (this.isIdentifier(last) && this.isIdentifier(first)) {
+            if (this.isIdentifier(last) && (this.isIdentifier(first) || Values.sameType(first.tokenType, PreprocessorTokens.Number))) {
                 const part1 = lhs.slice(0, lhs.length - 1);
                 const part2 = [createTokenInstance(this.idTokenType, last.image + first.image, 0, 0, 0, 0, 0, 0)];
                 const part3 = rhs.slice(1);

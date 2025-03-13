@@ -2,6 +2,7 @@ import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { PPBinaryExpression, ProcedureScope, ScanMode } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
+import { PreprocessorInterpreterState } from "./pli-preprocessor-interpreter-state";
 
 export interface PPInstructionBase {
     type: string;
@@ -117,27 +118,47 @@ export namespace Values {
     export function sameType(lhs: TokenType, rhs: TokenType) {
         return lhs.name.toLocaleUpperCase() === rhs.name.toLocaleUpperCase();
     }
-    export function add(lhs: IToken[], rhs: IToken[]) {
-        if(lhs.length !== 1 || !sameType(lhs[0].tokenType, PreprocessorTokens.Number)) {
-            return [];
-        }
-        const left = parseFloat(lhs[0].image);
-        if(rhs.length !== 1 || !sameType(rhs[0].tokenType, PreprocessorTokens.Number)) {
-            return [];
-        }
-        const right = parseFloat(rhs[0].image);
-        return Number(left+right);
+    export const add = numericArithmticOp((lhs, rhs) => lhs+rhs);
+    export const subtract = numericArithmticOp((lhs, rhs) => lhs-rhs);
+    export const multiply = numericArithmticOp((lhs, rhs) => lhs*rhs);
+    export const divide = numericArithmticOp((lhs, rhs) => lhs/rhs);
+    export const power = numericArithmticOp((lhs, rhs) => Math.pow(lhs, rhs));
+    export const concat = (lhs: IToken[], rhs: IToken[]) => lhs.concat(rhs);
+    export const lt = numericComparisonOp((lhs, rhs) => lhs < rhs);
+    export const le = numericComparisonOp((lhs, rhs) => lhs <= rhs);
+    export const gt = numericComparisonOp((lhs, rhs) => lhs > rhs);
+    export const ge = numericComparisonOp((lhs, rhs) => lhs >= rhs);
+    export const eq = numericComparisonOp((lhs, rhs) => lhs === rhs);
+    export const neq = numericComparisonOp((lhs, rhs) => lhs !== rhs);
+    export const and = numericArithmticOp((lhs, rhs) => lhs & rhs);
+    export const or = numericArithmticOp((lhs, rhs) => lhs | rhs);
+
+    function numericComparisonOp(op: (lhs: number, rhs: number) => boolean) {
+        return function func(lhs: IToken[], rhs: IToken[]) {
+            if(lhs.length !== 1 || !sameType(lhs[0].tokenType, PreprocessorTokens.Number)) {
+                return [];
+            }
+            const left = parseFloat(lhs[0].image);
+            if(rhs.length !== 1 || !sameType(rhs[0].tokenType, PreprocessorTokens.Number)) {
+                return [];
+            }
+            const right = parseFloat(rhs[0].image);
+            return op(left, right) ? Values.True() : Values.False();
+        };
     }
-    export function subtract(lhs: IToken[], rhs: IToken[]) {
-        if(lhs.length !== 1 || !sameType(lhs[0].tokenType, PreprocessorTokens.Number)) {
-            return [];
-        }
-        const left = parseFloat(lhs[0].image);
-        if(rhs.length !== 1 || !sameType(rhs[0].tokenType, PreprocessorTokens.Number)) {
-            return [];
-        }
-        const right = parseFloat(rhs[0].image);
-        return Number(left-right);
+
+    function numericArithmticOp(op: (lhs: number, rhs: number) => number) {
+        return function func(lhs: IToken[], rhs: IToken[]) {
+            if(lhs.length !== 1 || !sameType(lhs[0].tokenType, PreprocessorTokens.Number)) {
+                return [];
+            }
+            const left = parseFloat(lhs[0].image);
+            if(rhs.length !== 1 || !sameType(rhs[0].tokenType, PreprocessorTokens.Number)) {
+                return [];
+            }
+            const right = parseFloat(rhs[0].image);
+            return Number(op(left, right));
+        };
     }
 }
 
@@ -256,4 +277,46 @@ export function printProgram(program: PPInstruction[]) {
         programText.push('\n');
     });
     console.log(programText.join(""));
+}
+
+export function printInstruction(instruction: PPInstruction, state: PreprocessorInterpreterState) {
+    const programText: string[] = [];
+    programText.push(instruction.type.toUpperCase());
+    switch (instruction.type) {
+        case 'activate':
+            programText.push(...' ', instruction.name);
+            if (instruction.scanMode) {
+                programText.push(...' ', instruction.scanMode.toUpperCase());
+            }
+            break;
+        case 'deactivate':
+            programText.push(...' ', instruction.name);
+            break;
+        case 'concat':
+        case 'scan':
+        case 'print':
+        case 'halt':
+            //nothing to print
+            break;
+        case 'set':
+            programText.push(...' ', instruction.name);
+            break;
+        case 'push':
+            programText.push(...' ', '[', instruction.value.map(tk => tk.image + ':' + tk.tokenType.name).join(', '), ']');
+            break;
+        case 'goto':
+        case 'branchIfNEQ':
+            programText.push(...' ', '@', instruction.address.toString());
+            break;
+        case 'get':
+            programText.push(...' ', instruction.variableName);
+            break;
+        case 'compute':
+            programText.push(...' ', instruction.operator);
+            break;
+        default:
+            assertUnreachable(instruction);
+    }
+    programText.push('\n');
+    return programText.join("");
 }

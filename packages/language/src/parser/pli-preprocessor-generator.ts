@@ -1,7 +1,7 @@
 import { IToken, TokenType, createTokenInstance } from "chevrotain";
 import { Pl1Services } from "../pli-module";
-import { Instructions, PPInstruction, Values } from "./pli-preprocessor-instructions";
-import { PPActivate, PPAssign, PPBinaryExpression, PPDeactivate, PPDeclaration, PPDoGroup, PPExpression, PPIfStatement, PPNumber, PPPliStatement, PPStatement, PPString, PPVariableUsage } from "./pli-preprocessor-ast";
+import { Instructions, PPIBranchIfNotEqual, PPInstruction, Values } from "./pli-preprocessor-instructions";
+import { PPActivate, PPAssign, PPBinaryExpression, PPDeactivate, PPDeclaration, PPDoGroup, PPDoUntilWhile, PPDoWhileUntil, PPExpression, PPIfStatement, PPNumber, PPPliStatement, PPStatement, PPString, PPVariableUsage } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 
 export class PliPreprocessorGenerator {
@@ -37,8 +37,51 @@ export class PliPreprocessorGenerator {
             case 'if': this.handleIf(statement, program); break;
             case 'do': this.handleDoGroup(statement, program); break;
             case 'pli': this.handlePliCode(statement, program); break;
+            case 'empty':
+                break;
+            case 'do-until-while': this.handleDoUntilWhile(statement, program); break;
+            case 'do-while-until': this.handleDoWhileUntil(statement, program); break;
             default:
                 assertUnreachable(statement);
+        }
+    }
+
+    handleDoUntilWhile(statement: PPDoUntilWhile, program: PPInstruction[]) {
+
+    }
+
+    handleDoWhileUntil(statement: PPDoWhileUntil, program: PPInstruction[]) {
+        /**
+         * $while$: <EXPRESSION-WHILE>
+         *          PUSH [TRUE]
+         *          BRANCHIFNEQ $end$
+         * {if until != undefined}
+         *          <EXPRESSION-UNTIL>
+         *          PUSH [FALSE]
+         *          BRANCHIFNEQ $end$
+         * {/if}
+         *          <BODY>
+         *          GOTO $while$
+         * $end$:
+         */
+        const $while$ = program.length;
+        this.handleExpression(statement.conditionWhile, program);
+        program.push(Instructions.push(Values.True()));
+        const branchWhile = Instructions.branchIfNotEqual(-1);
+        program.push(branchWhile);
+        let branchUntil: PPIBranchIfNotEqual|undefined = undefined;
+        if(statement.conditionUntil) {
+            this.handleExpression(statement.conditionUntil, program);
+            program.push(Instructions.push(Values.False()));
+            branchUntil = Instructions.branchIfNotEqual(-1);
+            program.push(branchUntil);
+        }
+        this.handleStatements(statement.body, program);
+        program.push(Instructions.goto($while$));
+        const $end$ = program.length;
+        branchWhile.address = $end$;
+        if(branchUntil) {
+            branchUntil.address = $end$;
         }
     }
 
@@ -71,7 +114,11 @@ export class PliPreprocessorGenerator {
     }
 
     handleDoGroup(doGroup: PPDoGroup, program: PPInstruction[]) {
-        for (const statement of doGroup.statements) {
+        this.handleStatements(doGroup.statements, program);
+    }
+
+    handleStatements(statements: PPStatement[], program: PPInstruction[]) {
+        for (const statement of statements) {
             this.handleStatement(statement, program);
         }
     }
@@ -186,6 +233,6 @@ export class PliPreprocessorGenerator {
     }
 
     // protected isIdentifier(token: IToken) {
-    //     return token.tokenType.name === "ID" || (token.tokenType.CATEGORIES && token.tokenType.CATEGORIES.findIndex(t => t.name === "ID") > -1);
-    // }
+        //     return token.tokenType.name === "ID" || (token.tokenType.CATEGORIES && token.tokenType.CATEGORIES.findIndex(t => t.name === "ID") > -1);
+        // }
 }
