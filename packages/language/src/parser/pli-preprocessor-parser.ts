@@ -1,4 +1,4 @@
-import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective, PPActivate, PPDeactivate, PPIfStatement } from "./pli-preprocessor-ast";
+import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective, PPActivate, PPDeactivate, PPIfStatement, PPDoGroup } from "./pli-preprocessor-ast";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorParserState, PreprocessorParserState } from "./pli-preprocessor-parser-state";
 import { ILexingError, IToken } from "chevrotain";
@@ -58,11 +58,28 @@ export class PliPreprocessorParser {
                 case PreprocessorTokens.Skip: return this.skipStatement(state);
                 case PreprocessorTokens.Id: return this.assignmentStatement(state);
                 case PreprocessorTokens.If: return this.ifStatement(state);
+                case PreprocessorTokens.Do: return this.doStatement(state);
             }
             throw new PreprocessorError("Unexpected token '"+state.current?.image+"'.", state.current!);
         } finally {
             state.pop();
         }
+    }
+
+    doStatement(state: PreprocessorParserState): PPDoGroup {
+        const statements: PPStatement[] = [];
+        state.consume(PreprocessorTokens.Do);
+        while(!(state.canConsume(PreprocessorTokens.Percentage) && state.canConsume(PreprocessorTokens.End, 2))) {
+            const statement = this.statement(state);
+            statements.push(statement);
+        }
+        state.consume(PreprocessorTokens.Percentage);
+        state.consume(PreprocessorTokens.End);
+        state.consume(PreprocessorTokens.Semicolon);
+        return {
+            type: 'do',
+            statements
+        };
     }
 
     ifStatement(state: PreprocessorParserState): PPIfStatement {
@@ -100,6 +117,7 @@ export class PliPreprocessorParser {
             variables
         };
     }
+
     activateStatement(state: PreprocessorParserState): PPActivate {
         state.consume(PreprocessorTokens.Activate);
         const variables: Record<string, ScanMode|undefined> = {};
@@ -241,14 +259,17 @@ export class PliPreprocessorParser {
     }
 
     expression(state: PreprocessorParserState): PPExpression {
+        return this.addition(state);
+    }
+
+    primary(state: PreprocessorParserState): PPExpression {
         if (state.canConsume(PreprocessorTokens.Number)) {
             const number = state.consume(PreprocessorTokens.Number);
             return {
                 type: "number",
                 value: parseInt(number.image, 10), //TODO when to parse binary?
             };
-        } else 
-        if (state.canConsume(PreprocessorTokens.String)) {
+        } else if (state.canConsume(PreprocessorTokens.String)) {
             const character = state.consume(PreprocessorTokens.String);
             const content = this.unpackCharacterValue(character.image);
             const tokens = this.tokenizePurePliCode(content);
@@ -256,8 +277,36 @@ export class PliPreprocessorParser {
                 type: "string",
                 value: tokens
             };
+        } else if(state.canConsume(PreprocessorTokens.Percentage) && state.canConsume(PreprocessorTokens.Id, 2)) {
+            state.consume(PreprocessorTokens.Percentage);
+            const variableName = state.consume(PreprocessorTokens.Id).image;
+            return {
+                type: 'variable-usage',
+                variableName
+            };
         }
         throw new PreprocessorError("Cannot handle this type of preprocessor expression yet!", state.current!);
+    }
+
+    addition(state: PreprocessorParserState): PPExpression {
+        const next = this.primary;
+        let lhs = next(state);
+        while(state.canConsume(PreprocessorTokens.Plus) || state.canConsume(PreprocessorTokens.Minus)) {
+            let operator: '+'|'-' = '+';
+            if(state.tryConsume(PreprocessorTokens.Plus)) {
+                operator = '+';
+            } else if(state.tryConsume(PreprocessorTokens.Minus)) {
+                operator = '-';
+            }
+            const rhs = next(state);
+            lhs = {
+                type: 'binary',
+                lhs,
+                rhs,
+                operator
+            };
+        }
+        return lhs;
     }
 
     private tokenizePurePliCode(content: string) {

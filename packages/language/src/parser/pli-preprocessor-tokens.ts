@@ -12,6 +12,8 @@ export function tokenType(name: string, pattern: string | RegExp) {
 export const PreprocessorTokens = {
     Activate: tokenType("activate", /ACT(IVATE)?/yi),
     If: tokenType("if", /IF/yi),
+    Do: tokenType("do", /DO/yi),
+    End: tokenType("end", /END/yi),
     Then: tokenType("then", /THEN/yi),
     Else: tokenType("else", /ELSE/yi),
     Deactivate: tokenType("deactivate", /DEACT(IVATE)?/yi),
@@ -35,6 +37,7 @@ export const PreprocessorTokens = {
     Comma: tokenType("comma", /,/yi),
     Percentage: tokenType("percentage", /%/yi),
     Plus: tokenType("plus", /\+/yi),
+    Minus: tokenType("minus", /\-/yi),
     Eq: tokenType("eq", /=/yi),
     
     //This token regexp was taken from the PL/1 Langium grammar

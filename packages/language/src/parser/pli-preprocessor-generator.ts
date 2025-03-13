@@ -1,7 +1,7 @@
 import { IToken, TokenType, createTokenInstance } from "chevrotain";
 import { Pl1Services } from "../pli-module";
 import { Instructions, PPInstruction, Values } from "./pli-preprocessor-instructions";
-import { PPActivate, PPAssign, PPDeactivate, PPDeclaration, PPExpression, PPIfStatement, PPNumber, PPPliStatement, PPStatement, PPString } from "./pli-preprocessor-ast";
+import { PPActivate, PPAssign, PPBinaryExpression, PPDeactivate, PPDeclaration, PPDoGroup, PPExpression, PPIfStatement, PPNumber, PPPliStatement, PPStatement, PPString, PPVariableUsage } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 
 export class PliPreprocessorGenerator {
@@ -35,7 +35,7 @@ export class PliPreprocessorGenerator {
                 //do nothing    
                 break;
             case 'if': this.handleIf(statement, program); break;
-            case 'activate': this.handleActivate(statement, program); break;
+            case 'do': this.handleDoGroup(statement, program); break;
             case 'pli': this.handlePliCode(statement, program); break;
             default:
                 assertUnreachable(statement);
@@ -68,6 +68,12 @@ export class PliPreprocessorGenerator {
                 list.push(token);
             }
         });
+    }
+
+    handleDoGroup(doGroup: PPDoGroup, program: PPInstruction[]) {
+        for (const statement of doGroup.statements) {
+            this.handleStatement(statement, program);
+        }
     }
 
     handleIf(statement: PPIfStatement, program: PPInstruction[]) {
@@ -127,8 +133,26 @@ export class PliPreprocessorGenerator {
                 this.handleNumberLiteral(expression, program);
                 break;
             }
+            case 'variable-usage': {
+                this.handleVariableUsage(expression, program);
+                break;
+            }
+            case 'binary': {
+                this.handleBinaryExpression(expression, program);
+                break;
+            }
         }
 
+    }
+
+    handleBinaryExpression(expression: PPBinaryExpression, program: PPInstruction[]) {
+        this.handleExpression(expression.lhs, program);
+        this.handleExpression(expression.rhs, program);
+        program.push(Instructions.compute(expression.operator));
+    }
+
+    handleVariableUsage(expression: PPVariableUsage, program: PPInstruction[]) {
+        program.push(Instructions.get(expression.variableName));
     }
 
     handleNumberLiteral(expression: PPNumber, program: PPInstruction[]) {

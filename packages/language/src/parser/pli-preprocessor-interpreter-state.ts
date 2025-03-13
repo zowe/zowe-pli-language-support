@@ -1,6 +1,7 @@
 import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
-import { PPInstruction } from "./pli-preprocessor-instructions";
+import { PPInstruction, Values } from "./pli-preprocessor-instructions";
+import { assertUnreachable } from "langium";
 
 export interface PreprocessorInterpreterState {
     currentInstruction: PPInstruction;
@@ -118,10 +119,10 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
             case 'halt':
                 break;
             case 'activate': {
-                if(this.hasVariable(instruction.name)) {
+                if (this.hasVariable(instruction.name)) {
                     const variable = this.plainState.variables[instruction.name];
                     variable.active = true;
-                    if(instruction.scanMode) {
+                    if (instruction.scanMode) {
                         variable.scanMode = instruction.scanMode;
                     }
                 } else {
@@ -136,7 +137,7 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
                 break;
             }
             case "deactivate": {
-                if(this.hasVariable(instruction.name)) {
+                if (this.hasVariable(instruction.name)) {
                     this.plainState.variables[instruction.name].active = false;
                 } else {
                     this.plainState.variables[instruction.name] = {
@@ -149,11 +150,38 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
                 this.goTo(prev => prev + 1);
                 break;
             }
+            case "compute": {
+                if (this.plainState.stack.length >= 2) {
+                    const rhs = this.plainState.stack.pop()!;
+                    const lhs = this.plainState.stack.pop()!;
+                    let value: IToken[] = [];
+                    switch (instruction.operator) {
+                        case "+":
+                            value = Values.add(lhs, rhs);
+                            break;
+                        case "-":
+                            value = Values.subtract(lhs, rhs);
+                            break;
+                        default:
+                            assertUnreachable(instruction.operator);
+                    }
+                    this.plainState.stack.push(value);
+                }
+                this.goTo(prev => prev + 1);
+                break;
+            }
+            case 'get': {
+                if (instruction.variableName in this.plainState.variables) {
+                    this.plainState.stack.push(this.plainState.variables[instruction.variableName].value);
+                }
+                this.goTo(prev => prev + 1);
+                break;
+            }
             case 'set': {
-                if(this.plainState.stack.length > 0) {
+                if (this.plainState.stack.length > 0) {
                     const tokens = this.plainState.stack.pop()!;
                     //TODO check type of variable and content of tokens?
-                    if(!this.hasVariable(instruction.name)) {
+                    if (!this.hasVariable(instruction.name)) {
                         this.plainState.variables[instruction.name] = {
                             active: false,
                             dataType: "character",
@@ -185,7 +213,7 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
                 break;
             }
             case "print": {
-                if(this.plainState.stack.length > 0) {
+                if (this.plainState.stack.length > 0) {
                     const tokens = this.plainState.stack.pop()!;
                     this.plainState.output.push(...tokens);
                 } //TODO else error?
@@ -196,19 +224,23 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
                 this.goTo(() => instruction.address);
                 break;
             }
-            case 'branchIfNEQ':
+            case 'branchIfNEQ': {
                 const rhs = this.plainState.stack.pop()!;
                 const lhs = this.plainState.stack.pop()!;
-                if(this.areEqual(lhs, rhs)) {
+                if (this.areEqual(lhs, rhs)) {
                     this.goTo(prev => prev + 1);
                 } else {
                     this.goTo(() => instruction.address);
                 }
+                break;
+            }
+            default:
+                assertUnreachable(instruction);
         }
     }
 
     private areEqual(lhs: IToken[], rhs: IToken[]): boolean {
-        if(lhs.length !== rhs.length) {
+        if (lhs.length !== rhs.length) {
             return false;
         }
         return lhs.every((lv, index) => {
@@ -218,16 +250,16 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
     }
 
     private concat(lhs: IToken[], rhs: IToken[]): IToken[] {
-        if(lhs.length === 0) {
+        if (lhs.length === 0) {
             return rhs;
-        } else if(rhs.length === 0) {
+        } else if (rhs.length === 0) {
             return lhs;
         } else {
-            const last = lhs[lhs.length-1];
+            const last = lhs[lhs.length - 1];
             const first = rhs[0];
-            if(this.isIdentifier(last) && this.isIdentifier(first)) {
-                const part1 = lhs.slice(0, lhs.length-1);
-                const part2 = [createTokenInstance(this.idTokenType, last.image+first.image, 0,0,0,0,0,0)];
+            if (this.isIdentifier(last) && this.isIdentifier(first)) {
+                const part1 = lhs.slice(0, lhs.length - 1);
+                const part2 = [createTokenInstance(this.idTokenType, last.image + first.image, 0, 0, 0, 0, 0, 0)];
                 const part3 = rhs.slice(1);
                 return part1.concat(part2).concat(part3);
             } else {
@@ -250,9 +282,9 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
         };
 
         for (const [name, variable] of Object.entries(this.plainState.variables)) {
-            if(variable.active) {
+            if (variable.active) {
                 activeScanVariables.add(name);
-                if(variable.scanMode === 'rescan') {
+                if (variable.scanMode === 'rescan') {
                     activeRescanVariables.add(name);
                 }
             }

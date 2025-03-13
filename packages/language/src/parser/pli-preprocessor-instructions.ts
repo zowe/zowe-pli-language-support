@@ -1,10 +1,15 @@
-import { createTokenInstance, IToken } from "chevrotain";
-import { ProcedureScope, ScanMode } from "./pli-preprocessor-ast";
+import { createTokenInstance, IToken, TokenType } from "chevrotain";
+import { PPBinaryExpression, ProcedureScope, ScanMode } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 
 export interface PPInstructionBase {
     type: string;
+}
+
+export interface PPICompute extends PPInstructionBase {
+    type: 'compute',
+    operator: PPBinaryExpression['operator'],
 }
 
 export interface PPIActivate extends PPInstructionBase {
@@ -65,7 +70,14 @@ export interface PPIBranchIfNotEqual extends PPInstructionBase {
     address: number;
 }
 
+export interface PPIGet extends PPInstructionBase {
+    type: 'get',
+    variableName: string;
+}
+
 export type PPInstruction =
+    | PPIGet
+    | PPICompute
     | PPIScan
     | PPIPrint
     | PPIActivate
@@ -102,9 +114,46 @@ export namespace Values {
     export function False(): IToken[] {
         return Number(0);
     }
+    export function sameType(lhs: TokenType, rhs: TokenType) {
+        return lhs.name.toLocaleUpperCase() === rhs.name.toLocaleUpperCase();
+    }
+    export function add(lhs: IToken[], rhs: IToken[]) {
+        if(lhs.length !== 1 || !sameType(lhs[0].tokenType, PreprocessorTokens.Number)) {
+            return [];
+        }
+        const left = parseFloat(lhs[0].image);
+        if(rhs.length !== 1 || !sameType(rhs[0].tokenType, PreprocessorTokens.Number)) {
+            return [];
+        }
+        const right = parseFloat(rhs[0].image);
+        return Number(left+right);
+    }
+    export function subtract(lhs: IToken[], rhs: IToken[]) {
+        if(lhs.length !== 1 || !sameType(lhs[0].tokenType, PreprocessorTokens.Number)) {
+            return [];
+        }
+        const left = parseFloat(lhs[0].image);
+        if(rhs.length !== 1 || !sameType(rhs[0].tokenType, PreprocessorTokens.Number)) {
+            return [];
+        }
+        const right = parseFloat(rhs[0].image);
+        return Number(left-right);
+    }
 }
 
 export namespace Instructions {
+    export function compute(operator: PPBinaryExpression['operator']): PPICompute {
+        return {
+            type: "compute",
+            operator
+        };
+    }
+    export function get(variableName: string): PPIGet {
+        return {
+            type: "get",
+            variableName
+        };
+    }
     export function scan(): PPIScan {
         return {
             type: "scan"
@@ -194,6 +243,12 @@ export function printProgram(program: PPInstruction[]) {
             case 'goto':
             case 'branchIfNEQ':
                 programText.push(...' ', '@', instruction.address.toString());
+                break;
+            case 'get':
+                programText.push(...' ', instruction.variableName);
+                break;
+            case 'compute':
+                programText.push(...' ', instruction.operator);
                 break;
             default:
                 assertUnreachable(instruction);

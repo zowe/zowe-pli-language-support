@@ -48,7 +48,19 @@ export interface PPNumber extends PPAstNode {
     value: number;
 }
 
-export type PPExpression = PPString | PPNumber;
+export interface PPVariableUsage extends PPAstNode {
+    type: 'variable-usage',
+    variableName: string;
+}
+
+export interface PPBinaryExpression extends PPAstNode {
+    type: 'binary',
+    lhs: PPExpression;
+    rhs: PPExpression;
+    operator: '+'|'-';
+}
+
+export type PPExpression = PPString | PPNumber | PPBinaryExpression | PPVariableUsage;
 
 export interface PPActivate extends PPAstNode {
     type: 'activate';
@@ -67,6 +79,11 @@ export interface PPIfStatement extends PPAstNode {
     elseUnit?: PPStatement;
 }
 
+export interface PPDoGroup extends PPAstNode {
+    type: "do",
+    statements: PPStatement[];
+}
+
 export type PPStatement =
   | PPPliStatement
   | PPActivate
@@ -76,8 +93,7 @@ export type PPStatement =
   | PPDeclare
   | PPAssign
   | PPIfStatement
-//  | PPIncludeStatement
-//  | PPLabeledStatement
+  | PPDoGroup
   ;
 
 export type VariableDataType = 'fixed' | 'character';

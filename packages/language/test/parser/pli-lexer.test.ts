@@ -12,7 +12,7 @@ describe("PL/1 Lexer", () => {
         //await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
         tokenize = (text: string) => {
             const { tokens } = services.pli.parser.Lexer.tokenize(text);
-            return tokens.map(t => t.image + ':' + t.tokenType.name);
+            return tokens.map(t => t.image + ':' + t.tokenType.name.toUpperCase());
         };
     });
 
@@ -253,6 +253,28 @@ describe("PL/1 Lexer", () => {
             "X:X",
             "=:=",
             "123:NUMBER",
+            ";:;",
+        ]);
+    });
+
+    test('IF-THEN-ELSE with DO group', () => {
+        expect(tokenize(`
+            %A = 123;
+            %IF 1 %THEN %DO
+              %A = %A + 1;
+              %A = %A + 2;
+            %END;
+            %ACTIVATE A;
+            dcl X fixed;
+            X = A;
+        `)).toStrictEqual([
+            "dcl:DCL",
+            "X:X",
+            "fixed:FIXED",
+            ";:;",
+            "X:X",
+            "=:=",
+            "126:NUMBER",
             ";:;",
         ]);
     });
