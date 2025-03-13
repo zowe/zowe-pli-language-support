@@ -1,9 +1,14 @@
-import { Lexer } from "chevrotain";
+import { IToken, Lexer } from "chevrotain";
 import { all } from "./tokens";
 import { PliParser } from "./parser";
 import { test } from 'vitest';
 import { createPliServices } from '../packages/language/src/pli-module';
 import { EmptyFileSystem } from 'langium';
+
+interface LexerResult {
+    tokens: IToken[];
+    perFile: Map<string, IToken[]>;
+}
 
 test('parser', () => {
     const services = createPliServices({ ...EmptyFileSystem });
@@ -74,21 +79,21 @@ test('parser', () => {
     end;
     `;
     let text = '';
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 1600; i++) {
         text += input;
     }
     const size = text.split('\n').length;
-    const lexerResult = lexer.tokenize(text);
+    let lexerResult = lexer.tokenize(text);
     parser.input = lexerResult.tokens;
-    parser.PliProgram();
+    const result = parser.PliProgram();
     console.time('parse');
-    lexer.tokenize(text);
+    lexerResult = lexer.tokenize(text);
     parser.input = lexerResult.tokens;
     parser.PliProgram();
     console.timeEnd('parse');
-    services.pli.parser.LangiumParser.parse(text);
-    console.time('parse2');
-    services.pli.parser.LangiumParser.parse(text);
-    console.timeEnd('parse2');
+    // services.pli.parser.LangiumParser.parse(text);
+    // console.time('parse2');
+    // services.pli.parser.LangiumParser.parse(text);
+    // console.timeEnd('parse2');
     console.log('LOC', size);
-});
+}, 100000);

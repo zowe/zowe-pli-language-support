@@ -1,6 +1,7 @@
 import { AbstractParser } from './abstract-parser';
 import * as tokens from './tokens';
 import * as ast from './ast';
+import { CstNodeKind } from './cst';
 
 export class PliParser extends AbstractParser {
     constructor() {
@@ -9,505 +10,854 @@ export class PliParser extends AbstractParser {
     }
 
     private createPliProgram(): ast.PliProgram {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.PliProgram,
+            statements: undefined,
+        } as any;
     }
 
     PliProgram = this.RULE('PliProgram', () => {
-        const element = this.createPliProgram();
+        let element = this.push(this.createPliProgram());
 
         this.MANY1(() => {
-            this.SUBRULE1(this.Statement);
+            this.SUBRULE_ASSIGN1(this.Statement, {
+                assign: result => {
+                    element.statements ??= []; element.statements.push(result);
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createPackage(): ast.Package {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.Package,
+            exports: undefined,
+            reserves: undefined,
+            options: undefined,
+            statements: undefined,
+            end: undefined,
+        } as any;
     }
 
     Package = this.RULE('Package', () => {
-        const element = this.createPackage();
+        let element = this.push(this.createPackage());
 
-        this.CONSUME1(tokens.PACKAGE);
+        this.CONSUME_ASSIGN1(tokens.PACKAGE, token => {
+            this.tokenPayload(token, element, CstNodeKind.Package_PACKAGE_0);
+        });
         this.OPTION1(() => {
-            this.SUBRULE1(this.Exports);
+            this.SUBRULE_ASSIGN1(this.Exports, {
+                assign: result => {
+                    element.exports = result;
+                }
+            });
         });
         this.OPTION2(() => {
-            this.SUBRULE1(this.Reserves);
+            this.SUBRULE_ASSIGN1(this.Reserves, {
+                assign: result => {
+                    element.reserves = result;
+                }
+            });
         });
         this.OPTION3(() => {
-            this.SUBRULE1(this.Options);
+            this.SUBRULE_ASSIGN1(this.Options, {
+                assign: result => {
+                    element.options = result;
+                }
+            });
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.Package_Semicolon_0);
+        });
         this.MANY1(() => {
-            this.SUBRULE1(this.Statement);
+            this.SUBRULE_ASSIGN1(this.Statement, {
+                assign: result => {
+                    element.statements ??= []; element.statements.push(result);
+                }
+            });
         });
-        this.SUBRULE1(this.EndStatement);
-        this.CONSUME2(tokens.Semicolon);
+        this.SUBRULE_ASSIGN1(this.EndStatement, {
+            assign: result => {
+                element.end = result;
+            }
+        });
+        this.CONSUME_ASSIGN2(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.Package_Semicolon_1);
+        });
 
-        return element;
+        return this.pop();
     });
     private createConditionPrefix(): ast.ConditionPrefix {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ConditionPrefix,
+            items: undefined,
+        } as any;
     }
 
     ConditionPrefix = this.RULE('ConditionPrefix', () => {
-        const element = this.createConditionPrefix();
+        let element = this.push(this.createConditionPrefix());
 
         this.AT_LEAST_ONE1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.ConditionPrefixItem);
-            this.CONSUME1(tokens.CloseParen);
-            this.CONSUME1(tokens.Colon);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.ConditionPrefix_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.ConditionPrefixItem, {
+                assign: result => {
+                    element.items ??= []; element.items.push(result);
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.ConditionPrefix_CloseParen_0);
+            });
+            this.CONSUME_ASSIGN1(tokens.Colon, token => {
+                this.tokenPayload(token, element, CstNodeKind.ConditionPrefix_Colon_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createConditionPrefixItem(): ast.ConditionPrefixItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ConditionPrefixItem,
+            conditions: undefined,
+        } as any;
     }
 
     ConditionPrefixItem = this.RULE('ConditionPrefixItem', () => {
-        const element = this.createConditionPrefixItem();
+        let element = this.push(this.createConditionPrefixItem());
 
-        this.SUBRULE1(this.Condition);
+        this.SUBRULE_ASSIGN1(this.Condition, {
+            assign: result => {
+                element.conditions ??= []; element.conditions.push(result);
+            }
+        });
         this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.Condition);
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.ConditionPrefixItem_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.Condition, {
+                assign: result => {
+                    element.conditions ??= []; element.conditions.push(result);
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createExports(): ast.Exports {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.Exports,
+            all: undefined,
+            procedures: undefined,
+        } as any;
     }
 
     Exports = this.RULE('Exports', () => {
-        const element = this.createExports();
+        let element = this.push(this.createExports());
 
-        this.CONSUME1(tokens.EXPORTS);
-        this.CONSUME1(tokens.OpenParen);
+        this.CONSUME_ASSIGN1(tokens.EXPORTS, token => {
+            this.tokenPayload(token, element, CstNodeKind.Exports_EXPORTS_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.Exports_OpenParen_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.Star); 
+                    this.CONSUME_ASSIGN1(tokens.Star, token => {
+                        this.tokenPayload(token, element, CstNodeKind.Exports_all_Star_0);
+                        element.all = true;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ID);
+                    this.CONSUME_ASSIGN1(tokens.ID, token => {
+                        this.tokenPayload(token, element, CstNodeKind.Exports_procedures_ID_0);
+                        element.procedures ??= []; element.procedures.push(token.image);
+                    });
                     this.MANY1(() => {
-                        this.CONSUME1(tokens.Comma);
-                        this.CONSUME2(tokens.ID);
+                        this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                            this.tokenPayload(token, element, CstNodeKind.Exports_Comma_0);
+                        });
+                        this.CONSUME_ASSIGN2(tokens.ID, token => {
+                            this.tokenPayload(token, element, CstNodeKind.Exports_procedures_ID_1);
+                            element.procedures ??= []; element.procedures.push(token.image);
+                        });
                     });
                 }
             },
         ]);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.Exports_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createReserves(): ast.Reserves {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.Reserves,
+            all: undefined,
+            variables: undefined,
+        } as any;
     }
 
     Reserves = this.RULE('Reserves', () => {
-        const element = this.createReserves();
+        let element = this.push(this.createReserves());
 
-        this.CONSUME1(tokens.RESERVES);
-        this.CONSUME1(tokens.OpenParen);
+        this.CONSUME_ASSIGN1(tokens.RESERVES, token => {
+            this.tokenPayload(token, element, CstNodeKind.Reserves_RESERVES_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.Reserves_OpenParen_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.Star); 
+                    this.CONSUME_ASSIGN1(tokens.Star, token => {
+                        this.tokenPayload(token, element, CstNodeKind.Reserves_all_Star_0);
+                        element.all = true;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ID);
+                    this.CONSUME_ASSIGN1(tokens.ID, token => {
+                        this.tokenPayload(token, element, CstNodeKind.Reserves_variables_ID_0);
+                        element.variables ??= []; element.variables.push(token.image);
+                    });
                     this.MANY1(() => {
-                        this.CONSUME1(tokens.Comma);
-                        this.CONSUME2(tokens.ID);
+                        this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                            this.tokenPayload(token, element, CstNodeKind.Reserves_Comma_0);
+                        });
+                        this.CONSUME_ASSIGN2(tokens.ID, token => {
+                            this.tokenPayload(token, element, CstNodeKind.Reserves_variables_ID_1);
+                            element.variables ??= []; element.variables.push(token.image);
+                        });
                     });
                 }
             },
         ]);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.Reserves_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createOptions(): ast.Options {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.Options,
+            items: undefined,
+        } as any;
     }
 
     Options = this.RULE('Options', () => {
-        const element = this.createOptions();
+        let element = this.push(this.createOptions());
 
-        this.CONSUME1(tokens.OPTIONS);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.OptionsItem);
+        this.CONSUME_ASSIGN1(tokens.OPTIONS, token => {
+            this.tokenPayload(token, element, CstNodeKind.Options_OPTIONS_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.Options_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.OptionsItem, {
+            assign: result => {
+                element.items ??= []; element.items.push(result);
+            }
+        });
         this.MANY1(() => {
             this.OPTION1(() => {
-                this.CONSUME1(tokens.Comma);
+                this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                    this.tokenPayload(token, element, CstNodeKind.Options_Comma_0);
+                });
             });
-            this.SUBRULE2(this.OptionsItem);
+            this.SUBRULE_ASSIGN2(this.OptionsItem, {
+                assign: result => {
+                    element.items ??= []; element.items.push(result);
+                }
+            });
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.Options_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createOptionsItem(): ast.OptionsItem {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     OptionsItem = this.RULE('OptionsItem', () => {
-        const element = this.createOptionsItem();
+        let element = this.push(this.createOptionsItem());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.SimpleOptionsItem); 
+                    this.SUBRULE_ASSIGN1(this.SimpleOptionsItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.CMPATOptionsItem); 
+                    this.SUBRULE_ASSIGN1(this.CMPATOptionsItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.LinkageOptionsItem); 
+                    this.SUBRULE_ASSIGN1(this.LinkageOptionsItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.NoMapOptionsItem); 
+                    this.SUBRULE_ASSIGN1(this.NoMapOptionsItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createLinkageOptionsItem(): ast.LinkageOptionsItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LinkageOptionsItem,
+            value: undefined,
+        } as any;
     }
 
     LinkageOptionsItem = this.RULE('LinkageOptionsItem', () => {
-        const element = this.createLinkageOptionsItem();
+        let element = this.push(this.createLinkageOptionsItem());
 
-        this.CONSUME1(tokens.LINKAGE);
-        this.CONSUME1(tokens.OpenParen);
+        this.CONSUME_ASSIGN1(tokens.LINKAGE, token => {
+            this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_LINKAGE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_OpenParen_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CDECL); 
+                    this.CONSUME_ASSIGN1(tokens.CDECL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_value_CDECL_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OPTLINK); 
+                    this.CONSUME_ASSIGN1(tokens.OPTLINK, token => {
+                        this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_value_OPTLINK_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.STDCALL); 
+                    this.CONSUME_ASSIGN1(tokens.STDCALL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_value_STDCALL_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.SYSTEM); 
+                    this.CONSUME_ASSIGN1(tokens.SYSTEM, token => {
+                        this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_value_SYSTEM_0);
+                        element.value = token.image;
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createCMPATOptionsItem(): ast.CMPATOptionsItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.CMPATOptionsItem,
+            value: undefined,
+        } as any;
     }
 
     CMPATOptionsItem = this.RULE('CMPATOptionsItem', () => {
-        const element = this.createCMPATOptionsItem();
+        let element = this.push(this.createCMPATOptionsItem());
 
-        this.CONSUME1(tokens.CMPAT);
-        this.CONSUME1(tokens.OpenParen);
+        this.CONSUME_ASSIGN1(tokens.CMPAT, token => {
+            this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_CMPAT_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_OpenParen_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.V1); 
+                    this.CONSUME_ASSIGN1(tokens.V1, token => {
+                        this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_value_V1_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.V2); 
+                    this.CONSUME_ASSIGN1(tokens.V2, token => {
+                        this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_value_V2_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.V3); 
+                    this.CONSUME_ASSIGN1(tokens.V3, token => {
+                        this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_value_V3_0);
+                        element.value = token.image;
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createNoMapOptionsItem(): ast.NoMapOptionsItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.NoMapOptionsItem,
+            type: undefined,
+            parameters: undefined,
+        } as any;
     }
 
     NoMapOptionsItem = this.RULE('NoMapOptionsItem', () => {
-        const element = this.createNoMapOptionsItem();
+        let element = this.push(this.createNoMapOptionsItem());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NOMAP); 
+                    this.CONSUME_ASSIGN1(tokens.NOMAP, token => {
+                        this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_type_NOMAP_0);
+                        element.type = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NOMAPIN); 
+                    this.CONSUME_ASSIGN1(tokens.NOMAPIN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_type_NOMAPIN_0);
+                        element.type = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NOMAPOUT); 
+                    this.CONSUME_ASSIGN1(tokens.NOMAPOUT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_type_NOMAPOUT_0);
+                        element.type = token.image;
+                    });
                 }
             },
         ]);
         this.OPTION2(() => {
-            this.CONSUME1(tokens.OpenParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_OpenParen_0);
+            });
             this.OPTION1(() => {
-                this.CONSUME1(tokens.ID);
+                this.CONSUME_ASSIGN1(tokens.ID, token => {
+                    this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_parameters_ID_0);
+                    element.parameters ??= []; element.parameters.push(token.image);
+                });
                 this.MANY1(() => {
-                    this.CONSUME1(tokens.Comma);
-                    this.CONSUME2(tokens.ID);
+                    this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                        this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_Comma_0);
+                    });
+                    this.CONSUME_ASSIGN2(tokens.ID, token => {
+                        this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_parameters_ID_1);
+                        element.parameters ??= []; element.parameters.push(token.image);
+                    });
                 });
             });
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createSimpleOptionsItem(): ast.SimpleOptionsItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.SimpleOptionsItem,
+            value: undefined,
+        } as any;
     }
 
     SimpleOptionsItem = this.RULE('SimpleOptionsItem', () => {
-        const element = this.createSimpleOptionsItem();
+        let element = this.push(this.createSimpleOptionsItem());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ORDER); 
+                    this.CONSUME_ASSIGN1(tokens.ORDER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_ORDER_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.REORDER); 
+                    this.CONSUME_ASSIGN1(tokens.REORDER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_REORDER_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NOCHARGRAPHIC); 
+                    this.CONSUME_ASSIGN1(tokens.NOCHARGRAPHIC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_NOCHARGRAPHIC_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CHARGRAPHIC); 
+                    this.CONSUME_ASSIGN1(tokens.CHARGRAPHIC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_CHARGRAPHIC_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NOINLINE); 
+                    this.CONSUME_ASSIGN1(tokens.NOINLINE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_NOINLINE_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.INLINE); 
+                    this.CONSUME_ASSIGN1(tokens.INLINE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_INLINE_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.MAIN); 
+                    this.CONSUME_ASSIGN1(tokens.MAIN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_MAIN_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NOEXECOPS); 
+                    this.CONSUME_ASSIGN1(tokens.NOEXECOPS, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_NOEXECOPS_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.COBOL); 
+                    this.CONSUME_ASSIGN1(tokens.COBOL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_COBOL_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.FORTRAN); 
+                    this.CONSUME_ASSIGN1(tokens.FORTRAN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_FORTRAN_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BYADDR); 
+                    this.CONSUME_ASSIGN1(tokens.BYADDR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_BYADDR_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BYVALUE); 
+                    this.CONSUME_ASSIGN1(tokens.BYVALUE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_BYVALUE_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DESCRIPTOR); 
+                    this.CONSUME_ASSIGN1(tokens.DESCRIPTOR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_DESCRIPTOR_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NODESCRIPTOR); 
+                    this.CONSUME_ASSIGN1(tokens.NODESCRIPTOR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_NODESCRIPTOR_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.IRREDUCIBLE); 
+                    this.CONSUME_ASSIGN1(tokens.IRREDUCIBLE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_IRREDUCIBLE_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.REDUCIBLE); 
+                    this.CONSUME_ASSIGN1(tokens.REDUCIBLE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_REDUCIBLE_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NORETURN); 
+                    this.CONSUME_ASSIGN1(tokens.NORETURN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_NORETURN_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.REENTRANT); 
+                    this.CONSUME_ASSIGN1(tokens.REENTRANT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_REENTRANT_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.FETCHABLE); 
+                    this.CONSUME_ASSIGN1(tokens.FETCHABLE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_FETCHABLE_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.RENT); 
+                    this.CONSUME_ASSIGN1(tokens.RENT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_RENT_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.AMODE31); 
+                    this.CONSUME_ASSIGN1(tokens.AMODE31, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_AMODE31_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.AMODE64); 
+                    this.CONSUME_ASSIGN1(tokens.AMODE64, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_AMODE64_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DLLINTERNAL); 
+                    this.CONSUME_ASSIGN1(tokens.DLLINTERNAL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_DLLINTERNAL_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.FROMALIEN); 
+                    this.CONSUME_ASSIGN1(tokens.FROMALIEN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_FROMALIEN_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.RETCODE); 
+                    this.CONSUME_ASSIGN1(tokens.RETCODE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_RETCODE_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ASSEMBLER); 
+                    this.CONSUME_ASSIGN1(tokens.ASSEMBLER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_ASSEMBLER_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ASM); 
+                    this.CONSUME_ASSIGN1(tokens.ASM, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_ASM_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.WINMAIN); 
+                    this.CONSUME_ASSIGN1(tokens.WINMAIN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_WINMAIN_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.INTER); 
+                    this.CONSUME_ASSIGN1(tokens.INTER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_INTER_0);
+                        element.value = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.RECURSIVE); 
+                    this.CONSUME_ASSIGN1(tokens.RECURSIVE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_RECURSIVE_0);
+                        element.value = token.image;
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createProcedureStatement(): ast.ProcedureStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ProcedureStatement,
+            xProc: undefined,
+            parameters: undefined,
+            statements: undefined,
+            returns: undefined,
+            options: undefined,
+            recursive: undefined,
+            order: undefined,
+            scope: undefined,
+            end: undefined,
+            environmentName: undefined,
+        } as any;
     }
 
     ProcedureStatement = this.RULE('ProcedureStatement', () => {
-        const element = this.createProcedureStatement();
+        let element = this.push(this.createProcedureStatement());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PROC); 
+                    this.CONSUME_ASSIGN1(tokens.PROC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_PROC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PROCEDURE); 
+                    this.CONSUME_ASSIGN1(tokens.PROCEDURE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_PROCEDURE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.XPROC); 
+                    this.CONSUME_ASSIGN1(tokens.XPROC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_xProc_XPROC_0);
+                        element.xProc = true;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.XPROCEDURE); 
+                    this.CONSUME_ASSIGN1(tokens.XPROCEDURE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_xProc_XPROCEDURE_0);
+                        element.xProc = true;
+                    });
                 }
             },
         ]);
         this.OPTION2(() => {
-            this.CONSUME1(tokens.OpenParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_OpenParen_0);
+            });
             this.OPTION1(() => {
-                this.SUBRULE1(this.ProcedureParameter);
+                this.SUBRULE_ASSIGN1(this.ProcedureParameter, {
+                    assign: result => {
+                        element.parameters ??= []; element.parameters.push(result);
+                    }
+                });
                 this.MANY1(() => {
-                    this.CONSUME1(tokens.Comma);
-                    this.SUBRULE2(this.ProcedureParameter);
+                    this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_Comma_0);
+                    });
+                    this.SUBRULE_ASSIGN2(this.ProcedureParameter, {
+                        assign: result => {
+                            element.parameters ??= []; element.parameters.push(result);
+                        }
+                    });
                 });
             });
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_CloseParen_0);
+            });
         });
         this.MANY2(() => {
             this.OR2([
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.ReturnsOption); 
+                        this.SUBRULE_ASSIGN1(this.ReturnsOption, {
+                            assign: result => {
+                                element.returns ??= []; element.returns.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.Options); 
+                        this.SUBRULE_ASSIGN1(this.Options, {
+                            assign: result => {
+                                element.options ??= []; element.options.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.RECURSIVE); 
+                        this.CONSUME_ASSIGN1(tokens.RECURSIVE, token => {
+                            this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_recursive_RECURSIVE_0);
+                            element.recursive ??= []; element.recursive.push(token.image);
+                        });
                     }
                 },
                 {
@@ -515,12 +865,18 @@ export class PliParser extends AbstractParser {
                         this.OR3([
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.ORDER); 
+                                    this.CONSUME_ASSIGN1(tokens.ORDER, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_order_ORDER_0);
+                                        element.order ??= []; element.order.push(token.image);
+                                    });
                                 }
                             },
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.REORDER); 
+                                    this.CONSUME_ASSIGN1(tokens.REORDER, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_order_REORDER_0);
+                                        element.order ??= []; element.order.push(token.image);
+                                    });
                                 }
                             },
                         ]);
@@ -531,104 +887,174 @@ export class PliParser extends AbstractParser {
                         this.OR4([
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.EXTERNAL); 
+                                    this.CONSUME_ASSIGN1(tokens.EXTERNAL, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_EXTERNAL_0);
+                                    });
                                 }
                             },
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.EXT); 
+                                    this.CONSUME_ASSIGN1(tokens.EXT, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_EXT_0);
+                                    });
                                 }
                             },
                         ]);
                         this.OPTION3(() => {
-                            this.CONSUME2(tokens.OpenParen);
-                            this.SUBRULE1(this.Expression);
-                            this.CONSUME2(tokens.CloseParen);
+                            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                                this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_OpenParen_1);
+                            });
+                            this.SUBRULE_ASSIGN1(this.Expression, {
+                                assign: result => {
+                                    element.environmentName ??= []; element.environmentName.push(result);
+                                }
+                            });
+                            this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                                this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_CloseParen_1);
+                            });
                         });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.ScopeAttribute); 
+                        this.SUBRULE_ASSIGN1(this.ScopeAttribute, {
+                            assign: result => {
+                                element.scope ??= []; element.scope.push(result);
+                            }
+                        });
                     }
                 },
             ]);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_Semicolon_0);
+        });
         this.MANY3(() => {
-            this.SUBRULE1(this.Statement);
+            this.SUBRULE_ASSIGN1(this.Statement, {
+                assign: result => {
+                    element.statements ??= []; element.statements.push(result);
+                }
+            });
         });
         this.OPTION4(() => {
             this.OR5([
                 {
                     ALT: () => {
-                        this.CONSUME2(tokens.PROC); 
+                        this.CONSUME_ASSIGN2(tokens.PROC, token => {
+                            this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_PROC_1);
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME2(tokens.PROCEDURE); 
+                        this.CONSUME_ASSIGN2(tokens.PROCEDURE, token => {
+                            this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_PROCEDURE_1);
+                        });
                     }
                 },
             ]);
         });
-        this.SUBRULE1(this.EndStatement);
-        this.CONSUME2(tokens.Semicolon);
+        this.SUBRULE_ASSIGN1(this.EndStatement, {
+            assign: result => {
+                element.end = result;
+            }
+        });
+        this.CONSUME_ASSIGN2(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.ProcedureStatement_Semicolon_1);
+        });
 
-        return element;
+        return this.pop();
     });
     private createScopeAttribute(): ast.ScopeAttribute {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     ScopeAttribute = this.RULE('ScopeAttribute', () => {
-        const element = this.createScopeAttribute();
+        let element = this.push(this.createScopeAttribute());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.STATIC); 
+                    this.CONSUME_ASSIGN1(tokens.STATIC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ScopeAttribute_STATIC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DYNAMIC); 
+                    this.CONSUME_ASSIGN1(tokens.DYNAMIC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ScopeAttribute_DYNAMIC_0);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createLabelPrefix(): ast.LabelPrefix {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LabelPrefix,
+            name: undefined,
+        } as any;
     }
 
     LabelPrefix = this.RULE('LabelPrefix', () => {
-        const element = this.createLabelPrefix();
+        let element = this.push(this.createLabelPrefix());
 
-        this.CONSUME1(tokens.ID);
-        this.CONSUME1(tokens.Colon);
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.LabelPrefix_name_ID_0);
+            element.name = token.image;
+        });
+        this.CONSUME_ASSIGN1(tokens.Colon, token => {
+            this.tokenPayload(token, element, CstNodeKind.LabelPrefix_Colon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createEntryStatement(): ast.EntryStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.EntryStatement,
+            parameters: undefined,
+            variable: undefined,
+            limited: undefined,
+            returns: undefined,
+            options: undefined,
+            environmentName: undefined,
+        } as any;
     }
 
     EntryStatement = this.RULE('EntryStatement', () => {
-        const element = this.createEntryStatement();
+        let element = this.push(this.createEntryStatement());
 
-        this.CONSUME1(tokens.ENTRY);
+        this.CONSUME_ASSIGN1(tokens.ENTRY, token => {
+            this.tokenPayload(token, element, CstNodeKind.EntryStatement_ENTRY_0);
+        });
         this.OPTION2(() => {
-            this.CONSUME1(tokens.OpenParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.EntryStatement_OpenParen_0);
+            });
             this.OPTION1(() => {
-                this.SUBRULE1(this.ProcedureParameter);
+                this.SUBRULE_ASSIGN1(this.ProcedureParameter, {
+                    assign: result => {
+                        element.parameters ??= []; element.parameters.push(result);
+                    }
+                });
                 this.MANY1(() => {
-                    this.CONSUME1(tokens.Comma);
-                    this.SUBRULE2(this.ProcedureParameter);
+                    this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                        this.tokenPayload(token, element, CstNodeKind.EntryStatement_Comma_0);
+                    });
+                    this.SUBRULE_ASSIGN2(this.ProcedureParameter, {
+                        assign: result => {
+                            element.parameters ??= []; element.parameters.push(result);
+                        }
+                    });
                 });
             });
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.EntryStatement_CloseParen_0);
+            });
         });
         this.MANY2(() => {
             this.OR1([
@@ -637,935 +1063,1667 @@ export class PliParser extends AbstractParser {
                         this.OR2([
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.EXTERNAL); 
+                                    this.CONSUME_ASSIGN1(tokens.EXTERNAL, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.EntryStatement_EXTERNAL_0);
+                                    });
                                 }
                             },
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.EXT); 
+                                    this.CONSUME_ASSIGN1(tokens.EXT, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.EntryStatement_EXT_0);
+                                    });
                                 }
                             },
                         ]);
                         this.OPTION3(() => {
-                            this.CONSUME2(tokens.OpenParen);
-                            this.SUBRULE1(this.Expression);
-                            this.CONSUME2(tokens.CloseParen);
+                            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                                this.tokenPayload(token, element, CstNodeKind.EntryStatement_OpenParen_1);
+                            });
+                            this.SUBRULE_ASSIGN1(this.Expression, {
+                                assign: result => {
+                                    element.environmentName ??= []; element.environmentName.push(result);
+                                }
+                            });
+                            this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                                this.tokenPayload(token, element, CstNodeKind.EntryStatement_CloseParen_1);
+                            });
                         });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.VARIABLE); 
+                        this.CONSUME_ASSIGN1(tokens.VARIABLE, token => {
+                            this.tokenPayload(token, element, CstNodeKind.EntryStatement_variable_VARIABLE_0);
+                            element.variable ??= []; element.variable.push(token.image);
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.LIMITED); 
+                        this.CONSUME_ASSIGN1(tokens.LIMITED, token => {
+                            this.tokenPayload(token, element, CstNodeKind.EntryStatement_limited_LIMITED_0);
+                            element.limited ??= []; element.limited.push(token.image);
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.ReturnsOption); 
+                        this.SUBRULE_ASSIGN1(this.ReturnsOption, {
+                            assign: result => {
+                                element.returns ??= []; element.returns.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.Options); 
+                        this.SUBRULE_ASSIGN1(this.Options, {
+                            assign: result => {
+                                element.options ??= []; element.options.push(result);
+                            }
+                        });
                     }
                 },
             ]);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.EntryStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createStatement(): ast.Statement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.Statement,
+            condition: undefined,
+            labels: undefined,
+            value: undefined,
+        } as any;
     }
 
     Statement = this.RULE('Statement', () => {
-        const element = this.createStatement();
+        let element = this.push(this.createStatement());
 
         this.OPTION1(() => {
-            this.SUBRULE1(this.ConditionPrefix);
+            this.SUBRULE_ASSIGN1(this.ConditionPrefix, {
+                assign: result => {
+                    element.condition = result;
+                }
+            });
         });
         this.MANY1(() => {
-            this.SUBRULE1(this.LabelPrefix);
+            this.SUBRULE_ASSIGN1(this.LabelPrefix, {
+                assign: result => {
+                    element.labels ??= []; element.labels.push(result);
+                }
+            });
         });
-        this.SUBRULE1(this.Unit);
+        this.SUBRULE_ASSIGN1(this.Unit, {
+            assign: result => {
+                element.value = result;
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createUnit(): ast.Unit {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     Unit = this.RULE('Unit', () => {
-        const element = this.createUnit();
+        let element = this.push(this.createUnit());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DeclareStatement); 
+                    this.SUBRULE_ASSIGN1(this.DeclareStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.AllocateStatement); 
+                    this.SUBRULE_ASSIGN1(this.AllocateStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.AssertStatement); 
+                    this.SUBRULE_ASSIGN1(this.AssertStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.AssignmentStatement); 
+                    this.SUBRULE_ASSIGN1(this.AssignmentStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.AttachStatement); 
+                    this.SUBRULE_ASSIGN1(this.AttachStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.BeginStatement); 
+                    this.SUBRULE_ASSIGN1(this.BeginStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.CallStatement); 
+                    this.SUBRULE_ASSIGN1(this.CallStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.CancelThreadStatement); 
+                    this.SUBRULE_ASSIGN1(this.CancelThreadStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.CloseStatement); 
+                    this.SUBRULE_ASSIGN1(this.CloseStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DefaultStatement); 
+                    this.SUBRULE_ASSIGN1(this.DefaultStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DefineAliasStatement); 
+                    this.SUBRULE_ASSIGN1(this.DefineAliasStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DefineOrdinalStatement); 
+                    this.SUBRULE_ASSIGN1(this.DefineOrdinalStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DefineStructureStatement); 
+                    this.SUBRULE_ASSIGN1(this.DefineStructureStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DelayStatement); 
+                    this.SUBRULE_ASSIGN1(this.DelayStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DeleteStatement); 
+                    this.SUBRULE_ASSIGN1(this.DeleteStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DetachStatement); 
+                    this.SUBRULE_ASSIGN1(this.DetachStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DisplayStatement); 
+                    this.SUBRULE_ASSIGN1(this.DisplayStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DoStatement); 
+                    this.SUBRULE_ASSIGN1(this.DoStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.EntryStatement); 
+                    this.SUBRULE_ASSIGN1(this.EntryStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ExecStatement); 
+                    this.SUBRULE_ASSIGN1(this.ExecStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ExitStatement); 
+                    this.SUBRULE_ASSIGN1(this.ExitStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.FetchStatement); 
+                    this.SUBRULE_ASSIGN1(this.FetchStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.FlushStatement); 
+                    this.SUBRULE_ASSIGN1(this.FlushStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.FormatStatement); 
+                    this.SUBRULE_ASSIGN1(this.FormatStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.FreeStatement); 
+                    this.SUBRULE_ASSIGN1(this.FreeStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.GetStatement); 
+                    this.SUBRULE_ASSIGN1(this.GetStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.GoToStatement); 
+                    this.SUBRULE_ASSIGN1(this.GoToStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.IfStatement); 
+                    this.SUBRULE_ASSIGN1(this.IfStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.IncludeDirective); 
+                    this.SUBRULE_ASSIGN1(this.IncludeDirective, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.IterateStatement); 
+                    this.SUBRULE_ASSIGN1(this.IterateStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.LeaveStatement); 
+                    this.SUBRULE_ASSIGN1(this.LeaveStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.LineDirective); 
+                    this.SUBRULE_ASSIGN1(this.LineDirective, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.LocateStatement); 
+                    this.SUBRULE_ASSIGN1(this.LocateStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.NoPrintDirective); 
+                    this.SUBRULE_ASSIGN1(this.NoPrintDirective, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.NoteDirective); 
+                    this.SUBRULE_ASSIGN1(this.NoteDirective, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.NullStatement); 
+                    this.SUBRULE_ASSIGN1(this.NullStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OnStatement); 
+                    this.SUBRULE_ASSIGN1(this.OnStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OpenStatement); 
+                    this.SUBRULE_ASSIGN1(this.OpenStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.PageDirective); 
+                    this.SUBRULE_ASSIGN1(this.PageDirective, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.PopDirective); 
+                    this.SUBRULE_ASSIGN1(this.PopDirective, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.PrintDirective); 
+                    this.SUBRULE_ASSIGN1(this.PrintDirective, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ProcessDirective); 
+                    this.SUBRULE_ASSIGN1(this.ProcessDirective, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ProcincDirective); 
+                    this.SUBRULE_ASSIGN1(this.ProcincDirective, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.PushDirective); 
+                    this.SUBRULE_ASSIGN1(this.PushDirective, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.PutStatement); 
+                    this.SUBRULE_ASSIGN1(this.PutStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.QualifyStatement); 
+                    this.SUBRULE_ASSIGN1(this.QualifyStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReadStatement); 
+                    this.SUBRULE_ASSIGN1(this.ReadStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReinitStatement); 
+                    this.SUBRULE_ASSIGN1(this.ReinitStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReleaseStatement); 
+                    this.SUBRULE_ASSIGN1(this.ReleaseStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ResignalStatement); 
+                    this.SUBRULE_ASSIGN1(this.ResignalStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReturnStatement); 
+                    this.SUBRULE_ASSIGN1(this.ReturnStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.RevertStatement); 
+                    this.SUBRULE_ASSIGN1(this.RevertStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.RewriteStatement); 
+                    this.SUBRULE_ASSIGN1(this.RewriteStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.SelectStatement); 
+                    this.SUBRULE_ASSIGN1(this.SelectStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.SignalStatement); 
+                    this.SUBRULE_ASSIGN1(this.SignalStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.SkipDirective); 
+                    this.SUBRULE_ASSIGN1(this.SkipDirective, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.StopStatement); 
+                    this.SUBRULE_ASSIGN1(this.StopStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.WaitStatement); 
+                    this.SUBRULE_ASSIGN1(this.WaitStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.WriteStatement); 
+                    this.SUBRULE_ASSIGN1(this.WriteStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ProcedureStatement); 
+                    this.SUBRULE_ASSIGN1(this.ProcedureStatement, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.Package); 
+                    this.SUBRULE_ASSIGN1(this.Package, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createAllocateStatement(): ast.AllocateStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.AllocateStatement,
+            variables: undefined,
+        } as any;
     }
 
     AllocateStatement = this.RULE('AllocateStatement', () => {
-        const element = this.createAllocateStatement();
+        let element = this.push(this.createAllocateStatement());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ALLOCATE); 
+                    this.CONSUME_ASSIGN1(tokens.ALLOCATE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AllocateStatement_ALLOCATE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ALLOC); 
+                    this.CONSUME_ASSIGN1(tokens.ALLOC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AllocateStatement_ALLOC_0);
+                    });
                 }
             },
         ]);
-        this.SUBRULE1(this.AllocatedVariable);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.AllocatedVariable);
+        this.SUBRULE_ASSIGN1(this.AllocatedVariable, {
+            assign: result => {
+                element.variables ??= []; element.variables.push(result);
+            }
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.AllocateStatement_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.AllocatedVariable, {
+                assign: result => {
+                    element.variables ??= []; element.variables.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.AllocateStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createAllocatedVariable(): ast.AllocatedVariable {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.AllocatedVariable,
+            level: undefined,
+            var: undefined,
+            attribute: undefined,
+        } as any;
     }
 
     AllocatedVariable = this.RULE('AllocatedVariable', () => {
-        const element = this.createAllocatedVariable();
+        let element = this.push(this.createAllocatedVariable());
 
         this.OPTION1(() => {
-            this.CONSUME1(tokens.NUMBER);
+            this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+                this.tokenPayload(token, element, CstNodeKind.AllocatedVariable_level_NUMBER_0);
+                element.level = token.image;
+            });
         });
-        this.SUBRULE1(this.ReferenceItem);
+        this.SUBRULE_ASSIGN1(this.ReferenceItem, {
+            assign: result => {
+                element.var = result;
+            }
+        });
         this.OPTION2(() => {
-            this.SUBRULE1(this.AllocateAttribute);
+            this.SUBRULE_ASSIGN1(this.AllocateAttribute, {
+                assign: result => {
+                    element.attribute = result;
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createAllocateAttribute(): ast.AllocateAttribute {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     AllocateAttribute = this.RULE('AllocateAttribute', () => {
-        const element = this.createAllocateAttribute();
+        let element = this.push(this.createAllocateAttribute());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.AllocateDimension); 
+                    this.SUBRULE_ASSIGN1(this.AllocateDimension, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.AllocateType); 
+                    this.SUBRULE_ASSIGN1(this.AllocateType, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.AllocateLocationReferenceIn); 
+                    this.SUBRULE_ASSIGN1(this.AllocateLocationReferenceIn, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.AllocateLocationReferenceSet); 
+                    this.SUBRULE_ASSIGN1(this.AllocateLocationReferenceSet, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.InitialAttribute); 
+                    this.SUBRULE_ASSIGN1(this.InitialAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createAllocateLocationReferenceIn(): ast.AllocateLocationReferenceIn {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.AllocateLocationReferenceIn,
+            area: undefined,
+        } as any;
     }
 
     AllocateLocationReferenceIn = this.RULE('AllocateLocationReferenceIn', () => {
-        const element = this.createAllocateLocationReferenceIn();
+        let element = this.push(this.createAllocateLocationReferenceIn());
 
-        this.CONSUME1(tokens.IN);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.IN, token => {
+            this.tokenPayload(token, element, CstNodeKind.AllocateLocationReferenceIn_IN_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.AllocateLocationReferenceIn_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.area = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.AllocateLocationReferenceIn_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createAllocateLocationReferenceSet(): ast.AllocateLocationReferenceSet {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.AllocateLocationReferenceSet,
+            locatorVariable: undefined,
+        } as any;
     }
 
     AllocateLocationReferenceSet = this.RULE('AllocateLocationReferenceSet', () => {
-        const element = this.createAllocateLocationReferenceSet();
+        let element = this.push(this.createAllocateLocationReferenceSet());
 
-        this.CONSUME1(tokens.SET);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.SET, token => {
+            this.tokenPayload(token, element, CstNodeKind.AllocateLocationReferenceSet_SET_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.AllocateLocationReferenceSet_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.locatorVariable = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.AllocateLocationReferenceSet_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createAllocateDimension(): ast.AllocateDimension {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.AllocateDimension,
+            dimensions: undefined,
+        } as any;
     }
 
     AllocateDimension = this.RULE('AllocateDimension', () => {
-        const element = this.createAllocateDimension();
+        let element = this.push(this.createAllocateDimension());
 
-        this.SUBRULE1(this.Dimensions);
+        this.SUBRULE_ASSIGN1(this.Dimensions, {
+            assign: result => {
+                element.dimensions = result;
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createAllocateType(): ast.AllocateType {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.AllocateType,
+            type: undefined,
+            dimensions: undefined,
+        } as any;
     }
 
     AllocateType = this.RULE('AllocateType', () => {
-        const element = this.createAllocateType();
+        let element = this.push(this.createAllocateType());
 
-        this.SUBRULE1(this.AllocateAttributeType);
+        this.SUBRULE_ASSIGN1(this.AllocateAttributeType, {
+            assign: result => {
+                element.type = result;
+            }
+        });
         this.OPTION1(() => {
-            this.SUBRULE1(this.Dimensions);
+            this.SUBRULE_ASSIGN1(this.Dimensions, {
+                assign: result => {
+                    element.dimensions = result;
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createAllocateAttributeType(): ast.AllocateAttributeType {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     AllocateAttributeType = this.RULE('AllocateAttributeType', () => {
-        const element = this.createAllocateAttributeType();
+        let element = this.push(this.createAllocateAttributeType());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CHAR); 
+                    this.CONSUME_ASSIGN1(tokens.CHAR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_CHAR_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CHARACTER); 
+                    this.CONSUME_ASSIGN1(tokens.CHARACTER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_CHARACTER_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BIT); 
+                    this.CONSUME_ASSIGN1(tokens.BIT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_BIT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.GRAPHIC); 
+                    this.CONSUME_ASSIGN1(tokens.GRAPHIC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_GRAPHIC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UCHAR); 
+                    this.CONSUME_ASSIGN1(tokens.UCHAR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_UCHAR_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.WIDECHAR); 
+                    this.CONSUME_ASSIGN1(tokens.WIDECHAR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_WIDECHAR_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.AREA); 
+                    this.CONSUME_ASSIGN1(tokens.AREA, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_AREA_0);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createAssertStatement(): ast.AssertStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.AssertStatement,
+            true: undefined,
+            actual: undefined,
+            false: undefined,
+            unreachable: undefined,
+            displayExpression: undefined,
+            compare: undefined,
+            expected: undefined,
+            operator: undefined,
+        } as any;
     }
 
     AssertStatement = this.RULE('AssertStatement', () => {
-        const element = this.createAssertStatement();
+        let element = this.push(this.createAssertStatement());
 
-        this.CONSUME1(tokens.ASSERT);
+        this.CONSUME_ASSIGN1(tokens.ASSERT, token => {
+            this.tokenPayload(token, element, CstNodeKind.AssertStatement_ASSERT_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.TRUE);
-                    this.CONSUME1(tokens.OpenParen);
-                    this.SUBRULE1(this.Expression);
-                    this.CONSUME1(tokens.CloseParen);
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME1(tokens.FALSE);
-                    this.CONSUME2(tokens.OpenParen);
-                    this.SUBRULE2(this.Expression);
-                    this.CONSUME2(tokens.CloseParen);
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME1(tokens.COMPARE);
-                    this.CONSUME3(tokens.OpenParen);
-                    this.SUBRULE3(this.Expression);
-                    this.CONSUME1(tokens.Comma);
-                    this.SUBRULE4(this.Expression);
-                    this.OPTION1(() => {
-                        this.CONSUME2(tokens.Comma);
-                        this.CONSUME1(tokens.STRING_TERM);
+                    this.CONSUME_ASSIGN1(tokens.TRUE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssertStatement_true_TRUE_0);
+                        element.true = true;
                     });
-                    this.CONSUME3(tokens.CloseParen);
+                    this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssertStatement_OpenParen_0);
+                    });
+                    this.SUBRULE_ASSIGN1(this.Expression, {
+                        assign: result => {
+                            element.actual = result;
+                        }
+                    });
+                    this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssertStatement_CloseParen_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UNREACHABLE); 
+                    this.CONSUME_ASSIGN1(tokens.FALSE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssertStatement_false_FALSE_0);
+                        element.false = true;
+                    });
+                    this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssertStatement_OpenParen_1);
+                    });
+                    this.SUBRULE_ASSIGN2(this.Expression, {
+                        assign: result => {
+                            element.actual = result;
+                        }
+                    });
+                    this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssertStatement_CloseParen_1);
+                    });
+                }
+            },
+            {
+                ALT: () => {
+                    this.CONSUME_ASSIGN1(tokens.COMPARE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssertStatement_compare_COMPARE_0);
+                        element.compare = true;
+                    });
+                    this.CONSUME_ASSIGN3(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssertStatement_OpenParen_2);
+                    });
+                    this.SUBRULE_ASSIGN3(this.Expression, {
+                        assign: result => {
+                            element.actual = result;
+                        }
+                    });
+                    this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssertStatement_Comma_0);
+                    });
+                    this.SUBRULE_ASSIGN4(this.Expression, {
+                        assign: result => {
+                            element.expected = result;
+                        }
+                    });
+                    this.OPTION1(() => {
+                        this.CONSUME_ASSIGN2(tokens.Comma, token => {
+                            this.tokenPayload(token, element, CstNodeKind.AssertStatement_Comma_1);
+                        });
+                        this.CONSUME_ASSIGN1(tokens.STRING_TERM, token => {
+                            this.tokenPayload(token, element, CstNodeKind.AssertStatement_operator_STRING_TERM_0);
+                            element.operator = token.image;
+                        });
+                    });
+                    this.CONSUME_ASSIGN3(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssertStatement_CloseParen_2);
+                    });
+                }
+            },
+            {
+                ALT: () => {
+                    this.CONSUME_ASSIGN1(tokens.UNREACHABLE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssertStatement_unreachable_UNREACHABLE_0);
+                        element.unreachable = true;
+                    });
                 }
             },
         ]);
         this.OPTION2(() => {
-            this.CONSUME1(tokens.TEXT);
-            this.SUBRULE5(this.Expression);
+            this.CONSUME_ASSIGN1(tokens.TEXT, token => {
+                this.tokenPayload(token, element, CstNodeKind.AssertStatement_TEXT_0);
+            });
+            this.SUBRULE_ASSIGN5(this.Expression, {
+                assign: result => {
+                    element.displayExpression = result;
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createAssignmentStatement(): ast.AssignmentStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.AssignmentStatement,
+            refs: undefined,
+            operator: undefined,
+            expression: undefined,
+            dimacrossExpr: undefined,
+        } as any;
     }
 
     AssignmentStatement = this.RULE('AssignmentStatement', () => {
-        const element = this.createAssignmentStatement();
+        let element = this.push(this.createAssignmentStatement());
 
-        this.SUBRULE1(this.LocatorCall);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.LocatorCall);
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.refs ??= []; element.refs.push(result);
+            }
         });
-        this.SUBRULE1(this.AssignmentOperator);
-        this.SUBRULE1(this.Expression);
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.AssignmentStatement_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.LocatorCall, {
+                assign: result => {
+                    element.refs ??= []; element.refs.push(result);
+                }
+            });
+        });
+        this.SUBRULE_ASSIGN1(this.AssignmentOperator, {
+            assign: result => {
+                element.operator = result;
+            }
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.expression = result;
+            }
+        });
         this.OPTION1(() => {
-            this.CONSUME2(tokens.Comma);
-            this.CONSUME1(tokens.BY);
+            this.CONSUME_ASSIGN2(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.AssignmentStatement_Comma_1);
+            });
+            this.CONSUME_ASSIGN1(tokens.BY, token => {
+                this.tokenPayload(token, element, CstNodeKind.AssignmentStatement_BY_0);
+            });
             this.OR1([
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.NAME); 
+                        this.CONSUME_ASSIGN1(tokens.NAME, token => {
+                            this.tokenPayload(token, element, CstNodeKind.AssignmentStatement_NAME_0);
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.DIMACROSS);
-                        this.SUBRULE2(this.Expression);
+                        this.CONSUME_ASSIGN1(tokens.DIMACROSS, token => {
+                            this.tokenPayload(token, element, CstNodeKind.AssignmentStatement_DIMACROSS_0);
+                        });
+                        this.SUBRULE_ASSIGN2(this.Expression, {
+                            assign: result => {
+                                element.dimacrossExpr = result;
+                            }
+                        });
                     }
                 },
             ]);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.AssignmentStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createAssignmentOperator(): ast.AssignmentOperator {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     AssignmentOperator = this.RULE('AssignmentOperator', () => {
-        const element = this.createAssignmentOperator();
+        let element = this.push(this.createAssignmentOperator());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.Equals); 
+                    this.CONSUME_ASSIGN1(tokens.Equals, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_Equals_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PlusEquals); 
+                    this.CONSUME_ASSIGN1(tokens.PlusEquals, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_PlusEquals_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.MinusEquals); 
+                    this.CONSUME_ASSIGN1(tokens.MinusEquals, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_MinusEquals_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.StarEquals); 
+                    this.CONSUME_ASSIGN1(tokens.StarEquals, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_StarEquals_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.SlashEquals); 
+                    this.CONSUME_ASSIGN1(tokens.SlashEquals, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_SlashEquals_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PipeEquals); 
+                    this.CONSUME_ASSIGN1(tokens.PipeEquals, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_PipeEquals_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.AmpersandEquals); 
+                    this.CONSUME_ASSIGN1(tokens.AmpersandEquals, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_AmpersandEquals_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PipePipeEquals); 
+                    this.CONSUME_ASSIGN1(tokens.PipePipeEquals, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_PipePipeEquals_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.StarStarEquals); 
+                    this.CONSUME_ASSIGN1(tokens.StarStarEquals, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_StarStarEquals_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NotEquals); 
+                    this.CONSUME_ASSIGN1(tokens.NotEquals, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_NotEquals_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CaretEquals); 
+                    this.CONSUME_ASSIGN1(tokens.CaretEquals, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_CaretEquals_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.LessThanGreaterThan); 
+                    this.CONSUME_ASSIGN1(tokens.LessThanGreaterThan, token => {
+                        this.tokenPayload(token, element, CstNodeKind.AssignmentOperator_LessThanGreaterThan_0);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createAttachStatement(): ast.AttachStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.AttachStatement,
+            reference: undefined,
+            task: undefined,
+            environment: undefined,
+            tstack: undefined,
+        } as any;
     }
 
     AttachStatement = this.RULE('AttachStatement', () => {
-        const element = this.createAttachStatement();
+        let element = this.push(this.createAttachStatement());
 
-        this.CONSUME1(tokens.ATTACH);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.THREAD);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE2(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
-        this.OPTION2(() => {
-            this.CONSUME1(tokens.ENVIRONMENT);
-            this.CONSUME2(tokens.OpenParen);
-            this.OPTION1(() => {
-                this.CONSUME1(tokens.TSTACK);
-                this.CONSUME3(tokens.OpenParen);
-                this.SUBRULE1(this.Expression);
-                this.CONSUME2(tokens.CloseParen);
-            });
-            this.CONSUME3(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.ATTACH, token => {
+            this.tokenPayload(token, element, CstNodeKind.AttachStatement_ATTACH_0);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.reference = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.THREAD, token => {
+            this.tokenPayload(token, element, CstNodeKind.AttachStatement_THREAD_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.AttachStatement_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN2(this.LocatorCall, {
+            assign: result => {
+                element.task = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.AttachStatement_CloseParen_0);
+        });
+        this.OPTION2(() => {
+            this.CONSUME_ASSIGN1(tokens.ENVIRONMENT, token => {
+                this.tokenPayload(token, element, CstNodeKind.AttachStatement_environment_ENVIRONMENT_0);
+                element.environment = true;
+            });
+            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.AttachStatement_OpenParen_1);
+            });
+            this.OPTION1(() => {
+                this.CONSUME_ASSIGN1(tokens.TSTACK, token => {
+                    this.tokenPayload(token, element, CstNodeKind.AttachStatement_TSTACK_0);
+                });
+                this.CONSUME_ASSIGN3(tokens.OpenParen, token => {
+                    this.tokenPayload(token, element, CstNodeKind.AttachStatement_OpenParen_2);
+                });
+                this.SUBRULE_ASSIGN1(this.Expression, {
+                    assign: result => {
+                        element.tstack = result;
+                    }
+                });
+                this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                    this.tokenPayload(token, element, CstNodeKind.AttachStatement_CloseParen_1);
+                });
+            });
+            this.CONSUME_ASSIGN3(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.AttachStatement_CloseParen_2);
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.AttachStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createBeginStatement(): ast.BeginStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.BeginStatement,
+            options: undefined,
+            recursive: undefined,
+            statements: undefined,
+            end: undefined,
+            order: undefined,
+            reorder: undefined,
+        } as any;
     }
 
     BeginStatement = this.RULE('BeginStatement', () => {
-        const element = this.createBeginStatement();
+        let element = this.push(this.createBeginStatement());
 
-        this.CONSUME1(tokens.BEGIN);
+        this.CONSUME_ASSIGN1(tokens.BEGIN, token => {
+            this.tokenPayload(token, element, CstNodeKind.BeginStatement_BEGIN_0);
+        });
         this.OPTION1(() => {
-            this.SUBRULE1(this.Options);
+            this.SUBRULE_ASSIGN1(this.Options, {
+                assign: result => {
+                    element.options = result;
+                }
+            });
         });
         this.OPTION2(() => {
-            this.CONSUME1(tokens.RECURSIVE);
+            this.CONSUME_ASSIGN1(tokens.RECURSIVE, token => {
+                this.tokenPayload(token, element, CstNodeKind.BeginStatement_recursive_RECURSIVE_0);
+                element.recursive = true;
+            });
         });
         this.OPTION3(() => {
             this.OR1([
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.ORDER); 
+                        this.CONSUME_ASSIGN1(tokens.ORDER, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BeginStatement_order_ORDER_0);
+                            element.order = true;
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.REORDER); 
+                        this.CONSUME_ASSIGN1(tokens.REORDER, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BeginStatement_reorder_REORDER_0);
+                            element.reorder = true;
+                        });
                     }
                 },
             ]);
         });
-        this.CONSUME1(tokens.Semicolon);
-        this.MANY1(() => {
-            this.SUBRULE1(this.Statement);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.BeginStatement_Semicolon_0);
         });
-        this.SUBRULE1(this.EndStatement);
-        this.CONSUME2(tokens.Semicolon);
+        this.MANY1(() => {
+            this.SUBRULE_ASSIGN1(this.Statement, {
+                assign: result => {
+                    element.statements ??= []; element.statements.push(result);
+                }
+            });
+        });
+        this.SUBRULE_ASSIGN1(this.EndStatement, {
+            assign: result => {
+                element.end = result;
+            }
+        });
+        this.CONSUME_ASSIGN2(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.BeginStatement_Semicolon_1);
+        });
 
-        return element;
+        return this.pop();
     });
     private createEndStatement(): ast.EndStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.EndStatement,
+            labels: undefined,
+            label: undefined,
+        } as any;
     }
 
     EndStatement = this.RULE('EndStatement', () => {
-        const element = this.createEndStatement();
+        let element = this.push(this.createEndStatement());
 
         this.MANY1(() => {
-            this.SUBRULE1(this.LabelPrefix);
+            this.SUBRULE_ASSIGN1(this.LabelPrefix, {
+                assign: result => {
+                    element.labels ??= []; element.labels.push(result);
+                }
+            });
         });
-        this.CONSUME1(tokens.END);
+        this.CONSUME_ASSIGN1(tokens.END, token => {
+            this.tokenPayload(token, element, CstNodeKind.EndStatement_END_0);
+        });
         this.OPTION1(() => {
-            this.SUBRULE1(this.LabelReference);
+            this.SUBRULE_ASSIGN1(this.LabelReference, {
+                assign: result => {
+                    element.label = result;
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createCallStatement(): ast.CallStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.CallStatement,
+            call: undefined,
+        } as any;
     }
 
     CallStatement = this.RULE('CallStatement', () => {
-        const element = this.createCallStatement();
+        let element = this.push(this.createCallStatement());
 
-        this.CONSUME1(tokens.CALL);
-        this.SUBRULE1(this.ProcedureCall);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.CALL, token => {
+            this.tokenPayload(token, element, CstNodeKind.CallStatement_CALL_0);
+        });
+        this.SUBRULE_ASSIGN1(this.ProcedureCall, {
+            assign: result => {
+                element.call = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.CallStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createCancelThreadStatement(): ast.CancelThreadStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.CancelThreadStatement,
+            thread: undefined,
+        } as any;
     }
 
     CancelThreadStatement = this.RULE('CancelThreadStatement', () => {
-        const element = this.createCancelThreadStatement();
+        let element = this.push(this.createCancelThreadStatement());
 
-        this.CONSUME1(tokens.CANCEL);
-        this.CONSUME1(tokens.THREAD);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.CANCEL, token => {
+            this.tokenPayload(token, element, CstNodeKind.CancelThreadStatement_CANCEL_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.THREAD, token => {
+            this.tokenPayload(token, element, CstNodeKind.CancelThreadStatement_THREAD_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.CancelThreadStatement_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.thread = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.CancelThreadStatement_CloseParen_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.CancelThreadStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createCloseStatement(): ast.CloseStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.CloseStatement,
+            files: undefined,
+        } as any;
     }
 
     CloseStatement = this.RULE('CloseStatement', () => {
-        const element = this.createCloseStatement();
+        let element = this.push(this.createCloseStatement());
 
-        this.CONSUME1(tokens.CLOSE);
-        this.CONSUME1(tokens.FILE);
-        this.CONSUME1(tokens.OpenParen);
+        this.CONSUME_ASSIGN1(tokens.CLOSE, token => {
+            this.tokenPayload(token, element, CstNodeKind.CloseStatement_CLOSE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.FILE, token => {
+            this.tokenPayload(token, element, CstNodeKind.CloseStatement_FILE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.CloseStatement_OpenParen_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.MemberCall); 
+                    this.SUBRULE_ASSIGN1(this.MemberCall, {
+                        assign: result => {
+                            element.files ??= []; element.files.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.Star); 
+                    this.CONSUME_ASSIGN1(tokens.Star, token => {
+                        this.tokenPayload(token, element, CstNodeKind.CloseStatement_files_Star_0);
+                        element.files ??= []; element.files.push(token.image);
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.CloseStatement_CloseParen_0);
+        });
         this.MANY1(() => {
             this.OPTION1(() => {
-                this.CONSUME1(tokens.Comma);
+                this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                    this.tokenPayload(token, element, CstNodeKind.CloseStatement_Comma_0);
+                });
             });
-            this.CONSUME2(tokens.FILE);
-            this.CONSUME2(tokens.OpenParen);
+            this.CONSUME_ASSIGN2(tokens.FILE, token => {
+                this.tokenPayload(token, element, CstNodeKind.CloseStatement_FILE_1);
+            });
+            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.CloseStatement_OpenParen_1);
+            });
             this.OR2([
                 {
                     ALT: () => {
-                        this.SUBRULE2(this.MemberCall); 
+                        this.SUBRULE_ASSIGN2(this.MemberCall, {
+                            assign: result => {
+                                element.files ??= []; element.files.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME2(tokens.Star); 
+                        this.CONSUME_ASSIGN2(tokens.Star, token => {
+                            this.tokenPayload(token, element, CstNodeKind.CloseStatement_files_Star_1);
+                            element.files ??= []; element.files.push(token.image);
+                        });
                     }
                 },
             ]);
-            this.CONSUME2(tokens.CloseParen);
+            this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.CloseStatement_CloseParen_1);
+            });
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.CloseStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDefaultStatement(): ast.DefaultStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefaultStatement,
+            expressions: undefined,
+        } as any;
     }
 
     DefaultStatement = this.RULE('DefaultStatement', () => {
-        const element = this.createDefaultStatement();
+        let element = this.push(this.createDefaultStatement());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DEFAULT); 
+                    this.CONSUME_ASSIGN1(tokens.DEFAULT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultStatement_DEFAULT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DFT); 
+                    this.CONSUME_ASSIGN1(tokens.DFT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultStatement_DFT_0);
+                    });
                 }
             },
         ]);
-        this.SUBRULE1(this.DefaultExpression);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.DefaultExpression);
+        this.SUBRULE_ASSIGN1(this.DefaultExpression, {
+            assign: result => {
+                element.expressions ??= []; element.expressions.push(result);
+            }
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefaultStatement_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.DefaultExpression, {
+                assign: result => {
+                    element.expressions ??= []; element.expressions.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefaultStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDefaultExpression(): ast.DefaultExpression {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefaultExpression,
+            expression: undefined,
+            attributes: undefined,
+        } as any;
     }
 
     DefaultExpression = this.RULE('DefaultExpression', () => {
-        const element = this.createDefaultExpression();
+        let element = this.push(this.createDefaultExpression());
 
-        this.SUBRULE1(this.DefaultExpressionPart);
+        this.SUBRULE_ASSIGN1(this.DefaultExpressionPart, {
+            assign: result => {
+                element.expression = result;
+            }
+        });
         this.MANY1(() => {
-            this.SUBRULE1(this.DefaultDeclarationAttribute);
+            this.SUBRULE_ASSIGN1(this.DefaultDeclarationAttribute, {
+                assign: result => {
+                    element.attributes ??= []; element.attributes.push(result);
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDefaultExpressionPart(): ast.DefaultExpressionPart {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefaultExpressionPart,
+            expression: undefined,
+            identifiers: undefined,
+        } as any;
     }
 
     DefaultExpressionPart = this.RULE('DefaultExpressionPart', () => {
-        const element = this.createDefaultExpressionPart();
+        let element = this.push(this.createDefaultExpressionPart());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DESCRIPTORS);
-                    this.SUBRULE1(this.DefaultAttributeExpression);
+                    this.CONSUME_ASSIGN1(tokens.DESCRIPTORS, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultExpressionPart_DESCRIPTORS_0);
+                    });
+                    this.SUBRULE_ASSIGN1(this.DefaultAttributeExpression, {
+                        assign: result => {
+                            element.expression = result;
+                        }
+                    });
                 }
             },
             {
@@ -1573,17 +2731,35 @@ export class PliParser extends AbstractParser {
                     this.OR2([
                         {
                             ALT: () => {
-                                this.CONSUME1(tokens.RANGE);
-                                this.CONSUME1(tokens.OpenParen);
-                                this.SUBRULE1(this.DefaultRangeIdentifiers);
-                                this.CONSUME1(tokens.CloseParen);
+                                this.CONSUME_ASSIGN1(tokens.RANGE, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.DefaultExpressionPart_RANGE_0);
+                                });
+                                this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.DefaultExpressionPart_OpenParen_0);
+                                });
+                                this.SUBRULE_ASSIGN1(this.DefaultRangeIdentifiers, {
+                                    assign: result => {
+                                        element.identifiers = result;
+                                    }
+                                });
+                                this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.DefaultExpressionPart_CloseParen_0);
+                                });
                             }
                         },
                         {
                             ALT: () => {
-                                this.CONSUME2(tokens.OpenParen);
-                                this.SUBRULE2(this.DefaultAttributeExpression);
-                                this.CONSUME2(tokens.CloseParen);
+                                this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.DefaultExpressionPart_OpenParen_1);
+                                });
+                                this.SUBRULE_ASSIGN2(this.DefaultAttributeExpression, {
+                                    assign: result => {
+                                        element.expression = result;
+                                    }
+                                });
+                                this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.DefaultExpressionPart_CloseParen_1);
+                                });
                             }
                         },
                     ]);
@@ -1591,650 +2767,960 @@ export class PliParser extends AbstractParser {
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createDefaultRangeIdentifiers(): ast.DefaultRangeIdentifiers {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefaultRangeIdentifiers,
+            identifiers: undefined,
+        } as any;
     }
 
     DefaultRangeIdentifiers = this.RULE('DefaultRangeIdentifiers', () => {
-        const element = this.createDefaultRangeIdentifiers();
+        let element = this.push(this.createDefaultRangeIdentifiers());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.Star); 
+                    this.CONSUME_ASSIGN1(tokens.Star, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultRangeIdentifiers_identifiers_Star_0);
+                        element.identifiers ??= []; element.identifiers.push(token.image);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DefaultRangeIdentifierItem); 
+                    this.SUBRULE_ASSIGN1(this.DefaultRangeIdentifierItem, {
+                        assign: result => {
+                            element.identifiers ??= []; element.identifiers.push(result);
+                        }
+                    });
                 }
             },
         ]);
         this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefaultRangeIdentifiers_Comma_0);
+            });
             this.OR2([
                 {
                     ALT: () => {
-                        this.CONSUME2(tokens.Star); 
+                        this.CONSUME_ASSIGN2(tokens.Star, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DefaultRangeIdentifiers_identifiers_Star_1);
+                            element.identifiers ??= []; element.identifiers.push(token.image);
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE2(this.DefaultRangeIdentifierItem); 
+                        this.SUBRULE_ASSIGN2(this.DefaultRangeIdentifierItem, {
+                            assign: result => {
+                                element.identifiers ??= []; element.identifiers.push(result);
+                            }
+                        });
                     }
                 },
             ]);
         });
 
-        return element;
+        return this.pop();
     });
     private createDefaultRangeIdentifierItem(): ast.DefaultRangeIdentifierItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefaultRangeIdentifierItem,
+            from: undefined,
+            to: undefined,
+        } as any;
     }
 
     DefaultRangeIdentifierItem = this.RULE('DefaultRangeIdentifierItem', () => {
-        const element = this.createDefaultRangeIdentifierItem();
+        let element = this.push(this.createDefaultRangeIdentifierItem());
 
-        this.CONSUME1(tokens.ID);
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefaultRangeIdentifierItem_from_ID_0);
+            element.from = token.image;
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.Colon);
-            this.CONSUME2(tokens.ID);
+            this.CONSUME_ASSIGN1(tokens.Colon, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefaultRangeIdentifierItem_Colon_0);
+            });
+            this.CONSUME_ASSIGN2(tokens.ID, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefaultRangeIdentifierItem_to_ID_0);
+                element.to = token.image;
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDefaultAttributeExpression(): ast.DefaultAttributeExpression {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefaultAttributeExpression,
+            items: undefined,
+            operators: undefined,
+        } as any;
     }
 
     DefaultAttributeExpression = this.RULE('DefaultAttributeExpression', () => {
-        const element = this.createDefaultAttributeExpression();
+        let element = this.push(this.createDefaultAttributeExpression());
 
-        this.SUBRULE1(this.DefaultAttributeExpressionNot);
+        this.SUBRULE_ASSIGN1(this.DefaultAttributeExpressionNot, {
+            assign: result => {
+                element.items ??= []; element.items.push(result);
+            }
+        });
         this.OPTION1(() => {
             this.OR1([
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.AND); 
+                        this.CONSUME_ASSIGN1(tokens.AND, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DefaultAttributeExpression_operators_AND_0);
+                            element.operators ??= []; element.operators.push(token.image);
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.OR); 
+                        this.CONSUME_ASSIGN1(tokens.OR, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DefaultAttributeExpression_operators_OR_0);
+                            element.operators ??= []; element.operators.push(token.image);
+                        });
                     }
                 },
             ]);
-            this.SUBRULE2(this.DefaultAttributeExpressionNot);
+            this.SUBRULE_ASSIGN2(this.DefaultAttributeExpressionNot, {
+                assign: result => {
+                    element.items ??= []; element.items.push(result);
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDefaultAttributeExpressionNot(): ast.DefaultAttributeExpressionNot {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefaultAttributeExpressionNot,
+            not: undefined,
+            value: undefined,
+        } as any;
     }
 
     DefaultAttributeExpressionNot = this.RULE('DefaultAttributeExpressionNot', () => {
-        const element = this.createDefaultAttributeExpressionNot();
+        let element = this.push(this.createDefaultAttributeExpressionNot());
 
         this.OPTION1(() => {
-            this.CONSUME1(tokens.NOT);
+            this.CONSUME_ASSIGN1(tokens.NOT, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefaultAttributeExpressionNot_not_NOT_0);
+                element.not = true;
+            });
         });
-        this.SUBRULE1(this.DefaultAttribute);
+        this.SUBRULE_ASSIGN1(this.DefaultAttribute, {
+            assign: result => {
+                element.value = result;
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createDefaultAttribute(): ast.DefaultAttribute {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     DefaultAttribute = this.RULE('DefaultAttribute', () => {
-        const element = this.createDefaultAttribute();
+        let element = this.push(this.createDefaultAttribute());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ABNORMAL); 
+                    this.CONSUME_ASSIGN1(tokens.ABNORMAL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_ABNORMAL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ALIGNED); 
+                    this.CONSUME_ASSIGN1(tokens.ALIGNED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_ALIGNED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.AREA); 
+                    this.CONSUME_ASSIGN1(tokens.AREA, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_AREA_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ASSIGNABLE); 
+                    this.CONSUME_ASSIGN1(tokens.ASSIGNABLE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_ASSIGNABLE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.AUTOMATIC); 
+                    this.CONSUME_ASSIGN1(tokens.AUTOMATIC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_AUTOMATIC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BACKWARDS); 
+                    this.CONSUME_ASSIGN1(tokens.BACKWARDS, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BACKWARDS_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BASED); 
+                    this.CONSUME_ASSIGN1(tokens.BASED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BASED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BIT); 
+                    this.CONSUME_ASSIGN1(tokens.BIT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BIT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BUFFERED); 
+                    this.CONSUME_ASSIGN1(tokens.BUFFERED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BUFFERED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BUILTIN); 
+                    this.CONSUME_ASSIGN1(tokens.BUILTIN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BUILTIN_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BYADDR); 
+                    this.CONSUME_ASSIGN1(tokens.BYADDR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BYADDR_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BYVALUE); 
+                    this.CONSUME_ASSIGN1(tokens.BYVALUE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BYVALUE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BIN); 
+                    this.CONSUME_ASSIGN1(tokens.BIN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BIN_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BINARY); 
+                    this.CONSUME_ASSIGN1(tokens.BINARY, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BINARY_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CHARACTER); 
+                    this.CONSUME_ASSIGN1(tokens.CHARACTER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CHARACTER_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CHAR); 
+                    this.CONSUME_ASSIGN1(tokens.CHAR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CHAR_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.COMPLEX); 
+                    this.CONSUME_ASSIGN1(tokens.COMPLEX, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_COMPLEX_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CONDITION); 
+                    this.CONSUME_ASSIGN1(tokens.CONDITION, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CONDITION_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CONNECTED); 
+                    this.CONSUME_ASSIGN1(tokens.CONNECTED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CONNECTED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CONSTANT); 
+                    this.CONSUME_ASSIGN1(tokens.CONSTANT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CONSTANT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CONTROLLED); 
+                    this.CONSUME_ASSIGN1(tokens.CONTROLLED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CONTROLLED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CTL); 
+                    this.CONSUME_ASSIGN1(tokens.CTL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_CTL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DECIMAL); 
+                    this.CONSUME_ASSIGN1(tokens.DECIMAL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_DECIMAL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DEC); 
+                    this.CONSUME_ASSIGN1(tokens.DEC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_DEC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DIMACROSS); 
+                    this.CONSUME_ASSIGN1(tokens.DIMACROSS, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_DIMACROSS_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.EVENT); 
+                    this.CONSUME_ASSIGN1(tokens.EVENT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_EVENT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.EXCLUSIVE); 
+                    this.CONSUME_ASSIGN1(tokens.EXCLUSIVE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_EXCLUSIVE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.EXTERNAL); 
+                    this.CONSUME_ASSIGN1(tokens.EXTERNAL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_EXTERNAL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.EXT); 
+                    this.CONSUME_ASSIGN1(tokens.EXT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_EXT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.FILE); 
+                    this.CONSUME_ASSIGN1(tokens.FILE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_FILE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.FIXED); 
+                    this.CONSUME_ASSIGN1(tokens.FIXED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_FIXED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.FLOAT); 
+                    this.CONSUME_ASSIGN1(tokens.FLOAT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_FLOAT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.FORMAT); 
+                    this.CONSUME_ASSIGN1(tokens.FORMAT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_FORMAT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.GENERIC); 
+                    this.CONSUME_ASSIGN1(tokens.GENERIC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_GENERIC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.GRAPHIC); 
+                    this.CONSUME_ASSIGN1(tokens.GRAPHIC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_GRAPHIC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.HEX); 
+                    this.CONSUME_ASSIGN1(tokens.HEX, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_HEX_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.HEXADEC); 
+                    this.CONSUME_ASSIGN1(tokens.HEXADEC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_HEXADEC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.IEEE); 
+                    this.CONSUME_ASSIGN1(tokens.IEEE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_IEEE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.INONLY); 
+                    this.CONSUME_ASSIGN1(tokens.INONLY, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_INONLY_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.INOUT); 
+                    this.CONSUME_ASSIGN1(tokens.INOUT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_INOUT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.INTERNAL); 
+                    this.CONSUME_ASSIGN1(tokens.INTERNAL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_INTERNAL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.INT); 
+                    this.CONSUME_ASSIGN1(tokens.INT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_INT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.IRREDUCIBLE); 
+                    this.CONSUME_ASSIGN1(tokens.IRREDUCIBLE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_IRREDUCIBLE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.INPUT); 
+                    this.CONSUME_ASSIGN1(tokens.INPUT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_INPUT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.KEYED); 
+                    this.CONSUME_ASSIGN1(tokens.KEYED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_KEYED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.LABEL); 
+                    this.CONSUME_ASSIGN1(tokens.LABEL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_LABEL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.LIST); 
+                    this.CONSUME_ASSIGN1(tokens.LIST, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_LIST_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.MEMBER); 
+                    this.CONSUME_ASSIGN1(tokens.MEMBER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_MEMBER_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NATIVE); 
+                    this.CONSUME_ASSIGN1(tokens.NATIVE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NATIVE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NONASSIGNABLE); 
+                    this.CONSUME_ASSIGN1(tokens.NONASSIGNABLE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NONASSIGNABLE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NONASGN); 
+                    this.CONSUME_ASSIGN1(tokens.NONASGN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NONASGN_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NONCONNECTED); 
+                    this.CONSUME_ASSIGN1(tokens.NONCONNECTED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NONCONNECTED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NONNATIVE); 
+                    this.CONSUME_ASSIGN1(tokens.NONNATIVE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NONNATIVE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NONVARYING); 
+                    this.CONSUME_ASSIGN1(tokens.NONVARYING, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NONVARYING_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NORMAL); 
+                    this.CONSUME_ASSIGN1(tokens.NORMAL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_NORMAL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OFFSET); 
+                    this.CONSUME_ASSIGN1(tokens.OFFSET, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_OFFSET_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OPTIONAL); 
+                    this.CONSUME_ASSIGN1(tokens.OPTIONAL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_OPTIONAL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OPTIONS); 
+                    this.CONSUME_ASSIGN1(tokens.OPTIONS, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_OPTIONS_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OUTONLY); 
+                    this.CONSUME_ASSIGN1(tokens.OUTONLY, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_OUTONLY_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OUTPUT); 
+                    this.CONSUME_ASSIGN1(tokens.OUTPUT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_OUTPUT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PARAMETER); 
+                    this.CONSUME_ASSIGN1(tokens.PARAMETER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_PARAMETER_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.POINTER); 
+                    this.CONSUME_ASSIGN1(tokens.POINTER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_POINTER_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PTR); 
+                    this.CONSUME_ASSIGN1(tokens.PTR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_PTR_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.POSITION); 
+                    this.CONSUME_ASSIGN1(tokens.POSITION, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_POSITION_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PRECISION); 
+                    this.CONSUME_ASSIGN1(tokens.PRECISION, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_PRECISION_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PREC); 
+                    this.CONSUME_ASSIGN1(tokens.PREC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_PREC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PRINT); 
+                    this.CONSUME_ASSIGN1(tokens.PRINT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_PRINT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.RANGE); 
+                    this.CONSUME_ASSIGN1(tokens.RANGE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_RANGE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.REAL); 
+                    this.CONSUME_ASSIGN1(tokens.REAL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_REAL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.RECORD); 
+                    this.CONSUME_ASSIGN1(tokens.RECORD, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_RECORD_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.RESERVED); 
+                    this.CONSUME_ASSIGN1(tokens.RESERVED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_RESERVED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.SEQUENTIAL); 
+                    this.CONSUME_ASSIGN1(tokens.SEQUENTIAL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_SEQUENTIAL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.SIGNED); 
+                    this.CONSUME_ASSIGN1(tokens.SIGNED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_SIGNED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.STATIC); 
+                    this.CONSUME_ASSIGN1(tokens.STATIC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_STATIC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.STREAM); 
+                    this.CONSUME_ASSIGN1(tokens.STREAM, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_STREAM_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.STRUCTURE); 
+                    this.CONSUME_ASSIGN1(tokens.STRUCTURE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_STRUCTURE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.TASK); 
+                    this.CONSUME_ASSIGN1(tokens.TASK, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_TASK_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.TRANSIENT); 
+                    this.CONSUME_ASSIGN1(tokens.TRANSIENT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_TRANSIENT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UNAL); 
+                    this.CONSUME_ASSIGN1(tokens.UNAL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UNAL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UCHAR); 
+                    this.CONSUME_ASSIGN1(tokens.UCHAR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UCHAR_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UNALIGNED); 
+                    this.CONSUME_ASSIGN1(tokens.UNALIGNED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UNALIGNED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UNBUFFERED); 
+                    this.CONSUME_ASSIGN1(tokens.UNBUFFERED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UNBUFFERED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UNION); 
+                    this.CONSUME_ASSIGN1(tokens.UNION, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UNION_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UNSIGNED); 
+                    this.CONSUME_ASSIGN1(tokens.UNSIGNED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UNSIGNED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UPDATE); 
+                    this.CONSUME_ASSIGN1(tokens.UPDATE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_UPDATE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.VARIABLE); 
+                    this.CONSUME_ASSIGN1(tokens.VARIABLE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VARIABLE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.VARYING); 
+                    this.CONSUME_ASSIGN1(tokens.VARYING, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VARYING_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.VAR); 
+                    this.CONSUME_ASSIGN1(tokens.VAR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VAR_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.VARYING4); 
+                    this.CONSUME_ASSIGN1(tokens.VARYING4, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VARYING4_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.VARYINGZ); 
+                    this.CONSUME_ASSIGN1(tokens.VARYINGZ, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VARYINGZ_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.VARZ); 
+                    this.CONSUME_ASSIGN1(tokens.VARZ, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_VARZ_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.WIDECHAR); 
+                    this.CONSUME_ASSIGN1(tokens.WIDECHAR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_WIDECHAR_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.BIGENDIAN); 
+                    this.CONSUME_ASSIGN1(tokens.BIGENDIAN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_BIGENDIAN_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.LITTLEENDIAN); 
+                    this.CONSUME_ASSIGN1(tokens.LITTLEENDIAN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_LITTLEENDIAN_0);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createDefineAliasStatement(): ast.DefineAliasStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefineAliasStatement,
+            name: undefined,
+            xDefine: undefined,
+            attributes: undefined,
+        } as any;
     }
 
     DefineAliasStatement = this.RULE('DefineAliasStatement', () => {
-        const element = this.createDefineAliasStatement();
+        let element = this.push(this.createDefineAliasStatement());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DEFINE); 
+                    this.CONSUME_ASSIGN1(tokens.DEFINE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefineAliasStatement_DEFINE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.XDEFINE); 
+                    this.CONSUME_ASSIGN1(tokens.XDEFINE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefineAliasStatement_xDefine_XDEFINE_0);
+                        element.xDefine = true;
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.ALIAS);
-        this.CONSUME1(tokens.ID);
+        this.CONSUME_ASSIGN1(tokens.ALIAS, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefineAliasStatement_ALIAS_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefineAliasStatement_name_ID_0);
+            element.name = token.image;
+        });
         this.OPTION2(() => {
-            this.SUBRULE1(this.DeclarationAttribute);
+            this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+                assign: result => {
+                    element.attributes ??= []; element.attributes.push(result);
+                }
+            });
             this.MANY1(() => {
                 this.OPTION1(() => {
-                    this.CONSUME1(tokens.Comma);
+                    this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefineAliasStatement_Comma_0);
+                    });
                 });
-                this.SUBRULE2(this.DeclarationAttribute);
+                this.SUBRULE_ASSIGN2(this.DeclarationAttribute, {
+                    assign: result => {
+                        element.attributes ??= []; element.attributes.push(result);
+                    }
+                });
             });
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefineAliasStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDefineOrdinalStatement(): ast.DefineOrdinalStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefineOrdinalStatement,
+            name: undefined,
+            ordinalValues: undefined,
+            xDefine: undefined,
+            signed: undefined,
+            unsigned: undefined,
+            precision: undefined,
+        } as any;
     }
 
     DefineOrdinalStatement = this.RULE('DefineOrdinalStatement', () => {
-        const element = this.createDefineOrdinalStatement();
+        let element = this.push(this.createDefineOrdinalStatement());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DEFINE); 
+                    this.CONSUME_ASSIGN1(tokens.DEFINE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_DEFINE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.XDEFINE); 
+                    this.CONSUME_ASSIGN1(tokens.XDEFINE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_xDefine_XDEFINE_0);
+                        element.xDefine = true;
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.ORDINAL);
-        this.SUBRULE1(this.FQN);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.OrdinalValueList);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.ORDINAL, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_ORDINAL_0);
+        });
+        this.SUBRULE_ASSIGN1(this.FQN, {
+            assign: result => {
+                element.name = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.OrdinalValueList, {
+            assign: result => {
+                element.ordinalValues = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_CloseParen_0);
+        });
         this.OPTION1(() => {
             this.OR2([
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.SIGNED); 
+                        this.CONSUME_ASSIGN1(tokens.SIGNED, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_signed_SIGNED_0);
+                            element.signed = true;
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.UNSIGNED); 
+                        this.CONSUME_ASSIGN1(tokens.UNSIGNED, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_unsigned_UNSIGNED_0);
+                            element.unsigned = true;
+                        });
                     }
                 },
             ]);
@@ -2243,389 +3729,769 @@ export class PliParser extends AbstractParser {
             this.OR3([
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.PRECISION); 
+                        this.CONSUME_ASSIGN1(tokens.PRECISION, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_PRECISION_0);
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.PREC); 
+                        this.CONSUME_ASSIGN1(tokens.PREC, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_PREC_0);
+                        });
                     }
                 },
             ]);
-            this.CONSUME2(tokens.OpenParen);
-            this.CONSUME1(tokens.NUMBER);
-            this.CONSUME2(tokens.CloseParen);
+            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_OpenParen_1);
+            });
+            this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_precision_NUMBER_0);
+                element.precision = token.image;
+            });
+            this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_CloseParen_1);
+            });
         });
         this.OPTION3(() => {
             this.OR4([
                 {
                     ALT: () => {
-                        this.CONSUME2(tokens.SIGNED); 
+                        this.CONSUME_ASSIGN2(tokens.SIGNED, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_signed_SIGNED_1);
+                            element.signed = true;
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME2(tokens.UNSIGNED); 
+                        this.CONSUME_ASSIGN2(tokens.UNSIGNED, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_unsigned_UNSIGNED_1);
+                            element.unsigned = true;
+                        });
                     }
                 },
             ]);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefineOrdinalStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createOrdinalValueList(): ast.OrdinalValueList {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OrdinalValueList,
+            members: undefined,
+        } as any;
     }
 
     OrdinalValueList = this.RULE('OrdinalValueList', () => {
-        const element = this.createOrdinalValueList();
+        let element = this.push(this.createOrdinalValueList());
 
-        this.SUBRULE1(this.OrdinalValue);
+        this.SUBRULE_ASSIGN1(this.OrdinalValue, {
+            assign: result => {
+                element.members ??= []; element.members.push(result);
+            }
+        });
         this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.OrdinalValue);
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.OrdinalValueList_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.OrdinalValue, {
+                assign: result => {
+                    element.members ??= []; element.members.push(result);
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createOrdinalValue(): ast.OrdinalValue {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OrdinalValue,
+            name: undefined,
+            value: undefined,
+        } as any;
     }
 
     OrdinalValue = this.RULE('OrdinalValue', () => {
-        const element = this.createOrdinalValue();
+        let element = this.push(this.createOrdinalValue());
 
-        this.CONSUME1(tokens.ID);
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.OrdinalValue_name_ID_0);
+            element.name = token.image;
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.VALUE);
-            this.CONSUME1(tokens.OpenParen);
-            this.CONSUME1(tokens.NUMBER);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.VALUE, token => {
+                this.tokenPayload(token, element, CstNodeKind.OrdinalValue_VALUE_0);
+            });
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.OrdinalValue_OpenParen_0);
+            });
+            this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+                this.tokenPayload(token, element, CstNodeKind.OrdinalValue_value_NUMBER_0);
+                element.value = token.image;
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.OrdinalValue_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDefineStructureStatement(): ast.DefineStructureStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefineStructureStatement,
+            xDefine: undefined,
+            level: undefined,
+            name: undefined,
+            union: undefined,
+            substructures: undefined,
+        } as any;
     }
 
     DefineStructureStatement = this.RULE('DefineStructureStatement', () => {
-        const element = this.createDefineStructureStatement();
+        let element = this.push(this.createDefineStructureStatement());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DEFINE); 
+                    this.CONSUME_ASSIGN1(tokens.DEFINE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefineStructureStatement_DEFINE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.XDEFINE); 
+                    this.CONSUME_ASSIGN1(tokens.XDEFINE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefineStructureStatement_xDefine_XDEFINE_0);
+                        element.xDefine = true;
+                    });
                 }
             },
         ]);
         this.OR2([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.STRUCTURE); 
+                    this.CONSUME_ASSIGN1(tokens.STRUCTURE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefineStructureStatement_STRUCTURE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.STRUCT); 
+                    this.CONSUME_ASSIGN1(tokens.STRUCT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefineStructureStatement_STRUCT_0);
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.NUMBER);
-        this.SUBRULE1(this.FQN);
+        this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefineStructureStatement_level_NUMBER_0);
+            element.level = token.image;
+        });
+        this.SUBRULE_ASSIGN1(this.FQN, {
+            assign: result => {
+                element.name = result;
+            }
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.UNION);
+            this.CONSUME_ASSIGN1(tokens.UNION, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefineStructureStatement_union_UNION_0);
+                element.union = true;
+            });
         });
         this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE1(this.SubStructure);
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefineStructureStatement_Comma_0);
+            });
+            this.SUBRULE_ASSIGN1(this.SubStructure, {
+                assign: result => {
+                    element.substructures ??= []; element.substructures.push(result);
+                }
+            });
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefineStructureStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createSubStructure(): ast.SubStructure {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.SubStructure,
+            level: undefined,
+            name: undefined,
+            attributes: undefined,
+        } as any;
     }
 
     SubStructure = this.RULE('SubStructure', () => {
-        const element = this.createSubStructure();
+        let element = this.push(this.createSubStructure());
 
-        this.CONSUME1(tokens.NUMBER);
-        this.CONSUME1(tokens.ID);
+        this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+            this.tokenPayload(token, element, CstNodeKind.SubStructure_level_NUMBER_0);
+            element.level = token.image;
+        });
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.SubStructure_name_ID_0);
+            element.name = token.image;
+        });
         this.MANY1(() => {
-            this.SUBRULE1(this.DeclarationAttribute);
+            this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+                assign: result => {
+                    element.attributes ??= []; element.attributes.push(result);
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDelayStatement(): ast.DelayStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DelayStatement,
+            delay: undefined,
+        } as any;
     }
 
     DelayStatement = this.RULE('DelayStatement', () => {
-        const element = this.createDelayStatement();
+        let element = this.push(this.createDelayStatement());
 
-        this.CONSUME1(tokens.DELAY);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.DELAY, token => {
+            this.tokenPayload(token, element, CstNodeKind.DelayStatement_DELAY_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DelayStatement_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.delay = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DelayStatement_CloseParen_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.DelayStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDeleteStatement(): ast.DeleteStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DeleteStatement,
+            file: undefined,
+            key: undefined,
+        } as any;
     }
 
     DeleteStatement = this.RULE('DeleteStatement', () => {
-        const element = this.createDeleteStatement();
+        let element = this.push(this.createDeleteStatement());
 
-        this.CONSUME1(tokens.DELETE);
-        this.CONSUME1(tokens.FILE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
-        this.OPTION1(() => {
-            this.CONSUME1(tokens.KEY);
-            this.CONSUME2(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME2(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.DELETE, token => {
+            this.tokenPayload(token, element, CstNodeKind.DeleteStatement_DELETE_0);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.FILE, token => {
+            this.tokenPayload(token, element, CstNodeKind.DeleteStatement_FILE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DeleteStatement_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.file = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DeleteStatement_CloseParen_0);
+        });
+        this.OPTION1(() => {
+            this.CONSUME_ASSIGN1(tokens.KEY, token => {
+                this.tokenPayload(token, element, CstNodeKind.DeleteStatement_KEY_0);
+            });
+            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DeleteStatement_OpenParen_1);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.key = result;
+                }
+            });
+            this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DeleteStatement_CloseParen_1);
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.DeleteStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDetachStatement(): ast.DetachStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DetachStatement,
+            reference: undefined,
+        } as any;
     }
 
     DetachStatement = this.RULE('DetachStatement', () => {
-        const element = this.createDetachStatement();
+        let element = this.push(this.createDetachStatement());
 
-        this.CONSUME1(tokens.DETACH);
-        this.CONSUME1(tokens.THREAD);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.DETACH, token => {
+            this.tokenPayload(token, element, CstNodeKind.DetachStatement_DETACH_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.THREAD, token => {
+            this.tokenPayload(token, element, CstNodeKind.DetachStatement_THREAD_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DetachStatement_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.reference = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DetachStatement_CloseParen_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.DetachStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDisplayStatement(): ast.DisplayStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DisplayStatement,
+            expression: undefined,
+            reply: undefined,
+            rout: undefined,
+            desc: undefined,
+        } as any;
     }
 
     DisplayStatement = this.RULE('DisplayStatement', () => {
-        const element = this.createDisplayStatement();
+        let element = this.push(this.createDisplayStatement());
 
-        this.CONSUME1(tokens.DISPLAY);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.DISPLAY, token => {
+            this.tokenPayload(token, element, CstNodeKind.DisplayStatement_DISPLAY_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DisplayStatement_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.expression = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DisplayStatement_CloseParen_0);
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.REPLY);
-            this.CONSUME2(tokens.OpenParen);
-            this.SUBRULE1(this.LocatorCall);
-            this.CONSUME2(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.REPLY, token => {
+                this.tokenPayload(token, element, CstNodeKind.DisplayStatement_REPLY_0);
+            });
+            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DisplayStatement_OpenParen_1);
+            });
+            this.SUBRULE_ASSIGN1(this.LocatorCall, {
+                assign: result => {
+                    element.reply = result;
+                }
+            });
+            this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DisplayStatement_CloseParen_1);
+            });
         });
         this.OPTION3(() => {
-            this.CONSUME1(tokens.ROUTCDE);
-            this.CONSUME3(tokens.OpenParen);
-            this.CONSUME1(tokens.NUMBER);
-            this.MANY1(() => {
-                this.CONSUME1(tokens.Comma);
-                this.CONSUME2(tokens.NUMBER);
+            this.CONSUME_ASSIGN1(tokens.ROUTCDE, token => {
+                this.tokenPayload(token, element, CstNodeKind.DisplayStatement_ROUTCDE_0);
             });
-            this.CONSUME3(tokens.CloseParen);
-            this.OPTION2(() => {
-                this.CONSUME1(tokens.DESC);
-                this.CONSUME4(tokens.OpenParen);
-                this.CONSUME3(tokens.NUMBER);
-                this.MANY2(() => {
-                    this.CONSUME2(tokens.Comma);
-                    this.CONSUME4(tokens.NUMBER);
+            this.CONSUME_ASSIGN3(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DisplayStatement_OpenParen_2);
+            });
+            this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+                this.tokenPayload(token, element, CstNodeKind.DisplayStatement_rout_NUMBER_0);
+                element.rout ??= []; element.rout.push(token.image);
+            });
+            this.MANY1(() => {
+                this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                    this.tokenPayload(token, element, CstNodeKind.DisplayStatement_Comma_0);
                 });
-                this.CONSUME4(tokens.CloseParen);
+                this.CONSUME_ASSIGN2(tokens.NUMBER, token => {
+                    this.tokenPayload(token, element, CstNodeKind.DisplayStatement_rout_NUMBER_1);
+                    element.rout ??= []; element.rout.push(token.image);
+                });
+            });
+            this.CONSUME_ASSIGN3(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DisplayStatement_CloseParen_2);
+            });
+            this.OPTION2(() => {
+                this.CONSUME_ASSIGN1(tokens.DESC, token => {
+                    this.tokenPayload(token, element, CstNodeKind.DisplayStatement_DESC_0);
+                });
+                this.CONSUME_ASSIGN4(tokens.OpenParen, token => {
+                    this.tokenPayload(token, element, CstNodeKind.DisplayStatement_OpenParen_3);
+                });
+                this.CONSUME_ASSIGN3(tokens.NUMBER, token => {
+                    this.tokenPayload(token, element, CstNodeKind.DisplayStatement_desc_NUMBER_0);
+                    element.desc ??= []; element.desc.push(token.image);
+                });
+                this.MANY2(() => {
+                    this.CONSUME_ASSIGN2(tokens.Comma, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DisplayStatement_Comma_1);
+                    });
+                    this.CONSUME_ASSIGN4(tokens.NUMBER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DisplayStatement_desc_NUMBER_1);
+                        element.desc ??= []; element.desc.push(token.image);
+                    });
+                });
+                this.CONSUME_ASSIGN4(tokens.CloseParen, token => {
+                    this.tokenPayload(token, element, CstNodeKind.DisplayStatement_CloseParen_3);
+                });
             });
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.DisplayStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDoStatement(): ast.DoStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DoStatement,
+            statements: undefined,
+            end: undefined,
+            doType2: undefined,
+            doType3: undefined,
+        } as any;
     }
 
     DoStatement = this.RULE('DoStatement', () => {
-        const element = this.createDoStatement();
+        let element = this.push(this.createDoStatement());
 
-        this.CONSUME1(tokens.DO);
+        this.CONSUME_ASSIGN1(tokens.DO, token => {
+            this.tokenPayload(token, element, CstNodeKind.DoStatement_DO_0);
+        });
         this.OPTION1(() => {
             this.OR1([
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.DoType2); 
+                        this.SUBRULE_ASSIGN1(this.DoType2, {
+                            assign: result => {
+                                element.doType2 = result;
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.DoType3); 
+                        this.SUBRULE_ASSIGN1(this.DoType3, {
+                            assign: result => {
+                                element.doType3 = result;
+                            }
+                        });
                     }
                 },
             ]);
         });
-        this.CONSUME1(tokens.Semicolon);
-        this.MANY1(() => {
-            this.SUBRULE1(this.Statement);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.DoStatement_Semicolon_0);
         });
-        this.SUBRULE1(this.EndStatement);
-        this.CONSUME2(tokens.Semicolon);
+        this.MANY1(() => {
+            this.SUBRULE_ASSIGN1(this.Statement, {
+                assign: result => {
+                    element.statements ??= []; element.statements.push(result);
+                }
+            });
+        });
+        this.SUBRULE_ASSIGN1(this.EndStatement, {
+            assign: result => {
+                element.end = result;
+            }
+        });
+        this.CONSUME_ASSIGN2(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.DoStatement_Semicolon_1);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDoType2(): ast.DoType2 {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     DoType2 = this.RULE('DoType2', () => {
-        const element = this.createDoType2();
+        let element = this.push(this.createDoType2());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DoWhile); 
+                    this.SUBRULE_ASSIGN1(this.DoWhile, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DoUntil); 
+                    this.SUBRULE_ASSIGN1(this.DoUntil, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createDoWhile(): ast.DoWhile {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DoWhile,
+            while: undefined,
+            until: undefined,
+        } as any;
     }
 
     DoWhile = this.RULE('DoWhile', () => {
-        const element = this.createDoWhile();
+        let element = this.push(this.createDoWhile());
 
-        this.CONSUME1(tokens.WHILE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.WHILE, token => {
+            this.tokenPayload(token, element, CstNodeKind.DoWhile_WHILE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DoWhile_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.while = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DoWhile_CloseParen_0);
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.UNTIL);
-            this.CONSUME2(tokens.OpenParen);
-            this.SUBRULE2(this.Expression);
-            this.CONSUME2(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.UNTIL, token => {
+                this.tokenPayload(token, element, CstNodeKind.DoWhile_UNTIL_0);
+            });
+            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DoWhile_OpenParen_1);
+            });
+            this.SUBRULE_ASSIGN2(this.Expression, {
+                assign: result => {
+                    element.until = result;
+                }
+            });
+            this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DoWhile_CloseParen_1);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDoUntil(): ast.DoUntil {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DoUntil,
+            until: undefined,
+            while: undefined,
+        } as any;
     }
 
     DoUntil = this.RULE('DoUntil', () => {
-        const element = this.createDoUntil();
+        let element = this.push(this.createDoUntil());
 
-        this.CONSUME1(tokens.UNTIL);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.UNTIL, token => {
+            this.tokenPayload(token, element, CstNodeKind.DoUntil_UNTIL_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DoUntil_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.until = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DoUntil_CloseParen_0);
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.WHILE);
-            this.CONSUME2(tokens.OpenParen);
-            this.SUBRULE2(this.Expression);
-            this.CONSUME2(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.WHILE, token => {
+                this.tokenPayload(token, element, CstNodeKind.DoUntil_WHILE_0);
+            });
+            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DoUntil_OpenParen_1);
+            });
+            this.SUBRULE_ASSIGN2(this.Expression, {
+                assign: result => {
+                    element.while = result;
+                }
+            });
+            this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DoUntil_CloseParen_1);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDoType3(): ast.DoType3 {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DoType3,
+            variable: undefined,
+            specifications: undefined,
+        } as any;
     }
 
     DoType3 = this.RULE('DoType3', () => {
-        const element = this.createDoType3();
+        let element = this.push(this.createDoType3());
 
-        this.SUBRULE1(this.DoType3Variable);
-        this.CONSUME1(tokens.Equals);
-        this.SUBRULE1(this.DoSpecification);
+        this.SUBRULE_ASSIGN1(this.DoType3Variable, {
+            assign: result => {
+                element.variable = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.Equals, token => {
+            this.tokenPayload(token, element, CstNodeKind.DoType3_Equals_0);
+        });
+        this.SUBRULE_ASSIGN1(this.DoSpecification, {
+            assign: result => {
+                element.specifications ??= []; element.specifications.push(result);
+            }
+        });
         this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.DoSpecification);
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.DoType3_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.DoSpecification, {
+                assign: result => {
+                    element.specifications ??= []; element.specifications.push(result);
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDoType3Variable(): ast.DoType3Variable {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DoType3Variable,
+            name: undefined,
+        } as any;
     }
 
     DoType3Variable = this.RULE('DoType3Variable', () => {
-        const element = this.createDoType3Variable();
+        let element = this.push(this.createDoType3Variable());
 
-        this.CONSUME1(tokens.ID);
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.DoType3Variable_name_ID_0);
+            element.name = token.image;
+        });
 
-        return element;
+        return this.pop();
     });
     private createDoSpecification(): ast.DoSpecification {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DoSpecification,
+            exp1: undefined,
+            upthru: undefined,
+            downthru: undefined,
+            repeat: undefined,
+            whileOrUntil: undefined,
+            to: undefined,
+            by: undefined,
+        } as any;
     }
 
     DoSpecification = this.RULE('DoSpecification', () => {
-        const element = this.createDoSpecification();
+        let element = this.push(this.createDoSpecification());
 
-        this.SUBRULE1(this.Expression);
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.exp1 = result;
+            }
+        });
         this.OPTION3(() => {
             this.OR1([
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.TO);
-                        this.SUBRULE2(this.Expression);
+                        this.CONSUME_ASSIGN1(tokens.TO, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DoSpecification_TO_0);
+                        });
+                        this.SUBRULE_ASSIGN2(this.Expression, {
+                            assign: result => {
+                                element.to = result;
+                            }
+                        });
                         this.OPTION1(() => {
-                            this.CONSUME1(tokens.BY);
-                            this.SUBRULE3(this.Expression);
+                            this.CONSUME_ASSIGN1(tokens.BY, token => {
+                                this.tokenPayload(token, element, CstNodeKind.DoSpecification_BY_0);
+                            });
+                            this.SUBRULE_ASSIGN3(this.Expression, {
+                                assign: result => {
+                                    element.by = result;
+                                }
+                            });
                         });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME2(tokens.BY);
-                        this.SUBRULE4(this.Expression);
+                        this.CONSUME_ASSIGN2(tokens.BY, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DoSpecification_BY_1);
+                        });
+                        this.SUBRULE_ASSIGN4(this.Expression, {
+                            assign: result => {
+                                element.by = result;
+                            }
+                        });
                         this.OPTION2(() => {
-                            this.CONSUME2(tokens.TO);
-                            this.SUBRULE5(this.Expression);
+                            this.CONSUME_ASSIGN2(tokens.TO, token => {
+                                this.tokenPayload(token, element, CstNodeKind.DoSpecification_TO_1);
+                            });
+                            this.SUBRULE_ASSIGN5(this.Expression, {
+                                assign: result => {
+                                    element.to = result;
+                                }
+                            });
                         });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.UPTHRU);
-                        this.SUBRULE6(this.Expression);
+                        this.CONSUME_ASSIGN1(tokens.UPTHRU, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DoSpecification_UPTHRU_0);
+                        });
+                        this.SUBRULE_ASSIGN6(this.Expression, {
+                            assign: result => {
+                                element.upthru = result;
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.DOWNTHRU);
-                        this.SUBRULE7(this.Expression);
+                        this.CONSUME_ASSIGN1(tokens.DOWNTHRU, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DoSpecification_DOWNTHRU_0);
+                        });
+                        this.SUBRULE_ASSIGN7(this.Expression, {
+                            assign: result => {
+                                element.downthru = result;
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.REPEAT);
-                        this.SUBRULE8(this.Expression);
+                        this.CONSUME_ASSIGN1(tokens.REPEAT, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DoSpecification_REPEAT_0);
+                        });
+                        this.SUBRULE_ASSIGN8(this.Expression, {
+                            assign: result => {
+                                element.repeat = result;
+                            }
+                        });
                     }
                 },
             ]);
@@ -2634,556 +4500,991 @@ export class PliParser extends AbstractParser {
             this.OR2([
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.DoWhile); 
+                        this.SUBRULE_ASSIGN1(this.DoWhile, {
+                            assign: result => {
+                                element.whileOrUntil = result;
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.DoUntil); 
+                        this.SUBRULE_ASSIGN1(this.DoUntil, {
+                            assign: result => {
+                                element.whileOrUntil = result;
+                            }
+                        });
                     }
                 },
             ]);
         });
 
-        return element;
+        return this.pop();
     });
     private createExecStatement(): ast.ExecStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ExecStatement,
+            query: undefined,
+        } as any;
     }
 
     ExecStatement = this.RULE('ExecStatement', () => {
-        const element = this.createExecStatement();
+        let element = this.push(this.createExecStatement());
 
-        this.CONSUME1(tokens.EXEC);
-        this.CONSUME1(tokens.ExecFragment);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.EXEC, token => {
+            this.tokenPayload(token, element, CstNodeKind.ExecStatement_EXEC_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.ExecFragment, token => {
+            this.tokenPayload(token, element, CstNodeKind.ExecStatement_query_ExecFragment_0);
+            element.query = token.image;
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.ExecStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createExitStatement(): ast.ExitStatement {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     ExitStatement = this.RULE('ExitStatement', () => {
-        const element = this.createExitStatement();
+        let element = this.push(this.createExitStatement());
 
         /* Action: ExitStatement */
-        this.CONSUME1(tokens.EXIT);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.EXIT, token => {
+            this.tokenPayload(token, element, CstNodeKind.ExitStatement_EXIT_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.ExitStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createFetchStatement(): ast.FetchStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.FetchStatement,
+            entries: undefined,
+        } as any;
     }
 
     FetchStatement = this.RULE('FetchStatement', () => {
-        const element = this.createFetchStatement();
+        let element = this.push(this.createFetchStatement());
 
-        this.CONSUME1(tokens.FETCH);
-        this.SUBRULE1(this.FetchEntry);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.FetchEntry);
+        this.CONSUME_ASSIGN1(tokens.FETCH, token => {
+            this.tokenPayload(token, element, CstNodeKind.FetchStatement_FETCH_0);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.SUBRULE_ASSIGN1(this.FetchEntry, {
+            assign: result => {
+                element.entries ??= []; element.entries.push(result);
+            }
+        });
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.FetchStatement_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.FetchEntry, {
+                assign: result => {
+                    element.entries ??= []; element.entries.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.FetchStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createFetchEntry(): ast.FetchEntry {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.FetchEntry,
+            name: undefined,
+            set: undefined,
+            title: undefined,
+        } as any;
     }
 
     FetchEntry = this.RULE('FetchEntry', () => {
-        const element = this.createFetchEntry();
+        let element = this.push(this.createFetchEntry());
 
-        this.CONSUME1(tokens.ID);
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.FetchEntry_name_ID_0);
+            element.name = token.image;
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.SET);
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.LocatorCall);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.SET, token => {
+                this.tokenPayload(token, element, CstNodeKind.FetchEntry_SET_0);
+            });
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.FetchEntry_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.LocatorCall, {
+                assign: result => {
+                    element.set = result;
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.FetchEntry_CloseParen_0);
+            });
         });
         this.OPTION2(() => {
-            this.CONSUME1(tokens.TITLE);
-            this.CONSUME2(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME2(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.TITLE, token => {
+                this.tokenPayload(token, element, CstNodeKind.FetchEntry_TITLE_0);
+            });
+            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.FetchEntry_OpenParen_1);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.title = result;
+                }
+            });
+            this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.FetchEntry_CloseParen_1);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createFlushStatement(): ast.FlushStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.FlushStatement,
+            file: undefined,
+        } as any;
     }
 
     FlushStatement = this.RULE('FlushStatement', () => {
-        const element = this.createFlushStatement();
+        let element = this.push(this.createFlushStatement());
 
-        this.CONSUME1(tokens.FLUSH);
-        this.CONSUME1(tokens.FILE);
-        this.CONSUME1(tokens.OpenParen);
+        this.CONSUME_ASSIGN1(tokens.FLUSH, token => {
+            this.tokenPayload(token, element, CstNodeKind.FlushStatement_FLUSH_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.FILE, token => {
+            this.tokenPayload(token, element, CstNodeKind.FlushStatement_FILE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.FlushStatement_OpenParen_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.LocatorCall); 
+                    this.SUBRULE_ASSIGN1(this.LocatorCall, {
+                        assign: result => {
+                            element.file = result;
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.Star); 
+                    this.CONSUME_ASSIGN1(tokens.Star, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FlushStatement_file_Star_0);
+                        element.file = token.image;
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.CloseParen);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.FlushStatement_CloseParen_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.FlushStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createFormatStatement(): ast.FormatStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.FormatStatement,
+            list: undefined,
+        } as any;
     }
 
     FormatStatement = this.RULE('FormatStatement', () => {
-        const element = this.createFormatStatement();
+        let element = this.push(this.createFormatStatement());
 
-        this.CONSUME1(tokens.FORMAT);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.FormatList);
-        this.CONSUME1(tokens.CloseParen);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.FORMAT, token => {
+            this.tokenPayload(token, element, CstNodeKind.FormatStatement_FORMAT_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.FormatStatement_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.FormatList, {
+            assign: result => {
+                element.list = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.FormatStatement_CloseParen_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.FormatStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createFormatList(): ast.FormatList {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.FormatList,
+            items: undefined,
+        } as any;
     }
 
     FormatList = this.RULE('FormatList', () => {
-        const element = this.createFormatList();
+        let element = this.push(this.createFormatList());
 
-        this.SUBRULE1(this.FormatListItem);
+        this.SUBRULE_ASSIGN1(this.FormatListItem, {
+            assign: result => {
+                element.items ??= []; element.items.push(result);
+            }
+        });
         this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.FormatListItem);
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.FormatList_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.FormatListItem, {
+                assign: result => {
+                    element.items ??= []; element.items.push(result);
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createFormatListItem(): ast.FormatListItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.FormatListItem,
+            level: undefined,
+            item: undefined,
+            list: undefined,
+        } as any;
     }
 
     FormatListItem = this.RULE('FormatListItem', () => {
-        const element = this.createFormatListItem();
+        let element = this.push(this.createFormatListItem());
 
         this.OPTION1(() => {
-            this.SUBRULE1(this.FormatListItemLevel);
+            this.SUBRULE_ASSIGN1(this.FormatListItemLevel, {
+                assign: result => {
+                    element.level = result;
+                }
+            });
         });
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.FormatItem); 
+                    this.SUBRULE_ASSIGN1(this.FormatItem, {
+                        assign: result => {
+                            element.item = result;
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OpenParen);
-                    this.SUBRULE1(this.FormatList);
-                    this.CONSUME1(tokens.CloseParen);
+                    this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FormatListItem_OpenParen_0);
+                    });
+                    this.SUBRULE_ASSIGN1(this.FormatList, {
+                        assign: result => {
+                            element.list = result;
+                        }
+                    });
+                    this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FormatListItem_CloseParen_0);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createFormatListItemLevel(): ast.FormatListItemLevel {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.FormatListItemLevel,
+            level: undefined,
+        } as any;
     }
 
     FormatListItemLevel = this.RULE('FormatListItemLevel', () => {
-        const element = this.createFormatListItemLevel();
+        let element = this.push(this.createFormatListItemLevel());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NUMBER); 
+                    this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FormatListItemLevel_level_NUMBER_0);
+                        element.level = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OpenParen);
-                    this.SUBRULE1(this.Expression);
-                    this.CONSUME1(tokens.CloseParen);
+                    this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FormatListItemLevel_OpenParen_0);
+                    });
+                    this.SUBRULE_ASSIGN1(this.Expression, {
+                        assign: result => {
+                            element.level = result;
+                        }
+                    });
+                    this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FormatListItemLevel_CloseParen_0);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createFormatItem(): ast.FormatItem {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     FormatItem = this.RULE('FormatItem', () => {
-        const element = this.createFormatItem();
+        let element = this.push(this.createFormatItem());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.AFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.AFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.BFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.BFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.CFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.CFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.EFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.EFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.FFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.FFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.PFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.PFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ColumnFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.ColumnFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.GFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.GFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.LFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.LFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.LineFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.LineFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.PageFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.PageFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.RFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.RFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.SkipFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.SkipFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.VFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.VFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.XFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.XFormatItem, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createAFormatItem(): ast.AFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.AFormatItem,
+            fieldWidth: undefined,
+        } as any;
     }
 
     AFormatItem = this.RULE('AFormatItem', () => {
-        const element = this.createAFormatItem();
+        let element = this.push(this.createAFormatItem());
 
-        this.CONSUME1(tokens.A);
+        this.CONSUME_ASSIGN1(tokens.A, token => {
+            this.tokenPayload(token, element, CstNodeKind.AFormatItem_A_0);
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.AFormatItem_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.fieldWidth = result;
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.AFormatItem_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createBFormatItem(): ast.BFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.BFormatItem,
+            fieldWidth: undefined,
+        } as any;
     }
 
     BFormatItem = this.RULE('BFormatItem', () => {
-        const element = this.createBFormatItem();
+        let element = this.push(this.createBFormatItem());
 
-        this.CONSUME1(tokens.B);
+        this.CONSUME_ASSIGN1(tokens.B, token => {
+            this.tokenPayload(token, element, CstNodeKind.BFormatItem_B_0);
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.BFormatItem_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.fieldWidth = result;
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.BFormatItem_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createCFormatItem(): ast.CFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.CFormatItem,
+            item: undefined,
+        } as any;
     }
 
     CFormatItem = this.RULE('CFormatItem', () => {
-        const element = this.createCFormatItem();
+        let element = this.push(this.createCFormatItem());
 
-        this.CONSUME1(tokens.C);
-        this.CONSUME1(tokens.OpenParen);
+        this.CONSUME_ASSIGN1(tokens.C, token => {
+            this.tokenPayload(token, element, CstNodeKind.CFormatItem_C_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.CFormatItem_OpenParen_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.FFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.FFormatItem, {
+                        assign: result => {
+                            element.item = result;
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.EFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.EFormatItem, {
+                        assign: result => {
+                            element.item = result;
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.PFormatItem); 
+                    this.SUBRULE_ASSIGN1(this.PFormatItem, {
+                        assign: result => {
+                            element.item = result;
+                        }
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.CFormatItem_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createFFormatItem(): ast.FFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.FFormatItem,
+            fieldWidth: undefined,
+            fractionalDigits: undefined,
+            scalingFactor: undefined,
+        } as any;
     }
 
     FFormatItem = this.RULE('FFormatItem', () => {
-        const element = this.createFFormatItem();
+        let element = this.push(this.createFFormatItem());
 
-        this.CONSUME1(tokens.F);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
+        this.CONSUME_ASSIGN1(tokens.F, token => {
+            this.tokenPayload(token, element, CstNodeKind.FFormatItem_F_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.FFormatItem_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.fieldWidth = result;
+            }
+        });
         this.OPTION2(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.Expression);
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.FFormatItem_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.Expression, {
+                assign: result => {
+                    element.fractionalDigits = result;
+                }
+            });
             this.OPTION1(() => {
-                this.CONSUME2(tokens.Comma);
-                this.SUBRULE3(this.Expression);
+                this.CONSUME_ASSIGN2(tokens.Comma, token => {
+                    this.tokenPayload(token, element, CstNodeKind.FFormatItem_Comma_1);
+                });
+                this.SUBRULE_ASSIGN3(this.Expression, {
+                    assign: result => {
+                        element.scalingFactor = result;
+                    }
+                });
             });
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.FFormatItem_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createEFormatItem(): ast.EFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.EFormatItem,
+            fieldWidth: undefined,
+            fractionalDigits: undefined,
+            significantDigits: undefined,
+        } as any;
     }
 
     EFormatItem = this.RULE('EFormatItem', () => {
-        const element = this.createEFormatItem();
+        let element = this.push(this.createEFormatItem());
 
-        this.CONSUME1(tokens.E);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.Comma);
-        this.SUBRULE2(this.Expression);
-        this.OPTION1(() => {
-            this.CONSUME2(tokens.Comma);
-            this.SUBRULE3(this.Expression);
+        this.CONSUME_ASSIGN1(tokens.E, token => {
+            this.tokenPayload(token, element, CstNodeKind.EFormatItem_E_0);
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.EFormatItem_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.fieldWidth = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.Comma, token => {
+            this.tokenPayload(token, element, CstNodeKind.EFormatItem_Comma_0);
+        });
+        this.SUBRULE_ASSIGN2(this.Expression, {
+            assign: result => {
+                element.fractionalDigits = result;
+            }
+        });
+        this.OPTION1(() => {
+            this.CONSUME_ASSIGN2(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.EFormatItem_Comma_1);
+            });
+            this.SUBRULE_ASSIGN3(this.Expression, {
+                assign: result => {
+                    element.significantDigits = result;
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.EFormatItem_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createPFormatItem(): ast.PFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.PFormatItem,
+            specification: undefined,
+        } as any;
     }
 
     PFormatItem = this.RULE('PFormatItem', () => {
-        const element = this.createPFormatItem();
+        let element = this.push(this.createPFormatItem());
 
-        this.CONSUME1(tokens.P);
-        this.CONSUME1(tokens.STRING_TERM);
+        this.CONSUME_ASSIGN1(tokens.P, token => {
+            this.tokenPayload(token, element, CstNodeKind.PFormatItem_P_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.STRING_TERM, token => {
+            this.tokenPayload(token, element, CstNodeKind.PFormatItem_specification_STRING_TERM_0);
+            element.specification = token.image;
+        });
 
-        return element;
+        return this.pop();
     });
     private createColumnFormatItem(): ast.ColumnFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ColumnFormatItem,
+            characterPosition: undefined,
+        } as any;
     }
 
     ColumnFormatItem = this.RULE('ColumnFormatItem', () => {
-        const element = this.createColumnFormatItem();
+        let element = this.push(this.createColumnFormatItem());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.COLUMN); 
+                    this.CONSUME_ASSIGN1(tokens.COLUMN, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ColumnFormatItem_COLUMN_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.COL); 
+                    this.CONSUME_ASSIGN1(tokens.COL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ColumnFormatItem_COL_0);
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ColumnFormatItem_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.characterPosition = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ColumnFormatItem_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createGFormatItem(): ast.GFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.GFormatItem,
+            fieldWidth: undefined,
+        } as any;
     }
 
     GFormatItem = this.RULE('GFormatItem', () => {
-        const element = this.createGFormatItem();
+        let element = this.push(this.createGFormatItem());
 
-        this.CONSUME1(tokens.G);
+        this.CONSUME_ASSIGN1(tokens.G, token => {
+            this.tokenPayload(token, element, CstNodeKind.GFormatItem_G_0);
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.GFormatItem_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.fieldWidth = result;
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.GFormatItem_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createLFormatItem(): ast.LFormatItem {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     LFormatItem = this.RULE('LFormatItem', () => {
-        const element = this.createLFormatItem();
+        let element = this.push(this.createLFormatItem());
 
         /* Action: LFormatItem */
-        this.CONSUME1(tokens.L);
+        this.CONSUME_ASSIGN1(tokens.L, token => {
+            this.tokenPayload(token, element, CstNodeKind.LFormatItem_L_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createLineFormatItem(): ast.LineFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LineFormatItem,
+            lineNumber: undefined,
+        } as any;
     }
 
     LineFormatItem = this.RULE('LineFormatItem', () => {
-        const element = this.createLineFormatItem();
+        let element = this.push(this.createLineFormatItem());
 
-        this.CONSUME1(tokens.LINE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.LINE, token => {
+            this.tokenPayload(token, element, CstNodeKind.LineFormatItem_LINE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LineFormatItem_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.lineNumber = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LineFormatItem_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createPageFormatItem(): ast.PageFormatItem {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     PageFormatItem = this.RULE('PageFormatItem', () => {
-        const element = this.createPageFormatItem();
+        let element = this.push(this.createPageFormatItem());
 
         /* Action: PageFormatItem */
-        this.CONSUME1(tokens.PAGE);
+        this.CONSUME_ASSIGN1(tokens.PAGE, token => {
+            this.tokenPayload(token, element, CstNodeKind.PageFormatItem_PAGE_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createRFormatItem(): ast.RFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.RFormatItem,
+            labelReference: undefined,
+        } as any;
     }
 
     RFormatItem = this.RULE('RFormatItem', () => {
-        const element = this.createRFormatItem();
+        let element = this.push(this.createRFormatItem());
 
-        this.CONSUME1(tokens.R);
-        this.CONSUME1(tokens.OpenParen);
-        this.CONSUME1(tokens.ID);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.R, token => {
+            this.tokenPayload(token, element, CstNodeKind.RFormatItem_R_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.RFormatItem_OpenParen_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.RFormatItem_labelReference_ID_0);
+            element.labelReference = token.image;
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.RFormatItem_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createSkipFormatItem(): ast.SkipFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.SkipFormatItem,
+            skip: undefined,
+        } as any;
     }
 
     SkipFormatItem = this.RULE('SkipFormatItem', () => {
-        const element = this.createSkipFormatItem();
+        let element = this.push(this.createSkipFormatItem());
 
-        this.CONSUME1(tokens.SKIP);
+        this.CONSUME_ASSIGN1(tokens.SKIP, token => {
+            this.tokenPayload(token, element, CstNodeKind.SkipFormatItem_SKIP_0);
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.SkipFormatItem_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.skip = result;
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.SkipFormatItem_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createVFormatItem(): ast.VFormatItem {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     VFormatItem = this.RULE('VFormatItem', () => {
-        const element = this.createVFormatItem();
+        let element = this.push(this.createVFormatItem());
 
         /* Action: VFormatItem */
-        this.CONSUME1(tokens.V);
+        this.CONSUME_ASSIGN1(tokens.V, token => {
+            this.tokenPayload(token, element, CstNodeKind.VFormatItem_V_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createXFormatItem(): ast.XFormatItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.XFormatItem,
+            width: undefined,
+        } as any;
     }
 
     XFormatItem = this.RULE('XFormatItem', () => {
-        const element = this.createXFormatItem();
+        let element = this.push(this.createXFormatItem());
 
-        this.CONSUME1(tokens.X);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.X, token => {
+            this.tokenPayload(token, element, CstNodeKind.XFormatItem_X_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.XFormatItem_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.width = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.XFormatItem_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createFreeStatement(): ast.FreeStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.FreeStatement,
+            references: undefined,
+        } as any;
     }
 
     FreeStatement = this.RULE('FreeStatement', () => {
-        const element = this.createFreeStatement();
+        let element = this.push(this.createFreeStatement());
 
-        this.CONSUME1(tokens.FREE);
-        this.SUBRULE1(this.LocatorCall);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.LocatorCall);
+        this.CONSUME_ASSIGN1(tokens.FREE, token => {
+            this.tokenPayload(token, element, CstNodeKind.FreeStatement_FREE_0);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.references ??= []; element.references.push(result);
+            }
+        });
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.FreeStatement_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.LocatorCall, {
+                assign: result => {
+                    element.references ??= []; element.references.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.FreeStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createGetStatement(): ast.GetStatement {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     GetStatement = this.RULE('GetStatement', () => {
-        const element = this.createGetStatement();
+        let element = this.push(this.createGetStatement());
 
-        this.CONSUME1(tokens.GET);
+        this.CONSUME_ASSIGN1(tokens.GET, token => {
+            this.tokenPayload(token, element, CstNodeKind.GetStatement_GET_0);
+        });
         this.OR1([
             {
                 ALT: () => {
@@ -3192,22 +5493,38 @@ export class PliParser extends AbstractParser {
                         this.OR2([
                             {
                                 ALT: () => {
-                                    this.SUBRULE1(this.GetFile); 
+                                    this.SUBRULE_ASSIGN1(this.GetFile, {
+                                        assign: result => {
+                                            element.specifications ??= []; element.specifications.push(result);
+                                        }
+                                    });
                                 }
                             },
                             {
                                 ALT: () => {
-                                    this.SUBRULE1(this.GetCopy); 
+                                    this.SUBRULE_ASSIGN1(this.GetCopy, {
+                                        assign: result => {
+                                            element.specifications ??= []; element.specifications.push(result);
+                                        }
+                                    });
                                 }
                             },
                             {
                                 ALT: () => {
-                                    this.SUBRULE1(this.GetSkip); 
+                                    this.SUBRULE_ASSIGN1(this.GetSkip, {
+                                        assign: result => {
+                                            element.specifications ??= []; element.specifications.push(result);
+                                        }
+                                    });
                                 }
                             },
                             {
                                 ALT: () => {
-                                    this.SUBRULE1(this.DataSpecificationOptions); 
+                                    this.SUBRULE_ASSIGN1(this.DataSpecificationOptions, {
+                                        assign: result => {
+                                            element.specifications ??= []; element.specifications.push(result);
+                                        }
+                                    });
                                 }
                             },
                         ]);
@@ -3217,141 +5534,256 @@ export class PliParser extends AbstractParser {
             {
                 ALT: () => {
                     /* Action: GetStringStatement */
-                    this.CONSUME1(tokens.STRING);
-                    this.CONSUME1(tokens.OpenParen);
-                    this.SUBRULE1(this.Expression);
-                    this.CONSUME1(tokens.CloseParen);
-                    this.SUBRULE2(this.DataSpecificationOptions);
+                    this.CONSUME_ASSIGN1(tokens.STRING, token => {
+                        this.tokenPayload(token, element, CstNodeKind.GetStatement_STRING_0);
+                    });
+                    this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.GetStatement_OpenParen_0);
+                    });
+                    this.SUBRULE_ASSIGN1(this.Expression, {
+                        assign: result => {
+                            element.expression = result;
+                        }
+                    });
+                    this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.GetStatement_CloseParen_0);
+                    });
+                    this.SUBRULE_ASSIGN2(this.DataSpecificationOptions, {
+                        assign: result => {
+                            element.dataSpecification = result;
+                        }
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.GetStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createGetFile(): ast.GetFile {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.GetFile,
+            file: undefined,
+        } as any;
     }
 
     GetFile = this.RULE('GetFile', () => {
-        const element = this.createGetFile();
+        let element = this.push(this.createGetFile());
 
-        this.CONSUME1(tokens.FILE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.FILE, token => {
+            this.tokenPayload(token, element, CstNodeKind.GetFile_FILE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.GetFile_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.file = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.GetFile_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createGetCopy(): ast.GetCopy {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.GetCopy,
+            copyReference: undefined,
+        } as any;
     }
 
     GetCopy = this.RULE('GetCopy', () => {
-        const element = this.createGetCopy();
+        let element = this.push(this.createGetCopy());
 
-        this.CONSUME1(tokens.COPY);
+        this.CONSUME_ASSIGN1(tokens.COPY, token => {
+            this.tokenPayload(token, element, CstNodeKind.GetCopy_COPY_0);
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.CONSUME1(tokens.ID);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.GetCopy_OpenParen_0);
+            });
+            this.CONSUME_ASSIGN1(tokens.ID, token => {
+                this.tokenPayload(token, element, CstNodeKind.GetCopy_copyReference_ID_0);
+                element.copyReference = token.image;
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.GetCopy_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createGetSkip(): ast.GetSkip {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.GetSkip,
+            skipExpression: undefined,
+        } as any;
     }
 
     GetSkip = this.RULE('GetSkip', () => {
-        const element = this.createGetSkip();
+        let element = this.push(this.createGetSkip());
 
-        this.CONSUME1(tokens.SKIP);
+        this.CONSUME_ASSIGN1(tokens.SKIP, token => {
+            this.tokenPayload(token, element, CstNodeKind.GetSkip_SKIP_0);
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.GetSkip_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.skipExpression = result;
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.GetSkip_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createGoToStatement(): ast.GoToStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.GoToStatement,
+            label: undefined,
+        } as any;
     }
 
     GoToStatement = this.RULE('GoToStatement', () => {
-        const element = this.createGoToStatement();
+        let element = this.push(this.createGoToStatement());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.GO);
-                    this.CONSUME1(tokens.TO);
+                    this.CONSUME_ASSIGN1(tokens.GO, token => {
+                        this.tokenPayload(token, element, CstNodeKind.GoToStatement_GO_0);
+                    });
+                    this.CONSUME_ASSIGN1(tokens.TO, token => {
+                        this.tokenPayload(token, element, CstNodeKind.GoToStatement_TO_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.GOTO); 
+                    this.CONSUME_ASSIGN1(tokens.GOTO, token => {
+                        this.tokenPayload(token, element, CstNodeKind.GoToStatement_GOTO_0);
+                    });
                 }
             },
         ]);
-        this.SUBRULE1(this.LabelReference);
-        this.CONSUME1(tokens.Semicolon);
+        this.SUBRULE_ASSIGN1(this.LabelReference, {
+            assign: result => {
+                element.label = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.GoToStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createIfStatement(): ast.IfStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.IfStatement,
+            expression: undefined,
+            unit: undefined,
+            else: undefined,
+        } as any;
     }
 
     IfStatement = this.RULE('IfStatement', () => {
-        const element = this.createIfStatement();
+        let element = this.push(this.createIfStatement());
 
-        this.CONSUME1(tokens.IF);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.THEN);
-        this.SUBRULE1(this.Statement);
+        this.CONSUME_ASSIGN1(tokens.IF, token => {
+            this.tokenPayload(token, element, CstNodeKind.IfStatement_IF_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.expression = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.THEN, token => {
+            this.tokenPayload(token, element, CstNodeKind.IfStatement_THEN_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Statement, {
+            assign: result => {
+                element.unit = result;
+            }
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.ELSE);
-            this.SUBRULE2(this.Statement);
+            this.CONSUME_ASSIGN1(tokens.ELSE, token => {
+                this.tokenPayload(token, element, CstNodeKind.IfStatement_ELSE_0);
+            });
+            this.SUBRULE_ASSIGN2(this.Statement, {
+                assign: result => {
+                    element.else = result;
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createIncludeDirective(): ast.IncludeDirective {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.IncludeDirective,
+            items: undefined,
+        } as any;
     }
 
     IncludeDirective = this.RULE('IncludeDirective', () => {
-        const element = this.createIncludeDirective();
+        let element = this.push(this.createIncludeDirective());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PercentINCLUDE); 
+                    this.CONSUME_ASSIGN1(tokens.PercentINCLUDE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.IncludeDirective_PercentINCLUDE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PercentXINCLUDE); 
+                    this.CONSUME_ASSIGN1(tokens.PercentXINCLUDE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.IncludeDirective_PercentXINCLUDE_0);
+                    });
                 }
             },
         ]);
-        this.SUBRULE1(this.IncludeItem);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.IncludeItem);
+        this.SUBRULE_ASSIGN1(this.IncludeItem, {
+            assign: result => {
+                element.items ??= []; element.items.push(result);
+            }
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.IncludeDirective_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.IncludeItem, {
+                assign: result => {
+                    element.items ??= []; element.items.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.IncludeDirective_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createIncludeItem(): ast.IncludeItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.IncludeItem,
+            file: undefined,
+            ddname: undefined,
+        } as any;
     }
 
     IncludeItem = this.RULE('IncludeItem', () => {
-        const element = this.createIncludeItem();
+        let element = this.push(this.createIncludeItem());
 
         this.OR1([
             {
@@ -3359,12 +5791,18 @@ export class PliParser extends AbstractParser {
                     this.OR2([
                         {
                             ALT: () => {
-                                this.CONSUME1(tokens.STRING_TERM); 
+                                this.CONSUME_ASSIGN1(tokens.STRING_TERM, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.IncludeItem_file_STRING_TERM_0);
+                                    element.file = token.image;
+                                });
                             }
                         },
                         {
                             ALT: () => {
-                                this.CONSUME1(tokens.ID); 
+                                this.CONSUME_ASSIGN1(tokens.ID, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.IncludeItem_file_ID_0);
+                                    element.file = token.image;
+                                });
                             }
                         },
                     ]);
@@ -3372,592 +5810,1005 @@ export class PliParser extends AbstractParser {
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ddname);
-                    this.CONSUME1(tokens.OpenParen);
+                    this.CONSUME_ASSIGN1(tokens.ddname, token => {
+                        this.tokenPayload(token, element, CstNodeKind.IncludeItem_ddname_ddname_0);
+                        element.ddname = true;
+                    });
+                    this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.IncludeItem_OpenParen_0);
+                    });
                     this.OR3([
                         {
                             ALT: () => {
-                                this.CONSUME2(tokens.STRING_TERM); 
+                                this.CONSUME_ASSIGN2(tokens.STRING_TERM, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.IncludeItem_file_STRING_TERM_1);
+                                    element.file = token.image;
+                                });
                             }
                         },
                         {
                             ALT: () => {
-                                this.CONSUME2(tokens.ID); 
+                                this.CONSUME_ASSIGN2(tokens.ID, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.IncludeItem_file_ID_1);
+                                    element.file = token.image;
+                                });
                             }
                         },
                     ]);
-                    this.CONSUME1(tokens.CloseParen);
+                    this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.IncludeItem_CloseParen_0);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createIterateStatement(): ast.IterateStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.IterateStatement,
+            label: undefined,
+        } as any;
     }
 
     IterateStatement = this.RULE('IterateStatement', () => {
-        const element = this.createIterateStatement();
+        let element = this.push(this.createIterateStatement());
 
-        this.CONSUME1(tokens.ITERATE);
-        this.OPTION1(() => {
-            this.SUBRULE1(this.LabelReference);
+        this.CONSUME_ASSIGN1(tokens.ITERATE, token => {
+            this.tokenPayload(token, element, CstNodeKind.IterateStatement_ITERATE_0);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.OPTION1(() => {
+            this.SUBRULE_ASSIGN1(this.LabelReference, {
+                assign: result => {
+                    element.label = result;
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.IterateStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createLeaveStatement(): ast.LeaveStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LeaveStatement,
+            label: undefined,
+        } as any;
     }
 
     LeaveStatement = this.RULE('LeaveStatement', () => {
-        const element = this.createLeaveStatement();
+        let element = this.push(this.createLeaveStatement());
 
-        this.CONSUME1(tokens.LEAVE);
-        this.OPTION1(() => {
-            this.SUBRULE1(this.LabelReference);
+        this.CONSUME_ASSIGN1(tokens.LEAVE, token => {
+            this.tokenPayload(token, element, CstNodeKind.LeaveStatement_LEAVE_0);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.OPTION1(() => {
+            this.SUBRULE_ASSIGN1(this.LabelReference, {
+                assign: result => {
+                    element.label = result;
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.LeaveStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createLineDirective(): ast.LineDirective {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LineDirective,
+            line: undefined,
+            file: undefined,
+        } as any;
     }
 
     LineDirective = this.RULE('LineDirective', () => {
-        const element = this.createLineDirective();
+        let element = this.push(this.createLineDirective());
 
-        this.CONSUME1(tokens.PercentLINE);
-        this.CONSUME1(tokens.OpenParen);
-        this.CONSUME1(tokens.NUMBER);
-        this.CONSUME1(tokens.Comma);
-        this.CONSUME1(tokens.STRING_TERM);
-        this.CONSUME1(tokens.CloseParen);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.PercentLINE, token => {
+            this.tokenPayload(token, element, CstNodeKind.LineDirective_PercentLINE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LineDirective_OpenParen_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+            this.tokenPayload(token, element, CstNodeKind.LineDirective_line_NUMBER_0);
+            element.line = token.image;
+        });
+        this.CONSUME_ASSIGN1(tokens.Comma, token => {
+            this.tokenPayload(token, element, CstNodeKind.LineDirective_Comma_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.STRING_TERM, token => {
+            this.tokenPayload(token, element, CstNodeKind.LineDirective_file_STRING_TERM_0);
+            element.file = token.image;
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LineDirective_CloseParen_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.LineDirective_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createLocateStatement(): ast.LocateStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LocateStatement,
+            variable: undefined,
+            arguments: undefined,
+        } as any;
     }
 
     LocateStatement = this.RULE('LocateStatement', () => {
-        const element = this.createLocateStatement();
+        let element = this.push(this.createLocateStatement());
 
-        this.CONSUME1(tokens.LOCATE);
-        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME_ASSIGN1(tokens.LOCATE, token => {
+            this.tokenPayload(token, element, CstNodeKind.LocateStatement_LOCATE_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.variable = result;
+            }
+        });
         this.MANY1(() => {
             this.OR1([
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.LocateStatementFile); 
+                        this.SUBRULE_ASSIGN1(this.LocateStatementFile, {
+                            assign: result => {
+                                element.arguments ??= []; element.arguments.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.LocateStatementSet); 
+                        this.SUBRULE_ASSIGN1(this.LocateStatementSet, {
+                            assign: result => {
+                                element.arguments ??= []; element.arguments.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.LocateStatementKeyFrom); 
+                        this.SUBRULE_ASSIGN1(this.LocateStatementKeyFrom, {
+                            assign: result => {
+                                element.arguments ??= []; element.arguments.push(result);
+                            }
+                        });
                     }
                 },
             ]);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.LocateStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createLocateStatementFile(): ast.LocateStatementFile {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LocateStatementFile,
+            file: undefined,
+        } as any;
     }
 
     LocateStatementFile = this.RULE('LocateStatementFile', () => {
-        const element = this.createLocateStatementFile();
+        let element = this.push(this.createLocateStatementFile());
 
-        this.CONSUME1(tokens.FILE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.ReferenceItem);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.FILE, token => {
+            this.tokenPayload(token, element, CstNodeKind.LocateStatementFile_FILE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LocateStatementFile_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.ReferenceItem, {
+            assign: result => {
+                element.file = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LocateStatementFile_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createLocateStatementSet(): ast.LocateStatementSet {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LocateStatementSet,
+            set: undefined,
+        } as any;
     }
 
     LocateStatementSet = this.RULE('LocateStatementSet', () => {
-        const element = this.createLocateStatementSet();
+        let element = this.push(this.createLocateStatementSet());
 
-        this.CONSUME1(tokens.SET);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.SET, token => {
+            this.tokenPayload(token, element, CstNodeKind.LocateStatementSet_SET_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LocateStatementSet_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.set = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LocateStatementSet_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createLocateStatementKeyFrom(): ast.LocateStatementKeyFrom {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LocateStatementKeyFrom,
+            keyfrom: undefined,
+        } as any;
     }
 
     LocateStatementKeyFrom = this.RULE('LocateStatementKeyFrom', () => {
-        const element = this.createLocateStatementKeyFrom();
+        let element = this.push(this.createLocateStatementKeyFrom());
 
-        this.CONSUME1(tokens.KEYFROM);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.KEYFROM, token => {
+            this.tokenPayload(token, element, CstNodeKind.LocateStatementKeyFrom_KEYFROM_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LocateStatementKeyFrom_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.keyfrom = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.LocateStatementKeyFrom_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createNoPrintDirective(): ast.NoPrintDirective {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     NoPrintDirective = this.RULE('NoPrintDirective', () => {
-        const element = this.createNoPrintDirective();
+        let element = this.push(this.createNoPrintDirective());
 
         /* Action: NoPrintDirective */
-        this.CONSUME1(tokens.PercentNOPRINT);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.PercentNOPRINT, token => {
+            this.tokenPayload(token, element, CstNodeKind.NoPrintDirective_PercentNOPRINT_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.NoPrintDirective_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createNoteDirective(): ast.NoteDirective {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.NoteDirective,
+            message: undefined,
+            code: undefined,
+        } as any;
     }
 
     NoteDirective = this.RULE('NoteDirective', () => {
-        const element = this.createNoteDirective();
+        let element = this.push(this.createNoteDirective());
 
-        this.CONSUME1(tokens.PercentNOTE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.OPTION1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.Expression);
+        this.CONSUME_ASSIGN1(tokens.PercentNOTE, token => {
+            this.tokenPayload(token, element, CstNodeKind.NoteDirective_PercentNOTE_0);
         });
-        this.CONSUME1(tokens.CloseParen);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.NoteDirective_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.message = result;
+            }
+        });
+        this.OPTION1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.NoteDirective_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.Expression, {
+                assign: result => {
+                    element.code = result;
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.NoteDirective_CloseParen_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.NoteDirective_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createNullStatement(): ast.NullStatement {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     NullStatement = this.RULE('NullStatement', () => {
-        const element = this.createNullStatement();
+        let element = this.push(this.createNullStatement());
 
         /* Action: NullStatement */
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.NullStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createOnStatement(): ast.OnStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OnStatement,
+            conditions: undefined,
+            snap: undefined,
+            system: undefined,
+            onUnit: undefined,
+        } as any;
     }
 
     OnStatement = this.RULE('OnStatement', () => {
-        const element = this.createOnStatement();
+        let element = this.push(this.createOnStatement());
 
-        this.CONSUME1(tokens.ON);
-        this.SUBRULE1(this.Condition);
+        this.CONSUME_ASSIGN1(tokens.ON, token => {
+            this.tokenPayload(token, element, CstNodeKind.OnStatement_ON_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Condition, {
+            assign: result => {
+                element.conditions ??= []; element.conditions.push(result);
+            }
+        });
         this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.Condition);
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.OnStatement_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.Condition, {
+                assign: result => {
+                    element.conditions ??= []; element.conditions.push(result);
+                }
+            });
         });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.SNAP);
+            this.CONSUME_ASSIGN1(tokens.SNAP, token => {
+                this.tokenPayload(token, element, CstNodeKind.OnStatement_snap_SNAP_0);
+                element.snap = true;
+            });
         });
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.SYSTEM);
-                    this.CONSUME1(tokens.Semicolon);
+                    this.CONSUME_ASSIGN1(tokens.SYSTEM, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OnStatement_system_SYSTEM_0);
+                        element.system = true;
+                    });
+                    this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OnStatement_Semicolon_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.Statement); 
+                    this.SUBRULE_ASSIGN1(this.Statement, {
+                        assign: result => {
+                            element.onUnit = result;
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createCondition(): ast.Condition {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     Condition = this.RULE('Condition', () => {
-        const element = this.createCondition();
+        let element = this.push(this.createCondition());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.KeywordCondition); 
+                    this.SUBRULE_ASSIGN1(this.KeywordCondition, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.NamedCondition); 
+                    this.SUBRULE_ASSIGN1(this.NamedCondition, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.FileReferenceCondition); 
+                    this.SUBRULE_ASSIGN1(this.FileReferenceCondition, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createKeywordCondition(): ast.KeywordCondition {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.KeywordCondition,
+            keyword: undefined,
+        } as any;
     }
 
     KeywordCondition = this.RULE('KeywordCondition', () => {
-        const element = this.createKeywordCondition();
+        let element = this.push(this.createKeywordCondition());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ANYCONDITION); 
+                    this.CONSUME_ASSIGN1(tokens.ANYCONDITION, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ANYCONDITION_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ANYCOND); 
+                    this.CONSUME_ASSIGN1(tokens.ANYCOND, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ANYCOND_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.AREA); 
+                    this.CONSUME_ASSIGN1(tokens.AREA, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_AREA_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ASSERTION); 
+                    this.CONSUME_ASSIGN1(tokens.ASSERTION, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ASSERTION_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ATTENTION); 
+                    this.CONSUME_ASSIGN1(tokens.ATTENTION, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ATTENTION_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CONFORMANCE); 
+                    this.CONSUME_ASSIGN1(tokens.CONFORMANCE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_CONFORMANCE_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CONVERSION); 
+                    this.CONSUME_ASSIGN1(tokens.CONVERSION, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_CONVERSION_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ERROR); 
+                    this.CONSUME_ASSIGN1(tokens.ERROR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ERROR_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.FINISH); 
+                    this.CONSUME_ASSIGN1(tokens.FINISH, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_FINISH_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.FIXEDOVERFLOW); 
+                    this.CONSUME_ASSIGN1(tokens.FIXEDOVERFLOW, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_FIXEDOVERFLOW_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.FOFL); 
+                    this.CONSUME_ASSIGN1(tokens.FOFL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_FOFL_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.INVALIDOP); 
+                    this.CONSUME_ASSIGN1(tokens.INVALIDOP, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_INVALIDOP_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OVERFLOW); 
+                    this.CONSUME_ASSIGN1(tokens.OVERFLOW, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_OVERFLOW_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OFL); 
+                    this.CONSUME_ASSIGN1(tokens.OFL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_OFL_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.SIZE); 
+                    this.CONSUME_ASSIGN1(tokens.SIZE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_SIZE_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.STORAGE); 
+                    this.CONSUME_ASSIGN1(tokens.STORAGE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_STORAGE_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.STRINGRANGE); 
+                    this.CONSUME_ASSIGN1(tokens.STRINGRANGE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_STRINGRANGE_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.STRINGSIZE); 
+                    this.CONSUME_ASSIGN1(tokens.STRINGSIZE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_STRINGSIZE_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.SUBSCRIPTRANGE); 
+                    this.CONSUME_ASSIGN1(tokens.SUBSCRIPTRANGE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_SUBSCRIPTRANGE_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UNDERFLOW); 
+                    this.CONSUME_ASSIGN1(tokens.UNDERFLOW, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_UNDERFLOW_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UFL); 
+                    this.CONSUME_ASSIGN1(tokens.UFL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_UFL_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ZERODIVIDE); 
+                    this.CONSUME_ASSIGN1(tokens.ZERODIVIDE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ZERODIVIDE_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ZDIV); 
+                    this.CONSUME_ASSIGN1(tokens.ZDIV, token => {
+                        this.tokenPayload(token, element, CstNodeKind.KeywordCondition_keyword_ZDIV_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createNamedCondition(): ast.NamedCondition {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.NamedCondition,
+            name: undefined,
+        } as any;
     }
 
     NamedCondition = this.RULE('NamedCondition', () => {
-        const element = this.createNamedCondition();
+        let element = this.push(this.createNamedCondition());
 
-        this.CONSUME1(tokens.CONDITION);
-        this.CONSUME1(tokens.OpenParen);
-        this.CONSUME1(tokens.ID);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CONDITION, token => {
+            this.tokenPayload(token, element, CstNodeKind.NamedCondition_CONDITION_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.NamedCondition_OpenParen_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.NamedCondition_name_ID_0);
+            element.name = token.image;
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.NamedCondition_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createFileReferenceCondition(): ast.FileReferenceCondition {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.FileReferenceCondition,
+            keyword: undefined,
+            fileReference: undefined,
+        } as any;
     }
 
     FileReferenceCondition = this.RULE('FileReferenceCondition', () => {
-        const element = this.createFileReferenceCondition();
+        let element = this.push(this.createFileReferenceCondition());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ENDFILE); 
+                    this.CONSUME_ASSIGN1(tokens.ENDFILE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_ENDFILE_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ENDPAGE); 
+                    this.CONSUME_ASSIGN1(tokens.ENDPAGE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_ENDPAGE_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.KEY); 
+                    this.CONSUME_ASSIGN1(tokens.KEY, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_KEY_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NAME); 
+                    this.CONSUME_ASSIGN1(tokens.NAME, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_NAME_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.RECORD); 
+                    this.CONSUME_ASSIGN1(tokens.RECORD, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_RECORD_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.TRANSMIT); 
+                    this.CONSUME_ASSIGN1(tokens.TRANSMIT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_TRANSMIT_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UNDEFINEDFILE); 
+                    this.CONSUME_ASSIGN1(tokens.UNDEFINEDFILE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_UNDEFINEDFILE_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UNDF); 
+                    this.CONSUME_ASSIGN1(tokens.UNDF, token => {
+                        this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_keyword_UNDF_0);
+                        element.keyword = token.image;
+                    });
                 }
             },
         ]);
         this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.ReferenceItem);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.ReferenceItem, {
+                assign: result => {
+                    element.fileReference = result;
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.FileReferenceCondition_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createOpenStatement(): ast.OpenStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OpenStatement,
+            options: undefined,
+        } as any;
     }
 
     OpenStatement = this.RULE('OpenStatement', () => {
-        const element = this.createOpenStatement();
+        let element = this.push(this.createOpenStatement());
 
-        this.CONSUME1(tokens.OPEN);
-        this.SUBRULE1(this.OpenOptionsGroup);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.OpenOptionsGroup);
+        this.CONSUME_ASSIGN1(tokens.OPEN, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenStatement_OPEN_0);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.SUBRULE_ASSIGN1(this.OpenOptionsGroup, {
+            assign: result => {
+                element.options ??= []; element.options.push(result);
+            }
+        });
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.OpenStatement_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.OpenOptionsGroup, {
+                assign: result => {
+                    element.options ??= []; element.options.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createOpenOptionsGroup(): ast.OpenOptionsGroup {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OpenOptionsGroup,
+            options: undefined,
+        } as any;
     }
 
     OpenOptionsGroup = this.RULE('OpenOptionsGroup', () => {
-        const element = this.createOpenOptionsGroup();
+        let element = this.push(this.createOpenOptionsGroup());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OpenOptionsFile); 
+                    this.SUBRULE_ASSIGN1(this.OpenOptionsFile, {
+                        assign: result => {
+                            element.options ??= []; element.options.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OpenOptionsStream); 
+                    this.SUBRULE_ASSIGN1(this.OpenOptionsStream, {
+                        assign: result => {
+                            element.options ??= []; element.options.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OpenOptionsAccess); 
+                    this.SUBRULE_ASSIGN1(this.OpenOptionsAccess, {
+                        assign: result => {
+                            element.options ??= []; element.options.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OpenOptionsBuffering); 
+                    this.SUBRULE_ASSIGN1(this.OpenOptionsBuffering, {
+                        assign: result => {
+                            element.options ??= []; element.options.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OpenOptionsKeyed); 
+                    this.SUBRULE_ASSIGN1(this.OpenOptionsKeyed, {
+                        assign: result => {
+                            element.options ??= []; element.options.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OpenOptionsPrint); 
+                    this.SUBRULE_ASSIGN1(this.OpenOptionsPrint, {
+                        assign: result => {
+                            element.options ??= []; element.options.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OpenOptionsTitle); 
+                    this.SUBRULE_ASSIGN1(this.OpenOptionsTitle, {
+                        assign: result => {
+                            element.options ??= []; element.options.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OpenOptionsLineSize); 
+                    this.SUBRULE_ASSIGN1(this.OpenOptionsLineSize, {
+                        assign: result => {
+                            element.options ??= []; element.options.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OpenOptionsPageSize); 
+                    this.SUBRULE_ASSIGN1(this.OpenOptionsPageSize, {
+                        assign: result => {
+                            element.options ??= []; element.options.push(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createOpenOptionsFile(): ast.OpenOptionsFile {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OpenOptionsFile,
+            file: undefined,
+        } as any;
     }
 
     OpenOptionsFile = this.RULE('OpenOptionsFile', () => {
-        const element = this.createOpenOptionsFile();
+        let element = this.push(this.createOpenOptionsFile());
 
-        this.CONSUME1(tokens.FILE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.ReferenceItem);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.FILE, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsFile_FILE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsFile_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.ReferenceItem, {
+            assign: result => {
+                element.file = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsFile_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createOpenOptionsStream(): ast.OpenOptionsStream {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OpenOptionsStream,
+            stream: undefined,
+            record: undefined,
+        } as any;
     }
 
     OpenOptionsStream = this.RULE('OpenOptionsStream', () => {
-        const element = this.createOpenOptionsStream();
+        let element = this.push(this.createOpenOptionsStream());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.STREAM); 
+                    this.CONSUME_ASSIGN1(tokens.STREAM, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsStream_stream_STREAM_0);
+                        element.stream = true;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.RECORD); 
+                    this.CONSUME_ASSIGN1(tokens.RECORD, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsStream_record_RECORD_0);
+                        element.record = true;
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createOpenOptionsAccess(): ast.OpenOptionsAccess {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OpenOptionsAccess,
+            input: undefined,
+            output: undefined,
+            update: undefined,
+        } as any;
     }
 
     OpenOptionsAccess = this.RULE('OpenOptionsAccess', () => {
-        const element = this.createOpenOptionsAccess();
+        let element = this.push(this.createOpenOptionsAccess());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.INPUT); 
+                    this.CONSUME_ASSIGN1(tokens.INPUT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsAccess_input_INPUT_0);
+                        element.input = true;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OUTPUT); 
+                    this.CONSUME_ASSIGN1(tokens.OUTPUT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsAccess_output_OUTPUT_0);
+                        element.output = true;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UPDATE); 
+                    this.CONSUME_ASSIGN1(tokens.UPDATE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsAccess_update_UPDATE_0);
+                        element.update = true;
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createOpenOptionsBuffering(): ast.OpenOptionsBuffering {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OpenOptionsBuffering,
+            sequential: undefined,
+            direct: undefined,
+            unbuffered: undefined,
+            buffered: undefined,
+        } as any;
     }
 
     OpenOptionsBuffering = this.RULE('OpenOptionsBuffering', () => {
-        const element = this.createOpenOptionsBuffering();
+        let element = this.push(this.createOpenOptionsBuffering());
 
         this.OR1([
             {
@@ -3965,12 +6816,18 @@ export class PliParser extends AbstractParser {
                     this.OR2([
                         {
                             ALT: () => {
-                                this.CONSUME1(tokens.SEQUENTIAL); 
+                                this.CONSUME_ASSIGN1(tokens.SEQUENTIAL, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.OpenOptionsBuffering_sequential_SEQUENTIAL_0);
+                                    element.sequential = true;
+                                });
                             }
                         },
                         {
                             ALT: () => {
-                                this.CONSUME1(tokens.SEQL); 
+                                this.CONSUME_ASSIGN1(tokens.SEQL, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.OpenOptionsBuffering_sequential_SEQL_0);
+                                    element.sequential = true;
+                                });
                             }
                         },
                     ]);
@@ -3978,7 +6835,10 @@ export class PliParser extends AbstractParser {
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DIRECT); 
+                    this.CONSUME_ASSIGN1(tokens.DIRECT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsBuffering_direct_DIRECT_0);
+                        element.direct = true;
+                    });
                 }
             },
         ]);
@@ -3989,12 +6849,18 @@ export class PliParser extends AbstractParser {
                         this.OR4([
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.UNBUFFERED); 
+                                    this.CONSUME_ASSIGN1(tokens.UNBUFFERED, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsBuffering_unbuffered_UNBUFFERED_0);
+                                        element.unbuffered = true;
+                                    });
                                 }
                             },
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.UNBUF); 
+                                    this.CONSUME_ASSIGN1(tokens.UNBUF, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsBuffering_unbuffered_UNBUF_0);
+                                        element.unbuffered = true;
+                                    });
                                 }
                             },
                         ]);
@@ -4005,12 +6871,18 @@ export class PliParser extends AbstractParser {
                         this.OR5([
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.BUF); 
+                                    this.CONSUME_ASSIGN1(tokens.BUF, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsBuffering_buffered_BUF_0);
+                                        element.buffered = true;
+                                    });
                                 }
                             },
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.BUFFERED); 
+                                    this.CONSUME_ASSIGN1(tokens.BUFFERED, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsBuffering_buffered_BUFFERED_0);
+                                        element.buffered = true;
+                                    });
                                 }
                             },
                         ]);
@@ -4019,195 +6891,311 @@ export class PliParser extends AbstractParser {
             ]);
         });
 
-        return element;
+        return this.pop();
     });
     private createOpenOptionsKeyed(): ast.OpenOptionsKeyed {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OpenOptionsKeyed,
+            keyed: undefined,
+        } as any;
     }
 
     OpenOptionsKeyed = this.RULE('OpenOptionsKeyed', () => {
-        const element = this.createOpenOptionsKeyed();
+        let element = this.push(this.createOpenOptionsKeyed());
 
-        this.CONSUME1(tokens.KEYED);
+        this.CONSUME_ASSIGN1(tokens.KEYED, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsKeyed_keyed_KEYED_0);
+            element.keyed = true;
+        });
 
-        return element;
+        return this.pop();
     });
     private createOpenOptionsPrint(): ast.OpenOptionsPrint {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OpenOptionsPrint,
+            print: undefined,
+        } as any;
     }
 
     OpenOptionsPrint = this.RULE('OpenOptionsPrint', () => {
-        const element = this.createOpenOptionsPrint();
+        let element = this.push(this.createOpenOptionsPrint());
 
-        this.CONSUME1(tokens.PRINT);
+        this.CONSUME_ASSIGN1(tokens.PRINT, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsPrint_print_PRINT_0);
+            element.print = true;
+        });
 
-        return element;
+        return this.pop();
     });
     private createOpenOptionsTitle(): ast.OpenOptionsTitle {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OpenOptionsTitle,
+            title: undefined,
+        } as any;
     }
 
     OpenOptionsTitle = this.RULE('OpenOptionsTitle', () => {
-        const element = this.createOpenOptionsTitle();
+        let element = this.push(this.createOpenOptionsTitle());
 
-        this.CONSUME1(tokens.TITLE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.TITLE, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsTitle_TITLE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsTitle_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.title = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsTitle_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createOpenOptionsLineSize(): ast.OpenOptionsLineSize {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OpenOptionsLineSize,
+            lineSize: undefined,
+        } as any;
     }
 
     OpenOptionsLineSize = this.RULE('OpenOptionsLineSize', () => {
-        const element = this.createOpenOptionsLineSize();
+        let element = this.push(this.createOpenOptionsLineSize());
 
-        this.CONSUME1(tokens.LINESIZE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.LINESIZE, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsLineSize_LINESIZE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsLineSize_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.lineSize = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsLineSize_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createOpenOptionsPageSize(): ast.OpenOptionsPageSize {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OpenOptionsPageSize,
+            pageSize: undefined,
+        } as any;
     }
 
     OpenOptionsPageSize = this.RULE('OpenOptionsPageSize', () => {
-        const element = this.createOpenOptionsPageSize();
+        let element = this.push(this.createOpenOptionsPageSize());
 
-        this.CONSUME1(tokens.PAGESIZE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.PAGESIZE, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsPageSize_PAGESIZE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsPageSize_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.pageSize = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOptionsPageSize_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createPageDirective(): ast.PageDirective {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     PageDirective = this.RULE('PageDirective', () => {
-        const element = this.createPageDirective();
+        let element = this.push(this.createPageDirective());
 
         /* Action: PageDirective */
-        this.CONSUME1(tokens.PercentPAGE);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.PercentPAGE, token => {
+            this.tokenPayload(token, element, CstNodeKind.PageDirective_PercentPAGE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.PageDirective_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createPopDirective(): ast.PopDirective {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     PopDirective = this.RULE('PopDirective', () => {
-        const element = this.createPopDirective();
+        let element = this.push(this.createPopDirective());
 
         /* Action: PopDirective */
-        this.CONSUME1(tokens.PercentPOP);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.PercentPOP, token => {
+            this.tokenPayload(token, element, CstNodeKind.PopDirective_PercentPOP_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.PopDirective_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createPrintDirective(): ast.PrintDirective {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     PrintDirective = this.RULE('PrintDirective', () => {
-        const element = this.createPrintDirective();
+        let element = this.push(this.createPrintDirective());
 
         /* Action: PrintDirective */
-        this.CONSUME1(tokens.PercentPRINT);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.PercentPRINT, token => {
+            this.tokenPayload(token, element, CstNodeKind.PrintDirective_PercentPRINT_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.PrintDirective_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createProcessDirective(): ast.ProcessDirective {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ProcessDirective,
+            compilerOptions: undefined,
+        } as any;
     }
 
     ProcessDirective = this.RULE('ProcessDirective', () => {
-        const element = this.createProcessDirective();
+        let element = this.push(this.createProcessDirective());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.StarPROCESS); 
+                    this.CONSUME_ASSIGN1(tokens.StarPROCESS, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ProcessDirective_StarPROCESS_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PercentPROCESS); 
+                    this.CONSUME_ASSIGN1(tokens.PercentPROCESS, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ProcessDirective_PercentPROCESS_0);
+                    });
                 }
             },
         ]);
         this.OPTION1(() => {
-            this.SUBRULE1(this.CompilerOptions);
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.CompilerOptions);
+            this.SUBRULE_ASSIGN1(this.CompilerOptions, {
+                assign: result => {
+                    element.compilerOptions ??= []; element.compilerOptions.push(result);
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.ProcessDirective_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.CompilerOptions, {
+                assign: result => {
+                    element.compilerOptions ??= []; element.compilerOptions.push(result);
+                }
+            });
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.ProcessDirective_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createCompilerOptions(): ast.CompilerOptions {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.CompilerOptions,
+            value: undefined,
+        } as any;
     }
 
     CompilerOptions = this.RULE('CompilerOptions', () => {
-        const element = this.createCompilerOptions();
+        let element = this.push(this.createCompilerOptions());
 
-        this.CONSUME1(tokens.TODO);
+        this.CONSUME_ASSIGN1(tokens.TODO, token => {
+            this.tokenPayload(token, element, CstNodeKind.CompilerOptions_value_TODO_0);
+            element.value = token.image;
+        });
 
-        return element;
+        return this.pop();
     });
     private createProcincDirective(): ast.ProcincDirective {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ProcincDirective,
+            datasetName: undefined,
+        } as any;
     }
 
     ProcincDirective = this.RULE('ProcincDirective', () => {
-        const element = this.createProcincDirective();
+        let element = this.push(this.createProcincDirective());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PercentPROCINC); 
+                    this.CONSUME_ASSIGN1(tokens.PercentPROCINC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ProcincDirective_PercentPROCINC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.StarPROCINC); 
+                    this.CONSUME_ASSIGN1(tokens.StarPROCINC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ProcincDirective_StarPROCINC_0);
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.ID);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.ProcincDirective_datasetName_ID_0);
+            element.datasetName = token.image;
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.ProcincDirective_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createPushDirective(): ast.PushDirective {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     PushDirective = this.RULE('PushDirective', () => {
-        const element = this.createPushDirective();
+        let element = this.push(this.createPushDirective());
 
         /* Action: PushDirective */
-        this.CONSUME1(tokens.PercentPUSH);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.PercentPUSH, token => {
+            this.tokenPayload(token, element, CstNodeKind.PushDirective_PercentPUSH_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.PushDirective_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createPutStatement(): ast.PutStatement {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     PutStatement = this.RULE('PutStatement', () => {
-        const element = this.createPutStatement();
+        let element = this.push(this.createPutStatement());
 
-        this.CONSUME1(tokens.PUT);
+        this.CONSUME_ASSIGN1(tokens.PUT, token => {
+            this.tokenPayload(token, element, CstNodeKind.PutStatement_PUT_0);
+        });
         this.OPTION1(() => {
             this.OR1([
                 {
@@ -4217,12 +7205,20 @@ export class PliParser extends AbstractParser {
                             this.OR2([
                                 {
                                     ALT: () => {
-                                        this.SUBRULE1(this.PutItem); 
+                                        this.SUBRULE_ASSIGN1(this.PutItem, {
+                                            assign: result => {
+                                                element.items ??= []; element.items.push(result);
+                                            }
+                                        });
                                     }
                                 },
                                 {
                                     ALT: () => {
-                                        this.SUBRULE1(this.DataSpecificationOptions); 
+                                        this.SUBRULE_ASSIGN1(this.DataSpecificationOptions, {
+                                            assign: result => {
+                                                element.items ??= []; element.items.push(result);
+                                            }
+                                        });
                                     }
                                 },
                             ]);
@@ -4232,678 +7228,1247 @@ export class PliParser extends AbstractParser {
                 {
                     ALT: () => {
                         /* Action: PutStringStatement */
-                        this.CONSUME1(tokens.STRING);
-                        this.CONSUME1(tokens.OpenParen);
-                        this.SUBRULE1(this.Expression);
-                        this.CONSUME1(tokens.CloseParen);
-                        this.SUBRULE2(this.DataSpecificationOptions);
+                        this.CONSUME_ASSIGN1(tokens.STRING, token => {
+                            this.tokenPayload(token, element, CstNodeKind.PutStatement_STRING_0);
+                        });
+                        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                            this.tokenPayload(token, element, CstNodeKind.PutStatement_OpenParen_0);
+                        });
+                        this.SUBRULE_ASSIGN1(this.Expression, {
+                            assign: result => {
+                                element.stringExpression = result;
+                            }
+                        });
+                        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                            this.tokenPayload(token, element, CstNodeKind.PutStatement_CloseParen_0);
+                        });
+                        this.SUBRULE_ASSIGN2(this.DataSpecificationOptions, {
+                            assign: result => {
+                                element.dataSpecification = result;
+                            }
+                        });
                     }
                 },
             ]);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.PutStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createPutItem(): ast.PutItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.PutItem,
+            attribute: undefined,
+            expression: undefined,
+        } as any;
     }
 
     PutItem = this.RULE('PutItem', () => {
-        const element = this.createPutItem();
+        let element = this.push(this.createPutItem());
 
-        this.SUBRULE1(this.PutAttribute);
+        this.SUBRULE_ASSIGN1(this.PutAttribute, {
+            assign: result => {
+                element.attribute = result;
+            }
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.PutItem_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.expression = result;
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.PutItem_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createPutAttribute(): ast.PutAttribute {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     PutAttribute = this.RULE('PutAttribute', () => {
-        const element = this.createPutAttribute();
+        let element = this.push(this.createPutAttribute());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PAGE); 
+                    this.CONSUME_ASSIGN1(tokens.PAGE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.PutAttribute_PAGE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.LINE); 
+                    this.CONSUME_ASSIGN1(tokens.LINE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.PutAttribute_LINE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.SKIP); 
+                    this.CONSUME_ASSIGN1(tokens.SKIP, token => {
+                        this.tokenPayload(token, element, CstNodeKind.PutAttribute_SKIP_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.FILE); 
+                    this.CONSUME_ASSIGN1(tokens.FILE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.PutAttribute_FILE_0);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createDataSpecificationOptions(): ast.DataSpecificationOptions {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DataSpecificationOptions,
+            dataList: undefined,
+            edit: undefined,
+            dataLists: undefined,
+            formatLists: undefined,
+            data: undefined,
+            dataListItems: undefined,
+        } as any;
     }
 
     DataSpecificationOptions = this.RULE('DataSpecificationOptions', () => {
-        const element = this.createDataSpecificationOptions();
+        let element = this.push(this.createDataSpecificationOptions());
 
         this.OR1([
             {
                 ALT: () => {
                     this.OPTION1(() => {
-                        this.CONSUME1(tokens.LIST);
-                    });
-                    this.CONSUME1(tokens.OpenParen);
-                    this.SUBRULE1(this.DataSpecificationDataList);
-                    this.CONSUME1(tokens.CloseParen);
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME1(tokens.DATA);
-                    this.OPTION2(() => {
-                        this.CONSUME2(tokens.OpenParen);
-                        this.SUBRULE1(this.DataSpecificationDataListItem);
-                        this.MANY1(() => {
-                            this.CONSUME1(tokens.Comma);
-                            this.SUBRULE2(this.DataSpecificationDataListItem);
+                        this.CONSUME_ASSIGN1(tokens.LIST, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_LIST_0);
                         });
-                        this.CONSUME2(tokens.CloseParen);
+                    });
+                    this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_OpenParen_0);
+                    });
+                    this.SUBRULE_ASSIGN1(this.DataSpecificationDataList, {
+                        assign: result => {
+                            element.dataList = result;
+                        }
+                    });
+                    this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_CloseParen_0);
                     });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.EDIT);
+                    this.CONSUME_ASSIGN1(tokens.DATA, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_data_DATA_0);
+                        element.data = true;
+                    });
+                    this.OPTION2(() => {
+                        this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_OpenParen_1);
+                        });
+                        this.SUBRULE_ASSIGN1(this.DataSpecificationDataListItem, {
+                            assign: result => {
+                                element.dataListItems ??= []; element.dataListItems.push(result);
+                            }
+                        });
+                        this.MANY1(() => {
+                            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                                this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_Comma_0);
+                            });
+                            this.SUBRULE_ASSIGN2(this.DataSpecificationDataListItem, {
+                                assign: result => {
+                                    element.dataListItems ??= []; element.dataListItems.push(result);
+                                }
+                            });
+                        });
+                        this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_CloseParen_1);
+                        });
+                    });
+                }
+            },
+            {
+                ALT: () => {
+                    this.CONSUME_ASSIGN1(tokens.EDIT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_edit_EDIT_0);
+                        element.edit = true;
+                    });
                     this.AT_LEAST_ONE1(() => {
-                        this.CONSUME3(tokens.OpenParen);
-                        this.SUBRULE2(this.DataSpecificationDataList);
-                        this.CONSUME3(tokens.CloseParen);
-                        this.CONSUME4(tokens.OpenParen);
-                        this.SUBRULE1(this.FormatList);
-                        this.CONSUME4(tokens.CloseParen);
+                        this.CONSUME_ASSIGN3(tokens.OpenParen, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_OpenParen_2);
+                        });
+                        this.SUBRULE_ASSIGN2(this.DataSpecificationDataList, {
+                            assign: result => {
+                                element.dataLists ??= []; element.dataLists.push(result);
+                            }
+                        });
+                        this.CONSUME_ASSIGN3(tokens.CloseParen, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_CloseParen_2);
+                        });
+                        this.CONSUME_ASSIGN4(tokens.OpenParen, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_OpenParen_3);
+                        });
+                        this.SUBRULE_ASSIGN1(this.FormatList, {
+                            assign: result => {
+                                element.formatLists ??= []; element.formatLists.push(result);
+                            }
+                        });
+                        this.CONSUME_ASSIGN4(tokens.CloseParen, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DataSpecificationOptions_CloseParen_3);
+                        });
                     });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createDataSpecificationDataList(): ast.DataSpecificationDataList {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DataSpecificationDataList,
+            items: undefined,
+        } as any;
     }
 
     DataSpecificationDataList = this.RULE('DataSpecificationDataList', () => {
-        const element = this.createDataSpecificationDataList();
+        let element = this.push(this.createDataSpecificationDataList());
 
-        this.SUBRULE1(this.DataSpecificationDataListItem);
+        this.SUBRULE_ASSIGN1(this.DataSpecificationDataListItem, {
+            assign: result => {
+                element.items ??= []; element.items.push(result);
+            }
+        });
         this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.DataSpecificationDataListItem);
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.DataSpecificationDataList_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.DataSpecificationDataListItem, {
+                assign: result => {
+                    element.items ??= []; element.items.push(result);
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDataSpecificationDataListItem(): ast.DataSpecificationDataListItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DataSpecificationDataListItem,
+            value: undefined,
+        } as any;
     }
 
     DataSpecificationDataListItem = this.RULE('DataSpecificationDataListItem', () => {
-        const element = this.createDataSpecificationDataListItem();
+        let element = this.push(this.createDataSpecificationDataListItem());
 
-        this.SUBRULE1(this.Expression);
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.value = result;
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createQualifyStatement(): ast.QualifyStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.QualifyStatement,
+            statements: undefined,
+            end: undefined,
+        } as any;
     }
 
     QualifyStatement = this.RULE('QualifyStatement', () => {
-        const element = this.createQualifyStatement();
+        let element = this.push(this.createQualifyStatement());
 
-        this.CONSUME1(tokens.QUALIFY);
-        this.CONSUME1(tokens.Semicolon);
-        this.MANY1(() => {
-            this.SUBRULE1(this.Statement);
+        this.CONSUME_ASSIGN1(tokens.QUALIFY, token => {
+            this.tokenPayload(token, element, CstNodeKind.QualifyStatement_QUALIFY_0);
         });
-        this.SUBRULE1(this.EndStatement);
-        this.CONSUME2(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.QualifyStatement_Semicolon_0);
+        });
+        this.MANY1(() => {
+            this.SUBRULE_ASSIGN1(this.Statement, {
+                assign: result => {
+                    element.statements ??= []; element.statements.push(result);
+                }
+            });
+        });
+        this.SUBRULE_ASSIGN1(this.EndStatement, {
+            assign: result => {
+                element.end = result;
+            }
+        });
+        this.CONSUME_ASSIGN2(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.QualifyStatement_Semicolon_1);
+        });
 
-        return element;
+        return this.pop();
     });
     private createReadStatement(): ast.ReadStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ReadStatement,
+            arguments: undefined,
+        } as any;
     }
 
     ReadStatement = this.RULE('ReadStatement', () => {
-        const element = this.createReadStatement();
+        let element = this.push(this.createReadStatement());
 
-        this.CONSUME1(tokens.READ);
+        this.CONSUME_ASSIGN1(tokens.READ, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatement_READ_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReadStatementFile); 
+                    this.SUBRULE_ASSIGN1(this.ReadStatementFile, {
+                        assign: result => {
+                            element.arguments ??= []; element.arguments.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReadStatementIgnore); 
+                    this.SUBRULE_ASSIGN1(this.ReadStatementIgnore, {
+                        assign: result => {
+                            element.arguments ??= []; element.arguments.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReadStatementInto); 
+                    this.SUBRULE_ASSIGN1(this.ReadStatementInto, {
+                        assign: result => {
+                            element.arguments ??= []; element.arguments.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReadStatementSet); 
+                    this.SUBRULE_ASSIGN1(this.ReadStatementSet, {
+                        assign: result => {
+                            element.arguments ??= []; element.arguments.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReadStatementKey); 
+                    this.SUBRULE_ASSIGN1(this.ReadStatementKey, {
+                        assign: result => {
+                            element.arguments ??= []; element.arguments.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReadStatementKeyTo); 
-                }
-            },
-        ]);
-        this.CONSUME1(tokens.Semicolon);
-
-        return element;
-    });
-    private createReadStatementFile(): ast.ReadStatementFile {
-        return {} as any;
-    }
-
-    ReadStatementFile = this.RULE('ReadStatementFile', () => {
-        const element = this.createReadStatementFile();
-
-        this.CONSUME1(tokens.FILE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
-
-        return element;
-    });
-    private createReadStatementIgnore(): ast.ReadStatementIgnore {
-        return {} as any;
-    }
-
-    ReadStatementIgnore = this.RULE('ReadStatementIgnore', () => {
-        const element = this.createReadStatementIgnore();
-
-        this.CONSUME1(tokens.IGNORE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
-
-        return element;
-    });
-    private createReadStatementInto(): ast.ReadStatementInto {
-        return {} as any;
-    }
-
-    ReadStatementInto = this.RULE('ReadStatementInto', () => {
-        const element = this.createReadStatementInto();
-
-        this.CONSUME1(tokens.INTO);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
-
-        return element;
-    });
-    private createReadStatementSet(): ast.ReadStatementSet {
-        return {} as any;
-    }
-
-    ReadStatementSet = this.RULE('ReadStatementSet', () => {
-        const element = this.createReadStatementSet();
-
-        this.CONSUME1(tokens.SET);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
-
-        return element;
-    });
-    private createReadStatementKey(): ast.ReadStatementKey {
-        return {} as any;
-    }
-
-    ReadStatementKey = this.RULE('ReadStatementKey', () => {
-        const element = this.createReadStatementKey();
-
-        this.CONSUME1(tokens.KEY);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
-
-        return element;
-    });
-    private createReadStatementKeyTo(): ast.ReadStatementKeyTo {
-        return {} as any;
-    }
-
-    ReadStatementKeyTo = this.RULE('ReadStatementKeyTo', () => {
-        const element = this.createReadStatementKeyTo();
-
-        this.CONSUME1(tokens.KEYTO);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
-
-        return element;
-    });
-    private createReinitStatement(): ast.ReinitStatement {
-        return {} as any;
-    }
-
-    ReinitStatement = this.RULE('ReinitStatement', () => {
-        const element = this.createReinitStatement();
-
-        this.CONSUME1(tokens.REINIT);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.Semicolon);
-
-        return element;
-    });
-    private createReleaseStatement(): ast.ReleaseStatement {
-        return {} as any;
-    }
-
-    ReleaseStatement = this.RULE('ReleaseStatement', () => {
-        const element = this.createReleaseStatement();
-
-        this.CONSUME1(tokens.RELEASE);
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME1(tokens.Star); 
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME1(tokens.ID);
-                    this.MANY1(() => {
-                        this.CONSUME1(tokens.Comma);
-                        this.CONSUME2(tokens.ID);
+                    this.SUBRULE_ASSIGN1(this.ReadStatementKeyTo, {
+                        assign: result => {
+                            element.arguments ??= []; element.arguments.push(result);
+                        }
                     });
                 }
             },
         ]);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
+    });
+    private createReadStatementFile(): ast.ReadStatementFile {
+        return {
+            kind: ast.SyntaxKind.ReadStatementFile,
+            file: undefined,
+        } as any;
+    }
+
+    ReadStatementFile = this.RULE('ReadStatementFile', () => {
+        let element = this.push(this.createReadStatementFile());
+
+        this.CONSUME_ASSIGN1(tokens.FILE, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementFile_FILE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementFile_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.file = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementFile_CloseParen_0);
+        });
+
+        return this.pop();
+    });
+    private createReadStatementIgnore(): ast.ReadStatementIgnore {
+        return {
+            kind: ast.SyntaxKind.ReadStatementIgnore,
+            ignore: undefined,
+        } as any;
+    }
+
+    ReadStatementIgnore = this.RULE('ReadStatementIgnore', () => {
+        let element = this.push(this.createReadStatementIgnore());
+
+        this.CONSUME_ASSIGN1(tokens.IGNORE, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementIgnore_IGNORE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementIgnore_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.ignore = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementIgnore_CloseParen_0);
+        });
+
+        return this.pop();
+    });
+    private createReadStatementInto(): ast.ReadStatementInto {
+        return {
+            kind: ast.SyntaxKind.ReadStatementInto,
+            intoRef: undefined,
+        } as any;
+    }
+
+    ReadStatementInto = this.RULE('ReadStatementInto', () => {
+        let element = this.push(this.createReadStatementInto());
+
+        this.CONSUME_ASSIGN1(tokens.INTO, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementInto_INTO_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementInto_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.intoRef = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementInto_CloseParen_0);
+        });
+
+        return this.pop();
+    });
+    private createReadStatementSet(): ast.ReadStatementSet {
+        return {
+            kind: ast.SyntaxKind.ReadStatementSet,
+            set: undefined,
+        } as any;
+    }
+
+    ReadStatementSet = this.RULE('ReadStatementSet', () => {
+        let element = this.push(this.createReadStatementSet());
+
+        this.CONSUME_ASSIGN1(tokens.SET, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementSet_SET_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementSet_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.set = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementSet_CloseParen_0);
+        });
+
+        return this.pop();
+    });
+    private createReadStatementKey(): ast.ReadStatementKey {
+        return {
+            kind: ast.SyntaxKind.ReadStatementKey,
+            key: undefined,
+        } as any;
+    }
+
+    ReadStatementKey = this.RULE('ReadStatementKey', () => {
+        let element = this.push(this.createReadStatementKey());
+
+        this.CONSUME_ASSIGN1(tokens.KEY, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementKey_KEY_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementKey_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.key = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementKey_CloseParen_0);
+        });
+
+        return this.pop();
+    });
+    private createReadStatementKeyTo(): ast.ReadStatementKeyTo {
+        return {
+            kind: ast.SyntaxKind.ReadStatementKeyTo,
+            keyto: undefined,
+        } as any;
+    }
+
+    ReadStatementKeyTo = this.RULE('ReadStatementKeyTo', () => {
+        let element = this.push(this.createReadStatementKeyTo());
+
+        this.CONSUME_ASSIGN1(tokens.KEYTO, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementKeyTo_KEYTO_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementKeyTo_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.keyto = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReadStatementKeyTo_CloseParen_0);
+        });
+
+        return this.pop();
+    });
+    private createReinitStatement(): ast.ReinitStatement {
+        return {
+            kind: ast.SyntaxKind.ReinitStatement,
+            reference: undefined,
+        } as any;
+    }
+
+    ReinitStatement = this.RULE('ReinitStatement', () => {
+        let element = this.push(this.createReinitStatement());
+
+        this.CONSUME_ASSIGN1(tokens.REINIT, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReinitStatement_REINIT_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.reference = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReinitStatement_Semicolon_0);
+        });
+
+        return this.pop();
+    });
+    private createReleaseStatement(): ast.ReleaseStatement {
+        return {
+            kind: ast.SyntaxKind.ReleaseStatement,
+            star: undefined,
+            references: undefined,
+        } as any;
+    }
+
+    ReleaseStatement = this.RULE('ReleaseStatement', () => {
+        let element = this.push(this.createReleaseStatement());
+
+        this.CONSUME_ASSIGN1(tokens.RELEASE, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReleaseStatement_RELEASE_0);
+        });
+        this.OR1([
+            {
+                ALT: () => {
+                    this.CONSUME_ASSIGN1(tokens.Star, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ReleaseStatement_star_Star_0);
+                        element.star = true;
+                    });
+                }
+            },
+            {
+                ALT: () => {
+                    this.CONSUME_ASSIGN1(tokens.ID, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ReleaseStatement_references_ID_0);
+                        element.references ??= []; element.references.push(token.image);
+                    });
+                    this.MANY1(() => {
+                        this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                            this.tokenPayload(token, element, CstNodeKind.ReleaseStatement_Comma_0);
+                        });
+                        this.CONSUME_ASSIGN2(tokens.ID, token => {
+                            this.tokenPayload(token, element, CstNodeKind.ReleaseStatement_references_ID_1);
+                            element.references ??= []; element.references.push(token.image);
+                        });
+                    });
+                }
+            },
+        ]);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReleaseStatement_Semicolon_0);
+        });
+
+        return this.pop();
     });
     private createResignalStatement(): ast.ResignalStatement {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     ResignalStatement = this.RULE('ResignalStatement', () => {
-        const element = this.createResignalStatement();
+        let element = this.push(this.createResignalStatement());
 
         /* Action: ResignalStatement */
-        this.CONSUME1(tokens.RESIGNAL);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.RESIGNAL, token => {
+            this.tokenPayload(token, element, CstNodeKind.ResignalStatement_RESIGNAL_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.ResignalStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createReturnStatement(): ast.ReturnStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ReturnStatement,
+            expression: undefined,
+        } as any;
     }
 
     ReturnStatement = this.RULE('ReturnStatement', () => {
-        const element = this.createReturnStatement();
+        let element = this.push(this.createReturnStatement());
 
-        this.CONSUME1(tokens.RETURN);
-        this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.RETURN, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReturnStatement_RETURN_0);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.OPTION1(() => {
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.ReturnStatement_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.expression = result;
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.ReturnStatement_CloseParen_0);
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReturnStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createRevertStatement(): ast.RevertStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.RevertStatement,
+            conditions: undefined,
+        } as any;
     }
 
     RevertStatement = this.RULE('RevertStatement', () => {
-        const element = this.createRevertStatement();
+        let element = this.push(this.createRevertStatement());
 
-        this.CONSUME1(tokens.REVERT);
-        this.SUBRULE1(this.Condition);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.Condition);
+        this.CONSUME_ASSIGN1(tokens.REVERT, token => {
+            this.tokenPayload(token, element, CstNodeKind.RevertStatement_REVERT_0);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.SUBRULE_ASSIGN1(this.Condition, {
+            assign: result => {
+                element.conditions ??= []; element.conditions.push(result);
+            }
+        });
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.RevertStatement_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.Condition, {
+                assign: result => {
+                    element.conditions ??= []; element.conditions.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.RevertStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createRewriteStatement(): ast.RewriteStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.RewriteStatement,
+            arguments: undefined,
+        } as any;
     }
 
     RewriteStatement = this.RULE('RewriteStatement', () => {
-        const element = this.createRewriteStatement();
+        let element = this.push(this.createRewriteStatement());
 
-        this.CONSUME1(tokens.REWRITE);
+        this.CONSUME_ASSIGN1(tokens.REWRITE, token => {
+            this.tokenPayload(token, element, CstNodeKind.RewriteStatement_REWRITE_0);
+        });
         this.MANY1(() => {
             this.OR1([
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.RewriteStatementFile); 
+                        this.SUBRULE_ASSIGN1(this.RewriteStatementFile, {
+                            assign: result => {
+                                element.arguments ??= []; element.arguments.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.RewriteStatementFrom); 
+                        this.SUBRULE_ASSIGN1(this.RewriteStatementFrom, {
+                            assign: result => {
+                                element.arguments ??= []; element.arguments.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.RewriteStatementKey); 
+                        this.SUBRULE_ASSIGN1(this.RewriteStatementKey, {
+                            assign: result => {
+                                element.arguments ??= []; element.arguments.push(result);
+                            }
+                        });
                     }
                 },
             ]);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.RewriteStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createRewriteStatementFile(): ast.RewriteStatementFile {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.RewriteStatementFile,
+            file: undefined,
+        } as any;
     }
 
     RewriteStatementFile = this.RULE('RewriteStatementFile', () => {
-        const element = this.createRewriteStatementFile();
+        let element = this.push(this.createRewriteStatementFile());
 
-        this.CONSUME1(tokens.FILE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.FILE, token => {
+            this.tokenPayload(token, element, CstNodeKind.RewriteStatementFile_FILE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.RewriteStatementFile_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.file = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.RewriteStatementFile_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createRewriteStatementFrom(): ast.RewriteStatementFrom {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.RewriteStatementFrom,
+            from: undefined,
+        } as any;
     }
 
     RewriteStatementFrom = this.RULE('RewriteStatementFrom', () => {
-        const element = this.createRewriteStatementFrom();
+        let element = this.push(this.createRewriteStatementFrom());
 
-        this.CONSUME1(tokens.FROM);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.FROM, token => {
+            this.tokenPayload(token, element, CstNodeKind.RewriteStatementFrom_FROM_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.RewriteStatementFrom_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.from = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.RewriteStatementFrom_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createRewriteStatementKey(): ast.RewriteStatementKey {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.RewriteStatementKey,
+            key: undefined,
+        } as any;
     }
 
     RewriteStatementKey = this.RULE('RewriteStatementKey', () => {
-        const element = this.createRewriteStatementKey();
+        let element = this.push(this.createRewriteStatementKey());
 
-        this.CONSUME1(tokens.KEY);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.KEY, token => {
+            this.tokenPayload(token, element, CstNodeKind.RewriteStatementKey_KEY_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.RewriteStatementKey_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.key = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.RewriteStatementKey_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createSelectStatement(): ast.SelectStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.SelectStatement,
+            on: undefined,
+            statements: undefined,
+            end: undefined,
+        } as any;
     }
 
     SelectStatement = this.RULE('SelectStatement', () => {
-        const element = this.createSelectStatement();
+        let element = this.push(this.createSelectStatement());
 
-        this.CONSUME1(tokens.SELECT);
-        this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.SELECT, token => {
+            this.tokenPayload(token, element, CstNodeKind.SelectStatement_SELECT_0);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.OPTION1(() => {
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.SelectStatement_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.on = result;
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.SelectStatement_CloseParen_0);
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.SelectStatement_Semicolon_0);
+        });
         this.MANY1(() => {
             this.OR1([
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.WhenStatement); 
+                        this.SUBRULE_ASSIGN1(this.WhenStatement, {
+                            assign: result => {
+                                element.statements ??= []; element.statements.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.OtherwiseStatement); 
+                        this.SUBRULE_ASSIGN1(this.OtherwiseStatement, {
+                            assign: result => {
+                                element.statements ??= []; element.statements.push(result);
+                            }
+                        });
                     }
                 },
             ]);
         });
-        this.SUBRULE1(this.EndStatement);
-        this.CONSUME2(tokens.Semicolon);
+        this.SUBRULE_ASSIGN1(this.EndStatement, {
+            assign: result => {
+                element.end = result;
+            }
+        });
+        this.CONSUME_ASSIGN2(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.SelectStatement_Semicolon_1);
+        });
 
-        return element;
+        return this.pop();
     });
     private createWhenStatement(): ast.WhenStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.WhenStatement,
+            conditions: undefined,
+            unit: undefined,
+        } as any;
     }
 
     WhenStatement = this.RULE('WhenStatement', () => {
-        const element = this.createWhenStatement();
+        let element = this.push(this.createWhenStatement());
 
-        this.CONSUME1(tokens.WHEN);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.Expression);
+        this.CONSUME_ASSIGN1(tokens.WHEN, token => {
+            this.tokenPayload(token, element, CstNodeKind.WhenStatement_WHEN_0);
         });
-        this.CONSUME1(tokens.CloseParen);
-        this.SUBRULE1(this.Statement);
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WhenStatement_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.conditions ??= []; element.conditions.push(result);
+            }
+        });
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.WhenStatement_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.Expression, {
+                assign: result => {
+                    element.conditions ??= []; element.conditions.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WhenStatement_CloseParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Statement, {
+            assign: result => {
+                element.unit = result;
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createOtherwiseStatement(): ast.OtherwiseStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OtherwiseStatement,
+            unit: undefined,
+        } as any;
     }
 
     OtherwiseStatement = this.RULE('OtherwiseStatement', () => {
-        const element = this.createOtherwiseStatement();
+        let element = this.push(this.createOtherwiseStatement());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OTHERWISE); 
+                    this.CONSUME_ASSIGN1(tokens.OTHERWISE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OtherwiseStatement_OTHERWISE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OTHER); 
+                    this.CONSUME_ASSIGN1(tokens.OTHER, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OtherwiseStatement_OTHER_0);
+                    });
                 }
             },
         ]);
-        this.SUBRULE1(this.Statement);
+        this.SUBRULE_ASSIGN1(this.Statement, {
+            assign: result => {
+                element.unit = result;
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createSignalStatement(): ast.SignalStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.SignalStatement,
+            condition: undefined,
+        } as any;
     }
 
     SignalStatement = this.RULE('SignalStatement', () => {
-        const element = this.createSignalStatement();
+        let element = this.push(this.createSignalStatement());
 
-        this.CONSUME1(tokens.SIGNAL);
-        this.SUBRULE1(this.Condition);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.SIGNAL, token => {
+            this.tokenPayload(token, element, CstNodeKind.SignalStatement_SIGNAL_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Condition, {
+            assign: result => {
+                element.condition ??= []; element.condition.push(result);
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.SignalStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createSkipDirective(): ast.SkipDirective {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.SkipDirective,
+            lines: undefined,
+        } as any;
     }
 
     SkipDirective = this.RULE('SkipDirective', () => {
-        const element = this.createSkipDirective();
+        let element = this.push(this.createSkipDirective());
 
-        this.CONSUME1(tokens.PercentSKIP);
-        this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.PercentSKIP, token => {
+            this.tokenPayload(token, element, CstNodeKind.SkipDirective_PercentSKIP_0);
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.OPTION1(() => {
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.SkipDirective_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.lines = result;
+                }
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.SkipDirective_CloseParen_0);
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.SkipDirective_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createStopStatement(): ast.StopStatement {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     StopStatement = this.RULE('StopStatement', () => {
-        const element = this.createStopStatement();
+        let element = this.push(this.createStopStatement());
 
         /* Action: StopStatement */
-        this.CONSUME1(tokens.STOP);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.STOP, token => {
+            this.tokenPayload(token, element, CstNodeKind.StopStatement_STOP_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.StopStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createWaitStatement(): ast.WaitStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.WaitStatement,
+            task: undefined,
+        } as any;
     }
 
     WaitStatement = this.RULE('WaitStatement', () => {
-        const element = this.createWaitStatement();
+        let element = this.push(this.createWaitStatement());
 
-        this.CONSUME1(tokens.WAIT);
-        this.CONSUME1(tokens.THREAD);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.WAIT, token => {
+            this.tokenPayload(token, element, CstNodeKind.WaitStatement_WAIT_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.THREAD, token => {
+            this.tokenPayload(token, element, CstNodeKind.WaitStatement_THREAD_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WaitStatement_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.task = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WaitStatement_CloseParen_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.WaitStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createWriteStatement(): ast.WriteStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.WriteStatement,
+            arguments: undefined,
+        } as any;
     }
 
     WriteStatement = this.RULE('WriteStatement', () => {
-        const element = this.createWriteStatement();
+        let element = this.push(this.createWriteStatement());
 
-        this.CONSUME1(tokens.WRITE);
+        this.CONSUME_ASSIGN1(tokens.WRITE, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatement_WRITE_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.WriteStatementFile); 
+                    this.SUBRULE_ASSIGN1(this.WriteStatementFile, {
+                        assign: result => {
+                            element.arguments ??= []; element.arguments.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.WriteStatementFrom); 
+                    this.SUBRULE_ASSIGN1(this.WriteStatementFrom, {
+                        assign: result => {
+                            element.arguments ??= []; element.arguments.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.WriteStatementKeyFrom); 
+                    this.SUBRULE_ASSIGN1(this.WriteStatementKeyFrom, {
+                        assign: result => {
+                            element.arguments ??= []; element.arguments.push(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.WriteStatementKeyTo); 
+                    this.SUBRULE_ASSIGN1(this.WriteStatementKeyTo, {
+                        assign: result => {
+                            element.arguments ??= []; element.arguments.push(result);
+                        }
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.Semicolon);
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createWriteStatementFile(): ast.WriteStatementFile {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.WriteStatementFile,
+            file: undefined,
+        } as any;
     }
 
     WriteStatementFile = this.RULE('WriteStatementFile', () => {
-        const element = this.createWriteStatementFile();
+        let element = this.push(this.createWriteStatementFile());
 
-        this.CONSUME1(tokens.FILE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.FILE, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementFile_FILE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementFile_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.file = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementFile_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createWriteStatementFrom(): ast.WriteStatementFrom {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.WriteStatementFrom,
+            from: undefined,
+        } as any;
     }
 
     WriteStatementFrom = this.RULE('WriteStatementFrom', () => {
-        const element = this.createWriteStatementFrom();
+        let element = this.push(this.createWriteStatementFrom());
 
-        this.CONSUME1(tokens.FROM);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.FROM, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementFrom_FROM_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementFrom_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.from = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementFrom_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createWriteStatementKeyFrom(): ast.WriteStatementKeyFrom {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.WriteStatementKeyFrom,
+            keyfrom: undefined,
+        } as any;
     }
 
     WriteStatementKeyFrom = this.RULE('WriteStatementKeyFrom', () => {
-        const element = this.createWriteStatementKeyFrom();
+        let element = this.push(this.createWriteStatementKeyFrom());
 
-        this.CONSUME1(tokens.KEYFROM);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.KEYFROM, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementKeyFrom_KEYFROM_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementKeyFrom_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.keyfrom = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementKeyFrom_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createWriteStatementKeyTo(): ast.WriteStatementKeyTo {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.WriteStatementKeyTo,
+            keyto: undefined,
+        } as any;
     }
 
     WriteStatementKeyTo = this.RULE('WriteStatementKeyTo', () => {
-        const element = this.createWriteStatementKeyTo();
+        let element = this.push(this.createWriteStatementKeyTo());
 
-        this.CONSUME1(tokens.KEYTO);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.LocatorCall);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.KEYTO, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementKeyTo_KEYTO_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementKeyTo_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.keyto = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.WriteStatementKeyTo_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createInitialAttribute(): ast.InitialAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.InitialAttribute,
+            across: undefined,
+            expressions: undefined,
+            direct: undefined,
+            items: undefined,
+            call: undefined,
+            procedureCall: undefined,
+            to: undefined,
+            content: undefined,
+        } as any;
     }
 
     InitialAttribute = this.RULE('InitialAttribute', () => {
-        const element = this.createInitialAttribute();
+        let element = this.push(this.createInitialAttribute());
 
         this.OR1([
             {
@@ -4911,46 +8476,97 @@ export class PliParser extends AbstractParser {
                     this.OR2([
                         {
                             ALT: () => {
-                                this.CONSUME1(tokens.INITIAL); 
+                                this.CONSUME_ASSIGN1(tokens.INITIAL, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.InitialAttribute_INITIAL_0);
+                                });
                             }
                         },
                         {
                             ALT: () => {
-                                this.CONSUME1(tokens.INIT); 
+                                this.CONSUME_ASSIGN1(tokens.INIT, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.InitialAttribute_INIT_0);
+                                });
                             }
                         },
                     ]);
                     this.OR3([
                         {
                             ALT: () => {
-                                this.CONSUME1(tokens.OpenParen);
-                                this.SUBRULE1(this.InitialAttributeItem);
+                                this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.InitialAttribute_direct_OpenParen_0);
+                                    element.direct = true;
+                                });
+                                this.SUBRULE_ASSIGN1(this.InitialAttributeItem, {
+                                    assign: result => {
+                                        element.items ??= []; element.items.push(result);
+                                    }
+                                });
                                 this.MANY1(() => {
-                                    this.CONSUME1(tokens.Comma);
-                                    this.SUBRULE2(this.InitialAttributeItem);
+                                    this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.InitialAttribute_Comma_0);
+                                    });
+                                    this.SUBRULE_ASSIGN2(this.InitialAttributeItem, {
+                                        assign: result => {
+                                            element.items ??= []; element.items.push(result);
+                                        }
+                                    });
                                 });
-                                this.CONSUME1(tokens.CloseParen);
+                                this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.InitialAttribute_CloseParen_0);
+                                });
                             }
                         },
                         {
                             ALT: () => {
-                                this.CONSUME1(tokens.CALL);
-                                this.SUBRULE1(this.ProcedureCall);
+                                this.CONSUME_ASSIGN1(tokens.CALL, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.InitialAttribute_call_CALL_0);
+                                    element.call = true;
+                                });
+                                this.SUBRULE_ASSIGN1(this.ProcedureCall, {
+                                    assign: result => {
+                                        element.procedureCall = result;
+                                    }
+                                });
                             }
                         },
                         {
                             ALT: () => {
-                                this.CONSUME1(tokens.TO);
-                                this.CONSUME2(tokens.OpenParen);
-                                this.SUBRULE1(this.InitialToContent);
-                                this.CONSUME2(tokens.CloseParen);
-                                this.CONSUME3(tokens.OpenParen);
-                                this.SUBRULE3(this.InitialAttributeItem);
+                                this.CONSUME_ASSIGN1(tokens.TO, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.InitialAttribute_to_TO_0);
+                                    element.to = true;
+                                });
+                                this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.InitialAttribute_OpenParen_0);
+                                });
+                                this.SUBRULE_ASSIGN1(this.InitialToContent, {
+                                    assign: result => {
+                                        element.content = result;
+                                    }
+                                });
+                                this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.InitialAttribute_CloseParen_1);
+                                });
+                                this.CONSUME_ASSIGN3(tokens.OpenParen, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.InitialAttribute_OpenParen_1);
+                                });
+                                this.SUBRULE_ASSIGN3(this.InitialAttributeItem, {
+                                    assign: result => {
+                                        element.items ??= []; element.items.push(result);
+                                    }
+                                });
                                 this.MANY2(() => {
-                                    this.CONSUME2(tokens.Comma);
-                                    this.SUBRULE4(this.InitialAttributeItem);
+                                    this.CONSUME_ASSIGN2(tokens.Comma, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.InitialAttribute_Comma_1);
+                                    });
+                                    this.SUBRULE_ASSIGN4(this.InitialAttributeItem, {
+                                        assign: result => {
+                                            element.items ??= []; element.items.push(result);
+                                        }
+                                    });
                                 });
-                                this.CONSUME3(tokens.CloseParen);
+                                this.CONSUME_ASSIGN3(tokens.CloseParen, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.InitialAttribute_CloseParen_2);
+                                });
                             }
                         },
                     ]);
@@ -4958,552 +8574,923 @@ export class PliParser extends AbstractParser {
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.INITACROSS);
-                    this.CONSUME4(tokens.OpenParen);
-                    this.SUBRULE1(this.InitAcrossExpression);
-                    this.MANY3(() => {
-                        this.CONSUME3(tokens.Comma);
-                        this.SUBRULE2(this.InitAcrossExpression);
+                    this.CONSUME_ASSIGN1(tokens.INITACROSS, token => {
+                        this.tokenPayload(token, element, CstNodeKind.InitialAttribute_across_INITACROSS_0);
+                        element.across = true;
                     });
-                    this.CONSUME4(tokens.CloseParen);
+                    this.CONSUME_ASSIGN4(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.InitialAttribute_OpenParen_2);
+                    });
+                    this.SUBRULE_ASSIGN1(this.InitAcrossExpression, {
+                        assign: result => {
+                            element.expressions ??= []; element.expressions.push(result);
+                        }
+                    });
+                    this.MANY3(() => {
+                        this.CONSUME_ASSIGN3(tokens.Comma, token => {
+                            this.tokenPayload(token, element, CstNodeKind.InitialAttribute_Comma_2);
+                        });
+                        this.SUBRULE_ASSIGN2(this.InitAcrossExpression, {
+                            assign: result => {
+                                element.expressions ??= []; element.expressions.push(result);
+                            }
+                        });
+                    });
+                    this.CONSUME_ASSIGN4(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.InitialAttribute_CloseParen_3);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createInitialToContent(): ast.InitialToContent {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.InitialToContent,
+            varying: undefined,
+            type: undefined,
+        } as any;
     }
 
     InitialToContent = this.RULE('InitialToContent', () => {
-        const element = this.createInitialToContent();
+        let element = this.push(this.createInitialToContent());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.Varying);
+                    this.SUBRULE_ASSIGN1(this.Varying, {
+                        assign: result => {
+                            element.varying = result;
+                        }
+                    });
                     this.OPTION1(() => {
-                        this.SUBRULE1(this.CharType);
+                        this.SUBRULE_ASSIGN1(this.CharType, {
+                            assign: result => {
+                                element.type = result;
+                            }
+                        });
                     });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE2(this.CharType);
+                    this.SUBRULE_ASSIGN2(this.CharType, {
+                        assign: result => {
+                            element.type = result;
+                        }
+                    });
                     this.OPTION2(() => {
-                        this.SUBRULE2(this.Varying);
+                        this.SUBRULE_ASSIGN2(this.Varying, {
+                            assign: result => {
+                                element.varying = result;
+                            }
+                        });
                     });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createVarying(): ast.Varying {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     Varying = this.RULE('Varying', () => {
-        const element = this.createVarying();
+        let element = this.push(this.createVarying());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.VARYING); 
+                    this.CONSUME_ASSIGN1(tokens.VARYING, token => {
+                        this.tokenPayload(token, element, CstNodeKind.Varying_VARYING_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.VARYING4); 
+                    this.CONSUME_ASSIGN1(tokens.VARYING4, token => {
+                        this.tokenPayload(token, element, CstNodeKind.Varying_VARYING4_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.VARYINGZ); 
+                    this.CONSUME_ASSIGN1(tokens.VARYINGZ, token => {
+                        this.tokenPayload(token, element, CstNodeKind.Varying_VARYINGZ_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.NONVARYING); 
+                    this.CONSUME_ASSIGN1(tokens.NONVARYING, token => {
+                        this.tokenPayload(token, element, CstNodeKind.Varying_NONVARYING_0);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createCharType(): ast.CharType {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     CharType = this.RULE('CharType', () => {
-        const element = this.createCharType();
+        let element = this.push(this.createCharType());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.CHAR); 
+                    this.CONSUME_ASSIGN1(tokens.CHAR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.CharType_CHAR_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.UCHAR); 
+                    this.CONSUME_ASSIGN1(tokens.UCHAR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.CharType_UCHAR_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.WCHAR); 
+                    this.CONSUME_ASSIGN1(tokens.WCHAR, token => {
+                        this.tokenPayload(token, element, CstNodeKind.CharType_WCHAR_0);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createInitAcrossExpression(): ast.InitAcrossExpression {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.InitAcrossExpression,
+            expressions: undefined,
+        } as any;
     }
 
     InitAcrossExpression = this.RULE('InitAcrossExpression', () => {
-        const element = this.createInitAcrossExpression();
+        let element = this.push(this.createInitAcrossExpression());
 
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.Expression);
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.InitAcrossExpression_OpenParen_0);
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.expressions ??= []; element.expressions.push(result);
+            }
+        });
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.InitAcrossExpression_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.Expression, {
+                assign: result => {
+                    element.expressions ??= []; element.expressions.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.InitAcrossExpression_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createInitialAttributeItem(): ast.InitialAttributeItem {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     InitialAttributeItem = this.RULE('InitialAttributeItem', () => {
-        const element = this.createInitialAttributeItem();
+        let element = this.push(this.createInitialAttributeItem());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.InitialAttributeItemStar); 
+                    this.SUBRULE_ASSIGN1(this.InitialAttributeItemStar, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.InitialAttributeSpecification); 
+                    this.SUBRULE_ASSIGN1(this.InitialAttributeSpecification, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createInitialAttributeItemStar(): ast.InitialAttributeItemStar {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     InitialAttributeItemStar = this.RULE('InitialAttributeItemStar', () => {
-        const element = this.createInitialAttributeItemStar();
+        let element = this.push(this.createInitialAttributeItemStar());
 
         /* Action: InitialAttributeItemStar */
-        this.CONSUME1(tokens.Star);
+        this.CONSUME_ASSIGN1(tokens.Star, token => {
+            this.tokenPayload(token, element, CstNodeKind.InitialAttributeItemStar_Star_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createInitialAttributeSpecification(): ast.InitialAttributeSpecification {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.InitialAttributeSpecification,
+            star: undefined,
+            item: undefined,
+            expression: undefined,
+        } as any;
     }
 
     InitialAttributeSpecification = this.RULE('InitialAttributeSpecification', () => {
-        const element = this.createInitialAttributeSpecification();
+        let element = this.push(this.createInitialAttributeSpecification());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OpenParen);
-                    this.CONSUME1(tokens.Star);
-                    this.CONSUME1(tokens.CloseParen);
+                    this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.InitialAttributeSpecification_OpenParen_0);
+                    });
+                    this.CONSUME_ASSIGN1(tokens.Star, token => {
+                        this.tokenPayload(token, element, CstNodeKind.InitialAttributeSpecification_star_Star_0);
+                        element.star = true;
+                    });
+                    this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.InitialAttributeSpecification_CloseParen_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.Expression); 
+                    this.SUBRULE_ASSIGN1(this.Expression, {
+                        assign: result => {
+                            element.expression = result;
+                        }
+                    });
                 }
             },
         ]);
         this.OPTION1(() => {
-            this.SUBRULE1(this.InitialAttributeSpecificationIteration);
+            this.SUBRULE_ASSIGN1(this.InitialAttributeSpecificationIteration, {
+                assign: result => {
+                    element.item = result;
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createInitialAttributeSpecificationIteration(): ast.InitialAttributeSpecificationIteration {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     InitialAttributeSpecificationIteration = this.RULE('InitialAttributeSpecificationIteration', () => {
-        const element = this.createInitialAttributeSpecificationIteration();
+        let element = this.push(this.createInitialAttributeSpecificationIteration());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.InitialAttributeItemStar); 
+                    this.SUBRULE_ASSIGN1(this.InitialAttributeItemStar, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.InitialAttributeSpecificationIterationValue); 
+                    this.SUBRULE_ASSIGN1(this.InitialAttributeSpecificationIterationValue, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createInitialAttributeSpecificationIterationValue(): ast.InitialAttributeSpecificationIterationValue {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.InitialAttributeSpecificationIterationValue,
+            items: undefined,
+        } as any;
     }
 
     InitialAttributeSpecificationIterationValue = this.RULE('InitialAttributeSpecificationIterationValue', () => {
-        const element = this.createInitialAttributeSpecificationIterationValue();
+        let element = this.push(this.createInitialAttributeSpecificationIterationValue());
 
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.InitialAttributeItem);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.InitialAttributeItem);
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.InitialAttributeSpecificationIterationValue_OpenParen_0);
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.SUBRULE_ASSIGN1(this.InitialAttributeItem, {
+            assign: result => {
+                element.items ??= []; element.items.push(result);
+            }
+        });
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.InitialAttributeSpecificationIterationValue_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.InitialAttributeItem, {
+                assign: result => {
+                    element.items ??= []; element.items.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.InitialAttributeSpecificationIterationValue_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDeclareStatement(): ast.DeclareStatement {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DeclareStatement,
+            items: undefined,
+            xDeclare: undefined,
+        } as any;
     }
 
     DeclareStatement = this.RULE('DeclareStatement', () => {
-        const element = this.createDeclareStatement();
+        let element = this.push(this.createDeclareStatement());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DCL); 
+                    this.CONSUME_ASSIGN1(tokens.DCL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DeclareStatement_DCL_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DECLARE); 
+                    this.CONSUME_ASSIGN1(tokens.DECLARE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DeclareStatement_DECLARE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.XDECLARE); 
+                    this.CONSUME_ASSIGN1(tokens.XDECLARE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DeclareStatement_xDeclare_XDECLARE_0);
+                        element.xDeclare = true;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.XDCL); 
+                    this.CONSUME_ASSIGN1(tokens.XDCL, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DeclareStatement_xDeclare_XDCL_0);
+                        element.xDeclare = true;
+                    });
                 }
             },
         ]);
-        this.SUBRULE1(this.DeclaredItem);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.DeclaredItem);
+        this.SUBRULE_ASSIGN1(this.DeclaredItem, {
+            assign: result => {
+                element.items ??= []; element.items.push(result);
+            }
         });
-        this.CONSUME1(tokens.Semicolon);
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.DeclareStatement_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.DeclaredItem, {
+                assign: result => {
+                    element.items ??= []; element.items.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+            this.tokenPayload(token, element, CstNodeKind.DeclareStatement_Semicolon_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDeclaredItem(): ast.DeclaredItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DeclaredItem,
+            level: undefined,
+            element: undefined,
+            attributes: undefined,
+            items: undefined,
+        } as any;
     }
 
     DeclaredItem = this.RULE('DeclaredItem', () => {
-        const element = this.createDeclaredItem();
+        let element = this.push(this.createDeclaredItem());
 
         this.OPTION1(() => {
-            this.CONSUME1(tokens.NUMBER);
+            this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+                this.tokenPayload(token, element, CstNodeKind.DeclaredItem_level_NUMBER_0);
+                element.level = token.image;
+            });
         });
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DeclaredVariable); 
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME1(tokens.Star); 
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME1(tokens.OpenParen);
-                    this.SUBRULE1(this.DeclaredItem);
-                    this.MANY1(() => {
-                        this.CONSUME1(tokens.Comma);
-                        this.SUBRULE2(this.DeclaredItem);
+                    this.SUBRULE_ASSIGN1(this.DeclaredVariable, {
+                        assign: result => {
+                            element.element = result;
+                        }
                     });
-                    this.CONSUME1(tokens.CloseParen);
+                }
+            },
+            {
+                ALT: () => {
+                    this.CONSUME_ASSIGN1(tokens.Star, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DeclaredItem_element_Star_0);
+                        element.element = token.image;
+                    });
+                }
+            },
+            {
+                ALT: () => {
+                    this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DeclaredItem_OpenParen_0);
+                    });
+                    this.SUBRULE_ASSIGN1(this.DeclaredItem, {
+                        assign: result => {
+                            element.items ??= []; element.items.push(result);
+                        }
+                    });
+                    this.MANY1(() => {
+                        this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DeclaredItem_Comma_0);
+                        });
+                        this.SUBRULE_ASSIGN2(this.DeclaredItem, {
+                            assign: result => {
+                                element.items ??= []; element.items.push(result);
+                            }
+                        });
+                    });
+                    this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DeclaredItem_CloseParen_0);
+                    });
                 }
             },
         ]);
         this.MANY2(() => {
-            this.SUBRULE1(this.DeclarationAttribute);
+            this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+                assign: result => {
+                    element.attributes ??= []; element.attributes.push(result);
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDeclaredVariable(): ast.DeclaredVariable {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DeclaredVariable,
+            name: undefined,
+        } as any;
     }
 
     DeclaredVariable = this.RULE('DeclaredVariable', () => {
-        const element = this.createDeclaredVariable();
+        let element = this.push(this.createDeclaredVariable());
 
-        this.CONSUME1(tokens.ID);
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.DeclaredVariable_name_ID_0);
+            element.name = token.image;
+        });
 
-        return element;
+        return this.pop();
     });
     private createDefaultDeclarationAttribute(): ast.DefaultDeclarationAttribute {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     DefaultDeclarationAttribute = this.RULE('DefaultDeclarationAttribute', () => {
-        const element = this.createDefaultDeclarationAttribute();
+        let element = this.push(this.createDefaultDeclarationAttribute());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.InitialAttribute); 
+                    this.SUBRULE_ASSIGN1(this.InitialAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DateAttribute); 
+                    this.SUBRULE_ASSIGN1(this.DateAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.HandleAttribute); 
+                    this.SUBRULE_ASSIGN1(this.HandleAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DefinedAttribute); 
+                    this.SUBRULE_ASSIGN1(this.DefinedAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.PictureAttribute); 
+                    this.SUBRULE_ASSIGN1(this.PictureAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.EnvironmentAttribute); 
+                    this.SUBRULE_ASSIGN1(this.EnvironmentAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DimensionsDataAttribute); 
+                    this.SUBRULE_ASSIGN1(this.DimensionsDataAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DefaultValueAttribute); 
+                    this.SUBRULE_ASSIGN1(this.DefaultValueAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ValueListFromAttribute); 
+                    this.SUBRULE_ASSIGN1(this.ValueListFromAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ValueListAttribute); 
+                    this.SUBRULE_ASSIGN1(this.ValueListAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ValueRangeAttribute); 
+                    this.SUBRULE_ASSIGN1(this.ValueRangeAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReturnsAttribute); 
+                    this.SUBRULE_ASSIGN1(this.ReturnsAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ComputationDataAttribute); 
+                    this.SUBRULE_ASSIGN1(this.ComputationDataAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.EntryAttribute); 
+                    this.SUBRULE_ASSIGN1(this.EntryAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.LikeAttribute); 
+                    this.SUBRULE_ASSIGN1(this.LikeAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.TypeAttribute); 
+                    this.SUBRULE_ASSIGN1(this.TypeAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OrdinalTypeAttribute); 
+                    this.SUBRULE_ASSIGN1(this.OrdinalTypeAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createDeclarationAttribute(): ast.DeclarationAttribute {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     DeclarationAttribute = this.RULE('DeclarationAttribute', () => {
-        const element = this.createDeclarationAttribute();
+        let element = this.push(this.createDeclarationAttribute());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.InitialAttribute); 
+                    this.SUBRULE_ASSIGN1(this.InitialAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DateAttribute); 
+                    this.SUBRULE_ASSIGN1(this.DateAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.HandleAttribute); 
+                    this.SUBRULE_ASSIGN1(this.HandleAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DefinedAttribute); 
+                    this.SUBRULE_ASSIGN1(this.DefinedAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.PictureAttribute); 
+                    this.SUBRULE_ASSIGN1(this.PictureAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.EnvironmentAttribute); 
+                    this.SUBRULE_ASSIGN1(this.EnvironmentAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.DimensionsDataAttribute); 
+                    this.SUBRULE_ASSIGN1(this.DimensionsDataAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ValueAttribute); 
+                    this.SUBRULE_ASSIGN1(this.ValueAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ValueListFromAttribute); 
+                    this.SUBRULE_ASSIGN1(this.ValueListFromAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ValueListAttribute); 
+                    this.SUBRULE_ASSIGN1(this.ValueListAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ValueRangeAttribute); 
+                    this.SUBRULE_ASSIGN1(this.ValueRangeAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ReturnsAttribute); 
+                    this.SUBRULE_ASSIGN1(this.ReturnsAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ComputationDataAttribute); 
+                    this.SUBRULE_ASSIGN1(this.ComputationDataAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.EntryAttribute); 
+                    this.SUBRULE_ASSIGN1(this.EntryAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.LikeAttribute); 
+                    this.SUBRULE_ASSIGN1(this.LikeAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.TypeAttribute); 
+                    this.SUBRULE_ASSIGN1(this.TypeAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.OrdinalTypeAttribute); 
+                    this.SUBRULE_ASSIGN1(this.OrdinalTypeAttribute, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createDateAttribute(): ast.DateAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DateAttribute,
+            pattern: undefined,
+        } as any;
     }
 
     DateAttribute = this.RULE('DateAttribute', () => {
-        const element = this.createDateAttribute();
+        let element = this.push(this.createDateAttribute());
 
-        this.CONSUME1(tokens.DATE);
+        this.CONSUME_ASSIGN1(tokens.DATE, token => {
+            this.tokenPayload(token, element, CstNodeKind.DateAttribute_DATE_0);
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.CONSUME1(tokens.STRING_TERM);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DateAttribute_OpenParen_0);
+            });
+            this.CONSUME_ASSIGN1(tokens.STRING_TERM, token => {
+                this.tokenPayload(token, element, CstNodeKind.DateAttribute_pattern_STRING_TERM_0);
+                element.pattern = token.image;
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DateAttribute_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDefinedAttribute(): ast.DefinedAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefinedAttribute,
+            reference: undefined,
+            position: undefined,
+        } as any;
     }
 
     DefinedAttribute = this.RULE('DefinedAttribute', () => {
-        const element = this.createDefinedAttribute();
+        let element = this.push(this.createDefinedAttribute());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DEFINED); 
+                    this.CONSUME_ASSIGN1(tokens.DEFINED, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefinedAttribute_DEFINED_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.DEF); 
+                    this.CONSUME_ASSIGN1(tokens.DEF, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefinedAttribute_DEF_0);
+                    });
                 }
             },
         ]);
         this.OR2([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.MemberCall); 
+                    this.SUBRULE_ASSIGN1(this.MemberCall, {
+                        assign: result => {
+                            element.reference = result;
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OpenParen);
-                    this.SUBRULE2(this.MemberCall);
-                    this.CONSUME1(tokens.CloseParen);
+                    this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefinedAttribute_OpenParen_0);
+                    });
+                    this.SUBRULE_ASSIGN2(this.MemberCall, {
+                        assign: result => {
+                            element.reference = result;
+                        }
+                    });
+                    this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.DefinedAttribute_CloseParen_0);
+                    });
                 }
             },
         ]);
@@ -5511,482 +9498,841 @@ export class PliParser extends AbstractParser {
             this.OR3([
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.POSITION); 
+                        this.CONSUME_ASSIGN1(tokens.POSITION, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DefinedAttribute_POSITION_0);
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.POS); 
+                        this.CONSUME_ASSIGN1(tokens.POS, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DefinedAttribute_POS_0);
+                        });
                     }
                 },
             ]);
-            this.CONSUME2(tokens.OpenParen);
-            this.SUBRULE1(this.Expression);
-            this.CONSUME2(tokens.CloseParen);
+            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefinedAttribute_OpenParen_1);
+            });
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.position = result;
+                }
+            });
+            this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefinedAttribute_CloseParen_1);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createPictureAttribute(): ast.PictureAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.PictureAttribute,
+            picture: undefined,
+        } as any;
     }
 
     PictureAttribute = this.RULE('PictureAttribute', () => {
-        const element = this.createPictureAttribute();
+        let element = this.push(this.createPictureAttribute());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PICTURE); 
+                    this.CONSUME_ASSIGN1(tokens.PICTURE, token => {
+                        this.tokenPayload(token, element, CstNodeKind.PictureAttribute_PICTURE_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.WIDEPIC); 
+                    this.CONSUME_ASSIGN1(tokens.WIDEPIC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.PictureAttribute_WIDEPIC_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.PIC); 
+                    this.CONSUME_ASSIGN1(tokens.PIC, token => {
+                        this.tokenPayload(token, element, CstNodeKind.PictureAttribute_PIC_0);
+                    });
                 }
             },
         ]);
         this.OPTION1(() => {
-            this.CONSUME1(tokens.STRING_TERM);
+            this.CONSUME_ASSIGN1(tokens.STRING_TERM, token => {
+                this.tokenPayload(token, element, CstNodeKind.PictureAttribute_picture_STRING_TERM_0);
+                element.picture = token.image;
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDimensionsDataAttribute(): ast.DimensionsDataAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DimensionsDataAttribute,
+            dimensions: undefined,
+        } as any;
     }
 
     DimensionsDataAttribute = this.RULE('DimensionsDataAttribute', () => {
-        const element = this.createDimensionsDataAttribute();
+        let element = this.push(this.createDimensionsDataAttribute());
 
         this.OPTION1(() => {
             this.OR1([
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.DIMENSION); 
+                        this.CONSUME_ASSIGN1(tokens.DIMENSION, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DimensionsDataAttribute_DIMENSION_0);
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.DIM); 
+                        this.CONSUME_ASSIGN1(tokens.DIM, token => {
+                            this.tokenPayload(token, element, CstNodeKind.DimensionsDataAttribute_DIM_0);
+                        });
                     }
                 },
             ]);
         });
-        this.SUBRULE1(this.Dimensions);
+        this.SUBRULE_ASSIGN1(this.Dimensions, {
+            assign: result => {
+                element.dimensions = result;
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createTypeAttribute(): ast.TypeAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.TypeAttribute,
+            type: undefined,
+        } as any;
     }
 
     TypeAttribute = this.RULE('TypeAttribute', () => {
-        const element = this.createTypeAttribute();
+        let element = this.push(this.createTypeAttribute());
 
-        this.CONSUME1(tokens.TYPE);
+        this.CONSUME_ASSIGN1(tokens.TYPE, token => {
+            this.tokenPayload(token, element, CstNodeKind.TypeAttribute_TYPE_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ID); 
+                    this.CONSUME_ASSIGN1(tokens.ID, token => {
+                        this.tokenPayload(token, element, CstNodeKind.TypeAttribute_type_ID_0);
+                        element.type = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OpenParen);
-                    this.CONSUME2(tokens.ID);
-                    this.CONSUME1(tokens.CloseParen);
+                    this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.TypeAttribute_OpenParen_0);
+                    });
+                    this.CONSUME_ASSIGN2(tokens.ID, token => {
+                        this.tokenPayload(token, element, CstNodeKind.TypeAttribute_type_ID_1);
+                        element.type = token.image;
+                    });
+                    this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.TypeAttribute_CloseParen_0);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createOrdinalTypeAttribute(): ast.OrdinalTypeAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.OrdinalTypeAttribute,
+            type: undefined,
+            byvalue: undefined,
+        } as any;
     }
 
     OrdinalTypeAttribute = this.RULE('OrdinalTypeAttribute', () => {
-        const element = this.createOrdinalTypeAttribute();
+        let element = this.push(this.createOrdinalTypeAttribute());
 
-        this.CONSUME1(tokens.ORDINAL);
+        this.CONSUME_ASSIGN1(tokens.ORDINAL, token => {
+            this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_ORDINAL_0);
+        });
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ID); 
+                    this.CONSUME_ASSIGN1(tokens.ID, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_type_ID_0);
+                        element.type = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.OpenParen);
-                    this.CONSUME2(tokens.ID);
-                    this.CONSUME1(tokens.CloseParen);
+                    this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_OpenParen_0);
+                    });
+                    this.CONSUME_ASSIGN2(tokens.ID, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_type_ID_1);
+                        element.type = token.image;
+                    });
+                    this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_CloseParen_0);
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.BYVALUE);
+        this.CONSUME_ASSIGN1(tokens.BYVALUE, token => {
+            this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_byvalue_BYVALUE_0);
+            element.byvalue = true;
+        });
 
-        return element;
+        return this.pop();
     });
     private createReturnsAttribute(): ast.ReturnsAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ReturnsAttribute,
+            attrs: undefined,
+        } as any;
     }
 
     ReturnsAttribute = this.RULE('ReturnsAttribute', () => {
-        const element = this.createReturnsAttribute();
+        let element = this.push(this.createReturnsAttribute());
 
-        this.CONSUME1(tokens.RETURNS);
-        this.CONSUME1(tokens.OpenParen);
+        this.CONSUME_ASSIGN1(tokens.RETURNS, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReturnsAttribute_RETURNS_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReturnsAttribute_OpenParen_0);
+        });
         this.MANY1(() => {
             this.OR1([
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.ComputationDataAttribute); 
+                        this.SUBRULE_ASSIGN1(this.ComputationDataAttribute, {
+                            assign: result => {
+                                element.attrs ??= []; element.attrs.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.DateAttribute); 
+                        this.SUBRULE_ASSIGN1(this.DateAttribute, {
+                            assign: result => {
+                                element.attrs ??= []; element.attrs.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.ValueListAttribute); 
+                        this.SUBRULE_ASSIGN1(this.ValueListAttribute, {
+                            assign: result => {
+                                element.attrs ??= []; element.attrs.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.ValueRangeAttribute); 
+                        this.SUBRULE_ASSIGN1(this.ValueRangeAttribute, {
+                            assign: result => {
+                                element.attrs ??= []; element.attrs.push(result);
+                            }
+                        });
                     }
                 },
             ]);
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReturnsAttribute_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createComputationDataAttribute(): ast.ComputationDataAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ComputationDataAttribute,
+            type: undefined,
+            dimensions: undefined,
+        } as any;
     }
 
     ComputationDataAttribute = this.RULE('ComputationDataAttribute', () => {
-        const element = this.createComputationDataAttribute();
+        let element = this.push(this.createComputationDataAttribute());
 
-        this.SUBRULE1(this.DataAttributeType);
+        this.SUBRULE_ASSIGN1(this.DataAttributeType, {
+            assign: result => {
+                element.type = result;
+            }
+        });
         this.OPTION1(() => {
-            this.SUBRULE1(this.Dimensions);
+            this.SUBRULE_ASSIGN1(this.Dimensions, {
+                assign: result => {
+                    element.dimensions = result;
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createDefaultValueAttribute(): ast.DefaultValueAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefaultValueAttribute,
+            items: undefined,
+        } as any;
     }
 
     DefaultValueAttribute = this.RULE('DefaultValueAttribute', () => {
-        const element = this.createDefaultValueAttribute();
+        let element = this.push(this.createDefaultValueAttribute());
 
-        this.CONSUME1(tokens.VALUE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.DefaultValueAttributeItem);
-        this.MANY1(() => {
-            this.CONSUME1(tokens.Comma);
-            this.SUBRULE2(this.DefaultValueAttributeItem);
+        this.CONSUME_ASSIGN1(tokens.VALUE, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefaultValueAttribute_VALUE_0);
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefaultValueAttribute_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.DefaultValueAttributeItem, {
+            assign: result => {
+                element.items ??= []; element.items.push(result);
+            }
+        });
+        this.MANY1(() => {
+            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                this.tokenPayload(token, element, CstNodeKind.DefaultValueAttribute_Comma_0);
+            });
+            this.SUBRULE_ASSIGN2(this.DefaultValueAttributeItem, {
+                assign: result => {
+                    element.items ??= []; element.items.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.DefaultValueAttribute_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createValueAttribute(): ast.ValueAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ValueAttribute,
+            value: undefined,
+        } as any;
     }
 
     ValueAttribute = this.RULE('ValueAttribute', () => {
-        const element = this.createValueAttribute();
+        let element = this.push(this.createValueAttribute());
 
-        this.CONSUME1(tokens.VALUE);
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.VALUE, token => {
+            this.tokenPayload(token, element, CstNodeKind.ValueAttribute_VALUE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ValueAttribute_OpenParen_0);
+        });
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.value = result;
+            }
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ValueAttribute_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDefaultValueAttributeItem(): ast.DefaultValueAttributeItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DefaultValueAttributeItem,
+            attributes: undefined,
+        } as any;
     }
 
     DefaultValueAttributeItem = this.RULE('DefaultValueAttributeItem', () => {
-        const element = this.createDefaultValueAttributeItem();
+        let element = this.push(this.createDefaultValueAttributeItem());
 
         this.AT_LEAST_ONE1(() => {
-            this.SUBRULE1(this.DeclarationAttribute);
+            this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+                assign: result => {
+                    element.attributes ??= []; element.attributes.push(result);
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createValueListAttribute(): ast.ValueListAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ValueListAttribute,
+            values: undefined,
+        } as any;
     }
 
     ValueListAttribute = this.RULE('ValueListAttribute', () => {
-        const element = this.createValueListAttribute();
+        let element = this.push(this.createValueListAttribute());
 
-        this.CONSUME1(tokens.VALUELIST);
-        this.CONSUME1(tokens.OpenParen);
+        this.CONSUME_ASSIGN1(tokens.VALUELIST, token => {
+            this.tokenPayload(token, element, CstNodeKind.ValueListAttribute_VALUELIST_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ValueListAttribute_OpenParen_0);
+        });
         this.OPTION1(() => {
-            this.SUBRULE1(this.Expression);
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.values ??= []; element.values.push(result);
+                }
+            });
             this.MANY1(() => {
-                this.CONSUME1(tokens.Comma);
-                this.SUBRULE2(this.Expression);
+                this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                    this.tokenPayload(token, element, CstNodeKind.ValueListAttribute_Comma_0);
+                });
+                this.SUBRULE_ASSIGN2(this.Expression, {
+                    assign: result => {
+                        element.values ??= []; element.values.push(result);
+                    }
+                });
             });
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ValueListAttribute_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createValueListFromAttribute(): ast.ValueListFromAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ValueListFromAttribute,
+            from: undefined,
+        } as any;
     }
 
     ValueListFromAttribute = this.RULE('ValueListFromAttribute', () => {
-        const element = this.createValueListFromAttribute();
+        let element = this.push(this.createValueListFromAttribute());
 
-        this.CONSUME1(tokens.VALUELISTFROM);
-        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME_ASSIGN1(tokens.VALUELISTFROM, token => {
+            this.tokenPayload(token, element, CstNodeKind.ValueListFromAttribute_VALUELISTFROM_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.from = result;
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createValueRangeAttribute(): ast.ValueRangeAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ValueRangeAttribute,
+            values: undefined,
+        } as any;
     }
 
     ValueRangeAttribute = this.RULE('ValueRangeAttribute', () => {
-        const element = this.createValueRangeAttribute();
+        let element = this.push(this.createValueRangeAttribute());
 
-        this.CONSUME1(tokens.VALUERANGE);
-        this.CONSUME1(tokens.OpenParen);
+        this.CONSUME_ASSIGN1(tokens.VALUERANGE, token => {
+            this.tokenPayload(token, element, CstNodeKind.ValueRangeAttribute_VALUERANGE_0);
+        });
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ValueRangeAttribute_OpenParen_0);
+        });
         this.OPTION1(() => {
-            this.SUBRULE1(this.Expression);
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.values ??= []; element.values.push(result);
+                }
+            });
             this.MANY1(() => {
-                this.CONSUME1(tokens.Comma);
-                this.SUBRULE2(this.Expression);
+                this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                    this.tokenPayload(token, element, CstNodeKind.ValueRangeAttribute_Comma_0);
+                });
+                this.SUBRULE_ASSIGN2(this.Expression, {
+                    assign: result => {
+                        element.values ??= []; element.values.push(result);
+                    }
+                });
             });
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ValueRangeAttribute_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDataAttributeType(): ast.DataAttributeType {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     DataAttributeType = this.RULE('DataAttributeType', () => {
-        const element = this.createDataAttributeType();
+        let element = this.push(this.createDataAttributeType());
 
-        this.SUBRULE1(this.DefaultAttribute);
+        this.SUBRULE_ASSIGN1(this.DefaultAttribute, {
+            assign: result => {
+                element = this.replace(result);
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createLikeAttribute(): ast.LikeAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LikeAttribute,
+            reference: undefined,
+        } as any;
     }
 
     LikeAttribute = this.RULE('LikeAttribute', () => {
-        const element = this.createLikeAttribute();
+        let element = this.push(this.createLikeAttribute());
 
-        this.CONSUME1(tokens.LIKE);
-        this.SUBRULE1(this.LocatorCall);
+        this.CONSUME_ASSIGN1(tokens.LIKE, token => {
+            this.tokenPayload(token, element, CstNodeKind.LikeAttribute_LIKE_0);
+        });
+        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            assign: result => {
+                element.reference = result;
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createHandleAttribute(): ast.HandleAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.HandleAttribute,
+            size: undefined,
+            type: undefined,
+        } as any;
     }
 
     HandleAttribute = this.RULE('HandleAttribute', () => {
-        const element = this.createHandleAttribute();
+        let element = this.push(this.createHandleAttribute());
 
-        this.CONSUME1(tokens.HANDLE);
+        this.CONSUME_ASSIGN1(tokens.HANDLE, token => {
+            this.tokenPayload(token, element, CstNodeKind.HandleAttribute_HANDLE_0);
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.CONSUME1(tokens.NUMBER);
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.HandleAttribute_OpenParen_0);
+            });
+            this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+                this.tokenPayload(token, element, CstNodeKind.HandleAttribute_size_NUMBER_0);
+                element.size = token.image;
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.HandleAttribute_CloseParen_0);
+            });
         });
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ID); 
+                    this.CONSUME_ASSIGN1(tokens.ID, token => {
+                        this.tokenPayload(token, element, CstNodeKind.HandleAttribute_type_ID_0);
+                        element.type = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME2(tokens.OpenParen);
-                    this.CONSUME2(tokens.ID);
-                    this.CONSUME2(tokens.CloseParen);
+                    this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.HandleAttribute_OpenParen_1);
+                    });
+                    this.CONSUME_ASSIGN2(tokens.ID, token => {
+                        this.tokenPayload(token, element, CstNodeKind.HandleAttribute_type_ID_1);
+                        element.type = token.image;
+                    });
+                    this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                        this.tokenPayload(token, element, CstNodeKind.HandleAttribute_CloseParen_1);
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createDimensions(): ast.Dimensions {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.Dimensions,
+            dimensions: undefined,
+        } as any;
     }
 
     Dimensions = this.RULE('Dimensions', () => {
-        const element = this.createDimensions();
+        let element = this.push(this.createDimensions());
 
-        this.CONSUME1(tokens.OpenParen);
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.Dimensions_OpenParen_0);
+        });
         this.OPTION1(() => {
-            this.SUBRULE1(this.DimensionBound);
+            this.SUBRULE_ASSIGN1(this.DimensionBound, {
+                assign: result => {
+                    element.dimensions ??= []; element.dimensions.push(result);
+                }
+            });
             this.MANY1(() => {
-                this.CONSUME1(tokens.Comma);
-                this.SUBRULE2(this.DimensionBound);
+                this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                    this.tokenPayload(token, element, CstNodeKind.Dimensions_Comma_0);
+                });
+                this.SUBRULE_ASSIGN2(this.DimensionBound, {
+                    assign: result => {
+                        element.dimensions ??= []; element.dimensions.push(result);
+                    }
+                });
             });
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.Dimensions_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createDimensionBound(): ast.DimensionBound {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.DimensionBound,
+            bound1: undefined,
+            bound2: undefined,
+        } as any;
     }
 
     DimensionBound = this.RULE('DimensionBound', () => {
-        const element = this.createDimensionBound();
+        let element = this.push(this.createDimensionBound());
 
-        this.SUBRULE1(this.Bound);
+        this.SUBRULE_ASSIGN1(this.Bound, {
+            assign: result => {
+                element.bound1 = result;
+            }
+        });
         this.OPTION1(() => {
-            this.CONSUME1(tokens.Colon);
-            this.SUBRULE2(this.Bound);
+            this.CONSUME_ASSIGN1(tokens.Colon, token => {
+                this.tokenPayload(token, element, CstNodeKind.DimensionBound_Colon_0);
+            });
+            this.SUBRULE_ASSIGN2(this.Bound, {
+                assign: result => {
+                    element.bound2 = result;
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createBound(): ast.Bound {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.Bound,
+            expression: undefined,
+            refer: undefined,
+        } as any;
     }
 
     Bound = this.RULE('Bound', () => {
-        const element = this.createBound();
+        let element = this.push(this.createBound());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.Star); 
+                    this.CONSUME_ASSIGN1(tokens.Star, token => {
+                        this.tokenPayload(token, element, CstNodeKind.Bound_expression_Star_0);
+                        element.expression = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.Expression);
+                    this.SUBRULE_ASSIGN1(this.Expression, {
+                        assign: result => {
+                            element.expression = result;
+                        }
+                    });
                     this.OPTION1(() => {
-                        this.CONSUME1(tokens.REFER);
-                        this.CONSUME1(tokens.OpenParen);
-                        this.SUBRULE1(this.LocatorCall);
-                        this.CONSUME1(tokens.CloseParen);
+                        this.CONSUME_ASSIGN1(tokens.REFER, token => {
+                            this.tokenPayload(token, element, CstNodeKind.Bound_REFER_0);
+                        });
+                        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                            this.tokenPayload(token, element, CstNodeKind.Bound_OpenParen_0);
+                        });
+                        this.SUBRULE_ASSIGN1(this.LocatorCall, {
+                            assign: result => {
+                                element.refer = result;
+                            }
+                        });
+                        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                            this.tokenPayload(token, element, CstNodeKind.Bound_CloseParen_0);
+                        });
                     });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createEnvironmentAttribute(): ast.EnvironmentAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.EnvironmentAttribute,
+            items: undefined,
+        } as any;
     }
 
     EnvironmentAttribute = this.RULE('EnvironmentAttribute', () => {
-        const element = this.createEnvironmentAttribute();
+        let element = this.push(this.createEnvironmentAttribute());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ENVIRONMENT); 
+                    this.CONSUME_ASSIGN1(tokens.ENVIRONMENT, token => {
+                        this.tokenPayload(token, element, CstNodeKind.EnvironmentAttribute_ENVIRONMENT_0);
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.ENV); 
+                    this.CONSUME_ASSIGN1(tokens.ENV, token => {
+                        this.tokenPayload(token, element, CstNodeKind.EnvironmentAttribute_ENV_0);
+                    });
                 }
             },
         ]);
-        this.CONSUME1(tokens.OpenParen);
-        this.MANY1(() => {
-            this.SUBRULE1(this.EnvironmentAttributeItem);
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.EnvironmentAttribute_OpenParen_0);
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.MANY1(() => {
+            this.SUBRULE_ASSIGN1(this.EnvironmentAttributeItem, {
+                assign: result => {
+                    element.items ??= []; element.items.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.EnvironmentAttribute_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createEnvironmentAttributeItem(): ast.EnvironmentAttributeItem {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.EnvironmentAttributeItem,
+            environment: undefined,
+            args: undefined,
+        } as any;
     }
 
     EnvironmentAttributeItem = this.RULE('EnvironmentAttributeItem', () => {
-        const element = this.createEnvironmentAttributeItem();
+        let element = this.push(this.createEnvironmentAttributeItem());
 
-        this.CONSUME1(tokens.ID);
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.EnvironmentAttributeItem_environment_ID_0);
+            element.environment = token.image;
+        });
         this.OPTION3(() => {
-            this.CONSUME1(tokens.OpenParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.EnvironmentAttributeItem_OpenParen_0);
+            });
             this.OPTION2(() => {
-                this.SUBRULE1(this.Expression);
+                this.SUBRULE_ASSIGN1(this.Expression, {
+                    assign: result => {
+                        element.args ??= []; element.args.push(result);
+                    }
+                });
                 this.MANY1(() => {
                     this.OPTION1(() => {
-                        this.CONSUME1(tokens.Comma);
+                        this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                            this.tokenPayload(token, element, CstNodeKind.EnvironmentAttributeItem_Comma_0);
+                        });
                     });
-                    this.SUBRULE2(this.Expression);
+                    this.SUBRULE_ASSIGN2(this.Expression, {
+                        assign: result => {
+                            element.args ??= []; element.args.push(result);
+                        }
+                    });
                 });
             });
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.EnvironmentAttributeItem_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createEntryAttribute(): ast.EntryAttribute {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.EntryAttribute,
+            limited: undefined,
+            attributes: undefined,
+            options: undefined,
+            variable: undefined,
+            returns: undefined,
+            environmentName: undefined,
+        } as any;
     }
 
     EntryAttribute = this.RULE('EntryAttribute', () => {
-        const element = this.createEntryAttribute();
+        let element = this.push(this.createEntryAttribute());
 
         this.MANY1(() => {
-            this.CONSUME1(tokens.LIMITED);
-        });
-        this.CONSUME1(tokens.ENTRY);
-        this.OPTION1(() => {
-            this.CONSUME1(tokens.OpenParen);
-            this.SUBRULE1(this.EntryDescription);
-            this.MANY2(() => {
-                this.CONSUME1(tokens.Comma);
-                this.SUBRULE2(this.EntryDescription);
+            this.CONSUME_ASSIGN1(tokens.LIMITED, token => {
+                this.tokenPayload(token, element, CstNodeKind.EntryAttribute_limited_LIMITED_0);
+                element.limited ??= []; element.limited.push(token.image);
             });
-            this.CONSUME1(tokens.CloseParen);
+        });
+        this.CONSUME_ASSIGN1(tokens.ENTRY, token => {
+            this.tokenPayload(token, element, CstNodeKind.EntryAttribute_ENTRY_0);
+        });
+        this.OPTION1(() => {
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.EntryAttribute_OpenParen_0);
+            });
+            this.SUBRULE_ASSIGN1(this.EntryDescription, {
+                assign: result => {
+                    element.attributes ??= []; element.attributes.push(result);
+                }
+            });
+            this.MANY2(() => {
+                this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                    this.tokenPayload(token, element, CstNodeKind.EntryAttribute_Comma_0);
+                });
+                this.SUBRULE_ASSIGN2(this.EntryDescription, {
+                    assign: result => {
+                        element.attributes ??= []; element.attributes.push(result);
+                    }
+                });
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.EntryAttribute_CloseParen_0);
+            });
         });
         this.MANY3(() => {
             this.OR1([
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.Options); 
+                        this.SUBRULE_ASSIGN1(this.Options, {
+                            assign: result => {
+                                element.options ??= []; element.options.push(result);
+                            }
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.VARIABLE); 
+                        this.CONSUME_ASSIGN1(tokens.VARIABLE, token => {
+                            this.tokenPayload(token, element, CstNodeKind.EntryAttribute_variable_VARIABLE_0);
+                            element.variable ??= []; element.variable.push(token.image);
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME2(tokens.LIMITED); 
+                        this.CONSUME_ASSIGN2(tokens.LIMITED, token => {
+                            this.tokenPayload(token, element, CstNodeKind.EntryAttribute_limited_LIMITED_1);
+                            element.limited ??= []; element.limited.push(token.image);
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.SUBRULE1(this.ReturnsOption); 
+                        this.SUBRULE_ASSIGN1(this.ReturnsOption, {
+                            assign: result => {
+                                element.returns ??= []; element.returns.push(result);
+                            }
+                        });
                     }
                 },
                 {
@@ -5994,535 +10340,873 @@ export class PliParser extends AbstractParser {
                         this.OR2([
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.EXTERNAL); 
+                                    this.CONSUME_ASSIGN1(tokens.EXTERNAL, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.EntryAttribute_EXTERNAL_0);
+                                    });
                                 }
                             },
                             {
                                 ALT: () => {
-                                    this.CONSUME1(tokens.EXT); 
+                                    this.CONSUME_ASSIGN1(tokens.EXT, token => {
+                                        this.tokenPayload(token, element, CstNodeKind.EntryAttribute_EXT_0);
+                                    });
                                 }
                             },
                         ]);
                         this.OPTION2(() => {
-                            this.CONSUME2(tokens.OpenParen);
-                            this.SUBRULE1(this.Expression);
-                            this.CONSUME2(tokens.CloseParen);
+                            this.CONSUME_ASSIGN2(tokens.OpenParen, token => {
+                                this.tokenPayload(token, element, CstNodeKind.EntryAttribute_OpenParen_1);
+                            });
+                            this.SUBRULE_ASSIGN1(this.Expression, {
+                                assign: result => {
+                                    element.environmentName ??= []; element.environmentName.push(result);
+                                }
+                            });
+                            this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
+                                this.tokenPayload(token, element, CstNodeKind.EntryAttribute_CloseParen_1);
+                            });
                         });
                     }
                 },
             ]);
         });
 
-        return element;
+        return this.pop();
     });
     private createReturnsOption(): ast.ReturnsOption {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ReturnsOption,
+            returnAttributes: undefined,
+        } as any;
     }
 
     ReturnsOption = this.RULE('ReturnsOption', () => {
-        const element = this.createReturnsOption();
+        let element = this.push(this.createReturnsOption());
 
-        this.CONSUME1(tokens.RETURNS);
-        this.CONSUME1(tokens.OpenParen);
-        this.MANY1(() => {
-            this.SUBRULE1(this.DeclarationAttribute);
+        this.CONSUME_ASSIGN1(tokens.RETURNS, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReturnsOption_RETURNS_0);
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReturnsOption_OpenParen_0);
+        });
+        this.MANY1(() => {
+            this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+                assign: result => {
+                    element.returnAttributes ??= []; element.returnAttributes.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReturnsOption_CloseParen_0);
+        });
 
-        return element;
+        return this.pop();
     });
     private createEntryDescription(): ast.EntryDescription {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     EntryDescription = this.RULE('EntryDescription', () => {
-        const element = this.createEntryDescription();
+        let element = this.push(this.createEntryDescription());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.EntryParameterDescription); 
+                    this.SUBRULE_ASSIGN1(this.EntryParameterDescription, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.EntryUnionDescription); 
-                }
-            },
-        ]);
-
-        return element;
-    });
-    private createEntryParameterDescription(): ast.EntryParameterDescription {
-        return {} as any;
-    }
-
-    EntryParameterDescription = this.RULE('EntryParameterDescription', () => {
-        const element = this.createEntryParameterDescription();
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.AT_LEAST_ONE1(() => {
-                        this.SUBRULE1(this.DeclarationAttribute);
-                    }); 
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME1(tokens.Star);
-                    this.MANY1(() => {
-                        this.SUBRULE2(this.DeclarationAttribute);
+                    this.SUBRULE_ASSIGN1(this.EntryUnionDescription, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
                     });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
-    private createEntryUnionDescription(): ast.EntryUnionDescription {
-        return {} as any;
+    private createEntryParameterDescription(): ast.EntryParameterDescription {
+        return {
+            kind: ast.SyntaxKind.EntryParameterDescription,
+            attributes: undefined,
+            star: undefined,
+        } as any;
     }
 
-    EntryUnionDescription = this.RULE('EntryUnionDescription', () => {
-        const element = this.createEntryUnionDescription();
-
-        this.CONSUME1(tokens.NUMBER);
-        this.MANY1(() => {
-            this.SUBRULE1(this.DeclarationAttribute);
-        });
-        this.CONSUME1(tokens.Comma);
-        this.MANY2(() => {
-            this.SUBRULE1(this.PrefixedAttribute);
-        });
-
-        return element;
-    });
-    private createPrefixedAttribute(): ast.PrefixedAttribute {
-        return {} as any;
-    }
-
-    PrefixedAttribute = this.RULE('PrefixedAttribute', () => {
-        const element = this.createPrefixedAttribute();
-
-        this.CONSUME1(tokens.NUMBER);
-        this.MANY1(() => {
-            this.SUBRULE1(this.DeclarationAttribute);
-        });
-
-        return element;
-    });
-    private createProcedureParameter(): ast.ProcedureParameter {
-        return {} as any;
-    }
-
-    ProcedureParameter = this.RULE('ProcedureParameter', () => {
-        const element = this.createProcedureParameter();
-
-        this.CONSUME1(tokens.ID);
-
-        return element;
-    });
-    private createReferenceItem(): ast.ReferenceItem {
-        return {} as any;
-    }
-
-    ReferenceItem = this.RULE('ReferenceItem', () => {
-        const element = this.createReferenceItem();
-
-        this.CONSUME1(tokens.ID);
-        this.OPTION1(() => {
-            this.SUBRULE1(this.Dimensions);
-        });
-
-        return element;
-    });
-    private createExpression(): ast.Expression {
-        return {} as any;
-    }
-
-    Expression = this.RULE('Expression', () => {
-        const element = this.createExpression();
-
-        this.SUBRULE1(this.BinaryExpression);
-
-        return element;
-    });
-    private createBinaryExpression(): ast.Expression {
-        return {} as any;
-    }
-
-    BinaryExpression = this.RULE('BinaryExpression', () => {
-        const element = this.createBinaryExpression();
-
-        /* Action: BinaryExpression */
-        this.SUBRULE1(this.PrimaryExpression);
-        this.MANY1(() => {
-            this.OR1([
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.Pipe); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.Not); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.Caret); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.Ampersand); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.LessThan); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.NotLessThan); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.LessThanEquals); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.Equals); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.NotEquals); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.CaretEquals); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.LessThanGreaterThan); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.GreaterThanEquals); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.GreaterThan); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.NotGreaterThan); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.PipePipe); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.ExclamationMarkExclamationMark); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.Plus); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.Minus); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.Star); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.Slash); 
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.CONSUME1(tokens.StarStar); 
-                    }
-                },
-            ]);
-            this.SUBRULE2(this.PrimaryExpression);
-        });
-
-        return element;
-    });
-    private createPrimaryExpression(): ast.Expression {
-        return {} as any;
-    }
-
-    PrimaryExpression = this.RULE('PrimaryExpression', () => {
-        const element = this.createPrimaryExpression();
+    EntryParameterDescription = this.RULE('EntryParameterDescription', () => {
+        let element = this.push(this.createEntryParameterDescription());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.Literal); 
+                    this.AT_LEAST_ONE1(() => {
+                        this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+                            assign: result => {
+                                element.attributes ??= []; element.attributes.push(result);
+                            }
+                        });
+                    }); 
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.ParenthesizedExpression); 
-                }
-            },
-            {
-                ALT: () => {
-                    this.SUBRULE1(this.UnaryExpression); 
-                }
-            },
-            {
-                ALT: () => {
-                    this.SUBRULE1(this.LocatorCall); 
+                    this.CONSUME_ASSIGN1(tokens.Star, token => {
+                        this.tokenPayload(token, element, CstNodeKind.EntryParameterDescription_star_Star_0);
+                        element.star = true;
+                    });
+                    this.MANY1(() => {
+                        this.SUBRULE_ASSIGN2(this.DeclarationAttribute, {
+                            assign: result => {
+                                element.attributes ??= []; element.attributes.push(result);
+                            }
+                        });
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
+    });
+    private createEntryUnionDescription(): ast.EntryUnionDescription {
+        return {
+            kind: ast.SyntaxKind.EntryUnionDescription,
+            init: undefined,
+            attributes: undefined,
+            prefixedAttributes: undefined,
+        } as any;
+    }
+
+    EntryUnionDescription = this.RULE('EntryUnionDescription', () => {
+        let element = this.push(this.createEntryUnionDescription());
+
+        this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+            this.tokenPayload(token, element, CstNodeKind.EntryUnionDescription_init_NUMBER_0);
+            element.init = token.image;
+        });
+        this.MANY1(() => {
+            this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+                assign: result => {
+                    element.attributes ??= []; element.attributes.push(result);
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.Comma, token => {
+            this.tokenPayload(token, element, CstNodeKind.EntryUnionDescription_Comma_0);
+        });
+        this.MANY2(() => {
+            this.SUBRULE_ASSIGN1(this.PrefixedAttribute, {
+                assign: result => {
+                    element.prefixedAttributes ??= []; element.prefixedAttributes.push(result);
+                }
+            });
+        });
+
+        return this.pop();
+    });
+    private createPrefixedAttribute(): ast.PrefixedAttribute {
+        return {
+            kind: ast.SyntaxKind.PrefixedAttribute,
+            level: undefined,
+            attribute: undefined,
+        } as any;
+    }
+
+    PrefixedAttribute = this.RULE('PrefixedAttribute', () => {
+        let element = this.push(this.createPrefixedAttribute());
+
+        this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+            this.tokenPayload(token, element, CstNodeKind.PrefixedAttribute_level_NUMBER_0);
+            element.level = token.image;
+        });
+        this.MANY1(() => {
+            this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+                assign: result => {
+                    element.attribute = result;
+                }
+            });
+        });
+
+        return this.pop();
+    });
+    private createProcedureParameter(): ast.ProcedureParameter {
+        return {
+            kind: ast.SyntaxKind.ProcedureParameter,
+            id: undefined,
+        } as any;
+    }
+
+    ProcedureParameter = this.RULE('ProcedureParameter', () => {
+        let element = this.push(this.createProcedureParameter());
+
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.ProcedureParameter_id_ID_0);
+            element.id = token.image;
+        });
+
+        return this.pop();
+    });
+    private createReferenceItem(): ast.ReferenceItem {
+        return {
+            kind: ast.SyntaxKind.ReferenceItem,
+            ref: undefined,
+            dimensions: undefined,
+        } as any;
+    }
+
+    ReferenceItem = this.RULE('ReferenceItem', () => {
+        let element = this.push(this.createReferenceItem());
+
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.ReferenceItem_ref_ID_0);
+            element.ref = token.image;
+        });
+        this.OPTION1(() => {
+            this.SUBRULE_ASSIGN1(this.Dimensions, {
+                assign: result => {
+                    element.dimensions = result;
+                }
+            });
+        });
+
+        return this.pop();
+    });
+    private createExpression(): ast.Expression {
+        return {
+            
+        } as any;
+    }
+
+    Expression = this.RULE('Expression', () => {
+        let element = this.push(this.createExpression());
+
+        this.SUBRULE_ASSIGN1(this.BinaryExpression, {
+            assign: result => {
+                element = this.replace(result);
+            }
+        });
+
+        return this.pop();
+    });
+    private createBinaryExpression(): ast.Expression {
+        return {
+            
+        } as any;
+    }
+
+    BinaryExpression = this.RULE('BinaryExpression', () => {
+        let element = this.push(this.createBinaryExpression());
+
+        /* Action: BinaryExpression */
+        this.SUBRULE_ASSIGN1(this.PrimaryExpression, {
+            assign: result => {
+                element.items ??= []; element.items.push(result);
+            }
+        });
+        this.MANY1(() => {
+            this.OR1([
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.Pipe, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Pipe_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.Not, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Not_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.Caret, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Caret_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.Ampersand, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Ampersand_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.LessThan, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_LessThan_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.NotLessThan, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_NotLessThan_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.LessThanEquals, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_LessThanEquals_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.Equals, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Equals_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.NotEquals, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_NotEquals_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.CaretEquals, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_CaretEquals_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.LessThanGreaterThan, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_LessThanGreaterThan_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.GreaterThanEquals, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_GreaterThanEquals_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.GreaterThan, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_GreaterThan_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.NotGreaterThan, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_NotGreaterThan_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.PipePipe, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_PipePipe_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.ExclamationMarkExclamationMark, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_ExclamationMarkExclamationMark_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.Plus, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Plus_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.Minus, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Minus_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.Star, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Star_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.Slash, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_Slash_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.CONSUME_ASSIGN1(tokens.StarStar, token => {
+                            this.tokenPayload(token, element, CstNodeKind.BinaryExpression_op_StarStar_0);
+                            element.op ??= []; element.op.push(token.image);
+                        });
+                    }
+                },
+            ]);
+            this.SUBRULE_ASSIGN2(this.PrimaryExpression, {
+                assign: result => {
+                    element.items ??= []; element.items.push(result);
+                }
+            });
+        });
+
+        return this.pop();
+    });
+    private createPrimaryExpression(): ast.Expression {
+        return {
+            
+        } as any;
+    }
+
+    PrimaryExpression = this.RULE('PrimaryExpression', () => {
+        let element = this.push(this.createPrimaryExpression());
+
+        this.OR1([
+            {
+                ALT: () => {
+                    this.SUBRULE_ASSIGN1(this.Literal, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE_ASSIGN1(this.ParenthesizedExpression, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE_ASSIGN1(this.UnaryExpression, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
+                }
+            },
+            {
+                ALT: () => {
+                    this.SUBRULE_ASSIGN1(this.LocatorCall, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
+                }
+            },
+        ]);
+
+        return this.pop();
     });
     private createParenthesizedExpression(): ast.Expression {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     ParenthesizedExpression = this.RULE('ParenthesizedExpression', () => {
-        const element = this.createParenthesizedExpression();
+        let element = this.push(this.createParenthesizedExpression());
 
         /* Action: Parenthesis */
-        this.CONSUME1(tokens.OpenParen);
-        this.SUBRULE1(this.Expression);
-        this.OPTION1(() => {
-            this.CONSUME1(tokens.DO);
-            this.SUBRULE1(this.DoType3);
+        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ParenthesizedExpression_OpenParen_0);
         });
-        this.CONSUME1(tokens.CloseParen);
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.value = result;
+            }
+        });
+        this.OPTION1(() => {
+            this.CONSUME_ASSIGN1(tokens.DO, token => {
+                this.tokenPayload(token, element, CstNodeKind.ParenthesizedExpression_DO_0);
+            });
+            this.SUBRULE_ASSIGN1(this.DoType3, {
+                assign: result => {
+                    element.do = result;
+                }
+            });
+        });
+        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+            this.tokenPayload(token, element, CstNodeKind.ParenthesizedExpression_CloseParen_0);
+        });
         this.OPTION2(() => {
             /* Action: Literal.multiplier */
-            this.SUBRULE1(this.LiteralValue);
+            this.SUBRULE_ASSIGN1(this.LiteralValue, {
+                assign: result => {
+                    element.value = result;
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createMemberCall(): ast.MemberCall {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.MemberCall,
+            element: undefined,
+            previous: undefined,
+        } as any;
     }
 
     MemberCall = this.RULE('MemberCall', () => {
-        const element = this.createMemberCall();
+        let element = this.push(this.createMemberCall());
 
-        this.SUBRULE1(this.ReferenceItem);
+        this.SUBRULE_ASSIGN1(this.ReferenceItem, {
+            assign: result => {
+                element.element = result;
+            }
+        });
         this.MANY1(() => {
             /* Action: MemberCall.previous */
-            this.CONSUME1(tokens.Dot);
-            this.SUBRULE2(this.ReferenceItem);
+            this.CONSUME_ASSIGN1(tokens.Dot, token => {
+                this.tokenPayload(token, element, CstNodeKind.MemberCall_Dot_0);
+            });
+            this.SUBRULE_ASSIGN2(this.ReferenceItem, {
+                assign: result => {
+                    element.element = result;
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createLocatorCall(): ast.LocatorCall {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LocatorCall,
+            element: undefined,
+            previous: undefined,
+            pointer: undefined,
+            handle: undefined,
+        } as any;
     }
 
     LocatorCall = this.RULE('LocatorCall', () => {
-        const element = this.createLocatorCall();
+        let element = this.push(this.createLocatorCall());
 
-        this.SUBRULE1(this.MemberCall);
+        this.SUBRULE_ASSIGN1(this.MemberCall, {
+            assign: result => {
+                element.element = result;
+            }
+        });
         this.MANY1(() => {
             /* Action: LocatorCall.previous */
             this.OR1([
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.MinusGreaterThan); 
+                        this.CONSUME_ASSIGN1(tokens.MinusGreaterThan, token => {
+                            this.tokenPayload(token, element, CstNodeKind.LocatorCall_pointer_MinusGreaterThan_0);
+                            element.pointer = true;
+                        });
                     }
                 },
                 {
                     ALT: () => {
-                        this.CONSUME1(tokens.EqualsGreaterThan); 
+                        this.CONSUME_ASSIGN1(tokens.EqualsGreaterThan, token => {
+                            this.tokenPayload(token, element, CstNodeKind.LocatorCall_handle_EqualsGreaterThan_0);
+                            element.handle = true;
+                        });
                     }
                 },
             ]);
-            this.SUBRULE2(this.MemberCall);
+            this.SUBRULE_ASSIGN2(this.MemberCall, {
+                assign: result => {
+                    element.element = result;
+                }
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createProcedureCall(): ast.ProcedureCall {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.ProcedureCall,
+            procedure: undefined,
+            args: undefined,
+        } as any;
     }
 
     ProcedureCall = this.RULE('ProcedureCall', () => {
-        const element = this.createProcedureCall();
+        let element = this.push(this.createProcedureCall());
 
-        this.CONSUME1(tokens.ID);
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.ProcedureCall_procedure_ID_0);
+            element.procedure = token.image;
+        });
         this.OPTION2(() => {
-            this.CONSUME1(tokens.OpenParen);
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.ProcedureCall_OpenParen_0);
+            });
             this.OPTION1(() => {
                 this.OR1([
                     {
                         ALT: () => {
-                            this.SUBRULE1(this.Expression); 
+                            this.SUBRULE_ASSIGN1(this.Expression, {
+                                assign: result => {
+                                    element.args ??= []; element.args.push(result);
+                                }
+                            });
                         }
                     },
                     {
                         ALT: () => {
-                            this.CONSUME1(tokens.Star); 
+                            this.CONSUME_ASSIGN1(tokens.Star, token => {
+                                this.tokenPayload(token, element, CstNodeKind.ProcedureCall_args_Star_0);
+                                element.args ??= []; element.args.push(token.image);
+                            });
                         }
                     },
                 ]);
                 this.MANY1(() => {
-                    this.CONSUME1(tokens.Comma);
+                    this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                        this.tokenPayload(token, element, CstNodeKind.ProcedureCall_Comma_0);
+                    });
                     this.OR2([
                         {
                             ALT: () => {
-                                this.SUBRULE2(this.Expression); 
+                                this.SUBRULE_ASSIGN2(this.Expression, {
+                                    assign: result => {
+                                        element.args ??= []; element.args.push(result);
+                                    }
+                                });
                             }
                         },
                         {
                             ALT: () => {
-                                this.CONSUME2(tokens.Star); 
+                                this.CONSUME_ASSIGN2(tokens.Star, token => {
+                                    this.tokenPayload(token, element, CstNodeKind.ProcedureCall_args_Star_1);
+                                    element.args ??= []; element.args.push(token.image);
+                                });
                             }
                         },
                     ]);
                 });
             });
-            this.CONSUME1(tokens.CloseParen);
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.ProcedureCall_CloseParen_0);
+            });
         });
 
-        return element;
+        return this.pop();
     });
     private createLabelReference(): ast.LabelReference {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.LabelReference,
+            label: undefined,
+        } as any;
     }
 
     LabelReference = this.RULE('LabelReference', () => {
-        const element = this.createLabelReference();
+        let element = this.push(this.createLabelReference());
 
-        this.CONSUME1(tokens.ID);
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.LabelReference_label_ID_0);
+            element.label = token.image;
+        });
 
-        return element;
+        return this.pop();
     });
     private createUnaryExpression(): ast.UnaryExpression {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.UnaryExpression,
+            op: undefined,
+            expr: undefined,
+        } as any;
     }
 
     UnaryExpression = this.RULE('UnaryExpression', () => {
-        const element = this.createUnaryExpression();
+        let element = this.push(this.createUnaryExpression());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.Plus); 
+                    this.CONSUME_ASSIGN1(tokens.Plus, token => {
+                        this.tokenPayload(token, element, CstNodeKind.UnaryExpression_op_Plus_0);
+                        element.op = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.Minus); 
+                    this.CONSUME_ASSIGN1(tokens.Minus, token => {
+                        this.tokenPayload(token, element, CstNodeKind.UnaryExpression_op_Minus_0);
+                        element.op = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.Not); 
+                    this.CONSUME_ASSIGN1(tokens.Not, token => {
+                        this.tokenPayload(token, element, CstNodeKind.UnaryExpression_op_Not_0);
+                        element.op = token.image;
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.CONSUME1(tokens.Caret); 
+                    this.CONSUME_ASSIGN1(tokens.Caret, token => {
+                        this.tokenPayload(token, element, CstNodeKind.UnaryExpression_op_Caret_0);
+                        element.op = token.image;
+                    });
                 }
             },
         ]);
-        this.SUBRULE1(this.Expression);
+        this.SUBRULE_ASSIGN1(this.Expression, {
+            assign: result => {
+                element.expr = result;
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createLiteral(): ast.Literal {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.Literal,
+            multiplier: undefined,
+            value: undefined,
+        } as any;
     }
 
     Literal = this.RULE('Literal', () => {
-        const element = this.createLiteral();
+        let element = this.push(this.createLiteral());
 
-        this.SUBRULE1(this.LiteralValue);
+        this.SUBRULE_ASSIGN1(this.LiteralValue, {
+            assign: result => {
+                element.value = result;
+            }
+        });
 
-        return element;
+        return this.pop();
     });
     private createLiteralValue(): ast.LiteralValue {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     LiteralValue = this.RULE('LiteralValue', () => {
-        const element = this.createLiteralValue();
+        let element = this.push(this.createLiteralValue());
 
         this.OR1([
             {
                 ALT: () => {
-                    this.SUBRULE1(this.StringLiteral); 
+                    this.SUBRULE_ASSIGN1(this.StringLiteral, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
             {
                 ALT: () => {
-                    this.SUBRULE1(this.NumberLiteral); 
+                    this.SUBRULE_ASSIGN1(this.NumberLiteral, {
+                        assign: result => {
+                            element = this.replace(result);
+                        }
+                    });
                 }
             },
         ]);
 
-        return element;
+        return this.pop();
     });
     private createStringLiteral(): ast.StringLiteral {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.StringLiteral,
+            value: undefined,
+        } as any;
     }
 
     StringLiteral = this.RULE('StringLiteral', () => {
-        const element = this.createStringLiteral();
+        let element = this.push(this.createStringLiteral());
 
-        this.CONSUME1(tokens.STRING_TERM);
+        this.CONSUME_ASSIGN1(tokens.STRING_TERM, token => {
+            this.tokenPayload(token, element, CstNodeKind.StringLiteral_value_STRING_TERM_0);
+            element.value = token.image;
+        });
 
-        return element;
+        return this.pop();
     });
     private createNumberLiteral(): ast.NumberLiteral {
-        return {} as any;
+        return {
+            kind: ast.SyntaxKind.NumberLiteral,
+            value: undefined,
+        } as any;
     }
 
     NumberLiteral = this.RULE('NumberLiteral', () => {
-        const element = this.createNumberLiteral();
+        let element = this.push(this.createNumberLiteral());
 
-        this.CONSUME1(tokens.NUMBER);
+        this.CONSUME_ASSIGN1(tokens.NUMBER, token => {
+            this.tokenPayload(token, element, CstNodeKind.NumberLiteral_value_NUMBER_0);
+            element.value = token.image;
+        });
 
-        return element;
+        return this.pop();
     });
     private createFQN(): ast.FQN {
-        return {} as any;
+        return {
+            
+        } as any;
     }
 
     FQN = this.RULE('FQN', () => {
-        const element = this.createFQN();
+        let element = this.push(this.createFQN());
 
-        this.CONSUME1(tokens.ID);
+        this.CONSUME_ASSIGN1(tokens.ID, token => {
+            this.tokenPayload(token, element, CstNodeKind.FQN_ID_0);
+        });
         this.MANY1(() => {
-            this.CONSUME1(tokens.Dot);
-            this.CONSUME2(tokens.ID);
+            this.CONSUME_ASSIGN1(tokens.Dot, token => {
+                this.tokenPayload(token, element, CstNodeKind.FQN_Dot_0);
+            });
+            this.CONSUME_ASSIGN2(tokens.ID, token => {
+                this.tokenPayload(token, element, CstNodeKind.FQN_ID_1);
+            });
         });
 
-        return element;
+        return this.pop();
     });
 }

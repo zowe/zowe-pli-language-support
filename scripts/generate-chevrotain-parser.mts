@@ -12,6 +12,7 @@ const parse = parseHelper(services.grammar);
 
 const file = readFileSync('../packages/language/src/pli.langium', 'utf8');
 const grammar = (await parse(file)).parseResult.value as Grammar;
+const { interfaces, unions } = collectAst(grammar);
 
 function buildCstNodeNames(): Map<GrammarAST.AbstractElement, string> {
     const ruleCallsAndKeywords = AstUtils.streamAllContents(grammar).filter(e => GrammarAST.isRuleCall(e) || GrammarAST.isKeyword(e)).toArray();
@@ -53,6 +54,7 @@ function generateParser(): GeneratorNode {
     import { AbstractParser } from './abstract-parser';
     import * as tokens from './tokens';
     import * as ast from './ast';
+    import { CstNodeKind } from './cst';
 
     export class PliParser extends AbstractParser {
         constructor() {
@@ -83,17 +85,24 @@ function generateParserRule(rule: GrammarAST.ParserRule): GeneratorNode {
         plus: 1,
         option: 1
     };
+    const typeName = GrammarUtils.getTypeName(rule);
+    const props = interfaces.find(e => e.name === typeName)?.allProperties ?? [];
     return expandToNode`
-    private create${rule.name}(): ast.${GrammarUtils.getTypeName(rule)} {
-        return {} as any;
+    private create${rule.name}(): ast.${typeName} {
+        return {
+            ${props.length > 0 ? `kind: ast.SyntaxKind.${typeName},` : ''}
+            ${joinToNode(props, (prop) => expandToNode`${prop.name}: undefined,`, {
+                appendNewLineIfNotEmpty: true 
+            })}
+        } as any;
     }
 
     ${rule.name} = this.RULE('${rule.name}', () => {
-        const element = this.create${rule.name}();
+        let element = this.push(this.create${rule.name}());
 
         ${generateElement(rule.definition, context)}
 
-        return element;
+        return this.pop();
     });
     `
 }
@@ -121,7 +130,21 @@ function generateElement(el: GrammarAST.AbstractElement, context: ParserContext)
         const name = getKeywordName(el);
         const index = context.consume.get(name) || 1;
         context.consume.set(name, index + 1);
-        node = expandToNode`this.CONSUME${index}(tokens.${name});`;
+        const assignment = AstUtils.getContainerOfType(el, GrammarAST.isAssignment);
+        if (assignment) {
+            node = expandToNode`
+            this.CONSUME_ASSIGN${index}(tokens.${name}, token => {
+                this.tokenPayload(token, element, CstNodeKind.${cstNames.get(el) ?? 'ERROR'});
+                ${assignment.operator === '+=' ? `element.${assignment.feature} ??= []; element.${assignment.feature}.push(token.image);` : `element.${assignment.feature} = ${assignment.operator === '?=' ? 'true' : 'token.image'};`}
+            });
+            `;
+        } else {
+            node = expandToNode`
+            this.CONSUME_ASSIGN${index}(tokens.${name}, token => {
+                this.tokenPayload(token, element, CstNodeKind.${cstNames.get(el) ?? 'ERROR'});
+            });
+            `;
+        }
     } else if (GrammarAST.isRuleCall(el)) {
         const rule = el.rule.ref;
         if (!rule) {
@@ -130,11 +153,42 @@ function generateElement(el: GrammarAST.AbstractElement, context: ParserContext)
         if (GrammarAST.isParserRule(rule)) {
             const index = context.subrule.get(rule.name) || 1;
             context.subrule.set(rule.name, index + 1);
-            node = expandToNode`this.SUBRULE${index}(this.${rule.name});`;
+            const assignment = AstUtils.getContainerOfType(el, GrammarAST.isAssignment);
+            if (assignment) {
+                node = expandToNode`
+                this.SUBRULE_ASSIGN${index}(this.${rule.name}, {
+                    assign: result => {
+                        ${assignment.operator === '+=' ? `element.${assignment.feature} ??= []; element.${assignment.feature}.push(result);` : `element.${assignment.feature} = result;`}
+                    }
+                });
+                `;
+            } else {
+                node = expandToNode`
+                this.SUBRULE_ASSIGN${index}(this.${rule.name}, {
+                    assign: result => {
+                        element = this.replace(result);
+                    }
+                });
+                `;
+            }
         } else {
             const index = context.consume.get(rule.name) || 1;
             context.consume.set(rule.name, index + 1);
-            node = expandToNode`this.CONSUME${index}(tokens.${rule.name});`;
+            const assignment = AstUtils.getContainerOfType(el, GrammarAST.isAssignment);
+            if (assignment) {
+                node = expandToNode`
+                this.CONSUME_ASSIGN${index}(tokens.${rule.name}, token => {
+                    this.tokenPayload(token, element, CstNodeKind.${cstNames.get(el) ?? 'ERROR'});
+                    ${assignment.operator === '+=' ? `element.${assignment.feature} ??= []; element.${assignment.feature}.push(token.image);` : `element.${assignment.feature} = ${assignment.operator === '?=' ? 'true' : 'token.image'};`}
+                });
+                `;
+            } else {
+                node = expandToNode`
+                this.CONSUME_ASSIGN${index}(tokens.${rule.name}, token => {
+                    this.tokenPayload(token, element, CstNodeKind.${cstNames.get(el) ?? 'ERROR'});
+                });
+                `;
+            }
         }
     } else if (GrammarAST.isGroup(el)) {
         node = joinToNode(el.elements, (el) => generateElement(el, context), {
@@ -169,6 +223,7 @@ function generateElement(el: GrammarAST.AbstractElement, context: ParserContext)
 }
 
 function generateCrossReference(reference: GrammarAST.CrossReference, context: ParserContext, terminal = reference.terminal): GeneratorNode {
+    const assignment = AstUtils.getContainerOfType(reference, GrammarAST.isAssignment)!;
     if (!terminal) {
         if (!reference.type.ref) {
             throw new Error('Could not resolve reference to type: ' + reference.type.$refText);
@@ -186,12 +241,22 @@ function generateCrossReference(reference: GrammarAST.CrossReference, context: P
         }
         const index = context.consume.get(terminalRuleName) || 1;
         context.consume.set(terminalRuleName, index + 1);
-        return expandToNode`this.CONSUME${index}(tokens.${terminalRuleName});`;
+        return expandToNode`
+        this.CONSUME_ASSIGN${index}(tokens.${terminalRuleName}, token => {
+            this.tokenPayload(token, element, CstNodeKind.${cstNames.get(terminal) ?? 'ERROR'});
+            element.${assignment.feature} = token.image;
+        });
+        `;
     } else if (GrammarAST.isKeyword(terminal)) {
         const name = getKeywordName(terminal);
         const index = context.consume.get(name) || 1;
         context.consume.set(name, index + 1);
-        return expandToNode`this.CONSUME${index}(tokens.${name});`;
+        return expandToNode`
+        this.CONSUME_ASSIGN${index}(tokens.${name}, token => {
+            this.tokenPayload(token, element, CstNodeKind.${cstNames.get(terminal) ?? 'ERROR'});
+            element.${assignment.feature} = token.image;
+        });
+        `;
     }
     return generateElement(terminal, context);
 }
@@ -300,10 +365,7 @@ function generateTokenTypes(): GeneratorNode {
 }
 
 function generateAst(): GeneratorNode {
-    const { interfaces, unions } = collectAst(grammar);
     return expandToNode`
-    import { CstNode } from "./cst-base";
-
     export enum SyntaxKind {
         ${joinToNode(interfaces, type => expandToNode`${type.name}`, {
             appendNewLineIfNotEmpty: true,
@@ -312,10 +374,9 @@ function generateAst(): GeneratorNode {
     }
 
     export interface AstNode {
-        cst?: CstNode;
     }
     
-    export type Reference<T> = T;
+    export type Reference<T> = string;
 
     export type SyntaxNode =
         ${joinToNode(interfaces, (type) => type.name, {
@@ -394,6 +455,6 @@ function generateCst(): GeneratorNode {
 const cstNames = buildCstNodeNames();
 
 // writeFileSync('./tokens.ts', toString(generateTokenTypes()));
+writeFileSync('./cst.ts', toString(generateCst()));
 writeFileSync('./parser.ts', toString(generateParser()));
 writeFileSync('./ast.ts', toString(generateAst()));
-// writeFileSync('./cst.ts', toString(generateCst()));

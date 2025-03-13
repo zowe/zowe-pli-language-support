@@ -1,5 +1,3 @@
-import { CstNode } from "./cst-base";
-
 export enum SyntaxKind {
     AFormatItem,
     AllocateDimension,
@@ -204,10 +202,9 @@ export enum SyntaxKind {
 }
 
 export interface AstNode {
-    cst?: CstNode;
 }
 
-export type Reference<T> = T;
+export type Reference<T> = string;
 
 export type SyntaxNode =
     AFormatItem |
