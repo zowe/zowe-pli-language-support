@@ -47,7 +47,38 @@ export class PliPreprocessorGenerator {
     }
 
     handleDoUntilWhile(statement: PPDoUntilWhile, program: PPInstruction[]) {
-
+        /**
+         * $until$: <EXPRESSION-UNTIL>
+         *          PUSH [FALSE]
+         *          BRANCHIFNEQ $end$
+         * {if while != undefined}
+         *          <EXPRESSION-WHILE>
+         *          PUSH [TRUE]
+         *          BRANCHIFNEQ $end$
+         * {/if}
+         *          <BODY>
+         *          GOTO $until$
+         * $end$:
+         */
+        const $until$ = program.length;
+        this.handleExpression(statement.conditionUntil, program);
+        program.push(Instructions.push(Values.False()));
+        const branchUntil = Instructions.branchIfNotEqual(-1);
+        program.push(branchUntil);
+        let branchWhile: PPIBranchIfNotEqual | undefined = undefined;
+        if (statement.conditionWhile) {
+            this.handleExpression(statement.conditionWhile, program);
+            program.push(Instructions.push(Values.True()));
+            branchWhile = Instructions.branchIfNotEqual(-1);
+            program.push(branchWhile);
+        }
+        this.handleStatements(statement.body, program);
+        program.push(Instructions.goto($until$));
+        const $end$ = program.length;
+        branchUntil.address = $end$;
+        if (branchWhile) {
+            branchWhile.address = $end$;
+        }
     }
 
     handleDoWhileUntil(statement: PPDoWhileUntil, program: PPInstruction[]) {
@@ -69,8 +100,8 @@ export class PliPreprocessorGenerator {
         program.push(Instructions.push(Values.True()));
         const branchWhile = Instructions.branchIfNotEqual(-1);
         program.push(branchWhile);
-        let branchUntil: PPIBranchIfNotEqual|undefined = undefined;
-        if(statement.conditionUntil) {
+        let branchUntil: PPIBranchIfNotEqual | undefined = undefined;
+        if (statement.conditionUntil) {
             this.handleExpression(statement.conditionUntil, program);
             program.push(Instructions.push(Values.False()));
             branchUntil = Instructions.branchIfNotEqual(-1);
@@ -80,7 +111,7 @@ export class PliPreprocessorGenerator {
         program.push(Instructions.goto($while$));
         const $end$ = program.length;
         branchWhile.address = $end$;
-        if(branchUntil) {
+        if (branchUntil) {
             branchUntil.address = $end$;
         }
     }
@@ -136,7 +167,7 @@ export class PliPreprocessorGenerator {
          */
         this.handleExpression(statement.condition, program);
         program.push(Instructions.push(Values.True()));
-        if(statement.elseUnit) {
+        if (statement.elseUnit) {
             const $else$ = Instructions.branchIfNotEqual(-1);
             program.push($else$);
             this.handleStatement(statement.thenUnit, program);
@@ -222,8 +253,8 @@ export class PliPreprocessorGenerator {
             case "fixed": {
                 program.push(Instructions.push(
                     decl.type === "character"
-                    ? []
-                    : [createTokenInstance(this.numberTokenType, "0", 0, 0, 0, 0, 0, 0)]
+                        ? []
+                        : [createTokenInstance(this.numberTokenType, "0", 0, 0, 0, 0, 0, 0)]
                 ));
                 program.push(Instructions.set(decl.name));
                 program.push(Instructions.activate(decl.name, decl.scanMode));
@@ -233,6 +264,6 @@ export class PliPreprocessorGenerator {
     }
 
     // protected isIdentifier(token: IToken) {
-        //     return token.tokenType.name === "ID" || (token.tokenType.CATEGORIES && token.tokenType.CATEGORIES.findIndex(t => t.name === "ID") > -1);
-        // }
+    //     return token.tokenType.name === "ID" || (token.tokenType.CATEGORIES && token.tokenType.CATEGORIES.findIndex(t => t.name === "ID") > -1);
+    // }
 }
