@@ -1,15 +1,17 @@
 import { EmbeddedActionsParser, TokenType, IParserConfig, ParserMethod, SubruleMethodOpts, IToken } from "chevrotain";
 import { LLStarLookaheadStrategy } from "chevrotain-allstar";
 import type { CstNodeKind } from "./cst";
-import type { SyntaxNode } from "./ast";
+import { SyntaxKind, type BinaryExpression, type SyntaxNode } from "./ast";
+import * as tokens from './tokens';
 
 export interface SubruleAssignMethodOpts<ARGS, R> extends SubruleMethodOpts<ARGS> {
     assign: (result: R) => void;
 }
 
-export interface ParserStackAccess<T> {
-    item: T;
-    pop(): T;
+export interface IntermediateBinaryExpression {
+    items: any[];
+    operators: string[];
+    infix: true;
 }
 
 export class AbstractParser extends EmbeddedActionsParser {
@@ -35,8 +37,10 @@ export class AbstractParser extends EmbeddedActionsParser {
     private stack: any[] = [];
 
     protected push<T>(value: T): T {
-        this.stack.push(value);
-        return value;
+        return this.ACTION(() => {
+            this.stack.push(value);
+            return value;
+        });
     }
 
     protected peek(): any {
@@ -44,12 +48,20 @@ export class AbstractParser extends EmbeddedActionsParser {
     }
 
     protected replace<T>(value: T): T {
-        this.stack[this.stack.length - 1] = value;
-        return value;
+        return this.ACTION(() => {
+            this.stack[this.stack.length - 1] = value;
+            return value;
+        });
     }
 
     protected pop<T>(): T {
-        return this.stack.pop();
+        return this.ACTION(() => {
+            let element = this.stack.pop();
+            if (element && 'infix' in element) {
+                element = this.constructBinaryExpression(element);
+            }
+            return element;
+        });
     }
 
     protected consume_assign(index: number, tokenType: TokenType, assign: (value: IToken) => void): void {
@@ -167,4 +179,90 @@ export class AbstractParser extends EmbeddedActionsParser {
         this.subrule_assign(9, ruleToCall, options);
     }
 
+    private buildPrecendenceMap(precedenceGroups: TokenType[][]): Map<string, number> {
+        const map = new Map<string, number>();
+        for (let i = 0; i < precedenceGroups.length; i++) {
+            const group = precedenceGroups[i];
+            for (const token of group) {
+                map.set(token.name, i);
+            }
+        }
+        return map;
+    }
+
+    private binaryPrecedence = this.buildPrecendenceMap([
+        // Priority 1, **
+        [tokens.StarStar],
+        // Priority 2, *, /
+        [tokens.Star, tokens.Slash],
+        // Priority 3, +, -
+        [tokens.Plus, tokens.Minus],
+        // Priority 4, ||, !!
+        [tokens.PipePipe, tokens.ExclamationMarkExclamationMark],
+        // Priority 5, '<', '¬<', '<=', '=', '¬=', '^=', '<>', '>=', '>', '¬>'
+        [
+            tokens.LessThan, tokens.NotLessThan, tokens.LessThanEquals, 
+            tokens.Equals, tokens.NotEquals, tokens.CaretEquals, 
+            tokens.LessThanGreaterThan, tokens.GreaterThanEquals, 
+            tokens.GreaterThan, tokens.NotGreaterThan
+        ],
+        // Priority 6, &
+        [tokens.Ampersand],
+        // Priority 7, |, ¬, ^
+        [tokens.Pipe, tokens.Not, tokens.Caret]
+    ]);
+
+    private constructBinaryExpression(obj: IntermediateBinaryExpression): BinaryExpression {
+        if (obj.items.length === 1) {
+            // Captured just a single, non-binary expression
+            // Simply return the expression as is.
+            return obj.items[0];
+        }
+        // Find the operator with the lowest precedence (highest value in precedence map)
+        let lowestPrecedenceIdx = 0;
+        let lowestPrecedenceValue = -1;
+
+        for (let i = 0; i < obj.operators.length; i++) {
+            const operator = obj.operators[i];
+            const precedenceValue = this.binaryPrecedence.get(operator) ?? Infinity;
+
+            // If we find an operator with lower precedence or equal precedence
+            // (for left-to-right evaluation), update our tracking
+            if (precedenceValue > lowestPrecedenceValue) {
+                lowestPrecedenceValue = precedenceValue;
+                lowestPrecedenceIdx = i;
+            }
+        }
+
+        // Split the expression at the lowest precedence operator
+        const leftOperators = obj.operators.slice(0, lowestPrecedenceIdx);
+        const rightOperators = obj.operators.slice(lowestPrecedenceIdx + 1);
+
+        const leftParts = obj.items.slice(0, lowestPrecedenceIdx + 1);
+        const rightParts = obj.items.slice(lowestPrecedenceIdx + 1);
+
+        // Create sub-expressions
+        const leftInfix: IntermediateBinaryExpression = {
+            infix: true,
+            items: leftParts,
+            operators: leftOperators
+        };
+        const rightInfix: IntermediateBinaryExpression = {
+            infix: true,
+            items: rightParts,
+            operators: rightOperators
+        };
+
+        // Recursively build the left and right subtrees
+        const leftTree = this.constructBinaryExpression(leftInfix);
+        const rightTree = this.constructBinaryExpression(rightInfix);
+
+        // Create the final binary expression
+        return {
+            kind: SyntaxKind.BinaryExpression,
+            left: leftTree,
+            op: obj.operators[lowestPrecedenceIdx],
+            right: rightTree
+        };
+    }
 }

@@ -448,7 +448,7 @@ ReadStatement: 'READ'
         | ReadStatementSet
         | ReadStatementKey
         | ReadStatementKeyTo
-    ) ';'
+    )* ';'
 ;
 
 ReadStatementFile: 'FILE' '(' file=LocatorCall ')';

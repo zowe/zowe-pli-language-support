@@ -1,13 +1,8 @@
 import { createToken, Lexer } from 'chevrotain';
-import { create } from 'domain';
 
 // Combination tokens (parser optimization)
 export const LinkageOption = createToken({
     name: 'LinkageOption',
-    pattern: Lexer.NA
-});
-export const VX = createToken({
-    name: 'VX', // TODO: V1, V2, V3 combine?
     pattern: Lexer.NA
 });
 export const NoMapOption = createToken({
@@ -66,10 +61,21 @@ export const Char = createToken({
     name: 'Char',
     pattern: Lexer.NA
 });
+export const ReadStatementType = createToken({
+    name: 'ReadStatementType',
+    pattern: Lexer.NA
+});
+export const WriteStatementType = createToken({
+    name: 'WriteStatementType',
+    pattern: Lexer.NA
+});
+export const RewriteStatementType = createToken({
+    name: 'RewriteStatementType',
+    pattern: Lexer.NA
+});
 
 export const combinations = [
     LinkageOption,
-    VX,
     NoMapOption,
     SimpleOptions,
     DefaultAttribute,
@@ -83,7 +89,9 @@ export const combinations = [
     FileReferenceConditions,
     PutAttribute,
     Varying,
-    Char
+    Char,
+    ReadStatementType,
+    WriteStatementType
 ];
 
 // Lexer tokens
@@ -144,13 +152,13 @@ export const NONASSIGNABLE = createToken({
 });
 export const FIXEDOVERFLOW = createToken({
     name: 'FIXEDOVERFLOW',
-    pattern: /FIXEDOVERFLOW/i,
+    pattern: /FIXEDOVERFLOW|FOFL/i,
     categories: [ID, KeywordConditions],
     longer_alt: ID
 });
 export const UNDEFINEDFILE = createToken({
     name: 'UNDEFINEDFILE',
-    pattern: /UNDEFINEDFILE/i,
+    pattern: /UNDEFINEDFILE|UNDF/i,
     categories: [ID, FileReferenceConditions],
     longer_alt: ID
 });
@@ -180,7 +188,7 @@ export const LITTLEENDIAN = createToken({
 });
 export const ANYCONDITION = createToken({
     name: 'ANYCONDITION',
-    pattern: /ANYCONDITION/i,
+    pattern: /ANYCOND(ITION)?/i,
     categories: [ID, KeywordConditions],
     longer_alt: ID
 });
@@ -192,7 +200,7 @@ export const CHARGRAPHIC = createToken({
 });
 export const IRREDUCIBLE = createToken({
     name: 'IRREDUCIBLE',
-    pattern: /IRREDUCIBLE/i,
+    pattern: /IRRED(UCIBLE)?/i,
     categories: [ID, SimpleOptions, DefaultAttribute],
     longer_alt: ID
 });
@@ -210,7 +218,7 @@ export const UNREACHABLE = createToken({
 });
 export const ENVIRONMENT = createToken({
     name: 'ENVIRONMENT',
-    pattern: /ENVIRONMENT/i,
+    pattern: /ENV(IRONMENT)?/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -238,12 +246,6 @@ export const DESCRIPTOR = createToken({
     categories: [ID, SimpleOptions],
     longer_alt: ID
 });
-export const XPROCEDURE = createToken({
-    name: 'XPROCEDURE',
-    pattern: /XPROCEDURE/i,
-    categories: [ID],
-    longer_alt: ID
-});
 export const ASSIGNABLE = createToken({
     name: 'ASSIGNABLE',
     pattern: /ASSIGNABLE/i,
@@ -252,25 +254,19 @@ export const ASSIGNABLE = createToken({
 });
 export const CONTROLLED = createToken({
     name: 'CONTROLLED',
-    pattern: /CONTROLLED/i,
+    pattern: /CONTROLLED|CTL/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
 export const NONVARYING = createToken({
     name: 'NONVARYING',
-    pattern: /NONVARYING/i,
+    pattern: /NONVAR(YING)?/i,
     categories: [ID, DefaultAttribute, Varying],
     longer_alt: ID
 });
 export const SEQUENTIAL = createToken({
     name: 'SEQUENTIAL',
-    pattern: /SEQUENTIAL/i,
-    categories: [ID, DefaultAttribute],
-    longer_alt: ID
-});
-export const UNBUFFERED = createToken({
-    name: 'UNBUFFERED',
-    pattern: /UNBUFFERED/i,
+    pattern: /SEQ(UENTIA)?L/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -288,7 +284,7 @@ export const STRINGSIZE = createToken({
 });
 export const ZERODIVIDE = createToken({
     name: 'ZERODIVIDE',
-    pattern: /ZERODIVIDE/i,
+    pattern: /ZERODIVIDE|ZDIV/i,
     categories: [ID, KeywordConditions],
     longer_alt: ID
 });
@@ -312,7 +308,7 @@ export const NOEXECOPS = createToken({
 });
 export const REDUCIBLE = createToken({
     name: 'REDUCIBLE',
-    pattern: /REDUCIBLE/i,
+    pattern: /RED(UCIBLE)?/i,
     categories: [ID, SimpleOptions],
     longer_alt: ID
 });
@@ -336,7 +332,7 @@ export const FROMALIEN = createToken({
 });
 export const ASSEMBLER = createToken({
     name: 'ASSEMBLER',
-    pattern: /ASSEMBLER/i,
+    pattern: /ASSEMBLER|ASM/i,
     categories: [ID, SimpleOptions],
     longer_alt: ID
 });
@@ -348,13 +344,13 @@ export const RECURSIVE = createToken({
 });
 export const PROCEDURE = createToken({
     name: 'PROCEDURE',
-    pattern: /PROCEDURE/i,
+    pattern: /(X)?PROC(EDURE)?/i,
     categories: [ID],
     longer_alt: ID
 });
 export const CHARACTER = createToken({
     name: 'CHARACTER',
-    pattern: /CHARACTER/i,
+    pattern: /CHAR(ACTER)?/i,
     categories: [ID, DefaultAttribute, AllocateAttributeType],
     longer_alt: ID
 });
@@ -408,7 +404,7 @@ export const PARAMETER = createToken({
 });
 export const PRECISION = createToken({
     name: 'PRECISION',
-    pattern: /PRECISION/i,
+    pattern: /PREC(ISION)?/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -426,7 +422,7 @@ export const TRANSIENT = createToken({
 });
 export const UNALIGNED = createToken({
     name: 'UNALIGNED',
-    pattern: /UNALIGNED/i,
+    pattern: /UNAL(IGNED)?/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -461,19 +457,19 @@ export const INVALIDOP = createToken({
 });
 export const UNDERFLOW = createToken({
     name: 'UNDERFLOW',
-    pattern: /UNDERFLOW/i,
+    pattern: /UNDERFLOW|UFL/i,
     categories: [ID, KeywordConditions],
     longer_alt: ID
 });
 export const OTHERWISE = createToken({
     name: 'OTHERWISE',
-    pattern: /OTHERWISE/i,
+    pattern: /OTHER(WISE)?/i,
     categories: [ID],
     longer_alt: ID
 });
 export const DIMENSION = createToken({
     name: 'DIMENSION',
-    pattern: /DIMENSION/i,
+    pattern: /DIM(ENSION)?/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -509,7 +505,7 @@ export const NORETURN = createToken({
 });
 export const EXTERNAL = createToken({
     name: 'EXTERNAL',
-    pattern: /EXTERNAL/i,
+    pattern: /EXT(ERNAL)?/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -521,13 +517,13 @@ export const VARIABLE = createToken({
 });
 export const ALLOCATE = createToken({
     name: 'ALLOCATE',
-    pattern: /ALLOCATE/i,
+    pattern: /ALLOC(ATE)?/i,
     categories: [ID],
     longer_alt: ID
 });
 export const WIDECHAR = createToken({
     name: 'WIDECHAR',
-    pattern: /WIDECHAR/i,
+    pattern: /W(IDE)?CHAR/i,
     categories: [ID, DefaultAttribute, AllocateAttributeType],
     longer_alt: ID
 });
@@ -539,7 +535,7 @@ export const ABNORMAL = createToken({
 });
 export const BUFFERED = createToken({
     name: 'BUFFERED',
-    pattern: /BUFFERED/i,
+    pattern: /(UN)?BUF(FERED)?/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -587,7 +583,7 @@ export const VARYING4 = createToken({
 });
 export const VARYINGZ = createToken({
     name: 'VARYINGZ',
-    pattern: /VARYINGZ/i,
+    pattern: /VAR(YING)?Z/i,
     categories: [ID, DefaultAttribute, Varying],
     longer_alt: ID
 });
@@ -609,7 +605,7 @@ export const PercentNOPRINT = createToken({
 });
 export const OVERFLOW = createToken({
     name: 'OVERFLOW',
-    pattern: /OVERFLOW/i,
+    pattern: /OVERFLOW|OFL/i,
     categories: [ID, KeywordConditions],
     longer_alt: ID
 });
@@ -654,12 +650,6 @@ export const StarPROCINC = createToken({
 export const RESIGNAL = createToken({
     name: 'RESIGNAL',
     pattern: /RESIGNAL/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const XDECLARE = createToken({
-    name: 'XDECLARE',
-    pattern: /XDECLARE/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -773,7 +763,7 @@ export const COMPARE = createToken({
 });
 export const DEFAULT = createToken({
     name: 'DEFAULT',
-    pattern: /DEFAULT/i,
+    pattern: /DEFAULT|DFT/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -797,7 +787,7 @@ export const COMPLEX = createToken({
 });
 export const DECIMAL = createToken({
     name: 'DECIMAL',
-    pattern: /DECIMAL/i,
+    pattern: /DEC(IMAL)?/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -827,13 +817,13 @@ export const OUTONLY = createToken({
 });
 export const POINTER = createToken({
     name: 'POINTER',
-    pattern: /POINTER/i,
+    pattern: /POINTER|PTR/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
 export const VARYING = createToken({
     name: 'VARYING',
-    pattern: /VARYING/i,
+    pattern: /VAR(YING)?/i,
     categories: [ID, DefaultAttribute, Varying],
     longer_alt: ID
 });
@@ -870,13 +860,7 @@ export const ITERATE = createToken({
 export const KEYFROM = createToken({
     name: 'KEYFROM',
     pattern: /KEYFROM/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const ANYCOND = createToken({
-    name: 'ANYCOND',
-    pattern: /ANYCOND/i, // TODO: ANYCONDITION?
-    categories: [ID, KeywordConditions],
+    categories: [ID, WriteStatementType],
     longer_alt: ID
 });
 export const STORAGE = createToken({
@@ -917,25 +901,19 @@ export const REWRITE = createToken({
 });
 export const INITIAL = createToken({
     name: 'INITIAL',
-    pattern: /INITIAL/i,
+    pattern: /INIT(IAL)?/i,
     categories: [ID],
     longer_alt: ID
 });
 export const DECLARE = createToken({
     name: 'DECLARE',
-    pattern: /DECLARE/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const DEFINED = createToken({
-    name: 'DEFINED',
-    pattern: /DEFINED/i,
+    pattern: /DECLARE|DCL|XDECLARE|XDCL/i,
     categories: [ID],
     longer_alt: ID
 });
 export const PICTURE = createToken({
     name: 'PICTURE',
-    pattern: /PICTURE/i,
+    pattern: /PIC(TURE)?/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -1007,7 +985,7 @@ export const CANCEL = createToken({
 });
 export const BINARY = createToken({
     name: 'BINARY',
-    pattern: /BINARY/i,
+    pattern: /BIN(ARY)?/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -1083,6 +1061,12 @@ export const DEFINE = createToken({
     categories: [ID],
     longer_alt: ID
 });
+export const DEFINED = createToken({
+    name: 'DEFINED',
+    pattern: /DEF(INED)?/i,
+    categories: [ID],
+    longer_alt: [ID, DEFINE]
+});
 export const STRUCT = createToken({
     name: 'STRUCT',
     pattern: /STRUCT/i,
@@ -1115,7 +1099,7 @@ export const REPEAT = createToken({
 });
 export const COLUMN = createToken({
     name: 'COLUMN',
-    pattern: /COLUMN/i,
+    pattern: /COL(UMN)?/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -1157,7 +1141,7 @@ export const PercentPRINT = createToken({
 export const IGNORE = createToken({
     name: 'IGNORE',
     pattern: /IGNORE/i,
-    categories: [ID],
+    categories: [ID, ReadStatementType],
     longer_alt: ID
 });
 export const REINIT = createToken({
@@ -1226,21 +1210,9 @@ export const INTER = createToken({
     categories: [ID, SimpleOptions],
     longer_alt: ID
 });
-export const XPROC = createToken({
-    name: 'XPROC',
-    pattern: /XPROC/i,
-    categories: [ID],
-    longer_alt: ID
-});
 export const ENTRY = createToken({
     name: 'ENTRY',
     pattern: /ENTRY/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const ALLOC = createToken({
-    name: 'ALLOC',
-    pattern: /ALLOC/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -1410,12 +1382,6 @@ export const ERROR = createToken({
     categories: [ID, KeywordConditions],
     longer_alt: ID
 });
-export const UNBUF = createToken({
-    name: 'UNBUF',
-    pattern: /UNBUF/i, // TODO: UNBUFFERED?
-    categories: [ID],
-    longer_alt: ID
-});
 export const PercentPAGE = createToken({
     name: 'PercentPAGE',
     pattern: /%PAGE/i,
@@ -1429,18 +1395,12 @@ export const PercentPUSH = createToken({
 export const KEYTO = createToken({
     name: 'KEYTO',
     pattern: /KEYTO/i,
-    categories: [ID],
+    categories: [ID, ReadStatementType, WriteStatementType],
     longer_alt: ID
 });
 export const REVERT = createToken({
     name: 'REVERT',
     pattern: /REVERT/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const OTHER = createToken({
-    name: 'OTHER',
-    pattern: /OTHER/i, // TODO: OTHERWISE?
     categories: [ID],
     longer_alt: ID
 });
@@ -1453,12 +1413,6 @@ export const WRITE = createToken({
     name: 'WRITE',
     pattern: /WRITE/i,
     categories: [ID],
-    longer_alt: ID
-});
-export const WCHAR = createToken({
-    name: 'WCHAR',
-    pattern: /WCHAR/i,
-    categories: [ID, Char],
     longer_alt: ID
 });
 export const REFER = createToken({
@@ -1477,18 +1431,6 @@ export const RENT = createToken({
     name: 'RENT',
     pattern: /RENT/i,
     categories: [ID, SimpleOptions],
-    longer_alt: ID
-});
-export const PROC = createToken({
-    name: 'PROC',
-    pattern: /PROC/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const CHAR = createToken({
-    name: 'CHAR',
-    pattern: /CHAR/i,
-    categories: [ID, DefaultAttribute, AllocateAttributeType, Char],
     longer_alt: ID
 });
 export const AREA = createToken({
@@ -1524,7 +1466,7 @@ export const CALL = createToken({
 export const FILE = createToken({
     name: 'FILE',
     pattern: /FILE/i,
-    categories: [ID, DefaultAttribute, PutAttribute],
+    categories: [ID, DefaultAttribute, PutAttribute, ReadStatementType, WriteStatementType, RewriteStatementType],
     longer_alt: ID
 });
 export const IEEE = createToken({
@@ -1539,12 +1481,6 @@ export const LIST = createToken({
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
-export const PREC = createToken({
-    name: 'PREC',
-    pattern: /PREC/i,
-    categories: [ID, DefaultAttribute],
-    longer_alt: ID
-});
 export const REAL = createToken({
     name: 'REAL',
     pattern: /REAL/i,
@@ -1554,18 +1490,6 @@ export const REAL = createToken({
 export const TASK = createToken({
     name: 'TASK',
     pattern: /TASK/i,
-    categories: [ID, DefaultAttribute],
-    longer_alt: ID
-});
-export const UNAL = createToken({
-    name: 'UNAL',
-    pattern: /UNAL/i,
-    categories: [ID, DefaultAttribute],
-    longer_alt: ID
-});
-export const VARZ = createToken({
-    name: 'VARZ',
-    pattern: /VARZ/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -1641,39 +1565,15 @@ export const SNAP = createToken({
     categories: [ID],
     longer_alt: ID
 });
-export const FOFL = createToken({
-    name: 'FOFL',
-    pattern: /FOFL/i, // TODO: FIXEDOVERFLOW?
-    categories: [ID, KeywordConditions],
-    longer_alt: ID
-});
 export const SIZE = createToken({
     name: 'SIZE',
     pattern: /SIZE/i,
     categories: [ID, KeywordConditions],
     longer_alt: ID
 });
-export const ZDIV = createToken({
-    name: 'ZDIV',
-    pattern: /ZDIV/i, // TODO: ZERODIVIDE?
-    categories: [ID, KeywordConditions],
-    longer_alt: ID
-});
-export const UNDF = createToken({
-    name: 'UNDF',
-    pattern: /UNDF/i, // TODO: UNDEFINEDFILE?
-    categories: [ID, FileReferenceConditions],
-    longer_alt: ID
-});
 export const OPEN = createToken({
     name: 'OPEN',
     pattern: /OPEN/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const SEQL = createToken({
-    name: 'SEQL',
-    pattern: /SEQL/i, // TODO: SEQUENTIAL?
     categories: [ID],
     longer_alt: ID
 });
@@ -1709,13 +1609,13 @@ export const READ = createToken({
 export const INTO = createToken({
     name: 'INTO',
     pattern: /INTO/i,
-    categories: [ID],
+    categories: [ID, ReadStatementType],
     longer_alt: ID
 });
 export const FROM = createToken({
     name: 'FROM',
     pattern: /FROM/i,
-    categories: [ID],
+    categories: [ID, WriteStatementType, RewriteStatementType],
     longer_alt: ID
 });
 export const WHEN = createToken({
@@ -1733,18 +1633,6 @@ export const STOP = createToken({
 export const WAIT = createToken({
     name: 'WAIT',
     pattern: /WAIT/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const INIT = createToken({
-    name: 'INIT',
-    pattern: /INIT/i, // TODO: INITIAL?
-    categories: [ID],
-    longer_alt: ID
-});
-export const XDCL = createToken({
-    name: 'XDCL',
-    pattern: /XDCL/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -1766,22 +1654,10 @@ export const LIKE = createToken({
     categories: [ID],
     longer_alt: ID
 });
-export const ASM = createToken({
-    name: 'ASM',
-    pattern: /ASM/i,
-    categories: [ID, SimpleOptions],
-    longer_alt: ID
-});
-export const EXT = createToken({
-    name: 'EXT',
-    pattern: /EXT/i,
-    categories: [ID, DefaultAttribute],
-    longer_alt: ID
-});
 export const SET = createToken({
     name: 'SET',
     pattern: /SET/i,
-    categories: [ID],
+    categories: [ID, ReadStatementType],
     longer_alt: ID
 });
 export const BIT = createToken({
@@ -1806,12 +1682,6 @@ export const END = createToken({
     categories: [ID],
     longer_alt: ID
 });
-export const DFT = createToken({
-    name: 'DFT',
-    pattern: /DFT/i,
-    categories: [ID],
-    longer_alt: ID
-});
 export const AND = createToken({
     name: 'AND',
     pattern: /AND/i,
@@ -1822,24 +1692,6 @@ export const NOT = createToken({
     name: 'NOT',
     pattern: /NOT/i,
     categories: [ID],
-    longer_alt: ID
-});
-export const BIN = createToken({
-    name: 'BIN',
-    pattern: /BIN/i,
-    categories: [ID, DefaultAttribute],
-    longer_alt: ID
-});
-export const CTL = createToken({
-    name: 'CTL',
-    pattern: /CTL/i,
-    categories: [ID, DefaultAttribute],
-    longer_alt: ID
-});
-export const DEC = createToken({
-    name: 'DEC',
-    pattern: /DEC/i,
-    categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
 export const HEX = createToken({
@@ -1854,51 +1706,15 @@ export const INT = createToken({
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
-export const PTR = createToken({
-    name: 'PTR',
-    pattern: /PTR/i,
-    categories: [ID, DefaultAttribute],
-    longer_alt: ID
-});
-export const VAR = createToken({
-    name: 'VAR',
-    pattern: /VAR/i,
-    categories: [ID, DefaultAttribute],
-    longer_alt: ID
-});
 export const KEY = createToken({
     name: 'KEY',
     pattern: /KEY/i,
-    categories: [ID, FileReferenceConditions],
-    longer_alt: ID
-});
-export const COL = createToken({
-    name: 'COL',
-    pattern: /COL/i,
-    categories: [ID],
+    categories: [ID, FileReferenceConditions, ReadStatementType, RewriteStatementType],
     longer_alt: ID
 });
 export const GET = createToken({
     name: 'GET',
     pattern: /GET/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const OFL = createToken({
-    name: 'OFL',
-    pattern: /OFL/i, // TODO: OVERFLOW?
-    categories: [ID, KeywordConditions],
-    longer_alt: ID
-});
-export const UFL = createToken({
-    name: 'UFL',
-    pattern: /UFL/i, // TODO: UNDERFLOW?
-    categories: [ID, KeywordConditions],
-    longer_alt: ID
-});
-export const BUF = createToken({
-    name: 'BUF',
-    pattern: /BUF/i, // TODO: BUFFERED?
     categories: [ID],
     longer_alt: ID
 });
@@ -1908,58 +1724,16 @@ export const PUT = createToken({
     categories: [ID],
     longer_alt: ID
 });
-export const DCL = createToken({
-    name: 'DCL',
-    pattern: /DCL/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const DEF = createToken({
-    name: 'DEF',
-    pattern: /DEF/i,
-    categories: [ID],
-    longer_alt: ID
-});
 export const POS = createToken({
     name: 'POS',
     pattern: /POS/i,
     categories: [ID],
     longer_alt: ID
 });
-export const PIC = createToken({
-    name: 'PIC',
-    pattern: /PIC/i,
+export const VX = createToken({
+    name: 'VX',
+    pattern: /V(1|2|3)/i,
     categories: [ID],
-    longer_alt: ID
-});
-export const DIM = createToken({
-    name: 'DIM',
-    pattern: /DIM/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const ENV = createToken({
-    name: 'ENV',
-    pattern: /ENV/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const V1 = createToken({
-    name: 'V1',
-    pattern: /V1/i,
-    categories: [ID, VX],
-    longer_alt: ID
-});
-export const V2 = createToken({
-    name: 'V2',
-    pattern: /V2/i,
-    categories: [ID, VX],
-    longer_alt: ID
-});
-export const V3 = createToken({
-    name: 'V3',
-    pattern: /V3/i,
-    categories: [ID, VX],
     longer_alt: ID
 });
 export const IN = createToken({
@@ -2158,15 +1932,15 @@ export const E = createToken({
     categories: [ID],
     longer_alt: ID
 });
-export const P = createToken({
-    name: 'P',
-    pattern: /P/i,
-    categories: [ID],
-    longer_alt: ID
-});
 export const G = createToken({
     name: 'G',
     pattern: /G/i,
+    categories: [ID],
+    longer_alt: ID
+});
+export const P = createToken({
+    name: 'P',
+    pattern: /P/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -2275,12 +2049,10 @@ export const keywords = [
     CONFORMANCE,
     STRINGRANGE,
     DESCRIPTOR,
-    XPROCEDURE,
     ASSIGNABLE,
     CONTROLLED,
     NONVARYING,
     SEQUENTIAL,
-    UNBUFFERED,
     CONVERSION,
     STRINGSIZE,
     ZERODIVIDE,
@@ -2346,7 +2118,6 @@ export const keywords = [
     PercentPROCINC,
     StarPROCINC,
     RESIGNAL,
-    XDECLARE,
     PACKAGE,
     EXPORTS,
     OPTIONS,
@@ -2382,7 +2153,6 @@ export const keywords = [
     ROUTCDE,
     ITERATE,
     KEYFROM,
-    ANYCOND,
     STORAGE,
     ENDFILE,
     ENDPAGE,
@@ -2391,7 +2161,6 @@ export const keywords = [
     REWRITE,
     INITIAL,
     DECLARE,
-    DEFINED,
     PICTURE,
     WIDEPIC,
     RETURNS,
@@ -2417,6 +2186,7 @@ export const keywords = [
     STREAM,
     UPDATE,
     DEFINE,
+    DEFINED,
     STRUCT,
     DELETE,
     DETACH,
@@ -2441,9 +2211,7 @@ export const keywords = [
     ORDER,
     COBOL,
     INTER,
-    XPROC,
     ENTRY,
-    ALLOC,
     UCHAR,
     FALSE,
     BEGIN,
@@ -2472,20 +2240,15 @@ export const keywords = [
     PercentLINE,
     PercentNOTE,
     ERROR,
-    UNBUF,
     PercentPAGE,
     PercentPUSH,
     KEYTO,
     REVERT,
-    OTHER,
     PercentSKIP,
     WRITE,
-    WCHAR,
     REFER,
     MAIN,
     RENT,
-    PROC,
-    CHAR,
     AREA,
     TRUE,
     TEXT,
@@ -2494,11 +2257,8 @@ export const keywords = [
     FILE,
     IEEE,
     LIST,
-    PREC,
     REAL,
     TASK,
-    UNAL,
-    VARZ,
     DESC,
     EXEC,
     EXIT,
@@ -2511,12 +2271,8 @@ export const keywords = [
     THEN,
     ELSE,
     SNAP,
-    FOFL,
     SIZE,
-    ZDIV,
-    UNDF,
     OPEN,
-    SEQL,
     PercentPOP,
     TODO,
     DATA,
@@ -2527,44 +2283,23 @@ export const keywords = [
     WHEN,
     STOP,
     WAIT,
-    INIT,
-    XDCL,
     DATE,
     TYPE,
     LIKE,
-    ASM,
-    EXT,
     SET,
     BIT,
     PipePipeEquals,
     StarStarEquals,
     END,
-    DFT,
     AND,
     NOT,
-    BIN,
-    CTL,
-    DEC,
     HEX,
     INT,
-    PTR,
-    VAR,
     KEY,
-    COL,
     GET,
-    OFL,
-    UFL,
-    BUF,
     PUT,
-    DCL,
-    DEF,
     POS,
-    PIC,
-    DIM,
-    ENV,
-    V1,
-    V2,
-    V3,
+    VX,
     IN,
     BY,
     PlusEquals,
@@ -2603,8 +2338,8 @@ export const keywords = [
     C,
     F,
     E,
-    P,
     G,
+    P,
     L,
     R,
     V,

@@ -155,6 +155,7 @@ export enum SyntaxKind {
     PutStringStatement,
     QualifyStatement,
     ReadStatement,
+    ReadStatementOption,
     ReadStatementFile,
     ReadStatementIgnore,
     ReadStatementInto,
@@ -171,9 +172,7 @@ export enum SyntaxKind {
     ReturnStatement,
     RevertStatement,
     RewriteStatement,
-    RewriteStatementFile,
-    RewriteStatementFrom,
-    RewriteStatementKey,
+    RewriteStatementOption,
     RFormatItem,
     SelectStatement,
     SignalStatement,
@@ -194,10 +193,7 @@ export enum SyntaxKind {
     WaitStatement,
     WhenStatement,
     WriteStatement,
-    WriteStatementFile,
-    WriteStatementFrom,
-    WriteStatementKeyFrom,
-    WriteStatementKeyTo,
+    WriteStatementOption,
     XFormatItem
 }
 
@@ -363,12 +359,7 @@ export type SyntaxNode =
     PutStringStatement |
     QualifyStatement |
     ReadStatement |
-    ReadStatementFile |
-    ReadStatementIgnore |
-    ReadStatementInto |
-    ReadStatementKey |
-    ReadStatementKeyTo |
-    ReadStatementSet |
+    ReadStatementOption |
     ReferenceItem |
     ReinitStatement |
     ReleaseStatement |
@@ -379,9 +370,7 @@ export type SyntaxNode =
     ReturnStatement |
     RevertStatement |
     RewriteStatement |
-    RewriteStatementFile |
-    RewriteStatementFrom |
-    RewriteStatementKey |
+    RewriteStatementOption |
     RFormatItem |
     SelectStatement |
     SignalStatement |
@@ -402,10 +391,7 @@ export type SyntaxNode =
     WaitStatement |
     WhenStatement |
     WriteStatement |
-    WriteStatementFile |
-    WriteStatementFrom |
-    WriteStatementKeyFrom |
-    WriteStatementKeyTo |
+    WriteStatementOption |
     XFormatItem
     ;
 
@@ -508,8 +494,9 @@ export interface BFormatItem extends AstNode {
 }
 export interface BinaryExpression extends AstNode {
     kind: SyntaxKind.BinaryExpression;
-    items: Expression[];
-    op: ('|' | '¬' | '^' | '&' | '<' | '¬<' | '<=' | '=' | '¬=' | '^=' | '<>' | '>=' | '>' | '¬>' | '||' | '!!' | '+' | '-' | '*' | '/' | '**')[];
+    left: Expression;
+    right: Expression;
+    op: string; //'|' | '¬' | '^' | '&' | '<' | '¬<' | '<=' | '=' | '¬=' | '^=' | '<>' | '>=' | '>' | '¬>' | '||' | '!!' | '+' | '-' | '*' | '/' | '**';
 }
 export interface Bound extends AstNode {
     kind: SyntaxKind.Bound;
@@ -1195,31 +1182,12 @@ export interface QualifyStatement extends AstNode {
 }
 export interface ReadStatement extends AstNode {
     kind: SyntaxKind.ReadStatement;
-    arguments: (ReadStatementFile | ReadStatementIgnore | ReadStatementInto | ReadStatementSet | ReadStatementKey | ReadStatementKeyTo)[];
+    arguments: ReadStatementOption[];
 }
-export interface ReadStatementFile extends AstNode {
-    kind: SyntaxKind.ReadStatementFile;
-    file: LocatorCall | null;
-}
-export interface ReadStatementIgnore extends AstNode {
-    kind: SyntaxKind.ReadStatementIgnore;
-    ignore: Expression | null;
-}
-export interface ReadStatementInto extends AstNode {
-    kind: SyntaxKind.ReadStatementInto;
-    intoRef: LocatorCall | null;
-}
-export interface ReadStatementKey extends AstNode {
-    kind: SyntaxKind.ReadStatementKey;
-    key: Expression | null;
-}
-export interface ReadStatementKeyTo extends AstNode {
-    kind: SyntaxKind.ReadStatementKeyTo;
-    keyto: LocatorCall | null;
-}
-export interface ReadStatementSet extends AstNode {
-    kind: SyntaxKind.ReadStatementSet;
-    set: LocatorCall | null;
+export interface ReadStatementOption extends AstNode {
+    kind: SyntaxKind.ReadStatementOption;
+    type: 'KEY' | 'KEYTO' | 'INTO' | 'SET' | 'IGNORE' | 'FILE' | null;
+    value: Expression | null;
 }
 export interface ReferenceItem extends AstNode {
     kind: SyntaxKind.ReferenceItem;
@@ -1261,19 +1229,12 @@ export interface RevertStatement extends AstNode {
 }
 export interface RewriteStatement extends AstNode {
     kind: SyntaxKind.RewriteStatement;
-    arguments: (RewriteStatementFile | RewriteStatementFrom | RewriteStatementKey)[];
+    arguments: RewriteStatementOption[];
 }
-export interface RewriteStatementFile extends AstNode {
-    kind: SyntaxKind.RewriteStatementFile;
-    file: LocatorCall | null;
-}
-export interface RewriteStatementFrom extends AstNode {
-    kind: SyntaxKind.RewriteStatementFrom;
-    from: LocatorCall | null;
-}
-export interface RewriteStatementKey extends AstNode {
-    kind: SyntaxKind.RewriteStatementKey;
-    key: Expression | null;
+export interface RewriteStatementOption extends AstNode {
+    kind: SyntaxKind.RewriteStatementOption;
+    type: 'FILE' | 'FROM' | 'KEY' | null;
+    value: Expression | null;
 }
 export interface RFormatItem extends AstNode {
     kind: SyntaxKind.RFormatItem;
@@ -1359,23 +1320,12 @@ export interface WhenStatement extends AstNode {
 }
 export interface WriteStatement extends AstNode {
     kind: SyntaxKind.WriteStatement;
-    arguments: (WriteStatementFile | WriteStatementFrom | WriteStatementKeyFrom | WriteStatementKeyTo)[];
+    arguments: WriteStatementOption[];
 }
-export interface WriteStatementFile extends AstNode {
-    kind: SyntaxKind.WriteStatementFile;
-    file: LocatorCall | null;
-}
-export interface WriteStatementFrom extends AstNode {
-    kind: SyntaxKind.WriteStatementFrom;
-    from: LocatorCall | null;
-}
-export interface WriteStatementKeyFrom extends AstNode {
-    kind: SyntaxKind.WriteStatementKeyFrom;
-    keyfrom: Expression | null;
-}
-export interface WriteStatementKeyTo extends AstNode {
-    kind: SyntaxKind.WriteStatementKeyTo;
-    keyto: LocatorCall | null;
+export interface WriteStatementOption extends AstNode {
+    kind: SyntaxKind.WriteStatementOption;
+    type: 'FILE' | 'FROM' | 'KEYFROM' | 'KEYTO' | null;
+    value: Expression | null;
 }
 export interface XFormatItem extends AstNode {
     kind: SyntaxKind.XFormatItem;
