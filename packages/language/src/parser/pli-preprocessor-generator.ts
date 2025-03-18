@@ -41,6 +41,7 @@ export class PliPreprocessorGenerator {
                 break;
             case 'do-until-while': this.handleDoUntilWhile(statement, program); break;
             case 'do-while-until': this.handleDoWhileUntil(statement, program); break;
+            case "include": this.handleStatements(statement.statements, program); break;
             default:
                 assertUnreachable(statement);
         }

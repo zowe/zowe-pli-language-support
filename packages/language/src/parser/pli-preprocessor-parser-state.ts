@@ -4,11 +4,13 @@ import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorLexerState, PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { Values } from "./pli-preprocessor-instructions";
+import { URI } from "langium";
 
 type ParserLocation = 'in-statement' | 'in-procedure';
 
 export interface PreprocessorParserState {
     index: number;
+    uri: URI;
     get current(): IToken | undefined;
     get last(): IToken | undefined;
     get eof(): boolean;
@@ -29,13 +31,15 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     private readonly lexerState: PreprocessorLexerState;
     private readonly tokens: IToken[]
     public index: number;
+    public uri: URI;
     private location: ParserLocation[] = [];
 
-    constructor(lexer: PliPreprocessorLexer, text: string) {
+    constructor(lexer: PliPreprocessorLexer, text: string, uri: URI) {
         this.lexer = lexer;
         this.lexerState = new PliPreprocessorLexerState(text);
         this.tokens = [];
         this.index = 0;
+        this.uri = uri;
     }
 
     consumeUntil(predicate: (token: IToken) => boolean): IToken[] {

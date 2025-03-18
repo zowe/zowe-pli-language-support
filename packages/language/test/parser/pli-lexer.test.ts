@@ -9,7 +9,7 @@ describe("PL/1 Lexer", () => {
 
     beforeAll(async () => {
         const services = createPliServices(EmptyFileSystem);
-        //await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
+        await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
         tokenize = (text: string) => {
             const { tokens } = services.pli.parser.Lexer.tokenize(text);
             return tokens.map(t => t.image + ':' + t.tokenType.name.toUpperCase());

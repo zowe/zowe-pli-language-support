@@ -12,3 +12,4 @@ out/
 *.tsbuildinfo
 *.vsix
 **/*.DS_Store
+packages/language/test/parser/*.pli

@@ -43,6 +43,11 @@ export interface PPAssign extends PPAstNode {
     value: PPExpression;
 }
 
+export interface PPInclude extends PPAstNode {
+    type: 'include',
+    statements: PPStatement[];
+}
+
 export interface PPString extends PPAstNode {
     type: 'string',
     value: IToken[];
@@ -126,6 +131,7 @@ export type PPStatement =
   | PPSkip
   | PPDeclare
   | PPAssign
+  | PPInclude
   | PPIfStatement
   | PPDoGroup
   | PPDoWhileUntil

@@ -1,10 +1,12 @@
-import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective, PPActivate, PPDeactivate, PPIfStatement, PPDoGroup, PPDoWhileUntil, PPDoUntilWhile, PPBinaryExpression } from "./pli-preprocessor-ast";
+import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective, PPActivate, PPDeactivate, PPDoGroup, PPDoWhileUntil, PPDoUntilWhile, PPBinaryExpression } from "./pli-preprocessor-ast";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorParserState, PreprocessorParserState } from "./pli-preprocessor-parser-state";
 import { ILexingError, IToken, TokenType } from "chevrotain";
 import { Pl1Services } from "../pli-module";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
+import { DocumentCache, URI } from "langium";
+import { readFileSync } from "fs";
 
 export class PreprocessorError extends Error implements ILexingError {
     private readonly token: IToken;
@@ -21,13 +23,15 @@ export class PreprocessorError extends Error implements ILexingError {
 
 export class PliPreprocessorParser {
     private readonly lexer: PliPreprocessorLexer;
+    private readonly includeCache: DocumentCache<string, PPStatement[]>;
 
     constructor(services: Pl1Services) {
         this.lexer = services.parser.PreprocessorLexer;
+        this.includeCache = new DocumentCache<string, PPStatement[]>(services.shared);
     }
 
-    initializeState(text: string): PreprocessorParserState {
-        return new PliPreprocessorParserState(this.lexer, text);
+    initializeState(text: string, uri: URI): PreprocessorParserState {
+        return new PliPreprocessorParserState(this.lexer, text, uri);
     }
 
     start(state: PreprocessorParserState): PPStatement[] {
@@ -56,6 +60,7 @@ export class PliPreprocessorParser {
                     case PreprocessorTokens.Declare: return this.declareStatement(state);
                     case PreprocessorTokens.Directive: return this.directive(state);
                     case PreprocessorTokens.Skip: return this.skipStatement(state);
+                    case PreprocessorTokens.Include: return this.includeStatement(state);
                     case PreprocessorTokens.Id: return this.assignmentStatement(state);
                     case PreprocessorTokens.If: return this.ifStatement(state);
                     case PreprocessorTokens.Do: return this.doStatement(state);
@@ -70,6 +75,23 @@ export class PliPreprocessorParser {
                 tokens: state.consumeUntil(tk => tk.image === ';'),
             };
         }
+    }
+
+    includeStatement(state: PreprocessorParserState): PPStatement {
+        state.consume(PreprocessorTokens.Include);
+        const file = state.consume(PreprocessorTokens.String).image;
+        const fileName = file.substring(1, file.length-1);
+        state.consume(PreprocessorTokens.Semicolon);
+        const statements = this.includeCache.get(state.uri, fileName, () => {
+            const uri = URI.file(fileName);
+            const content = readFileSync(fileName, 'utf-8');
+            const subState = this.initializeState(content, uri);
+            return this.start(subState);
+        });
+        return {
+            type: 'include',
+            statements,
+        };
     }
 
     doStatement(state: PreprocessorParserState): PPDoGroup|PPDoWhileUntil|PPDoUntilWhile {
@@ -148,7 +170,7 @@ export class PliPreprocessorParser {
         return statements;
     }
 
-    ifStatement(state: PreprocessorParserState): PPIfStatement {
+    ifStatement(state: PreprocessorParserState): PPStatement {
         state.consume(PreprocessorTokens.If);
         const condition = this.expression(state);
         state.consume(PreprocessorTokens.Percentage);

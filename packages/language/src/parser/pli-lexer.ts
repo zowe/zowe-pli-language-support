@@ -10,7 +10,7 @@
  */
 
 import { IToken, Lexer, TokenTypeDictionary } from "chevrotain";
-import { Lexer as LangiumLexer, LexerResult } from "langium";
+import { Lexer as LangiumLexer, LexerResult, URI } from "langium";
 import { Pl1Services } from "../pli-module";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
@@ -44,7 +44,7 @@ export class Pl1Lexer implements LangiumLexer {
 
     tokenize(printerText: string): LexerResult {
         const text = this.marginsProcessor.processMargins(printerText);
-        const state = this.preprocessorParser.initializeState(text);
+        const state = this.preprocessorParser.initializeState(text, URI.file('file.pli')); //TODO update URI
         const statements = this.preprocessorParser.start(state);
         const program = this.preprocessorGenerator.generateProgram(statements);
         const tokens: IToken[] = [];

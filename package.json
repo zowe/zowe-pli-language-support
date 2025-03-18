@@ -26,5 +26,6 @@
     "typescript": "~5.4.5",
     "vitest": "~3.0.7",
     "@vitest/coverage-v8": "~3.0.7"
-  }
+  },
+  "packageManager": "pnpm@10.6.4+sha256.0a3574244b6d2bea5b5d530c0901fbc5dafa593c2e9962a421d57b839f97063f"
 }
