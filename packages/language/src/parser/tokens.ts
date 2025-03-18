@@ -1,3 +1,14 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
 import { createToken, Lexer } from 'chevrotain';
 
 // Combination tokens (parser optimization)
@@ -1780,13 +1791,8 @@ export const AmpersandEquals = createToken({
 });
 export const NotEquals = createToken({
     name: 'NotEquals',
-    pattern: '¬=',
-    categories: [AssignmentOperator]
-});
-export const CaretEquals = createToken({
-    name: 'CaretEquals',
-    pattern: '^=',
-    categories: [AssignmentOperator]
+    pattern: /¬=|\^=/,
+    categories: [AssignmentOperator, BinaryOperator]
 });
 export const LessThanGreaterThan = createToken({
     name: 'LessThanGreaterThan',
@@ -1831,7 +1837,7 @@ export const ON = createToken({
 });
 export const NotLessThan = createToken({
     name: 'NotLessThan',
-    pattern: '¬<',
+    pattern: /¬<|\^</,
     categories: [BinaryOperator]
 });
 export const LessThanEquals = createToken({
@@ -1846,7 +1852,7 @@ export const GreaterThanEquals = createToken({
 });
 export const NotGreaterThan = createToken({
     name: 'NotGreaterThan',
-    pattern: '¬>',
+    pattern: /¬>|\^>/,
     categories: [BinaryOperator]
 });
 export const PipePipe = createToken({
@@ -1975,12 +1981,7 @@ export const Pipe = createToken({
 });
 export const Not = createToken({
     name: 'Not',
-    pattern: '¬',
-    categories: [UnaryOperator]
-});
-export const Caret = createToken({
-    name: 'Caret',
-    pattern: '^',
+    pattern: /¬|\^/,
     categories: [BinaryOperator, UnaryOperator]
 });
 export const Ampersand = createToken({
@@ -2309,7 +2310,6 @@ export const keywords = [
     PipeEquals,
     AmpersandEquals,
     NotEquals,
-    CaretEquals,
     LessThanGreaterThan,
     OR,
     DO,
@@ -2346,7 +2346,6 @@ export const keywords = [
     X,
     Pipe,
     Not,
-    Caret,
     Ampersand,
     LessThan,
     GreaterThan,
@@ -2367,3 +2366,5 @@ export const all = [
     ML_COMMENT,
     SL_COMMENT
 ];
+
+export const LexerInstance = new Lexer(all);

@@ -9,10 +9,12 @@
  *
  */
 
-// export * from "./pli-module.js";
-// export * from "./validation/pli-validator.js";
-// export * from "./generated/ast.js";
-// export * from "./generated/grammar.js";
-// export * from "./generated/module.js";
-export * from './workspace/pli-builtin-functions';
-export * from "./language-server/connection-handler.js";
+import { IToken } from "chevrotain";
+import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+
+export function getNameToken(node: SyntaxNode): IToken | undefined {
+    if (node.kind === SyntaxKind.DeclaredVariable && node.nameToken) {
+        return node.nameToken;
+    }
+    return undefined;
+}

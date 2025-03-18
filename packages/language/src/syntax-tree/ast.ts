@@ -1,3 +1,16 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
+import { IToken } from "chevrotain";
+
 export enum SyntaxKind {
     AFormatItem,
     AllocateDimension,
@@ -198,9 +211,22 @@ export enum SyntaxKind {
 }
 
 export interface AstNode {
+    container: SyntaxNode | null;
 }
 
-export type Reference<T> = string;
+export interface Reference<T extends SyntaxNode = SyntaxNode> {
+    text: string;
+    token: IToken;
+    node: T | null | undefined;
+};
+
+export function createReference<T extends SyntaxNode>(token: IToken): Reference<T> {
+    return {
+        text: token.image,
+        token,
+        node: undefined,
+    }
+}
 
 export type SyntaxNode =
     AFormatItem |
@@ -427,6 +453,15 @@ export interface AFormatItem extends AstNode {
     kind: SyntaxKind.AFormatItem;
     fieldWidth: Expression | null;
 }
+
+export function createAFormatItem(): AFormatItem {
+    return {
+        kind: SyntaxKind.AFormatItem,
+        container: null,
+        fieldWidth: null,
+    };
+}
+
 export interface AllocateDimension extends AstNode {
     kind: SyntaxKind.AllocateDimension;
     dimensions: Dimensions | null;
@@ -574,6 +609,7 @@ export interface DeclaredItem extends AstNode {
 }
 export interface DeclaredVariable extends AstNode {
     kind: SyntaxKind.DeclaredVariable;
+    nameToken: IToken | null;
     name: string | null;
 }
 export interface DeclareStatement extends AstNode {
@@ -919,6 +955,7 @@ export interface KeywordCondition extends AstNode {
 }
 export interface LabelPrefix extends AstNode {
     kind: SyntaxKind.LabelPrefix;
+    nameToken: IToken | null;
     name: string | null;
 }
 export interface LabelReference extends AstNode {

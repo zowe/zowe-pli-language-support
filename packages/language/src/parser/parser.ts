@@ -1,7 +1,18 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
 import { AbstractParser, IntermediateBinaryExpression } from './abstract-parser';
 import * as tokens from './tokens';
-import * as ast from './ast';
-import { CstNodeKind } from './cst';
+import * as ast from '../syntax-tree/ast';
+import { CstNodeKind } from '../syntax-tree/cst';
 
 export class PliParser extends AbstractParser {
     constructor() {
@@ -12,6 +23,7 @@ export class PliParser extends AbstractParser {
     private createPliProgram(): ast.PliProgram {
         return {
             kind: ast.SyntaxKind.PliProgram,
+            container: null,
             statements: [],
         };
     }
@@ -32,6 +44,7 @@ export class PliParser extends AbstractParser {
     private createPackage(): ast.Package {
         return {
             kind: ast.SyntaxKind.Package,
+            container: null,
             exports: null,
             reserves: null,
             options: null,
@@ -91,6 +104,7 @@ export class PliParser extends AbstractParser {
     private createConditionPrefix(): ast.ConditionPrefix {
         return {
             kind: ast.SyntaxKind.ConditionPrefix,
+            container: null,
             items: [],
         };
     }
@@ -120,6 +134,7 @@ export class PliParser extends AbstractParser {
     private createConditionPrefixItem(): ast.ConditionPrefixItem {
         return {
             kind: ast.SyntaxKind.ConditionPrefixItem,
+            container: null,
             conditions: [],
         };
     }
@@ -148,6 +163,7 @@ export class PliParser extends AbstractParser {
     private createExports(): ast.Exports {
         return {
             kind: ast.SyntaxKind.Exports,
+            container: null,
             all: false,
             procedures: [],
         };
@@ -198,6 +214,7 @@ export class PliParser extends AbstractParser {
     private createReserves(): ast.Reserves {
         return {
             kind: ast.SyntaxKind.Reserves,
+            container: null,
             all: false,
             variables: [],
         };
@@ -248,6 +265,7 @@ export class PliParser extends AbstractParser {
     private createOptions(): ast.Options {
         return {
             kind: ast.SyntaxKind.Options,
+            container: null,
             items: [],
         };
     }
@@ -296,6 +314,7 @@ export class PliParser extends AbstractParser {
                         this.tokenPayload(token, element, CstNodeKind.SimpleOptionsItem_value_AMODE31_0);
                         element = this.replace({
                             kind: ast.SyntaxKind.SimpleOptionsItem,
+                            container: null,
                             value: token.image as ast.SimpleOptionsItem['value'],
                         });
                     });
@@ -335,6 +354,7 @@ export class PliParser extends AbstractParser {
     private createLinkageOptionsItem(): ast.LinkageOptionsItem {
         return {
             kind: ast.SyntaxKind.LinkageOptionsItem,
+            container: null,
             value: null,
         };
     }
@@ -364,6 +384,7 @@ export class PliParser extends AbstractParser {
     private createCMPATOptionsItem(): ast.CMPATOptionsItem {
         return {
             kind: ast.SyntaxKind.CMPATOptionsItem,
+            container: null,
             value: null,
         };
     }
@@ -390,6 +411,7 @@ export class PliParser extends AbstractParser {
     private createNoMapOptionsItem(): ast.NoMapOptionsItem {
         return {
             kind: ast.SyntaxKind.NoMapOptionsItem,
+            container: null,
             type: null,
             parameters: [],
         };
@@ -434,6 +456,7 @@ export class PliParser extends AbstractParser {
     private createProcedureStatement(): ast.ProcedureStatement {
         return {
             kind: ast.SyntaxKind.ProcedureStatement,
+            container: null,
             xProc: false,
             parameters: [],
             statements: [],
@@ -589,6 +612,8 @@ export class PliParser extends AbstractParser {
     private createLabelPrefix(): ast.LabelPrefix {
         return {
             kind: ast.SyntaxKind.LabelPrefix,
+            container: null,
+            nameToken: null,
             name: null,
         };
     }
@@ -599,6 +624,7 @@ export class PliParser extends AbstractParser {
         this.CONSUME_ASSIGN1(tokens.ID, token => {
             this.tokenPayload(token, element, CstNodeKind.LabelPrefix_name_ID_0);
             element.name = token.image;
+            element.nameToken = token;
         });
         this.CONSUME_ASSIGN1(tokens.Colon, token => {
             this.tokenPayload(token, element, CstNodeKind.LabelPrefix_Colon_0);
@@ -609,6 +635,7 @@ export class PliParser extends AbstractParser {
     private createEntryStatement(): ast.EntryStatement {
         return {
             kind: ast.SyntaxKind.EntryStatement,
+            container: null,
             parameters: [],
             variable: [],
             limited: [],
@@ -716,6 +743,7 @@ export class PliParser extends AbstractParser {
     private createStatement(): ast.Statement {
         return {
             kind: ast.SyntaxKind.Statement,
+            container: null,
             condition: null,
             labels: [],
             value: null,
@@ -747,21 +775,15 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createUnit(): ast.Unit {
-        return {
-            
-        } as any;
-    }
 
     Unit = this.RULE('Unit', () => {
-        let element = this.push(this.createUnit());
-
+        this.push({});
         this.OR1([
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.DeclareStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -770,7 +792,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.AllocateStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -779,7 +801,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.AssertStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -788,7 +810,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.AssignmentStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -797,7 +819,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.AttachStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -806,7 +828,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.BeginStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -815,7 +837,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.CallStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -824,7 +846,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.CancelThreadStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -833,7 +855,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.CloseStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -842,7 +864,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.DefaultStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -851,7 +873,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.DefineAliasStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -860,7 +882,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.DefineOrdinalStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -869,7 +891,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.DefineStructureStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -878,7 +900,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.DelayStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -887,7 +909,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.DeleteStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -896,7 +918,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.DetachStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -905,7 +927,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.DisplayStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -914,7 +936,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.DoStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -923,7 +945,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.EntryStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -932,7 +954,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.ExecStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -941,7 +963,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.ExitStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -950,7 +972,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.FetchStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -959,7 +981,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.FlushStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -968,7 +990,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.FormatStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -977,7 +999,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.FreeStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -986,7 +1008,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.GetStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -995,7 +1017,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.GoToStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1004,7 +1026,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.IfStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1013,7 +1035,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.IncludeDirective, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1022,7 +1044,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.IterateStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1031,7 +1053,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.LeaveStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1040,7 +1062,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.LineDirective, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1049,7 +1071,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.LocateStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1058,7 +1080,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.NoPrintDirective, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1067,7 +1089,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.NoteDirective, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1076,7 +1098,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.NullStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1085,7 +1107,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.OnStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1094,7 +1116,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.OpenStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1103,7 +1125,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.PageDirective, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1112,7 +1134,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.PopDirective, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1121,7 +1143,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.PrintDirective, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1130,7 +1152,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.ProcessDirective, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1139,7 +1161,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.ProcincDirective, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1148,7 +1170,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.PushDirective, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1157,7 +1179,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.PutStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1166,7 +1188,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.QualifyStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1175,7 +1197,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.ReadStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1184,7 +1206,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.ReinitStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1193,7 +1215,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.ReleaseStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1202,7 +1224,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.ResignalStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1211,7 +1233,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.ReturnStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1220,7 +1242,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.RevertStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1229,7 +1251,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.RewriteStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1238,7 +1260,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.SelectStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1247,7 +1269,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.SignalStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1256,7 +1278,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.SkipDirective, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1265,7 +1287,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.StopStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1274,7 +1296,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.WaitStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1283,7 +1305,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.WriteStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1292,7 +1314,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.ProcedureStatement, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1301,7 +1323,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.Package, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -1314,6 +1336,7 @@ export class PliParser extends AbstractParser {
     private createAllocateStatement(): ast.AllocateStatement {
         return {
             kind: ast.SyntaxKind.AllocateStatement,
+            container: null,
             variables: [],
         };
     }
@@ -1348,6 +1371,7 @@ export class PliParser extends AbstractParser {
     private createAllocatedVariable(): ast.AllocatedVariable {
         return {
             kind: ast.SyntaxKind.AllocatedVariable,
+            container: null,
             level: null,
             var: null,
             attribute: null,
@@ -1435,6 +1459,7 @@ export class PliParser extends AbstractParser {
     private createAllocateLocationReferenceIn(): ast.AllocateLocationReferenceIn {
         return {
             kind: ast.SyntaxKind.AllocateLocationReferenceIn,
+            container: null,
             area: null,
         };
     }
@@ -1462,6 +1487,7 @@ export class PliParser extends AbstractParser {
     private createAllocateLocationReferenceSet(): ast.AllocateLocationReferenceSet {
         return {
             kind: ast.SyntaxKind.AllocateLocationReferenceSet,
+            container: null,
             locatorVariable: null,
         };
     }
@@ -1489,6 +1515,7 @@ export class PliParser extends AbstractParser {
     private createAllocateDimension(): ast.AllocateDimension {
         return {
             kind: ast.SyntaxKind.AllocateDimension,
+            container: null,
             dimensions: null,
         };
     }
@@ -1507,6 +1534,7 @@ export class PliParser extends AbstractParser {
     private createAllocateType(): ast.AllocateType {
         return {
             kind: ast.SyntaxKind.AllocateType,
+            container: null,
             type: null,
             dimensions: null,
         };
@@ -1534,6 +1562,7 @@ export class PliParser extends AbstractParser {
     private createAssertStatement(): ast.AssertStatement {
         return {
             kind: ast.SyntaxKind.AssertStatement,
+            container: null,
             true: false,
             actual: null,
             false: false,
@@ -1651,6 +1680,7 @@ export class PliParser extends AbstractParser {
     private createAssignmentStatement(): ast.AssignmentStatement {
         return {
             kind: ast.SyntaxKind.AssignmentStatement,
+            container: null,
             refs: [],
             operator: null,
             expression: null,
@@ -1725,6 +1755,7 @@ export class PliParser extends AbstractParser {
     private createAttachStatement(): ast.AttachStatement {
         return {
             kind: ast.SyntaxKind.AttachStatement,
+            container: null,
             reference: null,
             task: null,
             environment: false,
@@ -1794,6 +1825,7 @@ export class PliParser extends AbstractParser {
     private createBeginStatement(): ast.BeginStatement {
         return {
             kind: ast.SyntaxKind.BeginStatement,
+            container: null,
             options: null,
             recursive: false,
             statements: [],
@@ -1866,6 +1898,7 @@ export class PliParser extends AbstractParser {
     private createEndStatement(): ast.EndStatement {
         return {
             kind: ast.SyntaxKind.EndStatement,
+            container: null,
             labels: [],
             label: null,
         };
@@ -1897,6 +1930,7 @@ export class PliParser extends AbstractParser {
     private createCallStatement(): ast.CallStatement {
         return {
             kind: ast.SyntaxKind.CallStatement,
+            container: null,
             call: null,
         };
     }
@@ -1921,6 +1955,7 @@ export class PliParser extends AbstractParser {
     private createCancelThreadStatement(): ast.CancelThreadStatement {
         return {
             kind: ast.SyntaxKind.CancelThreadStatement,
+            container: null,
             thread: null,
         };
     }
@@ -1954,6 +1989,7 @@ export class PliParser extends AbstractParser {
     private createCloseStatement(): ast.CloseStatement {
         return {
             kind: ast.SyntaxKind.CloseStatement,
+            container: null,
             files: [],
         };
     }
@@ -2036,6 +2072,7 @@ export class PliParser extends AbstractParser {
     private createDefaultStatement(): ast.DefaultStatement {
         return {
             kind: ast.SyntaxKind.DefaultStatement,
+            container: null,
             expressions: [],
         };
     }
@@ -2070,6 +2107,7 @@ export class PliParser extends AbstractParser {
     private createDefaultExpression(): ast.DefaultExpression {
         return {
             kind: ast.SyntaxKind.DefaultExpression,
+            container: null,
             expression: null,
             attributes: [],
         };
@@ -2096,6 +2134,7 @@ export class PliParser extends AbstractParser {
     private createDefaultExpressionPart(): ast.DefaultExpressionPart {
         return {
             kind: ast.SyntaxKind.DefaultExpressionPart,
+            container: null,
             expression: null,
             identifiers: null,
         };
@@ -2163,6 +2202,7 @@ export class PliParser extends AbstractParser {
     private createDefaultRangeIdentifiers(): ast.DefaultRangeIdentifiers {
         return {
             kind: ast.SyntaxKind.DefaultRangeIdentifiers,
+            container: null,
             identifiers: [],
         };
     }
@@ -2219,6 +2259,7 @@ export class PliParser extends AbstractParser {
     private createDefaultRangeIdentifierItem(): ast.DefaultRangeIdentifierItem {
         return {
             kind: ast.SyntaxKind.DefaultRangeIdentifierItem,
+            container: null,
             from: null,
             to: null,
         };
@@ -2246,6 +2287,7 @@ export class PliParser extends AbstractParser {
     private createDefaultAttributeExpression(): ast.DefaultAttributeExpression {
         return {
             kind: ast.SyntaxKind.DefaultAttributeExpression,
+            container: null,
             items: [],
             operators: [],
         };
@@ -2277,6 +2319,7 @@ export class PliParser extends AbstractParser {
     private createDefaultAttributeExpressionNot(): ast.DefaultAttributeExpressionNot {
         return {
             kind: ast.SyntaxKind.DefaultAttributeExpressionNot,
+            container: null,
             not: false,
             value: null,
         };
@@ -2303,6 +2346,7 @@ export class PliParser extends AbstractParser {
     private createDefineAliasStatement(): ast.DefineAliasStatement {
         return {
             kind: ast.SyntaxKind.DefineAliasStatement,
+            container: null,
             name: null,
             xDefine: false,
             attributes: [],
@@ -2364,6 +2408,7 @@ export class PliParser extends AbstractParser {
     private createDefineOrdinalStatement(): ast.DefineOrdinalStatement {
         return {
             kind: ast.SyntaxKind.DefineOrdinalStatement,
+            container: null,
             name: null,
             ordinalValues: null,
             xDefine: false,
@@ -2476,6 +2521,7 @@ export class PliParser extends AbstractParser {
     private createOrdinalValueList(): ast.OrdinalValueList {
         return {
             kind: ast.SyntaxKind.OrdinalValueList,
+            container: null,
             members: [],
         };
     }
@@ -2504,6 +2550,7 @@ export class PliParser extends AbstractParser {
     private createOrdinalValue(): ast.OrdinalValue {
         return {
             kind: ast.SyntaxKind.OrdinalValue,
+            container: null,
             name: null,
             value: null,
         };
@@ -2537,6 +2584,7 @@ export class PliParser extends AbstractParser {
     private createDefineStructureStatement(): ast.DefineStructureStatement {
         return {
             kind: ast.SyntaxKind.DefineStructureStatement,
+            container: null,
             xDefine: false,
             level: null,
             name: null,
@@ -2615,6 +2663,7 @@ export class PliParser extends AbstractParser {
     private createSubStructure(): ast.SubStructure {
         return {
             kind: ast.SyntaxKind.SubStructure,
+            container: null,
             level: null,
             name: null,
             attributes: [],
@@ -2646,6 +2695,7 @@ export class PliParser extends AbstractParser {
     private createDelayStatement(): ast.DelayStatement {
         return {
             kind: ast.SyntaxKind.DelayStatement,
+            container: null,
             delay: null,
         };
     }
@@ -2677,6 +2727,7 @@ export class PliParser extends AbstractParser {
     private createDeleteStatement(): ast.DeleteStatement {
         return {
             kind: ast.SyntaxKind.DeleteStatement,
+            container: null,
             file: null,
             key: null,
         };
@@ -2728,6 +2779,7 @@ export class PliParser extends AbstractParser {
     private createDetachStatement(): ast.DetachStatement {
         return {
             kind: ast.SyntaxKind.DetachStatement,
+            container: null,
             reference: null,
         };
     }
@@ -2762,6 +2814,7 @@ export class PliParser extends AbstractParser {
     private createDisplayStatement(): ast.DisplayStatement {
         return {
             kind: ast.SyntaxKind.DisplayStatement,
+            container: null,
             expression: null,
             reply: null,
             rout: [],
@@ -2860,6 +2913,7 @@ export class PliParser extends AbstractParser {
     private createDoStatement(): ast.DoStatement {
         return {
             kind: ast.SyntaxKind.DoStatement,
+            container: null,
             statements: [],
             end: null,
             doType2: null,
@@ -2876,6 +2930,7 @@ export class PliParser extends AbstractParser {
         this.OPTION1(() => {
             this.OR1([
                 {
+                    GATE: () => this.LA(2).tokenTypeIdx !== tokens.Equals.tokenTypeIdx,
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.DoType2, {
                             assign: result => {
@@ -2885,6 +2940,7 @@ export class PliParser extends AbstractParser {
                     }
                 },
                 {
+                    GATE: () => this.LA(2).tokenTypeIdx === tokens.Equals.tokenTypeIdx,
                     ALT: () => {
                         this.SUBRULE_ASSIGN1(this.DoType3, {
                             assign: result => {
@@ -2946,6 +3002,7 @@ export class PliParser extends AbstractParser {
     private createDoWhile(): ast.DoWhile {
         return {
             kind: ast.SyntaxKind.DoWhile,
+            container: null,
             while: null,
             until: null,
         };
@@ -2990,6 +3047,7 @@ export class PliParser extends AbstractParser {
     private createDoUntil(): ast.DoUntil {
         return {
             kind: ast.SyntaxKind.DoUntil,
+            container: null,
             until: null,
             while: null,
         };
@@ -3034,6 +3092,7 @@ export class PliParser extends AbstractParser {
     private createDoType3(): ast.DoType3 {
         return {
             kind: ast.SyntaxKind.DoType3,
+            container: null,
             variable: null,
             specifications: [],
         };
@@ -3072,6 +3131,7 @@ export class PliParser extends AbstractParser {
     private createDoType3Variable(): ast.DoType3Variable {
         return {
             kind: ast.SyntaxKind.DoType3Variable,
+            container: null,
             name: null,
         };
     }
@@ -3090,6 +3150,7 @@ export class PliParser extends AbstractParser {
     private createDoSpecification(): ast.DoSpecification {
         return {
             kind: ast.SyntaxKind.DoSpecification,
+            container: null,
             exp1: null,
             upthru: null,
             downthru: null,
@@ -3220,6 +3281,7 @@ export class PliParser extends AbstractParser {
     private createExecStatement(): ast.ExecStatement {
         return {
             kind: ast.SyntaxKind.ExecStatement,
+            container: null,
             query: null,
         };
     }
@@ -3242,7 +3304,7 @@ export class PliParser extends AbstractParser {
     });
 
     private createExitStatement(): ast.ExitStatement {
-        return { kind: ast.SyntaxKind.ExitStatement };
+        return { kind: ast.SyntaxKind.ExitStatement, container: null };
     }
 
     ExitStatement = this.RULE('ExitStatement', () => {
@@ -3261,6 +3323,7 @@ export class PliParser extends AbstractParser {
     private createFetchStatement(): ast.FetchStatement {
         return {
             kind: ast.SyntaxKind.FetchStatement,
+            container: null,
             entries: [],
         };
     }
@@ -3296,6 +3359,7 @@ export class PliParser extends AbstractParser {
     private createFetchEntry(): ast.FetchEntry {
         return {
             kind: ast.SyntaxKind.FetchEntry,
+            container: null,
             name: null,
             set: null,
             title: null,
@@ -3348,6 +3412,7 @@ export class PliParser extends AbstractParser {
     private createFlushStatement(): ast.FlushStatement {
         return {
             kind: ast.SyntaxKind.FlushStatement,
+            container: null,
             file: null,
         };
     }
@@ -3395,6 +3460,7 @@ export class PliParser extends AbstractParser {
     private createFormatStatement(): ast.FormatStatement {
         return {
             kind: ast.SyntaxKind.FormatStatement,
+            container: null,
             list: null,
         };
     }
@@ -3425,6 +3491,7 @@ export class PliParser extends AbstractParser {
     private createFormatList(): ast.FormatList {
         return {
             kind: ast.SyntaxKind.FormatList,
+            container: null,
             items: [],
         };
     }
@@ -3454,6 +3521,7 @@ export class PliParser extends AbstractParser {
     private createFormatListItem(): ast.FormatListItem {
         return {
             kind: ast.SyntaxKind.FormatListItem,
+            container: null,
             level: null,
             item: null,
             list: null,
@@ -3503,6 +3571,7 @@ export class PliParser extends AbstractParser {
     private createFormatListItemLevel(): ast.FormatListItemLevel {
         return {
             kind: ast.SyntaxKind.FormatListItemLevel,
+            container: null,
             level: null,
         };
     }
@@ -3682,15 +3751,9 @@ export class PliParser extends AbstractParser {
 
         return this.pop();
     });
-    private createAFormatItem(): ast.AFormatItem {
-        return {
-            kind: ast.SyntaxKind.AFormatItem,
-            fieldWidth: null,
-        };
-    }
 
     AFormatItem = this.RULE('AFormatItem', () => {
-        let element = this.push(this.createAFormatItem());
+        let element = this.push(ast.createAFormatItem());
 
         this.CONSUME_ASSIGN1(tokens.A, token => {
             this.tokenPayload(token, element, CstNodeKind.AFormatItem_A_0);
@@ -3714,6 +3777,7 @@ export class PliParser extends AbstractParser {
     private createBFormatItem(): ast.BFormatItem {
         return {
             kind: ast.SyntaxKind.BFormatItem,
+            container: null,
             fieldWidth: null,
         };
     }
@@ -3743,6 +3807,7 @@ export class PliParser extends AbstractParser {
     private createCFormatItem(): ast.CFormatItem {
         return {
             kind: ast.SyntaxKind.CFormatItem,
+            container: null,
             item: null,
         };
     }
@@ -3795,6 +3860,7 @@ export class PliParser extends AbstractParser {
     private createFFormatItem(): ast.FFormatItem {
         return {
             kind: ast.SyntaxKind.FFormatItem,
+            container: null,
             fieldWidth: null,
             fractionalDigits: null,
             scalingFactor: null,
@@ -3845,6 +3911,7 @@ export class PliParser extends AbstractParser {
     private createEFormatItem(): ast.EFormatItem {
         return {
             kind: ast.SyntaxKind.EFormatItem,
+            container: null,
             fieldWidth: null,
             fractionalDigits: null,
             significantDigits: null,
@@ -3892,6 +3959,7 @@ export class PliParser extends AbstractParser {
     private createPFormatItem(): ast.PFormatItem {
         return {
             kind: ast.SyntaxKind.PFormatItem,
+            container: null,
             specification: null,
         };
     }
@@ -3912,6 +3980,7 @@ export class PliParser extends AbstractParser {
     private createColumnFormatItem(): ast.ColumnFormatItem {
         return {
             kind: ast.SyntaxKind.ColumnFormatItem,
+            container: null,
             characterPosition: null,
         };
     }
@@ -3939,6 +4008,7 @@ export class PliParser extends AbstractParser {
     private createGFormatItem(): ast.GFormatItem {
         return {
             kind: ast.SyntaxKind.GFormatItem,
+            container: null,
             fieldWidth: null,
         };
     }
@@ -3966,7 +4036,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createLFormatItem(): ast.LFormatItem {
-        return { kind: ast.SyntaxKind.LFormatItem };
+        return { kind: ast.SyntaxKind.LFormatItem, container: null };
     }
 
     LFormatItem = this.RULE('LFormatItem', () => {
@@ -3981,6 +4051,7 @@ export class PliParser extends AbstractParser {
     private createLineFormatItem(): ast.LineFormatItem {
         return {
             kind: ast.SyntaxKind.LineFormatItem,
+            container: null,
             lineNumber: null,
         };
     }
@@ -4006,7 +4077,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createPageFormatItem(): ast.PageFormatItem {
-        return { kind: ast.SyntaxKind.PageFormatItem };
+        return { kind: ast.SyntaxKind.PageFormatItem, container: null };
     }
 
     PageFormatItem = this.RULE('PageFormatItem', () => {
@@ -4021,6 +4092,7 @@ export class PliParser extends AbstractParser {
     private createRFormatItem(): ast.RFormatItem {
         return {
             kind: ast.SyntaxKind.RFormatItem,
+            container: null,
             labelReference: null,
         };
     }
@@ -4047,6 +4119,7 @@ export class PliParser extends AbstractParser {
     private createSkipFormatItem(): ast.SkipFormatItem {
         return {
             kind: ast.SyntaxKind.SkipFormatItem,
+            container: null,
             skip: null,
         };
     }
@@ -4075,7 +4148,7 @@ export class PliParser extends AbstractParser {
     });
 
     private createVFormatItem(): ast.VFormatItem {
-        return { kind: ast.SyntaxKind.VFormatItem }
+        return { kind: ast.SyntaxKind.VFormatItem, container: null }
     }
 
     VFormatItem = this.RULE('VFormatItem', () => {
@@ -4090,6 +4163,7 @@ export class PliParser extends AbstractParser {
     private createXFormatItem(): ast.XFormatItem {
         return {
             kind: ast.SyntaxKind.XFormatItem,
+            container: null,
             width: null,
         };
     }
@@ -4117,6 +4191,7 @@ export class PliParser extends AbstractParser {
     private createFreeStatement(): ast.FreeStatement {
         return {
             kind: ast.SyntaxKind.FreeStatement,
+            container: null,
             references: [],
         };
     }
@@ -4151,6 +4226,7 @@ export class PliParser extends AbstractParser {
     private createGetFileStatement(): ast.GetFileStatement {
         return {
             kind: ast.SyntaxKind.GetFileStatement,
+            container: null,
             specifications: []
         };
     }
@@ -4158,6 +4234,7 @@ export class PliParser extends AbstractParser {
     private createGetStringStatement(): ast.GetStringStatement {
         return {
             kind: ast.SyntaxKind.GetStringStatement,
+            container: null,
             dataSpecification: null,
             expression: null
         };
@@ -4249,6 +4326,7 @@ export class PliParser extends AbstractParser {
     private createGetFile(): ast.GetFile {
         return {
             kind: ast.SyntaxKind.GetFile,
+            container: null,
             file: null,
         };
     }
@@ -4276,6 +4354,7 @@ export class PliParser extends AbstractParser {
     private createGetCopy(): ast.GetCopy {
         return {
             kind: ast.SyntaxKind.GetCopy,
+            container: null,
             copyReference: null,
         };
     }
@@ -4304,6 +4383,7 @@ export class PliParser extends AbstractParser {
     private createGetSkip(): ast.GetSkip {
         return {
             kind: ast.SyntaxKind.GetSkip,
+            container: null,
             skipExpression: null,
         };
     }
@@ -4333,6 +4413,7 @@ export class PliParser extends AbstractParser {
     private createGoToStatement(): ast.GoToStatement {
         return {
             kind: ast.SyntaxKind.GoToStatement,
+            container: null,
             label: null,
         };
     }
@@ -4373,6 +4454,7 @@ export class PliParser extends AbstractParser {
     private createIfStatement(): ast.IfStatement {
         return {
             kind: ast.SyntaxKind.IfStatement,
+            container: null,
             expression: null,
             unit: null,
             else: null,
@@ -4414,6 +4496,7 @@ export class PliParser extends AbstractParser {
     private createIncludeDirective(): ast.IncludeDirective {
         return {
             kind: ast.SyntaxKind.IncludeDirective,
+            container: null,
             items: [],
         };
     }
@@ -4461,6 +4544,7 @@ export class PliParser extends AbstractParser {
     private createIncludeItem(): ast.IncludeItem {
         return {
             kind: ast.SyntaxKind.IncludeItem,
+            container: null,
             file: null,
             ddname: false,
         };
@@ -4531,6 +4615,7 @@ export class PliParser extends AbstractParser {
     private createIterateStatement(): ast.IterateStatement {
         return {
             kind: ast.SyntaxKind.IterateStatement,
+            container: null,
             label: null,
         };
     }
@@ -4557,6 +4642,7 @@ export class PliParser extends AbstractParser {
     private createLeaveStatement(): ast.LeaveStatement {
         return {
             kind: ast.SyntaxKind.LeaveStatement,
+            container: null,
             label: null,
         };
     }
@@ -4583,6 +4669,7 @@ export class PliParser extends AbstractParser {
     private createLineDirective(): ast.LineDirective {
         return {
             kind: ast.SyntaxKind.LineDirective,
+            container: null,
             line: null,
             file: null,
         };
@@ -4620,6 +4707,7 @@ export class PliParser extends AbstractParser {
     private createLocateStatement(): ast.LocateStatement {
         return {
             kind: ast.SyntaxKind.LocateStatement,
+            container: null,
             variable: null,
             arguments: [],
         };
@@ -4676,6 +4764,7 @@ export class PliParser extends AbstractParser {
     private createLocateStatementFile(): ast.LocateStatementFile {
         return {
             kind: ast.SyntaxKind.LocateStatementFile,
+            container: null,
             file: null,
         };
     }
@@ -4703,6 +4792,7 @@ export class PliParser extends AbstractParser {
     private createLocateStatementSet(): ast.LocateStatementSet {
         return {
             kind: ast.SyntaxKind.LocateStatementSet,
+            container: null,
             set: null,
         };
     }
@@ -4730,6 +4820,7 @@ export class PliParser extends AbstractParser {
     private createLocateStatementKeyFrom(): ast.LocateStatementKeyFrom {
         return {
             kind: ast.SyntaxKind.LocateStatementKeyFrom,
+            container: null,
             keyfrom: null,
         };
     }
@@ -4755,7 +4846,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createNoPrintDirective(): ast.NoPrintDirective {
-        return { kind: ast.SyntaxKind.NoPrintDirective };
+        return { kind: ast.SyntaxKind.NoPrintDirective, container: null };
     }
 
     NoPrintDirective = this.RULE('NoPrintDirective', () => {
@@ -4773,6 +4864,7 @@ export class PliParser extends AbstractParser {
     private createNoteDirective(): ast.NoteDirective {
         return {
             kind: ast.SyntaxKind.NoteDirective,
+            container: null,
             message: null,
             code: null,
         };
@@ -4812,7 +4904,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createNullStatement(): ast.NullStatement {
-        return { kind: ast.SyntaxKind.NullStatement };
+        return { kind: ast.SyntaxKind.NullStatement, container: null };
     }
 
     NullStatement = this.RULE('NullStatement', () => {
@@ -4827,6 +4919,7 @@ export class PliParser extends AbstractParser {
     private createOnStatement(): ast.OnStatement {
         return {
             kind: ast.SyntaxKind.OnStatement,
+            container: null,
             conditions: [],
             snap: false,
             system: false,
@@ -4925,6 +5018,7 @@ export class PliParser extends AbstractParser {
     private createKeywordCondition(): ast.KeywordCondition {
         return {
             kind: ast.SyntaxKind.KeywordCondition,
+            container: null,
             keyword: null,
         };
     }
@@ -4942,6 +5036,7 @@ export class PliParser extends AbstractParser {
     private createNamedCondition(): ast.NamedCondition {
         return {
             kind: ast.SyntaxKind.NamedCondition,
+            container: null,
             name: null,
         };
     }
@@ -4969,6 +5064,7 @@ export class PliParser extends AbstractParser {
     private createFileReferenceCondition(): ast.FileReferenceCondition {
         return {
             kind: ast.SyntaxKind.FileReferenceCondition,
+            container: null,
             keyword: null,
             fileReference: null,
         };
@@ -5001,6 +5097,7 @@ export class PliParser extends AbstractParser {
     private createOpenStatement(): ast.OpenStatement {
         return {
             kind: ast.SyntaxKind.OpenStatement,
+            container: null,
             options: [],
         };
     }
@@ -5035,6 +5132,7 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsGroup(): ast.OpenOptionsGroup {
         return {
             kind: ast.SyntaxKind.OpenOptionsGroup,
+            container: null,
             options: [],
         };
     }
@@ -5113,6 +5211,7 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsFile(): ast.OpenOptionsFile {
         return {
             kind: ast.SyntaxKind.OpenOptionsFile,
+            container: null,
             file: null,
         };
     }
@@ -5140,6 +5239,7 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsStream(): ast.OpenOptionsStream {
         return {
             kind: ast.SyntaxKind.OpenOptionsStream,
+            container: null,
             stream: false,
             record: false,
         };
@@ -5172,6 +5272,7 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsAccess(): ast.OpenOptionsAccess {
         return {
             kind: ast.SyntaxKind.OpenOptionsAccess,
+            container: null,
             input: false,
             output: false,
             update: false,
@@ -5213,6 +5314,7 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsBuffering(): ast.OpenOptionsBuffering {
         return {
             kind: ast.SyntaxKind.OpenOptionsBuffering,
+            container: null,
             sequential: false,
             direct: false,
             unbuffered: false,
@@ -5253,6 +5355,7 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsKeyed(): ast.OpenOptionsKeyed {
         return {
             kind: ast.SyntaxKind.OpenOptionsKeyed,
+            container: null,
             keyed: false,
         };
     }
@@ -5271,6 +5374,7 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsPrint(): ast.OpenOptionsPrint {
         return {
             kind: ast.SyntaxKind.OpenOptionsPrint,
+            container: null,
             print: false,
         };
     }
@@ -5288,6 +5392,7 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsTitle(): ast.OpenOptionsTitle {
         return {
             kind: ast.SyntaxKind.OpenOptionsTitle,
+            container: null,
             title: null,
         };
     }
@@ -5315,6 +5420,7 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsLineSize(): ast.OpenOptionsLineSize {
         return {
             kind: ast.SyntaxKind.OpenOptionsLineSize,
+            container: null,
             lineSize: null,
         };
     }
@@ -5342,6 +5448,7 @@ export class PliParser extends AbstractParser {
     private createOpenOptionsPageSize(): ast.OpenOptionsPageSize {
         return {
             kind: ast.SyntaxKind.OpenOptionsPageSize,
+            container: null,
             pageSize: null,
         };
     }
@@ -5367,7 +5474,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createPageDirective(): ast.PageDirective {
-        return { kind: ast.SyntaxKind.PageDirective };
+        return { kind: ast.SyntaxKind.PageDirective, container: null };
     }
 
     PageDirective = this.RULE('PageDirective', () => {
@@ -5383,7 +5490,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createPopDirective(): ast.PopDirective {
-        return { kind: ast.SyntaxKind.PopDirective };
+        return { kind: ast.SyntaxKind.PopDirective, container: null };
     }
 
     PopDirective = this.RULE('PopDirective', () => {
@@ -5399,7 +5506,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createPrintDirective(): ast.PrintDirective {
-        return { kind: ast.SyntaxKind.PrintDirective };
+        return { kind: ast.SyntaxKind.PrintDirective, container: null };
     }
 
     PrintDirective = this.RULE('PrintDirective', () => {
@@ -5417,6 +5524,7 @@ export class PliParser extends AbstractParser {
     private createProcessDirective(): ast.ProcessDirective {
         return {
             kind: ast.SyntaxKind.ProcessDirective,
+            container: null,
             compilerOptions: [],
         };
     }
@@ -5464,6 +5572,7 @@ export class PliParser extends AbstractParser {
     private createCompilerOptions(): ast.CompilerOptions {
         return {
             kind: ast.SyntaxKind.CompilerOptions,
+            container: null,
             value: null,
         };
     }
@@ -5482,6 +5591,7 @@ export class PliParser extends AbstractParser {
     private createProcincDirective(): ast.ProcincDirective {
         return {
             kind: ast.SyntaxKind.ProcincDirective,
+            container: null,
             datasetName: null,
         };
     }
@@ -5516,7 +5626,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createPushDirective(): ast.PushDirective {
-        return { kind: ast.SyntaxKind.PushDirective };
+        return { kind: ast.SyntaxKind.PushDirective, container: null };
     }
 
     PushDirective = this.RULE('PushDirective', () => {
@@ -5534,6 +5644,7 @@ export class PliParser extends AbstractParser {
     private createPutFileStatement(): ast.PutFileStatement {
         return {
             kind: ast.SyntaxKind.PutFileStatement,
+            container: null,
             items: []   
         };
     }
@@ -5541,6 +5652,7 @@ export class PliParser extends AbstractParser {
     private createPutStringStatement(): ast.PutStringStatement {
         return {
             kind: ast.SyntaxKind.PutStringStatement,
+            container: null,
             dataSpecification: null,
             stringExpression: null
         };
@@ -5616,6 +5728,7 @@ export class PliParser extends AbstractParser {
     private createPutItem(): ast.PutItem {
         return {
             kind: ast.SyntaxKind.PutItem,
+            container: null,
             attribute: null,
             expression: null,
         };
@@ -5648,6 +5761,7 @@ export class PliParser extends AbstractParser {
     private createDataSpecificationOptions(): ast.DataSpecificationOptions {
         return {
             kind: ast.SyntaxKind.DataSpecificationOptions,
+            container: null,
             dataList: null,
             edit: false,
             dataLists: [],
@@ -5751,6 +5865,7 @@ export class PliParser extends AbstractParser {
     private createDataSpecificationDataList(): ast.DataSpecificationDataList {
         return {
             kind: ast.SyntaxKind.DataSpecificationDataList,
+            container: null,
             items: [],
         };
     }
@@ -5779,6 +5894,7 @@ export class PliParser extends AbstractParser {
     private createDataSpecificationDataListItem(): ast.DataSpecificationDataListItem {
         return {
             kind: ast.SyntaxKind.DataSpecificationDataListItem,
+            container: null,
             value: null,
         };
     }
@@ -5797,6 +5913,7 @@ export class PliParser extends AbstractParser {
     private createQualifyStatement(): ast.QualifyStatement {
         return {
             kind: ast.SyntaxKind.QualifyStatement,
+            container: null,
             statements: [],
             end: null,
         };
@@ -5832,6 +5949,7 @@ export class PliParser extends AbstractParser {
     private createReadStatement(): ast.ReadStatement {
         return {
             kind: ast.SyntaxKind.ReadStatement,
+            container: null,
             arguments: [],
         };
     }
@@ -5858,6 +5976,7 @@ export class PliParser extends AbstractParser {
     private createReadStatementOption(): ast.ReadStatementOption {
         return {
             kind: ast.SyntaxKind.ReadStatementOption,
+            container: null,
             type: null,
             value: null
         };
@@ -5889,6 +6008,7 @@ export class PliParser extends AbstractParser {
     private createReinitStatement(): ast.ReinitStatement {
         return {
             kind: ast.SyntaxKind.ReinitStatement,
+            container: null,
             reference: null,
         };
     }
@@ -5913,6 +6033,7 @@ export class PliParser extends AbstractParser {
     private createReleaseStatement(): ast.ReleaseStatement {
         return {
             kind: ast.SyntaxKind.ReleaseStatement,
+            container: null,
             star: false,
             references: [],
         };
@@ -5958,7 +6079,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createResignalStatement(): ast.ResignalStatement {
-        return { kind: ast.SyntaxKind.ResignalStatement };
+        return { kind: ast.SyntaxKind.ResignalStatement, container: null };
     }
 
     ResignalStatement = this.RULE('ResignalStatement', () => {
@@ -5976,6 +6097,7 @@ export class PliParser extends AbstractParser {
     private createReturnStatement(): ast.ReturnStatement {
         return {
             kind: ast.SyntaxKind.ReturnStatement,
+            container: null,
             expression: null,
         };
     }
@@ -6008,6 +6130,7 @@ export class PliParser extends AbstractParser {
     private createRevertStatement(): ast.RevertStatement {
         return {
             kind: ast.SyntaxKind.RevertStatement,
+            container: null,
             conditions: [],
         };
     }
@@ -6042,6 +6165,7 @@ export class PliParser extends AbstractParser {
     private createRewriteStatement(): ast.RewriteStatement {
         return {
             kind: ast.SyntaxKind.RewriteStatement,
+            container: null,
             arguments: [],
         };
     }
@@ -6068,6 +6192,7 @@ export class PliParser extends AbstractParser {
     private createRewriteStatementOption(): ast.RewriteStatementOption {
         return {
             kind: ast.SyntaxKind.RewriteStatementOption,
+            container: null,
             type: null,
             value: null
         };
@@ -6098,6 +6223,7 @@ export class PliParser extends AbstractParser {
     private createSelectStatement(): ast.SelectStatement {
         return {
             kind: ast.SyntaxKind.SelectStatement,
+            container: null,
             on: null,
             statements: [],
             end: null,
@@ -6162,6 +6288,7 @@ export class PliParser extends AbstractParser {
     private createWhenStatement(): ast.WhenStatement {
         return {
             kind: ast.SyntaxKind.WhenStatement,
+            container: null,
             conditions: [],
             unit: null,
         };
@@ -6205,6 +6332,7 @@ export class PliParser extends AbstractParser {
     private createOtherwiseStatement(): ast.OtherwiseStatement {
         return {
             kind: ast.SyntaxKind.OtherwiseStatement,
+            container: null,
             unit: null,
         };
     }
@@ -6226,6 +6354,7 @@ export class PliParser extends AbstractParser {
     private createSignalStatement(): ast.SignalStatement {
         return {
             kind: ast.SyntaxKind.SignalStatement,
+            container: null,
             condition: [],
         };
     }
@@ -6250,6 +6379,7 @@ export class PliParser extends AbstractParser {
     private createSkipDirective(): ast.SkipDirective {
         return {
             kind: ast.SyntaxKind.SkipDirective,
+            container: null,
             lines: null,
         };
     }
@@ -6280,7 +6410,7 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createStopStatement(): ast.StopStatement {
-        return { kind: ast.SyntaxKind.StopStatement };
+        return { kind: ast.SyntaxKind.StopStatement, container: null };
     }
 
     StopStatement = this.RULE('StopStatement', () => {
@@ -6298,6 +6428,7 @@ export class PliParser extends AbstractParser {
     private createWaitStatement(): ast.WaitStatement {
         return {
             kind: ast.SyntaxKind.WaitStatement,
+            container: null,
             task: null,
         };
     }
@@ -6331,6 +6462,7 @@ export class PliParser extends AbstractParser {
     private createWriteStatement(): ast.WriteStatement {
         return {
             kind: ast.SyntaxKind.WriteStatement,
+            container: null,
             arguments: [],
         };
     }
@@ -6357,6 +6489,7 @@ export class PliParser extends AbstractParser {
     private createWriteStatementOption(): ast.WriteStatementOption {
         return {
             kind: ast.SyntaxKind.WriteStatementOption,
+            container: null,
             type: null,
             value: null
         };
@@ -6387,6 +6520,7 @@ export class PliParser extends AbstractParser {
     private createInitialAttribute(): ast.InitialAttribute {
         return {
             kind: ast.SyntaxKind.InitialAttribute,
+            container: null,
             across: false,
             expressions: [],
             direct: false,
@@ -6526,6 +6660,7 @@ export class PliParser extends AbstractParser {
     private createInitialToContent(): ast.InitialToContent {
         return {
             kind: ast.SyntaxKind.InitialToContent,
+            container: null,
             varying: null,
             type: null,
         };
@@ -6571,6 +6706,7 @@ export class PliParser extends AbstractParser {
     private createInitAcrossExpression(): ast.InitAcrossExpression {
         return {
             kind: ast.SyntaxKind.InitAcrossExpression,
+            container: null,
             expressions: [],
         };
     }
@@ -6604,14 +6740,14 @@ export class PliParser extends AbstractParser {
     });
 
     InitialAttributeItem = this.RULE('InitialAttributeItem', () => {
-        let element = this.push({});
+        this.push({});
 
         this.OR1([
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.InitialAttributeItemStar, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -6620,7 +6756,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.InitialAttributeSpecification, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -6631,7 +6767,7 @@ export class PliParser extends AbstractParser {
     });
 
     private createInitialAttributeItemStar(): ast.InitialAttributeItemStar {
-        return { kind: ast.SyntaxKind.InitialAttributeItemStar }
+        return { kind: ast.SyntaxKind.InitialAttributeItemStar, container: null }
     }
 
     InitialAttributeItemStar = this.RULE('InitialAttributeItemStar', () => {
@@ -6646,6 +6782,7 @@ export class PliParser extends AbstractParser {
     private createInitialAttributeSpecification(): ast.InitialAttributeSpecification {
         return {
             kind: ast.SyntaxKind.InitialAttributeSpecification,
+            container: null,
             star: false,
             item: null,
             expression: null,
@@ -6692,14 +6829,14 @@ export class PliParser extends AbstractParser {
     });
 
     InitialAttributeSpecificationIteration = this.RULE('InitialAttributeSpecificationIteration', () => {
-        let element = this.push({});
+        this.push({});
 
         this.OR1([
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.InitialAttributeItemStar, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -6708,7 +6845,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.InitialAttributeSpecificationIterationValue, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -6720,6 +6857,7 @@ export class PliParser extends AbstractParser {
     private createInitialAttributeSpecificationIterationValue(): ast.InitialAttributeSpecificationIterationValue {
         return {
             kind: ast.SyntaxKind.InitialAttributeSpecificationIterationValue,
+            container: null,
             items: [],
         };
     }
@@ -6754,6 +6892,7 @@ export class PliParser extends AbstractParser {
     private createDeclareStatement(): ast.DeclareStatement {
         return {
             kind: ast.SyntaxKind.DeclareStatement,
+            container: null,
             items: [],
             xDeclare: false,
         };
@@ -6789,6 +6928,7 @@ export class PliParser extends AbstractParser {
     private createDeclaredItem(): ast.DeclaredItem {
         return {
             kind: ast.SyntaxKind.DeclaredItem,
+            container: null,
             level: null,
             element: null,
             attributes: [],
@@ -6862,6 +7002,8 @@ export class PliParser extends AbstractParser {
     private createDeclaredVariable(): ast.DeclaredVariable {
         return {
             kind: ast.SyntaxKind.DeclaredVariable,
+            container: null,
+            nameToken: null,
             name: null,
         };
     }
@@ -6872,6 +7014,7 @@ export class PliParser extends AbstractParser {
         this.CONSUME_ASSIGN1(tokens.ID, token => {
             this.tokenPayload(token, element, CstNodeKind.DeclaredVariable_name_ID_0);
             element.name = token.image;
+            element.nameToken = token;
         });
 
         return this.pop();
@@ -7203,6 +7346,7 @@ export class PliParser extends AbstractParser {
     private createDateAttribute(): ast.DateAttribute {
         return {
             kind: ast.SyntaxKind.DateAttribute,
+            container: null,
             pattern: null,
         };
     }
@@ -7231,6 +7375,7 @@ export class PliParser extends AbstractParser {
     private createDefinedAttribute(): ast.DefinedAttribute {
         return {
             kind: ast.SyntaxKind.DefinedAttribute,
+            container: null,
             reference: null,
             position: null,
         };
@@ -7303,6 +7448,7 @@ export class PliParser extends AbstractParser {
     private createPictureAttribute(): ast.PictureAttribute {
         return {
             kind: ast.SyntaxKind.PictureAttribute,
+            container: null,
             picture: null,
         };
     }
@@ -7338,6 +7484,7 @@ export class PliParser extends AbstractParser {
     private createDimensionsDataAttribute(): ast.DimensionsDataAttribute {
         return {
             kind: ast.SyntaxKind.DimensionsDataAttribute,
+            container: null,
             dimensions: null,
         };
     }
@@ -7361,6 +7508,7 @@ export class PliParser extends AbstractParser {
     private createTypeAttribute(): ast.TypeAttribute {
         return {
             kind: ast.SyntaxKind.TypeAttribute,
+            container: null,
             type: null,
         };
     }
@@ -7376,7 +7524,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.TypeAttribute_type_ID_0);
-                        element.type = token.image;
+                        element.type = ast.createReference(token);
                     });
                 }
             },
@@ -7387,7 +7535,7 @@ export class PliParser extends AbstractParser {
                     });
                     this.CONSUME_ASSIGN2(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.TypeAttribute_type_ID_1);
-                        element.type = token.image;
+                        element.type = ast.createReference(token);
                     });
                     this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
                         this.tokenPayload(token, element, CstNodeKind.TypeAttribute_CloseParen_0);
@@ -7401,6 +7549,7 @@ export class PliParser extends AbstractParser {
     private createOrdinalTypeAttribute(): ast.OrdinalTypeAttribute {
         return {
             kind: ast.SyntaxKind.OrdinalTypeAttribute,
+            container: null,
             type: null,
             byvalue: false,
         };
@@ -7417,7 +7566,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_type_ID_0);
-                        element.type = token.image;
+                        element.type = ast.createReference(token);
                     });
                 }
             },
@@ -7428,7 +7577,7 @@ export class PliParser extends AbstractParser {
                     });
                     this.CONSUME_ASSIGN2(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_type_ID_1);
-                        element.type = token.image;
+                        element.type = ast.createReference(token);
                     });
                     this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
                         this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_CloseParen_0);
@@ -7446,6 +7595,7 @@ export class PliParser extends AbstractParser {
     private createReturnsAttribute(): ast.ReturnsAttribute {
         return {
             kind: ast.SyntaxKind.ReturnsAttribute,
+            container: null,
             attrs: [],
         };
     }
@@ -7508,6 +7658,7 @@ export class PliParser extends AbstractParser {
     private createComputationDataAttribute(): ast.ComputationDataAttribute {
         return {
             kind: ast.SyntaxKind.ComputationDataAttribute,
+            container: null,
             type: null,
             dimensions: null,
         };
@@ -7534,6 +7685,7 @@ export class PliParser extends AbstractParser {
     private createDefaultValueAttribute(): ast.DefaultValueAttribute {
         return {
             kind: ast.SyntaxKind.DefaultValueAttribute,
+            container: null,
             items: [],
         };
     }
@@ -7571,6 +7723,7 @@ export class PliParser extends AbstractParser {
     private createValueAttribute(): ast.ValueAttribute {
         return {
             kind: ast.SyntaxKind.ValueAttribute,
+            container: null,
             value: null,
         };
     }
@@ -7598,6 +7751,7 @@ export class PliParser extends AbstractParser {
     private createDefaultValueAttributeItem(): ast.DefaultValueAttributeItem {
         return {
             kind: ast.SyntaxKind.DefaultValueAttributeItem,
+            container: null,
             attributes: [],
         };
     }
@@ -7618,6 +7772,7 @@ export class PliParser extends AbstractParser {
     private createValueListAttribute(): ast.ValueListAttribute {
         return {
             kind: ast.SyntaxKind.ValueListAttribute,
+            container: null,
             values: [],
         };
     }
@@ -7657,6 +7812,7 @@ export class PliParser extends AbstractParser {
     private createValueListFromAttribute(): ast.ValueListFromAttribute {
         return {
             kind: ast.SyntaxKind.ValueListFromAttribute,
+            container: null,
             from: null,
         };
     }
@@ -7678,6 +7834,7 @@ export class PliParser extends AbstractParser {
     private createValueRangeAttribute(): ast.ValueRangeAttribute {
         return {
             kind: ast.SyntaxKind.ValueRangeAttribute,
+            container: null,
             values: [],
         };
     }
@@ -7718,6 +7875,7 @@ export class PliParser extends AbstractParser {
     private createLikeAttribute(): ast.LikeAttribute {
         return {
             kind: ast.SyntaxKind.LikeAttribute,
+            container: null,
             reference: null,
         };
     }
@@ -7739,6 +7897,7 @@ export class PliParser extends AbstractParser {
     private createHandleAttribute(): ast.HandleAttribute {
         return {
             kind: ast.SyntaxKind.HandleAttribute,
+            container: null,
             size: null,
             type: null,
         };
@@ -7767,7 +7926,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.HandleAttribute_type_ID_0);
-                        element.type = token.image;
+                        element.type = ast.createReference(token);
                     });
                 }
             },
@@ -7778,7 +7937,7 @@ export class PliParser extends AbstractParser {
                     });
                     this.CONSUME_ASSIGN2(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.HandleAttribute_type_ID_1);
-                        element.type = token.image;
+                        element.type = ast.createReference(token);
                     });
                     this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
                         this.tokenPayload(token, element, CstNodeKind.HandleAttribute_CloseParen_1);
@@ -7792,6 +7951,7 @@ export class PliParser extends AbstractParser {
     private createDimensions(): ast.Dimensions {
         return {
             kind: ast.SyntaxKind.Dimensions,
+            container: null,
             dimensions: [],
         };
     }
@@ -7828,6 +7988,7 @@ export class PliParser extends AbstractParser {
     private createDimensionBound(): ast.DimensionBound {
         return {
             kind: ast.SyntaxKind.DimensionBound,
+            container: null,
             bound1: null,
             bound2: null,
         };
@@ -7857,6 +8018,7 @@ export class PliParser extends AbstractParser {
     private createBound(): ast.Bound {
         return {
             kind: ast.SyntaxKind.Bound,
+            container: null,
             expression: null,
             refer: null,
         };
@@ -7906,6 +8068,7 @@ export class PliParser extends AbstractParser {
     private createEnvironmentAttribute(): ast.EnvironmentAttribute {
         return {
             kind: ast.SyntaxKind.EnvironmentAttribute,
+            container: null,
             items: [],
         };
     }
@@ -7935,6 +8098,7 @@ export class PliParser extends AbstractParser {
     private createEnvironmentAttributeItem(): ast.EnvironmentAttributeItem {
         return {
             kind: ast.SyntaxKind.EnvironmentAttributeItem,
+            container: null,
             environment: null,
             args: [],
         };
@@ -7980,6 +8144,7 @@ export class PliParser extends AbstractParser {
     private createEntryAttribute(): ast.EntryAttribute {
         return {
             kind: ast.SyntaxKind.EntryAttribute,
+            container: null,
             limited: [],
             attributes: [],
             options: [],
@@ -8088,6 +8253,7 @@ export class PliParser extends AbstractParser {
     private createReturnsOption(): ast.ReturnsOption {
         return {
             kind: ast.SyntaxKind.ReturnsOption,
+            container: null,
             returnAttributes: [],
         };
     }
@@ -8116,14 +8282,14 @@ export class PliParser extends AbstractParser {
     });
 
     EntryDescription = this.RULE('EntryDescription', () => {
-        let element = this.push({});
+        this.push({});
 
         this.OR1([
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.EntryParameterDescription, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -8132,7 +8298,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.EntryUnionDescription, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -8144,6 +8310,7 @@ export class PliParser extends AbstractParser {
     private createEntryParameterDescription(): ast.EntryParameterDescription {
         return {
             kind: ast.SyntaxKind.EntryParameterDescription,
+            container: null,
             attributes: [],
             star: false,
         };
@@ -8186,6 +8353,7 @@ export class PliParser extends AbstractParser {
     private createEntryUnionDescription(): ast.EntryUnionDescription {
         return {
             kind: ast.SyntaxKind.EntryUnionDescription,
+            container: null,
             init: null,
             attributes: [],
             prefixedAttributes: [],
@@ -8222,6 +8390,7 @@ export class PliParser extends AbstractParser {
     private createPrefixedAttribute(): ast.PrefixedAttribute {
         return {
             kind: ast.SyntaxKind.PrefixedAttribute,
+            container: null,
             level: null,
             attribute: null,
         };
@@ -8247,6 +8416,7 @@ export class PliParser extends AbstractParser {
     private createProcedureParameter(): ast.ProcedureParameter {
         return {
             kind: ast.SyntaxKind.ProcedureParameter,
+            container: null,
             id: null,
         };
     }
@@ -8264,6 +8434,7 @@ export class PliParser extends AbstractParser {
     private createReferenceItem(): ast.ReferenceItem {
         return {
             kind: ast.SyntaxKind.ReferenceItem,
+            container: null,
             ref: null,
             dimensions: null,
         };
@@ -8274,7 +8445,7 @@ export class PliParser extends AbstractParser {
 
         this.CONSUME_ASSIGN1(tokens.ID, token => {
             this.tokenPayload(token, element, CstNodeKind.ReferenceItem_ref_ID_0);
-            element.ref = token.image;
+            element.ref = ast.createReference(token);
         });
         this.OPTION1(() => {
             this.SUBRULE_ASSIGN1(this.Dimensions, {
@@ -8320,14 +8491,14 @@ export class PliParser extends AbstractParser {
     Expression = this.BinaryExpression;
 
     PrimaryExpression = this.RULE('PrimaryExpression', () => {
-        let element = this.push({});
+        this.push({});
 
         this.OR1([
             {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.Literal, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -8336,7 +8507,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.ParenthesizedExpression, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -8345,7 +8516,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.UnaryExpression, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -8354,7 +8525,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.SUBRULE_ASSIGN1(this.LocatorCall, {
                         assign: result => {
-                            element = this.replace(result);
+                            this.replace(result);
                         }
                     });
                 }
@@ -8366,6 +8537,7 @@ export class PliParser extends AbstractParser {
     private createParenthesizedExpression(): ast.Parenthesis {
         return {
             kind: ast.SyntaxKind.Parenthesis,
+            container: null,
             value: null,
             do: null
         };
@@ -8413,6 +8585,7 @@ export class PliParser extends AbstractParser {
     private createMemberCall(): ast.MemberCall {
         return {
             kind: ast.SyntaxKind.MemberCall,
+            container: null,
             element: null,
             previous: null,
         };
@@ -8447,6 +8620,7 @@ export class PliParser extends AbstractParser {
     private createLocatorCall(): ast.LocatorCall {
         return {
             kind: ast.SyntaxKind.LocatorCall,
+            container: null,
             element: null,
             previous: null,
             pointer: false,
@@ -8498,6 +8672,7 @@ export class PliParser extends AbstractParser {
     private createProcedureCall(): ast.ProcedureCall {
         return {
             kind: ast.SyntaxKind.ProcedureCall,
+            container: null,
             procedure: null,
             args: [],
         };
@@ -8508,7 +8683,7 @@ export class PliParser extends AbstractParser {
 
         this.CONSUME_ASSIGN1(tokens.ID, token => {
             this.tokenPayload(token, element, CstNodeKind.ProcedureCall_procedure_ID_0);
-            element.procedure = token.image;
+            element.procedure = ast.createReference(token);
         });
         this.OPTION2(() => {
             this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
@@ -8569,6 +8744,7 @@ export class PliParser extends AbstractParser {
     private createLabelReference(): ast.LabelReference {
         return {
             kind: ast.SyntaxKind.LabelReference,
+            container: null,
             label: null,
         };
     }
@@ -8578,7 +8754,7 @@ export class PliParser extends AbstractParser {
 
         this.CONSUME_ASSIGN1(tokens.ID, token => {
             this.tokenPayload(token, element, CstNodeKind.LabelReference_label_ID_0);
-            element.label = token.image;
+            element.label = ast.createReference(token);
         });
 
         return this.pop();
@@ -8586,6 +8762,7 @@ export class PliParser extends AbstractParser {
     private createUnaryExpression(): ast.UnaryExpression {
         return {
             kind: ast.SyntaxKind.UnaryExpression,
+            container: null,
             op: null,
             expr: null,
         };
@@ -8609,6 +8786,7 @@ export class PliParser extends AbstractParser {
     private createLiteral(): ast.Literal {
         return {
             kind: ast.SyntaxKind.Literal,
+            container: null,
             multiplier: null,
             value: null,
         };
@@ -8655,6 +8833,7 @@ export class PliParser extends AbstractParser {
     private createStringLiteral(): ast.StringLiteral {
         return {
             kind: ast.SyntaxKind.StringLiteral,
+            container: null,
             value: null,
         };
     }
@@ -8672,6 +8851,7 @@ export class PliParser extends AbstractParser {
     private createNumberLiteral(): ast.NumberLiteral {
         return {
             kind: ast.SyntaxKind.NumberLiteral,
+            container: null,
             value: null,
         };
     }
@@ -8693,7 +8873,7 @@ export class PliParser extends AbstractParser {
     }
 
     FQN = this.RULE('FQN', () => {
-        let element = this.push(this.createFQN());
+        this.push(this.createFQN());
 
         this.CONSUME_ASSIGN1(tokens.ID, token => {
             // this.tokenPayload(token, element, CstNodeKind.FQN_ID_0);
@@ -8710,3 +8890,5 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
 }
+
+export const PliParserInstance = new PliParser();

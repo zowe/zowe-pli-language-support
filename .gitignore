@@ -8,7 +8,6 @@ out/
 .DS_Store
 .env
 **/src/generated
-**/syntaxes/pli.merged.json
 *.tsbuildinfo
 *.vsix
 **/*.DS_Store

@@ -6,11 +6,10 @@
   "private": true,
   "scripts": {
     "clean": "pnpm --dir packages/language clean && pnpm --dir packages/vscode-extension clean",
-    "generate": "pnpm  --dir packages/language langium:generate",
     "compile": "tsc -b tsconfig.build.json",
     "bundle": "pnpm --dir packages/vscode-extension esbuild:bundle",
     "merge": "node ./scripts/merge-tmlanguage.mjs",
-    "build": "pnpm clean && pnpm generate && pnpm compile && pnpm bundle && pnpm merge",
+    "build": "pnpm clean && pnpm compile && pnpm bundle && pnpm merge",
     "test": "vitest",
     "coverage": "vitest --coverage",
     "lint": "prettier -c \"**/*.ts\"",

@@ -457,9 +457,60 @@ function generateCst(): GeneratorNode {
     `;
 }
 
+function generateAstIterator(): GeneratorNode {
+    return expandToNode`
+    import { SyntaxKind, SyntaxNode } from "./ast";
+
+    export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
+        switch (node.kind) {
+            ${joinToNode(interfaces, (type) => generateAstKindIterator(type), {
+                appendNewLineIfNotEmpty: true
+            })}
+        }
+    }
+    `
+}
+
+function generateAstKindIterator(type: InterfaceType): GeneratorNode {
+    return expandToNode`
+    case SyntaxKind.${type.name}:
+        ${joinToNode(filterProperties(type.properties), (prop) => generatePropertyIterator(prop), {
+            appendNewLineIfNotEmpty: true
+        })}
+        break;
+    `;
+}
+
+function filterProperties(properties: Property[]): Property[] {
+    return properties.filter(prop => {
+        const type = prop.type;
+        if (isValueType(type)) {
+            return true;
+        } else if (isArrayType(type) && type.elementType && isValueType(type.elementType)) {
+            return true;
+        }
+        return false;
+    });
+}
+
+function generatePropertyIterator(prop: Property): GeneratorNode {
+    if (isArrayType(prop.type)) {
+        return expandToNode`
+        yield* node.${prop.name};
+        `;
+    } else {
+        return expandToNode`
+        if (node.${prop.name}) {
+            yield node.${prop.name};
+        }
+        `;
+    }
+}
+
 const cstNames = buildCstNodeNames();
 
 // writeFileSync('./tokens.ts', toString(generateTokenTypes()));
 // writeFileSync('./cst.ts', toString(generateCst()));
 // writeFileSync('./parser.ts', toString(generateParser()));
-writeFileSync('./ast.ts', toString(generateAst()));
+writeFileSync('./ast-iterator.ts', toString(generateAstIterator()));
+// writeFileSync('./ast.ts', toString(generateAst()));

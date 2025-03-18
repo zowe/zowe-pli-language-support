@@ -1,6 +1,6 @@
 import { IToken, Lexer } from "chevrotain";
-import { all } from "./tokens";
-import { PliParser } from "./parser";
+import { all } from "../packages/language/src/parser/tokens";
+import { PliParser } from "../packages/language/src/parser/parser";
 import { test } from 'vitest';
 import { createPliServices } from '../packages/language/src/pli-module';
 import { EmptyFileSystem } from 'langium';

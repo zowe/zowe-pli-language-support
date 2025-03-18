@@ -1,7 +1,18 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
 import { EmbeddedActionsParser, TokenType, IParserConfig, ParserMethod, SubruleMethodOpts, IToken } from "chevrotain";
 import { LLStarLookaheadStrategy } from "chevrotain-allstar";
-import type { CstNodeKind } from "./cst";
-import { SyntaxKind, type BinaryExpression, type SyntaxNode } from "./ast";
+import type { CstNodeKind } from "../syntax-tree/cst";
+import { SyntaxKind, type BinaryExpression, type SyntaxNode } from "../syntax-tree/ast";
 import * as tokens from './tokens';
 
 export interface SubruleAssignMethodOpts<ARGS, R> extends SubruleMethodOpts<ARGS> {
@@ -12,6 +23,12 @@ export interface IntermediateBinaryExpression {
     items: any[];
     operators: string[];
     infix: true;
+}
+
+export interface TokenPayload {
+    uri?: string;
+    kind: CstNodeKind;
+    element: SyntaxNode;
 }
 
 export class AbstractParser extends EmbeddedActionsParser {
@@ -202,14 +219,14 @@ export class AbstractParser extends EmbeddedActionsParser {
         // Priority 5, '<', '¬<', '<=', '=', '¬=', '^=', '<>', '>=', '>', '¬>'
         [
             tokens.LessThan, tokens.NotLessThan, tokens.LessThanEquals, 
-            tokens.Equals, tokens.NotEquals, tokens.CaretEquals, 
+            tokens.Equals, tokens.NotEquals,
             tokens.LessThanGreaterThan, tokens.GreaterThanEquals, 
             tokens.GreaterThan, tokens.NotGreaterThan
         ],
         // Priority 6, &
         [tokens.Ampersand],
-        // Priority 7, |, ¬, ^
-        [tokens.Pipe, tokens.Not, tokens.Caret]
+        // Priority 7, |, ¬ or ^
+        [tokens.Pipe, tokens.Not]
     ]);
 
     private constructBinaryExpression(obj: IntermediateBinaryExpression): BinaryExpression {
@@ -260,6 +277,7 @@ export class AbstractParser extends EmbeddedActionsParser {
         // Create the final binary expression
         return {
             kind: SyntaxKind.BinaryExpression,
+            container: null,
             left: leftTree,
             op: obj.operators[lowestPrecedenceIdx],
             right: rightTree
