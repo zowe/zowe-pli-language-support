@@ -3,7 +3,13 @@ import { PPBinaryExpression, ProcedureScope, ScanMode } from "./pli-preprocessor
 import { assertUnreachable } from "langium";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PreprocessorInterpreterState } from "./pli-preprocessor-interpreter-state";
-import { PliPreprocessorProgram } from "./pli-preprocessor-generator";
+import { PliPreprocessorProgram } from "./pli-preprocessor-program-builder";
+
+export type Label = {
+    address: number|undefined;
+};
+
+export type ProgramAddressOrPlaceholder = number | Label;
 
 export interface PPInstructionBase {
     type: string;
@@ -47,29 +53,18 @@ export interface PPIPush extends PPInstructionBase {
     value: IToken[];
 }
 
-// export interface PPPop extends PPInstructionBase {
-//     type: 'pop';
-// }
-
 export interface PPIPrint extends PPInstructionBase {
     type: 'print';
 }
 
 export interface PPIGoto extends PPInstructionBase {
     type: 'goto';
-    address: number;
+    address: ProgramAddressOrPlaceholder;
 }
-
-// export interface PPCompute extends PPInstructionBase {
-//     //operation on FIXED
-//     type: 'compute';
-//     op: '+'|'-'|'*'|'/';
-//     //TODO more?
-// }
 
 export interface PPIBranchIfNotEqual extends PPInstructionBase {
     type: 'branchIfNEQ',
-    address: number;
+    address: ProgramAddressOrPlaceholder;
 }
 
 export interface PPIGet extends PPInstructionBase {
@@ -221,13 +216,13 @@ export namespace Instructions {
             type: "halt",
         };
     }
-    export function branchIfNotEqual(address: number): PPIBranchIfNotEqual {
+    export function branchIfNotEqual(address: ProgramAddressOrPlaceholder): PPIBranchIfNotEqual {
         return {
             type: "branchIfNEQ",
             address
         };
     }
-    export function goto(address: number): PPIGoto {
+    export function goto(address: ProgramAddressOrPlaceholder): PPIGoto {
         return {
             type: "goto",
             address
