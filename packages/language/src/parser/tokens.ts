@@ -383,7 +383,7 @@ export const DIMACROSS = createToken({
 });
 export const AUTOMATIC = createToken({
     name: 'AUTOMATIC',
-    pattern: /AUTOMATIC/i,
+    pattern: /AUTO(MATIC)?/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -395,7 +395,7 @@ export const BACKWARDS = createToken({
 });
 export const CONDITION = createToken({
     name: 'CONDITION',
-    pattern: /CONDITION/i,
+    pattern: /COND(ITION)?/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -2108,7 +2108,6 @@ export const keywords = [
     ALIGNED,
     BUILTIN,
     COMPLEX,
-    DECIMAL,
     GENERIC,
     HEXADEC,
     NONASGN,
@@ -2128,6 +2127,7 @@ export const keywords = [
     REWRITE,
     INITIAL,
     DECLARE,
+    DECIMAL,
     PICTURE,
     WIDEPIC,
     RETURNS,

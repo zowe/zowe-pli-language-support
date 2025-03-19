@@ -12,11 +12,13 @@
 import { ILexingError, IRecognitionException, MismatchedTokenException } from "chevrotain";
 import { SourceFile } from "../workspace/source-file";
 import { Diagnostic, Position, Range } from "vscode-languageserver-types";
+import { ReferencesCache } from "../linking/resolver";
 
 export function collectCommonDiagnostics(sourceFile: SourceFile, lexerErrors: ILexingError[], parserErrors: IRecognitionException[]): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
     diagnostics.push(...lexerErrorsToDiagnostics(lexerErrors));
     diagnostics.push(...parserErrorsToDiagnostics(parserErrors));
+    diagnostics.push(...linkingErrorsToDiagnostics(sourceFile.references));
     return diagnostics;
 }
 
@@ -71,6 +73,31 @@ function parserErrorsToDiagnostics(parserErrors: IRecognitionException[]): Diagn
                 range,
                 message: error.message,
                 source: 'parser'
+            };
+            diagnostics.push(diagnostic);
+        }
+    }
+    return diagnostics;
+}
+
+function linkingErrorsToDiagnostics(references: ReferencesCache): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    for (const reference of references.allReferences()) {
+        if (reference.node === null) {
+            const diagnostic: Diagnostic = {
+                severity: 2,
+                range: {
+                    start: {
+                        line: reference.token.startLine! - 1,
+                        character: reference.token.startColumn! - 1,
+                    },
+                    end: {
+                        line: reference.token.endLine! - 1,
+                        character: reference.token.endColumn!
+                    }
+                },
+                message: `Cannot find symbol '${reference.text}'`,
+                source: 'linking'
             };
             diagnostics.push(diagnostic);
         }

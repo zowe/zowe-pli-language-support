@@ -9,6 +9,7 @@
  *
  */
 
+export const BuiltinsUri = 'pli-builtin:///builtins.pli';
 export const Builtins = ` // Mathematical functions
  ABS: PROC (value) RETURNS ();
  END;

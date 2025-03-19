@@ -13,18 +13,20 @@ import { IToken } from "chevrotain";
 import { PliProgram, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
 import { Diagnostic } from "vscode-languageserver-types";
-import { createSymbolTable, SymbolTable } from "../linking/symbol-table.js";
+import { iterateSymbols, SymbolTable } from "../linking/symbol-table.js";
 import { TextDocuments } from "../language-server/text-documents.js";
 import { LexerInstance } from "../parser/tokens.js";
 import { PliParserInstance } from "../parser/parser.js";
 import { Connection } from "vscode-languageserver";
 import { collectCommonDiagnostics } from "../validation/validator.js";
+import { ReferencesCache, resolveReferences } from "../linking/resolver.js";
 
 export interface SourceFile {
     uri: URI;
     ast: PliProgram;
     tokens: IToken[];
     symbols: SymbolTable;
+    references: ReferencesCache
     diagnostics: Diagnostic[];
 }
 
@@ -38,6 +40,7 @@ export function createSourceFile(uri: URI): SourceFile {
         },
         tokens: [],
         symbols: new SymbolTable(),
+        references: new ReferencesCache(),
         diagnostics: []
     }
 }
@@ -51,10 +54,10 @@ export class SourceFileHandler {
     }
 
     getOrCreateSourceFile(uri: URI): SourceFile {
-        return this.sourceFiles.get(uri.toString()) || this.addSourceFile(uri);
+        return this.sourceFiles.get(uri.toString()) || this.createSourceFile(uri);
     }
 
-    addSourceFile(uri: URI): SourceFile {
+    createSourceFile(uri: URI): SourceFile {
         const sourceFile = createSourceFile(uri);
         this.sourceFiles.set(uri.toString(), sourceFile);
         return sourceFile;
@@ -68,24 +71,92 @@ export class SourceFileHandler {
         const textDocuments = TextDocuments;
         textDocuments.listen(connection);
         textDocuments.onDidChangeContent(event => {
-            console.time('document');
-            const sourceFile = this.getOrCreateSourceFile(URI.parse(event.document.uri));
-            const lexerResult = LexerInstance.tokenize(event.document.getText());
-            sourceFile.tokens = lexerResult.tokens;
-            PliParserInstance.input = sourceFile.tokens;
-            const ast = PliParserInstance.PliProgram();
-            sourceFile.ast = ast;
-            sourceFile.diagnostics = collectCommonDiagnostics(sourceFile, lexerResult.errors, PliParserInstance.errors);
+            const sourceFile = this.createSourceFile(URI.parse(event.document.uri));
+            sourceFileLifecycle(sourceFile, event.document.getText());
             connection.sendDiagnostics({
                 uri: event.document.uri,
                 diagnostics: sourceFile.diagnostics
             });
-            sourceFile.symbols = createSymbolTable(ast);
-            console.timeEnd('document');
         });
         textDocuments.onDidClose(event => {
             this.sourceFiles.delete(event.document.uri);
         });
     }
+}
 
+function sourceFileLifecycle(sourceFile: SourceFile, text: string): void {
+    console.time('document');
+    // Tokenize
+    console.time('parse');
+    const lexerResult = LexerInstance.tokenize(adjustMargins(text));
+    sourceFile.tokens = lexerResult.tokens;
+    PliParserInstance.input = sourceFile.tokens;
+    // Parse
+    const ast = PliParserInstance.PliProgram();
+    sourceFile.ast = ast;
+    console.timeEnd('parse');
+    // Index all symbols
+    console.time('index');
+    iterateSymbols(sourceFile);
+    console.timeEnd('index');
+    // Resolve all references
+    console.time('resolve');
+    resolveReferences(sourceFile);
+    console.timeEnd('resolve');
+    // Generate diagnostics
+    console.time('diagnostics');
+    sourceFile.diagnostics = collectCommonDiagnostics(sourceFile, lexerResult.errors, PliParserInstance.errors);
+    console.timeEnd('diagnostics');
+    console.timeEnd('document');
+}
+
+// TODO: margins
+function adjustMargins(text: string): string {
+    const lines = splitLines(text);
+    const adjustedLines = lines.map((line) => adjustLine(line));
+    const adjustedText = adjustedLines.join("");
+    return adjustedText;
+}
+
+const NEWLINE = "\n".charCodeAt(0);
+
+function splitLines(text: string): string[] {
+    const lines: string[] = [];
+    for (let i = 0; i < text.length; i++) {
+        const start = i;
+        while (i < text.length && text.charCodeAt(i) !== NEWLINE) {
+            i++;
+        }
+        lines.push(text.substring(start, i + 1));
+    }
+    return lines;
+}
+
+const start = 1;
+const end = 72;
+
+function adjustLine(line: string): string {
+    let eol = "";
+    if (line.endsWith("\r\n")) {
+        eol = "\r\n";
+    } else if (line.endsWith("\n")) {
+        eol = "\n";
+    }
+    const prefixLength = start;
+    const lineLength = line.length - eol.length;
+    if (lineLength < prefixLength) {
+        return " ".repeat(lineLength) + eol;
+    }
+    const lineEnd = end;
+    const prefix = " ".repeat(prefixLength);
+    let postfix = "";
+    if (lineLength > lineEnd) {
+        postfix = " ".repeat(lineLength - lineEnd);
+    }
+    return (
+        prefix +
+        line.substring(prefixLength, Math.min(lineEnd, lineLength)) +
+        postfix +
+        eol
+    );
 }

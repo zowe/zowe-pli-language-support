@@ -213,13 +213,15 @@ export interface AstNode {
 }
 
 export interface Reference<T extends SyntaxNode = SyntaxNode> {
+    owner: SyntaxNode;
     text: string;
     token: IToken;
     node: T | null | undefined;
 };
 
-export function createReference<T extends SyntaxNode>(token: IToken): Reference<T> {
+export function createReference<T extends SyntaxNode>(owner: SyntaxNode, token: IToken): Reference<T> {
     return {
+        owner,
         text: token.image,
         token,
         node: undefined,
@@ -717,7 +719,7 @@ export interface DisplayStatement extends AstNode {
 }
 export interface DoSpecification extends AstNode {
     kind: SyntaxKind.DoSpecification;
-    exp1: Expression | null;
+    expression: Expression | null;
     upthru: Expression | null;
     downthru: Expression | null;
     repeat: Expression | null;

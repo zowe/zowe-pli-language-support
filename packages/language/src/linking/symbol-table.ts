@@ -10,6 +10,10 @@
  */
 
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import { forEachNode } from "../syntax-tree/ast-iterator";
+import { SourceFile } from "../workspace/source-file";
+import { ReferencesCache } from "./resolver";
+import { getReference } from "./tokens";
 
 // TODO: Refactor this symbol table into something that can differentiate between scopes
 export class SymbolTable {
@@ -32,10 +36,22 @@ export class SymbolTable {
     }
 }
 
-export function createSymbolTable(node: SyntaxNode): SymbolTable {
-    const table = new SymbolTable();
+export function iterateSymbols(sourceFile: SourceFile): void {
+    const { symbols, references } = sourceFile;
+    iterate(sourceFile.ast, symbols, references);
+}
+
+function iterate(node: SyntaxNode, table: SymbolTable, references: ReferencesCache): void {
     fillSymbolTable(node, table);
-    return table;
+    const ref = getReference(node);
+    if (ref) {
+        references.add(ref);
+    }
+    forEachNode(node, (child) => {
+        // Set the parent node on our first iteration through the file
+        child.container = node;
+        iterate(child, table, references);
+    });
 }
 
 function fillSymbolTable(node: SyntaxNode, table: SymbolTable): void {
@@ -45,59 +61,6 @@ function fillSymbolTable(node: SyntaxNode, table: SymbolTable): void {
             break;
         case SyntaxKind.LabelPrefix:
             table.addLabelSymbol(node, node.name!, node);
-            break;
-    }
-    iterateSymbolTable(node, (child) => fillSymbolTable(child, table));
-}
-
-export function iterateSymbolTable(node: SyntaxNode, action: (node: SyntaxNode) => void): void {
-    switch (node.kind) {
-        case SyntaxKind.PliProgram:
-            node.statements.forEach(action);
-            break;
-        case SyntaxKind.Package:
-            node.statements.forEach(action);
-            break;
-        case SyntaxKind.Statement:
-            node.labels.forEach(action);
-            if (node.value) {
-                action(node.value);
-            }
-            break;
-        case SyntaxKind.ProcedureStatement:
-            node.statements.forEach(action);
-            break;
-        case SyntaxKind.BeginStatement:
-            node.statements.forEach(action);
-            break;
-        case SyntaxKind.DoStatement:
-            node.statements.forEach(action);
-            break;
-        case SyntaxKind.SelectStatement:
-            node.statements.forEach(action);
-            break;
-        case SyntaxKind.DeclareStatement:
-            node.items.forEach(action);
-            break;
-        case SyntaxKind.DeclaredItem:
-            if (node.element && node.element !== '*') {
-                action(node.element);
-            }
-            node.items.forEach(action);
-            break;
-        case SyntaxKind.DefineStructureStatement:
-            node.substructures.forEach(action);
-            break;
-        case SyntaxKind.DefineOrdinalStatement:
-            if (node.ordinalValues) {
-                action(node.ordinalValues);
-            }
-            break;
-        case SyntaxKind.OrdinalValueList:
-            node.members.forEach(action);
-            break;
-        case SyntaxKind.DefineAliasStatement:
-            node.attributes.forEach(action);
             break;
     }
 }

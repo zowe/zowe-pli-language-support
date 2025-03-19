@@ -790,15 +790,6 @@ export class PliParser extends AbstractParser {
             },
             {
                 ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.AssignmentStatement, {
-                        assign: result => {
-                            this.replace(result);
-                        }
-                    });
-                }
-            },
-            {
-                ALT: () => {
                     this.SUBRULE_ASSIGN1(this.AttachStatement, {
                         assign: result => {
                             this.replace(result);
@@ -1310,6 +1301,15 @@ export class PliParser extends AbstractParser {
                     });
                 }
             },
+            {
+                ALT: () => {
+                    this.SUBRULE_ASSIGN1(this.AssignmentStatement, {
+                        assign: result => {
+                            this.replace(result);
+                        }
+                    });
+                }
+            }
         ]);
 
         return this.pop();
@@ -3058,7 +3058,7 @@ export class PliParser extends AbstractParser {
         return {
             kind: ast.SyntaxKind.DoSpecification,
             container: null,
-            exp1: null,
+            expression: null,
             upthru: null,
             downthru: null,
             repeat: null,
@@ -3073,7 +3073,7 @@ export class PliParser extends AbstractParser {
 
         this.SUBRULE_ASSIGN1(this.Expression, {
             assign: result => {
-                element.exp1 = result;
+                element.expression = result;
             }
         });
         this.OPTION3(() => {
@@ -4921,7 +4921,7 @@ export class PliParser extends AbstractParser {
     OpenStatement = this.RULE('OpenStatement', () => {
         let element = this.push(this.createOpenStatement());
 
-        this.CONSUME_ASSIGN1(tokens.OPEN, token => {
+        this.CONSUME_ASSIGN(tokens.OPEN, token => {
             this.tokenPayload(token, element, CstNodeKind.OpenStatement_OPEN);
         });
         this.SUBRULE_ASSIGN1(this.OpenOptionsGroup, {
@@ -4929,8 +4929,8 @@ export class PliParser extends AbstractParser {
                 element.options.push(result);
             }
         });
-        this.MANY1(() => {
-            this.CONSUME_ASSIGN1(tokens.Comma, token => {
+        this.MANY(() => {
+            this.CONSUME_ASSIGN(tokens.Comma, token => {
                 this.tokenPayload(token, element, CstNodeKind.OpenStatement_Comma);
             });
             this.SUBRULE_ASSIGN2(this.OpenOptionsGroup, {
@@ -4939,7 +4939,7 @@ export class PliParser extends AbstractParser {
                 }
             });
         });
-        this.CONSUME_ASSIGN1(tokens.Semicolon, token => {
+        this.CONSUME_ASSIGN(tokens.Semicolon, token => {
             this.tokenPayload(token, element, CstNodeKind.OpenStatement_Semicolon);
         });
 
@@ -4956,71 +4956,73 @@ export class PliParser extends AbstractParser {
     OpenOptionsGroup = this.RULE('OpenOptionsGroup', () => {
         let element = this.push(this.createOpenOptionsGroup());
 
-        this.OR1([
-            {
-                ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.OpenOptionsFile, {
-                        assign: result => element.options.push(result)
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.OpenOptionsStream, {
-                        assign: result => element.options.push(result)
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.OpenOptionsAccess, {
-                        assign: result => element.options.push(result)
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.OpenOptionsBuffering, {
-                        assign: result => element.options.push(result)
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.OpenOptionsKeyed, {
-                        assign: result => element.options.push(result)
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.OpenOptionsPrint, {
-                        assign: result => element.options.push(result)
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.OpenOptionsTitle, {
-                        assign: result => element.options.push(result)
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.OpenOptionsLineSize, {
-                        assign: result => element.options.push(result)
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.OpenOptionsPageSize, {
-                        assign: result => element.options.push(result)
-                    });
-                }
-            },
-        ]);
+        this.AT_LEAST_ONE(() => {
+            this.OR([
+                {
+                    ALT: () => {
+                        this.SUBRULE_ASSIGN(this.OpenOptionsFile, {
+                            assign: result => element.options.push(result)
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE_ASSIGN(this.OpenOptionsStream, {
+                            assign: result => element.options.push(result)
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE_ASSIGN(this.OpenOptionsAccess, {
+                            assign: result => element.options.push(result)
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE_ASSIGN(this.OpenOptionsBuffering, {
+                            assign: result => element.options.push(result)
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE_ASSIGN(this.OpenOptionsKeyed, {
+                            assign: result => element.options.push(result)
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE_ASSIGN(this.OpenOptionsPrint, {
+                            assign: result => element.options.push(result)
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE_ASSIGN(this.OpenOptionsTitle, {
+                            assign: result => element.options.push(result)
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE_ASSIGN(this.OpenOptionsLineSize, {
+                            assign: result => element.options.push(result)
+                        });
+                    }
+                },
+                {
+                    ALT: () => {
+                        this.SUBRULE_ASSIGN(this.OpenOptionsPageSize, {
+                            assign: result => element.options.push(result)
+                        });
+                    }
+                },
+            ]);
+        });
 
         return this.pop();
     });
@@ -7303,7 +7305,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.TypeAttribute_TypeId0);
-                        element.type = ast.createReference(token);
+                        element.type = ast.createReference(element, token);
                     });
                 }
             },
@@ -7314,7 +7316,7 @@ export class PliParser extends AbstractParser {
                     });
                     this.CONSUME_ASSIGN2(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.TypeAttribute_TypeId1);
-                        element.type = ast.createReference(token);
+                        element.type = ast.createReference(element, token);
                     });
                     this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
                         this.tokenPayload(token, element, CstNodeKind.TypeAttribute_CloseParen);
@@ -7345,7 +7347,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_TypeId0);
-                        element.type = ast.createReference(token);
+                        element.type = ast.createReference(element, token);
                     });
                 }
             },
@@ -7356,7 +7358,7 @@ export class PliParser extends AbstractParser {
                     });
                     this.CONSUME_ASSIGN2(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_TypeId1);
-                        element.type = ast.createReference(token);
+                        element.type = ast.createReference(element, token);
                     });
                     this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
                         this.tokenPayload(token, element, CstNodeKind.OrdinalTypeAttribute_CloseParen);
@@ -7704,7 +7706,7 @@ export class PliParser extends AbstractParser {
                 ALT: () => {
                     this.CONSUME_ASSIGN1(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.HandleAttribute_TypeId0);
-                        element.type = ast.createReference(token);
+                        element.type = ast.createReference(element, token);
                     });
                 }
             },
@@ -7715,7 +7717,7 @@ export class PliParser extends AbstractParser {
                     });
                     this.CONSUME_ASSIGN2(tokens.ID, token => {
                         this.tokenPayload(token, element, CstNodeKind.HandleAttribute_TypeId1);
-                        element.type = ast.createReference(token);
+                        element.type = ast.createReference(element, token);
                     });
                     this.CONSUME_ASSIGN2(tokens.CloseParen, token => {
                         this.tokenPayload(token, element, CstNodeKind.HandleAttribute_CloseParenType);
@@ -7865,6 +7867,12 @@ export class PliParser extends AbstractParser {
                 assign: result => {
                     element.items.push(result);
                 }
+            });
+            // TODO: research, This does not align to the language spec
+            this.OPTION1(() => {
+                this.CONSUME_ASSIGN1(tokens.Comma, token => {
+                    this.tokenPayload(token, element, CstNodeKind.EnvironmentAttributeItem_Comma);
+                });
             });
         });
         this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
@@ -8223,7 +8231,7 @@ export class PliParser extends AbstractParser {
 
         this.CONSUME_ASSIGN1(tokens.ID, token => {
             this.tokenPayload(token, element, CstNodeKind.ReferenceItem_Ref);
-            element.ref = ast.createReference(token);
+            element.ref = ast.createReference(element, token);
         });
         this.OPTION1(() => {
             this.SUBRULE_ASSIGN1(this.Dimensions, {
@@ -8461,7 +8469,7 @@ export class PliParser extends AbstractParser {
 
         this.CONSUME_ASSIGN1(tokens.ID, token => {
             this.tokenPayload(token, element, CstNodeKind.ProcedureCall_ProcedureRef);
-            element.procedure = ast.createReference(token);
+            element.procedure = ast.createReference(element, token);
         });
         this.OPTION2(() => {
             this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
@@ -8532,7 +8540,7 @@ export class PliParser extends AbstractParser {
 
         this.CONSUME_ASSIGN1(tokens.ID, token => {
             this.tokenPayload(token, element, CstNodeKind.LabelReference_LabelRef);
-            element.label = ast.createReference(token);
+            element.label = ast.createReference(element, token);
         });
 
         return this.pop();

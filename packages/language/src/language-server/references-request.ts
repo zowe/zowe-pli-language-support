@@ -12,32 +12,40 @@
 import { SourceFile } from "../workspace/source-file";
 import { binaryTokenSearch } from "../utils/search";
 import { TokenPayload } from "../parser/abstract-parser";
-import { CstNodeKind } from "../syntax-tree/cst";
-import { ReferenceItem } from "../syntax-tree/ast";
 import { Location, tokenToRange } from "./types";
-import { resolveReference } from "../linking/resolver";
-import { allReferences } from "../syntax-tree/ast-iterator";
+import { getNameToken, getReference, isNameToken, isReferenceToken } from "../linking/tokens";
 
 export function referencesRequest(sourceFile: SourceFile, offset: number): Location[] {
     const token = binaryTokenSearch(sourceFile.tokens, offset);
-    if (!token) {
-        return [];
-    }
-    const payload = token.payload as TokenPayload;
+    const payload = token?.payload as TokenPayload;
     if (!payload) {
         return [];
     }
-    const element = payload.element;
-    if (payload.kind === CstNodeKind.DeclaredVariable_Name) {
-        const refItem = element as ReferenceItem;
-        const allRefs = allReferences(sourceFile.ast);
-        const references = allRefs.filter(([item, ref]) => resolveReference(sourceFile, item, ref) === refItem);
-        return references.map(([item, ref]) => {
-            return {
-                uri: payload.uri ?? sourceFile.uri.toString(),
-                range: tokenToRange(ref.token)
-            };
+    let element = payload.element;
+    if (isReferenceToken(payload.kind)) {
+        const ref = getReference(payload.element);
+        if (ref && ref.node) {
+            element = ref.node;
+        } else {
+            return [];
+        }
+    } else if (!isNameToken(payload.kind)) {
+        return [];
+    }
+    const reverseReferences = sourceFile.references.findReferences(element);
+    const locations: Location[] = [];
+    const nameToken = getNameToken(element);
+    if (nameToken) {
+        locations.push({
+            uri: sourceFile.uri.toString(),
+            range: tokenToRange(nameToken)
+        })
+    }
+    for (const ref of reverseReferences) {
+        locations.push({
+            uri: payload.uri ?? sourceFile.uri.toString(),
+            range: tokenToRange(ref.token)
         });
     }
-    return [];
+    return locations;
 }

@@ -9,378 +9,371 @@
  *
  */
 
-import { Reference, SyntaxKind, SyntaxNode } from "./ast";
+import { SyntaxKind, SyntaxNode } from "./ast";
 
-export function allReferences(node: SyntaxNode): [SyntaxNode, Reference][] {
-    const result: [SyntaxNode, Reference][] = [];
-    for (const child of iterateNode(node)) {
-        const ref = getReference(child);
-        if (ref) {
-            result.push([child, ref]);
-        }
-        result.push(...allReferences(child));
-    }
-    return result;
-}
-
-export function getReference(node: SyntaxNode): Reference | undefined {
-    switch (node.kind) {
-        case SyntaxKind.ReferenceItem:
-            return node.ref ?? undefined;
-    }
-    return undefined;
-}
-
-export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
+export function forEachNode(node: SyntaxNode, action: (node: SyntaxNode) => void): void {
     switch (node.kind) {
         case SyntaxKind.AFormatItem:
             if (node.fieldWidth) {
-                yield node.fieldWidth;
+                action(node.fieldWidth);
             }
             break;
         case SyntaxKind.AllocateDimension:
             if (node.dimensions) {
-                yield node.dimensions;
+                action(node.dimensions);
             }
             break;
         case SyntaxKind.AllocatedVariable:
             if (node.var) {
-                yield node.var;
+                action(node.var);
             }
             if (node.attribute) {
-                yield node.attribute;
+                action(node.attribute);
             }
             break;
         case SyntaxKind.AllocateLocationReferenceIn:
             if (node.area) {
-                yield node.area;
+                action(node.area);
             }
             break;
         case SyntaxKind.AllocateLocationReferenceSet:
             if (node.locatorVariable) {
-                yield node.locatorVariable;
+                action(node.locatorVariable);
             }
             break;
         case SyntaxKind.AllocateStatement:
-            yield* node.variables;
+            node.variables.forEach(action);
             break;
         case SyntaxKind.AllocateType:
             if (node.dimensions) {
-                yield node.dimensions;
+                action(node.dimensions);
             }
             break;
         case SyntaxKind.AssertStatement:
             if (node.actual) {
-                yield node.actual;
+                action(node.actual);
             }
             if (node.displayExpression) {
-                yield node.displayExpression;
+                action(node.displayExpression);
             }
             if (node.expected) {
-                yield node.expected;
+                action(node.expected);
             }
             break;
         case SyntaxKind.AssignmentStatement:
-            yield* node.refs;
+            node.refs.forEach(action);
             if (node.expression) {
-                yield node.expression;
+                action(node.expression);
             }
             if (node.dimacrossExpr) {
-                yield node.dimacrossExpr;
+                action(node.dimacrossExpr);
             }
             break;
         case SyntaxKind.AttachStatement:
             if (node.reference) {
-                yield node.reference;
+                action(node.reference);
             }
             if (node.task) {
-                yield node.task;
+                action(node.task);
             }
             if (node.tstack) {
-                yield node.tstack;
+                action(node.tstack);
             }
             break;
         case SyntaxKind.BeginStatement:
             if (node.options) {
-                yield node.options;
+                action(node.options);
             }
-            yield* node.statements;
+            node.statements.forEach(action);
             if (node.end) {
-                yield node.end;
+                action(node.end);
             }
             break;
         case SyntaxKind.BFormatItem:
             if (node.fieldWidth) {
-                yield node.fieldWidth;
+                action(node.fieldWidth);
             }
             break;
         case SyntaxKind.BinaryExpression:
             if (node.left) {
-                yield node.left;
+                action(node.left);
             }
             if (node.right) {
-                yield node.right;
+                action(node.right);
             }
             break;
         case SyntaxKind.Bound:
             if (node.refer) {
-                yield node.refer;
+                action(node.refer);
             }
             if (node.expression && node.expression !== '*') {
-                yield node.expression;
+                action(node.expression);
             }
             break;
         case SyntaxKind.CallStatement:
             if (node.call) {
-                yield node.call;
+                action(node.call);
             }
             break;
         case SyntaxKind.CancelThreadStatement:
             if (node.thread) {
-                yield node.thread;
+                action(node.thread);
             }
             break;
         case SyntaxKind.CFormatItem:
             break;
         case SyntaxKind.CloseStatement:
+            for (const file of node.files) {
+                if (file !== '*') {
+                    action(file);
+                }
+            }
             break;
         case SyntaxKind.CMPATOptionsItem:
             break;
         case SyntaxKind.ColumnFormatItem:
             if (node.characterPosition) {
-                yield node.characterPosition;
+                action(node.characterPosition);
             }
             break;
         case SyntaxKind.CompilerOptions:
             break;
         case SyntaxKind.ComputationDataAttribute:
             if (node.dimensions) {
-                yield node.dimensions;
+                action(node.dimensions);
             }
             break;
         case SyntaxKind.ConditionPrefix:
-            yield* node.items;
+            node.items.forEach(action);
             break;
         case SyntaxKind.ConditionPrefixItem:
-            yield* node.conditions;
+            node.conditions.forEach(action);
             break;
         case SyntaxKind.DataSpecificationDataList:
-            yield* node.items;
+            node.items.forEach(action);
             break;
         case SyntaxKind.DataSpecificationDataListItem:
             if (node.value) {
-                yield node.value;
+                action(node.value);
             }
             break;
         case SyntaxKind.DataSpecificationOptions:
             if (node.dataList) {
-                yield node.dataList;
+                action(node.dataList);
             }
-            yield* node.dataLists;
-            yield* node.formatLists;
-            yield* node.dataListItems;
+            node.dataLists.forEach(action);
+            node.formatLists.forEach(action);
+            node.dataListItems.forEach(action);
             break;
         case SyntaxKind.DateAttribute:
             break;
         case SyntaxKind.DeclaredItem:
-            yield* node.attributes;
-            yield* node.items;
+            if (node.element !== null && node.element !== '*') {
+                action(node.element);
+            }
+            node.items.forEach(action);
+            node.attributes.forEach(action);
             break;
         case SyntaxKind.DeclaredVariable:
             break;
         case SyntaxKind.DeclareStatement:
-            yield* node.items;
+            node.items.forEach(action);
             break;
         case SyntaxKind.DefaultAttributeExpression:
-            yield* node.items;
+            node.items.forEach(action);
             break;
         case SyntaxKind.DefaultAttributeExpressionNot:
             break;
         case SyntaxKind.DefaultExpression:
             if (node.expression) {
-                yield node.expression;
+                action(node.expression);
             }
-            yield* node.attributes;
+            node.attributes.forEach(action);
             break;
         case SyntaxKind.DefaultExpressionPart:
             if (node.expression) {
-                yield node.expression;
+                action(node.expression);
             }
             if (node.identifiers) {
-                yield node.identifiers;
+                action(node.identifiers);
             }
             break;
         case SyntaxKind.DefaultRangeIdentifierItem:
             break;
         case SyntaxKind.DefaultRangeIdentifiers:
+            for (const id of node.identifiers) {
+                if (id !== '*') {
+                    action(id);
+                }
+            }
             break;
         case SyntaxKind.DefaultStatement:
-            yield* node.expressions;
+            node.expressions.forEach(action);
             break;
         case SyntaxKind.DefaultValueAttribute:
-            yield* node.items;
+            node.items.forEach(action);
             break;
         case SyntaxKind.DefaultValueAttributeItem:
-            yield* node.attributes;
+            node.attributes.forEach(action);
             break;
         case SyntaxKind.DefineAliasStatement:
-            yield* node.attributes;
+            node.attributes.forEach(action);
             break;
         case SyntaxKind.DefinedAttribute:
             if (node.reference) {
-                yield node.reference;
+                action(node.reference);
             }
             if (node.position) {
-                yield node.position;
+                action(node.position);
             }
             break;
         case SyntaxKind.DefineOrdinalStatement:
             if (node.ordinalValues) {
-                yield node.ordinalValues;
+                action(node.ordinalValues);
             }
             break;
         case SyntaxKind.DefineStructureStatement:
-            yield* node.substructures;
+            node.substructures.forEach(action);
             break;
         case SyntaxKind.DelayStatement:
             if (node.delay) {
-                yield node.delay;
+                action(node.delay);
             }
             break;
         case SyntaxKind.DeleteStatement:
             if (node.file) {
-                yield node.file;
+                action(node.file);
             }
             if (node.key) {
-                yield node.key;
+                action(node.key);
             }
             break;
         case SyntaxKind.DetachStatement:
             if (node.reference) {
-                yield node.reference;
+                action(node.reference);
             }
             break;
         case SyntaxKind.DimensionBound:
             if (node.bound1) {
-                yield node.bound1;
+                action(node.bound1);
             }
             if (node.bound2) {
-                yield node.bound2;
+                action(node.bound2);
             }
             break;
         case SyntaxKind.Dimensions:
-            yield* node.dimensions;
+            node.dimensions.forEach(action);
             break;
         case SyntaxKind.DimensionsDataAttribute:
             if (node.dimensions) {
-                yield node.dimensions;
+                action(node.dimensions);
             }
             break;
         case SyntaxKind.DisplayStatement:
             if (node.expression) {
-                yield node.expression;
+                action(node.expression);
             }
             if (node.reply) {
-                yield node.reply;
+                action(node.reply);
             }
             break;
         case SyntaxKind.DoSpecification:
-            if (node.exp1) {
-                yield node.exp1;
+            if (node.expression) {
+                action(node.expression);
             }
             if (node.upthru) {
-                yield node.upthru;
+                action(node.upthru);
             }
             if (node.downthru) {
-                yield node.downthru;
+                action(node.downthru);
             }
             if (node.repeat) {
-                yield node.repeat;
+                action(node.repeat);
             }
             if (node.to) {
-                yield node.to;
+                action(node.to);
             }
             if (node.by) {
-                yield node.by;
+                action(node.by);
             }
             break;
         case SyntaxKind.DoStatement:
-            yield* node.statements;
+            node.statements.forEach(action);
             if (node.end) {
-                yield node.end;
+                action(node.end);
             }
             if (node.doType2) {
-                yield node.doType2;
+                action(node.doType2);
             }
             if (node.doType3) {
-                yield node.doType3;
+                action(node.doType3);
             }
             break;
         case SyntaxKind.DoType3:
             if (node.variable) {
-                yield node.variable;
+                action(node.variable);
             }
-            yield* node.specifications;
+            node.specifications.forEach(action);
             break;
         case SyntaxKind.DoType3Variable:
             break;
         case SyntaxKind.DoUntil:
             if (node.until) {
-                yield node.until;
+                action(node.until);
             }
             if (node.while) {
-                yield node.while;
+                action(node.while);
             }
             break;
         case SyntaxKind.DoWhile:
             if (node.while) {
-                yield node.while;
+                action(node.while);
             }
             if (node.until) {
-                yield node.until;
+                action(node.until);
             }
             break;
         case SyntaxKind.EFormatItem:
             if (node.fieldWidth) {
-                yield node.fieldWidth;
+                action(node.fieldWidth);
             }
             if (node.fractionalDigits) {
-                yield node.fractionalDigits;
+                action(node.fractionalDigits);
             }
             if (node.significantDigits) {
-                yield node.significantDigits;
+                action(node.significantDigits);
             }
             break;
         case SyntaxKind.EndStatement:
-            yield* node.labels;
+            node.labels.forEach(action);
             if (node.label) {
-                yield node.label;
+                action(node.label);
             }
             break;
         case SyntaxKind.EntryAttribute:
-            yield* node.attributes;
-            yield* node.options;
-            yield* node.returns;
-            yield* node.environmentName;
+            node.attributes.forEach(action);
+            node.options.forEach(action);
+            node.returns.forEach(action);
+            node.environmentName.forEach(action);
             break;
         case SyntaxKind.EntryParameterDescription:
-            yield* node.attributes;
+            node.attributes.forEach(action);
             break;
         case SyntaxKind.EntryStatement:
-            yield* node.parameters;
-            yield* node.returns;
-            yield* node.options;
-            yield* node.environmentName;
+            node.parameters.forEach(action);
+            node.returns.forEach(action);
+            node.options.forEach(action);
+            node.environmentName.forEach(action);
             break;
         case SyntaxKind.EntryUnionDescription:
-            yield* node.attributes;
-            yield* node.prefixedAttributes;
+            node.attributes.forEach(action);
+            node.prefixedAttributes.forEach(action);
             break;
         case SyntaxKind.EnvironmentAttribute:
-            yield* node.items;
+            node.items.forEach(action);
             break;
         case SyntaxKind.EnvironmentAttributeItem:
-            yield* node.args;
+            node.args.forEach(action);
             break;
         case SyntaxKind.ExecStatement:
             break;
@@ -390,138 +383,141 @@ export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
             break;
         case SyntaxKind.FetchEntry:
             if (node.set) {
-                yield node.set;
+                action(node.set);
             }
             if (node.title) {
-                yield node.title;
+                action(node.title);
             }
             break;
         case SyntaxKind.FetchStatement:
-            yield* node.entries;
+            node.entries.forEach(action);
             break;
         case SyntaxKind.FFormatItem:
             if (node.fieldWidth) {
-                yield node.fieldWidth;
+                action(node.fieldWidth);
             }
             if (node.fractionalDigits) {
-                yield node.fractionalDigits;
+                action(node.fractionalDigits);
             }
             if (node.scalingFactor) {
-                yield node.scalingFactor;
+                action(node.scalingFactor);
             }
             break;
         case SyntaxKind.FileReferenceCondition:
             if (node.fileReference) {
-                yield node.fileReference;
+                action(node.fileReference);
             }
             break;
         case SyntaxKind.FlushStatement:
+            if (node.file && node.file !== '*') {
+                action(node.file);
+            }
             break;
         case SyntaxKind.FormatList:
-            yield* node.items;
+            node.items.forEach(action);
             break;
         case SyntaxKind.FormatListItem:
             if (node.level) {
-                yield node.level;
+                action(node.level);
             }
             if (node.item) {
-                yield node.item;
+                action(node.item);
             }
             if (node.list) {
-                yield node.list;
+                action(node.list);
             }
             break;
         case SyntaxKind.FormatListItemLevel:
             break;
         case SyntaxKind.FormatStatement:
             if (node.list) {
-                yield node.list;
+                action(node.list);
             }
             break;
         case SyntaxKind.FreeStatement:
-            yield* node.references;
+            node.references.forEach(action);
             break;
         case SyntaxKind.GetCopy:
             break;
         case SyntaxKind.GetFile:
             if (node.file) {
-                yield node.file;
+                action(node.file);
             }
             break;
         case SyntaxKind.GetFileStatement:
             break;
         case SyntaxKind.GetSkip:
             if (node.skipExpression) {
-                yield node.skipExpression;
+                action(node.skipExpression);
             }
             break;
         case SyntaxKind.GetStringStatement:
             if (node.expression) {
-                yield node.expression;
+                action(node.expression);
             }
             if (node.dataSpecification) {
-                yield node.dataSpecification;
+                action(node.dataSpecification);
             }
             break;
         case SyntaxKind.GFormatItem:
             if (node.fieldWidth) {
-                yield node.fieldWidth;
+                action(node.fieldWidth);
             }
             break;
         case SyntaxKind.GoToStatement:
             if (node.label) {
-                yield node.label;
+                action(node.label);
             }
             break;
         case SyntaxKind.HandleAttribute:
             break;
         case SyntaxKind.IfStatement:
             if (node.expression) {
-                yield node.expression;
+                action(node.expression);
             }
             if (node.unit) {
-                yield node.unit;
+                action(node.unit);
             }
             if (node.else) {
-                yield node.else;
+                action(node.else);
             }
             break;
         case SyntaxKind.IncludeDirective:
-            yield* node.items;
+            node.items.forEach(action);
             break;
         case SyntaxKind.IncludeItem:
             break;
         case SyntaxKind.InitAcrossExpression:
-            yield* node.expressions;
+            node.expressions.forEach(action);
             break;
         case SyntaxKind.InitialAttribute:
-            yield* node.expressions;
-            yield* node.items;
+            node.expressions.forEach(action);
+            node.items.forEach(action);
             if (node.procedureCall) {
-                yield node.procedureCall;
+                action(node.procedureCall);
             }
             if (node.content) {
-                yield node.content;
+                action(node.content);
             }
             break;
         case SyntaxKind.InitialAttributeItemStar:
             break;
         case SyntaxKind.InitialAttributeSpecification:
             if (node.item) {
-                yield node.item;
+                action(node.item);
             }
             if (node.expression) {
-                yield node.expression;
+                action(node.expression);
             }
             break;
         case SyntaxKind.InitialAttributeSpecificationIterationValue:
-            yield* node.items;
+            node.items.forEach(action);
             break;
         case SyntaxKind.InitialToContent:
             break;
         case SyntaxKind.IterateStatement:
             if (node.label) {
-                yield node.label;
+                action(node.label);
             }
             break;
         case SyntaxKind.KeywordCondition:
@@ -532,67 +528,57 @@ export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
             break;
         case SyntaxKind.LeaveStatement:
             if (node.label) {
-                yield node.label;
+                action(node.label);
             }
             break;
         case SyntaxKind.LFormatItem:
             break;
         case SyntaxKind.LikeAttribute:
             if (node.reference) {
-                yield node.reference;
+                action(node.reference);
             }
             break;
         case SyntaxKind.LineDirective:
             break;
         case SyntaxKind.LineFormatItem:
             if (node.lineNumber) {
-                yield node.lineNumber;
+                action(node.lineNumber);
             }
             break;
         case SyntaxKind.LinkageOptionsItem:
             break;
         case SyntaxKind.Literal:
             if (node.multiplier) {
-                yield node.multiplier;
+                action(node.multiplier);
             }
             if (node.value) {
-                yield node.value;
+                action(node.value);
             }
             break;
         case SyntaxKind.LocateStatement:
             if (node.variable) {
-                yield node.variable;
+                action(node.variable);
             }
             break;
-        case SyntaxKind.LocateStatementFile:
-            if (node.file) {
-                yield node.file;
-            }
-            break;
-        case SyntaxKind.LocateStatementKeyFrom:
-            if (node.keyfrom) {
-                yield node.keyfrom;
-            }
-            break;
-        case SyntaxKind.LocateStatementSet:
-            if (node.set) {
-                yield node.set;
+        case SyntaxKind.LocateStatementOption:
+            if (node.element) {
+                action(node.element);
             }
             break;
         case SyntaxKind.LocatorCall:
             if (node.element) {
-                yield node.element;
+                action(node.element);
             }
             if (node.previous) {
-                yield node.previous;
+                action(node.previous);
             }
             break;
         case SyntaxKind.MemberCall:
             if (node.element) {
-                yield node.element;
+                action(node.element);
             }
             if (node.previous) {
-                yield node.previous;
+                action(node.previous);
             }
             break;
         case SyntaxKind.NamedCondition:
@@ -603,10 +589,10 @@ export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
             break;
         case SyntaxKind.NoteDirective:
             if (node.message) {
-                yield node.message;
+                action(node.message);
             }
             if (node.code) {
-                yield node.code;
+                action(node.code);
             }
             break;
         case SyntaxKind.NullStatement:
@@ -614,9 +600,9 @@ export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
         case SyntaxKind.NumberLiteral:
             break;
         case SyntaxKind.OnStatement:
-            yield* node.conditions;
+            node.conditions.forEach(action);
             if (node.onUnit) {
-                yield node.onUnit;
+                action(node.onUnit);
             }
             break;
         case SyntaxKind.OpenOptionsAccess:
@@ -625,19 +611,19 @@ export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
             break;
         case SyntaxKind.OpenOptionsFile:
             if (node.file) {
-                yield node.file;
+                action(node.file);
             }
             break;
         case SyntaxKind.OpenOptionsKeyed:
             break;
         case SyntaxKind.OpenOptionsLineSize:
             if (node.lineSize) {
-                yield node.lineSize;
+                action(node.lineSize);
             }
             break;
         case SyntaxKind.OpenOptionsPageSize:
             if (node.pageSize) {
-                yield node.pageSize;
+                action(node.pageSize);
             }
             break;
         case SyntaxKind.OpenOptionsPrint:
@@ -646,43 +632,43 @@ export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
             break;
         case SyntaxKind.OpenOptionsTitle:
             if (node.title) {
-                yield node.title;
+                action(node.title);
             }
             break;
         case SyntaxKind.OpenStatement:
-            yield* node.options;
+            node.options.forEach(action);
             break;
         case SyntaxKind.OpenOptionsGroup:
-            yield* node.options;
+            node.options.forEach(action);
             break;
         case SyntaxKind.Options:
-            yield* node.items;
+            node.items.forEach(action);
             break;
         case SyntaxKind.OrdinalTypeAttribute:
             break;
         case SyntaxKind.OrdinalValue:
             break;
         case SyntaxKind.OrdinalValueList:
-            yield* node.members;
+            node.members.forEach(action);
             break;
         case SyntaxKind.OtherwiseStatement:
             if (node.unit) {
-                yield node.unit;
+                action(node.unit);
             }
             break;
         case SyntaxKind.Package:
             if (node.exports) {
-                yield node.exports;
+                action(node.exports);
             }
             if (node.reserves) {
-                yield node.reserves;
+                action(node.reserves);
             }
             if (node.options) {
-                yield node.options;
+                action(node.options);
             }
-            yield* node.statements;
+            node.statements.forEach(action);
             if (node.end) {
-                yield node.end;
+                action(node.end);
             }
             break;
         case SyntaxKind.PageDirective:
@@ -691,10 +677,10 @@ export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
             break;
         case SyntaxKind.Parenthesis:
             if (node.value) {
-                yield node.value;
+                action(node.value);
             }
             if (node.do) {
-                yield node.do;
+                action(node.do);
             }
             break;
         case SyntaxKind.PFormatItem:
@@ -702,75 +688,80 @@ export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
         case SyntaxKind.PictureAttribute:
             break;
         case SyntaxKind.PliProgram:
-            yield* node.statements;
+            node.statements.forEach(action);
             break;
         case SyntaxKind.PopDirective:
             break;
         case SyntaxKind.PrefixedAttribute:
             if (node.attribute) {
-                yield node.attribute;
+                action(node.attribute);
             }
             break;
         case SyntaxKind.PrintDirective:
             break;
         case SyntaxKind.ProcedureCall:
+            for (const arg of node.args) {
+                if (arg !== '*') {
+                    action(arg);
+                }
+            }
             break;
         case SyntaxKind.ProcedureParameter:
             break;
         case SyntaxKind.ProcedureStatement:
-            yield* node.parameters;
-            yield* node.statements;
-            yield* node.returns;
-            yield* node.options;
+            node.parameters.forEach(action);
+            node.statements.forEach(action);
+            node.returns.forEach(action);
+            node.options.forEach(action);
             if (node.end) {
-                yield node.end;
+                action(node.end);
             }
-            yield* node.environmentName;
+            node.environmentName.forEach(action);
             break;
         case SyntaxKind.ProcessDirective:
-            yield* node.compilerOptions;
+            node.compilerOptions.forEach(action);
             break;
         case SyntaxKind.ProcincDirective:
             break;
         case SyntaxKind.PushDirective:
             break;
         case SyntaxKind.PutFileStatement:
-            yield* node.items;
+            node.items.forEach(action);
             break;
         case SyntaxKind.PutItem:
             if (node.expression) {
-                yield node.expression;
+                action(node.expression);
             }
             break;
         case SyntaxKind.PutStringStatement:
             if (node.stringExpression) {
-                yield node.stringExpression;
+                action(node.stringExpression);
             }
             if (node.dataSpecification) {
-                yield node.dataSpecification;
+                action(node.dataSpecification);
             }
             break;
         case SyntaxKind.QualifyStatement:
-            yield* node.statements;
+            node.statements.forEach(action);
             if (node.end) {
-                yield node.end;
+                action(node.end);
             }
             break;
         case SyntaxKind.ReadStatement:
             break;
         case SyntaxKind.ReadStatementOption:
             if (node.value) {
-                yield node.value;
+                action(node.value);
             }
             break;
         case SyntaxKind.ReferenceItem:
             if (node.dimensions) {
-                yield node.dimensions;
+                action(node.dimensions);
             }
             break;
         case SyntaxKind.ReinitStatement:
             if (node.reference) {
-                yield node.reference;
+                action(node.reference);
             }
             break;
         case SyntaxKind.ReleaseStatement:
@@ -782,56 +773,56 @@ export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
         case SyntaxKind.ReturnsAttribute:
             break;
         case SyntaxKind.ReturnsOption:
-            yield* node.returnAttributes;
+            node.returnAttributes.forEach(action);
             break;
         case SyntaxKind.ReturnStatement:
             if (node.expression) {
-                yield node.expression;
+                action(node.expression);
             }
             break;
         case SyntaxKind.RevertStatement:
-            yield* node.conditions;
+            node.conditions.forEach(action);
             break;
         case SyntaxKind.RewriteStatement:
-            yield* node.arguments;
+            node.arguments.forEach(action);
             break;
         case SyntaxKind.RewriteStatementOption:
             if (node.value) {
-                yield node.value;
+                action(node.value);
             }
             break;
         case SyntaxKind.RFormatItem:
             break;
         case SyntaxKind.SelectStatement:
             if (node.on) {
-                yield node.on;
+                action(node.on);
             }
             if (node.end) {
-                yield node.end;
+                action(node.end);
             }
             break;
         case SyntaxKind.SignalStatement:
-            yield* node.condition;
+            node.condition.forEach(action);
             break;
         case SyntaxKind.SimpleOptionsItem:
             break;
         case SyntaxKind.SkipDirective:
             if (node.lines) {
-                yield node.lines;
+                action(node.lines);
             }
             break;
         case SyntaxKind.SkipFormatItem:
             if (node.skip) {
-                yield node.skip;
+                action(node.skip);
             }
             break;
         case SyntaxKind.Statement:
             if (node.condition) {
-                yield node.condition;
+                action(node.condition);
             }
-            yield* node.labels;
+            node.labels.forEach(action);
             if (node.value) {
-                yield node.value;
+                action(node.value);
             }
             break;
         case SyntaxKind.StopStatement:
@@ -839,55 +830,55 @@ export function* iterateNode(node: SyntaxNode): Iterable<SyntaxNode> {
         case SyntaxKind.StringLiteral:
             break;
         case SyntaxKind.SubStructure:
-            yield* node.attributes;
+            node.attributes.forEach(action);
             break;
         case SyntaxKind.TypeAttribute:
             break;
         case SyntaxKind.UnaryExpression:
             if (node.expr) {
-                yield node.expr;
+                action(node.expr);
             }
             break;
         case SyntaxKind.ValueAttribute:
             if (node.value) {
-                yield node.value;
+                action(node.value);
             }
             break;
         case SyntaxKind.ValueListAttribute:
-            yield* node.values;
+            node.values.forEach(action);
             break;
         case SyntaxKind.ValueListFromAttribute:
             if (node.from) {
-                yield node.from;
+                action(node.from);
             }
             break;
         case SyntaxKind.ValueRangeAttribute:
-            yield* node.values;
+            node.values.forEach(action);
             break;
         case SyntaxKind.VFormatItem:
             break;
         case SyntaxKind.WaitStatement:
             if (node.task) {
-                yield node.task;
+                action(node.task);
             }
             break;
         case SyntaxKind.WhenStatement:
-            yield* node.conditions;
+            node.conditions.forEach(action);
             if (node.unit) {
-                yield node.unit;
+                action(node.unit);
             }
             break;
         case SyntaxKind.WriteStatement:
-            yield* node.arguments;
+            node.arguments.forEach(action);
             break;
         case SyntaxKind.WriteStatementOption:
             if (node.value) {
-                yield node.value;
+                action(node.value);
             }
             break;
         case SyntaxKind.XFormatItem:
             if (node.width) {
-                yield node.width;
+                action(node.width);
             }
             break;
     }

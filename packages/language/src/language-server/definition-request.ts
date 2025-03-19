@@ -12,29 +12,29 @@
 import { SourceFile } from "../workspace/source-file";
 import { binaryTokenSearch } from "../utils/search";
 import { TokenPayload } from "../parser/abstract-parser";
-import { CstNodeKind } from "../syntax-tree/cst";
-import { ReferenceItem } from "../syntax-tree/ast";
 import { Location } from "./types";
-import { getNameToken } from "../linking/names";
-import { resolveReference } from "../linking/resolver";
+import { getNameToken, getReference, isNameToken, isReferenceToken } from "../linking/tokens";
 
 export function definitionRequest(sourceFile: SourceFile, offset: number): Location[] {
     const token = binaryTokenSearch(sourceFile.tokens, offset);
-    if (!token) {
+    const payload = token?.payload as TokenPayload;
+    if (!payload || !token) {
         return [];
     }
-    const payload = token.payload as TokenPayload;
-    if (!payload) {
-        return [];
-    }
-    const element = payload.element;
-    if (payload.kind === CstNodeKind.ReferenceItem_Ref) {
-        const refItem = element as ReferenceItem;
-        const symbol = resolveReference(sourceFile, refItem, refItem.ref);
-        if (!symbol) {
+    if (isNameToken(payload.kind)) {
+        return [{
+            uri: sourceFile.uri.toString(),
+            range: {
+                start: token.startOffset,
+                end: token.endOffset! + 1
+            }
+        }];
+    } else if (isReferenceToken(payload.kind)) {
+        const ref = getReference(payload.element);
+        if (!ref || !ref.node) {
             return [];
         }
-        const nameToken = getNameToken(symbol);
+        const nameToken = getNameToken(ref.node);
         if (!nameToken) {
             return [];
         }
