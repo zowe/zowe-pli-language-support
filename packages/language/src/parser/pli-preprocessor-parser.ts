@@ -1,53 +1,61 @@
 import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective, PPActivate, PPDeactivate, PPDoGroup, PPDoWhileUntil, PPDoUntilWhile, PPBinaryExpression } from "./pli-preprocessor-ast";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorParserState, PreprocessorParserState } from "./pli-preprocessor-parser-state";
-import { ILexingError, IToken, TokenType } from "chevrotain";
+import { PreprocessorError } from "./pli-preprocessor-error";
+import { IToken, TokenType } from "chevrotain";
 import { Pl1Services } from "../pli-module";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { DocumentCache, URI } from "langium";
 import { readFileSync } from "fs";
 
-export class PreprocessorError extends Error implements ILexingError {
-    private readonly token: IToken;
-    constructor(message: string, token: IToken) {
-        super(message);
-        this.token = token;
-    }
-    readonly type = 'error';
-    get offset(): number { return this.token.startOffset; }
-    get line(): number | undefined { return this.token.startLine; }
-    get column(): number | undefined { return this.token.startColumn; }
-    get length(): number { return this.token.image.length; }
+export type PreprocessorParserResult = {
+    statements: PPStatement[];
+    errors: PreprocessorError[];
 }
 
 export class PliPreprocessorParser {
     private readonly lexer: PliPreprocessorLexer;
-    private readonly includeCache: DocumentCache<string, PPStatement[]>;
+    private readonly includeCache: DocumentCache<string, PreprocessorParserResult>;
 
     constructor(services: Pl1Services) {
         this.lexer = services.parser.PreprocessorLexer;
-        this.includeCache = new DocumentCache<string, PPStatement[]>(services.shared);
+        this.includeCache = new DocumentCache<string, PreprocessorParserResult>(services.shared);
     }
 
     initializeState(text: string, uri: URI): PreprocessorParserState {
         return new PliPreprocessorParserState(this.lexer, text, uri);
     }
 
-    start(state: PreprocessorParserState): PPStatement[] {
-        const result: PPStatement[] = [];
+    start(state: PreprocessorParserState): PreprocessorParserResult {
+        const statements: PPStatement[] = [];
+        const errors: PreprocessorError[] = [];
         while(!state.eof) {
-            if(state.isInProcedure() || state.canConsume(PreprocessorTokens.Percentage)) {
-                const statement = this.statement(state);
-                result.push(statement);
-            } else {
-                result.push({
-                    type: 'pli',
-                    tokens: state.consumeUntil(tk => tk.image === ';'),
-                });
+            try {
+                if(state.isInProcedure() || state.canConsume(PreprocessorTokens.Percentage)) {
+                    const statement = this.statement(state);
+                    if(statement.type === 'include')  {
+                        errors.push(...statement.subProgram.errors);
+                    }
+                    statements.push(statement);
+                } else {
+                    statements.push({
+                        type: 'pli',
+                        tokens: state.consumeUntil(tk => tk.image === ';'),
+                    });
+                }
+            } catch (error) {
+                if(error instanceof PreprocessorError) {
+                    errors.push(error);
+                } else {
+                    throw error;
+                }
             }
         }
-        return result;
+        return {
+            statements,
+            errors,
+        };
     }
 
     statement(state: PreprocessorParserState): PPStatement {
@@ -65,7 +73,7 @@ export class PliPreprocessorParser {
                     case PreprocessorTokens.If: return this.ifStatement(state);
                     case PreprocessorTokens.Do: return this.doStatement(state);
                 }
-                throw new PreprocessorError("Unexpected token '"+state.current?.image+"'.", state.current!);
+                throw new PreprocessorError("Unexpected token '"+state.current?.image+"'.", state.current!, state.uri.toString());
             } finally {
                 state.pop();
             }
@@ -82,7 +90,7 @@ export class PliPreprocessorParser {
         const file = state.consume(PreprocessorTokens.String).image;
         const fileName = file.substring(1, file.length-1);
         state.consume(PreprocessorTokens.Semicolon);
-        const statements = this.includeCache.get(state.uri, fileName, () => {
+        const subProgram = this.includeCache.get(state.uri, fileName, () => {
             const uri = URI.file(fileName);
             const content = readFileSync(fileName, 'utf-8');
             const subState = this.initializeState(content, uri);
@@ -90,7 +98,7 @@ export class PliPreprocessorParser {
         });
         return {
             type: 'include',
-            statements,
+            subProgram
         };
     }
 
@@ -468,7 +476,7 @@ export class PliPreprocessorParser {
                 variableName
             };
         }
-        throw new PreprocessorError("Cannot handle this type of preprocessor expression yet!", state.current!);
+        throw new PreprocessorError("Cannot handle this type of preprocessor expression yet!", state.current!, state.uri.toString());
     }
 
     private tokenizePurePliCode(content: string) {

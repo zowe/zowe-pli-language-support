@@ -3,6 +3,7 @@
  */
 
 import { IToken } from "chevrotain";
+import { PreprocessorParserResult } from "./pli-preprocessor-parser";
 
 export interface PPAstNode {
     type: string;
@@ -17,11 +18,6 @@ export interface PPDirective extends PPAstNode {
     type: 'directive';
     which: 'page'|'print'|'noprint'|'push'|'pop';
 }
-
-// export interface PPIncludeStatement extends PPAstNode {
-//     type: 'includeStatement';
-//     identifier: string;
-// }
 
 export interface PPDeclare extends PPAstNode {
     type: 'declare';
@@ -45,7 +41,7 @@ export interface PPAssign extends PPAstNode {
 
 export interface PPInclude extends PPAstNode {
     type: 'include',
-    statements: PPStatement[];
+    subProgram: PreprocessorParserResult;
 }
 
 export interface PPString extends PPAstNode {

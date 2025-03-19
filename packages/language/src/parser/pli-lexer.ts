@@ -15,7 +15,7 @@ import { Pl1Services } from "../pli-module";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
-import { PliPreprocessorParser, PreprocessorError } from "./pli-preprocessor-parser";
+import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { PliPreprocessorGenerator } from "./pli-preprocessor-generator";
 import { printProgram } from "./pli-preprocessor-instructions";
 
@@ -45,11 +45,18 @@ export class Pl1Lexer implements LangiumLexer {
     tokenize(printerText: string): LexerResult {
         const text = this.marginsProcessor.processMargins(printerText);
         const state = this.preprocessorParser.initializeState(text, URI.file('file.pli')); //TODO update URI
-        const statements = this.preprocessorParser.start(state);
+        const { statements, errors } = this.preprocessorParser.start(state);
+        if(errors.length > 0) {
+            return {
+                errors,
+                tokens: [],
+                hidden: [],
+                report: undefined!
+            };
+        }
         const program = this.preprocessorGenerator.generateProgram(statements);
         const tokens: IToken[] = [];
         const hidden: IToken[] = [];
-        const errors: PreprocessorError[] = []; //TODO
         printProgram(program);
         const output = this.preprocessorInterpreter.run(program, this.preprocessorLexer.idTokenType);
         for (const token of output) {

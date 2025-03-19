@@ -6,18 +6,32 @@ type TokenizeFunction = (text: string) => string[];
 
 describe("PL/1 Lexer", () => {
     let tokenize: TokenizeFunction;
+    let tokenizeWithErrors: TokenizeFunction;
 
     beforeAll(async () => {
         const services = createPliServices(EmptyFileSystem);
-        await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
         tokenize = (text: string) => {
             const { tokens } = services.pli.parser.Lexer.tokenize(text);
             return tokens.map(t => t.image + ':' + t.tokenType.name.toUpperCase());
+        };
+        tokenizeWithErrors = (text: string) => {
+            const { errors } = services.pli.parser.Lexer.tokenize(text);
+            return errors.map(e => e.message);
         };
     });
 
     test("Empty", () => {
         expect(tokenize('')).toStrictEqual([]);
+    });
+
+    test("Preprocessor garbage", () => {
+        expect(tokenizeWithErrors(' %garbage')).toStrictEqual([`Expected token type 'eq', got '???' instead.`]);
+    });
+
+    test("PL/I garbage", () => {
+        //This is not an error, since it is a valid PL/I token.
+        //The error will pop up in the PL/I parser due to syntax rules!
+        expect(tokenizeWithErrors(' garbage')).toStrictEqual([]);
     });
 
     test("Tokenize simple declaration without preprocessor", () => {
@@ -33,6 +47,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
+
     test("Tokenize simple declaration with preprocessor", () => {
         expect(tokenize(`
             %dcl A char;
@@ -47,6 +62,26 @@ describe("PL/1 Lexer", () => {
             "31:NUMBER",
             "):)",
             ";:;",
+        ]);
+    });
+
+    test("Tokenize simple error in declaration with preprocessor", () => {
+        expect(tokenizeWithErrors(`
+            %decl A char;
+            %A = 'B';
+            dcl A%C fixed bin(31);
+        `)).toStrictEqual([
+            "Expected token type 'eq', got 'id' instead."
+        ]);
+    });
+
+    test("Tokenize multiple errors in declaration with preprocessor", () => {
+        expect(tokenizeWithErrors(`
+            %decl A char;
+            %%A = 'B';
+        `)).toStrictEqual([
+            "Expected token type 'eq', got 'id' instead.",
+            "Unexpected token '%'."
         ]);
     });
 

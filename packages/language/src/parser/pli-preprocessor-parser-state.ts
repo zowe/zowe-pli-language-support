@@ -1,10 +1,10 @@
 import { IToken, TokenType } from "chevrotain";
-import { PreprocessorError } from "./pli-preprocessor-parser";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorLexerState, PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { Values } from "./pli-preprocessor-instructions";
 import { URI } from "langium";
+import { PreprocessorError } from "./pli-preprocessor-error";
 
 type ParserLocation = 'in-statement' | 'in-procedure';
 
@@ -137,7 +137,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
         const token = this.current!;
         if (!this.canConsume(tokenType)) {
             const message = `Expected token type '${tokenType.name}', got '${this.current?.tokenType.name ?? '???'}' instead.`;
-            throw new PreprocessorError(message, token);
+            throw new PreprocessorError(message, token, this.uri.toString());
         }
         this.index++;
         return token;

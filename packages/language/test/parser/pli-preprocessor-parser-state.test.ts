@@ -2,14 +2,15 @@ import { describe, expect, test } from "vitest";
 import { PreprocessorTokens } from "../../src/parser/pli-preprocessor-tokens";
 import { PliPreprocessorParserState } from "../../src/parser/pli-preprocessor-parser-state";
 import { createPliServices } from "../../src";
-import { EmptyFileSystem } from "langium";
+import { EmptyFileSystem, URI } from "langium";
 
 namespace Fixtures {
     const services = createPliServices(EmptyFileSystem);
 
-    export const Empty = () => new PliPreprocessorParserState(services.pli.parser.PreprocessorLexer, "");
-    export const OneToken = () => new PliPreprocessorParserState(services.pli.parser.PreprocessorLexer, "ABC");
-    export const TwoTokens = () => new PliPreprocessorParserState(services.pli.parser.PreprocessorLexer, "ABC 123");
+    const uri = URI.file("file:///test.pli");
+    export const Empty = () => new PliPreprocessorParserState(services.pli.parser.PreprocessorLexer, "", uri);
+    export const OneToken = () => new PliPreprocessorParserState(services.pli.parser.PreprocessorLexer, "ABC", uri);
+    export const TwoTokens = () => new PliPreprocessorParserState(services.pli.parser.PreprocessorLexer, "ABC 123", uri);
 }
 
 describe("Preprocessor parser state", () => {
