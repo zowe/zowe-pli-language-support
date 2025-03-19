@@ -118,7 +118,13 @@ export interface PPDoUntilWhile extends PPAstNode {
     body: PPStatement[];
 }
 
+export interface PPDoForever extends PPAstNode {
+    type: 'do-forever',
+    body: PPStatement[];
+}
+
 export type PPStatement =
+  | PPDoForever
   | PPPliStatement
   | PPEmptyStatement
   | PPActivate

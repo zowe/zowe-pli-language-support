@@ -415,4 +415,13 @@ describe("PL/1 Lexer", () => {
             ";:;",
         ]);
     });
+
+    test.skip('DO FOREVER', () => {
+        //TODO implement when you have LEAVE or GOTO ready
+        expect(tokenize(`
+            %DO %FOREVER;
+                
+            %END;
+        `)).toStrictEqual([]);
+    });
 });

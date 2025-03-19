@@ -12,6 +12,7 @@ export function tokenType(name: string, pattern: string | RegExp) {
 export const PreprocessorTokens = {
     Activate: tokenType("activate", /ACT(IVATE)?/yi),
     If: tokenType("if", /IF/yi),
+    Loop: tokenType("loop", /LOOP|FOREVER/yi),
     While: tokenType("while", /WHILE/yi),
     Until: tokenType("until", /UNTIL/yi),
     Do: tokenType("do", /DO/yi),

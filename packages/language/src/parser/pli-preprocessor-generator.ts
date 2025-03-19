@@ -1,7 +1,7 @@
 import { IToken, TokenType, createTokenInstance } from "chevrotain";
 import { Pl1Services } from "../pli-module";
 import { Instructions, PPIBranchIfNotEqual, PPInstruction, Values } from "./pli-preprocessor-instructions";
-import { PPActivate, PPAssign, PPBinaryExpression, PPDeactivate, PPDeclaration, PPDoGroup, PPDoUntilWhile, PPDoWhileUntil, PPExpression, PPIfStatement, PPNumber, PPPliStatement, PPStatement, PPString, PPVariableUsage } from "./pli-preprocessor-ast";
+import { PPActivate, PPAssign, PPBinaryExpression, PPDeactivate, PPDeclaration, PPDoForever, PPDoGroup, PPDoUntilWhile, PPDoWhileUntil, PPExpression, PPIfStatement, PPNumber, PPPliStatement, PPStatement, PPString, PPVariableUsage } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 
 export class PliPreprocessorGenerator {
@@ -41,10 +41,21 @@ export class PliPreprocessorGenerator {
                 break;
             case 'do-until-while': this.handleDoUntilWhile(statement, program); break;
             case 'do-while-until': this.handleDoWhileUntil(statement, program); break;
+            case "do-forever": this.handleDoForever(statement, program); break;
             case "include": this.handleStatements(statement.subProgram.statements, program); break;
             default:
                 assertUnreachable(statement);
         }
+    }
+
+    handleDoForever(statement: PPDoForever, program: PPInstruction[]) {
+        /**
+         * $start$: <BODY>
+         * GOTO $start$
+         */
+        const $start$ = program.length;
+        this.handleStatements(statement.body, program);
+        program.push(Instructions.goto($start$));
     }
 
     handleDoUntilWhile(statement: PPDoUntilWhile, program: PPInstruction[]) {
