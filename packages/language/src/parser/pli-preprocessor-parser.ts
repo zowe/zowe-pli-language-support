@@ -62,18 +62,34 @@ export class PliPreprocessorParser {
         if(state.tryConsume(PreprocessorTokens.Percentage)) {
             state.push('in-statement');
             try {
-                switch (state.current?.tokenType) {
-                    case PreprocessorTokens.Activate: return this.activateStatement(state);
-                    case PreprocessorTokens.Deactivate: return this.deactivateStatement(state);
-                    case PreprocessorTokens.Declare: return this.declareStatement(state);
-                    case PreprocessorTokens.Directive: return this.directive(state);
-                    case PreprocessorTokens.Skip: return this.skipStatement(state);
-                    case PreprocessorTokens.Include: return this.includeStatement(state);
-                    case PreprocessorTokens.Id: return this.assignmentStatement(state);
-                    case PreprocessorTokens.If: return this.ifStatement(state);
-                    case PreprocessorTokens.Do: return this.doStatement(state);
+                const labels: string[] = [];
+                while(state.canConsume(PreprocessorTokens.Id, PreprocessorTokens.Colon)) {
+                    const labelName = state.consume(PreprocessorTokens.Id).image;
+                    state.consume(PreprocessorTokens.Colon);
+                    labels.push(labelName);
                 }
-                throw new PreprocessorError("Unexpected token '"+state.current?.image+"'.", state.current!, state.uri.toString());
+                let statement: PPStatement;
+                switch (state.current?.tokenType) {
+                    case PreprocessorTokens.Activate: statement = this.activateStatement(state); break;
+                    case PreprocessorTokens.Deactivate: statement = this.deactivateStatement(state); break;
+                    case PreprocessorTokens.Declare: statement = this.declareStatement(state); break;
+                    case PreprocessorTokens.Directive: statement = this.directive(state); break;
+                    case PreprocessorTokens.Skip: statement = this.skipStatement(state); break;
+                    case PreprocessorTokens.Include: statement = this.includeStatement(state); break;
+                    case PreprocessorTokens.Id: statement = this.assignmentStatement(state); break;
+                    case PreprocessorTokens.If: statement = this.ifStatement(state); break;
+                    case PreprocessorTokens.Do: statement = this.doStatement(state); break;
+                    case PreprocessorTokens.Go: statement = this.goToStatement(state); break;
+                    default: throw new PreprocessorError("Unexpected token '"+state.current?.image+"'.", state.current!, state.uri.toString());
+                }
+                for (const labelName of labels.reverse()) {
+                    statement = {
+                        type: 'labeled',
+                        label: labelName,
+                        statement
+                    };
+                }
+                return statement;
             } finally {
                 state.pop();
             }
@@ -83,6 +99,17 @@ export class PliPreprocessorParser {
                 tokens: state.consumeUntil(tk => tk.image === ';'),
             };
         }
+    }
+
+    goToStatement(state: PreprocessorParserState): PPStatement {
+        state.consume(PreprocessorTokens.Go);
+        state.consume(PreprocessorTokens.To);
+        const label = state.consume(PreprocessorTokens.Id).image;
+        state.consume(PreprocessorTokens.Semicolon);
+        return {
+            type: 'goto',
+            label
+        };
     }
 
     includeStatement(state: PreprocessorParserState): PPStatement {

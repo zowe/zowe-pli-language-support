@@ -12,6 +12,8 @@ export function tokenType(name: string, pattern: string | RegExp) {
 export const PreprocessorTokens = {
     Activate: tokenType("activate", /ACT(IVATE)?/yi),
     If: tokenType("if", /IF/yi),
+    Go: tokenType("go", /GO/yi),
+    To: tokenType("to", /TO/yi),
     Loop: tokenType("loop", /LOOP|FOREVER/yi),
     While: tokenType("while", /WHILE/yi),
     Until: tokenType("until", /UNTIL/yi),
@@ -37,6 +39,7 @@ export const PreprocessorTokens = {
     LParen: tokenType("lparen", /\(/yi),
     RParen: tokenType("rparen", /\)/yi),
     Semicolon: tokenType("semicolon", /;/yi),
+    Colon: tokenType("colon", /:/yi),
     Comma: tokenType("comma", /,/yi),
     Percentage: tokenType("percentage", /%/yi),
     Plus: tokenType("plus", /\+/yi),

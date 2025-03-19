@@ -3,6 +3,7 @@ import { PPBinaryExpression, ProcedureScope, ScanMode } from "./pli-preprocessor
 import { assertUnreachable } from "langium";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PreprocessorInterpreterState } from "./pli-preprocessor-interpreter-state";
+import { PliPreprocessorProgram } from "./pli-preprocessor-generator";
 
 export interface PPInstructionBase {
     type: string;
@@ -234,9 +235,9 @@ export namespace Instructions {
     }
 }
 
-export function printProgram(program: PPInstruction[]) {
+export function printProgram(program: PliPreprocessorProgram) {
     const programText: string[] = [];
-    program.forEach((instruction, index) => {
+    program.instructions.forEach((instruction, index) => {
         programText.push(index.toString().padStart(4, ' ')+': ');
         programText.push(instruction.type.toUpperCase());
         switch (instruction.type) {

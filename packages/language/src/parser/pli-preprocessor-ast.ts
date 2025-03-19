@@ -9,6 +9,17 @@ export interface PPAstNode {
     type: string;
 }
 
+export interface PPLabeledStatement extends PPAstNode {
+    type: 'labeled',
+    label: string;
+    statement: PPStatement;
+}
+
+export interface PPGoTo extends PPAstNode {
+    type: 'goto',
+    label: string;
+}
+
 export interface PPPliStatement extends PPAstNode {
     type: 'pli';
     tokens: IToken[];
@@ -138,6 +149,8 @@ export type PPStatement =
   | PPDoGroup
   | PPDoWhileUntil
   | PPDoUntilWhile
+  | PPLabeledStatement
+  | PPGoTo
   ;
 
 export type VariableDataType = 'fixed' | 'character';
