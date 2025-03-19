@@ -84,6 +84,14 @@ export const RewriteStatementType = createToken({
     name: 'RewriteStatementType',
     pattern: Lexer.NA
 });
+export const Boolean = createToken({
+    name: 'Boolean',
+    pattern: Lexer.NA
+});
+export const LocateType = createToken({
+    name: 'LocateType',
+    pattern: Lexer.NA
+});
 
 export const combinations = [
     LinkageOption,
@@ -102,7 +110,9 @@ export const combinations = [
     Varying,
     Char,
     ReadStatementType,
-    WriteStatementType
+    WriteStatementType,
+    Boolean,
+    LocateType
 ];
 
 // Lexer tokens
@@ -421,7 +431,7 @@ export const PRECISION = createToken({
 });
 export const STRUCTURE = createToken({
     name: 'STRUCTURE',
-    pattern: /STRUCTURE/i,
+    pattern: /STRUCT(URE)?/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -442,11 +452,6 @@ export const BIGENDIAN = createToken({
     pattern: /BIGENDIAN/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
-});
-export const PercentXINCLUDE = createToken({
-    name: 'PercentXINCLUDE',
-    pattern: /%XINCLUDE/i,
-    categories: [ID]
 });
 export const ASSERTION = createToken({
     name: 'ASSERTION',
@@ -570,7 +575,7 @@ export const OPTIONAL = createToken({
 });
 export const POSITION = createToken({
     name: 'POSITION',
-    pattern: /POSITION/i,
+    pattern: /POS(ITION)?/i,
     categories: [ID, DefaultAttribute],
     longer_alt: ID
 });
@@ -606,7 +611,7 @@ export const DOWNTHRU = createToken({
 });
 export const PercentINCLUDE = createToken({
     name: 'PercentINCLUDE',
-    pattern: /%INCLUDE/i,
+    pattern: /%(X)?INCLUDE/i,
     categories: [ID]
 });
 export const PercentNOPRINT = createToken({
@@ -638,24 +643,14 @@ export const PAGESIZE = createToken({
     categories: [ID],
     longer_alt: ID
 });
-export const StarPROCESS = createToken({
-    name: 'StarPROCESS',
-    pattern: /\*PROCESS/i,
+export const PROCESS = createToken({
+    name: 'PROCESS',
+    pattern: /[*%]PROCESS/i,
     categories: [ID]
 });
-export const PercentPROCESS = createToken({
-    name: 'PercentPROCESS',
-    pattern: /%PROCESS/i,
-    categories: [ID]
-});
-export const PercentPROCINC = createToken({
-    name: 'PercentPROCINC',
-    pattern: /%PROCINC/i,
-    categories: [ID]
-});
-export const StarPROCINC = createToken({
-    name: 'StarPROCINC',
-    pattern: /\*PROCINC/i,
+export const PROCINC = createToken({
+    name: 'PROCINC',
+    pattern: /[*%]PROCINC/i,
     categories: [ID]
 });
 export const RESIGNAL = createToken({
@@ -704,12 +699,6 @@ export const NOMAPIN = createToken({
     name: 'NOMAPIN',
     pattern: /NOMAPIN/i,
     categories: [ID, NoMapOption],
-    longer_alt: ID
-});
-export const REORDER = createToken({
-    name: 'REORDER',
-    pattern: /REORDER/i,
-    categories: [ID, SimpleOptions],
     longer_alt: ID
 });
 export const FORTRAN = createToken({
@@ -838,12 +827,6 @@ export const VARYING = createToken({
     categories: [ID, DefaultAttribute, Varying],
     longer_alt: ID
 });
-export const XDEFINE = createToken({
-    name: 'XDEFINE',
-    pattern: /XDEFINE/i,
-    categories: [ID],
-    longer_alt: ID
-});
 export const ORDINAL = createToken({
     name: 'ORDINAL',
     pattern: /ORDINAL/i,
@@ -871,7 +854,7 @@ export const ITERATE = createToken({
 export const KEYFROM = createToken({
     name: 'KEYFROM',
     pattern: /KEYFROM/i,
-    categories: [ID, WriteStatementType],
+    categories: [ID, WriteStatementType, LocateType],
     longer_alt: ID
 });
 export const STORAGE = createToken({
@@ -1068,7 +1051,7 @@ export const UPDATE = createToken({
 });
 export const DEFINE = createToken({
     name: 'DEFINE',
-    pattern: /DEFINE/i,
+    pattern: /(X)?DEFINE/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -1077,12 +1060,6 @@ export const DEFINED = createToken({
     pattern: /DEF(INED)?/i,
     categories: [ID],
     longer_alt: [ID, DEFINE]
-});
-export const STRUCT = createToken({
-    name: 'STRUCT',
-    pattern: /STRUCT/i,
-    categories: [ID],
-    longer_alt: ID
 });
 export const DELETE = createToken({
     name: 'DELETE',
@@ -1205,7 +1182,7 @@ export const NOMAP = createToken({
 });
 export const ORDER = createToken({
     name: 'ORDER',
-    pattern: /ORDER/i,
+    pattern: /(RE)?ORDER/i,
     categories: [ID, SimpleOptions],
     longer_alt: ID
 });
@@ -1236,7 +1213,7 @@ export const UCHAR = createToken({
 export const FALSE = createToken({
     name: 'FALSE',
     pattern: /FALSE/i,
-    categories: [ID],
+    categories: [ID, Boolean],
     longer_alt: ID
 });
 export const BEGIN = createToken({
@@ -1453,7 +1430,7 @@ export const AREA = createToken({
 export const TRUE = createToken({
     name: 'TRUE',
     pattern: /TRUE/i,
-    categories: [ID],
+    categories: [ID, Boolean],
     longer_alt: ID
 });
 export const TEXT = createToken({
@@ -1477,7 +1454,7 @@ export const CALL = createToken({
 export const FILE = createToken({
     name: 'FILE',
     pattern: /FILE/i,
-    categories: [ID, DefaultAttribute, PutAttribute, ReadStatementType, WriteStatementType, RewriteStatementType],
+    categories: [ID, DefaultAttribute, PutAttribute, ReadStatementType, WriteStatementType, RewriteStatementType, LocateType],
     longer_alt: ID
 });
 export const IEEE = createToken({
@@ -1668,7 +1645,7 @@ export const LIKE = createToken({
 export const SET = createToken({
     name: 'SET',
     pattern: /SET/i,
-    categories: [ID, ReadStatementType],
+    categories: [ID, ReadStatementType, LocateType],
     longer_alt: ID
 });
 export const BIT = createToken({
@@ -1732,12 +1709,6 @@ export const GET = createToken({
 export const PUT = createToken({
     name: 'PUT',
     pattern: /PUT/i,
-    categories: [ID],
-    longer_alt: ID
-});
-export const POS = createToken({
-    name: 'POS',
-    pattern: /POS/i,
     categories: [ID],
     longer_alt: ID
 });
@@ -2081,7 +2052,6 @@ export const keywords = [
     TRANSIENT,
     UNALIGNED,
     BIGENDIAN,
-    PercentXINCLUDE,
     ASSERTION,
     ATTENTION,
     INVALIDOP,
@@ -2114,10 +2084,8 @@ export const keywords = [
     TRANSMIT,
     LINESIZE,
     PAGESIZE,
-    StarPROCESS,
-    PercentPROCESS,
-    PercentPROCINC,
-    StarPROCINC,
+    PROCESS,
+    PROCINC,
     RESIGNAL,
     PACKAGE,
     EXPORTS,
@@ -2126,7 +2094,6 @@ export const keywords = [
     OPTLINK,
     STDCALL,
     NOMAPIN,
-    REORDER,
     FORTRAN,
     BYVALUE,
     AMODE31,
@@ -2148,7 +2115,6 @@ export const keywords = [
     OUTONLY,
     POINTER,
     VARYING,
-    XDEFINE,
     ORDINAL,
     DISPLAY,
     ROUTCDE,
@@ -2188,7 +2154,6 @@ export const keywords = [
     UPDATE,
     DEFINE,
     DEFINED,
-    STRUCT,
     DELETE,
     DETACH,
     UPTHRU,
@@ -2299,7 +2264,6 @@ export const keywords = [
     KEY,
     GET,
     PUT,
-    POS,
     VX,
     IN,
     BY,

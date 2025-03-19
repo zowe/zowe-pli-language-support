@@ -28,7 +28,7 @@ export function referencesRequest(sourceFile: SourceFile, offset: number): Locat
         return [];
     }
     const element = payload.element;
-    if (payload.kind === CstNodeKind.DeclaredVariable_name_ID_0) {
+    if (payload.kind === CstNodeKind.DeclaredVariable_Name) {
         const refItem = element as ReferenceItem;
         const allRefs = allReferences(sourceFile.ast);
         const references = allRefs.filter(([item, ref]) => resolveReference(sourceFile, item, ref) === refItem);

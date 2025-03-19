@@ -28,7 +28,7 @@ export function definitionRequest(sourceFile: SourceFile, offset: number): Locat
         return [];
     }
     const element = payload.element;
-    if (payload.kind === CstNodeKind.ReferenceItem_ref_ID_0) {
+    if (payload.kind === CstNodeKind.ReferenceItem_Ref) {
         const refItem = element as ReferenceItem;
         const symbol = resolveReference(sourceFile, refItem, refItem.ref);
         if (!symbol) {

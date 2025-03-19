@@ -119,9 +119,7 @@ export enum SyntaxKind {
     LinkageOptionsItem,
     Literal,
     LocateStatement,
-    LocateStatementFile,
-    LocateStatementKeyFrom,
-    LocateStatementSet,
+    LocateStatementOption,
     LocatorCall,
     MemberCall,
     NamedCondition,
@@ -336,9 +334,7 @@ export type SyntaxNode =
     LinkageOptionsItem |
     Literal |
     LocateStatement |
-    LocateStatementFile |
-    LocateStatementKeyFrom |
-    LocateStatementSet |
+    LocateStatementOption |
     LocatorCall |
     MemberCall |
     NamedCondition |
@@ -994,19 +990,12 @@ export interface Literal extends AstNode {
 export interface LocateStatement extends AstNode {
     kind: SyntaxKind.LocateStatement;
     variable: LocatorCall | null;
-    arguments: (LocateStatementFile | LocateStatementSet | LocateStatementKeyFrom)[];
+    arguments: LocateStatementOption[];
 }
-export interface LocateStatementFile extends AstNode {
-    kind: SyntaxKind.LocateStatementFile;
-    file: ReferenceItem | null;
-}
-export interface LocateStatementKeyFrom extends AstNode {
-    kind: SyntaxKind.LocateStatementKeyFrom;
-    keyfrom: Expression | null;
-}
-export interface LocateStatementSet extends AstNode {
-    kind: SyntaxKind.LocateStatementSet;
-    set: LocatorCall | null;
+export interface LocateStatementOption extends AstNode {
+    kind: SyntaxKind.LocateStatementOption;
+    type: 'FILE' | 'KEYFROM' | 'SET' | null;
+    element: Expression | null;
 }
 export interface LocatorCall extends AstNode {
     kind: SyntaxKind.LocatorCall;
