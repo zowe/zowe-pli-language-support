@@ -92,6 +92,10 @@ export const LocateType = createToken({
     name: 'LocateType',
     pattern: Lexer.NA
 });
+export const OpenOptionType = createToken({
+    name: 'OpenOptionType',
+    pattern: Lexer.NA
+});
 
 export const combinations = [
     LinkageOption,
@@ -112,7 +116,8 @@ export const combinations = [
     ReadStatementType,
     WriteStatementType,
     Boolean,
-    LocateType
+    LocateType,
+    OpenOptionType
 ];
 
 // Lexer tokens
@@ -288,7 +293,7 @@ export const NONVARYING = createToken({
 export const SEQUENTIAL = createToken({
     name: 'SEQUENTIAL',
     pattern: /SEQ(UENTIA)?L/i,
-    categories: [ID, DefaultAttribute],
+    categories: [ID, DefaultAttribute, OpenOptionType],
     longer_alt: ID
 });
 export const CONVERSION = createToken({
@@ -552,7 +557,7 @@ export const ABNORMAL = createToken({
 export const BUFFERED = createToken({
     name: 'BUFFERED',
     pattern: /(UN)?BUF(FERED)?/i,
-    categories: [ID, DefaultAttribute],
+    categories: [ID, DefaultAttribute, OpenOptionType],
     longer_alt: ID
 });
 export const CONSTANT = createToken({
@@ -634,13 +639,13 @@ export const TRANSMIT = createToken({
 export const LINESIZE = createToken({
     name: 'LINESIZE',
     pattern: /LINESIZE/i,
-    categories: [ID],
+    categories: [ID, OpenOptionType],
     longer_alt: ID
 });
 export const PAGESIZE = createToken({
     name: 'PAGESIZE',
     pattern: /PAGESIZE/i,
-    categories: [ID],
+    categories: [ID, OpenOptionType],
     longer_alt: ID
 });
 export const PROCESS = createToken({
@@ -1022,13 +1027,13 @@ export const OFFSET = createToken({
 export const OUTPUT = createToken({
     name: 'OUTPUT',
     pattern: /OUTPUT/i,
-    categories: [ID, DefaultAttribute],
+    categories: [ID, DefaultAttribute, OpenOptionType],
     longer_alt: ID
 });
 export const RECORD = createToken({
     name: 'RECORD',
     pattern: /RECORD/i,
-    categories: [ID, DefaultAttribute, FileReferenceConditions],
+    categories: [ID, DefaultAttribute, FileReferenceConditions, OpenOptionType],
     longer_alt: ID
 });
 export const SIGNED = createToken({
@@ -1040,13 +1045,13 @@ export const SIGNED = createToken({
 export const STREAM = createToken({
     name: 'STREAM',
     pattern: /STREAM/i,
-    categories: [ID, DefaultAttribute],
+    categories: [ID, DefaultAttribute, OpenOptionType],
     longer_alt: ID
 });
 export const UPDATE = createToken({
     name: 'UPDATE',
     pattern: /UPDATE/i,
-    categories: [ID, DefaultAttribute],
+    categories: [ID, DefaultAttribute, OpenOptionType],
     longer_alt: ID
 });
 export const DEFINE = createToken({
@@ -1118,7 +1123,7 @@ export const FINISH = createToken({
 export const DIRECT = createToken({
     name: 'DIRECT',
     pattern: /DIRECT/i,
-    categories: [ID],
+    categories: [ID, OpenOptionType],
     longer_alt: ID
 });
 export const PercentPRINT = createToken({
@@ -1267,13 +1272,13 @@ export const INOUT = createToken({
 export const INPUT = createToken({
     name: 'INPUT',
     pattern: /INPUT/i,
-    categories: [ID, DefaultAttribute],
+    categories: [ID, DefaultAttribute, OpenOptionType],
     longer_alt: ID
 });
 export const KEYED = createToken({
     name: 'KEYED',
     pattern: /KEYED/i,
-    categories: [ID, DefaultAttribute],
+    categories: [ID, DefaultAttribute, OpenOptionType],
     longer_alt: ID
 });
 export const LABEL = createToken({
@@ -1285,7 +1290,7 @@ export const LABEL = createToken({
 export const PRINT = createToken({
     name: 'PRINT',
     pattern: /PRINT/i,
-    categories: [ID, DefaultAttribute],
+    categories: [ID, DefaultAttribute, OpenOptionType],
     longer_alt: ID
 });
 export const UNION = createToken({
@@ -1339,7 +1344,7 @@ export const FETCH = createToken({
 export const TITLE = createToken({
     name: 'TITLE',
     pattern: /TITLE/i,
-    categories: [ID],
+    categories: [ID, OpenOptionType],
     longer_alt: ID
 });
 export const FLUSH = createToken({
@@ -1454,7 +1459,7 @@ export const CALL = createToken({
 export const FILE = createToken({
     name: 'FILE',
     pattern: /FILE/i,
-    categories: [ID, DefaultAttribute, PutAttribute, ReadStatementType, WriteStatementType, RewriteStatementType, LocateType],
+    categories: [ID, DefaultAttribute, PutAttribute, ReadStatementType, WriteStatementType, RewriteStatementType, LocateType, OpenOptionType],
     longer_alt: ID
 });
 export const IEEE = createToken({

@@ -605,41 +605,16 @@ export function forEachNode(node: SyntaxNode, action: (node: SyntaxNode) => void
                 action(node.onUnit);
             }
             break;
-        case SyntaxKind.OpenOptionsAccess:
-            break;
-        case SyntaxKind.OpenOptionsBuffering:
-            break;
-        case SyntaxKind.OpenOptionsFile:
-            if (node.file) {
-                action(node.file);
-            }
-            break;
-        case SyntaxKind.OpenOptionsKeyed:
-            break;
-        case SyntaxKind.OpenOptionsLineSize:
-            if (node.lineSize) {
-                action(node.lineSize);
-            }
-            break;
-        case SyntaxKind.OpenOptionsPageSize:
-            if (node.pageSize) {
-                action(node.pageSize);
-            }
-            break;
-        case SyntaxKind.OpenOptionsPrint:
-            break;
-        case SyntaxKind.OpenOptionsStream:
-            break;
-        case SyntaxKind.OpenOptionsTitle:
-            if (node.title) {
-                action(node.title);
-            }
-            break;
         case SyntaxKind.OpenStatement:
             node.options.forEach(action);
             break;
         case SyntaxKind.OpenOptionsGroup:
             node.options.forEach(action);
+            break;
+        case SyntaxKind.OpenOption:
+            if (node.expression) {
+                action(node.expression);
+            }
             break;
         case SyntaxKind.Options:
             node.items.forEach(action);

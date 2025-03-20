@@ -20,7 +20,7 @@ export default defineConfig({
     deps: {
       interopDefault: true,
     },
-    include: ["scripts/*.test.ts"],
+    include: ["packages/**/test/**/*.test.ts"],
     coverage: {
       reporter: ["text"],
       include: ["packages/**/src/**/*.ts"],

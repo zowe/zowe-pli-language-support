@@ -23,6 +23,7 @@ export function referencesRequest(sourceFile: SourceFile, offset: number): Locat
     }
     let element = payload.element;
     if (isReferenceToken(payload.kind)) {
+        // Find the reference beloging to the token
         const ref = getReference(payload.element);
         if (ref && ref.node) {
             element = ref.node;
@@ -30,6 +31,7 @@ export function referencesRequest(sourceFile: SourceFile, offset: number): Locat
             return [];
         }
     } else if (!isNameToken(payload.kind)) {
+        // Not a reference or a name token
         return [];
     }
     const reverseReferences = sourceFile.references.findReferences(element);

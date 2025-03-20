@@ -9,6 +9,8 @@
  *
  */
 
+// KEEP THIS FOR REFERENCE
+// WE CAN DELETE IT ONCE IT IS NO LONGER USEFUL!
 grammar Pl1
 
 entry PliProgram:

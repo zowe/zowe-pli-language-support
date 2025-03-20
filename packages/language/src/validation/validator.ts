@@ -11,8 +11,8 @@
 
 import { ILexingError, IRecognitionException, MismatchedTokenException } from "chevrotain";
 import { SourceFile } from "../workspace/source-file";
-import { Diagnostic, Position, Range } from "vscode-languageserver-types";
 import { ReferencesCache } from "../linking/resolver";
+import { Diagnostic, Range, Severity } from "../language-server/types";
 
 export function collectCommonDiagnostics(sourceFile: SourceFile, lexerErrors: ILexingError[], parserErrors: IRecognitionException[]): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
@@ -22,21 +22,16 @@ export function collectCommonDiagnostics(sourceFile: SourceFile, lexerErrors: IL
     return diagnostics;
 }
 
-function lexerErrorsToDiagnostics(lexerErrors: ILexingError[]): Diagnostic[] {
+export function lexerErrorsToDiagnostics(lexerErrors: ILexingError[]): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
     for (const error of lexerErrors) {
         if (error.line && error.column) {
             diagnostics.push({
-                severity: 1,
+                uri: '',
+                severity: Severity.E,
                 range: {
-                    start: {
-                        line: error.line! - 1,
-                        character: error.column! - 1
-                    },
-                    end: {
-                        line: error.line! - 1,
-                        character: error.column! + error.length - 1
-                    }
+                    start: error.offset,
+                    end: error.offset + error.length
                 },
                 message: error.message,
                 source: 'lexer'
@@ -46,7 +41,7 @@ function lexerErrorsToDiagnostics(lexerErrors: ILexingError[]): Diagnostic[] {
     return diagnostics;
 }
 
-function parserErrorsToDiagnostics(parserErrors: IRecognitionException[]): Diagnostic[] {
+export function parserErrorsToDiagnostics(parserErrors: IRecognitionException[]): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
     for (const error of parserErrors) {
         let range: Range | undefined = undefined;
@@ -54,25 +49,26 @@ function parserErrorsToDiagnostics(parserErrors: IRecognitionException[]): Diagn
             if ('previousToken' in error) {
                 const token = (error as MismatchedTokenException).previousToken;
                 if (!isNaN(token.startOffset)) {
-                    const position: Position = { line: token.endLine! - 1, character: token.endColumn! };
-                    range = { start: position, end: position};
+                    range = { start: token.startOffset, end: token.startOffset};
                 } else {
                     // No valid prev token. Might be empty document or containing only hidden tokens.
                     // Point to document start
-                    const position: Position = { line: 0, character: 0 };
-                    range = { start: position, end: position};
+                    range = { start: 0, end: 0 };
                 }
             }
         } else {
-            const position: Position = { line: error.token.startLine! - 1, character: error.token.startColumn! };
-            range = { start: position, end: position};
+            range = {
+                start: error.token.startOffset,
+                end: error.token.startOffset
+            };
         }
         if (range) {
             const diagnostic: Diagnostic = {
-                severity: 1,
+                uri: '',
+                severity: Severity.E,
                 range,
                 message: error.message,
-                source: 'parser'
+                source: 'parser',
             };
             diagnostics.push(diagnostic);
         }
@@ -80,21 +76,16 @@ function parserErrorsToDiagnostics(parserErrors: IRecognitionException[]): Diagn
     return diagnostics;
 }
 
-function linkingErrorsToDiagnostics(references: ReferencesCache): Diagnostic[] {
+export function linkingErrorsToDiagnostics(references: ReferencesCache): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
     for (const reference of references.allReferences()) {
         if (reference.node === null) {
             const diagnostic: Diagnostic = {
-                severity: 2,
+                uri: '',
+                severity: Severity.W,
                 range: {
-                    start: {
-                        line: reference.token.startLine! - 1,
-                        character: reference.token.startColumn! - 1,
-                    },
-                    end: {
-                        line: reference.token.endLine! - 1,
-                        character: reference.token.endColumn!
-                    }
+                    start: reference.token.startOffset,
+                    end: reference.token.endOffset!
                 },
                 message: `Cannot find symbol '${reference.text}'`,
                 source: 'linking'

@@ -4957,340 +4957,55 @@ export class PliParser extends AbstractParser {
         let element = this.push(this.createOpenOptionsGroup());
 
         this.AT_LEAST_ONE(() => {
-            this.OR([
-                {
-                    ALT: () => {
-                        this.SUBRULE_ASSIGN(this.OpenOptionsFile, {
-                            assign: result => element.options.push(result)
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.SUBRULE_ASSIGN(this.OpenOptionsStream, {
-                            assign: result => element.options.push(result)
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.SUBRULE_ASSIGN(this.OpenOptionsAccess, {
-                            assign: result => element.options.push(result)
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.SUBRULE_ASSIGN(this.OpenOptionsBuffering, {
-                            assign: result => element.options.push(result)
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.SUBRULE_ASSIGN(this.OpenOptionsKeyed, {
-                            assign: result => element.options.push(result)
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.SUBRULE_ASSIGN(this.OpenOptionsPrint, {
-                            assign: result => element.options.push(result)
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.SUBRULE_ASSIGN(this.OpenOptionsTitle, {
-                            assign: result => element.options.push(result)
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.SUBRULE_ASSIGN(this.OpenOptionsLineSize, {
-                            assign: result => element.options.push(result)
-                        });
-                    }
-                },
-                {
-                    ALT: () => {
-                        this.SUBRULE_ASSIGN(this.OpenOptionsPageSize, {
-                            assign: result => element.options.push(result)
-                        });
-                    }
-                },
-            ]);
+            this.SUBRULE_ASSIGN(this.OpenOption, {
+                assign: result => element.options.push(result)
+            })
         });
 
         return this.pop();
     });
-    private createOpenOptionsFile(): ast.OpenOptionsFile {
+
+    private createOpenOption(): ast.OpenOption {
         return {
-            kind: ast.SyntaxKind.OpenOptionsFile,
+            kind: ast.SyntaxKind.OpenOption,
             container: null,
-            file: null,
+            option: null,
+            expression: null,
         };
     }
 
-    OpenOptionsFile = this.RULE('OpenOptionsFile', () => {
-        let element = this.push(this.createOpenOptionsFile());
+    OpenOption = this.RULE('OpenOption', () => {
+        // TODO: explain the discrepancy in the grammar
+        // The language reference explains that BUFFERED/UNBUFFERED can only be followed by SEQUENTIAL or DIRECT
+        // THIS IS NOT THE CASE
+        // It can appear on its own
+        // Therefore, we simply combine all open options into one single rule
+        let element = this.push(this.createOpenOption());
 
-        this.CONSUME_ASSIGN1(tokens.FILE, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsFile_FILE);
+        this.CONSUME_ASSIGN1(tokens.OpenOptionType, token => {
+            this.tokenPayload(token, element, CstNodeKind.OpenOption_Type);
+            element.option = token.image;
         });
-        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsFile_OpenParen);
-        });
-        this.SUBRULE_ASSIGN1(this.ReferenceItem, {
-            assign: result => {
-                element.file = result;
-            }
-        });
-        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsFile_CloseParen);
-        });
-
-        return this.pop();
-    });
-    private createOpenOptionsStream(): ast.OpenOptionsStream {
-        return {
-            kind: ast.SyntaxKind.OpenOptionsStream,
-            container: null,
-            stream: false,
-            record: false,
-        };
-    }
-
-    OpenOptionsStream = this.RULE('OpenOptionsStream', () => {
-        let element = this.push(this.createOpenOptionsStream());
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.STREAM, token => {
-                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsStream_Stream);
-                        element.stream = true;
-                    });
+        this.OPTION(() => {
+            this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.OpenOption_OpenParen);
+            });
+            // Note that only FILE, TITLE, LINESIZE and PAGESIZE are supposed to use this
+            // Validate against this later in the lifecycle
+            this.SUBRULE_ASSIGN1(this.Expression, {
+                assign: result => {
+                    element.expression = result;
                 }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.RECORD, token => {
-                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsStream_Record);
-                        element.record = true;
-                    });
-                }
-            },
-        ]);
-
-        return this.pop();
-    });
-    private createOpenOptionsAccess(): ast.OpenOptionsAccess {
-        return {
-            kind: ast.SyntaxKind.OpenOptionsAccess,
-            container: null,
-            input: false,
-            output: false,
-            update: false,
-        };
-    }
-
-    OpenOptionsAccess = this.RULE('OpenOptionsAccess', () => {
-        let element = this.push(this.createOpenOptionsAccess());
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.INPUT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsAccess_Input);
-                        element.input = true;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.OUTPUT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsAccess_Output);
-                        element.output = true;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.UPDATE, token => {
-                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsAccess_Update);
-                        element.update = true;
-                    });
-                }
-            },
-        ]);
-
-        return this.pop();
-    });
-    private createOpenOptionsBuffering(): ast.OpenOptionsBuffering {
-        return {
-            kind: ast.SyntaxKind.OpenOptionsBuffering,
-            container: null,
-            sequential: false,
-            direct: false,
-            unbuffered: false,
-            buffered: false,
-        };
-    }
-
-    OpenOptionsBuffering = this.RULE('OpenOptionsBuffering', () => {
-        let element = this.push(this.createOpenOptionsBuffering());
-
-        this.OR1([
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.SEQUENTIAL, token => {
-                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsBuffering_Sequential);
-                        element.sequential = true;
-                    });
-                }
-            },
-            {
-                ALT: () => {
-                    this.CONSUME_ASSIGN1(tokens.DIRECT, token => {
-                        this.tokenPayload(token, element, CstNodeKind.OpenOptionsBuffering_Direct);
-                        element.direct = true;
-                    });
-                }
-            },
-        ]);
-        this.OPTION1(() => {
-            this.CONSUME_ASSIGN1(tokens.BUFFERED, token => {
-                this.tokenPayload(token, element, CstNodeKind.OpenOptionsBuffering_Buffered);
-                element.buffered = true;
+            });
+            this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
+                this.tokenPayload(token, element, CstNodeKind.OpenOption_CloseParen);
             });
         });
-
-        return this.pop();
-    });
-    private createOpenOptionsKeyed(): ast.OpenOptionsKeyed {
-        return {
-            kind: ast.SyntaxKind.OpenOptionsKeyed,
-            container: null,
-            keyed: false,
-        };
-    }
-
-    OpenOptionsKeyed = this.RULE('OpenOptionsKeyed', () => {
-        let element = this.push(this.createOpenOptionsKeyed());
-
-        this.CONSUME_ASSIGN1(tokens.KEYED, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsKeyed_Keyed);
-            element.keyed = true;
-        });
+        
 
         return this.pop();
     });
 
-    private createOpenOptionsPrint(): ast.OpenOptionsPrint {
-        return {
-            kind: ast.SyntaxKind.OpenOptionsPrint,
-            container: null,
-            print: false,
-        };
-    }
-
-    OpenOptionsPrint = this.RULE('OpenOptionsPrint', () => {
-        let element = this.push(this.createOpenOptionsPrint());
-
-        this.CONSUME_ASSIGN1(tokens.PRINT, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsPrint_Print);
-            element.print = true;
-        });
-
-        return this.pop();
-    });
-    private createOpenOptionsTitle(): ast.OpenOptionsTitle {
-        return {
-            kind: ast.SyntaxKind.OpenOptionsTitle,
-            container: null,
-            title: null,
-        };
-    }
-
-    OpenOptionsTitle = this.RULE('OpenOptionsTitle', () => {
-        let element = this.push(this.createOpenOptionsTitle());
-
-        this.CONSUME_ASSIGN1(tokens.TITLE, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsTitle_TITLE);
-        });
-        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsTitle_OpenParen);
-        });
-        this.SUBRULE_ASSIGN1(this.Expression, {
-            assign: result => {
-                element.title = result;
-            }
-        });
-        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsTitle_CloseParen);
-        });
-
-        return this.pop();
-    });
-    private createOpenOptionsLineSize(): ast.OpenOptionsLineSize {
-        return {
-            kind: ast.SyntaxKind.OpenOptionsLineSize,
-            container: null,
-            lineSize: null,
-        };
-    }
-
-    OpenOptionsLineSize = this.RULE('OpenOptionsLineSize', () => {
-        let element = this.push(this.createOpenOptionsLineSize());
-
-        this.CONSUME_ASSIGN1(tokens.LINESIZE, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsLineSize_LINESIZE);
-        });
-        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsLineSize_OpenParen);
-        });
-        this.SUBRULE_ASSIGN1(this.Expression, {
-            assign: result => {
-                element.lineSize = result;
-            }
-        });
-        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsLineSize_CloseParen);
-        });
-
-        return this.pop();
-    });
-    private createOpenOptionsPageSize(): ast.OpenOptionsPageSize {
-        return {
-            kind: ast.SyntaxKind.OpenOptionsPageSize,
-            container: null,
-            pageSize: null,
-        };
-    }
-
-    OpenOptionsPageSize = this.RULE('OpenOptionsPageSize', () => {
-        let element = this.push(this.createOpenOptionsPageSize());
-
-        this.CONSUME_ASSIGN1(tokens.PAGESIZE, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsPageSize_PAGESIZE);
-        });
-        this.CONSUME_ASSIGN1(tokens.OpenParen, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsPageSize_OpenParen);
-        });
-        this.SUBRULE_ASSIGN1(this.Expression, {
-            assign: result => {
-                element.pageSize = result;
-            }
-        });
-        this.CONSUME_ASSIGN1(tokens.CloseParen, token => {
-            this.tokenPayload(token, element, CstNodeKind.OpenOptionsPageSize_CloseParen);
-        });
-
-        return this.pop();
-    });
     private createPageDirective(): ast.PageDirective {
         return { kind: ast.SyntaxKind.PageDirective, container: null };
     }
@@ -8653,27 +8368,28 @@ export class PliParser extends AbstractParser {
         return this.pop();
     });
     private createFQN(): ast.FQN {
-        return {
-            
-        } as any;
+        return '';
     }
 
     FQN = this.RULE('FQN', () => {
-        this.push(this.createFQN());
+        let fqn = this.push(this.createFQN());
 
         this.CONSUME_ASSIGN1(tokens.ID, token => {
             // this.tokenPayload(token, element, CstNodeKind.FQN_ID_0);
+            fqn += token.image;
         });
         this.MANY1(() => {
             this.CONSUME_ASSIGN1(tokens.Dot, token => {
+                fqn += '.';
                 // this.tokenPayload(token, element, CstNodeKind.FQN_Dot_0);
             });
             this.CONSUME_ASSIGN2(tokens.ID, token => {
+                fqn += token.image;
                 // this.tokenPayload(token, element, CstNodeKind.FQN_ID_1);
             });
         });
 
-        return this.pop();
+        return this.pop<string>();
     });
 }
 

@@ -129,16 +129,8 @@ export enum SyntaxKind {
     NullStatement,
     NumberLiteral,
     OnStatement,
-    OpenOptionsAccess,
-    OpenOptionsBuffering,
-    OpenOptionsFile,
     OpenOptionsGroup,
-    OpenOptionsKeyed,
-    OpenOptionsLineSize,
-    OpenOptionsPageSize,
-    OpenOptionsPrint,
-    OpenOptionsStream,
-    OpenOptionsTitle,
+    OpenOption,
     OpenStatement,
     Options,
     OrdinalTypeAttribute,
@@ -346,16 +338,8 @@ export type SyntaxNode =
     NullStatement |
     NumberLiteral |
     OnStatement |
-    OpenOptionsAccess |
-    OpenOptionsBuffering |
-    OpenOptionsFile |
     OpenOptionsGroup |
-    OpenOptionsKeyed |
-    OpenOptionsLineSize |
-    OpenOptionsPageSize |
-    OpenOptionsPrint |
-    OpenOptionsStream |
-    OpenOptionsTitle |
+    OpenOption |
     OpenStatement |
     Options |
     OrdinalTypeAttribute |
@@ -1042,51 +1026,14 @@ export interface OnStatement extends AstNode {
     system: boolean;
     onUnit: Statement | null;
 }
-export interface OpenOptionsAccess extends AstNode {
-    kind: SyntaxKind.OpenOptionsAccess;
-    input: boolean;
-    output: boolean;
-    update: boolean;
-}
-export interface OpenOptionsBuffering extends AstNode {
-    kind: SyntaxKind.OpenOptionsBuffering;
-    sequential: boolean;
-    direct: boolean;
-    unbuffered: boolean;
-    buffered: boolean;
-}
-export interface OpenOptionsFile extends AstNode {
-    kind: SyntaxKind.OpenOptionsFile;
-    file: ReferenceItem | null;
-}
 export interface OpenOptionsGroup extends AstNode {
     kind: SyntaxKind.OpenOptionsGroup;
-    options: (OpenOptionsFile | OpenOptionsStream | OpenOptionsAccess | OpenOptionsBuffering | OpenOptionsKeyed | OpenOptionsPrint | OpenOptionsTitle | OpenOptionsLineSize | OpenOptionsPageSize)[];
+    options: OpenOption[];
 }
-export interface OpenOptionsKeyed extends AstNode {
-    kind: SyntaxKind.OpenOptionsKeyed;
-    keyed: boolean;
-}
-export interface OpenOptionsLineSize extends AstNode {
-    kind: SyntaxKind.OpenOptionsLineSize;
-    lineSize: Expression | null;
-}
-export interface OpenOptionsPageSize extends AstNode {
-    kind: SyntaxKind.OpenOptionsPageSize;
-    pageSize: Expression | null;
-}
-export interface OpenOptionsPrint extends AstNode {
-    kind: SyntaxKind.OpenOptionsPrint;
-    print: boolean;
-}
-export interface OpenOptionsStream extends AstNode {
-    kind: SyntaxKind.OpenOptionsStream;
-    stream: boolean;
-    record: boolean;
-}
-export interface OpenOptionsTitle extends AstNode {
-    kind: SyntaxKind.OpenOptionsTitle;
-    title: Expression | null;
+export interface OpenOption extends AstNode {
+    kind: SyntaxKind.OpenOption;
+    option: string | null;
+    expression: Expression | null;
 }
 export interface OpenStatement extends AstNode {
     kind: SyntaxKind.OpenStatement;

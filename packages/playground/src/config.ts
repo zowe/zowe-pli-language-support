@@ -30,7 +30,7 @@ import {
   attachPart,
 } from "@codingame/monaco-vscode-views-service-override";
 
-export const defaultViewsInit = () => {
+export const defaultViewsInit = async () => {
   for (const config of [
     { part: Parts.EDITOR_PART, element: "#editors" },
     { part: Parts.PANEL_PART, element: "#panel" },

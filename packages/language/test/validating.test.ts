@@ -9,6 +9,10 @@
  *
  */
 
+import { test } from "vitest";
+
+test('TODO', () => {});
+
 // import { beforeAll, describe, expect, test } from "vitest";
 // import { EmptyFileSystem, type LangiumDocument } from "langium";
 // import { parseHelper } from "langium/test";
