@@ -10,6 +10,8 @@ export function tokenType(name: string, pattern: string | RegExp) {
 }
 
 export const PreprocessorTokens = {
+    Leave: tokenType("leave", /LEAVE/yi),
+    Iterate: tokenType("iterate", /ITERATE/yi),
     Activate: tokenType("activate", /ACT(IVATE)?/yi),
     If: tokenType("if", /IF/yi),
     Go: tokenType("go", /GO/yi),

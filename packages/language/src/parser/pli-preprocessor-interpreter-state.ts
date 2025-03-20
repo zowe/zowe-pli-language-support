@@ -230,7 +230,7 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
                 break;
             }
             case 'goto': {
-                this.goTo(() => instruction.address);
+                this.goTo(() => instruction.address as number);
                 break;
             }
             case 'branchIfNEQ': {
@@ -239,7 +239,7 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
                 if (this.areEqual(lhs, rhs)) {
                     this.goTo(prev => prev + 1);
                 } else {
-                    this.goTo(() => instruction.address);
+                    this.goTo(() => instruction.address as number);
                 }
                 break;
             }

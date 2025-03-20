@@ -1,7 +1,7 @@
 import { IToken, TokenType, createTokenInstance } from "chevrotain";
 import { Pl1Services } from "../pli-module";
 import { Instructions, Values } from "./pli-preprocessor-instructions";
-import { PPActivate, PPAssign, PPBinaryExpression, PPDeactivate, PPDeclaration, PPDoForever, PPDoGroup, PPDoUntilWhile, PPDoWhileUntil, PPExpression, PPGoTo, PPIfStatement, PPNumber, PPPliStatement, PPStatement, PPString, PPVariableUsage } from "./pli-preprocessor-ast";
+import { AnyDoGroup, PPActivate, PPAssign, PPBinaryExpression, PPDeactivate, PPDeclaration, PPDoForever, PPDoGroup, PPDoUntilWhile, PPDoWhileUntil, PPExpression, PPGoTo, PPIfStatement, PPIterate, PPLabeledStatement, PPLeave, PPNumber, PPPliStatement, PPStatement, PPString, PPVariableUsage } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 import { PliPreprocessorProgram, PliPreprocessorProgramBuilder } from "./pli-preprocessor-program-builder";
 
@@ -24,7 +24,7 @@ export class PliPreprocessorGenerator {
     handleStatement(statement: PPStatement, builder: PliPreprocessorProgramBuilder) {
         switch (statement.type) {
             case 'labeled':
-                const label = builder.createLabel(statement.label);
+                const label = builder.getOrCreateLabel(statement.label, this.findDoGroup(statement));
                 builder.pushLabel(label);
                 this.handleStatement(statement.statement, builder);
                 break;
@@ -41,22 +41,87 @@ export class PliPreprocessorGenerator {
                 //do nothing
                 break;
             case 'if': this.handleIf(statement, builder); break;
-            case 'do': this.handleDoGroup(statement, builder); break;
             case 'pli': this.handlePliCode(statement, builder); break;
             case 'empty':
                 break;
+            case 'do': this.handleDoGroup(statement, builder); break;
             case 'do-until-while': this.handleDoUntilWhile(statement, builder); break;
             case 'do-while-until': this.handleDoWhileUntil(statement, builder); break;
             case "do-forever": this.handleDoForever(statement, builder); break;
             case "include": this.handleStatements(statement.subProgram.statements, builder); break;
             case "goto": this.handleGoTo(statement, builder); break;
+            case "leave": this.handleLeave(statement, builder); break;
+            case "iterate": this.handleIterate(statement, builder); break;
             default: assertUnreachable(statement);
         }
     }
 
+    findDoGroup(statement: PPLabeledStatement): AnyDoGroup | undefined {
+        const possibleDoGroups: PPStatement['type'][] = ['do', 'do-until-while', 'do-while-until', 'do-forever']; 
+        if(possibleDoGroups.includes(statement.statement.type)) {
+            return statement.statement as AnyDoGroup;
+        }
+        if(statement.statement.type === 'labeled') {
+            return this.findDoGroup(statement.statement);
+        }
+        return undefined;
+    }
+
+    handleIterate(statement: PPIterate, builder: PliPreprocessorProgramBuilder) {
+        if(statement.label) {
+            const label = builder.getOrCreateLabel(statement.label);
+            if(label.doGroup) {
+                const labels = builder.lookupDoGroup(label.doGroup);
+                if(labels) {
+                    const actualLabel = labels.$iterate$;
+                    builder.pushInstruction(Instructions.goto(actualLabel));
+                    return;
+                }
+            }
+            throw new Error(`Label '${statement.label}' not found or no valid DO group.`);
+        } else {
+            const top = builder.topDoGroup();
+            if(top) {
+                builder.pushInstruction(Instructions.goto(top.$iterate$));
+                return;
+            }
+            throw new Error(`No DO group to iterate.`);
+        }
+    }
+
+    handleLeave(statement: PPLeave, builder: PliPreprocessorProgramBuilder) {
+        if(statement.label) {
+            const label = builder.getOrCreateLabel(statement.label);
+            if(label.doGroup) {
+                const labels = builder.lookupDoGroup(label.doGroup);
+                if(labels) {
+                    const actualLabel = labels.$leave$;
+                    builder.pushInstruction(Instructions.goto(actualLabel));
+                    return;
+                }
+            }
+            throw new Error(`Label '${statement.label}' not found or no valid DO group.`);
+        } else {
+            const top = builder.topDoGroup();
+            if(top) {
+                builder.pushInstruction(Instructions.goto(top.$leave$));
+                return;
+            }
+            throw new Error(`No DO group to leave.`);
+        }
+    }
+
     handleGoTo(statement: PPGoTo, builder: PliPreprocessorProgramBuilder) {
-        const label = builder.createLabel(statement.label);
+        const label = builder.getOrCreateLabel(statement.label);
         builder.pushInstruction(Instructions.goto(label));
+    }
+
+    handleDoGroup(statement: PPDoGroup, builder: PliPreprocessorProgramBuilder) {
+        const { $iterate$, $leave$ } = builder.pushDoGroup(statement);
+        builder.pushLabel($iterate$);
+        this.handleStatements(statement.statements, builder);
+        builder.pushLabel($leave$)
+        builder.popDoGroup();
     }
 
     handleDoForever(statement: PPDoForever, builder: PliPreprocessorProgramBuilder) {
@@ -64,10 +129,12 @@ export class PliPreprocessorGenerator {
          * $start$: <BODY>
          * GOTO $start$
          */
-        const $start$ = builder.createLabel();
-        builder.pushLabel($start$);
+        const { $iterate$, $leave$ } = builder.pushDoGroup(statement);
+        builder.pushLabel($iterate$);
         this.handleStatements(statement.body, builder);
-        builder.pushInstruction(Instructions.goto($start$));
+        builder.pushInstruction(Instructions.goto($iterate$));
+        builder.pushLabel($leave$);
+        builder.popDoGroup();
     }
 
     handleDoUntilWhile(statement: PPDoUntilWhile, builder: PliPreprocessorProgramBuilder) {
@@ -84,20 +151,20 @@ export class PliPreprocessorGenerator {
          *          GOTO $until$
          * $end$:
          */
-        const $until$ = builder.createLabel();
-        builder.pushLabel($until$);
+        const { $iterate$, $leave$ } = builder.pushDoGroup(statement);
+        builder.pushLabel($iterate$);
         this.handleExpression(statement.conditionUntil, builder);
         builder.pushInstruction(Instructions.push(Values.False()));
-        const $end$ = builder.createLabel();
-        builder.pushInstruction(Instructions.branchIfNotEqual($end$));
+        builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
         if (statement.conditionWhile) {
             this.handleExpression(statement.conditionWhile, builder);
             builder.pushInstruction(Instructions.push(Values.True()));
-            builder.pushInstruction(Instructions.branchIfNotEqual($end$));
+            builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
         }
         this.handleStatements(statement.body, builder);
-        builder.pushInstruction(Instructions.goto($until$));
-        builder.pushLabel($end$);
+        builder.pushInstruction(Instructions.goto($iterate$));
+        builder.pushLabel($leave$);
+        builder.popDoGroup();
     }
 
     handleDoWhileUntil(statement: PPDoWhileUntil, builder: PliPreprocessorProgramBuilder) {
@@ -114,20 +181,20 @@ export class PliPreprocessorGenerator {
          *          GOTO $while$
          * $end$:
          */
-        const $while$ = builder.createLabel();
-        builder.pushLabel($while$);
+        const { $iterate$, $leave$ } = builder.pushDoGroup(statement);
+        builder.pushLabel($iterate$);
         this.handleExpression(statement.conditionWhile, builder);
         builder.pushInstruction(Instructions.push(Values.True()));
-        const $end$ = builder.createLabel();
-        builder.pushInstruction(Instructions.branchIfNotEqual($end$));
+        builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
         if (statement.conditionUntil) {
             this.handleExpression(statement.conditionUntil, builder);
             builder.pushInstruction(Instructions.push(Values.False()));
-            builder.pushInstruction(Instructions.branchIfNotEqual($end$));
+            builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
         }
         this.handleStatements(statement.body, builder);
-        builder.pushInstruction(Instructions.goto($while$));
-        builder.pushLabel($end$);
+        builder.pushInstruction(Instructions.goto($iterate$));
+        builder.pushLabel($leave$);
+        builder.popDoGroup();
     }
 
     handlePliCode(statement: PPPliStatement, builder: PliPreprocessorProgramBuilder) {
@@ -158,10 +225,6 @@ export class PliPreprocessorGenerator {
         });
     }
 
-    handleDoGroup(doGroup: PPDoGroup, builder: PliPreprocessorProgramBuilder) {
-        this.handleStatements(doGroup.statements, builder);
-    }
-
     handleStatements(statements: PPStatement[], builder: PliPreprocessorProgramBuilder) {
         for (const statement of statements) {
             this.handleStatement(statement, builder);
@@ -182,16 +245,16 @@ export class PliPreprocessorGenerator {
         this.handleExpression(statement.condition, builder);
         builder.pushInstruction(Instructions.push(Values.True()));
         if (statement.elseUnit) {
-            const $else$ = builder.createLabel();
+            const $else$ = builder.getOrCreateLabel();
             builder.pushInstruction(Instructions.branchIfNotEqual($else$));
             this.handleStatement(statement.thenUnit, builder);
-            const $exit$ = builder.createLabel();
+            const $exit$ = builder.getOrCreateLabel();
             builder.pushInstruction(Instructions.goto($exit$));
             builder.pushLabel($else$);
             this.handleStatement(statement.elseUnit, builder);
             builder.pushLabel($exit$);
         } else {
-            const $exit$ = builder.createLabel();
+            const $exit$ = builder.getOrCreateLabel();
             builder.pushInstruction(Instructions.branchIfNotEqual($exit$));
             this.handleStatement(statement.thenUnit, builder);
             builder.pushLabel($exit$);

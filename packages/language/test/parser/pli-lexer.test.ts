@@ -11,7 +11,10 @@ describe("PL/1 Lexer", () => {
     beforeAll(async () => {
         const services = createPliServices(EmptyFileSystem);
         tokenize = (text: string) => {
-            const { tokens } = services.pli.parser.Lexer.tokenize(text);
+            const { tokens, errors } = services.pli.parser.Lexer.tokenize(text);
+            if (errors.length > 0) {
+                throw new Error(errors.map(e => e.message).join('\n'));
+            }
             return tokens.map(t => t.image + ':' + t.tokenType.name.toUpperCase());
         };
         tokenizeWithErrors = (text: string) => {
@@ -416,12 +419,87 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip('DO FOREVER', () => {
-        //TODO implement when you have LEAVE or GOTO ready
+    test('DO FOREVER with LEAVE', () => {
         expect(tokenize(`
             %DO %FOREVER;
-                
+                %LEAVE;
             %END;
         `)).toStrictEqual([]);
+    });
+
+    test('Nested DO-block with LEAVE outer one', () => {
+        expect(tokenize(`
+            %outer: DO %FOREVER;
+                %DO %FOREVER;
+                    %LEAVE outer;
+                %END;
+            %END;
+        `)).toStrictEqual([]);
+    });
+
+    test('Nested DO-block with LEAVE inner, then outer one', () => {
+        expect(tokenize(`
+            %outer: DO %FOREVER;
+                %inner: DO %FOREVER;
+                    %LEAVE inner;
+                %END;
+                %LEAVE;
+            %END;
+        `)).toStrictEqual([]);
+    });
+
+    test('FOREVER with LEAVE condition', () => {
+        expect(tokenize(`
+            %declare A fixed;
+            %A = 3;
+            %DO %FOREVER;
+                dcl X%A fixed;
+                %A = %A - 1;
+                %IF %A = 0 %THEN %LEAVE;
+            %END;
+        `)).toStrictEqual([
+            "dcl:DCL",
+            "X3:ID",
+            "fixed:FIXED",
+            ";:;",
+            "dcl:DCL",
+            "X2:ID",
+            "fixed:FIXED",
+            ";:;",
+            "dcl:DCL",
+            "X1:ID",
+            "fixed:FIXED",
+            ";:;",
+        ]);
+    });
+
+    test('FOREVER with ITERATE', () => {
+        expect(tokenize(`
+            %declare A fixed;
+            %A = 3;
+            %DO %FOREVER;
+                %A = %A - 1;
+                %IF %A = 0 %THEN %LEAVE;
+                %ELSE %ITERATE;
+                dcl X%A fixed;
+            %END;
+        `)).toStrictEqual([]);
+    });
+
+    test('DO with GOTO loop', () => {
+        expect(tokenize(`
+            %declare A fixed;
+            %A = 3;
+            %myLoop: DO
+                %A = %A - 1;
+                %IF %A <> 0 %THEN %GO %TO myLoop;
+                DCL X%A FIXED;
+            %END;
+        `)).toStrictEqual([
+            "DCL:DCL",
+            "X0:ID",
+            "FIXED:FIXED",
+            ";:;",
+        ]);
     });
 });

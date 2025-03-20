@@ -1,13 +1,11 @@
 import { TokenType } from "chevrotain";
-import { PPInstruction } from "./pli-preprocessor-instructions";
 import { PliPreprocessorInterpreterState } from "./pli-preprocessor-interpreter-state";
+import { PliPreprocessorProgram } from "./pli-preprocessor-program-builder";
 
 export class PliPreprocessorInterpreter {
-    run(program: PPInstruction[], idTokenType: TokenType) {
-        const state = new PliPreprocessorInterpreterState(program, idTokenType);
+    run(program: PliPreprocessorProgram, idTokenType: TokenType) {
+        const state = new PliPreprocessorInterpreterState(program.instructions, idTokenType);
         while(!state.halt) {
-            // const xxx = printInstruction(state.currentInstruction, state);
-            // console.log(xxx);
             state.step();
         }
         return state.getOutput();

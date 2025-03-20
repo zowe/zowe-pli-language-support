@@ -4,6 +4,7 @@
 
 import { IToken } from "chevrotain";
 import { PreprocessorParserResult } from "./pli-preprocessor-parser";
+import { ProgramAddressOrPlaceholder } from "./pli-preprocessor-instructions";
 
 export interface PPAstNode {
     type: string;
@@ -134,7 +135,21 @@ export interface PPDoForever extends PPAstNode {
     body: PPStatement[];
 }
 
+export type AnyDoGroup = PPDoGroup | PPDoWhileUntil | PPDoUntilWhile | PPDoForever;
+
+export interface PPIterate extends PPAstNode {
+    type: 'iterate',
+    label: string|undefined;
+}
+
+export interface PPLeave extends PPAstNode {
+    type: 'leave',
+    label: string|undefined;
+}
+
 export type PPStatement =
+  | PPLeave
+  | PPIterate
   | PPDoForever
   | PPPliStatement
   | PPEmptyStatement

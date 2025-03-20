@@ -1,3 +1,4 @@
+import { AnyDoGroup } from "./pli-preprocessor-ast";
 import { PPInstruction, Label, PPIGoto } from "./pli-preprocessor-instructions";
 
 
@@ -5,27 +6,56 @@ export type PliPreprocessorProgram = {
     instructions: PPInstruction[];
 };
 
+export type DoGroupStackItem = {
+    doGroup: AnyDoGroup;
+    $start$: Label;
+    $iterate$: Label;
+    $leave$: Label;
+};
+
 export class PliPreprocessorProgramBuilder {
     private labelCounter = 0;
-    private readonly labelStack: Record<string, Label>[] = [{}];
+    private readonly labels: Record<string, Label> = {};
+    private readonly doGroupStack: DoGroupStackItem[] = [];
     private readonly program: PliPreprocessorProgram;
 
     constructor() {
         this.program = { instructions: [] };
     }
 
+    lookupDoGroup(doGroup: AnyDoGroup) {
+        return this.doGroupStack.find(item => item.doGroup === doGroup);
+    }
+
+    topDoGroup() {
+        return this.doGroupStack.length > 0 ? this.doGroupStack[this.doGroupStack.length - 1] : undefined;
+    }
+
     pushInstruction(instruction: PPInstruction): void {
         this.program.instructions.push(instruction);
     }
 
-    pushDoGroup(): void {
-        this.labelStack.push({});
+    pushDoGroup(doGroup: AnyDoGroup) {
+        const item = {
+            doGroup,
+            $start$: this.getOrCreateLabel(),
+            $iterate$: this.getOrCreateLabel(),
+            $leave$: this.getOrCreateLabel(),
+        };
+        this.doGroupStack.push(item);
+        return item as {
+            $iterate$: Label;
+            $leave$: Label;
+        };
     }
 
-    createLabel(label?: string): Label {
+    getOrCreateLabel(label?: string, doGroup?: AnyDoGroup): Label {
         label ??= `$label${this.labelCounter++}$`;
-        const newLabel: Label = { address: undefined };
-        this.labelStack[this.labelStack.length - 1][label] = newLabel;
+        if(this.labels[label]) {
+            return this.labels[label];
+        }
+        const newLabel: Label = { address: undefined, doGroup };
+        this.labels[label] = newLabel;
         return newLabel;
     }
 
@@ -34,17 +64,7 @@ export class PliPreprocessorProgramBuilder {
     }
 
     popDoGroup(): void {
-        this.labelStack.pop();
-    }
-
-    lookupLabel(label: string): Label {
-        for (let i = this.labelStack.length - 1; i >= 0; i--) {
-            const labelEntry = this.labelStack[i][label];
-            if (labelEntry) {
-                return labelEntry;
-            }
-        }
-        throw new Error(`Label '${label}' not found.`);
+        this.doGroupStack.pop();
     }
 
     build(): PliPreprocessorProgram {

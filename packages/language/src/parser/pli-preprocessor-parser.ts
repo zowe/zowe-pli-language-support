@@ -80,6 +80,8 @@ export class PliPreprocessorParser {
                     case PreprocessorTokens.If: statement = this.ifStatement(state); break;
                     case PreprocessorTokens.Do: statement = this.doStatement(state); break;
                     case PreprocessorTokens.Go: statement = this.goToStatement(state); break;
+                    case PreprocessorTokens.Leave: statement = this.leaveStatement(state); break;
+                    case PreprocessorTokens.Iterate: statement = this.iterateStatement(state); break;
                     default: throw new PreprocessorError("Unexpected token '"+state.current?.image+"'.", state.current!, state.uri.toString());
                 }
                 for (const labelName of labels.reverse()) {
@@ -101,8 +103,43 @@ export class PliPreprocessorParser {
         }
     }
 
+    iterateStatement(state: PreprocessorParserState): PPStatement {
+        state.consume(PreprocessorTokens.Iterate);
+        if(state.canConsume(PreprocessorTokens.Id)) {
+            const label = state.consume(PreprocessorTokens.Id).image;
+            state.consume(PreprocessorTokens.Semicolon);
+            return {
+                type: 'iterate',
+                label
+            };
+        }
+        state.consume(PreprocessorTokens.Semicolon);
+        return {
+            type: 'iterate',
+            label: undefined
+        };
+    }
+
+    leaveStatement(state: PreprocessorParserState): PPStatement {
+        state.consume(PreprocessorTokens.Leave);
+        if(state.canConsume(PreprocessorTokens.Id)) {
+            const label = state.consume(PreprocessorTokens.Id).image;
+            state.consume(PreprocessorTokens.Semicolon);
+            return {
+                type: 'leave',
+                label
+            };
+        }
+        state.consume(PreprocessorTokens.Semicolon);
+        return {
+            type: 'leave',
+            label: undefined
+        };
+    }
+
     goToStatement(state: PreprocessorParserState): PPStatement {
         state.consume(PreprocessorTokens.Go);
+        state.consume(PreprocessorTokens.Percentage);
         state.consume(PreprocessorTokens.To);
         const label = state.consume(PreprocessorTokens.Id).image;
         state.consume(PreprocessorTokens.Semicolon);

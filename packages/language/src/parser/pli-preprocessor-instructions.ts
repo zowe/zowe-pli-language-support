@@ -1,5 +1,5 @@
 import { createTokenInstance, IToken, TokenType } from "chevrotain";
-import { PPBinaryExpression, ProcedureScope, ScanMode } from "./pli-preprocessor-ast";
+import { AnyDoGroup, PPBinaryExpression, ProcedureScope, ScanMode } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PreprocessorInterpreterState } from "./pli-preprocessor-interpreter-state";
@@ -7,6 +7,7 @@ import { PliPreprocessorProgram } from "./pli-preprocessor-program-builder";
 
 export type Label = {
     address: number|undefined;
+    doGroup?: AnyDoGroup;
 };
 
 export type ProgramAddressOrPlaceholder = number | Label;
@@ -259,7 +260,7 @@ export function printProgram(program: PliPreprocessorProgram) {
                 break;
             case 'goto':
             case 'branchIfNEQ':
-                programText.push(...' ', '@', instruction.address.toString());
+                programText.push(...' ', '@', instruction.address?.toString() ?? '???');
                 break;
             case 'get':
                 programText.push(...' ', instruction.variableName);
