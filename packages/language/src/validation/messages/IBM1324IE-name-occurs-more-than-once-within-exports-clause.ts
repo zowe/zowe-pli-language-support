@@ -9,6 +9,8 @@
  *
  */
 
+// TODO: Reimplement once the validation infrastructure is in place
+
 // import { ValidationAcceptor } from "langium";
 // import { Exports } from "../../generated/ast";
 

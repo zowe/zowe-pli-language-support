@@ -9,5 +9,5 @@
  *
  */
 
-export * from "./workspace/pli-builtin-functions";
+export * from "./workspace/builtins";
 export * from "./language-server/connection-handler.js";
