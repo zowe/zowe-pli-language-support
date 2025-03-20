@@ -102,6 +102,7 @@ This state is managed in the preprocessor interpreter state class.
 
 ### Instructions
 
+
 #### Instruction `ACTIVATE`
 
 ```plain
@@ -374,3 +375,58 @@ will be transplated to:
   14: PRINT
   15: HALT
 ```
+
+#### Instruction `GET`
+
+```plain
+GET <VARNAME>;
+```
+
+Takes the value of the variable `VARNAME` and pushes it onto the stack.
+
+##### Example Get
+
+Imagine you execute this instruction: `GET A;`.
+This is how the machine behave before and after the execution of `GET`.
+
+| Before | After |
+|--------|-------|
+| S and V={A=[1,2,3]} | [1,2,3]:S and V={A=[1,2,3]} |
+| S and V={A=[A,+,B]} | [A,+,B]:S and V={A=[A,+,B]} |
+
+
+#### Instruction `COMPUTE`
+
+```plain
+COMPUTE <operation>;
+```
+
+Takes the topmost two elements from the stack and computes the operation. The result gets pushed onto the stack.
+
+The operation can be one of the following:
+
+| Operation | Description |
+|-----------|-------------|
+| '**'      | exponentiation |
+| '*'       | multiplication |
+| '/'       | division |
+| '+'       | addition |
+| '-'       | subtraction |
+| '\|\|'      | concatenation |
+| '<'       | less than |
+| '<='      | less than or equal |
+| '>'       | greater than |
+| '>='      | greater than or equal |
+| '='       | equal |
+| '<>'      | not equal |
+| '&'       | logical and |
+| '\|'      | logical or |
+
+##### Example Compute
+
+Imagine you execute this instruction: `COMPUTE +;`.
+This is how the machine behave before and after the execution of `COMPUTE`.
+
+| Before | After |
+|--------|-------|
+| [2]:[1]:S | [3]:S |

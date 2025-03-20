@@ -74,18 +74,18 @@ export interface PPIGet extends PPInstructionBase {
 }
 
 export type PPInstruction =
-    | PPIGet
-    | PPICompute
-    | PPIScan
-    | PPIPrint
-    | PPIActivate
-    | PPIDeactivate
-    | PPISet
-    | PPIPush
-    | PPIConcat
-    | PPIBranchIfNotEqual
-    | PPIGoto
-    | PPIHalt
+    | PPIActivate         //documented
+    | PPIBranchIfNotEqual //documented
+    | PPICompute          //documented
+    | PPIConcat           //documented
+    | PPIDeactivate       //documented
+    | PPIGet              //documented
+    | PPIGoto             //documented
+    | PPIHalt             //documented
+    | PPIPrint            //documented
+    | PPIPush             //documented
+    | PPIScan             //documented
+    | PPISet              //documented
     ;
 
 export type PPProgram = PPInstruction[];
