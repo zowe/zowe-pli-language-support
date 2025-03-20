@@ -1,4 +1,4 @@
-import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective, PPActivate, PPDeactivate, PPDoGroup, PPDoWhileUntil, PPDoUntilWhile, PPBinaryExpression, PPDoForever } from "./pli-preprocessor-ast";
+import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective, PPActivate, PPDeactivate, PPBinaryExpression, AnyDoGroup } from "./pli-preprocessor-ast";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorParserState, PreprocessorParserState } from "./pli-preprocessor-parser-state";
 import { PreprocessorError } from "./pli-preprocessor-error";
@@ -166,12 +166,10 @@ export class PliPreprocessorParser {
         };
     }
 
-    doStatement(state: PreprocessorParserState): PPDoGroup|PPDoWhileUntil|PPDoUntilWhile|PPDoForever {
+    doStatement(state: PreprocessorParserState): AnyDoGroup {
         state.consume(PreprocessorTokens.Do);
-        if(state.canConsume(PreprocessorTokens.Percentage, PreprocessorTokens.While)) {
+        if(state.tryConsume(PreprocessorTokens.Percentage, PreprocessorTokens.While)) {
             //type-2-do-while-first
-            state.consume(PreprocessorTokens.Percentage);
-            state.consume(PreprocessorTokens.While);
             state.consume(PreprocessorTokens.LParen);
             const conditionWhile = this.expression(state);
             state.consume(PreprocessorTokens.RParen);
@@ -195,10 +193,8 @@ export class PliPreprocessorParser {
                 conditionUntil,
                 body
             };
-        } else if(state.canConsume(PreprocessorTokens.Percentage, PreprocessorTokens.Until)) {
+        } else if(state.tryConsume(PreprocessorTokens.Percentage, PreprocessorTokens.Until)) {
             //type-2-do-until-first
-            state.consume(PreprocessorTokens.Percentage);
-            state.consume(PreprocessorTokens.Until);
             state.consume(PreprocessorTokens.LParen);
             const conditionUntil = this.expression(state);
             state.consume(PreprocessorTokens.RParen);
@@ -221,10 +217,8 @@ export class PliPreprocessorParser {
                 conditionUntil,
                 body
             };
-        } else if (state.canConsume(PreprocessorTokens.Percentage, PreprocessorTokens.Loop)) {
+        } else if (state.tryConsume(PreprocessorTokens.Percentage, PreprocessorTokens.Loop)) {
             //type-4 loops
-            state.consume(PreprocessorTokens.Percentage);
-            state.consume(PreprocessorTokens.Loop);
             state.consume(PreprocessorTokens.Semicolon);
             const body = this.statements(state);
             state.consume(PreprocessorTokens.Percentage);
@@ -234,7 +228,8 @@ export class PliPreprocessorParser {
                 type: 'do-forever',
                 body
             };
-        } else { //type-1-do
+        } else if(state.tryConsume(PreprocessorTokens.Semicolon)) {
+            //type-1-do
             const statements = this.statements(state);
             state.consume(PreprocessorTokens.Percentage);
             state.consume(PreprocessorTokens.End);
@@ -244,6 +239,8 @@ export class PliPreprocessorParser {
                 statements
             };
         }
+        //TODO type-3-do
+        throw new PreprocessorError("Unexpected token '"+state.current?.image+"'.", state.current!, state.uri.toString());
     }
 
     private statements(state: PreprocessorParserState) {

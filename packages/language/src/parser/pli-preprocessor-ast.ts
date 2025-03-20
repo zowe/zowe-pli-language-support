@@ -130,12 +130,43 @@ export interface PPDoUntilWhile extends PPAstNode {
     body: PPStatement[];
 }
 
+interface PPDoType3Base extends PPAstNode {
+    conditionUntil?: PPExpression;
+    conditionWhile?: PPExpression;
+    body: PPStatement[];
+    first: 'while' | 'until';
+}
+
+export interface PPDoFromToBy extends PPDoType3Base {
+    type: 'do-from-to-by',
+    fromValue: PPExpression;
+    toValue: PPExpression;
+    byValue: PPExpression;
+}
+
+export interface PPDoUpThru extends PPDoType3Base {
+    type: 'do-up-thru',
+    left: PPExpression;
+    right: PPExpression;
+}
+
+export interface PPDoDownThru extends PPDoType3Base {
+    type: 'do-down-thru',
+    left: PPExpression;
+    right: PPExpression;
+}
+
+export interface PPDoRepeat extends PPDoType3Base {
+    type: 'do-repeat',
+    repeat: PPExpression;
+}
+
 export interface PPDoForever extends PPAstNode {
     type: 'do-forever',
     body: PPStatement[];
 }
 
-export type AnyDoGroup = PPDoGroup | PPDoWhileUntil | PPDoUntilWhile | PPDoForever;
+export type AnyDoGroup = PPDoFromToBy | PPDoRepeat | PPDoDownThru | PPDoUpThru | PPDoGroup | PPDoWhileUntil | PPDoUntilWhile | PPDoForever;
 
 export interface PPIterate extends PPAstNode {
     type: 'iterate',
@@ -150,7 +181,6 @@ export interface PPLeave extends PPAstNode {
 export type PPStatement =
   | PPLeave
   | PPIterate
-  | PPDoForever
   | PPPliStatement
   | PPEmptyStatement
   | PPActivate
@@ -161,9 +191,7 @@ export type PPStatement =
   | PPAssign
   | PPInclude
   | PPIfStatement
-  | PPDoGroup
-  | PPDoWhileUntil
-  | PPDoUntilWhile
+  | AnyDoGroup
   | PPLabeledStatement
   | PPGoTo
   ;

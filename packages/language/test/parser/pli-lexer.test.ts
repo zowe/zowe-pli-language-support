@@ -298,7 +298,7 @@ describe("PL/1 Lexer", () => {
     test('IF-THEN-ELSE with DO group', () => {
         expect(tokenize(`
             %A = 123;
-            %IF 1 %THEN %DO
+            %IF 1 %THEN %DO;
               %A = %A + 1;
               %A = %A + 2;
             %END;
@@ -490,7 +490,7 @@ describe("PL/1 Lexer", () => {
         expect(tokenize(`
             %declare A fixed;
             %A = 3;
-            %myLoop: DO
+            %myLoop: DO;
                 %A = %A - 1;
                 %IF %A <> 0 %THEN %GO %TO myLoop;
                 DCL X%A FIXED;

@@ -15,7 +15,7 @@ export interface PreprocessorParserState {
     get last(): IToken | undefined;
     get eof(): boolean;
     canConsume(...tokenType: TokenType[]): boolean;
-    tryConsume(tokenType: TokenType): boolean;
+    tryConsume(...tokenTypes: TokenType[]): boolean;
     consume(tokenType: TokenType): IToken;
     consumeUntil(predicate: (token: IToken) => boolean): IToken[];
     advanceLines(lineCount: number): void;
@@ -125,11 +125,11 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
         return this.location.some(l => l === 'in-procedure');
     }
 
-    tryConsume(tokenType: TokenType): boolean {
-        if (!this.canConsume(tokenType)) {
+    tryConsume(...tokenTypes: TokenType[]): boolean {
+        if (!this.canConsume(...tokenTypes)) {
             return false;
         }
-        this.index++;
+        this.index += tokenTypes.length;
         return true;
     }
 
