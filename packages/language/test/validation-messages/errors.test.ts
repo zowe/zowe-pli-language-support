@@ -11,7 +11,7 @@
 
 import { test } from "vitest";
 
-test('TODO', () => {});
+test("TODO", () => {});
 
 // import { EmptyFileSystem } from "langium";
 // import { expectIssue, parseHelper } from "langium/test";
@@ -35,7 +35,7 @@ test('TODO', () => {});
 //       async (upperBound) => {
 //         const document = await parse(`
 //                 TEST: PROCEDURE OPTIONS(MAIN) REORDER;
-//                 dcl x(${upperBound}) fixed bin;    
+//                 dcl x(${upperBound}) fixed bin;
 //                 END TEST;
 //             `);
 //         const diagnostics = document.diagnostics ?? [];

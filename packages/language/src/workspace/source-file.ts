@@ -20,85 +20,86 @@ import { Diagnostic, diagnosticToLSP } from "../language-server/types.js";
 import { lifecycle } from "./lifecycle.js";
 
 export interface SourceFile {
-    uri: URI;
-    ast: PliProgram;
-    tokens: IToken[];
-    symbols: SymbolTable;
-    references: ReferencesCache
-    diagnostics: SourceFileDiagnostics;
+  uri: URI;
+  ast: PliProgram;
+  tokens: IToken[];
+  symbols: SymbolTable;
+  references: ReferencesCache;
+  diagnostics: SourceFileDiagnostics;
 }
 
 export interface SourceFileDiagnostics {
-    lexer: Diagnostic[];
-    parser: Diagnostic[];
-    linking: Diagnostic[];
-    validation: Diagnostic[];
+  lexer: Diagnostic[];
+  parser: Diagnostic[];
+  linking: Diagnostic[];
+  validation: Diagnostic[];
 }
 
 export function collectDiagnostics(sourceFile: SourceFile): Diagnostic[] {
-    return [
-        ...sourceFile.diagnostics.lexer,
-        ...sourceFile.diagnostics.parser,
-        ...sourceFile.diagnostics.linking,
-        ...sourceFile.diagnostics.validation
-    ];
+  return [
+    ...sourceFile.diagnostics.lexer,
+    ...sourceFile.diagnostics.parser,
+    ...sourceFile.diagnostics.linking,
+    ...sourceFile.diagnostics.validation,
+  ];
 }
 
 export function createSourceFile(uri: URI): SourceFile {
-    return {
-        uri,
-        ast: {
-            kind: SyntaxKind.PliProgram,
-            container: null,
-            statements: []
-        },
-        tokens: [],
-        symbols: new SymbolTable(),
-        references: new ReferencesCache(),
-        diagnostics: {
-            lexer: [],
-            parser: [],
-            linking: [],
-            validation: []
-        }
-    }
+  return {
+    uri,
+    ast: {
+      kind: SyntaxKind.PliProgram,
+      container: null,
+      statements: [],
+    },
+    tokens: [],
+    symbols: new SymbolTable(),
+    references: new ReferencesCache(),
+    diagnostics: {
+      lexer: [],
+      parser: [],
+      linking: [],
+      validation: [],
+    },
+  };
 }
 
 export class SourceFileHandler {
+  private sourceFiles: Map<string, SourceFile> = new Map();
 
-    private sourceFiles: Map<string, SourceFile> = new Map();
+  getSourceFile(uri: URI): SourceFile | undefined {
+    return this.sourceFiles.get(uri.toString());
+  }
 
-    getSourceFile(uri: URI): SourceFile | undefined {
-        return this.sourceFiles.get(uri.toString());
-    }
+  getOrCreateSourceFile(uri: URI): SourceFile {
+    return this.sourceFiles.get(uri.toString()) || this.createSourceFile(uri);
+  }
 
-    getOrCreateSourceFile(uri: URI): SourceFile {
-        return this.sourceFiles.get(uri.toString()) || this.createSourceFile(uri);
-    }
+  createSourceFile(uri: URI): SourceFile {
+    const sourceFile = createSourceFile(uri);
+    this.sourceFiles.set(uri.toString(), sourceFile);
+    return sourceFile;
+  }
 
-    createSourceFile(uri: URI): SourceFile {
-        const sourceFile = createSourceFile(uri);
-        this.sourceFiles.set(uri.toString(), sourceFile);
-        return sourceFile;
-    }
+  deleteSourceFile(uri: URI): boolean {
+    return this.sourceFiles.delete(uri.toString());
+  }
 
-    deleteSourceFile(uri: URI): boolean {
-        return this.sourceFiles.delete(uri.toString());
-    }
-
-    listen(connection: Connection): void {
-        const textDocuments = TextDocuments;
-        textDocuments.listen(connection);
-        textDocuments.onDidChangeContent(event => {
-            const sourceFile = this.createSourceFile(URI.parse(event.document.uri));
-            lifecycle(sourceFile, event.document.getText());
-            connection.sendDiagnostics({
-                uri: event.document.uri,
-                diagnostics: collectDiagnostics(sourceFile).map(d => diagnosticToLSP(event.document, d))
-            });
-        });
-        textDocuments.onDidClose(event => {
-            this.sourceFiles.delete(event.document.uri);
-        });
-    }
+  listen(connection: Connection): void {
+    const textDocuments = TextDocuments;
+    textDocuments.listen(connection);
+    textDocuments.onDidChangeContent((event) => {
+      const sourceFile = this.createSourceFile(URI.parse(event.document.uri));
+      lifecycle(sourceFile, event.document.getText());
+      connection.sendDiagnostics({
+        uri: event.document.uri,
+        diagnostics: collectDiagnostics(sourceFile).map((d) =>
+          diagnosticToLSP(event.document, d),
+        ),
+      });
+    });
+    textDocuments.onDidClose((event) => {
+      this.sourceFiles.delete(event.document.uri);
+    });
+  }
 }

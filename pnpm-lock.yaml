@@ -44,9 +44,6 @@ importers:
       chevrotain:
         specifier: ^11.0.3
         version: 11.0.3
-      langium:
-        specifier: ~3.4.0
-        version: 3.4.0
       vscode-languageserver:
         specifier: ~9.0.1
         version: 9.0.1

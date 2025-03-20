@@ -11,7 +11,7 @@
 
 import { test } from "vitest";
 
-test('TODO', () => {});
+test("TODO", () => {});
 
 // import { beforeAll, describe, expect, test } from "vitest";
 // import { EmptyFileSystem, type LangiumDocument } from "langium";
@@ -60,9 +60,9 @@ test('TODO', () => {});
 //   MYPROC: PROCEDURE OPTIONS (MAIN);
 //   DCL TRUE BIT(1) INIT(1);
 //   DCL FALSE BIT(1) INIT(0);
-//   DCL OR_VALUE; 
+//   DCL OR_VALUE;
 //   OR_VALUE = TRUE | FALSE;
-//   DCL NOT_VALUE;  
+//   DCL NOT_VALUE;
 //   END MYPROG;
 //     `);
 

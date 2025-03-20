@@ -177,7 +177,7 @@ DefaultAttributeExpression: items+=DefaultAttributeExpressionNot ((operators+=('
 DefaultAttributeExpressionNot: (not?='NOT')? value=DefaultAttribute;
 
 DefaultAttribute returns string:
-    'ABNORMAL' | 'ALIGNED' | 'AREA' | 'ASSIGNABLE' | 'AUTOMATIC' 
+    'ABNORMAL' | 'ALIGNED' | 'AREA' | 'ASSIGNABLE' | 'AUTOMATIC' | 'AUTO'
     | 'BACKWARDS' | 'BASED' | 'BIT' | 'BUFFERED' | 'BUILTIN' | 'BYADDR' | 'BYVALUE' | 'BIN' | 'BINARY'
     | 'CHARACTER' | 'CHAR' | 'COMPLEX' | 'CONDITION' | 'CONNECTED' | 'CONSTANT' | 'CONTROLLED' | 'CTL'
     | 'DECIMAL' | 'DEC' | 'DIMACROSS'

@@ -18,61 +18,59 @@ import { rangeToLSP } from "./types";
 import { referencesRequest } from "./references-request";
 
 export function startLanguageServer(connection: Connection): void {
-    const sourceFileHandler = new SourceFileHandler();
-    sourceFileHandler.listen(connection);
-    connection.onInitialize(params => {
+  const sourceFileHandler = new SourceFileHandler();
+  sourceFileHandler.listen(connection);
+  connection.onInitialize((params) => {
+    return {
+      capabilities: {
+        workspace: {
+          workspaceFolders: {
+            supported: true,
+          },
+          fileOperations: {},
+        },
+        textDocumentSync: {
+          change: TextDocumentSyncKind.Incremental,
+          openClose: true,
+        },
+        definitionProvider: true,
+        referencesProvider: true,
+      },
+    };
+  });
+  connection.onDefinition((params) => {
+    const uri = params.textDocument.uri;
+    const position = params.position;
+    const textDocument = TextDocuments.get(uri);
+    const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
+    if (textDocument && sourceFile) {
+      const offset = textDocument.offsetAt(position);
+      const definition = definitionRequest(sourceFile, offset);
+      return definition.map((def) => {
         return {
-            capabilities: {
-                workspace: {
-                    workspaceFolders: {
-                        supported: true
-                    },
-                    fileOperations: {
-
-                    }
-                },
-                textDocumentSync: {
-                    change: TextDocumentSyncKind.Incremental,
-                    openClose: true
-                },
-                definitionProvider: true,
-                referencesProvider: true
-            }
-        }
-    });
-    connection.onDefinition((params) => {
-        const uri = params.textDocument.uri;
-        const position = params.position;
-        const textDocument = TextDocuments.get(uri);
-        const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
-        if (textDocument && sourceFile) {
-            const offset = textDocument.offsetAt(position);
-            const definition = definitionRequest(sourceFile, offset);
-            return definition.map(def => {
-                return {
-                    uri: def.uri,
-                    range: rangeToLSP(textDocument, def.range)
-                }
-            });
-        }
-        return [];
-    });
-    connection.onReferences((params) => {
-        const uri = params.textDocument.uri;
-        const position = params.position;
-        const textDocument = TextDocuments.get(uri);
-        const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
-        if (textDocument && sourceFile) {
-            const offset = textDocument.offsetAt(position);
-            const definition = referencesRequest(sourceFile, offset);
-            return definition.map(def => {
-                return {
-                    uri: def.uri,
-                    range: rangeToLSP(textDocument, def.range)
-                }
-            });
-        }
-        return [];
-    })
-    connection.listen();
+          uri: def.uri,
+          range: rangeToLSP(textDocument, def.range),
+        };
+      });
+    }
+    return [];
+  });
+  connection.onReferences((params) => {
+    const uri = params.textDocument.uri;
+    const position = params.position;
+    const textDocument = TextDocuments.get(uri);
+    const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
+    if (textDocument && sourceFile) {
+      const offset = textDocument.offsetAt(position);
+      const definition = referencesRequest(sourceFile, offset);
+      return definition.map((def) => {
+        return {
+          uri: def.uri,
+          range: rangeToLSP(textDocument, def.range),
+        };
+      });
+    }
+    return [];
+  });
+  connection.listen();
 }

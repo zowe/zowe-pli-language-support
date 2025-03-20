@@ -13,41 +13,49 @@ import { SourceFile } from "../workspace/source-file";
 import { binaryTokenSearch } from "../utils/search";
 import { TokenPayload } from "../parser/abstract-parser";
 import { Location, tokenToRange } from "./types";
-import { getNameToken, getReference, isNameToken, isReferenceToken } from "../linking/tokens";
+import {
+  getNameToken,
+  getReference,
+  isNameToken,
+  isReferenceToken,
+} from "../linking/tokens";
 
-export function referencesRequest(sourceFile: SourceFile, offset: number): Location[] {
-    const token = binaryTokenSearch(sourceFile.tokens, offset);
-    const payload = token?.payload as TokenPayload;
-    if (!payload) {
-        return [];
+export function referencesRequest(
+  sourceFile: SourceFile,
+  offset: number,
+): Location[] {
+  const token = binaryTokenSearch(sourceFile.tokens, offset);
+  const payload = token?.payload as TokenPayload;
+  if (!payload) {
+    return [];
+  }
+  let element = payload.element;
+  if (isReferenceToken(payload.kind)) {
+    // Find the reference beloging to the token
+    const ref = getReference(payload.element);
+    if (ref && ref.node) {
+      element = ref.node;
+    } else {
+      return [];
     }
-    let element = payload.element;
-    if (isReferenceToken(payload.kind)) {
-        // Find the reference beloging to the token
-        const ref = getReference(payload.element);
-        if (ref && ref.node) {
-            element = ref.node;
-        } else {
-            return [];
-        }
-    } else if (!isNameToken(payload.kind)) {
-        // Not a reference or a name token
-        return [];
-    }
-    const reverseReferences = sourceFile.references.findReferences(element);
-    const locations: Location[] = [];
-    const nameToken = getNameToken(element);
-    if (nameToken) {
-        locations.push({
-            uri: sourceFile.uri.toString(),
-            range: tokenToRange(nameToken)
-        })
-    }
-    for (const ref of reverseReferences) {
-        locations.push({
-            uri: payload.uri ?? sourceFile.uri.toString(),
-            range: tokenToRange(ref.token)
-        });
-    }
-    return locations;
+  } else if (!isNameToken(payload.kind)) {
+    // Not a reference or a name token
+    return [];
+  }
+  const reverseReferences = sourceFile.references.findReferences(element);
+  const locations: Location[] = [];
+  const nameToken = getNameToken(element);
+  if (nameToken) {
+    locations.push({
+      uri: sourceFile.uri.toString(),
+      range: tokenToRange(nameToken),
+    });
+  }
+  for (const ref of reverseReferences) {
+    locations.push({
+      uri: payload.uri ?? sourceFile.uri.toString(),
+      range: tokenToRange(ref.token),
+    });
+  }
+  return locations;
 }

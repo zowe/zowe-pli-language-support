@@ -11,7 +11,7 @@
 
 import { test } from "vitest";
 
-test('TODO', () => {});
+test("TODO", () => {});
 
 // import { beforeAll, describe, test } from "vitest";
 // import { EmptyFileSystem } from "langium";
@@ -171,7 +171,7 @@ test('TODO', () => {});
 //       test("Must find declaration in SELECT/WHEN construct", async () => {
 //         // Taken from code_samples/PLI0001.pli
 //         const text = `
-//  SELECT (123); 
+//  SELECT (123);
 //     WHEN (123)
 //     DO;
 //         DCL <|BFSTRING|> CHAR(255);
@@ -233,7 +233,7 @@ test('TODO', () => {});
 //         2  NON_ARRAY_ENTRY,
 //            3  NAME                          CHAR(32) VARYING,
 //            3  TYPE#                         CHAR(8);
-                     
+
 //  PUT (<|>TWO_DIM_TABLE);
 //  PUT (TWO_DIM_TABLE.<|>TWO_DIM_TABLE_ENTRY);
 //  PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|>TYPE#);`;
