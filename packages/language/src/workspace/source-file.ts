@@ -22,7 +22,7 @@ import { lifecycle } from "./lifecycle.js";
 /**
  * A source file is a representation of a PL/I source file in the language server.
  * It contains all information about the source file.
- * 
+ *
  * Note that the source file is not a representation of the file on disk, but rather
  * a representation of the file once all of its macros have been expanded.
  * This means in particular that `%INCLUDE` statements have been resolved.
