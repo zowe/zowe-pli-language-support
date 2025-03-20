@@ -16,6 +16,7 @@ import {
   ParserMethod,
   SubruleMethodOpts,
   IToken,
+  IOrAlt,
 } from "chevrotain";
 import { LLStarLookaheadStrategy } from "chevrotain-allstar";
 import type { CstNodeKind } from "../syntax-tree/cst";
@@ -93,6 +94,27 @@ export class AbstractParser extends EmbeddedActionsParser {
         element = this.constructBinaryExpression(element);
       }
       return element;
+    });
+  }
+
+  protected OR_RULE<T>(
+    name: string,
+    rules: () => ParserMethod<any, any>[],
+  ): ParserMethod<any, T> {
+    let alts: IOrAlt<any>[] | undefined;
+    return this.RULE<() => T>(name, () => {
+      this.push({});
+      this.OR(
+        alts ??
+          (alts = rules().map((rule, idx) => ({
+            ALT: () => {
+              this.subrule_assign(idx, rule, {
+                assign: (result) => this.replace(result),
+              });
+            },
+          }))),
+      );
+      return this.pop();
     });
   }
 

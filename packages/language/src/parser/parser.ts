@@ -897,562 +897,69 @@ export class PliParser extends AbstractParser {
     return this.pop();
   });
 
-  Unit = this.RULE("Unit", () => {
-    this.push({});
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DeclareStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.AllocateStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.AssertStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.AttachStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.BeginStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.CallStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.CancelThreadStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.CloseStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DefaultStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DefineAliasStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DefineOrdinalStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DefineStructureStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DelayStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DeleteStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DetachStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DisplayStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DoStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.EntryStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ExecStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ExitStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.FetchStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.FlushStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.FormatStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.FreeStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.GetStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.GoToStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.IfStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.IncludeDirective, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.IterateStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.LeaveStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.LineDirective, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.LocateStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.NoPrintDirective, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.NoteDirective, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.NullStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.OnStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.OpenStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.PageDirective, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.PopDirective, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.PrintDirective, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ProcessDirective, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ProcincDirective, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.PushDirective, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.PutStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.QualifyStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ReadStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ReinitStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ReleaseStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ResignalStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ReturnStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.RevertStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.RewriteStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.SelectStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.SignalStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.SkipDirective, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.StopStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.WaitStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.WriteStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ProcedureStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.Package, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.AssignmentStatement, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-    ]);
-
-    return this.pop();
-  });
+  Unit = this.OR_RULE<ast.Unit>("Unit", () => [
+    this.DeclareStatement,
+    this.AllocateStatement,
+    this.AssertStatement,
+    this.AttachStatement,
+    this.BeginStatement,
+    this.CallStatement,
+    this.CancelThreadStatement,
+    this.CloseStatement,
+    this.DefaultStatement,
+    this.DefineAliasStatement,
+    this.DefineOrdinalStatement,
+    this.DefineStructureStatement,
+    this.DelayStatement,
+    this.DeleteStatement,
+    this.DetachStatement,
+    this.DisplayStatement,
+    this.DoStatement,
+    this.EntryStatement,
+    this.ExecStatement,
+    this.ExitStatement,
+    this.FetchStatement,
+    this.FlushStatement,
+    this.FormatStatement,
+    this.FreeStatement,
+    this.GetStatement,
+    this.GoToStatement,
+    this.IfStatement,
+    this.IncludeDirective,
+    this.IterateStatement,
+    this.LeaveStatement,
+    this.LineDirective,
+    this.LocateStatement,
+    this.NoPrintDirective,
+    this.NoteDirective,
+    this.NullStatement,
+    this.OnStatement,
+    this.OpenStatement,
+    this.PageDirective,
+    this.PopDirective,
+    this.PrintDirective,
+    this.ProcessDirective,
+    this.ProcincDirective,
+    this.PushDirective,
+    this.PutStatement,
+    this.QualifyStatement,
+    this.ReadStatement,
+    this.ReinitStatement,
+    this.ReleaseStatement,
+    this.ResignalStatement,
+    this.ReturnStatement,
+    this.RevertStatement,
+    this.RewriteStatement,
+    this.SelectStatement,
+    this.SignalStatement,
+    this.SkipDirective,
+    this.StopStatement,
+    this.WaitStatement,
+    this.WriteStatement,
+    this.ProcedureStatement,
+    this.Package,
+    this.AssignmentStatement,
+  ]);
 
   private createAllocateStatement(): ast.AllocateStatement {
     return {
@@ -1532,59 +1039,17 @@ export class PliParser extends AbstractParser {
     return this.pop();
   });
 
-  AllocateAttribute = this.RULE("AllocateAttribute", () => {
-    this.push({});
+  AllocateAttribute = this.OR_RULE<ast.AllocateAttribute>(
+    "AllocateAttribute",
+    () => [
+      this.AllocateDimension,
+      this.AllocateType,
+      this.AllocateLocationReferenceIn,
+      this.AllocateLocationReferenceSet,
+      this.InitialAttribute,
+    ],
+  );
 
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.AllocateDimension, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.AllocateType, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.AllocateLocationReferenceIn, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.AllocateLocationReferenceSet, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.InitialAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-    ]);
-
-    return this.pop<ast.AllocateAttribute>();
-  });
   private createAllocateLocationReferenceIn(): ast.AllocateLocationReferenceIn {
     return {
       kind: ast.SyntaxKind.AllocateLocationReferenceIn,
@@ -3399,32 +2864,11 @@ export class PliParser extends AbstractParser {
     return this.pop();
   });
 
-  DoType2 = this.RULE("DoType2", () => {
-    this.push({});
+  DoType2 = this.OR_RULE<ast.DoType2>("DoType2", () => [
+    this.DoWhile,
+    this.DoUntil,
+  ]);
 
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DoWhile, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DoUntil, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-    ]);
-
-    return this.pop();
-  });
   private createDoWhile(): ast.DoWhile {
     return {
       kind: ast.SyntaxKind.DoWhile,
@@ -4090,149 +3534,23 @@ export class PliParser extends AbstractParser {
     return this.pop();
   });
 
-  FormatItem = this.RULE("FormatItem", () => {
-    this.push({});
-
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.AFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.BFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.CFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.EFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.FFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.PFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ColumnFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.GFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.LFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.LineFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.PageFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.RFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.SkipFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.VFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.XFormatItem, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-    ]);
-
-    return this.pop();
-  });
+  FormatItem = this.OR_RULE<ast.FormatItem>("FormatItem", () => [
+    this.AFormatItem,
+    this.BFormatItem,
+    this.CFormatItem,
+    this.EFormatItem,
+    this.FFormatItem,
+    this.PFormatItem,
+    this.ColumnFormatItem,
+    this.GFormatItem,
+    this.LFormatItem,
+    this.LineFormatItem,
+    this.PageFormatItem,
+    this.RFormatItem,
+    this.SkipFormatItem,
+    this.VFormatItem,
+    this.XFormatItem,
+  ]);
 
   AFormatItem = this.RULE("AFormatItem", () => {
     let element = this.push(ast.createAFormatItem());
@@ -5444,41 +4762,12 @@ export class PliParser extends AbstractParser {
     return this.pop();
   });
 
-  Condition = this.RULE("Condition", () => {
-    this.push({});
+  Condition = this.OR_RULE<ast.Condition>("Condition", () => [
+    this.KeywordCondition,
+    this.NamedCondition,
+    this.FileReferenceCondition,
+  ]);
 
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.KeywordCondition, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.NamedCondition, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.FileReferenceCondition, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-    ]);
-
-    return this.pop();
-  });
   private createKeywordCondition(): ast.KeywordCondition {
     return {
       kind: ast.SyntaxKind.KeywordCondition,
@@ -7474,329 +6763,52 @@ export class PliParser extends AbstractParser {
     return this.pop();
   });
 
-  DefaultDeclarationAttribute = this.RULE("DefaultDeclarationAttribute", () => {
-    this.push({});
+  DefaultDeclarationAttribute = this.OR_RULE<ast.DefaultDeclarationAttribute>(
+    "DefaultDeclarationAttribute",
+    () => [
+      this.InitialAttribute,
+      this.DateAttribute,
+      this.HandleAttribute,
+      this.DefinedAttribute,
+      this.PictureAttribute,
+      this.EnvironmentAttribute,
+      this.DimensionsDataAttribute,
+      this.DefaultValueAttribute,
+      this.ValueListFromAttribute,
+      this.ValueListAttribute,
+      this.ValueRangeAttribute,
+      this.ReturnsAttribute,
+      this.ComputationDataAttribute,
+      this.EntryAttribute,
+      this.LikeAttribute,
+      this.TypeAttribute,
+      this.OrdinalTypeAttribute,
+    ],
+  );
 
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.InitialAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DateAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.HandleAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DefinedAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.PictureAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.EnvironmentAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DimensionsDataAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DefaultValueAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ValueListFromAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ValueListAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ValueRangeAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ReturnsAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ComputationDataAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.EntryAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.LikeAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.TypeAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.OrdinalTypeAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-    ]);
+  DeclarationAttribute = this.OR_RULE<ast.DeclarationAttribute>(
+    "DeclarationAttribute",
+    () => [
+      this.InitialAttribute,
+      this.DateAttribute,
+      this.HandleAttribute,
+      this.DefinedAttribute,
+      this.PictureAttribute,
+      this.EnvironmentAttribute,
+      this.DimensionsDataAttribute,
+      this.ValueAttribute,
+      this.ValueListFromAttribute,
+      this.ValueListAttribute,
+      this.ValueRangeAttribute,
+      this.ReturnsAttribute,
+      this.ComputationDataAttribute,
+      this.EntryAttribute,
+      this.LikeAttribute,
+      this.TypeAttribute,
+      this.OrdinalTypeAttribute,
+    ],
+  );
 
-    return this.pop();
-  });
-
-  DeclarationAttribute = this.RULE("DeclarationAttribute", () => {
-    this.push({});
-
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.InitialAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DateAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.HandleAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DefinedAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.PictureAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.EnvironmentAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DimensionsDataAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ValueAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ValueListFromAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ValueListAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ValueRangeAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ReturnsAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ComputationDataAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.EntryAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.LikeAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.TypeAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.OrdinalTypeAttribute, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-    ]);
-
-    return this.pop();
-  });
   private createDateAttribute(): ast.DateAttribute {
     return {
       kind: ast.SyntaxKind.DateAttribute,
@@ -9184,50 +8196,13 @@ export class PliParser extends AbstractParser {
 
   Expression = this.BinaryExpression;
 
-  PrimaryExpression = this.RULE("PrimaryExpression", () => {
-    this.push({});
+  PrimaryExpression = this.OR_RULE<ast.Expression>("PrimaryExpression", () => [
+    this.Literal,
+    this.ParenthesizedExpression,
+    this.UnaryExpression,
+    this.LocatorCall,
+  ]);
 
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.Literal, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ParenthesizedExpression, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.UnaryExpression, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.LocatorCall, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-    ]);
-
-    return this.pop<ast.Expression>();
-  });
   private createParenthesizedExpression(): ast.Parenthesis {
     return {
       kind: ast.SyntaxKind.Parenthesis,
@@ -9522,32 +8497,11 @@ export class PliParser extends AbstractParser {
     return this.pop();
   });
 
-  LiteralValue = this.RULE("LiteralValue", () => {
-    this.push({});
+  LiteralValue = this.OR_RULE<ast.LiteralValue>("LiteralValue", () => [
+    this.StringLiteral,
+    this.NumberLiteral,
+  ]);
 
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.StringLiteral, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.NumberLiteral, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-    ]);
-
-    return this.pop();
-  });
   private createStringLiteral(): ast.StringLiteral {
     return {
       kind: ast.SyntaxKind.StringLiteral,
