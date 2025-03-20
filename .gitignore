@@ -11,3 +11,4 @@ out/
 *.tsbuildinfo
 *.vsix
 **/*.DS_Store
+scripts/*.html

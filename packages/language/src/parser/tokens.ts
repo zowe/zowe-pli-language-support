@@ -617,12 +617,12 @@ export const DOWNTHRU = createToken({
   longer_alt: ID,
 });
 export const PercentINCLUDE = createToken({
-  name: "PercentINCLUDE",
+  name: "%INCLUDE",
   pattern: /%(X)?INCLUDE/i,
   categories: [ID],
 });
 export const PercentNOPRINT = createToken({
-  name: "PercentNOPRINT",
+  name: "%NOPRINT",
   pattern: /%NOPRINT/i,
   categories: [ID],
 });
@@ -1129,7 +1129,7 @@ export const DIRECT = createToken({
   longer_alt: ID,
 });
 export const PercentPRINT = createToken({
-  name: "PercentPRINT",
+  name: "%PRINT",
   pattern: /%PRINT/i,
   categories: [ID],
 });
@@ -1362,12 +1362,12 @@ export const LEAVE = createToken({
   longer_alt: ID,
 });
 export const PercentLINE = createToken({
-  name: "PercentLINE",
+  name: "%LINE",
   pattern: /%LINE/i,
   categories: [ID],
 });
 export const PercentNOTE = createToken({
-  name: "PercentNOTE",
+  name: "%NOTE",
   pattern: /%NOTE/i,
   categories: [ID],
 });
@@ -1378,12 +1378,12 @@ export const ERROR = createToken({
   longer_alt: ID,
 });
 export const PercentPAGE = createToken({
-  name: "PercentPAGE",
+  name: "%PAGE",
   pattern: /%PAGE/i,
   categories: [ID],
 });
 export const PercentPUSH = createToken({
-  name: "PercentPUSH",
+  name: "%PUSH",
   pattern: /%PUSH/i,
   categories: [ID],
 });
@@ -1582,7 +1582,7 @@ export const OPEN = createToken({
   longer_alt: ID,
 });
 export const PercentPOP = createToken({
-  name: "PercentPOP",
+  name: "%POP",
   pattern: /%POP/i,
   categories: [ID],
 });
@@ -1671,12 +1671,12 @@ export const BIT = createToken({
   longer_alt: ID,
 });
 export const PipePipeEquals = createToken({
-  name: "PipePipeEquals",
+  name: "||=",
   pattern: "||=",
   categories: [AssignmentOperator],
 });
 export const StarStarEquals = createToken({
-  name: "StarStarEquals",
+  name: "**=",
   pattern: "**=",
   categories: [AssignmentOperator],
 });
@@ -1752,42 +1752,42 @@ export const BY = createToken({
   longer_alt: ID,
 });
 export const PlusEquals = createToken({
-  name: "PlusEquals",
+  name: "+=",
   pattern: "+=",
   categories: [AssignmentOperator],
 });
 export const MinusEquals = createToken({
-  name: "MinusEquals",
+  name: "-=",
   pattern: "-=",
   categories: [AssignmentOperator],
 });
 export const StarEquals = createToken({
-  name: "StarEquals",
+  name: "*=",
   pattern: "*=",
   categories: [AssignmentOperator],
 });
 export const SlashEquals = createToken({
-  name: "SlashEquals",
+  name: "/=",
   pattern: "/=",
   categories: [AssignmentOperator],
 });
 export const PipeEquals = createToken({
-  name: "PipeEquals",
+  name: "|=",
   pattern: "|=",
   categories: [AssignmentOperator],
 });
 export const AmpersandEquals = createToken({
-  name: "AmpersandEquals",
+  name: "&=",
   pattern: "&=",
   categories: [AssignmentOperator],
 });
 export const NotEquals = createToken({
-  name: "NotEquals",
+  name: "^=",
   pattern: /¬=|\^=/,
   categories: [AssignmentOperator, BinaryOperator],
 });
 export const LessThanGreaterThan = createToken({
-  name: "LessThanGreaterThan",
+  name: "<>",
   pattern: "<>",
   categories: [AssignmentOperator],
 });
@@ -1828,75 +1828,75 @@ export const ON = createToken({
   longer_alt: ID,
 });
 export const NotLessThan = createToken({
-  name: "NotLessThan",
+  name: "^<",
   pattern: /¬<|\^</,
   categories: [BinaryOperator],
 });
 export const LessThanEquals = createToken({
-  name: "LessThanEquals",
+  name: "<=",
   pattern: "<=",
   categories: [BinaryOperator],
 });
 export const GreaterThanEquals = createToken({
-  name: "GreaterThanEquals",
+  name: ">=",
   pattern: ">=",
   categories: [BinaryOperator],
 });
 export const NotGreaterThan = createToken({
-  name: "NotGreaterThan",
+  name: "^>",
   pattern: /¬>|\^>/,
   categories: [BinaryOperator],
 });
 export const PipePipe = createToken({
-  name: "PipePipe",
+  name: "||",
   pattern: "||",
   categories: [BinaryOperator],
 });
 export const ExclamationMarkExclamationMark = createToken({
-  name: "ExclamationMarkExclamationMark",
+  name: "!!",
   pattern: "!!",
   categories: [BinaryOperator],
 });
 export const StarStar = createToken({
-  name: "StarStar",
+  name: "**",
   pattern: "**",
   categories: [BinaryOperator],
 });
 export const MinusGreaterThan = createToken({
-  name: "MinusGreaterThan",
+  name: "->",
   pattern: "->",
 });
 export const EqualsGreaterThan = createToken({
-  name: "EqualsGreaterThan",
+  name: "=>",
   pattern: "=>",
 });
 export const Semicolon = createToken({
-  name: "Semicolon",
+  name: ";",
   pattern: ";",
 });
 export const OpenParen = createToken({
-  name: "OpenParen",
+  name: "(",
   pattern: "(",
 });
 export const CloseParen = createToken({
-  name: "CloseParen",
+  name: ")",
   pattern: ")",
 });
 export const Colon = createToken({
-  name: "Colon",
+  name: ":",
   pattern: ":",
 });
 export const Comma = createToken({
-  name: "Comma",
+  name: ",",
   pattern: ",",
 });
 export const Star = createToken({
-  name: "Star",
+  name: "*",
   pattern: "*",
   categories: [BinaryOperator],
 });
 export const Equals = createToken({
-  name: "Equals",
+  name: "=",
   pattern: "=",
   categories: [BinaryOperator, AssignmentOperator],
 });
@@ -1967,48 +1967,48 @@ export const X = createToken({
   longer_alt: ID,
 });
 export const Pipe = createToken({
-  name: "Pipe",
+  name: "|",
   pattern: "|",
   categories: [BinaryOperator],
 });
 export const Not = createToken({
-  name: "Not",
+  name: "^",
   pattern: /¬|\^/,
   categories: [BinaryOperator, UnaryOperator],
 });
 export const Ampersand = createToken({
-  name: "Ampersand",
+  name: "&",
   pattern: "&",
   categories: [BinaryOperator],
 });
 export const LessThan = createToken({
-  name: "LessThan",
+  name: "<",
   pattern: "<",
   categories: [BinaryOperator],
 });
 export const GreaterThan = createToken({
-  name: "GreaterThan",
+  name: ">",
   pattern: ">",
   categories: [BinaryOperator],
 });
 export const Plus = createToken({
-  name: "Plus",
+  name: "+",
   pattern: "+",
   categories: [BinaryOperator, UnaryOperator],
 });
 export const Minus = createToken({
-  name: "Minus",
+  name: "-",
   pattern: "-",
   categories: [BinaryOperator, UnaryOperator],
 });
 export const Slash = createToken({
-  name: "Slash",
+  name: "/",
   pattern: "/",
   categories: [BinaryOperator],
   longer_alt: [ML_COMMENT, SL_COMMENT],
 });
 export const Dot = createToken({
-  name: "Dot",
+  name: ".",
   pattern: ".",
 });
 
