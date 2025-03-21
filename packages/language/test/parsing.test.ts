@@ -756,11 +756,24 @@ describe("PL/I Parsing tests", () => {
 
   test("align in returns attributes is valid as well", () => {
     const doc = parseStmts(`
- dcl my_external ext('my_external')
+      dcl my_external ext('my_external')
         entry( 
             returns ( aligned byvalue bin(7) fixed )
         );
         `);
+    assertNoParseErrors(doc);
+  });
+
+  test("Supports GENERIC attribute", () => {
+    // From page 122 of the Enterprise PL/I for z/OS Language Reference
+    const doc = parseStmts(`
+      declare Calc generic (
+        Fxdcal when (fixed,fixed),
+        Flocal when (float,float),
+        Mixed when (float,fixed),
+        Error otherwise
+      );
+    `);
     assertNoParseErrors(doc);
   });
 });

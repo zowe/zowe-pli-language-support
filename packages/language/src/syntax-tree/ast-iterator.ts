@@ -472,6 +472,22 @@ export function forEachNode(
         action(node.label);
       }
       break;
+    case SyntaxKind.GenericAttribute:
+      node.references.forEach(action);
+      break;
+    case SyntaxKind.GenericReference:
+      if (node.entry) {
+        action(node.entry);
+      }
+      for (const descriptor of node.descriptors) {
+        if (descriptor !== "*") {
+          action(descriptor);
+        }
+      }
+      break;
+    case SyntaxKind.GenericDescriptor:
+      node.attributes.forEach(action);
+      break;
     case SyntaxKind.HandleAttribute:
       break;
     case SyntaxKind.IfStatement:

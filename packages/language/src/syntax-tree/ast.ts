@@ -97,6 +97,10 @@ export enum SyntaxKind {
   GetStringStatement,
   GFormatItem,
   GoToStatement,
+  GenericAttribute,
+  GenericReference,
+  GenericOtherwiseReference,
+  GenericDescriptor,
   HandleAttribute,
   IfStatement,
   IncludeDirective,
@@ -224,6 +228,8 @@ export function createReference<T extends SyntaxNode>(
   };
 }
 
+export type Wildcard<T> = T | "*";
+
 export type SyntaxNode =
   | AFormatItem
   | AllocateDimension
@@ -310,6 +316,9 @@ export type SyntaxNode =
   | GetStringStatement
   | GFormatItem
   | GoToStatement
+  | GenericAttribute
+  | GenericReference
+  | GenericDescriptor
   | HandleAttribute
   | IfStatement
   | IncludeDirective
@@ -440,9 +449,10 @@ export type Condition =
   | KeywordCondition
   | NamedCondition;
 export type DataAttributeType = DefaultAttribute;
-export type DeclarationAttribute =
+export type DefaultDeclarationAttribute =
   | ComputationDataAttribute
   | DateAttribute
+  | DefaultValueAttribute
   | DefinedAttribute
   | DimensionsDataAttribute
   | EntryAttribute
@@ -454,10 +464,15 @@ export type DeclarationAttribute =
   | PictureAttribute
   | ReturnsAttribute
   | TypeAttribute
-  | ValueAttribute
   | ValueListAttribute
   | ValueListFromAttribute
-  | ValueRangeAttribute;
+  | ValueRangeAttribute
+  | GenericAttribute;
+/**
+ * A list of all the possible attributes that can be used in a declaration.
+ * This is essentially a list of all attributes that can be used in a DEFAULT declaration + the VALUE attribute.
+ */
+export type DeclarationAttribute = DefaultDeclarationAttribute | ValueAttribute;
 export type DefaultAttribute =
   | "ABNORMAL"
   | "ALIGNED"
@@ -553,24 +568,6 @@ export type DefaultAttribute =
   | "VARYINGZ"
   | "VARZ"
   | "WIDECHAR";
-export type DefaultDeclarationAttribute =
-  | ComputationDataAttribute
-  | DateAttribute
-  | DefaultValueAttribute
-  | DefinedAttribute
-  | DimensionsDataAttribute
-  | EntryAttribute
-  | EnvironmentAttribute
-  | HandleAttribute
-  | InitialAttribute
-  | LikeAttribute
-  | OrdinalTypeAttribute
-  | PictureAttribute
-  | ReturnsAttribute
-  | TypeAttribute
-  | ValueListAttribute
-  | ValueListFromAttribute
-  | ValueRangeAttribute;
 export type DoType2 = DoUntil | DoWhile;
 export type EntryDescription =
   | EntryParameterDescription
@@ -771,7 +768,7 @@ export interface BinaryExpression extends AstNode {
 }
 export interface Bound extends AstNode {
   kind: SyntaxKind.Bound;
-  expression: "*" | Expression | null;
+  expression: Wildcard<Expression> | null;
   refer: LocatorCall | null;
 }
 export interface CallStatement extends AstNode {
@@ -788,7 +785,7 @@ export interface CFormatItem extends AstNode {
 }
 export interface CloseStatement extends AstNode {
   kind: SyntaxKind.CloseStatement;
-  files: (MemberCall | "*")[];
+  files: Wildcard<MemberCall>[];
 }
 export interface CMPATOptionsItem extends AstNode {
   kind: SyntaxKind.CMPATOptionsItem;
@@ -839,7 +836,7 @@ export interface DateAttribute extends AstNode {
 export interface DeclaredItem extends AstNode {
   kind: SyntaxKind.DeclaredItem;
   level: string | null;
-  element: DeclaredVariable | "*" | null;
+  element: Wildcard<DeclaredVariable> | null;
   attributes: DeclarationAttribute[];
   items: DeclaredItem[];
 }
@@ -880,7 +877,7 @@ export interface DefaultRangeIdentifierItem extends AstNode {
 }
 export interface DefaultRangeIdentifiers extends AstNode {
   kind: SyntaxKind.DefaultRangeIdentifiers;
-  identifiers: ("*" | DefaultRangeIdentifierItem)[];
+  identifiers: Wildcard<DefaultRangeIdentifierItem>[];
 }
 export interface DefaultStatement extends AstNode {
   kind: SyntaxKind.DefaultStatement;
@@ -1084,7 +1081,7 @@ export interface FileReferenceCondition extends AstNode {
 }
 export interface FlushStatement extends AstNode {
   kind: SyntaxKind.FlushStatement;
-  file: LocatorCall | "*" | null;
+  file: Wildcard<LocatorCall> | null;
 }
 export interface FormatList extends AstNode {
   kind: SyntaxKind.FormatList;
@@ -1136,6 +1133,20 @@ export interface GFormatItem extends AstNode {
 export interface GoToStatement extends AstNode {
   kind: SyntaxKind.GoToStatement;
   label: LabelReference | null;
+}
+export interface GenericAttribute extends AstNode {
+  kind: SyntaxKind.GenericAttribute;
+  references: GenericReference[];
+}
+export interface GenericReference extends AstNode {
+  kind: SyntaxKind.GenericReference;
+  entry: ReferenceItem | null;
+  otherwise: boolean;
+  descriptors: Wildcard<GenericDescriptor>[];
+}
+export interface GenericDescriptor extends AstNode {
+  kind: SyntaxKind.GenericDescriptor;
+  attributes: DeclarationAttribute[];
 }
 export interface HandleAttribute extends AstNode {
   kind: SyntaxKind.HandleAttribute;
@@ -1407,7 +1418,7 @@ export interface ProcedureCall extends AstNode {
 }
 export interface ProcedureCallArgs extends AstNode {
   kind: SyntaxKind.ProcedureCallArgs;
-  list: (Expression | "*")[];
+  list: Wildcard<Expression>[];
 }
 export interface ProcedureParameter extends AstNode {
   kind: SyntaxKind.ProcedureParameter;

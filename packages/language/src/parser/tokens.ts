@@ -174,7 +174,7 @@ export const NOCHARGRAPHIC = createToken({
 });
 export const NONASSIGNABLE = createToken({
   name: "NONASSIGNABLE",
-  pattern: /NONASSIGNABLE/i,
+  pattern: /NONASSIGNABLE|NONASGN/i,
   categories: [ID, DefaultAttribute],
   longer_alt: ID,
 });
@@ -801,18 +801,12 @@ export const DECIMAL = createToken({
 export const GENERIC = createToken({
   name: "GENERIC",
   pattern: /GENERIC/i,
-  categories: [ID, DefaultAttribute],
+  categories: [ID],
   longer_alt: ID,
 });
 export const HEXADEC = createToken({
   name: "HEXADEC",
   pattern: /HEXADEC/i,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
-});
-export const NONASGN = createToken({
-  name: "NONASGN",
-  pattern: /NONASGN/i,
   categories: [ID, DefaultAttribute],
   longer_alt: ID,
 });
@@ -2131,7 +2125,6 @@ export const keywords = [
   COMPLEX,
   GENERIC,
   HEXADEC,
-  NONASGN,
   OUTONLY,
   POINTER,
   VARYING,

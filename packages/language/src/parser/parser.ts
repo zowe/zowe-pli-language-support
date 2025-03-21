@@ -16,6 +16,7 @@ import {
 import * as tokens from "./tokens";
 import * as ast from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { ParserMethod } from "chevrotain";
 
 export class PliParser extends AbstractParser {
   constructor() {
@@ -4283,6 +4284,150 @@ export class PliParser extends AbstractParser {
 
     return this.pop();
   });
+
+  private createGenericAttribute(): ast.GenericAttribute {
+    return {
+      kind: ast.SyntaxKind.GenericAttribute,
+      container: null,
+      references: [],
+    };
+  }
+
+  GenericAttribute = this.RULE("GenericAttribute", () => {
+    let element = this.push(this.createGenericAttribute());
+
+    this.CONSUME_ASSIGN(tokens.GENERIC, (token) => {
+      this.tokenPayload(token, element, CstNodeKind.GenericAttribute_GENERIC);
+    });
+    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
+      this.tokenPayload(token, element, CstNodeKind.GenericAttribute_OpenParen);
+    });
+    this.OPTION(() => {
+      this.SUBRULE_ASSIGN1(this.GenericReference, {
+        assign: (result) => {
+          element.references.push(result);
+        },
+      });
+      this.MANY(() => {
+        this.CONSUME_ASSIGN(tokens.Comma, (token) => {
+          this.tokenPayload(token, element, CstNodeKind.GenericAttribute_Comma);
+        });
+        this.SUBRULE_ASSIGN2(this.GenericReference, {
+          assign: (result) => {
+            element.references.push(result);
+          },
+        });
+      });
+    });
+
+    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
+      this.tokenPayload(
+        token,
+        element,
+        CstNodeKind.GenericAttribute_CloseParen,
+      );
+    });
+
+    return this.pop<ast.GenericAttribute>();
+  });
+
+  private createGenericReference(): ast.GenericReference {
+    return {
+      kind: ast.SyntaxKind.GenericReference,
+      container: null,
+      descriptors: [],
+      otherwise: false,
+      entry: null,
+    };
+  }
+
+  GenericReference = this.RULE("GenericReference", () => {
+    let element = this.push(this.createGenericReference());
+
+    this.SUBRULE_ASSIGN(this.ReferenceItem, {
+      assign: (result) => {
+        element.entry = result;
+      },
+    });
+    this.OR([
+      {
+        ALT: () => {
+          this.CONSUME_ASSIGN(tokens.WHEN, (token) => {
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.GenericReference_WHEN,
+            );
+          });
+          this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.GenericReference_OpenParen,
+            );
+          });
+          this.OPTION(() => {
+            this.SUBRULE_ASSIGN(this.GenericDescriptor, {
+              assign: (result) => {
+                element.descriptors.push(result);
+              },
+            });
+          });
+          this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.GenericReference_CloseParen,
+            );
+          });
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME_ASSIGN(tokens.OTHERWISE, (token) => {
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.GenericReference_OTHERWISE,
+            );
+          });
+        },
+      },
+    ]);
+
+    return this.pop<ast.GenericReference>();
+  });
+
+  private createGenericDescriptor(): ast.GenericDescriptor {
+    return {
+      kind: ast.SyntaxKind.GenericDescriptor,
+      container: null,
+      attributes: [],
+    };
+  }
+
+  GenericDescriptor = this.RULE("GenericDescriptor", () => {
+    let element = this.push(this.createGenericDescriptor());
+
+    this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+      assign: (result) => {
+        element.attributes.push(result);
+      },
+    });
+    this.MANY(() => {
+      this.CONSUME_ASSIGN(tokens.Comma, (token) => {
+        this.tokenPayload(token, element, CstNodeKind.GenericDescriptor_Comma);
+      });
+      this.SUBRULE_ASSIGN2(this.DeclarationAttribute, {
+        assign: (result) => {
+          element.attributes.push(result);
+        },
+      });
+    });
+
+    return this.pop<ast.GenericDescriptor>();
+  });
+
   private createIfStatement(): ast.IfStatement {
     return {
       kind: ast.SyntaxKind.IfStatement,
@@ -6763,9 +6908,8 @@ export class PliParser extends AbstractParser {
     return this.pop();
   });
 
-  DefaultDeclarationAttribute = this.OR_RULE<ast.DefaultDeclarationAttribute>(
-    "DefaultDeclarationAttribute",
-    () => [
+  private getDefaultDeclarationAttributes(): ParserMethod<[], any>[] {
+    return [
       this.InitialAttribute,
       this.DateAttribute,
       this.HandleAttribute,
@@ -6783,30 +6927,18 @@ export class PliParser extends AbstractParser {
       this.LikeAttribute,
       this.TypeAttribute,
       this.OrdinalTypeAttribute,
-    ],
+      this.GenericAttribute,
+    ];
+  }
+
+  DefaultDeclarationAttribute = this.OR_RULE<ast.DefaultDeclarationAttribute>(
+    "DefaultDeclarationAttribute",
+    () => this.getDefaultDeclarationAttributes(),
   );
 
   DeclarationAttribute = this.OR_RULE<ast.DeclarationAttribute>(
     "DeclarationAttribute",
-    () => [
-      this.InitialAttribute,
-      this.DateAttribute,
-      this.HandleAttribute,
-      this.DefinedAttribute,
-      this.PictureAttribute,
-      this.EnvironmentAttribute,
-      this.DimensionsDataAttribute,
-      this.ValueAttribute,
-      this.ValueListFromAttribute,
-      this.ValueListAttribute,
-      this.ValueRangeAttribute,
-      this.ReturnsAttribute,
-      this.ComputationDataAttribute,
-      this.EntryAttribute,
-      this.LikeAttribute,
-      this.TypeAttribute,
-      this.OrdinalTypeAttribute,
-    ],
+    () => [...this.getDefaultDeclarationAttributes(), this.ValueAttribute],
   );
 
   private createDateAttribute(): ast.DateAttribute {
@@ -8375,15 +8507,15 @@ export class PliParser extends AbstractParser {
       this.SUBRULE_ASSIGN1(this.ProcedureCallArgs, {
         assign: (result) => {
           element.args1 = result;
-        }
-      })
+        },
+      });
     });
     this.OPTION2(() => {
       this.SUBRULE_ASSIGN2(this.ProcedureCallArgs, {
         assign: (result) => {
           element.args2 = result;
-        }
-      })
+        },
+      });
     });
 
     return this.pop();
@@ -8393,7 +8525,7 @@ export class PliParser extends AbstractParser {
     return {
       kind: ast.SyntaxKind.ProcedureCallArgs,
       container: null,
-      list: []
+      list: [],
     };
   }
 
@@ -8401,7 +8533,11 @@ export class PliParser extends AbstractParser {
     const element = this.push(this.createProcedureCallArgs());
     this.OPTION1(() => {
       this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.ProcedureCallArgs_OpenParen);
+        this.tokenPayload(
+          token,
+          element,
+          CstNodeKind.ProcedureCallArgs_OpenParen,
+        );
       });
       this.OPTION2(() => {
         this.OR1([
@@ -8429,7 +8565,11 @@ export class PliParser extends AbstractParser {
         ]);
         this.MANY1(() => {
           this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.ProcedureCallArgs_Comma);
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.ProcedureCallArgs_Comma,
+            );
           });
           this.OR2([
             {
@@ -8457,7 +8597,11 @@ export class PliParser extends AbstractParser {
         });
       });
       this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.ProcedureCallArgs_CloseParen);
+        this.tokenPayload(
+          token,
+          element,
+          CstNodeKind.ProcedureCallArgs_CloseParen,
+        );
       });
     });
     return this.pop();
