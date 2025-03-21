@@ -444,10 +444,9 @@ export type Condition =
   | KeywordCondition
   | NamedCondition;
 export type DataAttributeType = DefaultAttribute;
-export type DefaultDeclarationAttribute =
+export type CommonDeclarationAttribute =
   | ComputationDataAttribute
   | DateAttribute
-  | DefaultValueAttribute
   | DefinedAttribute
   | DimensionsDataAttribute
   | EntryAttribute
@@ -465,10 +464,17 @@ export type DefaultDeclarationAttribute =
   | GenericAttribute
   | IndForAttribute;
 /**
- * A list of all the possible attributes that can be used in a declaration.
- * This is essentially a list of all attributes that can be used in a DEFAULT declaration + the VALUE attribute.
+ * A list of all the possible attributes that can be used in a defaiöt exüressopm.
+ * This is essentially a list of all attributes that can be used in a common declaration + the DEFAULT VALUE attribute.
  */
-export type DeclarationAttribute = DefaultDeclarationAttribute | ValueAttribute;
+export type DefaultDeclarationAttribute =
+  | CommonDeclarationAttribute
+  | DefaultValueAttribute;
+/**
+ * A list of all the possible attributes that can be used in a declaration.
+ * This is essentially a list of all attributes that can be used in a common declaration + the VALUE attribute.
+ */
+export type DeclarationAttribute = CommonDeclarationAttribute | ValueAttribute;
 export type DefaultAttribute =
   | "ABNORMAL"
   | "ALIGNED"

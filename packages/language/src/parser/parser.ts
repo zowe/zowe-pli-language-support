@@ -6929,7 +6929,7 @@ export class PliParser extends AbstractParser {
     return this.pop<ast.DeclaredVariable>();
   });
 
-  private getDefaultDeclarationAttributes(): ParserMethod<[], any>[] {
+  private getCommonDeclarationAttributes(): ParserMethod<[], any>[] {
     return [
       this.InitialAttribute,
       this.DateAttribute,
@@ -6938,7 +6938,6 @@ export class PliParser extends AbstractParser {
       this.PictureAttribute,
       this.EnvironmentAttribute,
       this.DimensionsDataAttribute,
-      this.DefaultValueAttribute,
       this.ValueListFromAttribute,
       this.ValueListAttribute,
       this.ValueRangeAttribute,
@@ -6949,17 +6948,21 @@ export class PliParser extends AbstractParser {
       this.TypeAttribute,
       this.OrdinalTypeAttribute,
       this.GenericAttribute,
+      this.IndForAttribute,
     ];
   }
 
   DefaultDeclarationAttribute = this.OR_RULE<ast.DefaultDeclarationAttribute>(
     "DefaultDeclarationAttribute",
-    () => this.getDefaultDeclarationAttributes(),
+    () => [
+      ...this.getCommonDeclarationAttributes(),
+      this.DefaultValueAttribute,
+    ],
   );
 
   DeclarationAttribute = this.OR_RULE<ast.DeclarationAttribute>(
     "DeclarationAttribute",
-    () => [...this.getDefaultDeclarationAttributes(), this.ValueAttribute],
+    () => [...this.getCommonDeclarationAttributes(), this.ValueAttribute],
   );
 
   private createDateAttribute(): ast.DateAttribute {
@@ -8499,23 +8502,27 @@ export class PliParser extends AbstractParser {
   ProcedureCall = this.RULE("ProcedureCall", () => {
     let element = this.push(this.createProcedureCall());
 
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
+    this.CONSUME_ASSIGN(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ProcedureCall_ProcedureRef);
       element.procedure = ast.createReference(element, token);
     });
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.ProcedureCallArgs, {
-        assign: (result) => {
-          element.args1 = result;
-        },
-      });
-    });
-    this.OPTION2(() => {
-      this.SUBRULE_ASSIGN2(this.ProcedureCallArgs, {
-        assign: (result) => {
-          element.args2 = result;
-        },
-      });
+    let i = 0;
+    // Use MANY to prevent grammar ambiguity
+    this.MANY({
+      DEF: () => {
+        this.SUBRULE_ASSIGN(this.ProcedureCallArgs, {
+          assign: (result) => {
+            if (i === 0) {
+              element.args1 = result;
+            } else {
+              element.args2 = result;
+            }
+          },
+        });
+        i++;
+      },
+      // Use a gate to prevent parsing this more than twice
+      GATE: () => i < 2,
     });
 
     return this.pop<ast.ProcedureCall>();
