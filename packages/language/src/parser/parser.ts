@@ -8359,7 +8359,8 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.ProcedureCall,
       container: null,
       procedure: null,
-      args: [],
+      args1: null,
+      args2: null,
     };
   }
 
@@ -8370,17 +8371,45 @@ export class PliParser extends AbstractParser {
       this.tokenPayload(token, element, CstNodeKind.ProcedureCall_ProcedureRef);
       element.procedure = ast.createReference(element, token);
     });
+    this.OPTION1(() => {
+      this.SUBRULE_ASSIGN1(this.ProcedureCallArgs, {
+        assign: (result) => {
+          element.args1 = result;
+        }
+      })
+    });
     this.OPTION2(() => {
+      this.SUBRULE_ASSIGN2(this.ProcedureCallArgs, {
+        assign: (result) => {
+          element.args2 = result;
+        }
+      })
+    });
+
+    return this.pop();
+  });
+
+  private createProcedureCallArgs(): ast.ProcedureCallArgs {
+    return {
+      kind: ast.SyntaxKind.ProcedureCallArgs,
+      container: null,
+      list: []
+    };
+  }
+
+  ProcedureCallArgs = this.RULE("ProcedureCallArgs", () => {
+    const element = this.push(this.createProcedureCallArgs());
+    this.OPTION1(() => {
       this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.ProcedureCall_OpenParen);
+        this.tokenPayload(token, element, CstNodeKind.ProcedureCallArgs_OpenParen);
       });
-      this.OPTION1(() => {
+      this.OPTION2(() => {
         this.OR1([
           {
             ALT: () => {
               this.SUBRULE_ASSIGN1(this.Expression, {
                 assign: (result) => {
-                  element.args.push(result);
+                  element.list.push(result);
                 },
               });
             },
@@ -8391,23 +8420,23 @@ export class PliParser extends AbstractParser {
                 this.tokenPayload(
                   token,
                   element,
-                  CstNodeKind.ProcedureCall_ArgsStar0,
+                  CstNodeKind.ProcedureCallArgs_Star0,
                 );
-                element.args.push(token.image as "*");
+                element.list.push(token.image as "*");
               });
             },
           },
         ]);
         this.MANY1(() => {
           this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.ProcedureCall_Comma);
+            this.tokenPayload(token, element, CstNodeKind.ProcedureCallArgs_Comma);
           });
           this.OR2([
             {
               ALT: () => {
                 this.SUBRULE_ASSIGN2(this.Expression, {
                   assign: (result) => {
-                    element.args.push(result);
+                    element.list.push(result);
                   },
                 });
               },
@@ -8418,9 +8447,9 @@ export class PliParser extends AbstractParser {
                   this.tokenPayload(
                     token,
                     element,
-                    CstNodeKind.ProcedureCall_ArgsStar1,
+                    CstNodeKind.ProcedureCallArgs_Star1,
                   );
-                  element.args.push(token.image as "*");
+                  element.list.push(token.image as "*");
                 });
               },
             },
@@ -8428,12 +8457,12 @@ export class PliParser extends AbstractParser {
         });
       });
       this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.ProcedureCall_CloseParen);
+        this.tokenPayload(token, element, CstNodeKind.ProcedureCallArgs_CloseParen);
       });
     });
-
     return this.pop();
   });
+
   private createLabelReference(): ast.LabelReference {
     return {
       kind: ast.SyntaxKind.LabelReference,

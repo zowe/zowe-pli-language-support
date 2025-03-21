@@ -148,6 +148,7 @@ export enum SyntaxKind {
   PrefixedAttribute,
   PrintDirective,
   ProcedureCall,
+  ProcedureCallArgs,
   ProcedureParameter,
   ProcedureStatement,
   ProcessDirective,
@@ -360,6 +361,7 @@ export type SyntaxNode =
   | PrefixedAttribute
   | PrintDirective
   | ProcedureCall
+  | ProcedureCallArgs
   | ProcedureParameter
   | ProcedureStatement
   | ProcessDirective
@@ -1391,7 +1393,21 @@ export interface PrintDirective extends AstNode {
 export interface ProcedureCall extends AstNode {
   kind: SyntaxKind.ProcedureCall;
   procedure: Reference<ProcedureStatement> | null;
-  args: (Expression | "*")[];
+  /**
+   * First argument list of the CALL statement.
+   * In case of a procedure array, this is the index!
+   * Use `args2` for the actual arguments (assuming there are any).
+   */
+  args1: ProcedureCallArgs | null;
+  /**
+   * Second argument list of the CALL statement.
+   * Likely empty. Only filled if the linked procedure is an array!
+   */
+  args2: ProcedureCallArgs | null;
+}
+export interface ProcedureCallArgs extends AstNode {
+  kind: SyntaxKind.ProcedureCallArgs;
+  list: (Expression | "*")[];
 }
 export interface ProcedureParameter extends AstNode {
   kind: SyntaxKind.ProcedureParameter;

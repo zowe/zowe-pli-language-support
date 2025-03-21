@@ -512,7 +512,7 @@ describe("PL/I Parsing tests", () => {
     assertNoParseErrors(doc);
   });
 
-  test.skip("Subscripted entry invocation", () => {
+  test("Subscripted entry invocation", () => {
     const doc = parseStmts(`
  declare (A,B,C,D,E) entry;
  declare F(5) entry variable initial (A,B,C,D,E);
