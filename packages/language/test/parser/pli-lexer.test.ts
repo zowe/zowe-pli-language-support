@@ -502,4 +502,70 @@ describe("PL/1 Lexer", () => {
             ";:;",
         ]);
     });
+
+    test('DECLARE multiple ids in one statement #1', () => {
+        expect(tokenize(`
+            %declare A character, B fixed;
+            %A = 'Hello';
+            %B = 2;
+            A%B = 123;
+        `)).toStrictEqual([
+            "Hello2:ID",
+            "=:=",
+            "123:NUMBER",
+            ";:;",
+        ]);
+    });
+
+    test('DECLARE multiple ids in one statement #2', () => {
+        expect(tokenize(`
+            %declare (A, B) character;
+            %A = 'Hello';
+            %B = 'World';
+            A%B = 123;
+        `)).toStrictEqual([
+            "HelloWorld:ID",
+            "=:=",
+            "123:NUMBER",
+            ";:;",
+        ]);
+    });
+
+    test.skip('Preprocessor example 5', () => {
+        //TODO the final procedure test
+        expect(tokenize(`
+            %DCL GEN ENTRY;
+            DCL A GEN (A,2,5,FIXED);
+            %GEN: PROC(NAME,LOW,HIGH,ATTR) RETURNS (CHAR);
+                DCL (NAME, SUFFIX, ATTR, STRING) CHAR, (LOW, HIGH, I, J) FIXED;
+                STRING='GENERIC(';
+                DO I=LOW TO HIGH;                      /* ENTRY NAME LOOP*/
+                    IF I>9 THEN
+                    SUFFIX=SUBSTR(I, 7, 2);
+                                                        /* 2 DIGIT SUFFIX*/
+                    ELSE SUFFIX=SUBSTR(I, 8, 1);
+                                                        /* 1 DIGIT SUFFIX*/
+                    STRING=STRING||NAME||SUFFIX||' WHEN (';
+                    DO J=1 TO I;                        /* DESCRIPTOR LIST*/
+                    STRING=STRING||ATTR;
+                    IF J<I                           /* ATTRIBUTE SEPARATOR*/
+                        THEN STRING=STRING||',';
+                        ELSE STRING=STRING||')';
+                                                        /* LIST SEPARATOR */
+                    END;
+                    IF I<HIGH THEN                      /* ENTRY NAME SEPARATOR*/
+                    STRING=STRING||',';
+                    ELSE STRING=STRING||')';
+                                                    /* END OF LIST /*
+                END;
+                RETURN (STRING)
+            % END;
+        `)).toStrictEqual([
+            // DCL A GENERIC(A2 WHEN (FIXED,FIXED),
+            // A3 WHEN (FIXED, FIXED, FIXED),
+            // A4 WHEN (FIXED, FIXED, FIXED, FIXED),
+            // A5 WHEN (FIXED, FIXED, FIXED, FIXED, FIXED));
+        ]);
+    });
+ 
 });

@@ -4,7 +4,6 @@
 
 import { IToken } from "chevrotain";
 import { PreprocessorParserResult } from "./pli-preprocessor-parser";
-import { ProgramAddressOrPlaceholder } from "./pli-preprocessor-instructions";
 
 export interface PPAstNode {
     type: string;
@@ -28,20 +27,22 @@ export interface PPPliStatement extends PPAstNode {
 
 export interface PPDirective extends PPAstNode {
     type: 'directive';
-    which: 'page'|'print'|'noprint'|'push'|'pop';
+    which: 'page' | 'print' | 'noprint' | 'push' | 'pop';
 }
 
-export interface PPDeclare extends PPAstNode {
+export type AnyDeclare = PPDeclareType1;
+
+export interface PPDeclareType1 extends PPAstNode {
     type: 'declare';
     declarations: PPDeclaration[];
 }
 
 export interface PPEmptyStatement extends PPAstNode {
-    type: 'empty',
+    type: 'empty';
 }
 
 export interface PPSkip extends PPAstNode {
-    type: 'skip',
+    type: 'skip';
     lineCount: number;
 }
 
@@ -76,14 +77,14 @@ export interface PPBinaryExpression extends PPAstNode {
     lhs: PPExpression;
     rhs: PPExpression;
     operator:
-      | '**'
-      | '*' | '/'
-      | '+' | '-'
-      | '||'
-      | '<' | '<=' | '>' | '>=' | '=' | '<>'
-      | '&'
-      | '|'
-      ;
+    | '**'
+    | '*' | '/'
+    | '+' | '-'
+    | '||'
+    | '<' | '<=' | '>' | '>=' | '=' | '<>'
+    | '&'
+    | '|'
+    ;
 }
 
 export interface PPUnaryExpression extends PPAstNode {
@@ -96,7 +97,7 @@ export type PPExpression = PPString | PPNumber | PPBinaryExpression | PPVariable
 
 export interface PPActivate extends PPAstNode {
     type: 'activate';
-    variables: Record<string, ScanMode|undefined>;
+    variables: Record<string, ScanMode | undefined>;
 }
 
 export interface PPDeactivate extends PPAstNode {
@@ -166,48 +167,82 @@ export interface PPDoForever extends PPAstNode {
     body: PPStatement[];
 }
 
-export type AnyDoGroup = PPDoFromToBy | PPDoRepeat | PPDoDownThru | PPDoUpThru | PPDoGroup | PPDoWhileUntil | PPDoUntilWhile | PPDoForever;
+export type AnyDoGroup =
+    //TODO implement type 3 DO statements
+    // | PPDoFromToBy
+    // | PPDoRepeat
+    // | PPDoDownThru
+    // | PPDoUpThru
+    | PPDoGroup
+    | PPDoWhileUntil
+    | PPDoUntilWhile
+    | PPDoForever
+    ;
 
 export interface PPIterate extends PPAstNode {
     type: 'iterate',
-    label: string|undefined;
+    label: string | undefined;
 }
 
 export interface PPLeave extends PPAstNode {
     type: 'leave',
-    label: string|undefined;
+    label: string | undefined;
 }
 
 export type PPStatement =
-  | PPLeave
-  | PPIterate
-  | PPPliStatement
-  | PPEmptyStatement
-  | PPActivate
-  | PPDeactivate
-  | PPDirective
-  | PPSkip
-  | PPDeclare
-  | PPAssign
-  | PPInclude
-  | PPIfStatement
-  | AnyDoGroup
-  | PPLabeledStatement
-  | PPGoTo
-  ;
+    | PPLeave
+    | PPIterate
+    | PPPliStatement
+    | PPEmptyStatement
+    | PPActivate
+    | PPDeactivate
+    | PPDirective
+    | PPSkip
+    | PPAssign
+    | PPInclude
+    | PPIfStatement
+    | AnyDeclare
+    | AnyDoGroup
+    | PPLabeledStatement
+    | PPGoTo
+    ;
 
 export type VariableDataType = 'fixed' | 'character';
 
 export type PPDeclaration = {
-    name: string;
-} & ({
-    type: 'builtin' | 'entry';
-} | {
-    type: VariableDataType;
-    scope: ProcedureScope;
+    names: NameAndBounds[];
+    attributes: Attributes;
+};
+
+export interface Attributes {
     scanMode: ScanMode;
-});
+    scope: ProcedureScope;
+    type: VariableType;
+}
 
 export type ScanMode = 'noscan' | 'rescan' | 'scan';
 export type ProcedureScope = 'internal' | 'external';
-export type VariableType = 'builtin' | 'entry' | VariableDataType;
+export type ProcedureType = 'builtin' | 'entry';
+export type VariableType = ProcedureType | VariableDataType;
+
+export type Dimensions = UnboundedDimensions | BoundedDimensions;
+
+export interface NameAndBounds {
+    name: string;
+    dimensions?: Dimensions;
+}
+
+export interface UnboundedDimensions {
+    type: 'unbounded-dimensions';
+    count: number;
+}
+
+export interface BoundedDimensions {
+    type: 'bounded-dimensions';
+    dimensions: DimensionBounds[];
+}
+
+export interface DimensionBounds {
+    lowerBound?: PPExpression;
+    upperBound: PPExpression;
+}

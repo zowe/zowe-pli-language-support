@@ -25,7 +25,6 @@ export interface PreprocessorParserState {
     isInProcedure(): boolean;
 }
 
-
 export class PliPreprocessorParserState implements PreprocessorParserState {
     private readonly lexer: PliPreprocessorLexer;
     private readonly lexerState: PreprocessorLexerState;

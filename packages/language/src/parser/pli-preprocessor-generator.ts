@@ -37,6 +37,7 @@ export class PliPreprocessorGenerator {
                 }
                 break;
             case 'skip':
+                //handled in the parser already!
             case 'directive':
                 //do nothing
                 break;
@@ -319,7 +320,7 @@ export class PliPreprocessorGenerator {
     }
 
     handleDeclaration(decl: PPDeclaration, builder: PliPreprocessorProgramBuilder) {
-        switch (decl.type) {
+        switch (decl.attributes.type) {
             case 'builtin':
                 //TODO builtin declarations
                 break;
@@ -328,13 +329,16 @@ export class PliPreprocessorGenerator {
                 break;
             case "character":
             case "fixed": {
-                builder.pushInstruction(Instructions.push(
-                    decl.type === "character"
-                        ? []
-                        : [createTokenInstance(this.numberTokenType, "0", 0, 0, 0, 0, 0, 0)]
-                ));
-                builder.pushInstruction(Instructions.set(decl.name));
-                builder.pushInstruction(Instructions.activate(decl.name, decl.scanMode));
+                for (const { name } of decl.names) {
+                    //TODO handle _dimensions
+                    builder.pushInstruction(Instructions.push(
+                        decl.attributes.type === "character"
+                            ? []
+                            : [createTokenInstance(this.numberTokenType, "0", 0, 0, 0, 0, 0, 0)]
+                    ));
+                    builder.pushInstruction(Instructions.set(name));
+                    builder.pushInstruction(Instructions.activate(name, decl.attributes.scanMode));   
+                }
                 break;
             }
         }

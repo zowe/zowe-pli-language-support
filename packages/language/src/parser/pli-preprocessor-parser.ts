@@ -1,4 +1,4 @@
-import { PPStatement, PPDeclaration, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDeclare, PPDirective, PPActivate, PPDeactivate, PPBinaryExpression, AnyDoGroup } from "./pli-preprocessor-ast";
+import { PPStatement, ProcedureScope, ScanMode, VariableType, PPExpression, PPAssign, PPDirective, PPActivate, PPDeactivate, PPBinaryExpression, AnyDoGroup, AnyDeclare, DimensionBounds, NameAndBounds, Dimensions, PPDeclaration } from "./pli-preprocessor-ast";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PliPreprocessorParserState, PreprocessorParserState } from "./pli-preprocessor-parser-state";
 import { PreprocessorError } from "./pli-preprocessor-error";
@@ -355,52 +355,78 @@ export class PliPreprocessorParser {
         };
     }
 
-    declareStatement(state: PreprocessorParserState): PPDeclare {
+    declareStatement(state: PreprocessorParserState): AnyDeclare {
         const declarations: PPDeclaration[] = [];
         state.consume(PreprocessorTokens.Declare);
-        const first = this.identifierDescription(state);
-        declarations.push(...first);
-        while (state.canConsume(PreprocessorTokens.Comma)) {
-            state.consume(PreprocessorTokens.Comma);
-            const next = this.identifierDescription(state);
-            declarations.push(...next);
-        }
+        do {
+            const names: NameAndBounds[] = [];
+            if(state.tryConsume(PreprocessorTokens.LParen)) {
+                do {
+                    const name = state.consume(PreprocessorTokens.Id).image;
+                    if (state.tryConsume(PreprocessorTokens.LParen)) {
+                        const dimensions = this.dimensions(state);
+                        state.consume(PreprocessorTokens.RParen);
+                        names.push({
+                            name,
+                            dimensions
+                        });
+                    } else {
+                        names.push({
+                            name,
+                        });
+                    }
+                } while (state.tryConsume(PreprocessorTokens.Comma));
+                state.consume(PreprocessorTokens.RParen);
+            } else {
+                const name = state.consume(PreprocessorTokens.Id).image;
+                names.push({ name });
+            }
+            const attributes = this.attributes(state);
+            declarations.push({
+                names,
+                attributes
+            });
+        } while(state.tryConsume(PreprocessorTokens.Comma));
         state.consume(PreprocessorTokens.Semicolon);
         return {
             type: "declare",
             declarations
-        }
+        };
     }
 
-    identifierDescription(state: PreprocessorParserState): PPDeclaration[] {
-        if (state.canConsume(PreprocessorTokens.Id)) {
-            const id = state.consume(PreprocessorTokens.Id).image;
-            if (state.canConsume(PreprocessorTokens.LParen)) {
-                state.consume(PreprocessorTokens.LParen);
-                //TODO dimension
-                state.consume(PreprocessorTokens.RParen);
-            } else if (state.tryConsume(PreprocessorTokens.Builtin)) {
-                return [{
-                    name: id,
-                    type: "builtin"
-                }];
-            } else if (state.tryConsume(PreprocessorTokens.Entry)) {
-                return [{
-                    name: id,
-                    type: "entry"
-                }];
+    dimensions(state: PreprocessorParserState): Dimensions {
+        if(state.tryConsume(PreprocessorTokens.Multiply)) {
+            let count = 1;
+            while(state.tryConsume(PreprocessorTokens.Comma)) {
+                state.consume(PreprocessorTokens.Multiply);
+                count++;
             }
-            const { type, scope, scanMode } = this.attributes(state);
-            return [{
-                type,
-                name: id,
-                scanMode,
-                scope
-            }];
-        } else if (state.canConsume(PreprocessorTokens.LParen)) {
-            //TODO
+            return {
+                type: 'unbounded-dimensions',
+                count,
+            };
+        } else {
+            const dimensions: DimensionBounds[] = [];
+            do {
+                const left = this.expression(state);
+                if(state.tryConsume(PreprocessorTokens.Colon)) {
+                    const right = this.expression(state);
+                    dimensions.push({
+                        lowerBound: left,
+                        upperBound: right,
+                    });
+                } else {
+                    dimensions.push({
+                        lowerBound: undefined,
+                        upperBound: left,
+                    });
+                }
+            } while (state.tryConsume(PreprocessorTokens.Comma));
+            return {
+                type: 'bounded-dimensions',
+                dimensions,
+            };
         }
-        return [];
     }
 
     attributes(state: PreprocessorParserState) {
@@ -412,6 +438,8 @@ export class PliPreprocessorParser {
         do {
             lastIndex = state.index;
             switch (state.current?.tokenType) {
+                case PreprocessorTokens.Builtin: type = 'builtin'; state.index++; break;
+                case PreprocessorTokens.Entry: type = 'entry'; state.index++; break;
                 case PreprocessorTokens.Internal: scope = 'internal'; state.index++; break;
                 case PreprocessorTokens.External: scope = 'external'; state.index++; break;
                 case PreprocessorTokens.Character: type = 'character'; state.index++; break;
