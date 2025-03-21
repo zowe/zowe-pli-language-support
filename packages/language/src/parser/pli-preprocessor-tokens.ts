@@ -13,6 +13,7 @@ export const PreprocessorTokens = {
     Procedure: tokenType("procedure", /PROC(EDURE)?/yi),
     Statement: tokenType("statement", /STATEMENT/yi),
     Returns: tokenType("returns", /RETURNS/yi),
+    Return: tokenType("return", /RETURN/yi),
     Leave: tokenType("leave", /LEAVE/yi),
     By: tokenType("by", /BY/yi),
     Iterate: tokenType("iterate", /ITERATE/yi),

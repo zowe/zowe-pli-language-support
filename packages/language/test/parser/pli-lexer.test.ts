@@ -531,7 +531,23 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip('Preprocessor example 5', () => {
+    test('XYZ', () => {
+        expect(tokenize(`
+            %DCL GEN ENTRY;
+            DCL A GEN(FIXED);
+            %GEN: PROCEDURE(STRING) RETURNS (CHAR);
+                DCL STRING CHAR;
+                RETURN (STRING);
+            END;
+        `)).toStrictEqual([
+            // DCL A GENERIC(A2 WHEN (FIXED,FIXED),
+            // A3 WHEN (FIXED, FIXED, FIXED),
+            // A4 WHEN (FIXED, FIXED, FIXED, FIXED),
+            // A5 WHEN (FIXED, FIXED, FIXED, FIXED, FIXED));
+        ]);
+    });
+
+    test.skip('Preprocessor example', () => {
         //TODO the final procedure test
         expect(tokenize(`
             %DCL GEN ENTRY;
@@ -558,7 +574,7 @@ describe("PL/1 Lexer", () => {
                     ELSE STRING=STRING||')';
                                                     /* END OF LIST /*
                 END;
-                RETURN (STRING)
+                RETURN (STRING);
             % END;
         `)).toStrictEqual([
             // DCL A GENERIC(A2 WHEN (FIXED,FIXED),
@@ -567,5 +583,4 @@ describe("PL/1 Lexer", () => {
             // A5 WHEN (FIXED, FIXED, FIXED, FIXED, FIXED));
         ]);
     });
- 
 });

@@ -1,7 +1,7 @@
 import { IToken, TokenType, createTokenInstance } from "chevrotain";
 import { Pl1Services } from "../pli-module";
 import { Instructions, Values } from "./pli-preprocessor-instructions";
-import { AnyDoGroup, PPActivate, PPAssign, PPBinaryExpression, PPDeactivate, PPDeclaration, PPDoForever, PPDoGroup, PPDoUntilWhile, PPDoWhileUntil, PPExpression, PPGoTo, PPIfStatement, PPIterate, PPLabeledStatement, PPLeave, PPNumber, PPPliStatement, PPStatement, PPString, PPVariableUsage } from "./pli-preprocessor-ast";
+import { AnyDoGroup, PPActivate, PPAssign, PPBinaryExpression, PPDeactivate, PPDeclaration, PPDoForever, PPDoGroup, PPDoUntilWhile, PPDoWhileUntil, PPExpression, PPGoTo, PPIfStatement, PPIterate, PPLabeledStatement, PPLeave, PPNumber, PPPliStatement, PPReturn, PPStatement, PPString, PPVariableUsage } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 import { PliPreprocessorProgram, PliPreprocessorProgramBuilder } from "./pli-preprocessor-program-builder";
 
@@ -53,8 +53,16 @@ export class PliPreprocessorGenerator {
             case "goto": this.handleGoTo(statement, builder); break;
             case "leave": this.handleLeave(statement, builder); break;
             case "iterate": this.handleIterate(statement, builder); break;
+            case "return": this.handleReturn(statement, builder); break;
+            case "procedure": //TODO should be handled upfront
+                break;
             default: assertUnreachable(statement);
         }
+    }
+
+    handleReturn(statement: PPReturn, builder: PliPreprocessorProgramBuilder) {
+        this.handleExpression(statement.value, builder);
+        builder.pushInstruction(Instructions.ret());
     }
 
     findDoGroup(statement: PPLabeledStatement): AnyDoGroup | undefined {
@@ -298,7 +306,6 @@ export class PliPreprocessorGenerator {
                 break;
             }
         }
-
     }
 
     handleBinaryExpression(expression: PPBinaryExpression, builder: PliPreprocessorProgramBuilder) {

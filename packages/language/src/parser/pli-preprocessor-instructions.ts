@@ -16,6 +16,10 @@ export interface PPInstructionBase {
     type: string;
 }
 
+export interface PPIReturn extends PPInstructionBase {
+    type: 'return',
+}
+
 export interface PPICompute extends PPInstructionBase {
     type: 'compute',
     operator: PPBinaryExpression['operator'],
@@ -86,6 +90,7 @@ export type PPInstruction =
     | PPIPush             //documented
     | PPIScan             //documented
     | PPISet              //documented
+    | PPIReturn
     ;
 
 export type PPProgram = PPInstruction[];
@@ -160,6 +165,9 @@ export namespace Values {
 }
 
 export namespace Instructions {
+    export function ret(): PPIReturn {
+        return { type: "return" };
+    }
     export function compute(operator: PPBinaryExpression['operator']): PPICompute {
         return {
             type: "compute",
@@ -246,6 +254,7 @@ export function printProgram(program: PliPreprocessorProgram) {
             case 'deactivate':
                 programText.push(...' ', instruction.name);
                 break;
+            case 'return':
             case 'concat':
             case 'scan':
             case 'print':
@@ -267,7 +276,7 @@ export function printProgram(program: PliPreprocessorProgram) {
                 break;
             case 'compute':
                 programText.push(...' ', instruction.operator);
-                break;
+                break;                
             default:
                 assertUnreachable(instruction);
         }
@@ -293,6 +302,7 @@ export function printInstruction(instruction: PPInstruction, state: Preprocessor
         case 'scan':
         case 'print':
         case 'halt':
+        case 'return':
             //nothing to print
             break;
         case 'set':

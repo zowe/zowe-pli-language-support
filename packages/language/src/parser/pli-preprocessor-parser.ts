@@ -85,7 +85,7 @@ export class PliPreprocessorParser {
             state.consume(PreprocessorTokens.Colon);
             labels.push(labelName);
         }
-        let statement: PPStatement;
+        let statement: PPStatement|undefined = undefined;
         switch (state.current?.tokenType) {
             case PreprocessorTokens.Activate: statement = this.activateStatement(state); break;
             case PreprocessorTokens.Deactivate: statement = this.deactivateStatement(state); break;
@@ -105,11 +105,19 @@ export class PliPreprocessorParser {
                         statement = this.procedureStatement(state);
                     }
                 } else { //state.isInProcedure()
-                    //TODO
-                    //-ANSWER
-                    //-RETURN
+                    if(state.tryConsume(PreprocessorTokens.Return)) {
+                        state.consume(PreprocessorTokens.LParen);
+                        statement = {
+                            type: 'return',
+                            value: this.expression(state),
+                        };
+                        state.consume(PreprocessorTokens.RParen);
+                        state.consume(PreprocessorTokens.Semicolon);
+                    }
                 }
-                throw new PreprocessorError("Unexpected token '" + state.current?.image + "'.", state.current!, state.uri.toString());
+                if(statement === undefined) {
+                    throw new PreprocessorError("Unexpected token '" + state.current?.image + "'.", state.current!, state.uri.toString());
+                }
         }
         for (const labelName of labels.reverse()) {
             statement = {

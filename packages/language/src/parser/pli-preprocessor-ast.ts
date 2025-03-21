@@ -112,6 +112,11 @@ export interface PPIfStatement extends PPAstNode {
     elseUnit?: PPStatement;
 }
 
+export interface PPReturn extends PPAstNode {
+    type: "return",
+    value: PPExpression;
+}
+
 export interface PPDoGroup extends PPAstNode {
     type: "do",
     statements: PPStatement[];
@@ -214,6 +219,7 @@ export type PPStatement =
     | PPLabeledStatement
     | PPGoTo
     | PPProcedure
+    | PPReturn
     ;
 
 export type VariableDataType = 'fixed' | 'character';
