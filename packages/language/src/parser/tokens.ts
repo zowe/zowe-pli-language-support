@@ -274,6 +274,18 @@ export const DESCRIPTOR = createToken({
   categories: [ID, SimpleOptions],
   longer_alt: ID,
 });
+export const XMLCONTENT = createToken({
+  name: "XMLCONTENT",
+  pattern: /XMLCONTENT/i,
+  categories: [ID, DefaultAttribute],
+  longer_alt: ID,
+});
+export const JSONIGNORE = createToken({
+  name: "JSONIGNORE",
+  pattern: /JSONIGNORE/i,
+  categories: [ID, DefaultAttribute],
+  longer_alt: ID,
+});
 export const ASSIGNABLE = createToken({
   name: "ASSIGNABLE",
   pattern: /ASSIGNABLE/i,
@@ -326,6 +338,18 @@ export const VALUERANGE = createToken({
   name: "VALUERANGE",
   pattern: /VALUERANGE/i,
   categories: [ID],
+  longer_alt: ID,
+});
+export const XMLIGNORE = createToken({
+  name: "XMLIGNORE",
+  pattern: /XMLIGNORE/i,
+  categories: [ID, DefaultAttribute],
+  longer_alt: ID,
+});
+export const JSONTRIMR = createToken({
+  name: "JSONTRIMR",
+  pattern: /JSONTRIMR/i,
+  categories: [ID, DefaultAttribute],
   longer_alt: ID,
 });
 export const NOEXECOPS = createToken({
@@ -508,6 +532,24 @@ export const RESERVES = createToken({
   categories: [ID],
   longer_alt: ID,
 });
+export const JSONNAME = createToken({
+  name: "JSONNAME",
+  pattern: /JSONNAME/i,
+  categories: [ID, DefaultAttribute],
+  longer_alt: ID,
+});
+export const JSONNULL = createToken({
+  name: "JSONNULL",
+  pattern: /JSONNULL/i,
+  categories: [ID, DefaultAttribute],
+  longer_alt: ID,
+});
+export const JSONOMIT = createToken({
+  name: "JSONOMIT",
+  pattern: /JSONOMIT/i,
+  categories: [ID, DefaultAttribute],
+  longer_alt: ID,
+});
 export const NOMAPOUT = createToken({
   name: "NOMAPOUT",
   pattern: /NOMAPOUT/i,
@@ -650,6 +692,12 @@ export const PAGESIZE = createToken({
   categories: [ID, OpenOptionType],
   longer_alt: ID,
 });
+export const NULLINIT = createToken({
+  name: "NULLINIT",
+  pattern: /NULLINIT/i,
+  categories: [ID, DefaultAttribute],
+  longer_alt: ID,
+});
 export const PROCESS = createToken({
   name: "PROCESS",
   pattern: /[*%]PROCESS/i,
@@ -659,6 +707,24 @@ export const PROCINC = createToken({
   name: "PROCINC",
   pattern: /[*%]PROCINC/i,
   categories: [ID],
+});
+export const XMLNAME = createToken({
+  name: "XMLNAME",
+  pattern: /XMLNAME/i,
+  categories: [ID, DefaultAttribute],
+  longer_alt: ID,
+});
+export const XMLATTR = createToken({
+  name: "XMLATTR",
+  pattern: /XMLATTR/i,
+  categories: [ID, DefaultAttribute],
+  longer_alt: ID,
+});
+export const XMLOMIT = createToken({
+  name: "XMLOMIT",
+  pattern: /XMLOMIT/i,
+  categories: [ID, DefaultAttribute],
+  longer_alt: ID,
 });
 export const RESIGNAL = createToken({
   name: "RESIGNAL",
@@ -990,10 +1056,22 @@ export const FORMAT = createToken({
   categories: [ID, DefaultAttribute],
   longer_alt: ID,
 });
+export const NOINIT = createToken({
+  name: "NOINIT",
+  pattern: /NOINIT/i,
+  categories: [ID, DefaultAttribute],
+  longer_alt: ID,
+});
 export const INONLY = createToken({
   name: "INONLY",
   pattern: /INONLY/i,
   categories: [ID, DefaultAttribute],
+  longer_alt: ID,
+});
+export const INDFOR = createToken({
+  name: "INDFOR",
+  pattern: /INDFOR/i,
+  categories: [ID],
   longer_alt: ID,
 });
 export const MEMBER = createToken({
@@ -2036,6 +2114,8 @@ export const keywords = [
   CONFORMANCE,
   STRINGRANGE,
   DESCRIPTOR,
+  XMLCONTENT,
+  JSONIGNORE,
   ASSIGNABLE,
   CONTROLLED,
   NONVARYING,
@@ -2046,6 +2126,8 @@ export const keywords = [
   INITACROSS,
   VALUERANGE,
   NOEXECOPS,
+  XMLIGNORE,
+  JSONTRIMR,
   REDUCIBLE,
   REENTRANT,
   FETCHABLE,
@@ -2075,6 +2157,9 @@ export const keywords = [
   DIMENSION,
   VALUELIST,
   RESERVES,
+  JSONNAME,
+  JSONOMIT,
+  JSONNULL,
   NOMAPOUT,
   NOINLINE,
   NORETURN,
@@ -2093,6 +2178,7 @@ export const keywords = [
   VARYING4,
   VARYINGZ,
   DOWNTHRU,
+  RESIGNAL,
   PercentINCLUDE,
   PercentNOPRINT,
   OVERFLOW,
@@ -2101,7 +2187,9 @@ export const keywords = [
   PAGESIZE,
   PROCESS,
   PROCINC,
-  RESIGNAL,
+  XMLNAME,
+  XMLATTR,
+  XMLOMIT,
   PACKAGE,
   EXPORTS,
   OPTIONS,
@@ -2157,6 +2245,7 @@ export const keywords = [
   BINARY,
   FORMAT,
   INONLY,
+  INDFOR,
   MEMBER,
   NATIVE,
   NORMAL,

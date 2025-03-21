@@ -506,6 +506,11 @@ export function forEachNode(
       break;
     case SyntaxKind.IncludeItem:
       break;
+    case SyntaxKind.IndForAttribute:
+      if (node.reference) {
+        action(node.reference);
+      }
+      break;
     case SyntaxKind.InitAcrossExpression:
       node.expressions.forEach(action);
       break;
@@ -883,5 +888,11 @@ export function forEachNode(
         action(node.width);
       }
       break;
+    default:
+      throwNever(node);
   }
+}
+
+function throwNever(item: never): never {
+  throw new Error(`Unexpected item: ${item}`);
 }

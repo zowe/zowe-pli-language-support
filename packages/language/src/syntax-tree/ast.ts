@@ -99,12 +99,12 @@ export enum SyntaxKind {
   GoToStatement,
   GenericAttribute,
   GenericReference,
-  GenericOtherwiseReference,
   GenericDescriptor,
   HandleAttribute,
   IfStatement,
   IncludeDirective,
   IncludeItem,
+  IndForAttribute,
   InitAcrossExpression,
   InitialAttribute,
   InitialAttributeItemStar,
@@ -164,12 +164,6 @@ export enum SyntaxKind {
   QualifyStatement,
   ReadStatement,
   ReadStatementOption,
-  ReadStatementFile,
-  ReadStatementIgnore,
-  ReadStatementInto,
-  ReadStatementKey,
-  ReadStatementKeyTo,
-  ReadStatementSet,
   ReferenceItem,
   ReinitStatement,
   ReleaseStatement,
@@ -323,6 +317,7 @@ export type SyntaxNode =
   | IfStatement
   | IncludeDirective
   | IncludeItem
+  | IndForAttribute
   | InitAcrossExpression
   | InitialAttribute
   | InitialAttributeItemStar
@@ -467,7 +462,8 @@ export type DefaultDeclarationAttribute =
   | ValueListAttribute
   | ValueListFromAttribute
   | ValueRangeAttribute
-  | GenericAttribute;
+  | GenericAttribute
+  | IndForAttribute;
 /**
  * A list of all the possible attributes that can be used in a declaration.
  * This is essentially a list of all attributes that can be used in a DEFAULT declaration + the VALUE attribute.
@@ -531,6 +527,8 @@ export type DefaultAttribute =
   | "NONNATIVE"
   | "NONVARYING"
   | "NORMAL"
+  | "NOINIT"
+  | "NULLINIT"
   | "OFFSET"
   | "OPTIONAL"
   | "OPTIONS"
@@ -1167,6 +1165,10 @@ export interface IncludeItem extends AstNode {
   kind: SyntaxKind.IncludeItem;
   file: string | null;
   ddname: boolean;
+}
+export interface IndForAttribute extends AstNode {
+  kind: SyntaxKind.IndForAttribute;
+  reference: LocatorCall | null;
 }
 export interface InitAcrossExpression extends AstNode {
   kind: SyntaxKind.InitAcrossExpression;
