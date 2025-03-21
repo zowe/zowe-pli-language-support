@@ -14,9 +14,15 @@ export interface PreprocessorParserState {
     get current(): IToken | undefined;
     get last(): IToken | undefined;
     get eof(): boolean;
+
     canConsume(...tokenType: TokenType[]): boolean;
     tryConsume(...tokenTypes: TokenType[]): boolean;
-    consume(tokenType: TokenType): IToken;
+    consume(...tokenTypes: TokenType[]): IToken;
+
+    canConsumeKeyword(...tokenType: TokenType[]): boolean;
+    tryConsumeKeyword(...tokenTypes: TokenType[]): boolean;
+    consumeKeyword(...tokenTypes: TokenType[]): IToken;
+
     consumeUntil(predicate: (token: IToken) => boolean): IToken[];
     advanceLines(lineCount: number): void;
     push(location: ParserLocation): void;
@@ -132,13 +138,35 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
         return true;
     }
 
-    consume(tokenType: TokenType) {
+    consume(...tokenTypes: TokenType[]) {
         const token = this.current!;
-        if (!this.canConsume(tokenType)) {
-            const message = `Expected token type '${tokenType.name}', got '${this.current?.tokenType.name ?? '???'}' instead.`;
+        if (!this.canConsume(...tokenTypes)) {
+            const actualTokenTypes = this.tokens.slice(this.index, this.index + tokenTypes.length).map(t => t.tokenType.name ?? '???').join(", ");  
+            const message = `Expected token types '${tokenTypes.map(tt => tt.name).join(", ")}', got '${actualTokenTypes}' instead.`;
             throw new PreprocessorError(message, token, this.uri.toString());
         }
-        this.index++;
+        this.index += tokenTypes.length;
         return token;
+    }
+
+    canConsumeKeyword(...tokenTypes: TokenType[]): boolean {
+        if(!this.isInProcedure()) {
+            tokenTypes = [PreprocessorTokens.Percentage, ...tokenTypes];
+        }
+        return this.canConsume(...tokenTypes);
+    }
+
+    tryConsumeKeyword(...tokenTypes: TokenType[]): boolean {
+        if(!this.isInProcedure()) {
+            tokenTypes = [PreprocessorTokens.Percentage, ...tokenTypes];
+        }
+        return this.tryConsume(...tokenTypes);
+    }
+
+    consumeKeyword(...tokenTypes: TokenType[]): IToken {
+        if(!this.isInProcedure()) {
+            tokenTypes = [PreprocessorTokens.Percentage, ...tokenTypes];
+        }
+        return this.consume(...tokenTypes);
     }
 }

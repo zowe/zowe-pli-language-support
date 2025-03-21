@@ -13,7 +13,7 @@ describe("PL/1 Lexer", () => {
         tokenize = (text: string) => {
             const { tokens, errors } = services.pli.parser.Lexer.tokenize(text);
             if (errors.length > 0) {
-                throw new Error(errors.map(e => e.message).join('\n'));
+                throw new Error(errors.map(e => `${e.line}:${e.column}: ${e.message}`).join('\n'));
             }
             return tokens.map(t => t.image + ':' + t.tokenType.name.toUpperCase());
         };
@@ -28,7 +28,7 @@ describe("PL/1 Lexer", () => {
     });
 
     test("Preprocessor garbage", () => {
-        expect(tokenizeWithErrors(' %garbage')).toStrictEqual([`Expected token type 'eq', got '???' instead.`]);
+        expect(tokenizeWithErrors(' %garbage')).toStrictEqual([`Expected token types 'eq', got '' instead.`]);
     });
 
     test("PL/I garbage", () => {
@@ -74,7 +74,7 @@ describe("PL/1 Lexer", () => {
             %A = 'B';
             dcl A%C fixed bin(31);
         `)).toStrictEqual([
-            "Expected token type 'eq', got 'id' instead."
+            "Expected token types 'eq', got 'id' instead."
         ]);
     });
 
@@ -83,7 +83,7 @@ describe("PL/1 Lexer", () => {
             %decl A char;
             %%A = 'B';
         `)).toStrictEqual([
-            "Expected token type 'eq', got 'id' instead.",
+            "Expected token types 'eq', got 'id' instead.",
             "Unexpected token '%'."
         ]);
     });

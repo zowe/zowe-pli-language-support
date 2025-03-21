@@ -167,6 +167,14 @@ export interface PPDoForever extends PPAstNode {
     body: PPStatement[];
 }
 
+export interface PPProcedure {
+    type: 'procedure';
+    parameters: string[];
+    isStatement: boolean;
+    returnType: VariableDataType|undefined;
+    body: PPStatement[];
+}
+
 export type AnyDoGroup =
     //TODO implement type 3 DO statements
     // | PPDoFromToBy
@@ -205,6 +213,7 @@ export type PPStatement =
     | AnyDoGroup
     | PPLabeledStatement
     | PPGoTo
+    | PPProcedure
     ;
 
 export type VariableDataType = 'fixed' | 'character';

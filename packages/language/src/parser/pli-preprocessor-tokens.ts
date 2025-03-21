@@ -10,6 +10,9 @@ export function tokenType(name: string, pattern: string | RegExp) {
 }
 
 export const PreprocessorTokens = {
+    Procedure: tokenType("procedure", /PROC(EDURE)?/yi),
+    Statement: tokenType("statement", /STATEMENT/yi),
+    Returns: tokenType("returns", /RETURNS/yi),
     Leave: tokenType("leave", /LEAVE/yi),
     By: tokenType("by", /BY/yi),
     Iterate: tokenType("iterate", /ITERATE/yi),
@@ -38,7 +41,6 @@ export const PreprocessorTokens = {
     Rescan: tokenType("rescan", /RESCAN/yi),
     Noscan: tokenType("noscan", /NOSCAN/yi),
     Fixed: tokenType("fixed", /FIXED/yi),
-
     LParen: tokenType("lparen", /\(/yi),
     RParen: tokenType("rparen", /\)/yi),
     Semicolon: tokenType("semicolon", /;/yi),
@@ -59,7 +61,6 @@ export const PreprocessorTokens = {
     GE: tokenType("ge", />=/yi),
     GT: tokenType("gt", />/yi),
     LT: tokenType("lt", /</yi),
-    
     //This token regexp was taken from the PL/1 Langium grammar
     //TODO need a way to sync them...
     String: tokenType("string", /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')([xX]|[aA]|[eE]|[xX][uU]|[xX][nN]|[bB]4|[bB]3|[bB][xX]|[bB]|[gG][xX]|[gG]|[uU][xX]|[wW][xX]|[xX]|[iI])*/y),

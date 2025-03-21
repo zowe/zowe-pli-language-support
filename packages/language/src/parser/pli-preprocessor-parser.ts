@@ -59,48 +59,102 @@ export class PliPreprocessorParser {
     }
 
     statement(state: PreprocessorParserState): PPStatement {
-        if(state.tryConsume(PreprocessorTokens.Percentage)) {
-            state.push('in-statement');
-            try {
-                const labels: string[] = [];
-                while(state.canConsume(PreprocessorTokens.Id, PreprocessorTokens.Colon)) {
-                    const labelName = state.consume(PreprocessorTokens.Id).image;
-                    state.consume(PreprocessorTokens.Colon);
-                    labels.push(labelName);
+        if(state.isOnlyInStatement()) {
+            if(state.tryConsume(PreprocessorTokens.Percentage)) {
+                state.push('in-statement');
+                try {
+                    return this.commonStatement(state);
+                } finally {
+                    state.pop();
                 }
-                let statement: PPStatement;
-                switch (state.current?.tokenType) {
-                    case PreprocessorTokens.Activate: statement = this.activateStatement(state); break;
-                    case PreprocessorTokens.Deactivate: statement = this.deactivateStatement(state); break;
-                    case PreprocessorTokens.Declare: statement = this.declareStatement(state); break;
-                    case PreprocessorTokens.Directive: statement = this.directive(state); break;
-                    case PreprocessorTokens.Skip: statement = this.skipStatement(state); break;
-                    case PreprocessorTokens.Include: statement = this.includeStatement(state); break;
-                    case PreprocessorTokens.Id: statement = this.assignmentStatement(state); break;
-                    case PreprocessorTokens.If: statement = this.ifStatement(state); break;
-                    case PreprocessorTokens.Do: statement = this.doStatement(state); break;
-                    case PreprocessorTokens.Go: statement = this.goToStatement(state); break;
-                    case PreprocessorTokens.Leave: statement = this.leaveStatement(state); break;
-                    case PreprocessorTokens.Iterate: statement = this.iterateStatement(state); break;
-                    default: throw new PreprocessorError("Unexpected token '"+state.current?.image+"'.", state.current!, state.uri.toString());
-                }
-                for (const labelName of labels.reverse()) {
-                    statement = {
-                        type: 'labeled',
-                        label: labelName,
-                        statement
-                    };
-                }
-                return statement;
-            } finally {
-                state.pop();
+            } else {
+                return {
+                    type: 'pli',
+                    tokens: state.consumeUntil(tk => tk.image === ';'),
+                };
             }
-        } else {
-            return {
-                type: 'pli',
-                tokens: state.consumeUntil(tk => tk.image === ';'),
+        } else { //state.isInProcedure()
+            return this.commonStatement(state);
+        }
+    }
+
+    commonStatement(state: PreprocessorParserState) {
+        const labels: string[] = [];
+        while (state.canConsume(PreprocessorTokens.Id, PreprocessorTokens.Colon)) {
+            const labelName = state.consume(PreprocessorTokens.Id).image;
+            state.consume(PreprocessorTokens.Colon);
+            labels.push(labelName);
+        }
+        let statement: PPStatement;
+        switch (state.current?.tokenType) {
+            case PreprocessorTokens.Activate: statement = this.activateStatement(state); break;
+            case PreprocessorTokens.Deactivate: statement = this.deactivateStatement(state); break;
+            case PreprocessorTokens.Declare: statement = this.declareStatement(state); break;
+            case PreprocessorTokens.Directive: statement = this.directive(state); break;
+            case PreprocessorTokens.Skip: statement = this.skipStatement(state); break;
+            case PreprocessorTokens.Include: statement = this.includeStatement(state); break;
+            case PreprocessorTokens.Id: statement = this.assignmentStatement(state); break;
+            case PreprocessorTokens.If: statement = this.ifStatement(state); break;
+            case PreprocessorTokens.Do: statement = this.doStatement(state); break;
+            case PreprocessorTokens.Go: statement = this.goToStatement(state); break;
+            case PreprocessorTokens.Leave: statement = this.leaveStatement(state); break;
+            case PreprocessorTokens.Iterate: statement = this.iterateStatement(state); break;
+            default: 
+                if(state.isOnlyInStatement()) {
+                    if(state.current?.tokenType === PreprocessorTokens.Procedure) {
+                        statement = this.procedureStatement(state);
+                    }
+                } else { //state.isInProcedure()
+                    //TODO
+                    //-ANSWER
+                    //-RETURN
+                }
+                throw new PreprocessorError("Unexpected token '" + state.current?.image + "'.", state.current!, state.uri.toString());
+        }
+        for (const labelName of labels.reverse()) {
+            statement = {
+                type: 'labeled',
+                label: labelName,
+                statement
             };
         }
+        return statement;
+    }
+
+    procedureStatement(state: PreprocessorParserState): PPStatement {
+        state.push('in-procedure');
+        state.consume(PreprocessorTokens.Procedure);
+        const parameters: string[] = [];
+        if(state.tryConsume(PreprocessorTokens.LParen)) {
+            do {
+                const parameter = state.consume(PreprocessorTokens.Id).image;
+                parameters.push(parameter);
+            } while (state.tryConsume(PreprocessorTokens.Comma));
+            state.consume(PreprocessorTokens.RParen);
+        }
+        const isStatement = state.tryConsume(PreprocessorTokens.Statement);
+        let returnType: VariableType|undefined = undefined;
+        if(state.tryConsume(PreprocessorTokens.Returns)) {
+            state.consume(PreprocessorTokens.LParen);
+            if(state.tryConsume(PreprocessorTokens.Character)) {
+                returnType = 'character';
+            } else if(state.tryConsume(PreprocessorTokens.Fixed)) {
+                returnType = 'fixed';
+            }
+            state.consume(PreprocessorTokens.RParen);
+        }
+        state.consume(PreprocessorTokens.Semicolon);
+        const body = this.statements(state);
+        state.consume(PreprocessorTokens.End);
+        state.consume(PreprocessorTokens.Semicolon);
+        state.pop();
+        return {
+            type: 'procedure',
+            isStatement,
+            returnType,
+            parameters,
+            body,
+        };
     }
 
     iterateStatement(state: PreprocessorParserState): PPStatement {
@@ -139,8 +193,7 @@ export class PliPreprocessorParser {
 
     goToStatement(state: PreprocessorParserState): PPStatement {
         state.consume(PreprocessorTokens.Go);
-        state.consume(PreprocessorTokens.Percentage);
-        state.consume(PreprocessorTokens.To);
+        state.consumeKeyword(PreprocessorTokens.To);
         const label = state.consume(PreprocessorTokens.Id).image;
         state.consume(PreprocessorTokens.Semicolon);
         return {
@@ -168,15 +221,14 @@ export class PliPreprocessorParser {
 
     doStatement(state: PreprocessorParserState): AnyDoGroup {
         state.consume(PreprocessorTokens.Do);
-        if(state.tryConsume(PreprocessorTokens.Percentage, PreprocessorTokens.While)) {
+        if(state.tryConsumeKeyword(PreprocessorTokens.While)) {
             //type-2-do-while-first
             state.consume(PreprocessorTokens.LParen);
             const conditionWhile = this.expression(state);
             state.consume(PreprocessorTokens.RParen);
             let conditionUntil: PPExpression|undefined = undefined;
-            if(state.canConsume(PreprocessorTokens.Percentage, PreprocessorTokens.Until)) {
-                state.consume(PreprocessorTokens.Percentage);
-                state.consume(PreprocessorTokens.Until);
+            if(state.canConsumeKeyword(PreprocessorTokens.Until)) {
+                state.consumeKeyword(PreprocessorTokens.Until);
                 state.consume(PreprocessorTokens.LParen);
                 conditionUntil = this.expression(state);
                 state.consume(PreprocessorTokens.RParen);
@@ -184,8 +236,7 @@ export class PliPreprocessorParser {
             state.consume(PreprocessorTokens.Semicolon);
 
             const body = this.statements(state);
-            state.consume(PreprocessorTokens.Percentage);
-            state.consume(PreprocessorTokens.End);
+            state.consumeKeyword(PreprocessorTokens.End);
             state.consume(PreprocessorTokens.Semicolon);
             return {
                 type: 'do-while-until',
@@ -193,23 +244,21 @@ export class PliPreprocessorParser {
                 conditionUntil,
                 body
             };
-        } else if(state.tryConsume(PreprocessorTokens.Percentage, PreprocessorTokens.Until)) {
+        } else if(state.tryConsumeKeyword(PreprocessorTokens.Until)) {
             //type-2-do-until-first
             state.consume(PreprocessorTokens.LParen);
             const conditionUntil = this.expression(state);
             state.consume(PreprocessorTokens.RParen);
             let conditionWhile: PPExpression|undefined = undefined;
-            if(state.canConsume(PreprocessorTokens.Percentage, PreprocessorTokens.While)) {
-                state.consume(PreprocessorTokens.Percentage);
-                state.consume(PreprocessorTokens.While);
+            if(state.canConsumeKeyword(PreprocessorTokens.While)) {
+                state.consumeKeyword(PreprocessorTokens.While);
                 state.consume(PreprocessorTokens.LParen);
                 conditionWhile = this.expression(state);
                 state.consume(PreprocessorTokens.RParen);
             }
             state.consume(PreprocessorTokens.Semicolon);
             const body = this.statements(state);
-            state.consume(PreprocessorTokens.Percentage);
-            state.consume(PreprocessorTokens.End);
+            state.consumeKeyword(PreprocessorTokens.End);
             state.consume(PreprocessorTokens.Semicolon);
             return {
                 type: 'do-until-while',
@@ -217,12 +266,11 @@ export class PliPreprocessorParser {
                 conditionUntil,
                 body
             };
-        } else if (state.tryConsume(PreprocessorTokens.Percentage, PreprocessorTokens.Loop)) {
+        } else if (state.tryConsumeKeyword(PreprocessorTokens.Loop)) {
             //type-4 loops
             state.consume(PreprocessorTokens.Semicolon);
             const body = this.statements(state);
-            state.consume(PreprocessorTokens.Percentage);
-            state.consume(PreprocessorTokens.End);
+            state.consumeKeyword(PreprocessorTokens.End);
             state.consume(PreprocessorTokens.Semicolon);
             return {
                 type: 'do-forever',
@@ -231,8 +279,7 @@ export class PliPreprocessorParser {
         } else if(state.tryConsume(PreprocessorTokens.Semicolon)) {
             //type-1-do
             const statements = this.statements(state);
-            state.consume(PreprocessorTokens.Percentage);
-            state.consume(PreprocessorTokens.End);
+            state.consumeKeyword(PreprocessorTokens.End);
             state.consume(PreprocessorTokens.Semicolon);
             return {
                 type: 'do',
@@ -245,7 +292,7 @@ export class PliPreprocessorParser {
 
     private statements(state: PreprocessorParserState) {
         const statements: PPStatement[] = [];
-        while (!(state.canConsume(PreprocessorTokens.Percentage, PreprocessorTokens.End))) {
+        while (!(state.canConsumeKeyword(PreprocessorTokens.End))) {
             const statement = this.statement(state);
             statements.push(statement);
         }
@@ -255,13 +302,11 @@ export class PliPreprocessorParser {
     ifStatement(state: PreprocessorParserState): PPStatement {
         state.consume(PreprocessorTokens.If);
         const condition = this.expression(state);
-        state.consume(PreprocessorTokens.Percentage);
-        state.consume(PreprocessorTokens.Then);
+        state.consumeKeyword(PreprocessorTokens.Then);
         const thenUnit = this.statement(state);
         let elseUnit: PPStatement|undefined = undefined;
-        if(state.canConsume(PreprocessorTokens.Percentage, PreprocessorTokens.Else)) {
-            state.consume(PreprocessorTokens.Percentage);
-            state.consume(PreprocessorTokens.Else);
+        if(state.canConsumeKeyword(PreprocessorTokens.Else)) {
+            state.consumeKeyword(PreprocessorTokens.Else);
             elseUnit = this.statement(state);
         }
         return {
@@ -570,8 +615,10 @@ export class PliPreprocessorParser {
                 type: "string",
                 value: tokens
             };
-        } else if(state.canConsume(PreprocessorTokens.Percentage, PreprocessorTokens.Id)) {
-            state.consume(PreprocessorTokens.Percentage);
+        } else if(state.canConsumeKeyword(PreprocessorTokens.Id)) {
+            if(state.isOnlyInStatement()) {
+                state.consume(PreprocessorTokens.Percentage);
+            } 
             const variableName = state.consume(PreprocessorTokens.Id).image;
             return {
                 type: 'variable-usage',
