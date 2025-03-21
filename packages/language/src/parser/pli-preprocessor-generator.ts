@@ -1,9 +1,10 @@
 import { IToken, TokenType, createTokenInstance } from "chevrotain";
 import { Pl1Services } from "../pli-module";
-import { Instructions, Values } from "./pli-preprocessor-instructions";
-import { AnyDoGroup, PPActivate, PPAssign, PPBinaryExpression, PPDeactivate, PPDeclaration, PPDoForever, PPDoGroup, PPDoUntilWhile, PPDoWhileUntil, PPExpression, PPGoTo, PPIfStatement, PPIterate, PPLabeledStatement, PPLeave, PPNumber, PPPliStatement, PPReturn, PPStatement, PPString, PPVariableUsage } from "./pli-preprocessor-ast";
+import { Instructions, Label, Values } from "./pli-preprocessor-instructions";
+import { AnyDoGroup, PPActivate, PPAssign, PPBinaryExpression, PPDeactivate, PPDeclaration, PPDoForever, PPDoGroup, PPDoUntilWhile, PPDoWhileUntil, PPExpression, PPGoTo, PPIfStatement, PPIterate, PPLabeledStatement, PPLeave, PPNumber, PPPliStatement, PPProcedure, PPReturn, PPStatement, PPString, PPVariableUsage } from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 import { PliPreprocessorProgram, PliPreprocessorProgramBuilder } from "./pli-preprocessor-program-builder";
+import { assertType } from "./util";
 
 export class PliPreprocessorGenerator {
     private readonly numberTokenType: TokenType;
@@ -14,11 +15,47 @@ export class PliPreprocessorGenerator {
 
     generateProgram(statements: PPStatement[]): PliPreprocessorProgram {
         const builder = new PliPreprocessorProgramBuilder();
-        for (const statement of statements) {
+        const { pureStatements, pureProcedures } = this.splitStatements(statements);
+        for (const statement of pureStatements) {
             this.handleStatement(statement, builder);
         }
         builder.pushInstruction(Instructions.halt());
+        for (const statement of pureProcedures) {
+            this.handleProcedure(statement, builder);
+        }
         return builder.build();
+    }
+
+    handleProcedure(statement: PPStatement, builder: PliPreprocessorProgramBuilder) {
+        assertType<PPLabeledStatement>(statement);
+        let label: Label = undefined!;
+        while(statement.type === 'labeled') {
+            label = builder.getOrCreateLabel(statement.label);
+            builder.pushLabel(label);
+            statement = statement.statement;
+        }
+        assertType<PPProcedure>(statement);
+        this.handleStatements(statement.body, builder);
+    }
+
+    splitStatements(statements: PPStatement[]): { pureStatements: PPStatement[]; pureProcedures: PPLabeledStatement[]; } {
+        const pureStatements: PPStatement[] = [];
+        const pureProcedures: PPLabeledStatement[] = [];
+        for (const statement of statements) {
+            if (this.isLabeledStatementsWithProcedureCall(statement)) {
+                pureProcedures.push(statement);
+            } else {
+                pureStatements.push(statement);
+            }
+        }
+        return { pureStatements, pureProcedures };
+    }
+
+    isLabeledStatementsWithProcedureCall(statement: PPStatement): statement is PPLabeledStatement {
+        while (statement.type === 'labeled') {
+            statement = statement.statement;
+        }
+        return statement.type === 'procedure';
     }
 
     handleStatement(statement: PPStatement, builder: PliPreprocessorProgramBuilder) {

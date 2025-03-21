@@ -119,6 +119,9 @@ export class PliPreprocessorParser {
                     throw new PreprocessorError("Unexpected token '" + state.current?.image + "'.", state.current!, state.uri.toString());
                 }
         }
+        if(labels.length === 0 && statement.type === 'procedure') {
+            throw new PreprocessorError("Procedure must have a label.", state.current!, state.uri.toString());
+        }
         for (const labelName of labels.reverse()) {
             statement = {
                 type: 'labeled',
