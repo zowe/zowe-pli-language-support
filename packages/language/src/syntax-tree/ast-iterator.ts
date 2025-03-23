@@ -755,6 +755,7 @@ export function forEachNode(
       }
       break;
     case SyntaxKind.ReadStatement:
+      node.arguments.forEach(action);
       break;
     case SyntaxKind.ReadStatementOption:
       if (node.value) {
@@ -804,6 +805,7 @@ export function forEachNode(
       if (node.on) {
         action(node.on);
       }
+      node.statements.forEach(action);
       if (node.end) {
         action(node.end);
       }
@@ -888,11 +890,5 @@ export function forEachNode(
         action(node.width);
       }
       break;
-    default:
-      throwNever(node);
   }
-}
-
-function throwNever(item: never): never {
-  throw new Error(`Unexpected item: ${item}`);
 }

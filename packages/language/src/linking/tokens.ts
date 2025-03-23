@@ -14,7 +14,11 @@ import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 
 export function isValidToken(token: IToken): boolean {
-  return !isNaN(token.startOffset);
+  return (
+    !isNaN(token.startOffset) &&
+    typeof token.endOffset === "number" &&
+    !isNaN(token.endOffset)
+  );
 }
 
 // TODO: There are more name tokens

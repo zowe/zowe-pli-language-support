@@ -17,6 +17,7 @@ import {
 import { SourceFile } from "../workspace/source-file";
 import { ReferencesCache } from "../linking/resolver";
 import { Diagnostic, Range, Severity } from "../language-server/types";
+import { isValidToken } from "../linking/tokens";
 
 export function collectCommonDiagnostics(
   sourceFile: SourceFile,
@@ -93,13 +94,13 @@ export function linkingErrorsToDiagnostics(
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   for (const reference of references.allReferences()) {
-    if (reference.node === null) {
+    if (reference.node === null && isValidToken(reference.token)) {
       const diagnostic: Diagnostic = {
         uri: "",
         severity: Severity.W,
         range: {
           start: reference.token.startOffset,
-          end: reference.token.endOffset!,
+          end: reference.token.endOffset! + 1,
         },
         message: `Cannot find symbol '${reference.text}'`,
         source: "linking",

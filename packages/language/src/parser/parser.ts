@@ -5598,6 +5598,9 @@ export class PliParser extends AbstractParser {
     () => {
       let element = this.push(this.createDataSpecificationDataListItem());
 
+      // TODO: research, in some example, this can be found:
+      // ((I, ENTRY(I) DO I = 0 TO ENTRY_TABLE_COUNT))
+      // However, this does not conform to the language reference
       this.SUBRULE_ASSIGN1(this.Expression, {
         assign: (result) => {
           element.value = result;
@@ -7385,14 +7388,14 @@ export class PliParser extends AbstractParser {
   DefaultValueAttribute = this.RULE("DefaultValueAttribute", () => {
     let element = this.push(this.createDefaultValueAttribute());
 
-    this.CONSUME_ASSIGN1(tokens.VALUE, (token) => {
+    this.CONSUME_ASSIGN(tokens.VALUE, (token) => {
       this.tokenPayload(
         token,
         element,
         CstNodeKind.DefaultValueAttribute_VALUE,
       );
     });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
       this.tokenPayload(
         token,
         element,
@@ -7404,8 +7407,8 @@ export class PliParser extends AbstractParser {
         element.items.push(result);
       },
     });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
+    this.MANY(() => {
+      this.CONSUME_ASSIGN(tokens.Comma, (token) => {
         this.tokenPayload(
           token,
           element,
@@ -7418,7 +7421,7 @@ export class PliParser extends AbstractParser {
         },
       });
     });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
       this.tokenPayload(
         token,
         element,
@@ -7439,18 +7442,18 @@ export class PliParser extends AbstractParser {
   ValueAttribute = this.RULE("ValueAttribute", () => {
     let element = this.push(this.createValueAttribute());
 
-    this.CONSUME_ASSIGN1(tokens.VALUE, (token) => {
+    this.CONSUME_ASSIGN(tokens.VALUE, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ValueAttribute_VALUE);
     });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ValueAttribute_OpenParen);
     });
-    this.SUBRULE_ASSIGN1(this.Expression, {
+    this.SUBRULE_ASSIGN(this.Expression, {
       assign: (result) => {
         element.value = result;
       },
     });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ValueAttribute_CloseParen);
     });
 
@@ -7467,8 +7470,8 @@ export class PliParser extends AbstractParser {
   DefaultValueAttributeItem = this.RULE("DefaultValueAttributeItem", () => {
     let element = this.push(this.createDefaultValueAttributeItem());
 
-    this.AT_LEAST_ONE1(() => {
-      this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+    this.AT_LEAST_ONE(() => {
+      this.SUBRULE_ASSIGN(this.DeclarationAttribute, {
         assign: (result) => {
           element.attributes.push(result);
         },
@@ -7488,28 +7491,28 @@ export class PliParser extends AbstractParser {
   ValueListAttribute = this.RULE("ValueListAttribute", () => {
     let element = this.push(this.createValueListAttribute());
 
-    this.CONSUME_ASSIGN1(tokens.VALUELIST, (token) => {
+    this.CONSUME_ASSIGN(tokens.VALUELIST, (token) => {
       this.tokenPayload(
         token,
         element,
         CstNodeKind.ValueListAttribute_VALUELIST,
       );
     });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
       this.tokenPayload(
         token,
         element,
         CstNodeKind.ValueListAttribute_OpenParen,
       );
     });
-    this.OPTION1(() => {
+    this.OPTION(() => {
       this.SUBRULE_ASSIGN1(this.Expression, {
         assign: (result) => {
           element.values.push(result);
         },
       });
-      this.MANY1(() => {
-        this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
+      this.MANY(() => {
+        this.CONSUME_ASSIGN(tokens.Comma, (token) => {
           this.tokenPayload(
             token,
             element,
@@ -7523,7 +7526,7 @@ export class PliParser extends AbstractParser {
         });
       });
     });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
       this.tokenPayload(
         token,
         element,
@@ -7544,14 +7547,14 @@ export class PliParser extends AbstractParser {
   ValueListFromAttribute = this.RULE("ValueListFromAttribute", () => {
     let element = this.push(this.createValueListFromAttribute());
 
-    this.CONSUME_ASSIGN1(tokens.VALUELISTFROM, (token) => {
+    this.CONSUME_ASSIGN(tokens.VALUELISTFROM, (token) => {
       this.tokenPayload(
         token,
         element,
         CstNodeKind.ValueListFromAttribute_VALUELISTFROM,
       );
     });
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
+    this.SUBRULE_ASSIGN(this.LocatorCall, {
       assign: (result) => {
         element.from = result;
       },
@@ -7570,28 +7573,28 @@ export class PliParser extends AbstractParser {
   ValueRangeAttribute = this.RULE("ValueRangeAttribute", () => {
     let element = this.push(this.createValueRangeAttribute());
 
-    this.CONSUME_ASSIGN1(tokens.VALUERANGE, (token) => {
+    this.CONSUME_ASSIGN(tokens.VALUERANGE, (token) => {
       this.tokenPayload(
         token,
         element,
         CstNodeKind.ValueRangeAttribute_VALUERANGE,
       );
     });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
       this.tokenPayload(
         token,
         element,
         CstNodeKind.ValueRangeAttribute_OpenParen,
       );
     });
-    this.OPTION1(() => {
+    this.OPTION(() => {
       this.SUBRULE_ASSIGN1(this.Expression, {
         assign: (result) => {
           element.values.push(result);
         },
       });
-      this.MANY1(() => {
-        this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
+      this.MANY(() => {
+        this.CONSUME_ASSIGN(tokens.Comma, (token) => {
           this.tokenPayload(
             token,
             element,
@@ -7605,7 +7608,7 @@ export class PliParser extends AbstractParser {
         });
       });
     });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
       this.tokenPayload(
         token,
         element,
@@ -7627,10 +7630,10 @@ export class PliParser extends AbstractParser {
   LikeAttribute = this.RULE("LikeAttribute", () => {
     let element = this.push(this.createLikeAttribute());
 
-    this.CONSUME_ASSIGN1(tokens.LIKE, (token) => {
+    this.CONSUME_ASSIGN(tokens.LIKE, (token) => {
       this.tokenPayload(token, element, CstNodeKind.LikeAttribute_LIKE);
     });
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
+    this.SUBRULE_ASSIGN(this.LocatorCall, {
       assign: (result) => {
         element.reference = result;
       },
@@ -7650,7 +7653,7 @@ export class PliParser extends AbstractParser {
   HandleAttribute = this.RULE("HandleAttribute", () => {
     let element = this.push(this.createHandleAttribute());
 
-    this.CONSUME_ASSIGN1(tokens.HANDLE, (token) => {
+    this.CONSUME_ASSIGN(tokens.HANDLE, (token) => {
       this.tokenPayload(token, element, CstNodeKind.HandleAttribute_HANDLE);
     });
     this.OPTION1(() => {
@@ -7731,17 +7734,17 @@ export class PliParser extends AbstractParser {
   Dimensions = this.RULE("Dimensions", () => {
     let element = this.push(this.createDimensions());
 
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
       this.tokenPayload(token, element, CstNodeKind.Dimensions_OpenParen);
     });
-    this.OPTION1(() => {
+    this.OPTION(() => {
       this.SUBRULE_ASSIGN1(this.DimensionBound, {
         assign: (result) => {
           element.dimensions.push(result);
         },
       });
-      this.MANY1(() => {
-        this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
+      this.MANY(() => {
+        this.CONSUME_ASSIGN(tokens.Comma, (token) => {
           this.tokenPayload(token, element, CstNodeKind.Dimensions_Comma);
         });
         this.SUBRULE_ASSIGN2(this.DimensionBound, {
@@ -7751,7 +7754,7 @@ export class PliParser extends AbstractParser {
         });
       });
     });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
       this.tokenPayload(token, element, CstNodeKind.Dimensions_CloseParen);
     });
 
@@ -7775,7 +7778,7 @@ export class PliParser extends AbstractParser {
       },
     });
     this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.Colon, (token) => {
+      this.CONSUME_ASSIGN(tokens.Colon, (token) => {
         this.tokenPayload(token, element, CstNodeKind.DimensionBound_Colon);
       });
       this.SUBRULE_ASSIGN2(this.Bound, {
@@ -7802,7 +7805,7 @@ export class PliParser extends AbstractParser {
     this.OR1([
       {
         ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.Star, (token) => {
+          this.CONSUME_ASSIGN(tokens.Star, (token) => {
             this.tokenPayload(token, element, CstNodeKind.Bound_Star);
             element.expression = token.image as "*";
           });
@@ -7810,24 +7813,24 @@ export class PliParser extends AbstractParser {
       },
       {
         ALT: () => {
-          this.SUBRULE_ASSIGN1(this.Expression, {
+          this.SUBRULE_ASSIGN(this.Expression, {
             assign: (result) => {
               element.expression = result;
             },
           });
           this.OPTION1(() => {
-            this.CONSUME_ASSIGN1(tokens.REFER, (token) => {
+            this.CONSUME_ASSIGN(tokens.REFER, (token) => {
               this.tokenPayload(token, element, CstNodeKind.Bound_REFER);
             });
-            this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
+            this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
               this.tokenPayload(token, element, CstNodeKind.Bound_OpenParen);
             });
-            this.SUBRULE_ASSIGN1(this.LocatorCall, {
+            this.SUBRULE_ASSIGN(this.LocatorCall, {
               assign: (result) => {
                 element.refer = result;
               },
             });
-            this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
+            this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
               this.tokenPayload(token, element, CstNodeKind.Bound_CloseParen);
             });
           });
@@ -7848,29 +7851,29 @@ export class PliParser extends AbstractParser {
   EnvironmentAttribute = this.RULE("EnvironmentAttribute", () => {
     let element = this.push(this.createEnvironmentAttribute());
 
-    this.CONSUME_ASSIGN1(tokens.ENVIRONMENT, (token) => {
+    this.CONSUME_ASSIGN(tokens.ENVIRONMENT, (token) => {
       this.tokenPayload(
         token,
         element,
         CstNodeKind.EnvironmentAttribute_ENVIRONMENT,
       );
     });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
       this.tokenPayload(
         token,
         element,
         CstNodeKind.EnvironmentAttribute_OpenParen,
       );
     });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.EnvironmentAttributeItem, {
+    this.MANY(() => {
+      this.SUBRULE_ASSIGN(this.EnvironmentAttributeItem, {
         assign: (result) => {
           element.items.push(result);
         },
       });
       // TODO: research, This does not align to the language spec
-      this.OPTION1(() => {
-        this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
+      this.OPTION(() => {
+        this.CONSUME_ASSIGN(tokens.Comma, (token) => {
           this.tokenPayload(
             token,
             element,
@@ -7879,7 +7882,7 @@ export class PliParser extends AbstractParser {
         });
       });
     });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
       this.tokenPayload(
         token,
         element,
@@ -7901,7 +7904,7 @@ export class PliParser extends AbstractParser {
   EnvironmentAttributeItem = this.RULE("EnvironmentAttributeItem", () => {
     let element = this.push(this.createEnvironmentAttributeItem());
 
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
+    this.CONSUME_ASSIGN(tokens.ID, (token) => {
       this.tokenPayload(
         token,
         element,
@@ -7910,7 +7913,7 @@ export class PliParser extends AbstractParser {
       element.environment = token.image;
     });
     this.OPTION3(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
+      this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
         this.tokenPayload(
           token,
           element,
@@ -7925,7 +7928,7 @@ export class PliParser extends AbstractParser {
         });
         this.MANY1(() => {
           this.OPTION1(() => {
-            this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
+            this.CONSUME_ASSIGN(tokens.Comma, (token) => {
               this.tokenPayload(
                 token,
                 element,
@@ -7940,7 +7943,7 @@ export class PliParser extends AbstractParser {
           });
         });
       });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
+      this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
         this.tokenPayload(
           token,
           element,
@@ -8103,20 +8106,20 @@ export class PliParser extends AbstractParser {
   ReturnsOption = this.RULE("ReturnsOption", () => {
     let element = this.push(this.createReturnsOption());
 
-    this.CONSUME_ASSIGN1(tokens.RETURNS, (token) => {
+    this.CONSUME_ASSIGN(tokens.RETURNS, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ReturnsOption_RETURNS);
     });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ReturnsOption_OpenParen);
     });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+    this.MANY(() => {
+      this.SUBRULE_ASSIGN(this.DeclarationAttribute, {
         assign: (result) => {
           element.returnAttributes.push(result);
         },
       });
     });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ReturnsOption_CloseParen);
     });
 
@@ -8140,10 +8143,10 @@ export class PliParser extends AbstractParser {
   EntryParameterDescription = this.RULE("EntryParameterDescription", () => {
     let element = this.push(this.createEntryParameterDescription());
 
-    this.OR1([
+    this.OR([
       {
         ALT: () => {
-          this.AT_LEAST_ONE1(() => {
+          this.AT_LEAST_ONE(() => {
             this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
               assign: (result) => {
                 element.attributes.push(result);
@@ -8154,7 +8157,7 @@ export class PliParser extends AbstractParser {
       },
       {
         ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.Star, (token) => {
+          this.CONSUME_ASSIGN(tokens.Star, (token) => {
             this.tokenPayload(
               token,
               element,
@@ -8188,7 +8191,7 @@ export class PliParser extends AbstractParser {
   EntryUnionDescription = this.RULE("EntryUnionDescription", () => {
     let element = this.push(this.createEntryUnionDescription());
 
-    this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
+    this.CONSUME_ASSIGN(tokens.NUMBER, (token) => {
       this.tokenPayload(
         token,
         element,
@@ -8197,13 +8200,13 @@ export class PliParser extends AbstractParser {
       element.init = token.image;
     });
     this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+      this.SUBRULE_ASSIGN(this.DeclarationAttribute, {
         assign: (result) => {
           element.attributes.push(result);
         },
       });
     });
-    this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
+    this.CONSUME_ASSIGN(tokens.Comma, (token) => {
       this.tokenPayload(
         token,
         element,
@@ -8211,7 +8214,7 @@ export class PliParser extends AbstractParser {
       );
     });
     this.MANY2(() => {
-      this.SUBRULE_ASSIGN1(this.PrefixedAttribute, {
+      this.SUBRULE_ASSIGN(this.PrefixedAttribute, {
         assign: (result) => {
           element.prefixedAttributes.push(result);
         },
@@ -8232,7 +8235,7 @@ export class PliParser extends AbstractParser {
   PrefixedAttribute = this.RULE("PrefixedAttribute", () => {
     let element = this.push(this.createPrefixedAttribute());
 
-    this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
+    this.CONSUME_ASSIGN(tokens.NUMBER, (token) => {
       this.tokenPayload(
         token,
         element,
@@ -8240,8 +8243,8 @@ export class PliParser extends AbstractParser {
       );
       element.level = token.image;
     });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
+    this.MANY(() => {
+      this.SUBRULE_ASSIGN(this.DeclarationAttribute, {
         assign: (result) => {
           element.attribute = result;
         },
@@ -8261,7 +8264,7 @@ export class PliParser extends AbstractParser {
   ProcedureParameter = this.RULE("ProcedureParameter", () => {
     let element = this.push(this.createProcedureParameter());
 
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
+    this.CONSUME_ASSIGN(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ProcedureParameter_Id);
       element.id = token.image;
     });
@@ -8280,12 +8283,12 @@ export class PliParser extends AbstractParser {
   ReferenceItem = this.RULE("ReferenceItem", () => {
     let element = this.push(this.createReferenceItem());
 
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
+    this.CONSUME_ASSIGN(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ReferenceItem_Ref);
       element.ref = ast.createReference(element, token);
     });
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.Dimensions, {
+    this.OPTION(() => {
+      this.SUBRULE_ASSIGN(this.Dimensions, {
         assign: (result) => {
           element.dimensions = result;
         },
@@ -8307,7 +8310,7 @@ export class PliParser extends AbstractParser {
         element.items.push(result);
       },
     });
-    this.MANY1(() => {
+    this.MANY(() => {
       this.CONSUME_ASSIGN(tokens.BinaryOperator, (token) => {
         this.tokenPayload(
           token,
@@ -8350,27 +8353,27 @@ export class PliParser extends AbstractParser {
   ParenthesizedExpression = this.RULE("ParenthesizedExpression", () => {
     let element = this.push(this.createParenthesizedExpression());
 
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
+    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
       this.tokenPayload(
         token,
         element,
         CstNodeKind.ParenthesizedExpression_OpenParen,
       );
     });
-    this.SUBRULE_ASSIGN1(this.Expression, {
+    this.SUBRULE_ASSIGN(this.Expression, {
       assign: (result) => {
         element.value = result;
       },
     });
     this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.DO, (token) => {
+      this.CONSUME_ASSIGN(tokens.DO, (token) => {
         this.tokenPayload(
           token,
           element,
           CstNodeKind.ParenthesizedExpression_DO,
         );
       });
-      this.SUBRULE_ASSIGN1(this.DoType3, {
+      this.SUBRULE_ASSIGN(this.DoType3, {
         assign: (result) => {
           element.do = result;
         },
@@ -8389,7 +8392,7 @@ export class PliParser extends AbstractParser {
       this.ACTION(() => {
         literal.multiplier = multiplier;
       });
-      this.SUBRULE_ASSIGN1(this.LiteralValue, {
+      this.SUBRULE_ASSIGN(this.LiteralValue, {
         assign: (result) => {
           literal.value = result;
         },

@@ -16,6 +16,7 @@ import { definitionRequest } from "./definition-request";
 import { URI } from "../utils/uri";
 import { rangeToLSP } from "./types";
 import { referencesRequest } from "./references-request";
+import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
 
 export function startLanguageServer(connection: Connection): void {
   const sourceFileHandler = new SourceFileHandler();
@@ -35,6 +36,11 @@ export function startLanguageServer(connection: Connection): void {
         },
         definitionProvider: true,
         referencesProvider: true,
+        semanticTokensProvider: {
+          legend: semanticTokenLegend,
+          full: true,
+          range: false,
+        },
       },
     };
   });
@@ -71,6 +77,19 @@ export function startLanguageServer(connection: Connection): void {
       });
     }
     return [];
+  });
+  connection.languages.semanticTokens.on((params) => {
+    const uri = params.textDocument.uri;
+    const textDocument = TextDocuments.get(uri);
+    const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
+    if (textDocument && sourceFile) {
+      return {
+        data: semanticTokens(textDocument, sourceFile),
+      };
+    }
+    return {
+      data: [],
+    };
   });
   connection.listen();
 }
