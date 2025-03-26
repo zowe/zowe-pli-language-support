@@ -56,6 +56,7 @@ export interface ParametricPLICode {
   /**
    * Message for the code, with placeholders for parameters
    */
+  // Todo: add a generic type for the arguments to the interface
   message: (...args: string[]) => string;
 }
 

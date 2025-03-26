@@ -14,6 +14,12 @@ importers:
       '@vitest/coverage-v8':
         specifier: ~3.0.7
         version: 3.0.7(vitest@3.0.7(@types/node@18.19.70))
+      chevrotain:
+        specifier: ^11.0.3
+        version: 11.0.3
+      chevrotain-allstar:
+        specifier: ~0.3.1
+        version: 0.3.1(chevrotain@11.0.3)
       deepmerge:
         specifier: ^1.5.2
         version: 1.5.2
@@ -38,15 +44,18 @@ importers:
       chevrotain:
         specifier: ^11.0.3
         version: 11.0.3
-      langium:
-        specifier: ~3.4.0
-        version: 3.4.0
       vscode-languageserver:
         specifier: ~9.0.1
         version: 9.0.1
+      vscode-languageserver-textdocument:
+        specifier: ^1.0.12
+        version: 1.0.12
       vscode-languageserver-types:
         specifier: ^3.17.5
         version: 3.17.5
+      vscode-uri:
+        specifier: ^3.1.0
+        version: 3.1.0
     devDependencies:
       langium-cli:
         specifier: ~3.4.0
@@ -2361,6 +2370,9 @@ packages:
   vscode-uri@3.0.8:
     resolution: {integrity: sha512-AyFQ0EVmsOZOlAnxoFOGOq1SQDWAB7C6aqMGS23svWAllfOaxbuFvcT8D1i8z3Gyn8fraVeZNNmN6e9bxxXkKw==}
 
+  vscode-uri@3.1.0:
+    resolution: {integrity: sha512-/BpdSx+yCQGnCvecbyXdxHDkuk55/G3xwnC0GqY4gmQ3j+A+g8kzzgB4Nk/SINjqn6+waqw3EgbVF2QKExkRxQ==}
+
   vscode-ws-jsonrpc@3.4.0:
     resolution: {integrity: sha512-jkNZvX0LdHt4skPxMw/jFePr3jRCJU6ZmO28oPoQ7RwNSkwU3uN8mgtxACYEbOY68bYmi/b/uJzhxewKCz1P4w==}
     engines: {node: '>=18.19.0', npm: '>=10.2.3'}
@@ -4342,6 +4354,8 @@ snapshots:
   vscode-textmate@9.1.0: {}
 
   vscode-uri@3.0.8: {}
+
+  vscode-uri@3.1.0: {}
 
   vscode-ws-jsonrpc@3.4.0:
     dependencies:
