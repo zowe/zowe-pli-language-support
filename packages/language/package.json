@@ -29,13 +29,18 @@
     "clean": "shx rm -fr *.tsbuildinfo out"
   },
   "dependencies": {
+    "@chevrotain/regexp-to-ast": "^11.0.3",
+    "@chevrotain/types": "^11.0.3",
+    "@chevrotain/utils": "^11.0.3",
     "chevrotain": "^11.0.3",
+    "lodash-es": "^4.17.21",
     "vscode-languageserver": "~9.0.1",
     "vscode-languageserver-types": "^3.17.5",
     "vscode-languageserver-textdocument": "^1.0.12",
     "vscode-uri": "^3.1.0"
   },
   "devDependencies": {
-    "langium-cli": "~3.4.0"
+    "langium-cli": "~3.4.0",
+    "@types/lodash-es": "^4.17.12"
   }
 }
