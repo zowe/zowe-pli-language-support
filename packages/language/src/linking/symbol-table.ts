@@ -46,7 +46,8 @@ function iterate(
   table: SymbolTable,
   references: ReferencesCache,
 ): void {
-  fillSymbolTable(node, table);
+  addToSymbolTable(node, table);
+  // While we're here, let's also add the reference to our cache
   const ref = getReference(node);
   if (ref) {
     references.add(ref);
@@ -58,7 +59,7 @@ function iterate(
   });
 }
 
-function fillSymbolTable(node: SyntaxNode, table: SymbolTable): void {
+function addToSymbolTable(node: SyntaxNode, table: SymbolTable): void {
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
       table.addVariableSymbol(node, node.name!, node);
