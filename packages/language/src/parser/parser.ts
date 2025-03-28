@@ -2238,104 +2238,79 @@ export class PliParser extends AbstractParser {
       );
     });
 
-    // originally this is an option, but instead it should be a (a | b)*
-    this.OR2([
-      {
-
-      },
-      {
-
-      }
-    ]);
-
-    this.OPTION1(() => {
+    // zero or more attributes following
+    this.MANY(() => {
+      // either signed/unsigned OR a precision attribute
       this.OR2([
         {
+          // signed | unsigned
           ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.SIGNED, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DefineOrdinalStatement_Signed0,
-              );
-              element.attributes.push(token.image as 'SIGNED');
-            });
-          },
+            this.OR3([
+              // signed
+              {
+                ALT: () => {
+                  this.CONSUME_ASSIGN1(tokens.SIGNED, (token) => {
+                    this.tokenPayload(
+                      token,
+                      element,
+                      CstNodeKind.DefineOrdinalStatement_Signed0,
+                    );
+                    element.attributes.push(token.image as 'SIGNED');
+                  });
+                }
+              },
+              // unsigned
+              {
+                ALT: () => {
+                  this.CONSUME_ASSIGN1(tokens.UNSIGNED, (token) => {
+                    this.tokenPayload(
+                      token,
+                      element,
+                      CstNodeKind.DefineOrdinalStatement_Unsigned0,
+                    );
+                    element.attributes.push(token.image as 'UNSIGNED');
+                  });
+                },
+              }
+            ])
+          }
         },
         {
+          // attribute w/ precision val (will only take one)
           ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.UNSIGNED, (token) => {
+            this.CONSUME_ASSIGN1(tokens.PRECISION, (token) => {
               this.tokenPayload(
                 token,
                 element,
-                CstNodeKind.DefineOrdinalStatement_Unsigned0,
+                CstNodeKind.DefineOrdinalStatement_PRECISION,
               );
-              element.attributes.push(token.image as 'UNSIGNED');
+              element.attributes.push(token.image as 'PRECISION' | 'PREC');
             });
-          },
-        },
-      ]);
-    });
-
-    this.OPTION2(() => {
-      this.CONSUME_ASSIGN1(tokens.PRECISION, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DefineOrdinalStatement_PRECISION,
-        );
-      });
-      this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DefineOrdinalStatement_OpenParenPrecision,
-        );
-      });
-      this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DefineOrdinalStatement_PrecisionNumber,
-        );
-        element.precision = token.image;
-      });
-      this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DefineOrdinalStatement_CloseParenPrecision,
-        );
-      });
-    });
-
-    // follow-up signed & unsigned stuff
-    this.OPTION3(() => {
-      this.OR4([
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN2(tokens.SIGNED, (token) => {
+            this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
               this.tokenPayload(
                 token,
                 element,
-                CstNodeKind.DefineOrdinalStatement_SIGNED1,
+                CstNodeKind.DefineOrdinalStatement_OpenParenPrecision,
               );
-              element.signed = true;
             });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN2(tokens.UNSIGNED, (token) => {
+            this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
               this.tokenPayload(
                 token,
                 element,
-                CstNodeKind.DefineOrdinalStatement_UNSIGNED1,
+                CstNodeKind.DefineOrdinalStatement_PrecisionNumber,
               );
-              element.unsigned = true;
+              // will override prior precisions (but this parses in 6.1 PL/I strangely enough)
+              element.precision = token.image;
             });
-          },
-        },
+            this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
+              this.tokenPayload(
+                token,
+                element,
+                CstNodeKind.DefineOrdinalStatement_CloseParenPrecision,
+              );
+            });
+          }
+        }
       ]);
     });
     this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {

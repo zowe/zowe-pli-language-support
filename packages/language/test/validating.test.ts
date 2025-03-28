@@ -209,34 +209,37 @@ describe("Validating", () => {
   describe("Ordinal validations", async () => {
     test("Signed & unsigned are mutually exclusive", async () => {
       // ensure that only one set of signed/unsigned & precision is specified
-      document = await parse(`
+      const doc = parseWithValidations(`
       define ordinal day (
         Monday
       ) prec(15) signed unsigned;`);
-      expect(document.diagnostics?.length).not.toBe(0);
+      const diagnostics = collectDiagnostics(doc);
+      expect(diagnostics.length).not.toBe(0);
     });
 
     test("Valid to have signed before precision", async () => {
       // ensure that only one set of signed/unsigned & precision is specified
-      document = await parse(`
+      const doc = parseWithValidations(`
       define ordinal day (
         Monday
       ) signed prec(15);`);
-      expect(document.diagnostics?.length).toBe(0);
+      const diagnostics = collectDiagnostics(doc);
+      expect(diagnostics.length).toBe(0);
     });
 
     test("Don't allow multiple precisions", async () => {
       // ensure that only one set of signed/unsigned & precision is specified
-      document = await parse(`
+      const doc = parseWithValidations(`
       define ordinal day (
         Monday
       ) precision(15) prec(15);`);
-      expect(document.diagnostics?.length).not.toBe(0);
+      const diagnostics = collectDiagnostics(doc);
+      expect(diagnostics.length).not.toBe(0);
     });
 
     test("Double signed/unsigned is ok (redundant)", async () => {
       // ensure that only one set of signed/unsigned & precision is specified
-      document = await parse(`
+      const doc = parseWithValidations(`
       define ordinal D1 (
         Day1
       ) unsigned unsigned;
@@ -244,7 +247,8 @@ describe("Validating", () => {
       define ordinal D2 (
         Day2
       ) signed signed;`);
-      expect(document.diagnostics?.length).toBe(0);
+      const diagnostics = collectDiagnostics(doc);
+      expect(diagnostics.length).toBe(0);
     });
   });
 
