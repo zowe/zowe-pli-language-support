@@ -11,40 +11,78 @@
 
 import {
   EmbeddedActionsParser,
-  TokenType,
+  IOrAlt,
   IParserConfig,
+  IToken,
   ParserMethod,
   SubruleMethodOpts,
-  IToken,
-  IOrAlt,
+  TokenType,
 } from "chevrotain";
 import { LLStarLookaheadStrategy } from "chevrotain-allstar";
-import type { CstNodeKind } from "../syntax-tree/cst";
 import {
   SyntaxKind,
   type BinaryExpression,
   type SyntaxNode,
 } from "../syntax-tree/ast";
+import type { CstNodeKind } from "../syntax-tree/cst";
 import * as tokens from "./tokens";
 
+/**
+ * Options for assigning a result to a subrule.
+ * @template ARGS - The arguments type for the subrule.
+ * @template R - The return type of the subrule.
+ */
 export interface SubruleAssignMethodOpts<ARGS, R>
   extends SubruleMethodOpts<ARGS> {
+  /**
+   * A function to assign the result of the subrule.
+   * @param result - The result to assign.
+   */
   assign: (result: R) => void;
 }
 
+/**
+ * Represents an intermediate binary expression used during parsing.
+ */
 export interface IntermediateBinaryExpression {
+  /**
+   * The items (operands) in the binary expression.
+   */
   items: any[];
+
+  /**
+   * The operators in the binary expression.
+   */
   operators: string[];
+
+  /**
+   * Indicates that this is an infix expression.
+   */
   infix: true;
 }
 
+/**
+ * Payload for a token, containing metadata about its syntax and element.
+ */
 export interface TokenPayload {
+  /**
+   * The URI associated with the token, if any.
+   */
   uri?: string;
+
+  /**
+   * The kind of CST (Concrete Syntax Tree) node.
+   */
   kind: CstNodeKind;
+
+  /**
+   * The syntax node associated with the token.
+   */
   element: SyntaxNode;
 }
 
 export class AbstractParser extends EmbeddedActionsParser {
+
   constructor(tokens: TokenType[], config?: IParserConfig) {
     super(tokens, {
       ...config,
@@ -53,6 +91,12 @@ export class AbstractParser extends EmbeddedActionsParser {
     });
   }
 
+  /**
+   * Assigns a payload to a token
+   * @param token - The token to assign the payload to
+   * @param element - The syntax node associated with the token
+   * @param kind - The kind of CST node
+   */
   protected tokenPayload(
     token: IToken,
     element: SyntaxNode,
@@ -97,6 +141,9 @@ export class AbstractParser extends EmbeddedActionsParser {
     });
   }
 
+  /**
+   * Defines an OR rule with a name and a set of alternative rules.
+   */
   protected OR_RULE<T>(
     name: string,
     rules: () => ParserMethod<any, any>[],
@@ -252,6 +299,9 @@ export class AbstractParser extends EmbeddedActionsParser {
     this.subrule_assign(9, ruleToCall, options);
   }
 
+  /**
+   * Builds a precedence map from precedence groups
+   */
   private buildPrecendenceMap(
     precedenceGroups: TokenType[][],
   ): Map<string, number> {
@@ -292,6 +342,11 @@ export class AbstractParser extends EmbeddedActionsParser {
     [tokens.Pipe, tokens.Not],
   ]);
 
+  /**
+   * Constructs a binary expression from an intermediate representation, 
+   * used when popping infix exprs from the stack, 
+   * so we get the whole thing together
+   */
   private constructBinaryExpression(
     obj: IntermediateBinaryExpression,
   ): BinaryExpression {

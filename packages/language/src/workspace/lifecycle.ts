@@ -1,21 +1,24 @@
 import { ILexingResult } from "chevrotain";
-import { SourceFile } from "./source-file";
+import { Diagnostic } from "../language-server/types";
+import { ReferencesCache, resolveReferences } from "../linking/resolver";
+import { iterateSymbols, SymbolTable } from "../linking/symbol-table";
+import { PliParserInstance } from "../parser/parser";
 import { LexerInstance } from "../parser/tokens";
 import { PliProgram } from "../syntax-tree/ast";
-import { PliParserInstance } from "../parser/parser";
-import { iterateSymbols, SymbolTable } from "../linking/symbol-table";
-import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import {
+  generateValidationDiagnostics,
   lexerErrorsToDiagnostics,
   linkingErrorsToDiagnostics,
   parserErrorsToDiagnostics,
 } from "../validation/validator";
+import { SourceFile } from "./source-file";
 
 export function lifecycle(sourceFile: SourceFile, text: string): void {
   tokenize(sourceFile, text);
   parse(sourceFile);
   generateSymbolTable(sourceFile);
   link(sourceFile);
+  validate(sourceFile);
 }
 
 export function tokenize(sourceFile: SourceFile, text: string): ILexingResult {
@@ -99,7 +102,11 @@ export function link(sourceFile: SourceFile): ReferencesCache {
   return sourceFile.references;
 }
 
-// TODO: add semantic validation phase
-// export function validate(sourceFile: SourceFile): Diagnostic[] {
-//     sourceFile.diagnostics = collectCommonDiagnostics(sourceFile, LexerInstance.errors, PliParserInstance.errors);
-// }
+/**
+ * Performs semantic validations on the AST of the source file
+ */
+export function validate(sourceFile: SourceFile): Diagnostic[] {
+  const diagnostics = generateValidationDiagnostics(sourceFile.ast);
+  sourceFile.diagnostics.validation = diagnostics;
+  return diagnostics;
+}

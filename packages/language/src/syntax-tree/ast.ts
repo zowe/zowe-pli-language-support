@@ -201,6 +201,7 @@ export enum SyntaxKind {
 
 export interface AstNode {
   container: SyntaxNode | null;
+  kind: SyntaxKind;
 }
 
 export interface Reference<T extends SyntaxNode = SyntaxNode> {

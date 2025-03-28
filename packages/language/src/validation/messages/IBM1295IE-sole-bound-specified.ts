@@ -9,52 +9,53 @@
  *
  */
 
-// TODO: Reimplement once the validation infrastructure is in place
+import { getSyntaxNodeRange, Severity } from "../../language-server/types";
+import { Bound, DimensionBound, SyntaxKind } from "../../syntax-tree/ast";
+import { PliValidationAcceptor } from "../validator";
+import { Error } from "./pli-codes";
 
-// import { ValidationAcceptor } from "langium";
-// import {
-//   Bound,
-//   DimensionBound,
-//   isLiteral,
-//   isNumberLiteral,
-//   isUnaryExpression,
-// } from "../../generated/ast";
-// import { Error } from "./pli-codes";
+export function IBM1295IE_sole_bound_specified(
+  bound: DimensionBound,
+  accept: PliValidationAcceptor,
+): void {
+  if (bound.bound2 !== undefined) {
+    return;
+  }
+  const upper = bound.bound1;
+  if (isBoundNegative(upper) || isBoundZero(upper)) {
+    const code = Error.IBM1295I;
+    accept(Severity.E, code.message, {
+    //   node: bound
+      range: getSyntaxNodeRange(bound)!,
+      uri: "", // TODO: Add URI
+    //   property: "bound1",
+      code: code.fullCode,
+    });
+  }
+}
 
-// export function IBM1295IE_sole_bound_specified(
-//   bound: DimensionBound,
-//   accept: ValidationAcceptor,
-// ): void {
-//   if (bound.bound2 !== undefined) {
-//     return;
-//   }
-//   const upper = bound.bound1;
-//   if (isBoundNegative(upper) || isBoundZero(upper)) {
-//     const code = Error.IBM1295I;
-//     accept("error", code.message, {
-//       node: bound,
-//       property: "bound1",
-//       code: code.fullCode,
-//     });
-//   }
-// }
+function isBoundNegative(bound: Bound | null) {
+  return (
+    bound &&
+    bound.expression !== "*" &&
+    bound.expression?.kind === SyntaxKind.UnaryExpression &&
+    bound.expression.op === "-" &&
+    bound.expression.expr &&
+    bound.expression.expr.kind === SyntaxKind.Literal &&
+    bound.expression.expr.value &&
+    bound.expression.expr.value.kind === SyntaxKind.NumberLiteral
+  );
+}
 
-// function isBoundNegative(bound: Bound) {
-//   return (
-//     bound.expression !== "*" &&
-//     isUnaryExpression(bound.expression) &&
-//     bound.expression.op === "-" &&
-//     isLiteral(bound.expression.expr) &&
-//     isNumberLiteral(bound.expression.expr.value)
-//   );
-// }
-
-// function isBoundZero(bound: Bound): boolean {
-//   return (
-//     bound.expression !== "*" &&
-//     isLiteral(bound.expression) &&
-//     isNumberLiteral(bound.expression.value) &&
-//     //TODO find other cases when it is zero
-//     bound.expression.value.value === "0"
-//   );
-// }
+function isBoundZero(bound: Bound | null): boolean {
+  return (
+    bound &&
+    bound.expression &&
+    bound.expression !== "*" &&
+    bound.expression.kind === SyntaxKind.Literal &&
+    bound.expression.value &&
+    bound.expression.value.kind === SyntaxKind.NumberLiteral &&
+    //TODO find other cases when it is zero
+    bound.expression.value.value === "0"
+  )!!;
+}
