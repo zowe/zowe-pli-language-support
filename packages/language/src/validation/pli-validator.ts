@@ -154,7 +154,7 @@ export class Pl1Validator {
                     });
 
                     // also flag when we have any sort of args list (even an empty one) present after the call
-                    if (node.call?.hasArgs) {
+                    if (node.call?.args1) {
                         acceptor(Severity.E,
                             PLICodes.Error.IBM1231I.message(node.call?.procedure?.text!),
                             {
