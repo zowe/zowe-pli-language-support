@@ -74,7 +74,9 @@ export function parse(
 export function parseStmts(text: string, options?: { validate: boolean }): CompilationUnit {
   return parse(` STARTPR: PROCEDURE OPTIONS (MAIN);
 ${text}
- end STARTPR;`, options);
+ end STARTPR;`,
+    options,
+  );
 }
 
 /**

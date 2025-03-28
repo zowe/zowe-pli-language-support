@@ -2255,9 +2255,9 @@ export class PliParser extends AbstractParser {
                       element,
                       CstNodeKind.DefineOrdinalStatement_Signed0,
                     );
-                    element.attributes.push(token.image as 'SIGNED');
+                    element.attributes.push(token.image as "SIGNED");
                   });
-                }
+                },
               },
               // unsigned
               {
@@ -2268,12 +2268,12 @@ export class PliParser extends AbstractParser {
                       element,
                       CstNodeKind.DefineOrdinalStatement_Unsigned0,
                     );
-                    element.attributes.push(token.image as 'UNSIGNED');
+                    element.attributes.push(token.image as "UNSIGNED");
                   });
                 },
-              }
-            ])
-          }
+              },
+            ]);
+          },
         },
         {
           // attribute w/ precision val (will only take one)
@@ -2284,7 +2284,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.DefineOrdinalStatement_PRECISION,
               );
-              element.attributes.push(token.image as 'PRECISION' | 'PREC');
+              element.attributes.push(token.image as "PRECISION" | "PREC");
             });
             this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
               this.tokenPayload(
@@ -2309,8 +2309,8 @@ export class PliParser extends AbstractParser {
                 CstNodeKind.DefineOrdinalStatement_CloseParenPrecision,
               );
             });
-          }
-        }
+          },
+        },
       ]);
     });
     this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
