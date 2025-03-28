@@ -28,10 +28,10 @@ export function IBM1324IE_name_occurs_more_than_once_within_exports_clause(
         {
           code: "IBM1324IE",
           range: getSyntaxNodeRange(exports)!,
-          uri: "" // TODO: Add URI
-        //   node: exports,
-        //   property: "procedures",
-        //   index,
+          uri: "", // TODO: Add URI
+          //   node: exports,
+          //   property: "procedures",
+          //   index,
         },
       );
     }

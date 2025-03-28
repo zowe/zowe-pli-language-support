@@ -82,7 +82,6 @@ export interface TokenPayload {
 }
 
 export class AbstractParser extends EmbeddedActionsParser {
-
   constructor(tokens: TokenType[], config?: IParserConfig) {
     super(tokens, {
       ...config,
@@ -343,8 +342,8 @@ export class AbstractParser extends EmbeddedActionsParser {
   ]);
 
   /**
-   * Constructs a binary expression from an intermediate representation, 
-   * used when popping infix exprs from the stack, 
+   * Constructs a binary expression from an intermediate representation,
+   * used when popping infix exprs from the stack,
    * so we get the whole thing together
    */
   private constructBinaryExpression(

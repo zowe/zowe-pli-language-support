@@ -25,10 +25,10 @@ export function IBM1295IE_sole_bound_specified(
   if (isBoundNegative(upper) || isBoundZero(upper)) {
     const code = Error.IBM1295I;
     accept(Severity.E, code.message, {
-    //   node: bound
+      //   node: bound
       range: getSyntaxNodeRange(bound)!,
       uri: "", // TODO: Add URI
-    //   property: "bound1",
+      //   property: "bound1",
       code: code.fullCode,
     });
   }
@@ -48,14 +48,12 @@ function isBoundNegative(bound: Bound | null) {
 }
 
 function isBoundZero(bound: Bound | null): boolean {
-  return (
-    bound &&
+  return (bound &&
     bound.expression &&
     bound.expression !== "*" &&
     bound.expression.kind === SyntaxKind.Literal &&
     bound.expression.value &&
     bound.expression.value.kind === SyntaxKind.NumberLiteral &&
     //TODO find other cases when it is zero
-    bound.expression.value.value === "0"
-  )!!;
+    bound.expression.value.value === "0")!!;
 }

@@ -10,7 +10,12 @@
  */
 
 import { getSyntaxNodeRange, Severity } from "../../language-server/types";
-import { DeclareStatement, ProcedureStatement, SimpleOptionsItem, SyntaxKind } from "../../syntax-tree/ast";
+import {
+  DeclareStatement,
+  ProcedureStatement,
+  SimpleOptionsItem,
+  SyntaxKind,
+} from "../../syntax-tree/ast";
 import { compareIdentifiers, normalizeIdentifier } from "../utils";
 import { PliValidationAcceptor } from "../validator";
 
@@ -21,25 +26,31 @@ export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_h
   const items = procedureStatement.options.flatMap((o) => o.items);
   const item = items.find(
     (i) =>
-        i.kind === SyntaxKind.SimpleOptionsItem &&
-        i.value && i.value.toUpperCase() === "NODESCRIPTOR",
+      i.kind === SyntaxKind.SimpleOptionsItem &&
+      i.value &&
+      i.value.toUpperCase() === "NODESCRIPTOR",
   ) as SimpleOptionsItem | undefined;
   if (item) {
     const parameterNames = new Set(
-      procedureStatement.parameters.map((p) => p.id ? normalizeIdentifier(p.id) : p.id),
+      procedureStatement.parameters.map((p) =>
+        p.id ? normalizeIdentifier(p.id) : p.id,
+      ),
     );
 
     const declareStmts: DeclareStatement[] = procedureStatement.statements
-        .filter(s => s.kind === SyntaxKind.Statement)
-        .map(s => s.value)
-        .filter(s => s !== null && s.kind === SyntaxKind.DeclareStatement) as DeclareStatement[];
-
+      .filter((s) => s.kind === SyntaxKind.Statement)
+      .map((s) => s.value)
+      .filter(
+        (s) => s !== null && s.kind === SyntaxKind.DeclareStatement,
+      ) as DeclareStatement[];
 
     const nonConnectedParameters = declareStmts
-      .flatMap(d => d.items)
+      .flatMap((d) => d.items)
       .filter(
         (i) =>
-          i.element && i.element !== '*' && i.element.kind === SyntaxKind.DeclaredVariable &&
+          i.element &&
+          i.element !== "*" &&
+          i.element.kind === SyntaxKind.DeclaredVariable &&
           parameterNames.has(normalizeIdentifier(i.element.name!)),
       )
       .filter((i) =>
@@ -57,8 +68,8 @@ export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_h
           code: "IBM1388IE",
           range: getSyntaxNodeRange(item)!,
           uri: "", // TODO: Add URI
-        //   node: item,
-        //   property: "value",
+          //   node: item,
+          //   property: "value",
         },
       );
     }

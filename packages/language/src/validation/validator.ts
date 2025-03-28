@@ -14,32 +14,48 @@ import {
   IRecognitionException,
   MismatchedTokenException,
 } from "chevrotain";
-import { Diagnostic, DiagnosticInfo, Range, Severity } from "../language-server/types";
+import {
+  Diagnostic,
+  DiagnosticInfo,
+  Range,
+  Severity,
+} from "../language-server/types";
 import { ReferencesCache } from "../linking/resolver";
 import { isValidToken } from "../linking/tokens";
 import { PliProgram, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
-import { PliValidationChecks, PliValidationFunction, registerValidationChecks } from "./pli-validator";
+import {
+  PliValidationChecks,
+  PliValidationFunction,
+  registerValidationChecks,
+} from "./pli-validator";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
  */
-export type PliValidationAcceptor = (severity: Severity, message: string, info: DiagnosticInfo) => void;
+export type PliValidationAcceptor = (
+  severity: Severity,
+  message: string,
+  info: DiagnosticInfo,
+) => void;
 
 /**
  * Generates validation diagnostics (semantic checks) from the given AST node.
  */
 export function generateValidationDiagnostics(root: PliProgram): Diagnostic[] {
-
   // TODO @montymxb Mar. 27th, 2025: Checks are generated on each invocation, not ideal, needs a rework still
   const handlers = registerValidationChecks();
 
   const diagnostics: Diagnostic[] = [];
-  const acceptor: PliValidationAcceptor = (severity: Severity, message: string, d: DiagnosticInfo) => {
+  const acceptor: PliValidationAcceptor = (
+    severity: Severity,
+    message: string,
+    d: DiagnosticInfo,
+  ) => {
     diagnostics.push({
       severity,
       message,
-      ...d
+      ...d,
     });
   };
 
@@ -56,11 +72,16 @@ export function generateValidationDiagnostics(root: PliProgram): Diagnostic[] {
  * @param handlers Registered handlers for validating specific node types
  */
 // function validateSyntaxNode(node: SyntaxNode, acceptor: PliValidationAcceptor, handlers: Map<SyntaxKind, AstNodeValidator>): void {
-function validateSyntaxNode(node: SyntaxNode, acceptor: PliValidationAcceptor, handlers: PliValidationChecks): void {
+function validateSyntaxNode(
+  node: SyntaxNode,
+  acceptor: PliValidationAcceptor,
+  handlers: PliValidationChecks,
+): void {
   // get the name of enum value for node.kind
   const name = SyntaxKind[node.kind] as keyof typeof SyntaxKind;
   if (handlers[name]) {
-    let fnOrArray: PliValidationFunction | PliValidationFunction[] = handlers[name] ?? [];
+    let fnOrArray: PliValidationFunction | PliValidationFunction[] =
+      handlers[name] ?? [];
     if (!(fnOrArray instanceof Array)) {
       fnOrArray = [fnOrArray];
     }
