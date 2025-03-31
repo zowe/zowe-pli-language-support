@@ -324,23 +324,29 @@ describe("Linking tests", async () => {
     });
   });
 
-  test('fetch linking', async () => {
-    const doc = parse(`
+  test("fetch linking", async () => {
+    const doc = parse(
+      `
         MAINPR: PROCEDURE OPTIONS(MAIN);
         dcl A entry;
         fetch A;
         end MAINPR;
-    `, { validate: true });
+    `,
+      { validate: true },
+    );
     const diagnostics = collectDiagnostics(doc);
   
     expect(diagnostics.length).toBe(0);
-  
-    const procedureStatement = doc.ast.statements[0].value as ProcedureStatement;
+
+    const procedureStatement = doc.ast.statements[0]
+      .value as ProcedureStatement;
     const subStmt = procedureStatement.statements[1] as Statement;
-    expect(subStmt && subStmt.value && subStmt.value.kind === SyntaxKind.FetchStatement).toBeTruthy();
-  
-    // using the new scoping approach, determie that 'fetch A' resolves correctly reference A
-  
+    expect(
+      subStmt &&
+        subStmt.value &&
+        subStmt.value.kind === SyntaxKind.FetchStatement,
+    ).toBeTruthy();
+
     // look up the symbol
     const fetchStmt = subStmt.value as FetchStatement;
     const fetchStmtNameRef = fetchStmt.entries[0].name as string;
