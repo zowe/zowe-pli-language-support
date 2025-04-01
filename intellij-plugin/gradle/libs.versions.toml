@@ -1,0 +1,26 @@
+[versions]
+# libraries
+gson = "2.11.0"
+kotest = "5.9.1"
+mockk = "1.13.13"
+junit = "1.11.3"
+
+# plugins
+gradle = "2.1.0"
+kotlinJvm = "1.9.22"
+kover = "0.8.3"
+
+[libraries]
+# build deps
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+
+# test deps
+kotest-runner-junit5 = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
+kotest-assertions-core = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version = "junit" }
+
+[plugins]
+gradle = { id = "org.jetbrains.intellij.platform", version.ref = "gradle" }
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlinJvm" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

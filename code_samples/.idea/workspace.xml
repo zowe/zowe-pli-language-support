@@ -2,14 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="226bf052-aed0-4175-a9f6-56129753ea31" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../intellij-plugin/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../intellij-plugin/.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../intellij-plugin/.idea/gradle.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../intellij-plugin/.idea/kotlinc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../intellij-plugin/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../intellij-plugin/.idea/uiDesigner.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../intellij-plugin/.idea/vcs.xml" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/../intellij-plugin/gradle/libs.versions.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../intellij-plugin/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../intellij-plugin/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../intellij-plugin/src/main/kotlin/org/zowe/pli/state/PliPluginState.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../intellij-plugin/src/main/kotlin/org/zowe/pli/state/PliPluginState.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,10 +15,10 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 2
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="2oQnMJBWwa6C4ovaKZ4jfIy2hal" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -31,7 +27,12 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "kotlin-language-version-configured": "true"
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "feature/intellij-pli-poc",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/IBA/IJMP/zowe-explorer-intellij",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
 }]]></component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />

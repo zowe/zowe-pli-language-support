@@ -27,7 +27,6 @@ import org.jetbrains.plugins.textmate.TextMateService
 import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings
 import com.intellij.openapi.util.io.FileUtil
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
-import com.redhat.devtools.lsp4ij.server.JavaProcessCommandBuilder
 import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
 import kotlinx.coroutines.runBlocking
@@ -38,7 +37,7 @@ import kotlin.io.path.pathString
 const val PLI_PLUGIN_NOTIFICATION_ID = "org.zowe.pli.PliNotificationId"
 
 private const val VSIX_NAME = "pli-language-support"
-private const val VSIX_VERSION = "0.0.1"
+private const val VSIX_VERSION = "0.0.3"
 const val TEXTMATE_BUNDLE_NAME = "pli"
 
 /**
@@ -78,7 +77,7 @@ class PliPluginState(private val project: Project) : LanguageSupportState() {
    */
   private fun computeVSIXPlacingPaths(): Boolean {
     vsixPlacingRootPath = PathManager.getConfigDir().resolve(VSIX_NAME)
-    vsixUnpackedPath = vsixPlacingRootPath.resolve("extension")
+    vsixUnpackedPath = vsixPlacingRootPath
     packageJsonPath = vsixUnpackedPath.resolve("package.json")
     lspServerPath = vsixUnpackedPath.resolve("out").resolve("language").resolve("main.cjs")
     val syntaxesPath = vsixUnpackedPath.resolve("syntaxes")
@@ -149,6 +148,7 @@ class PliPluginState(private val project: Project) : LanguageSupportState() {
     super.prepareLSPClient {
       val emptyBundleName = "$TEXTMATE_BUNDLE_NAME-0.0.0"
       val newBundleName = "$TEXTMATE_BUNDLE_NAME-$VSIX_VERSION"
+//      val textMateUserBundlesSettings = TextMateUserBundlesSettings.getInstance()
       val textMateUserBundlesSettings = TextMateUserBundlesSettings.instance
       if (textMateUserBundlesSettings != null) {
         var existingBundles = textMateUserBundlesSettings.bundles
@@ -186,6 +186,7 @@ class PliPluginState(private val project: Project) : LanguageSupportState() {
   override fun unloadLSPClient(unloadFun: () -> Unit) {
     super.unloadLSPClient {
       unloadFun()
+//      val textMateUserBundlesSettings = TextMateUserBundlesSettings.getInstance()
       val textMateUserBundlesSettings = TextMateUserBundlesSettings.instance
       if (textMateUserBundlesSettings != null) {
         var existingBundles = textMateUserBundlesSettings.bundles
