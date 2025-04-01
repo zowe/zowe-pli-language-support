@@ -11,6 +11,8 @@ type ParserLocation = 'in-statement' | 'in-procedure';
 export interface PreprocessorParserState {
     index: number;
     uri: URI;
+    get tokens(): IToken[];
+    get perFileTokens(): Record<string, IToken[]>;
     get current(): IToken | undefined;
     get last(): IToken | undefined;
     get eof(): boolean;
@@ -34,14 +36,15 @@ export interface PreprocessorParserState {
 export class PliPreprocessorParserState implements PreprocessorParserState {
     private readonly lexer: PliPreprocessorLexer;
     private readonly lexerState: PreprocessorLexerState;
-    private readonly tokens: IToken[]
+    readonly tokens: IToken[];
+    readonly perFileTokens: Record<string, IToken[]> = {};
     public index: number;
     public uri: URI;
     private location: ParserLocation[] = [];
 
     constructor(lexer: PliPreprocessorLexer, text: string, uri: URI) {
         this.lexer = lexer;
-        this.lexerState = new PliPreprocessorLexerState(text);
+        this.lexerState = new PliPreprocessorLexerState(text, uri);
         this.tokens = [];
         this.index = 0;
         this.uri = uri;

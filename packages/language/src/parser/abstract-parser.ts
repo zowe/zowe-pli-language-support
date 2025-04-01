@@ -26,6 +26,7 @@ import {
 } from "../syntax-tree/ast";
 import type { CstNodeKind } from "../syntax-tree/cst";
 import * as tokens from "./tokens";
+import { URI } from "../utils/uri";
 
 /**
  * Options for assigning a result to a subrule.
@@ -68,7 +69,7 @@ export interface TokenPayload {
   /**
    * The URI associated with the token, if any.
    */
-  uri?: string;
+  uri: URI;
 
   /**
    * The kind of CST (Concrete Syntax Tree) node.
@@ -104,10 +105,15 @@ export class AbstractParser extends EmbeddedActionsParser {
     if (isNaN(token.startOffset)) {
       return;
     }
-    token.payload = {
-      kind,
-      element,
-    };
+    if (token.payload === undefined) {
+      token.payload = {
+        kind,
+        element,
+      }
+    } else {
+      token.payload.kind = kind;
+      token.payload.element = element;
+    }
   }
 
   private stack: any[] = [];

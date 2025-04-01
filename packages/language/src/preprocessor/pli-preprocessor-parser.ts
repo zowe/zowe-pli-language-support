@@ -5,12 +5,14 @@ import { PreprocessorError } from "./pli-preprocessor-error";
 import { IToken, TokenType } from "chevrotain";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
-import { readFileSync } from "fs";
-import { URI } from "../utils/uri";
+import { URI, UriUtils } from "../utils/uri";
+import { FileSystemProviderInstance } from "../workspace/file-system-provider";
+import { TextDocuments } from "../language-server/text-documents";
 
 export type PreprocessorParserResult = {
     statements: PPStatement[];
     errors: PreprocessorError[];
+    perFileTokens: Record<string, IToken[]>;
 }
 
 export class PliPreprocessorParser {
@@ -31,7 +33,7 @@ export class PliPreprocessorParser {
             try {
                 if(state.isInProcedure() || state.canConsume(PreprocessorTokens.Percentage)) {
                     const statement = this.statement(state);
-                    if(statement.type === 'include')  {
+                    if(statement.type === 'include') {
                         errors.push(...statement.subProgram.errors);
                     }
                     statements.push(statement);
@@ -49,9 +51,11 @@ export class PliPreprocessorParser {
                 }
             }
         }
+        state.perFileTokens[state.uri.toString()] = state.tokens;
         return {
             statements,
             errors,
+            perFileTokens: state.perFileTokens
         };
     }
 
@@ -213,17 +217,36 @@ export class PliPreprocessorParser {
     includeStatement(state: PreprocessorParserState): PPStatement {
         state.consume(PreprocessorTokens.Include);
         const file = state.consume(PreprocessorTokens.String).image;
-        const fileName = file.substring(1, file.length-1);
+        const fileName = file.substring(1, file.length - 1);
         state.consume(PreprocessorTokens.Semicolon);
-        // To do cache included files
-        const uri = URI.file(fileName);
-        const content = readFileSync(fileName, 'utf-8');
-        const subState = this.initializeState(content, uri);
-        const subProgram = this.start(subState);
-        return {
-            type: 'include',
-            subProgram
-        };
+        // TODO: cache included files
+        const currentDir = UriUtils.dirname(state.uri);
+        const uri = UriUtils.joinPath(currentDir, fileName);
+        try {
+            const content = TextDocuments.get(uri)?.getText() ?? FileSystemProviderInstance.readFileSync(uri);
+            const subState = this.initializeState(content, uri);
+            const subProgram = this.start(subState);
+            // Ensure that we store the tokens of included files in our state
+            // That way we can use them later for LSP services!
+            for (const [uri, tokens] of Object.entries(subState.perFileTokens)) {
+                state.perFileTokens[uri] = tokens;
+            }
+            return {
+                type: 'include',
+                subProgram
+            };
+        } catch {
+            return {
+                type: 'include',
+                subProgram: {
+                    errors: [],
+                    statements: [],
+                    perFileTokens: {}
+                }
+            };
+        }
+        
+        
     }
 
     doStatement(state: PreprocessorParserState): AnyDoGroup {
@@ -637,7 +660,7 @@ export class PliPreprocessorParser {
 
     private tokenizePurePliCode(content: string) {
         const result: IToken[] = [];
-        const lexerState = new PliPreprocessorLexerState(content);
+        const lexerState = new PliPreprocessorLexerState(content, URI.parse('test'));
         while(!lexerState.eof()) {
             const tokens = this.lexer.tokenizePliTokensUntilSemicolon(lexerState);
             result.push(...tokens);

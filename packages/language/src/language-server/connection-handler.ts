@@ -19,6 +19,7 @@ import { SourceFileHandler } from "../workspace/source-file";
 import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
+import { Location } from "vscode-languageserver-types";
 import { TextDocuments } from "./text-documents";
 import { rangeToLSP } from "./types";
 import { renameRequest } from "./rename-request";
@@ -54,19 +55,25 @@ export function startLanguageServer(connection: Connection): void {
     };
   });
   connection.onDefinition((params) => {
-    const uri = params.textDocument.uri;
     const position = params.position;
-    const textDocument = TextDocuments.get(uri);
-    const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
+    const textDocument = TextDocuments.get(params.textDocument.uri);
+    const uri = URI.parse(params.textDocument.uri);
+    const sourceFile = sourceFileHandler.getSourceFile(uri);
     if (textDocument && sourceFile) {
       const offset = textDocument.offsetAt(position);
-      const definition = definitionRequest(sourceFile, offset);
-      return definition.map((def) => {
-        return {
-          uri: def.uri,
-          range: rangeToLSP(textDocument, def.range),
-        };
-      });
+      const definition = definitionRequest(sourceFile, uri, offset);
+      const lspDefinitions: Location[] = [];
+      for (const def of definition) {
+        const doc = TextDocuments.get(def.uri);
+        if (doc) {
+          const range = rangeToLSP(doc, def.range);
+          lspDefinitions.push({
+            uri: def.uri,
+            range
+          });
+        }
+      }
+      return lspDefinitions;
     }
     return [];
   });
@@ -74,16 +81,23 @@ export function startLanguageServer(connection: Connection): void {
     const uri = params.textDocument.uri;
     const position = params.position;
     const textDocument = TextDocuments.get(uri);
-    const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
+    const parsedUri = URI.parse(uri);
+    const sourceFile = sourceFileHandler.getSourceFile(parsedUri);
     if (textDocument && sourceFile) {
       const offset = textDocument.offsetAt(position);
-      const definition = referencesRequest(sourceFile, offset);
-      return definition.map((def) => {
-        return {
-          uri: def.uri,
-          range: rangeToLSP(textDocument, def.range),
-        };
-      });
+      const definition = referencesRequest(sourceFile, parsedUri, offset);
+      const lspDefinitions: Location[] = [];
+      for (const def of definition) {
+        const doc = TextDocuments.get(def.uri);
+        if (doc) {
+          const range = rangeToLSP(doc, def.range);
+          lspDefinitions.push({
+            uri: def.uri,
+            range
+          });
+        }
+      }
+      return lspDefinitions;
     }
     return [];
   });

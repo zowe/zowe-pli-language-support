@@ -3,6 +3,7 @@ import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols, SymbolTable } from "../linking/symbol-table";
 import { PliParserInstance } from "../parser/parser";
 import { LexerInstance } from "../parser/tokens";
+import { SourceFile } from "./source-file";
 import { PliProgram } from "../syntax-tree/ast";
 import {
   generateValidationDiagnostics,
@@ -10,6 +11,8 @@ import {
   linkingErrorsToDiagnostics,
   parserErrorsToDiagnostics,
 } from "../validation/validator";
+import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
+import { URI } from "../utils/uri";
 import { SourceFile } from "./source-file";
 
 export function lifecycle(sourceFile: SourceFile, text: string): void {
@@ -20,66 +23,19 @@ export function lifecycle(sourceFile: SourceFile, text: string): void {
   validate(sourceFile);
 }
 
-export function tokenize(sourceFile: SourceFile, text: string): ILexingResult {
-  const result = LexerInstance.tokenize(adjustMargins(text));
-  sourceFile.tokens = result.tokens;
+const lexer = new PliLexer();
+
+export function tokenize(sourceFile: SourceFile, text: string): LexerResult {
+  const result = lexer.tokenize(text, sourceFile.uri);
+  sourceFile.files = Object.keys(result.fileTokens).map(e => URI.parse(e));
+  sourceFile.tokens.all = result.all;
+  sourceFile.tokens.fileTokens = result.fileTokens;
   sourceFile.diagnostics.lexer = lexerErrorsToDiagnostics(result.errors);
   return result;
 }
 
-// TODO: use margins processor later on
-function adjustMargins(text: string): string {
-  const lines = splitLines(text);
-  const adjustedLines = lines.map((line) => adjustLine(line));
-  const adjustedText = adjustedLines.join("");
-  return adjustedText;
-}
-
-const NEWLINE = "\n".charCodeAt(0);
-
-function splitLines(text: string): string[] {
-  const lines: string[] = [];
-  for (let i = 0; i < text.length; i++) {
-    const start = i;
-    while (i < text.length && text.charCodeAt(i) !== NEWLINE) {
-      i++;
-    }
-    lines.push(text.substring(start, i + 1));
-  }
-  return lines;
-}
-
-const start = 1;
-const end = 72;
-
-function adjustLine(line: string): string {
-  let eol = "";
-  if (line.endsWith("\r\n")) {
-    eol = "\r\n";
-  } else if (line.endsWith("\n")) {
-    eol = "\n";
-  }
-  const prefixLength = start;
-  const lineLength = line.length - eol.length;
-  if (lineLength < prefixLength) {
-    return " ".repeat(lineLength) + eol;
-  }
-  const lineEnd = end;
-  const prefix = " ".repeat(prefixLength);
-  let postfix = "";
-  if (lineLength > lineEnd) {
-    postfix = " ".repeat(lineLength - lineEnd);
-  }
-  return (
-    prefix +
-    line.substring(prefixLength, Math.min(lineEnd, lineLength)) +
-    postfix +
-    eol
-  );
-}
-
 export function parse(sourceFile: SourceFile): PliProgram {
-  PliParserInstance.input = sourceFile.tokens;
+  PliParserInstance.input = sourceFile.tokens.all;
   const ast = PliParserInstance.PliProgram();
   sourceFile.ast = ast;
   sourceFile.diagnostics.parser = parserErrorsToDiagnostics(
@@ -89,6 +45,8 @@ export function parse(sourceFile: SourceFile): PliProgram {
 }
 
 export function generateSymbolTable(sourceFile: SourceFile): SymbolTable {
+  sourceFile.references.clear();
+  sourceFile.symbols.clear();
   iterateSymbols(sourceFile);
   return sourceFile.symbols;
 }

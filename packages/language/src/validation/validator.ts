@@ -22,6 +22,7 @@ import {
 } from "../language-server/types";
 import { ReferencesCache } from "../linking/resolver";
 import { isValidToken } from "../linking/tokens";
+import { TokenPayload } from "../parser/abstract-parser";
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import {
@@ -162,7 +163,7 @@ export function linkingErrorsToDiagnostics(
   for (const reference of references.allReferences()) {
     if (reference.node === null && isValidToken(reference.token)) {
       const diagnostic: Diagnostic = {
-        uri: "",
+        uri: (reference.token.payload as TokenPayload).uri.toString(),
         severity: Severity.W,
         range: {
           start: reference.token.startOffset,

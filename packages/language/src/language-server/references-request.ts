@@ -15,6 +15,7 @@ import { Location } from "./types";
 
 export function referencesRequest(
   sourceFile: SourceFile,
+  uri: URI,
   offset: number,
 ): Location[] {
   return getReferenceLocations(sourceFile, offset);

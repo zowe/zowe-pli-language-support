@@ -242,17 +242,17 @@ export namespace Instructions {
 export function printProgram(program: PliPreprocessorProgram) {
     const programText: string[] = [];
     program.instructions.forEach((instruction, index) => {
-        programText.push(index.toString().padStart(4, ' ')+': ');
+        programText.push(index.toString().padStart(4, ' ') + ': ');
         programText.push(instruction.type.toUpperCase());
         switch (instruction.type) {
             case 'activate':
-                programText.push(...' ', instruction.name);
+                programText.push(' ', instruction.name);
                 if (instruction.scanMode) {
-                    programText.push(...' ', instruction.scanMode.toUpperCase());
+                    programText.push(' ', instruction.scanMode.toUpperCase());
                 }
                 break;
             case 'deactivate':
-                programText.push(...' ', instruction.name);
+                programText.push(' ', instruction.name);
                 break;
             case 'return':
             case 'concat':
@@ -262,20 +262,20 @@ export function printProgram(program: PliPreprocessorProgram) {
                 //nothing to print
                 break;
             case 'set':
-                programText.push(...' ', instruction.name);
+                programText.push(' ', instruction.name);
                 break;
             case 'push':
-                programText.push(...' ', '[', instruction.value.map(tk => tk.image + ':' + tk.tokenType.name).join(', '), ']');
+                programText.push(' ', '[', instruction.value.map(tk => tk.image + ':' + tk.tokenType.name).join(', '), ']');
                 break;
             case 'goto':
             case 'branchIfNEQ':
-                programText.push(...' ', '@', instruction.address?.toString() ?? '???');
+                programText.push(' ', '@', instruction.address?.toString() ?? '???');
                 break;
             case 'get':
-                programText.push(...' ', instruction.variableName);
+                programText.push(' ', instruction.variableName);
                 break;
             case 'compute':
-                programText.push(...' ', instruction.operator);
+                programText.push(' ', instruction.operator);
                 break;                
             default:
                 assertUnreachable(instruction);
@@ -290,13 +290,13 @@ export function printInstruction(instruction: PPInstruction, state: Preprocessor
     programText.push(instruction.type.toUpperCase());
     switch (instruction.type) {
         case 'activate':
-            programText.push(...' ', instruction.name);
+            programText.push(' ', instruction.name);
             if (instruction.scanMode) {
-                programText.push(...' ', instruction.scanMode.toUpperCase());
+                programText.push(' ', instruction.scanMode.toUpperCase());
             }
             break;
         case 'deactivate':
-            programText.push(...' ', instruction.name);
+            programText.push(' ', instruction.name);
             break;
         case 'concat':
         case 'scan':
@@ -306,20 +306,20 @@ export function printInstruction(instruction: PPInstruction, state: Preprocessor
             //nothing to print
             break;
         case 'set':
-            programText.push(...' ', instruction.name);
+            programText.push(' ', instruction.name);
             break;
         case 'push':
-            programText.push(...' ', '[', instruction.value.map(tk => tk.image + ':' + tk.tokenType.name).join(', '), ']');
+            programText.push(' ', '[', instruction.value.map(tk => tk.image + ':' + tk.tokenType.name).join(', '), ']');
             break;
         case 'goto':
         case 'branchIfNEQ':
-            programText.push(...' ', '@', instruction.address.toString());
+            programText.push(' ', '@', instruction.address.toString());
             break;
         case 'get':
-            programText.push(...' ', instruction.variableName);
+            programText.push(' ', instruction.variableName);
             break;
         case 'compute':
-            programText.push(...' ', instruction.operator);
+            programText.push(' ', instruction.operator);
             break;
         default:
             assertUnreachable(instruction);

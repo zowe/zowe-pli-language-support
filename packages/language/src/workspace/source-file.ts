@@ -34,11 +34,17 @@ export interface SourceFile {
    * This might not be the same as the URI of the currently open file.
    */
   uri: URI;
+  files: URI[];
   ast: PliProgram;
-  tokens: IToken[];
+  tokens: SourceFileTokens;
   symbols: SymbolTable;
   references: ReferencesCache;
   diagnostics: SourceFileDiagnostics;
+}
+
+export interface SourceFileTokens {
+  all: IToken[];
+  fileTokens: Record<string, IToken[]>;
 }
 
 export interface SourceFileDiagnostics {
@@ -60,12 +66,16 @@ export function collectDiagnostics(sourceFile: SourceFile): Diagnostic[] {
 export function createSourceFile(uri: URI): SourceFile {
   return {
     uri,
+    files: [],
     ast: {
       kind: SyntaxKind.PliProgram,
       container: null,
       statements: [],
     },
-    tokens: [],
+    tokens: {
+      fileTokens: {},
+      all: []
+    },
     symbols: new SymbolTable(),
     references: new ReferencesCache(),
     diagnostics: {
@@ -102,13 +112,15 @@ export class SourceFileHandler {
     const textDocuments = TextDocuments;
     textDocuments.listen(connection);
     textDocuments.onDidChangeContent((event) => {
-      const sourceFile = this.createSourceFile(URI.parse(event.document.uri));
-      lifecycle(sourceFile, event.document.getText());
+      const sourceFile = this.getOrCreateSourceFile(URI.parse(event.document.uri));
+      const document = TextDocuments.get(sourceFile.uri.toString()) ?? event.document;
+      lifecycle(sourceFile, document.getText());
+      sourceFile.files.forEach(file => {
+        this.sourceFiles.set(file.toString(), sourceFile);
+      });
       connection.sendDiagnostics({
         uri: event.document.uri,
-        diagnostics: collectDiagnostics(sourceFile).map((d) =>
-          diagnosticToLSP(event.document, d),
-        ),
+        diagnostics: collectDiagnostics(sourceFile).map(diagnosticToLSP),
       });
     });
     textDocuments.onDidClose((event) => {

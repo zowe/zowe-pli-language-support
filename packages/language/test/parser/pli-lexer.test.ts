@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import { Pl1Lexer } from "../../src/preprocessor/pli-lexer";
+import { PliLexer } from "../../src/preprocessor/pli-lexer";
+import { URI } from "../../src/utils/uri";
 
 type TokenizeFunction = (text: string) => string[];
 
@@ -8,16 +9,16 @@ describe("PL/1 Lexer", () => {
     let tokenizeWithErrors: TokenizeFunction;
 
     beforeAll(async () => {
-        const lexer = new Pl1Lexer();
+        const lexer = new PliLexer();
         tokenize = (text: string) => {
-            const { tokens, errors } = lexer.tokenize(text);
+            const { all: allTokens, errors } = lexer.tokenize(text, URI.file('/test.pli'));
             if (errors.length > 0) {
                 throw new Error(errors.map(e => `${e.line}:${e.column}: ${e.message}`).join('\n'));
             }
-            return tokens.map(t => t.image + ':' + t.tokenType.name.toUpperCase());
+            return allTokens.map(t => t.image + ':' + t.tokenType.name.toUpperCase());
         };
         tokenizeWithErrors = (text: string) => {
-            const { errors } = lexer.tokenize(text);
+            const { errors } = lexer.tokenize(text, URI.file('/test.pli'));
             return errors.map(e => e.message);
         };
     });
@@ -38,10 +39,10 @@ describe("PL/1 Lexer", () => {
 
     test("Tokenize simple declaration without preprocessor", () => {
         expect(tokenize(' dcl A fixed bin(31);')).toStrictEqual([
-            "dcl:DCL",
+            "dcl:DECLARE",
             "A:A",
             "fixed:FIXED",
-            "bin:BIN",
+            "bin:BINARY",
             "(:(",
             "31:NUMBER",
             "):)",
@@ -56,10 +57,10 @@ describe("PL/1 Lexer", () => {
             %A = 'B';
             dcl A%C fixed bin(31);
         `)).toStrictEqual([
-            "dcl:DCL",
+            "dcl:DECLARE",
             "BC:ID",
             "fixed:FIXED",
-            "bin:BIN",
+            "bin:BINARY",
             "(:(",
             "31:NUMBER",
             "):)",
@@ -67,7 +68,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip("Tokenize simple error in declaration with preprocessor", () => {
+    test("Tokenize simple error in declaration with preprocessor", () => {
         expect(tokenizeWithErrors(`
             %decl A char;
             %A = 'B';
@@ -77,7 +78,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip("Tokenize multiple errors in declaration with preprocessor", () => {
+    test("Tokenize multiple errors in declaration with preprocessor", () => {
         expect(tokenizeWithErrors(`
             %decl A char;
             %%A = 'B';
@@ -87,16 +88,16 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip("Replace with empty string", () => {
+    test("Replace with empty string", () => {
         expect(tokenize(`
             %dcl A char;
             %A = '';
             dcl A%C fixed bin(31);
         `)).toStrictEqual([
-            "dcl:DCL",
+            "dcl:DECLARE",
             "C:C",
             "fixed:FIXED",
-            "bin:BIN",
+            "bin:BINARY",
             "(:(",
             "31:NUMBER",
             "):)",
@@ -104,7 +105,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip('Example 1.1 from documentation', () => {
+    test('Example 1.1 from documentation', () => {
         expect(tokenize(`
             %DECLARE A CHARACTER, B FIXED;
             %A = 'B+C';
@@ -120,7 +121,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip('Example 1.2 from documentation', () => {
+    test('Example 1.2 from documentation', () => {
         expect(tokenize(`
             %DECLARE A CHARACTER, B FIXED;
             %A = 'B+C';
@@ -137,7 +138,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip('Replace once then twice', () => {
+    test('Replace once then twice', () => {
         expect(tokenize(`
             %DECLARE A CHARACTER, B FIXED, C FIXED;
             %A = 'B+C';
@@ -154,15 +155,15 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip("Page directive will be ignored", () => {
+    test("Page directive will be ignored", () => {
         expect(tokenize(`
             %PAGE;
             dcl A fixed bin(31);
         `)).toStrictEqual([
-            "dcl:DCL",
+            "dcl:DECLARE",
             "A:A",
             "fixed:FIXED",
-            "bin:BIN",
+            "bin:BINARY",
             "(:(",
             "31:NUMBER",
             "):)",
@@ -170,16 +171,16 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip("Skip directive will ignore only the next line", () => {
+    test("Skip directive will ignore only the next line", () => {
         expect(tokenize(`
             %SKIP;
             dcl A fixed bin(31);
             dcl B fixed bin(31);
         `)).toStrictEqual([
-            "dcl:DCL",
+            "dcl:DECLARE",
             "B:B",
             "fixed:FIXED",
-            "bin:BIN",
+            "bin:BINARY",
             "(:(",
             "31:NUMBER",
             "):)",
@@ -187,7 +188,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip("Skip directive will ignore 2 next lines", () => {
+    test("Skip directive will ignore 2 next lines", () => {
         expect(tokenize(`
             %SKIP 2;
             dcl A fixed bin(31);
@@ -195,14 +196,14 @@ describe("PL/1 Lexer", () => {
         `)).toStrictEqual([]);
     });
 
-    test.skip("Assign a preprocessed value", () => {
+    test("Assign a preprocessed value", () => {
         expect(tokenize(`
             DCL WHAT FIXED;
             %DECLARE A CHARACTER;
             %A = '123';
             WHAT = A;
         `)).toStrictEqual([
-            "DCL:DCL",
+            "DCL:DECLARE",
             "WHAT:ID",
             "FIXED:FIXED",
             ";:;",
@@ -213,7 +214,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip("Hello World", () => {
+    test("Hello World", () => {
         expect(tokenize(`
             AVERAGE: PROCEDURE OPTIONS (MAIN);
                 /* Test characters: ^[] € */
@@ -241,7 +242,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip("NodeDescriptor", () => {
+    test("NodeDescriptor", () => {
         expect(tokenize(`
             a: proc( x ) options(nodescriptor);
               dcl x(20) fixed bin nonconnected;
@@ -249,7 +250,7 @@ describe("PL/1 Lexer", () => {
         `)).toStrictEqual([
             "a:A",
             ":::",
-            "proc:PROC",
+            "proc:PROCEDURE",
             "(:(",
             "x:X",
             "):)",
@@ -258,13 +259,13 @@ describe("PL/1 Lexer", () => {
             "nodescriptor:NODESCRIPTOR",
             "):)",
             ";:;",
-            "dcl:DCL",
+            "dcl:DECLARE",
             "x:X",
             "(:(",
             "20:NUMBER",
             "):)",
             "fixed:FIXED",
-            "bin:BIN",
+            "bin:BINARY",
             "nonconnected:NONCONNECTED",
             ";:;",
             "end:END",
@@ -273,7 +274,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip('Simple IF-THEN-ELSE', () => {
+    test('Simple IF-THEN-ELSE', () => {
         expect(tokenize(`
             %IF 1 %THEN
               %A = 123;
@@ -283,7 +284,7 @@ describe("PL/1 Lexer", () => {
             dcl X fixed;
             X = A;
         `)).toStrictEqual([
-            "dcl:DCL",
+            "dcl:DECLARE",
             "X:X",
             "fixed:FIXED",
             ";:;",
@@ -294,7 +295,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip('IF-THEN-ELSE with DO group', () => {
+    test('IF-THEN-ELSE with DO group', () => {
         expect(tokenize(`
             %A = 123;
             %IF 1 %THEN %DO;
@@ -305,7 +306,7 @@ describe("PL/1 Lexer", () => {
             dcl X fixed;
             X = A;
         `)).toStrictEqual([
-            "dcl:DCL",
+            "dcl:DECLARE",
             "X:X",
             "fixed:FIXED",
             ";:;",
@@ -316,7 +317,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip('DO WHILE', () => {
+    test('DO WHILE', () => {
         expect(tokenize(`
             %DCL X FIXED;
             %X = 1;
@@ -326,22 +327,22 @@ describe("PL/1 Lexer", () => {
                 %X = %X + 1;
             %END;
         `)).toStrictEqual([
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable1:ID",
             "FIXED:FIXED",
             ";:;",
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable2:ID",
             "FIXED:FIXED",
             ";:;",
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable3:ID",
             "FIXED:FIXED",
             ";:;",
         ]);
     });
 
-    test.skip('DO WHILE UNTIL', () => {
+    test('DO WHILE UNTIL', () => {
         expect(tokenize(`
             %DCL X FIXED;
             %X = 1;
@@ -352,22 +353,22 @@ describe("PL/1 Lexer", () => {
                 %X = %X + 1;
             %END;
         `)).toStrictEqual([
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable1:ID",
             "FIXED:FIXED",
             ";:;",
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable2:ID",
             "FIXED:FIXED",
             ";:;",
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable3:ID",
             "FIXED:FIXED",
             ";:;",
         ]);
     });
 
-    test.skip('DO UNTIL', () => {
+    test('DO UNTIL', () => {
         expect(tokenize(`
             %DCL X FIXED;
             %X = 1;
@@ -377,22 +378,22 @@ describe("PL/1 Lexer", () => {
                 %X = %X + 1;
             %END;
         `)).toStrictEqual([
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable1:ID",
             "FIXED:FIXED",
             ";:;",
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable2:ID",
             "FIXED:FIXED",
             ";:;",
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable3:ID",
             "FIXED:FIXED",
             ";:;",
         ]);
     });
 
-    test.skip('DO UNTIL-WHILE', () => {
+    test('DO UNTIL-WHILE', () => {
         expect(tokenize(`
             %DCL X FIXED;
             %X = 1;
@@ -403,22 +404,22 @@ describe("PL/1 Lexer", () => {
                 %X = %X + 1;
             %END;
         `)).toStrictEqual([
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable1:ID",
             "FIXED:FIXED",
             ";:;",
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable2:ID",
             "FIXED:FIXED",
             ";:;",
-            "DCL:DCL",
+            "DCL:DECLARE",
             "Variable3:ID",
             "FIXED:FIXED",
             ";:;",
         ]);
     });
 
-    test.skip('DO FOREVER with LEAVE', () => {
+    test('DO FOREVER with LEAVE', () => {
         expect(tokenize(`
             %DO %FOREVER;
                 %LEAVE;
@@ -426,7 +427,7 @@ describe("PL/1 Lexer", () => {
         `)).toStrictEqual([]);
     });
 
-    test.skip('Nested DO-block with LEAVE outer one', () => {
+    test('Nested DO-block with LEAVE outer one', () => {
         expect(tokenize(`
             %outer: DO %FOREVER;
                 %DO %FOREVER;
@@ -436,7 +437,7 @@ describe("PL/1 Lexer", () => {
         `)).toStrictEqual([]);
     });
 
-    test.skip('Nested DO-block with LEAVE inner, then outer one', () => {
+    test('Nested DO-block with LEAVE inner, then outer one', () => {
         expect(tokenize(`
             %outer: DO %FOREVER;
                 %inner: DO %FOREVER;
@@ -447,7 +448,7 @@ describe("PL/1 Lexer", () => {
         `)).toStrictEqual([]);
     });
 
-    test.skip('FOREVER with LEAVE condition', () => {
+    test('FOREVER with LEAVE condition', () => {
         expect(tokenize(`
             %declare A fixed;
             %A = 3;
@@ -457,22 +458,22 @@ describe("PL/1 Lexer", () => {
                 %IF %A = 0 %THEN %LEAVE;
             %END;
         `)).toStrictEqual([
-            "dcl:DCL",
+            "dcl:DECLARE",
             "X3:ID",
             "fixed:FIXED",
             ";:;",
-            "dcl:DCL",
+            "dcl:DECLARE",
             "X2:ID",
             "fixed:FIXED",
             ";:;",
-            "dcl:DCL",
+            "dcl:DECLARE",
             "X1:ID",
             "fixed:FIXED",
             ";:;",
         ]);
     });
 
-    test.skip('FOREVER with ITERATE', () => {
+    test('FOREVER with ITERATE', () => {
         expect(tokenize(`
             %declare A fixed;
             %A = 3;
@@ -485,7 +486,7 @@ describe("PL/1 Lexer", () => {
         `)).toStrictEqual([]);
     });
 
-    test.skip('DO with GOTO loop', () => {
+    test('DO with GOTO loop', () => {
         expect(tokenize(`
             %declare A fixed;
             %A = 3;
@@ -495,14 +496,14 @@ describe("PL/1 Lexer", () => {
                 DCL X%A FIXED;
             %END;
         `)).toStrictEqual([
-            "DCL:DCL",
+            "DCL:DECLARE",
             "X0:ID",
             "FIXED:FIXED",
             ";:;",
         ]);
     });
 
-    test.skip('DECLARE multiple ids in one statement #1', () => {
+    test('DECLARE multiple ids in one statement #1', () => {
         expect(tokenize(`
             %declare A character, B fixed;
             %A = 'Hello';
@@ -516,7 +517,7 @@ describe("PL/1 Lexer", () => {
         ]);
     });
 
-    test.skip('DECLARE multiple ids in one statement #2', () => {
+    test('DECLARE multiple ids in one statement #2', () => {
         expect(tokenize(`
             %declare (A, B) character;
             %A = 'Hello';

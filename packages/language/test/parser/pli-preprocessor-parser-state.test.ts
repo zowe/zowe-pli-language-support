@@ -2,10 +2,10 @@ import { describe, expect, test } from "vitest";
 import { PreprocessorTokens } from "../../src/preprocessor/pli-preprocessor-tokens";
 import { PliPreprocessorParserState } from "../../src/preprocessor/pli-preprocessor-parser-state";
 import { URI } from "../../src/utils/uri";
-import { Pl1Lexer } from "../../src/preprocessor/pli-lexer";
+import { PliLexer } from "../../src/preprocessor/pli-lexer";
 
 namespace Fixtures {
-    const lexer = new Pl1Lexer();
+    const lexer = new PliLexer();
     const uri = URI.file("file:///test.pli");
     export const Empty = () => new PliPreprocessorParserState(lexer.preprocessorLexer, "", uri);
     export const OneToken = () => new PliPreprocessorParserState(lexer.preprocessorLexer, "ABC", uri);

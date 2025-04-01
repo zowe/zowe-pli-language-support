@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { rmSync, writeFileSync } from "fs";
-import { Pl1Lexer } from "../../src/preprocessor/pli-lexer";
+import { PliLexer } from "../../src/preprocessor/pli-lexer";
+import { setFileSystemProvider, VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
+import { URI } from "../../src/utils/uri";
 
 type TokenizeFunction = (text: string) => string[];
 
@@ -8,17 +9,19 @@ describe("PL/1 Includes", () => {
     let tokenize: TokenizeFunction;
 
     beforeAll(async () => {
-        writeFileSync('payroll.pli', ' DECLARE PAYROLL FIXED;');
-        const lexer = new Pl1Lexer();
+        const vtsfs = new VirtualFileSystemProvider();
+        setFileSystemProvider(vtsfs);
+        vtsfs.writeFile(URI.file('/test/payroll.pli'), ' DECLARE PAYROLL FIXED;');
+        const lexer = new PliLexer();
         tokenize = (text: string) => {
-            const { tokens } = lexer.tokenize(text);
-            return tokens.map(t => t.image + ':' + t.tokenType.name.toUpperCase());
+            const { all: allTokens } = lexer.tokenize(text, URI.file('/test/test.pli'));
+            return allTokens.map(t => t.image + ':' + t.tokenType.name.toUpperCase());
         };
     });
 
     afterAll(() => {
-        rmSync('payroll.pli');
-    });
+        setFileSystemProvider(undefined);
+    })
 
     test("Include twice with different IDs", () => {
         expect(tokenize(`

@@ -9,22 +9,27 @@
  *
  */
 
-import { ILexingResult, IToken, Lexer, TokenTypeDictionary } from "chevrotain";
+import { ILexingError, IToken } from "chevrotain";
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { PliPreprocessorGenerator } from "./pli-preprocessor-generator";
-import { printProgram } from "./pli-preprocessor-instructions";
 import { PliSmartTokenPickerOptimizer } from "./pli-token-picker-optimizer";
 import * as tokens from '../parser/tokens';
 import { URI } from "../utils/uri";
 
-/** 
+export interface LexerResult {
+    all: IToken[];
+    errors: ILexingError[];
+    fileTokens: Record<string, IToken[]>;
+}
+
+/**
  * Lexer for PL/I language. It orchestrates a margins processor and a preprocessor. 
  * The latter creates the desired token stream without preprocessor statements
  */
-export class Pl1Lexer {
+export class PliLexer {
     readonly marginsProcessor: MarginsProcessor;
     readonly preprocessorLexer: PliPreprocessorLexer;
     readonly preprocessorParser: PliPreprocessorParser;
@@ -39,37 +44,23 @@ export class Pl1Lexer {
         this.preprocessorInterpreter = new PliPreprocessorInterpreter();
     }
 
-    get definition(): TokenTypeDictionary {
-        return this.preprocessorLexer.tokenTypeDictionary;
-    }
-
-    tokenize(printerText: string): ILexingResult {
+    tokenize(printerText: string, uri: URI): LexerResult {
         const text = this.marginsProcessor.processMargins(printerText);
-        const state = this.preprocessorParser.initializeState(text, URI.file('file.pli')); //TODO update URI
+        const state = this.preprocessorParser.initializeState(text, uri);
         const { statements, errors } = this.preprocessorParser.start(state);
-        if(errors.length > 0) {
+        if (errors.length > 0) {
             return {
                 errors,
-                tokens: [],
-                groups: {}
+                all: [],
+                fileTokens: {}
             };
         }
         const program = this.preprocessorGenerator.generateProgram(statements);
-        const tokens: IToken[] = [];
-        const hidden: IToken[] = [];
-        printProgram(program);
         const output = this.preprocessorInterpreter.run(program, this.preprocessorLexer.idTokenType);
-        for (const token of output) {
-            if(token.tokenType.GROUP === 'hidden' || token.tokenType.GROUP === Lexer.SKIPPED) {
-                hidden.push(token);
-            } else {
-                tokens.push(token);
-            }
-        }
         return {
-            tokens,
+            all: output.all,
             errors,
-            groups: {}
+            fileTokens: state.perFileTokens
         };
     }
 }

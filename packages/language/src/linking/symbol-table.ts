@@ -34,6 +34,10 @@ export class SymbolTable {
   getSymbol(context: SyntaxNode, name: string): SyntaxNode | undefined {
     return this.symbols.get(name);
   }
+
+  clear(): void {
+    this.symbols.clear();
+  }
 }
 
 export function iterateSymbols(sourceFile: SourceFile): void {

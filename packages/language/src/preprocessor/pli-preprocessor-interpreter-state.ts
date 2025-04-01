@@ -3,11 +3,12 @@ import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 import { PPInstruction, Values } from "./pli-preprocessor-instructions";
 import { assertUnreachable } from "langium";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
+import { SourceFileTokens } from "../workspace/source-file";
 
 export interface PreprocessorInterpreterState {
     currentInstruction: PPInstruction;
     halt: boolean;
-    getOutput(): IToken[];
+    getOutput(): SourceFileTokens;
     goTo(next: (previousCounter: number) => number): void;
     activate(name: string, scanMode: ScanMode): void;
     deactivate(name: string): void;
@@ -27,7 +28,7 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
         this.idTokenType = idTokenType;
     }
 
-    getOutput(): IToken[] {
+    getOutput(): SourceFileTokens {
         return this.plainState.output;
     }
 
@@ -224,7 +225,7 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
             case "print": {
                 if (this.plainState.stack.length > 0) {
                     const tokens = this.plainState.stack.pop()!;
-                    this.plainState.output.push(...tokens);
+                    this.plainState.output.all.push(...tokens);
                 } //TODO else error?
                 this.goTo(prev => prev + 1);
                 break;
@@ -331,7 +332,7 @@ export type PreprocessorScan = Readonly<{
 export type PlainPreprocessorInterpreterState = {
     program: PPInstruction[];
     stack: IToken[][];
-    output: IToken[];
+    output: SourceFileTokens;
     programCounter: number,
     variables: Record<string, PreprocessorVariable>;
 };
@@ -339,7 +340,10 @@ export type PlainPreprocessorInterpreterState = {
 export const initializeInterpreterState: (program: PPInstruction[]) => PlainPreprocessorInterpreterState = (program) => ({
     program,
     stack: [],
-    output: [],
+    output: {
+        all: [],
+        fileTokens: {}
+    },
     programCounter: 0,
     variables: {}
 });
