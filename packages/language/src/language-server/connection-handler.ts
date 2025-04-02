@@ -69,7 +69,7 @@ export function startLanguageServer(connection: Connection): void {
           const range = rangeToLSP(doc, def.range);
           lspDefinitions.push({
             uri: def.uri,
-            range
+            range,
           });
         }
       }
@@ -93,7 +93,7 @@ export function startLanguageServer(connection: Connection): void {
           const range = rangeToLSP(doc, def.range);
           lspDefinitions.push({
             uri: def.uri,
-            range
+            range,
           });
         }
       }

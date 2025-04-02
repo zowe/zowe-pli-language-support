@@ -109,7 +109,7 @@ export class AbstractParser extends EmbeddedActionsParser {
       token.payload = {
         kind,
         element,
-      }
+      };
     } else {
       token.payload.kind = kind;
       token.payload.element = element;

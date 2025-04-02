@@ -74,7 +74,7 @@ export function createSourceFile(uri: URI): SourceFile {
     },
     tokens: {
       fileTokens: {},
-      all: []
+      all: [],
     },
     symbols: new SymbolTable(),
     references: new ReferencesCache(),
@@ -112,10 +112,15 @@ export class SourceFileHandler {
     const textDocuments = TextDocuments;
     textDocuments.listen(connection);
     textDocuments.onDidChangeContent((event) => {
-      const sourceFile = this.getOrCreateSourceFile(URI.parse(event.document.uri));
-      const document = TextDocuments.get(sourceFile.uri.toString()) ?? event.document;
+      const sourceFile = this.getOrCreateSourceFile(
+        URI.parse(event.document.uri),
+      );
+      const document =
+        TextDocuments.get(sourceFile.uri.toString()) ?? event.document;
+      console.time("document");
       lifecycle(sourceFile, document.getText());
-      sourceFile.files.forEach(file => {
+      console.timeEnd("document");
+      sourceFile.files.forEach((file) => {
         this.sourceFiles.set(file.toString(), sourceFile);
       });
       connection.sendDiagnostics({

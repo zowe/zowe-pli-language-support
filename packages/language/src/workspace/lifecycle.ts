@@ -16,10 +16,16 @@ import { URI } from "../utils/uri";
 import { SourceFile } from "./source-file";
 
 export function lifecycle(sourceFile: SourceFile, text: string): void {
+  console.time("tokenize");
   tokenize(sourceFile, text);
+  console.timeEnd("tokenize");
+  console.time("parse");
   parse(sourceFile);
+  console.timeEnd("parse");
+  console.time("symbolTable");
   generateSymbolTable(sourceFile);
   link(sourceFile);
+  console.timeEnd("symbolTable");
   validate(sourceFile);
 }
 
@@ -27,7 +33,7 @@ const lexer = new PliLexer();
 
 export function tokenize(sourceFile: SourceFile, text: string): LexerResult {
   const result = lexer.tokenize(text, sourceFile.uri);
-  sourceFile.files = Object.keys(result.fileTokens).map(e => URI.parse(e));
+  sourceFile.files = Object.keys(result.fileTokens).map((e) => URI.parse(e));
   sourceFile.tokens.all = result.all;
   sourceFile.tokens.fileTokens = result.fileTokens;
   sourceFile.diagnostics.lexer = lexerErrorsToDiagnostics(result.errors);

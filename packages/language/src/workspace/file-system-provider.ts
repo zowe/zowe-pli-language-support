@@ -17,7 +17,7 @@ export interface FileSystemProvider {
 
 class _EmptyFileSystemProvider implements FileSystemProvider {
   readFileSync(uri: URI): string {
-    return '';
+    return "";
   }
 }
 
@@ -31,12 +31,15 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
   }
 
   readFileSync(uri: URI): string {
-    return this.files.get(uri.path) || '';
+    return this.files.get(uri.path) || "";
   }
 }
 
-export let FileSystemProviderInstance: FileSystemProvider = EmptyFileSystemProvider;
+export let FileSystemProviderInstance: FileSystemProvider =
+  EmptyFileSystemProvider;
 
-export function setFileSystemProvider(provider: FileSystemProvider | undefined): void {
+export function setFileSystemProvider(
+  provider: FileSystemProvider | undefined,
+): void {
   FileSystemProviderInstance = provider ?? EmptyFileSystemProvider;
 }

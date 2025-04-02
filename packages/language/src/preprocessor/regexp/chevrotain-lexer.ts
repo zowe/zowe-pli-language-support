@@ -1,8 +1,5 @@
 import { BaseRegExpVisitor } from "@chevrotain/regexp-to-ast";
-import {
-  Lexer,
-  LexerDefinitionErrorType,
-} from "chevrotain";
+import { Lexer, LexerDefinitionErrorType } from "chevrotain";
 import {
   compact,
   defaults,
@@ -67,7 +64,6 @@ export type CustomPatternMatcherFunc = (
     [groupName: string]: IToken[];
   },
 ) => CustomPatternMatcherReturn | RegExpExecArray | null; // RegExpExecArray included for legacy reasons
-
 
 export interface IRegExpExec {
   exec: CustomPatternMatcherFunc;
@@ -335,8 +331,9 @@ export function analyzeTokenTypes(
   });
 
   let canBeOptimized = true;
-  let charCodeToPatternIdxToConfig: { [charCode: number]: (TokenType & IPatternConfig)[] } =
-    [];
+  let charCodeToPatternIdxToConfig: {
+    [charCode: number]: (TokenType & IPatternConfig)[];
+  } = [];
 
   if (!options.safeMode) {
     tracer("First Char Optimization", () => {
@@ -374,10 +371,10 @@ export function analyzeTokenTypes(
               if (options.ensureOptimizations) {
                 PRINT_ERROR(
                   `${failedOptimizationPrefixMsg}` +
-                  `\tUnable to analyze < ${currTokType.PATTERN.toString()} > pattern.\n` +
-                  "\tThe regexp unicode flag is not currently supported by the regexp-to-ast library.\n" +
-                  "\tThis will disable the lexer's first char optimizations.\n" +
-                  "\tFor details See: https://chevrotain.io/docs/guide/resolving_lexer_errors.html#UNICODE_OPTIMIZE",
+                    `\tUnable to analyze < ${currTokType.PATTERN.toString()} > pattern.\n` +
+                    "\tThe regexp unicode flag is not currently supported by the regexp-to-ast library.\n" +
+                    "\tThis will disable the lexer's first char optimizations.\n" +
+                    "\tFor details See: https://chevrotain.io/docs/guide/resolving_lexer_errors.html#UNICODE_OPTIMIZE",
                 );
               }
             } else {
@@ -402,9 +399,9 @@ export function analyzeTokenTypes(
             if (options.ensureOptimizations) {
               PRINT_ERROR(
                 `${failedOptimizationPrefixMsg}` +
-                `\tTokenType: <${currTokType.name}> is using a custom token pattern without providing <start_chars_hint> parameter.\n` +
-                "\tThis will disable the lexer's first char optimizations.\n" +
-                "\tFor details See: https://chevrotain.io/docs/guide/resolving_lexer_errors.html#CUSTOM_OPTIMIZE",
+                  `\tTokenType: <${currTokType.name}> is using a custom token pattern without providing <start_chars_hint> parameter.\n` +
+                  "\tThis will disable the lexer's first char optimizations.\n" +
+                  "\tFor details See: https://chevrotain.io/docs/guide/resolving_lexer_errors.html#CUSTOM_OPTIMIZE",
               );
             }
             canBeOptimized = false;
@@ -1074,11 +1071,11 @@ function checkLineBreaksIssues(
   lineTerminatorCharCodes: number[],
 ):
   | {
-    issue:
-    | LexerDefinitionErrorType.IDENTIFY_TERMINATOR
-    | LexerDefinitionErrorType.CUSTOM_LINE_BREAK;
-    errMsg?: string;
-  }
+      issue:
+        | LexerDefinitionErrorType.IDENTIFY_TERMINATOR
+        | LexerDefinitionErrorType.CUSTOM_LINE_BREAK;
+      errMsg?: string;
+    }
   | false {
   if (has(tokType, "LINE_BREAKS")) {
     // if the user explicitly declared the line_breaks option we will respect their choice
@@ -1114,8 +1111,8 @@ export function buildLineBreakIssueMessage(
   tokType: TokenType,
   details: {
     issue:
-    | LexerDefinitionErrorType.IDENTIFY_TERMINATOR
-    | LexerDefinitionErrorType.CUSTOM_LINE_BREAK;
+      | LexerDefinitionErrorType.IDENTIFY_TERMINATOR
+      | LexerDefinitionErrorType.CUSTOM_LINE_BREAK;
     errMsg?: string;
   },
 ): string {

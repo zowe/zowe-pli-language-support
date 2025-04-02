@@ -5,165 +5,179 @@ import { Instructions } from "../../src/preprocessor/pli-preprocessor-instructio
 import { createTokenInstance } from "chevrotain";
 
 namespace Fixtures {
-    export function emptyProgram() {
-        return new PliPreprocessorInterpreterState([
-            Instructions.halt()
-        ], PreprocessorTokens.Id);
-    }
+  export function emptyProgram() {
+    return new PliPreprocessorInterpreterState(
+      [Instructions.halt()],
+      PreprocessorTokens.Id,
+    );
+  }
 }
 
 describe("Preprocessor Interpreter State", () => {
-    describe("activate", () => {
-        test("activate if not existing", () => {
-            //arrange
-            const state = Fixtures.emptyProgram();
+  describe("activate", () => {
+    test("activate if not existing", () => {
+      //arrange
+      const state = Fixtures.emptyProgram();
 
-            //act
-            state.activate("VARIABLE", "rescan");
+      //act
+      state.activate("VARIABLE", "rescan");
 
-            //assert
-            expect(state.hasVariable("VARIABLE")).toBeTruthy()
-            expect(state.getVariable("VARIABLE").active).toBeTruthy()
-        });
-
-        test("activate if existing", () => {
-            //arrange
-            const state = Fixtures.emptyProgram();
-            state.declare("VARIABLE", {
-                active: true,
-                dataType: 'character',
-                scanMode: "scan",
-                value: [],
-            });
-
-            //act
-            state.deactivate("VARIABLE");
-
-            //assert
-            expect(state.hasVariable("VARIABLE")).toBeTruthy()
-            expect(state.getVariable("VARIABLE").active).toBeFalsy()
-        });
+      //assert
+      expect(state.hasVariable("VARIABLE")).toBeTruthy();
+      expect(state.getVariable("VARIABLE").active).toBeTruthy();
     });
 
-    describe("assign", () => {
-        test("assign if not existing", () => {
-            //arrange
-            const state = Fixtures.emptyProgram();
+    test("activate if existing", () => {
+      //arrange
+      const state = Fixtures.emptyProgram();
+      state.declare("VARIABLE", {
+        active: true,
+        dataType: "character",
+        scanMode: "scan",
+        value: [],
+      });
 
-            //act
-            state.assign("VARIABLE", []);
+      //act
+      state.deactivate("VARIABLE");
 
-            //assert
-            expect(state.hasVariable("VARIABLE")).toBeTruthy()
-            expect(state.getVariable("VARIABLE").active).toBeFalsy()
-        });
+      //assert
+      expect(state.hasVariable("VARIABLE")).toBeTruthy();
+      expect(state.getVariable("VARIABLE").active).toBeFalsy();
+    });
+  });
 
-        test("assign if existing", () => {
-            //arrange
-            const state = Fixtures.emptyProgram();
-            state.declare("VARIABLE", {
-                active: true,
-                dataType: 'character',
-                scanMode: "scan",
-                value: [],
-            });
+  describe("assign", () => {
+    test("assign if not existing", () => {
+      //arrange
+      const state = Fixtures.emptyProgram();
 
-            //act
-            state.assign("VARIABLE", [createTokenInstance(PreprocessorTokens.Id, "bye", 0,0,0,0,0,0)]);
+      //act
+      state.assign("VARIABLE", []);
 
-            //assert
-            expect(state.hasVariable("VARIABLE")).toBeTruthy()
-            expect(state.getVariable("VARIABLE").value[0].image).toBe("bye")
-        });
+      //assert
+      expect(state.hasVariable("VARIABLE")).toBeTruthy();
+      expect(state.getVariable("VARIABLE").active).toBeFalsy();
     });
 
-    describe("hasVariable", () => {
-        test("hasVariable if not existing", () => {
-            //arrange
-            const state = Fixtures.emptyProgram();
+    test("assign if existing", () => {
+      //arrange
+      const state = Fixtures.emptyProgram();
+      state.declare("VARIABLE", {
+        active: true,
+        dataType: "character",
+        scanMode: "scan",
+        value: [],
+      });
 
-            //act + assert
-            expect(state.hasVariable("VARIABLE")).toBeFalsy();
-        });
+      //act
+      state.assign("VARIABLE", [
+        createTokenInstance(PreprocessorTokens.Id, "bye", 0, 0, 0, 0, 0, 0),
+      ]);
 
-        test("hasVariable if existing", () => {
-            //arrange
-            const state = Fixtures.emptyProgram();
-            state.declare("VARIABLE", {
-                active: true,
-                dataType: 'character',
-                scanMode: 'noscan',
-                value: []
-            })
+      //assert
+      expect(state.hasVariable("VARIABLE")).toBeTruthy();
+      expect(state.getVariable("VARIABLE").value[0].image).toBe("bye");
+    });
+  });
 
-            //act + assert
-            expect(state.hasVariable("VARIABLE")).toBeTruthy();
-        });
+  describe("hasVariable", () => {
+    test("hasVariable if not existing", () => {
+      //arrange
+      const state = Fixtures.emptyProgram();
+
+      //act + assert
+      expect(state.hasVariable("VARIABLE")).toBeFalsy();
     });
 
-    describe("getVariable", () => {
-        test("getVariable if not existing", () => {
-            //arrange
-            const state = Fixtures.emptyProgram();
+    test("hasVariable if existing", () => {
+      //arrange
+      const state = Fixtures.emptyProgram();
+      state.declare("VARIABLE", {
+        active: true,
+        dataType: "character",
+        scanMode: "noscan",
+        value: [],
+      });
 
-            //act + assert
-            expect(state.getVariable("VARIABLE")).toBeUndefined();
-        });
+      //act + assert
+      expect(state.hasVariable("VARIABLE")).toBeTruthy();
+    });
+  });
 
-        test("getVariable if existing", () => {
-            //arrange
-            const state = Fixtures.emptyProgram();
-            state.declare("VARIABLE", {
-                active: true,
-                dataType: 'character',
-                scanMode: 'noscan',
-                value: []
-            })
+  describe("getVariable", () => {
+    test("getVariable if not existing", () => {
+      //arrange
+      const state = Fixtures.emptyProgram();
 
-            //act + assert
-            expect(state.getVariable("VARIABLE")).toBeDefined();
-            expect(state.getVariable("VARIABLE").value.length).toBe(0);
-        });
+      //act + assert
+      expect(state.getVariable("VARIABLE")).toBeUndefined();
     });
 
-    describe("declare", () => {
-        test("declare if not existing", () => {
-            //arrange
-            const state = Fixtures.emptyProgram();
+    test("getVariable if existing", () => {
+      //arrange
+      const state = Fixtures.emptyProgram();
+      state.declare("VARIABLE", {
+        active: true,
+        dataType: "character",
+        scanMode: "noscan",
+        value: [],
+      });
 
-            //act
-            state.declare("VARIABLE", {
-                active: true,
-                dataType: 'fixed',
-                scanMode: 'noscan',
-                value: []
-            })
-
-            //assert
-            expect(state.hasVariable("VARIABLE")).toBeTruthy();
-        });
-
-        test("declare if existing", () => {
-            //arrange
-            const state = Fixtures.emptyProgram();
-            state.declare("VARIABLE", {
-                active: true,
-                dataType: 'fixed',
-                scanMode: 'noscan',
-                value: []
-            })
-
-            //act
-            state.declare("VARIABLE", {
-                active: true,
-                dataType: 'character',
-                scanMode: 'noscan',
-                value: [createTokenInstance(PreprocessorTokens.Number, "123", 0,0,0,0,0,0)]
-            })
-
-            //assert
-            expect(state.hasVariable("VARIABLE")).toBeTruthy();
-            expect(state.getVariable("VARIABLE").value[0].image).toBe('123');
-        });
+      //act + assert
+      expect(state.getVariable("VARIABLE")).toBeDefined();
+      expect(state.getVariable("VARIABLE").value.length).toBe(0);
     });
+  });
+
+  describe("declare", () => {
+    test("declare if not existing", () => {
+      //arrange
+      const state = Fixtures.emptyProgram();
+
+      //act
+      state.declare("VARIABLE", {
+        active: true,
+        dataType: "fixed",
+        scanMode: "noscan",
+        value: [],
+      });
+
+      //assert
+      expect(state.hasVariable("VARIABLE")).toBeTruthy();
+    });
+
+    test("declare if existing", () => {
+      //arrange
+      const state = Fixtures.emptyProgram();
+      state.declare("VARIABLE", {
+        active: true,
+        dataType: "fixed",
+        scanMode: "noscan",
+        value: [],
+      });
+
+      //act
+      state.declare("VARIABLE", {
+        active: true,
+        dataType: "character",
+        scanMode: "noscan",
+        value: [
+          createTokenInstance(
+            PreprocessorTokens.Number,
+            "123",
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+          ),
+        ],
+      });
+
+      //assert
+      expect(state.hasVariable("VARIABLE")).toBeTruthy();
+      expect(state.getVariable("VARIABLE").value[0].image).toBe("123");
+    });
+  });
 });

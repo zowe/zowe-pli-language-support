@@ -36,7 +36,7 @@ export function semanticTokens(
   range?: Range,
 ): number[] {
   const semanticTokens = new SemanticTokensBuilder();
-  const tokens = sourceFile.tokens.fileTokens[textDocument.uri] ?? [];;
+  const tokens = sourceFile.tokens.fileTokens[textDocument.uri] ?? [];
   for (const token of tokens) {
     const type = tokenType(token);
     if (type !== undefined) {

@@ -12,4 +12,4 @@
 export * from "./workspace/builtins";
 export * from "./workspace/file-system-provider.js";
 export * from "./language-server/connection-handler.js";
-export * from './utils/uri';
+export * from "./utils/uri";

@@ -13,8 +13,13 @@ import {
   createConnection,
   ProposedFeatures,
 } from "vscode-languageserver/node.js";
-import { startLanguageServer, FileSystemProvider, URI, setFileSystemProvider } from "pli-language";
-import * as fs from 'fs';
+import {
+  startLanguageServer,
+  FileSystemProvider,
+  URI,
+  setFileSystemProvider,
+} from "pli-language";
+import * as fs from "fs";
 
 class NodeFileSystemProvider implements FileSystemProvider {
   readFileSync(uri: URI): string {

@@ -16,61 +16,69 @@ import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { PliPreprocessorGenerator } from "./pli-preprocessor-generator";
 import { PliSmartTokenPickerOptimizer } from "./pli-token-picker-optimizer";
-import * as tokens from '../parser/tokens';
+import * as tokens from "../parser/tokens";
 import { URI } from "../utils/uri";
 
 export interface LexerResult {
-    all: IToken[];
-    errors: ILexingError[];
-    fileTokens: Record<string, IToken[]>;
+  all: IToken[];
+  errors: ILexingError[];
+  fileTokens: Record<string, IToken[]>;
 }
 
 /**
- * Lexer for PL/I language. It orchestrates a margins processor and a preprocessor. 
+ * Lexer for PL/I language. It orchestrates a margins processor and a preprocessor.
  * The latter creates the desired token stream without preprocessor statements
  */
 export class PliLexer {
-    readonly marginsProcessor: MarginsProcessor;
-    readonly preprocessorLexer: PliPreprocessorLexer;
-    readonly preprocessorParser: PliPreprocessorParser;
-    readonly preprocessorGenerator: PliPreprocessorGenerator;
-    readonly preprocessorInterpreter: PliPreprocessorInterpreter;
+  readonly marginsProcessor: MarginsProcessor;
+  readonly preprocessorLexer: PliPreprocessorLexer;
+  readonly preprocessorParser: PliPreprocessorParser;
+  readonly preprocessorGenerator: PliPreprocessorGenerator;
+  readonly preprocessorInterpreter: PliPreprocessorInterpreter;
 
-    constructor() {
-        this.marginsProcessor = new PliMarginsProcessor();
-        this.preprocessorLexer = new PliPreprocessorLexer(new PliSmartTokenPickerOptimizer(), tokens.all);
-        this.preprocessorParser = new PliPreprocessorParser(this.preprocessorLexer);
-        this.preprocessorGenerator = new PliPreprocessorGenerator(tokens.NUMBER);
-        this.preprocessorInterpreter = new PliPreprocessorInterpreter();
-    }
+  constructor() {
+    this.marginsProcessor = new PliMarginsProcessor();
+    this.preprocessorLexer = new PliPreprocessorLexer(
+      new PliSmartTokenPickerOptimizer(),
+      tokens.all,
+    );
+    this.preprocessorParser = new PliPreprocessorParser(this.preprocessorLexer);
+    this.preprocessorGenerator = new PliPreprocessorGenerator(tokens.NUMBER);
+    this.preprocessorInterpreter = new PliPreprocessorInterpreter();
+  }
 
-    tokenize(printerText: string, uri: URI): LexerResult {
-        const text = this.marginsProcessor.processMargins(printerText);
-        const state = this.preprocessorParser.initializeState(text, uri);
-        const { statements, errors } = this.preprocessorParser.start(state);
-        if (errors.length > 0) {
-            return {
-                errors,
-                all: [],
-                fileTokens: {}
-            };
-        }
-        const program = this.preprocessorGenerator.generateProgram(statements);
-        const output = this.preprocessorInterpreter.run(program, this.preprocessorLexer.idTokenType);
-        for (const uri in state.perFileTokens) {
-            state.perFileTokens[uri] = this.filterHiddenTokens(state.perFileTokens[uri]);
-        }
-        return {
-            all: this.filterHiddenTokens(output.all),
-            errors,
-            fileTokens: state.perFileTokens
-        };
+  tokenize(printerText: string, uri: URI): LexerResult {
+    const text = this.marginsProcessor.processMargins(printerText);
+    const state = this.preprocessorParser.initializeState(text, uri);
+    const { statements, errors } = this.preprocessorParser.start(state);
+    if (errors.length > 0) {
+      return {
+        errors,
+        all: [],
+        fileTokens: {},
+      };
     }
+    const program = this.preprocessorGenerator.generateProgram(statements);
+    const output = this.preprocessorInterpreter.run(
+      program,
+      this.preprocessorLexer.idTokenType,
+    );
+    for (const uri in state.perFileTokens) {
+      state.perFileTokens[uri] = this.filterHiddenTokens(
+        state.perFileTokens[uri],
+      );
+    }
+    return {
+      all: this.filterHiddenTokens(output.all),
+      errors,
+      fileTokens: state.perFileTokens,
+    };
+  }
 
-    private filterHiddenTokens(tokens: IToken[]): IToken[] {
-        return tokens.filter(token => {
-            const tokenType = token.tokenType;
-            return tokenType.GROUP !== Lexer.SKIPPED;
-        });
-    }
+  private filterHiddenTokens(tokens: IToken[]): IToken[] {
+    return tokens.filter((token) => {
+      const tokenType = token.tokenType;
+      return tokenType.GROUP !== Lexer.SKIPPED;
+    });
+  }
 }

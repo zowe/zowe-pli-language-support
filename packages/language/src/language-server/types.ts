@@ -125,14 +125,18 @@ export function diagnosticToLSP(
   return {
     severity: severityToLsp(diagnostic.severity),
     range: {
-      start: doc ? offsetToPosition(doc, diagnostic.range.start) : {
-        character: 0,
-        line: 0,
-      },
-      end: doc ? offsetToPosition(doc, diagnostic.range.end) : {
-        character: 0,
-        line: 0
-      },
+      start: doc
+        ? offsetToPosition(doc, diagnostic.range.start)
+        : {
+            character: 0,
+            line: 0,
+          },
+      end: doc
+        ? offsetToPosition(doc, diagnostic.range.end)
+        : {
+            character: 0,
+            line: 0,
+          },
     },
     message: diagnostic.message,
     code: diagnostic.code,
