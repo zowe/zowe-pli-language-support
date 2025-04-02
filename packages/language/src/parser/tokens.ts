@@ -1861,7 +1861,7 @@ export const NotEquals = createToken({
 export const LessThanGreaterThan = createToken({
   name: "<>",
   pattern: "<>",
-  categories: [AssignmentOperator],
+  categories: [AssignmentOperator, BinaryOperator],
 });
 export const OR = createToken({
   name: "OR",

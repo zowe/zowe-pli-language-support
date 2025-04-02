@@ -125,11 +125,13 @@ export function parserErrorsToDiagnostics(
   const diagnostics: Diagnostic[] = [];
   for (const error of parserErrors) {
     let range: Range | undefined = undefined;
+    let uri: string | undefined = undefined;
     if (isNaN(error.token.startOffset)) {
       if ("previousToken" in error) {
         const token = (error as MismatchedTokenException).previousToken;
         if (!isNaN(token.startOffset)) {
           range = { start: token.startOffset, end: token.startOffset };
+          uri = token.payload?.uri?.toString();
         } else {
           // No valid prev token. Might be empty document or containing only hidden tokens.
           // Point to document start
@@ -141,10 +143,11 @@ export function parserErrorsToDiagnostics(
         start: error.token.startOffset,
         end: error.token.startOffset,
       };
+      uri = error.token.payload?.uri?.toString();
     }
-    if (range) {
+    if (range && uri) {
       const diagnostic: Diagnostic = {
-        uri: "",
+        uri,
         severity: Severity.E,
         range,
         message: error.message,
