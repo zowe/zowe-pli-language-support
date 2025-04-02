@@ -273,8 +273,15 @@ export class PliPreprocessorParser {
 
   includeStatement(state: PreprocessorParserState): PPStatement {
     state.consume(PreprocessorTokens.Include);
-    const file = state.consume(PreprocessorTokens.String).image;
-    const fileName = file.substring(1, file.length - 1);
+    let fileName = "";
+    if (state.canConsume(PreprocessorTokens.Id)) {
+      // TODO: read file extension from config
+      // TODO#2 use SYSLIB (i.e. compiler options) to determine the file location
+      fileName = state.consume(PreprocessorTokens.Id).image + ".pli";
+    } else {
+      const file = state.consume(PreprocessorTokens.String).image;
+      fileName = file.substring(1, file.length - 1);
+    }
     state.consume(PreprocessorTokens.Semicolon);
     // TODO: cache included files
     const currentDir = UriUtils.dirname(state.uri);
