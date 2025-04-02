@@ -38,7 +38,8 @@ export class PliPreprocessorLexer {
         const list: IToken[] = [];
         do {
             token = this.getNextPliToken(state);
-            if (token && token.tokenType.GROUP !== ChevrotainLexer.SKIPPED) {
+            if (token) {
+                // TODO: Ignore hidden tokens already here?
                 list.push(token);
             }
         } while (token && token.image !== ';');

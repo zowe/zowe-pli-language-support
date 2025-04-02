@@ -9,7 +9,7 @@
  *
  */
 
-import { ILexingError, IToken } from "chevrotain";
+import { ILexingError, IToken, Lexer } from "chevrotain";
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
@@ -57,10 +57,20 @@ export class PliLexer {
         }
         const program = this.preprocessorGenerator.generateProgram(statements);
         const output = this.preprocessorInterpreter.run(program, this.preprocessorLexer.idTokenType);
+        for (const uri in state.perFileTokens) {
+            state.perFileTokens[uri] = this.filterHiddenTokens(state.perFileTokens[uri]);
+        }
         return {
-            all: output.all,
+            all: this.filterHiddenTokens(output.all),
             errors,
             fileTokens: state.perFileTokens
         };
+    }
+
+    private filterHiddenTokens(tokens: IToken[]): IToken[] {
+        return tokens.filter(token => {
+            const tokenType = token.tokenType;
+            return tokenType.GROUP !== Lexer.SKIPPED;
+        });
     }
 }

@@ -112,7 +112,8 @@ export class PliPreprocessorInterpreterState implements PreprocessorInterpreterS
     }
 
     private isIdentifier(token: IToken) {
-        return token.tokenType.name === "ID" || (token.tokenType.CATEGORIES && token.tokenType.CATEGORIES.findIndex(t => t.name === "ID") > -1);
+        // TODO: optimize this!
+        return token.tokenType.name === "ID" || (token.tokenType.CATEGORIES && token.tokenType.CATEGORIES.some(t => t.name === "ID"));
     }
 
     step() {
