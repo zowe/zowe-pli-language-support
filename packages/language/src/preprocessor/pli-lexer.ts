@@ -51,13 +51,6 @@ export class PliLexer {
     const text = this.marginsProcessor.processMargins(printerText);
     const state = this.preprocessorParser.initializeState(text, uri);
     const { statements, errors } = this.preprocessorParser.start(state);
-    if (errors.length > 0) {
-      return {
-        errors,
-        all: [],
-        fileTokens: {},
-      };
-    }
     const program = this.preprocessorGenerator.generateProgram(statements);
     const output = this.preprocessorInterpreter.run(
       program,
