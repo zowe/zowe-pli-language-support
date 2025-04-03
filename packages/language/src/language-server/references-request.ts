@@ -14,7 +14,7 @@ import { getReferenceLocations } from "../linking/resolver";
 import { Location } from "./types";
 
 export function referencesRequest(
-  sourceFile: SourceFile,
+  compilationUnit: CompilationUnit,
   uri: URI,
   offset: number,
 ): Location[] {

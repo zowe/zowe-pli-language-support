@@ -11,7 +11,7 @@
 
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
-import { SourceFile } from "../workspace/source-file";
+import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache } from "./resolver";
 import { getReference } from "./tokens";
 
@@ -40,9 +40,9 @@ export class SymbolTable {
   }
 }
 
-export function iterateSymbols(sourceFile: SourceFile): void {
-  const { symbols, references } = sourceFile;
-  iterate(sourceFile.ast, symbols, references);
+export function iterateSymbols(compilationUnit: CompilationUnit): void {
+  const { symbols, references } = compilationUnit;
+  iterate(compilationUnit.ast, symbols, references);
 }
 
 function iterate(

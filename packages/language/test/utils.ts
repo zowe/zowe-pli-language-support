@@ -1,4 +1,9 @@
 import { expect } from "vitest";
+import {
+  CompilationUnit,
+  createCompilationUnit,
+} from "../src/workspace/compilation-unit";
+import * as lifecycle from "../src/workspace/lifecycle";
 import { URI } from "vscode-uri";
 import { Diagnostic, Range } from "../src/language-server/types";
 import * as lifecycle from "../src/workspace/lifecycle";
@@ -10,7 +15,7 @@ import {
 import { definitionRequest } from "../src/language-server/definition-request";
 import assert from "node:assert";
 
-export function assertNoParseErrors(sourceFile: SourceFile) {
+export function assertNoParseErrors(sourceFile: CompilationUnit) {
   expect(sourceFile.diagnostics.lexer).toHaveLength(0);
   expect(sourceFile.diagnostics.parser).toHaveLength(0);
 }
@@ -71,7 +76,7 @@ export function parse(
  * Helper function to parse a string of PL/I statements,
  * wrapping them in a procedure to ensure they are valid
  */
-export function parseStmts(text: string): SourceFile {
+export function parseStmts(text: string): CompilationUnit {
   return parse(` STARTPR: PROCEDURE OPTIONS (MAIN);
 ${text}
  end STARTPR;`);

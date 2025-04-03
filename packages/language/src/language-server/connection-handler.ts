@@ -9,6 +9,10 @@
  *
  */
 
+import { Connection, TextDocumentSyncKind } from "vscode-languageserver";
+import { CompletionUnitHandler } from "../workspace/compilation-unit";
+import { TextDocuments } from "./text-documents";
+import { definitionRequest } from "./definition-request";
 import {
   Connection,
   DocumentHighlight,
@@ -27,8 +31,8 @@ import { mapValues } from "../utils/common";
 import { getReferenceLocations } from "../linking/resolver";
 
 export function startLanguageServer(connection: Connection): void {
-  const sourceFileHandler = new SourceFileHandler();
-  sourceFileHandler.listen(connection);
+  const compilationUnitHandler = new CompletionUnitHandler();
+  compilationUnitHandler.listen(connection);
   connection.onInitialize((params) => {
     return {
       capabilities: {
@@ -58,10 +62,10 @@ export function startLanguageServer(connection: Connection): void {
     const position = params.position;
     const textDocument = TextDocuments.get(params.textDocument.uri);
     const uri = URI.parse(params.textDocument.uri);
-    const sourceFile = sourceFileHandler.getSourceFile(uri);
-    if (textDocument && sourceFile) {
+    const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
+    if (textDocument && compilationUnit) {
       const offset = textDocument.offsetAt(position);
-      const definition = definitionRequest(sourceFile, uri, offset);
+      const definition = definitionRequest(compilationUnit, uri, offset);
       const lspDefinitions: Location[] = [];
       for (const def of definition) {
         const doc = TextDocuments.get(def.uri);
@@ -82,10 +86,11 @@ export function startLanguageServer(connection: Connection): void {
     const position = params.position;
     const textDocument = TextDocuments.get(uri);
     const parsedUri = URI.parse(uri);
-    const sourceFile = sourceFileHandler.getSourceFile(parsedUri);
-    if (textDocument && sourceFile) {
+    const compilationUnit =
+      compilationUnitHandler.getCompilationUnit(parsedUri);
+    if (textDocument && compilationUnit) {
       const offset = textDocument.offsetAt(position);
-      const definition = referencesRequest(sourceFile, parsedUri, offset);
+      const definition = referencesRequest(compilationUnit, parsedUri, offset);
       const lspDefinitions: Location[] = [];
       for (const def of definition) {
         const doc = TextDocuments.get(def.uri);
@@ -104,10 +109,12 @@ export function startLanguageServer(connection: Connection): void {
   connection.languages.semanticTokens.on((params) => {
     const uri = params.textDocument.uri;
     const textDocument = TextDocuments.get(uri);
-    const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
-    if (textDocument && sourceFile) {
+    const compilationUnit = compilationUnitHandler.getCompilationUnit(
+      URI.parse(uri),
+    );
+    if (textDocument && compilationUnit) {
       return {
-        data: semanticTokens(textDocument, sourceFile),
+        data: semanticTokens(textDocument, compilationUnit),
       };
     }
     return {

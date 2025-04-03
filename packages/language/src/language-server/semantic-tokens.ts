@@ -10,7 +10,7 @@
  */
 
 import { SemanticTokensBuilder } from "vscode-languageserver";
-import { SourceFile } from "../workspace/source-file";
+import { CompilationUnit } from "../workspace/compilation-unit";
 import { offsetToPosition, Range } from "./types";
 import { IToken } from "chevrotain";
 import { TokenPayload } from "../parser/abstract-parser";
@@ -32,11 +32,11 @@ export const semanticTokenLegend: SemanticTokensLegend = {
 
 export function semanticTokens(
   textDocument: TextDocument,
-  sourceFile: SourceFile,
+  compilationUnit: CompilationUnit,
   range?: Range,
 ): number[] {
   const semanticTokens = new SemanticTokensBuilder();
-  const tokens = sourceFile.tokens.fileTokens[textDocument.uri] ?? [];
+  const tokens = compilationUnit.tokens.fileTokens[textDocument.uri] ?? [];
   for (const token of tokens) {
     const type = tokenType(token);
     if (type !== undefined) {

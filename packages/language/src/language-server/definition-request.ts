@@ -9,7 +9,7 @@
  *
  */
 
-import { SourceFile } from "../workspace/source-file";
+import { CompilationUnit } from "../workspace/compilation-unit";
 import { binaryTokenSearch } from "../utils/search";
 import { TokenPayload } from "../parser/abstract-parser";
 import { Location } from "./types";
@@ -22,11 +22,11 @@ import {
 import { URI } from "../utils/uri";
 
 export function definitionRequest(
-  sourceFile: SourceFile,
+  compilationUnit: CompilationUnit,
   uri: URI,
   offset: number,
 ): Location[] {
-  const tokens = sourceFile.tokens.fileTokens[uri.toString()] ?? [];
+  const tokens = compilationUnit.tokens.fileTokens[uri.toString()] ?? [];
   const token = binaryTokenSearch(tokens, offset);
   const payload = token?.payload as TokenPayload;
   if (!payload || !token) {

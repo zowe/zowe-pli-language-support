@@ -118,9 +118,22 @@ export interface Diagnostic {
  */
 export type DiagnosticInfo = Omit<Diagnostic, "severity" | "message">;
 
-export function diagnosticToLSP(
-  diagnostic: Diagnostic,
-): lsp.Diagnostic {
+export function diagnosticsToLSP(
+  diagnostics: Diagnostic[],
+): Map<string, lsp.Diagnostic[]> {
+  const map = new Map<string, lsp.Diagnostic[]>();
+  for (const diagnostic of diagnostics) {
+    const uri = diagnostic.uri;
+    const lspDiagnostic = diagnosticToLSP(diagnostic);
+    if (!map.has(uri)) {
+      map.set(uri, []);
+    }
+    map.get(uri)?.push(lspDiagnostic);
+  }
+  return map;
+}
+
+export function diagnosticToLSP(diagnostic: Diagnostic): lsp.Diagnostic {
   const doc = TextDocuments.get(diagnostic.uri);
   return {
     severity: severityToLsp(diagnostic.severity),

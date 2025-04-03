@@ -56,20 +56,17 @@ export class ReferencesCache {
 }
 
 export function resolveReference<T extends SyntaxNode>(
-  sourceFile: SourceFile,
+  unit: CompilationUnit,
   reference: Reference<T> | null,
 ): T | undefined {
   if (reference === null || reference.node === null) {
     return undefined;
   }
   if (reference.node === undefined) {
-    const symbol = sourceFile.symbols.getSymbol(
-      reference.owner,
-      reference.text,
-    );
+    const symbol = unit.symbols.getSymbol(reference.owner, reference.text);
     if (symbol) {
       reference.node = symbol as T;
-      sourceFile.references.addInverse(reference);
+      unit.references.addInverse(reference);
       return symbol as T;
     } else {
       reference.node = null;
@@ -79,9 +76,9 @@ export function resolveReference<T extends SyntaxNode>(
   return reference.node;
 }
 
-export function resolveReferences(sourceFile: SourceFile): void {
-  for (const reference of sourceFile.references.allReferences()) {
-    resolveReference(sourceFile, reference);
+export function resolveReferences(unit: CompilationUnit): void {
+  for (const reference of unit.references.allReferences()) {
+    resolveReference(unit, reference);
   }
 }
 

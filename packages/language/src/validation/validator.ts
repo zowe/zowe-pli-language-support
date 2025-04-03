@@ -14,6 +14,7 @@ import {
   IRecognitionException,
   MismatchedTokenException,
 } from "chevrotain";
+import { CompilationUnit } from "../workspace/compilation-unit";
 import {
   Diagnostic,
   DiagnosticInfo,

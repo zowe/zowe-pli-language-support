@@ -16,19 +16,19 @@ import { SymbolTable } from "../linking/symbol-table.js";
 import { TextDocuments } from "../language-server/text-documents.js";
 import { Connection } from "vscode-languageserver";
 import { ReferencesCache } from "../linking/resolver.js";
-import { Diagnostic, diagnosticToLSP } from "../language-server/types.js";
+import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
 import { lifecycle } from "./lifecycle.js";
 
 /**
- * A source file is a representation of a PL/I source file in the language server.
- * It contains all information about the source file.
+ * A compilation unit is a representation of a PL/I program in the language server.
+ * It contains all information about the program.
  *
- * Note that the source file is not a representation of the file on disk, but rather
+ * Note that the compilation unit is not a representation of the file on disk, but rather
  * a representation of the file once all of its macros have been expanded.
  * This means in particular that `%INCLUDE` statements have been resolved.
- * This in turn means that the source file is a collection of files, starting with the main file.
+ * This in turn means that the compilation unit is a collection of files, starting with the main file.
  */
-export interface SourceFile {
+export interface CompilationUnit {
   /**
    * The URI of the source file. This points to the main file that represents the entry point of the program.
    * This might not be the same as the URI of the currently open file.
@@ -36,25 +36,25 @@ export interface SourceFile {
   uri: URI;
   files: URI[];
   ast: PliProgram;
-  tokens: SourceFileTokens;
+  tokens: CompilationUnitTokens;
   symbols: SymbolTable;
   references: ReferencesCache;
-  diagnostics: SourceFileDiagnostics;
+  diagnostics: CompilationUnitDiagnostics;
 }
 
-export interface SourceFileTokens {
+export interface CompilationUnitTokens {
   all: IToken[];
   fileTokens: Record<string, IToken[]>;
 }
 
-export interface SourceFileDiagnostics {
+export interface CompilationUnitDiagnostics {
   lexer: Diagnostic[];
   parser: Diagnostic[];
   linking: Diagnostic[];
   validation: Diagnostic[];
 }
 
-export function collectDiagnostics(sourceFile: SourceFile): Diagnostic[] {
+export function collectDiagnostics(sourceFile: CompilationUnit): Diagnostic[] {
   return [
     ...sourceFile.diagnostics.lexer,
     ...sourceFile.diagnostics.parser,
@@ -63,7 +63,7 @@ export function collectDiagnostics(sourceFile: SourceFile): Diagnostic[] {
   ];
 }
 
-export function createSourceFile(uri: URI): SourceFile {
+export function createCompilationUnit(uri: URI): CompilationUnit {
   return {
     uri,
     files: [],
@@ -87,49 +87,59 @@ export function createSourceFile(uri: URI): SourceFile {
   };
 }
 
-export class SourceFileHandler {
-  private sourceFiles: Map<string, SourceFile> = new Map();
+export class CompletionUnitHandler {
+  private compilationUnits: Map<string, CompilationUnit> = new Map();
 
-  getSourceFile(uri: URI): SourceFile | undefined {
-    return this.sourceFiles.get(uri.toString());
+  getCompilationUnit(uri: URI): CompilationUnit | undefined {
+    return this.compilationUnits.get(uri.toString());
   }
 
-  getOrCreateSourceFile(uri: URI): SourceFile {
-    return this.sourceFiles.get(uri.toString()) || this.createSourceFile(uri);
+  getOrCreateCompilationUnit(uri: URI): CompilationUnit {
+    return (
+      this.compilationUnits.get(uri.toString()) ||
+      this.createCompilationUnit(uri)
+    );
   }
 
-  createSourceFile(uri: URI): SourceFile {
-    const sourceFile = createSourceFile(uri);
-    this.sourceFiles.set(uri.toString(), sourceFile);
-    return sourceFile;
+  createCompilationUnit(uri: URI): CompilationUnit {
+    const unit = createCompilationUnit(uri);
+    this.compilationUnits.set(uri.toString(), unit);
+    return unit;
   }
 
-  deleteSourceFile(uri: URI): boolean {
-    return this.sourceFiles.delete(uri.toString());
+  deleteCompilationUnit(uri: URI): boolean {
+    const unit = this.compilationUnits.get(uri.toString());
+    for (const file of unit?.files ?? []) {
+      this.compilationUnits.delete(file.toString());
+    }
+    return unit !== undefined;
   }
 
   listen(connection: Connection): void {
     const textDocuments = TextDocuments;
     textDocuments.listen(connection);
     textDocuments.onDidChangeContent((event) => {
-      const sourceFile = this.getOrCreateSourceFile(
+      const unit = this.getOrCreateCompilationUnit(
         URI.parse(event.document.uri),
       );
-      const document =
-        TextDocuments.get(sourceFile.uri.toString()) ?? event.document;
+      const document = TextDocuments.get(unit.uri.toString()) ?? event.document;
       console.time("document");
-      lifecycle(sourceFile, document.getText());
+      lifecycle(unit, document.getText());
       console.timeEnd("document");
-      sourceFile.files.forEach((file) => {
-        this.sourceFiles.set(file.toString(), sourceFile);
+      unit.files.forEach((file) => {
+        this.compilationUnits.set(file.toString(), unit);
       });
-      connection.sendDiagnostics({
-        uri: event.document.uri,
-        diagnostics: collectDiagnostics(sourceFile).map(diagnosticToLSP),
-      });
+      const allDiagnostics = diagnosticsToLSP(collectDiagnostics(unit));
+      for (const file of unit.files) {
+        const fileDiagnostics = allDiagnostics.get(file.toString());
+        connection.sendDiagnostics({
+          uri: file.toString(),
+          diagnostics: fileDiagnostics ?? [],
+        });
+      }
     });
     textDocuments.onDidClose((event) => {
-      this.sourceFiles.delete(event.document.uri);
+      this.compilationUnits.delete(event.document.uri);
     });
   }
 }

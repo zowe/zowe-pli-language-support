@@ -4,6 +4,7 @@ import { iterateSymbols, SymbolTable } from "../linking/symbol-table";
 import { PliParserInstance } from "../parser/parser";
 import { LexerInstance } from "../parser/tokens";
 import { SourceFile } from "./source-file";
+import { CompilationUnit } from "./compilation-unit";
 import { PliProgram } from "../syntax-tree/ast";
 import {
   generateValidationDiagnostics,
@@ -15,54 +16,64 @@ import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { URI } from "../utils/uri";
 import { SourceFile } from "./source-file";
 
-export function lifecycle(sourceFile: SourceFile, text: string): void {
+export function lifecycle(
+  compilationUnit: CompilationUnit,
+  text: string,
+): void {
   console.time("tokenize");
-  tokenize(sourceFile, text);
+  tokenize(compilationUnit, text);
   console.timeEnd("tokenize");
   console.time("parse");
-  parse(sourceFile);
+  parse(compilationUnit);
   console.timeEnd("parse");
   console.time("symbolTable");
-  generateSymbolTable(sourceFile);
-  link(sourceFile);
+  generateSymbolTable(compilationUnit);
+  link(compilationUnit);
   console.timeEnd("symbolTable");
   validate(sourceFile);
 }
 
 const lexer = new PliLexer();
 
-export function tokenize(sourceFile: SourceFile, text: string): LexerResult {
-  const result = lexer.tokenize(text, sourceFile.uri);
-  sourceFile.files = Object.keys(result.fileTokens).map((e) => URI.parse(e));
-  sourceFile.tokens.all = result.all;
-  sourceFile.tokens.fileTokens = result.fileTokens;
-  sourceFile.diagnostics.lexer = lexerErrorsToDiagnostics(result.errors);
+export function tokenize(
+  compilationUnit: CompilationUnit,
+  text: string,
+): LexerResult {
+  const result = lexer.tokenize(text, compilationUnit.uri);
+  compilationUnit.files = Object.keys(result.fileTokens).map((e) =>
+    URI.parse(e),
+  );
+  compilationUnit.tokens.all = result.all;
+  compilationUnit.tokens.fileTokens = result.fileTokens;
+  compilationUnit.diagnostics.lexer = lexerErrorsToDiagnostics(result.errors);
   return result;
 }
 
-export function parse(sourceFile: SourceFile): PliProgram {
-  PliParserInstance.input = sourceFile.tokens.all;
+export function parse(compilationUnit: CompilationUnit): PliProgram {
+  PliParserInstance.input = compilationUnit.tokens.all;
   const ast = PliParserInstance.PliProgram();
-  sourceFile.ast = ast;
-  sourceFile.diagnostics.parser = parserErrorsToDiagnostics(
+  compilationUnit.ast = ast;
+  compilationUnit.diagnostics.parser = parserErrorsToDiagnostics(
     PliParserInstance.errors,
   );
   return ast;
 }
 
-export function generateSymbolTable(sourceFile: SourceFile): SymbolTable {
-  sourceFile.references.clear();
-  sourceFile.symbols.clear();
-  iterateSymbols(sourceFile);
-  return sourceFile.symbols;
+export function generateSymbolTable(
+  compilationUnit: CompilationUnit,
+): SymbolTable {
+  compilationUnit.references.clear();
+  compilationUnit.symbols.clear();
+  iterateSymbols(compilationUnit);
+  return compilationUnit.symbols;
 }
 
-export function link(sourceFile: SourceFile): ReferencesCache {
-  resolveReferences(sourceFile);
-  sourceFile.diagnostics.linking = linkingErrorsToDiagnostics(
-    sourceFile.references,
+export function link(compilationUnit: CompilationUnit): ReferencesCache {
+  resolveReferences(compilationUnit);
+  compilationUnit.diagnostics.linking = linkingErrorsToDiagnostics(
+    compilationUnit.references,
   );
-  return sourceFile.references;
+  return compilationUnit.references;
 }
 
 /**

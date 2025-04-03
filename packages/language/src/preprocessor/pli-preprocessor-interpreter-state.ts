@@ -3,12 +3,12 @@ import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 import { PPInstruction, Values } from "./pli-preprocessor-instructions";
 import { assertUnreachable } from "langium";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import { SourceFileTokens } from "../workspace/source-file";
+import { CompilationUnitTokens } from "../workspace/compilation-unit";
 
 export interface PreprocessorInterpreterState {
   currentInstruction: PPInstruction;
   halt: boolean;
-  getOutput(): SourceFileTokens;
+  getOutput(): CompilationUnitTokens;
   goTo(next: (previousCounter: number) => number): void;
   activate(name: string, scanMode: ScanMode): void;
   deactivate(name: string): void;
@@ -30,7 +30,7 @@ export class PliPreprocessorInterpreterState
     this.idTokenType = idTokenType;
   }
 
-  getOutput(): SourceFileTokens {
+  getOutput(): CompilationUnitTokens {
     return this.plainState.output;
   }
 
@@ -390,7 +390,7 @@ export type PreprocessorScan = Readonly<{
 export type PlainPreprocessorInterpreterState = {
   program: PPInstruction[];
   stack: IToken[][];
-  output: SourceFileTokens;
+  output: CompilationUnitTokens;
   programCounter: number;
   variables: Record<string, PreprocessorVariable>;
 };
