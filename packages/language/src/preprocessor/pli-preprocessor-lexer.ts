@@ -74,6 +74,10 @@ export class PliPreprocessorLexer {
     if (state.eof()) {
       return undefined;
     }
+    // TODO: Add ID based optimization:
+    // I.e. only check for ID if the current char is a letter
+    // Afterwards, check if the ID is a keyword
+    // This is much faster than checking all the keyword tokens and then the ID token
     for (const tokenType of this.normalTokenTypePicker.pickTokenTypes(
       state.currentChar(),
     )) {

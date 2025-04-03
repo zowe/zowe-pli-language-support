@@ -52,8 +52,7 @@ function getTokenMatcher(token: TokenType): TokenMatcher {
           return undefined;
         }
       }
-      const match = text.substring(index, index + len);
-      return handleLongerAlternative(token, match, text, index);
+      return handleLongerAlternative(token, pattern, text, index);
     };
   } else {
     throw new Error(
@@ -176,10 +175,10 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
   hasLongerAlternative(tokenType: TokenType, match: string): boolean {
     const alternative = this.canConsume(tokenType);
     return (
-      alternative !== undefined &&
-      alternative.length > match.length &&
-      //TODO this last condition should be implicit. But actually there is a bug and this condition needs to be checked as well.
-      alternative.startsWith(match)
+      alternative !== undefined && alternative.length > match.length
+      // TODO: Figure out why this was added (it doesn't seem to actually apply)
+      // TODO this last condition should be implicit. But actually there is a bug and this condition needs to be checked as well.
+      // && alternative.startsWith(match)
     );
   }
 
