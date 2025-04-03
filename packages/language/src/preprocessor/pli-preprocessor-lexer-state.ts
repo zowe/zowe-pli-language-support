@@ -13,6 +13,91 @@ export interface PreprocessorLexerState {
   emit(image: string, tokenType: TokenType): IToken;
 }
 
+export type TokenMatcher = (text: string, index: number) => string | undefined;
+
+const tokenMatcherCache: TokenMatcher[] = [];
+
+function getTokenMatcher(token: TokenType): TokenMatcher {
+  if (tokenMatcherCache[token.tokenTypeIdx!]) {
+    return tokenMatcherCache[token.tokenTypeIdx!];
+  }
+  const pattern = token.PATTERN;
+  let tokenMatcher: TokenMatcher;
+  if (pattern instanceof RegExp) {
+    tokenMatcher = (text: string, index: number) => {
+      pattern.lastIndex = index;
+      const match = pattern.exec(text);
+      return match
+        ? handleLongerAlternative(token, match[0], text, index)
+        : undefined;
+    };
+  } else if (typeof pattern === "function") {
+    const tokens: IToken[] = [];
+    const groups = {};
+    tokenMatcher = (text: string, index: number) => {
+      const match = pattern(text, index, tokens, groups);
+      return match
+        ? handleLongerAlternative(token, match[0], text, index)
+        : undefined;
+    };
+  } else if (typeof pattern === "string") {
+    const len = pattern.length;
+    tokenMatcher = (text: string, index: number) => {
+      for (let i = 0; i < len; i++) {
+        // Lowercase both characters for case-insensitive comparison
+        if (
+          (text.charCodeAt(i + index) | 0x20) !==
+          (pattern.charCodeAt(i) | 0x20)
+        ) {
+          return undefined;
+        }
+      }
+      const match = text.substring(index, index + len);
+      return handleLongerAlternative(token, match, text, index);
+    };
+  } else {
+    throw new Error(
+      `Token type "${token.name}" does not have a valid pattern.`,
+    );
+  }
+  tokenMatcherCache[token.tokenTypeIdx!] = tokenMatcher;
+  return tokenMatcher;
+}
+
+function handleLongerAlternative(
+  tokenType: TokenType,
+  match: string,
+  text: string,
+  index: number,
+) {
+  if (tokenType.LONGER_ALT) {
+    //if a "longer" alternative can be detected, deny
+    const alternatives = Array.isArray(tokenType.LONGER_ALT)
+      ? tokenType.LONGER_ALT
+      : [tokenType.LONGER_ALT];
+    if (alternatives.some((a) => hasLongerAlternative(a, match, text, index))) {
+      return undefined;
+    }
+  }
+  return match;
+}
+
+function hasLongerAlternative(
+  tokenType: TokenType,
+  match: string,
+  text: string,
+  index: number,
+): boolean {
+  const longerAltMatcher = getTokenMatcher(tokenType);
+  const alternative = longerAltMatcher(text, index);
+  return (
+    alternative !== undefined &&
+    alternative.length > match.length &&
+    //TODO this last condition should be implicit. But actually there is a bug and this condition needs to be checked as well.
+    alternative.startsWith(match)
+  );
+}
+
 export class PliPreprocessorLexerState implements PreprocessorLexerState {
   private readonly plainState: PlainPreprocessorLexerState;
 
@@ -71,22 +156,8 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
       return undefined;
     }
     const { offset: index, text } = this.plainState;
-    const pattern = tokenType.PATTERN;
-    if (pattern) {
-      if (pattern instanceof RegExp) {
-        pattern.lastIndex = index;
-        const match = pattern.exec(text);
-        if (match) {
-          return this.handleLongerAlternative(tokenType, match[0]);
-        }
-      } else if (typeof pattern === "string") {
-        const image = text.substring(index, index + pattern.length);
-        if (image.toLowerCase() === pattern.toLowerCase()) {
-          return this.handleLongerAlternative(tokenType, image);
-        }
-      }
-    }
-    return undefined;
+    const tokenMatcher = getTokenMatcher(tokenType);
+    return tokenMatcher(text, index);
   }
 
   handleLongerAlternative(tokenType: TokenType, match: string) {

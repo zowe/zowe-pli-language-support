@@ -1,4 +1,4 @@
-import { createToken } from "chevrotain";
+import { createToken, Lexer } from "chevrotain";
 
 const Id = tokenType("id", /[a-z_][a-z_0-9]*/iy);
 
@@ -71,5 +71,10 @@ export const PreprocessorTokens = {
   Id,
   Number: tokenType("number", /[0-9]+/iy),
 };
+
+// We need this to augment the token types with the tokenTypeIdx
+new Lexer(Object.values(PreprocessorTokens), {
+  skipValidations: true,
+});
 
 export const AllPreprocessorTokens = Object.values(PreprocessorTokens);
