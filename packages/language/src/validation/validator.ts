@@ -22,13 +22,14 @@ import {
 } from "../language-server/types";
 import { ReferencesCache } from "../linking/resolver";
 import { isValidToken } from "../linking/tokens";
-import { PliProgram, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import {
   PliValidationChecks,
   PliValidationFunction,
   registerValidationChecks,
 } from "./pli-validator";
+import { SourceFile } from "../workspace/source-file";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -42,7 +43,7 @@ export type PliValidationAcceptor = (
 /**
  * Generates validation diagnostics (semantic checks) from the given AST node.
  */
-export function generateValidationDiagnostics(root: PliProgram): Diagnostic[] {
+export function generateValidationDiagnostics(sourceFile: SourceFile): void {
   // TODO @montymxb Mar. 27th, 2025: Checks are generated on each invocation, not ideal, needs a rework still
   const handlers = registerValidationChecks();
 
@@ -60,9 +61,9 @@ export function generateValidationDiagnostics(root: PliProgram): Diagnostic[] {
   };
 
   // iterate over all nodes and validate them
-  validateSyntaxNode(root, acceptor, handlers);
+  validateSyntaxNode(sourceFile.ast, acceptor, handlers);
 
-  return diagnostics;
+  sourceFile.diagnostics.validation = diagnostics;
 }
 
 /**

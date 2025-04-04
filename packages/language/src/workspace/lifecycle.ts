@@ -1,5 +1,4 @@
 import { ILexingResult } from "chevrotain";
-import { Diagnostic } from "../language-server/types";
 import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols, SymbolTable } from "../linking/symbol-table";
 import { PliParserInstance } from "../parser/parser";
@@ -105,8 +104,6 @@ export function link(sourceFile: SourceFile): ReferencesCache {
 /**
  * Performs semantic validations on the AST of the source file
  */
-export function validate(sourceFile: SourceFile): Diagnostic[] {
-  const diagnostics = generateValidationDiagnostics(sourceFile.ast);
-  sourceFile.diagnostics.validation = diagnostics;
-  return diagnostics;
+export function validate(sourceFile: SourceFile): void {
+  generateValidationDiagnostics(sourceFile);
 }
