@@ -10,13 +10,13 @@
  */
 
 import { Connection, TextDocumentSyncKind } from "vscode-languageserver";
-import { SourceFileHandler } from "../workspace/source-file";
-import { TextDocuments } from "./text-documents";
-import { definitionRequest } from "./definition-request";
 import { URI } from "../utils/uri";
-import { rangeToLSP } from "./types";
+import { SourceFileHandler } from "../workspace/source-file";
+import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
+import { TextDocuments } from "./text-documents";
+import { rangeToLSP } from "./types";
 
 export function startLanguageServer(connection: Connection): void {
   const sourceFileHandler = new SourceFileHandler();

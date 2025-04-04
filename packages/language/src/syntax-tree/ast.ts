@@ -201,6 +201,7 @@ export enum SyntaxKind {
 
 export interface AstNode {
   container: SyntaxNode | null;
+  kind: SyntaxKind;
 }
 
 export interface Reference<T extends SyntaxNode = SyntaxNode> {
@@ -1411,7 +1412,10 @@ export interface PrintDirective extends AstNode {
 }
 export interface ProcedureCall extends AstNode {
   kind: SyntaxKind.ProcedureCall;
-  procedure: Reference<ProcedureStatement> | null;
+  /**
+   * Call to a known procedure or external declaration (via a named element), does not necessarily require an arg list
+   */
+  procedure: Reference<NamedElement> | null;
   /**
    * First argument list of the CALL statement.
    * In case of a procedure array, this is the index!

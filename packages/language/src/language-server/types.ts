@@ -12,6 +12,8 @@
 import { IToken } from "chevrotain";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import * as lsp from "vscode-languageserver-types";
+import { getNameToken } from "../linking/tokens";
+import { SyntaxNode } from "../syntax-tree/ast";
 
 export type Offset = number;
 
@@ -60,6 +62,17 @@ export function tokenToRange(token: IToken): Range {
   };
 }
 
+/**
+ * Retrieve the range of the given syntax node, when possible.
+ */
+export function getSyntaxNodeRange(node: SyntaxNode): Range | undefined {
+  const token = getNameToken(node);
+  if (token) {
+    return tokenToRange(token);
+  }
+  return undefined;
+}
+
 export enum Severity {
   /** Info */
   I,
@@ -97,6 +110,12 @@ export interface Diagnostic {
   data?: any;
   source?: string;
 }
+
+/**
+ * DiagnosticInfo is a Diagnostic without the severity and message fields.
+ * For convenience w/ prior-langium diagnostic reporting in our validations
+ */
+export type DiagnosticInfo = Omit<Diagnostic, "severity" | "message">;
 
 export function diagnosticToLSP(
   textDocument: TextDocument,

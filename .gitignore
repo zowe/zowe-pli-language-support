@@ -12,3 +12,4 @@ out/
 *.vsix
 **/*.DS_Store
 scripts/*.html
+coverage/
