@@ -11,9 +11,9 @@
 
 import { SourceFile } from "../workspace/source-file";
 import { referencesRequest } from "./references-request";
-import { groupBy } from "../utils/group-by";
 import { DocumentUri } from "vscode-languageserver-types";
 import { Location } from "./types";
+import { groupBy } from "../utils/common";
 
 export function renameRequest(
   sourceFile: SourceFile,

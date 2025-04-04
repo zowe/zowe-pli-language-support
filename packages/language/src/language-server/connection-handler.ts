@@ -21,8 +21,8 @@ import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
 import { TextDocuments } from "./text-documents";
 import { rangeToLSP } from "./types";
-import { mapValues } from "../utils/map-values";
 import { renameRequest } from "./rename-request";
+import { mapValues } from "../utils/common";
 
 export function startLanguageServer(connection: Connection): void {
   const sourceFileHandler = new SourceFileHandler();
