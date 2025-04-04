@@ -21,6 +21,8 @@ import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
 import { TextDocuments } from "./text-documents";
 import { rangeToLSP } from "./types";
+import { mapValues } from "../utils/map-values";
+import { renameRequest } from "./rename-request";
 
 export function startLanguageServer(connection: Connection): void {
   const sourceFileHandler = new SourceFileHandler();
@@ -38,6 +40,7 @@ export function startLanguageServer(connection: Connection): void {
           change: TextDocumentSyncKind.Incremental,
           openClose: true,
         },
+        renameProvider: true,
         definitionProvider: true,
         referencesProvider: true,
         documentHighlightProvider: true,
@@ -101,6 +104,7 @@ export function startLanguageServer(connection: Connection): void {
     const position = params.position;
     const textDocument = TextDocuments.get(uri);
     const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
+
     if (textDocument && sourceFile) {
       const offset = textDocument.offsetAt(position);
       const definitions = referencesRequest(sourceFile, offset);
@@ -109,6 +113,29 @@ export function startLanguageServer(connection: Connection): void {
       );
     }
     return [];
+  });
+  connection.onRenameRequest((params) => {
+    const uri = params.textDocument.uri;
+    const position = params.position;
+    const textDocument = TextDocuments.get(uri);
+    const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
+    
+    if (textDocument && sourceFile) {
+      const offset = textDocument.offsetAt(position);
+      const renameLocations = renameRequest(sourceFile, offset);
+      const changes = mapValues(renameLocations, (locations) =>
+        locations.map((location) => ({
+          range: rangeToLSP(textDocument, location.range),
+          newText: params.newName,
+        })),
+      );
+
+      return {
+        changes,
+      };
+    }
+
+    return null;
   });
   connection.listen();
 }
