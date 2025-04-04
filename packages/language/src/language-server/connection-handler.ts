@@ -36,6 +36,7 @@ export function startLanguageServer(connection: Connection): void {
         },
         definitionProvider: true,
         referencesProvider: true,
+        documentHighlightProvider: true,
         semanticTokensProvider: {
           legend: semanticTokenLegend,
           full: true,
@@ -90,6 +91,23 @@ export function startLanguageServer(connection: Connection): void {
     return {
       data: [],
     };
+  });
+  connection.onDocumentHighlight((params) => {
+    const uri = params.textDocument.uri;
+    const position = params.position;
+    const textDocument = TextDocuments.get(uri);
+    const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
+    if (textDocument && sourceFile) {
+      const offset = textDocument.offsetAt(position);
+      const definition = referencesRequest(sourceFile, offset);
+      return definition.map((def) => {
+        return {
+          uri: def.uri,
+          range: rangeToLSP(textDocument, def.range),
+        };
+      });
+    }
+    return [];
   });
   connection.listen();
 }
