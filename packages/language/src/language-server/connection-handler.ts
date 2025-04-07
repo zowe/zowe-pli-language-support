@@ -9,7 +9,11 @@
  *
  */
 
-import { Connection, TextDocumentSyncKind } from "vscode-languageserver";
+import {
+  Connection,
+  DocumentHighlight,
+  TextDocumentSyncKind,
+} from "vscode-languageserver";
 import { URI } from "../utils/uri";
 import { SourceFileHandler } from "../workspace/source-file";
 import { definitionRequest } from "./definition-request";
@@ -99,13 +103,10 @@ export function startLanguageServer(connection: Connection): void {
     const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
     if (textDocument && sourceFile) {
       const offset = textDocument.offsetAt(position);
-      const definition = referencesRequest(sourceFile, offset);
-      return definition.map((def) => {
-        return {
-          uri: def.uri,
-          range: rangeToLSP(textDocument, def.range),
-        };
-      });
+      const definitions = referencesRequest(sourceFile, offset);
+      return definitions.map((def) =>
+        DocumentHighlight.create(rangeToLSP(textDocument, def.range)),
+      );
     }
     return [];
   });
