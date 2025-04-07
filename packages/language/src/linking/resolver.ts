@@ -107,7 +107,7 @@ export function findTokenElementReference(
   return element;
 }
 
-export function getElementReferences(
+export function findElementReferences(
   sourceFile: SourceFile,
   element: SyntaxNode,
 ): Reference<SyntaxNode>[] {
@@ -129,7 +129,7 @@ export function getReferenceLocations(
   }
 
   const locations: Location[] = [];
-  const reverseReferences = getElementReferences(sourceFile, element);
+  const reverseReferences = findElementReferences(sourceFile, element);
 
   const nameToken = getNameToken(element);
   if (nameToken) {
