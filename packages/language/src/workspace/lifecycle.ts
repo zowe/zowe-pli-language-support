@@ -1,9 +1,6 @@
-import { ILexingResult } from "chevrotain";
 import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols, SymbolTable } from "../linking/symbol-table";
 import { PliParserInstance } from "../parser/parser";
-import { LexerInstance } from "../parser/tokens";
-import { SourceFile } from "./source-file";
 import { CompilationUnit } from "./compilation-unit";
 import { PliProgram } from "../syntax-tree/ast";
 import {
@@ -14,23 +11,16 @@ import {
 } from "../validation/validator";
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { URI } from "../utils/uri";
-import { SourceFile } from "./source-file";
 
 export function lifecycle(
   compilationUnit: CompilationUnit,
   text: string,
 ): void {
-  console.time("tokenize");
   tokenize(compilationUnit, text);
-  console.timeEnd("tokenize");
-  console.time("parse");
   parse(compilationUnit);
-  console.timeEnd("parse");
-  console.time("symbolTable");
   generateSymbolTable(compilationUnit);
   link(compilationUnit);
-  console.timeEnd("symbolTable");
-  validate(sourceFile);
+  validate(compilationUnit);
 }
 
 const lexer = new PliLexer();
@@ -77,8 +67,8 @@ export function link(compilationUnit: CompilationUnit): ReferencesCache {
 }
 
 /**
- * Performs semantic validations on the AST of the source file
+ * Performs semantic validations on the AST of the compilation unit
  */
-export function validate(sourceFile: SourceFile): void {
-  generateValidationDiagnostics(sourceFile);
+export function validate(compilationUnit: CompilationUnit): void {
+  generateValidationDiagnostics(compilationUnit);
 }

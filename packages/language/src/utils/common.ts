@@ -23,9 +23,12 @@ export function groupBy<T, K extends string | number | symbol>(
  */
 export function mapValues<K extends string | number | symbol, T, U>(
   obj: Record<K, T>,
-  fn: (value: T) => U,
+  fn: (value: T, key: K) => U,
 ): Record<K, U> {
   return Object.fromEntries(
-    Object.entries(obj).map(([key, value]) => [key as K, fn(value as T)]),
+    Object.entries(obj).map(([key, value]) => [
+      key as K,
+      fn(value as T, key as K),
+    ]),
   ) as Record<K, U>;
 }

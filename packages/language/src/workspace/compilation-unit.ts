@@ -122,10 +122,7 @@ export class CompletionUnitHandler {
       const unit = this.getOrCreateCompilationUnit(
         URI.parse(event.document.uri),
       );
-      const document = TextDocuments.get(unit.uri.toString()) ?? event.document;
-      console.time("document");
-      lifecycle(unit, document.getText());
-      console.timeEnd("document");
+      lifecycle(unit, event.document.getText());
       unit.files.forEach((file) => {
         this.compilationUnits.set(file.toString(), unit);
       });
@@ -140,6 +137,10 @@ export class CompletionUnitHandler {
     });
     textDocuments.onDidClose((event) => {
       this.compilationUnits.delete(event.document.uri);
+      connection.sendDiagnostics({
+        uri: event.document.uri,
+        diagnostics: [],
+      });
     });
   }
 }

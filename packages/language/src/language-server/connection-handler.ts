@@ -9,21 +9,17 @@
  *
  */
 
-import { Connection, TextDocumentSyncKind } from "vscode-languageserver";
 import { CompletionUnitHandler } from "../workspace/compilation-unit";
-import { TextDocuments } from "./text-documents";
-import { definitionRequest } from "./definition-request";
 import {
   Connection,
   DocumentHighlight,
   TextDocumentSyncKind,
 } from "vscode-languageserver";
-import { URI } from "../utils/uri";
-import { SourceFileHandler } from "../workspace/source-file";
+import { URI, UriUtils } from "../utils/uri";
 import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
-import { Location } from "vscode-languageserver-types";
+import { Location, TextEdit } from "vscode-languageserver-types";
 import { TextDocuments } from "./text-documents";
 import { rangeToLSP } from "./types";
 import { renameRequest } from "./rename-request";
@@ -122,17 +118,19 @@ export function startLanguageServer(connection: Connection): void {
     };
   });
   connection.onDocumentHighlight((params) => {
-    const uri = params.textDocument.uri;
+    const uri = UriUtils.normalize(params.textDocument.uri);
     const position = params.position;
     const textDocument = TextDocuments.get(uri);
-    const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
-
-    if (textDocument && sourceFile) {
+    const parsedUri = URI.parse(uri);
+    const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
+    if (textDocument && unit) {
       const offset = textDocument.offsetAt(position);
-      const definitions = getReferenceLocations(sourceFile, offset);
-      return definitions.map((def) =>
-        DocumentHighlight.create(rangeToLSP(textDocument, def.range)),
-      );
+      const definitions = getReferenceLocations(unit, parsedUri, offset);
+      return definitions
+        .filter((e) => e.uri === uri)
+        .map((def) =>
+          DocumentHighlight.create(rangeToLSP(textDocument, def.range)),
+        );
     }
     return [];
   });
@@ -140,17 +138,25 @@ export function startLanguageServer(connection: Connection): void {
     const uri = params.textDocument.uri;
     const position = params.position;
     const textDocument = TextDocuments.get(uri);
-    const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
-
-    if (textDocument && sourceFile) {
+    const parsedUri = URI.parse(uri);
+    const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
+    if (textDocument && unit) {
       const offset = textDocument.offsetAt(position);
-      const renameLocations = renameRequest(sourceFile, offset);
-      const changes = mapValues(renameLocations, (locations) =>
-        locations.map((location) => ({
-          range: rangeToLSP(textDocument, location.range),
-          newText: params.newName,
-        })),
-      );
+      const renameLocations = renameRequest(unit, parsedUri, offset);
+      const changes = mapValues(renameLocations, (locations, key) => {
+        const textDocument = TextDocuments.get(key);
+        if (!textDocument) {
+          return [];
+        } else {
+          return locations.map(
+            (location) =>
+              ({
+                range: rangeToLSP(textDocument, location.range),
+                newText: params.newName,
+              }) satisfies TextEdit,
+          );
+        }
+      });
 
       return {
         changes,

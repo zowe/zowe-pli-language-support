@@ -9,14 +9,15 @@
  *
  */
 
-import { SourceFile } from "../workspace/source-file";
 import { getReferenceLocations } from "../linking/resolver";
 import { Location } from "./types";
+import { CompilationUnit } from "../workspace/compilation-unit";
+import { URI } from "../utils/uri";
 
 export function referencesRequest(
-  compilationUnit: CompilationUnit,
+  unit: CompilationUnit,
   uri: URI,
   offset: number,
 ): Location[] {
-  return getReferenceLocations(sourceFile, offset);
+  return getReferenceLocations(unit, uri, offset);
 }

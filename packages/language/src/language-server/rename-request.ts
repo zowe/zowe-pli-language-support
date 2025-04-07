@@ -9,17 +9,19 @@
  *
  */
 
-import { SourceFile } from "../workspace/source-file";
 import { DocumentUri } from "vscode-languageserver-types";
 import { Location } from "./types";
 import { groupBy } from "../utils/common";
 import { getReferenceLocations } from "../linking/resolver";
+import { URI } from "../utils/uri";
+import { CompilationUnit } from "../workspace/compilation-unit";
 
 export function renameRequest(
-  sourceFile: SourceFile,
+  unit: CompilationUnit,
+  uri: URI,
   offset: number,
 ): Record<DocumentUri, Location[]> {
-  const references = getReferenceLocations(sourceFile, offset);
+  const references = getReferenceLocations(unit, uri, offset);
   const referencesGroupedByUri = groupBy(
     references,
     (reference) => reference.uri,

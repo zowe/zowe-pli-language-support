@@ -31,7 +31,6 @@ import {
   PliValidationFunction,
   registerValidationChecks,
 } from "./pli-validator";
-import { SourceFile } from "../workspace/source-file";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -45,7 +44,7 @@ export type PliValidationAcceptor = (
 /**
  * Generates validation diagnostics (semantic checks) from the given AST node.
  */
-export function generateValidationDiagnostics(sourceFile: SourceFile): void {
+export function generateValidationDiagnostics(unit: CompilationUnit): void {
   // TODO @montymxb Mar. 27th, 2025: Checks are generated on each invocation, not ideal, needs a rework still
   const handlers = registerValidationChecks();
 
@@ -63,9 +62,9 @@ export function generateValidationDiagnostics(sourceFile: SourceFile): void {
   };
 
   // iterate over all nodes and validate them
-  validateSyntaxNode(sourceFile.ast, acceptor, handlers);
+  validateSyntaxNode(unit.ast, acceptor, handlers);
 
-  sourceFile.diagnostics.validation = diagnostics;
+  unit.diagnostics.validation = diagnostics;
 }
 
 /**
