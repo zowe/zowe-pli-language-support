@@ -9,7 +9,11 @@
  *
  */
 
-import { Connection, TextDocumentSyncKind } from "vscode-languageserver";
+import {
+  Connection,
+  DocumentHighlight,
+  TextDocumentSyncKind,
+} from "vscode-languageserver";
 import { URI } from "../utils/uri";
 import { SourceFileHandler } from "../workspace/source-file";
 import { definitionRequest } from "./definition-request";
@@ -36,6 +40,7 @@ export function startLanguageServer(connection: Connection): void {
         },
         definitionProvider: true,
         referencesProvider: true,
+        documentHighlightProvider: true,
         semanticTokensProvider: {
           legend: semanticTokenLegend,
           full: true,
@@ -90,6 +95,20 @@ export function startLanguageServer(connection: Connection): void {
     return {
       data: [],
     };
+  });
+  connection.onDocumentHighlight((params) => {
+    const uri = params.textDocument.uri;
+    const position = params.position;
+    const textDocument = TextDocuments.get(uri);
+    const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
+    if (textDocument && sourceFile) {
+      const offset = textDocument.offsetAt(position);
+      const definitions = referencesRequest(sourceFile, offset);
+      return definitions.map((def) =>
+        DocumentHighlight.create(rangeToLSP(textDocument, def.range)),
+      );
+    }
+    return [];
   });
   connection.listen();
 }
