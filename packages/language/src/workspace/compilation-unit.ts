@@ -18,6 +18,7 @@ import { Connection } from "vscode-languageserver";
 import { ReferencesCache } from "../linking/resolver.js";
 import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
 import { lifecycle } from "./lifecycle.js";
+import { CompilerOptions } from "../preprocessor/compiler-options/options.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -35,6 +36,7 @@ export interface CompilationUnit {
    */
   uri: URI;
   files: URI[];
+  compilerOptions: CompilerOptions;
   ast: PliProgram;
   tokens: CompilationUnitTokens;
   symbols: SymbolTable;
@@ -49,6 +51,7 @@ export interface CompilationUnitTokens {
 
 export interface CompilationUnitDiagnostics {
   lexer: Diagnostic[];
+  compilerOptions: Diagnostic[];
   parser: Diagnostic[];
   linking: Diagnostic[];
   validation: Diagnostic[];
@@ -57,6 +60,7 @@ export interface CompilationUnitDiagnostics {
 export function collectDiagnostics(sourceFile: CompilationUnit): Diagnostic[] {
   return [
     ...sourceFile.diagnostics.lexer,
+    ...sourceFile.diagnostics.compilerOptions,
     ...sourceFile.diagnostics.parser,
     ...sourceFile.diagnostics.linking,
     ...sourceFile.diagnostics.validation,
@@ -67,6 +71,7 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
   return {
     uri,
     files: [],
+    compilerOptions: {},
     ast: {
       kind: SyntaxKind.PliProgram,
       container: null,
@@ -80,6 +85,7 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
     references: new ReferencesCache(),
     diagnostics: {
       lexer: [],
+      compilerOptions: [],
       parser: [],
       linking: [],
       validation: [],

@@ -33,6 +33,9 @@ export enum SyntaxKind {
   CMPATOptionsItem,
   ColumnFormatItem,
   CompilerOptions,
+  CompilerOption,
+  CompilerOptionString,
+  CompilerOptionText,
   ComputationDataAttribute,
   ConditionPrefix,
   ConditionPrefixItem,
@@ -247,6 +250,9 @@ export type SyntaxNode =
   | CMPATOptionsItem
   | ColumnFormatItem
   | CompilerOptions
+  | CompilerOption
+  | CompilerOptionString
+  | CompilerOptionText
   | ComputationDataAttribute
   | ConditionPrefix
   | ConditionPrefixItem
@@ -804,6 +810,31 @@ export interface CompilerOptions extends AstNode {
   kind: SyntaxKind.CompilerOptions;
   value: "TODO" | null;
 }
+
+export type CompilerOptionValue =
+  | CompilerOption
+  | CompilerOptionString
+  | CompilerOptionText;
+
+export interface CompilerOption extends AstNode {
+  kind: SyntaxKind.CompilerOption;
+  name: string;
+  token: IToken;
+  values: CompilerOptionValue[];
+}
+
+export interface CompilerOptionString extends AstNode {
+  kind: SyntaxKind.CompilerOptionString;
+  token: IToken;
+  value: string;
+}
+
+export interface CompilerOptionText extends AstNode {
+  kind: SyntaxKind.CompilerOptionText;
+  token: IToken;
+  value: string;
+}
+
 export interface ComputationDataAttribute extends AstNode {
   kind: SyntaxKind.ComputationDataAttribute;
   type: DataAttributeType | null;

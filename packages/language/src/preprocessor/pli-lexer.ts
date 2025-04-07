@@ -18,10 +18,15 @@ import { PliPreprocessorGenerator } from "./pli-preprocessor-generator";
 import { PliSmartTokenPickerOptimizer } from "./pli-token-picker-optimizer";
 import * as tokens from "../parser/tokens";
 import { URI } from "../utils/uri";
+import {
+  CompilerOptionsProcessor,
+  CompilerOptionsProcessorResult,
+} from "./compiler-options-processor";
 
 export interface LexerResult {
   all: IToken[];
   errors: ILexingError[];
+  compilerOptions: CompilerOptionsProcessorResult;
   fileTokens: Record<string, IToken[]>;
 }
 
@@ -30,6 +35,7 @@ export interface LexerResult {
  * The latter creates the desired token stream without preprocessor statements
  */
 export class PliLexer {
+  readonly compilerOptionsPreprocessor: CompilerOptionsProcessor;
   readonly marginsProcessor: MarginsProcessor;
   readonly preprocessorLexer: PliPreprocessorLexer;
   readonly preprocessorParser: PliPreprocessorParser;
@@ -37,6 +43,7 @@ export class PliLexer {
   readonly preprocessorInterpreter: PliPreprocessorInterpreter;
 
   constructor() {
+    this.compilerOptionsPreprocessor = new CompilerOptionsProcessor();
     this.marginsProcessor = new PliMarginsProcessor();
     this.preprocessorLexer = new PliPreprocessorLexer(
       new PliSmartTokenPickerOptimizer(),
@@ -47,9 +54,16 @@ export class PliLexer {
     this.preprocessorInterpreter = new PliPreprocessorInterpreter();
   }
 
-  tokenize(printerText: string, uri: URI): LexerResult {
-    const text = this.marginsProcessor.processMargins(printerText);
-    const state = this.preprocessorParser.initializeState(text, uri);
+  tokenize(inputText: string, uri: URI): LexerResult {
+    const compilerOptionsResult =
+      this.compilerOptionsPreprocessor.extractCompilerOptions(inputText);
+    const textWithoutMargins = this.marginsProcessor.processMargins(
+      compilerOptionsResult,
+    );
+    const state = this.preprocessorParser.initializeState(
+      textWithoutMargins,
+      uri,
+    );
     const { statements, errors } = this.preprocessorParser.start(state);
     const program = this.preprocessorGenerator.generateProgram(statements);
     const output = this.preprocessorInterpreter.run(
@@ -61,8 +75,14 @@ export class PliLexer {
         state.perFileTokens[uri],
       );
     }
+    if (compilerOptionsResult.result) {
+      state.perFileTokens[uri.toString()].unshift(
+        ...compilerOptionsResult.result.tokens,
+      );
+    }
     return {
       all: this.filterHiddenTokens(output.all),
+      compilerOptions: compilerOptionsResult,
       errors,
       fileTokens: state.perFileTokens,
     };

@@ -11,6 +11,7 @@ import {
 } from "../validation/validator";
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { URI } from "../utils/uri";
+import { compilerOptionIssueToDiagnostics } from "../preprocessor/compiler-options/options";
 
 export function lifecycle(
   compilationUnit: CompilationUnit,
@@ -35,7 +36,14 @@ export function tokenize(
   );
   compilationUnit.tokens.all = result.all;
   compilationUnit.tokens.fileTokens = result.fileTokens;
+  compilationUnit.compilerOptions =
+    result.compilerOptions.result?.options ?? {};
+  const uri = compilationUnit.uri.toString();
   compilationUnit.diagnostics.lexer = lexerErrorsToDiagnostics(result.errors);
+  compilationUnit.diagnostics.compilerOptions =
+    result.compilerOptions.result?.issues.map((e) =>
+      compilerOptionIssueToDiagnostics(e, uri),
+    ) ?? [];
   return result;
 }
 

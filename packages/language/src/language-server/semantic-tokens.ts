@@ -20,8 +20,17 @@ import {
   SemanticTokensLegend,
   SemanticTokenTypes,
 } from "vscode-languageserver-types";
+import { CstNodeKind } from "../syntax-tree/cst";
 
-const tokenTypes = new Map<string, number>([[SemanticTokenTypes.variable, 0]]);
+const semanticTokenTypes = [
+  SemanticTokenTypes.variable,
+  SemanticTokenTypes.keyword,
+  SemanticTokenTypes.number,
+];
+
+const tokenTypes = new Map<string, number>(
+  semanticTokenTypes.map((type, index) => [type, index]),
+);
 
 const tokenModifiers = new Map<string, number>([]);
 
@@ -60,6 +69,10 @@ function tokenType(token: IToken): string | undefined {
   }
   if (isNameToken(payload.kind) || isReferenceToken(payload.kind)) {
     return SemanticTokenTypes.variable;
+  } else if (payload.kind === CstNodeKind.CompilerOption_Name) {
+    return SemanticTokenTypes.keyword;
+  } else if (payload.kind === CstNodeKind.CompilerOption_Number) {
+    return SemanticTokenTypes.number;
   }
   return undefined;
 }
