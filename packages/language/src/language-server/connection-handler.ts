@@ -23,6 +23,7 @@ import { TextDocuments } from "./text-documents";
 import { rangeToLSP } from "./types";
 import { renameRequest } from "./rename-request";
 import { mapValues } from "../utils/common";
+import { getReferenceLocations } from "../linking/resolver";
 
 export function startLanguageServer(connection: Connection): void {
   const sourceFileHandler = new SourceFileHandler();
@@ -107,7 +108,7 @@ export function startLanguageServer(connection: Connection): void {
 
     if (textDocument && sourceFile) {
       const offset = textDocument.offsetAt(position);
-      const definitions = referencesRequest(sourceFile, offset);
+      const definitions = getReferenceLocations(sourceFile, offset);
       return definitions.map((def) =>
         DocumentHighlight.create(rangeToLSP(textDocument, def.range)),
       );
@@ -119,7 +120,7 @@ export function startLanguageServer(connection: Connection): void {
     const position = params.position;
     const textDocument = TextDocuments.get(uri);
     const sourceFile = sourceFileHandler.getSourceFile(URI.parse(uri));
-    
+
     if (textDocument && sourceFile) {
       const offset = textDocument.offsetAt(position);
       const renameLocations = renameRequest(sourceFile, offset);

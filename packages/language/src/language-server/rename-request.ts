@@ -10,16 +10,16 @@
  */
 
 import { SourceFile } from "../workspace/source-file";
-import { referencesRequest } from "./references-request";
 import { DocumentUri } from "vscode-languageserver-types";
 import { Location } from "./types";
 import { groupBy } from "../utils/common";
+import { getReferenceLocations } from "../linking/resolver";
 
 export function renameRequest(
   sourceFile: SourceFile,
   offset: number,
 ): Record<DocumentUri, Location[]> {
-  const references = referencesRequest(sourceFile, offset);
+  const references = getReferenceLocations(sourceFile, offset);
   const referencesGroupedByUri = groupBy(
     references,
     (reference) => reference.uri,
