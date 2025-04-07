@@ -12,6 +12,7 @@
 import { IToken } from "chevrotain";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import * as lsp from "vscode-languageserver-types";
+import { TextDocuments } from "./text-documents";
 import { getNameToken } from "../linking/tokens";
 import { SyntaxNode } from "../syntax-tree/ast";
 
@@ -117,15 +118,38 @@ export interface Diagnostic {
  */
 export type DiagnosticInfo = Omit<Diagnostic, "severity" | "message">;
 
-export function diagnosticToLSP(
-  textDocument: TextDocument,
-  diagnostic: Diagnostic,
-): lsp.Diagnostic {
+export function diagnosticsToLSP(
+  diagnostics: Diagnostic[],
+): Map<string, lsp.Diagnostic[]> {
+  const map = new Map<string, lsp.Diagnostic[]>();
+  for (const diagnostic of diagnostics) {
+    const uri = diagnostic.uri;
+    const lspDiagnostic = diagnosticToLSP(diagnostic);
+    if (!map.has(uri)) {
+      map.set(uri, []);
+    }
+    map.get(uri)?.push(lspDiagnostic);
+  }
+  return map;
+}
+
+export function diagnosticToLSP(diagnostic: Diagnostic): lsp.Diagnostic {
+  const doc = TextDocuments.get(diagnostic.uri);
   return {
     severity: severityToLsp(diagnostic.severity),
     range: {
-      start: offsetToPosition(textDocument, diagnostic.range.start),
-      end: offsetToPosition(textDocument, diagnostic.range.end),
+      start: doc
+        ? offsetToPosition(doc, diagnostic.range.start)
+        : {
+            character: 0,
+            line: 0,
+          },
+      end: doc
+        ? offsetToPosition(doc, diagnostic.range.end)
+        : {
+            character: 0,
+            line: 0,
+          },
     },
     message: diagnostic.message,
     code: diagnostic.code,

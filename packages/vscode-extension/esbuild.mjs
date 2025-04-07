@@ -11,6 +11,9 @@
 
 //@ts-check
 import * as esbuild from "esbuild";
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 const watch = process.argv.includes("--watch");
 const minify = process.argv.includes("--minify");
@@ -74,7 +77,23 @@ const browserCtx = await esbuild.context({
   platform: "browser",
   sourcemap: true,
   minify,
-  plugins,
+  plugins: [
+    ...plugins,
+    {
+      name: "node-builtins",
+      setup(build) {
+        build.onResolve({ filter: /^stream$/ }, () => {
+          return { path: require.resolve('stream-browserify') };
+        });
+        build.onResolve({ filter: /^path$/ }, () => {
+          return { path: require.resolve('path-browserify') };
+        });
+        build.onResolve({ filter: /^fs$/ }, () => {
+          return { path: require.resolve('browserify-fs') };
+        });
+      },
+    }
+  ],
 });
 
 if (watch) {

@@ -12,7 +12,7 @@
 import { describe, expect, test } from "vitest";
 import { Severity } from "../src/language-server/types";
 import * as PLICodes from "../src/validation/messages/pli-codes";
-import { collectDiagnostics } from "../src/workspace/source-file";
+import { collectDiagnostics } from "../src/workspace/compilation-unit";
 import { assertDiagnostic, assertNoDiagnostics, parse } from "./utils";
 
 // beforeAll(async () => {

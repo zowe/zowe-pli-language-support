@@ -14,6 +14,7 @@ import {
   IRecognitionException,
   MismatchedTokenException,
 } from "chevrotain";
+import { CompilationUnit } from "../workspace/compilation-unit";
 import {
   Diagnostic,
   DiagnosticInfo,
@@ -22,6 +23,7 @@ import {
 } from "../language-server/types";
 import { ReferencesCache } from "../linking/resolver";
 import { isValidToken } from "../linking/tokens";
+import { TokenPayload } from "../parser/abstract-parser";
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import {
@@ -29,7 +31,6 @@ import {
   PliValidationFunction,
   registerValidationChecks,
 } from "./pli-validator";
-import { SourceFile } from "../workspace/source-file";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -43,7 +44,7 @@ export type PliValidationAcceptor = (
 /**
  * Generates validation diagnostics (semantic checks) from the given AST node.
  */
-export function generateValidationDiagnostics(sourceFile: SourceFile): void {
+export function generateValidationDiagnostics(unit: CompilationUnit): void {
   // TODO @montymxb Mar. 27th, 2025: Checks are generated on each invocation, not ideal, needs a rework still
   const handlers = registerValidationChecks();
 
@@ -61,9 +62,9 @@ export function generateValidationDiagnostics(sourceFile: SourceFile): void {
   };
 
   // iterate over all nodes and validate them
-  validateSyntaxNode(sourceFile.ast, acceptor, handlers);
+  validateSyntaxNode(unit.ast, acceptor, handlers);
 
-  sourceFile.diagnostics.validation = diagnostics;
+  unit.diagnostics.validation = diagnostics;
 }
 
 /**
@@ -124,11 +125,13 @@ export function parserErrorsToDiagnostics(
   const diagnostics: Diagnostic[] = [];
   for (const error of parserErrors) {
     let range: Range | undefined = undefined;
+    let uri: string | undefined = undefined;
     if (isNaN(error.token.startOffset)) {
       if ("previousToken" in error) {
         const token = (error as MismatchedTokenException).previousToken;
         if (!isNaN(token.startOffset)) {
           range = { start: token.startOffset, end: token.startOffset };
+          uri = token.payload?.uri?.toString();
         } else {
           // No valid prev token. Might be empty document or containing only hidden tokens.
           // Point to document start
@@ -140,10 +143,11 @@ export function parserErrorsToDiagnostics(
         start: error.token.startOffset,
         end: error.token.startOffset,
       };
+      uri = error.token.payload?.uri?.toString();
     }
-    if (range) {
+    if (range && uri) {
       const diagnostic: Diagnostic = {
-        uri: "",
+        uri,
         severity: Severity.E,
         range,
         message: error.message,
@@ -162,7 +166,7 @@ export function linkingErrorsToDiagnostics(
   for (const reference of references.allReferences()) {
     if (reference.node === null && isValidToken(reference.token)) {
       const diagnostic: Diagnostic = {
-        uri: "",
+        uri: (reference.token.payload as TokenPayload).uri.toString(),
         severity: Severity.W,
         range: {
           start: reference.token.startOffset,

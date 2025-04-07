@@ -54,8 +54,12 @@
     "dependencies": false
   },
   "dependencies": {
+    "browserify-fs": "^1.0.0",
     "langium": "~3.4.0",
+    "path-browserify": "^1.0.1",
     "pli-language": "workspace:*",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5",
     "vscode-languageclient": "~9.0.1",
     "vscode-languageserver": "~9.0.1"
   },

@@ -1,16 +1,16 @@
 import { expect } from "vitest";
+import {
+  collectDiagnostics,
+  CompilationUnit,
+  createCompilationUnit,
+} from "../src/workspace/compilation-unit";
+import * as lifecycle from "../src/workspace/lifecycle";
 import { URI } from "vscode-uri";
 import { Diagnostic, Range } from "../src/language-server/types";
-import * as lifecycle from "../src/workspace/lifecycle";
-import {
-  SourceFile,
-  collectDiagnostics,
-  createSourceFile,
-} from "../src/workspace/source-file";
 import { definitionRequest } from "../src/language-server/definition-request";
 import assert from "node:assert";
 
-export function assertNoParseErrors(sourceFile: SourceFile) {
+export function assertNoParseErrors(sourceFile: CompilationUnit) {
   expect(sourceFile.diagnostics.lexer).toHaveLength(0);
   expect(sourceFile.diagnostics.parser).toHaveLength(0);
 }
@@ -18,28 +18,28 @@ export function assertNoParseErrors(sourceFile: SourceFile) {
 /**
  * Asserts the absence of linking errors in the given source file
  */
-export function assertNoLinkingErrors(sourceFile: SourceFile) {
+export function assertNoLinkingErrors(sourceFile: CompilationUnit) {
   expect(sourceFile.diagnostics.linking).toHaveLength(0);
 }
 
 /**
  * Asserts the absence of validation errors in the given source file
  */
-export function assertNoValidationErrors(sourceFile: SourceFile) {
+export function assertNoValidationErrors(sourceFile: CompilationUnit) {
   expect(sourceFile.diagnostics.validation).toHaveLength(0);
 }
 
 /**
  * Asserts the absence of all diagnostics in the given source file
  */
-export function assertNoDiagnostics(sourceFile: SourceFile) {
+export function assertNoDiagnostics(sourceFile: CompilationUnit) {
   assertNoParseErrors(sourceFile);
   assertNoLinkingErrors(sourceFile);
   assertNoValidationErrors(sourceFile);
 }
 
 export function assertDiagnostic(
-  sourceFile: SourceFile,
+  sourceFile: CompilationUnit,
   diagnostic: Partial<Diagnostic>,
 ) {
   const diagnostics = collectDiagnostics(sourceFile);
@@ -56,8 +56,8 @@ export function assertDiagnostic(
 export function parse(
   text: string,
   options?: { validate: boolean },
-): SourceFile {
-  const sourceFile = createSourceFile(URI.file("test.pli"));
+): CompilationUnit {
+  const sourceFile = createCompilationUnit(URI.file("test.pli"));
   if (!options?.validate) {
     lifecycle.tokenize(sourceFile, text);
     lifecycle.parse(sourceFile);
@@ -71,7 +71,7 @@ export function parse(
  * Helper function to parse a string of PL/I statements,
  * wrapping them in a procedure to ensure they are valid
  */
-export function parseStmts(text: string): SourceFile {
+export function parseStmts(text: string): CompilationUnit {
   return parse(` STARTPR: PROCEDURE OPTIONS (MAIN);
 ${text}
  end STARTPR;`);
@@ -89,7 +89,7 @@ export function expectedFunction(
   assert.deepStrictEqual(actual, expected, message);
 }
 
-export function parseAndLink(text: string): SourceFile {
+export function parseAndLink(text: string): CompilationUnit {
   const sourceFile = parse(text);
   lifecycle.generateSymbolTable(sourceFile);
   lifecycle.link(sourceFile);
@@ -176,10 +176,10 @@ export function expectGotoDefinition(
 ) {
   const { index, rangeIndex } = expectedGotoDefinition;
   const { output, indices, ranges } = replaceIndices(expectedGotoDefinition);
-  const sourceFile = parseAndLink(output);
+  const unit = parseAndLink(output);
 
   const offset = indices[index];
-  const result = definitionRequest(sourceFile, offset);
+  const result = definitionRequest(unit, unit.uri, offset);
 
   if (Array.isArray(rangeIndex)) {
     expectedFunction(

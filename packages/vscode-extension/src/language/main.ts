@@ -13,7 +13,21 @@ import {
   createConnection,
   ProposedFeatures,
 } from "vscode-languageserver/node.js";
-import { startLanguageServer } from "pli-language";
+import {
+  startLanguageServer,
+  FileSystemProvider,
+  URI,
+  setFileSystemProvider,
+} from "pli-language";
+import * as fs from "fs";
+
+class NodeFileSystemProvider implements FileSystemProvider {
+  readFileSync(uri: URI): string {
+    return fs.readFileSync(uri.fsPath, "utf8");
+  }
+}
+
+setFileSystemProvider(new NodeFileSystemProvider());
 
 // Create a connection to the client
 const connection = createConnection(ProposedFeatures.all);

@@ -9,7 +9,7 @@
  *
  */
 
-import { SourceFile } from "../workspace/source-file";
+import { CompilationUnit } from "../workspace/compilation-unit";
 import { binaryTokenSearch } from "../utils/search";
 import { TokenPayload } from "../parser/abstract-parser";
 import { Location } from "./types";
@@ -19,12 +19,15 @@ import {
   isNameToken,
   isReferenceToken,
 } from "../linking/tokens";
+import { URI } from "../utils/uri";
 
 export function definitionRequest(
-  sourceFile: SourceFile,
+  compilationUnit: CompilationUnit,
+  uri: URI,
   offset: number,
 ): Location[] {
-  const token = binaryTokenSearch(sourceFile.tokens, offset);
+  const tokens = compilationUnit.tokens.fileTokens[uri.toString()] ?? [];
+  const token = binaryTokenSearch(tokens, offset);
   const payload = token?.payload as TokenPayload;
   if (!payload || !token) {
     return [];
@@ -32,7 +35,7 @@ export function definitionRequest(
   if (isNameToken(payload.kind)) {
     return [
       {
-        uri: sourceFile.uri.toString(),
+        uri: payload.uri.toString(),
         range: {
           start: token.startOffset,
           end: token.endOffset! + 1,
@@ -50,7 +53,7 @@ export function definitionRequest(
     }
     return [
       {
-        uri: payload.uri ?? sourceFile.uri.toString(),
+        uri: nameToken.payload.uri.toString(),
         range: {
           start: nameToken.startOffset,
           end: nameToken.endOffset! + 1,

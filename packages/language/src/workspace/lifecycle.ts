@@ -1,8 +1,7 @@
-import { ILexingResult } from "chevrotain";
 import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols, SymbolTable } from "../linking/symbol-table";
 import { PliParserInstance } from "../parser/parser";
-import { LexerInstance } from "../parser/tokens";
+import { CompilationUnit } from "./compilation-unit";
 import { PliProgram } from "../syntax-tree/ast";
 import {
   generateValidationDiagnostics,
@@ -10,100 +9,66 @@ import {
   linkingErrorsToDiagnostics,
   parserErrorsToDiagnostics,
 } from "../validation/validator";
-import { SourceFile } from "./source-file";
+import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
+import { URI } from "../utils/uri";
 
-export function lifecycle(sourceFile: SourceFile, text: string): void {
-  tokenize(sourceFile, text);
-  parse(sourceFile);
-  generateSymbolTable(sourceFile);
-  link(sourceFile);
-  validate(sourceFile);
+export function lifecycle(
+  compilationUnit: CompilationUnit,
+  text: string,
+): void {
+  tokenize(compilationUnit, text);
+  parse(compilationUnit);
+  generateSymbolTable(compilationUnit);
+  link(compilationUnit);
+  validate(compilationUnit);
 }
 
-export function tokenize(sourceFile: SourceFile, text: string): ILexingResult {
-  const result = LexerInstance.tokenize(adjustMargins(text));
-  sourceFile.tokens = result.tokens;
-  sourceFile.diagnostics.lexer = lexerErrorsToDiagnostics(result.errors);
+const lexer = new PliLexer();
+
+export function tokenize(
+  compilationUnit: CompilationUnit,
+  text: string,
+): LexerResult {
+  const result = lexer.tokenize(text, compilationUnit.uri);
+  compilationUnit.files = Object.keys(result.fileTokens).map((e) =>
+    URI.parse(e),
+  );
+  compilationUnit.tokens.all = result.all;
+  compilationUnit.tokens.fileTokens = result.fileTokens;
+  compilationUnit.diagnostics.lexer = lexerErrorsToDiagnostics(result.errors);
   return result;
 }
 
-// TODO: use margins processor later on
-function adjustMargins(text: string): string {
-  const lines = splitLines(text);
-  const adjustedLines = lines.map((line) => adjustLine(line));
-  const adjustedText = adjustedLines.join("");
-  return adjustedText;
-}
-
-const NEWLINE = "\n".charCodeAt(0);
-
-function splitLines(text: string): string[] {
-  const lines: string[] = [];
-  for (let i = 0; i < text.length; i++) {
-    const start = i;
-    while (i < text.length && text.charCodeAt(i) !== NEWLINE) {
-      i++;
-    }
-    lines.push(text.substring(start, i + 1));
-  }
-  return lines;
-}
-
-const start = 1;
-const end = 72;
-
-function adjustLine(line: string): string {
-  let eol = "";
-  if (line.endsWith("\r\n")) {
-    eol = "\r\n";
-  } else if (line.endsWith("\n")) {
-    eol = "\n";
-  }
-  const prefixLength = start;
-  const lineLength = line.length - eol.length;
-  if (lineLength < prefixLength) {
-    return " ".repeat(lineLength) + eol;
-  }
-  const lineEnd = end;
-  const prefix = " ".repeat(prefixLength);
-  let postfix = "";
-  if (lineLength > lineEnd) {
-    postfix = " ".repeat(lineLength - lineEnd);
-  }
-  return (
-    prefix +
-    line.substring(prefixLength, Math.min(lineEnd, lineLength)) +
-    postfix +
-    eol
-  );
-}
-
-export function parse(sourceFile: SourceFile): PliProgram {
-  PliParserInstance.input = sourceFile.tokens;
+export function parse(compilationUnit: CompilationUnit): PliProgram {
+  PliParserInstance.input = compilationUnit.tokens.all;
   const ast = PliParserInstance.PliProgram();
-  sourceFile.ast = ast;
-  sourceFile.diagnostics.parser = parserErrorsToDiagnostics(
+  compilationUnit.ast = ast;
+  compilationUnit.diagnostics.parser = parserErrorsToDiagnostics(
     PliParserInstance.errors,
   );
   return ast;
 }
 
-export function generateSymbolTable(sourceFile: SourceFile): SymbolTable {
-  iterateSymbols(sourceFile);
-  return sourceFile.symbols;
+export function generateSymbolTable(
+  compilationUnit: CompilationUnit,
+): SymbolTable {
+  compilationUnit.references.clear();
+  compilationUnit.symbols.clear();
+  iterateSymbols(compilationUnit);
+  return compilationUnit.symbols;
 }
 
-export function link(sourceFile: SourceFile): ReferencesCache {
-  resolveReferences(sourceFile);
-  sourceFile.diagnostics.linking = linkingErrorsToDiagnostics(
-    sourceFile.references,
+export function link(compilationUnit: CompilationUnit): ReferencesCache {
+  resolveReferences(compilationUnit);
+  compilationUnit.diagnostics.linking = linkingErrorsToDiagnostics(
+    compilationUnit.references,
   );
-  return sourceFile.references;
+  return compilationUnit.references;
 }
 
 /**
- * Performs semantic validations on the AST of the source file
+ * Performs semantic validations on the AST of the compilation unit
  */
-export function validate(sourceFile: SourceFile): void {
-  generateValidationDiagnostics(sourceFile);
+export function validate(compilationUnit: CompilationUnit): void {
+  generateValidationDiagnostics(compilationUnit);
 }

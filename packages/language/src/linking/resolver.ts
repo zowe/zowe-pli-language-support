@@ -14,13 +14,14 @@ import { Location, tokenToRange } from "../language-server/types";
 import { TokenPayload } from "../parser/abstract-parser";
 import { Reference, SyntaxNode } from "../syntax-tree/ast";
 import { binaryTokenSearch } from "../utils/search";
-import { SourceFile } from "../workspace/source-file";
 import {
   getNameToken,
   getReference,
   isNameToken,
   isReferenceToken,
 } from "./tokens";
+import { URI } from "../utils/uri";
+import { CompilationUnit } from "../workspace/compilation-unit";
 
 export class ReferencesCache {
   private list: Reference[] = [];
@@ -56,20 +57,17 @@ export class ReferencesCache {
 }
 
 export function resolveReference<T extends SyntaxNode>(
-  sourceFile: SourceFile,
+  unit: CompilationUnit,
   reference: Reference<T> | null,
 ): T | undefined {
   if (reference === null || reference.node === null) {
     return undefined;
   }
   if (reference.node === undefined) {
-    const symbol = sourceFile.symbols.getSymbol(
-      reference.owner,
-      reference.text,
-    );
+    const symbol = unit.symbols.getSymbol(reference.owner, reference.text);
     if (symbol) {
       reference.node = symbol as T;
-      sourceFile.references.addInverse(reference);
+      unit.references.addInverse(reference);
       return symbol as T;
     } else {
       reference.node = null;
@@ -79,9 +77,9 @@ export function resolveReference<T extends SyntaxNode>(
   return reference.node;
 }
 
-export function resolveReferences(sourceFile: SourceFile): void {
-  for (const reference of sourceFile.references.allReferences()) {
-    resolveReference(sourceFile, reference);
+export function resolveReferences(unit: CompilationUnit): void {
+  for (const reference of unit.references.allReferences()) {
+    resolveReference(unit, reference);
   }
 }
 
@@ -108,17 +106,21 @@ export function findTokenElementReference(
 }
 
 export function findElementReferences(
-  sourceFile: SourceFile,
+  unit: CompilationUnit,
   element: SyntaxNode,
 ): Reference<SyntaxNode>[] {
-  return sourceFile.references.findReferences(element);
+  return unit.references.findReferences(element);
 }
 
 export function getReferenceLocations(
-  sourceFile: SourceFile,
+  unit: CompilationUnit,
+  uri: URI,
   offset: number,
 ): Location[] {
-  const token = binaryTokenSearch(sourceFile.tokens, offset);
+  const token = binaryTokenSearch(
+    unit.tokens.fileTokens[uri.toString()] ?? [],
+    offset,
+  );
   if (!token) {
     return [];
   }
@@ -129,19 +131,19 @@ export function getReferenceLocations(
   }
 
   const locations: Location[] = [];
-  const reverseReferences = findElementReferences(sourceFile, element);
+  const reverseReferences = findElementReferences(unit, element);
 
   const nameToken = getNameToken(element);
   if (nameToken) {
     locations.push({
-      uri: sourceFile.uri.toString(),
+      uri: nameToken.payload.uri?.toString(),
       range: tokenToRange(nameToken),
     });
   }
 
   for (const ref of reverseReferences) {
     locations.push({
-      uri: token.payload.uri ?? sourceFile.uri.toString(),
+      uri: ref.token.payload.uri?.toString(),
       range: tokenToRange(ref.token),
     });
   }
