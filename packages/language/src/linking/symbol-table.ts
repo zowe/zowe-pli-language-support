@@ -34,6 +34,10 @@ export class SymbolTable {
     return this.symbols.get(name);
   }
 
+  hasSymbol(name: string): boolean {
+    return this.symbols.has(name);
+  }
+
   clear(): void {
     this.symbols.clear();
   }
