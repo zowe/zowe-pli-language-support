@@ -63,8 +63,12 @@ export function resolveReference<T extends SyntaxNode>(
   if (reference === null || reference.node === null) {
     return undefined;
   }
+
   if (reference.node === undefined) {
-    const symbol = unit.symbols.getSymbol(reference.owner, reference.text);
+    const symbol = unit.scopeCache
+      .get(reference.owner)
+      ?.getSymbol(reference.text);
+
     if (symbol) {
       reference.node = symbol as T;
       unit.references.addInverse(reference);

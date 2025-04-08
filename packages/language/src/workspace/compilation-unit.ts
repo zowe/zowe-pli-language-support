@@ -12,7 +12,7 @@
 import { IToken } from "chevrotain";
 import { PliProgram, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
-import { SymbolTable } from "../linking/symbol-table.js";
+import { ScopeCache } from "../linking/symbol-table.js";
 import { TextDocuments } from "../language-server/text-documents.js";
 import { Connection } from "vscode-languageserver";
 import { ReferencesCache } from "../linking/resolver.js";
@@ -37,9 +37,9 @@ export interface CompilationUnit {
   files: URI[];
   ast: PliProgram;
   tokens: CompilationUnitTokens;
-  symbols: SymbolTable;
   references: ReferencesCache;
   diagnostics: CompilationUnitDiagnostics;
+  scopeCache: ScopeCache;
 }
 
 export interface CompilationUnitTokens {
@@ -76,8 +76,8 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       fileTokens: {},
       all: [],
     },
-    symbols: new SymbolTable(),
     references: new ReferencesCache(),
+    scopeCache: new ScopeCache(),
     diagnostics: {
       lexer: [],
       parser: [],

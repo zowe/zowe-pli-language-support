@@ -1,5 +1,5 @@
 import { ReferencesCache, resolveReferences } from "../linking/resolver";
-import { iterateSymbols, SymbolTable } from "../linking/symbol-table";
+import { iterateSymbols } from "../linking/symbol-table";
 import { PliParserInstance } from "../parser/parser";
 import { CompilationUnit } from "./compilation-unit";
 import { PliProgram } from "../syntax-tree/ast";
@@ -49,13 +49,10 @@ export function parse(compilationUnit: CompilationUnit): PliProgram {
   return ast;
 }
 
-export function generateSymbolTable(
-  compilationUnit: CompilationUnit,
-): SymbolTable {
+export function generateSymbolTable(compilationUnit: CompilationUnit) {
   compilationUnit.references.clear();
-  compilationUnit.symbols.clear();
+  compilationUnit.scopeCache.clear();
   iterateSymbols(compilationUnit);
-  return compilationUnit.symbols;
 }
 
 export function link(compilationUnit: CompilationUnit): ReferencesCache {
