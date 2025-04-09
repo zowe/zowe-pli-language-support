@@ -9,7 +9,7 @@
  *
  */
 
-import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import { ProcedureStatement, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache } from "./resolver";
@@ -34,10 +34,6 @@ export class SymbolTable {
     return this.symbols.get(name);
   }
 
-  hasSymbol(name: string): boolean {
-    return this.symbols.has(name);
-  }
-
   clear(): void {
     this.symbols.clear();
   }
@@ -50,10 +46,7 @@ export class Scope {
   private _symbolTable: SymbolTable | null;
   private parent: Scope | null;
 
-  constructor(
-    parent: Scope | null,
-    symbolTable: SymbolTable = new SymbolTable(),
-  ) {
+  constructor(parent: Scope | null, symbolTable: SymbolTable | null = null) {
     this.parent = parent;
     this._symbolTable = symbolTable;
   }
@@ -102,6 +95,9 @@ export function iterateSymbols(compilationUnit: CompilationUnit): void {
   const builtInSymbols = new SymbolTable();
   const scope = new Scope(null, builtInSymbols);
 
+  // Iterate over the PLI program.
+  // The returned scope should be the "exported" scope of the file,
+  // if that should ever become relevant.
   iterate(compilationUnit.ast, scopeCache, scope, references);
 }
 
@@ -111,55 +107,98 @@ function iterate(
   scopeCache: ScopeCache,
   parentScope: Scope,
   references: ReferencesCache,
-): Scope {
+) {
   // While we're here, let's also add the reference to our cache
   const ref = getReference(node);
   if (ref) {
     references.add(ref);
   }
 
-  // Maybe create a new scope for this node,
-  // if it is a containing node. Otherwise,
-  // use the parent scope.
-  let scope = getNewScope(node, parentScope);
-  scopeCache.add(node, scope);
-
-  // If this node is declaring a symbol, we
-  // register it to the symbol table in the
-  // current scope.
-  const symbol = getSymbol(node);
-  if (symbol) {
-    // If the symbol already exists in the current scope,
-    // we forcibly create a new scope to allow for redeclarations.
-    if (scope.symbolTable.hasSymbol(symbol)) {
-      scope = new Scope(parentScope);
-    }
-
-    scope.symbolTable.addSymbol(symbol, node);
+  // If we are declaring a local variable, we create a
+  // new scope to prevent usage of this symbol before it is declared.
+  // This also makes it possible to redeclare the same variable name.
+  // Labels are global in a scope, so we don't need
+  // to create a new scope for them.
+  if (node.kind === SyntaxKind.DeclaredVariable) {
+    parentScope = new Scope(parentScope);
   }
 
-  forEachNode(node, (child) => {
+  /**
+   * TODO: Figure out how to label shadowing is supposed to work in PLI.
+   */
+
+  // Add the symbol to the symbol table in the current scope.
+  const symbol = getSymbol(node);
+  if (symbol) {
+    parentScope.symbolTable.addSymbol(symbol, node);
+  }
+
+  // We connect the current node to its scope for usage in the
+  // linking phase.
+  scopeCache.add(node, parentScope);
+
+  // Are we entering a containing node? Then we should create a new scope
+  // for all our children.
+  let shouldCreateNewScope = shouldNodeCreateNewScope(node);
+  let scope = parentScope;
+  if (shouldCreateNewScope) {
+    scope = new Scope(parentScope);
+  }
+
+  // Function to recursively iterate over the child nodes
+  // to build their symbol table.
+  // CAUTION: This function has two side effects:
+  // * it sets the container property on the child node.
+  // * it may overwrite the scope variable if a child node returns a new scope.
+  // This is done to enable redeclarations of local variables.
+  const iterateChild = (child: SyntaxNode) => {
     // Set the parent node on our first iteration through the file
     child.container = node;
 
-    // Iterate over the child node. The child node may contain
-    // redeclared symbols, which requires that we create a new
-    // scope. That's why we overwrite the scope variable for
-    // each iteration.
+    // Iterate over the child node. The child node may return
+    // a new scope, which siblings should have access to.
     scope = iterate(child, scopeCache, scope, references);
-  });
+  };
 
-  return scope;
+  // This switch statement handles the special case of a procedure statement.
+  switch (node.kind) {
+    // A procedure statement's end node is a child node, but scope-wise, the end
+    // node should be part of the parent scope of the procedure statement, to
+    // properly link to the procedure's label.
+    case SyntaxKind.ProcedureStatement:
+      // Remove the end node from the procedure statement,
+      // to process it as a sibling node.
+      const procedure: ProcedureStatement = {
+        ...node,
+        end: null,
+      };
+      forEachNode(procedure, iterateChild);
+      if (node.end) {
+        iterate(node.end, scopeCache, parentScope, references);
+      }
+      break;
+    default:
+      forEachNode(node, iterateChild);
+  }
+
+  if (shouldCreateNewScope) {
+    // If this node has created a new sub-scope, we don't
+    // return this to the parent node.
+    return parentScope;
+  } else {
+    // If this node has not created a new sub-scope, we return
+    // the current scope, which MAY be a sub-scope of the parent scope.
+    // This is done to enable redeclarations of local variables.
+    return scope;
+  }
 }
 
-// This function may return a new scope if the parent
-// is a containing node (i.e. creating a new scope).
-function getNewScope(parent: SyntaxNode, scope: Scope): Scope {
+// This function determines if a node should create a new scope.
+function shouldNodeCreateNewScope(parent: SyntaxNode): boolean {
   switch (parent.kind) {
-    case SyntaxKind.PliProgram:
     case SyntaxKind.ProcedureStatement:
-      return new Scope(scope);
+      return true;
     default:
-      return scope;
+      return false;
   }
 }

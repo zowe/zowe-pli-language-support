@@ -75,7 +75,6 @@ export function getReference(node: SyntaxNode): Reference | undefined {
   return undefined;
 }
 
-// Todo: differentiate between variables and labels in symbol table.
 export function getSymbol(node: SyntaxNode): string | undefined {
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
