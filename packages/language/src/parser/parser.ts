@@ -2243,37 +2243,30 @@ export class PliParser extends AbstractParser {
       // either signed/unsigned OR a precision attribute
       this.OR2([
         {
-          // signed | unsigned
+          // signed
           ALT: () => {
-            this.OR3([
-              // signed
-              {
-                ALT: () => {
-                  this.CONSUME_ASSIGN1(tokens.SIGNED, (token) => {
-                    this.tokenPayload(
-                      token,
-                      element,
-                      CstNodeKind.DefineOrdinalStatement_Signed0,
-                    );
-                    element.attributes.push(token.image as "SIGNED");
-                  });
-                },
-              },
-              // unsigned
-              {
-                ALT: () => {
-                  this.CONSUME_ASSIGN1(tokens.UNSIGNED, (token) => {
-                    this.tokenPayload(
-                      token,
-                      element,
-                      CstNodeKind.DefineOrdinalStatement_Unsigned0,
-                    );
-                    element.attributes.push(token.image as "UNSIGNED");
-                  });
-                },
-              },
-            ]);
+            this.CONSUME_ASSIGN1(tokens.SIGNED, (token) => {
+              this.tokenPayload(
+                token,
+                element,
+                CstNodeKind.DefineOrdinalStatement_Signed0,
+              );
+              element.attributes.push(token.image as "SIGNED");
+            });
           },
+        },
+        {
+          // unsigned
+          ALT: () => {
+            this.CONSUME_ASSIGN1(tokens.UNSIGNED, (token) => {
+              this.tokenPayload(
+                token,
+                element,
+                CstNodeKind.DefineOrdinalStatement_Unsigned0,
+              );
+              element.attributes.push(token.image as "UNSIGNED");
+            });
+          }
         },
         {
           // attribute w/ precision val (will only take one)
