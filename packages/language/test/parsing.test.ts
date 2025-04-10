@@ -10,7 +10,7 @@
  */
 
 import { describe, expect, test } from "vitest";
-import { collectDiagnostics } from "../src/workspace/source-file";
+import { collectDiagnostics } from "../src/workspace/compilation-unit";
 import { assertNoParseErrors, parse, parseStmts } from "./utils";
 
 describe("PL/I Parsing tests", () => {

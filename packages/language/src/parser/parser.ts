@@ -2266,7 +2266,7 @@ export class PliParser extends AbstractParser {
               );
               element.attributes.push(token.image as "UNSIGNED");
             });
-          }
+          },
         },
         {
           // attribute w/ precision val (will only take one)
