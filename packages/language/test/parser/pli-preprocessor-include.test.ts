@@ -5,6 +5,7 @@ import {
   VirtualFileSystemProvider,
 } from "../../src/workspace/file-system-provider";
 import { URI } from "../../src/utils/uri";
+import { createCompilationUnit } from "../../src/workspace/compilation-unit";
 
 type TokenizeFunction = (text: string) => string[];
 
@@ -17,9 +18,11 @@ describe("PL/1 Includes", () => {
     vtsfs.writeFile(URI.file("/test/payroll.pli"), " DECLARE PAYROLL FIXED;");
     const lexer = new PliLexer();
     tokenize = (text: string) => {
+      const uri = URI.file("/test/test.pli");
       const { all: allTokens } = lexer.tokenize(
+        createCompilationUnit(uri),
         text,
-        URI.file("/test/test.pli"),
+        uri,
       );
       return allTokens.map(
         (t) => t.image + ":" + t.tokenType.name.toUpperCase(),

@@ -164,9 +164,14 @@ export function linkingErrorsToDiagnostics(
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   for (const reference of references.allReferences()) {
-    if (reference.node === null && isValidToken(reference.token)) {
+    const payload = reference.token.payload as TokenPayload;
+    if (
+      reference.node === null &&
+      isValidToken(reference.token) &&
+      payload.uri
+    ) {
       const diagnostic: Diagnostic = {
-        uri: (reference.token.payload as TokenPayload).uri.toString(),
+        uri: payload.uri.toString(),
         severity: Severity.W,
         range: {
           start: reference.token.startOffset,

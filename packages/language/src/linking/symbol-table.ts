@@ -245,6 +245,20 @@ export class Scope {
   }
 }
 
+export class ScopeCacheGroups {
+  regular = new ScopeCache();
+  preprocessor = new ScopeCache();
+
+  clear(): void {
+    this.regular.clear();
+    this.preprocessor.clear();
+  }
+
+  get(node: SyntaxNode): Scope | undefined {
+    return this.regular.get(node) ?? this.preprocessor.get(node);
+  }
+}
+
 // The scope cache is used to relate a syntax node to its scope.
 export class ScopeCache {
   private scopes: Map<SyntaxNode, Scope> = new Map();
@@ -263,7 +277,7 @@ export class ScopeCache {
 }
 
 export function iterateSymbols(compilationUnit: CompilationUnit): void {
-  const { scopeCache, references } = compilationUnit;
+  const { scopeCaches, references } = compilationUnit;
 
   // Todo: The root scope should contain global PL1 standard library symbols.
   const builtInSymbols = new SymbolTable();
@@ -271,7 +285,13 @@ export function iterateSymbols(compilationUnit: CompilationUnit): void {
 
   // Iterate over the PLI program.
   recursivelySetContainer(compilationUnit.ast);
-  iterate(compilationUnit.ast, scopeCache, scope, references);
+  iterate(
+    compilationUnit.preprocessorAst,
+    scopeCaches.preprocessor,
+    scope,
+    references,
+  );
+  iterate(compilationUnit.ast, scopeCaches.regular, scope, references);
 }
 
 function recursivelySetContainer(node: SyntaxNode) {

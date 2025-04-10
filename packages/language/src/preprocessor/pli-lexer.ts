@@ -22,11 +22,14 @@ import {
   CompilerOptionsProcessor,
   CompilerOptionsProcessorResult,
 } from "./compiler-options-processor";
+import { CompilationUnit } from "../workspace/compilation-unit";
+import { Statement } from "../syntax-tree/ast";
 
 export interface LexerResult {
   all: IToken[];
   errors: ILexingError[];
   compilerOptions: CompilerOptionsProcessorResult;
+  statements: Statement[];
   fileTokens: Record<string, IToken[]>;
 }
 
@@ -54,7 +57,7 @@ export class PliLexer {
     this.preprocessorInterpreter = new PliPreprocessorInterpreter();
   }
 
-  tokenize(inputText: string, uri: URI): LexerResult {
+  tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
     const compilerOptionsResult =
       this.compilerOptionsPreprocessor.extractCompilerOptions(inputText);
     const textWithoutMargins = this.marginsProcessor.processMargins(
@@ -84,6 +87,7 @@ export class PliLexer {
       all: this.filterHiddenTokens(output.all),
       compilerOptions: compilerOptionsResult,
       errors,
+      statements,
       fileTokens: state.perFileTokens,
     };
   }

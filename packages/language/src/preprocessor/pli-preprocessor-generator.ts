@@ -10,38 +10,12 @@
  */
 
 import { IToken, TokenType, createTokenInstance } from "chevrotain";
-import { Instructions, Label, Values } from "./pli-preprocessor-instructions";
-import {
-  AnyDoGroup,
-  PPActivate,
-  PPAssign,
-  PPBinaryExpression,
-  PPDeactivate,
-  PPDeclaration,
-  PPDoForever,
-  PPDoGroup,
-  PPDoUntilWhile,
-  PPDoWhileUntil,
-  PPExpression,
-  PPGoTo,
-  PPIfStatement,
-  PPIterate,
-  PPLabeledStatement,
-  PPLeave,
-  PPNumber,
-  PPPliStatement,
-  PPProcedure,
-  PPReturn,
-  PPStatement,
-  PPString,
-  PPVariableUsage,
-} from "./pli-preprocessor-ast";
-import { assertUnreachable } from "langium";
+import { Instructions, Values } from "./pli-preprocessor-instructions";
 import {
   PliPreprocessorProgram,
   PliPreprocessorProgramBuilder,
 } from "./pli-preprocessor-program-builder";
-import { assertType } from "./util.js";
+import * as ast from "../syntax-tree/ast";
 
 export class PliPreprocessorGenerator {
   private readonly numberTokenType: TokenType;
@@ -50,7 +24,7 @@ export class PliPreprocessorGenerator {
     this.numberTokenType = numberTokenType;
   }
 
-  generateProgram(statements: PPStatement[]): PliPreprocessorProgram {
+  generateProgram(statements: ast.Statement[]): PliPreprocessorProgram {
     const builder = new PliPreprocessorProgramBuilder();
     const { pureStatements, pureProcedures } = this.splitStatements(statements);
     for (const statement of pureStatements) {
@@ -64,26 +38,25 @@ export class PliPreprocessorGenerator {
   }
 
   handleProcedure(
-    statement: PPStatement,
+    statement: ast.Statement,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    assertType<PPLabeledStatement>(statement);
-    let label: Label = undefined!;
-    while (statement.type === "labeled") {
-      label = builder.getOrCreateLabel(statement.label);
+    for (const statementLabel of statement.labels) {
+      const label = builder.createNamedLabel(statementLabel);
       builder.pushLabel(label);
-      statement = statement.statement;
     }
-    assertType<PPProcedure>(statement);
-    this.handleStatements(statement.body, builder);
+    if (statement.value?.kind !== ast.SyntaxKind.ProcedureStatement) {
+      throw new Error("Expected a procedure statement");
+    }
+    this.handleStatements(statement.value.statements, builder);
   }
 
-  splitStatements(statements: PPStatement[]): {
-    pureStatements: PPStatement[];
-    pureProcedures: PPLabeledStatement[];
+  splitStatements(statements: ast.Statement[]): {
+    pureStatements: ast.Statement[];
+    pureProcedures: ast.Statement[];
   } {
-    const pureStatements: PPStatement[] = [];
-    const pureProcedures: PPLabeledStatement[] = [];
+    const pureStatements: ast.Statement[] = [];
+    const pureProcedures: ast.Statement[] = [];
     for (const statement of statements) {
       if (this.isLabeledStatementsWithProcedureCall(statement)) {
         pureProcedures.push(statement);
@@ -94,113 +67,112 @@ export class PliPreprocessorGenerator {
     return { pureStatements, pureProcedures };
   }
 
-  isLabeledStatementsWithProcedureCall(
-    statement: PPStatement,
-  ): statement is PPLabeledStatement {
-    while (statement.type === "labeled") {
-      statement = statement.statement;
-    }
-    return statement.type === "procedure";
+  isLabeledStatementsWithProcedureCall(statement: ast.Statement): boolean {
+    return statement.value?.kind === ast.SyntaxKind.ProcedureStatement;
   }
 
   handleStatement(
-    statement: PPStatement,
+    statement: ast.Statement,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    switch (statement.type) {
-      case "labeled":
-        const label = builder.getOrCreateLabel(
-          statement.label,
-          this.findDoGroup(statement),
-        );
-        builder.pushLabel(label);
-        this.handleStatement(statement.statement, builder);
+    const unit = statement.value;
+    if (unit === null) {
+      return;
+    }
+    const doGroup = this.findDoGroup(statement);
+    for (const label of statement.labels) {
+      const labelObj = builder.createNamedLabel(label, doGroup);
+      builder.pushLabel(labelObj);
+    }
+    switch (unit.kind) {
+      case ast.SyntaxKind.ActivateStatement:
+        this.handleActivate(unit, builder);
         break;
-      case "activate":
-        this.handleActivate(statement, builder);
+      case ast.SyntaxKind.DeactivateStatement:
+        this.handleDeactivate(unit, builder);
         break;
-      case "deactivate":
-        this.handleDeactivate(statement, builder);
+      case ast.SyntaxKind.AssignmentStatement:
+        this.handleAssignment(unit, builder);
         break;
-      case "assign":
-        this.handleAssignment(statement, builder);
-        break;
-      case "declare":
-        for (const declare of statement.declarations) {
+      case ast.SyntaxKind.DeclareStatement:
+        for (const declare of unit.items) {
           this.handleDeclaration(declare, builder);
         }
         break;
-      case "skip":
-      //handled in the parser already!
-      case "directive":
-        //do nothing
+      case ast.SyntaxKind.SkipDirective:
+      case ast.SyntaxKind.PopDirective:
+      case ast.SyntaxKind.PushDirective:
+      case ast.SyntaxKind.PageDirective:
+      case ast.SyntaxKind.PrintDirective:
+      case ast.SyntaxKind.NoPrintDirective:
+        // All of the previous are handled in the parser
+        // Therefore, do nothing
         break;
-      case "if":
-        this.handleIf(statement, builder);
+      case ast.SyntaxKind.IfStatement:
+        this.handleIf(unit, builder);
         break;
-      case "pli":
-        this.handlePliCode(statement, builder);
+      case ast.SyntaxKind.TokenStatement:
+        this.handlePliCode(unit, builder);
         break;
-      case "empty":
+      case ast.SyntaxKind.DoStatement:
+        this.handleDoGroup(unit, builder);
         break;
-      case "do":
-        this.handleDoGroup(statement, builder);
+      case ast.SyntaxKind.IncludeDirective:
+        for (const item of unit.items) {
+          if (item.result) {
+            this.handleStatements(item.result.statements, builder);
+          }
+        }
         break;
-      case "do-until-while":
-        this.handleDoUntilWhile(statement, builder);
+      case ast.SyntaxKind.GoToStatement:
+        this.handleGoTo(unit, builder);
         break;
-      case "do-while-until":
-        this.handleDoWhileUntil(statement, builder);
+      case ast.SyntaxKind.LeaveStatement:
+        this.handleLeave(unit, builder);
         break;
-      case "do-forever":
-        this.handleDoForever(statement, builder);
+      case ast.SyntaxKind.IterateStatement:
+        this.handleIterate(unit, builder);
         break;
-      case "include":
-        this.handleStatements(statement.subProgram.statements, builder);
+      case ast.SyntaxKind.ReturnStatement:
+        this.handleReturn(unit, builder);
         break;
-      case "goto":
-        this.handleGoTo(statement, builder);
-        break;
-      case "leave":
-        this.handleLeave(statement, builder);
-        break;
-      case "iterate":
-        this.handleIterate(statement, builder);
-        break;
-      case "return":
-        this.handleReturn(statement, builder);
-        break;
-      case "procedure": //TODO should be handled upfront
+      case ast.SyntaxKind.ProcedureStatement: //TODO should be handled upfront
         break;
       default:
-        assertUnreachable(statement);
+        // Ignore all other cases
+        // Generally, we should never reach this point
+        // But since we are using a subset of the original AST,
+        // TypeScript doesn't pick it up correctly
+        break;
     }
   }
 
-  handleReturn(statement: PPReturn, builder: PliPreprocessorProgramBuilder) {
-    this.handleExpression(statement.value, builder);
+  handleReturn(
+    statement: ast.ReturnStatement,
+    builder: PliPreprocessorProgramBuilder,
+  ) {
+    if (statement.expression) {
+      this.handleExpression(statement.expression, builder);
+    }
     builder.pushInstruction(Instructions.ret());
   }
 
-  findDoGroup(statement: PPLabeledStatement): AnyDoGroup | undefined {
-    const possibleDoGroups: PPStatement["type"][] = [
-      "do",
-      "do-until-while",
-      "do-while-until",
-      "do-forever",
-    ];
-    if (possibleDoGroups.includes(statement.statement.type)) {
-      return statement.statement as AnyDoGroup;
-    }
-    if (statement.statement.type === "labeled") {
-      return this.findDoGroup(statement.statement);
+  findDoGroup(statement: ast.Statement): ast.DoStatement | undefined {
+    if (statement.value?.kind === ast.SyntaxKind.DoStatement) {
+      return statement.value;
     }
     return undefined;
   }
 
-  handleIterate(statement: PPIterate, builder: PliPreprocessorProgramBuilder) {
+  handleIterate(
+    statement: ast.IterateStatement,
+    builder: PliPreprocessorProgramBuilder,
+  ) {
     if (statement.label) {
-      const label = builder.getOrCreateLabel(statement.label);
+      const label = builder.resolveLabel(statement.label);
+      if (!label) {
+        return;
+      }
       if (label.doGroup) {
         const labels = builder.lookupDoGroup(label.doGroup);
         if (labels) {
@@ -222,9 +194,15 @@ export class PliPreprocessorGenerator {
     }
   }
 
-  handleLeave(statement: PPLeave, builder: PliPreprocessorProgramBuilder) {
+  handleLeave(
+    statement: ast.LeaveStatement,
+    builder: PliPreprocessorProgramBuilder,
+  ) {
     if (statement.label) {
-      const label = builder.getOrCreateLabel(statement.label);
+      const label = builder.resolveLabel(statement.label);
+      if (!label) {
+        return;
+      }
       if (label.doGroup) {
         const labels = builder.lookupDoGroup(label.doGroup);
         if (labels) {
@@ -246,103 +224,56 @@ export class PliPreprocessorGenerator {
     }
   }
 
-  handleGoTo(statement: PPGoTo, builder: PliPreprocessorProgramBuilder) {
-    const label = builder.getOrCreateLabel(statement.label);
-    builder.pushInstruction(Instructions.goto(label));
+  handleGoTo(
+    statement: ast.GoToStatement,
+    builder: PliPreprocessorProgramBuilder,
+  ) {
+    if (statement.label) {
+      const label = builder.resolveLabel(statement.label);
+      if (label) {
+        builder.pushInstruction(Instructions.goto(label));
+      }
+    }
   }
 
-  handleDoGroup(statement: PPDoGroup, builder: PliPreprocessorProgramBuilder) {
+  handleDoGroup(
+    statement: ast.DoStatement,
+    builder: PliPreprocessorProgramBuilder,
+  ) {
     const { $iterate$, $leave$ } = builder.pushDoGroup(statement);
     builder.pushLabel($iterate$);
+    if (statement.doType2) {
+      const type2 = statement.doType2;
+      if (type2.kind === ast.SyntaxKind.DoUntil && type2.until) {
+        this.handleExpression(type2.until, builder);
+        builder.pushInstruction(Instructions.push(Values.False()));
+        builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
+        if (type2.while) {
+          this.handleExpression(type2.while, builder);
+          builder.pushInstruction(Instructions.push(Values.True()));
+          builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
+        }
+      } else if (type2.kind === ast.SyntaxKind.DoWhile && type2.while) {
+        this.handleExpression(type2.while, builder);
+        builder.pushInstruction(Instructions.push(Values.True()));
+        builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
+        if (type2.until) {
+          this.handleExpression(type2.until, builder);
+          builder.pushInstruction(Instructions.push(Values.False()));
+          builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
+        }
+      }
+    }
     this.handleStatements(statement.statements, builder);
-    builder.pushLabel($leave$);
-    builder.popDoGroup();
-  }
-
-  handleDoForever(
-    statement: PPDoForever,
-    builder: PliPreprocessorProgramBuilder,
-  ) {
-    /**
-     * $start$: <BODY>
-     * GOTO $start$
-     */
-    const { $iterate$, $leave$ } = builder.pushDoGroup(statement);
-    builder.pushLabel($iterate$);
-    this.handleStatements(statement.body, builder);
-    builder.pushInstruction(Instructions.goto($iterate$));
-    builder.pushLabel($leave$);
-    builder.popDoGroup();
-  }
-
-  handleDoUntilWhile(
-    statement: PPDoUntilWhile,
-    builder: PliPreprocessorProgramBuilder,
-  ) {
-    /**
-     * $until$: <EXPRESSION-UNTIL>
-     *          PUSH [FALSE]
-     *          BRANCHIFNEQ $end$
-     * {if while != undefined}
-     *          <EXPRESSION-WHILE>
-     *          PUSH [TRUE]
-     *          BRANCHIFNEQ $end$
-     * {/if}
-     *          <BODY>
-     *          GOTO $until$
-     * $end$:
-     */
-    const { $iterate$, $leave$ } = builder.pushDoGroup(statement);
-    builder.pushLabel($iterate$);
-    this.handleExpression(statement.conditionUntil, builder);
-    builder.pushInstruction(Instructions.push(Values.False()));
-    builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
-    if (statement.conditionWhile) {
-      this.handleExpression(statement.conditionWhile, builder);
-      builder.pushInstruction(Instructions.push(Values.True()));
-      builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
+    if (statement.doType4 || statement.doType2) {
+      builder.pushInstruction(Instructions.goto($iterate$));
     }
-    this.handleStatements(statement.body, builder);
-    builder.pushInstruction(Instructions.goto($iterate$));
-    builder.pushLabel($leave$);
-    builder.popDoGroup();
-  }
-
-  handleDoWhileUntil(
-    statement: PPDoWhileUntil,
-    builder: PliPreprocessorProgramBuilder,
-  ) {
-    /**
-     * $while$: <EXPRESSION-WHILE>
-     *          PUSH [TRUE]
-     *          BRANCHIFNEQ $end$
-     * {if until != undefined}
-     *          <EXPRESSION-UNTIL>
-     *          PUSH [FALSE]
-     *          BRANCHIFNEQ $end$
-     * {/if}
-     *          <BODY>
-     *          GOTO $while$
-     * $end$:
-     */
-    const { $iterate$, $leave$ } = builder.pushDoGroup(statement);
-    builder.pushLabel($iterate$);
-    this.handleExpression(statement.conditionWhile, builder);
-    builder.pushInstruction(Instructions.push(Values.True()));
-    builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
-    if (statement.conditionUntil) {
-      this.handleExpression(statement.conditionUntil, builder);
-      builder.pushInstruction(Instructions.push(Values.False()));
-      builder.pushInstruction(Instructions.branchIfNotEqual($leave$));
-    }
-    this.handleStatements(statement.body, builder);
-    builder.pushInstruction(Instructions.goto($iterate$));
     builder.pushLabel($leave$);
     builder.popDoGroup();
   }
 
   handlePliCode(
-    statement: PPPliStatement,
+    statement: ast.TokenStatement,
     builder: PliPreprocessorProgramBuilder,
   ) {
     let list: IToken[] = [];
@@ -374,7 +305,7 @@ export class PliPreprocessorGenerator {
   }
 
   handleStatements(
-    statements: PPStatement[],
+    statements: ast.Statement[],
     builder: PliPreprocessorProgramBuilder,
   ) {
     for (const statement of statements) {
@@ -382,7 +313,7 @@ export class PliPreprocessorGenerator {
     }
   }
 
-  handleIf(statement: PPIfStatement, builder: PliPreprocessorProgramBuilder) {
+  handleIf(statement: ast.IfStatement, builder: PliPreprocessorProgramBuilder) {
     /** with else:                  without else:
      *  PUSH condition              PUSH condition
      *  PUSH [TRUE]                 PUSH [TRUE]
@@ -393,69 +324,91 @@ export class PliPreprocessorGenerator {
      *      <elseStatement>
      *  $exit$:
      */
-    this.handleExpression(statement.condition, builder);
+    if (!statement.expression) {
+      return;
+    }
+    this.handleExpression(statement.expression, builder);
     builder.pushInstruction(Instructions.push(Values.True()));
-    if (statement.elseUnit) {
-      const $else$ = builder.getOrCreateLabel();
+    if (statement.else) {
+      const $else$ = builder.createLabel();
       builder.pushInstruction(Instructions.branchIfNotEqual($else$));
-      this.handleStatement(statement.thenUnit, builder);
-      const $exit$ = builder.getOrCreateLabel();
+      if (statement.unit) {
+        this.handleStatement(statement.unit, builder);
+      }
+      const $exit$ = builder.createLabel();
       builder.pushInstruction(Instructions.goto($exit$));
       builder.pushLabel($else$);
-      this.handleStatement(statement.elseUnit, builder);
+      this.handleStatement(statement.else, builder);
       builder.pushLabel($exit$);
     } else {
-      const $exit$ = builder.getOrCreateLabel();
+      const $exit$ = builder.createLabel();
       builder.pushInstruction(Instructions.branchIfNotEqual($exit$));
-      this.handleStatement(statement.thenUnit, builder);
+      if (statement.unit) {
+        this.handleStatement(statement.unit, builder);
+      }
       builder.pushLabel($exit$);
     }
   }
 
   handleDeactivate(
-    statement: PPDeactivate,
+    statement: ast.DeactivateStatement,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    for (const name of statement.variables) {
-      builder.pushInstruction(Instructions.deactivate(name));
+    for (const ref of statement.references) {
+      if (ref.ref?.text) {
+        builder.pushInstruction(Instructions.deactivate(ref.ref.text));
+      }
     }
   }
 
   handleActivate(
-    statement: PPActivate,
+    statement: ast.ActivateStatement,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    for (const [name, scanMode] of Object.entries(statement.variables)) {
-      builder.pushInstruction(Instructions.activate(name, scanMode));
+    for (const item of statement.items) {
+      const text = item.reference?.ref?.text;
+      if (text) {
+        builder.pushInstruction(
+          Instructions.activate(text, item.scanMode ?? "SCAN"),
+        );
+      }
     }
   }
 
   handleAssignment(
-    statement: PPAssign,
+    statement: ast.AssignmentStatement,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    this.handleExpression(statement.value, builder);
-    builder.pushInstruction(Instructions.set(statement.name));
+    const expr = statement.expression;
+    const ref = statement.refs[0];
+    const refName = ref?.element?.element?.ref?.text;
+    if (expr && refName) {
+      this.handleExpression(expr, builder);
+      builder.pushInstruction(Instructions.set(refName));
+    }
   }
 
   handleExpression(
-    expression: PPExpression,
+    expression: ast.Expression,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    switch (expression.type) {
-      case "string": {
-        this.handleStringLiteral(expression, builder);
+    switch (expression.kind) {
+      case ast.SyntaxKind.Literal: {
+        switch (expression.value?.kind) {
+          case ast.SyntaxKind.StringLiteral:
+            this.handleStringLiteral(expression.value, builder);
+            break;
+          case ast.SyntaxKind.NumberLiteral:
+            this.handleNumberLiteral(expression.value, builder);
+            break;
+        }
         break;
       }
-      case "number": {
-        this.handleNumberLiteral(expression, builder);
-        break;
-      }
-      case "variable-usage": {
+      case ast.SyntaxKind.LocatorCall: {
         this.handleVariableUsage(expression, builder);
         break;
       }
-      case "binary": {
+      case ast.SyntaxKind.BinaryExpression: {
         this.handleBinaryExpression(expression, builder);
         break;
       }
@@ -463,30 +416,39 @@ export class PliPreprocessorGenerator {
   }
 
   handleBinaryExpression(
-    expression: PPBinaryExpression,
+    expression: ast.BinaryExpression,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    this.handleExpression(expression.lhs, builder);
-    this.handleExpression(expression.rhs, builder);
-    builder.pushInstruction(Instructions.compute(expression.operator));
+    this.handleExpression(expression.left, builder);
+    this.handleExpression(expression.right, builder);
+    builder.pushInstruction(Instructions.compute(expression.op));
   }
 
   handleVariableUsage(
-    expression: PPVariableUsage,
+    expression: ast.LocatorCall,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    builder.pushInstruction(Instructions.get(expression.variableName));
+    const member = expression.element;
+    if (member) {
+      const ref = member.element;
+      if (ref) {
+        const name = ref.ref?.text;
+        if (name) {
+          builder.pushInstruction(Instructions.get(name));
+        }
+      }
+    }
   }
 
   handleNumberLiteral(
-    expression: PPNumber,
+    expression: ast.NumberLiteral,
     builder: PliPreprocessorProgramBuilder,
   ) {
     builder.pushInstruction(
       Instructions.push([
         createTokenInstance(
           this.numberTokenType,
-          expression.value.toString(),
+          expression.value?.toString() ?? "0",
           0,
           0,
           0,
@@ -499,51 +461,59 @@ export class PliPreprocessorGenerator {
   }
 
   handleStringLiteral(
-    expression: PPString,
+    expression: ast.StringLiteral,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    builder.pushInstruction(Instructions.push(expression.value));
+    builder.pushInstruction(Instructions.push(expression.tokens));
+  }
+
+  private getVariableNames(decl: ast.DeclaredItem): string[] {
+    const names: string[] = [];
+    for (const element of decl.elements) {
+      if (element === "*") {
+        continue;
+      }
+      if (element.kind === ast.SyntaxKind.DeclaredItem) {
+        names.push(...this.getVariableNames(element));
+      } else if (element.name) {
+        names.push(element.name);
+      }
+    }
+    return names;
   }
 
   handleDeclaration(
-    decl: PPDeclaration,
+    decl: ast.DeclaredItem,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    switch (decl.attributes.type) {
-      case "builtin":
-        //TODO builtin declarations
-        break;
-      case "entry":
-        //TODO entry declarations
-        break;
-      case "character":
-      case "fixed": {
-        for (const { name } of decl.names) {
-          //TODO handle _dimensions
+    const types: string[] = [];
+    for (const attribute of decl.attributes) {
+      if (
+        attribute.kind === ast.SyntaxKind.ComputationDataAttribute &&
+        attribute.type
+      ) {
+        types.push(attribute.type);
+      }
+    }
+    // RESCAN is the default mode for all variables
+    let scanMode: ast.ScanMode = "RESCAN";
+    if (types.includes("SCAN")) {
+      scanMode = "SCAN";
+    } else if (types.includes("NOSCAN")) {
+      scanMode = "NOSCAN";
+    }
+    if (types.includes("CHARACTER") || types.includes("FIXED")) {
+      const names = this.getVariableNames(decl);
+      for (const name of names) {
+        if (types.includes("FIXED")) {
           builder.pushInstruction(
-            Instructions.push(
-              decl.attributes.type === "character"
-                ? []
-                : [
-                    createTokenInstance(
-                      this.numberTokenType,
-                      "0",
-                      0,
-                      0,
-                      0,
-                      0,
-                      0,
-                      0,
-                    ),
-                  ],
-            ),
-          );
-          builder.pushInstruction(Instructions.set(name));
-          builder.pushInstruction(
-            Instructions.activate(name, decl.attributes.scanMode),
+            Instructions.push([
+              createTokenInstance(this.numberTokenType, "0", 0, 0, 0, 0, 0, 0),
+            ]),
           );
         }
-        break;
+        builder.pushInstruction(Instructions.set(name));
+        builder.pushInstruction(Instructions.activate(name, scanMode));
       }
     }
   }

@@ -16,6 +16,25 @@ export function forEachNode(
   action: (node: SyntaxNode) => void,
 ): void {
   switch (node.kind) {
+    case SyntaxKind.ActivateStatement:
+      node.items.forEach(action);
+      break;
+    case SyntaxKind.ActivateItem:
+      if (node.reference) {
+        action(node.reference);
+      }
+      break;
+    case SyntaxKind.DeactivateStatement:
+      node.references.forEach(action);
+      break;
+    case SyntaxKind.CompilerOption:
+      break;
+    case SyntaxKind.CompilerOptionString:
+      break;
+    case SyntaxKind.CompilerOptionText:
+      break;
+    case SyntaxKind.TokenStatement:
+      break;
     case SyntaxKind.AFormatItem:
       if (node.fieldWidth) {
         action(node.fieldWidth);
@@ -171,10 +190,11 @@ export function forEachNode(
     case SyntaxKind.DateAttribute:
       break;
     case SyntaxKind.DeclaredItem:
-      if (node.element !== null && node.element !== "*") {
-        action(node.element);
+      for (const element of node.elements) {
+        if (element !== "*") {
+          action(element);
+        }
       }
-      node.items.forEach(action);
       node.attributes.forEach(action);
       break;
     case SyntaxKind.DeclaredVariable:
@@ -257,11 +277,11 @@ export function forEachNode(
       }
       break;
     case SyntaxKind.DimensionBound:
-      if (node.bound1) {
-        action(node.bound1);
+      if (node.lower) {
+        action(node.lower);
       }
-      if (node.bound2) {
-        action(node.bound2);
+      if (node.upper) {
+        action(node.upper);
       }
       break;
     case SyntaxKind.Dimensions:
@@ -718,12 +738,21 @@ export function forEachNode(
     case SyntaxKind.ProcedureStatement:
       node.parameters.forEach(action);
       node.statements.forEach(action);
-      node.returns.forEach(action);
       node.options.forEach(action);
       if (node.end) {
         action(node.end);
       }
-      node.environmentName.forEach(action);
+      break;
+    case SyntaxKind.ProcedureOrderOption:
+      break;
+    case SyntaxKind.ProcedureRecursiveOption:
+      break;
+    case SyntaxKind.ProcedureScopeOption:
+      break;
+    case SyntaxKind.EnvironmentOption:
+      if (node.environment) {
+        action(node.environment);
+      }
       break;
     case SyntaxKind.ProcessDirective:
       node.compilerOptions.forEach(action);

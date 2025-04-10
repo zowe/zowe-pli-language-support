@@ -85,7 +85,7 @@ export function resolveReference<T extends SyntaxNode>(
 
   const qualifiedName = getQualifiedName(reference);
 
-  const scope = unit.scopeCache.get(reference.owner);
+  const scope = unit.scopeCaches.get(reference.owner);
   if (!scope) {
     return undefined;
   }
@@ -163,18 +163,20 @@ export function getReferenceLocations(
   const reverseReferences = findElementReferences(unit, element);
 
   const nameToken = getNameToken(element);
-  if (nameToken) {
+  if (nameToken?.payload?.uri) {
     locations.push({
-      uri: nameToken.payload.uri?.toString(),
+      uri: nameToken.payload.uri.toString(),
       range: tokenToRange(nameToken),
     });
   }
 
   for (const ref of reverseReferences) {
-    locations.push({
-      uri: ref.token.payload.uri?.toString(),
-      range: tokenToRange(ref.token),
-    });
+    if (ref.token.payload?.uri) {
+      locations.push({
+        uri: ref.token.payload.uri.toString(),
+        range: tokenToRange(ref.token),
+      });
+    }
   }
 
   return locations;

@@ -34,6 +34,33 @@ ${params.text}
 }
 
 describe("Linking tests", async () => {
+  describe("Preprocessor variables", () => {
+    test("Must find preprocessor variable", () => {
+      const text = `
+      %DECLARE <|VAR|> FIXED;
+      %<|>VAR = 1;
+      %ACTIVATE <|>VAR;
+      %DEACTIVATE <|>VAR;
+      `;
+
+      expectGotoDefinition({
+        text,
+        index: 0,
+        rangeIndex: 0,
+      });
+      expectGotoDefinition({
+        text,
+        index: 1,
+        rangeIndex: 0,
+      });
+      expectGotoDefinition({
+        text,
+        index: 2,
+        rangeIndex: 0,
+      });
+    });
+  });
+
   describe("Unstructured tests", async () => {
     describe("Nested procedure label tests", async () => {
       const text = `
