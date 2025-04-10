@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect } from "vitest";
-import { parseAndLink, replaceIndices } from "../utils";
+import { parse, replaceIndices } from "../utils";
 import {
   semanticTokens,
   tokenTypes,
@@ -43,7 +43,7 @@ function expectSemanticTokens(annotatedCode: string, expectedTypes: string[]) {
     output,
   );
 
-  const doc = parseAndLink(output);
+  const doc = parse(output, { validate: true });
   const tokens = semanticTokens(textDocument, doc);
   const decodedTokens = SemanticTokenDecoder.decode(
     tokens,
@@ -61,6 +61,17 @@ function expectSemanticTokens(annotatedCode: string, expectedTypes: string[]) {
 }
 
 describe("Semantic Tokens", () => {
+  test("should highlight procedure declarations", () => {
+    const code = `
+<|EXAMPLE|>: PROC;
+END <|EXAMPLE|>;`;
+
+    expectSemanticTokens(code, [
+      SemanticTokenTypes.function,
+      SemanticTokenTypes.function,
+    ]);
+  });
+
   test("should highlight procedure declarations and calls", () => {
     const code = `
 <|EXAMPLE|>: PROC OPTIONS(MAIN);
