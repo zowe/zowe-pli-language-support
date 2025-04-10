@@ -74,3 +74,13 @@ export function getReference(node: SyntaxNode): Reference | undefined {
   }
   return undefined;
 }
+
+export function getSymbol(node: SyntaxNode): string | undefined {
+  switch (node.kind) {
+    case SyntaxKind.DeclaredVariable:
+    case SyntaxKind.LabelPrefix:
+      return node.name!;
+    default:
+      return undefined;
+  }
+}

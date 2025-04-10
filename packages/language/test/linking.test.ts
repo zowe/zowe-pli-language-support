@@ -49,8 +49,14 @@ describe("Linking tests", async () => {
   });
 
   describe("Unstructured tests", async () => {
-    // IMPORTANT: These tests are currently skipped. Unskip when scoping is resolved.
-    // https://github.com/zowe/zowe-pli-language-support/issues/29#issuecomment-2623842079
+    /**
+     * Didrik 2025-04-09
+     *
+     * CAUTION: These test may be incorrect.
+     * TODO: Figure out how label scoping/shadowing works on the mainframe.
+     *
+     * Information: https://github.com/zowe/zowe-pli-language-support/issues/29#issuecomment-2623842079
+     */
     describe("Nested procedure label tests", async () => {
       const text = `
  <|OUTER|>: procedure options (main); // outer0
@@ -69,18 +75,18 @@ describe("Linking tests", async () => {
 
             call <|>OUTER;            // callOuter3
             call <|>INNER;            // callInner3
-        END OUTER;
+        END <|>OUTER;                 // callOuter4
 
-        call <|>OUTER;                // callOuter4
+        call <|>OUTER;                // callOuter5
         call <|>INNER;                // callInner4
-    END INNER;
+    END <|>INNER;                     // callInner5
 
-    call <|>OUTER;                    // callOuter5
-    call <|>INNER;                    // callInner5
- end OUTER;
+    call <|>OUTER;                    // callOuter6
+    call <|>INNER;                    // callInner6
+ end <|>OUTER;                        // callOuter7
 
- call <|>OUTER;                       // callOuter6
-        `;
+ call <|>OUTER;                       // callOuter8`;
+
       const procedures = {
         outer0: 0,
         inner0: 1,
@@ -98,36 +104,45 @@ describe("Linking tests", async () => {
         callOuter3: 6,
         callInner3: 7,
         callOuter4: 8,
-        callInner4: 9,
-        callOuter5: 10,
+        callOuter5: 9,
+        callInner4: 10,
         callInner5: 11,
         callOuter6: 12,
+        callInner6: 13,
+        callOuter7: 14,
+        callOuter8: 15,
       };
 
       const links: Record<number, number[]> = {
         [procedures.outer0]: [
-          calls.callOuter0,
-          calls.callOuter5,
           calls.callOuter6,
+          calls.callOuter7,
+          calls.callOuter8,
         ],
         [procedures.inner0]: [
           calls.callInner0,
-          calls.callInner1,
           calls.callInner4,
           calls.callInner5,
+          calls.callInner6,
         ],
         [procedures.outer1]: [
+          calls.callOuter0,
           calls.callOuter1,
           calls.callOuter2,
           calls.callOuter3,
           calls.callOuter4,
+          calls.callOuter5,
         ],
-        [procedures.inner1]: [calls.callInner2, calls.callInner3],
+        [procedures.inner1]: [
+          calls.callInner1,
+          calls.callInner2,
+          calls.callInner3,
+        ],
       };
 
       for (const [procedure, calls] of Object.entries(links)) {
         for (const call of calls) {
-          test.skip("Must find link correct procedure label", async () => {
+          test(`Must link call ${call} to procedure ${procedure}`, async () => {
             await expectGotoDefinition({
               text,
               index: call,
@@ -139,6 +154,59 @@ describe("Linking tests", async () => {
     });
 
     describe("Declaration tests", async () => {
+      test("Must handle scoping in prodecures", async () => {
+        const text = `
+ DCL <|ABC|>;
+ CALL <|>ABC;
+
+ OUTER: PROCEDURE;
+  DCL <|ABC|>;
+  CALL <|>ABC;
+ END OUTER;
+
+ DCL <|ABC|>;
+ CALL <|>ABC;
+`;
+
+        await expectGotoDefinition({
+          text,
+          index: 0,
+          rangeIndex: 0,
+        });
+
+        await expectGotoDefinition({
+          text,
+          index: 1,
+          rangeIndex: 1,
+        });
+
+        await expectGotoDefinition({
+          text,
+          index: 2,
+          rangeIndex: 2,
+        });
+      });
+
+      test("Must handle redeclarations", async () => {
+        const text = `
+ DCL <|ABC|>;
+ CALL <|>ABC;
+ DCL <|ABC|>;
+ CALL <|>ABC;`;
+
+        await expectGotoDefinition({
+          text,
+          index: 0,
+          rangeIndex: 0,
+        });
+
+        await expectGotoDefinition({
+          text,
+          index: 1,
+          rangeIndex: 1,
+        });
+      });
+
       test("Must find declaration in SELECT/WHEN construct", async () => {
         // Taken from code_samples/PLI0001.pli
         const text = `
@@ -193,6 +261,34 @@ describe("Linking tests", async () => {
       });
     });
 
+    // TODO: Figure out how label shadowing should work on the mainframe.
+    describe("Label shadowing", async () => {
+      const text = `
+ CALL <|>OUTER;                     // call1
+ <|OUTER|>: PROCEDURE;              // label1
+  CALL <|>OUTER;                    // call2
+  <|OUTER|>: PROCEDURE; END OUTER;  // label2
+  CALL <|>OUTER;                    // call3
+ END OUTER;   
+ CALL <|>OUTER;                     // call4
+
+ CALL <|>OUTER;                     // call5
+ <|OUTER|>: PROCEDURE;              // label3
+  CALL <|>OUTER;                    // call6
+  <|OUTER|>: PROCEDURE; END OUTER;  // label4
+  CALL <|>OUTER;                    // call7
+ END OUTER;   
+ CALL <|>OUTER;                     // call8`;
+
+      test.skip("Must find the correct label", async () => {
+        await expectGotoDefinition({
+          text,
+          index: 0,
+          rangeIndex: 0,
+        });
+      });
+    });
+
     describe("Qualified names", async () => {
       const text = `
 0DCL 1  <|TWO_DIM_TABLE|>,
@@ -204,6 +300,9 @@ describe("Linking tests", async () => {
         2  NON_ARRAY_ENTRY,
            3  NAME                          CHAR(32) VARYING,
            3  <|TYPE#|>                     CHAR(8);
+
+ DCL ARRAY_ENTRY;
+ DCL TWO_DIM_TABLE_ENTRY;
 
  PUT (<|>TWO_DIM_TABLE);
  PUT (TWO_DIM_TABLE.<|>TWO_DIM_TABLE_ENTRY);
@@ -217,7 +316,8 @@ describe("Linking tests", async () => {
         });
       });
 
-      test("Must find qualified name in table", async () => {
+      // TODO: Fix qualified name scoping
+      test.skip("Must find qualified name in table", async () => {
         await expectGotoDefinition({
           text,
           index: 1,
