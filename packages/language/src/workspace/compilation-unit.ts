@@ -129,9 +129,7 @@ export class CompletionUnitHandler {
         URI.parse(event.document.uri),
       );
       lifecycle(unit, event.document.getText());
-      unit.files.forEach((file) => {
-        this.compilationUnits.set(file.toString(), unit);
-      });
+      this.compilationUnits.set(unit.uri.toString(), unit);
       const allDiagnostics = diagnosticsToLSP(collectDiagnostics(unit));
       for (const file of unit.files) {
         const fileDiagnostics = allDiagnostics.get(file.toString());
