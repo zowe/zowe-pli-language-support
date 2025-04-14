@@ -47,6 +47,7 @@ export function registerValidationChecks(): PliValidationChecks {
     ],
     LabelReference: [validator.checkLabelReference],
     CallStatement: [validator.checkCallStatement],
+    DefineOrdinalStatement: [validator.checkDefineOrdinalStatement],
   };
 
   return checks;
@@ -186,6 +187,52 @@ export class Pl1Validator {
             );
           }
         }
+      }
+    }
+  }
+
+  /**
+   * Ensure ordinal statements don't have conflicting attributes, and only 1 precision attribute
+   */
+  checkDefineOrdinalStatement(
+    node: AST.DefineOrdinalStatement,
+    acceptor: PliValidationAcceptor,
+  ): void {
+    // get attributes
+    const attrs = node.attributes;
+    const attrSet = new Set<string>();
+    for (const attr of attrs) {
+      const lattr = attr.toLowerCase();
+      if (
+        (lattr === "signed" && attrSet.has("unsigned")) ||
+        (lattr === "unsigned" && attrSet.has("signed"))
+      ) {
+        // mutually exclusive attributes
+        acceptor(
+          Severity.W,
+          "Signed & unsigned attributes are mutually exclusive, ideally only one should be specified.",
+          {
+            // node,
+            range: getSyntaxNodeRange(node)!,
+            uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+            // property: "attributes"
+          },
+        );
+      } else if (lattr.match(/prec/) && attrSet.has("prec")) {
+        // don't allow multiple precision attributes
+        acceptor(
+          Severity.W,
+          "Multiple precision attributes will result in only one taking effect, ideally only one should be specified.",
+          {
+            // node,
+            range: getSyntaxNodeRange(node)!,
+            uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+            // property: "attributes",
+          },
+        );
+      } else {
+        // add it in, normalizing precision & prec to 'prec' along the way
+        attrSet.add(lattr.match(/prec/) ? "prec" : lattr);
       }
     }
   }

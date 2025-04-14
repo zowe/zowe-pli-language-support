@@ -209,10 +209,12 @@ DefineAliasStatement: ('DEFINE' | xDefine?='XDEFINE') 'ALIAS' name=ID (attribute
 DefineOrdinalStatement:
     ('DEFINE' | xDefine?='XDEFINE') 'ORDINAL' name=FQN
     '(' ordinalValues=OrdinalValueList ')' 
-    (signed?='SIGNED' | unsigned?='UNSIGNED')?
-    (('PRECISION' | 'PREC') '(' precision=NUMBER ')')? 
-    (signed?='SIGNED' | unsigned?='UNSIGNED')?
-    ';';
+    (
+        // std. attributes
+        attributes+= ('SIGNED' | 'UNSIGNED')  |
+        // attribute w/ precision val (will only take one)
+        (attributes+=('PRECISION' | 'PREC') '(' precision+=NUMBER ')')
+    )* ';';
 
 OrdinalValueList: members+=OrdinalValue (',' members+=OrdinalValue)*;
 
