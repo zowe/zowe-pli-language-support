@@ -128,7 +128,8 @@ export class CompletionUnitHandler {
       const unit = this.getOrCreateCompilationUnit(
         URI.parse(event.document.uri),
       );
-      lifecycle(unit, event.document.getText());
+      const document = textDocuments.get(unit.uri) ?? event.document;
+      lifecycle(unit, document.getText());
       unit.files.forEach((file) => {
         this.compilationUnits.set(file.toString(), unit);
       });
