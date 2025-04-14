@@ -158,7 +158,7 @@ describe("Linking tests", async () => {
       for (const [procedure, calls] of Object.entries(links)) {
         for (const call of calls) {
           test(`Must link call ${call} to procedure ${procedure}`, async () => {
-            await expectGotoDefinition({
+            expectGotoDefinition({
               text,
               index: call,
               rangeIndex: +procedure,
@@ -183,19 +183,19 @@ describe("Linking tests", async () => {
  CALL <|>ABC;
 `;
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 0,
           rangeIndex: 0,
         });
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 1,
           rangeIndex: 1,
         });
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 2,
           rangeIndex: 0,
@@ -209,13 +209,13 @@ describe("Linking tests", async () => {
  DCL <|ABC|>;
  CALL <|>ABC;`;
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 0,
           rangeIndex: 0,
         });
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 1,
           rangeIndex: 0,
@@ -233,7 +233,7 @@ describe("Linking tests", async () => {
     END;
  END;`;
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 0,
           rangeIndex: 0,
@@ -252,7 +252,7 @@ describe("Linking tests", async () => {
  end <|>A;`;
 
       test("Must find declared procedure label in CALL", async () => {
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 0,
           rangeIndex: 0,
@@ -260,7 +260,7 @@ describe("Linking tests", async () => {
       });
 
       test("Must find declared procedure label in END", async () => {
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 2,
           rangeIndex: 0,
@@ -268,7 +268,7 @@ describe("Linking tests", async () => {
       });
 
       test("Must find declared variable", async () => {
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 1,
           rangeIndex: 1,
@@ -298,7 +298,7 @@ describe("Linking tests", async () => {
  PUT (TABLE_WITH_ARRAY.NON_ARRAY_ENTRY.<|>TYPE#);`;
 
       test("Must find table name in table", async () => {
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 0,
           rangeIndex: 0,
@@ -307,7 +307,7 @@ describe("Linking tests", async () => {
 
       // TODO: Fix qualified name scoping
       test("Must find qualified name in table", async () => {
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 1,
           rangeIndex: 1,
@@ -315,7 +315,7 @@ describe("Linking tests", async () => {
       });
 
       test("Must find qualified name in array", async () => {
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 2,
           rangeIndex: 2,
