@@ -175,6 +175,7 @@ function iterate(
       forEachNode(procedure, iterateChild);
       if (node.end) {
         iterate(node.end, scopeCache, parentScope, references);
+        node.end.container = node;
       }
       break;
     default:
