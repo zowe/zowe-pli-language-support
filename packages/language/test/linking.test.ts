@@ -10,8 +10,8 @@
  */
 
 import { describe, expect, test } from "vitest";
-import { FetchStatement } from "../src/generated/ast";
 import {
+  FetchStatement,
   ProcedureStatement,
   Statement,
   SyntaxKind,
