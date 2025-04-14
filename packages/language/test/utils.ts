@@ -13,6 +13,7 @@ import { SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
 import { forEachNode } from "../src/syntax-tree/ast-iterator";
 import { IntermediateBinaryExpression } from "../src/parser/abstract-parser";
 import { IToken } from "@chevrotain/types";
+import { escapeRegExp } from "../src/parser/tokens";
 
 interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
@@ -252,10 +253,6 @@ interface ExpectedBase {
    * String to mark end indices for test cases. `|>` by default.
    */
   rangeEndMarker?: string;
-}
-
-export function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**

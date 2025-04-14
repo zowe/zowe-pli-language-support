@@ -329,7 +329,7 @@ const binaryPrecedence = buildPrecendenceMap([
   // Priority 3, +, -
   [tokens.Plus, tokens.Minus],
   // Priority 4, ||, !!
-  [tokens.PipePipe, tokens.ExclamationMarkExclamationMark],
+  [tokens.PipePipe],
   // Priority 5, '<', '¬<', '<=', '=', '¬=', '^=', '<>', '>=', '>', '¬>'
   [
     tokens.LessThan,

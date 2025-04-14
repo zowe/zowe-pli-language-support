@@ -24,6 +24,14 @@ export class PliParser extends AbstractParser {
     this.performSelfAnalysis();
   }
 
+  parse(): ast.PliProgram {
+    const result = this.PliProgram();
+    if (result === undefined) {
+      return this.pop<ast.PliProgram>();
+    }
+    return result;
+  }
+
   private createPliProgram(): ast.PliProgram {
     return {
       kind: ast.SyntaxKind.PliProgram,

@@ -16,7 +16,7 @@ import {
   Range,
   Set,
 } from "@chevrotain/regexp-to-ast";
-import { PRINT_ERROR, PRINT_WARNING } from "@chevrotain/utils";
+import { PRINT_WARNING } from "@chevrotain/utils";
 import { ASTNode, getRegExpAst } from "./chevrotain-regexp-parser.js";
 
 const minOptimizationVal = 256;
@@ -61,20 +61,6 @@ export function getOptimizedStartCodesIndices(
             "\tSee: https://chevrotain.io/docs/guide/resolving_lexer_errors.html#COMPLEMENT for details.",
         );
       }
-    } else {
-      let msgSuffix = "";
-      if (ensureOptimizations) {
-        msgSuffix =
-          "\n\tThis will disable the lexer's first char optimizations.\n" +
-          "\tSee: https://chevrotain.io/docs/guide/resolving_lexer_errors.html#REGEXP_PARSING for details.";
-      }
-      PRINT_ERROR(
-        `${failedOptimizationPrefixMsg}\n` +
-          `\tFailed parsing: < ${regExp.toString()} >\n` +
-          `\tUsing the @chevrotain/regexp-to-ast library\n` +
-          "\tPlease open an issue at: https://github.com/chevrotain/chevrotain/issues" +
-          msgSuffix,
-      );
     }
   }
 

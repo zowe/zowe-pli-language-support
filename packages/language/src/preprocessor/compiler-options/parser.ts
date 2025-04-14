@@ -22,7 +22,10 @@ import {
 } from "../../syntax-tree/ast";
 
 const commaToken = createToken({ name: "comma", pattern: "," });
-const stringToken = createToken({ name: "string", pattern: /'([^'\\]|\\.)*'/ });
+const stringToken = createToken({
+  name: "string",
+  pattern: /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')/,
+});
 const wordToken = createToken({ name: "value", pattern: /[\w\d\-+_]+/ });
 const parenOpen = createToken({ name: "parenOpen", pattern: "(" });
 const parenClose = createToken({ name: "parenClose", pattern: ")" });
