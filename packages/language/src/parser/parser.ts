@@ -2321,6 +2321,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.OrdinalValue,
       container: null,
       name: null,
+      nameToken: null,
       value: null,
     };
   }
@@ -2331,6 +2332,7 @@ export class PliParser extends AbstractParser {
     this.CONSUME_ASSIGN1(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.OrdinalValue_Name);
       element.name = token.image;
+      element.nameToken = token;
     });
     this.OPTION1(() => {
       this.CONSUME_ASSIGN1(tokens.VALUE, (token) => {
@@ -2925,6 +2927,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.DoType3Variable,
       container: null,
       name: null,
+      nameToken: null,
     };
   }
 
@@ -2934,6 +2937,7 @@ export class PliParser extends AbstractParser {
     this.CONSUME_ASSIGN1(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.DoType3Variable_Name);
       element.name = token.image;
+      element.nameToken = token;
     });
 
     return this.pop<ast.DoType3Variable>();
@@ -3180,7 +3184,7 @@ export class PliParser extends AbstractParser {
     return {
       kind: ast.SyntaxKind.FetchEntry,
       container: null,
-      name: null,
+      entry: null,
       set: null,
       title: null,
     };
@@ -3188,10 +3192,10 @@ export class PliParser extends AbstractParser {
 
   FetchEntry = this.RULE("FetchEntry", () => {
     let element = this.push(this.createFetchEntry());
-
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FetchEntry_Name);
-      element.name = token.image;
+    this.SUBRULE_ASSIGN1(this.ReferenceItem, {
+      assign: (result) => {
+        element.entry = result;
+      },
     });
     this.OPTION1(() => {
       this.CONSUME_ASSIGN1(tokens.SET, (token) => {

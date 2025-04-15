@@ -1185,6 +1185,7 @@ export function createDoType3(): DoType3 {
 export interface DoType3Variable extends AstNode {
   kind: SyntaxKind.DoType3Variable;
   name: string | null;
+  nameToken: IToken | null;
 }
 export function createDoType3Variable(): DoType3Variable {
   return {
@@ -1282,7 +1283,7 @@ export interface Exports extends AstNode {
 }
 export interface FetchEntry extends AstNode {
   kind: SyntaxKind.FetchEntry;
-  name: string | null;
+  entry: ReferenceItem | null;
   set: LocatorCall | null;
   title: Expression | null;
 }
@@ -1687,6 +1688,7 @@ export interface OrdinalTypeAttribute extends AstNode {
 export interface OrdinalValue extends AstNode {
   kind: SyntaxKind.OrdinalValue;
   name: string | null;
+  nameToken: IToken | null;
   value: string | null;
 }
 export interface OrdinalValueList extends AstNode {

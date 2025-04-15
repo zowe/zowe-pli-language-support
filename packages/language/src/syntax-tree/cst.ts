@@ -257,7 +257,7 @@ export enum CstNodeKind {
   FetchStatement_FETCH,
   FetchStatement_Comma,
   FetchStatement_Semicolon,
-  FetchEntry_Name,
+  FetchEntry_Entry,
   FetchEntry_SET,
   FetchEntry_OpenParenSet,
   FetchEntry_CloseParenSet,

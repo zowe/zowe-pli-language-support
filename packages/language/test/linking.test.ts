@@ -332,8 +332,7 @@ describe("Linking tests", async () => {
     });
   });
 
-  // TODO @montymxb declaration doesn't show up as a ref for 'fetch' as it stands, TBD
-  test.fails("fetch linking", async () => {
+  test("fetch linking", async () => {
     const doc = parse(
       `
         MAINPR: PROCEDURE OPTIONS(MAIN);
@@ -355,13 +354,10 @@ describe("Linking tests", async () => {
         subStmt.value.kind === SyntaxKind.FetchStatement,
     ).toBeTruthy();
 
-    // TODO Symbol lookup appears to not working yet for 'fetch' statements
+    // check that the entry ref is linked
     const fetchStmt = subStmt.value as FetchStatement | null;
     expect(fetchStmt).toBeDefined();
-    const fetchStmtNameRef = fetchStmt!.entries[0].name as string;
-    const symbol = doc.references
-      .allReferences()
-      .find((ref) => ref.text === fetchStmtNameRef);
-    expect(symbol).toBeDefined();
+    const ref = fetchStmt!.entries[0].entry?.ref?.node;
+    expect(ref).toBeDefined();
   });
 });

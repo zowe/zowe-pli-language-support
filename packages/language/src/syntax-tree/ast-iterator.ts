@@ -405,6 +405,9 @@ export function forEachNode(
     case SyntaxKind.Exports:
       break;
     case SyntaxKind.FetchEntry:
+      if (node.entry) {
+        action(node.entry);
+      }
       if (node.set) {
         action(node.set);
       }
