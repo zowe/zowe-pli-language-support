@@ -9,6 +9,14 @@ import { URI } from "vscode-uri";
 import { Diagnostic, Range } from "../src/language-server/types";
 import { definitionRequest } from "../src/language-server/definition-request";
 import assert from "node:assert";
+import { SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
+import {
+  generateSymbolTable,
+  link,
+  tokenize,
+  validate,
+} from "../src/workspace/lifecycle";
+import { forEachNode } from "../src/syntax-tree/ast-iterator";
 
 export function assertNoParseErrors(sourceFile: CompilationUnit) {
   expect(sourceFile.diagnostics.lexer).toHaveLength(0);
@@ -81,6 +89,42 @@ ${text}
  end STARTPR;`,
     options,
   );
+}
+
+export function lifecycleDebug(
+  text: string,
+  debugInfoFn?: <T extends { kind: SyntaxKind }>(node: T) => T,
+): CompilationUnit {
+  const sourceFile = createCompilationUnit(URI.file("test.pli"));
+  tokenize(sourceFile, text);
+  lifecycle.parse(sourceFile);
+  if (debugInfoFn) {
+    const includeDebugInfo = (node: SyntaxNode) => {
+      debugInfoFn(node);
+      forEachNode(node, includeDebugInfo);
+    };
+    includeDebugInfo(sourceFile.ast);
+  }
+  generateSymbolTable(sourceFile);
+  link(sourceFile);
+  validate(sourceFile);
+  return sourceFile;
+}
+
+/**
+ * Formats the given PL/I code to be used in tests for nicer formatting.
+ */
+export function formatPLICode(code: string, padding: number = 0): string {
+  if (code.startsWith("\n")) {
+    code = code.slice(1);
+  }
+
+  return code
+    .split("\n")
+    .map((line) => {
+      return " ".repeat(padding) + line;
+    })
+    .join("\n");
 }
 
 /**
