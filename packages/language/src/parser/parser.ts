@@ -336,7 +336,7 @@ export class PliParser extends AbstractParser {
   });
 
   OptionsItem = this.RULE("OptionsItem", () => {
-    let element = this.push<ast.OptionsItem>(undefined!);
+    let element = this.push<ast.OptionsItem>(null!);
 
     this.OR1([
       {
@@ -2903,7 +2903,7 @@ export class PliParser extends AbstractParser {
   DoType3 = this.RULE("DoType3", () => {
     let element = this.push(ast.createDoType3());
 
-    this.SUBRULE_ASSIGN1(this.DoType3Variable, {
+    this.SUBRULE_ASSIGN1(this.ReferenceItem, {
       assign: (result) => {
         element.variable = result;
       },
@@ -2928,27 +2928,6 @@ export class PliParser extends AbstractParser {
     });
 
     return this.pop<ast.DoType3>();
-  });
-
-  private createDoType3Variable(): ast.DoType3Variable {
-    return {
-      kind: ast.SyntaxKind.DoType3Variable,
-      container: null,
-      name: null,
-      nameToken: null,
-    };
-  }
-
-  DoType3Variable = this.RULE("DoType3Variable", () => {
-    let element = this.push(this.createDoType3Variable());
-
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DoType3Variable_Name);
-      element.name = token.image;
-      element.nameToken = token;
-    });
-
-    return this.pop<ast.DoType3Variable>();
   });
 
   private createDoSpecification(): ast.DoSpecification {

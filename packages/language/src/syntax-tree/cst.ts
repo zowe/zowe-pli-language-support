@@ -241,7 +241,6 @@ export enum CstNodeKind {
   DoUntil_CloseParenWhile,
   DoType3_Equals,
   DoType3_Comma,
-  DoType3Variable_Name,
   DoSpecification_TO0,
   DoSpecification_BY0,
   DoSpecification_BY1,
