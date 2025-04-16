@@ -17,48 +17,89 @@ import {
   SyntaxNode,
 } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
-// import { debugMapAst } from "../syntax-tree/debug";
+import { groupBy } from "../utils/common";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache } from "./resolver";
-import {
-  getLabelSymbol,
-  getReference,
-  getVariableNodeNames,
-  getVariableSymbol,
-} from "./tokens";
+import { getLabelSymbol, getReference, getVariableSymbol } from "./tokens";
 
 /**
  * Terminology:
  * - Redeclaration: A symbol that is declared with the same name in the same scope.
  * - Shadowing: A symbol that is declared with the same name in a nested scope.
- * - Ambiguous: A symbol that is declared with the same name in different branches of scopes.
+ * - Ambiguous: A symbol that is declared with the same name in different branches of nested scopes.
  */
 
-class SymbolizedSyntaxNodes {
-  private value: SyntaxNode;
-  // Contains all explicit redeclarations
-  private redeclarations: SyntaxNode[] = [];
-  // Contains all implicit symbols (from nested structured declarations)
-  private implicitSymbols: SyntaxNode[] = [];
+/**
+ * ```
+ * DCL 1 A1,
+ *       2 B,
+ *         3 K,
+ *       2 C,
+ *         3 K;
+ * ```
+ *
+ * Into:
+ *
+ * ```
+ * K -> B -> A1
+ * B -> A1
+ * K -> C -> A1
+ * C -> A1
+ * ```
+ */
 
-  constructor(value: SyntaxNode) {
-    this.value = value;
+/**
+ * Always take full qualification over partial qualification.
+ */
+enum QualificationStatus {
+  NoQualification,
+  FullQualification,
+  PartialQualification,
+}
+
+class QualifiedSyntaxNode {
+  node: SyntaxNode;
+  name: string;
+  parent: QualifiedSyntaxNode | null;
+
+  constructor(
+    name: string,
+    node: SyntaxNode,
+    parent: QualifiedSyntaxNode | null = null,
+  ) {
+    this.node = node;
+    this.name = name;
+    this.parent = parent;
   }
 
-  addDeclaration(node: SyntaxNode): void {
-    this.redeclarations.push(node);
+  getParent(): QualifiedSyntaxNode | null {
+    return this.parent;
   }
 
-  addImplicitDeclaration(node: SyntaxNode): void {
-    this.implicitSymbols.push(node);
-  }
+  getQualificationStatus(qualifiers: string[]): QualificationStatus {
+    const [qualifier, ...rest] = qualifiers;
+    if (!qualifier) {
+      return QualificationStatus.NoQualification;
+    }
 
-  getValue(): SyntaxNode {
-    return this.value;
+    let nextQualifiers = this.name === qualifier ? rest : qualifiers;
+    if (nextQualifiers.length <= 0) {
+      if (!this.parent) {
+        return QualificationStatus.FullQualification;
+      } else {
+        return QualificationStatus.PartialQualification;
+      }
+    }
+
+    if (this.parent) {
+      return this.parent.getQualificationStatus(nextQualifiers);
+    }
+
+    return QualificationStatus.NoQualification;
   }
 }
 
-class QualifiedDeclarationGenerator {
+class SymbolTableDeclaredItemGenerator {
   private items: DeclaredItem[];
 
   constructor(items: DeclaredItem[]) {
@@ -73,7 +114,11 @@ class QualifiedDeclarationGenerator {
     return this.items.shift();
   }
 
-  private getSymbolTable(table: SymbolTable, parentLevel: number) {
+  _generate(
+    table: SymbolTable,
+    parent: QualifiedSyntaxNode | null,
+    parentLevel: number,
+  ) {
     // Consume many items on the same level.
     while (true) {
       const item = this.peek();
@@ -81,80 +126,84 @@ class QualifiedDeclarationGenerator {
         break;
       }
 
-      // When level is not set, we assume 1 the PL1 compiler seem to do.
+      // When level is not set, we assume 1 like the PL1 compiler seems to do.
       const level = item.level ?? 1;
+      // The item we're looking at is not a part of the current scope, let's exit.
       if (level <= parentLevel) {
         break;
       }
 
-      // Consume the item from the list, we're committed to parsing this item.
+      // This item is part of the current scope, let's consume it.
       this.pop();
 
-      table.recursivelyAddSymbolDeclarations(item);
-
-      const childTable = new SymbolTable(table);
-      this.getSymbolTable(childTable, level);
-
-      const names = getVariableNodeNames(item);
-      for (const name of names) {
-        table.qualifiedSymbols.set(name, childTable);
-      }
+      // In the case of factorized variables, a single
+      // DeclaredItem can contain multiple names.
+      // TODO: Should we allow this? The PL/I compiler simply ignores
+      // factorized variables in structured declarations.
+      forEachNode(item, (child) => {
+        const name = getVariableSymbol(child);
+        if (name) {
+          const node = new QualifiedSyntaxNode(name, child, parent);
+          table.addSymbolDeclaration(name, node);
+          this._generate(table, node, level);
+        }
+      });
     }
   }
 
   generate(table: SymbolTable) {
     // Use 0 as a default level to start the generation.
-    // TODO: Maybe make this `null`, as this is technically a hack.
-    return this.getSymbolTable(table, 0);
+    // TODO: Maybe make this `null` to represent the root scope.
+    this._generate(table, null, 0);
   }
 }
 
 export class SymbolTable {
-  private symbols: Map<string, SymbolizedSyntaxNodes> = new Map();
-
-  // A map of qualified symbols to their symbol tables.
-  public qualifiedSymbols: Map<string, SymbolTable> = new Map();
-  private parent: SymbolTable | null;
-
-  constructor(parent: SymbolTable | null = null) {
-    this.parent = parent;
-  }
-
-  getParent(): SymbolTable | null {
-    return this.parent;
-  }
-
-  recursivelyAddSymbolDeclarations(node: SyntaxNode): void {
-    const symbol = getVariableSymbol(node);
-    if (symbol) {
-      this.addSymbolDeclaration(symbol, node);
-    }
-
-    forEachNode(node, (child) => {
-      this.recursivelyAddSymbolDeclarations(child);
-    });
-  }
+  private symbols: Map<string, QualifiedSyntaxNode[]> = new Map();
 
   addDeclarationStatement(declaration: DeclareStatement): void {
-    new QualifiedDeclarationGenerator(declaration.items).generate(this);
+    const generator = new SymbolTableDeclaredItemGenerator(declaration.items);
+
+    generator.generate(this);
   }
 
-  addSymbolDeclaration(name: string, node: SyntaxNode): void {
-    const symbol = this.symbols.get(name);
-    if (symbol) {
-      symbol.addDeclaration(node);
+  addSymbolDeclaration(name: string, node: QualifiedSyntaxNode): void {
+    const symbols = this.symbols.get(name);
+    if (symbols) {
+      symbols.push(node);
     } else {
-      this.symbols.set(name, new SymbolizedSyntaxNodes(node));
+      this.symbols.set(name, [node]);
     }
   }
 
-  // Todo: return/use all redeclarations for validation
-  getSymbol(name: string): SymbolizedSyntaxNodes | undefined {
-    return this.symbols.get(name);
-  }
+  // Return all qualified symbols
+  getSymbols(qualifiedName: string[]): SyntaxNode[] | undefined {
+    const [name] = qualifiedName;
+    if (!name) {
+      return undefined;
+    }
 
-  getQualifiedSymbolTable(name: string): SymbolTable | undefined {
-    return this.qualifiedSymbols.get(name);
+    const symbols = this.symbols.get(name);
+    if (!symbols) {
+      return undefined;
+    }
+
+    const qualifiedSymbols = groupBy(symbols, (symbol) =>
+      symbol.getQualificationStatus(qualifiedName),
+    );
+
+    const fullQualification =
+      qualifiedSymbols[QualificationStatus.FullQualification];
+    const partialQualification =
+      qualifiedSymbols[QualificationStatus.PartialQualification];
+
+    if (fullQualification) {
+      return fullQualification.map((symbol) => symbol.node);
+    } else if (partialQualification) {
+      return partialQualification.map((symbol) => symbol.node);
+    } else {
+      return undefined;
+    }
   }
 
   clear(): void {
@@ -174,11 +223,11 @@ export class Scope {
     this._symbolTable = symbolTable;
   }
 
-  getSymbol(name: string): SymbolizedSyntaxNodes | undefined {
+  getSymbols(qualifiedName: string[]): SyntaxNode[] {
     return (
-      this._symbolTable?.getSymbol(name) ??
-      this.parent?.getSymbol(name) ??
-      undefined
+      this._symbolTable?.getSymbols(qualifiedName) ??
+      this.parent?.getSymbols(qualifiedName) ??
+      []
     );
   }
 
@@ -218,15 +267,9 @@ export function iterateSymbols(compilationUnit: CompilationUnit): void {
   const builtInSymbols = new SymbolTable();
   const scope = new Scope(null, builtInSymbols);
 
-  // debugMapAst(compilationUnit.ast);
-
-  // const t1 = performance.now();
-
   // Iterate over the PLI program.
   recursivelySetContainer(compilationUnit.ast);
   iterate(compilationUnit.ast, scopeCache, scope, references);
-
-  // console.log(`Time taken: ${performance.now() - t1} milliseconds`);
 }
 
 function recursivelySetContainer(node: SyntaxNode) {
@@ -243,10 +286,18 @@ function iterate(
   parentScope: Scope,
   references: ReferencesCache,
 ) {
+  const ref = getReference(node);
+  if (ref) {
+    references.add(ref);
+  }
+
   // Add the label symbol to the symbol table in the current scope.
   const symbol = getLabelSymbol(node);
   if (symbol) {
-    parentScope.symbolTable.addSymbolDeclaration(symbol, node);
+    parentScope.symbolTable.addSymbolDeclaration(
+      symbol,
+      new QualifiedSyntaxNode(symbol, node),
+    );
   }
 
   // We connect the current node to its scope for usage in the linking phase.
@@ -283,15 +334,7 @@ function iterate(
     case SyntaxKind.DeclareStatement:
       scope.symbolTable.addDeclarationStatement(node);
       break;
-    case SyntaxKind.MemberCall:
-      references.addMemberCall(node);
-      break;
     default:
-      const ref = getReference(node);
-      if (ref) {
-        references.add(ref);
-      }
-
       forEachNode(node, iterateChild(scope));
   }
 }

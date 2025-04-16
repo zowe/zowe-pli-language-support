@@ -12,7 +12,6 @@
 import { IToken } from "chevrotain";
 import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { forEachNode } from "../syntax-tree/ast-iterator";
 
 export function isValidToken(token: IToken): boolean {
   return (
@@ -74,17 +73,6 @@ export function getReference(node: SyntaxNode): Reference | undefined {
       return node.type ?? undefined;
   }
   return undefined;
-}
-
-export function getVariableNodeNames(node: SyntaxNode): string[] {
-  const name = getVariableSymbol(node);
-  let names = name ? [name] : [];
-
-  forEachNode(node, (child) => {
-    names = [...names, ...getVariableNodeNames(child)];
-  });
-
-  return names;
 }
 
 export function getVariableSymbol(node: SyntaxNode): string | undefined {

@@ -12,12 +12,7 @@
 import { IToken } from "chevrotain";
 import { Location, tokenToRange } from "../language-server/types";
 import { TokenPayload } from "../parser/abstract-parser";
-import {
-  MemberCall,
-  Reference,
-  ReferenceItem,
-  SyntaxNode,
-} from "../syntax-tree/ast";
+import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { binaryTokenSearch } from "../utils/search";
 import {
   getNameToken,
@@ -29,18 +24,12 @@ import { URI } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
 
 export class ReferencesCache {
-  private memberCalls: MemberCall[] = [];
   private list: Reference[] = [];
   private reverseMap = new Map<SyntaxNode, Reference[]>();
 
   clear(): void {
-    this.memberCalls = [];
     this.list = [];
     this.reverseMap.clear();
-  }
-
-  addMemberCall(memberCall: MemberCall): void {
-    this.memberCalls.push(memberCall);
   }
 
   add(reference: Reference): void {
@@ -65,10 +54,19 @@ export class ReferencesCache {
   allReferences(): Reference[] {
     return this.list;
   }
+}
 
-  allMemberCalls(): MemberCall[] {
-    return this.memberCalls;
+// Returns the qualified name in reverse order, e.g. "A.B.C" -> ["C", "B", "A"]
+export function getQualifiedName(reference: Reference): string[] {
+  if (reference.owner.container?.kind === SyntaxKind.MemberCall) {
+    const memberCall = reference.owner.container;
+    if (memberCall.previous?.element?.ref) {
+      const names = getQualifiedName(memberCall.previous.element.ref);
+      return [reference.text, ...names];
+    }
   }
+
+  return [reference.text];
 }
 
 export function resolveReference<T extends SyntaxNode>(
@@ -79,77 +77,35 @@ export function resolveReference<T extends SyntaxNode>(
     return undefined;
   }
 
-  if (reference.node === undefined) {
-    const symbol = unit.scopeCache
-      .get(reference.owner)
-      ?.getSymbol(reference.text);
-
-    if (symbol) {
-      const value = symbol.getValue();
-      reference.node = value as T;
-      unit.references.addInverse(reference);
-      return value as T;
-    } else {
-      reference.node = null;
-      return undefined;
-    }
-  }
-  return reference.node;
-}
-
-// Convert recursive member calls into a flat list of reference items.
-function getMemberCallMembers(memberCall: MemberCall): ReferenceItem[] {
-  const element = memberCall.element;
-  if (!element) {
-    return [];
+  if (reference.node !== undefined) {
+    return reference.node;
   }
 
-  if (memberCall.previous) {
-    return [...getMemberCallMembers(memberCall.previous), element];
-  }
+  const qualifiedName = getQualifiedName(reference);
 
-  return [element];
-}
-
-export function resolveMemberCall(
-  unit: CompilationUnit,
-  memberCall: MemberCall,
-): void {
-  const members = getMemberCallMembers(memberCall);
-  const scope = unit.scopeCache.get(memberCall);
+  const scope = unit.scopeCache.get(reference.owner);
   if (!scope) {
-    return;
+    return undefined;
   }
 
-  let table = scope.symbolTable;
-  for (const member of members) {
-    if (!member.ref) {
-      break;
-    }
-
-    const symbol = table.getSymbol(member.ref.text);
-    if (symbol) {
-      member.ref.node = symbol.getValue() as any;
-      unit.references.addInverse(member.ref);
-    }
-
-    const newTable = table.getQualifiedSymbolTable(member.ref.text);
-    if (!newTable) {
-      break;
-    }
-
-    table = newTable;
+  const [symbol, ...symbols] = scope.getSymbols(qualifiedName);
+  if (!symbol) {
+    reference.node = null;
+    return undefined;
   }
+
+  if (symbols.length > 0) {
+    // TODO: Diagnostic error about ambiguity on `symbols` locations
+  }
+
+  reference.node = symbol as T;
+  unit.references.addInverse(reference);
+  return symbol as T;
 }
 
 export function resolveReferences(unit: CompilationUnit): void {
   for (const reference of unit.references.allReferences()) {
     resolveReference(unit, reference);
-  }
-
-  const memberCalls = unit.references.allMemberCalls();
-  for (const memberCall of memberCalls) {
-    resolveMemberCall(unit, memberCall);
   }
 }
 
@@ -162,7 +118,7 @@ export function findTokenElementReference(
   if (isReferenceToken(payload.kind)) {
     // Find the reference beloging to the token
     const ref = getReference(payload.element);
-    if (ref && ref.node) {
+    if (ref?.node) {
       element = ref.node;
     } else {
       return undefined;
