@@ -9,29 +9,152 @@
  *
  */
 
-import { ProcedureStatement, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import {
+  DeclaredItem,
+  DeclareStatement,
+  ProcedureStatement,
+  SyntaxKind,
+  SyntaxNode,
+} from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
+// import { debugMapAst } from "../syntax-tree/debug";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache } from "./resolver";
-import { getReference, getSymbol } from "./tokens";
+import {
+  getLabelSymbol,
+  getReference,
+  getVariableNodeNames,
+  getVariableSymbol,
+} from "./tokens";
+
+/**
+ * Terminology:
+ * - Redeclaration: A symbol that is declared with the same name in the same scope.
+ * - Shadowing: A symbol that is declared with the same name in a nested scope.
+ * - Ambiguous: A symbol that is declared with the same name in different branches of scopes.
+ */
+
+class SymbolizedSyntaxNodes {
+  private value: SyntaxNode;
+  // Contains all explicit redeclarations
+  private redeclarations: SyntaxNode[] = [];
+  // Contains all implicit symbols (from nested structured declarations)
+  private implicitSymbols: SyntaxNode[] = [];
+
+  constructor(value: SyntaxNode) {
+    this.value = value;
+  }
+
+  addDeclaration(node: SyntaxNode): void {
+    this.redeclarations.push(node);
+  }
+
+  addImplicitDeclaration(node: SyntaxNode): void {
+    this.implicitSymbols.push(node);
+  }
+
+  getValue(): SyntaxNode {
+    return this.value;
+  }
+}
+
+class QualifiedDeclarationGenerator {
+  private items: DeclaredItem[];
+
+  constructor(items: DeclaredItem[]) {
+    this.items = items;
+  }
+
+  private peek(): DeclaredItem | undefined {
+    return this.items[0];
+  }
+
+  private pop(): DeclaredItem | undefined {
+    return this.items.shift();
+  }
+
+  private getSymbolTable(table: SymbolTable, parentLevel: number) {
+    // Consume many items on the same level.
+    while (true) {
+      const item = this.peek();
+      if (!item) {
+        break;
+      }
+
+      // When level is not set, we assume 1 the PL1 compiler seem to do.
+      const level = item.level ?? 1;
+      if (level <= parentLevel) {
+        break;
+      }
+
+      // Consume the item from the list, we're committed to parsing this item.
+      this.pop();
+
+      table.recursivelyAddSymbolDeclarations(item);
+
+      const childTable = new SymbolTable(table);
+      this.getSymbolTable(childTable, level);
+
+      const names = getVariableNodeNames(item);
+      for (const name of names) {
+        table.qualifiedSymbols.set(name, childTable);
+      }
+    }
+  }
+
+  generate(table: SymbolTable) {
+    // Use 0 as a default level to start the generation.
+    // TODO: Maybe make this `null`, as this is technically a hack.
+    return this.getSymbolTable(table, 0);
+  }
+}
 
 export class SymbolTable {
-  private symbols: Map<string, SyntaxNode> = new Map();
+  private symbols: Map<string, SymbolizedSyntaxNodes> = new Map();
 
-  addSymbol(name: string, node: SyntaxNode): void {
-    this.symbols.set(name, node);
+  // A map of qualified symbols to their symbol tables.
+  public qualifiedSymbols: Map<string, SymbolTable> = new Map();
+  private parent: SymbolTable | null;
+
+  constructor(parent: SymbolTable | null = null) {
+    this.parent = parent;
   }
 
-  addVariableSymbol(name: string, node: SyntaxNode): void {
-    this.symbols.set(name, node);
+  getParent(): SymbolTable | null {
+    return this.parent;
   }
 
-  addLabelSymbol(name: string, node: SyntaxNode): void {
-    this.symbols.set(name, node);
+  recursivelyAddSymbolDeclarations(node: SyntaxNode): void {
+    const symbol = getVariableSymbol(node);
+    if (symbol) {
+      this.addSymbolDeclaration(symbol, node);
+    }
+
+    forEachNode(node, (child) => {
+      this.recursivelyAddSymbolDeclarations(child);
+    });
   }
 
-  getSymbol(name: string): SyntaxNode | undefined {
+  addDeclarationStatement(declaration: DeclareStatement): void {
+    new QualifiedDeclarationGenerator(declaration.items).generate(this);
+  }
+
+  addSymbolDeclaration(name: string, node: SyntaxNode): void {
+    const symbol = this.symbols.get(name);
+    if (symbol) {
+      symbol.addDeclaration(node);
+    } else {
+      this.symbols.set(name, new SymbolizedSyntaxNodes(node));
+    }
+  }
+
+  // Todo: return/use all redeclarations for validation
+  getSymbol(name: string): SymbolizedSyntaxNodes | undefined {
     return this.symbols.get(name);
+  }
+
+  getQualifiedSymbolTable(name: string): SymbolTable | undefined {
+    return this.qualifiedSymbols.get(name);
   }
 
   clear(): void {
@@ -51,7 +174,7 @@ export class Scope {
     this._symbolTable = symbolTable;
   }
 
-  getSymbol(name: string): SyntaxNode | undefined {
+  getSymbol(name: string): SymbolizedSyntaxNodes | undefined {
     return (
       this._symbolTable?.getSymbol(name) ??
       this.parent?.getSymbol(name) ??
@@ -95,10 +218,22 @@ export function iterateSymbols(compilationUnit: CompilationUnit): void {
   const builtInSymbols = new SymbolTable();
   const scope = new Scope(null, builtInSymbols);
 
+  // debugMapAst(compilationUnit.ast);
+
+  // const t1 = performance.now();
+
   // Iterate over the PLI program.
-  // The returned scope should be the "exported" scope of the file,
-  // if that should ever become relevant.
+  recursivelySetContainer(compilationUnit.ast);
   iterate(compilationUnit.ast, scopeCache, scope, references);
+
+  // console.log(`Time taken: ${performance.now() - t1} milliseconds`);
+}
+
+function recursivelySetContainer(node: SyntaxNode) {
+  forEachNode(node, (child) => {
+    child.container = node;
+    recursivelySetContainer(child);
+  });
 }
 
 // This function iterates over the syntax tree and builds the symbol table.
@@ -108,56 +243,23 @@ function iterate(
   parentScope: Scope,
   references: ReferencesCache,
 ) {
-  // While we're here, let's also add the reference to our cache
-  const ref = getReference(node);
-  if (ref) {
-    references.add(ref);
-  }
-
-  // If we are declaring a local variable, we create a
-  // new scope to prevent usage of this symbol before it is declared.
-  // This also makes it possible to redeclare the same variable name.
-  // Labels are global in a scope, so we don't need
-  // to create a new scope for them.
-  if (node.kind === SyntaxKind.DeclaredVariable) {
-    parentScope = new Scope(parentScope);
-  }
-
-  /**
-   * TODO: Figure out how to label shadowing is supposed to work in PLI.
-   */
-
-  // Add the symbol to the symbol table in the current scope.
-  const symbol = getSymbol(node);
+  // Add the label symbol to the symbol table in the current scope.
+  const symbol = getLabelSymbol(node);
   if (symbol) {
-    parentScope.symbolTable.addSymbol(symbol, node);
+    parentScope.symbolTable.addSymbolDeclaration(symbol, node);
   }
 
-  // We connect the current node to its scope for usage in the
-  // linking phase.
+  // We connect the current node to its scope for usage in the linking phase.
   scopeCache.add(node, parentScope);
 
-  // Are we entering a containing node? Then we should create a new scope
-  // for all our children.
-  let shouldCreateNewScope = shouldNodeCreateNewScope(node);
-  let scope = parentScope;
-  if (shouldCreateNewScope) {
-    scope = new Scope(parentScope);
-  }
+  // Are we entering a containing node? Then we should create a new scope for all our children.
+  const scope = shouldNodeCreateNewScope(node)
+    ? new Scope(parentScope)
+    : parentScope;
 
-  // Function to recursively iterate over the child nodes
-  // to build their symbol table.
-  // CAUTION: This function has two side effects:
-  // * it sets the container property on the child node.
-  // * it may overwrite the scope variable if a child node returns a new scope.
-  // This is done to enable redeclarations of local variables.
-  const iterateChild = (child: SyntaxNode) => {
-    // Set the parent node on our first iteration through the file
-    child.container = node;
-
-    // Iterate over the child node. The child node may return
-    // a new scope, which siblings should have access to.
-    scope = iterate(child, scopeCache, scope, references);
+  // Function to recursively iterate over the child nodes to build their symbol table.
+  const iterateChild = (scope: Scope) => (child: SyntaxNode) => {
+    iterate(child, scopeCache, scope, references);
   };
 
   // This switch statement handles the special case of a procedure statement.
@@ -172,25 +274,25 @@ function iterate(
         ...node,
         end: null,
       };
-      forEachNode(procedure, iterateChild);
+      forEachNode(procedure, iterateChild(scope));
       if (node.end) {
-        iterate(node.end, scopeCache, parentScope, references);
+        iterateChild(parentScope)(node.end);
         node.end.container = node;
       }
       break;
+    case SyntaxKind.DeclareStatement:
+      scope.symbolTable.addDeclarationStatement(node);
+      break;
+    case SyntaxKind.MemberCall:
+      references.addMemberCall(node);
+      break;
     default:
-      forEachNode(node, iterateChild);
-  }
+      const ref = getReference(node);
+      if (ref) {
+        references.add(ref);
+      }
 
-  if (shouldCreateNewScope) {
-    // If this node has created a new sub-scope, we don't
-    // return this to the parent node.
-    return parentScope;
-  } else {
-    // If this node has not created a new sub-scope, we return
-    // the current scope, which MAY be a sub-scope of the parent scope.
-    // This is done to enable redeclarations of local variables.
-    return scope;
+      forEachNode(node, iterateChild(scope));
   }
 }
 

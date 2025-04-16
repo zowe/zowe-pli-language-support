@@ -13,6 +13,10 @@ import { describe, test } from "vitest";
 import { expectGotoDefinition as expectGotoDefinitionRoot } from "./utils";
 
 /**
+ * Scoping report: https://github.com/zowe/zowe-pli-language-support/issues/94
+ */
+
+/**
  * Helper function to parse a string of PL/I statements,
  * wrapping them in a procedure to ensure they are valid
  */
@@ -30,33 +34,7 @@ ${params.text}
 }
 
 describe("Linking tests", async () => {
-  describe("Structured tests", async () => {
-    describe("NamedType", async () => {
-      // Didrik: I'm unsure what the expected behavior on the mainframe is here.
-      test("Must find the type declaration", async () => {
-        const text = `
- DEFINE ALIAS AAA;
- DCL <|AAA|> CHAR(1);
- DCL BBB TYPE(<|>AAA);`;
-
-        await expectGotoDefinition({
-          text,
-          index: 0,
-          rangeIndex: 0,
-        });
-      });
-    });
-  });
-
   describe("Unstructured tests", async () => {
-    /**
-     * Didrik 2025-04-09
-     *
-     * CAUTION: These test may be incorrect.
-     * TODO: Figure out how label scoping/shadowing works on the mainframe.
-     *
-     * Information: https://github.com/zowe/zowe-pli-language-support/issues/29#issuecomment-2623842079
-     */
     describe("Nested procedure label tests", async () => {
       const text = `
  <|OUTER|>: procedure options (main); // outer0
@@ -164,7 +142,7 @@ describe("Linking tests", async () => {
   CALL <|>ABC;
  END OUTER;
 
- DCL <|ABC|>;
+ DCL ABC;
  CALL <|>ABC;
 `;
 
@@ -183,11 +161,11 @@ describe("Linking tests", async () => {
         await expectGotoDefinition({
           text,
           index: 2,
-          rangeIndex: 2,
+          rangeIndex: 0,
         });
       });
 
-      test("Must handle redeclarations", async () => {
+      test("Must ignore redeclarations", async () => {
         const text = `
  DCL <|ABC|>;
  CALL <|>ABC;
@@ -203,7 +181,7 @@ describe("Linking tests", async () => {
         await expectGotoDefinition({
           text,
           index: 1,
-          rangeIndex: 1,
+          rangeIndex: 0,
         });
       });
 
@@ -261,52 +239,26 @@ describe("Linking tests", async () => {
       });
     });
 
-    // TODO: Figure out how label shadowing should work on the mainframe.
-    describe("Label shadowing", async () => {
-      const text = `
- CALL <|>OUTER;                     // call1
- <|OUTER|>: PROCEDURE;              // label1
-  CALL <|>OUTER;                    // call2
-  <|OUTER|>: PROCEDURE; END OUTER;  // label2
-  CALL <|>OUTER;                    // call3
- END OUTER;   
- CALL <|>OUTER;                     // call4
-
- CALL <|>OUTER;                     // call5
- <|OUTER|>: PROCEDURE;              // label3
-  CALL <|>OUTER;                    // call6
-  <|OUTER|>: PROCEDURE; END OUTER;  // label4
-  CALL <|>OUTER;                    // call7
- END OUTER;   
- CALL <|>OUTER;                     // call8`;
-
-      test.skip("Must find the correct label", async () => {
-        await expectGotoDefinition({
-          text,
-          index: 0,
-          rangeIndex: 0,
-        });
-      });
-    });
-
     describe("Qualified names", async () => {
       const text = `
-0DCL 1  <|TWO_DIM_TABLE|>,
+ DCL ARRAY_ENTRY;
+ DCL TWO_DIM_TABLE_ENTRY;
+ DCL TYPE#;
+
+ DCL 1  <|TWO_DIM_TABLE|>,
         2  <|TWO_DIM_TABLE_ENTRY|>          CHAR(32);
-0DCL 1  TABLE_WITH_ARRAY,
+ DCL 1  TABLE_WITH_ARRAY,
         2  ARRAY_ENTRY(0:1000),
            3  NAME                          CHAR(32) VARYING,
-           3  TYPE#                         CHAR(8),
+           3  <|TYPE#|>                     CHAR(8),
         2  NON_ARRAY_ENTRY,
            3  NAME                          CHAR(32) VARYING,
            3  <|TYPE#|>                     CHAR(8);
 
- DCL ARRAY_ENTRY;
- DCL TWO_DIM_TABLE_ENTRY;
-
  PUT (<|>TWO_DIM_TABLE);
  PUT (TWO_DIM_TABLE.<|>TWO_DIM_TABLE_ENTRY);
- PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|>TYPE#);`;
+ PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|>TYPE#);
+ PUT (TABLE_WITH_ARRAY.NON_ARRAY_ENTRY.<|>TYPE#);`;
 
       test("Must find table name in table", async () => {
         await expectGotoDefinition({
@@ -317,7 +269,7 @@ describe("Linking tests", async () => {
       });
 
       // TODO: Fix qualified name scoping
-      test.skip("Must find qualified name in table", async () => {
+      test("Must find qualified name in table", async () => {
         await expectGotoDefinition({
           text,
           index: 1,
@@ -330,6 +282,14 @@ describe("Linking tests", async () => {
           text,
           index: 2,
           rangeIndex: 2,
+        });
+      });
+
+      test("Must find qualified name in structured variable", async () => {
+        await expectGotoDefinition({
+          text,
+          index: 3,
+          rangeIndex: 3,
         });
       });
     });

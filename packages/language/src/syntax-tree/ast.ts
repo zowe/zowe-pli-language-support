@@ -871,7 +871,7 @@ export interface DateAttribute extends AstNode {
 }
 export interface DeclaredItem extends AstNode {
   kind: SyntaxKind.DeclaredItem;
-  level: string | null;
+  level: number | null;
   element: Wildcard<DeclaredVariable> | null;
   attributes: DeclarationAttribute[];
   items: DeclaredItem[];
