@@ -330,7 +330,6 @@ function iterate(
       forEachNode(procedure, iterateChild(scope));
       if (node.end) {
         iterateChild(parentScope)(node.end);
-        node.end.container = node;
       }
       break;
     case SyntaxKind.DeclareStatement:
