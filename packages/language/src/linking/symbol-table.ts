@@ -116,7 +116,7 @@ class SymbolTableDeclaredItemGenerator {
     return this.items.shift();
   }
 
-  _generate(
+  private _generate(
     table: SymbolTable,
     parent: QualifiedSyntaxNode | null,
     parentLevel: number,
