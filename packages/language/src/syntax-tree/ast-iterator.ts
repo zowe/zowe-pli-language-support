@@ -448,6 +448,11 @@ export function forEachNode(
       }
       break;
     case SyntaxKind.GetFileStatement:
+      if (node.specifications) {
+        for (const specification of node.specifications) {
+          action(specification);
+        }
+      }
       break;
     case SyntaxKind.GetSkip:
       if (node.skipExpression) {
@@ -692,9 +697,7 @@ export function forEachNode(
     case SyntaxKind.PopDirective:
       break;
     case SyntaxKind.PrefixedAttribute:
-      if (node.attribute) {
-        action(node.attribute);
-      }
+      node.attributes.forEach(action);
       break;
     case SyntaxKind.PrintDirective:
       break;
@@ -779,6 +782,7 @@ export function forEachNode(
     case SyntaxKind.ResignalStatement:
       break;
     case SyntaxKind.ReturnsAttribute:
+      node.attrs.forEach(action);
       break;
     case SyntaxKind.ReturnsOption:
       node.returnAttributes.forEach(action);

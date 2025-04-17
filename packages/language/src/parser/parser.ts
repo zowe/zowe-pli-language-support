@@ -334,16 +334,16 @@ export class PliParser extends AbstractParser {
       {
         ALT: () => {
           this.CONSUME_ASSIGN(tokens.SimpleOptions, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.SimpleOptionsItem_Value,
-            );
             element = this.replace({
               kind: ast.SyntaxKind.SimpleOptionsItem,
               container: null,
               value: token.image as ast.SimpleOptionsItem["value"],
             });
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.SimpleOptionsItem_Value,
+            );
           });
         },
       },
@@ -8209,7 +8209,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.PrefixedAttribute,
       container: null,
       level: null,
-      attribute: null,
+      attributes: [],
     };
   }
 
@@ -8227,7 +8227,7 @@ export class PliParser extends AbstractParser {
     this.MANY(() => {
       this.SUBRULE_ASSIGN(this.DeclarationAttribute, {
         assign: (result) => {
-          element.attribute = result;
+          element.attributes.push(result);
         },
       });
     });
