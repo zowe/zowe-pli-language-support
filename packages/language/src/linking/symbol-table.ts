@@ -77,12 +77,14 @@ class QualifiedSyntaxNode {
   }
 
   getQualificationStatus(qualifiers: string[]): QualificationStatus {
-    const [qualifier, ...rest] = qualifiers;
+    const qualifier = qualifiers[0];
     if (!qualifier) {
       return QualificationStatus.NoQualification;
     }
 
-    let nextQualifiers = this.name === qualifier ? rest : qualifiers;
+    let nextQualifiers =
+      this.name === qualifier ? qualifiers.slice(1) : qualifiers;
+
     if (nextQualifiers.length <= 0) {
       if (!this.parent) {
         return QualificationStatus.FullQualification;

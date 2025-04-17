@@ -62,7 +62,9 @@ export function getQualifiedName(reference: Reference): string[] {
     const memberCall = reference.owner.container;
     if (memberCall.previous?.element?.ref) {
       const names = getQualifiedName(memberCall.previous.element.ref);
-      return [reference.text, ...names];
+      names.unshift(reference.text);
+
+      return names;
     }
   }
 
@@ -88,13 +90,14 @@ export function resolveReference<T extends SyntaxNode>(
     return undefined;
   }
 
-  const [symbol, ...symbols] = scope.getSymbols(qualifiedName);
+  const symbols = scope.getSymbols(qualifiedName);
+  const symbol = symbols[0];
   if (!symbol) {
     reference.node = null;
     return undefined;
   }
 
-  if (symbols.length > 0) {
+  if (symbols.length > 1) {
     // TODO: Diagnostic error about ambiguity on `symbols` locations
   }
 
