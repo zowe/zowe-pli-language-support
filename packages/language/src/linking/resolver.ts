@@ -12,7 +12,7 @@
 import { IToken } from "chevrotain";
 import { Location, tokenToRange } from "../language-server/types";
 import { TokenPayload } from "../parser/abstract-parser";
-import { Reference, SyntaxNode } from "../syntax-tree/ast";
+import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { binaryTokenSearch } from "../utils/search";
 import {
   getNameToken,
@@ -56,6 +56,21 @@ export class ReferencesCache {
   }
 }
 
+// Returns the qualified name in reverse order, e.g. "A.B.C" -> ["C", "B", "A"]
+export function getQualifiedName(reference: Reference): string[] {
+  if (reference.owner.container?.kind === SyntaxKind.MemberCall) {
+    const memberCall = reference.owner.container;
+    if (memberCall.previous?.element?.ref) {
+      const names = getQualifiedName(memberCall.previous.element.ref);
+      names.unshift(reference.text);
+
+      return names;
+    }
+  }
+
+  return [reference.text];
+}
+
 export function resolveReference<T extends SyntaxNode>(
   unit: CompilationUnit,
   reference: Reference<T> | null,
@@ -64,21 +79,31 @@ export function resolveReference<T extends SyntaxNode>(
     return undefined;
   }
 
-  if (reference.node === undefined) {
-    const symbol = unit.scopeCache
-      .get(reference.owner)
-      ?.getSymbol(reference.text);
-
-    if (symbol) {
-      reference.node = symbol as T;
-      unit.references.addInverse(reference);
-      return symbol as T;
-    } else {
-      reference.node = null;
-      return undefined;
-    }
+  if (reference.node !== undefined) {
+    return reference.node;
   }
-  return reference.node;
+
+  const qualifiedName = getQualifiedName(reference);
+
+  const scope = unit.scopeCache.get(reference.owner);
+  if (!scope) {
+    return undefined;
+  }
+
+  const symbols = scope.getSymbols(qualifiedName);
+  const symbol = symbols[0];
+  if (!symbol) {
+    reference.node = null;
+    return undefined;
+  }
+
+  if (symbols.length > 1) {
+    // TODO: Diagnostic error about ambiguity on `symbols` locations
+  }
+
+  reference.node = symbol as T;
+  unit.references.addInverse(reference);
+  return symbol as T;
 }
 
 export function resolveReferences(unit: CompilationUnit): void {
@@ -96,7 +121,7 @@ export function findTokenElementReference(
   if (isReferenceToken(payload.kind)) {
     // Find the reference beloging to the token
     const ref = getReference(payload.element);
-    if (ref && ref.node) {
+    if (ref?.node) {
       element = ref.node;
     } else {
       return undefined;
