@@ -22,12 +22,14 @@ import {
   CompilerOptionsProcessor,
   CompilerOptionsProcessorResult,
 } from "./compiler-options-processor";
+import { PPStatement } from "./pli-preprocessor-ast";
 
 export interface LexerResult {
   all: IToken[];
   errors: ILexingError[];
   compilerOptions: CompilerOptionsProcessorResult;
   fileTokens: Record<string, IToken[]>;
+  preprocessorStatements: PPStatement[];
 }
 
 /**
@@ -80,11 +82,15 @@ export class PliLexer {
         ...compilerOptionsResult.result.tokens,
       );
     }
+    const preprocessorStatements = statements.filter(
+      (statement) => statement.type !== "pli",
+    );
     return {
       all: this.filterHiddenTokens(output.all),
       compilerOptions: compilerOptionsResult,
       errors,
       fileTokens: state.perFileTokens,
+      preprocessorStatements,
     };
   }
 

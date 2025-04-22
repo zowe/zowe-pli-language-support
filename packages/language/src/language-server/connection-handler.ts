@@ -51,6 +51,9 @@ export function startLanguageServer(connection: Connection): void {
           full: true,
           range: false,
         },
+        experimental: {
+          skippedPliCode: true,
+        },
       },
     };
   });

@@ -287,8 +287,10 @@ export class PliPreprocessorInterpreterState
         const lhs = this.plainState.stack.pop()!;
         if (this.areEqual(lhs, rhs)) {
           this.goTo((prev) => prev + 1);
+          instruction.evalFn(true);
         } else {
           this.goTo(() => instruction.address as number);
+          instruction.evalFn(false);
         }
         break;
       }

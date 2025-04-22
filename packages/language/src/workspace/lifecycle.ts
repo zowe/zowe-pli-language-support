@@ -36,6 +36,7 @@ export function tokenize(
   );
   compilationUnit.tokens.all = result.all;
   compilationUnit.tokens.fileTokens = result.fileTokens;
+  compilationUnit.preprocessorStatements = result.preprocessorStatements;
   compilationUnit.compilerOptions =
     result.compilerOptions.result?.options ?? {};
   const uri = compilationUnit.uri.toString();

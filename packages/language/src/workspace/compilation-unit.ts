@@ -19,6 +19,8 @@ import { ReferencesCache } from "../linking/resolver.js";
 import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
 import { lifecycle } from "./lifecycle.js";
 import { CompilerOptions } from "../preprocessor/compiler-options/options.js";
+import { skippedCode } from "../language-server/skipped-code.js";
+import { PPStatement } from "../preprocessor/pli-preprocessor-ast.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -39,6 +41,7 @@ export interface CompilationUnit {
   compilerOptions: CompilerOptions;
   ast: PliProgram;
   tokens: CompilationUnitTokens;
+  preprocessorStatements: PPStatement[];
   references: ReferencesCache;
   diagnostics: CompilationUnitDiagnostics;
   scopeCache: ScopeCache;
@@ -81,6 +84,7 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       fileTokens: {},
       all: [],
     },
+    preprocessorStatements: [],
     references: new ReferencesCache(),
     scopeCache: new ScopeCache(),
     diagnostics: {
@@ -141,6 +145,7 @@ export class CompletionUnitHandler {
           diagnostics: fileDiagnostics ?? [],
         });
       }
+      skippedCode(connection, event.document.uri, unit, document);
     });
     textDocuments.onDidClose((event) => {
       this.compilationUnits.delete(event.document.uri);

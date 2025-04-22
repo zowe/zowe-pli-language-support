@@ -130,6 +130,11 @@ export const setupClient = async (content?: string): Promise<WrapperConfig> => {
           "editor.guides.bracketPairsHorizontal": "active",
           "editor.wordBasedSuggestions": "off",
           "editor.experimental.asyncTokenization": true,
+          "editor.decorations.colors": {
+            "pli.skippedCode": {
+              opacity: "0.55",
+            },
+          },
         }),
       },
       viewsConfig: {

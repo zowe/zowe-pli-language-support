@@ -90,3 +90,7 @@ body {
   display: flex;
   flex: 2;
 }
+
+.pli-skippedCode {
+  opacity: 0.55;
+}

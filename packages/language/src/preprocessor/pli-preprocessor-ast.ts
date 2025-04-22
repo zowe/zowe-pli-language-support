@@ -55,6 +55,7 @@ export interface PPEmptyStatement extends PPAstNode {
 export interface PPSkip extends PPAstNode {
   type: "skip";
   lineCount: number;
+  startOffset: number;
 }
 
 export interface PPAssign extends PPAstNode {
@@ -131,6 +132,9 @@ export interface PPIfStatement extends PPAstNode {
   condition: PPExpression;
   thenUnit: PPStatement;
   elseUnit?: PPStatement;
+  conditionEval: boolean | undefined;
+  thenUnitRange: { start: number; end: number };
+  elseUnitRange?: { start: number; end: number };
 }
 
 export interface PPReturn extends PPAstNode {

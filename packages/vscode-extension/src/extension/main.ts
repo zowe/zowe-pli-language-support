@@ -13,12 +13,14 @@ import type {
   LanguageClientOptions,
   ServerOptions,
 } from "vscode-languageclient/node.js";
-import type * as vscode from "vscode";
+import * as vscode from "vscode";
 import * as path from "node:path";
 import { LanguageClient, TransportKind } from "vscode-languageclient/node.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 
 let client: LanguageClient;
+let skippedCodeDecorationType: vscode.TextEditorDecorationType;
+const skippedRangesByUri = new Map<string, vscode.Range[]>();
 
 // This function is called when the extension is activated.
 export function activate(context: vscode.ExtensionContext): void {
@@ -72,7 +74,56 @@ function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
     clientOptions,
   );
 
+  // Register custom decorator types.
+  registerSkipDecoratorType(client);
+
   // Start the client. This will also launch the server
   client.start();
   return client;
+}
+
+function registerSkipDecoratorType(client: LanguageClient) {
+  skippedCodeDecorationType = vscode.window.createTextEditorDecorationType({
+    opacity: "0.33",
+  });
+
+  client.onNotification(
+    "pli/skippedCode",
+    (params: {
+      uri: string;
+      ranges: Array<{
+        range: {
+          start: { line: number; character: number };
+          end: { line: number; character: number };
+        };
+      }>;
+    }) => {
+      const editor = vscode.window.visibleTextEditors.find(
+        (e) => e.document.uri.toString() === params.uri,
+      );
+      if (editor) {
+        const ranges = params.ranges.map(
+          ({ range }) =>
+            new vscode.Range(
+              new vscode.Position(range.start.line, range.start.character),
+              new vscode.Position(range.end.line, range.end.character),
+            ),
+        );
+        skippedRangesByUri.set(params.uri, ranges);
+        editor.setDecorations(skippedCodeDecorationType, ranges);
+      }
+    },
+  );
+
+  vscode.window.onDidChangeActiveTextEditor((editor) => {
+    if (!editor) return;
+    const ranges = skippedRangesByUri.get(editor.document.uri.toString());
+    if (ranges) {
+      editor.setDecorations(skippedCodeDecorationType, ranges);
+    }
+  });
+
+  vscode.workspace.onDidCloseTextDocument((doc) => {
+    skippedRangesByUri.delete(doc.uri.toString());
+  });
 }

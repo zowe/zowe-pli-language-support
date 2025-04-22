@@ -412,17 +412,31 @@ export class PliPreprocessorParser {
     state.consume(PreprocessorTokens.If);
     const condition = this.expression(state);
     state.consumeKeyword(PreprocessorTokens.Then);
+    const thenUnitRange = {
+      start: state.current!.startOffset,
+      end: 0,
+    };
     const thenUnit = this.statement(state);
+    thenUnitRange.end = state.current!.startOffset;
     let elseUnit: PPStatement | undefined = undefined;
+    let elseUnitRange: { start: number; end: number } | undefined = undefined;
     if (state.canConsumeKeyword(PreprocessorTokens.Else)) {
+      elseUnitRange = {
+        start: state.current!.startOffset,
+        end: 0,
+      };
       state.consumeKeyword(PreprocessorTokens.Else);
       elseUnit = this.statement(state);
+      elseUnitRange.end = state.current!.startOffset;
     }
     return {
       type: "if",
       condition,
       thenUnit,
       elseUnit,
+      conditionEval: undefined,
+      thenUnitRange,
+      elseUnitRange,
     };
   }
 
@@ -483,6 +497,7 @@ export class PliPreprocessorParser {
   }
 
   skipStatement(state: PreprocessorParserState): PPStatement {
+    const startOffset = state.current!.startOffset;
     state.consume(PreprocessorTokens.Skip);
     let lineCount: number = 1;
     if (state.tryConsume(PreprocessorTokens.Number)) {
@@ -494,6 +509,7 @@ export class PliPreprocessorParser {
       type: "skip",
       //TODO numeric base of 10 ok?
       lineCount,
+      startOffset,
     };
   }
 

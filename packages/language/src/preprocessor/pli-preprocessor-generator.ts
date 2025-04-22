@@ -397,7 +397,11 @@ export class PliPreprocessorGenerator {
     builder.pushInstruction(Instructions.push(Values.True()));
     if (statement.elseUnit) {
       const $else$ = builder.getOrCreateLabel();
-      builder.pushInstruction(Instructions.branchIfNotEqual($else$));
+      builder.pushInstruction(
+        Instructions.branchIfNotEqual($else$, (b) => {
+          statement.conditionEval = b;
+        }),
+      );
       this.handleStatement(statement.thenUnit, builder);
       const $exit$ = builder.getOrCreateLabel();
       builder.pushInstruction(Instructions.goto($exit$));
@@ -406,7 +410,11 @@ export class PliPreprocessorGenerator {
       builder.pushLabel($exit$);
     } else {
       const $exit$ = builder.getOrCreateLabel();
-      builder.pushInstruction(Instructions.branchIfNotEqual($exit$));
+      builder.pushInstruction(
+        Instructions.branchIfNotEqual($exit$, (b) => {
+          statement.conditionEval = b;
+        }),
+      );
       this.handleStatement(statement.thenUnit, builder);
       builder.pushLabel($exit$);
     }
