@@ -13,14 +13,20 @@ import * as vscode from "vscode";
 import { LanguageClient, Range } from "vscode-languageclient/node.js";
 import { Settings } from "./settings";
 
+export function registerCustomDecorators(
+  client: LanguageClient,
+  settings: Settings,
+) {
+  SkippedCodeDecorator.register(client, settings);
+  MarginIndicatorDecorator.register(client, settings);
+}
+
 export namespace SkippedCodeDecorator {
   let skippedCodeDecorationType: vscode.TextEditorDecorationType;
   const skippedRangesByUri = new Map<string, vscode.Range[]>();
 
   export function register(client: LanguageClient, settings: Settings): void {
-    skippedCodeDecorationType = vscode.window.createTextEditorDecorationType({
-      opacity: settings.skippedCodeOpacity.toString(),
-    });
+    updateDecoratorType(settings, false);
 
     client.onNotification(
       "pli/skippedCode",
@@ -73,13 +79,71 @@ export namespace SkippedCodeDecorator {
     editor.setDecorations(skippedCodeDecorationType, ranges);
   }
 
-  export function updateType(settings: Settings): void {
+  export function updateDecoratorType(
+    settings: Settings,
+    update: boolean = true,
+  ): void {
     if (skippedCodeDecorationType) {
       skippedCodeDecorationType.dispose();
     }
     skippedCodeDecorationType = vscode.window.createTextEditorDecorationType({
       opacity: settings.skippedCodeOpacity.toString(),
     });
-    updateAll(settings);
+    if (update) {
+      updateAll(settings);
+    }
+  }
+}
+
+export namespace MarginIndicatorDecorator {
+  const marginIndicatorRangesByUri = new Map<
+    string,
+    { m: number; n: number }
+  >();
+
+  export function register(client: LanguageClient, settings: Settings): void {
+    client.onNotification(
+      "pli/marginIndicator",
+      (params: { uri: string; m: number; n: number }) => {
+        marginIndicatorRangesByUri.set(params.uri, {
+          m: params.m,
+          n: params.n,
+        });
+        updateRulers(settings);
+      },
+    );
+
+    vscode.workspace.onDidCloseTextDocument((doc) => {
+      marginIndicatorRangesByUri.delete(doc.uri.toString());
+      updateRulers(settings);
+    });
+  }
+
+  export function updateRulers(settings: Settings): void {
+    const config = vscode.workspace.getConfiguration("editor", {
+      languageId: "pli",
+    });
+    let rulers: number[] = [];
+
+    if (!settings.marginIndicatorRulersEnabled) {
+      config.update("rulers", rulers, vscode.ConfigurationTarget.Global, true);
+      return;
+    }
+
+    if (settings.marginIndicatorRulers === "automatic") {
+      for (const margins of marginIndicatorRangesByUri.values()) {
+        if (!rulers.includes(margins.m)) {
+          rulers.push(margins.m);
+        }
+        if (!rulers.includes(margins.n)) {
+          rulers.push(margins.n);
+        }
+      }
+    } else {
+      rulers = [2, 72];
+    }
+
+    rulers = rulers.map((r) => r - 1);
+    config.update("rulers", rulers, vscode.ConfigurationTarget.Global, true);
   }
 }

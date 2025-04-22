@@ -10,7 +10,7 @@
  */
 
 import * as vscode from "vscode";
-import { SkippedCodeDecorator } from "./decorators";
+import { SkippedCodeDecorator, MarginIndicatorDecorator } from "./decorators";
 
 export class Settings {
   private static instance: Settings;
@@ -42,7 +42,8 @@ export class Settings {
   }
 
   private updateSettings(): void {
-    SkippedCodeDecorator.updateType(this);
+    SkippedCodeDecorator.updateDecoratorType(this);
+    MarginIndicatorDecorator.updateRulers(this);
   }
 
   public get skippedCodeEnabled(): boolean {
@@ -51,5 +52,13 @@ export class Settings {
 
   public get skippedCodeOpacity(): number {
     return this.getConfiguration().get("skippedCode.opacity") ?? 0.55;
+  }
+
+  public get marginIndicatorRulersEnabled(): boolean {
+    return this.marginIndicatorRulers !== "off";
+  }
+
+  public get marginIndicatorRulers(): "off" | "default" | "automatic" {
+    return this.getConfiguration().get("marginIndicator.rulers") ?? "off";
   }
 }
