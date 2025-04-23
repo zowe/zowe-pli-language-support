@@ -10,7 +10,7 @@
  */
 
 import { FileSystemProviderInstance } from "./file-system-provider";
-import { URI } from "vscode-uri";
+import { URI } from "../utils/uri";
 
 /**
  * Plugin configuration provider for loading up '.pliplugin' (when it exists), processing its contents,
