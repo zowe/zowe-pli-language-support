@@ -31,33 +31,32 @@ ${text}
 describe("Linking tests", () => {
   test("Nested procedure label tests", () =>
     expectLinks(`
- <|1:OUTER|>: procedure options (main); // outer0
-    <|2:INNER|>: procedure;             // inner0
-        call <|3>OUTER;                // callOuter0
-        call <|2>INNER;                // callInner0
+ <|1:OUTER|>: procedure options (main);
+    <|2:INNER|>: procedure;
+        call <|3>OUTER;
+        call <|2>INNER;
 
-        <|3:OUTER|>: procedure;         // outer1
-            call <|3>OUTER;            // callOuter1
-            call <|4>INNER;            // callInner1
+        <|3:OUTER|>: procedure;
+            call <|3>OUTER;
+            call <|4>INNER;
 
-            <|4:INNER|>: procedure;     // inner1
-                call <|3>OUTER;        // callOuter2
-                call <|4>INNER;        // callInner2
+            <|4:INNER|>: procedure;
+                call <|3>OUTER;
+                call <|4>INNER;
             END <|4>INNER;
 
-            call <|3>OUTER;            // callOuter3
-            call <|4>INNER;            // callInner3
-        END <|3>OUTER;                 // callOuter4
+            call <|3>OUTER;
+            call <|4>INNER;
+        END <|3>OUTER;
 
-        call <|3>OUTER;                // callOuter5
-        call <|2>INNER;                // callInner4
-    END <|2>INNER;                     // callInner5
+        call <|3>OUTER;
+        call <|2>INNER;
+    END <|2>INNER;
 
-    call <|1>OUTER;                    // callOuter6
-    call <|2>INNER;                    // callInner6
- end <|1>OUTER;                        // callOuter7
-
- call <|1>OUTER;                       // callOuter8`));
+    call <|1>OUTER;
+    call <|2>INNER;
+ end <|1>OUTER;
+ call <|1>OUTER;`));
 
   test("Must handle implicit declaration (use before declaration)", () =>
     expectLinks(`
