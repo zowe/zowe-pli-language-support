@@ -15,7 +15,6 @@ import type {
 } from "vscode-languageclient/node.js";
 import * as vscode from "vscode";
 import * as path from "node:path";
-import * as fs from "node:fs";
 import { LanguageClient, TransportKind } from "vscode-languageclient/node.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Settings } from "./settings";
@@ -29,48 +28,6 @@ export function activate(context: vscode.ExtensionContext): void {
   BuiltinFileSystemProvider.register(context);
   settings = Settings.getInstance();
   client = startLanguageClient(context);
-
-  // Add a file watcher for file opening events
-  const fileWatcher = vscode.workspace.onDidOpenTextDocument(async (document) => {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-    if (!workspaceFolder) {
-      return;
-    }
-
-    const plipluginPath = path.join(workspaceFolder, ".pliplugin");
-    if (!fs.existsSync(plipluginPath)) {
-      const userResponse = await vscode.window.showInformationMessage(
-        "Create a '.pliplugin' folder in the project root using this file as the entry point in 'pgm_conf.json'?",
-        "Yes",
-        "No"
-      );
-
-      if (userResponse === "Yes") {
-        fs.mkdirSync(plipluginPath);
-
-        fs.writeFileSync(path.join(plipluginPath, "pgm_conf.json"), JSON.stringify({
-          pgms: [
-            {
-              program: path.relative(workspaceFolder, document.fileName),
-              pgroup: "default"
-            }
-          ]
-        }, null, 2));
-        fs.writeFileSync(path.join(plipluginPath, "proc_grps.json"), JSON.stringify({
-          pgroups: [
-            {
-              name: "default",
-              "compiler-options": [],
-              libs: [],
-              "copybook-extensions": []
-            }
-          ]
-        }, null, 2));
-        vscode.window.showInformationMessage("'.pliplugin' folder and files created successfully.");
-      }
-    }
-  });
-  context.subscriptions.push(fileWatcher);
 }
 
 // This function is called when the extension is deactivated.

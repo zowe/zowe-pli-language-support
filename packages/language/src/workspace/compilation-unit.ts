@@ -23,6 +23,7 @@ import { skippedCode } from "../language-server/skipped-code.js";
 import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-state.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
+import { PluginConfigurationProviderInstance } from "./plugin-configuration-provider.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -116,18 +117,29 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
   };
 }
 
-export class CompletionUnitHandler {
+export class CompilationUnitHandler {
   private compilationUnits: Map<string, CompilationUnit> = new Map();
 
   getCompilationUnit(uri: URI): CompilationUnit | undefined {
     return this.compilationUnits.get(uri.toString());
   }
 
-  getOrCreateCompilationUnit(uri: URI): CompilationUnit {
-    return (
-      this.compilationUnits.get(uri.toString()) ||
-      this.createCompilationUnit(uri)
-    );
+  /**
+   * Conditionally creates/gets a compilation unit for the given URI
+   * if the URI corresponds to an entry point, or part of an existing compilation unit.
+   * 
+   * @returns Associated compilation unit or undefined
+   */
+  getOrCreateCompilationUnit(uri: URI): CompilationUnit | undefined {
+    const filePath = uri.toString();
+    if (PluginConfigurationProviderInstance.hasProgramConfig(filePath)) {
+      // entry point, or already part of a compilation unit
+      return (
+        this.compilationUnits.get(filePath) ||
+        this.createCompilationUnit(uri)
+      );
+    }
+    return undefined;
   }
 
   createCompilationUnit(uri: URI): CompilationUnit {
@@ -155,6 +167,9 @@ export class CompletionUnitHandler {
       const unit = this.getOrCreateCompilationUnit(
         URI.parse(event.document.uri),
       );
+      if (!unit) {
+        return;
+      }
       const document = textDocuments.get(unit.uri) ?? event.document;
       lifecycle(unit, document.getText());
       unit.files.forEach((file) => {

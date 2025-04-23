@@ -9,7 +9,7 @@
  *
  */
 
-import { CompletionUnitHandler } from "../workspace/compilation-unit";
+import { CompilationUnitHandler } from "../workspace/compilation-unit";
 import {
   Connection,
   DocumentHighlight,
@@ -27,11 +27,17 @@ import { mapValues } from "../utils/common";
 import { getReferenceLocations } from "../linking/resolver";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
+import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 
 export function startLanguageServer(connection: Connection): void {
-  const compilationUnitHandler = new CompletionUnitHandler();
+  const compilationUnitHandler = new CompilationUnitHandler();
   compilationUnitHandler.listen(connection);
   connection.onInitialize((params) => {
+    // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
+    // TODO @montymxb Apr 23rd, 2025: Consider addressing multiple workspaces w/ multiple plugin configs
+    for (const folder of params.workspaceFolders?.reverse() ?? []) {
+      PluginConfigurationProviderInstance.init(folder.uri);
+    }
     return {
       capabilities: {
         workspace: {
