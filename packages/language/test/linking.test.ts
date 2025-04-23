@@ -71,15 +71,13 @@ describe("Linking tests", () => {
 
  PUT(<|1>A); // -> "A"
  CALL LABL;
- PUT(<|1>A); // -> "A"
-`));
+ PUT(<|1>A); // -> "A"`));
 
   test("Must handle implicit declaration (use before declaration)", () =>
     expectLinks(`
  PUT(<|1>A);
  DCL <|1:A|> CHAR(8) INIT("A");
- PUT(<|1>A);
-`));
+ PUT(<|1>A);`));
 
   test("Must handle scoping in prodecures", () =>
     expectLinks(`
@@ -92,8 +90,7 @@ describe("Linking tests", () => {
  END OUTER;
 
  DCL ABC;
- CALL <|1>ABC;
-`));
+ CALL <|1>ABC;`));
 
   test("Must ignore redeclarations", () =>
     expectLinks(`
@@ -154,8 +151,7 @@ describe("Linking tests", () => {
  DCL 1 <|1:A|>,
      2 <|2:B|> CHAR(8) VALUE("B");
  PUT(<|2>B);
- PUT(<|1>A.<|2>B);
-`));
+ PUT(<|1>A.<|2>B);`));
 
     test("Declaration must override implicit qualification", () =>
       expectLinks(`
@@ -163,8 +159,7 @@ describe("Linking tests", () => {
      2 <|2:B|> CHAR(8) VALUE("B");
  DCL <|3:B|> CHAR(8) VALUE("B2");
  PUT(<|3>B);
- PUT(<|1>A.<|2>B);
-`));
+ PUT(<|1>A.<|2>B);`));
 
     test("Variable must be partially qualified", () =>
       expectLinks(`
@@ -176,8 +171,7 @@ describe("Linking tests", () => {
         3 <|a2_c_b:B|> CHAR(8) VALUE("B2");
 
   PUT (<|a2_c>C.<|a2_c_b>B);
-  PUT (<|a>A.<|a_b>B);
-`));
+  PUT (<|a>A.<|a_b>B);`));
 
     test("Star name in structure should not need to be qualified", () =>
       expectLinks(`
@@ -185,8 +179,7 @@ describe("Linking tests", () => {
        2 *,
          3 <|b:B|> CHAR(8) VALUE("B");
 
- PUT(A.<|b>B);
-`));
+ PUT(A.<|b>B);`));
 
     /**
      * TODO: Implement star handling in structured names
@@ -198,8 +191,7 @@ describe("Linking tests", () => {
           3 B CHAR(8) VALUE("B"),
         2 <|b:B|> CHAR(8) VALUE("B2");
 
- PUT(A.<|b>B);
-`));
+ PUT(A.<|b>B);`));
   });
 
   test("fetch linking", () => {
