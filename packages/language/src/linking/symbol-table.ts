@@ -10,6 +10,13 @@
  */
 
 import {
+  Diagnostic,
+  DiagnosticInfo,
+  Severity,
+  tokenToRange,
+  tokenToUri,
+} from "../language-server/types";
+import {
   DeclaredItem,
   DeclareStatement,
   ProcedureStatement,
@@ -18,9 +25,11 @@ import {
 } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { groupBy } from "../utils/common";
+import { PliValidationAcceptor } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache } from "./resolver";
 import { getLabelSymbol, getReference, getVariableSymbol } from "./tokens";
+import * as PLICodes from "../validation/messages/pli-codes";
 
 /**
  * Terminology:
@@ -103,9 +112,11 @@ class QualifiedSyntaxNode {
 
 class SymbolTableDeclaredItemGenerator {
   private items: DeclaredItem[];
+  private acceptor: PliValidationAcceptor;
 
-  constructor(items: DeclaredItem[]) {
+  constructor(items: DeclaredItem[], acceptor: PliValidationAcceptor) {
     this.items = items.slice(); // Explicitly make a copy of the items, to use `.shift()` in `this.pop()`
+    this.acceptor = acceptor;
   }
 
   private peek(): DeclaredItem | undefined {
@@ -129,10 +140,21 @@ class SymbolTableDeclaredItemGenerator {
       }
 
       // When level is not set, we assume 1 like the PL1 compiler seems to do.
-      const level = item.level ?? 1;
+      let level = item.level ?? 1;
       // The item we're looking at is not a part of the current scope, let's exit.
       if (level <= parentLevel) {
         break;
+      }
+
+      // TODO: get max level from compilation unit? If e.g. compilation flags can change this.
+      if (level > 255) {
+        level = 255;
+
+        this.acceptor(Severity.E, PLICodes.Error.IBM1363I.message, {
+          code: PLICodes.Error.IBM1363I.fullCode,
+          range: tokenToRange(item.levelToken!),
+          uri: tokenToUri(item.levelToken!),
+        });
       }
 
       // This item is part of the current scope, let's consume it.
@@ -163,8 +185,14 @@ class SymbolTableDeclaredItemGenerator {
 export class SymbolTable {
   private symbols: Map<string, QualifiedSyntaxNode[]> = new Map();
 
-  addDeclarationStatement(declaration: DeclareStatement): void {
-    const generator = new SymbolTableDeclaredItemGenerator(declaration.items);
+  addDeclarationStatement(
+    declaration: DeclareStatement,
+    acceptor: PliValidationAcceptor,
+  ): void {
+    const generator = new SymbolTableDeclaredItemGenerator(
+      declaration.items,
+      acceptor,
+    );
 
     generator.generate(this);
   }
@@ -276,22 +304,43 @@ export class ScopeCache {
   }
 }
 
-export function iterateSymbols(compilationUnit: CompilationUnit): void {
-  const { scopeCaches, references } = compilationUnit;
+export function iterateSymbols(unit: CompilationUnit): void {
+  const { scopeCaches, references } = unit;
 
   // Todo: The root scope should contain global PL1 standard library symbols.
   const builtInSymbols = new SymbolTable();
   const scope = new Scope(null, builtInSymbols);
 
-  // Iterate over the PLI program.
-  recursivelySetContainer(compilationUnit.ast);
-  iterate(
-    compilationUnit.preprocessorAst,
+  // Set child containers for all nodes.
+  recursivelySetContainer(unit.ast);
+
+  // Todo: generic interface with `validator.ts`.
+  const diagnostics: Diagnostic[] = [];
+  const acceptor: PliValidationAcceptor = (
+    severity: Severity,
+    message: string,
+    d: DiagnosticInfo,
+  ) => {
+    diagnostics.push({
+      severity,
+      message,
+      ...d,
+    });
+  };
+
+  // Iterate over the PLI program creating the symbol table.
+  new SymbolTableIterator(
     scopeCaches.preprocessor,
-    scope,
     references,
+    acceptor,
+  ).iterate(unit.preprocessorAst, scope);
+
+  new SymbolTableIterator(scopeCaches.regular, references, acceptor).iterate(
+    unit.ast,
+    scope,
   );
-  iterate(compilationUnit.ast, scopeCaches.regular, scope, references);
+
+  unit.diagnostics.symbolTable = diagnostics;
 }
 
 function recursivelySetContainer(node: SyntaxNode) {
@@ -301,65 +350,6 @@ function recursivelySetContainer(node: SyntaxNode) {
   });
 }
 
-// This function iterates over the syntax tree and builds the symbol table.
-function iterate(
-  node: SyntaxNode,
-  scopeCache: ScopeCache,
-  parentScope: Scope,
-  references: ReferencesCache,
-) {
-  const ref = getReference(node);
-  if (ref) {
-    references.add(ref);
-  }
-
-  // Add the label symbol to the symbol table in the current scope.
-  const symbol = getLabelSymbol(node);
-  if (symbol) {
-    parentScope.symbolTable.addSymbolDeclaration(
-      symbol,
-      new QualifiedSyntaxNode(symbol, node),
-    );
-  }
-
-  // We connect the current node to its scope for usage in the linking phase.
-  scopeCache.add(node, parentScope);
-
-  // Are we entering a containing node? Then we should create a new scope for all our children.
-  const scope = shouldNodeCreateNewScope(node)
-    ? new Scope(parentScope)
-    : parentScope;
-
-  // Function to recursively iterate over the child nodes to build their symbol table.
-  const iterateChild = (scope: Scope) => (child: SyntaxNode) => {
-    iterate(child, scopeCache, scope, references);
-  };
-
-  // This switch statement handles the special case of a procedure statement.
-  switch (node.kind) {
-    // A procedure statement's end node is a child node, but scope-wise, the end
-    // node should be part of the parent scope of the procedure statement, to
-    // properly link to the procedure's label.
-    case SyntaxKind.ProcedureStatement:
-      // Remove the end node from the procedure statement,
-      // to process it as a sibling node.
-      const procedure: ProcedureStatement = {
-        ...node,
-        end: null,
-      };
-      forEachNode(procedure, iterateChild(scope));
-      if (node.end) {
-        iterateChild(parentScope)(node.end);
-      }
-      break;
-    case SyntaxKind.DeclareStatement:
-      scope.symbolTable.addDeclarationStatement(node);
-      break;
-    default:
-      forEachNode(node, iterateChild(scope));
-  }
-}
-
 // This function determines if a node should create a new scope.
 function shouldNodeCreateNewScope(parent: SyntaxNode): boolean {
   switch (parent.kind) {
@@ -367,5 +357,74 @@ function shouldNodeCreateNewScope(parent: SyntaxNode): boolean {
       return true;
     default:
       return false;
+  }
+}
+
+class SymbolTableIterator {
+  private scopeCache: ScopeCache;
+  private referenceCache: ReferencesCache;
+  private acceptor: PliValidationAcceptor;
+
+  constructor(
+    scopeCache: ScopeCache,
+    referenceCache: ReferencesCache,
+    acceptor: PliValidationAcceptor,
+  ) {
+    this.scopeCache = scopeCache;
+    this.referenceCache = referenceCache;
+    this.acceptor = acceptor;
+  }
+
+  // This function iterates over the syntax tree and builds the symbol table.
+  iterate(node: SyntaxNode, parentScope: Scope) {
+    const ref = getReference(node);
+    if (ref) {
+      this.referenceCache.add(ref);
+    }
+
+    // Add the label symbol to the symbol table in the current scope.
+    const symbol = getLabelSymbol(node);
+    if (symbol) {
+      parentScope.symbolTable.addSymbolDeclaration(
+        symbol,
+        new QualifiedSyntaxNode(symbol, node),
+      );
+    }
+
+    // We connect the current node to its scope for usage in the linking phase.
+    this.scopeCache.add(node, parentScope);
+
+    // Are we entering a containing node? Then we should create a new scope for all our children.
+    const scope = shouldNodeCreateNewScope(node)
+      ? new Scope(parentScope)
+      : parentScope;
+
+    // Function to recursively iterate over the child nodes to build their symbol table.
+    const iterateChild = (scope: Scope) => (child: SyntaxNode) =>
+      this.iterate(child, scope);
+
+    // This switch statement handles the special case of a procedure statement.
+    switch (node.kind) {
+      // A procedure statement's end node is a child node, but scope-wise, the end
+      // node should be part of the parent scope of the procedure statement, to
+      // properly link to the procedure's label.
+      case SyntaxKind.ProcedureStatement:
+        // Remove the end node from the procedure statement,
+        // to process it as a sibling node.
+        const procedure: ProcedureStatement = {
+          ...node,
+          end: null,
+        };
+        forEachNode(procedure, iterateChild(scope));
+        if (node.end) {
+          iterateChild(parentScope)(node.end);
+        }
+        break;
+      case SyntaxKind.DeclareStatement:
+        scope.symbolTable.addDeclarationStatement(node, this.acceptor);
+        break;
+      default:
+        forEachNode(node, iterateChild(scope));
+    }
   }
 }

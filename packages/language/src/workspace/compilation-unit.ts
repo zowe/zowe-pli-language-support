@@ -57,6 +57,7 @@ export interface CompilationUnitDiagnostics {
   lexer: Diagnostic[];
   compilerOptions: Diagnostic[];
   parser: Diagnostic[];
+  symbolTable: Diagnostic[];
   linking: Diagnostic[];
   validation: Diagnostic[];
 }
@@ -66,6 +67,7 @@ export function collectDiagnostics(sourceFile: CompilationUnit): Diagnostic[] {
     ...sourceFile.diagnostics.lexer,
     ...sourceFile.diagnostics.compilerOptions,
     ...sourceFile.diagnostics.parser,
+    ...sourceFile.diagnostics.symbolTable,
     ...sourceFile.diagnostics.linking,
     ...sourceFile.diagnostics.validation,
   ];
@@ -97,6 +99,7 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       lexer: [],
       compilerOptions: [],
       parser: [],
+      symbolTable: [],
       linking: [],
       validation: [],
     },

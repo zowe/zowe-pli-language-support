@@ -6758,6 +6758,7 @@ export class PliParser extends AbstractParser {
     this.OPTION1(() => {
       this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
         this.tokenPayload(token, element, CstNodeKind.DeclaredItem_LevelNumber);
+        element.levelToken = token;
         element.level = parseInt(token.image);
       });
     });

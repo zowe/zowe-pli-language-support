@@ -10,7 +10,13 @@
  */
 
 import { describe, test } from "vitest";
-import { expectLinks as expectLinksRoot } from "./utils";
+import {
+  assertDiagnostic,
+  expectLinks as expectLinksRoot,
+  parseAndLink,
+} from "./utils";
+import * as PLICodes from "../src/validation/messages/pli-codes";
+import { Severity } from "../src/language-server/types";
 
 /**
  * Scoping report: https://github.com/zowe/zowe-pli-language-support/issues/94
@@ -271,48 +277,77 @@ describe("Linking tests", () => {
    * These test probably should not in the linking tests, but I'm putting them here for reference for now.
    */
   describe("Faulty cases", () => {
-    /**
-     * TODO: Should this be tested here or in the validation step?
-     */
-    test.fails.skip("Redeclaration must fail", () =>
-      expectLinks(`
-       DCL A CHAR(8) INIT("A");
-       DCL A CHAR(8) INIT("A2");`),
-    );
-
-    test.fails.skip("Redeclaration of label must fail", () =>
-      expectLinks(`
+    test.skip("Redeclaration of label must fail", () => {
+      const doc = parseAndLink(`
  OUTER: PROCEDURE;
  END OUTER;
  OUTER: PROCEDURE;
- END OUTER;`),
-    );
+ END OUTER;`);
+
+      assertDiagnostic(doc, {
+        code: PLICodes.Severe.IBM1916I.fullCode,
+        severity: Severity.S,
+      });
+    });
+
+    test.skip("Unused label should warn", () => {
+      const doc = parseAndLink(`
+OUTER: PROCEDURE;
+END OUTER;`);
+
+      assertDiagnostic(doc, {
+        code: PLICodes.Warning.IBM1213I.fullCode,
+        severity: Severity.W,
+      });
+    });
 
     /**
-     * TODO: This program should warn about unused labels (IBM1213I W)
-     *
-     * ```
-     * OUTER: PROCEDURE;
-     * END OUTER;
-     * ```
+     * TODO: Should this be tested here or in the validation step?
      */
+    test.skip("Redeclaration must fail", () => {
+      const doc = parseAndLink(`
+ DCL A CHAR(8) INIT("A");
+ DCL A CHAR(8) INIT("A2");`);
 
-    test.fails.skip("Repeated declaration of label is invalid", () =>
-      // Should produce: IBM1306I E: Repeated declaration of A is invalid and will be ignored.
-      expectLinks(`
+      assertDiagnostic(doc, {
+        code: PLICodes.Error.IBM1306I.fullCode,
+        severity: Severity.E,
+      });
+    });
+
+    test.skip("Repeated declaration of label is invalid", () => {
+      const doc = parseAndLink(`
  A: PROCEDURE;
  END A;
- DCL A CHAR(8) INIT("A"); // <- Error`),
-    );
+ DCL A CHAR(8) INIT("A");`);
 
-    test.fails.skip(
-      "Factoring of level numbers into declaration lists containing level numbers is invalid",
-      () =>
-        // Should produce: IBM1376I E: Factoring of level numbers into declaration lists containing level numbers is invalid. The level numbers in the declaration list will be ignored.
-        expectLinks(`
+      assertDiagnostic(doc, {
+        code: PLICodes.Error.IBM1306I.fullCode,
+        severity: Severity.E,
+      });
+    });
+
+    test.skip("Factoring of level numbers into declaration lists containing level numbers is invalid", () => {
+      const doc = parseAndLink(`
  DCL 1 A,
-       2(B, 3 C, D) (3,2) binary fixed (15);`),
-    );
+       2(B, 3 C, D) (3,2) binary fixed (15);`);
+
+      assertDiagnostic(doc, {
+        code: PLICodes.Error.IBM1376I.fullCode,
+        severity: Severity.E,
+      });
+    });
+
+    test("Structure level greater than 255 is invalid", () => {
+      const doc = parseAndLink(`
+ DCL 1 A,
+       256 B;`);
+
+      assertDiagnostic(doc, {
+        code: PLICodes.Error.IBM1363I.fullCode,
+        severity: Severity.E,
+      });
+    });
   });
 
   test("fetch linking", () => {
