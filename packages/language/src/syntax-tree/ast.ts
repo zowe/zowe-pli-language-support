@@ -1192,6 +1192,7 @@ export function createDoType3Variable(): DoType3Variable {
     kind: SyntaxKind.DoType3Variable,
     container: null,
     name: null,
+    nameToken: null,
   };
 }
 export interface DoUntil extends AstNode {
