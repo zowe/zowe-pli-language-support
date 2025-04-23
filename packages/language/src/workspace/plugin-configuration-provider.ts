@@ -134,6 +134,14 @@ class PluginConfigurationProvider {
   }
 
   /**
+   * Returns whether any program configs have been registered.
+   * Without any, all programs are treated as valid entry points
+   */
+  public hasRegisteredProgramConfigs(): boolean {
+    return this.programConfigs.size > 0;
+  }
+
+  /**
    * Returns the process group config for the given process group
    * @param pgroup Name of the process group to get a config for
    * @returns Associated process group config, or undefined if not found

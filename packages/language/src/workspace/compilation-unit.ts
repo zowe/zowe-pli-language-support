@@ -132,17 +132,22 @@ export class CompilationUnitHandler {
    */
   getOrCreateCompilationUnit(uri: URI): CompilationUnit | undefined {
     const filePath = uri.toString();
-    if (this.compilationUnits.has(filePath) || PluginConfigurationProviderInstance.hasProgramConfig(filePath)) {
+    if (
+      this.compilationUnits.has(filePath) ||
+      PluginConfigurationProviderInstance.hasProgramConfig(filePath) ||
+      // no configs, all entry points valid
+      !PluginConfigurationProviderInstance.hasRegisteredProgramConfigs()
+    ) {
       // entry point, or already part of a compilation unit
       return (
         this.compilationUnits.get(filePath) ||
-        this.createCompilationUnit(uri)
+        this.createAndStoreCompilationUnit(uri)
       );
     }
     return undefined;
   }
 
-  createCompilationUnit(uri: URI): CompilationUnit {
+  createAndStoreCompilationUnit(uri: URI): CompilationUnit {
     const unit = createCompilationUnit(uri);
     this.compilationUnits.set(uri.toString(), unit);
     return unit;
