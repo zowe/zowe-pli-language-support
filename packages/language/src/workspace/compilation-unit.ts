@@ -132,7 +132,7 @@ export class CompilationUnitHandler {
    */
   getOrCreateCompilationUnit(uri: URI): CompilationUnit | undefined {
     const filePath = uri.toString();
-    if (PluginConfigurationProviderInstance.hasProgramConfig(filePath)) {
+    if (this.compilationUnits.has(filePath) || PluginConfigurationProviderInstance.hasProgramConfig(filePath)) {
       // entry point, or already part of a compilation unit
       return (
         this.compilationUnits.get(filePath) ||
