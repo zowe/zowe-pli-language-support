@@ -291,8 +291,9 @@ export function expectLinks(text: string) {
         end: singleRangeIndex[1],
       };
 
-      const line = output.slice(0, offset).split("\n").length + 1;
+      // Produce a small snippet with a margin of 10 characters to give a hint of where the error is
       const snippet = `${output.slice(offset - 10, offset).trimStart()}<|${label}>${output.slice(offset, offset + 10).trimEnd()}`;
+      const line = output.slice(0, offset).split("\n").length + 1;
 
       expectedFunction(
         definition.range,
