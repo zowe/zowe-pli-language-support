@@ -33,7 +33,7 @@ ${params.text}
   });
 }
 
-describe("Linking tests", async () => {
+describe("Linking tests", () => {
   describe("Preprocessor variables", () => {
     test("Must find preprocessor variable", () => {
       const text = `
@@ -61,8 +61,8 @@ describe("Linking tests", async () => {
     });
   });
 
-  describe("Unstructured tests", async () => {
-    describe("Nested procedure label tests", async () => {
+  describe("Unstructured tests", () => {
+    describe("Nested procedure label tests", () => {
       const text = `
  <|OUTER|>: procedure options (main); // outer0
     <|INNER|>: procedure;             // inner0
@@ -147,8 +147,8 @@ describe("Linking tests", async () => {
 
       for (const [procedure, calls] of Object.entries(links)) {
         for (const call of calls) {
-          test(`Must link call ${call} to procedure ${procedure}`, async () => {
-            await expectGotoDefinition({
+          test(`Must link call ${call} to procedure ${procedure}`, () => {
+            expectGotoDefinition({
               text,
               index: call,
               rangeIndex: +procedure,
@@ -158,8 +158,8 @@ describe("Linking tests", async () => {
       }
     });
 
-    describe("Declaration tests", async () => {
-      test("Must handle scoping in prodecures", async () => {
+    describe("Declaration tests", () => {
+      test("Must handle scoping in procedures", () => {
         const text = `
  DCL <|ABC|>;
  CALL <|>ABC;
@@ -173,46 +173,46 @@ describe("Linking tests", async () => {
  CALL <|>ABC;
 `;
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 0,
           rangeIndex: 0,
         });
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 1,
           rangeIndex: 1,
         });
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 2,
           rangeIndex: 0,
         });
       });
 
-      test("Must ignore redeclarations", async () => {
+      test("Must ignore redeclarations", () => {
         const text = `
  DCL <|ABC|>;
  CALL <|>ABC;
  DCL <|ABC|>;
  CALL <|>ABC;`;
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 0,
           rangeIndex: 0,
         });
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 1,
           rangeIndex: 0,
         });
       });
 
-      test("Must find declaration in SELECT/WHEN construct", async () => {
+      test("Must find declaration in SELECT/WHEN construct", () => {
         // Taken from code_samples/PLI0001.pli
         const text = `
  SELECT (123);
@@ -223,7 +223,7 @@ describe("Linking tests", async () => {
     END;
  END;`;
 
-        await expectGotoDefinition({
+        expectGotoDefinition({
           text,
           index: 0,
           rangeIndex: 0,
@@ -231,7 +231,7 @@ describe("Linking tests", async () => {
       });
     });
 
-    describe("Declarations and labels combined", async () => {
+    describe("Declarations and labels combined", () => {
       const text = `
  Control: procedure options(main);
   call <|>A('ok!'); // invoke the 'A' subroutine
@@ -241,24 +241,24 @@ describe("Linking tests", async () => {
  put skip list(V<|>AR1);
  end <|>A;`;
 
-      test("Must find declared procedure label in CALL", async () => {
-        await expectGotoDefinition({
+      test("Must find declared procedure label in CALL", () => {
+        expectGotoDefinition({
           text,
           index: 0,
           rangeIndex: 0,
         });
       });
 
-      test("Must find declared procedure label in END", async () => {
-        await expectGotoDefinition({
+      test("Must find declared procedure label in END", () => {
+        expectGotoDefinition({
           text,
           index: 2,
           rangeIndex: 0,
         });
       });
 
-      test("Must find declared variable", async () => {
-        await expectGotoDefinition({
+      test("Must find declared variable", () => {
+        expectGotoDefinition({
           text,
           index: 1,
           rangeIndex: 1,
@@ -266,7 +266,7 @@ describe("Linking tests", async () => {
       });
     });
 
-    describe("Qualified names", async () => {
+    describe("Qualified names", () => {
       const text = `
  DCL ARRAY_ENTRY;
  DCL TWO_DIM_TABLE_ENTRY;
@@ -287,8 +287,8 @@ describe("Linking tests", async () => {
  PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|>TYPE#);
  PUT (TABLE_WITH_ARRAY.NON_ARRAY_ENTRY.<|>TYPE#);`;
 
-      test("Must find table name in table", async () => {
-        await expectGotoDefinition({
+      test("Must find table name in table", () => {
+        expectGotoDefinition({
           text,
           index: 0,
           rangeIndex: 0,
@@ -296,29 +296,41 @@ describe("Linking tests", async () => {
       });
 
       // TODO: Fix qualified name scoping
-      test("Must find qualified name in table", async () => {
-        await expectGotoDefinition({
+      test("Must find qualified name in table", () => {
+        expectGotoDefinition({
           text,
           index: 1,
           rangeIndex: 1,
         });
       });
 
-      test("Must find qualified name in array", async () => {
-        await expectGotoDefinition({
+      test("Must find qualified name in array", () => {
+        expectGotoDefinition({
           text,
           index: 2,
           rangeIndex: 2,
         });
       });
 
-      test("Must find qualified name in structured variable", async () => {
-        await expectGotoDefinition({
+      test("Must find qualified name in structured variable", () => {
+        expectGotoDefinition({
           text,
           index: 3,
           rangeIndex: 3,
         });
       });
+    });
+  });
+
+  test("fetch linking", () => {
+    expectGotoDefinition({
+      text: `
+        MAINPR: PROCEDURE OPTIONS(MAIN);
+        dcl <|A|> entry;
+        fetch <|>A;
+        end MAINPR;`,
+      index: 0,
+      rangeIndex: 0,
     });
   });
 });
