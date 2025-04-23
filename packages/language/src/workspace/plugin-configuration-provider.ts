@@ -65,13 +65,19 @@ class PluginConfigurationProvider {
     const processGroupConfigPath = plipluginPath + "/proc_grps.json";
 
     // attempt to read configs
-    const progConfig = FileSystemProviderInstance.readFileSync(URI.parse(programConfigPath));
-    const processGrpConfig = FileSystemProviderInstance.readFileSync(URI.parse(processGroupConfigPath));
+    const progConfig = FileSystemProviderInstance.readFileSync(
+      URI.parse(programConfigPath),
+    );
+    const processGrpConfig = FileSystemProviderInstance.readFileSync(
+      URI.parse(processGroupConfigPath),
+    );
 
     // add configs to our provider if they exist
     if (progConfig !== undefined) {
       try {
-        const programConfigs: ProgramConfig[] = JSON.parse(progConfig.toString()).pgms;
+        const programConfigs: ProgramConfig[] = JSON.parse(
+          progConfig.toString(),
+        ).pgms;
         // set w/ respect to the cur workspace path
         this.setProgramConfigs(workspacePath, programConfigs);
       } catch (e) {
@@ -83,8 +89,10 @@ class PluginConfigurationProvider {
 
     if (processGrpConfig !== undefined) {
       try {
-      const processGroupConfigs: ProcessGroup[] = JSON.parse(processGrpConfig.toString()).pgroups;
-      this.setProcessGroupConfigs(processGroupConfigs);
+        const processGroupConfigs: ProcessGroup[] = JSON.parse(
+          processGrpConfig.toString(),
+        ).pgroups;
+        this.setProcessGroupConfigs(processGroupConfigs);
       } catch (e) {
         console.error("Failed to load process group config, skipping:", e);
       }
@@ -99,10 +107,13 @@ class PluginConfigurationProvider {
    * @param programConfigs Program configs loaded from
    *  .pliplugin/pgm_confg.json (when present)
    */
-  public setProgramConfigs(partialKey: string, programConfigs: ProgramConfig[]): void {
+  public setProgramConfigs(
+    partialKey: string,
+    programConfigs: ProgramConfig[],
+  ): void {
     for (const config of programConfigs) {
       // TODO @montymxb Apr. 23rd, 2025: Path sep is not cross-platform
-      this.programConfigs.set(partialKey + '/' + config.program, config);
+      this.programConfigs.set(partialKey + "/" + config.program, config);
     }
   }
 
@@ -154,4 +165,5 @@ class PluginConfigurationProvider {
 /**
  * Single instance of the pli plugin configuration provider.
  */
-export const PluginConfigurationProviderInstance: PluginConfigurationProvider = new PluginConfigurationProvider();
+export const PluginConfigurationProviderInstance: PluginConfigurationProvider =
+  new PluginConfigurationProvider();

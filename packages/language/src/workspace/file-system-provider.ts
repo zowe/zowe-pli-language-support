@@ -33,7 +33,6 @@ export const EmptyFileSystemProvider = new _EmptyFileSystemProvider();
  * Virtualized file system, internally represented as a flat map of files
  */
 export class VirtualFileSystemProvider implements FileSystemProvider {
-
   /**
    * A flat map of files in the virtualized file system, all files are accessible whether in a directory or not this way
    */

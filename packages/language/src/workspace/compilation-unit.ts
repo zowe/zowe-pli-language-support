@@ -127,7 +127,7 @@ export class CompilationUnitHandler {
   /**
    * Conditionally creates/gets a compilation unit for the given URI
    * if the URI corresponds to an entry point, or part of an existing compilation unit.
-   * 
+   *
    * @returns Associated compilation unit or undefined
    */
   getOrCreateCompilationUnit(uri: URI): CompilationUnit | undefined {
