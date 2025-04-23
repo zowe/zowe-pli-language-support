@@ -58,6 +58,16 @@ describe("Linking tests", () => {
  end <|1>OUTER;
  call <|1>OUTER;`));
 
+  test("Must link to procedure label before declaration", () =>
+    expectLinks(`
+ CALL <|1>OUTER;
+
+ <|1:OUTER|>: PROCEDURE;
+   PUT("INSIDE");
+ END <|1>OUTER;   
+
+ CALL <|1>OUTER;`));
+
   test("Must handle implicit declaration (use before declaration)", () =>
     expectLinks(`
  DCL <|1:A|> CHAR(8) INIT("A");
@@ -120,30 +130,73 @@ describe("Linking tests", () => {
           put skip list(V<|2>AR1);
           end <|1>A;`));
 
-  test("Qualified names", () =>
+  test("DO WHILE does not create a new scope", () =>
     expectLinks(`
- DCL ARRAY_ENTRY;
- DCL TWO_DIM_TABLE_ENTRY;
- DCL TYPE#;
+ PUT(<|a>A);
+ DO WHILE (<|a>A < 5);
+  PUT(<|a>A);
+  DCL <|a:A|> BIN FIXED(15) INIT(0);
+  <|proc:MYPROC|>: PROCEDURE;
+  END <|proc>MYPROC;
+ END;
+ PUT(<|a>A);
+ CALL <|proc>MYPROC;`));
 
- DCL 1  <|1:TWO_DIM_TABLE|>,
-        2  <|2:TWO_DIM_TABLE_ENTRY|>          CHAR(32);
- DCL 1  TABLE_WITH_ARRAY,
-        2  ARRAY_ENTRY(0:1000),
-           3  NAME                          CHAR(32) VARYING,
-           3  <|3:TYPE#|>                     CHAR(8),
-        2  NON_ARRAY_ENTRY,
-           3  NAME                          CHAR(32) VARYING,
-           3  <|4:TYPE#|>                     CHAR(8);
+  describe("Qualified names", () => {
+    test("Must work in structured declaration", () =>
+      expectLinks(`
+        DCL ARRAY_ENTRY;
+        DCL TWO_DIM_TABLE_ENTRY;
+        DCL TYPE#;
+       
+        DCL 1  <|1:TWO_DIM_TABLE|>,
+               2  <|2:TWO_DIM_TABLE_ENTRY|>          CHAR(32);
+        DCL 1  TABLE_WITH_ARRAY,
+               2  ARRAY_ENTRY(0:1000),
+                  3  NAME                          CHAR(32) VARYING,
+                  3  <|3:TYPE#|>                     CHAR(8),
+               2  NON_ARRAY_ENTRY,
+                  3  NAME                          CHAR(32) VARYING,
+                  3  <|4:TYPE#|>                     CHAR(8);
+       
+        DCL ARRAY_ENTRY;
+        DCL TWO_DIM_TABLE_ENTRY;
+        DCL TYPE#;
+       
+        PUT (<|1>TWO_DIM_TABLE);
+        PUT (TWO_DIM_TABLE.<|2>TWO_DIM_TABLE_ENTRY);
+        PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|3>TYPE#);
+        PUT (TABLE_WITH_ARRAY.NON_ARRAY_ENTRY.<|4>TYPE#);`));
 
- DCL ARRAY_ENTRY;
- DCL TWO_DIM_TABLE_ENTRY;
- DCL TYPE#;
+    /**
+     * TODO: `b2` should link correctly based on `c`'s qualification.
+     */
+    test.skip("Must infer partially qualified names", () =>
+      expectLinks(`
+ DCL 1 A,
+        2 <|b1:B|>,
+          3 <|c:C|> CHAR(8) VALUE("C");
 
- PUT (<|1>TWO_DIM_TABLE);
- PUT (TWO_DIM_TABLE.<|2>TWO_DIM_TABLE_ENTRY);
- PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|3>TYPE#);
- PUT (TABLE_WITH_ARRAY.NON_ARRAY_ENTRY.<|4>TYPE#);`));
+ DCL 1 A2,
+        2 <|b2:B|>,
+          3 <|d:D|> CHAR(8) VALUE("D");
+
+ PUT (<|b1>B.<|c>C);
+ PUT (<|b2>B.<|d>D);`));
+
+    /**
+     * TODO: This should fail
+     */
+    test.fails.skip("Should not qualify for factorized structured names", () =>
+      // When using factorized names in structures, no child elements are referenceable any more.
+      expectLinks(`
+ DCL 1 A,
+       2 (B,C),
+          3 <|d:D|>;
+
+ PUT(<|d>D);`),
+    );
+  });
 
   describe("Implicit qualification", () => {
     test("Must qualify implicitly in structure", () =>
@@ -192,6 +245,74 @@ describe("Linking tests", () => {
         2 <|b:B|> CHAR(8) VALUE("B2");
 
  PUT(A.<|b>B);`));
+
+    test("Must work before declaration", () =>
+      expectLinks(`
+ PUT(<|a>A);
+ <|a>A = "A2";
+ DCL <|a:A|> CHAR(8) INIT("A");
+ PUT(<|a>A);`));
+
+    test("Must work across procedure boundaries", () =>
+      expectLinks(`
+ PUT(<|a>A);
+
+ LABL: PROCEDURE;
+   PUT(<|a>A);
+ END LABL;
+
+ PUT(<|a>A);
+ CALL LABL;
+
+ DCL <|a:A|> CHAR(8) INIT("A");`));
+  });
+
+  /**
+   * These test probably should not in the linking tests, but I'm putting them here for reference for now.
+   */
+  describe("Faulty cases", () => {
+    /**
+     * TODO: Should this be tested here or in the validation step?
+     */
+    test.fails.skip("Redeclaration must fail", () =>
+      expectLinks(`
+       DCL A CHAR(8) INIT("A");
+       DCL A CHAR(8) INIT("A2");`),
+    );
+
+    test.fails.skip("Redeclaration of label must fail", () =>
+      expectLinks(`
+ OUTER: PROCEDURE;
+ END OUTER;
+ OUTER: PROCEDURE;
+ END OUTER;`),
+    );
+
+    /**
+     * TODO: This program should warn about unused labels (IBM1213I W)
+     *
+     * ```
+     * OUTER: PROCEDURE;
+     * END OUTER;
+     * ```
+     */
+
+    test.fails.skip("Repeated declaration of label is invalid", () =>
+      // Should produce: IBM1306I E: Repeated declaration of A is invalid and will be ignored.
+      expectLinks(`
+ A: PROCEDURE;
+ END A;
+ DCL A CHAR(8) INIT("A"); // <- Error`),
+    );
+
+    test.fails.skip(
+      "Factoring of level numbers into declaration lists containing level numbers is invalid",
+      () =>
+        // Should produce: IBM1376I E: Factoring of level numbers into declaration lists containing level numbers is invalid. The level numbers in the declaration list will be ignored.
+        expectLinks(`
+ DCL 1 A,
+       2(B, 3 C, D) (3,2) binary fixed (15);`),
+    );
   });
 
   test("fetch linking", () => {

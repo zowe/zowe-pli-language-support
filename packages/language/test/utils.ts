@@ -356,7 +356,7 @@ export function expectLinks(text: string) {
       expectedFunction(
         definition.range,
         expectedRange,
-        `Expected range does not match actual range on line ${line} near \`${snippet}\``,
+        `Expected range does not match actual range for label "${label}" on line ${line} near \`${snippet}\``,
       );
     }
   }
