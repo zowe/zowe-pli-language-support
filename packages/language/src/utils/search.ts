@@ -9,9 +9,14 @@ export function binaryTokenSearch(
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
     const token = tokens[mid];
-    if (token.startOffset <= offset && offset <= token.endOffset!) {
+    const start = token.startOffset;
+    const end = token.endOffset!;
+    if (start <= offset && offset <= end) {
       return token;
-    } else if (token.startOffset > offset) {
+    } else if (offset - end === 1 && /\w$/u.test(token.image)) {
+      // If the offset is right after the end of a word token, return that token
+      return token;
+    } else if (start > offset) {
       high = mid - 1;
     } else {
       low = mid + 1;

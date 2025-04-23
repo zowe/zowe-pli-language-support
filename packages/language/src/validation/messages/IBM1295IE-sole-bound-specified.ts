@@ -18,17 +18,17 @@ export function IBM1295IE_sole_bound_specified(
   bound: DimensionBound,
   accept: PliValidationAcceptor,
 ): void {
-  if (bound.bound2 !== undefined) {
+  if (bound.lower !== undefined) {
     return;
   }
-  const upper = bound.bound1;
+  const upper = bound.upper;
   if (isBoundNegative(upper) || isBoundZero(upper)) {
     const code = Error.IBM1295I;
     accept(Severity.E, code.message, {
       //   node: bound
       range: getSyntaxNodeRange(bound)!,
       uri: "", // TODO: Add URI
-      //   property: "bound1",
+      //   property: "upper",
       code: code.fullCode,
     });
   }

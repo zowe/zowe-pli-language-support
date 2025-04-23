@@ -69,7 +69,7 @@ export interface TokenPayload {
   /**
    * The URI associated with the token, if any.
    */
-  uri: URI;
+  uri?: URI;
 
   /**
    * The kind of CST (Concrete Syntax Tree) node.
@@ -140,7 +140,7 @@ export class AbstractParser extends EmbeddedActionsParser {
     return this.ACTION(() => {
       let element = this.stack.pop();
       if (element && "infix" in element) {
-        element = this.constructBinaryExpression(element);
+        element = constructBinaryExpression(element);
       }
       return element;
     });
@@ -303,109 +303,109 @@ export class AbstractParser extends EmbeddedActionsParser {
   ): void {
     this.subrule_assign(9, ruleToCall, options);
   }
+}
 
-  /**
-   * Builds a precedence map from precedence groups
-   */
-  private buildPrecendenceMap(
-    precedenceGroups: TokenType[][],
-  ): Map<string, number> {
-    const map = new Map<string, number>();
-    for (let i = 0; i < precedenceGroups.length; i++) {
-      const group = precedenceGroups[i];
-      for (const token of group) {
-        map.set(token.name, i);
-      }
+/**
+ * Builds a precedence map from precedence groups
+ */
+function buildPrecendenceMap(
+  precedenceGroups: TokenType[][],
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (let i = 0; i < precedenceGroups.length; i++) {
+    const group = precedenceGroups[i];
+    for (const token of group) {
+      map.set(token.name, i);
     }
-    return map;
+  }
+  return map;
+}
+
+const binaryPrecedence = buildPrecendenceMap([
+  // Priority 1, **
+  [tokens.StarStar],
+  // Priority 2, *, /
+  [tokens.Star, tokens.Slash],
+  // Priority 3, +, -
+  [tokens.Plus, tokens.Minus],
+  // Priority 4, ||, !!
+  [tokens.PipePipe, tokens.ExclamationMarkExclamationMark],
+  // Priority 5, '<', '¬<', '<=', '=', '¬=', '^=', '<>', '>=', '>', '¬>'
+  [
+    tokens.LessThan,
+    tokens.NotLessThan,
+    tokens.LessThanEquals,
+    tokens.Equals,
+    tokens.NotEquals,
+    tokens.LessThanGreaterThan,
+    tokens.GreaterThanEquals,
+    tokens.GreaterThan,
+    tokens.NotGreaterThan,
+  ],
+  // Priority 6, &
+  [tokens.Ampersand],
+  // Priority 7, |, ¬ or ^
+  [tokens.Pipe, tokens.Not],
+]);
+
+/**
+ * Constructs a binary expression from an intermediate representation,
+ * used when popping infix exprs from the stack,
+ * so we get the whole thing together
+ */
+export function constructBinaryExpression(
+  obj: IntermediateBinaryExpression,
+): BinaryExpression {
+  if (obj.items.length === 1) {
+    // Captured just a single, non-binary expression
+    // Simply return the expression as is.
+    return obj.items[0];
+  }
+  // Find the operator with the lowest precedence (highest value in precedence map)
+  let lowestPrecedenceIdx = 0;
+  let lowestPrecedenceValue = -1;
+
+  for (let i = 0; i < obj.operators.length; i++) {
+    const operator = obj.operators[i];
+    const precedenceValue = binaryPrecedence.get(operator) ?? Infinity;
+
+    // If we find an operator with lower precedence or equal precedence
+    // (for left-to-right evaluation), update our tracking
+    if (precedenceValue > lowestPrecedenceValue) {
+      lowestPrecedenceValue = precedenceValue;
+      lowestPrecedenceIdx = i;
+    }
   }
 
-  private binaryPrecedence = this.buildPrecendenceMap([
-    // Priority 1, **
-    [tokens.StarStar],
-    // Priority 2, *, /
-    [tokens.Star, tokens.Slash],
-    // Priority 3, +, -
-    [tokens.Plus, tokens.Minus],
-    // Priority 4, ||, !!
-    [tokens.PipePipe, tokens.ExclamationMarkExclamationMark],
-    // Priority 5, '<', '¬<', '<=', '=', '¬=', '^=', '<>', '>=', '>', '¬>'
-    [
-      tokens.LessThan,
-      tokens.NotLessThan,
-      tokens.LessThanEquals,
-      tokens.Equals,
-      tokens.NotEquals,
-      tokens.LessThanGreaterThan,
-      tokens.GreaterThanEquals,
-      tokens.GreaterThan,
-      tokens.NotGreaterThan,
-    ],
-    // Priority 6, &
-    [tokens.Ampersand],
-    // Priority 7, |, ¬ or ^
-    [tokens.Pipe, tokens.Not],
-  ]);
+  // Split the expression at the lowest precedence operator
+  const leftOperators = obj.operators.slice(0, lowestPrecedenceIdx);
+  const rightOperators = obj.operators.slice(lowestPrecedenceIdx + 1);
 
-  /**
-   * Constructs a binary expression from an intermediate representation,
-   * used when popping infix exprs from the stack,
-   * so we get the whole thing together
-   */
-  private constructBinaryExpression(
-    obj: IntermediateBinaryExpression,
-  ): BinaryExpression {
-    if (obj.items.length === 1) {
-      // Captured just a single, non-binary expression
-      // Simply return the expression as is.
-      return obj.items[0];
-    }
-    // Find the operator with the lowest precedence (highest value in precedence map)
-    let lowestPrecedenceIdx = 0;
-    let lowestPrecedenceValue = -1;
+  const leftParts = obj.items.slice(0, lowestPrecedenceIdx + 1);
+  const rightParts = obj.items.slice(lowestPrecedenceIdx + 1);
 
-    for (let i = 0; i < obj.operators.length; i++) {
-      const operator = obj.operators[i];
-      const precedenceValue = this.binaryPrecedence.get(operator) ?? Infinity;
+  // Create sub-expressions
+  const leftInfix: IntermediateBinaryExpression = {
+    infix: true,
+    items: leftParts,
+    operators: leftOperators,
+  };
+  const rightInfix: IntermediateBinaryExpression = {
+    infix: true,
+    items: rightParts,
+    operators: rightOperators,
+  };
 
-      // If we find an operator with lower precedence or equal precedence
-      // (for left-to-right evaluation), update our tracking
-      if (precedenceValue > lowestPrecedenceValue) {
-        lowestPrecedenceValue = precedenceValue;
-        lowestPrecedenceIdx = i;
-      }
-    }
+  // Recursively build the left and right subtrees
+  const leftTree = constructBinaryExpression(leftInfix);
+  const rightTree = constructBinaryExpression(rightInfix);
 
-    // Split the expression at the lowest precedence operator
-    const leftOperators = obj.operators.slice(0, lowestPrecedenceIdx);
-    const rightOperators = obj.operators.slice(lowestPrecedenceIdx + 1);
-
-    const leftParts = obj.items.slice(0, lowestPrecedenceIdx + 1);
-    const rightParts = obj.items.slice(lowestPrecedenceIdx + 1);
-
-    // Create sub-expressions
-    const leftInfix: IntermediateBinaryExpression = {
-      infix: true,
-      items: leftParts,
-      operators: leftOperators,
-    };
-    const rightInfix: IntermediateBinaryExpression = {
-      infix: true,
-      items: rightParts,
-      operators: rightOperators,
-    };
-
-    // Recursively build the left and right subtrees
-    const leftTree = this.constructBinaryExpression(leftInfix);
-    const rightTree = this.constructBinaryExpression(rightInfix);
-
-    // Create the final binary expression
-    return {
-      kind: SyntaxKind.BinaryExpression,
-      container: null,
-      left: leftTree,
-      op: obj.operators[lowestPrecedenceIdx],
-      right: rightTree,
-    };
-  }
+  // Create the final binary expression
+  return {
+    kind: SyntaxKind.BinaryExpression,
+    container: null,
+    left: leftTree,
+    op: obj.operators[lowestPrecedenceIdx],
+    right: rightTree,
+  };
 }

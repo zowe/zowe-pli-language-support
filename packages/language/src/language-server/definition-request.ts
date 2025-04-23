@@ -32,7 +32,7 @@ export function definitionRequest(
   if (!payload || !token) {
     return [];
   }
-  if (isNameToken(payload.kind)) {
+  if (isNameToken(payload.kind) && payload.uri) {
     return [
       {
         uri: payload.uri.toString(),
@@ -48,7 +48,7 @@ export function definitionRequest(
       return [];
     }
     const nameToken = getNameToken(ref.node);
-    if (!nameToken) {
+    if (!nameToken?.payload?.uri) {
       return [];
     }
     return [
