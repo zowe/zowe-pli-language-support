@@ -101,6 +101,7 @@ class PluginConfigurationProvider {
    */
   public setProgramConfigs(partialKey: string, programConfigs: ProgramConfig[]): void {
     for (const config of programConfigs) {
+      // TODO @montymxb Apr. 23rd, 2025: Path sep is not cross-platform
       this.programConfigs.set(partialKey + '/' + config.program, config);
     }
   }
