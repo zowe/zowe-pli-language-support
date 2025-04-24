@@ -48,10 +48,14 @@ const controlKeywords = [
     'return',
     'when',
     'begin',
-    'process'
+    'process',
+    'include',
+    'deactivate',
+    'activate',
 ];
 
 const storageKeywords = keywords.map(e => e.toLowerCase()).exclude(controlKeywords).toArray();
+storageKeywords.push('SCAN', 'RESCAN');
 
 function toPattern(keywords) {
     const patterns = [];

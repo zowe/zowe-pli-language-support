@@ -12,7 +12,6 @@
 import { Connection, NotificationType } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { PPIfStatement, PPSkip } from "../preprocessor/pli-preprocessor-ast";
 
 export interface SkippedPliCodeNotificationParams {
   uri: string;
@@ -70,48 +69,48 @@ export function skippedCodeRanges(
     };
   }> = [];
 
-  const ppSkips: PPSkip[] = compilationUnit.preprocessorStatements.filter(
-    (statement) => statement.type === "skip",
-  ) as PPSkip[];
+  // const ppSkips: PPSkip[] = compilationUnit.preprocessorStatements.filter(
+  //   (statement) => statement.type === "skip",
+  // ) as PPSkip[];
 
-  for (const skip of ppSkips) {
-    const line = textDocument.positionAt(skip.startOffset).line + 1;
-    const range = {
-      range: {
-        start: { line: line, character: 0 },
-        end: { line: line + skip.lineCount, character: 0 },
-      },
-    };
-    result.push(range);
-  }
+  // for (const skip of ppSkips) {
+  //   const line = textDocument.positionAt(skip.startOffset).line + 1;
+  //   const range = {
+  //     range: {
+  //       start: { line: line, character: 0 },
+  //       end: { line: line + skip.lineCount, character: 0 },
+  //     },
+  //   };
+  //   result.push(range);
+  // }
 
-  const ppIfs: PPIfStatement[] = compilationUnit.preprocessorStatements.filter(
-    (statement) => statement.type === "if",
-  ) as PPIfStatement[];
+  // const ppIfs: PPIfStatement[] = compilationUnit.preprocessorStatements.filter(
+  //   (statement) => statement.type === "if",
+  // ) as PPIfStatement[];
 
-  for (const ifStatement of ppIfs) {
-    if (ifStatement.conditionEval === undefined) {
-      continue;
-    }
+  // for (const ifStatement of ppIfs) {
+  //   if (ifStatement.conditionEval === undefined) {
+  //     continue;
+  //   }
 
-    if (ifStatement.conditionEval) {
-      if (ifStatement.elseUnitRange) {
-        result.push({
-          range: {
-            start: textDocument.positionAt(ifStatement.elseUnitRange!.start),
-            end: textDocument.positionAt(ifStatement.elseUnitRange!.end),
-          },
-        });
-      }
-    } else {
-      result.push({
-        range: {
-          start: textDocument.positionAt(ifStatement.thenUnitRange.start),
-          end: textDocument.positionAt(ifStatement.thenUnitRange.end),
-        },
-      });
-    }
-  }
+  //   if (ifStatement.conditionEval) {
+  //     if (ifStatement.elseUnitRange) {
+  //       result.push({
+  //         range: {
+  //           start: textDocument.positionAt(ifStatement.elseUnitRange!.start),
+  //           end: textDocument.positionAt(ifStatement.elseUnitRange!.end),
+  //         },
+  //       });
+  //     }
+  //   } else {
+  //     result.push({
+  //       range: {
+  //         start: textDocument.positionAt(ifStatement.thenUnitRange.start),
+  //         end: textDocument.positionAt(ifStatement.thenUnitRange.end),
+  //       },
+  //     });
+  //   }
+  // }
 
   return result;
 }

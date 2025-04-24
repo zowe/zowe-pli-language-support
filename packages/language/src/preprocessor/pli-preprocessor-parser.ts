@@ -10,38 +10,29 @@
  */
 
 import {
-  PPStatement,
-  ProcedureScope,
-  ScanMode,
-  VariableType,
-  PPExpression,
-  PPAssign,
-  PPDirective,
-  PPActivate,
-  PPDeactivate,
-  PPBinaryExpression,
-  AnyDoGroup,
-  AnyDeclare,
-  DimensionBounds,
-  NameAndBounds,
-  Dimensions,
-  PPDeclaration,
-} from "./pli-preprocessor-ast";
-import { PreprocessorTokens } from "./pli-preprocessor-tokens";
+  PreprocessorBinaryTokens,
+  PreprocessorTokens,
+} from "./pli-preprocessor-tokens";
 import {
   PliPreprocessorParserState,
   PreprocessorParserState,
 } from "./pli-preprocessor-parser-state";
 import { PreprocessorError } from "./pli-preprocessor-error";
-import { IToken, TokenType } from "chevrotain";
+import { IToken } from "chevrotain";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
-import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { URI, UriUtils } from "../utils/uri";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import { TextDocuments } from "../language-server/text-documents";
+import * as ast from "../syntax-tree/ast";
+import {
+  constructBinaryExpression,
+  IntermediateBinaryExpression,
+} from "../parser/abstract-parser";
+import { CstNodeKind } from "../syntax-tree/cst";
+import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 
 export type PreprocessorParserResult = {
-  statements: PPStatement[];
+  statements: ast.Statement[];
   errors: PreprocessorError[];
   perFileTokens: Record<string, IToken[]>;
 };
@@ -58,7 +49,7 @@ export class PliPreprocessorParser {
   }
 
   start(state: PreprocessorParserState): PreprocessorParserResult {
-    const statements: PPStatement[] = [];
+    const statements: ast.Statement[] = [];
     const errors: PreprocessorError[] = [];
     while (!state.eof) {
       try {
@@ -67,15 +58,14 @@ export class PliPreprocessorParser {
           state.canConsume(PreprocessorTokens.Percentage)
         ) {
           const statement = this.statement(state);
-          if (statement.type === "include") {
-            errors.push(...statement.subProgram.errors);
+          if (statement.value?.kind === ast.SyntaxKind.IncludeDirective) {
+            errors.push(
+              ...statement.value.items.flatMap((e) => e.result?.errors ?? []),
+            );
           }
           statements.push(statement);
         } else {
-          statements.push({
-            type: "pli",
-            tokens: state.consumeUntil((tk) => tk.image === ";"),
-          });
+          statements.push(this.consumeTokenStatement(state));
         }
       } catch (error) {
         if (error instanceof PreprocessorError) {
@@ -93,9 +83,23 @@ export class PliPreprocessorParser {
     };
   }
 
-  statement(state: PreprocessorParserState): PPStatement {
+  private consumeTokenStatement(state: PreprocessorParserState): ast.Statement {
+    const tokenStatement = ast.createTokenStatement();
+    tokenStatement.tokens = state.consumeUntil((tk) => tk.image === ";");
+    const statement = ast.createStatement();
+    statement.value = tokenStatement;
+    return statement;
+  }
+
+  statement(state: PreprocessorParserState): ast.Statement {
     if (state.isOnlyInStatement()) {
-      if (state.tryConsume(PreprocessorTokens.Percentage)) {
+      if (
+        state.tryConsume(
+          undefined,
+          CstNodeKind.Percentage,
+          PreprocessorTokens.Percentage,
+        )
+      ) {
         state.push("in-statement");
         try {
           return this.commonStatement(state);
@@ -103,10 +107,7 @@ export class PliPreprocessorParser {
           state.pop();
         }
       } else {
-        return {
-          type: "pli",
-          tokens: state.consumeUntil((tk) => tk.image === ";"),
-        };
+        return this.consumeTokenStatement(state);
       }
     } else {
       //state.isInProcedure()
@@ -114,282 +115,456 @@ export class PliPreprocessorParser {
     }
   }
 
-  commonStatement(state: PreprocessorParserState) {
-    const labels: string[] = [];
+  commonStatement(state: PreprocessorParserState): ast.Statement {
+    const statement = ast.createStatement();
     while (state.canConsume(PreprocessorTokens.Id, PreprocessorTokens.Colon)) {
-      const labelName = state.consume(PreprocessorTokens.Id).image;
-      state.consume(PreprocessorTokens.Colon);
-      labels.push(labelName);
+      const label = ast.createLabelPrefix();
+      const labelToken = state.consume(
+        label,
+        CstNodeKind.LabelPrefix_Name,
+        PreprocessorTokens.Id,
+      );
+      label.name = labelToken.image;
+      label.nameToken = labelToken;
+      state.consume(
+        label,
+        CstNodeKind.LabelPrefix_Colon,
+        PreprocessorTokens.Colon,
+      );
+      statement.labels.push(label);
     }
-    let statement: PPStatement | undefined = undefined;
+    let unit: ast.Unit | undefined = undefined;
     switch (state.current?.tokenType) {
       case PreprocessorTokens.Activate:
-        statement = this.activateStatement(state);
+        unit = this.activateStatement(state);
         break;
       case PreprocessorTokens.Deactivate:
-        statement = this.deactivateStatement(state);
+        unit = this.deactivateStatement(state);
         break;
       case PreprocessorTokens.Declare:
-        statement = this.declareStatement(state);
+        unit = this.declareStatement(state);
         break;
       case PreprocessorTokens.Directive:
-        statement = this.directive(state);
+        unit = this.directive(state);
         break;
       case PreprocessorTokens.Skip:
-        statement = this.skipStatement(state);
+        unit = this.skipStatement(state);
         break;
       case PreprocessorTokens.Include:
-        statement = this.includeStatement(state);
+        unit = this.includeStatement(state);
         break;
       case PreprocessorTokens.Id:
-        statement = this.assignmentStatement(state);
+        unit = this.assignmentStatement(state);
         break;
       case PreprocessorTokens.If:
-        statement = this.ifStatement(state);
+        unit = this.ifStatement(state);
         break;
       case PreprocessorTokens.Do:
-        statement = this.doStatement(state);
+        unit = this.doStatement(state);
         break;
       case PreprocessorTokens.Go:
-        statement = this.goToStatement(state);
+        unit = this.goToStatement(state);
         break;
       case PreprocessorTokens.Leave:
-        statement = this.leaveStatement(state);
+        unit = this.leaveStatement(state);
         break;
       case PreprocessorTokens.Iterate:
-        statement = this.iterateStatement(state);
+        unit = this.iterateStatement(state);
         break;
       default:
         if (state.isOnlyInStatement()) {
           if (state.current?.tokenType === PreprocessorTokens.Procedure) {
-            statement = this.procedureStatement(state);
+            unit = this.procedureStatement(state);
           }
         } else {
           //state.isInProcedure()
-          if (state.tryConsume(PreprocessorTokens.Return)) {
-            state.consume(PreprocessorTokens.LParen);
-            statement = {
-              type: "return",
-              value: this.expression(state),
-            };
-            state.consume(PreprocessorTokens.RParen);
-            state.consume(PreprocessorTokens.Semicolon);
+          const returnStatement = ast.createReturnStatement();
+          if (
+            state.tryConsume(
+              returnStatement,
+              CstNodeKind.ReturnStatement_RETURN,
+              PreprocessorTokens.Return,
+            )
+          ) {
+            state.consume(
+              returnStatement,
+              CstNodeKind.ReturnStatement_OpenParen,
+              PreprocessorTokens.LParen,
+            );
+            returnStatement.expression = this.expression(state);
+            unit = returnStatement;
+            state.consume(
+              returnStatement,
+              CstNodeKind.ReturnStatement_CloseParen,
+              PreprocessorTokens.RParen,
+            );
+            state.consume(
+              returnStatement,
+              CstNodeKind.ReturnStatement_Semicolon,
+              PreprocessorTokens.Semicolon,
+            );
           }
         }
-        if (statement === undefined) {
-          throw new PreprocessorError(
-            "Unexpected token '" + state.current?.image + "'.",
-            state.current!,
-            state.uri.toString(),
-          );
-        }
     }
-    if (labels.length === 0 && statement.type === "procedure") {
+    if (unit === undefined) {
       throw new PreprocessorError(
-        "Procedure must have a label.",
+        "Unexpected token '" + state.current?.image + "'.",
         state.current!,
         state.uri.toString(),
       );
     }
-    for (const labelName of labels.reverse()) {
-      statement = {
-        type: "labeled",
-        label: labelName,
-        statement,
-      };
-    }
+    // TODO: We can move this into validation!
+    // if (labels.length === 0 && unit?.kind === ast.SyntaxKind.ProcedureStatement) {
+    //   throw new PreprocessorError(
+    //     "Procedure must have a label.",
+    //     state.current!,
+    //     state.uri.toString(),
+    //   );
+    // }
+    statement.value = unit;
     return statement;
   }
 
-  procedureStatement(state: PreprocessorParserState): PPStatement {
+  procedureStatement(state: PreprocessorParserState): ast.ProcedureStatement {
+    const statement = ast.createProcedureStatement();
     state.push("in-procedure");
-    state.consume(PreprocessorTokens.Procedure);
-    const parameters: string[] = [];
-    if (state.tryConsume(PreprocessorTokens.LParen)) {
+    state.consume(
+      statement,
+      CstNodeKind.ProcedureStatement_PROCEDURE,
+      PreprocessorTokens.Procedure,
+    );
+    if (
+      state.tryConsume(
+        statement,
+        CstNodeKind.ProcedureStatement_OpenParenParams,
+        PreprocessorTokens.LParen,
+      )
+    ) {
       do {
-        const parameter = state.consume(PreprocessorTokens.Id).image;
-        parameters.push(parameter);
-      } while (state.tryConsume(PreprocessorTokens.Comma));
-      state.consume(PreprocessorTokens.RParen);
+        const parameter = ast.createProcedureParameter();
+        const nameToken = state.consume(
+          parameter,
+          CstNodeKind.ProcedureParameter_Id,
+          PreprocessorTokens.Id,
+        );
+        parameter.name = nameToken.image;
+        parameter.nameToken = nameToken;
+        statement.parameters.push(parameter);
+      } while (
+        state.tryConsume(
+          statement,
+          CstNodeKind.ProcedureStatement_Comma,
+          PreprocessorTokens.Comma,
+        )
+      );
+      state.consume(
+        statement,
+        CstNodeKind.ProcedureStatement_CloseParenParams,
+        PreprocessorTokens.RParen,
+      );
     }
-    const isStatement = state.tryConsume(PreprocessorTokens.Statement);
-    let returnType: VariableType | undefined = undefined;
-    if (state.tryConsume(PreprocessorTokens.Returns)) {
-      state.consume(PreprocessorTokens.LParen);
-      if (state.tryConsume(PreprocessorTokens.Character)) {
+    statement.statement = state.tryConsume(
+      statement,
+      CstNodeKind.ProcedureStatement_STATEMENT,
+      PreprocessorTokens.Statement,
+    );
+    const returnsOption = ast.createReturnsOption();
+    if (
+      state.tryConsume(
+        returnsOption,
+        CstNodeKind.ReturnsOption_RETURNS,
+        PreprocessorTokens.Returns,
+      )
+    ) {
+      state.consume(
+        returnsOption,
+        CstNodeKind.ReturnsOption_OpenParen,
+        PreprocessorTokens.LParen,
+      );
+      let returnType: string | undefined = undefined;
+      const dataAttribute = ast.createComputationDataAttribute();
+      if (
+        state.tryConsume(
+          dataAttribute,
+          CstNodeKind.DefaultAttribute_Value,
+          PreprocessorTokens.Character,
+        )
+      ) {
         returnType = "character";
-      } else if (state.tryConsume(PreprocessorTokens.Fixed)) {
+      } else if (
+        state.tryConsume(
+          dataAttribute,
+          CstNodeKind.DefaultAttribute_Value,
+          PreprocessorTokens.Fixed,
+        )
+      ) {
         returnType = "fixed";
       }
-      state.consume(PreprocessorTokens.RParen);
+      if (returnType) {
+        dataAttribute.type = returnType as ast.DefaultAttribute;
+        returnsOption.returnAttributes.push(dataAttribute);
+      }
+      state.consume(
+        returnsOption,
+        CstNodeKind.ReturnsOption_CloseParen,
+        PreprocessorTokens.RParen,
+      );
+      statement.options.push(returnsOption);
     }
-    state.consume(PreprocessorTokens.Semicolon);
+    state.consume(
+      statement,
+      CstNodeKind.ProcedureStatement_Semicolon0,
+      PreprocessorTokens.Semicolon,
+    );
     const body = this.statements(state);
-    state.consume(PreprocessorTokens.End);
-    state.consume(PreprocessorTokens.Semicolon);
+    statement.statements = body;
+    state.consume(
+      statement,
+      CstNodeKind.ProcedureStatement_PROCEDURE_END,
+      PreprocessorTokens.End,
+    );
+    state.consume(
+      statement,
+      CstNodeKind.ProcedureStatement_Semicolon1,
+      PreprocessorTokens.Semicolon,
+    );
     state.pop();
-    return {
-      type: "procedure",
-      isStatement,
-      returnType,
-      parameters,
-      body,
-    };
+    return statement;
   }
 
-  iterateStatement(state: PreprocessorParserState): PPStatement {
-    state.consume(PreprocessorTokens.Iterate);
+  iterateStatement(state: PreprocessorParserState): ast.IterateStatement {
+    const statement = ast.createIterateStatement();
+    state.consume(
+      statement,
+      CstNodeKind.IterateStatement_ITERATE,
+      PreprocessorTokens.Iterate,
+    );
     if (state.canConsume(PreprocessorTokens.Id)) {
-      const label = state.consume(PreprocessorTokens.Id).image;
-      state.consume(PreprocessorTokens.Semicolon);
-      return {
-        type: "iterate",
-        label,
-      };
+      statement.label = this.labelReference(state);
     }
-    state.consume(PreprocessorTokens.Semicolon);
-    return {
-      type: "iterate",
-      label: undefined,
-    };
+    state.consume(
+      statement,
+      CstNodeKind.IterateStatement_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return statement;
   }
 
-  leaveStatement(state: PreprocessorParserState): PPStatement {
-    state.consume(PreprocessorTokens.Leave);
+  leaveStatement(state: PreprocessorParserState): ast.LeaveStatement {
+    const statement = ast.createLeaveStatement();
+    state.consume(
+      statement,
+      CstNodeKind.LeaveStatement_LEAVE,
+      PreprocessorTokens.Leave,
+    );
     if (state.canConsume(PreprocessorTokens.Id)) {
-      const label = state.consume(PreprocessorTokens.Id).image;
-      state.consume(PreprocessorTokens.Semicolon);
-      return {
-        type: "leave",
-        label,
-      };
+      statement.label = this.labelReference(state);
     }
-    state.consume(PreprocessorTokens.Semicolon);
-    return {
-      type: "leave",
-      label: undefined,
-    };
+    state.consume(
+      statement,
+      CstNodeKind.LeaveStatement_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return statement;
   }
 
-  goToStatement(state: PreprocessorParserState): PPStatement {
-    state.consume(PreprocessorTokens.Go);
-    state.consumeKeyword(PreprocessorTokens.To);
-    const label = state.consume(PreprocessorTokens.Id).image;
-    state.consume(PreprocessorTokens.Semicolon);
-    return {
-      type: "goto",
-      label,
-    };
+  goToStatement(state: PreprocessorParserState): ast.GoToStatement {
+    const statement = ast.createGoToStatement();
+    state.consume(
+      statement,
+      CstNodeKind.GoToStatement_GO,
+      PreprocessorTokens.Go,
+    );
+    state.consumeKeyword(
+      statement,
+      CstNodeKind.GoToStatement_TO,
+      PreprocessorTokens.To,
+    );
+    statement.label = this.labelReference(state);
+    state.consume(
+      statement,
+      CstNodeKind.GoToStatement_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return statement;
   }
 
-  includeStatement(state: PreprocessorParserState): PPStatement {
-    state.consume(PreprocessorTokens.Include);
-    let fileName = "";
-    if (state.canConsume(PreprocessorTokens.Id)) {
-      // TODO: read file extension from config
-      // TODO#2 use SYSLIB (i.e. compiler options) to determine the file location
-      fileName = state.consume(PreprocessorTokens.Id).image + ".pli";
-    } else {
-      const file = state.consume(PreprocessorTokens.String).image;
-      fileName = file.substring(1, file.length - 1);
+  private labelReference(state: PreprocessorParserState): ast.LabelReference {
+    const reference = ast.createLabelReference();
+    const label = state.consume(
+      reference,
+      CstNodeKind.LabelReference_LabelRef,
+      PreprocessorTokens.Id,
+    );
+    reference.label = ast.createReference(reference, label, true);
+    return reference;
+  }
+
+  includeStatement(state: PreprocessorParserState): ast.IncludeDirective {
+    const directive = ast.createIncludeDirective();
+    state.consume(
+      directive,
+      CstNodeKind.IncludeDirective_INCLUDE,
+      PreprocessorTokens.Include,
+    );
+    while (true) {
+      const item = ast.createIncludeItem();
+      if (state.canConsume(PreprocessorTokens.Id)) {
+        // TODO: read file extension from config
+        // TODO#2 use SYSLIB (i.e. compiler options) to determine the file location
+        const fileName =
+          state.consume(
+            item,
+            CstNodeKind.IncludeItem_FileID0,
+            PreprocessorTokens.Id,
+          ).image + ".pli";
+        item.file = fileName;
+      } else if (state.canConsume(PreprocessorTokens.String)) {
+        const file = state.consume(
+          item,
+          CstNodeKind.IncludeItem_FileString0,
+          PreprocessorTokens.String,
+        ).image;
+        const fileName = file.substring(1, file.length - 1);
+        item.file = fileName;
+        item.string = true;
+      } else {
+        break;
+      }
+      directive.items.push(item);
+      // Optional comma
+      state.tryConsume(
+        directive,
+        CstNodeKind.IncludeDirective_Comma,
+        PreprocessorTokens.Comma,
+      );
     }
-    state.consume(PreprocessorTokens.Semicolon);
+    state.consume(
+      directive,
+      CstNodeKind.IncludeDirective_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
     // TODO: cache included files
     const currentDir = UriUtils.dirname(state.uri);
-    const uri = UriUtils.joinPath(currentDir, fileName);
-    try {
-      const content =
-        TextDocuments.get(uri)?.getText() ??
-        FileSystemProviderInstance.readFileSync(uri);
-      const subState = this.initializeState(content, uri);
-      const subProgram = this.start(subState);
-      // Ensure that we store the tokens of included files in our state
-      // That way we can use them later for LSP services!
-      for (const [uri, tokens] of Object.entries(subState.perFileTokens)) {
-        state.perFileTokens[uri] = tokens;
+    for (const item of directive.items) {
+      if (!item.file) {
+        continue;
       }
-      return {
-        type: "include",
-        subProgram,
-      };
-    } catch {
-      return {
-        type: "include",
-        subProgram: {
-          errors: [],
-          statements: [],
-          perFileTokens: {},
-        },
-      };
+      const uri = UriUtils.joinPath(currentDir, item.file);
+      try {
+        const content =
+          TextDocuments.get(uri)?.getText() ??
+          FileSystemProviderInstance.readFileSync(uri);
+        const subState = this.initializeState(content, uri);
+        const subProgram = this.start(subState);
+        // Ensure that we store the tokens of included files in our state
+        // That way we can use them later for LSP services!
+        for (const [uri, tokens] of Object.entries(subState.perFileTokens)) {
+          state.perFileTokens[uri] = tokens;
+        }
+        item.result = subProgram;
+      } catch {
+        // do nothing
+      }
     }
+    return directive;
   }
 
-  doStatement(state: PreprocessorParserState): AnyDoGroup {
-    state.consume(PreprocessorTokens.Do);
-    if (state.tryConsumeKeyword(PreprocessorTokens.While)) {
+  doStatement(state: PreprocessorParserState): ast.DoStatement {
+    const statement = ast.createDoStatement();
+    state.consume(statement, CstNodeKind.DoStatement_DO, PreprocessorTokens.Do);
+    if (state.canConsumeKeyword(PreprocessorTokens.While)) {
       //type-2-do-while-first
-      state.consume(PreprocessorTokens.LParen);
-      const conditionWhile = this.expression(state);
-      state.consume(PreprocessorTokens.RParen);
-      let conditionUntil: PPExpression | undefined = undefined;
-      if (state.canConsumeKeyword(PreprocessorTokens.Until)) {
-        state.consumeKeyword(PreprocessorTokens.Until);
-        state.consume(PreprocessorTokens.LParen);
-        conditionUntil = this.expression(state);
-        state.consume(PreprocessorTokens.RParen);
-      }
-      state.consume(PreprocessorTokens.Semicolon);
-
+      const type2 = this.doWhile(state);
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon0,
+        PreprocessorTokens.Semicolon,
+      );
       const body = this.statements(state);
-      state.consumeKeyword(PreprocessorTokens.End);
-      state.consume(PreprocessorTokens.Semicolon);
-      return {
-        type: "do-while-until",
-        conditionWhile,
-        conditionUntil,
-        body,
-      };
-    } else if (state.tryConsumeKeyword(PreprocessorTokens.Until)) {
+      statement.doType2 = type2;
+      statement.statements = body;
+      state.consumeKeyword(
+        statement,
+        CstNodeKind.EndStatement_END,
+        PreprocessorTokens.End,
+      );
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon1,
+        PreprocessorTokens.Semicolon,
+      );
+      return statement;
+    } else if (state.canConsumeKeyword(PreprocessorTokens.Until)) {
       //type-2-do-until-first
-      state.consume(PreprocessorTokens.LParen);
-      const conditionUntil = this.expression(state);
-      state.consume(PreprocessorTokens.RParen);
-      let conditionWhile: PPExpression | undefined = undefined;
-      if (state.canConsumeKeyword(PreprocessorTokens.While)) {
-        state.consumeKeyword(PreprocessorTokens.While);
-        state.consume(PreprocessorTokens.LParen);
-        conditionWhile = this.expression(state);
-        state.consume(PreprocessorTokens.RParen);
-      }
-      state.consume(PreprocessorTokens.Semicolon);
+      const type2 = this.doUntil(state);
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon0,
+        PreprocessorTokens.Semicolon,
+      );
       const body = this.statements(state);
-      state.consumeKeyword(PreprocessorTokens.End);
-      state.consume(PreprocessorTokens.Semicolon);
-      return {
-        type: "do-until-while",
-        conditionWhile,
-        conditionUntil,
-        body,
-      };
-    } else if (state.tryConsumeKeyword(PreprocessorTokens.Loop)) {
+      statement.doType2 = type2;
+      statement.statements = body;
+      state.consumeKeyword(
+        statement,
+        CstNodeKind.EndStatement_END,
+        PreprocessorTokens.End,
+      );
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon1,
+        PreprocessorTokens.Semicolon,
+      );
+      return statement;
+    } else if (
+      state.tryConsumeKeyword(
+        statement,
+        CstNodeKind.DoStatement_LOOP,
+        PreprocessorTokens.Loop,
+      )
+    ) {
       //type-4 loops
-      state.consume(PreprocessorTokens.Semicolon);
+      statement.doType4 = true;
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon0,
+        PreprocessorTokens.Semicolon,
+      );
       const body = this.statements(state);
-      state.consumeKeyword(PreprocessorTokens.End);
-      state.consume(PreprocessorTokens.Semicolon);
-      return {
-        type: "do-forever",
-        body,
-      };
-    } else if (state.tryConsume(PreprocessorTokens.Semicolon)) {
+      statement.statements = body;
+      state.consumeKeyword(
+        statement,
+        CstNodeKind.EndStatement_END,
+        PreprocessorTokens.End,
+      );
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon1,
+        PreprocessorTokens.Semicolon,
+      );
+      return statement;
+    } else if (
+      state.tryConsume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon0,
+        PreprocessorTokens.Semicolon,
+      )
+    ) {
       //type-1-do
       const statements = this.statements(state);
-      state.consumeKeyword(PreprocessorTokens.End);
-      state.consume(PreprocessorTokens.Semicolon);
-      return {
-        type: "do",
-        statements,
-      };
+      statement.statements = statements;
+      state.consumeKeyword(
+        statement,
+        CstNodeKind.EndStatement_END,
+        PreprocessorTokens.End,
+      );
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon1,
+        PreprocessorTokens.Semicolon,
+      );
+      return statement;
     }
     //TODO type-3-do
     throw new PreprocessorError(
@@ -399,8 +574,88 @@ export class PliPreprocessorParser {
     );
   }
 
-  private statements(state: PreprocessorParserState) {
-    const statements: PPStatement[] = [];
+  private doWhile(state: PreprocessorParserState): ast.DoWhile {
+    const statement = ast.createDoWhile();
+    state.consumeKeyword(
+      statement,
+      CstNodeKind.DoWhile_WHILE,
+      PreprocessorTokens.While,
+    );
+    state.consume(
+      statement,
+      CstNodeKind.DoWhile_OpenParenWhile,
+      PreprocessorTokens.LParen,
+    );
+    statement.while = this.expression(state);
+    state.consume(
+      statement,
+      CstNodeKind.DoWhile_CloseParenWhile,
+      PreprocessorTokens.RParen,
+    );
+    if (
+      state.tryConsumeKeyword(
+        statement,
+        CstNodeKind.DoWhile_UNTIL,
+        PreprocessorTokens.Until,
+      )
+    ) {
+      state.consume(
+        statement,
+        CstNodeKind.DoWhile_OpenParenUntil,
+        PreprocessorTokens.LParen,
+      );
+      statement.until = this.expression(state);
+      state.consume(
+        statement,
+        CstNodeKind.DoWhile_CloseParenUntil,
+        PreprocessorTokens.RParen,
+      );
+    }
+    return statement;
+  }
+
+  private doUntil(state: PreprocessorParserState): ast.DoUntil {
+    const statement = ast.createDoUntil();
+    state.consumeKeyword(
+      statement,
+      CstNodeKind.DoUntil_UNTIL,
+      PreprocessorTokens.Until,
+    );
+    state.consume(
+      statement,
+      CstNodeKind.DoUntil_OpenParenUntil,
+      PreprocessorTokens.LParen,
+    );
+    statement.until = this.expression(state);
+    state.consume(
+      statement,
+      CstNodeKind.DoUntil_CloseParenUntil,
+      PreprocessorTokens.RParen,
+    );
+    if (
+      state.tryConsumeKeyword(
+        statement,
+        CstNodeKind.DoUntil_WHILE,
+        PreprocessorTokens.While,
+      )
+    ) {
+      state.consume(
+        statement,
+        CstNodeKind.DoUntil_OpenParenWhile,
+        PreprocessorTokens.LParen,
+      );
+      statement.while = this.expression(state);
+      state.consume(
+        statement,
+        CstNodeKind.DoWhile_CloseParenWhile,
+        PreprocessorTokens.RParen,
+      );
+    }
+    return statement;
+  }
+
+  private statements(state: PreprocessorParserState): ast.Statement[] {
+    const statements: ast.Statement[] = [];
     while (!state.canConsumeKeyword(PreprocessorTokens.End)) {
       const statement = this.statement(state);
       statements.push(statement);
@@ -408,423 +663,484 @@ export class PliPreprocessorParser {
     return statements;
   }
 
-  ifStatement(state: PreprocessorParserState): PPStatement {
-    state.consume(PreprocessorTokens.If);
-    const condition = this.expression(state);
-    state.consumeKeyword(PreprocessorTokens.Then);
-    const thenUnitRange = {
-      start: state.current!.startOffset,
-      end: 0,
-    };
-    const thenUnit = this.statement(state);
-    thenUnitRange.end = state.current!.startOffset;
-    let elseUnit: PPStatement | undefined = undefined;
-    let elseUnitRange: { start: number; end: number } | undefined = undefined;
+
+  ifStatement(state: PreprocessorParserState): ast.IfStatement {
+    const statement = ast.createIfStatement();
+    state.consume(statement, CstNodeKind.IfStatement_IF, PreprocessorTokens.If);
+    statement.expression = this.expression(state);
+    state.consumeKeyword(
+      statement,
+      CstNodeKind.IfStatement_THEN,
+      PreprocessorTokens.Then,
+    );
+    statement.unit = this.statement(state);
     if (state.canConsumeKeyword(PreprocessorTokens.Else)) {
-      elseUnitRange = {
-        start: state.current!.startOffset,
-        end: 0,
-      };
-      state.consumeKeyword(PreprocessorTokens.Else);
-      elseUnit = this.statement(state);
-      elseUnitRange.end = state.current!.startOffset;
+      state.consumeKeyword(
+        statement,
+        CstNodeKind.IfStatement_ELSE,
+        PreprocessorTokens.Else,
+      );
+      statement.else = this.statement(state);
     }
-    return {
-      type: "if",
-      condition,
-      thenUnit,
-      elseUnit,
-      conditionEval: undefined,
-      thenUnitRange,
-      elseUnitRange,
-    };
+    return statement;
   }
 
-  deactivateStatement(state: PreprocessorParserState): PPDeactivate {
-    state.consume(PreprocessorTokens.Deactivate);
-    const variables: string[] = [];
-    let variable = state.consume(PreprocessorTokens.Id).image;
-    variables.push(variable);
-    while (state.tryConsume(PreprocessorTokens.Comma)) {
-      variable = state.consume(PreprocessorTokens.Id).image;
-      variables.push(variable);
+  deactivateStatement(state: PreprocessorParserState): ast.DeactivateStatement {
+    const statement = ast.createDeactivateStatement();
+    state.consume(
+      statement,
+      CstNodeKind.DeactivateStatement_DEACTIVATE,
+      PreprocessorTokens.Deactivate,
+    );
+    statement.references.push(this.parseReferenceItem(state, false));
+    while (
+      state.tryConsume(
+        statement,
+        CstNodeKind.DeactivateStatement_Comma,
+        PreprocessorTokens.Comma,
+      )
+    ) {
+      statement.references.push(this.parseReferenceItem(state, false));
     }
-    state.consume(PreprocessorTokens.Semicolon);
-    return {
-      type: "deactivate",
-      variables,
-    };
+    state.consume(
+      statement,
+      CstNodeKind.DeactivateStatement_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return statement;
   }
 
-  activateStatement(state: PreprocessorParserState): PPActivate {
-    state.consume(PreprocessorTokens.Activate);
-    const variables: Record<string, ScanMode | undefined> = {};
-
-    let variableName = state.consume(PreprocessorTokens.Id).image;
-    let scanMode = this.tryScanMode(state);
-    variables[variableName] = scanMode;
-
-    while (state.tryConsume(PreprocessorTokens.Comma)) {
-      variableName = state.consume(PreprocessorTokens.Id).image;
-      scanMode = this.tryScanMode(state);
-      variables[variableName] = scanMode;
+  activateStatement(state: PreprocessorParserState): ast.ActivateStatement {
+    const statement = ast.createActivateStatement();
+    state.consume(
+      statement,
+      CstNodeKind.ActivateStatement_ACTIVATE,
+      PreprocessorTokens.Activate,
+    );
+    statement.items.push(this.parseActivateItem(state));
+    while (
+      state.tryConsume(
+        statement,
+        CstNodeKind.ActivateStatement_Comma,
+        PreprocessorTokens.Comma,
+      )
+    ) {
+      statement.items.push(this.parseActivateItem(state));
     }
-
-    state.consume(PreprocessorTokens.Semicolon);
-    return {
-      type: "activate",
-      variables,
-    };
+    state.consume(
+      statement,
+      CstNodeKind.ActivateStatement_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return statement;
   }
 
-  tryScanMode(state: PreprocessorParserState) {
-    let scanMode: ScanMode | undefined = undefined;
+  private parseActivateItem(state: PreprocessorParserState): ast.ActivateItem {
+    const item = ast.createActivateItem();
+    item.reference = this.parseReferenceItem(state, false);
+    item.scanMode = this.tryScanMode(state);
+    return item;
+  }
+
+  private parseReferenceItem(
+    state: PreprocessorParserState,
+    withDimensions: boolean,
+  ): ast.ReferenceItem {
+    const reference = ast.createReferenceItem();
+    const variable = state.consume(
+      reference,
+      CstNodeKind.ReferenceItem_Ref,
+      PreprocessorTokens.Id,
+    );
+    reference.ref = ast.createReference(reference, variable, true);
+    variable.payload.kind = CstNodeKind.ReferenceItem_Ref;
+    variable.payload.element = reference;
+    if (withDimensions && state.canConsume(PreprocessorTokens.LParen)) {
+      reference.dimensions = this.dimensions(state);
+    }
+    return reference;
+  }
+
+  tryScanMode(state: PreprocessorParserState): ast.ScanMode | null {
+    let scanMode: ast.ScanMode | null = null;
     switch (state.current!.tokenType) {
       case PreprocessorTokens.Scan:
-        scanMode = "scan";
+        scanMode = "SCAN";
         state.index++;
         break;
       case PreprocessorTokens.Rescan:
-        scanMode = "rescan";
+        scanMode = "RESCAN";
         state.index++;
         break;
       case PreprocessorTokens.Noscan:
-        scanMode = "scan";
+        scanMode = "NOSCAN";
         state.index++;
         break;
     }
     return scanMode;
   }
 
-  skipStatement(state: PreprocessorParserState): PPStatement {
-    const startOffset = state.current!.startOffset;
-    state.consume(PreprocessorTokens.Skip);
+
+  skipStatement(state: PreprocessorParserState): ast.SkipDirective {
+    const statement = ast.createSkipDirective();
+    state.consume(
+      statement,
+      CstNodeKind.SkipDirective_SKIP,
+      PreprocessorTokens.Skip,
+    );
     let lineCount: number = 1;
-    if (state.tryConsume(PreprocessorTokens.Number)) {
+    // TODO: add linecount token to the statement
+    if (
+      state.tryConsume(
+        statement,
+        CstNodeKind.NumberLiteral_ValueNumber,
+        PreprocessorTokens.Number,
+      )
+    ) {
       lineCount = parseInt(state.last!.image, 10);
     }
-    state.consume(PreprocessorTokens.Semicolon);
+    state.consume(
+      statement,
+      CstNodeKind.SkipDirective_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
     state.advanceLines(lineCount + 1);
-    return {
-      type: "skip",
-      //TODO numeric base of 10 ok?
-      lineCount,
-      startOffset,
-    };
+    return statement;
   }
 
-  directive(state: PreprocessorParserState): PPStatement {
-    const which = state
-      .consume(PreprocessorTokens.Directive)
-      .image.toLowerCase() as PPDirective["which"];
-    state.consume(PreprocessorTokens.Semicolon);
-    return {
-      type: "directive",
-      which,
-    };
+  directive(state: PreprocessorParserState): ast.Unit {
+    const token = state.consume(
+      undefined,
+      undefined,
+      PreprocessorTokens.Directive,
+    );
+    const which = token.image.toUpperCase();
+    let directive: ast.Unit;
+    if (which === "PUSH") {
+      directive = ast.createPushDirective();
+      token.payload.kind = CstNodeKind.PushDirective_PUSH;
+    } else if (which === "POP") {
+      directive = ast.createPopDirective();
+      token.payload.kind = CstNodeKind.PopDirective_POP;
+    } else if (which === "PRINT") {
+      directive = ast.createPrintDirective();
+      token.payload.kind = CstNodeKind.PrintDirective_PRINT;
+    } else if (which === "NOPRINT") {
+      directive = ast.createNoPrintDirective();
+      token.payload.kind = CstNodeKind.NoPrintDirective_NOPRINT;
+    } else {
+      directive = ast.createPageDirective();
+      token.payload.kind = CstNodeKind.PageDirective_PAGE;
+    }
+    token.payload.element = directive;
+    state.consume(
+      directive,
+      CstNodeKind.PopDirective_POP,
+      PreprocessorTokens.Semicolon,
+    );
+    return directive;
   }
 
-  assignmentStatement(state: PreprocessorParserState): PPAssign {
-    const left = state.consume(PreprocessorTokens.Id).image;
-    state.consume(PreprocessorTokens.Eq);
+  assignmentStatement(state: PreprocessorParserState): ast.AssignmentStatement {
+    const assignment = ast.createAssignmentStatement();
+    assignment.refs.push(this.locatorCall(state, false));
+    // TODO: add support for more assignment operators (+=, -=, etc)
+    state.consume(
+      assignment,
+      CstNodeKind.AssignmentStatement_Operator,
+      PreprocessorTokens.Eq,
+    );
+    assignment.operator = "=";
     const right = this.expression(state);
-    state.consume(PreprocessorTokens.Semicolon);
-    return {
-      type: "assign",
-      name: left,
-      value: right,
-    };
+    assignment.expression = right;
+    state.consume(
+      assignment,
+      CstNodeKind.AssignmentStatement_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return assignment;
   }
 
-  declareStatement(state: PreprocessorParserState): AnyDeclare {
-    const declarations: PPDeclaration[] = [];
-    state.consume(PreprocessorTokens.Declare);
+  private locatorCall(
+    state: PreprocessorParserState,
+    withDimensions: boolean,
+  ): ast.LocatorCall {
+    const locatorCall = ast.createLocatorCall();
+    locatorCall.element = this.memberCall(state, withDimensions);
+    return locatorCall;
+  }
+
+  private memberCall(
+    state: PreprocessorParserState,
+    withDimensions: boolean,
+  ): ast.MemberCall {
+    const memberCall = ast.createMemberCall();
+    memberCall.element = this.parseReferenceItem(state, withDimensions);
+    return memberCall;
+  }
+
+  declareStatement(state: PreprocessorParserState): ast.DeclareStatement {
+    const statement = ast.createDeclareStatement();
+    // Only one declared item is allowed in a preprocessor declare statement
+    const declaredItem = ast.createDeclaredItem();
+    statement.items.push(declaredItem);
+    state.consume(
+      statement,
+      CstNodeKind.DeclareStatement_DECLARE,
+      PreprocessorTokens.Declare,
+    );
     do {
-      const names: NameAndBounds[] = [];
-      if (state.tryConsume(PreprocessorTokens.LParen)) {
+      if (
+        state.tryConsume(
+          declaredItem,
+          CstNodeKind.DeclaredItem_OpenParen,
+          PreprocessorTokens.LParen,
+        )
+      ) {
         do {
-          const name = state.consume(PreprocessorTokens.Id).image;
-          if (state.tryConsume(PreprocessorTokens.LParen)) {
-            const dimensions = this.dimensions(state);
-            state.consume(PreprocessorTokens.RParen);
-            names.push({
-              name,
-              dimensions,
-            });
-          } else {
-            names.push({
-              name,
-            });
-          }
-        } while (state.tryConsume(PreprocessorTokens.Comma));
-        state.consume(PreprocessorTokens.RParen);
+          declaredItem.elements.push(this.declaredVariable(state));
+          // TODO: Figure out whether dimensions are allowed in multi variable declarations
+          // if (state.tryConsume(PreprocessorTokens.LParen)) {
+          //   const dimensions = this.dimensions(state);
+          //   state.consume(PreprocessorTokens.RParen);
+          //   names.push({
+          //     name: variable,
+          //     dimensions,
+          //   });
+          // } else {
+          //   names.push({
+          //     name: variable,
+          //   });
+          // }
+        } while (
+          state.tryConsume(
+            declaredItem,
+            CstNodeKind.DeclaredItem_Comma,
+            PreprocessorTokens.Comma,
+          )
+        );
+        state.consume(
+          declaredItem,
+          CstNodeKind.DeclaredItem_CloseParen,
+          PreprocessorTokens.RParen,
+        );
       } else {
-        const name = state.consume(PreprocessorTokens.Id).image;
-        names.push({ name });
+        declaredItem.elements.push(this.declaredVariable(state));
       }
       const attributes = this.attributes(state);
-      declarations.push({
-        names,
-        attributes,
-      });
-    } while (state.tryConsume(PreprocessorTokens.Comma));
-    state.consume(PreprocessorTokens.Semicolon);
-    return {
-      type: "declare",
-      declarations,
-    };
+      for (const attribute of attributes) {
+        const dataAttribute = ast.createComputationDataAttribute();
+        dataAttribute.type = attribute as ast.DefaultAttribute;
+        declaredItem.attributes.push(dataAttribute);
+      }
+    } while (
+      state.tryConsume(
+        statement,
+        CstNodeKind.DeclareStatement_Comma,
+        PreprocessorTokens.Comma,
+      )
+    );
+    state.consume(
+      statement,
+      CstNodeKind.DeclareStatement_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return statement;
   }
 
-  dimensions(state: PreprocessorParserState): Dimensions {
-    if (state.tryConsume(PreprocessorTokens.Multiply)) {
-      let count = 1;
-      while (state.tryConsume(PreprocessorTokens.Comma)) {
-        state.consume(PreprocessorTokens.Multiply);
-        count++;
-      }
-      return {
-        type: "unbounded-dimensions",
-        count,
-      };
-    } else {
-      const dimensions: DimensionBounds[] = [];
-      do {
-        const left = this.expression(state);
-        if (state.tryConsume(PreprocessorTokens.Colon)) {
-          const right = this.expression(state);
-          dimensions.push({
-            lowerBound: left,
-            upperBound: right,
-          });
-        } else {
-          dimensions.push({
-            lowerBound: undefined,
-            upperBound: left,
-          });
-        }
-      } while (state.tryConsume(PreprocessorTokens.Comma));
-      return {
-        type: "bounded-dimensions",
+  private declaredVariable(
+    state: PreprocessorParserState,
+  ): ast.DeclaredVariable {
+    const declaredVariable = ast.createDeclaredVariable();
+    const variable = state.consume(
+      declaredVariable,
+      CstNodeKind.DeclaredVariable_Name,
+      PreprocessorTokens.Id,
+    );
+    const name = variable.image;
+    declaredVariable.name = name;
+    declaredVariable.nameToken = variable;
+    return declaredVariable;
+  }
+
+  dimensions(state: PreprocessorParserState): ast.Dimensions {
+    const dimensions = ast.createDimensions();
+    state.consume(
+      dimensions,
+      CstNodeKind.Dimensions_OpenParen,
+      PreprocessorTokens.LParen,
+    );
+    dimensions.dimensions.push(this.parseBound(state));
+    while (
+      state.tryConsume(
         dimensions,
-      };
+        CstNodeKind.Dimensions_Comma,
+        PreprocessorTokens.Comma,
+      )
+    ) {
+      dimensions.dimensions.push(this.parseBound(state));
+    }
+    state.consume(
+      dimensions,
+      CstNodeKind.Dimensions_CloseParen,
+      PreprocessorTokens.RParen,
+    );
+    return dimensions;
+  }
+
+  private parseBound(state: PreprocessorParserState): ast.DimensionBound {
+    const bound = ast.createDimensionBound();
+    const leftBound = ast.createBound();
+    const left = this.parseExpressionWildcard(
+      leftBound,
+      CstNodeKind.Bound_Star,
+      state,
+    );
+    leftBound.expression = left;
+    if (
+      state.tryConsume(
+        bound,
+        CstNodeKind.DimensionBound_Colon,
+        PreprocessorTokens.Colon,
+      )
+    ) {
+      const rightBound = ast.createBound();
+      const right = this.parseExpressionWildcard(
+        rightBound,
+        CstNodeKind.Bound_Star,
+        state,
+      );
+      rightBound.expression = right;
+      bound.lower = leftBound;
+      bound.upper = rightBound;
+    } else {
+      bound.upper = leftBound;
+    }
+    return bound;
+  }
+
+  private parseExpressionWildcard(
+    element: ast.SyntaxNode,
+    kind: CstNodeKind,
+    state: PreprocessorParserState,
+  ): ast.Wildcard<ast.Expression> {
+    if (state.tryConsume(element, kind, PreprocessorTokens.Multiply)) {
+      return "*";
+    } else {
+      return this.expression(state);
     }
   }
 
   attributes(state: PreprocessorParserState) {
-    let scope: ProcedureScope = "external";
-    //TODO rescan seems to be the corrrect default, looking at example 1 from preprocessor documentation
-    let scanMode: ScanMode = "rescan";
-    let type: VariableType = "character";
+    const attributes: string[] = [];
     let lastIndex = 0;
     do {
       lastIndex = state.index;
       switch (state.current?.tokenType) {
         case PreprocessorTokens.Builtin:
-          type = "builtin";
+          attributes.push("BUILTIN");
           state.index++;
           break;
         case PreprocessorTokens.Entry:
-          type = "entry";
+          attributes.push("ENTRY");
           state.index++;
           break;
         case PreprocessorTokens.Internal:
-          scope = "internal";
+          attributes.push("INTERNAL");
           state.index++;
           break;
         case PreprocessorTokens.External:
-          scope = "external";
+          attributes.push("EXTERNAL");
           state.index++;
           break;
         case PreprocessorTokens.Character:
-          type = "character";
+          attributes.push("CHARACTER");
           state.index++;
           break;
         case PreprocessorTokens.Fixed:
-          type = "fixed";
+          attributes.push("FIXED");
           state.index++;
           break;
         case PreprocessorTokens.Scan:
-          scanMode = "scan";
+          attributes.push("SCAN");
           state.index++;
           break;
         case PreprocessorTokens.Rescan:
-          scanMode = "rescan";
+          attributes.push("RESCAN");
           state.index++;
           break;
         case PreprocessorTokens.Noscan:
-          scanMode = "scan";
+          attributes.push("NOSCAN");
           state.index++;
           break;
       }
     } while (lastIndex != state.index);
-    return {
-      scanMode,
-      scope,
-      type,
+    return attributes;
+  }
+
+  expression(state: PreprocessorParserState): ast.Expression {
+    return this.parseBinary(state);
+  }
+
+  private parseBinary(state: PreprocessorParserState): ast.Expression {
+    const infixOperatorItem: IntermediateBinaryExpression = {
+      infix: true,
+      items: [],
+      operators: [],
     };
-  }
-
-  expression(state: PreprocessorParserState): PPExpression {
-    return this.exponentiation(state);
-  }
-
-  exponentiation(state: PreprocessorParserState): PPExpression {
-    return this.rightAssociativeOperators<"**">(
-      state,
-      {
-        "**": PreprocessorTokens.Power,
-      },
-      this.multiplication,
-      this.exponentiation,
-    );
-  }
-
-  multiplication(state: PreprocessorParserState): PPExpression {
-    return this.leftAssociativeOperators<"*" | "/">(
-      state,
-      {
-        "*": PreprocessorTokens.Multiply,
-        "/": PreprocessorTokens.Divide,
-      },
-      this.addition,
-    );
-  }
-
-  addition(state: PreprocessorParserState): PPExpression {
-    return this.leftAssociativeOperators<"+" | "-">(
-      state,
-      {
-        "+": PreprocessorTokens.Plus,
-        "-": PreprocessorTokens.Minus,
-      },
-      this.concatenation,
-    );
-  }
-
-  concatenation(state: PreprocessorParserState): PPExpression {
-    return this.leftAssociativeOperators<"||">(
-      state,
-      {
-        "||": PreprocessorTokens.Concat,
-      },
-      this.relational,
-    );
-  }
-
-  relational(state: PreprocessorParserState): PPExpression {
-    return this.leftAssociativeOperators<"<" | "<=" | ">" | ">=" | "=" | "<>">(
-      state,
-      {
-        "<": PreprocessorTokens.LT,
-        "<=": PreprocessorTokens.LE,
-        ">": PreprocessorTokens.GT,
-        ">=": PreprocessorTokens.GE,
-        "=": PreprocessorTokens.Eq,
-        "<>": PreprocessorTokens.Neq,
-      },
-      this.and,
-    );
-  }
-
-  and(state: PreprocessorParserState): PPExpression {
-    return this.leftAssociativeOperators<"&">(
-      state,
-      {
-        "&": PreprocessorTokens.And,
-      },
-      this.or,
-    );
-  }
-
-  or(state: PreprocessorParserState): PPExpression {
-    return this.leftAssociativeOperators<"|">(
-      state,
-      {
-        "|": PreprocessorTokens.Or,
-      },
-      this.primary,
-    );
-  }
-
-  private leftAssociativeOperators<Ops extends PPBinaryExpression["operator"]>(
-    state: PreprocessorParserState,
-    operators: Record<Ops, TokenType>,
-    next: (state: PreprocessorParserState) => PPExpression,
-  ) {
-    let lhs = next.call(this, state);
+    infixOperatorItem.items.push(this.primary(state));
     while (true) {
-      let operator: Ops | undefined = undefined;
-      for (const [op, tokenType] of Object.entries<TokenType>(operators)) {
-        if (state.tryConsume(tokenType)) {
-          operator = op as Ops;
+      let operator: string | undefined = undefined;
+      for (const tokenType of PreprocessorBinaryTokens) {
+        if (
+          state.tryConsume(
+            infixOperatorItem as any,
+            CstNodeKind.BinaryExpression_Operator,
+            tokenType,
+          )
+        ) {
+          operator = tokenType.name;
           break;
         }
       }
       if (operator) {
-        const rhs = next.call(this, state);
-        lhs = {
-          type: "binary",
-          lhs,
-          rhs,
-          operator,
-        };
+        const item = this.primary(state);
+        infixOperatorItem.items.push(item);
+        infixOperatorItem.operators.push(operator);
       } else {
         break;
       }
     }
-    return lhs;
+    return constructBinaryExpression(infixOperatorItem);
   }
 
-  private rightAssociativeOperators<Ops extends PPBinaryExpression["operator"]>(
-    state: PreprocessorParserState,
-    operators: Record<Ops, TokenType>,
-    next: (state: PreprocessorParserState) => PPExpression,
-    self: (state: PreprocessorParserState) => PPExpression,
-  ) {
-    let lhs = next.call(this, state);
-    let operator: Ops | undefined = undefined;
-    for (const [op, tokenType] of Object.entries<TokenType>(operators)) {
-      if (state.tryConsume(tokenType)) {
-        operator = op as Ops;
-        break;
-      }
-    }
-    if (operator) {
-      const rhs = self.call(this, state);
-      lhs = {
-        type: "binary",
-        lhs,
-        rhs,
-        operator,
-      };
-    }
-    return lhs;
-  }
-
-  primary(state: PreprocessorParserState): PPExpression {
+  primary(state: PreprocessorParserState): ast.Expression {
     if (state.canConsume(PreprocessorTokens.Number)) {
-      const number = state.consume(PreprocessorTokens.Number);
-      return {
-        type: "number",
-        value: parseInt(number.image, 10), //TODO when to parse binary?
-      };
+      return this.numberLiteral(state);
     } else if (state.canConsume(PreprocessorTokens.String)) {
-      const character = state.consume(PreprocessorTokens.String);
-      const content = this.unpackCharacterValue(character.image);
-      const tokens = this.tokenizePurePliCode(content);
-      return {
-        type: "string",
-        value: tokens,
-      };
+      return this.stringLiteral(state);
     } else if (state.canConsumeKeyword(PreprocessorTokens.Id)) {
       if (state.isOnlyInStatement()) {
-        state.consume(PreprocessorTokens.Percentage);
+        state.consume(
+          undefined,
+          CstNodeKind.Percentage,
+          PreprocessorTokens.Percentage,
+        );
       }
-      const variableName = state.consume(PreprocessorTokens.Id).image;
-      return {
-        type: "variable-usage",
-        variableName,
-      };
+      return this.locatorCall(state, true);
+    } else if (state.canConsume(PreprocessorTokens.LParen)) {
+      state.consume(
+        undefined,
+        CstNodeKind.ParenthesizedExpression_OpenParen,
+        PreprocessorTokens.LParen,
+      );
+      const expression = this.expression(state);
+      state.consume(
+        undefined,
+        CstNodeKind.ParenthesizedExpression_CloseParen,
+        PreprocessorTokens.RParen,
+      );
+      return expression;
     }
     throw new PreprocessorError(
       "Cannot handle this type of preprocessor expression yet!",
@@ -833,11 +1149,39 @@ export class PliPreprocessorParser {
     );
   }
 
+  private numberLiteral(state: PreprocessorParserState): ast.Literal {
+    const literal = ast.createLiteral();
+    const numberLiteral = ast.createNumberLiteral();
+    literal.value = numberLiteral;
+    const number = state.consume(
+      numberLiteral,
+      CstNodeKind.NumberLiteral_ValueNumber,
+      PreprocessorTokens.Number,
+    );
+    numberLiteral.value = number.image;
+    return literal;
+  }
+
+  private stringLiteral(state: PreprocessorParserState): ast.Literal {
+    const literal = ast.createLiteral();
+    const stringLiteral = ast.createStringLiteral();
+    literal.value = stringLiteral;
+    const stringToken = state.consume(
+      stringLiteral,
+      CstNodeKind.StringLiteral_ValueString,
+      PreprocessorTokens.String,
+    );
+    const content = this.unpackCharacterValue(stringToken.image);
+    stringLiteral.value = content;
+    stringLiteral.tokens = this.tokenizePurePliCode(content);
+    return literal;
+  }
+
   private tokenizePurePliCode(content: string) {
     const result: IToken[] = [];
     const lexerState = new PliPreprocessorLexerState(
       content,
-      URI.parse("test"),
+      undefined, // URI is unknown, use undefined
     );
     while (!lexerState.eof()) {
       const tokens = this.lexer.tokenizePliTokensUntilSemicolon(lexerState);

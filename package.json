@@ -24,7 +24,7 @@
     "chevrotain-allstar": "~0.3.1",
     "prettier": "^3.4.2",
     "shx": "~0.3.4",
-    "typescript": "~5.4.5",
+    "typescript": "~5.8.3",
     "vitest": "~3.0.7",
     "@vitest/coverage-v8": "~3.0.7"
   }

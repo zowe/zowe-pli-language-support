@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { PliLexer } from "../../src/preprocessor/pli-lexer";
 import { URI } from "../../src/utils/uri";
+import { createCompilationUnit } from "../../src/workspace/compilation-unit";
 
 type TokenizeFunction = (text: string) => string[];
 
@@ -11,9 +12,11 @@ describe("PL/1 Lexer", () => {
   beforeAll(async () => {
     const lexer = new PliLexer();
     tokenize = (text: string) => {
+      const uri = URI.file("/test/test.pli");
       const { all: allTokens, errors } = lexer.tokenize(
+        createCompilationUnit(uri),
         text,
-        URI.file("/test.pli"),
+        uri,
       );
       if (errors.length > 0) {
         throw new Error(
@@ -25,7 +28,8 @@ describe("PL/1 Lexer", () => {
       );
     };
     tokenizeWithErrors = (text: string) => {
-      const { errors } = lexer.tokenize(text, URI.file("/test.pli"));
+      const uri = URI.file("/test/test.pli");
+      const { errors } = lexer.tokenize(createCompilationUnit(uri), text, uri);
       return errors.map((e) => e.message);
     };
   });
@@ -36,7 +40,7 @@ describe("PL/1 Lexer", () => {
 
   test("Preprocessor garbage", () => {
     expect(tokenizeWithErrors(" %garbage")).toStrictEqual([
-      `Expected token types 'eq', got '' instead.`,
+      `Expected token type '=', got '' instead.`,
     ]);
   });
 
@@ -85,7 +89,7 @@ describe("PL/1 Lexer", () => {
             %A = 'B';
             dcl A%C fixed bin(31);
         `),
-    ).toStrictEqual(["Expected token types 'eq', got 'id' instead."]);
+    ).toStrictEqual(["Expected token type '=', got 'id' instead."]);
   });
 
   test("Tokenize multiple errors in declaration with preprocessor", () => {
@@ -95,7 +99,7 @@ describe("PL/1 Lexer", () => {
             %%A = 'B';
         `),
     ).toStrictEqual([
-      "Expected token types 'eq', got 'id' instead.",
+      "Expected token type '=', got 'id' instead.",
       "Unexpected token '%'.",
     ]);
   });

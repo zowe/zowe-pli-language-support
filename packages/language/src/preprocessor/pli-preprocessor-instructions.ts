@@ -10,20 +10,15 @@
  */
 
 import { createTokenInstance, IToken, TokenType } from "chevrotain";
-import {
-  AnyDoGroup,
-  PPBinaryExpression,
-  ProcedureScope,
-  ScanMode,
-} from "./pli-preprocessor-ast";
 import { assertUnreachable } from "langium";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PreprocessorInterpreterState } from "./pli-preprocessor-interpreter-state";
 import { PliPreprocessorProgram } from "./pli-preprocessor-program-builder";
+import * as ast from "../syntax-tree/ast";
 
 export type Label = {
   address: number | undefined;
-  doGroup?: AnyDoGroup;
+  doGroup?: ast.DoStatement;
 };
 
 export type ProgramAddressOrPlaceholder = number | Label;
@@ -38,13 +33,13 @@ export interface PPIReturn extends PPInstructionBase {
 
 export interface PPICompute extends PPInstructionBase {
   type: "compute";
-  operator: PPBinaryExpression["operator"];
+  operator: ast.BinaryExpression["op"];
 }
 
 export interface PPIActivate extends PPInstructionBase {
   type: "activate";
   name: string;
-  scanMode: ScanMode | undefined;
+  scanMode: ast.ScanMode | undefined;
 }
 
 export interface PPIDeactivate extends PPInstructionBase {
@@ -111,20 +106,7 @@ export type PPInstruction =
 
 export type PPProgram = PPInstruction[];
 
-export type VariableDataType = "fixed" | "character";
-
-export type PPDeclaration = {
-  name: string;
-} & (
-  | {
-      type: "builtin" | "entry";
-    }
-  | {
-      type: VariableDataType;
-      scope: ProcedureScope;
-      scanMode: ScanMode;
-    }
-);
+export type VariableDataType = "FIXED" | "CHARACTER";
 
 export namespace Values {
   export function Number(value: number): IToken[] {
@@ -210,9 +192,7 @@ export namespace Instructions {
   export function ret(): PPIReturn {
     return { type: "return" };
   }
-  export function compute(
-    operator: PPBinaryExpression["operator"],
-  ): PPICompute {
+  export function compute(operator: ast.BinaryExpression["op"]): PPICompute {
     return {
       type: "compute",
       operator,
@@ -234,7 +214,7 @@ export namespace Instructions {
       type: "print",
     };
   }
-  export function activate(name: string, scanMode?: ScanMode): PPIActivate {
+  export function activate(name: string, scanMode?: ast.ScanMode): PPIActivate {
     return {
       type: "activate",
       name,

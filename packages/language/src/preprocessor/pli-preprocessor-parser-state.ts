@@ -19,6 +19,8 @@ import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { Values } from "./pli-preprocessor-instructions";
 import { URI } from "langium";
 import { PreprocessorError } from "./pli-preprocessor-error";
+import { SyntaxNode } from "../syntax-tree/ast";
+import { CstNodeKind } from "../syntax-tree/cst";
 
 type ParserLocation = "in-statement" | "in-procedure";
 
@@ -32,12 +34,28 @@ export interface PreprocessorParserState {
   get eof(): boolean;
 
   canConsume(...tokenType: TokenType[]): boolean;
-  tryConsume(...tokenTypes: TokenType[]): boolean;
-  consume(...tokenTypes: TokenType[]): IToken;
+  tryConsume(
+    element: SyntaxNode | undefined,
+    kind: CstNodeKind | undefined,
+    tokenType: TokenType,
+  ): boolean;
+  consume(
+    element: SyntaxNode | undefined,
+    kind: CstNodeKind | undefined,
+    tokenType: TokenType,
+  ): IToken;
 
-  canConsumeKeyword(...tokenType: TokenType[]): boolean;
-  tryConsumeKeyword(...tokenTypes: TokenType[]): boolean;
-  consumeKeyword(...tokenTypes: TokenType[]): IToken;
+  canConsumeKeyword(...tokenTypes: TokenType[]): boolean;
+  tryConsumeKeyword(
+    element: SyntaxNode | undefined,
+    kind: CstNodeKind | undefined,
+    tokenType: TokenType,
+  ): boolean;
+  consumeKeyword(
+    element: SyntaxNode | undefined,
+    kind: CstNodeKind | undefined,
+    tokenType: TokenType,
+  ): IToken;
 
   consumeUntil(predicate: (token: IToken) => boolean): IToken[];
   advanceLines(lineCount: number): void;
@@ -163,25 +181,43 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     return this.location.some((l) => l === "in-procedure");
   }
 
-  tryConsume(...tokenTypes: TokenType[]): boolean {
-    if (!this.canConsume(...tokenTypes)) {
+  tryConsume(
+    element: SyntaxNode | undefined,
+    kind: CstNodeKind | undefined,
+    tokenType: TokenType,
+  ): boolean {
+    if (!this.canConsume(tokenType)) {
       return false;
     }
-    this.index += tokenTypes.length;
+    this.current!.payload = {
+      uri: this.uri,
+      kind,
+      element,
+    };
+    this.index++;
     return true;
   }
 
-  consume(...tokenTypes: TokenType[]) {
+  consume(
+    element: SyntaxNode | undefined,
+    kind: CstNodeKind | undefined,
+    tokenType: TokenType,
+  ) {
     const token = this.current!;
-    if (!this.canConsume(...tokenTypes)) {
+    if (!this.canConsume(tokenType)) {
       const actualTokenTypes = this.tokens
-        .slice(this.index, this.index + tokenTypes.length)
+        .slice(this.index, this.index + 1)
         .map((t) => t.tokenType.name ?? "???")
         .join(", ");
-      const message = `Expected token types '${tokenTypes.map((tt) => tt.name).join(", ")}', got '${actualTokenTypes}' instead.`;
+      const message = `Expected token type '${tokenType.name}', got '${actualTokenTypes}' instead.`;
       throw new PreprocessorError(message, token, this.uri.toString());
     }
-    this.index += tokenTypes.length;
+    token.payload = {
+      uri: this.uri,
+      kind,
+      element,
+    };
+    this.index++;
     return token;
   }
 
@@ -192,17 +228,47 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     return this.canConsume(...tokenTypes);
   }
 
-  tryConsumeKeyword(...tokenTypes: TokenType[]): boolean {
-    if (!this.isInProcedure()) {
-      tokenTypes = [PreprocessorTokens.Percentage, ...tokenTypes];
+  tryConsumeKeyword(
+    element: SyntaxNode | undefined,
+    kind: CstNodeKind | undefined,
+    tokenType: TokenType,
+  ): boolean {
+    const percentage = !this.isInProcedure();
+    const start = this.index;
+    if (percentage) {
+      if (!this.canConsume(PreprocessorTokens.Percentage)) {
+        return false;
+      }
+      this.index++;
     }
-    return this.tryConsume(...tokenTypes);
+    if (!this.canConsume(tokenType)) {
+      this.index = start;
+      return false;
+    }
+    this.index = start;
+    if (percentage) {
+      this.consume(
+        element,
+        CstNodeKind.Percentage,
+        PreprocessorTokens.Percentage,
+      );
+    }
+    this.consume(element, kind, tokenType);
+    return true;
   }
 
-  consumeKeyword(...tokenTypes: TokenType[]): IToken {
+  consumeKeyword(
+    element: SyntaxNode | undefined,
+    kind: CstNodeKind | undefined,
+    tokenType: TokenType,
+  ): IToken {
     if (!this.isInProcedure()) {
-      tokenTypes = [PreprocessorTokens.Percentage, ...tokenTypes];
+      this.consume(
+        element,
+        CstNodeKind.Percentage,
+        PreprocessorTokens.Percentage,
+      );
     }
-    return this.consume(...tokenTypes);
+    return this.consume(element, kind, tokenType);
   }
 }

@@ -59,20 +59,20 @@ export const PreprocessorTokens = {
   Colon: tokenType("colon", /:/iy),
   Comma: tokenType("comma", /,/iy),
   Percentage: tokenType("percentage", /%/iy),
-  Plus: tokenType("plus", /\+/iy),
-  Minus: tokenType("minus", /\-/iy),
-  Divide: tokenType("divide", /\//iy),
-  Power: tokenType("pow", /\*\*/iy),
-  Multiply: tokenType("multiply", /\*/iy),
-  Concat: tokenType("concat", /\|\|/iy),
-  Or: tokenType("or", /\|/iy),
-  And: tokenType("and", /\&/iy),
-  Eq: tokenType("eq", /=/iy),
-  Neq: tokenType("neq", /<>/iy),
-  LE: tokenType("le", /<=/iy),
-  GE: tokenType("ge", />=/iy),
-  GT: tokenType("gt", />/iy),
-  LT: tokenType("lt", /</iy),
+  Plus: tokenType("+", /\+/iy),
+  Minus: tokenType("-", /\-/iy),
+  Divide: tokenType("/", /\//iy),
+  Power: tokenType("**", /\*\*/iy),
+  Multiply: tokenType("*", /\*/iy),
+  Concat: tokenType("||", /\|\|/iy),
+  Or: tokenType("|", /\|/iy),
+  And: tokenType("&", /\&/iy),
+  Eq: tokenType("=", /=/iy),
+  Neq: tokenType("<>", /<>/iy),
+  LE: tokenType("<=", /<=/iy),
+  GE: tokenType(">=", />=/iy),
+  GT: tokenType(">", />/iy),
+  LT: tokenType("<", /</iy),
   //This token regexp was taken from the PL/1 Langium grammar
   //TODO need a way to sync them...
   String: tokenType(
@@ -87,5 +87,22 @@ export const PreprocessorTokens = {
 new Lexer(Object.values(PreprocessorTokens), {
   skipValidations: true,
 });
+
+export const PreprocessorBinaryTokens = [
+  PreprocessorTokens.Power,
+  PreprocessorTokens.Multiply,
+  PreprocessorTokens.Divide,
+  PreprocessorTokens.Plus,
+  PreprocessorTokens.Minus,
+  PreprocessorTokens.Concat,
+  PreprocessorTokens.LT,
+  PreprocessorTokens.LE,
+  PreprocessorTokens.GT,
+  PreprocessorTokens.GE,
+  PreprocessorTokens.Eq,
+  PreprocessorTokens.Neq,
+  PreprocessorTokens.And,
+  PreprocessorTokens.Or,
+];
 
 export const AllPreprocessorTokens = Object.values(PreprocessorTokens);

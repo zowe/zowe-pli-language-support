@@ -17,6 +17,8 @@ export function lifecycle(
   compilationUnit: CompilationUnit,
   text: string,
 ): void {
+  compilationUnit.references.clear();
+  compilationUnit.scopeCaches.clear();
   tokenize(compilationUnit, text);
   parse(compilationUnit);
   generateSymbolTable(compilationUnit);
@@ -30,13 +32,14 @@ export function tokenize(
   compilationUnit: CompilationUnit,
   text: string,
 ): LexerResult {
-  const result = lexer.tokenize(text, compilationUnit.uri);
+  const result = lexer.tokenize(compilationUnit, text, compilationUnit.uri);
   compilationUnit.files = Object.keys(result.fileTokens).map((e) =>
     URI.parse(e),
   );
   compilationUnit.tokens.all = result.all;
   compilationUnit.tokens.fileTokens = result.fileTokens;
-  compilationUnit.preprocessorStatements = result.preprocessorStatements;
+
+  compilationUnit.preprocessorAst.statements = result.statements;
   compilationUnit.compilerOptions =
     result.compilerOptions.result?.options ?? {};
   const uri = compilationUnit.uri.toString();
@@ -59,8 +62,6 @@ export function parse(compilationUnit: CompilationUnit): PliProgram {
 }
 
 export function generateSymbolTable(compilationUnit: CompilationUnit) {
-  compilationUnit.references.clear();
-  compilationUnit.scopeCache.clear();
   iterateSymbols(compilationUnit);
 }
 

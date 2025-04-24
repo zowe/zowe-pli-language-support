@@ -87,7 +87,9 @@ describe("Preprocessor parser state", () => {
       const state = Fixtures.Empty();
 
       //act + assert
-      expect(() => state.consume(PreprocessorTokens.Id)).toThrowError();
+      expect(() =>
+        state.consume(undefined, undefined, PreprocessorTokens.Id),
+      ).toThrowError();
     });
 
     test("Consume positive for non-empty", () => {
@@ -95,7 +97,9 @@ describe("Preprocessor parser state", () => {
       const state = Fixtures.OneToken();
 
       //act
-      expect(state.consume(PreprocessorTokens.Id).image).toBe("ABC");
+      expect(
+        state.consume(undefined, undefined, PreprocessorTokens.Id).image,
+      ).toBe("ABC");
 
       //assert
       expect(state.eof).toBe(true);
@@ -109,7 +113,9 @@ describe("Preprocessor parser state", () => {
       const state = Fixtures.OneToken();
 
       //act + assert
-      expect(() => state.consume(PreprocessorTokens.Builtin)).toThrowError();
+      expect(() =>
+        state.consume(undefined, undefined, PreprocessorTokens.Builtin),
+      ).toThrowError();
     });
   });
 
@@ -119,7 +125,9 @@ describe("Preprocessor parser state", () => {
       const state = Fixtures.Empty();
 
       //act + assert
-      expect(state.tryConsume(PreprocessorTokens.Id)).toBeFalsy();
+      expect(
+        state.tryConsume(undefined, undefined, PreprocessorTokens.Id),
+      ).toBeFalsy();
     });
 
     test("tryConsume positve for non-empty", () => {
@@ -127,7 +135,9 @@ describe("Preprocessor parser state", () => {
       const state = Fixtures.OneToken();
 
       //act + assert
-      expect(state.tryConsume(PreprocessorTokens.Id)).toBeTruthy();
+      expect(
+        state.tryConsume(undefined, undefined, PreprocessorTokens.Id),
+      ).toBeTruthy();
       expect(state.eof).toBeTruthy();
       expect(state.current).toBeUndefined();
       expect(state.last).not.toBeUndefined();
@@ -139,7 +149,9 @@ describe("Preprocessor parser state", () => {
       const state = Fixtures.OneToken();
 
       //act + assert
-      expect(state.tryConsume(PreprocessorTokens.Builtin)).toBeFalsy();
+      expect(
+        state.tryConsume(undefined, undefined, PreprocessorTokens.Builtin),
+      ).toBeFalsy();
       expect(state.eof).toBeFalsy();
       expect(state.current).not.toBeUndefined();
       expect(state.current!.image).toBe("ABC");
@@ -151,7 +163,9 @@ describe("Preprocessor parser state", () => {
       const state = Fixtures.TwoTokens();
 
       //act + assert
-      expect(state.tryConsume(PreprocessorTokens.Id)).toBeTruthy();
+      expect(
+        state.tryConsume(undefined, undefined, PreprocessorTokens.Id),
+      ).toBeTruthy();
       expect(state.eof).toBeFalsy();
       expect(state.current).not.toBeUndefined();
       expect(state.current!.image).toBe(" ");

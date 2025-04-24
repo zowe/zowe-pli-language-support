@@ -10,18 +10,18 @@
  */
 
 import { createTokenInstance, IToken, TokenType } from "chevrotain";
-import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 import { PPInstruction, Values } from "./pli-preprocessor-instructions";
 import { assertUnreachable } from "langium";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { CompilationUnitTokens } from "../workspace/compilation-unit";
+import * as ast from "../syntax-tree/ast";
 
 export interface PreprocessorInterpreterState {
   currentInstruction: PPInstruction;
   halt: boolean;
   getOutput(): CompilationUnitTokens;
   goTo(next: (previousCounter: number) => number): void;
-  activate(name: string, scanMode: ScanMode): void;
+  activate(name: string, scanMode: ast.ScanMode): void;
   deactivate(name: string): void;
   hasVariable(name: string): boolean;
   getVariable(name: string): PreprocessorVariable;
@@ -68,7 +68,7 @@ export class PliPreprocessorInterpreterState
     return Selectors.getVariable(this.plainState, name);
   }
 
-  activate(name: string, scanMode: ScanMode = "rescan") {
+  activate(name: string, scanMode: ast.ScanMode = "RESCAN") {
     if (Selectors.hasVariable(this.plainState, name)) {
       const variable = Selectors.getVariable(this.plainState, name);
       Mutators.assignVariable(this.plainState, name, {
@@ -78,7 +78,7 @@ export class PliPreprocessorInterpreterState
       });
     } else {
       Mutators.assignVariable(this.plainState, name, {
-        dataType: "character",
+        dataType: "CHARACTER",
         scanMode,
         value: [],
         active: true,
@@ -95,8 +95,8 @@ export class PliPreprocessorInterpreterState
       });
     } else {
       Mutators.assignVariable(this.plainState, name, {
-        dataType: "character",
-        scanMode: "rescan",
+        dataType: "CHARACTER",
+        scanMode: "RESCAN",
         value: [],
         active: false,
       });
@@ -112,8 +112,8 @@ export class PliPreprocessorInterpreterState
       });
     } else {
       Mutators.assignVariable(this.plainState, name, {
-        dataType: typeof value === "string" ? "character" : "fixed",
-        scanMode: "rescan",
+        dataType: typeof value === "string" ? "CHARACTER" : "FIXED",
+        scanMode: "RESCAN",
         value,
         active: false,
       });
@@ -148,8 +148,8 @@ export class PliPreprocessorInterpreterState
         } else {
           this.plainState.variables[instruction.name] = {
             active: true,
-            dataType: "character",
-            scanMode: instruction.scanMode ?? "rescan",
+            dataType: "CHARACTER",
+            scanMode: instruction.scanMode ?? "RESCAN",
             value: [],
           };
         }
@@ -162,8 +162,8 @@ export class PliPreprocessorInterpreterState
         } else {
           this.plainState.variables[instruction.name] = {
             active: false,
-            dataType: "character",
-            scanMode: "rescan",
+            dataType: "CHARACTER",
+            scanMode: "RESCAN",
             value: [],
           };
         }
@@ -219,7 +219,10 @@ export class PliPreprocessorInterpreterState
               value = Values.or(lhs, rhs);
               break;
             default:
-              assertUnreachable(instruction.operator);
+              console.log(
+                "Found unexpected preprocessor operator: ",
+                instruction.operator,
+              );
           }
           this.plainState.stack.push(value);
         }
@@ -242,8 +245,8 @@ export class PliPreprocessorInterpreterState
           if (!this.hasVariable(instruction.name)) {
             this.plainState.variables[instruction.name] = {
               active: false,
-              dataType: "character",
-              scanMode: "rescan",
+              dataType: "CHARACTER",
+              scanMode: "RESCAN",
               value: [],
             };
           }
@@ -369,7 +372,7 @@ export class PliPreprocessorInterpreterState
     for (const [name, variable] of Object.entries(this.plainState.variables)) {
       if (variable.active) {
         activeScanVariables.add(name);
-        if (variable.scanMode === "rescan") {
+        if (variable.scanMode === "RESCAN") {
           activeRescanVariables.add(name);
         }
       }
@@ -387,9 +390,9 @@ export type TextPosition = {
 };
 
 export type PreprocessorVariable = {
-  scanMode: ScanMode;
+  scanMode: ast.ScanMode;
   active: boolean;
-  dataType: VariableDataType;
+  dataType: "CHARACTER" | "FIXED";
   value: IToken[];
 };
 

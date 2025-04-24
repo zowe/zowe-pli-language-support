@@ -12,7 +12,7 @@
 import { IToken } from "chevrotain";
 import { PliProgram, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
-import { ScopeCache } from "../linking/symbol-table.js";
+import { ScopeCacheGroups } from "../linking/symbol-table.js";
 import { TextDocuments } from "../language-server/text-documents.js";
 import { Connection } from "vscode-languageserver";
 import { ReferencesCache } from "../linking/resolver.js";
@@ -20,7 +20,6 @@ import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
 import { lifecycle } from "./lifecycle.js";
 import { CompilerOptions } from "../preprocessor/compiler-options/options.js";
 import { skippedCode } from "../language-server/skipped-code.js";
-import { PPStatement } from "../preprocessor/pli-preprocessor-ast.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -40,11 +39,11 @@ export interface CompilationUnit {
   files: URI[];
   compilerOptions: CompilerOptions;
   ast: PliProgram;
+  preprocessorAst: PliProgram;
   tokens: CompilationUnitTokens;
-  preprocessorStatements: PPStatement[];
   references: ReferencesCache;
   diagnostics: CompilationUnitDiagnostics;
-  scopeCache: ScopeCache;
+  scopeCaches: ScopeCacheGroups;
 }
 
 export interface CompilationUnitTokens {
@@ -80,13 +79,17 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       container: null,
       statements: [],
     },
+    preprocessorAst: {
+      kind: SyntaxKind.PliProgram,
+      container: null,
+      statements: [],
+    },
     tokens: {
       fileTokens: {},
       all: [],
     },
-    preprocessorStatements: [],
     references: new ReferencesCache(),
-    scopeCache: new ScopeCache(),
+    scopeCaches: new ScopeCacheGroups(),
     diagnostics: {
       lexer: [],
       compilerOptions: [],
