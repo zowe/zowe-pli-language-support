@@ -10,66 +10,76 @@
  */
 
 import * as vscode from "vscode";
-import { LanguageClient } from "vscode-languageclient/node.js";
+import { LanguageClient, Range } from "vscode-languageclient/node.js";
 import { Settings } from "./settings";
 
-let skippedCodeDecorationType: vscode.TextEditorDecorationType;
-const skippedRangesByUri = new Map<string, vscode.Range[]>();
+export namespace SkippedCodeDecorator {
+  let skippedCodeDecorationType: vscode.TextEditorDecorationType;
+  const skippedRangesByUri = new Map<string, vscode.Range[]>();
 
-export function registerSkipDecoratorType(client: LanguageClient, settings: Settings) {
-    updateSkipDecoratorType(settings);
-  
+  export function register(client: LanguageClient, settings: Settings): void {
+    skippedCodeDecorationType = vscode.window.createTextEditorDecorationType({
+      opacity: settings.skippedCodeOpacity.toString(),
+    });
+
     client.onNotification(
       "pli/skippedCode",
-      (params: {
-        uri: string;
-        ranges: Array<{
-          range: {
-            start: { line: number; character: number };
-            end: { line: number; character: number };
-          };
-        }>;
-      }) => {
-        if (!settings.skippedCodeEnabled) {
-          return;
-        }
-  
-        const editor = vscode.window.visibleTextEditors.find(
-          (e) => e.document.uri.toString() === params.uri,
+      (params: { uri: string; ranges: Range[] }) => {
+        const ranges = params.ranges.map(
+          (range) =>
+            new vscode.Range(
+              new vscode.Position(range.start.line, range.start.character),
+              new vscode.Position(range.end.line, range.end.character),
+            ),
         );
-        if (editor) {
-          const ranges = params.ranges.map(
-            ({ range }) =>
-              new vscode.Range(
-                new vscode.Position(range.start.line, range.start.character),
-                new vscode.Position(range.end.line, range.end.character),
-              ),
-          );
-          skippedRangesByUri.set(params.uri, ranges);
-          editor.setDecorations(skippedCodeDecorationType, ranges);
-        }
+        skippedRangesByUri.set(params.uri, ranges);
+        updateURI(params.uri, settings);
       },
     );
-  
-    vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (!editor || !settings.skippedCodeEnabled) return;
-      const ranges = skippedRangesByUri.get(editor.document.uri.toString());
-      if (ranges) {
-        editor.setDecorations(skippedCodeDecorationType, ranges);
+
+    vscode.window.onDidChangeVisibleTextEditors((editors) => {
+      for (const editor of editors) {
+        updateEditor(editor, settings);
       }
     });
-  
+
     vscode.workspace.onDidCloseTextDocument((doc) => {
       skippedRangesByUri.delete(doc.uri.toString());
     });
   }
-  
-  export function updateSkipDecoratorType(settings: Settings) {
+
+  export function updateAll(settings: Settings): void {
+    for (const editor of vscode.window.visibleTextEditors) {
+      updateEditor(editor, settings);
+    }
+  }
+
+  function updateURI(uri: string, settings: Settings): void {
+    vscode.window.visibleTextEditors
+      .filter((e) => e.document.uri.toString() === uri)
+      .forEach((editor) => {
+        updateEditor(editor, settings);
+      });
+  }
+
+  function updateEditor(editor: vscode.TextEditor, settings: Settings): void {
+    if (!settings.skippedCodeEnabled) {
+      editor.setDecorations(skippedCodeDecorationType, []);
+      return;
+    }
+    const ranges = skippedRangesByUri.get(editor.document.uri.toString());
+    if (!ranges) return;
+
+    editor.setDecorations(skippedCodeDecorationType, ranges);
+  }
+
+  export function updateType(settings: Settings): void {
     if (skippedCodeDecorationType) {
       skippedCodeDecorationType.dispose();
     }
     skippedCodeDecorationType = vscode.window.createTextEditorDecorationType({
       opacity: settings.skippedCodeOpacity.toString(),
     });
+    updateAll(settings);
   }
-  
+}

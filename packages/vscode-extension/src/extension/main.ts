@@ -18,7 +18,7 @@ import * as path from "node:path";
 import { LanguageClient, TransportKind } from "vscode-languageclient/node.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Settings } from "./settings";
-import { registerSkipDecoratorType } from "./decorators";
+import { SkippedCodeDecorator } from "./decorators";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -80,7 +80,7 @@ function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
   );
 
   // Register custom decorator types.
-  registerSkipDecoratorType(client, settings);
+  SkippedCodeDecorator.register(client, settings);
 
   // Start the client. This will also launch the server
   client.start();

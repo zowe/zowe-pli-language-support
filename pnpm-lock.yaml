@@ -110,10 +110,10 @@ importers:
         version: '@codingame/monaco-vscode-editor-api@11.1.2'
       monaco-editor-wrapper:
         specifier: ~6.1.0
-        version: 6.1.1(monaco-languageclient@9.1.1(pr23a6xbqk4pjfo5zls3ianfqe))(vscode-ws-jsonrpc@3.4.0)
+        version: 6.1.1(monaco-languageclient@9.1.1(84b79c2b6172ad88cc0782fe4be73cae))(vscode-ws-jsonrpc@3.4.0)
       monaco-languageclient:
         specifier: ~9.1.0
-        version: 9.1.1(pr23a6xbqk4pjfo5zls3ianfqe)
+        version: 9.1.1(84b79c2b6172ad88cc0782fe4be73cae)
       pli-language:
         specifier: workspace:*
         version: link:../language
@@ -4328,7 +4328,7 @@ snapshots:
   mkdirp-classic@0.5.3:
     optional: true
 
-  monaco-editor-wrapper@6.1.1(monaco-languageclient@9.1.1(pr23a6xbqk4pjfo5zls3ianfqe))(vscode-ws-jsonrpc@3.4.0):
+  monaco-editor-wrapper@6.1.1(monaco-languageclient@9.1.1(84b79c2b6172ad88cc0782fe4be73cae))(vscode-ws-jsonrpc@3.4.0):
     dependencies:
       '@codingame/monaco-vscode-chat-extensions-notebook-task-terminal-testing-common': 11.1.2
       '@codingame/monaco-vscode-configuration-service-override': 11.1.2
@@ -4354,13 +4354,13 @@ snapshots:
       '@codingame/monaco-vscode-views-service-override': 11.1.2
       '@codingame/monaco-vscode-workbench-service-override': 11.1.2
       monaco-editor: '@codingame/monaco-vscode-editor-api@11.1.2'
-      monaco-languageclient: 9.1.1(pr23a6xbqk4pjfo5zls3ianfqe)
+      monaco-languageclient: 9.1.1(84b79c2b6172ad88cc0782fe4be73cae)
       vscode: '@codingame/monaco-vscode-api@11.1.2'
       vscode-languageclient: 9.0.1
       vscode-languageserver-protocol: 3.17.5
       vscode-ws-jsonrpc: 3.4.0
 
-  monaco-languageclient@9.1.1(pr23a6xbqk4pjfo5zls3ianfqe):
+  monaco-languageclient@9.1.1(84b79c2b6172ad88cc0782fe4be73cae):
     dependencies:
       '@codingame/monaco-vscode-api': 11.1.2
       '@codingame/monaco-vscode-configuration-service-override': 11.1.2

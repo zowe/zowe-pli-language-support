@@ -12,15 +12,12 @@
 import { Connection, NotificationType } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { CstNodeKind } from "../syntax-tree/cst";
+import { Range } from "vscode-languageserver-types";
 
 export interface SkippedPliCodeNotificationParams {
   uri: string;
-  ranges: Array<{
-    range: {
-      start: { line: number; character: number };
-      end: { line: number; character: number };
-    };
-  }>;
+  ranges: Range[];
 }
 
 export const SkippedPliCodeNotification =
@@ -32,18 +29,10 @@ export function skippedCode(
   compilationUnit: CompilationUnit,
   textDocument: TextDocument,
 ) {
-  let ranges: Array<{
-    range: {
-      start: { line: number; character: number };
-      end: { line: number; character: number };
-    };
-  }> = [];
+  let ranges: Range[] = [];
 
   if (compilationUnit) {
-    ranges = [
-      ...ranges,
-      ...skippedCodeRanges(uri, compilationUnit, textDocument),
-    ];
+    ranges = skippedCodeRanges(uri, compilationUnit, textDocument);
   }
 
   connection.sendNotification(SkippedPliCodeNotification, {
@@ -56,61 +45,39 @@ export function skippedCodeRanges(
   uri: string,
   compilationUnit: CompilationUnit,
   textDocument: TextDocument,
-): Array<{
-  range: {
-    start: { line: number; character: number };
-    end: { line: number; character: number };
-  };
-}> {
-  const result: Array<{
-    range: {
-      start: { line: number; character: number };
-      end: { line: number; character: number };
-    };
-  }> = [];
+): Range[] {
+  const result: Range[] = [];
 
-  // const ppSkips: PPSkip[] = compilationUnit.preprocessorStatements.filter(
-  //   (statement) => statement.type === "skip",
-  // ) as PPSkip[];
+  const tokens = compilationUnit.tokens.fileTokens[textDocument.uri] ?? [];
 
-  // for (const skip of ppSkips) {
-  //   const line = textDocument.positionAt(skip.startOffset).line + 1;
-  //   const range = {
-  //     range: {
-  //       start: { line: line, character: 0 },
-  //       end: { line: line + skip.lineCount, character: 0 },
-  //     },
-  //   };
-  //   result.push(range);
-  // }
+  for (const token of tokens) {
+    if (token.payload?.kind === CstNodeKind.SkipDirective_SKIP) {
+      const line = textDocument.positionAt(token.startOffset).line + 1;
+      result.push({
+        start: { line: line, character: 0 },
+        end: { line: line + token.payload.element.lineCount, character: 0 },
+      });
+    }
 
-  // const ppIfs: PPIfStatement[] = compilationUnit.preprocessorStatements.filter(
-  //   (statement) => statement.type === "if",
-  // ) as PPIfStatement[];
-
-  // for (const ifStatement of ppIfs) {
-  //   if (ifStatement.conditionEval === undefined) {
-  //     continue;
-  //   }
-
-  //   if (ifStatement.conditionEval) {
-  //     if (ifStatement.elseUnitRange) {
-  //       result.push({
-  //         range: {
-  //           start: textDocument.positionAt(ifStatement.elseUnitRange!.start),
-  //           end: textDocument.positionAt(ifStatement.elseUnitRange!.end),
-  //         },
-  //       });
-  //     }
-  //   } else {
-  //     result.push({
-  //       range: {
-  //         start: textDocument.positionAt(ifStatement.thenUnitRange.start),
-  //         end: textDocument.positionAt(ifStatement.thenUnitRange.end),
-  //       },
-  //     });
-  //   }
-  // }
+    if (token.payload?.kind === CstNodeKind.IfStatement_IF) {
+      const evaluationResult =
+        compilationUnit.preprocessorEvaluationResults.get(
+          token.payload.element,
+        );
+      if (evaluationResult !== undefined) {
+        const startOffset = evaluationResult
+          ? (token.payload.element.elseRange?.start ?? 0)
+          : (token.payload.element.unitRange?.start ?? 0);
+        const endOffset = evaluationResult
+          ? (token.payload.element.elseRange?.end ?? 0)
+          : (token.payload.element.unitRange?.end ?? 0);
+        result.push({
+          start: textDocument.positionAt(startOffset),
+          end: textDocument.positionAt(endOffset),
+        });
+      }
+    }
+  }
 
   return result;
 }

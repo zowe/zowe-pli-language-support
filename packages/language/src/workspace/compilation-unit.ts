@@ -20,6 +20,7 @@ import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
 import { lifecycle } from "./lifecycle.js";
 import { CompilerOptions } from "../preprocessor/compiler-options/options.js";
 import { skippedCode } from "../language-server/skipped-code.js";
+import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-state.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -40,6 +41,7 @@ export interface CompilationUnit {
   compilerOptions: CompilerOptions;
   ast: PliProgram;
   preprocessorAst: PliProgram;
+  preprocessorEvaluationResults: EvaluationResults;
   tokens: CompilationUnitTokens;
   references: ReferencesCache;
   diagnostics: CompilationUnitDiagnostics;
@@ -84,6 +86,7 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       container: null,
       statements: [],
     },
+    preprocessorEvaluationResults: new Map(),
     tokens: {
       fileTokens: {},
       all: [],

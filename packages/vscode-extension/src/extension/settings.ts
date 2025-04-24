@@ -10,7 +10,7 @@
  */
 
 import * as vscode from "vscode";
-import { updateSkipDecoratorType } from "./decorators";
+import { SkippedCodeDecorator } from "./decorators";
 
 export class Settings {
   private static instance: Settings;
@@ -22,7 +22,7 @@ export class Settings {
         if (e.affectsConfiguration("pli")) {
           this.updateSettings();
         }
-      })
+      }),
     );
   }
 
@@ -42,7 +42,7 @@ export class Settings {
   }
 
   private updateSettings(): void {
-    updateSkipDecoratorType(this);
+    SkippedCodeDecorator.updateType(this);
   }
 
   public get skippedCodeEnabled(): boolean {
@@ -52,4 +52,4 @@ export class Settings {
   public get skippedCodeOpacity(): number {
     return this.getConfiguration().get("skippedCode.opacity") ?? 0.55;
   }
-} 
+}
