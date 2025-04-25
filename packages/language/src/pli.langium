@@ -267,7 +267,7 @@ ExitStatement: {infer ExitStatement} 'EXIT' ';';
 
 FetchStatement: 'FETCH' entries+=FetchEntry (',' entries+=FetchEntry)* ';';
 
-FetchEntry: name=ID ('SET' '(' set=LocatorCall ')')? ('TITLE' '(' title=Expression ')')?;
+FetchEntry: entry=[NamedElement:ID] ('SET' '(' set=LocatorCall ')')? ('TITLE' '(' title=Expression ')')?;
 
 FlushStatement: 'FLUSH' 'FILE' '(' file=(LocatorCall | '*') ')' ';';
 

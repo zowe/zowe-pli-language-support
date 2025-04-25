@@ -26,16 +26,25 @@ export function isNameToken(kind: CstNodeKind): boolean {
   switch (kind) {
     case CstNodeKind.DeclaredVariable_Name:
     case CstNodeKind.LabelPrefix_Name:
+    case CstNodeKind.DoType3Variable_Name:
+    case CstNodeKind.OrdinalValue_Name:
       return true;
   }
   return false;
 }
 
+/**
+ * Returns an associated name token for nodes that have one
+ */
 export function getNameToken(node: SyntaxNode): IToken | undefined {
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
       return node.nameToken ?? undefined;
     case SyntaxKind.LabelPrefix:
+      return node.nameToken ?? undefined;
+    case SyntaxKind.DoType3Variable:
+      return node.nameToken ?? undefined;
+    case SyntaxKind.OrdinalValue:
       return node.nameToken ?? undefined;
   }
   return undefined;
@@ -57,6 +66,9 @@ export function isReferenceToken(kind: CstNodeKind): boolean {
   return false;
 }
 
+/**
+ * Returns a reference contained within a node, when present
+ */
 export function getReference(node: SyntaxNode): Reference | undefined {
   switch (node.kind) {
     case SyntaxKind.HandleAttribute:
@@ -71,14 +83,29 @@ export function getReference(node: SyntaxNode): Reference | undefined {
       return node.ref ?? undefined;
     case SyntaxKind.TypeAttribute:
       return node.type ?? undefined;
+    case SyntaxKind.FetchEntry:
+      return node.entry?.ref ?? undefined;
   }
   return undefined;
 }
 
-export function getSymbol(node: SyntaxNode): string | undefined {
+/**
+ * Gets a referenceable symbol name for the given node, when present
+ */
+export function getVariableSymbol(node: SyntaxNode): string | undefined {
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
+      return node.name!;
+    default:
+      return undefined;
+  }
+}
+
+export function getLabelSymbol(node: SyntaxNode): string | undefined {
+  switch (node.kind) {
     case SyntaxKind.LabelPrefix:
+    case SyntaxKind.DoType3Variable:
+    case SyntaxKind.OrdinalValue:
       return node.name!;
     default:
       return undefined;

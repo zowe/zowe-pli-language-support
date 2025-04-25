@@ -10,328 +10,195 @@
  */
 
 import { describe, test } from "vitest";
-import { expectGotoDefinition as expectGotoDefinitionRoot } from "./utils";
+import { expectLinks as expectLinksRoot } from "./utils";
+
+/**
+ * Scoping report: https://github.com/zowe/zowe-pli-language-support/issues/94
+ */
 
 /**
  * Helper function to parse a string of PL/I statements,
  * wrapping them in a procedure to ensure they are valid
  */
-function expectGotoDefinition(
-  params: Parameters<typeof expectGotoDefinitionRoot>[0],
-) {
-  const text = ` STARTPR: PROCEDURE OPTIONS (MAIN);
-${params.text}
+function expectLinks(text: string) {
+  const wrappedText = ` STARTPR: PROCEDURE OPTIONS (MAIN);
+${text}
  END STARTPR;`;
 
-  return expectGotoDefinitionRoot({
-    ...params,
-    text,
-  });
+  return expectLinksRoot(wrappedText);
 }
 
-describe("Linking tests", async () => {
-  describe("Structured tests", async () => {
-    describe("NamedType", async () => {
-      // Didrik: I'm unsure what the expected behavior on the mainframe is here.
-      test("Must find the type declaration", async () => {
-        const text = `
- DEFINE ALIAS AAA;
- DCL <|AAA|> CHAR(1);
- DCL BBB TYPE(<|>AAA);`;
+describe("Linking tests", () => {
+  test("Nested procedure label tests", () =>
+    expectLinks(`
+ <|1:OUTER|>: procedure options (main);
+    <|2:INNER|>: procedure;
+        call <|3>OUTER;
+        call <|2>INNER;
 
-        await expectGotoDefinition({
-          text,
-          index: 0,
-          rangeIndex: 0,
-        });
-      });
-    });
-  });
+        <|3:OUTER|>: procedure;
+            call <|3>OUTER;
+            call <|4>INNER;
 
-  describe("Unstructured tests", async () => {
-    /**
-     * Didrik 2025-04-09
-     *
-     * CAUTION: These test may be incorrect.
-     * TODO: Figure out how label scoping/shadowing works on the mainframe.
-     *
-     * Information: https://github.com/zowe/zowe-pli-language-support/issues/29#issuecomment-2623842079
-     */
-    describe("Nested procedure label tests", async () => {
-      const text = `
- <|OUTER|>: procedure options (main); // outer0
-    <|INNER|>: procedure;             // inner0
-        call <|>OUTER;                // callOuter0
-        call <|>INNER;                // callInner0
+            <|4:INNER|>: procedure;
+                call <|3>OUTER;
+                call <|4>INNER;
+            END <|4>INNER;
 
-        <|OUTER|>: procedure;         // outer1
-            call <|>OUTER;            // callOuter1
-            call <|>INNER;            // callInner1
+            call <|3>OUTER;
+            call <|4>INNER;
+        END <|3>OUTER;
 
-            <|INNER|>: procedure;     // inner1
-                call <|>OUTER;        // callOuter2
-                call <|>INNER;        // callInner2
-            END INNER;
+        call <|3>OUTER;
+        call <|2>INNER;
+    END <|2>INNER;
 
-            call <|>OUTER;            // callOuter3
-            call <|>INNER;            // callInner3
-        END <|>OUTER;                 // callOuter4
+    call <|1>OUTER;
+    call <|2>INNER;
+ end <|1>OUTER;
+ call <|1>OUTER;`));
 
-        call <|>OUTER;                // callOuter5
-        call <|>INNER;                // callInner4
-    END <|>INNER;                     // callInner5
+  test("Must handle implicit declaration (use before declaration)", () =>
+    expectLinks(`
+ DCL <|1:A|> CHAR(8) INIT("A");
+ PUT(<|1>A); // -> "A"
 
-    call <|>OUTER;                    // callOuter6
-    call <|>INNER;                    // callInner6
- end <|>OUTER;                        // callOuter7
+ LABL: PROCEDURE;
+   PUT(<|2>A); // -> "A2"
+   DCL <|2:A|> CHAR(8) INIT("A2");
+   PUT(<|2>A); // -> "A2"
+ END LABL;
 
- call <|>OUTER;                       // callOuter8`;
+ PUT(<|1>A); // -> "A"
+ CALL LABL;
+ PUT(<|1>A); // -> "A"`));
 
-      const procedures = {
-        outer0: 0,
-        inner0: 1,
-        outer1: 2,
-        inner1: 3,
-      };
+  test("Must handle implicit declaration (use before declaration)", () =>
+    expectLinks(`
+ PUT(<|1>A);
+ DCL <|1:A|> CHAR(8) INIT("A");
+ PUT(<|1>A);`));
 
-      const calls = {
-        callOuter0: 0,
-        callInner0: 1,
-        callOuter1: 2,
-        callInner1: 3,
-        callOuter2: 4,
-        callInner2: 5,
-        callOuter3: 6,
-        callInner3: 7,
-        callOuter4: 8,
-        callOuter5: 9,
-        callInner4: 10,
-        callInner5: 11,
-        callOuter6: 12,
-        callInner6: 13,
-        callOuter7: 14,
-        callOuter8: 15,
-      };
-
-      const links: Record<number, number[]> = {
-        [procedures.outer0]: [
-          calls.callOuter6,
-          calls.callOuter7,
-          calls.callOuter8,
-        ],
-        [procedures.inner0]: [
-          calls.callInner0,
-          calls.callInner4,
-          calls.callInner5,
-          calls.callInner6,
-        ],
-        [procedures.outer1]: [
-          calls.callOuter0,
-          calls.callOuter1,
-          calls.callOuter2,
-          calls.callOuter3,
-          calls.callOuter4,
-          calls.callOuter5,
-        ],
-        [procedures.inner1]: [
-          calls.callInner1,
-          calls.callInner2,
-          calls.callInner3,
-        ],
-      };
-
-      for (const [procedure, calls] of Object.entries(links)) {
-        for (const call of calls) {
-          test(`Must link call ${call} to procedure ${procedure}`, async () => {
-            await expectGotoDefinition({
-              text,
-              index: call,
-              rangeIndex: +procedure,
-            });
-          });
-        }
-      }
-    });
-
-    describe("Declaration tests", async () => {
-      test("Must handle scoping in prodecures", async () => {
-        const text = `
- DCL <|ABC|>;
- CALL <|>ABC;
+  test("Must handle scoping in prodecures", () =>
+    expectLinks(`
+ DCL <|1:ABC|>;
+ CALL <|1>ABC;
 
  OUTER: PROCEDURE;
-  DCL <|ABC|>;
-  CALL <|>ABC;
+  DCL <|2:ABC|>;
+  CALL <|2>ABC;
  END OUTER;
 
- DCL <|ABC|>;
- CALL <|>ABC;
-`;
+ DCL ABC;
+ CALL <|1>ABC;`));
 
-        await expectGotoDefinition({
-          text,
-          index: 0,
-          rangeIndex: 0,
-        });
+  test("Must ignore redeclarations", () =>
+    expectLinks(`
+ DCL <|1:ABC|>;
+ CALL <|1>ABC;
+ DCL ABC;
+ CALL <|1>ABC;`));
 
-        await expectGotoDefinition({
-          text,
-          index: 1,
-          rangeIndex: 1,
-        });
-
-        await expectGotoDefinition({
-          text,
-          index: 2,
-          rangeIndex: 2,
-        });
-      });
-
-      test("Must handle redeclarations", async () => {
-        const text = `
- DCL <|ABC|>;
- CALL <|>ABC;
- DCL <|ABC|>;
- CALL <|>ABC;`;
-
-        await expectGotoDefinition({
-          text,
-          index: 0,
-          rangeIndex: 0,
-        });
-
-        await expectGotoDefinition({
-          text,
-          index: 1,
-          rangeIndex: 1,
-        });
-      });
-
-      test("Must find declaration in SELECT/WHEN construct", async () => {
-        // Taken from code_samples/PLI0001.pli
-        const text = `
+  test("Must find declaration in SELECT/WHEN construct", () =>
+    // Taken from code_samples/PLI0001.pli
+    expectLinks(`
  SELECT (123);
     WHEN (123)
     DO;
-        DCL <|BFSTRING|> CHAR(255);
-        PUT SKIP LIST(<|>BFSTRING);
+        DCL <|1:BFSTRING|> CHAR(255);
+        PUT SKIP LIST(<|1>BFSTRING);
     END;
- END;`;
+ END;`));
 
-        await expectGotoDefinition({
-          text,
-          index: 0,
-          rangeIndex: 0,
-        });
-      });
-    });
+  test("Must find declared procedure label in CALL/END", () =>
+    expectLinks(`
+          Control: procedure options(main);
+           call <|1>A('ok!'); // invoke the 'A' subroutine
+          end Control;
+          <|1:A|>: procedure (VAR1);
+          declare <|2:VAR1|> char(3);
+          put skip list(V<|2>AR1);
+          end <|1>A;`));
 
-    describe("Declarations and labels combined", async () => {
-      const text = `
- Control: procedure options(main);
-  call <|>A('ok!'); // invoke the 'A' subroutine
- end Control;
- <|A|>: procedure (VAR1);
- declare <|VAR1|> char(3);
- put skip list(V<|>AR1);
- end <|>A;`;
+  test("Qualified names", () =>
+    expectLinks(`
+ DCL ARRAY_ENTRY;
+ DCL TWO_DIM_TABLE_ENTRY;
+ DCL TYPE#;
 
-      test("Must find declared procedure label in CALL", async () => {
-        await expectGotoDefinition({
-          text,
-          index: 0,
-          rangeIndex: 0,
-        });
-      });
-
-      test("Must find declared procedure label in END", async () => {
-        await expectGotoDefinition({
-          text,
-          index: 2,
-          rangeIndex: 0,
-        });
-      });
-
-      test("Must find declared variable", async () => {
-        await expectGotoDefinition({
-          text,
-          index: 1,
-          rangeIndex: 1,
-        });
-      });
-    });
-
-    // TODO: Figure out how label shadowing should work on the mainframe.
-    describe("Label shadowing", async () => {
-      const text = `
- CALL <|>OUTER;                     // call1
- <|OUTER|>: PROCEDURE;              // label1
-  CALL <|>OUTER;                    // call2
-  <|OUTER|>: PROCEDURE; END OUTER;  // label2
-  CALL <|>OUTER;                    // call3
- END OUTER;   
- CALL <|>OUTER;                     // call4
-
- CALL <|>OUTER;                     // call5
- <|OUTER|>: PROCEDURE;              // label3
-  CALL <|>OUTER;                    // call6
-  <|OUTER|>: PROCEDURE; END OUTER;  // label4
-  CALL <|>OUTER;                    // call7
- END OUTER;   
- CALL <|>OUTER;                     // call8`;
-
-      test.skip("Must find the correct label", async () => {
-        await expectGotoDefinition({
-          text,
-          index: 0,
-          rangeIndex: 0,
-        });
-      });
-    });
-
-    describe("Qualified names", async () => {
-      const text = `
-0DCL 1  <|TWO_DIM_TABLE|>,
-        2  <|TWO_DIM_TABLE_ENTRY|>          CHAR(32);
-0DCL 1  TABLE_WITH_ARRAY,
+ DCL 1  <|1:TWO_DIM_TABLE|>,
+        2  <|2:TWO_DIM_TABLE_ENTRY|>          CHAR(32);
+ DCL 1  TABLE_WITH_ARRAY,
         2  ARRAY_ENTRY(0:1000),
            3  NAME                          CHAR(32) VARYING,
-           3  TYPE#                         CHAR(8),
+           3  <|3:TYPE#|>                     CHAR(8),
         2  NON_ARRAY_ENTRY,
            3  NAME                          CHAR(32) VARYING,
-           3  <|TYPE#|>                     CHAR(8);
+           3  <|4:TYPE#|>                     CHAR(8);
 
  DCL ARRAY_ENTRY;
  DCL TWO_DIM_TABLE_ENTRY;
+ DCL TYPE#;
 
- PUT (<|>TWO_DIM_TABLE);
- PUT (TWO_DIM_TABLE.<|>TWO_DIM_TABLE_ENTRY);
- PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|>TYPE#);`;
+ PUT (<|1>TWO_DIM_TABLE);
+ PUT (TWO_DIM_TABLE.<|2>TWO_DIM_TABLE_ENTRY);
+ PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|3>TYPE#);
+ PUT (TABLE_WITH_ARRAY.NON_ARRAY_ENTRY.<|4>TYPE#);`));
 
-      test("Must find table name in table", async () => {
-        await expectGotoDefinition({
-          text,
-          index: 0,
-          rangeIndex: 0,
-        });
-      });
+  describe("Implicit qualification", () => {
+    test("Must qualify implicitly in structure", () =>
+      expectLinks(`
+ DCL 1 <|1:A|>,
+     2 <|2:B|> CHAR(8) VALUE("B");
+ PUT(<|2>B);
+ PUT(<|1>A.<|2>B);`));
 
-      // TODO: Fix qualified name scoping
-      test.skip("Must find qualified name in table", async () => {
-        await expectGotoDefinition({
-          text,
-          index: 1,
-          rangeIndex: 1,
-        });
-      });
+    test("Declaration must override implicit qualification", () =>
+      expectLinks(`
+ DCL 1 <|1:A|>,
+     2 <|2:B|> CHAR(8) VALUE("B");
+ DCL <|3:B|> CHAR(8) VALUE("B2");
+ PUT(<|3>B);
+ PUT(<|1>A.<|2>B);`));
 
-      test("Must find qualified name in array", async () => {
-        await expectGotoDefinition({
-          text,
-          index: 2,
-          rangeIndex: 2,
-        });
-      });
-    });
+    test("Variable must be partially qualified", () =>
+      expectLinks(`
+  DCL 1 <|a:A|>,
+      2 <|a_b:B|> CHAR(8) VALUE("B");
+
+  DCL 1 A2,
+      2 <|a2_c:C|>,
+        3 <|a2_c_b:B|> CHAR(8) VALUE("B2");
+
+  PUT (<|a2_c>C.<|a2_c_b>B);
+  PUT (<|a>A.<|a_b>B);`));
+
+    test("Star name in structure should not need to be qualified", () =>
+      expectLinks(`
+ DCL 1 A,
+       2 *,
+         3 <|b:B|> CHAR(8) VALUE("B");
+
+ PUT(A.<|b>B);`));
+
+    /**
+     * TODO: Implement star handling in structured names
+     */
+    test.skip("Star name in structure should be qualifiable", () =>
+      expectLinks(`
+ DCL 1 A,
+        2 *,
+          3 B CHAR(8) VALUE("B"),
+        2 <|b:B|> CHAR(8) VALUE("B2");
+
+ PUT(A.<|b>B);`));
+  });
+
+  test("fetch linking", () => {
+    expectLinks(`
+ MAINPR: PROCEDURE OPTIONS(MAIN);
+ dcl <|a:A|> entry;
+ fetch <|a>A;
+ end MAINPR;`);
   });
 });

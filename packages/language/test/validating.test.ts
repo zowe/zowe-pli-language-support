@@ -123,7 +123,7 @@ describe("Validating", () => {
   });
 
   // TODO @montymxb Mar. 28th, 2025: Pending re-integration of the built-in library for testing
-  test.fails(
+  test.fails.skip(
     "Reference to alias types __SIGNED_INT & __UNSIGNED_INT",
     async () => {
       const doc = parseWithValidations(`

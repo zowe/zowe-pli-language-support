@@ -1694,6 +1694,12 @@ export const FROM = createToken({
   categories: [ID, WriteStatementType, RewriteStatementType],
   longer_alt: ID,
 });
+export const LOOP = createToken({
+  name: "LOOP",
+  pattern: /LOOP|FOREVER/i,
+  categories: [ID],
+  longer_alt: ID,
+});
 export const WHEN = createToken({
   name: "WHEN",
   pattern: /WHEN/i,
@@ -2349,6 +2355,7 @@ export const keywords = [
   READ,
   INTO,
   FROM,
+  LOOP,
   WHEN,
   STOP,
   WAIT,

@@ -10,7 +10,6 @@
  */
 
 import { createTokenInstance, IToken, TokenType } from "chevrotain";
-import { ScanMode, VariableDataType } from "./pli-preprocessor-ast";
 import { URI } from "../utils/uri";
 
 export interface PreprocessorLexerState {
@@ -111,7 +110,7 @@ function hasLongerAlternative(
 export class PliPreprocessorLexerState implements PreprocessorLexerState {
   private readonly plainState: PlainPreprocessorLexerState;
 
-  constructor(text: string, uri: URI) {
+  constructor(text: string, uri: URI | undefined) {
     this.plainState = initializePreprocessorState(text, uri);
   }
 
@@ -204,34 +203,23 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
 
   advanceScan(scanned: string) {
     Mutators.advanceCharacters(this.plainState, scanned.length);
-    // const offset = this.plainState.offset;
-    // const { text: _, ...oldPosition } = this.plainState;
-    // const newPosition = Mutators.countNewLinesWhile(oldPosition.offset, scanned, () => true);
-    // Mutators.setPosition(this.plainState, newPosition);
   }
 }
 
 // PLAIN STATE
 
-export type PreprocessorVariable = {
-  scanMode: ScanMode;
-  active: boolean;
-  dataType: VariableDataType;
-  value: number | string | undefined;
-};
-
 export type PreprocessorScan = {
   length: number;
   offset: number;
   text: string;
-  uri: URI;
+  uri: URI | undefined;
 };
 
 export type PlainPreprocessorLexerState = PreprocessorScan;
 
 export const initializePreprocessorState: (
   text: string,
-  uri: URI,
+  uri: URI | undefined,
 ) => PlainPreprocessorLexerState = (text, uri) => {
   return {
     tokens: [],

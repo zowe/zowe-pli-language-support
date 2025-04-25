@@ -23,7 +23,9 @@ export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_h
   procedureStatement: ProcedureStatement,
   accept: PliValidationAcceptor,
 ): void {
-  const items = procedureStatement.options.flatMap((o) => o.items);
+  const items = procedureStatement.options
+    .filter((e) => e.kind === SyntaxKind.Options)
+    .flatMap((o) => o.items);
   const item = items.find(
     (i) =>
       i.kind === SyntaxKind.SimpleOptionsItem &&
@@ -33,7 +35,7 @@ export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_h
   if (item) {
     const parameterNames = new Set(
       procedureStatement.parameters.map((p) =>
-        p.id ? normalizeIdentifier(p.id) : p.id,
+        p.name ? normalizeIdentifier(p.name) : p.name,
       ),
     );
 
@@ -46,12 +48,14 @@ export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_h
 
     const nonConnectedParameters = declareStmts
       .flatMap((d) => d.items)
-      .filter(
-        (i) =>
-          i.element &&
-          i.element !== "*" &&
-          i.element.kind === SyntaxKind.DeclaredVariable &&
-          parameterNames.has(normalizeIdentifier(i.element.name!)),
+      .filter((i) =>
+        i.elements.some(
+          (e) =>
+            e !== "*" &&
+            "name" in e &&
+            e.name &&
+            parameterNames.has(normalizeIdentifier(e.name)),
+        ),
       )
       .filter((i) =>
         i.attributes.some(

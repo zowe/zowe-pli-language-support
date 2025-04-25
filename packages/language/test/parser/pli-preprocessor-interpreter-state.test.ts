@@ -20,7 +20,7 @@ describe("Preprocessor Interpreter State", () => {
       const state = Fixtures.emptyProgram();
 
       //act
-      state.activate("VARIABLE", "rescan");
+      state.activate("VARIABLE", "RESCAN");
 
       //assert
       expect(state.hasVariable("VARIABLE")).toBeTruthy();
@@ -32,8 +32,8 @@ describe("Preprocessor Interpreter State", () => {
       const state = Fixtures.emptyProgram();
       state.declare("VARIABLE", {
         active: true,
-        dataType: "character",
-        scanMode: "scan",
+        dataType: "CHARACTER",
+        scanMode: "SCAN",
         value: [],
       });
 
@@ -64,8 +64,8 @@ describe("Preprocessor Interpreter State", () => {
       const state = Fixtures.emptyProgram();
       state.declare("VARIABLE", {
         active: true,
-        dataType: "character",
-        scanMode: "scan",
+        dataType: "CHARACTER",
+        scanMode: "SCAN",
         value: [],
       });
 
@@ -94,8 +94,8 @@ describe("Preprocessor Interpreter State", () => {
       const state = Fixtures.emptyProgram();
       state.declare("VARIABLE", {
         active: true,
-        dataType: "character",
-        scanMode: "noscan",
+        dataType: "CHARACTER",
+        scanMode: "NOSCAN",
         value: [],
       });
 
@@ -118,8 +118,8 @@ describe("Preprocessor Interpreter State", () => {
       const state = Fixtures.emptyProgram();
       state.declare("VARIABLE", {
         active: true,
-        dataType: "character",
-        scanMode: "noscan",
+        dataType: "CHARACTER",
+        scanMode: "NOSCAN",
         value: [],
       });
 
@@ -137,8 +137,8 @@ describe("Preprocessor Interpreter State", () => {
       //act
       state.declare("VARIABLE", {
         active: true,
-        dataType: "fixed",
-        scanMode: "noscan",
+        dataType: "FIXED",
+        scanMode: "NOSCAN",
         value: [],
       });
 
@@ -151,16 +151,16 @@ describe("Preprocessor Interpreter State", () => {
       const state = Fixtures.emptyProgram();
       state.declare("VARIABLE", {
         active: true,
-        dataType: "fixed",
-        scanMode: "noscan",
+        dataType: "FIXED",
+        scanMode: "NOSCAN",
         value: [],
       });
 
       //act
       state.declare("VARIABLE", {
         active: true,
-        dataType: "character",
-        scanMode: "noscan",
+        dataType: "CHARACTER",
+        scanMode: "NOSCAN",
         value: [
           createTokenInstance(
             PreprocessorTokens.Number,

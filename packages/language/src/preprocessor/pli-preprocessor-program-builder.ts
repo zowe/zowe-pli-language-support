@@ -9,7 +9,7 @@
  *
  */
 
-import { AnyDoGroup } from "./pli-preprocessor-ast";
+import * as ast from "../syntax-tree/ast";
 import { PPInstruction, Label, PPIGoto } from "./pli-preprocessor-instructions";
 
 export type PliPreprocessorProgram = {
@@ -17,7 +17,7 @@ export type PliPreprocessorProgram = {
 };
 
 export type DoGroupStackItem = {
-  doGroup: AnyDoGroup;
+  doGroup: ast.DoStatement;
   $start$: Label;
   $iterate$: Label;
   $leave$: Label;
@@ -33,7 +33,7 @@ export class PliPreprocessorProgramBuilder {
     this.program = { instructions: [] };
   }
 
-  lookupDoGroup(doGroup: AnyDoGroup) {
+  lookupDoGroup(doGroup: ast.DoStatement) {
     return this.doGroupStack.find((item) => item.doGroup === doGroup);
   }
 
@@ -47,12 +47,12 @@ export class PliPreprocessorProgramBuilder {
     this.program.instructions.push(instruction);
   }
 
-  pushDoGroup(doGroup: AnyDoGroup) {
+  pushDoGroup(doGroup: ast.DoStatement) {
     const item = {
       doGroup,
-      $start$: this.getOrCreateLabel(),
-      $iterate$: this.getOrCreateLabel(),
-      $leave$: this.getOrCreateLabel(),
+      $start$: this.createLabel(),
+      $iterate$: this.createLabel(),
+      $leave$: this.createLabel(),
     };
     this.doGroupStack.push(item);
     return item as {
@@ -61,14 +61,29 @@ export class PliPreprocessorProgramBuilder {
     };
   }
 
-  getOrCreateLabel(label?: string, doGroup?: AnyDoGroup): Label {
-    label ??= `$label${this.labelCounter++}$`;
-    if (this.labels[label]) {
-      return this.labels[label];
+  createLabel(): Label {
+    const labelName = `$label${this.labelCounter++}$`;
+    const label: Label = { address: undefined, doGroup: undefined };
+    this.labels[labelName] = label;
+    return label;
+  }
+
+  createNamedLabel(label: ast.LabelPrefix, doGroup?: ast.DoStatement): Label {
+    if (label.name) {
+      const name = label.name;
+      const newLabel: Label = { address: undefined, doGroup };
+      this.labels[name] = newLabel;
+      return newLabel;
+    } else {
+      return this.createLabel();
     }
-    const newLabel: Label = { address: undefined, doGroup };
-    this.labels[label] = newLabel;
-    return newLabel;
+  }
+
+  resolveLabel(label: ast.LabelReference): Label | undefined {
+    if (label.label?.text) {
+      return this.labels[label.label.text];
+    }
+    return undefined;
   }
 
   pushLabel(label: Label): void {

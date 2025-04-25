@@ -166,13 +166,80 @@ interface ExpectedBase {
   rangeEndMarker?: string;
 }
 
-interface ExpectGotoDefinitionParams extends ExpectedBase {
-  index: number;
-  rangeIndex: number | number[];
-}
-
 export function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Strip and extract named indices and ranges from the given text.
+ * Currently supports markers through the following syntax:
+ * - Range: `<|abc:A|>` -> produces output `A` and a named range `abc`
+ * - Index: `<|abc>A` -> produces output `A` and a named index `abc`
+ *
+ * Marker identifiers are limited to alphanumeric characters (`/\w+/`).
+ */
+export function replaceNamedIndices(text: string): {
+  output: string;
+  indices: Record<string, number[]>;
+  ranges: Record<string, Array<[number, number]>>;
+} {
+  const indices: Record<string, number[]> = {};
+  const ranges: Record<string, Array<[number, number]>> = {};
+  const rangeStack: {
+    index: number;
+    label: string;
+  }[] = [];
+
+  const regex = /<\|(?<indexMarker>\w+)>|<\|(?<rangeStartMarker>\w+):|\|>/;
+
+  let matched = true;
+  let input = text;
+
+  while (matched) {
+    const regexMatch = regex.exec(input);
+
+    if (regexMatch?.groups) {
+      if (regexMatch.groups.indexMarker) {
+        const label = regexMatch.groups.indexMarker;
+
+        if (!indices[label]) {
+          indices[label] = [];
+        }
+
+        indices[label].push(regexMatch.index);
+
+        if (!ranges[label]) {
+          ranges[label] = [];
+        }
+      } else if (regexMatch.groups.rangeStartMarker) {
+        rangeStack.push({
+          index: regexMatch.index,
+          label: regexMatch.groups.rangeStartMarker,
+        });
+      } else {
+        const rangeStart = rangeStack.pop();
+        if (!rangeStart) {
+          throw new Error("Range start not found");
+        }
+
+        if (!ranges[rangeStart.label]) {
+          ranges[rangeStart.label] = [];
+        }
+
+        ranges[rangeStart.label].push([rangeStart.index, regexMatch.index]);
+      }
+
+      const matchedString = regexMatch[0];
+
+      input =
+        input.substring(0, regexMatch.index) +
+        input.substring(regexMatch.index + matchedString.length);
+    } else {
+      matched = false;
+    }
+  }
+
+  return { output: input, indices, ranges };
 }
 
 export function replaceIndices(base: ExpectedBase): {
@@ -221,45 +288,64 @@ export function replaceIndices(base: ExpectedBase): {
   return { output: input, indices, ranges: ranges.sort((a, b) => a[0] - b[0]) };
 }
 
-export function expectGotoDefinition(
-  expectedGotoDefinition: ExpectGotoDefinitionParams,
-) {
-  const { index, rangeIndex } = expectedGotoDefinition;
-  const { output, indices, ranges } = replaceIndices(expectedGotoDefinition);
+/**
+ * Extract named range and index information and verify that linking works as expected.
+ *
+ * @param text PL/I text to parse and link, with range and index markers (as specified in `replaceNamedIndices`)
+ *
+ * @example
+ * ```ts
+ * expectLinks(`
+ *  DCL <|1:A|>, <|2:B|>;
+ *  PUT(<|1>A);
+ *  PUT(<|2>B);
+ * `)
+ * ```
+ */
+export function expectLinks(text: string) {
+  const { output, indices, ranges } = replaceNamedIndices(text);
+
+  const requests = Object.entries(indices).flatMap(([index, offsets]) =>
+    offsets.map((offset) => ({
+      label: index,
+      offset,
+      rangeIndex: ranges[index],
+    })),
+  );
+
   const unit = parseAndLink(output);
 
-  const offset = indices[index];
-  const result = definitionRequest(unit, unit.uri, offset);
+  for (const { label, offset, rangeIndex } of requests) {
+    const result = definitionRequest(unit, unit.uri, offset);
 
-  if (Array.isArray(rangeIndex)) {
     expectedFunction(
       result.length,
       rangeIndex.length,
-      `Expected ${rangeIndex.length} definitions but received ${result.length}`,
+      `Expected ${rangeIndex.length} definitions but received ${result.length} for label "${label}"`,
     );
 
-    throw new Error("Range index is not supported yet");
-  } else {
-    expectedFunction(
-      result.length,
-      1,
-      `Expected a single definition but received ${result.length}`,
-    );
+    if (rangeIndex.length > 1) {
+      throw new Error("TODO: Range index is not supported yet");
+    } else if (rangeIndex.length === 1) {
+      const [singleRangeIndex] = rangeIndex;
+      const [definition] = result;
 
-    const [definition] = result;
-    const expectedRange: Range = {
-      start: ranges[rangeIndex][0],
-      end: ranges[rangeIndex][1],
-    };
+      const expectedRange: Range = {
+        start: singleRangeIndex[0],
+        end: singleRangeIndex[1],
+      };
 
-    expectedFunction(
-      definition.range,
-      expectedRange,
-      `Expected range does not match actual range`,
-    );
+      // Produce a small snippet with a margin of 10 characters to give a hint of where the error is
+      const snippet = `${output.slice(offset - 10, offset).trimStart()}<|${label}>${output.slice(offset, offset + 10).trimEnd()}`;
+      const line = output.slice(0, offset).split("\n").length + 1;
+
+      expectedFunction(
+        definition.range,
+        expectedRange,
+        `Expected range does not match actual range on line ${line} near \`${snippet}\``,
+      );
+    }
   }
-
-  return result;
 }
 
 /**

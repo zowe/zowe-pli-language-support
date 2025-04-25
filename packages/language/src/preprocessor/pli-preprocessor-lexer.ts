@@ -42,7 +42,7 @@ export class PliPreprocessorLexer {
     this.tokenTypeDictionary = {};
     for (const token of this.vocabulary) {
       this.tokenTypeDictionary[token.name] = token;
-      if (token.PATTERN instanceof RegExp) {
+      if (token.PATTERN instanceof RegExp && !token.PATTERN.sticky) {
         token.PATTERN = new RegExp(
           token.PATTERN.source,
           token.PATTERN.flags + "y",
