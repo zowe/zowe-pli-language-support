@@ -5202,9 +5202,13 @@ export class PliParser extends AbstractParser {
 
   PutStatement = this.RULE("PutStatement", () => {
     let element: ast.PutStatement = this.push(this.createPutFileStatement());
+    let assignPayload = (element: ast.PutStatement) => {};
 
     this.CONSUME_ASSIGN1(tokens.PUT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PutStatement_PUT);
+      assignPayload = (element: ast.PutStatement) => {
+        this.tokenPayload(token, element, CstNodeKind.PutStatement_PUT);
+      };
+      assignPayload(element);
     });
     this.OPTION1(() => {
       this.OR1([
@@ -5240,6 +5244,7 @@ export class PliParser extends AbstractParser {
             const putStringStatement = this.replace(
               this.createPutStringStatement(),
             );
+            assignPayload(putStringStatement);
             this.CONSUME_ASSIGN1(tokens.STRING, (token) => {
               this.tokenPayload(
                 token,
