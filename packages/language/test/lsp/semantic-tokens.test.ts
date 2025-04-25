@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect } from "vitest";
-import { formatPLICode, parse, replaceIndices } from "../utils";
+import { parse, replaceIndices } from "../utils";
 import {
   semanticTokens,
   tokenTypes,
@@ -19,6 +19,16 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "../../src/utils/uri";
 import { SemanticTokenDecoder } from "../../src/language-server/semantic-token-decoder";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
+
+function formatPLICode(code: string, padding: number = 0): string {
+  if (code.startsWith("\n")) {
+    code = code.slice(1);
+  }
+  return code
+    .split("\n")
+    .map((line) => " ".repeat(padding) + line)
+    .join("\n");
+}
 
 function expectSemanticTokens(annotatedCode: string, expectedTypes: string[]) {
   const { output, ranges } = replaceIndices({

@@ -10,17 +10,14 @@ import { Diagnostic, Range } from "../src/language-server/types";
 import { definitionRequest } from "../src/language-server/definition-request";
 import assert from "node:assert";
 import { SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
-import {
-  generateSymbolTable,
-  link,
-  tokenize,
-  validate,
-} from "../src/workspace/lifecycle";
 import { forEachNode } from "../src/syntax-tree/ast-iterator";
+import { IntermediateBinaryExpression } from "../src/parser/abstract-parser";
+import { IToken } from "@chevrotain/types";
 
 export function assertNoParseErrors(sourceFile: CompilationUnit) {
   expect(sourceFile.diagnostics.lexer).toHaveLength(0);
   expect(sourceFile.diagnostics.parser).toHaveLength(0);
+  assertValidSymbolTable(sourceFile);
 }
 
 /**
@@ -81,7 +78,7 @@ export function parse(
  */
 export function parseStmts(
   text: string,
-  options?: { validate: boolean },
+  options?: { validate: boolean; generateSymbolTable: boolean },
 ): CompilationUnit {
   return parse(
     ` STARTPR: PROCEDURE OPTIONS (MAIN);
@@ -91,40 +88,57 @@ ${text}
   );
 }
 
-export function lifecycleDebug(
-  text: string,
-  debugInfoFn?: <T extends { kind: SyntaxKind }>(node: T) => T,
-): CompilationUnit {
-  const sourceFile = createCompilationUnit(URI.file("test.pli"));
-  tokenize(sourceFile, text);
-  lifecycle.parse(sourceFile);
-  if (debugInfoFn) {
-    const includeDebugInfo = (node: SyntaxNode) => {
-      debugInfoFn(node);
-      forEachNode(node, includeDebugInfo);
-    };
-    includeDebugInfo(sourceFile.ast);
-  }
-  generateSymbolTable(sourceFile);
-  link(sourceFile);
-  validate(sourceFile);
-  return sourceFile;
+/**
+ * ---------- Symbol Table ----------
+ */
+
+function isIntermediateBinaryExpression(
+  node: any,
+): node is IntermediateBinaryExpression {
+  return node && "infix" in node && "items" in node && "operators" in node;
 }
 
-/**
- * Formats the given PL/I code to be used in tests for nicer formatting.
- */
-export function formatPLICode(code: string, padding: number = 0): string {
-  if (code.startsWith("\n")) {
-    code = code.slice(1);
-  }
+function assertValidSymbolTable(compilationUnit: CompilationUnit) {
+  lifecycle.generateSymbolTable(compilationUnit);
 
-  return code
-    .split("\n")
-    .map((line) => {
-      return " ".repeat(padding) + line;
-    })
-    .join("\n");
+  for (const token of compilationUnit.tokens.all) {
+    expect(token.payload).toBeDefined();
+
+    if (token.payload.kind === -1) {
+      // FQN rule does not reset the token kind.
+      // todo: Remove this exception once the FQN rule is updated.
+      continue;
+    }
+    if (isIntermediateBinaryExpression(token.payload.element)) {
+      // Not an AST node
+      continue;
+    }
+
+    expect(
+      token.payload.element,
+      `Token of kind ${token.payload.kind} (${SyntaxKind[token.payload.kind]}) (${token.image}) should have a defined element`,
+    ).toBeDefined();
+    expect(
+      token.payload.element,
+      `Token of kind ${token.payload.kind} (${SyntaxKind[token.payload.kind]})(${token.image}) should have a non-null element`,
+    ).not.toBeNull();
+    expectASTNodeContainer(token.payload.element, token);
+  }
+}
+
+function expectASTNodeContainer(node: SyntaxNode, originalToken: IToken) {
+  expect(
+    node.container,
+    `Node of kind ${node.kind} (${SyntaxKind[node.kind]}) (${originalToken.image}) should have a defined container`,
+  ).toBeDefined();
+  expect(
+    node.container,
+    `Node of kind ${node.kind} (${SyntaxKind[node.kind]}) (${originalToken.image}) should have a non-null container.`,
+  ).not.toBeNull();
+
+  forEachNode(node as SyntaxNode, (childNode: SyntaxNode) => {
+    expectASTNodeContainer(childNode, originalToken);
+  });
 }
 
 /**

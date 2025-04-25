@@ -471,11 +471,7 @@ export function forEachNode(
       }
       break;
     case SyntaxKind.GetFileStatement:
-      if (node.specifications) {
-        for (const specification of node.specifications) {
-          action(specification);
-        }
-      }
+      node.specifications.forEach(action);
       break;
     case SyntaxKind.GetSkip:
       if (node.skipExpression) {
