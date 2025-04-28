@@ -11,6 +11,7 @@
 
 import { MonacoEditorLanguageClientWrapper } from "monaco-editor-wrapper";
 import { setupClient } from "./config.js";
+import { registerSkipDecoratorType } from "./decorators.js";
 import {
   compressToEncodedURIComponent,
   decompressFromEncodedURIComponent,
@@ -32,7 +33,8 @@ export async function startClient() {
     wrapper = new MonacoEditorLanguageClientWrapper();
     await wrapper.init(config);
     const element = document.getElementById("monaco-root")!;
-    wrapper.start(element);
+    await wrapper.start(element);
+    registerSkipDecoratorType(wrapper);
   } catch (e) {
     console.log(e);
   }

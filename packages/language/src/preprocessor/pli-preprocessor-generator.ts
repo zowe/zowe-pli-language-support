@@ -16,7 +16,6 @@ import {
   PliPreprocessorProgramBuilder,
 } from "./pli-preprocessor-program-builder";
 import * as ast from "../syntax-tree/ast";
-
 export class PliPreprocessorGenerator {
   private readonly numberTokenType: TokenType;
 
@@ -331,7 +330,7 @@ export class PliPreprocessorGenerator {
     builder.pushInstruction(Instructions.push(Values.True()));
     if (statement.else) {
       const $else$ = builder.createLabel();
-      builder.pushInstruction(Instructions.branchIfNotEqual($else$));
+      builder.pushInstruction(Instructions.branchIfNotEqual($else$, statement));
       if (statement.unit) {
         this.handleStatement(statement.unit, builder);
       }
@@ -342,7 +341,7 @@ export class PliPreprocessorGenerator {
       builder.pushLabel($exit$);
     } else {
       const $exit$ = builder.createLabel();
-      builder.pushInstruction(Instructions.branchIfNotEqual($exit$));
+      builder.pushInstruction(Instructions.branchIfNotEqual($exit$, statement));
       if (statement.unit) {
         this.handleStatement(statement.unit, builder);
       }

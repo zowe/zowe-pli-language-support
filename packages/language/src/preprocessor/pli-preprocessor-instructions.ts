@@ -81,6 +81,7 @@ export interface PPIGoto extends PPInstructionBase {
 export interface PPIBranchIfNotEqual extends PPInstructionBase {
   type: "branchIfNEQ";
   address: ProgramAddressOrPlaceholder;
+  ifStatement: ast.IfStatement | undefined;
 }
 
 export interface PPIGet extends PPInstructionBase {
@@ -250,10 +251,12 @@ export namespace Instructions {
   }
   export function branchIfNotEqual(
     address: ProgramAddressOrPlaceholder,
+    ifStatement: ast.IfStatement | undefined = undefined,
   ): PPIBranchIfNotEqual {
     return {
       type: "branchIfNEQ",
       address,
+      ifStatement,
     };
   }
   export function goto(address: ProgramAddressOrPlaceholder): PPIGoto {

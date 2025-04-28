@@ -22,6 +22,9 @@ export class PliPreprocessorInterpreter {
     while (!state.halt) {
       state.step();
     }
-    return state.getOutput();
+    return {
+      output: state.getOutput(),
+      evaluationResults: state.getEvaluationResults(),
+    };
   }
 }

@@ -16,6 +16,8 @@ import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { CompilationUnitTokens } from "../workspace/compilation-unit";
 import * as ast from "../syntax-tree/ast";
 
+export type EvaluationResults = Map<ast.IfStatement, boolean | undefined>;
+
 export interface PreprocessorInterpreterState {
   currentInstruction: PPInstruction;
   halt: boolean;
@@ -28,6 +30,7 @@ export interface PreprocessorInterpreterState {
   assign(name: string, value: IToken[]): void;
   declare(name: string, variable: PreprocessorVariable): void;
   step(): void;
+  getEvaluationResults(): EvaluationResults;
 }
 
 export class PliPreprocessorInterpreterState
@@ -35,10 +38,12 @@ export class PliPreprocessorInterpreterState
 {
   private plainState: PlainPreprocessorInterpreterState;
   private idTokenType: TokenType;
+  private evaluationResults: EvaluationResults;
 
   constructor(program: PPInstruction[], idTokenType: TokenType) {
     this.plainState = initializeInterpreterState(program);
     this.idTokenType = idTokenType;
+    this.evaluationResults = new Map();
   }
 
   getOutput(): CompilationUnitTokens {
@@ -290,8 +295,14 @@ export class PliPreprocessorInterpreterState
         const lhs = this.plainState.stack.pop()!;
         if (this.areEqual(lhs, rhs)) {
           this.goTo((prev) => prev + 1);
+          if (instruction.ifStatement) {
+            this.evaluationResults.set(instruction.ifStatement, true);
+          }
         } else {
           this.goTo(() => instruction.address as number);
+          if (instruction.ifStatement) {
+            this.evaluationResults.set(instruction.ifStatement, false);
+          }
         }
         break;
       }
@@ -302,6 +313,10 @@ export class PliPreprocessorInterpreterState
       default:
         assertUnreachable(instruction);
     }
+  }
+
+  getEvaluationResults(): EvaluationResults {
+    return this.evaluationResults;
   }
 
   private areEqual(lhs: IToken[], rhs: IToken[]): boolean {

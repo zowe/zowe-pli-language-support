@@ -39,6 +39,7 @@ export function tokenize(
   compilationUnit.tokens.all = result.all;
   compilationUnit.tokens.fileTokens = result.fileTokens;
   compilationUnit.preprocessorAst.statements = result.statements;
+  compilationUnit.preprocessorEvaluationResults = result.evaluationResults;
   compilationUnit.compilerOptions =
     result.compilerOptions.result?.options ?? {};
   const uri = compilationUnit.uri.toString();

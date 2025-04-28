@@ -24,6 +24,7 @@ import {
 } from "./compiler-options-processor";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { Statement } from "../syntax-tree/ast";
+import { EvaluationResults } from "./pli-preprocessor-interpreter-state";
 
 export interface LexerResult {
   all: IToken[];
@@ -31,6 +32,7 @@ export interface LexerResult {
   compilerOptions: CompilerOptionsProcessorResult;
   statements: Statement[];
   fileTokens: Record<string, IToken[]>;
+  evaluationResults: EvaluationResults;
 }
 
 /**
@@ -69,7 +71,7 @@ export class PliLexer {
     );
     const { statements, errors } = this.preprocessorParser.start(state);
     const program = this.preprocessorGenerator.generateProgram(statements);
-    const output = this.preprocessorInterpreter.run(
+    const { output, evaluationResults } = this.preprocessorInterpreter.run(
       program,
       this.preprocessorLexer.idTokenType,
     );
@@ -89,6 +91,7 @@ export class PliLexer {
       errors,
       statements,
       fileTokens: state.perFileTokens,
+      evaluationResults: evaluationResults,
     };
   }
 

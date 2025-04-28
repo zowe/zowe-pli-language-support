@@ -39,7 +39,24 @@
         "scopeName": "source.pli",
         "path": "syntaxes/pli.merged.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "PL/I Language Support",
+      "properties": {
+        "pli.skippedCode.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable the skipped code feature"
+        },
+        "pli.skippedCode.opacity": {
+          "type": "number",
+          "default": 0.55,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Opacity level for skipped code (0-1)"
+        }
+      }
+    }
   },
   "activationEvents": [],
   "main": "./out/extension/main.cjs",

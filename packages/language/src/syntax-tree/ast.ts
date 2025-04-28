@@ -11,6 +11,7 @@
 
 import { IToken } from "chevrotain";
 import type { PreprocessorParserResult } from "../preprocessor/pli-preprocessor-parser";
+import { Range } from "../language-server/types";
 
 export enum SyntaxKind {
   // Preprocessor AST
@@ -1398,6 +1399,8 @@ export interface IfStatement extends AstNode {
   expression: Expression | null;
   unit: Statement | null;
   else: Statement | null;
+  unitRange: Range | null;
+  elseRange: Range | null;
 }
 export function createIfStatement(): IfStatement {
   return {
@@ -1406,6 +1409,8 @@ export function createIfStatement(): IfStatement {
     expression: null,
     unit: null,
     else: null,
+    unitRange: null,
+    elseRange: null,
   };
 }
 export interface IncludeDirective extends AstNode {
@@ -2039,12 +2044,14 @@ export interface SimpleOptionsItem extends AstNode {
 export interface SkipDirective extends AstNode {
   kind: SyntaxKind.SkipDirective;
   lines: Expression | null;
+  lineCount: number;
 }
 export function createSkipDirective(): SkipDirective {
   return {
     kind: SyntaxKind.SkipDirective,
     container: null,
     lines: null,
+    lineCount: 1,
   };
 }
 export interface SkipFormatItem extends AstNode {

@@ -13,16 +13,20 @@ import type {
   LanguageClientOptions,
   ServerOptions,
 } from "vscode-languageclient/node.js";
-import type * as vscode from "vscode";
+import * as vscode from "vscode";
 import * as path from "node:path";
 import { LanguageClient, TransportKind } from "vscode-languageclient/node.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
+import { Settings } from "./settings";
+import { SkippedCodeDecorator } from "./decorators";
 
 let client: LanguageClient;
+let settings: Settings;
 
 // This function is called when the extension is activated.
 export function activate(context: vscode.ExtensionContext): void {
   BuiltinFileSystemProvider.register(context);
+  settings = Settings.getInstance();
   client = startLanguageClient(context);
 }
 
@@ -30,6 +34,9 @@ export function activate(context: vscode.ExtensionContext): void {
 export function deactivate(): Thenable<void> | undefined {
   if (client) {
     return client.stop();
+  }
+  if (settings) {
+    settings.dispose();
   }
   return undefined;
 }
@@ -71,6 +78,9 @@ function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
     serverOptions,
     clientOptions,
   );
+
+  // Register custom decorator types.
+  SkippedCodeDecorator.register(client, settings);
 
   // Start the client. This will also launch the server
   client.start();

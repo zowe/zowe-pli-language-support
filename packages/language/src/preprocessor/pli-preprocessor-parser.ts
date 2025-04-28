@@ -672,14 +672,24 @@ export class PliPreprocessorParser {
       CstNodeKind.IfStatement_THEN,
       PreprocessorTokens.Then,
     );
+    statement.unitRange = {
+      start: state.current!.startOffset,
+      end: NaN,
+    };
     statement.unit = this.statement(state);
+    statement.unitRange.end = state.last!.endOffset! + 1;
     if (state.canConsumeKeyword(PreprocessorTokens.Else)) {
       state.consumeKeyword(
         statement,
         CstNodeKind.IfStatement_ELSE,
         PreprocessorTokens.Else,
       );
+      statement.elseRange = {
+        start: state.current!.startOffset,
+        end: NaN,
+      };
       statement.else = this.statement(state);
+      statement.elseRange.end = state.last!.endOffset! + 1;
     }
     return statement;
   }
@@ -787,7 +797,6 @@ export class PliPreprocessorParser {
       PreprocessorTokens.Skip,
     );
     let lineCount: number = 1;
-    // TODO: add linecount token to the statement
     if (
       state.tryConsume(
         statement,
@@ -796,6 +805,7 @@ export class PliPreprocessorParser {
       )
     ) {
       lineCount = parseInt(state.last!.image, 10);
+      statement.lineCount = lineCount;
     }
     state.consume(
       statement,

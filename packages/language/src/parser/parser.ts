@@ -4360,6 +4360,8 @@ export class PliParser extends AbstractParser {
       expression: null,
       unit: null,
       else: null,
+      unitRange: null,
+      elseRange: null,
     };
   }
 
@@ -6058,6 +6060,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.SkipDirective,
       container: null,
       lines: null,
+      lineCount: 1,
     };
   }
 
