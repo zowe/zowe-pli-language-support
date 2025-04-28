@@ -20,7 +20,7 @@ import { URI } from "../../src/utils/uri";
 import { SemanticTokenDecoder } from "../../src/language-server/semantic-token-decoder";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
 
-function formatPLICode(code: string, padding: number = 0): string {
+function formatPLICode(code: string, padding: number = 1): string {
   if (code.startsWith("\n")) {
     code = code.slice(1);
   }
@@ -32,7 +32,7 @@ function formatPLICode(code: string, padding: number = 0): string {
 
 function expectSemanticTokens(annotatedCode: string, expectedTypes: string[]) {
   const { output, ranges } = replaceIndices({
-    text: formatPLICode(annotatedCode, 2),
+    text: formatPLICode(annotatedCode),
   });
 
   const textDocument = TextDocument.create(
