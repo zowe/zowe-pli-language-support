@@ -1754,7 +1754,7 @@ export function createPopDirective(): PopDirective {
 export interface PrefixedAttribute extends AstNode {
   kind: SyntaxKind.PrefixedAttribute;
   level: string | null;
-  attribute: DeclarationAttribute | null;
+  attributes: DeclarationAttribute[];
 }
 export interface PrintDirective extends AstNode {
   kind: SyntaxKind.PrintDirective;

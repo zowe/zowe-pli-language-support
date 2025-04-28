@@ -9,10 +9,15 @@ import { URI } from "vscode-uri";
 import { Diagnostic, Range } from "../src/language-server/types";
 import { definitionRequest } from "../src/language-server/definition-request";
 import assert from "node:assert";
+import { SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
+import { forEachNode } from "../src/syntax-tree/ast-iterator";
+import { IntermediateBinaryExpression } from "../src/parser/abstract-parser";
+import { IToken } from "@chevrotain/types";
 
 export function assertNoParseErrors(sourceFile: CompilationUnit) {
   expect(sourceFile.diagnostics.lexer).toHaveLength(0);
   expect(sourceFile.diagnostics.parser).toHaveLength(0);
+  assertValidSymbolTable(sourceFile);
 }
 
 /**
@@ -81,6 +86,59 @@ ${text}
  end STARTPR;`,
     options,
   );
+}
+
+/**
+ * ---------- Symbol Table ----------
+ */
+
+function isIntermediateBinaryExpression(
+  node: any,
+): node is IntermediateBinaryExpression {
+  return node && "infix" in node && "items" in node && "operators" in node;
+}
+
+function assertValidSymbolTable(compilationUnit: CompilationUnit) {
+  lifecycle.generateSymbolTable(compilationUnit);
+
+  for (const token of compilationUnit.tokens.all) {
+    expect(token.payload).toBeDefined();
+
+    if (token.payload.kind === -1) {
+      // FQN rule does not reset the token kind.
+      // todo: Remove this exception once the FQN rule is updated.
+      continue;
+    }
+    if (isIntermediateBinaryExpression(token.payload.element)) {
+      // Not an AST node
+      continue;
+    }
+
+    expect(
+      token.payload.element,
+      `Token of kind ${token.payload.kind} (${SyntaxKind[token.payload.kind]}) (${token.image}) should have a defined element`,
+    ).toBeDefined();
+    expect(
+      token.payload.element,
+      `Token of kind ${token.payload.kind} (${SyntaxKind[token.payload.kind]})(${token.image}) should have a non-null element`,
+    ).not.toBeNull();
+    expectASTNodeContainer(token.payload.element, token);
+  }
+}
+
+function expectASTNodeContainer(node: SyntaxNode, originalToken: IToken) {
+  expect(
+    node.container,
+    `Node of kind ${node.kind} (${SyntaxKind[node.kind]}) (${originalToken.image}) should have a defined container`,
+  ).toBeDefined();
+  expect(
+    node.container,
+    `Node of kind ${node.kind} (${SyntaxKind[node.kind]}) (${originalToken.image}) should have a non-null container.`,
+  ).not.toBeNull();
+
+  forEachNode(node as SyntaxNode, (childNode: SyntaxNode) => {
+    expectASTNodeContainer(childNode, originalToken);
+  });
 }
 
 /**

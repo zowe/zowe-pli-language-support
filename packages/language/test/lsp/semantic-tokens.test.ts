@@ -20,20 +20,19 @@ import { URI } from "../../src/utils/uri";
 import { SemanticTokenDecoder } from "../../src/language-server/semantic-token-decoder";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
 
-function formatTestPLI(code: string) {
+function formatPLICode(code: string, padding: number = 1): string {
   if (code.startsWith("\n")) {
     code = code.slice(1);
   }
-  code = code
+  return code
     .split("\n")
-    .map((line) => " " + line)
+    .map((line) => " ".repeat(padding) + line)
     .join("\n");
-  return code;
 }
 
 function expectSemanticTokens(annotatedCode: string, expectedTypes: string[]) {
   const { output, ranges } = replaceIndices({
-    text: formatTestPLI(annotatedCode),
+    text: formatPLICode(annotatedCode),
   });
 
   const textDocument = TextDocument.create(

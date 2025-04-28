@@ -334,16 +334,16 @@ export class PliParser extends AbstractParser {
       {
         ALT: () => {
           this.CONSUME_ASSIGN(tokens.SimpleOptions, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.SimpleOptionsItem_Value,
-            );
             element = this.replace({
               kind: ast.SyntaxKind.SimpleOptionsItem,
               container: null,
               value: token.image as ast.SimpleOptionsItem["value"],
             });
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.SimpleOptionsItem_Value,
+            );
           });
         },
       },
@@ -5204,9 +5204,13 @@ export class PliParser extends AbstractParser {
 
   PutStatement = this.RULE("PutStatement", () => {
     let element: ast.PutStatement = this.push(this.createPutFileStatement());
+    let assignPayload = (element: ast.PutStatement) => {};
 
     this.CONSUME_ASSIGN1(tokens.PUT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PutStatement_PUT);
+      assignPayload = (element: ast.PutStatement) => {
+        this.tokenPayload(token, element, CstNodeKind.PutStatement_PUT);
+      };
+      assignPayload(element);
     });
     this.OPTION1(() => {
       this.OR1([
@@ -5242,6 +5246,7 @@ export class PliParser extends AbstractParser {
             const putStringStatement = this.replace(
               this.createPutStringStatement(),
             );
+            assignPayload(putStringStatement);
             this.CONSUME_ASSIGN1(tokens.STRING, (token) => {
               this.tokenPayload(
                 token,
@@ -8128,7 +8133,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.PrefixedAttribute,
       container: null,
       level: null,
-      attribute: null,
+      attributes: [],
     };
   }
 
@@ -8146,7 +8151,7 @@ export class PliParser extends AbstractParser {
     this.MANY(() => {
       this.SUBRULE_ASSIGN(this.DeclarationAttribute, {
         assign: (result) => {
-          element.attribute = result;
+          element.attributes.push(result);
         },
       });
     });
