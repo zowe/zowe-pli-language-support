@@ -23,6 +23,10 @@ export interface SkippedPliCodeNotificationParams {
 export const SkippedPliCodeNotification =
   new NotificationType<SkippedPliCodeNotificationParams>("pli/skippedCode");
 
+/**
+ * Sends a notification to the client with the ranges of skipped code in the given compilation unit.
+ * Skipped code is either produced by the SKIP or by the IF preprocessor directive.
+ */
 export function skippedCode(
   connection: Connection,
   uri: string,
@@ -41,6 +45,10 @@ export function skippedCode(
   });
 }
 
+/**
+ * Returns the ranges of skipped code in the given compilation unit.
+ * Handles both SKIP and IF preprocessor directives.
+ */
 export function skippedCodeRanges(
   uri: string,
   compilationUnit: CompilationUnit,
@@ -57,9 +65,7 @@ export function skippedCodeRanges(
         start: { line: line, character: 0 },
         end: { line: line + token.payload.element.lineCount, character: 0 },
       });
-    }
-
-    if (token.payload?.kind === CstNodeKind.IfStatement_IF) {
+    } else if (token.payload?.kind === CstNodeKind.IfStatement_IF) {
       const evaluationResult =
         compilationUnit.preprocessorEvaluationResults.get(
           token.payload.element,
