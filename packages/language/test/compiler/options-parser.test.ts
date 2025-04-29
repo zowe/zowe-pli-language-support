@@ -130,7 +130,7 @@ describe("CompilerOptions translator", () => {
     const options = parseAbstractCompilerOptions("BRACKETS(TEST)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
-    expect(issues[0].message).toBe("Expected a plain text value.");
+    expect(issues[0].message).toBe("Expected a string value.");
   });
 
   test("Produce issue for text value when enum is expected", () => {
@@ -139,6 +139,33 @@ describe("CompilerOptions translator", () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
       "Expected one of 'UPPER', 'ASIS', but received 'TEST'.",
+    );
+  });
+
+  test("Produce issue for text value when option is expected in CASERULES", () => {
+    const options = parseAbstractCompilerOptions("CASERULES(TEST)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "Expected a compiler option with arguments.",
+    );
+  });
+
+  test("Produce issue for wrong option in CASERULES", () => {
+    const options = parseAbstractCompilerOptions("CASERULES(TEST())");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      `Expected "KEYWORD" as compiler option value.`,
+    );
+  });
+
+  test("Produce issue for wrong option in KEYWORD in CASERULES", () => {
+    const options = parseAbstractCompilerOptions("CASERULES(KEYWORD(TEST))");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "Expected one of 'MIXED', 'UPPER', 'LOWER', 'START', but received 'TEST'.",
     );
   });
 
