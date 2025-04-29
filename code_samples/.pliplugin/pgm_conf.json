@@ -1,0 +1,8 @@
+{
+  "pgms": [
+    {
+      "program": "preprocessor/include.pli",
+      "pgroup": "default"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "pgroups": [
+    {
+      "name": "default",
+      "compiler-options": [],
+      "libs": [],
+      "copybook-extensions": []
+    }
+  ]
+}
