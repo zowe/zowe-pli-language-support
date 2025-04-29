@@ -198,11 +198,31 @@ describe("PL/1 Lexer", () => {
   test("Skip directive will ignore 2 next lines", () => {
     expect(
       tokenize(`
-            %SKIP 2;
+            %SKIP (2);
             dcl A fixed bin(31);
             dcl B fixed bin(31);
         `),
     ).toStrictEqual([]);
+  });
+
+  test("Skip directive without parentheses should not lex correctly", () => {
+    expect(
+      tokenizeWithErrors(`
+            %SKIP 2;
+            dcl A fixed bin(31);
+            dcl B fixed bin(31);
+        `),
+    ).not.toStrictEqual([]);
+  });
+
+  test("Skip directive with incorrect parentheses should not lex correctly", () => {
+    expect(
+      tokenizeWithErrors(`
+            %SKIP (2;
+            dcl A fixed bin(31);
+            dcl B fixed bin(31);
+        `),
+    ).not.toStrictEqual([]);
   });
 
   test("Assign a preprocessed value", () => {
