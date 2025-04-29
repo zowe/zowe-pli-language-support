@@ -54,7 +54,7 @@ describe("Skipped Code", () => {
   test("should highlight skipped code", () => {
     const code = `
  IGNO: PROCEDURE OPTIONS (MAIN);
- %SKIP 2;
+ %SKIP (2);
 <|   dcl A fixed bin(31);
    dcl B fixed bin(31);
 |>   dcl WHAT fixed bin(31);  

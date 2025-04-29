@@ -800,12 +800,22 @@ export class PliPreprocessorParser {
     if (
       state.tryConsume(
         statement,
-        CstNodeKind.NumberLiteral_ValueNumber,
-        PreprocessorTokens.Number,
+        CstNodeKind.SkipDirective_OpenParen,
+        PreprocessorTokens.LParen,
       )
     ) {
+      state.consume(
+        statement,
+        CstNodeKind.NumberLiteral_ValueNumber,
+        PreprocessorTokens.Number,
+      );
       lineCount = parseInt(state.last!.image, 10);
       statement.lineCount = lineCount;
+      state.consume(
+        statement,
+        CstNodeKind.SkipDirective_CloseParen,
+        PreprocessorTokens.RParen,
+      );
     }
     state.consume(
       statement,
