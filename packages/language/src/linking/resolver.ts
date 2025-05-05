@@ -89,6 +89,8 @@ function getQualifiedName(reference: Reference): string[] {
 
 /**
  * We've resolved a qualified name, now qualify the entire chain of references.
+ * Note: This function assumes that the resolved syntax node and member call are correct,
+ * it does not validate the qualified name in any way. This is done in the `SymbolTable` step.
  *
  * Example:
  *
