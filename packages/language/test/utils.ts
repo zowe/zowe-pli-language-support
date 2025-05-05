@@ -6,7 +6,7 @@ import {
 } from "../src/workspace/compilation-unit";
 import * as lifecycle from "../src/workspace/lifecycle";
 import { URI } from "vscode-uri";
-import { Diagnostic, Range } from "../src/language-server/types";
+import { Diagnostic, Range, Severity } from "../src/language-server/types";
 import { definitionRequest } from "../src/language-server/definition-request";
 import assert from "node:assert";
 import { SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
@@ -14,33 +14,60 @@ import { forEachNode } from "../src/syntax-tree/ast-iterator";
 import { IntermediateBinaryExpression } from "../src/parser/abstract-parser";
 import { IToken } from "@chevrotain/types";
 
-export function assertNoParseErrors(sourceFile: CompilationUnit) {
-  expect(sourceFile.diagnostics.lexer).toHaveLength(0);
-  expect(sourceFile.diagnostics.parser).toHaveLength(0);
+interface AssertNoDiagnosticsOptions {
+  ignoreSeverity?: Severity[];
+}
+
+function expectNoDiagnostics(
+  diagnostics: Diagnostic[],
+  { ignoreSeverity = [] }: AssertNoDiagnosticsOptions,
+) {
+  const filteredDiagnostics = diagnostics.filter(
+    (diagnostic) => !ignoreSeverity.includes(diagnostic.severity),
+  );
+
+  expect(filteredDiagnostics).toHaveLength(0);
+}
+
+export function assertNoParseErrors(
+  sourceFile: CompilationUnit,
+  options: AssertNoDiagnosticsOptions = {},
+) {
+  expectNoDiagnostics(sourceFile.diagnostics.lexer, options);
+  expectNoDiagnostics(sourceFile.diagnostics.parser, options);
   assertValidSymbolTable(sourceFile);
 }
 
 /**
  * Asserts the absence of linking errors in the given source file
  */
-export function assertNoLinkingErrors(sourceFile: CompilationUnit) {
-  expect(sourceFile.diagnostics.linking).toHaveLength(0);
+export function assertNoLinkingErrors(
+  sourceFile: CompilationUnit,
+  options: AssertNoDiagnosticsOptions = {},
+) {
+  expectNoDiagnostics(sourceFile.diagnostics.linking, options);
 }
 
 /**
  * Asserts the absence of validation errors in the given source file
  */
-export function assertNoValidationErrors(sourceFile: CompilationUnit) {
-  expect(sourceFile.diagnostics.validation).toHaveLength(0);
+export function assertNoValidationErrors(
+  sourceFile: CompilationUnit,
+  options: AssertNoDiagnosticsOptions = {},
+) {
+  expectNoDiagnostics(sourceFile.diagnostics.validation, options);
 }
 
 /**
  * Asserts the absence of all diagnostics in the given source file
  */
-export function assertNoDiagnostics(sourceFile: CompilationUnit) {
-  assertNoParseErrors(sourceFile);
-  assertNoLinkingErrors(sourceFile);
-  assertNoValidationErrors(sourceFile);
+export function assertNoDiagnostics(
+  sourceFile: CompilationUnit,
+  options: AssertNoDiagnosticsOptions = {},
+) {
+  assertNoParseErrors(sourceFile, options);
+  assertNoLinkingErrors(sourceFile, options);
+  assertNoValidationErrors(sourceFile, options);
 }
 
 export function assertDiagnostic(

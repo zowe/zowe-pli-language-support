@@ -70,6 +70,10 @@ export class ReferencesCache {
   allReferences(): Reference[] {
     return this.list;
   }
+
+  allReverseReferences(): Map<SyntaxNode, Reference[]> {
+    return this.reverseMap;
+  }
 }
 
 // Returns the qualified name in reverse order, e.g. "A.B.C" -> ["C", "B", "A"]

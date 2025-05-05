@@ -104,22 +104,28 @@ export class QualifiedSyntaxNode {
       return QualificationStatus.NoQualification;
     }
 
+    // If the current node is the same as the qualifier, we can remove it from the list.
     const nextQualifiers =
       this.name === qualifier ? qualifiers.slice(1) : qualifiers;
 
+    // If there are no qualifiers left, we can determine the qualification status.
     if (nextQualifiers.length <= 0) {
       if (!this.parent) {
+        // If there is no parent, the current node is the root node.
         return QualificationStatus.FullQualification;
       } else {
+        // If there are parents left, the current node is partially qualified.
         return QualificationStatus.PartialQualification;
       }
     }
 
-    if (this.parent) {
-      return this.parent.getQualificationStatus(nextQualifiers);
+    // We have qualifiers left, but no parent. This does not qualify.
+    if (!this.parent) {
+      return QualificationStatus.NoQualification;
     }
 
-    return QualificationStatus.NoQualification;
+    // We have qualifiers left, and a parent. We continue the search.
+    return this.parent.getQualificationStatus(nextQualifiers);
   }
 }
 

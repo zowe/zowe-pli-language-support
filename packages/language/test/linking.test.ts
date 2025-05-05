@@ -289,10 +289,10 @@ describe("Linking tests", () => {
       });
     });
 
-    test.skip("Unused label should warn", () => {
+    test("Unused label should warn", () => {
       const doc = parseAndLink(`
-OUTER: PROCEDURE;
-END OUTER;`);
+ OUTER: PROCEDURE;
+ END OUTER;`);
       assertDiagnostic(doc, {
         code: PLICodes.Warning.IBM1213I.fullCode,
         severity: Severity.W,

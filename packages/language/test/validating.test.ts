@@ -97,9 +97,10 @@ describe("Validating", () => {
   test("package end label validates", async () => {
     const doc = parseWithValidations(`
         baseline: package;
-        end baseline;
-        `);
-    assertNoDiagnostics(doc);
+        end baseline;`);
+    assertNoDiagnostics(doc, {
+      ignoreSeverity: [Severity.W], // Ignore unused label warning
+    });
   });
 
   // TODO @montymxb Mar. 28th, 2025: Pending a fix to linking + scoping
