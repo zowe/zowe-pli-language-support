@@ -66,7 +66,7 @@ enum QualificationStatus {
   PartialQualification,
 }
 
-class QualifiedSyntaxNode {
+export class QualifiedSyntaxNode {
   node: SyntaxNode;
   name: string;
   parent: QualifiedSyntaxNode | null;
@@ -85,6 +85,20 @@ class QualifiedSyntaxNode {
     return this.parent;
   }
 
+  /**
+   * By walking the qualification chain, we can determine the qualification status of the current node.
+   *
+   * Example:
+   *
+   * ```
+   * DCL 1 A, 2 B, 3 C;
+   * PUT (A.B.C); // 1
+   * PUT (A.C);   // 2
+   * ```
+   *
+   * 1. In this case, the qualification status of `C` is `FullQualification` because it is fully qualified.
+   * 2. In this case, the qualification status of `C` is `PartialQualification` because it is partially qualified.
+   */
   getQualificationStatus(qualifiers: string[]): QualificationStatus {
     const qualifier = qualifiers[0];
     if (!qualifier) {
@@ -207,7 +221,7 @@ export class SymbolTable {
   }
 
   // Return all qualified symbols
-  getSymbols(qualifiedName: string[]): SyntaxNode[] | undefined {
+  getSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] | undefined {
     const [name] = qualifiedName;
     if (!name) {
       return undefined;
@@ -228,9 +242,9 @@ export class SymbolTable {
       qualifiedSymbols[QualificationStatus.PartialQualification];
 
     if (fullQualification) {
-      return fullQualification.map((symbol) => symbol.node);
+      return fullQualification;
     } else if (partialQualification) {
-      return partialQualification.map((symbol) => symbol.node);
+      return partialQualification;
     } else {
       return undefined;
     }
@@ -253,7 +267,7 @@ export class Scope {
     this._symbolTable = symbolTable;
   }
 
-  getSymbols(qualifiedName: string[]): SyntaxNode[] {
+  getSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
     return (
       this._symbolTable?.getSymbols(qualifiedName) ??
       this.parent?.getSymbols(qualifiedName) ??

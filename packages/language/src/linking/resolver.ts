@@ -12,7 +12,12 @@
 import { IToken } from "chevrotain";
 import { Location, tokenToRange } from "../language-server/types";
 import { TokenPayload } from "../parser/abstract-parser";
-import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import {
+  MemberCall,
+  Reference,
+  SyntaxKind,
+  SyntaxNode,
+} from "../syntax-tree/ast";
 import { binaryTokenSearch } from "../utils/search";
 import {
   getNameToken,
@@ -22,6 +27,7 @@ import {
 } from "./tokens";
 import { URI } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
+import { QualifiedSyntaxNode } from "./symbol-table";
 
 export class ReferencesCache {
   private list: Reference[] = [];
@@ -57,7 +63,7 @@ export class ReferencesCache {
 }
 
 // Returns the qualified name in reverse order, e.g. "A.B.C" -> ["C", "B", "A"]
-export function getQualifiedName(reference: Reference): string[] {
+function getQualifiedName(reference: Reference): string[] {
   if (reference.owner.container?.kind === SyntaxKind.MemberCall) {
     const memberCall = reference.owner.container;
     if (memberCall.previous?.element?.ref) {
@@ -71,39 +77,83 @@ export function getQualifiedName(reference: Reference): string[] {
   return [reference.text];
 }
 
-export function resolveReference<T extends SyntaxNode>(
-  unit: CompilationUnit,
-  reference: Reference<T> | null,
-): T | undefined {
-  if (reference === null || reference.node === null) {
-    return undefined;
+/**
+ * We've resolved a qualified name, now qualify the entire chain of references.
+ *
+ * Example:
+ *
+ * ```
+ * DCL 1 A1, 2 B, 3 K, 4 C;
+ * DCL 1 A2, 2 B, 3 K, 4 C;
+ * PUT (A2.B.C); // Symbol `B` should qualify correctly to line 2, and not line 1
+ * ```
+ */
+function assignQualifiedReference(
+  reference: Reference,
+  memberCall: MemberCall,
+  resolved: QualifiedSyntaxNode,
+) {
+  if (reference.text !== resolved.name) {
+    if (!resolved.parent) {
+      throw new Error(
+        "Resolved parent is null, should not happen. There is probably a mistake in the symbol table.",
+      );
+    }
+
+    assignReference(reference, resolved.parent);
+    return;
   }
 
-  if (reference.node !== undefined) {
-    return reference.node;
+  reference.node = resolved.node;
+
+  if (memberCall.previous?.element?.ref && resolved.parent) {
+    assignReference(memberCall.previous.element.ref, resolved.parent);
+  }
+}
+
+function assignReference(
+  reference: Reference<SyntaxNode>,
+  resolved: QualifiedSyntaxNode,
+) {
+  if (reference.owner.container?.kind === SyntaxKind.MemberCall) {
+    const memberCall = reference.owner.container;
+    assignQualifiedReference(reference, memberCall, resolved);
+
+    return;
+  }
+
+  reference.node = resolved.node;
+}
+
+function resolveReference(unit: CompilationUnit, reference: Reference) {
+  if (
+    reference === null ||
+    reference.node === null ||
+    reference.node !== undefined
+  ) {
+    return;
   }
 
   const qualifiedName = getQualifiedName(reference);
 
   const scope = unit.scopeCaches.get(reference.owner);
   if (!scope) {
-    return undefined;
+    return;
   }
 
   const symbols = scope.getSymbols(qualifiedName);
-  const symbol = symbols[0];
-  if (!symbol) {
-    reference.node = null;
-    return undefined;
-  }
-
   if (symbols.length > 1) {
     // TODO: Diagnostic error about ambiguity on `symbols` locations
   }
 
-  reference.node = symbol as T;
+  const symbol = symbols[0];
+  if (!symbol) {
+    reference.node = null;
+    return;
+  }
+
+  assignReference(reference, symbol);
   unit.references.addInverse(reference);
-  return symbol as T;
 }
 
 export function resolveReferences(unit: CompilationUnit): void {
