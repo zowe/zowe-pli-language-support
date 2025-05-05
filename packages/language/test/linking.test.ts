@@ -195,15 +195,16 @@ describe("Linking tests", () => {
     /**
      * TODO: This should fail
      */
-    test.fails.skip("Should not qualify for factorized structured names", () =>
-      // When using factorized names in structures, no child elements are referenceable any more.
-      expectLinks(`
+    test.skip("Should error when using factorized names in structures", () => {
+      const doc = parseAndLink(`
  DCL 1 A,
        2 (B,C),
-          3 <|d:D|>;
-
- PUT(<|d>D);`),
-    );
+          3 D CHAR(8) VALUE("D");`);
+      assertDiagnostic(doc, {
+        code: PLICodes.Severe.IBM2203I.fullCode,
+        severity: Severity.S,
+      });
+    });
   });
 
   describe("Implicit qualification", () => {
@@ -242,10 +243,7 @@ describe("Linking tests", () => {
 
  PUT(A.<|b>B);`));
 
-    /**
-     * TODO: Implement star handling in structured names
-     */
-    test.skip("Star name in structure should be qualifiable", () =>
+    test.skip("Star name in structure should result in partial qualification", () =>
       expectLinks(`
  DCL 1 A,
         2 *,
@@ -285,7 +283,6 @@ describe("Linking tests", () => {
  END OUTER;
  OUTER: PROCEDURE;
  END OUTER;`);
-
       assertDiagnostic(doc, {
         code: PLICodes.Severe.IBM1916I.fullCode,
         severity: Severity.S,
@@ -296,7 +293,6 @@ describe("Linking tests", () => {
       const doc = parseAndLink(`
 OUTER: PROCEDURE;
 END OUTER;`);
-
       assertDiagnostic(doc, {
         code: PLICodes.Warning.IBM1213I.fullCode,
         severity: Severity.W,
@@ -310,10 +306,23 @@ END OUTER;`);
       const doc = parseAndLink(`
  DCL A CHAR(8) INIT("A");
  DCL A CHAR(8) INIT("A2");`);
-
       assertDiagnostic(doc, {
         code: PLICodes.Error.IBM1306I.fullCode,
         severity: Severity.E,
+      });
+    });
+
+    test("Ambiguous reference must fail", () => {
+      const doc = parseAndLink(`
+ DCL 1 A,
+     2 B CHAR(8) VALUE("B1");
+ DCL 1 A,
+     2 B CHAR(8) VALUE("B2");
+ PUT(B);
+ `);
+      assertDiagnostic(doc, {
+        code: PLICodes.Severe.IBM1881I.fullCode,
+        severity: Severity.S,
       });
     });
 
@@ -322,7 +331,6 @@ END OUTER;`);
  A: PROCEDURE;
  END A;
  DCL A CHAR(8) INIT("A");`);
-
       assertDiagnostic(doc, {
         code: PLICodes.Error.IBM1306I.fullCode,
         severity: Severity.E,
@@ -333,7 +341,6 @@ END OUTER;`);
       const doc = parseAndLink(`
  DCL 1 A,
        2(B, 3 C, D) (3,2) binary fixed (15);`);
-
       assertDiagnostic(doc, {
         code: PLICodes.Error.IBM1376I.fullCode,
         severity: Severity.E,
@@ -344,7 +351,6 @@ END OUTER;`);
       const doc = parseAndLink(`
  DCL 1 A,
        256 B;`);
-
       assertDiagnostic(doc, {
         code: PLICodes.Error.IBM1363I.fullCode,
         severity: Severity.E,

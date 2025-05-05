@@ -41,6 +41,24 @@ export type PliValidationAcceptor = (
   info: DiagnosticInfo,
 ) => void;
 
+export class PliValidationBuffer {
+  private diagnostics: Diagnostic[] = [];
+
+  getAcceptor(): PliValidationAcceptor {
+    return (severity: Severity, message: string, d: DiagnosticInfo) => {
+      this.diagnostics.push({
+        severity,
+        message,
+        ...d,
+      });
+    };
+  }
+
+  getDiagnostics(): Diagnostic[] {
+    return this.diagnostics;
+  }
+}
+
 /**
  * Generates validation diagnostics (semantic checks) from the given AST node.
  */
@@ -48,23 +66,13 @@ export function generateValidationDiagnostics(unit: CompilationUnit): void {
   // TODO @montymxb Mar. 27th, 2025: Checks are generated on each invocation, not ideal, needs a rework still
   const handlers = registerValidationChecks();
 
-  const diagnostics: Diagnostic[] = [];
-  const acceptor: PliValidationAcceptor = (
-    severity: Severity,
-    message: string,
-    d: DiagnosticInfo,
-  ) => {
-    diagnostics.push({
-      severity,
-      message,
-      ...d,
-    });
-  };
+  const validationBuffer = new PliValidationBuffer();
+  const acceptor = validationBuffer.getAcceptor();
 
   // iterate over all nodes and validate them
   validateSyntaxNode(unit.ast, acceptor, handlers);
 
-  unit.diagnostics.validation = diagnostics;
+  unit.diagnostics.validation = validationBuffer.getDiagnostics();
 }
 
 /**

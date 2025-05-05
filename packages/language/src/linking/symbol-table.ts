@@ -11,7 +11,6 @@
 
 import {
   Diagnostic,
-  DiagnosticInfo,
   Severity,
   tokenToRange,
   tokenToUri,
@@ -25,7 +24,10 @@ import {
 } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { groupBy } from "../utils/common";
-import { PliValidationAcceptor } from "../validation/validator";
+import {
+  PliValidationAcceptor,
+  PliValidationBuffer,
+} from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache } from "./resolver";
 import { getLabelSymbol, getReference, getVariableSymbol } from "./tokens";
@@ -105,7 +107,7 @@ export class QualifiedSyntaxNode {
       return QualificationStatus.NoQualification;
     }
 
-    let nextQualifiers =
+    const nextQualifiers =
       this.name === qualifier ? qualifiers.slice(1) : qualifiers;
 
     if (nextQualifiers.length <= 0) {
@@ -141,6 +143,24 @@ class SymbolTableDeclaredItemGenerator {
     return this.items.shift();
   }
 
+  private getLevel(item: DeclaredItem): number {
+    // When level is not set, we assume 1 like the PL1 compiler seems to do.
+    let level = item.level ?? 1;
+
+    // TODO: get max level from compilation unit? If e.g. compilation flags can change this.
+    if (level > 255) {
+      level = 255;
+
+      this.acceptor(Severity.E, PLICodes.Error.IBM1363I.message, {
+        code: PLICodes.Error.IBM1363I.fullCode,
+        range: tokenToRange(item.levelToken!),
+        uri: tokenToUri(item.levelToken!) ?? "",
+      });
+    }
+
+    return level;
+  }
+
   private _generate(
     table: SymbolTable,
     parent: QualifiedSyntaxNode | null,
@@ -153,22 +173,10 @@ class SymbolTableDeclaredItemGenerator {
         break;
       }
 
-      // When level is not set, we assume 1 like the PL1 compiler seems to do.
-      let level = item.level ?? 1;
+      const level = this.getLevel(item);
       // The item we're looking at is not a part of the current scope, let's exit.
       if (level <= parentLevel) {
         break;
-      }
-
-      // TODO: get max level from compilation unit? If e.g. compilation flags can change this.
-      if (level > 255) {
-        level = 255;
-
-        this.acceptor(Severity.E, PLICodes.Error.IBM1363I.message, {
-          code: PLICodes.Error.IBM1363I.fullCode,
-          range: tokenToRange(item.levelToken!),
-          uri: tokenToUri(item.levelToken!) ?? "",
-        });
       }
 
       // This item is part of the current scope, let's consume it.
@@ -318,7 +326,7 @@ export class ScopeCache {
   }
 }
 
-export function iterateSymbols(unit: CompilationUnit): void {
+export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   const { scopeCaches, references } = unit;
 
   // Todo: The root scope should contain global PL1 standard library symbols.
@@ -328,19 +336,8 @@ export function iterateSymbols(unit: CompilationUnit): void {
   // Set child containers for all nodes.
   recursivelySetContainer(unit.ast);
 
-  // Todo: generic interface with `validator.ts`.
-  const diagnostics: Diagnostic[] = [];
-  const acceptor: PliValidationAcceptor = (
-    severity: Severity,
-    message: string,
-    d: DiagnosticInfo,
-  ) => {
-    diagnostics.push({
-      severity,
-      message,
-      ...d,
-    });
-  };
+  const validationBuffer = new PliValidationBuffer();
+  const acceptor = validationBuffer.getAcceptor();
 
   // Iterate over the PLI program creating the symbol table.
   iterateSymbolTable(
@@ -359,7 +356,7 @@ export function iterateSymbols(unit: CompilationUnit): void {
     scope,
   );
 
-  unit.diagnostics.symbolTable = diagnostics;
+  return validationBuffer.getDiagnostics();
 }
 
 function recursivelySetContainer(node: SyntaxNode) {

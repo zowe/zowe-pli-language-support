@@ -62,14 +62,21 @@ export function parse(compilationUnit: CompilationUnit): PliProgram {
 }
 
 export function generateSymbolTable(compilationUnit: CompilationUnit) {
-  iterateSymbols(compilationUnit);
+  const symbolTableDiagnostics = iterateSymbols(compilationUnit);
+  compilationUnit.diagnostics.symbolTable = symbolTableDiagnostics;
 }
 
 export function link(compilationUnit: CompilationUnit): ReferencesCache {
-  resolveReferences(compilationUnit);
-  compilationUnit.diagnostics.linking = linkingErrorsToDiagnostics(
+  const resolveDiagnostics = resolveReferences(compilationUnit);
+  const linkingDiagnostics = linkingErrorsToDiagnostics(
     compilationUnit.references,
   );
+
+  compilationUnit.diagnostics.linking = [
+    ...resolveDiagnostics,
+    ...linkingDiagnostics,
+  ];
+
   return compilationUnit.references;
 }
 

@@ -10,7 +10,12 @@
  */
 
 import { IToken } from "chevrotain";
-import { Location, tokenToRange } from "../language-server/types";
+import {
+  Diagnostic,
+  Location,
+  Severity,
+  tokenToRange,
+} from "../language-server/types";
 import { TokenPayload } from "../parser/abstract-parser";
 import {
   MemberCall,
@@ -28,6 +33,11 @@ import {
 import { URI } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { QualifiedSyntaxNode } from "./symbol-table";
+import {
+  PliValidationAcceptor,
+  PliValidationBuffer,
+} from "../validation/validator";
+import * as PLICodes from "../validation/messages/pli-codes";
 
 export class ReferencesCache {
   private list: Reference[] = [];
@@ -93,6 +103,7 @@ function assignQualifiedReference(
   memberCall: MemberCall,
   resolved: QualifiedSyntaxNode,
 ) {
+  // The names are not matching, this is a partial qualification.
   if (reference.text !== resolved.name) {
     if (!resolved.parent) {
       throw new Error(
@@ -100,12 +111,14 @@ function assignQualifiedReference(
       );
     }
 
+    // Try to match the resolved symbol with a reference further up the chain.
     assignReference(reference, resolved.parent);
     return;
   }
 
   reference.node = resolved.node;
 
+  // There are more qualified names to resolve, continue up the chain.
   if (memberCall.previous?.element?.ref && resolved.parent) {
     assignReference(memberCall.previous.element.ref, resolved.parent);
   }
@@ -115,6 +128,8 @@ function assignReference(
   reference: Reference<SyntaxNode>,
   resolved: QualifiedSyntaxNode,
 ) {
+  // Special handling for member calls and qualification.
+  // We want to assign the resolved references to the entire chain of references.
   if (reference.owner.container?.kind === SyntaxKind.MemberCall) {
     const memberCall = reference.owner.container;
     assignQualifiedReference(reference, memberCall, resolved);
@@ -125,7 +140,11 @@ function assignReference(
   reference.node = resolved.node;
 }
 
-function resolveReference(unit: CompilationUnit, reference: Reference) {
+function resolveReference(
+  unit: CompilationUnit,
+  reference: Reference,
+  acceptor: PliValidationAcceptor,
+) {
   if (
     reference === null ||
     reference.node === null ||
@@ -142,24 +161,43 @@ function resolveReference(unit: CompilationUnit, reference: Reference) {
   }
 
   const symbols = scope.getSymbols(qualifiedName);
+  // Ambiguous reference, emit a severe diagnostic.
+  // TODO: Currently only emitting on the last member call symbol (`reference.token`)
+  // We want to underline the entire qualified name.
   if (symbols.length > 1) {
-    // TODO: Diagnostic error about ambiguity on `symbols` locations
+    const fullName = qualifiedName.toReversed().join(".");
+    acceptor(Severity.S, PLICodes.Severe.IBM1881I.message(fullName), {
+      code: PLICodes.Severe.IBM1881I.fullCode,
+      range: tokenToRange(reference.token),
+      uri: reference.token.payload?.uri?.toString() ?? "",
+    });
   }
 
+  // We take the first symbol, even if there are multiple matching.
+  // Ideally, we'd want to reference all matching symbols, but the AST currently only supports a single reference per symbol.
   const symbol = symbols[0];
   if (!symbol) {
     reference.node = null;
     return;
   }
 
+  // Assign the resolved symbol to the reference.
+  // This function handles assigning references to member calls.
   assignReference(reference, symbol);
+
+  // Add the inverse reference to the cache.
   unit.references.addInverse(reference);
 }
 
-export function resolveReferences(unit: CompilationUnit): void {
+export function resolveReferences(unit: CompilationUnit): Diagnostic[] {
+  const validationBuffer = new PliValidationBuffer();
+  const acceptor = validationBuffer.getAcceptor();
+
   for (const reference of unit.references.allReferences()) {
-    resolveReference(unit, reference);
+    resolveReference(unit, reference, acceptor);
   }
+
+  return validationBuffer.getDiagnostics();
 }
 
 export function findTokenElementReference(
