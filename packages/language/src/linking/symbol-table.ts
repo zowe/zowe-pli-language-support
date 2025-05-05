@@ -94,12 +94,9 @@ export class QualifiedSyntaxNode {
    *
    * ```
    * DCL 1 A, 2 B, 3 C;
-   * PUT (A.B.C); // 1
-   * PUT (A.C);   // 2
+   * PUT (A.B.C); // `C` has `FullQualification`
+   * PUT (A.C);   // `C` has `PartialQualification`
    * ```
-   *
-   * 1. In this case, the qualification status of `C` is `FullQualification` because it is fully qualified.
-   * 2. In this case, the qualification status of `C` is `PartialQualification` because it is partially qualified.
    */
   getQualificationStatus(qualifiers: string[]): QualificationStatus {
     const qualifier = qualifiers[0];
