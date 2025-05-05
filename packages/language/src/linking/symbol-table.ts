@@ -329,13 +329,18 @@ export function iterateSymbols(unit: CompilationUnit): void {
   };
 
   // Iterate over the PLI program creating the symbol table.
-  new SymbolTableIterator(
+  iterateSymbolTable(
     scopeCaches.preprocessor,
     references,
     acceptor,
-  ).iterate(unit.preprocessorAst, scope);
+    unit.preprocessorAst,
+    scope,
+  );
 
-  new SymbolTableIterator(scopeCaches.regular, references, acceptor).iterate(
+  iterateSymbolTable(
+    scopeCaches.regular,
+    references,
+    acceptor,
     unit.ast,
     scope,
   );
@@ -360,71 +365,60 @@ function shouldNodeCreateNewScope(parent: SyntaxNode): boolean {
   }
 }
 
-class SymbolTableIterator {
-  private scopeCache: ScopeCache;
-  private referenceCache: ReferencesCache;
-  private acceptor: PliValidationAcceptor;
-
-  constructor(
-    scopeCache: ScopeCache,
-    referenceCache: ReferencesCache,
-    acceptor: PliValidationAcceptor,
-  ) {
-    this.scopeCache = scopeCache;
-    this.referenceCache = referenceCache;
-    this.acceptor = acceptor;
+const iterateSymbolTable = (
+  scopeCache: ScopeCache,
+  referenceCache: ReferencesCache,
+  acceptor: PliValidationAcceptor,
+  node: SyntaxNode,
+  parentScope: Scope,
+) => {
+  const ref = getReference(node);
+  if (ref) {
+    referenceCache.add(ref);
   }
 
-  // This function iterates over the syntax tree and builds the symbol table.
-  iterate(node: SyntaxNode, parentScope: Scope) {
-    const ref = getReference(node);
-    if (ref) {
-      this.referenceCache.add(ref);
-    }
-
-    // Add the label symbol to the symbol table in the current scope.
-    const symbol = getLabelSymbol(node);
-    if (symbol) {
-      parentScope.symbolTable.addSymbolDeclaration(
-        symbol,
-        new QualifiedSyntaxNode(symbol, node),
-      );
-    }
-
-    // We connect the current node to its scope for usage in the linking phase.
-    this.scopeCache.add(node, parentScope);
-
-    // Are we entering a containing node? Then we should create a new scope for all our children.
-    const scope = shouldNodeCreateNewScope(node)
-      ? new Scope(parentScope)
-      : parentScope;
-
-    // Function to recursively iterate over the child nodes to build their symbol table.
-    const iterateChild = (scope: Scope) => (child: SyntaxNode) =>
-      this.iterate(child, scope);
-
-    // This switch statement handles the special case of a procedure statement.
-    switch (node.kind) {
-      // A procedure statement's end node is a child node, but scope-wise, the end
-      // node should be part of the parent scope of the procedure statement, to
-      // properly link to the procedure's label.
-      case SyntaxKind.ProcedureStatement:
-        // Remove the end node from the procedure statement,
-        // to process it as a sibling node.
-        const procedure: ProcedureStatement = {
-          ...node,
-          end: null,
-        };
-        forEachNode(procedure, iterateChild(scope));
-        if (node.end) {
-          iterateChild(parentScope)(node.end);
-        }
-        break;
-      case SyntaxKind.DeclareStatement:
-        scope.symbolTable.addDeclarationStatement(node, this.acceptor);
-        break;
-      default:
-        forEachNode(node, iterateChild(scope));
-    }
+  // Add the label symbol to the symbol table in the current scope.
+  const symbol = getLabelSymbol(node);
+  if (symbol) {
+    parentScope.symbolTable.addSymbolDeclaration(
+      symbol,
+      new QualifiedSyntaxNode(symbol, node),
+    );
   }
-}
+
+  // We connect the current node to its scope for usage in the linking phase.
+  scopeCache.add(node, parentScope);
+
+  // Are we entering a containing node? Then we should create a new scope for all our children.
+  const scope = shouldNodeCreateNewScope(node)
+    ? new Scope(parentScope)
+    : parentScope;
+
+  // Function to recursively iterate over the child nodes to build their symbol table.
+  const iterateChild = (scope: Scope) => (child: SyntaxNode) =>
+    iterateSymbolTable(scopeCache, referenceCache, acceptor, child, scope);
+
+  // This switch statement handles the special case of a procedure statement.
+  switch (node.kind) {
+    // A procedure statement's end node is a child node, but scope-wise, the end
+    // node should be part of the parent scope of the procedure statement, to
+    // properly link to the procedure's label.
+    case SyntaxKind.ProcedureStatement:
+      // Remove the end node from the procedure statement,
+      // to process it as a sibling node.
+      const procedure: ProcedureStatement = {
+        ...node,
+        end: null,
+      };
+      forEachNode(procedure, iterateChild(scope));
+      if (node.end) {
+        iterateChild(parentScope)(node.end);
+      }
+      break;
+    case SyntaxKind.DeclareStatement:
+      scope.symbolTable.addDeclarationStatement(node, acceptor);
+      break;
+    default:
+      forEachNode(node, iterateChild(scope));
+  }
+};
