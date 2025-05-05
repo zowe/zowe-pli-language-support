@@ -56,8 +56,8 @@ export function rangeToLSP(
   };
 }
 
-export function tokenToUri(token: IToken): string {
-  return token.payload.uri._formatted; // TODO: Is this safe?
+export function tokenToUri(token: IToken): string | undefined {
+  return token.payload?.uri?.toString();
 }
 
 export function tokenToRange(token: IToken): Range {

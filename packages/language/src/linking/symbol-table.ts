@@ -153,7 +153,7 @@ class SymbolTableDeclaredItemGenerator {
         this.acceptor(Severity.E, PLICodes.Error.IBM1363I.message, {
           code: PLICodes.Error.IBM1363I.fullCode,
           range: tokenToRange(item.levelToken!),
-          uri: tokenToUri(item.levelToken!),
+          uri: tokenToUri(item.levelToken!) ?? "",
         });
       }
 
