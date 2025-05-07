@@ -20,7 +20,12 @@
  */
 
 import { test } from "vitest";
-import { assertNoParseErrors, parse, parseStmts } from "./utils";
+import {
+  assertNoParseErrors,
+  generateAndAssertValidSymbolTable,
+  parse,
+  parseStmts,
+} from "./utils";
 
 test("Block block-492.pli", () => {
   // Context:
@@ -47,6 +52,7 @@ test("Block block-492.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-508.pli", () => {
@@ -81,6 +87,7 @@ test("Block block-508.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-400.pli", () => {
@@ -111,6 +118,7 @@ test("Block block-400.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-204.pli", () => {
@@ -137,6 +145,7 @@ test("Block block-204.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-658.pli", () => {
@@ -170,6 +179,7 @@ test("Block block-658.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-297.pli", () => {
@@ -197,6 +207,7 @@ test("Block block-297.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-477.pli", () => {
@@ -224,6 +235,7 @@ test("Block block-477.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-610.pli", () => {
@@ -258,6 +270,7 @@ test("Block block-610.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-278.pli", () => {
@@ -290,6 +303,7 @@ test("Block block-278.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-184.pli", () => {
@@ -316,6 +330,7 @@ test("Block block-184.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-129.pli", () => {
@@ -343,6 +358,7 @@ test("Block block-129.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-689.pli", () => {
@@ -470,6 +486,7 @@ test("Block block-689.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-688.pli", () => {
@@ -595,6 +612,7 @@ test("Block block-688.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-68.pli", () => {
@@ -623,6 +641,7 @@ test("Block block-68.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-142.pli", () => {
@@ -658,6 +677,7 @@ test("Block block-142.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-21.pli", () => {
@@ -684,6 +704,7 @@ test("Block block-21.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-20.pli", () => {
@@ -710,6 +731,7 @@ test("Block block-20.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-389.pli", () => {
@@ -744,6 +766,7 @@ test("Block block-389.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-212.pli", () => {
@@ -770,6 +793,7 @@ test("Block block-212.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-149.pli", () => {
@@ -803,6 +827,7 @@ test("Block block-149.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-192.pli", () => {
@@ -829,6 +854,7 @@ test("Block block-192.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-633.pli", () => {
@@ -862,6 +888,7 @@ test("Block block-633.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-383.pli", () => {
@@ -889,6 +916,7 @@ test("Block block-383.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-382.pli", () => {
@@ -918,6 +946,7 @@ test("Block block-382.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-177.pli", () => {
@@ -945,6 +974,7 @@ test("Block block-177.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-87.pli", () => {
@@ -973,6 +1003,7 @@ test("Block block-87.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-562.pli", () => {
@@ -1005,6 +1036,7 @@ test("Block block-562.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-563.pli", () => {
@@ -1041,6 +1073,7 @@ test("Block block-563.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-27.pli", () => {
@@ -1068,6 +1101,7 @@ test("Block block-27.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-692.pli", () => {
@@ -1133,6 +1167,7 @@ test("Block block-692.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-214.pli", () => {
@@ -1170,6 +1205,7 @@ test("Block block-214.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-215.pli", () => {
@@ -1201,6 +1237,7 @@ test("Block block-215.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-286.pli", () => {
@@ -1228,6 +1265,7 @@ test("Block block-286.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-329.pli", () => {
@@ -1258,6 +1296,7 @@ test("Block block-329.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-194.pli", () => {
@@ -1293,6 +1332,7 @@ test("Block block-194.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-317.pli", () => {
@@ -1319,6 +1359,7 @@ test("Block block-317.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-12.pli", () => {
@@ -1345,6 +1386,7 @@ test("Block block-12.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-385.pli", () => {
@@ -1378,6 +1420,7 @@ test("Block block-385.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-153.pli", () => {
@@ -1408,6 +1451,7 @@ test("Block block-153.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-152.pli", () => {
@@ -1436,6 +1480,7 @@ test("Block block-152.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-31.pli", () => {
@@ -1469,6 +1514,7 @@ test("Block block-31.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-629.pli", () => {
@@ -1515,6 +1561,7 @@ test("Block block-629.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-291.pli", () => {
@@ -1546,6 +1593,7 @@ test("Block block-291.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-530.pli", () => {
@@ -1583,6 +1631,7 @@ test("Block block-530.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-399.pli", () => {
@@ -1611,6 +1660,7 @@ test("Block block-399.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-471.pli", () => {
@@ -1639,6 +1689,7 @@ test("Block block-471.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-183.pli", () => {
@@ -1665,6 +1716,7 @@ test("Block block-183.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-236.pli", () => {
@@ -1702,6 +1754,7 @@ test("Block block-236.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-209.pli", () => {
@@ -1739,6 +1792,7 @@ test("Block block-209.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-208.pli", () => {
@@ -1770,6 +1824,7 @@ test("Block block-208.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-393.pli", () => {
@@ -1796,6 +1851,7 @@ test("Block block-393.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-392.pli", () => {
@@ -1822,6 +1878,7 @@ test("Block block-392.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-300.pli", () => {
@@ -1849,6 +1906,7 @@ test("Block block-300.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-166.pli", () => {
@@ -1875,6 +1933,7 @@ test("Block block-166.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-28.pli", () => {
@@ -1901,6 +1960,7 @@ test("Block block-28.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-29.pli", () => {
@@ -1931,6 +1991,7 @@ test("Block block-29.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-516.pli", () => {
@@ -1959,6 +2020,7 @@ test("Block block-516.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-679.pli", () => {
@@ -1986,6 +2048,7 @@ test("Block block-679.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-191.pli", () => {
@@ -2012,6 +2075,7 @@ test("Block block-191.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-380.pli", () => {
@@ -2039,6 +2103,7 @@ test("Block block-380.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-528.pli", () => {
@@ -2067,6 +2132,7 @@ test("Block block-528.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-486.pli", () => {
@@ -2097,6 +2163,7 @@ test("Block block-486.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-22.pli", () => {
@@ -2123,6 +2190,7 @@ test("Block block-22.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-23.pli", () => {
@@ -2149,6 +2217,7 @@ test("Block block-23.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-115.pli", () => {
@@ -2175,6 +2244,7 @@ test("Block block-115.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-548.pli", () => {
@@ -2204,6 +2274,7 @@ test("Block block-548.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-549.pli", () => {
@@ -2251,6 +2322,7 @@ test("Block block-549.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-436.pli", () => {
@@ -2282,6 +2354,7 @@ test("Block block-436.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-305.pli", () => {
@@ -2309,6 +2382,7 @@ test("Block block-305.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-239.pli", () => {
@@ -2346,6 +2420,7 @@ test("Block block-239.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-403.pli", () => {
@@ -2378,6 +2453,7 @@ test("Block block-403.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-402.pli", () => {
@@ -2405,6 +2481,7 @@ test("Block block-402.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-379.pli", () => {
@@ -2432,6 +2509,7 @@ test("Block block-379.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-475.pli", () => {
@@ -2459,6 +2537,7 @@ test("Block block-475.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-613.pli", () => {
@@ -2489,6 +2568,7 @@ test("Block block-613.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-181.pli", () => {
@@ -2517,6 +2597,7 @@ test("Block block-181.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-180.pli", () => {
@@ -2549,6 +2630,7 @@ test("Block block-180.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-375.pli", () => {
@@ -2576,6 +2658,7 @@ test("Block block-375.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-374.pli", () => {
@@ -2603,6 +2686,7 @@ test("Block block-374.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-506.pli", () => {
@@ -2629,6 +2713,7 @@ test("Block block-506.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-594.pli", () => {
@@ -2662,6 +2747,7 @@ test("Block block-594.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-479.pli", () => {
@@ -2688,6 +2774,7 @@ test("Block block-479.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-478.pli", () => {
@@ -2714,6 +2801,7 @@ test("Block block-478.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-94.pli", () => {
@@ -2744,6 +2832,7 @@ test("Block block-94.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-299.pli", () => {
@@ -2770,6 +2859,7 @@ test("Block block-299.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-302.pli", () => {
@@ -2797,6 +2887,7 @@ test("Block block-302.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-165.pli", () => {
@@ -2831,6 +2922,7 @@ test("Block block-165.pli", () => {
    end X;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-150.pli", () => {
@@ -2858,6 +2950,7 @@ test("Block block-150.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-309.pli", () => {
@@ -2889,6 +2982,7 @@ test("Block block-309.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-532.pli", () => {
@@ -2926,6 +3020,7 @@ test("Block block-532.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-473.pli", () => {
@@ -2955,6 +3050,7 @@ test("Block block-473.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-687.pli", () => {
@@ -3060,6 +3156,7 @@ test("Block block-687.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-222.pli", () => {
@@ -3141,6 +3238,7 @@ test("Block block-222.pli", () => {
    end;          
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-450.pli", () => {
@@ -3173,6 +3271,7 @@ test("Block block-450.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-637.pli", () => {
@@ -3199,6 +3298,7 @@ test("Block block-637.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-196.pli", () => {
@@ -3236,6 +3336,7 @@ test("Block block-196.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-67.pli", () => {
@@ -3278,6 +3379,7 @@ test("Block block-67.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-315.pli", () => {
@@ -3305,6 +3407,7 @@ test("Block block-315.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-172.pli", () => {
@@ -3332,6 +3435,7 @@ test("Block block-172.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-387.pli", () => {
@@ -3364,6 +3468,7 @@ test("Block block-387.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-25.pli", () => {
@@ -3391,6 +3496,7 @@ test("Block block-25.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-480.pli", () => {
@@ -3418,6 +3524,7 @@ test("Block block-480.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-24.pli", () => {
@@ -3444,6 +3551,7 @@ test("Block block-24.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-589.pli", () => {
@@ -3488,6 +3596,7 @@ test("Block block-589.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-147.pli", () => {
@@ -3533,6 +3642,7 @@ test("Block block-147.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-321.pli", () => {
@@ -3562,6 +3672,7 @@ test("Block block-321.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-146.pli", () => {
@@ -3589,6 +3700,7 @@ test("Block block-146.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-52.pli", () => {
@@ -3617,6 +3729,7 @@ test("Block block-52.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-690.pli", () => {
@@ -3762,6 +3875,7 @@ test("Block block-690.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-691.pli", () => {
@@ -3907,6 +4021,7 @@ test("Block block-691.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-216.pli", () => {
@@ -3941,6 +4056,7 @@ test("Block block-216.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-179.pli", () => {
@@ -3967,6 +4083,7 @@ test("Block block-179.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-178.pli", () => {
@@ -3994,6 +4111,7 @@ test("Block block-178.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-271.pli", () => {
@@ -4040,6 +4158,7 @@ test("Block block-271.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-169.pli", () => {
@@ -4067,6 +4186,7 @@ test("Block block-169.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-48.pli", () => {
@@ -4106,6 +4226,7 @@ test("Block block-48.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-187.pli", () => {
@@ -4138,6 +4259,7 @@ test("Block block-187.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-2.pli", () => {
@@ -4167,6 +4289,7 @@ test("Block block-2.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-267.pli", () => {
@@ -4193,6 +4316,7 @@ test("Block block-267.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-283.pli", () => {
@@ -4225,6 +4349,7 @@ test("Block block-283.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-137.pli", () => {
@@ -4254,6 +4379,7 @@ test("Block block-137.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-102.pli", () => {
@@ -4280,6 +4406,7 @@ test("Block block-102.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-8.pli", () => {
@@ -4309,6 +4436,7 @@ test("Block block-8.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-289.pli", () => {
@@ -4349,6 +4477,7 @@ test("Block block-289.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-55.pli", () => {
@@ -4380,6 +4509,7 @@ test("Block block-55.pli", () => {
     End FMAIN;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-285.pli", () => {
@@ -4411,6 +4541,7 @@ test("Block block-285.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-284.pli", () => {
@@ -4442,6 +4573,7 @@ test("Block block-284.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-131.pli", () => {
@@ -4471,6 +4603,7 @@ test("Block block-131.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-11.pli", () => {
@@ -4504,6 +4637,7 @@ test("Block block-11.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-276.pli", () => {
@@ -4531,6 +4665,7 @@ test("Block block-276.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-249.pli", () => {
@@ -4558,6 +4693,7 @@ test("Block block-249.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-94.pli", () => {
@@ -4605,6 +4741,7 @@ test("Block block-94.pli", () => {
   //GO.IN DD */
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-309.pli", () => {
@@ -4648,6 +4785,7 @@ test("Block block-309.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-303.pli", () => {
@@ -4683,6 +4821,7 @@ test("Block block-303.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-298.pli", () => {
@@ -4716,6 +4855,7 @@ test("Block block-298.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-299.pli", () => {
@@ -4771,6 +4911,7 @@ test("Block block-299.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-101.pli", () => {
@@ -4808,6 +4949,7 @@ test("Block block-101.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-21.pli", () => {
@@ -4837,6 +4979,7 @@ test("Block block-21.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-311.pli", () => {
@@ -4902,6 +5045,7 @@ test("Block block-311.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-310.pli", () => {
@@ -4940,6 +5084,7 @@ test("Block block-310.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-56.pli", () => {
@@ -4975,6 +5120,7 @@ test("Block block-56.pli", () => {
     End;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-143.pli", () => {
@@ -5006,6 +5152,7 @@ test("Block block-143.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-281.pli", () => {
@@ -5038,6 +5185,7 @@ test("Block block-281.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-280.pli", () => {
@@ -5092,6 +5240,7 @@ test("Block block-280.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-135.pli", () => {
@@ -5119,6 +5268,7 @@ test("Block block-135.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-307.pli", () => {
@@ -5180,6 +5330,7 @@ test("Block block-307.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-128.pli", () => {
@@ -5215,6 +5366,7 @@ test("Block block-128.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-273.pli", () => {
@@ -5242,6 +5394,7 @@ test("Block block-273.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-272.pli", () => {
@@ -5271,6 +5424,7 @@ test("Block block-272.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-74.pli", () => {
@@ -5300,6 +5454,7 @@ test("Block block-74.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-91.pli", () => {
@@ -5326,6 +5481,7 @@ test("Block block-91.pli", () => {
  end;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-300.pli", () => {
@@ -5359,6 +5515,7 @@ test("Block block-300.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-274.pli", () => {
@@ -5386,6 +5543,7 @@ test("Block block-274.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-188.pli", () => {
@@ -5419,6 +5577,7 @@ test("Block block-188.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-220.pli", () => {
@@ -5448,6 +5607,7 @@ test("Block block-220.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-171.pli", () => {
@@ -5481,6 +5641,7 @@ test("Block block-171.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-287.pli", () => {
@@ -5527,6 +5688,7 @@ test("Block block-287.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-215.pli", () => {
@@ -5553,6 +5715,7 @@ test("Block block-215.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-12.pli", () => {
@@ -5586,4 +5749,5 @@ test("Block block-12.pli", () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
+  generateAndAssertValidSymbolTable(doc);
 });

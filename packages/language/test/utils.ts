@@ -35,7 +35,6 @@ export function assertNoParseErrors(
 ) {
   expectNoDiagnostics(sourceFile.diagnostics.lexer, options);
   expectNoDiagnostics(sourceFile.diagnostics.parser, options);
-  assertValidSymbolTable(sourceFile);
 }
 
 /**
@@ -125,47 +124,95 @@ function isIntermediateBinaryExpression(
   return node && "infix" in node && "items" in node && "operators" in node;
 }
 
-function assertValidSymbolTable(compilationUnit: CompilationUnit) {
-  lifecycle.generateSymbolTable(compilationUnit);
-
-  for (const token of compilationUnit.tokens.all) {
+export function generateAndAssertValidSymbolTable(
+  compilationUnit: CompilationUnit,
+) {
+  // Retrieve a list of valid tokens with validated payloads.
+  const tokens = compilationUnit.tokens.all.filter((token) => {
     expect(token.payload).toBeDefined();
 
-    if (token.payload.kind === -1) {
-      // FQN rule does not reset the token kind.
-      // todo: Remove this exception once the FQN rule is updated.
-      continue;
-    }
-    if (isIntermediateBinaryExpression(token.payload.element)) {
-      // Not an AST node
-      continue;
+    // FQN rule (token payload === -1) does not reset the token kind.
+    // Todo: Remove this exception once the FQN rule is updated.
+    // Intermediate binary expressions are not AST nodes.
+    if (
+      token.payload.kind === -1 ||
+      isIntermediateBinaryExpression(token.payload.element)
+    ) {
+      return false;
     }
 
+    const element = token.payload.element;
+    const kind = token.payload.kind;
+    const kindName = SyntaxKind[kind];
+    const image = token.image;
+
     expect(
-      token.payload.element,
-      `Token of kind ${token.payload.kind} (${SyntaxKind[token.payload.kind]}) (${token.image}) should have a defined element`,
+      element,
+      `Token of kind ${kind} (${kindName}) (${image}) should have a defined element`,
     ).toBeDefined();
     expect(
-      token.payload.element,
-      `Token of kind ${token.payload.kind} (${SyntaxKind[token.payload.kind]})(${token.image}) should have a non-null element`,
+      element,
+      `Token of kind ${kind} (${kindName}) (${image}) should have a non-null element`,
     ).not.toBeNull();
-    expectASTNodeContainer(token.payload.element, token);
-  }
-}
 
-function expectASTNodeContainer(node: SyntaxNode, originalToken: IToken) {
-  expect(
-    node.container,
-    `Node of kind ${node.kind} (${SyntaxKind[node.kind]}) (${originalToken.image}) should have a defined container`,
-  ).toBeDefined();
-  expect(
-    node.container,
-    `Node of kind ${node.kind} (${SyntaxKind[node.kind]}) (${originalToken.image}) should have a non-null container.`,
-  ).not.toBeNull();
-
-  forEachNode(node as SyntaxNode, (childNode: SyntaxNode) => {
-    expectASTNodeContainer(childNode, originalToken);
+    return true;
   });
+
+  // Verify the AST iterator before the symbol table is generated.
+  const addProperty = (node: SyntaxNode, prop: string) => {
+    (node as any)[prop] = prop;
+    forEachNode(node, (child) => addProperty(child, prop));
+  };
+
+  forEachNode(compilationUnit.ast, (node) =>
+    addProperty(node, "_beforeSymbolTable"),
+  );
+
+  const verifyNodeReachability = (node: SyntaxNode) => {
+    expect(
+      (node as any)._beforeSymbolTable,
+      `Node of kind ${node.kind} (${SyntaxKind[node.kind]}) was not reached by the AST iterator at all.`,
+    ).toBeDefined();
+    forEachNode(node, verifyNodeReachability);
+  };
+
+  tokens.forEach((token) => verifyNodeReachability(token.payload.element));
+
+  // Generate the symbol table and verify the container structure.
+  lifecycle.generateSymbolTable(compilationUnit);
+
+  forEachNode(compilationUnit.ast, (node) =>
+    addProperty(node, "_afterSymbolTable"),
+  );
+
+  const verifyNodeContainer = (node: SyntaxNode, token: IToken) => {
+    const kind = node.kind;
+    const kindName = SyntaxKind[kind];
+    const reachedBefore = (node as any)._beforeSymbolTable !== undefined;
+    const image = token.image;
+
+    // If there is a bug in the symbol table generation, it is possible to retrieve a node with a non-null container
+    // that is still not reachable by the AST iterator anymore.
+    // This is a sanity check to ensure that the symbol table generation is not messing with the structure of the AST.
+    expect(
+      (node as any)._afterSymbolTable,
+      `Node of kind ${kind} (${kindName}, reached before: ${reachedBefore}) was not reached by the AST iterator after the symbol table was generated.`,
+    ).toBeDefined();
+
+    // All nodes should have a non-null container.
+    expect(
+      node.container,
+      `Node of kind ${kind} (${kindName}) (${image}) should have a defined container`,
+    ).toBeDefined();
+    expect(
+      node.container,
+      `Node of kind ${kind} (${kindName}) (${image}) should have a non-null container.`,
+    ).not.toBeNull();
+
+    forEachNode(node, (child) => verifyNodeContainer(child, token));
+  };
+
+  tokens.forEach((token) => verifyNodeContainer(token.payload.element, token));
 }
 
 /**
