@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect } from "vitest";
-import { parse, replaceIndices } from "../utils";
+import { parse, replaceNamedIndices } from "../utils";
 import {
   semanticTokens,
   tokenTypes,
@@ -18,22 +18,13 @@ import {
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "../../src/utils/uri";
 import { SemanticTokenDecoder } from "../../src/language-server/semantic-token-decoder";
-import { SemanticTokenTypes } from "vscode-languageserver-types";
 
-function formatPLICode(code: string, padding: number = 1): string {
-  if (code.startsWith("\n")) {
-    code = code.slice(1);
-  }
-  return code
-    .split("\n")
-    .map((line) => " ".repeat(padding) + line)
-    .join("\n");
+function formatTestPLI(code: string): string {
+  return code.startsWith("\n") ? code.slice(1) : code;
 }
 
-function expectSemanticTokens(annotatedCode: string, expectedTypes: string[]) {
-  const { output, ranges } = replaceIndices({
-    text: formatPLICode(annotatedCode),
-  });
+function expectSemanticTokens(annotatedCode: string) {
+  const { output, ranges } = replaceNamedIndices(formatTestPLI(annotatedCode));
 
   const textDocument = TextDocument.create(
     URI.file("/test.pli").toString(),
@@ -49,97 +40,86 @@ function expectSemanticTokens(annotatedCode: string, expectedTypes: string[]) {
     tokenTypes,
     textDocument,
   );
+  const totalRanges = Object.values(ranges).reduce(
+    (acc, curr) => acc + curr.length,
+    0,
+  );
 
-  expect(decodedTokens).toHaveLength(ranges.length);
-  expect(decodedTokens).toHaveLength(expectedTypes.length);
-  for (let i = 0; i < ranges.length; i++) {
-    expect(decodedTokens[i].offsetStart).toBe(ranges[i][0]);
-    expect(decodedTokens[i].offsetEnd).toBe(ranges[i][1]);
-    expect(decodedTokens[i].semanticTokenType).toBe(expectedTypes[i]);
+  expect(decodedTokens).toHaveLength(totalRanges);
+
+  for (const [name, nameRanges] of Object.entries(ranges)) {
+    for (const range of nameRanges) {
+      const startPosition = textDocument.positionAt(range[0]);
+      const endPosition = textDocument.positionAt(range[1]);
+      const matchingToken = decodedTokens.find(
+        (t) => t.offsetStart === range[0] && t.offsetEnd === range[1],
+      );
+      expect(
+        matchingToken,
+        `${name} at ${startPosition.line}:${startPosition.character} - ${endPosition.line}:${endPosition.character} not found`,
+      ).toBeDefined();
+      expect(
+        matchingToken?.semanticTokenType,
+        `${name} at ${startPosition.line}:${startPosition.character} - ${endPosition.line}:${endPosition.character} has wrong token type`,
+      ).toBe(name);
+    }
   }
 }
 
 describe("Semantic Tokens", () => {
   test("should highlight procedure declarations", () => {
     const code = `
-<|EXAMPLE|>: PROC;
-END <|EXAMPLE|>;`;
+ <|function:EXAMPLE|>: PROC;
+ END <|function:EXAMPLE|>;`;
 
-    expectSemanticTokens(code, [
-      SemanticTokenTypes.function,
-      SemanticTokenTypes.function,
-    ]);
+    expectSemanticTokens(code);
   });
 
   test("should highlight procedure declarations and calls", () => {
     const code = `
-<|EXAMPLE|>: PROC OPTIONS(MAIN);
-  CALL <|EXAMPLE|>;
-END <|EXAMPLE|>;`;
+ <|function:EXAMPLE|>: PROC OPTIONS(MAIN);
+   CALL <|function:EXAMPLE|>;
+ END <|function:EXAMPLE|>;`;
 
-    expectSemanticTokens(code, [
-      SemanticTokenTypes.function,
-      SemanticTokenTypes.function,
-      SemanticTokenTypes.function,
-    ]);
+    expectSemanticTokens(code);
   });
 
   test("should highlight procedure declarations, variables, and assignments", () => {
     const code = `
-<|EXAMPLE|>: PROC OPTIONS(MAIN);
-  DCL <|X|> FIXED BIN(31);
-  <|X|> = 5;
-  CALL <|EXAMPLE|>;
-END <|EXAMPLE|>;`;
+ <|function:EXAMPLE|>: PROC OPTIONS(MAIN);
+   DCL <|variable:X|> FIXED BIN(31);
+   <|variable:X|> = 5;
+   CALL <|function:EXAMPLE|>;
+ END <|function:EXAMPLE|>;`;
 
-    expectSemanticTokens(code, [
-      SemanticTokenTypes.function,
-      SemanticTokenTypes.variable,
-      SemanticTokenTypes.variable,
-      SemanticTokenTypes.function,
-      SemanticTokenTypes.function,
-    ]);
+    expectSemanticTokens(code);
   });
 
   test("should highlight nested procedure declarations and variables", () => {
     const code = `
-<|OUTER|>: PROC;
-  <|INNER|>: PROC;
-    DCL <|X|> FIXED BIN(31);
-    <|X|> = 5;
-  END <|INNER|>;
-END <|OUTER|>;`;
+ <|function:OUTER|>: PROC;
+   <|function:INNER|>: PROC;
+     DCL <|variable:X|> FIXED BIN(31);
+     <|variable:X|> = 5;
+   END <|function:INNER|>;
+ END <|function:OUTER|>;`;
 
-    expectSemanticTokens(code, [
-      SemanticTokenTypes.function,
-      SemanticTokenTypes.function,
-      SemanticTokenTypes.variable,
-      SemanticTokenTypes.variable,
-      SemanticTokenTypes.function,
-      SemanticTokenTypes.function,
-    ]);
+    expectSemanticTokens(code);
   });
 
   test("should highlight END statements in different contexts", () => {
     const code = `
-<|EXAMPLE|>: PROC;
-  DO;
-    DCL <|X|> FIXED BIN(31);
-    <|X|> = 5;
-  END;
-  BEGIN;
-    DCL <|Y|> FIXED BIN(31);
-    <|Y|> = 10;
-    END;
-END <|EXAMPLE|>;`;
+ <|function:EXAMPLE|>: PROC;
+   DO;
+     DCL <|variable:X|> FIXED BIN(31);
+     <|variable:X|> = 5;
+   END;
+   BEGIN;
+     DCL <|variable:Y|> FIXED BIN(31);
+     <|variable:Y|> = 10;
+     END;
+ END <|function:EXAMPLE|>;`;
 
-    expectSemanticTokens(code, [
-      SemanticTokenTypes.function,
-      SemanticTokenTypes.variable,
-      SemanticTokenTypes.variable,
-      SemanticTokenTypes.variable,
-      SemanticTokenTypes.variable,
-      SemanticTokenTypes.function,
-    ]);
+    expectSemanticTokens(code);
   });
 });

@@ -25,6 +25,7 @@ import { rangeToLSP } from "./types";
 import { renameRequest } from "./rename-request";
 import { mapValues } from "../utils/common";
 import { getReferenceLocations } from "../linking/resolver";
+import { documentSymbolRequest } from "./document-symbol-request";
 
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompletionUnitHandler();
@@ -51,6 +52,7 @@ export function startLanguageServer(connection: Connection): void {
           full: true,
           range: false,
         },
+        documentSymbolProvider: true,
         experimental: {
           skippedPliCode: true,
         },
@@ -167,6 +169,18 @@ export function startLanguageServer(connection: Connection): void {
     }
 
     return null;
+  });
+  connection.onDocumentSymbol((params) => {
+    const uri = params.textDocument.uri;
+    const textDocument = TextDocuments.get(uri);
+    const parsedUri = URI.parse(uri);
+    const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
+
+    if (textDocument && unit) {
+      const symbols = documentSymbolRequest(unit, parsedUri);
+      return symbols;
+    }
+    return [];
   });
   connection.listen();
 }
