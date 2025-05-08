@@ -13,8 +13,9 @@ import type {
   LanguageClientOptions,
   ServerOptions,
 } from "vscode-languageclient/node.js";
-import type * as vscode from "vscode";
+import * as vscode from "vscode";
 import * as path from "node:path";
+import * as fs from "node:fs";
 import { LanguageClient, TransportKind } from "vscode-languageclient/node.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Settings } from "./settings";
@@ -28,6 +29,57 @@ export function activate(context: vscode.ExtensionContext): void {
   BuiltinFileSystemProvider.register(context);
   settings = Settings.getInstance();
   client = startLanguageClient(context);
+  context.subscriptions.push(registerOnDidOpenTextDocListener());
+}
+
+/**
+ * Listen for file open events, and prompt if we can create a .pliplugin folder
+ * @returns Disposable listener
+ */
+function registerOnDidOpenTextDocListener() {
+  const listener = vscode.workspace.onDidOpenTextDocument(async (document) => {
+    // settle on the 1st workspace folder available, may need to change this
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspaceFolder) {
+      return;
+    }
+
+    // check if we can create a .pliplugin folder
+    const plipluginPath = path.join(workspaceFolder, ".pliplugin");
+    if (!fs.existsSync(plipluginPath)) {
+      const userResponse = await vscode.window.showInformationMessage(
+        "Create a '.pliplugin' folder in the project root using this file as the entry point in 'pgm_conf.json'?",
+        "Yes",
+        "No"
+      );
+
+      if (userResponse === "Yes") {
+        // create the .pliplugin folder and files, using the current file as the entry point
+        fs.mkdirSync(plipluginPath);
+
+        fs.writeFileSync(path.join(plipluginPath, "pgm_conf.json"), JSON.stringify({
+          pgms: [
+            {
+              program: path.relative(workspaceFolder, document.fileName),
+              pgroup: "default"
+            }
+          ]
+        }, null, 2));
+        fs.writeFileSync(path.join(plipluginPath, "proc_grps.json"), JSON.stringify({
+          pgroups: [
+            {
+              name: "default",
+              "compiler-options": [],
+              libs: [],
+              "copybook-extensions": []
+            }
+          ]
+        }, null, 2));
+        vscode.window.showInformationMessage("'.pliplugin' folder and files created successfully.");
+      }
+    }
+  });
+  return listener;
 }
 
 // This function is called when the extension is deactivated.
