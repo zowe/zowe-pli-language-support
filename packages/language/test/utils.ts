@@ -406,10 +406,14 @@ export function expectLinks(text: string) {
   for (const { label, offset, rangeIndex } of requests) {
     const result = definitionRequest(unit, unit.uri, offset);
 
+    // Produce a small snippet with a margin of 10 characters to give a hint of where the error is
+    const snippet = `${output.slice(offset - 10, offset).trimStart()}<|${label}>${output.slice(offset, offset + 10).trimEnd()}`;
+    const line = output.slice(0, offset).split("\n").length + 1;
+
     expectedFunction(
       result.length,
       rangeIndex.length,
-      `Expected ${rangeIndex.length} definitions but received ${result.length} for label "${label}"`,
+      `Expected ${rangeIndex.length} definitions but received ${result.length} on line ${line} for label "${label}" near \`${snippet}\``,
     );
 
     if (rangeIndex.length > 1) {
@@ -422,10 +426,6 @@ export function expectLinks(text: string) {
         start: singleRangeIndex[0],
         end: singleRangeIndex[1],
       };
-
-      // Produce a small snippet with a margin of 10 characters to give a hint of where the error is
-      const snippet = `${output.slice(offset - 10, offset).trimStart()}<|${label}>${output.slice(offset, offset + 10).trimEnd()}`;
-      const line = output.slice(0, offset).split("\n").length + 1;
 
       expectedFunction(
         definition.range,

@@ -10,7 +10,12 @@
  */
 
 import { IToken } from "chevrotain";
-import { Diagnostic, Location, tokenToRange } from "../language-server/types";
+import {
+  Diagnostic,
+  Location,
+  Severity,
+  tokenToRange,
+} from "../language-server/types";
 import { TokenPayload } from "../parser/abstract-parser";
 import {
   MemberCall,
@@ -32,6 +37,7 @@ import {
   PliValidationAcceptor,
   PliValidationBuffer,
 } from "../validation/validator";
+import * as PLICodes from "../validation/messages/pli-codes";
 
 export class ReferencesCache {
   private list: Reference[] = [];
@@ -160,18 +166,14 @@ function resolveReference(
 
   const isAmbiguous = symbols.length > 1;
   if (isAmbiguous) {
-    /**
-     * @didrikmunther
-     * @WILLFIX: We're colliding with the DEACTIVATE functionality in the preprocessor.
-     */
-    // const fullName = qualifiedName.toReversed().join(".");
-    // // TODO: Currently only emitting on the last member call symbol (`reference.token`)
-    // // We want to underline the entire qualified name.
-    // acceptor(Severity.S, PLICodes.Severe.IBM1881I.message(fullName), {
-    //   code: PLICodes.Severe.IBM1881I.fullCode,
-    //   range: tokenToRange(reference.token),
-    //   uri: reference.token.payload?.uri?.toString() ?? "",
-    // });
+    const fullName = qualifiedName.toReversed().join(".");
+    // TODO: Currently only emitting on the last member call symbol (`reference.token`)
+    // We want to underline the entire qualified name.
+    acceptor(Severity.S, PLICodes.Severe.IBM1881I.message(fullName), {
+      code: PLICodes.Severe.IBM1881I.fullCode,
+      range: tokenToRange(reference.token),
+      uri: reference.token.payload?.uri?.toString() ?? "",
+    });
   }
 
   // We take the first symbol, even if there are multiple matching.
