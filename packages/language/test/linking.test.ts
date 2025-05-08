@@ -10,7 +10,13 @@
  */
 
 import { describe, test } from "vitest";
-import { expectLinks as expectLinksRoot } from "./utils";
+import {
+  assertDiagnostic,
+  expectLinks as expectLinksRoot,
+  parseAndLink,
+} from "./utils";
+import * as PLICodes from "../src/validation/messages/pli-codes";
+import { Severity } from "../src/language-server/types";
 
 /**
  * Scoping report: https://github.com/zowe/zowe-pli-language-support/issues/94
@@ -57,6 +63,16 @@ describe("Linking tests", () => {
     call <|2>INNER;
  end <|1>OUTER;
  call <|1>OUTER;`));
+
+  test("Must link to procedure label before declaration", () =>
+    expectLinks(`
+ CALL <|1>OUTER;
+
+ <|1:OUTER|>: PROCEDURE;
+   PUT("INSIDE");
+ END <|1>OUTER;   
+
+ CALL <|1>OUTER;`));
 
   test("Must handle implicit declaration (use before declaration)", () =>
     expectLinks(`
@@ -120,30 +136,74 @@ describe("Linking tests", () => {
           put skip list(V<|2>AR1);
           end <|1>A;`));
 
-  test("Qualified names", () =>
+  test("DO WHILE does not create a new scope", () =>
     expectLinks(`
- DCL ARRAY_ENTRY;
- DCL TWO_DIM_TABLE_ENTRY;
- DCL TYPE#;
+ PUT(<|a>A);
+ DO WHILE (<|a>A < 5);
+  PUT(<|a>A);
+  DCL <|a:A|> BIN FIXED(15) INIT(0);
+  <|proc:MYPROC|>: PROCEDURE;
+  END <|proc>MYPROC;
+ END;
+ PUT(<|a>A);
+ CALL <|proc>MYPROC;`));
 
- DCL 1  <|1:TWO_DIM_TABLE|>,
-        2  <|2:TWO_DIM_TABLE_ENTRY|>          CHAR(32);
- DCL 1  TABLE_WITH_ARRAY,
-        2  ARRAY_ENTRY(0:1000),
-           3  NAME                          CHAR(32) VARYING,
-           3  <|3:TYPE#|>                     CHAR(8),
-        2  NON_ARRAY_ENTRY,
-           3  NAME                          CHAR(32) VARYING,
-           3  <|4:TYPE#|>                     CHAR(8);
+  describe("Qualified names", () => {
+    test("Must work in structured declaration", () =>
+      expectLinks(`
+        DCL ARRAY_ENTRY;
+        DCL TWO_DIM_TABLE_ENTRY;
+        DCL TYPE#;
+       
+        DCL 1  <|1:TWO_DIM_TABLE|>,
+               2  <|2:TWO_DIM_TABLE_ENTRY|>          CHAR(32);
+        DCL 1  TABLE_WITH_ARRAY,
+               2  ARRAY_ENTRY(0:1000),
+                  3  NAME                          CHAR(32) VARYING,
+                  3  <|3:TYPE#|>                     CHAR(8),
+               2  NON_ARRAY_ENTRY,
+                  3  NAME                          CHAR(32) VARYING,
+                  3  <|4:TYPE#|>                     CHAR(8);
+       
+        DCL ARRAY_ENTRY;
+        DCL TWO_DIM_TABLE_ENTRY;
+        DCL TYPE#;
+       
+        PUT (<|1>TWO_DIM_TABLE);
+        PUT (TWO_DIM_TABLE.<|2>TWO_DIM_TABLE_ENTRY);
+        PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|3>TYPE#);
+        PUT (TABLE_WITH_ARRAY.NON_ARRAY_ENTRY.<|4>TYPE#);`));
 
- DCL ARRAY_ENTRY;
- DCL TWO_DIM_TABLE_ENTRY;
- DCL TYPE#;
+    test("Must infer partially qualified names", () =>
+      expectLinks(`
+ DCL 1 A,
+        2 <|b1:B|>,
+          3 K, // Should be skipped in qualification
+            4 <|c:C|> CHAR(8) VALUE("C");
 
- PUT (<|1>TWO_DIM_TABLE);
- PUT (TWO_DIM_TABLE.<|2>TWO_DIM_TABLE_ENTRY);
- PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|3>TYPE#);
- PUT (TABLE_WITH_ARRAY.NON_ARRAY_ENTRY.<|4>TYPE#);`));
+ DCL 1 A2,
+        2 <|b2:B|>,
+          3 K, // Should be skipped in qualification
+            4 <|d:D|> CHAR(8) VALUE("D");
+
+ PUT (<|b1>B.<|c>C);
+ PUT (<|b2>B.<|d>D);`));
+
+    /**
+     * @WILLFIX: We currently do not have explicit handling for factorized names in structures,
+     * they just get rolled out.
+     */
+    test.skip("Should error when using factorized names in structures", () => {
+      const doc = parseAndLink(`
+ DCL 1 A,
+       2 (B,C),
+          3 D CHAR(8) VALUE("D");`);
+      assertDiagnostic(doc, {
+        code: PLICodes.Severe.IBM2203I.fullCode,
+        severity: Severity.S,
+      });
+    });
+  });
 
   describe("Implicit qualification", () => {
     test("Must qualify implicitly in structure", () =>
@@ -182,9 +242,9 @@ describe("Linking tests", () => {
  PUT(A.<|b>B);`));
 
     /**
-     * TODO: Implement star handling in structured names
+     * @WILLFIX: We currently do not handle star names in any way.
      */
-    test.skip("Star name in structure should be qualifiable", () =>
+    test.skip("Star name in structure should result in partial qualification", () =>
       expectLinks(`
  DCL 1 A,
         2 *,
@@ -192,6 +252,122 @@ describe("Linking tests", () => {
         2 <|b:B|> CHAR(8) VALUE("B2");
 
  PUT(A.<|b>B);`));
+
+    test("Must work before declaration", () =>
+      expectLinks(`
+ PUT(<|a>A);
+ <|a>A = "A2";
+ DCL <|a:A|> CHAR(8) INIT("A");
+ PUT(<|a>A);`));
+
+    test("Must work across procedure boundaries", () =>
+      expectLinks(`
+ PUT(<|a>A);
+
+ LABL: PROCEDURE;
+   PUT(<|a>A);
+ END LABL;
+
+ PUT(<|a>A);
+ CALL LABL;
+
+ DCL <|a:A|> CHAR(8) INIT("A");`));
+  });
+
+  describe("Faulty cases", () => {
+    /**
+     * @WILLFIX: We currently cannot detect multiple declarations in the same scope.
+     */
+    test.skip("Redeclaration of label must fail", () => {
+      const doc = parseAndLink(`
+ OUTER: PROCEDURE;
+ END OUTER;
+ OUTER: PROCEDURE;
+ END OUTER;`);
+      assertDiagnostic(doc, {
+        code: PLICodes.Severe.IBM1916I.fullCode,
+        severity: Severity.S,
+      });
+    });
+
+    test("Unused label should warn", () => {
+      const doc = parseAndLink(`
+ OUTER: PROCEDURE;
+ END OUTER;`);
+      assertDiagnostic(doc, {
+        code: PLICodes.Warning.IBM1213I.fullCode,
+        severity: Severity.W,
+      });
+    });
+
+    /**
+     * @WILLFIX: We currently cannot detect multiple declarations in the same scope.
+     */
+    test.skip("Redeclaration must fail", () => {
+      const doc = parseAndLink(`
+ DCL A CHAR(8) INIT("A");
+ DCL A CHAR(8) INIT("A2");`);
+      assertDiagnostic(doc, {
+        code: PLICodes.Error.IBM1306I.fullCode,
+        severity: Severity.E,
+      });
+    });
+
+    /**
+     * @didrikmunther
+     * @WILLFIX: We're colliding with the DEACTIVATE functionality in the preprocessor, disabling for now.
+     */
+    test.skip("Ambiguous reference must fail", () => {
+      const doc = parseAndLink(`
+ DCL 1 A,
+     2 B CHAR(8) VALUE("B1");
+ DCL 1 A,
+     2 B CHAR(8) VALUE("B2");
+ PUT(B);
+ `);
+      assertDiagnostic(doc, {
+        code: PLICodes.Severe.IBM1881I.fullCode,
+        severity: Severity.S,
+      });
+    });
+
+    /**
+     * @WILLFIX: We currently cannot detect multiple declarations in the same scope.
+     */
+    test.skip("Repeated declaration of label is invalid", () => {
+      const doc = parseAndLink(`
+ A: PROCEDURE;
+ END A;
+ DCL A CHAR(8) INIT("A");`);
+      assertDiagnostic(doc, {
+        code: PLICodes.Error.IBM1306I.fullCode,
+        severity: Severity.E,
+      });
+    });
+
+    /**
+     * @WILLFIX: We currently do not have explicit handling for factorized names in structures,
+     * they just get rolled out.
+     */
+    test.skip("Factoring of level numbers into declaration lists containing level numbers is invalid", () => {
+      const doc = parseAndLink(`
+ DCL 1 A,
+       2(B, 3 C, D) (3,2) binary fixed (15);`);
+      assertDiagnostic(doc, {
+        code: PLICodes.Error.IBM1376I.fullCode,
+        severity: Severity.E,
+      });
+    });
+
+    test("Structure level greater than 255 is invalid", () => {
+      const doc = parseAndLink(`
+ DCL 1 A,
+       256 B;`);
+      assertDiagnostic(doc, {
+        code: PLICodes.Error.IBM1363I.fullCode,
+        severity: Severity.E,
+      });
+    });
   });
 
   test("fetch linking", () => {

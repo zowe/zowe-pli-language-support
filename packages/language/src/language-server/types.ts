@@ -56,6 +56,10 @@ export function rangeToLSP(
   };
 }
 
+export function tokenToUri(token: IToken): string | undefined {
+  return token.payload?.uri?.toString();
+}
+
 export function tokenToRange(token: IToken): Range {
   return {
     start: token.startOffset,

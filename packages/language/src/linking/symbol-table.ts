@@ -10,6 +10,12 @@
  */
 
 import {
+  Diagnostic,
+  Severity,
+  tokenToRange,
+  tokenToUri,
+} from "../language-server/types";
+import {
   DeclaredItem,
   DeclareStatement,
   ProcedureStatement,
@@ -18,9 +24,14 @@ import {
 } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { groupBy } from "../utils/common";
+import {
+  PliValidationAcceptor,
+  PliValidationBuffer,
+} from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache } from "./resolver";
 import { getLabelSymbol, getReference, getVariableSymbol } from "./tokens";
+import * as PLICodes from "../validation/messages/pli-codes";
 
 /**
  * Terminology:
@@ -57,7 +68,7 @@ enum QualificationStatus {
   PartialQualification,
 }
 
-class QualifiedSyntaxNode {
+export class QualifiedSyntaxNode {
   node: SyntaxNode;
   name: string;
   parent: QualifiedSyntaxNode | null;
@@ -76,36 +87,55 @@ class QualifiedSyntaxNode {
     return this.parent;
   }
 
+  /**
+   * By walking the qualification chain, we can determine the qualification status of the current node.
+   *
+   * Example:
+   *
+   * ```
+   * DCL 1 A, 2 B, 3 C;
+   * PUT (A.B.C); // `C` has `FullQualification`
+   * PUT (A.C);   // `C` has `PartialQualification`
+   * ```
+   */
   getQualificationStatus(qualifiers: string[]): QualificationStatus {
     const qualifier = qualifiers[0];
     if (!qualifier) {
       return QualificationStatus.NoQualification;
     }
 
-    let nextQualifiers =
+    // If the current node is the same as the qualifier, we can remove it from the list.
+    const nextQualifiers =
       this.name === qualifier ? qualifiers.slice(1) : qualifiers;
 
+    // If there are no qualifiers left, we can determine the qualification status.
     if (nextQualifiers.length <= 0) {
       if (!this.parent) {
+        // If there is no parent, the current node is the root node.
         return QualificationStatus.FullQualification;
       } else {
+        // If there are parents left, the current node is partially qualified.
         return QualificationStatus.PartialQualification;
       }
     }
 
-    if (this.parent) {
-      return this.parent.getQualificationStatus(nextQualifiers);
+    // We have qualifiers left, but no parent. This does not qualify.
+    if (!this.parent) {
+      return QualificationStatus.NoQualification;
     }
 
-    return QualificationStatus.NoQualification;
+    // We have qualifiers left, and a parent. We continue the search.
+    return this.parent.getQualificationStatus(nextQualifiers);
   }
 }
 
 class SymbolTableDeclaredItemGenerator {
   private items: DeclaredItem[];
+  private acceptor: PliValidationAcceptor;
 
-  constructor(items: DeclaredItem[]) {
+  constructor(items: DeclaredItem[], acceptor: PliValidationAcceptor) {
     this.items = items.slice(); // Explicitly make a copy of the items, to use `.shift()` in `this.pop()`
+    this.acceptor = acceptor;
   }
 
   private peek(): DeclaredItem | undefined {
@@ -114,6 +144,24 @@ class SymbolTableDeclaredItemGenerator {
 
   private pop(): DeclaredItem | undefined {
     return this.items.shift();
+  }
+
+  private getLevel(item: DeclaredItem): number {
+    // When level is not set, we assume 1 like the PL1 compiler seems to do.
+    let level = item.level ?? 1;
+
+    // TODO: get max level from compilation unit? If e.g. compilation flags can change this.
+    if (level > 255) {
+      level = 255;
+
+      this.acceptor(Severity.E, PLICodes.Error.IBM1363I.message, {
+        code: PLICodes.Error.IBM1363I.fullCode,
+        range: tokenToRange(item.levelToken!),
+        uri: tokenToUri(item.levelToken!) ?? "",
+      });
+    }
+
+    return level;
   }
 
   private _generate(
@@ -128,8 +176,7 @@ class SymbolTableDeclaredItemGenerator {
         break;
       }
 
-      // When level is not set, we assume 1 like the PL1 compiler seems to do.
-      const level = item.level ?? 1;
+      const level = this.getLevel(item);
       // The item we're looking at is not a part of the current scope, let's exit.
       if (level <= parentLevel) {
         break;
@@ -163,8 +210,14 @@ class SymbolTableDeclaredItemGenerator {
 export class SymbolTable {
   private symbols: Map<string, QualifiedSyntaxNode[]> = new Map();
 
-  addDeclarationStatement(declaration: DeclareStatement): void {
-    const generator = new SymbolTableDeclaredItemGenerator(declaration.items);
+  addDeclarationStatement(
+    declaration: DeclareStatement,
+    acceptor: PliValidationAcceptor,
+  ): void {
+    const generator = new SymbolTableDeclaredItemGenerator(
+      declaration.items,
+      acceptor,
+    );
 
     generator.generate(this);
   }
@@ -179,7 +232,7 @@ export class SymbolTable {
   }
 
   // Return all qualified symbols
-  getSymbols(qualifiedName: string[]): SyntaxNode[] | undefined {
+  getSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] | undefined {
     const [name] = qualifiedName;
     if (!name) {
       return undefined;
@@ -200,9 +253,9 @@ export class SymbolTable {
       qualifiedSymbols[QualificationStatus.PartialQualification];
 
     if (fullQualification) {
-      return fullQualification.map((symbol) => symbol.node);
+      return fullQualification;
     } else if (partialQualification) {
-      return partialQualification.map((symbol) => symbol.node);
+      return partialQualification;
     } else {
       return undefined;
     }
@@ -225,7 +278,7 @@ export class Scope {
     this._symbolTable = symbolTable;
   }
 
-  getSymbols(qualifiedName: string[]): SyntaxNode[] {
+  getSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
     return (
       this._symbolTable?.getSymbols(qualifiedName) ??
       this.parent?.getSymbols(qualifiedName) ??
@@ -276,22 +329,37 @@ export class ScopeCache {
   }
 }
 
-export function iterateSymbols(compilationUnit: CompilationUnit): void {
-  const { scopeCaches, references } = compilationUnit;
+export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
+  const { scopeCaches, references } = unit;
 
   // Todo: The root scope should contain global PL1 standard library symbols.
   const builtInSymbols = new SymbolTable();
   const scope = new Scope(null, builtInSymbols);
 
-  // Iterate over the PLI program.
-  recursivelySetContainer(compilationUnit.ast);
-  iterate(
-    compilationUnit.preprocessorAst,
+  // Set child containers for all nodes.
+  recursivelySetContainer(unit.ast);
+
+  const validationBuffer = new PliValidationBuffer();
+  const acceptor = validationBuffer.getAcceptor();
+
+  // Iterate over the PLI program creating the symbol table.
+  iterateSymbolTable(
     scopeCaches.preprocessor,
-    scope,
     references,
+    acceptor,
+    unit.preprocessorAst,
+    scope,
   );
-  iterate(compilationUnit.ast, scopeCaches.regular, scope, references);
+
+  iterateSymbolTable(
+    scopeCaches.regular,
+    references,
+    acceptor,
+    unit.ast,
+    scope,
+  );
+
+  return validationBuffer.getDiagnostics();
 }
 
 function recursivelySetContainer(node: SyntaxNode) {
@@ -301,16 +369,26 @@ function recursivelySetContainer(node: SyntaxNode) {
   });
 }
 
-// This function iterates over the syntax tree and builds the symbol table.
-function iterate(
-  node: SyntaxNode,
+// This function determines if a node should create a new scope.
+function shouldNodeCreateNewScope(parent: SyntaxNode): boolean {
+  switch (parent.kind) {
+    case SyntaxKind.ProcedureStatement:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const iterateSymbolTable = (
   scopeCache: ScopeCache,
+  referenceCache: ReferencesCache,
+  acceptor: PliValidationAcceptor,
+  node: SyntaxNode,
   parentScope: Scope,
-  references: ReferencesCache,
-) {
+) => {
   const ref = getReference(node);
   if (ref) {
-    references.add(ref);
+    referenceCache.add(ref);
   }
 
   // Add the label symbol to the symbol table in the current scope.
@@ -331,9 +409,8 @@ function iterate(
     : parentScope;
 
   // Function to recursively iterate over the child nodes to build their symbol table.
-  const iterateChild = (scope: Scope) => (child: SyntaxNode) => {
-    iterate(child, scopeCache, scope, references);
-  };
+  const iterateChild = (scope: Scope) => (child: SyntaxNode) =>
+    iterateSymbolTable(scopeCache, referenceCache, acceptor, child, scope);
 
   // This switch statement handles the special case of a procedure statement.
   switch (node.kind) {
@@ -353,19 +430,9 @@ function iterate(
       }
       break;
     case SyntaxKind.DeclareStatement:
-      scope.symbolTable.addDeclarationStatement(node);
+      scope.symbolTable.addDeclarationStatement(node, acceptor);
       break;
     default:
       forEachNode(node, iterateChild(scope));
   }
-}
-
-// This function determines if a node should create a new scope.
-function shouldNodeCreateNewScope(parent: SyntaxNode): boolean {
-  switch (parent.kind) {
-    case SyntaxKind.ProcedureStatement:
-      return true;
-    default:
-      return false;
-  }
-}
+};

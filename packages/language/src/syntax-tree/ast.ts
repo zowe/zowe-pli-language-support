@@ -988,6 +988,7 @@ export interface DeclaredItem extends AstNode {
   kind: SyntaxKind.DeclaredItem;
   level: number | null;
   elements: Wildcard<DeclaredVariable | DeclaredItem>[];
+  levelToken: IToken | null;
   attributes: DeclarationAttribute[];
 }
 export function createDeclaredItem(): DeclaredItem {
@@ -995,6 +996,7 @@ export function createDeclaredItem(): DeclaredItem {
     kind: SyntaxKind.DeclaredItem,
     container: null,
     level: null,
+    levelToken: null,
     elements: [],
     attributes: [],
   };

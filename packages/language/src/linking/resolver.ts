@@ -10,9 +10,14 @@
  */
 
 import { IToken } from "chevrotain";
-import { Location, tokenToRange } from "../language-server/types";
+import { Diagnostic, Location, tokenToRange } from "../language-server/types";
 import { TokenPayload } from "../parser/abstract-parser";
-import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import {
+  MemberCall,
+  Reference,
+  SyntaxKind,
+  SyntaxNode,
+} from "../syntax-tree/ast";
 import { binaryTokenSearch } from "../utils/search";
 import {
   getNameToken,
@@ -22,6 +27,11 @@ import {
 } from "./tokens";
 import { URI } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
+import { QualifiedSyntaxNode } from "./symbol-table";
+import {
+  PliValidationAcceptor,
+  PliValidationBuffer,
+} from "../validation/validator";
 
 export class ReferencesCache {
   private list: Reference[] = [];
@@ -54,10 +64,14 @@ export class ReferencesCache {
   allReferences(): Reference[] {
     return this.list;
   }
+
+  allReverseReferences(): Map<SyntaxNode, Reference[]> {
+    return this.reverseMap;
+  }
 }
 
 // Returns the qualified name in reverse order, e.g. "A.B.C" -> ["C", "B", "A"]
-export function getQualifiedName(reference: Reference): string[] {
+function getQualifiedName(reference: Reference): string[] {
   if (reference.owner.container?.kind === SyntaxKind.MemberCall) {
     const memberCall = reference.owner.container;
     if (memberCall.previous?.element?.ref) {
@@ -71,45 +85,120 @@ export function getQualifiedName(reference: Reference): string[] {
   return [reference.text];
 }
 
-export function resolveReference<T extends SyntaxNode>(
-  unit: CompilationUnit,
-  reference: Reference<T> | null,
-): T | undefined {
-  if (reference === null || reference.node === null) {
-    return undefined;
+/**
+ * We've resolved a qualified name, now qualify the entire chain of references.
+ * Note: This function assumes that the resolved syntax node and member call are correct,
+ * it does not validate the qualified name in any way. This is done in the `SymbolTable` step.
+ *
+ * Example:
+ *
+ * ```
+ * DCL 1 A1, 2 B, 3 K, 4 C;
+ * DCL 1 A2, 2 B, 3 K, 4 C;
+ * PUT (A2.B.C); // Symbol `B` should qualify correctly to line 2, and not line 1
+ * ```
+ */
+function assignQualifiedReference(
+  reference: Reference,
+  memberCall: MemberCall,
+  resolved: QualifiedSyntaxNode,
+) {
+  // The names are not matching, this is a partial qualification.
+  if (reference.text !== resolved.name) {
+    if (!resolved.parent) {
+      throw new Error(
+        "Resolved parent is null, should not happen. There is probably a mistake in the symbol table.",
+      );
+    }
+
+    // Try to match the resolved symbol with a reference further up the chain.
+    assignReference(reference, resolved.parent);
+    return;
   }
 
-  if (reference.node !== undefined) {
-    return reference.node;
+  reference.node = resolved.node;
+
+  // There are more qualified names to resolve, continue up the chain.
+  if (memberCall.previous?.element?.ref && resolved.parent) {
+    assignReference(memberCall.previous.element.ref, resolved.parent);
+  }
+}
+
+function assignReference(
+  reference: Reference<SyntaxNode>,
+  resolved: QualifiedSyntaxNode,
+) {
+  // Special handling for member calls and qualification.
+  // We want to assign the resolved references to the entire chain of references.
+  if (reference.owner.container?.kind === SyntaxKind.MemberCall) {
+    const memberCall = reference.owner.container;
+    assignQualifiedReference(reference, memberCall, resolved);
+
+    return;
+  }
+
+  reference.node = resolved.node;
+}
+
+function resolveReference(
+  unit: CompilationUnit,
+  reference: Reference,
+  acceptor: PliValidationAcceptor,
+) {
+  if (reference.node === null || reference.node !== undefined) {
+    return;
   }
 
   const qualifiedName = getQualifiedName(reference);
 
   const scope = unit.scopeCaches.get(reference.owner);
   if (!scope) {
-    return undefined;
+    return;
   }
 
   const symbols = scope.getSymbols(qualifiedName);
+
+  const isAmbiguous = symbols.length > 1;
+  if (isAmbiguous) {
+    /**
+     * @didrikmunther
+     * @WILLFIX: We're colliding with the DEACTIVATE functionality in the preprocessor.
+     */
+    // const fullName = qualifiedName.toReversed().join(".");
+    // // TODO: Currently only emitting on the last member call symbol (`reference.token`)
+    // // We want to underline the entire qualified name.
+    // acceptor(Severity.S, PLICodes.Severe.IBM1881I.message(fullName), {
+    //   code: PLICodes.Severe.IBM1881I.fullCode,
+    //   range: tokenToRange(reference.token),
+    //   uri: reference.token.payload?.uri?.toString() ?? "",
+    // });
+  }
+
+  // We take the first symbol, even if there are multiple matching.
+  // Ideally, we'd want to reference all matching symbols, but the AST currently only supports a single reference per symbol.
   const symbol = symbols[0];
   if (!symbol) {
     reference.node = null;
-    return undefined;
+    return;
   }
 
-  if (symbols.length > 1) {
-    // TODO: Diagnostic error about ambiguity on `symbols` locations
-  }
+  // Assign the resolved symbol to the reference.
+  // This function handles assigning references to member calls.
+  assignReference(reference, symbol);
 
-  reference.node = symbol as T;
+  // Add the inverse reference to the cache.
   unit.references.addInverse(reference);
-  return symbol as T;
 }
 
-export function resolveReferences(unit: CompilationUnit): void {
+export function resolveReferences(unit: CompilationUnit): Diagnostic[] {
+  const validationBuffer = new PliValidationBuffer();
+  const acceptor = validationBuffer.getAcceptor();
+
   for (const reference of unit.references.allReferences()) {
-    resolveReference(unit, reference);
+    resolveReference(unit, reference, acceptor);
   }
+
+  return validationBuffer.getDiagnostics();
 }
 
 export function findTokenElementReference(
