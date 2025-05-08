@@ -174,9 +174,6 @@ describe("Linking tests", () => {
         PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|3>TYPE#);
         PUT (TABLE_WITH_ARRAY.NON_ARRAY_ENTRY.<|4>TYPE#);`));
 
-    /**
-     * TODO: `b2` should link correctly based on `c`'s qualification.
-     */
     test("Must infer partially qualified names", () =>
       expectLinks(`
  DCL 1 A,
@@ -193,7 +190,7 @@ describe("Linking tests", () => {
  PUT (<|b2>B.<|d>D);`));
 
     /**
-     * TODO: This should fail
+     * @WILLFIX: This should fail
      */
     test.skip("Should error when using factorized names in structures", () => {
       const doc = parseAndLink(`
@@ -243,6 +240,9 @@ describe("Linking tests", () => {
 
  PUT(A.<|b>B);`));
 
+    /**
+     * @WILLFIX
+     */
     test.skip("Star name in structure should result in partial qualification", () =>
       expectLinks(`
  DCL 1 A,
@@ -273,10 +273,10 @@ describe("Linking tests", () => {
  DCL <|a:A|> CHAR(8) INIT("A");`));
   });
 
-  /**
-   * These test probably should not in the linking tests, but I'm putting them here for reference for now.
-   */
   describe("Faulty cases", () => {
+    /**
+     * @WILLFIX
+     */
     test.skip("Redeclaration of label must fail", () => {
       const doc = parseAndLink(`
  OUTER: PROCEDURE;
@@ -300,7 +300,7 @@ describe("Linking tests", () => {
     });
 
     /**
-     * TODO: Should this be tested here or in the validation step?
+     * @WILLFIX
      */
     test.skip("Redeclaration must fail", () => {
       const doc = parseAndLink(`
@@ -326,6 +326,9 @@ describe("Linking tests", () => {
       });
     });
 
+    /**
+     * @WILLFIX
+     */
     test.skip("Repeated declaration of label is invalid", () => {
       const doc = parseAndLink(`
  A: PROCEDURE;
@@ -337,6 +340,9 @@ describe("Linking tests", () => {
       });
     });
 
+    /**
+     * @WILLFIX
+     */
     test.skip("Factoring of level numbers into declaration lists containing level numbers is invalid", () => {
       const doc = parseAndLink(`
  DCL 1 A,
