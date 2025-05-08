@@ -21,6 +21,7 @@ import { lifecycle } from "./lifecycle.js";
 import { CompilerOptions } from "../preprocessor/compiler-options/options.js";
 import { skippedCode } from "../language-server/skipped-code.js";
 import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-state.js";
+import { marginIndicator } from "../language-server/margin-indicator.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -155,6 +156,7 @@ export class CompletionUnitHandler {
         });
       }
       skippedCode(connection, event.document.uri, unit, document);
+      marginIndicator(connection, event.document.uri, unit, document);
     });
     textDocuments.onDidClose((event) => {
       this.compilationUnits.delete(event.document.uri);

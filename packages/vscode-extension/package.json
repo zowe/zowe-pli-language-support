@@ -46,7 +46,7 @@
         "pli.skippedCode.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable/disable the skipped code feature"
+          "description": "Enable/disable the skipped code feature."
         },
         "pli.skippedCode.opacity": {
           "type": "number",
@@ -54,6 +54,12 @@
           "minimum": 0,
           "maximum": 1,
           "description": "Opacity level for skipped code (0-1)"
+        },
+        "pli.marginIndicator.rulers": {
+          "type": "string",
+          "enum": ["off", "default", "automatic"],
+          "default": "automatic",
+          "description": "Controls the rulers for the margin compiler option. 'off' disables rulers, 'default' shows the PL/I default rulers [2, 72], 'automatic' adds rulers based on margin compiler options."
         }
       }
     }

@@ -15,13 +15,13 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { Range } from "vscode-languageserver-types";
 
-export interface SkippedPliCodeNotificationParams {
+export interface SkippedCodeNotificationParams {
   uri: string;
   ranges: Range[];
 }
 
-export const SkippedPliCodeNotification =
-  new NotificationType<SkippedPliCodeNotificationParams>("pli/skippedCode");
+export const SkippedCodeNotification =
+  new NotificationType<SkippedCodeNotificationParams>("pli/skippedCode");
 
 /**
  * Sends a notification to the client with the ranges of skipped code in the given compilation unit.
@@ -39,7 +39,7 @@ export function skippedCode(
     ranges = skippedCodeRanges(uri, compilationUnit, textDocument);
   }
 
-  connection.sendNotification(SkippedPliCodeNotification, {
+  connection.sendNotification(SkippedCodeNotification, {
     uri: uri,
     ranges: ranges,
   });
