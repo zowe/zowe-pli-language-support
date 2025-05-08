@@ -25,6 +25,9 @@ class NodeFileSystemProvider implements FileSystemProvider {
   readFileSync(uri: URI): string {
     return fs.readFileSync(uri.fsPath, "utf8");
   }
+  fileExistsSync(uri: URI): boolean {
+    return fs.existsSync(uri.fsPath);
+  }
 }
 
 setFileSystemProvider(new NodeFileSystemProvider());

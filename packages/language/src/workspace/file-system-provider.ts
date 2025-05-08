@@ -13,6 +13,7 @@ import { URI } from "../utils/uri";
 
 export interface FileSystemProvider {
   readFileSync(uri: URI): string | undefined;
+  fileExistsSync(uri: URI): boolean;
 }
 
 /**
@@ -21,6 +22,10 @@ export interface FileSystemProvider {
 class _EmptyFileSystemProvider implements FileSystemProvider {
   readFileSync(_uri: URI): string {
     return "";
+  }
+
+  fileExistsSync(_uri: URI): boolean {
+    return false;
   }
 }
 
@@ -51,6 +56,13 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    */
   readFileSync(uri: URI): string | undefined {
     return this.files.get(uri.path);
+  }
+
+  /**
+   * Checks if a file exists in the virtualized file system
+   */
+  fileExistsSync(uri: URI): boolean {
+    return this.files.has(uri.path);
   }
 }
 

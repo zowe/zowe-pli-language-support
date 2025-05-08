@@ -65,39 +65,46 @@ class PluginConfigurationProvider {
     const processGroupConfigPath = plipluginPath + "/proc_grps.json";
 
     // attempt to read configs
-    const progConfig = FileSystemProviderInstance.readFileSync(
-      URI.parse(programConfigPath),
-    );
-    const processGrpConfig = FileSystemProviderInstance.readFileSync(
-      URI.parse(processGroupConfigPath),
-    );
+    const programConfigUri = URI.parse(programConfigPath);
+    if (FileSystemProviderInstance.fileExistsSync(programConfigUri)) {
+      const progConfig = FileSystemProviderInstance.readFileSync(
+        URI.parse(programConfigPath),
+      );
 
-    // add configs to our provider if they exist
-    if (progConfig !== undefined) {
-      try {
-        const programConfigs: ProgramConfig[] = JSON.parse(
-          progConfig.toString(),
-        ).pgms;
-        // set w/ respect to the cur workspace path
-        this.setProgramConfigs(workspacePath, programConfigs);
-      } catch (e) {
-        console.error("Failed to load program config, skipping:", e);
+      // add configs to our provider if they exist
+      if (progConfig !== undefined) {
+        try {
+          const programConfigs: ProgramConfig[] = JSON.parse(
+            progConfig.toString(),
+          ).pgms;
+          // set w/ respect to the cur workspace path
+          this.setProgramConfigs(workspacePath, programConfigs);
+        } catch (e) {
+          console.error("Failed to load program config, skipping:", e);
+        }
+      } else {
+        console.warn("No program config found.");
       }
-    } else {
-      console.warn("No program config found.");
     }
 
-    if (processGrpConfig !== undefined) {
-      try {
-        const processGroupConfigs: ProcessGroup[] = JSON.parse(
-          processGrpConfig.toString(),
-        ).pgroups;
-        this.setProcessGroupConfigs(processGroupConfigs);
-      } catch (e) {
-        console.error("Failed to load process group config, skipping:", e);
+    const processGroupConfigUri = URI.parse(processGroupConfigPath);
+    if (FileSystemProviderInstance.fileExistsSync(processGroupConfigUri)) {
+      const processGrpConfig = FileSystemProviderInstance.readFileSync(
+        URI.parse(processGroupConfigPath),
+      );
+
+      if (processGrpConfig !== undefined) {
+        try {
+          const processGroupConfigs: ProcessGroup[] = JSON.parse(
+            processGrpConfig.toString(),
+          ).pgroups;
+          this.setProcessGroupConfigs(processGroupConfigs);
+        } catch (e) {
+          console.error("Failed to load process group config, skipping:", e);
+        }
+      } else {
+        console.warn("No process group config found.");
       }
-    } else {
-      console.warn("No process group config found.");
     }
   }
 
