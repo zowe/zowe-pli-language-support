@@ -190,7 +190,8 @@ describe("Linking tests", () => {
  PUT (<|b2>B.<|d>D);`));
 
     /**
-     * @WILLFIX: This should fail
+     * @WILLFIX: We currently do not have explicit handling for factorized names in structures,
+     * they just get rolled out.
      */
     test.skip("Should error when using factorized names in structures", () => {
       const doc = parseAndLink(`
@@ -241,7 +242,7 @@ describe("Linking tests", () => {
  PUT(A.<|b>B);`));
 
     /**
-     * @WILLFIX
+     * @WILLFIX: We currently do not handle star names in any way.
      */
     test.skip("Star name in structure should result in partial qualification", () =>
       expectLinks(`
@@ -275,7 +276,7 @@ describe("Linking tests", () => {
 
   describe("Faulty cases", () => {
     /**
-     * @WILLFIX
+     * @WILLFIX: We currently cannot detect multiple declarations in the same scope.
      */
     test.skip("Redeclaration of label must fail", () => {
       const doc = parseAndLink(`
@@ -300,7 +301,7 @@ describe("Linking tests", () => {
     });
 
     /**
-     * @WILLFIX
+     * @WILLFIX: We currently cannot detect multiple declarations in the same scope.
      */
     test.skip("Redeclaration must fail", () => {
       const doc = parseAndLink(`
@@ -327,7 +328,7 @@ describe("Linking tests", () => {
     });
 
     /**
-     * @WILLFIX
+     * @WILLFIX: We currently cannot detect multiple declarations in the same scope.
      */
     test.skip("Repeated declaration of label is invalid", () => {
       const doc = parseAndLink(`
@@ -341,7 +342,8 @@ describe("Linking tests", () => {
     });
 
     /**
-     * @WILLFIX
+     * @WILLFIX: We currently do not have explicit handling for factorized names in structures,
+     * they just get rolled out.
      */
     test.skip("Factoring of level numbers into declaration lists containing level numbers is invalid", () => {
       const doc = parseAndLink(`
