@@ -18,6 +18,22 @@ interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
 }
 
+const SyntaxKindReverseLookup: Map<SyntaxKind, string> = new Map(
+  Object.values(SyntaxKind)
+    .filter((key) => typeof key === "number")
+    .map((key) => [key, SyntaxKind[key]]),
+);
+
+/**
+ * This function assigns a `_kind: string` to each node that
+ * alleviates debugging by allowing the user to see the kind
+ * of the node in the debugger.
+ */
+export function assignDebugKind(node: SyntaxNode) {
+  (node as any)._kind = SyntaxKindReverseLookup.get(node.kind);
+  forEachNode(node, assignDebugKind);
+}
+
 function expectNoDiagnostics(
   diagnostics: Diagnostic[],
   { ignoreSeverity = [] }: AssertNoDiagnosticsOptions,
@@ -181,10 +197,14 @@ export function expectedFunction(
 }
 
 export function parseAndLink(text: string): CompilationUnit {
-  const sourceFile = parse(text);
-  lifecycle.generateSymbolTable(sourceFile);
-  lifecycle.link(sourceFile);
-  return sourceFile;
+  const unit = parse(text);
+  lifecycle.generateSymbolTable(unit);
+  lifecycle.link(unit);
+
+  assignDebugKind(unit.ast);
+  assignDebugKind(unit.preprocessorAst);
+
+  return unit;
 }
 
 interface ExpectedBase {
