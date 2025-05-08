@@ -105,7 +105,7 @@ class SymbolTableDeclaredItemGenerator {
   private items: DeclaredItem[];
 
   constructor(items: DeclaredItem[]) {
-    this.items = items;
+    this.items = items.slice(); // Explicitly make a copy of the items, to use `.shift()` in `this.pop()`
   }
 
   private peek(): DeclaredItem | undefined {
