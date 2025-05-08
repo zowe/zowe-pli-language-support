@@ -155,8 +155,11 @@ export class CompilationUnitHandler {
 
   deleteCompilationUnit(uri: URI): boolean {
     const unit = this.compilationUnits.get(uri.toString());
-    for (const file of unit?.files ?? []) {
-      this.compilationUnits.delete(file.toString());
+    if (unit) {
+      for (const file of unit?.files ?? []) {
+        this.compilationUnits.delete(file.toString());
+      }
+      this.compilationUnits.delete(uri.toString());
     }
     return unit !== undefined;
   }

@@ -3,7 +3,9 @@
     {
       "name": "default",
       "compiler-options": [],
-      "libs": [],
+      "libs": [
+        "b.pli"
+      ],
       "copybook-extensions": []
     }
   ]

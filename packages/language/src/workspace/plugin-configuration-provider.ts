@@ -10,7 +10,7 @@
  */
 
 import { FileSystemProviderInstance } from "./file-system-provider";
-import { URI } from "../utils/uri";
+import { URI, UriUtils } from "../utils/uri";
 
 /**
  * Plugin configuration provider for loading up '.pliplugin' (when it exists), processing its contents,
@@ -56,10 +56,10 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Initializes the plugin configuration provider with a connection, using any plugins present in the workspace
+   * Initializes the plugin configuration provider with a workspace path, using any plugins present in the workspace
    */
   public async init(workspacePath: string) {
-    // TODO @montymxb Apr. 23rd, 2025: Path sep is not cross-platform
+    // TODO @montymxb Apr. 23rd, 2025: Path sep is not cross-platform (vscode-uri does the same)
     const plipluginPath = workspacePath + "/.pliplugin";
     const programConfigPath = plipluginPath + "/pgm_conf.json";
     const processGroupConfigPath = plipluginPath + "/proc_grps.json";
@@ -104,8 +104,7 @@ class PluginConfigurationProvider {
   /**
    * Sets program config of our plugin configuration provider, overriding prior configs
    * @param partialKey Workspace path as a partial key (program name takes the rest)
-   * @param programConfigs Program configs loaded from
-   *  .pliplugin/pgm_confg.json (when present)
+   * @param programConfigs Program configs loaded from .pliplugin/pgm_confg.json (when present)
    */
   public setProgramConfigs(
     partialKey: string,
@@ -113,7 +112,9 @@ class PluginConfigurationProvider {
   ): void {
     for (const config of programConfigs) {
       // TODO @montymxb Apr. 23rd, 2025: Path sep is not cross-platform
-      this.programConfigs.set(partialKey + "/" + config.program, config);
+      const workspaceUri = URI.parse(partialKey);
+      const newPath = UriUtils.joinPath(workspaceUri, config.program);
+      this.programConfigs.set(newPath.toString(), config);
     }
   }
 
