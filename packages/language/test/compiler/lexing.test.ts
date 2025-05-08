@@ -19,6 +19,10 @@ describe("CompilerOptions parser", () => {
   DECLARE VAR FIXED;
   VAR = ^VAR;
   VAR = ¬VAR;
+  VAR = VAR ¬= VAR;
+  VAR = VAR ^> VAR;
+  VAR = VAR ¬> VAR;
+  VAR = VAR ^< VAR;
     `);
     assertNoParseErrors(doc);
   });
@@ -28,6 +32,9 @@ describe("CompilerOptions parser", () => {
  MAIN: PROC;
    DECLARE VAR FIXED;
    VAR = ~VAR;
+   VAR = VAR ~= VAR;
+   VAR = VAR ~> VAR;
+   VAR = VAR ~< VAR;
  END MAIN;
     `);
     assertNoParseErrors(doc);
@@ -37,15 +44,21 @@ describe("CompilerOptions parser", () => {
     const doc = parseStmts(`
   DECLARE VAR FIXED;
   VAR = 1 | 2;
+  VAR |= 2;
+  VAR = 1 || 0;
+  VAR ||= 0;
     `);
     assertNoParseErrors(doc);
   });
 
-  test("Should lex correct NOT compiler option", () => {
-    const doc = parse(`*PROCESS NOT("~");
+  test("Should lex correct OR compiler option", () => {
+    const doc = parse(`*PROCESS OR('^');
  MAIN: PROC;
    DECLARE VAR FIXED;
-   VAR = ~VAR;
+   VAR = 1 ^ 2;
+   VAR ^= 2;
+   VAR = 1 ^^ 0;
+   VAR ^^= 0;
  END MAIN;
     `);
     assertNoParseErrors(doc);
