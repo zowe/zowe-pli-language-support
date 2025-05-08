@@ -50,32 +50,48 @@ function registerOnDidOpenTextDocListener() {
       const userResponse = await vscode.window.showInformationMessage(
         "Create a '.pliplugin' folder in the project root using this file as the entry point in 'pgm_conf.json'?",
         "Yes",
-        "No"
+        "No",
       );
 
       if (userResponse === "Yes") {
         // create the .pliplugin folder and files, using the current file as the entry point
         fs.mkdirSync(plipluginPath);
 
-        fs.writeFileSync(path.join(plipluginPath, "pgm_conf.json"), JSON.stringify({
-          pgms: [
+        fs.writeFileSync(
+          path.join(plipluginPath, "pgm_conf.json"),
+          JSON.stringify(
             {
-              program: path.relative(workspaceFolder, document.fileName),
-              pgroup: "default"
-            }
-          ]
-        }, null, 2));
-        fs.writeFileSync(path.join(plipluginPath, "proc_grps.json"), JSON.stringify({
-          pgroups: [
+              pgms: [
+                {
+                  program: path.relative(workspaceFolder, document.fileName),
+                  pgroup: "default",
+                },
+              ],
+            },
+            null,
+            2,
+          ),
+        );
+        fs.writeFileSync(
+          path.join(plipluginPath, "proc_grps.json"),
+          JSON.stringify(
             {
-              name: "default",
-              "compiler-options": [],
-              libs: [],
-              "copybook-extensions": []
-            }
-          ]
-        }, null, 2));
-        vscode.window.showInformationMessage("'.pliplugin' folder and files created successfully.");
+              pgroups: [
+                {
+                  name: "default",
+                  "compiler-options": [],
+                  libs: [],
+                  "copybook-extensions": [],
+                },
+              ],
+            },
+            null,
+            2,
+          ),
+        );
+        vscode.window.showInformationMessage(
+          "'.pliplugin' folder and files created successfully.",
+        );
       }
     }
   });
