@@ -151,11 +151,7 @@ function resolveReference(
   reference: Reference,
   acceptor: PliValidationAcceptor,
 ) {
-  if (
-    reference === null ||
-    reference.node === null ||
-    reference.node !== undefined
-  ) {
+  if (reference.node === null || reference.node !== undefined) {
     return;
   }
 
