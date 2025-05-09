@@ -53,7 +53,7 @@ export function tokenize(
 
 export function parse(compilationUnit: CompilationUnit): PliProgram {
   PliParserInstance.input = compilationUnit.tokens.all;
-  const ast = PliParserInstance.PliProgram();
+  const ast = PliParserInstance.parse();
   compilationUnit.ast = ast;
   compilationUnit.diagnostics.parser = parserErrorsToDiagnostics(
     PliParserInstance.errors,

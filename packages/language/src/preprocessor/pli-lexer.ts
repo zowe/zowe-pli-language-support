@@ -62,6 +62,7 @@ export class PliLexer {
   tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
     const compilerOptionsResult =
       this.compilerOptionsPreprocessor.extractCompilerOptions(inputText);
+    tokens.setCompilerOptions(compilerOptionsResult.result?.options ?? {});
     const textWithoutMargins = this.marginsProcessor.processMargins(
       compilerOptionsResult,
     );

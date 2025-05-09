@@ -33,16 +33,17 @@ export class PliNaiveTokenPickerOptimizer implements TokenPickerOptimizer {
 
 export class PliSmartTokenPickerOptimizer implements TokenPickerOptimizer {
   optimize(tokenTypes: TokenType[]): TokenPicker {
-    const { charCodeToPatternIdxToConfig } = analyzeTokenTypes(tokenTypes, {
-      useSticky: true,
-    });
+    const { charCodeToPatternIdxToConfig, unoptimizedPatterns } =
+      analyzeTokenTypes(tokenTypes, {
+        useSticky: true,
+      });
 
     return {
       pickTokenTypes: (charCode) => {
         const optimizedCharIdx = charCodeToOptimizedIndex(charCode);
         const possiblePatterns = charCodeToPatternIdxToConfig[optimizedCharIdx];
         if (possiblePatterns === undefined) {
-          return [];
+          return unoptimizedPatterns;
         } else {
           return possiblePatterns;
         }

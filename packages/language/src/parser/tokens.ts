@@ -9,7 +9,8 @@
  *
  */
 
-import { createToken, Lexer } from "chevrotain";
+import { createToken, CustomPatternMatcherFunc, Lexer } from "chevrotain";
+import { CompilerOptions } from "../preprocessor/compiler-options/options";
 
 // Combination tokens (parser optimization)
 export const LinkageOption = createToken({
@@ -119,6 +120,47 @@ export const combinations = [
   LocateType,
   OpenOptionType,
 ];
+
+// Custom functions
+
+export function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\\-]/g, "\\$&");
+}
+
+export function setCompilerOptions(options: CompilerOptions): void {
+  const orChars = escapeRegExp(options.or || "|");
+  const notChars = escapeRegExp(options.not || "¬^");
+  or = new RegExp(`[${orChars}]`, "y");
+  orEq = new RegExp(`[${orChars}]=`, "y");
+  orDouble = new RegExp(`[${orChars}]{2}`, "y");
+  orDoubleEq = new RegExp(`[${orChars}]{2}=`, "y");
+  not = new RegExp(`[${notChars}]`, "y");
+  notEq = new RegExp(`[${notChars}]=`, "y");
+  notGT = new RegExp(`[${notChars}]>`, "y");
+  notLT = new RegExp(`[${notChars}]<`, "y");
+}
+
+let or: RegExp;
+let orEq: RegExp;
+let orDouble: RegExp;
+let orDoubleEq: RegExp;
+
+let not: RegExp;
+let notEq: RegExp;
+let notGT: RegExp;
+let notLT: RegExp;
+
+setCompilerOptions({});
+
+function tokenizeWithCompilerOption(
+  getter: () => RegExp,
+): CustomPatternMatcherFunc {
+  return (text, offset) => {
+    const regexp = getter();
+    regexp.lastIndex = offset;
+    return regexp.exec(text);
+  };
+}
 
 // Lexer tokens
 export const WS = createToken({
@@ -1750,8 +1792,9 @@ export const BIT = createToken({
 });
 export const PipePipeEquals = createToken({
   name: "||=",
-  pattern: "||=",
+  pattern: tokenizeWithCompilerOption(() => orDoubleEq),
   categories: [AssignmentOperator],
+  line_breaks: false,
 });
 export const StarStarEquals = createToken({
   name: "**=",
@@ -1851,8 +1894,9 @@ export const SlashEquals = createToken({
 });
 export const PipeEquals = createToken({
   name: "|=",
-  pattern: "|=",
+  pattern: tokenizeWithCompilerOption(() => orEq),
   categories: [AssignmentOperator],
+  line_breaks: false,
 });
 export const AmpersandEquals = createToken({
   name: "&=",
@@ -1861,8 +1905,9 @@ export const AmpersandEquals = createToken({
 });
 export const NotEquals = createToken({
   name: "^=",
-  pattern: /¬=|\^=/,
+  pattern: tokenizeWithCompilerOption(() => notEq),
   categories: [AssignmentOperator, BinaryOperator],
+  line_breaks: false,
 });
 export const LessThanGreaterThan = createToken({
   name: "<>",
@@ -1907,8 +1952,9 @@ export const ON = createToken({
 });
 export const NotLessThan = createToken({
   name: "^<",
-  pattern: /¬<|\^</,
+  pattern: tokenizeWithCompilerOption(() => notLT),
   categories: [BinaryOperator],
+  line_breaks: false,
 });
 export const LessThanEquals = createToken({
   name: "<=",
@@ -1922,18 +1968,15 @@ export const GreaterThanEquals = createToken({
 });
 export const NotGreaterThan = createToken({
   name: "^>",
-  pattern: /¬>|\^>/,
+  pattern: tokenizeWithCompilerOption(() => notGT),
   categories: [BinaryOperator],
+  line_breaks: false,
 });
 export const PipePipe = createToken({
   name: "||",
-  pattern: "||",
+  pattern: tokenizeWithCompilerOption(() => orDouble),
   categories: [BinaryOperator],
-});
-export const ExclamationMarkExclamationMark = createToken({
-  name: "!!",
-  pattern: "!!",
-  categories: [BinaryOperator],
+  line_breaks: false,
 });
 export const StarStar = createToken({
   name: "**",
@@ -2044,15 +2087,19 @@ export const X = createToken({
   categories: [ID],
   longer_alt: ID,
 });
+// TODO: OR compiler option
 export const Pipe = createToken({
   name: "|",
-  pattern: "|",
+  pattern: tokenizeWithCompilerOption(() => or),
   categories: [BinaryOperator],
+  line_breaks: false,
 });
+// TODO: NOT compiler option
 export const Not = createToken({
   name: "^",
-  pattern: /¬|\^/,
+  pattern: tokenizeWithCompilerOption(() => not),
   categories: [BinaryOperator, UnaryOperator],
+  line_breaks: false,
 });
 export const Ampersand = createToken({
   name: "&",
@@ -2396,7 +2443,6 @@ export const keywords = [
   GreaterThanEquals,
   NotGreaterThan,
   PipePipe,
-  ExclamationMarkExclamationMark,
   StarStar,
   MinusGreaterThan,
   EqualsGreaterThan,
