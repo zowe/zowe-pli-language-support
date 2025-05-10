@@ -22,6 +22,7 @@ import { CompilerOptions } from "../preprocessor/compiler-options/options.js";
 import { skippedCode } from "../language-server/skipped-code.js";
 import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-state.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
+import { LSRequestCaches } from "../utils/cache.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -47,6 +48,7 @@ export interface CompilationUnit {
   references: ReferencesCache;
   diagnostics: CompilationUnitDiagnostics;
   scopeCaches: ScopeCacheGroups;
+  requestCaches: LSRequestCaches;
 }
 
 export interface CompilationUnitTokens {
@@ -104,6 +106,18 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       linking: [],
       validation: [],
     },
+    requestCaches: new LSRequestCaches().configure({
+      margins: (cache) => {
+        cache.onRevalidate(({ connection, unit }) => {
+          marginIndicator(connection, unit);
+        });
+      },
+      skippedCodeRanges: (cache) => {
+        cache.onRevalidate(({ connection, unit }) => {
+          skippedCode(connection, unit);
+        });
+      },
+    }),
   };
 }
 
@@ -135,6 +149,10 @@ export class CompletionUnitHandler {
     return unit !== undefined;
   }
 
+  getAllCompilationUnits(): CompilationUnit[] {
+    return Array.from(this.compilationUnits.values());
+  }
+
   listen(connection: Connection): void {
     const textDocuments = TextDocuments;
     textDocuments.listen(connection);
@@ -155,8 +173,7 @@ export class CompletionUnitHandler {
           diagnostics: fileDiagnostics ?? [],
         });
       }
-      skippedCode(connection, event.document.uri, unit, document);
-      marginIndicator(connection, event.document.uri, unit, document);
+      unit.requestCaches.revalidateAll({ connection, unit });
     });
     textDocuments.onDidClose((event) => {
       this.compilationUnits.delete(event.document.uri);

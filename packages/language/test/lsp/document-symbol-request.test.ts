@@ -22,17 +22,13 @@ type SymbolWithLevel = {
   level: number;
 };
 
-function formatTestPLI(code: string): string {
-  return code.startsWith("\n") ? code.slice(1) : code;
-}
+const formatTestPLI = (code: string): string =>
+  code.startsWith("\n") ? code.slice(1) : code;
 
-function documentSymbolKindString(symbolKind: SymbolKind): string {
-  return (
-    Object.keys(SymbolKind).find(
-      (key) => SymbolKind[key as keyof typeof SymbolKind] === symbolKind,
-    ) ?? ""
-  );
-}
+const documentSymbolKindString = (symbolKind: SymbolKind): string =>
+  Object.keys(SymbolKind).find(
+    (key) => SymbolKind[key as keyof typeof SymbolKind] === symbolKind,
+  ) ?? "";
 
 function expectDocumentSymbols(annotatedCode: string): void {
   const { output, ranges } = replaceNamedIndices(formatTestPLI(annotatedCode));
@@ -44,15 +40,16 @@ function expectDocumentSymbols(annotatedCode: string): void {
   );
 
   TextDocuments.set(textDocument);
-  const doc = parse(output, { validate: true });
-  const documentSymbols = documentSymbolRequest(doc, URI.file("/test.pli"));
+  const unit = parse(output, { validate: true });
+  const documentSymbols = documentSymbolRequest(unit, URI.file("/test.pli"));
 
   const totalRanges = Object.values(ranges).reduce(
     (acc, curr) => acc + curr.length,
     0,
   );
-  const flatSymbols = documentSymbols.reduce(
-    (acc: SymbolWithLevel[], symbol) => {
+
+  const flatSymbols = documentSymbols.reduce<SymbolWithLevel[]>(
+    (acc, symbol) => {
       const flatten = (s: DocumentSymbol, level: number) => {
         acc.push({ symbol: s, level });
         s.children?.forEach((child) => flatten(child, level + 1));

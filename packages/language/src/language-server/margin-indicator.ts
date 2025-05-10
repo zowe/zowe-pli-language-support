@@ -11,7 +11,6 @@
 
 import { Connection, NotificationType } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { TextDocument } from "vscode-languageserver-textdocument";
 
 export interface MarginIndicatorNotificationParams {
   uri: string;
@@ -26,25 +25,18 @@ export const MarginIndicatorNotification =
 
 export function marginIndicator(
   connection: Connection,
-  uri: string,
   compilationUnit: CompilationUnit,
-  textDocument: TextDocument,
 ) {
-  let indicator: MarginIndicatorNotificationParams = {
-    uri: uri,
-    m: undefined,
-    n: undefined,
+  const margins = compilationUnit.compilerOptions.margins;
+  const indicator: MarginIndicatorNotificationParams = {
+    uri: compilationUnit.uri.toString(),
+    m: margins ? margins.m : 2,
+    n: margins ? margins.n : 72,
   };
 
-  if (compilationUnit) {
-    if (compilationUnit.compilerOptions.margins) {
-      indicator.m = compilationUnit.compilerOptions.margins.m;
-      indicator.n = compilationUnit.compilerOptions.margins.n;
-    } else {
-      indicator.m = 2;
-      indicator.n = 72;
-    }
+  const cachedMargins = compilationUnit.requestCaches.get("margins").get();
+  if (cachedMargins?.m !== indicator.m || cachedMargins?.n !== indicator.n) {
+    compilationUnit.requestCaches.get("margins").set(indicator);
+    connection.sendNotification(MarginIndicatorNotification, indicator);
   }
-
-  connection.sendNotification(MarginIndicatorNotification, indicator);
 }

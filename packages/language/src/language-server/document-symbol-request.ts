@@ -253,6 +253,18 @@ export function documentSymbolRequest(
   compilationUnit: CompilationUnit,
   uri: URI,
 ): DocumentSymbol[] {
+  if (!compilationUnit.requestCaches.get("documentSymbols").isCached()) {
+    compilationUnit.requestCaches
+      .get("documentSymbols")
+      .set(compilationUnitDocumentSymbols(compilationUnit, uri));
+  }
+  return compilationUnit.requestCaches.get("documentSymbols").get() ?? [];
+}
+
+export function compilationUnitDocumentSymbols(
+  compilationUnit: CompilationUnit,
+  uri: URI,
+): DocumentSymbol[] {
   const symbols: DocumentSymbol[] = [];
   const textDocument = TextDocuments.get(uri.toString());
 
