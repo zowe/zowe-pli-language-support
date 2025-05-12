@@ -287,6 +287,14 @@ describe("Linking tests", () => {
  %DEACTIVATE <|3:PAYROLL|>;
  PUT(<|1><|2><|3>PAYROLL);`),
     );
+
+    test("Must link correctly when collision with preprocessor variables", () =>
+      expectLinks(`
+ %DECLARE ABC CHARACTER;
+ %ABC = 'PAY_ROLL';
+ %DEACTIVATE ABC;
+ DCL <|1:ABC|> CHAR(8) VALUE("PAYROLL");
+ PUT(<|1>ABC);`));
   });
 
   describe("Faulty cases", () => {
