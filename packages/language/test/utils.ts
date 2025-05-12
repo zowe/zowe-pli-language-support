@@ -25,13 +25,13 @@ const SyntaxKindReverseLookup: Map<SyntaxKind, string> = new Map(
 );
 
 /**
- * This function assigns a `_kind: string` to each node that
+ * This function assigns a `_debugKind: string` to each node that
  * alleviates debugging by allowing the user to see the kind
  * of the node in the debugger.
  */
-export function assignDebugKind(node: SyntaxNode) {
-  (node as any)._kind = SyntaxKindReverseLookup.get(node.kind);
-  forEachNode(node, assignDebugKind);
+export function assignDebugKinds(node: SyntaxNode) {
+  (node as any)._debugKind = SyntaxKindReverseLookup.get(node.kind);
+  forEachNode(node, assignDebugKinds);
 }
 
 function expectNoDiagnostics(
@@ -201,8 +201,8 @@ export function parseAndLink(text: string): CompilationUnit {
   lifecycle.generateSymbolTable(unit);
   lifecycle.link(unit);
 
-  assignDebugKind(unit.ast);
-  assignDebugKind(unit.preprocessorAst);
+  assignDebugKinds(unit.ast);
+  assignDebugKinds(unit.preprocessorAst);
 
   return unit;
 }
