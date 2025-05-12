@@ -338,8 +338,6 @@ export function forEachNode(
       }
       node.specifications.forEach(action);
       break;
-    case SyntaxKind.DoType3Variable:
-      break;
     case SyntaxKind.DoUntil:
       if (node.until) {
         action(node.until);

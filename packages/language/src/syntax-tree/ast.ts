@@ -307,7 +307,6 @@ export type SyntaxNode =
   | DoSpecification
   | DoStatement
   | DoType3
-  | DoType3Variable
   | DoUntil
   | DoWhile
   | EFormatItem
@@ -641,11 +640,7 @@ export type InitialAttributeSpecificationIteration =
   | InitialAttributeItemStar
   | InitialAttributeSpecificationIterationValue;
 export type LiteralValue = NumberLiteral | StringLiteral;
-export type NamedElement =
-  | DeclaredVariable
-  | DoType3Variable
-  | OrdinalValue
-  | ProcedureStatement;
+export type NamedElement = DeclaredVariable | OrdinalValue | ProcedureStatement;
 export type NamedType = DefineAliasStatement;
 export type OptionsItem =
   | CMPATOptionsItem
@@ -1174,7 +1169,7 @@ export function createDoStatement(): DoStatement {
 }
 export interface DoType3 extends AstNode {
   kind: SyntaxKind.DoType3;
-  variable: DoType3Variable | null;
+  variable: ReferenceItem | null;
   specifications: DoSpecification[];
 }
 export function createDoType3(): DoType3 {
@@ -1183,19 +1178,6 @@ export function createDoType3(): DoType3 {
     container: null,
     variable: null,
     specifications: [],
-  };
-}
-export interface DoType3Variable extends AstNode {
-  kind: SyntaxKind.DoType3Variable;
-  name: string | null;
-  nameToken: IToken | null;
-}
-export function createDoType3Variable(): DoType3Variable {
-  return {
-    kind: SyntaxKind.DoType3Variable,
-    container: null,
-    name: null,
-    nameToken: null,
   };
 }
 export interface DoUntil extends AstNode {
