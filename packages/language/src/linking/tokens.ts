@@ -26,7 +26,6 @@ export function isNameToken(kind: CstNodeKind): boolean {
   switch (kind) {
     case CstNodeKind.DeclaredVariable_Name:
     case CstNodeKind.LabelPrefix_Name:
-    case CstNodeKind.DoType3Variable_Name:
     case CstNodeKind.OrdinalValue_Name:
       return true;
   }
@@ -41,8 +40,6 @@ export function getNameToken(node: SyntaxNode): IToken | undefined {
     case SyntaxKind.DeclaredVariable:
       return node.nameToken ?? undefined;
     case SyntaxKind.LabelPrefix:
-      return node.nameToken ?? undefined;
-    case SyntaxKind.DoType3Variable:
       return node.nameToken ?? undefined;
     case SyntaxKind.OrdinalValue:
       return node.nameToken ?? undefined;
@@ -104,7 +101,6 @@ export function getVariableSymbol(node: SyntaxNode): string | undefined {
 export function getLabelSymbol(node: SyntaxNode): string | undefined {
   switch (node.kind) {
     case SyntaxKind.LabelPrefix:
-    case SyntaxKind.DoType3Variable:
     case SyntaxKind.OrdinalValue:
       return node.name!;
     default:

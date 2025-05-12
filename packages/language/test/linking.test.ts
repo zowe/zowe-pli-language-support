@@ -148,6 +148,13 @@ describe("Linking tests", () => {
  PUT(<|a>A);
  CALL <|proc>MYPROC;`));
 
+ test("DO TYPE 3 links to proper var", () =>
+    expectLinks(`
+      DCL <|I:I> FIXED;
+      DO <|I>I = 0 TO 10;
+        PUT(<|I>I);
+      END;`));
+
   describe("Qualified names", () => {
     test("Must work in structured declaration", () =>
       expectLinks(`

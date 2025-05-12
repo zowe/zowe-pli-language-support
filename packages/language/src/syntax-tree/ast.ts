@@ -1172,6 +1172,14 @@ export interface DoType3 extends AstNode {
   variable: ReferenceItem | null;
   specifications: DoSpecification[];
 }
+export function createDoType3(): DoType3 {
+  return {
+    kind: SyntaxKind.DoType3,
+    container: null,
+    variable: null,
+    specifications: [],
+  };
+}
 export interface DoUntil extends AstNode {
   kind: SyntaxKind.DoUntil;
   until: Expression | null;
