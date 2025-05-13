@@ -14,7 +14,11 @@ import { PliProgram, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
 import { ScopeCacheGroups } from "../linking/symbol-table.js";
 import { TextDocuments } from "../language-server/text-documents.js";
-import { Connection } from "vscode-languageserver";
+import {
+  Connection,
+  DocumentSymbol,
+  SymbolInformation,
+} from "vscode-languageserver";
 import { ReferencesCache } from "../linking/resolver.js";
 import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
 import { lifecycle } from "./lifecycle.js";
@@ -22,7 +26,9 @@ import { CompilerOptions } from "../preprocessor/compiler-options/options.js";
 import { skippedCode } from "../language-server/skipped-code.js";
 import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-state.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
-import { LSRequestCaches } from "../utils/cache.js";
+import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
+import { documentSymbolRequest } from "../language-server/document-symbol-request.js";
+import { workspaceSymbolRequestForCompilationUnit } from "../language-server/workspace-symbol-request.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -48,7 +54,7 @@ export interface CompilationUnit {
   references: ReferencesCache;
   diagnostics: CompilationUnitDiagnostics;
   scopeCaches: ScopeCacheGroups;
-  requestCaches: LSRequestCaches;
+  requestCaches: LSRequestCache;
 }
 
 export interface CompilationUnitTokens {
@@ -106,18 +112,13 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       linking: [],
       validation: [],
     },
-    requestCaches: new LSRequestCaches().configure({
-      margins: (cache) => {
-        cache.onRevalidate(({ connection, unit }) => {
-          marginIndicator(connection, unit);
-        });
-      },
-      skippedCodeRanges: (cache) => {
-        cache.onRevalidate(({ connection, unit }) => {
-          skippedCode(connection, unit);
-        });
-      },
-    }),
+    requestCaches: createLSRequestCaches()
+      .onRevalidate("margins", ({ connection, unit }) => {
+        marginIndicator(connection, unit);
+      })
+      .onRevalidate("skippedCodeRanges", ({ connection, unit }) => {
+        skippedCode(connection, unit);
+      }),
   };
 }
 
@@ -151,6 +152,36 @@ export class CompletionUnitHandler {
 
   getAllCompilationUnits(): CompilationUnit[] {
     return Array.from(this.compilationUnits.values());
+  }
+
+  getDocumentSymbols(uri: URI): DocumentSymbol[] {
+    const unit = this.getCompilationUnit(uri);
+    if (!unit) {
+      return [];
+    }
+    if (!unit.requestCaches.get("documentSymbols")) {
+      unit.requestCaches.set(
+        "documentSymbols",
+        documentSymbolRequest(unit, uri),
+      );
+    }
+    return unit.requestCaches.get("documentSymbols") ?? [];
+  }
+
+  getWorkspaceSymbols(query: string): SymbolInformation[] {
+    const units = this.getAllCompilationUnits();
+    return units.flatMap((unit) => {
+      if (!unit.requestCaches.get("workspaceSymbols")) {
+        unit.requestCaches.set(
+          "workspaceSymbols",
+          workspaceSymbolRequestForCompilationUnit(this, unit),
+        );
+      }
+      const symbols = unit.requestCaches.get("workspaceSymbols") ?? [];
+      return symbols.filter((symbol) =>
+        symbol.name.toLowerCase().includes(query.toLowerCase()),
+      );
+    });
   }
 
   listen(connection: Connection): void {

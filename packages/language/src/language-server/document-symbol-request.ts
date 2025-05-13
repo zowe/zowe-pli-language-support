@@ -1,3 +1,14 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
 import {
   DocumentSymbol,
   Position,
@@ -9,6 +20,8 @@ import { Range, rangeToLSP, getSyntaxNodeRange, tokenToRange } from "./types";
 import { TextDocuments } from "./text-documents";
 import {
   DeclaredItem,
+  DeclareStatement,
+  LabelPrefix,
   ProcedureStatement,
   Statement,
   SyntaxKind,
@@ -16,6 +29,8 @@ import {
 } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { getNameToken } from "../linking/tokens";
+import { IToken } from "chevrotain";
 
 // ---- Document Symbol Builder ----
 
@@ -24,27 +39,27 @@ interface LevelSymbol {
   symbol: DocumentSymbol;
 }
 
-interface SymbolBuilder {
+interface SymbolBuilder<T extends SyntaxNode> {
   canHandle(node: SyntaxNode): boolean;
   buildSymbol(
-    node: SyntaxNode,
+    node: T,
     textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[];
 }
 
-class ProcedureSymbolBuilder implements SymbolBuilder {
+class ProcedureSymbolBuilder implements SymbolBuilder<ProcedureStatement> {
   canHandle(node: SyntaxNode): boolean {
     return node.kind === SyntaxKind.ProcedureStatement;
   }
 
   buildSymbol(
-    node: SyntaxNode,
+    node: ProcedureStatement,
     textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
-    const procedureStatement = node as ProcedureStatement;
     const labelPrefixStatement = node.container as Statement;
+    const sourceToken = getNameToken(labelPrefixStatement.labels[0]);
     const procedureName =
       labelPrefixStatement.labels.map((label) => label.name).join(" ") ??
       "<unknown>";
@@ -58,10 +73,11 @@ class ProcedureSymbolBuilder implements SymbolBuilder {
       range,
       childSymbols,
       textDocument,
+      { sourceToken },
     );
     // Set the range end to the end statement of the procedure if a label exists.
-    if (procedureStatement.end) {
-      const endStatementToken = procedureStatement.end.label?.label?.token;
+    if (node.end) {
+      const endStatementToken = node.end.label?.label?.token;
       if (endStatementToken) {
         symbol.range.end = rangeToLSP(
           textDocument,
@@ -73,21 +89,20 @@ class ProcedureSymbolBuilder implements SymbolBuilder {
   }
 }
 
-class DeclareSymbolBuilder implements SymbolBuilder {
+class DeclareSymbolBuilder implements SymbolBuilder<DeclareStatement> {
   canHandle(node: SyntaxNode): boolean {
     return node.kind === SyntaxKind.DeclareStatement;
   }
 
   buildSymbol(
-    node: SyntaxNode,
+    node: DeclareStatement,
     textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
     const levelSymbols: LevelSymbol[] = [];
-    const hierarchyBuilder = new DeclareSymbolBuilder.LevelHierarchyBuilder();
-    const declareNode = node as { items: DeclaredItem[] };
+    const hierarchyBuilder = new LevelHierarchyBuilder();
 
-    for (const item of declareNode.items.filter(
+    for (const item of node.items.filter(
       (i: DeclaredItem) => i.kind === SyntaxKind.DeclaredItem,
     )) {
       levelSymbols.push(
@@ -101,54 +116,6 @@ class DeclareSymbolBuilder implements SymbolBuilder {
 
     return hierarchyBuilder.getRootSymbols();
   }
-
-  private static LevelHierarchyBuilder = class {
-    private levelMap: Map<number, DocumentSymbol>;
-    private rootSymbols: DocumentSymbol[];
-
-    constructor() {
-      this.levelMap = new Map();
-      this.rootSymbols = [];
-    }
-
-    addSymbol(level: number | null, symbol: DocumentSymbol): void {
-      if (!level) {
-        this.rootSymbols.push(symbol);
-        return;
-      }
-
-      let parentLevel = level - 1;
-      while (!this.levelMap.has(parentLevel) && parentLevel > 0) {
-        parentLevel--;
-      }
-
-      if (parentLevel > 0) {
-        const parentSymbol = this.levelMap.get(parentLevel);
-        if (parentSymbol) {
-          parentSymbol.children = [symbol, ...(parentSymbol.children ?? [])];
-          parentSymbol.kind = SymbolKind.Struct;
-          parentSymbol.range.end = getLastPositionOrDefault(
-            parentSymbol.children,
-            symbol.range.end,
-          );
-        }
-      } else {
-        this.rootSymbols.push(symbol);
-      }
-
-      this.levelMap.set(level, symbol);
-      // Remove all larger levels to reset position
-      for (const key of this.levelMap.keys()) {
-        if (key > level) {
-          this.levelMap.delete(key);
-        }
-      }
-    }
-
-    getRootSymbols(): DocumentSymbol[] {
-      return this.rootSymbols;
-    }
-  };
 
   private retrieveLevelSymbols(
     item: DeclaredItem,
@@ -185,6 +152,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
       } else if (element.kind === SyntaxKind.DeclaredVariable) {
         const name = element.name ?? "<unknown>";
         const range = getSyntaxNodeRange(element) ?? { start: 0, end: 0 };
+        const sourceToken = getNameToken(element);
         levelSymbols.push({
           level: item.level ?? inheritedLevel,
           symbol: createDocumentSymbol(
@@ -193,6 +161,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
             range,
             children,
             textDocument,
+            { sourceToken },
           ),
         });
       }
@@ -202,8 +171,56 @@ class DeclareSymbolBuilder implements SymbolBuilder {
   }
 }
 
-class LabelSymbolBuilder implements SymbolBuilder {
-  canHandle(node: SyntaxNode): boolean {
+class LevelHierarchyBuilder {
+  private levelMap: Map<number, DocumentSymbol>;
+  private rootSymbols: DocumentSymbol[];
+
+  constructor() {
+    this.levelMap = new Map();
+    this.rootSymbols = [];
+  }
+
+  addSymbol(level: number | null, symbol: DocumentSymbol): void {
+    if (!level) {
+      this.rootSymbols.push(symbol);
+      return;
+    }
+
+    let parentLevel = level - 1;
+    while (!this.levelMap.has(parentLevel) && parentLevel > 0) {
+      parentLevel--;
+    }
+
+    if (parentLevel > 0) {
+      const parentSymbol = this.levelMap.get(parentLevel);
+      if (parentSymbol) {
+        parentSymbol.children = [symbol, ...(parentSymbol.children ?? [])];
+        parentSymbol.kind = SymbolKind.Struct;
+        parentSymbol.range.end = getLastPositionOrDefault(
+          parentSymbol.children,
+          symbol.range.end,
+        );
+      }
+    } else {
+      this.rootSymbols.push(symbol);
+    }
+
+    this.levelMap.set(level, symbol);
+    // Remove all larger levels to reset position
+    for (const key of this.levelMap.keys()) {
+      if (key > level) {
+        this.levelMap.delete(key);
+      }
+    }
+  }
+
+  getRootSymbols(): DocumentSymbol[] {
+    return this.rootSymbols;
+  }
+}
+
+class LabelSymbolBuilder implements SymbolBuilder<LabelPrefix> {
+  canHandle(node: SyntaxNode): node is SyntaxNode {
     if (node.kind !== SyntaxKind.LabelPrefix) {
       return false;
     }
@@ -217,7 +234,7 @@ class LabelSymbolBuilder implements SymbolBuilder {
   }
 
   buildSymbol(
-    node: SyntaxNode,
+    node: LabelPrefix,
     textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
@@ -229,6 +246,7 @@ class LabelSymbolBuilder implements SymbolBuilder {
     return labelPrefixStatement.labels.map((label) => {
       const name = label.name ?? "<unknown>";
       const range = getSyntaxNodeRange(label) ?? { start: 0, end: 0 };
+      const sourceToken = getNameToken(label);
 
       return createDocumentSymbol(
         name,
@@ -236,6 +254,7 @@ class LabelSymbolBuilder implements SymbolBuilder {
         range,
         childSymbols,
         textDocument,
+        { sourceToken },
       );
     });
   }
@@ -243,25 +262,13 @@ class LabelSymbolBuilder implements SymbolBuilder {
 
 // ---- Document Symbol Request ----
 
-const DOCUMENT_SYMBOL_BUILDERS: SymbolBuilder[] = [
+const DOCUMENT_SYMBOL_BUILDERS: SymbolBuilder<SyntaxNode>[] = [
   new ProcedureSymbolBuilder(),
   new DeclareSymbolBuilder(),
   new LabelSymbolBuilder(),
 ];
 
 export function documentSymbolRequest(
-  compilationUnit: CompilationUnit,
-  uri: URI,
-): DocumentSymbol[] {
-  if (!compilationUnit.requestCaches.get("documentSymbols").isCached()) {
-    compilationUnit.requestCaches
-      .get("documentSymbols")
-      .set(compilationUnitDocumentSymbols(compilationUnit, uri));
-  }
-  return compilationUnit.requestCaches.get("documentSymbols").get() ?? [];
-}
-
-export function compilationUnitDocumentSymbols(
   compilationUnit: CompilationUnit,
   uri: URI,
 ): DocumentSymbol[] {
@@ -307,7 +314,25 @@ function createDocumentSymbol(
   selectionRange: Range,
   children: DocumentSymbol[],
   textDocument: TextDocument,
+  options?: {
+    sourceToken?: IToken;
+  },
 ): DocumentSymbol {
+  // If it is a token that originated from the preprocessor,
+  // show the source of the symbol and
+  // remove the ranges from the symbol as it is not a valid location in this document.
+  let details = undefined;
+  if (options?.sourceToken) {
+    if (options.sourceToken.payload?.uri?.toString() === undefined) {
+      details = "preprocessor";
+      selectionRange.start = selectionRange.end = 0;
+    } else if (
+      options.sourceToken.payload?.uri?.toString() !== textDocument.uri
+    ) {
+      details = options.sourceToken.payload?.uri?.toString().split("/").pop();
+      selectionRange.start = selectionRange.end = 0;
+    }
+  }
   const selectionLSPRange = rangeToLSP(textDocument, selectionRange);
   const range = {
     start: selectionLSPRange.start,
@@ -315,7 +340,7 @@ function createDocumentSymbol(
   };
   return DocumentSymbol.create(
     name,
-    undefined,
+    details,
     kind,
     range,
     selectionLSPRange,

@@ -18,90 +18,56 @@ import {
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { MarginIndicatorNotificationParams } from "../language-server/margin-indicator";
 
-/**
- * A generic cache implementation that stores a single value and provides revalidation capabilities.
- * T is the type of the cached value.
- * U is the type of the parameter used to revalidate the cache.
- */
-export class Cache<T, U> {
-  private data?: T;
-  // Default behavior is to clear the cache when revalidated
-  private onRevalidateCallback: (param: U) => void = () => {
-    this.clear();
-  };
+export class Cache<T extends Record<string, any>, U> {
+  private cache: Partial<T> = {};
+  private callbacks: Map<keyof T, (param: U) => void> = new Map();
 
-  isCached(): boolean {
-    return this.data !== undefined;
-  }
-
-  clear(): void {
-    this.data = undefined;
-  }
-
-  revalidate(param: U): void {
-    this.onRevalidateCallback(param);
-  }
-
-  onRevalidate(onRevalidate: (param: U) => void): this {
-    this.onRevalidateCallback = onRevalidate;
-    return this;
-  }
-
-  set(data: T): void {
-    this.data = data;
-  }
-
-  get(): T | undefined {
-    return this.data;
-  }
-}
-
-/**
- * A group of caches that can be managed together.
- */
-export class CacheGroup<T extends Record<string, any>, U> {
-  private caches: Map<keyof T, Cache<any, U>> = new Map();
-
-  /**
-   * Configures the cache callbacks.
-   * @param config - An object specifying the configuration for each cache.
-   * @returns this for method chaining
-   */
-  configure(config: {
-    [K in keyof T]?: (cache: Cache<T[K], U>) => void;
-  }): this {
-    Object.entries(config).forEach(([key, configureFn]) => {
-      const cache = this.get(key as keyof T);
-      configureFn?.(cache);
-    });
-    return this;
-  }
-
-  get<K extends keyof T>(key: K): Cache<T[K], U> {
-    if (!this.caches.has(key)) {
-      this.caches.set(key, new Cache<T[K], U>());
+  constructor(initialCache?: Partial<T>) {
+    if (initialCache) {
+      this.cache = initialCache;
     }
-    return this.caches.get(key) as Cache<T[K], U>;
   }
 
-  clearAll(): void {
-    this.caches.forEach((cache) => cache.clear());
+  get<K extends keyof T>(key: K): T[K] | undefined {
+    return this.cache[key];
+  }
+
+  set<K extends keyof T>(key: K, value: T[K]): void {
+    this.cache[key] = value;
+  }
+
+  onRevalidate<K extends keyof T>(key: K, callback: (param: U) => void): this {
+    this.callbacks.set(key, callback);
+    return this;
   }
 
   revalidateAll(param: U): void {
-    this.caches.forEach((cache) => cache.revalidate(param));
+    for (const key of Object.keys(this.cache) as (keyof T)[]) {
+      const callback = this.callbacks.get(key);
+      if (callback) {
+        callback(param);
+      } else {
+        this.cache[key] = undefined;
+      }
+    }
   }
 }
 
-/**
- * Predefined set of caches used for language server request lifecycle.
- */
-export class LSRequestCaches extends CacheGroup<
-  {
-    documentSymbols: DocumentSymbol[];
-    workspaceSymbols: SymbolInformation[];
-    margins: MarginIndicatorNotificationParams;
-    skippedCodeRanges: Range[];
-  },
+type LSRequestCaches = {
+  documentSymbols: DocumentSymbol[];
+  workspaceSymbols: SymbolInformation[];
+  margins: MarginIndicatorNotificationParams;
+  skippedCodeRanges: Range[];
+};
+
+export type LSRequestCache = Cache<
+  LSRequestCaches,
   { connection: Connection; unit: CompilationUnit }
-> {}
+>;
+
+export function createLSRequestCaches() {
+  return new Cache<
+    LSRequestCaches,
+    { connection: Connection; unit: CompilationUnit }
+  >() as LSRequestCache;
+}

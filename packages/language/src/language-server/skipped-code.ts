@@ -13,7 +13,7 @@ import { Connection, NotificationType, Range } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { TextDocuments } from "./text-documents";
-import { deepEqual } from "../utils/common";
+import { isEqual } from "lodash-es";
 
 export interface SkippedCodeNotificationParams {
   uri: string;
@@ -32,16 +32,14 @@ export function skippedCode(
   compilationUnit: CompilationUnit,
 ) {
   const ranges = compilationUnit ? skippedCodeRanges(compilationUnit) : [];
-  const cachedRanges = compilationUnit.requestCaches
-    .get("skippedCodeRanges")
-    .get();
+  const cachedRanges = compilationUnit.requestCaches.get("skippedCodeRanges");
 
   if (
     !cachedRanges?.length ||
     cachedRanges.length !== ranges.length ||
-    !cachedRanges.every((range, index) => deepEqual(range, ranges[index]))
+    !cachedRanges.every((range, index) => isEqual(range, ranges[index]))
   ) {
-    compilationUnit.requestCaches.get("skippedCodeRanges").set(ranges);
+    compilationUnit.requestCaches.set("skippedCodeRanges", ranges);
     connection.sendNotification(SkippedCodeNotification, {
       uri: compilationUnit.uri.toString(),
       ranges,

@@ -13,9 +13,8 @@ import { describe, test, expect } from "vitest";
 import { replaceNamedIndices } from "../utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "../../src/utils/uri";
-import { workspaceSymbolRequest } from "../../src/language-server/workspace-symbol-request";
 import { TextDocuments } from "../../src/language-server/text-documents";
-import { createCompilationUnit } from "../../src/workspace/compilation-unit";
+import { CompletionUnitHandler } from "../../src/workspace/compilation-unit";
 import * as lifecycle from "../../src/workspace/lifecycle";
 
 const formatTestPLI = (code: string): string =>
@@ -43,9 +42,10 @@ function expectWorkspaceSymbols(annotatedCode: string[]): void {
     TextDocument.create(URI.file(`/test${i}.pli`).toString(), "pli", 1, output),
   );
 
+  const handler = new CompletionUnitHandler();
   textDocuments.forEach((doc) => TextDocuments.set(doc));
-  const units = outputs.map((output, i) => {
-    const unit = createCompilationUnit(URI.file(`/test${i}.pli`));
+  outputs.map((output, i) => {
+    const unit = handler.createCompilationUnit(URI.file(`/test${i}.pli`));
     lifecycle.lifecycle(unit, output);
     return unit;
   });
@@ -65,7 +65,7 @@ function expectWorkspaceSymbols(annotatedCode: string[]): void {
   }
 
   for (const name of Object.keys(rangesWithSameName)) {
-    const workspaceSymbols = workspaceSymbolRequest(units, name);
+    const workspaceSymbols = handler.getWorkspaceSymbols(name);
     const totalRangesForName = Object.values(rangesWithSameName[name]).reduce(
       (acc, fileRanges) => acc + fileRanges.length,
       0,

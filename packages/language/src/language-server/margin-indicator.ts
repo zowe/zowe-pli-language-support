@@ -34,9 +34,9 @@ export function marginIndicator(
     n: margins ? margins.n : 72,
   };
 
-  const cachedMargins = compilationUnit.requestCaches.get("margins").get();
+  const cachedMargins = compilationUnit.requestCaches.get("margins");
   if (cachedMargins?.m !== indicator.m || cachedMargins?.n !== indicator.n) {
-    compilationUnit.requestCaches.get("margins").set(indicator);
+    compilationUnit.requestCaches.set("margins", indicator);
     connection.sendNotification(MarginIndicatorNotification, indicator);
   }
 }

@@ -25,8 +25,6 @@ import { rangeToLSP } from "./types";
 import { renameRequest } from "./rename-request";
 import { mapValues } from "../utils/common";
 import { getReferenceLocations } from "../linking/resolver";
-import { documentSymbolRequest } from "./document-symbol-request";
-import { workspaceSymbolRequest } from "./workspace-symbol-request";
 
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompletionUnitHandler();
@@ -179,14 +177,13 @@ export function startLanguageServer(connection: Connection): void {
     const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
 
     if (textDocument && unit) {
-      const symbols = documentSymbolRequest(unit, parsedUri);
+      const symbols = compilationUnitHandler.getDocumentSymbols(parsedUri);
       return symbols;
     }
     return [];
   });
   connection.onWorkspaceSymbol((params) => {
-    const compilationUnits = compilationUnitHandler.getAllCompilationUnits();
-    return workspaceSymbolRequest(compilationUnits, params.query);
+    return compilationUnitHandler.getWorkspaceSymbols(params.query);
   });
   connection.listen();
 }
