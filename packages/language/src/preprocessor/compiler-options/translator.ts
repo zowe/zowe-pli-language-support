@@ -1147,6 +1147,7 @@ export function translateCompilerOptions(
   input: AbstractCompilerOptions,
 ): CompilerOptionResult {
   translator.options = {};
+  translator.optionSet.clear();
   translator.issues = [...input.issues];
   for (const option of input.options) {
     translator.translate(option);
