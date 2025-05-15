@@ -13,21 +13,23 @@ import { IToken } from "chevrotain";
 import { binaryTokenSearch, completionTokenSearch } from "../../utils/search";
 import { URI } from "../../utils/uri";
 import { CompilationUnit } from "../../workspace/compilation-unit";
-import { TextDocuments } from "../text-documents";
 import { CompletionItem, Range } from "../types";
 import { SyntaxNode } from "../../syntax-tree/ast";
-import { FollowElement, getFollowElements, provideEntryPointFollowElements } from "./follow-elements";
-import { generateCompletionItems, SimpleCompletionItem } from "./completion-generator";
+import {
+  FollowElement,
+  getFollowElements,
+  provideEntryPointFollowElements,
+} from "./follow-elements";
+import {
+  generateCompletionItems,
+  SimpleCompletionItem,
+} from "./completion-generator";
 
 export function completionRequest(
   unit: CompilationUnit,
   uri: URI,
-  offset: number
+  offset: number,
 ): CompletionItem[] {
-  const textDocument = TextDocuments.get(uri.toString());
-  if (!textDocument) {
-    return [];
-  }
   const tokens = unit.tokens.fileTokens[uri.toString()] ?? [];
   const tokenIndex = completionTokenSearch(tokens, offset);
   const cursorToken = binaryTokenSearch(tokens, offset);
@@ -40,11 +42,16 @@ export function completionRequest(
   } else {
     followElements.push(...provideEntryPointFollowElements());
   }
-  const items = followElements.flatMap(element => generateCompletionItems(unit, context, element));
+  const items = followElements.flatMap((element) =>
+    generateCompletionItems(unit, context, element),
+  );
   return convertSimpleToItem(items, offset, cursorToken);
 }
 
-function getTokenContext(tokens: IToken[], index: number): SyntaxNode | undefined {
+function getTokenContext(
+  tokens: IToken[],
+  index: number,
+): SyntaxNode | undefined {
   for (let i = 0; i < 5; i++) {
     let token = tokens[index - i];
     if (!token) {
@@ -56,12 +63,16 @@ function getTokenContext(tokens: IToken[], index: number): SyntaxNode | undefine
   return undefined;
 }
 
-function convertSimpleToItem(items: SimpleCompletionItem[], offset: number, token?: IToken): CompletionItem[] {
-  let existingText = '';
+function convertSimpleToItem(
+  items: SimpleCompletionItem[],
+  offset: number,
+  token?: IToken,
+): CompletionItem[] {
+  let existingText = "";
   let range: Range = {
     start: offset,
     end: offset,
-  }
+  };
   if (token) {
     existingText = token.image.substring(0, offset - token.startOffset);
     range.start = token.startOffset;
@@ -85,4 +96,3 @@ function convertSimpleToItem(items: SimpleCompletionItem[], offset: number, toke
   }
   return completionItems;
 }
-

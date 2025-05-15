@@ -16,7 +16,7 @@ import { CstNodeKind } from "../../syntax-tree/cst";
 export enum FollowKind {
   CstNode,
   LocalReference,
-  QualifiedReference
+  QualifiedReference,
 }
 
 export interface FollowCstNode {
@@ -33,12 +33,15 @@ export interface FollowQualifiedReference {
   previous: MemberCall;
 }
 
-export type FollowElement = 
+export type FollowElement =
   | FollowCstNode
   | FollowLocalReference
   | FollowQualifiedReference;
 
-export function getFollowElements(context: SyntaxNode | undefined, token: IToken): FollowElement[] {
+export function getFollowElements(
+  context: SyntaxNode | undefined,
+  token: IToken,
+): FollowElement[] {
   const elements: FollowElement[] = [];
   const kind = token.payload?.kind as CstNodeKind | undefined;
   switch (kind) {
@@ -46,19 +49,23 @@ export function getFollowElements(context: SyntaxNode | undefined, token: IToken
     case CstNodeKind.BinaryExpression_Operator:
     case CstNodeKind.UnaryExpression_Operator:
     case CstNodeKind.InitialAttribute_OpenParenDirect:
+    // TODO: Percentage can be followed by all the preprocessor directives
+    case CstNodeKind.Percentage:
       elements.push({
-        kind: FollowKind.LocalReference
+        kind: FollowKind.LocalReference,
       });
+      break;
     case CstNodeKind.MemberCall_Dot:
       if (context?.kind === SyntaxKind.MemberCall) {
         const parent = context.previous;
         if (parent) {
           elements.push({
             kind: FollowKind.QualifiedReference,
-            previous: parent
+            previous: parent,
           });
         }
       }
+      break;
   }
   return elements;
 }

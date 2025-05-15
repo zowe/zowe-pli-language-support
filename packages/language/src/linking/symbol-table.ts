@@ -79,8 +79,8 @@ export class SymbolTable {
             }
             map.get(name)!.push(symbol);
           }
-          // Everything else indicates that the name could either not be found 
-          // or the qualified name is longer than the chain of parents, 
+          // Everything else indicates that the name could either not be found
+          // or the qualified name is longer than the chain of parents,
           // which also indicates a matching failure.
         }
       } else {
@@ -138,6 +138,7 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
 
   // Set child containers for all nodes.
   recursivelySetContainer(unit.ast);
+  recursivelySetContainer(unit.preprocessorAst);
 
   const validationBuffer = new PliValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();

@@ -1,3 +1,14 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
 import { expect } from "vitest";
 import {
   collectDiagnostics,
@@ -14,6 +25,7 @@ import { forEachNode } from "../src/syntax-tree/ast-iterator";
 import { IntermediateBinaryExpression } from "../src/parser/abstract-parser";
 import { IToken } from "@chevrotain/types";
 import { escapeRegExp } from "../src/parser/tokens";
+import { completionRequest } from "../src/language-server/completion/completion-request";
 
 interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
@@ -456,3 +468,22 @@ export function expectLinks(text: string) {
 /**
  * ---------- End of Linking utilities ----------
  */
+
+export function expectCompletions(text: string, completions: string[][]) {
+  const { output, indices } = replaceIndices({ text });
+
+  const unit = parseAndLink(output);
+
+  for (let i = 0; i < indices.length; i++) {
+    const index = indices[i];
+    const completionItems = completions[i];
+    const completionResult = completionRequest(unit, unit.uri, index)
+      .sort((a, b) => {
+        const aLabel = a.sortText ?? a.label;
+        const bLabel = b.sortText ?? b.label;
+        return aLabel.localeCompare(bLabel);
+      })
+      .map((e) => e.label);
+    expect(completionResult).toEqual(completionItems);
+  }
+}

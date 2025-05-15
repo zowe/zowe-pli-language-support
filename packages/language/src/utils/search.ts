@@ -41,7 +41,10 @@ function isBeforeTokenEnd(token: IToken, offset: number): boolean {
   return token.endOffset! >= offset || isAtTokenEnd(token, offset);
 }
 
-export function completionTokenSearch(tokens: IToken[], offset: number): number {
+export function completionTokenSearch(
+  tokens: IToken[],
+  offset: number,
+): number {
   if (tokens.length === 0) {
     return -1;
   }

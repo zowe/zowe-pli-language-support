@@ -23,7 +23,7 @@ export interface SimpleCompletionItem extends Omit<CompletionItem, "edit"> {
 export function generateCompletionItems(
   unit: CompilationUnit,
   context: SyntaxNode | undefined,
-  followElement: FollowElement
+  followElement: FollowElement,
 ): SimpleCompletionItem[] {
   const items: SimpleCompletionItem[] = [];
   if (followElement.kind === FollowKind.CstNode) {
@@ -48,7 +48,7 @@ export function generateCompletionItems(
         items.push({
           label: symbol.name,
           kind: CompletionItemKind.Variable,
-          text: symbol.name
+          text: symbol.name,
         });
       }
     }
@@ -64,7 +64,7 @@ export function generateCompletionItems(
         items.push({
           label: symbol.name,
           kind: CompletionItemKind.Variable,
-          text: symbol.name
+          text: symbol.name,
         });
       }
     }
@@ -77,5 +77,5 @@ function isPreprocessorNode(node: SyntaxNode, unit: CompilationUnit): boolean {
   while (parent.container) {
     parent = parent.container;
   }
-  return (unit.preprocessorAst.statements as SyntaxNode[]).includes(parent);
+  return unit.preprocessorAst === parent;
 }
