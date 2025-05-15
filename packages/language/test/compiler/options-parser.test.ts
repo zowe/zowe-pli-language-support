@@ -147,7 +147,7 @@ describe("CompilerOptions translator", () => {
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toMatch(
-      "The string UNKNOWNOPTION is not recognized as a valid option keyword and is ignored."
+      "The string UNKNOWNOPTION is not recognized as a valid option keyword and is ignored.",
     );
   });
 });

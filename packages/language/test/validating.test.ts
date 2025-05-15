@@ -276,7 +276,8 @@ describe("Validating", () => {
         END EP;
         `);
       assertDiagnostic(doc, {
-        message: "Mutually exclusive compiler options NOAGGREGATE & AGGREGATE, only the last one will take effect.",
+        message:
+          "Mutually exclusive compiler options NOAGGREGATE & AGGREGATE, only the last one will take effect.",
         severity: Severity.W,
       });
     });
@@ -304,18 +305,21 @@ describe("Validating", () => {
     });
 
     test("Warn on complex case w/ mutex opt", async () => {
-      const doc = parseWithValidations(`*PROCESS OBJECT, PPTRACE, AGGREGATE, NULLDATE, NOPPTRACE;
+      const doc =
+        parseWithValidations(`*PROCESS OBJECT, PPTRACE, AGGREGATE, NULLDATE, NOPPTRACE;
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
       assertDiagnostic(doc, {
-        message: "Mutually exclusive compiler options PPTRACE & NOPPTRACE, only the last one will take effect.",
+        message:
+          "Mutually exclusive compiler options PPTRACE & NOPPTRACE, only the last one will take effect.",
         severity: Severity.W,
       });
     });
 
     test("Valid on complex case w/ no issues", async () => {
-      const doc = parseWithValidations(`*PROCESS OBJECT, PPTRACE, AGGREGATE, NULLDATE;
+      const doc =
+        parseWithValidations(`*PROCESS OBJECT, PPTRACE, AGGREGATE, NULLDATE;
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
