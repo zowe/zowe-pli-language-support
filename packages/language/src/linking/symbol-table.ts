@@ -332,10 +332,6 @@ export class ScopeCache {
 export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   const { scopeCaches, references } = unit;
 
-  // Todo: The root scope should contain global PL1 standard library symbols.
-  const builtInSymbols = new SymbolTable();
-  const scope = new Scope(null, builtInSymbols);
-
   // Set child containers for all nodes.
   recursivelySetContainer(unit.ast);
 
@@ -343,14 +339,20 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   const acceptor = validationBuffer.getAcceptor();
 
   // Iterate over the PLI program creating the symbol table.
+  // Todo: The root preprocessor scope should contain global preprocessor variables.
+  const builtInPreprocessorSymbols = new SymbolTable();
+  const preprocessorScope = new Scope(null, builtInPreprocessorSymbols);
   iterateSymbolTable(
     scopeCaches.preprocessor,
     references,
     acceptor,
     unit.preprocessorAst,
-    scope,
+    preprocessorScope,
   );
 
+  // Todo: The root scope should contain global PL1 standard library symbols.
+  const builtInSymbols = new SymbolTable();
+  const scope = new Scope(null, builtInSymbols);
   iterateSymbolTable(
     scopeCaches.regular,
     references,

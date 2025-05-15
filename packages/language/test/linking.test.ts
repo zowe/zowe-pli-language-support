@@ -281,6 +281,29 @@ describe("Linking tests", () => {
  DCL <|a:A|> CHAR(8) INIT("A");`));
   });
 
+  describe("Preprocessor", () => {
+    /**
+     * This test intentionally fails in order to test that a native
+     * PL/I variable does not link to a preprocessor variable.
+     */
+    test.fails("Must not link between PL/I and preprocessor variables", () =>
+      expectLinks(`
+ %DECLARE <|1:PAYROLL|> CHARACTER;
+ %<|2:PAYROLL|> = 'PAY_ROLL';
+ DCL PAYROLL CHAR(8) VALUE("PAYROLL");
+ %DEACTIVATE <|3:PAYROLL|>;
+ PUT(<|1><|2><|3>PAYROLL);`),
+    );
+
+    test("Must link correctly when collision with preprocessor variables", () =>
+      expectLinks(`
+ %DECLARE ABC CHARACTER;
+ %ABC = 'PAY_ROLL';
+ %DEACTIVATE ABC;
+ DCL <|1:ABC|> CHAR(8) VALUE("PAYROLL");
+ PUT(<|1>ABC);`));
+  });
+
   describe("Faulty cases", () => {
     /**
      * @WILLFIX: We currently cannot detect multiple declarations in the same scope.
@@ -320,15 +343,11 @@ describe("Linking tests", () => {
       });
     });
 
-    /**
-     * @didrikmunther
-     * @WILLFIX: We're colliding with the DEACTIVATE functionality in the preprocessor, disabling for now.
-     */
-    test.skip("Ambiguous reference must fail", () => {
+    test("Ambiguous reference must fail", () => {
       const doc = parseAndLink(`
- DCL 1 A,
+ DCL 1 A1,
      2 B CHAR(8) VALUE("B1");
- DCL 1 A,
+ DCL 1 A2,
      2 B CHAR(8) VALUE("B2");
  PUT(B);
  `);
