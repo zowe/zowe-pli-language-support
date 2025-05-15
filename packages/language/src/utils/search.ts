@@ -20,8 +20,22 @@ export function binaryTokenIndexSearch(
     token = tokens[mid];
     const start = token.startOffset;
     const end = token.endOffset!;
-    if ((start <= offset && offset <= end) || isAtTokenEnd(token, offset)) {
-      return mid;
+    if (start === offset) {
+      const previousToken = tokens[mid - 1];
+      if (
+        previousToken?.endOffset === offset - 1 &&
+        /\w$/u.test(previousToken.image)
+      ) {
+        // If the offset is right after the end of a word token, return that token
+        return previousToken;
+      } else {
+        return token;
+      }
+    } else if (start < offset && offset <= end) {
+      return token;
+    } else if (offset - end === 1 && /\w$/u.test(token.image)) {
+      // If the offset is right after the end of a word token, return that token
+      return token;
     } else if (start > offset) {
       high = mid - 1;
     } else {

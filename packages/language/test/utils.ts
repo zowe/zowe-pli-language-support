@@ -25,6 +25,7 @@ import { forEachNode } from "../src/syntax-tree/ast-iterator";
 import { IntermediateBinaryExpression } from "../src/parser/abstract-parser";
 import { IToken } from "@chevrotain/types";
 import { escapeRegExp } from "../src/parser/tokens";
+import { referencesRequest } from "../src/language-server/references-request";
 import { completionRequest } from "../src/language-server/completion/completion-request";
 
 interface AssertNoDiagnosticsOptions {
@@ -462,6 +463,48 @@ export function expectLinks(text: string) {
         `Expected range does not match actual range for label "${label}" on line ${line} near \`${snippet}\``,
       );
     }
+  }
+}
+
+export function expectReferences(text: string) {
+  const { output, indices, ranges } = replaceNamedIndices(text);
+
+  const requests = Object.entries(indices).flatMap(([index, offsets]) =>
+    offsets.map((offset) => ({
+      label: index,
+      offset,
+      rangeIndex: ranges[index],
+    })),
+  );
+
+  const unit = parseAndLink(output);
+
+  for (const { label, offset, rangeIndex } of requests) {
+    const result = referencesRequest(unit, unit.uri, offset);
+
+    expectedFunction(
+      result.length,
+      rangeIndex.length,
+      `Expected ${rangeIndex.length} references but received ${result.length} for label "${label}"`,
+    );
+
+    for (const reference of result) {
+      const expectedIndex = rangeIndex.findIndex(
+        ([start, end]) =>
+          start === reference.range.start && end === reference.range.end,
+      );
+      if (expectedIndex === -1) {
+        throw new Error(
+          `Reference ${reference.range.start}-${reference.range.end} not found in expected ranges for label "${label}". Expected ranges: ${rangeIndex.map(([start, end]) => `${start}-${end}`).join(", ")}`,
+        );
+      }
+      // Remove the found index from the rangeIndex array
+      rangeIndex.splice(expectedIndex, 1);
+    }
+    expect(
+      rangeIndex,
+      `Not all expected ranges were found for label "${label}". Remaining ranges: ${rangeIndex.map(([start, end]) => `${start}-${end}`).join(", ")}`,
+    ).toHaveLength(0);
   }
 }
 
