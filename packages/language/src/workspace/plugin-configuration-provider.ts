@@ -64,6 +64,20 @@ class PluginConfigurationProvider {
     const programConfigPath = plipluginPath + "/pgm_conf.json";
     const processGroupConfigPath = plipluginPath + "/proc_grps.json";
 
+    // load configs
+    this.loadProgramConfig(programConfigPath, workspacePath);
+    this.loadProcessGroupConfig(processGroupConfigPath);
+  }
+
+  /**
+   * Loads the program config from the given path, and sets it in our provider
+   * @param programConfigPath Path to the program config file
+   * @param workspacePath Used to set program configs in relation to our workspace path
+   */
+  private loadProgramConfig(
+    programConfigPath: string,
+    workspacePath: string,
+  ): void {
     // attempt to read configs
     const programConfigUri = URI.parse(programConfigPath);
     if (FileSystemProviderInstance.fileExistsSync(programConfigUri)) {
@@ -86,7 +100,13 @@ class PluginConfigurationProvider {
         console.warn("No program config found.");
       }
     }
+  }
 
+  /**
+   * Loads the process group config from the given path, and sets it in our provider
+   * @param processGroupConfigPath Path to the process group config file
+   */
+  private loadProcessGroupConfig(processGroupConfigPath: string): void {
     const processGroupConfigUri = URI.parse(processGroupConfigPath);
     if (FileSystemProviderInstance.fileExistsSync(processGroupConfigUri)) {
       const processGrpConfig = FileSystemProviderInstance.readFileSync(

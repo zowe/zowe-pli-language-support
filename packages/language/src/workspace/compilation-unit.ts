@@ -155,7 +155,7 @@ export class CompilationUnitHandler {
 
   deleteCompilationUnit(uri: URI): boolean {
     const unit = this.compilationUnits.get(uri.toString());
-    if(!unit) {
+    if (!unit) {
       return false;
     }
 
