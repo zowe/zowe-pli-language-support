@@ -161,3 +161,43 @@ export function diagnosticToLSP(diagnostic: Diagnostic): lsp.Diagnostic {
     source: diagnostic.source ?? "pli",
   };
 }
+
+export interface CompletionItem {
+  label: string;
+  kind: lsp.CompletionItemKind;
+  detail?: string;
+  documentation?: string;
+  sortText?: string;
+  filterText?: string;
+  edit: TextEdit;
+}
+
+export function completionItemToLSP(
+  textDocument: TextDocument,
+  item: CompletionItem,
+): lsp.CompletionItem {
+  return {
+    label: item.label,
+    kind: item.kind,
+    detail: item.detail,
+    documentation: item.documentation,
+    sortText: item.sortText,
+    filterText: item.filterText,
+    textEdit: textEditToLSP(textDocument, item.edit),
+  };
+}
+
+export interface TextEdit {
+  range: Range;
+  text: string;
+}
+
+export function textEditToLSP(
+  textDocument: TextDocument,
+  edit: TextEdit,
+): lsp.TextEdit {
+  return {
+    range: rangeToLSP(textDocument, edit.range),
+    newText: edit.text,
+  };
+}

@@ -859,12 +859,15 @@ export class PliParser extends AbstractParser {
         },
       });
     });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.LabelPrefix, {
-        assign: (result) => {
-          element.labels.push(result);
-        },
-      });
+    this.MANY1({
+      DEF: () => {
+        this.SUBRULE_ASSIGN1(this.LabelPrefix, {
+          assign: (result) => {
+            element.labels.push(result);
+          },
+        });
+      },
+      GATE: () => this.canParseLabelPrefix(),
     });
     this.SUBRULE_ASSIGN1(this.Unit, {
       assign: (result) => {
@@ -874,6 +877,10 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.Statement>();
   });
+
+  private canParseLabelPrefix(): boolean {
+    return this.LA(2).tokenTypeIdx === tokens.Colon.tokenTypeIdx;
+  }
 
   Unit = this.OR_RULE<ast.Unit>("Unit", () => [
     this.DeclareStatement,
@@ -1570,12 +1577,15 @@ export class PliParser extends AbstractParser {
   EndStatement = this.RULE("EndStatement", () => {
     let element = this.push(this.createEndStatement());
 
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.LabelPrefix, {
-        assign: (result) => {
-          element.labels.push(result);
-        },
-      });
+    this.MANY1({
+      DEF: () => {
+        this.SUBRULE_ASSIGN1(this.LabelPrefix, {
+          assign: (result) => {
+            element.labels.push(result);
+          },
+        });
+      },
+      GATE: () => this.canParseLabelPrefix(),
     });
     this.CONSUME_ASSIGN1(tokens.END, (token) => {
       this.tokenPayload(token, element, CstNodeKind.EndStatement_END);

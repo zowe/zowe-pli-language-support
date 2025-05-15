@@ -77,7 +77,7 @@ export class ReferencesCache {
 }
 
 // Returns the qualified name in reverse order, e.g. "A.B.C" -> ["C", "B", "A"]
-function getQualifiedName(reference: Reference): string[] {
+export function getQualifiedName(reference: Reference): string[] {
   if (reference.owner.container?.kind === SyntaxKind.MemberCall) {
     const memberCall = reference.owner.container;
     if (memberCall.previous?.element?.ref) {
