@@ -24,6 +24,7 @@ import {
   CompilerOptionValue,
   SyntaxKind,
 } from "../../syntax-tree/ast";
+import { Warning as PLIWarning } from "../../validation/messages/pli-codes";
 
 interface TranslatorRule {
   positive?: string[];
@@ -36,6 +37,7 @@ type Translate = (option: CompilerOption, options: CompilerOptions) => void;
 
 class Translator {
   options: CompilerOptions = {};
+  optionSet: Set<string> = new Set();
   issues: CompilerOptionIssue[] = [];
 
   private rules: TranslatorRule[] = [];
@@ -72,6 +74,9 @@ class Translator {
   translate(option: CompilerOption) {
     const name = option.name.toUpperCase();
     let found = false;
+
+    this.checkDuplicateOption(option, name);
+
     try {
       for (const rule of this.rules) {
         if (rule.positive && rule.positive.includes(name)) {
@@ -103,9 +108,36 @@ class Translator {
     if (!found) {
       this.issues.push({
         range: tokenToRange(option.token),
-        message: `Unknown compiler option: ${option.name}`,
-        severity: Severity.E,
+        message: PLIWarning.IBM1159I.message(option.name),
+        severity: Severity.W,
       });
+    }
+  }
+
+  /**
+   * Reports duplicate or mutually exclusive compiler options.
+   */
+  checkDuplicateOption(option: CompilerOption, name: string): void {
+    const modifiedName = name.startsWith("NO") ? name.slice(2) : `NO${name}`;
+    if (this.optionSet.has(name)) {
+      // redundant option
+      this.issues.push({
+        range: tokenToRange(option.token),
+        message: `Duplicate compiler option ${name}`,
+        severity: Severity.W,
+      });
+    } else if (this.optionSet.has(modifiedName)) {
+      // mutex option conflicts w/ existing
+      this.issues.push({
+        range: tokenToRange(option.token),
+        message: `Mutually exclusive compiler options ${modifiedName} & ${name}, only the last one will take effect.`,
+        severity: Severity.W,
+      });
+      // also add
+      this.optionSet.add(name);
+    } else {
+      // entirely new option
+      this.optionSet.add(name);
     }
   }
 }

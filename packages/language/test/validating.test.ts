@@ -253,6 +253,76 @@ describe("Validating", () => {
     });
   });
 
+  describe("*PROCESS Validations", () => {
+    test("No options valid", async () => {
+      const doc = parseWithValidations(`*PROCESS;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertNoDiagnostics(doc);
+    });
+
+    test("Single option is valid", async () => {
+      const doc = parseWithValidations(`*PROCESS NOEXIT;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertNoDiagnostics(doc);
+    });
+
+    test("Warn on mutex opts", async () => {
+      const doc = parseWithValidations(`*PROCESS NOAGGREGATE, AGGREGATE;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message: "Mutually exclusive compiler options NOAGGREGATE & AGGREGATE, only the last one will take effect.",
+        severity: Severity.W,
+      });
+    });
+
+    test("Warn on duplicate opts", async () => {
+      const doc = parseWithValidations(`*PROCESS AGGREGATE, AGGREGATE;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message: "Duplicate compiler option AGGREGATE",
+        severity: Severity.W,
+      });
+    });
+
+    test("Warn on unrecognized compiler option", async () => {
+      const doc = parseWithValidations(`*PROCESS TYPEFOXOPT;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message: PLICodes.Warning.IBM1159I.message("TYPEFOXOPT"),
+        severity: Severity.W,
+      });
+    });
+
+    test("Warn on complex case w/ mutex opt", async () => {
+      const doc = parseWithValidations(`*PROCESS OBJECT, PPTRACE, AGGREGATE, NULLDATE, NOPPTRACE;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message: "Mutually exclusive compiler options PPTRACE & NOPPTRACE, only the last one will take effect.",
+        severity: Severity.W,
+      });
+    });
+
+    test("Valid on complex case w/ no issues", async () => {
+      const doc = parseWithValidations(`*PROCESS OBJECT, PPTRACE, AGGREGATE, NULLDATE;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertNoDiagnostics(doc);
+    });
+  });
+
   //
   //     test('check no errors', async () => {
   //         document = await parseWithValidations(`

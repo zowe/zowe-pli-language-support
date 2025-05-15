@@ -146,6 +146,8 @@ describe("CompilerOptions translator", () => {
     const options = parseAbstractCompilerOptions("UNKNOWNOPTION");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
-    expect(issues[0].message).toMatch("Unknown compiler option");
+    expect(issues[0].message).toMatch(
+      "The string UNKNOWNOPTION is not recognized as a valid option keyword and is ignored."
+    );
   });
 });
