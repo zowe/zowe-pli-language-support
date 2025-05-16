@@ -159,13 +159,7 @@ export class CompletionUnitHandler {
     if (!unit) {
       return [];
     }
-    if (!unit.requestCaches.get("documentSymbols")) {
-      unit.requestCaches.set(
-        "documentSymbols",
-        documentSymbolRequest(unit, uri),
-      );
-    }
-    return unit.requestCaches.get("documentSymbols") ?? [];
+    return documentSymbolRequest(unit, uri);
   }
 
   getWorkspaceSymbols(query: string): SymbolInformation[] {

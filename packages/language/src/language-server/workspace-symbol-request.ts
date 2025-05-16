@@ -9,7 +9,8 @@
  *
  */
 
-import { SymbolInformation } from "vscode-languageserver-types";
+import { DocumentSymbol, SymbolInformation } from "vscode-languageserver-types";
+import { URI } from "../utils/uri";
 import {
   CompilationUnit,
   CompletionUnitHandler,
@@ -19,8 +20,32 @@ export function workspaceSymbolRequestForCompilationUnit(
   handler: CompletionUnitHandler,
   unit: CompilationUnit,
 ): SymbolInformation[] {
-  // Get symbols for this unit and flatten the hierarchy
-  const unitSymbols = handler.getDocumentSymbols(unit.uri).flatMap((symbol) => {
+  // Get symbols for all files in the compilation unit.
+  const unitSymbols = unit.files.flatMap((file) => {
+    const symbols = collectSymbolsForDocument(file, handler);
+    return symbols.map((symbol) => ({
+      symbol,
+      uri: file,
+    }));
+  });
+
+  return unitSymbols.map(({ symbol, uri }) => {
+    return SymbolInformation.create(
+      symbol.name,
+      symbol.kind,
+      symbol.selectionRange,
+      uri.toString(),
+    );
+  });
+}
+
+function collectSymbolsForDocument(
+  uri: URI,
+  handler: CompletionUnitHandler,
+): DocumentSymbol[] {
+  const documentSymbols = handler.getDocumentSymbols(uri);
+
+  return documentSymbols.flatMap((symbol) => {
     const symbols: any[] = [];
 
     function collectSymbols(symbol: any) {
@@ -32,14 +57,5 @@ export function workspaceSymbolRequestForCompilationUnit(
 
     collectSymbols(symbol);
     return symbols;
-  });
-
-  return unitSymbols.map((symbol) => {
-    return SymbolInformation.create(
-      symbol.name,
-      symbol.kind,
-      symbol.range,
-      unit.uri.toString(),
-    );
   });
 }

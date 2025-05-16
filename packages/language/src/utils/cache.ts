@@ -9,12 +9,7 @@
  *
  */
 
-import {
-  Connection,
-  DocumentSymbol,
-  Range,
-  SymbolInformation,
-} from "vscode-languageserver";
+import { Connection, Range, SymbolInformation } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { MarginIndicatorNotificationParams } from "../language-server/margin-indicator";
 
@@ -54,7 +49,6 @@ export class Cache<T extends Record<string, any>, U> {
 }
 
 type LSRequestCaches = {
-  documentSymbols: DocumentSymbol[];
   workspaceSymbols: SymbolInformation[];
   margins: MarginIndicatorNotificationParams;
   skippedCodeRanges: Range[];
