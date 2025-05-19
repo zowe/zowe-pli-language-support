@@ -32,3 +32,7 @@ export function mapValues<K extends string | number | symbol, T, U>(
     ]),
   ) as Record<K, U>;
 }
+
+export function assertUnreachable(_: never): never {
+  throw new Error("Error! The input value was not handled.");
+}
