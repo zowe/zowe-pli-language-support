@@ -350,12 +350,12 @@ export class PliPreprocessorInterpreterState
           createTokenInstance(
             this.idTokenType,
             last.image + first.image,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
+            NaN,
+            NaN,
+            NaN,
+            NaN,
+            NaN,
+            NaN,
           ),
         ];
         const part3 = rhs.slice(1);

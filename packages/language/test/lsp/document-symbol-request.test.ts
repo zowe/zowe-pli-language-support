@@ -145,3 +145,15 @@ describe("Document Symbol Request", () => {
     expectDocumentSymbols(code);
   });
 });
+
+// Todo: Add test for generated declarations
+// %DCL X FIXED;
+// %X = 1;
+// %DO
+//   %WHILE(%X <= 3);
+//     DCL Variable%X FIXED;
+//     %X = %X + 1;
+// %END;
+// Variable1 = 1;
+// Variable2 = 2;
+// Variable3 = 3;

@@ -43,8 +43,8 @@ interface SymbolBuilder {
 class ProcedureSymbolBuilder implements SymbolBuilder {
   canHandle(token: IToken): boolean {
     return (
-      token.payload.kind == CstNodeKind.ProcedureStatement_PROCEDURE &&
-      token.payload?.element.kind === SyntaxKind.ProcedureStatement
+      token.payload.kind === CstNodeKind.ProcedureStatement_PROCEDURE &&
+      token.payload.element.kind === SyntaxKind.ProcedureStatement
     );
   }
 
@@ -55,13 +55,14 @@ class ProcedureSymbolBuilder implements SymbolBuilder {
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
     const labelPrefixStatement = token.payload?.element.container as Statement;
-    const procedureName =
-      labelPrefixStatement.labels.map((label) => label.name).join(" ") ??
-      "<unknown>";
-    const range = getSyntaxNodeRange(labelPrefixStatement.labels[0]) ?? {
-      start: token.startOffset,
-      end: token.endOffset ?? token.startOffset,
-    };
+    const procedureName = labelPrefixStatement.labels
+      .map((label) => label.name)
+      .join(" ");
+    const range = getSyntaxNodeRange(labelPrefixStatement.labels[0]);
+
+    if (!procedureName || !range) {
+      return [];
+    }
 
     const symbol = createDocumentSymbol(
       procedureName,
@@ -83,7 +84,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
   canHandle(token: IToken): boolean {
     if (
       token.payload.kind !== CstNodeKind.DeclareStatement_DECLARE ||
-      token.payload?.element.kind !== SyntaxKind.DeclareStatement
+      token.payload.element.kind !== SyntaxKind.DeclareStatement
     ) {
       return false;
     }
@@ -158,12 +159,16 @@ class DeclareSymbolBuilder implements SymbolBuilder {
         element.nameToken &&
         isValidToken(element.nameToken)
       ) {
-        const name = element.name ?? "<unknown>";
-        const range = getSyntaxNodeRange(element) ?? { start: 0, end: 0 };
+        const range = getSyntaxNodeRange(element);
+
+        if (!element.name || !range) {
+          continue;
+        }
+
         levelSymbols.push({
           level: item.level ?? inheritedLevel,
           symbol: createDocumentSymbol(
-            name,
+            element.name,
             kind,
             range,
             children,
@@ -229,7 +234,7 @@ class LabelSymbolBuilder implements SymbolBuilder {
   canHandle(token: IToken): boolean {
     if (
       token.payload.kind !== CstNodeKind.LabelPrefix_Name ||
-      token.payload?.element.kind !== SyntaxKind.LabelPrefix
+      token.payload.element.kind !== SyntaxKind.LabelPrefix
     ) {
       return false;
     }
@@ -255,15 +260,15 @@ class LabelSymbolBuilder implements SymbolBuilder {
 
     const documentSymbols: DocumentSymbol[] = [];
     for (const label of labelPrefixStatement.labels) {
-      const name = label.name ?? "<unknown>";
-      const range = getSyntaxNodeRange(label) ?? {
-        start: token.startOffset,
-        end: token.endOffset ?? token.startOffset,
-      };
+      const range = getSyntaxNodeRange(label);
+
+      if (!label.name || !range) {
+        continue;
+      }
 
       documentSymbols.push(
         createDocumentSymbol(
-          name,
+          label.name,
           SymbolKind.Key,
           range,
           childSymbols,
