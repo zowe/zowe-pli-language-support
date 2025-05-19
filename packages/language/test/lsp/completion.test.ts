@@ -35,4 +35,15 @@ describe("Completion", () => {
       [["A", "B", "C", "D", "X"], ["B", "C", "D"], ["C", "D"], ["D"]],
     );
   });
+
+  test("Provides completion for partially qualified references", () => {
+    expectCompletions(
+      `
+      DCL 1 A, 2 B, 3 C, 4 D char(10);
+      DCL X char(10);
+      X = <|>C.<|>D;
+    `,
+      [["A", "B", "C", "D", "X"], ["D"]],
+    );
+  });
 });
