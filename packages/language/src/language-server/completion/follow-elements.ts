@@ -21,7 +21,7 @@ export enum FollowKind {
 
 export interface FollowCstNode {
   kind: FollowKind.CstNode;
-  type: CstNodeKind;
+  types: CstNodeKind[];
 }
 
 export interface FollowLocalReference {
@@ -45,6 +45,7 @@ export function getFollowElements(
   const elements: FollowElement[] = [];
   const kind = token.payload?.kind as CstNodeKind | undefined;
   switch (kind) {
+    // TODO: add more entry points for the completion of expressions
     case CstNodeKind.AssignmentStatement_Operator:
     case CstNodeKind.BinaryExpression_Operator:
     case CstNodeKind.UnaryExpression_Operator:

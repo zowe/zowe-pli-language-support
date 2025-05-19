@@ -10,7 +10,7 @@
  */
 
 import { CompletionItemKind } from "vscode-languageserver-types";
-import { SyntaxNode } from "../../syntax-tree/ast";
+import { Statement, SyntaxKind, SyntaxNode } from "../../syntax-tree/ast";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { CompletionItem } from "../types";
 import { FollowElement, FollowKind } from "./follow-elements";
@@ -27,6 +27,7 @@ export function generateCompletionItems(
 ): SimpleCompletionItem[] {
   const items: SimpleCompletionItem[] = [];
   if (followElement.kind === FollowKind.CstNode) {
+    // TODO: implement completion for keywords
     return [];
   }
   if (followElement.kind === FollowKind.QualifiedReference) {
@@ -47,7 +48,7 @@ export function generateCompletionItems(
       if (symbol.name) {
         items.push({
           label: symbol.name,
-          kind: CompletionItemKind.Variable,
+          kind: getCompletionKind(symbol.node),
           text: symbol.name,
         });
       }
@@ -63,13 +64,27 @@ export function generateCompletionItems(
       if (symbol.name) {
         items.push({
           label: symbol.name,
-          kind: CompletionItemKind.Variable,
+          kind: getCompletionKind(symbol.node),
           text: symbol.name,
         });
       }
     }
   }
   return items;
+}
+
+function getCompletionKind(node: SyntaxNode): CompletionItemKind {
+  switch (node.kind) {
+    case SyntaxKind.LabelPrefix: {
+      const statement = node.container as Statement;
+      const value = statement.value;
+      if (value && value.kind === SyntaxKind.ProcedureStatement) {
+        return CompletionItemKind.Function;
+      }
+      return CompletionItemKind.Variable;
+    }
+  }
+  return CompletionItemKind.Variable;
 }
 
 function isPreprocessorNode(node: SyntaxNode, unit: CompilationUnit): boolean {
