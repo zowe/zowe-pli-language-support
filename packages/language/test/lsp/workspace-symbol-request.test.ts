@@ -16,6 +16,7 @@ import { URI } from "../../src/utils/uri";
 import { TextDocuments } from "../../src/language-server/text-documents";
 import { CompletionUnitHandler } from "../../src/workspace/compilation-unit";
 import * as lifecycle from "../../src/workspace/lifecycle";
+import { workspaceSymbolRequest } from "../../src/language-server/workspace-symbol-request";
 
 const formatTestPLI = (code: string): string =>
   code.startsWith("\n") ? code.slice(1) : code;
@@ -65,7 +66,10 @@ function expectWorkspaceSymbols(annotatedCode: string[]): void {
   }
 
   for (const name of Object.keys(rangesWithSameName)) {
-    const workspaceSymbols = handler.getWorkspaceSymbols(name);
+    const workspaceSymbols = workspaceSymbolRequest(
+      name,
+      handler.getAllCompilationUnits(),
+    );
     const totalRangesForName = Object.values(rangesWithSameName[name]).reduce(
       (acc, fileRanges) => acc + fileRanges.length,
       0,

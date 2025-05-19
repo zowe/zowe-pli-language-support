@@ -18,8 +18,8 @@ import { DOCUMENT_SYMBOL_BUILDERS } from "./document-symbol-builder";
 import { IToken } from "chevrotain";
 
 export function documentSymbolRequest(
-  compilationUnit: CompilationUnit,
   uri: URI,
+  compilationUnit: CompilationUnit,
 ): DocumentSymbol[] {
   const textDocument = TextDocuments.get(uri.toString());
   if (!textDocument) {

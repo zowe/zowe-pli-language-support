@@ -41,7 +41,7 @@ function expectDocumentSymbols(annotatedCode: string): void {
 
   TextDocuments.set(textDocument);
   const unit = parse(output, { validate: true });
-  const documentSymbols = documentSymbolRequest(unit, URI.file("/test.pli"));
+  const documentSymbols = documentSymbolRequest(URI.file("/test.pli"), unit);
 
   const totalRanges = Object.values(ranges).reduce(
     (acc, curr) => acc + curr.length,

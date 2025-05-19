@@ -11,18 +11,33 @@
 
 import { DocumentSymbol, SymbolInformation } from "vscode-languageserver-types";
 import { URI } from "../utils/uri";
-import {
-  CompilationUnit,
-  CompletionUnitHandler,
-} from "../workspace/compilation-unit";
+import { CompilationUnit } from "../workspace/compilation-unit";
+import { documentSymbolRequest } from "./document-symbol-request";
+
+export function workspaceSymbolRequest(
+  query: string,
+  units: CompilationUnit[],
+): SymbolInformation[] {
+  return units.flatMap((unit) => {
+    if (!unit.requestCaches.get("workspaceSymbols")) {
+      unit.requestCaches.set(
+        "workspaceSymbols",
+        workspaceSymbolRequestForCompilationUnit(unit),
+      );
+    }
+    const symbols = unit.requestCaches.get("workspaceSymbols") ?? [];
+    return symbols.filter((symbol) =>
+      symbol.name.toLowerCase().includes(query.toLowerCase()),
+    );
+  });
+}
 
 export function workspaceSymbolRequestForCompilationUnit(
-  handler: CompletionUnitHandler,
   unit: CompilationUnit,
 ): SymbolInformation[] {
   // Get symbols for all files in the compilation unit.
   const unitSymbols = unit.files.flatMap((file) => {
-    const symbols = collectSymbolsForDocument(file, handler);
+    const symbols = collectSymbolsForDocument(file, unit);
     return symbols.map((symbol) => ({
       symbol,
       uri: file,
@@ -41,9 +56,9 @@ export function workspaceSymbolRequestForCompilationUnit(
 
 function collectSymbolsForDocument(
   uri: URI,
-  handler: CompletionUnitHandler,
+  unit: CompilationUnit,
 ): DocumentSymbol[] {
-  const documentSymbols = handler.getDocumentSymbols(uri);
+  const documentSymbols = documentSymbolRequest(uri, unit);
 
   return documentSymbols.flatMap((symbol) => {
     const symbols: any[] = [];

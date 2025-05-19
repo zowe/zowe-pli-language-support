@@ -14,11 +14,7 @@ import { PliProgram, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
 import { ScopeCacheGroups } from "../linking/symbol-table.js";
 import { TextDocuments } from "../language-server/text-documents.js";
-import {
-  Connection,
-  DocumentSymbol,
-  SymbolInformation,
-} from "vscode-languageserver";
+import { Connection } from "vscode-languageserver";
 import { ReferencesCache } from "../linking/resolver.js";
 import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
 import { lifecycle } from "./lifecycle.js";
@@ -27,8 +23,6 @@ import { skippedCode } from "../language-server/skipped-code.js";
 import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-state.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
-import { documentSymbolRequest } from "../language-server/document-symbol-request.js";
-import { workspaceSymbolRequestForCompilationUnit } from "../language-server/workspace-symbol-request.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -152,30 +146,6 @@ export class CompletionUnitHandler {
 
   getAllCompilationUnits(): CompilationUnit[] {
     return Array.from(this.compilationUnits.values());
-  }
-
-  getDocumentSymbols(uri: URI): DocumentSymbol[] {
-    const unit = this.getCompilationUnit(uri);
-    if (!unit) {
-      return [];
-    }
-    return documentSymbolRequest(unit, uri);
-  }
-
-  getWorkspaceSymbols(query: string): SymbolInformation[] {
-    const units = this.getAllCompilationUnits();
-    return units.flatMap((unit) => {
-      if (!unit.requestCaches.get("workspaceSymbols")) {
-        unit.requestCaches.set(
-          "workspaceSymbols",
-          workspaceSymbolRequestForCompilationUnit(this, unit),
-        );
-      }
-      const symbols = unit.requestCaches.get("workspaceSymbols") ?? [];
-      return symbols.filter((symbol) =>
-        symbol.name.toLowerCase().includes(query.toLowerCase()),
-      );
-    });
   }
 
   listen(connection: Connection): void {
