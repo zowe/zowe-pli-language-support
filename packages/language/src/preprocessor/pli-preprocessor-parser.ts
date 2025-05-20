@@ -454,7 +454,8 @@ export class PliPreprocessorParser {
       try {
         const content =
           TextDocuments.get(uri)?.getText() ??
-          FileSystemProviderInstance.readFileSync(uri);
+          FileSystemProviderInstance.readFileSync(uri) ??
+          "";
         const subState = this.initializeState(content, uri);
         const subProgram = this.start(subState);
         // Ensure that we store the tokens of included files in our state

@@ -1,0 +1,4 @@
+ %INCLUDE "b.pli";
+ VARB = 2;
+ %INCLUDE "c.pli";
+ VARC = 3;

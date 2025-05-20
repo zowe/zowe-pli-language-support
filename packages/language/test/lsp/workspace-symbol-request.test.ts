@@ -14,7 +14,7 @@ import { replaceNamedIndices } from "../utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "../../src/utils/uri";
 import { TextDocuments } from "../../src/language-server/text-documents";
-import { CompletionUnitHandler } from "../../src/workspace/compilation-unit";
+import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import * as lifecycle from "../../src/workspace/lifecycle";
 import { workspaceSymbolRequest } from "../../src/language-server/workspace-symbol-request";
 
@@ -43,10 +43,12 @@ function expectWorkspaceSymbols(annotatedCode: string[]): void {
     TextDocument.create(URI.file(`/test${i}.pli`).toString(), "pli", 1, output),
   );
 
-  const handler = new CompletionUnitHandler();
+  const handler = new CompilationUnitHandler();
   textDocuments.forEach((doc) => TextDocuments.set(doc));
   outputs.map((output, i) => {
-    const unit = handler.createCompilationUnit(URI.file(`/test${i}.pli`));
+    const unit = handler.createAndStoreCompilationUnit(
+      URI.file(`/test${i}.pli`),
+    );
     lifecycle.lifecycle(unit, output);
     return unit;
   });

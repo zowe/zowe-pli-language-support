@@ -23,6 +23,7 @@ import { skippedCode } from "../language-server/skipped-code.js";
 import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-state.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
+import { PluginConfigurationProviderInstance } from "./plugin-configuration-provider.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -116,21 +117,37 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
   };
 }
 
-export class CompletionUnitHandler {
+export class CompilationUnitHandler {
   private compilationUnits: Map<string, CompilationUnit> = new Map();
 
   getCompilationUnit(uri: URI): CompilationUnit | undefined {
     return this.compilationUnits.get(uri.toString());
   }
 
-  getOrCreateCompilationUnit(uri: URI): CompilationUnit {
-    return (
-      this.compilationUnits.get(uri.toString()) ||
-      this.createCompilationUnit(uri)
-    );
+  /**
+   * Conditionally creates/gets a compilation unit for the given URI
+   * if the URI corresponds to an entry point, or part of an existing compilation unit.
+   *
+   * @returns Associated compilation unit or undefined
+   */
+  getOrCreateCompilationUnit(uri: URI): CompilationUnit | undefined {
+    const filePath = uri.toString();
+    if (
+      this.compilationUnits.has(filePath) ||
+      PluginConfigurationProviderInstance.hasProgramConfig(filePath) ||
+      // no configs, all entry points valid
+      !PluginConfigurationProviderInstance.hasRegisteredProgramConfigs()
+    ) {
+      // entry point, or already part of a compilation unit
+      return (
+        this.compilationUnits.get(filePath) ||
+        this.createAndStoreCompilationUnit(uri)
+      );
+    }
+    return undefined;
   }
 
-  createCompilationUnit(uri: URI): CompilationUnit {
+  createAndStoreCompilationUnit(uri: URI): CompilationUnit {
     const unit = createCompilationUnit(uri);
     this.compilationUnits.set(uri.toString(), unit);
     return unit;
@@ -138,10 +155,16 @@ export class CompletionUnitHandler {
 
   deleteCompilationUnit(uri: URI): boolean {
     const unit = this.compilationUnits.get(uri.toString());
-    for (const file of unit?.files ?? []) {
+    if (!unit) {
+      return false;
+    }
+
+    for (const file of unit.files ?? []) {
       this.compilationUnits.delete(file.toString());
     }
-    return unit !== undefined;
+    this.compilationUnits.delete(uri.toString());
+
+    return true;
   }
 
   getAllCompilationUnits(): CompilationUnit[] {
@@ -155,6 +178,9 @@ export class CompletionUnitHandler {
       const unit = this.getOrCreateCompilationUnit(
         URI.parse(event.document.uri),
       );
+      if (!unit) {
+        return;
+      }
       const document = textDocuments.get(unit.uri) ?? event.document;
       lifecycle(unit, document.getText());
       unit.files.forEach((file) => {

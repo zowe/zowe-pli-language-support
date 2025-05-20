@@ -1,3 +1,4 @@
+ /* Pre-processor declarations & expansion */
  %DECLARE A CHARACTER;
  %A = '123';
  AVERAGE: PROCEDURE OPTIONS (MAIN);

@@ -1,0 +1,12 @@
+{
+  "pgroups": [
+    {
+      "name": "default",
+      "compiler-options": [],
+      "libs": [
+        "b.pli"
+      ],
+      "copybook-extensions": []
+    }
+  ]
+}
