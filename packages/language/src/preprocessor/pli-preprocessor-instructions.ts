@@ -10,11 +10,11 @@
  */
 
 import { createTokenInstance, IToken, TokenType } from "chevrotain";
-import { assertUnreachable } from "langium";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PreprocessorInterpreterState } from "./pli-preprocessor-interpreter-state";
 import { PliPreprocessorProgram } from "./pli-preprocessor-program-builder";
 import * as ast from "../syntax-tree/ast";
+import { assertUnreachable } from "../utils/common";
 
 export type Label = {
   address: number | undefined;

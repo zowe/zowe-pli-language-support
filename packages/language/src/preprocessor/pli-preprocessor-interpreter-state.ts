@@ -11,10 +11,10 @@
 
 import { createTokenInstance, IToken, TokenType } from "chevrotain";
 import { PPInstruction, Values } from "./pli-preprocessor-instructions";
-import { assertUnreachable } from "langium";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { CompilationUnitTokens } from "../workspace/compilation-unit";
 import * as ast from "../syntax-tree/ast";
+import { assertUnreachable } from "../utils/common";
 
 export type EvaluationResults = Map<ast.IfStatement, boolean | undefined>;
 
@@ -33,12 +33,16 @@ export interface PreprocessorInterpreterState {
   getEvaluationResults(): EvaluationResults;
 }
 
+const MAX_GO_TO_COUNT = 5000;
+
 export class PliPreprocessorInterpreterState
   implements PreprocessorInterpreterState
 {
   private plainState: PlainPreprocessorInterpreterState;
   private idTokenType: TokenType;
   private evaluationResults: EvaluationResults;
+  private goToCounter = new Map<number, number>();
+  private _halt = false;
 
   constructor(program: PPInstruction[], idTokenType: TokenType) {
     this.plainState = initializeInterpreterState(program);
@@ -54,11 +58,18 @@ export class PliPreprocessorInterpreterState
     const newCounter = next(this.plainState.programCounter);
     if (newCounter >= 0 && newCounter < this.plainState.program.length) {
       this.plainState = { ...this.plainState, programCounter: newCounter };
+      const instructionCount = this.goToCounter.get(newCounter) ?? 0;
+      this.goToCounter.set(newCounter, instructionCount + 1);
+      // Ensure that we don't run into an infinite loop
+      if (instructionCount > MAX_GO_TO_COUNT) {
+        this._halt = true;
+        console.log("Long running preprocessor code detected. Stopping.");
+      }
     }
   }
 
   get halt() {
-    return this.currentInstruction.type === "halt";
+    return this._halt || this.currentInstruction.type === "halt";
   }
 
   get currentInstruction() {

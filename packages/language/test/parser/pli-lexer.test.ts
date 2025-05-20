@@ -476,6 +476,18 @@ describe("PL/1 Lexer", () => {
     ).toStrictEqual([]);
   });
 
+  test("DO FOREVER without LEAVE", () => {
+    // This might be an intermediate step in the development of a DO FOREVER loop
+    // The lexer should eventually terminate anyway
+    expect(
+      tokenize(`
+            %DO %FOREVER;
+              /* TERMINATE */
+            %END;
+        `),
+    ).toStrictEqual([]);
+  });
+
   test("Nested DO-block with LEAVE outer one", () => {
     expect(
       tokenize(`

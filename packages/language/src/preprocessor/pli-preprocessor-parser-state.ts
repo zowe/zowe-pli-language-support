@@ -17,10 +17,10 @@ import {
 } from "./pli-preprocessor-lexer-state";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { Values } from "./pli-preprocessor-instructions";
-import { URI } from "langium";
 import { PreprocessorError } from "./pli-preprocessor-error";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { URI } from "../utils/uri";
 
 type ParserLocation = "in-statement" | "in-procedure";
 
