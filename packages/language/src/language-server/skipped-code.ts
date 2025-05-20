@@ -9,11 +9,11 @@
  *
  */
 
-import { Connection, NotificationType } from "vscode-languageserver";
+import { Connection, NotificationType, Range } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { TextDocument } from "vscode-languageserver-textdocument";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { Range } from "vscode-languageserver-types";
+import { TextDocuments } from "./text-documents";
+import { isEqual } from "lodash-es";
 
 export interface SkippedCodeNotificationParams {
   uri: string;
@@ -29,40 +29,42 @@ export const SkippedCodeNotification =
  */
 export function skippedCode(
   connection: Connection,
-  uri: string,
   compilationUnit: CompilationUnit,
-  textDocument: TextDocument,
 ) {
-  let ranges: Range[] = [];
+  const ranges = compilationUnit ? skippedCodeRanges(compilationUnit) : [];
+  const cachedRanges = compilationUnit.requestCaches.get("skippedCodeRanges");
 
-  if (compilationUnit) {
-    ranges = skippedCodeRanges(uri, compilationUnit, textDocument);
+  if (
+    !cachedRanges?.length ||
+    cachedRanges.length !== ranges.length ||
+    !cachedRanges.every((range, index) => isEqual(range, ranges[index]))
+  ) {
+    compilationUnit.requestCaches.set("skippedCodeRanges", ranges);
+    connection.sendNotification(SkippedCodeNotification, {
+      uri: compilationUnit.uri.toString(),
+      ranges,
+    });
   }
-
-  connection.sendNotification(SkippedCodeNotification, {
-    uri: uri,
-    ranges: ranges,
-  });
 }
 
 /**
  * Returns the ranges of skipped code in the given compilation unit.
  * Handles both SKIP and IF preprocessor directives.
  */
-export function skippedCodeRanges(
-  uri: string,
-  compilationUnit: CompilationUnit,
-  textDocument: TextDocument,
-): Range[] {
-  const result: Range[] = [];
+export function skippedCodeRanges(compilationUnit: CompilationUnit): Range[] {
+  const textDocument = TextDocuments.get(compilationUnit.uri.toString());
+  if (!textDocument) {
+    return [];
+  }
 
   const tokens = compilationUnit.tokens.fileTokens[textDocument.uri] ?? [];
+  const result: Range[] = [];
 
   for (const token of tokens) {
     if (token.payload?.kind === CstNodeKind.SkipDirective_SKIP) {
       const line = textDocument.positionAt(token.startOffset).line + 1;
       result.push({
-        start: { line: line, character: 0 },
+        start: { line, character: 0 },
         end: { line: line + token.payload.element.lineCount, character: 0 },
       });
     } else if (token.payload?.kind === CstNodeKind.IfStatement_IF) {
@@ -71,12 +73,13 @@ export function skippedCodeRanges(
           token.payload.element,
         );
       if (evaluationResult !== undefined) {
+        const { elseRange, unitRange } = token.payload.element;
         const startOffset = evaluationResult
-          ? (token.payload.element.elseRange?.start ?? 0)
-          : (token.payload.element.unitRange?.start ?? 0);
+          ? (elseRange?.start ?? 0)
+          : (unitRange?.start ?? 0);
         const endOffset = evaluationResult
-          ? (token.payload.element.elseRange?.end ?? 0)
-          : (token.payload.element.unitRange?.end ?? 0);
+          ? (elseRange?.end ?? 0)
+          : (unitRange?.end ?? 0);
         result.push({
           start: textDocument.positionAt(startOffset),
           end: textDocument.positionAt(endOffset),

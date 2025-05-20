@@ -25,6 +25,8 @@ import { rangeToLSP } from "./types";
 import { renameRequest } from "./rename-request";
 import { mapValues } from "../utils/common";
 import { getReferenceLocations } from "../linking/resolver";
+import { documentSymbolRequest } from "./document-symbol-request";
+import { workspaceSymbolRequest } from "./workspace-symbol-request";
 
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompletionUnitHandler();
@@ -51,6 +53,8 @@ export function startLanguageServer(connection: Connection): void {
           full: true,
           range: false,
         },
+        documentSymbolProvider: true,
+        workspaceSymbolProvider: true,
         experimental: {
           skippedPliCode: true,
         },
@@ -167,6 +171,23 @@ export function startLanguageServer(connection: Connection): void {
     }
 
     return null;
+  });
+  connection.onDocumentSymbol((params) => {
+    const uri = params.textDocument.uri;
+    const textDocument = TextDocuments.get(uri);
+    const parsedUri = URI.parse(uri);
+    const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
+
+    if (textDocument && unit) {
+      return documentSymbolRequest(parsedUri, unit);
+    }
+    return [];
+  });
+  connection.onWorkspaceSymbol((params) => {
+    return workspaceSymbolRequest(
+      params.query,
+      compilationUnitHandler.getAllCompilationUnits(),
+    );
   });
   connection.listen();
 }
