@@ -10,7 +10,10 @@
  */
 
 import { IToken } from "chevrotain";
-import { binaryTokenSearch, completionTokenSearch } from "../../utils/search";
+import {
+  binaryTokenSearch,
+  completionTokenIndexSearch,
+} from "../../utils/search";
 import { URI } from "../../utils/uri";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { CompletionItem, Range } from "../types";
@@ -31,7 +34,7 @@ export function completionRequest(
   offset: number,
 ): CompletionItem[] {
   const tokens = unit.tokens.fileTokens[uri.toString()] ?? [];
-  const tokenIndex = completionTokenSearch(tokens, offset);
+  const tokenIndex = completionTokenIndexSearch(tokens, offset);
   const cursorToken = binaryTokenSearch(tokens, offset);
   const token = tokens[tokenIndex];
   const followElements: FollowElement[] = [];
@@ -52,6 +55,9 @@ function getTokenContext(
   tokens: IToken[],
   index: number,
 ): SyntaxNode | undefined {
+  // Random magic number to get the context of the current completion request
+  // If we don't find a context within those 5 tokens, the input is probably massively malformed
+  // This prevents us from giving a completion for cross references, but that's ok
   for (let i = 0; i < 5; i++) {
     let token = tokens[index - i];
     if (!token) {
