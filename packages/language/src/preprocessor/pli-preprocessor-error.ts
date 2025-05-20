@@ -9,27 +9,38 @@
  *
  */
 
-import { ILexingError, IToken } from "chevrotain";
+import type { LexingError } from "./pli-lexer";
+import { Range } from "../language-server/types";
+import { URI } from "../utils/uri";
+import { IToken } from "chevrotain";
 
-export class PreprocessorError extends Error implements ILexingError {
-  private readonly token: IToken;
-  public readonly uri: string;
-  constructor(message: string, token: IToken, uri: string) {
-    super(message);
-    this.token = token;
-    this.uri = uri;
+export class PreprocessorError implements LexingError {
+  private _uri: URI;
+  private _range: Range;
+  private _message: string;
+
+  get uri(): URI {
+    return this._uri;
   }
-  readonly type = "error";
-  get offset(): number {
-    return this.token.startOffset;
+
+  get range(): Range {
+    return this._range;
   }
-  get line(): number | undefined {
-    return this.token.startLine;
+
+  get message(): string {
+    return this._message;
   }
-  get column(): number | undefined {
-    return this.token.startColumn;
-  }
-  get length(): number {
-    return this.token.image.length;
+
+  constructor(message: string, range: Range | IToken, uri: URI) {
+    this._message = message;
+    if ("start" in range) {
+      this._range = range;
+    } else {
+      this._range = {
+        start: range.startOffset,
+        end: range.endOffset!,
+      };
+    }
+    this._uri = uri;
   }
 }

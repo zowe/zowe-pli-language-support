@@ -9,7 +9,7 @@
  *
  */
 
-import { ILexingError, IToken, Lexer } from "chevrotain";
+import { IToken, Lexer } from "chevrotain";
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
@@ -25,10 +25,17 @@ import {
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { Statement } from "../syntax-tree/ast";
 import { EvaluationResults } from "./pli-preprocessor-interpreter-state";
+import { Range } from "../language-server/types";
+
+export interface LexingError {
+  readonly message: string;
+  readonly range: Range;
+  readonly uri: URI;
+}
 
 export interface LexerResult {
   all: IToken[];
-  errors: ILexingError[];
+  errors: LexingError[];
   compilerOptions: CompilerOptionsProcessorResult;
   statements: Statement[];
   fileTokens: Record<string, IToken[]>;
