@@ -46,7 +46,7 @@ export class DeclaredItemParser {
   private items: DeclaredItem[];
   private accept: PliValidationAcceptor;
 
-  constructor(items: DeclaredItem[], accept: PliValidationAcceptor) {
+  constructor(items: readonly DeclaredItem[], accept: PliValidationAcceptor) {
     this.items = items.slice(); // Explicitly make a copy of the items, to use `.shift()` in `this.pop()`
     this.accept = accept;
   }

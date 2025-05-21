@@ -58,7 +58,7 @@ export class SymbolTable {
 
   // Return all qualified symbols
   getSymbols(
-    qualifiedName: string[],
+    qualifiedName: readonly string[],
   ): readonly QualifiedSyntaxNode[] | undefined {
     const [name] = qualifiedName;
     if (!name) {

@@ -82,7 +82,7 @@ export class QualifiedSyntaxNode {
    * PUT (A.C);   // `C` has `PartialQualification`
    * ```
    */
-  getQualificationStatus(qualifiers: string[]): QualificationStatus {
+  getQualificationStatus(qualifiers: readonly string[]): QualificationStatus {
     const qualifier = qualifiers[0];
     if (!qualifier) {
       return QualificationStatus.NoQualification;

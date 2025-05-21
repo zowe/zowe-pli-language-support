@@ -27,7 +27,7 @@ export class Scope {
     this._symbolTable = symbolTable;
   }
 
-  getSymbols(qualifiedName: string[]): readonly QualifiedSyntaxNode[] {
+  getSymbols(qualifiedName: readonly string[]): readonly QualifiedSyntaxNode[] {
     return (
       this._symbolTable?.getSymbols(qualifiedName) ??
       this.parent?.getSymbols(qualifiedName) ??
