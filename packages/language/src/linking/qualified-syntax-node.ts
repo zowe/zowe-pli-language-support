@@ -27,30 +27,6 @@ export class QualifiedSyntaxNode {
   level: number;
   nameToken: IToken;
 
-  /**
-   * The symbol is redeclared in the same scope.
-   * For example:
-   *
-   * ```pli
-   * // Case 1
-   * DCL A;
-   * DCL A;
-   *
-   * // Case 2
-   * DCL A, A;
-   *
-   * // Case 3
-   * A: PROCEDURE;
-   * A: PROCEDURE;
-   *
-   * // Case 4
-   * DCL 1 A,
-   *       2 B,
-   *       2 B;
-   * ```
-   */
-  // isRedeclared: boolean;
-
   constructor(
     nameToken: IToken,
     node: SyntaxNode,
