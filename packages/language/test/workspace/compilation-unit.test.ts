@@ -59,11 +59,11 @@ describe("Compilation Unit Tests", () => {
     );
     expect(config).toBeDefined();
 
-    // lib is not an entry point
+    // lib is not an entry point, but still valid for generating a compilation unit
     const unit1 = ch.getOrCreateCompilationUnit(uriLib);
-    expect(unit1).toBeUndefined();
+    expect(unit1).toBeDefined();
 
-    // entry point should setup a compilation unit
+    // entry point should also setup a compilation unit as expected
     const unit2 = ch.getOrCreateCompilationUnit(uriEntry);
     expect(unit2).toBeDefined();
   });
