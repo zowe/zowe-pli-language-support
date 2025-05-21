@@ -12,7 +12,6 @@
 import { IToken } from "chevrotain";
 import { PliProgram, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
-import { ScopeCacheGroups } from "../linking/symbol-table.js";
 import { TextDocuments } from "../language-server/text-documents.js";
 import { Connection } from "vscode-languageserver";
 import { ReferencesCache } from "../linking/resolver.js";
@@ -24,6 +23,7 @@ import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
 import { PluginConfigurationProviderInstance } from "./plugin-configuration-provider.js";
+import { ScopeCacheGroups } from "../linking/scope.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.

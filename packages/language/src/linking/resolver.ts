@@ -32,12 +32,12 @@ import {
 } from "./tokens";
 import { URI } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { QualifiedSyntaxNode } from "./symbol-table";
 import {
   PliValidationAcceptor,
   PliValidationBuffer,
 } from "../validation/validator";
 import * as PLICodes from "../validation/messages/pli-codes";
+import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 
 export class ReferencesCache {
   private list: Reference[] = [];
