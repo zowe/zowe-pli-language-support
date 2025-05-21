@@ -35,6 +35,19 @@ export class Scope {
     );
   }
 
+  allDistinctSymbols(
+    qualifiedName: string[],
+    symbols: QualifiedSyntaxNode[] = [],
+  ): QualifiedSyntaxNode[] {
+    if (this._symbolTable) {
+      symbols.push(...this._symbolTable.allDistinctSymbols(qualifiedName));
+    }
+    if (this.parent) {
+      this.parent.allDistinctSymbols(qualifiedName, symbols);
+    }
+    return symbols;
+  }
+
   // This is a lazy getter for the symbol table to
   // prevent unnecessary memory allocation for scopes
   // that do not have a symbol table.

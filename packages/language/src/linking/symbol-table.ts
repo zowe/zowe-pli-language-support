@@ -56,6 +56,46 @@ export class SymbolTable {
     this.symbols.add(name, node);
   }
 
+  allDistinctSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
+    const allSymbols: QualifiedSyntaxNode[] = [];
+    const map = new Map<string, QualifiedSyntaxNode[]>();
+    for (const [name, symbols] of this.symbols.entriesGroupedByKey()) {
+      if (qualifiedName.length > 0) {
+        for (const symbol of symbols) {
+          let parent = symbol.getParent();
+          let i = 0;
+          // Iterate over the qualified name and the parent chain in one loop
+          while (parent && i < qualifiedName.length) {
+            const name = qualifiedName[i];
+            if (parent.name === name) {
+              i++;
+            }
+            parent = parent.getParent();
+          }
+          if (i === qualifiedName.length) {
+            // The full qualified name has been used to find the symbol
+            if (!map.get(symbol.name)) {
+              map.set(symbol.name, []);
+            }
+            map.get(name)!.push(symbol);
+          }
+          // Everything else indicates that the name could either not be found
+          // or the qualified name is longer than the chain of parents,
+          // which also indicates a matching failure.
+        }
+      } else {
+        map.set(name, symbols);
+      }
+    }
+    for (const symbols of map.values()) {
+      if (symbols.length === 1) {
+        // Symbol is unique, add it to the list.
+        allSymbols.push(symbols[0]);
+      }
+    }
+    return allSymbols;
+  }
+
   // Return all qualified symbols
   getSymbols(
     qualifiedName: readonly string[],
@@ -98,6 +138,7 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
 
   // Set child containers for all nodes.
   recursivelySetContainer(unit.ast);
+  recursivelySetContainer(unit.preprocessorAst);
 
   const validationBuffer = new PliValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();

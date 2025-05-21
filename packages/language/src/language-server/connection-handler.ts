@@ -28,6 +28,7 @@ import { getReferenceLocations } from "../linking/resolver";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import { completionRequest } from "./completion/completion-request";
 
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
@@ -50,6 +51,9 @@ export function startLanguageServer(connection: Connection): void {
           change: TextDocumentSyncKind.Incremental,
           openClose: true,
         },
+        completionProvider: {
+          triggerCharacters: [".", "%"],
+        },
         renameProvider: true,
         definitionProvider: true,
         referencesProvider: true,
@@ -66,6 +70,19 @@ export function startLanguageServer(connection: Connection): void {
         },
       },
     };
+  });
+  connection.onCompletion((params) => {
+    const uri = params.textDocument.uri;
+    const position = params.position;
+    const textDocument = TextDocuments.get(uri);
+    const parsedUri = URI.parse(uri);
+    const compilationUnit =
+      compilationUnitHandler.getCompilationUnit(parsedUri);
+    if (textDocument && compilationUnit) {
+      const offset = textDocument.offsetAt(position);
+      return completionRequest(compilationUnit, parsedUri, offset);
+    }
+    return [];
   });
   connection.onDefinition((params) => {
     const position = params.position;
