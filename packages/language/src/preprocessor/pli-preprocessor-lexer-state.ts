@@ -9,8 +9,9 @@
  *
  */
 
-import { createTokenInstance, IToken, TokenType } from "chevrotain";
+import { TokenType } from "chevrotain";
 import { URI } from "../utils/uri";
+import { createSyntheticTokenInstance, Token } from "../parser/tokens";
 
 export interface PreprocessorLexerState {
   currentChar(): number;
@@ -18,9 +19,9 @@ export interface PreprocessorLexerState {
   position(): number;
   advanceScan(scanned: string): void;
   advanceLines(lineCount: number): void;
-  tryConsume(tokenType: TokenType): IToken | undefined;
+  tryConsume(tokenType: TokenType): Token | undefined;
   canConsume(tokenType: TokenType): string | undefined;
-  emit(image: string, tokenType: TokenType): IToken;
+  emit(image: string, tokenType: TokenType): Token;
 }
 
 export type TokenMatcher = (text: string, index: number) => string | undefined;
@@ -42,7 +43,7 @@ function getTokenMatcher(token: TokenType): TokenMatcher {
         : undefined;
     };
   } else if (typeof pattern === "function") {
-    const tokens: IToken[] = [];
+    const tokens: Token[] = [];
     const groups = {};
     tokenMatcher = (text: string, index: number) => {
       const match = pattern(text, index, tokens, groups);
@@ -128,7 +129,7 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
     return Selectors.position(this.plainState);
   }
 
-  tryConsume(tokenType: TokenType): IToken | undefined {
+  tryConsume(tokenType: TokenType): Token | undefined {
     const image = this.canConsume(tokenType);
     if (!image) {
       return undefined;
@@ -136,27 +137,16 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
     return this.emit(image, tokenType);
   }
 
-  emit(image: string, tokenType: TokenType) {
+  emit(image: string, tokenType: TokenType): Token {
     const startOffset = Selectors.position(this.plainState);
     this.advanceScan(image);
     const endOffset = Selectors.position(this.plainState);
     // ATTENTION: mind the -1 for end offset, we do not want to consume the next tokens range!
     // Note that we don't need line/column information for our LSP implementation
-    const token = createTokenInstance(
-      tokenType,
-      image,
-      startOffset,
-      endOffset - 1,
-      NaN,
-      NaN,
-      NaN,
-      NaN,
-    );
-    token.payload = {
-      uri: this.plainState.uri,
-      kind: -1,
-      element: null,
-    };
+    const token = createSyntheticTokenInstance(tokenType, image);
+    token.startOffset = startOffset;
+    token.endOffset = endOffset - 1;
+    token.payload.uri = this.plainState.uri;
     return token;
   }
 

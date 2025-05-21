@@ -9,7 +9,6 @@
  *
  */
 
-import { IToken } from "chevrotain";
 import { PliProgram, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
 import { Connection } from "vscode-languageserver";
@@ -22,6 +21,7 @@ import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
 import { ScopeCacheGroups } from "../linking/scope.js";
+import { Token } from "../parser/tokens.js";
 import { EditorDocuments } from "../language-server/text-documents.js";
 
 /**
@@ -52,8 +52,8 @@ export interface CompilationUnit {
 }
 
 export interface CompilationUnitTokens {
-  all: IToken[];
-  fileTokens: Record<string, IToken[]>;
+  all: Token[];
+  fileTokens: Record<string, Token[]>;
 }
 
 export interface CompilationUnitDiagnostics {

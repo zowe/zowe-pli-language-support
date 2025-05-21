@@ -9,7 +9,7 @@
  *
  */
 
-import type { IToken } from "chevrotain";
+import { Token } from "../parser/tokens";
 import type { SyntaxNode } from "../syntax-tree/ast";
 
 /**
@@ -25,7 +25,7 @@ export class QualifiedSyntaxNode {
   node: SyntaxNode;
   parent: QualifiedSyntaxNode | null;
   level: number;
-  token: IToken | null;
+  token: Token | null;
 
   /**
    * Whether the node is redeclared.
@@ -35,7 +35,7 @@ export class QualifiedSyntaxNode {
   isRedeclared: boolean | undefined = undefined;
 
   constructor(
-    token: IToken,
+    token: Token,
     node: SyntaxNode,
     parent: QualifiedSyntaxNode | null = null,
     level: number = 1,

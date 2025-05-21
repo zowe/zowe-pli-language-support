@@ -9,13 +9,14 @@
  *
  */
 
-import { createTokenInstance, IToken } from "chevrotain";
+import { createTokenInstance } from "chevrotain";
 import { Range } from "../language-server/types";
 import { CompilerOptionResult } from "./compiler-options/options";
 import { parseAbstractCompilerOptions } from "./compiler-options/parser";
 import { translateCompilerOptions } from "./compiler-options/translator";
-import { PROCESS } from "../parser/tokens";
+import { PROCESS, Token } from "../parser/tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { URI } from "../utils/uri";
 
 export interface CompilerOptionsProcessorResult {
   result: CompilerOptionResult | undefined;
@@ -23,8 +24,11 @@ export interface CompilerOptionsProcessorResult {
 }
 
 export class CompilerOptionsProcessor {
-  extractCompilerOptions(text: string): CompilerOptionsProcessorResult {
-    const range = this.getCompilerOptionsRange(text);
+  extractCompilerOptions(
+    text: string,
+    uri: URI,
+  ): CompilerOptionsProcessorResult {
+    const range = this.getCompilerOptionsRange(text, uri);
     if (range) {
       // Magic number 8 is the length of the string "*PROCESS"
       const offset = range.start + 8;
@@ -51,7 +55,8 @@ export class CompilerOptionsProcessor {
 
   private getCompilerOptionsRange(
     text: string,
-  ): (Range & { token: IToken }) | undefined {
+    uri: URI,
+  ): (Range & { token: Token }) | undefined {
     let start = 0;
     const ws = /\s+/y;
     ws.lastIndex = 0;
@@ -77,9 +82,11 @@ export class CompilerOptionsProcessor {
           NaN,
           NaN,
           NaN,
-        );
+        ) as Token;
         token.payload = {
+          uri,
           kind: CstNodeKind.ProcessDirective_PROCESS,
+          element: undefined,
         };
         for (let i = offset; i < text.length; i++) {
           const char = text.charAt(i);

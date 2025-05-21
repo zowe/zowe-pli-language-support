@@ -9,7 +9,6 @@
  *
  */
 
-import { IToken } from "chevrotain";
 import {
   binaryTokenSearch,
   completionTokenIndexSearch,
@@ -25,6 +24,7 @@ import {
 } from "./follow-elements";
 import { generateCompletionItems } from "./completion-generator";
 import { fuzzyMatch } from "../../utils/fuzzy-matcher";
+import { Token } from "../../parser/tokens";
 
 export function completionRequest(
   unit: CompilationUnit,
@@ -50,7 +50,7 @@ export function completionRequest(
 }
 
 function getTokenContext(
-  tokens: IToken[],
+  tokens: Token[],
   index: number,
 ): SyntaxNode | undefined {
   // Random magic number to get the context of the current completion request
@@ -90,7 +90,7 @@ function getCompletionItemElements(token: IToken | undefined, offset: number) {
 function convertSimpleToItem(
   items: SimpleCompletionItem[],
   offset: number,
-  token?: IToken,
+  token?: Token,
 ): CompletionItem[] {
   const { query, range } = getCompletionItemElements(token, offset);
 

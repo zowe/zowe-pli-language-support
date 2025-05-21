@@ -1,19 +1,19 @@
-import { IToken } from "chevrotain";
+import { Token } from "../parser/tokens";
 
 export function binaryTokenSearch(
-  tokens: IToken[],
+  tokens: Token[],
   offset: number,
-): IToken | undefined {
+): Token | undefined {
   return tokens[binaryTokenIndexSearch(tokens, offset)];
 }
 
 export function binaryTokenIndexSearch(
-  tokens: IToken[],
+  tokens: Token[],
   offset: number,
 ): number {
   let low = 0;
   let high = tokens.length - 1;
-  let token: IToken | undefined;
+  let token: Token | undefined;
   let mid = -1;
   while (low <= high) {
     mid = Math.floor((low + high) / 2);
@@ -42,18 +42,18 @@ export function binaryTokenIndexSearch(
   return -1;
 }
 
-function isAtTokenEnd(token: IToken, offset: number): boolean {
+function isAtTokenEnd(token: Token, offset: number): boolean {
   const end = token.endOffset!;
   // If the offset is right after the end of a word token, return that token
   return offset - end === 1 && /\w$/u.test(token.image);
 }
 
-function isBeforeTokenEnd(token: IToken, offset: number): boolean {
+function isBeforeTokenEnd(token: Token, offset: number): boolean {
   return token.endOffset! >= offset || isAtTokenEnd(token, offset);
 }
 
 export function completionTokenIndexSearch(
-  tokens: IToken[],
+  tokens: Token[],
   offset: number,
 ): number {
   if (tokens.length === 0) {

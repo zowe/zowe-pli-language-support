@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { PliPreprocessorInterpreterState } from "../../src/preprocessor/pli-preprocessor-interpreter-state";
 import { PreprocessorTokens } from "../../src/preprocessor/pli-preprocessor-tokens";
 import { Instructions } from "../../src/preprocessor/pli-preprocessor-instructions";
-import { createTokenInstance } from "chevrotain";
+import { createSyntheticTokenInstance } from "../../src/parser/tokens";
 
 namespace Fixtures {
   export function emptyProgram() {
@@ -71,7 +71,7 @@ describe("Preprocessor Interpreter State", () => {
 
       //act
       state.assign("VARIABLE", [
-        createTokenInstance(PreprocessorTokens.Id, "bye", 0, 0, 0, 0, 0, 0),
+        createSyntheticTokenInstance(PreprocessorTokens.Id, "bye"),
       ]);
 
       //assert
@@ -161,18 +161,7 @@ describe("Preprocessor Interpreter State", () => {
         active: true,
         dataType: "CHARACTER",
         scanMode: "NOSCAN",
-        value: [
-          createTokenInstance(
-            PreprocessorTokens.Number,
-            "123",
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-          ),
-        ],
+        value: [createSyntheticTokenInstance(PreprocessorTokens.Number, "123")],
       });
 
       //assert

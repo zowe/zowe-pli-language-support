@@ -9,8 +9,65 @@
  *
  */
 
-import { createToken, CustomPatternMatcherFunc, Lexer } from "chevrotain";
+import {
+  createToken,
+  createTokenInstance,
+  CustomPatternMatcherFunc,
+  IToken,
+  Lexer,
+  TokenType,
+} from "chevrotain";
 import { CompilerOptions } from "../preprocessor/compiler-options/options";
+import { URI } from "../utils/uri";
+import { CstNodeKind } from "../syntax-tree/cst";
+import { SyntaxNode } from "../syntax-tree/ast";
+
+/**
+ * Payload for a token, containing metadata about its syntax and element.
+ */
+export interface TokenPayload {
+  /**
+   * The URI associated with the token, if any.
+   */
+  uri: URI | undefined;
+
+  /**
+   * The kind of CST (Concrete Syntax Tree) node.
+   */
+  kind: CstNodeKind | undefined;
+
+  /**
+   * The syntax node associated with the token.
+   */
+  element: SyntaxNode | undefined;
+}
+
+export interface Token extends Omit<IToken, "endOffset" | "payload"> {
+  endOffset: number;
+  payload: TokenPayload;
+}
+
+export function createSyntheticTokenInstance(
+  tokenType: TokenType,
+  image: string,
+): Token {
+  const token = createTokenInstance(
+    tokenType,
+    image,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+  ) as Token;
+  token.payload = {
+    uri: undefined,
+    kind: undefined,
+    element: undefined,
+  };
+  return token;
+}
 
 // Combination tokens (parser optimization)
 export const LinkageOption = createToken({

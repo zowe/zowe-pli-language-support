@@ -13,6 +13,7 @@ import { Connection, NotificationType, Range } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { isEqual } from "lodash-es";
+import { IfStatement, SkipDirective } from "../syntax-tree/ast";
 import { TextDocuments } from "./text-documents";
 
 export interface SkippedCodeNotificationParams {
@@ -61,19 +62,19 @@ export function skippedCodeRanges(compilationUnit: CompilationUnit): Range[] {
   const result: Range[] = [];
 
   for (const token of tokens) {
-    if (token.payload?.kind === CstNodeKind.SkipDirective_SKIP) {
+    if (token.payload.kind === CstNodeKind.SkipDirective_SKIP) {
+      const element = token.payload.element as SkipDirective;
       const line = textDocument.positionAt(token.startOffset).line + 1;
       result.push({
         start: { line, character: 0 },
-        end: { line: line + token.payload.element.lineCount, character: 0 },
+        end: { line: line + element.lineCount, character: 0 },
       });
-    } else if (token.payload?.kind === CstNodeKind.IfStatement_IF) {
+    } else if (token.payload.kind === CstNodeKind.IfStatement_IF) {
+      const element = token.payload.element as IfStatement;
       const evaluationResult =
-        compilationUnit.preprocessorEvaluationResults.get(
-          token.payload.element,
-        );
+        compilationUnit.preprocessorEvaluationResults.get(element);
       if (evaluationResult !== undefined) {
-        const { elseRange, unitRange } = token.payload.element;
+        const { elseRange, unitRange } = element;
         const startOffset = evaluationResult
           ? (elseRange?.start ?? 0)
           : (unitRange?.start ?? 0);

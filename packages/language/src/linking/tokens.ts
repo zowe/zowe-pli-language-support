@@ -9,11 +9,11 @@
  *
  */
 
-import { IToken } from "chevrotain";
+import { Token } from "../parser/tokens";
 import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 
-export function isValidToken(token: IToken): boolean {
+export function isValidToken(token: Token): boolean {
   return (
     !isNaN(token.startOffset) &&
     typeof token.endOffset === "number" &&
@@ -22,7 +22,7 @@ export function isValidToken(token: IToken): boolean {
 }
 
 // TODO: There are more name tokens
-export function isNameToken(kind: CstNodeKind): boolean {
+export function isNameToken(kind: CstNodeKind | undefined): boolean {
   switch (kind) {
     case CstNodeKind.DeclaredVariable_Name:
     case CstNodeKind.LabelPrefix_Name:
@@ -35,7 +35,7 @@ export function isNameToken(kind: CstNodeKind): boolean {
 /**
  * Returns an associated name token for nodes that have one
  */
-export function getNameToken(node: SyntaxNode): IToken | undefined {
+export function getNameToken(node: SyntaxNode): Token | undefined {
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
       return node.nameToken ?? undefined;
@@ -47,7 +47,7 @@ export function getNameToken(node: SyntaxNode): IToken | undefined {
   return undefined;
 }
 
-export function isReferenceToken(kind: CstNodeKind): boolean {
+export function isReferenceToken(kind: CstNodeKind | undefined): boolean {
   switch (kind) {
     case CstNodeKind.TypeAttribute_TypeId0:
     case CstNodeKind.TypeAttribute_TypeId1:

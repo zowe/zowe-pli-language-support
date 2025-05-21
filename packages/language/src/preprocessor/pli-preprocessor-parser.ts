@@ -18,7 +18,6 @@ import {
   PreprocessorParserState,
 } from "./pli-preprocessor-parser-state";
 import { PreprocessorError } from "./pli-preprocessor-error";
-import { IToken } from "chevrotain";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { URI, UriUtils } from "../utils/uri";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
@@ -30,13 +29,14 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { LexingError } from "./pli-lexer";
+import { Token } from "../parser/tokens";
 import { TextDocuments } from "../language-server/text-documents";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
   errors: LexingError[];
-  perFileTokens: Record<string, IToken[]>;
+  perFileTokens: Record<string, Token[]>;
 };
 
 export class PliPreprocessorParser {
@@ -1310,7 +1310,7 @@ export class PliPreprocessorParser {
   }
 
   private tokenizePurePliCode(content: string) {
-    const result: IToken[] = [];
+    const result: Token[] = [];
     const lexerState = new PliPreprocessorLexerState(
       content,
       undefined, // URI is unknown, use undefined

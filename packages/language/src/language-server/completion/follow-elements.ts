@@ -9,7 +9,7 @@
  *
  */
 
-import { IToken } from "chevrotain";
+import { Token } from "../../parser/tokens";
 import { MemberCall, SyntaxKind, SyntaxNode } from "../../syntax-tree/ast";
 import { CstNodeKind } from "../../syntax-tree/cst";
 import {
@@ -55,7 +55,7 @@ export type FollowElement =
 
 export function getFollowElements(
   context: SyntaxNode | undefined,
-  token: IToken,
+  token: Token,
 ): FollowElement[] {
   const elements: FollowElement[] = [];
   const kind = token.payload?.kind as CstNodeKind | undefined;

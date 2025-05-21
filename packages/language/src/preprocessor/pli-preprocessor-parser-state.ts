@@ -9,7 +9,7 @@
  *
  */
 
-import { IToken, TokenType } from "chevrotain";
+import { TokenType } from "chevrotain";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import {
   PliPreprocessorLexerState,
@@ -21,16 +21,17 @@ import { PreprocessorError } from "./pli-preprocessor-error";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI } from "../utils/uri";
+import { Token } from "../parser/tokens";
 
 type ParserLocation = "in-statement" | "in-procedure";
 
 export interface PreprocessorParserState {
   index: number;
   uri: URI;
-  get tokens(): IToken[];
-  get perFileTokens(): Record<string, IToken[]>;
-  get current(): IToken | undefined;
-  get last(): IToken | undefined;
+  get tokens(): Token[];
+  get perFileTokens(): Record<string, Token[]>;
+  get current(): Token | undefined;
+  get last(): Token | undefined;
   get eof(): boolean;
 
   canConsume(...tokenType: TokenType[]): boolean;
@@ -43,7 +44,7 @@ export interface PreprocessorParserState {
     element: SyntaxNode | undefined,
     kind: CstNodeKind | undefined,
     tokenType: TokenType,
-  ): IToken;
+  ): Token;
 
   canConsumeKeyword(...tokenTypes: TokenType[]): boolean;
   tryConsumeKeyword(
@@ -55,7 +56,7 @@ export interface PreprocessorParserState {
     element: SyntaxNode | undefined,
     kind: CstNodeKind | undefined,
     tokenType: TokenType,
-  ): IToken;
+  ): Token;
 
   advanceLines(lineCount: number): void;
   push(location: ParserLocation): void;
@@ -67,8 +68,8 @@ export interface PreprocessorParserState {
 export class PliPreprocessorParserState implements PreprocessorParserState {
   private readonly lexer: PliPreprocessorLexer;
   private readonly lexerState: PreprocessorLexerState;
-  readonly tokens: IToken[];
-  readonly perFileTokens: Record<string, IToken[]> = {};
+  readonly tokens: Token[];
+  readonly perFileTokens: Record<string, Token[]> = {};
   public index: number;
   public uri: URI;
   private location: ParserLocation[] = [];
@@ -247,7 +248,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     element: SyntaxNode | undefined,
     kind: CstNodeKind | undefined,
     tokenType: TokenType,
-  ): IToken {
+  ): Token {
     if (!this.isInProcedure()) {
       this.consume(
         element,

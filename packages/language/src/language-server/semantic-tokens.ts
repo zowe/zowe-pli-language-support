@@ -12,8 +12,6 @@
 import { SemanticTokensBuilder } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { offsetToPosition, Range } from "./types";
-import { IToken } from "chevrotain";
-import { TokenPayload } from "../parser/abstract-parser";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   SemanticTokensLegend,
@@ -21,6 +19,7 @@ import {
 } from "vscode-languageserver-types";
 import { SyntaxKind } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { Token, TokenPayload } from "../parser/tokens";
 
 const semanticTokenTypes = [
   SemanticTokenTypes.variable,
@@ -63,11 +62,8 @@ export function semanticTokens(
   return semanticTokens.build().data;
 }
 
-function tokenType(token: IToken): string | undefined {
-  const payload = token.payload as TokenPayload;
-  if (!payload) {
-    return undefined;
-  }
+function tokenType(token: Token): string | undefined {
+  const payload = token.payload;
 
   if (isProcedureType(payload)) {
     return SemanticTokenTypes.function;
@@ -87,15 +83,15 @@ function tokenType(token: IToken): string | undefined {
 function isProcedureType(payload: TokenPayload): boolean {
   if (
     payload.kind === CstNodeKind.LabelPrefix_Name &&
-    payload.element.container?.kind === SyntaxKind.Statement &&
-    payload.element.container.value?.kind === SyntaxKind.ProcedureStatement
+    payload.element?.container?.kind === SyntaxKind.Statement &&
+    payload.element?.container.value?.kind === SyntaxKind.ProcedureStatement
   ) {
     return true;
   }
   if (
     payload.kind === CstNodeKind.LabelReference_LabelRef &&
-    payload.element.container?.kind === SyntaxKind.EndStatement &&
-    payload.element.container.container?.kind === SyntaxKind.ProcedureStatement
+    payload.element?.container?.kind === SyntaxKind.EndStatement &&
+    payload.element?.container.container?.kind === SyntaxKind.ProcedureStatement
   ) {
     return true;
   }

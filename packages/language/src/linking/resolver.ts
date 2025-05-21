@@ -9,14 +9,13 @@
  *
  */
 
-import { IToken } from "chevrotain";
 import {
   Diagnostic,
   Location,
   Severity,
   tokenToRange,
 } from "../language-server/types";
-import { TokenPayload } from "../parser/abstract-parser";
+import { TokenPayload, Token } from "../parser/tokens";
 import {
   MemberCall,
   Reference,
@@ -206,12 +205,12 @@ export function resolveReferences(unit: CompilationUnit): Diagnostic[] {
 }
 
 export function findTokenElementReference(
-  token: IToken,
+  token: Token,
 ): SyntaxNode | undefined {
   const payload = token.payload as TokenPayload;
   let element = payload.element;
 
-  if (isReferenceToken(payload.kind)) {
+  if (isReferenceToken(payload.kind) && payload.element) {
     // Find the reference beloging to the token
     const ref = getReference(payload.element);
     if (ref?.node) {

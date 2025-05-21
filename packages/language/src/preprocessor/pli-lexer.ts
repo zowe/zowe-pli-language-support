@@ -9,7 +9,7 @@
  *
  */
 
-import { IToken, Lexer } from "chevrotain";
+import { Lexer } from "chevrotain";
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
@@ -26,6 +26,7 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { Statement } from "../syntax-tree/ast";
 import { EvaluationResults } from "./pli-preprocessor-interpreter-state";
 import { Range } from "../language-server/types";
+import { Token } from "../parser/tokens";
 
 export interface LexingError {
   readonly message: string;
@@ -34,11 +35,11 @@ export interface LexingError {
 }
 
 export interface LexerResult {
-  all: IToken[];
+  all: Token[];
   errors: LexingError[];
   compilerOptions: CompilerOptionsProcessorResult;
   statements: Statement[];
-  fileTokens: Record<string, IToken[]>;
+  fileTokens: Record<string, Token[]>;
   evaluationResults: EvaluationResults;
 }
 
@@ -68,7 +69,7 @@ export class PliLexer {
 
   tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
     const compilerOptionsResult =
-      this.compilerOptionsPreprocessor.extractCompilerOptions(inputText);
+      this.compilerOptionsPreprocessor.extractCompilerOptions(inputText, uri);
     tokens.setCompilerOptions(compilerOptionsResult.result?.options ?? {});
     const textWithoutMargins = this.marginsProcessor.processMargins(
       compilerOptionsResult,
@@ -103,7 +104,7 @@ export class PliLexer {
     };
   }
 
-  private filterHiddenTokens(tokens: IToken[]): IToken[] {
+  private filterHiddenTokens(tokens: Token[]): Token[] {
     return tokens.filter((token) => {
       const tokenType = token.tokenType;
       return tokenType.GROUP !== Lexer.SKIPPED;
