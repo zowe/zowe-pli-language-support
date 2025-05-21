@@ -22,7 +22,6 @@ import { skippedCode } from "../language-server/skipped-code.js";
 import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-state.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
-import { PluginConfigurationProviderInstance } from "./plugin-configuration-provider.js";
 import { ScopeCacheGroups } from "../linking/scope.js";
 
 /**
@@ -125,26 +124,15 @@ export class CompilationUnitHandler {
   }
 
   /**
-   * Conditionally creates/gets a compilation unit for the given URI
-   * if the URI corresponds to an entry point, or part of an existing compilation unit.
+   * Gets an existing or creates a new compilation unit for the given URI
    *
-   * @returns Associated compilation unit or undefined
+   * @returns Pre-existing or new compilation unit
    */
-  getOrCreateCompilationUnit(uri: URI): CompilationUnit | undefined {
-    const filePath = uri.toString();
-    if (
-      this.compilationUnits.has(filePath) ||
-      PluginConfigurationProviderInstance.hasProgramConfig(filePath) ||
-      // no configs, all entry points valid
-      !PluginConfigurationProviderInstance.hasRegisteredProgramConfigs()
-    ) {
-      // entry point, or already part of a compilation unit
-      return (
-        this.compilationUnits.get(filePath) ||
-        this.createAndStoreCompilationUnit(uri)
-      );
-    }
-    return undefined;
+  getOrCreateCompilationUnit(uri: URI): CompilationUnit {
+    return (
+      this.compilationUnits.get(uri.toString()) ||
+      this.createAndStoreCompilationUnit(uri)
+    );
   }
 
   createAndStoreCompilationUnit(uri: URI): CompilationUnit {
@@ -178,9 +166,6 @@ export class CompilationUnitHandler {
       const unit = this.getOrCreateCompilationUnit(
         URI.parse(event.document.uri),
       );
-      if (!unit) {
-        return;
-      }
       const document = textDocuments.get(unit.uri) ?? event.document;
       lifecycle(unit, document.getText());
       unit.files.forEach((file) => {
