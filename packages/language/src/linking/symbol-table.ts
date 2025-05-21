@@ -9,14 +9,8 @@
  *
  */
 
+import { Diagnostic } from "../language-server/types";
 import {
-  Diagnostic,
-  Severity,
-  tokenToRange,
-  tokenToUri,
-} from "../language-server/types";
-import {
-  DeclaredItem,
   DeclareStatement,
   ProcedureStatement,
   SyntaxKind,
@@ -30,8 +24,14 @@ import {
 } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache } from "./resolver";
-import { getLabelSymbol, getReference, getVariableSymbol } from "./tokens";
-import * as PLICodes from "../validation/messages/pli-codes";
+import { getReference } from "./tokens";
+import { DeclaredItemParser } from "./declared-item-parser";
+import {
+  QualificationStatus,
+  QualifiedSyntaxNode,
+} from "./qualified-syntax-node";
+import { MultiMap } from "../utils/collections";
+import { Scope, ScopeCache } from "./scope";
 
 /**
  * Terminology:
@@ -40,199 +40,26 @@ import * as PLICodes from "../validation/messages/pli-codes";
  * - Ambiguous: A symbol that is declared with the same name in different branches of nested scopes.
  */
 
-/**
- * ```
- * DCL 1 A1,
- *       2 B,
- *         3 K,
- *       2 C,
- *         3 K;
- * ```
- *
- * Into:
- *
- * ```
- * K -> B -> A1
- * B -> A1
- * K -> C -> A1
- * C -> A1
- * ```
- */
-
-/**
- * Always take full qualification over partial qualification.
- */
-enum QualificationStatus {
-  NoQualification,
-  FullQualification,
-  PartialQualification,
-}
-
-export class QualifiedSyntaxNode {
-  node: SyntaxNode;
-  name: string;
-  parent: QualifiedSyntaxNode | null;
-
-  constructor(
-    name: string,
-    node: SyntaxNode,
-    parent: QualifiedSyntaxNode | null = null,
-  ) {
-    this.node = node;
-    this.name = name;
-    this.parent = parent;
-  }
-
-  getParent(): QualifiedSyntaxNode | null {
-    return this.parent;
-  }
-
-  /**
-   * By walking the qualification chain, we can determine the qualification status of the current node.
-   *
-   * Example:
-   *
-   * ```
-   * DCL 1 A, 2 B, 3 C;
-   * PUT (A.B.C); // `C` has `FullQualification`
-   * PUT (A.C);   // `C` has `PartialQualification`
-   * ```
-   */
-  getQualificationStatus(qualifiers: string[]): QualificationStatus {
-    const qualifier = qualifiers[0];
-    if (!qualifier) {
-      return QualificationStatus.NoQualification;
-    }
-
-    // If the current node is the same as the qualifier, we can remove it from the list.
-    const nextQualifiers =
-      this.name === qualifier ? qualifiers.slice(1) : qualifiers;
-
-    // If there are no qualifiers left, we can determine the qualification status.
-    if (nextQualifiers.length <= 0) {
-      if (!this.parent) {
-        // If there is no parent, the current node is the root node.
-        return QualificationStatus.FullQualification;
-      } else {
-        // If there are parents left, the current node is partially qualified.
-        return QualificationStatus.PartialQualification;
-      }
-    }
-
-    // We have qualifiers left, but no parent. This does not qualify.
-    if (!this.parent) {
-      return QualificationStatus.NoQualification;
-    }
-
-    // We have qualifiers left, and a parent. We continue the search.
-    return this.parent.getQualificationStatus(nextQualifiers);
-  }
-}
-
-class SymbolTableDeclaredItemGenerator {
-  private items: DeclaredItem[];
-  private acceptor: PliValidationAcceptor;
-
-  constructor(items: DeclaredItem[], acceptor: PliValidationAcceptor) {
-    this.items = items.slice(); // Explicitly make a copy of the items, to use `.shift()` in `this.pop()`
-    this.acceptor = acceptor;
-  }
-
-  private peek(): DeclaredItem | undefined {
-    return this.items[0];
-  }
-
-  private pop(): DeclaredItem | undefined {
-    return this.items.shift();
-  }
-
-  private getLevel(item: DeclaredItem): number {
-    // When level is not set, we assume 1 like the PL1 compiler seems to do.
-    let level = item.level ?? 1;
-
-    // TODO: get max level from compilation unit? If e.g. compilation flags can change this.
-    if (level > 255) {
-      level = 255;
-
-      this.acceptor(Severity.E, PLICodes.Error.IBM1363I.message, {
-        code: PLICodes.Error.IBM1363I.fullCode,
-        range: tokenToRange(item.levelToken!),
-        uri: tokenToUri(item.levelToken!) ?? "",
-      });
-    }
-
-    return level;
-  }
-
-  private _generate(
-    table: SymbolTable,
-    parent: QualifiedSyntaxNode | null,
-    parentLevel: number,
-  ) {
-    // Consume many items on the same level.
-    while (true) {
-      const item = this.peek();
-      if (!item) {
-        break;
-      }
-
-      const level = this.getLevel(item);
-      // The item we're looking at is not a part of the current scope, let's exit.
-      if (level <= parentLevel) {
-        break;
-      }
-
-      // This item is part of the current scope, let's consume it.
-      this.pop();
-
-      // In the case of factorized variables, a single
-      // DeclaredItem can contain multiple names.
-      // TODO: Should we allow this? The PL/I compiler simply ignores
-      // factorized variables in structured declarations.
-      forEachNode(item, (child) => {
-        const name = getVariableSymbol(child);
-        if (name) {
-          const node = new QualifiedSyntaxNode(name, child, parent);
-          table.addSymbolDeclaration(name, node);
-          this._generate(table, node, level);
-        }
-      });
-    }
-  }
-
-  generate(table: SymbolTable) {
-    // Use 0 as a default level to start the generation.
-    // TODO: Maybe make this `null` to represent the root scope.
-    this._generate(table, null, 0);
-  }
-}
-
 export class SymbolTable {
-  private symbols: Map<string, QualifiedSyntaxNode[]> = new Map();
+  private symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
 
   addDeclarationStatement(
     declaration: DeclareStatement,
     acceptor: PliValidationAcceptor,
   ): void {
-    const generator = new SymbolTableDeclaredItemGenerator(
-      declaration.items,
-      acceptor,
-    );
+    const generator = new DeclaredItemParser(declaration.items, acceptor);
 
     generator.generate(this);
   }
 
   addSymbolDeclaration(name: string, node: QualifiedSyntaxNode): void {
-    const symbols = this.symbols.get(name);
-    if (symbols) {
-      symbols.push(node);
-    } else {
-      this.symbols.set(name, [node]);
-    }
+    this.symbols.add(name, node);
   }
 
   // Return all qualified symbols
-  getSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] | undefined {
+  getSymbols(
+    qualifiedName: string[],
+  ): readonly QualifiedSyntaxNode[] | undefined {
     const [name] = qualifiedName;
     if (!name) {
       return undefined;
@@ -263,69 +90,6 @@ export class SymbolTable {
 
   clear(): void {
     this.symbols.clear();
-  }
-}
-
-// The Scope class is used to store the symbol table for a given scope.
-// When getting a symbol, the scope will check its own symbol table first,
-// then the parent scope, and so on.
-export class Scope {
-  private _symbolTable: SymbolTable | null;
-  private parent: Scope | null;
-
-  constructor(parent: Scope | null, symbolTable: SymbolTable | null = null) {
-    this.parent = parent;
-    this._symbolTable = symbolTable;
-  }
-
-  getSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
-    return (
-      this._symbolTable?.getSymbols(qualifiedName) ??
-      this.parent?.getSymbols(qualifiedName) ??
-      []
-    );
-  }
-
-  // This is a lazy getter for the symbol table to
-  // prevent unnecessary memory allocation for scopes
-  // that do not have a symbol table.
-  get symbolTable(): SymbolTable {
-    if (!this._symbolTable) {
-      this._symbolTable = new SymbolTable();
-    }
-
-    return this._symbolTable;
-  }
-}
-
-export class ScopeCacheGroups {
-  regular = new ScopeCache();
-  preprocessor = new ScopeCache();
-
-  clear(): void {
-    this.regular.clear();
-    this.preprocessor.clear();
-  }
-
-  get(node: SyntaxNode): Scope | undefined {
-    return this.regular.get(node) ?? this.preprocessor.get(node);
-  }
-}
-
-// The scope cache is used to relate a syntax node to its scope.
-export class ScopeCache {
-  private scopes: Map<SyntaxNode, Scope> = new Map();
-
-  add(node: SyntaxNode, scope: Scope): void {
-    this.scopes.set(node, scope);
-  }
-
-  get(node: SyntaxNode): Scope | undefined {
-    return this.scopes.get(node);
-  }
-
-  clear(): void {
-    this.scopes.clear();
   }
 }
 
@@ -371,16 +135,6 @@ function recursivelySetContainer(node: SyntaxNode) {
   });
 }
 
-// This function determines if a node should create a new scope.
-function shouldNodeCreateNewScope(parent: SyntaxNode): boolean {
-  switch (parent.kind) {
-    case SyntaxKind.ProcedureStatement:
-      return true;
-    default:
-      return false;
-  }
-}
-
 const iterateSymbolTable = (
   scopeCache: ScopeCache,
   referenceCache: ReferencesCache,
@@ -393,22 +147,8 @@ const iterateSymbolTable = (
     referenceCache.add(ref);
   }
 
-  // Add the label symbol to the symbol table in the current scope.
-  const symbol = getLabelSymbol(node);
-  if (symbol) {
-    parentScope.symbolTable.addSymbolDeclaration(
-      symbol,
-      new QualifiedSyntaxNode(symbol, node),
-    );
-  }
-
   // We connect the current node to its scope for usage in the linking phase.
   scopeCache.add(node, parentScope);
-
-  // Are we entering a containing node? Then we should create a new scope for all our children.
-  const scope = shouldNodeCreateNewScope(node)
-    ? new Scope(parentScope)
-    : parentScope;
 
   // Function to recursively iterate over the child nodes to build their symbol table.
   const iterateChild = (scope: Scope) => (child: SyntaxNode) =>
@@ -416,12 +156,20 @@ const iterateSymbolTable = (
 
   // This switch statement handles the special case of a procedure statement.
   switch (node.kind) {
-    // A procedure statement's end node is a child node, but scope-wise, the end
-    // node should be part of the parent scope of the procedure statement, to
-    // properly link to the procedure's label.
+    case SyntaxKind.LabelPrefix:
+    case SyntaxKind.OrdinalValue:
+      parentScope.symbolTable.addSymbolDeclaration(
+        node.name!,
+        new QualifiedSyntaxNode(node.nameToken!, node),
+      );
+      break;
     case SyntaxKind.ProcedureStatement:
-      // Remove the end node from the procedure statement,
-      // to process it as a sibling node.
+      // Create a new scope for the procedure statement.
+      const scope = new Scope(parentScope);
+      // A procedure statement's end node is a child node, but scope-wise, the end
+      // node should be part of the parent scope of the procedure statement, to
+      // properly link to the procedure's label.
+      // We remove the end node from the procedure statement, to process it as a sibling node.
       const procedure: ProcedureStatement = {
         ...node,
         end: null,
@@ -432,9 +180,9 @@ const iterateSymbolTable = (
       }
       break;
     case SyntaxKind.DeclareStatement:
-      scope.symbolTable.addDeclarationStatement(node, acceptor);
+      parentScope.symbolTable.addDeclarationStatement(node, acceptor);
       break;
     default:
-      forEachNode(node, iterateChild(scope));
+      forEachNode(node, iterateChild(parentScope));
   }
 };

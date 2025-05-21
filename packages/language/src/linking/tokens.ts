@@ -85,25 +85,3 @@ export function getReference(node: SyntaxNode): Reference | undefined {
   }
   return undefined;
 }
-
-/**
- * Gets a referenceable symbol name for the given node, when present
- */
-export function getVariableSymbol(node: SyntaxNode): string | undefined {
-  switch (node.kind) {
-    case SyntaxKind.DeclaredVariable:
-      return node.name!;
-    default:
-      return undefined;
-  }
-}
-
-export function getLabelSymbol(node: SyntaxNode): string | undefined {
-  switch (node.kind) {
-    case SyntaxKind.LabelPrefix:
-    case SyntaxKind.OrdinalValue:
-      return node.name!;
-    default:
-      return undefined;
-  }
-}
