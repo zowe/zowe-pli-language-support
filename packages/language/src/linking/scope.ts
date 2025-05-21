@@ -19,17 +19,17 @@ import { SymbolTable } from "./symbol-table";
  * then the parent scope, and so on.
  */
 export class Scope {
-  private _symbolTable: SymbolTable | null;
+  public symbolTable: SymbolTable;
   private parent: Scope | null;
 
   constructor(parent: Scope | null, symbolTable: SymbolTable | null = null) {
     this.parent = parent;
-    this._symbolTable = symbolTable;
+    this.symbolTable = symbolTable ?? new SymbolTable();
   }
 
   getSymbols(qualifiedName: readonly string[]): readonly QualifiedSyntaxNode[] {
     return (
-      this._symbolTable?.getSymbols(qualifiedName) ??
+      this.symbolTable?.getSymbols(qualifiedName) ??
       this.parent?.getSymbols(qualifiedName) ??
       []
     );
@@ -39,24 +39,13 @@ export class Scope {
     qualifiedName: string[],
     symbols: QualifiedSyntaxNode[] = [],
   ): QualifiedSyntaxNode[] {
-    if (this._symbolTable) {
-      symbols.push(...this._symbolTable.allDistinctSymbols(qualifiedName));
+    if (this.symbolTable) {
+      symbols.push(...this.symbolTable.allDistinctSymbols(qualifiedName));
     }
     if (this.parent) {
       this.parent.allDistinctSymbols(qualifiedName, symbols);
     }
     return symbols;
-  }
-
-  // This is a lazy getter for the symbol table to
-  // prevent unnecessary memory allocation for scopes
-  // that do not have a symbol table.
-  get symbolTable(): SymbolTable {
-    if (!this._symbolTable) {
-      this._symbolTable = new SymbolTable();
-    }
-
-    return this._symbolTable;
   }
 }
 
@@ -74,7 +63,9 @@ export class ScopeCacheGroups {
   }
 }
 
-// The scope cache is used to relate a syntax node to its scope.
+/**
+ * The scope cache is used to relate a syntax node to its scope.
+ */
 export class ScopeCache {
   private scopes: Map<SyntaxNode, Scope> = new Map();
 
@@ -88,5 +79,9 @@ export class ScopeCache {
 
   clear(): void {
     this.scopes.clear();
+  }
+
+  values(): Scope[] {
+    return Array.from(this.scopes.values());
   }
 }

@@ -17,11 +17,12 @@ import {
   Range,
   Severity,
   tokenToRange,
+  tokenToUri,
 } from "../language-server/types";
 import { ReferencesCache } from "../linking/resolver";
 import { isValidToken } from "../linking/tokens";
 import { TokenPayload } from "../parser/abstract-parser";
-import { LabelPrefix, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import {
   PliValidationChecks,
@@ -30,6 +31,8 @@ import {
 } from "./pli-validator";
 import * as PLICodes from "../validation/messages/pli-codes";
 import { LexingError } from "../preprocessor/pli-lexer";
+import { isMainProcedure } from "./utils";
+import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -163,35 +166,57 @@ export function parserErrorsToDiagnostics(
   return diagnostics;
 }
 
-/**
- * Checks if the given label prefix references a main procedure.
- * @param node Label prefix node to check
- * @returns True if the node is a main procedure, false otherwise
- */
-function isMainProcedure(node: LabelPrefix): boolean {
-  const statement = node.container;
-  if (statement?.kind !== SyntaxKind.Statement) {
-    return false;
-  }
+function linkingRedeclarationErrorsToDiagnostics(
+  regularScopeCache: ScopeCache,
+  diagnostics: Diagnostic[],
+) {
+  const symbols = new Set(
+    regularScopeCache
+      .values()
+      .flatMap((scope) => scope.symbolTable.symbols.values())
+      .filter((symbol) => symbol.isRedeclared),
+  );
 
-  const procedureStatement = statement.value;
-  if (procedureStatement?.kind !== SyntaxKind.ProcedureStatement) {
-    return false;
-  }
+  for (const symbol of symbols) {
+    const nameToken = symbol.nameToken;
+    if (!nameToken) {
+      continue;
+    }
 
-  // There is only one main procedure per program (@didrikmunther assumption),
-  // so we can just check for the presence of the main option
-  return procedureStatement.options
-    .filter((option) => option.kind === SyntaxKind.Options)
-    .flatMap((option) => option.items)
-    .filter((item) => item.kind === SyntaxKind.SimpleOptionsItem)
-    .some((item) => item.value?.toLowerCase() === "main");
+    /**
+     * Throw different errors depending on if the declaration is a label for a procedure or a declaration statement.
+     *
+     * TODO @didrikmunther: A LabelPrefix without a procedure option should throw a IBM1911I error instead.
+     * Currently, we don't have a way to know if a label is a statement label or a procedure label.
+     */
+    if (symbol.node.kind === SyntaxKind.LabelPrefix) {
+      diagnostics.push({
+        severity: Severity.S,
+        message: PLICodes.Severe.IBM1916I.message(symbol.name),
+        code: PLICodes.Severe.IBM1916I.fullCode,
+        uri: tokenToUri(nameToken) ?? "",
+        range: tokenToRange(nameToken),
+      });
+    } else {
+      diagnostics.push({
+        severity: Severity.E,
+        message: PLICodes.Error.IBM1306I.message(symbol.name),
+        code: PLICodes.Error.IBM1306I.fullCode,
+        uri: tokenToUri(nameToken) ?? "",
+        range: tokenToRange(nameToken),
+      });
+    }
+  }
 }
 
 export function linkingErrorsToDiagnostics(
   references: ReferencesCache,
+  scopeCaches: ScopeCacheGroups,
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
+
+  // @didrikmunther Only checking the regular scope for now
+  linkingRedeclarationErrorsToDiagnostics(scopeCaches.regular, diagnostics);
 
   for (const reference of references.allReferences()) {
     const payload = reference.token.payload as TokenPayload;

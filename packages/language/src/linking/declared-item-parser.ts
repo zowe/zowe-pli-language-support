@@ -41,7 +41,6 @@ import { getNameToken } from "./tokens";
  * C -> A1
  * ```
  */
-
 export class DeclaredItemParser {
   private items: DeclaredItem[];
   private accept: PliValidationAcceptor;
