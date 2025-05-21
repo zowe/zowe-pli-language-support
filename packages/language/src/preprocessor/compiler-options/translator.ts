@@ -1111,16 +1111,30 @@ translator.rule(
     const c = option.values[2];
     ensureType(m, "plain");
     ensureType(n, "plain");
+    // Default values for the margins are 2, 72.
+    const mValue: number = m.value === "" ? 2 : Number(m.value);
+    const nValue: number = n.value === "" ? 72 : Number(n.value);
     let cValue: string | undefined = undefined;
+    if (isNaN(mValue)) {
+      throw new TranslationError(m.token, "Expected a number.", 1);
+    }
+    if (isNaN(nValue)) {
+      throw new TranslationError(n.token, "Expected a number.", 1);
+    }
+    if (mValue >= nValue) {
+      throw new TranslationError(
+        option.token,
+        "Left margin must be smaller than right margin.",
+        1,
+      );
+    }
     if (c) {
       ensureType(c, "plain");
       cValue = c.value;
     }
-    const start = m.value ? Number(m.value) : NaN;
-    const end = n.value ? Number(n.value) : NaN;
     options.margins = {
-      m: start,
-      n: end,
+      m: mValue,
+      n: nValue,
       c: cValue,
     };
   },

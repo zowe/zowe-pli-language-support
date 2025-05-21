@@ -88,7 +88,7 @@ describe("CompilerOptions parser", () => {
 });
 
 describe("CompilerOptions translator", () => {
-  test("Translates MARGINS #1", () => {
+  test("Translates MARGINS with values", () => {
     const options = parseAbstractCompilerOptions("MARGINS(4, 80)");
     const translated = translateCompilerOptions(options).options;
     expect(translated.margins).toEqual({ m: 4, n: 80 });
@@ -100,10 +100,10 @@ describe("CompilerOptions translator", () => {
     expect(translated.margins).toEqual({ m: 4, n: 80 });
   });
 
-  test("Translates MARGINS #2", () => {
+  test("Translates MARGINS default value", () => {
     const options = parseAbstractCompilerOptions("MARGINS(4,)");
     const translated = translateCompilerOptions(options).options;
-    expect(translated.margins).toEqual({ m: 4, n: NaN });
+    expect(translated.margins).toEqual({ m: 4, n: 72 });
   });
 
   test("Translates MARGINS - negative", () => {
@@ -114,16 +114,29 @@ describe("CompilerOptions translator", () => {
     expect(translated.margins).toBeUndefined();
   });
 
-  test("Translates MARGINS #3", () => {
+  test("Translates MARGINS with c", () => {
     const options = parseAbstractCompilerOptions("MARGINS(0, 14,)");
     const translated = translateCompilerOptions(options).options;
     expect(translated.margins).toEqual({ m: 0, n: 14, c: "" });
   });
 
-  test("Translates MARGINS #4", () => {
+  test("Translates NOMARGINS", () => {
     const options = parseAbstractCompilerOptions("NOMARGINS");
     const translated = translateCompilerOptions(options).options;
     expect(translated.margins).toEqual(false);
+  });
+
+  test("Produce issue for text value in MARGINS m", () => {
+    const options = parseAbstractCompilerOptions("MARGINS(M,444)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe("Expected a number.");
+  });
+  test("Produce issue for text value in MARGINS n", () => {
+    const options = parseAbstractCompilerOptions("MARGINS(112, R)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe("Expected a number.");
   });
 
   test("Produce issue for text value when string is expected", () => {
