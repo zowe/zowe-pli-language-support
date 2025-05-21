@@ -20,7 +20,9 @@ describe("PL/1 Lexer", () => {
       );
       if (errors.length > 0) {
         throw new Error(
-          errors.map((e) => `${e.line}:${e.column}: ${e.message}`).join("\n"),
+          errors
+            .map((e) => `${e.range.start}:${e.range.end}: ${e.message}`)
+            .join("\n"),
         );
       }
       return allTokens.map(

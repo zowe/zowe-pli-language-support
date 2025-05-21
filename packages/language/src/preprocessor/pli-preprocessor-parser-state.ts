@@ -210,7 +210,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
         .map((t) => t.tokenType.name ?? "???")
         .join(", ");
       const message = `Expected token type '${tokenType.name}', got '${actualTokenTypes}' instead.`;
-      throw new PreprocessorError(message, token, this.uri.toString());
+      throw new PreprocessorError(message, token || this.last, this.uri);
     }
     token.payload = {
       uri: this.uri,

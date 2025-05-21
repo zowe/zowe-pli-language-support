@@ -30,10 +30,11 @@ import {
 } from "../parser/abstract-parser";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
+import { LexingError } from "./pli-lexer";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
-  errors: PreprocessorError[];
+  errors: LexingError[];
   perFileTokens: Record<string, IToken[]>;
 };
 
@@ -50,7 +51,7 @@ export class PliPreprocessorParser {
 
   start(state: PreprocessorParserState): PreprocessorParserResult {
     const statements: ast.Statement[] = [];
-    const errors: PreprocessorError[] = [];
+    const errors: LexingError[] = [];
     while (!state.eof) {
       try {
         if (
@@ -209,8 +210,8 @@ export class PliPreprocessorParser {
     if (unit === undefined) {
       throw new PreprocessorError(
         "Unexpected token '" + state.current?.image + "'.",
-        state.current!,
-        state.uri.toString(),
+        state.current || state.last!,
+        state.uri,
       );
     }
     // TODO: We can move this into validation!
@@ -570,8 +571,8 @@ export class PliPreprocessorParser {
     //TODO type-3-do
     throw new PreprocessorError(
       "Unexpected token '" + state.current?.image + "'.",
-      state.current!,
-      state.uri.toString(),
+      state.current || state.last!,
+      state.uri,
     );
   }
 
@@ -657,7 +658,7 @@ export class PliPreprocessorParser {
 
   private statements(state: PreprocessorParserState): ast.Statement[] {
     const statements: ast.Statement[] = [];
-    while (!state.canConsumeKeyword(PreprocessorTokens.End)) {
+    while (!state.eof && !state.canConsumeKeyword(PreprocessorTokens.End)) {
       const statement = this.statement(state);
       statements.push(statement);
     }
@@ -1163,8 +1164,8 @@ export class PliPreprocessorParser {
     }
     throw new PreprocessorError(
       "Cannot handle this type of preprocessor expression yet!",
-      state.current!,
-      state.uri.toString(),
+      state.current || state.last!,
+      state.uri,
     );
   }
 

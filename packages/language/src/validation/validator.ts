@@ -9,11 +9,7 @@
  *
  */
 
-import {
-  ILexingError,
-  IRecognitionException,
-  MismatchedTokenException,
-} from "chevrotain";
+import { IRecognitionException, MismatchedTokenException } from "chevrotain";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import {
   Diagnostic,
@@ -33,6 +29,7 @@ import {
   registerValidationChecks,
 } from "./pli-validator";
 import * as PLICodes from "../validation/messages/pli-codes";
+import { LexingError } from "../preprocessor/pli-lexer";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -109,18 +106,15 @@ function validateSyntaxNode(
 }
 
 export function lexerErrorsToDiagnostics(
-  lexerErrors: ILexingError[],
+  lexerErrors: LexingError[],
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   for (const error of lexerErrors) {
-    if (error.line && error.column) {
+    if (!isNaN(error.range.start)) {
       diagnostics.push({
-        uri: "",
+        uri: error.uri.toString(),
         severity: Severity.E,
-        range: {
-          start: error.offset,
-          end: error.offset + error.length,
-        },
+        range: error.range,
         message: error.message,
         source: "lexer",
       });
