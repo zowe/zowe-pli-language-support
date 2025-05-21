@@ -32,8 +32,8 @@ import {
   TextDocument,
   TextDocumentContentChangeEvent,
 } from "vscode-languageserver-textdocument";
-import type { URI } from "../utils/uri.js";
-import { UriUtils } from "../utils/uri.js";
+import { URI, UriUtils } from "../utils/uri.js";
+import { FileSystemProviderInstance } from "../workspace/file-system-provider.js";
 
 export type TextDocumentConnection = Pick<
   Connection,
@@ -208,8 +208,28 @@ export class NormalizedTextDocuments<T extends { uri: string }>
     return this._onDidClose.event;
   }
 
-  public get(uri: string | URI): T | undefined {
-    return this._syncedDocuments.get(UriUtils.normalize(uri));
+  public get(
+    uri: string | URI,
+    options?: { loadFromURI?: boolean },
+  ): T | undefined {
+    let syncedDocument = this._syncedDocuments.get(UriUtils.normalize(uri));
+    if (syncedDocument === undefined && options?.loadFromURI) {
+      try {
+        const uriName = typeof uri === "string" ? uri : uri.toString();
+        const content = FileSystemProviderInstance.readFileSync(
+          URI.parse(uriName),
+        );
+        if (content === undefined) {
+          return undefined;
+        }
+        syncedDocument = this._configuration.create(uriName, "pli", 0, content);
+        this.set(syncedDocument);
+      } catch (error) {
+        console.error(`Failed to load document from URI ${uri}: ${error}`);
+        return undefined;
+      }
+    }
+    return syncedDocument;
   }
 
   public set(document: T): boolean {
