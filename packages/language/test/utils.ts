@@ -65,6 +65,16 @@ export function assertNoLinkingErrors(
 }
 
 /**
+ * Asserts the absence of compiler option errors in the given source file
+ */
+export function assertNoCompilerOptionErrors(
+  sourceFile: CompilationUnit,
+  options: AssertNoDiagnosticsOptions = {},
+) {
+  expectNoDiagnostics(sourceFile.diagnostics.compilerOptions, options);
+}
+
+/**
  * Asserts the absence of validation errors in the given source file
  */
 export function assertNoValidationErrors(
@@ -83,6 +93,7 @@ export function assertNoDiagnostics(
 ) {
   assertNoParseErrors(sourceFile, options);
   assertNoLinkingErrors(sourceFile, options);
+  assertNoCompilerOptionErrors(sourceFile, options);
   assertNoValidationErrors(sourceFile, options);
 }
 

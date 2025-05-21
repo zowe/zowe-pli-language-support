@@ -342,7 +342,7 @@ describe("Validating", () => {
 
     test("Valid on complex case w/ no issues", async () => {
       const doc =
-        parseWithValidations(`*PROCESS OBJECT, PPTRACE, AGGREGATE, NULLDATE;
+        parseWithValidations(`*PROCESS COMPILE, NODBRMLIB, AGGREGATE, MARGINS(2,72);
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
