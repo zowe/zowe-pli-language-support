@@ -154,27 +154,34 @@ function ensureType(
   value: CompilerOptionValue,
   type: "option" | "plainOrString" | "string" | "plain",
 ): void {
-  if (value.kind === SyntaxKind.CompilerOption) {
-    if (type !== "option") {
+  if (type === "option") {
+    if (value.kind !== SyntaxKind.CompilerOption) {
       throw new TranslationError(
         value.token,
         `Expected a compiler option with arguments.`,
         1,
       );
     }
-  } else if (value.kind === SyntaxKind.CompilerOptionText) {
-    if (type !== "plain" && type !== "plainOrString") {
+  } else if (type === "plain") {
+    if (value.kind !== SyntaxKind.CompilerOptionText) {
       throw new TranslationError(
         value.token,
         `Expected a plain text value.`,
         1,
       );
     }
-  } else if (value.kind === SyntaxKind.CompilerOptionString) {
-    if (type !== "string" && type !== "plainOrString") {
+  } else if (type === "string") {
+    if (value.kind !== SyntaxKind.CompilerOptionString) {
+      throw new TranslationError(value.token, `Expected a string value.`, 1);
+    }
+  } else if (type === "plainOrString") {
+    if (
+      value.kind !== SyntaxKind.CompilerOptionText &&
+      value.kind !== SyntaxKind.CompilerOptionString
+    ) {
       throw new TranslationError(
         value.token,
-        `Expected a string compiler options argument.`,
+        `Expected a plain text or string value.`,
         1,
       );
     }
@@ -364,10 +371,25 @@ translator.rule(["CASERULES"], (option, options) => {
   ensureArguments(option, 1, 1);
   const keyword = option.values[0];
   ensureType(keyword, "option");
+  if (keyword.name !== "KEYWORD") {
+    throw new TranslationError(
+      keyword.token,
+      `Expected "KEYWORD" as compiler option value.`,
+      1,
+    );
+  }
   ensureArguments(keyword, 1, 1);
   const keywordCase = keyword.values[0];
   ensureType(keywordCase, "plain");
-  options.caserules = keywordCase.value as CompilerOptions.CaseRules;
+  plainTranslate(
+    (options, value) => {
+      options.caserules = value.value as CompilerOptions.CaseRules;
+    },
+    "MIXED",
+    "UPPER",
+    "LOWER",
+    "START",
+  )(keyword, options);
 });
 
 /** {@link CompilerOptions.check} */
