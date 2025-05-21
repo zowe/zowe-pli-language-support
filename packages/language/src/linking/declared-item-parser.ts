@@ -142,26 +142,6 @@ export class DeclaredItemParser {
         nodes.add(name, node);
         table.addSymbolDeclaration(name, node);
         this._generate(table, node, level);
-
-        // const isRootLevel = level === 1;
-
-        // if (nodes.get(name).length > 0) {
-        //   // If we've already seen this name on the current level, we have a redeclaration.
-        //   this.reportRedeclarationError(nameToken, level);
-        // } else if (isRootLevel && table.getRootDeclarations(name).length > 0) {
-        //   // If we've already seen this name in the root scope, we have a redeclaration.
-        //   this.reportRedeclarationError(nameToken, level);
-        // } else {
-        //   // Otherwise, we can add the node to the symbol table.
-        //   const node = new QualifiedSyntaxNode(name, child, {
-        //     parent,
-        //     level,
-        //   });
-
-        //   nodes.add(name, node);
-        //   table.addSymbolDeclaration(name, node);
-        //   this._generate(table, node, level);
-        // }
       });
     }
   }
