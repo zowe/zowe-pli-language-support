@@ -277,7 +277,7 @@ describe("Validating", () => {
         `);
       assertDiagnostic(doc, {
         message:
-          "Mutually exclusive compiler options NOAGGREGATE & AGGREGATE, only the last one will take effect.",
+          "Mutually exclusive compiler options found for AGGREGATE, only the last one will take effect.",
         severity: Severity.W,
       });
     });
@@ -306,13 +306,36 @@ describe("Validating", () => {
 
     test("Warn on complex case w/ mutex opt", async () => {
       const doc =
-        parseWithValidations(`*PROCESS OBJECT, PPTRACE, AGGREGATE, NULLDATE, NOPPTRACE;
+        parseWithValidations(`*PROCESS NODBRMLIB, COMPILE, AGGREGATE, NOCOMPILE;
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
       assertDiagnostic(doc, {
         message:
-          "Mutually exclusive compiler options PPTRACE & NOPPTRACE, only the last one will take effect.",
+          "Mutually exclusive compiler options found for NOCOMPILE, only the last one will take effect.",
+        severity: Severity.W,
+      });
+    });
+
+    test("Warn on duplicate w/ aliased form", async () => {
+      const doc = parseWithValidations(`*PROCESS AG, AGGREGATE;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message: "Duplicate compiler option AGGREGATE",
+        severity: Severity.W,
+      });
+    });
+
+    test("Warn on mutex case w/ aliased form", async () => {
+      const doc = parseWithValidations(`*PROCESS NAG, AGGREGATE;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message:
+          "Mutually exclusive compiler options found for AGGREGATE, only the last one will take effect.",
         severity: Severity.W,
       });
     });
