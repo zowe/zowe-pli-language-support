@@ -159,11 +159,6 @@ export class CompilationUnitHandler {
     return Array.from(this.compilationUnits.values());
   }
 
-  addCompilationUnit(unit: CompilationUnit): CompilationUnit {
-    this.compilationUnits.set(unit.uri.toString(), unit);
-    return unit;
-  }
-
   listen(connection: Connection): void {
     const textDocuments = TextDocuments;
     textDocuments.listen(connection);

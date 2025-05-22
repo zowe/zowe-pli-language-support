@@ -215,7 +215,7 @@ export class NormalizedTextDocuments<T extends { uri: string }>
     let syncedDocument = this._syncedDocuments.get(UriUtils.normalize(uri));
     if (syncedDocument === undefined && options?.loadFromURI) {
       try {
-        const uriName = typeof uri === "string" ? uri : uri.toString();
+        const uriName = UriUtils.normalize(uri);
         const content = FileSystemProviderInstance.readFileSync(
           URI.parse(uriName),
         );
