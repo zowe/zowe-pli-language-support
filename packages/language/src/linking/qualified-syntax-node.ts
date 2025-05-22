@@ -71,14 +71,16 @@ export class QualifiedSyntaxNode {
       return QualificationStatus.NoQualification;
     }
 
-    // If the current node is the same as the qualifier, we can remove it from the list.
-    const nextQualifiers =
-      this.name === qualifier ? qualifiers.slice(1) : qualifiers;
+    // If the current name matches the qualifier, we can remove it from the list.
+    const nameMatches = this.name === qualifier;
+    const nextQualifiers = nameMatches ? qualifiers.slice(1) : qualifiers;
 
     // If there are no qualifiers left, we can determine the qualification status.
-    if (nextQualifiers.length <= 0) {
-      if (!this.parent) {
-        // If there is no parent, the current node is the root node.
+    const noQualifiersLeft = nextQualifiers.length <= 0;
+    if (noQualifiersLeft) {
+      // If there is no parent, the current node is the root node.
+      const isRootNode = !this.parent;
+      if (isRootNode) {
         return QualificationStatus.FullQualification;
       } else {
         // If there are parents left, the current node is partially qualified.
@@ -92,6 +94,15 @@ export class QualifiedSyntaxNode {
     }
 
     // We have qualifiers left, and a parent. We continue the search.
-    return this.parent.getQualificationStatus(nextQualifiers);
+    const parentStatus = this.parent.getQualificationStatus(nextQualifiers);
+    switch (parentStatus) {
+      // If the parent is fully qualified, but our name didn't match, we are partially qualified.
+      case QualificationStatus.FullQualification:
+        return nameMatches
+          ? QualificationStatus.FullQualification
+          : QualificationStatus.PartialQualification;
+      default:
+        return parentStatus;
+    }
   }
 }
