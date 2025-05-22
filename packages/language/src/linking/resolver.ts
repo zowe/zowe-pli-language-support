@@ -187,9 +187,6 @@ function resolveReference(
   // Assign the resolved symbol to the reference.
   // This function handles assigning references to member calls.
   assignReference(reference, symbol);
-
-  // Add the inverse reference to the cache.
-  unit.references.addInverse(reference);
 }
 
 export function resolveReferences(unit: CompilationUnit): Diagnostic[] {
@@ -198,6 +195,8 @@ export function resolveReferences(unit: CompilationUnit): Diagnostic[] {
 
   for (const reference of unit.references.allReferences()) {
     resolveReference(unit, reference, acceptor);
+    // Add the reference to the reverse map so we can use it for LSP services
+    unit.references.addInverse(reference);
   }
 
   return validationBuffer.getDiagnostics();
