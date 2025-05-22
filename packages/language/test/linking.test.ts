@@ -210,6 +210,12 @@ describe("Linking tests", () => {
         PUT(<|1>D.<|2>E);
         `));
 
+    test.skip("Factorized names in structures are correctly unrolled with level embedded", () =>
+      expectLinks(`
+         DCL 1 A, (2 <|1:B|>);
+         PUT(A.<|1>B);
+        `));
+
     test("Factorized names in structures do only appear on the last symbol", () => {
       const doc = parseAndLink(`
         DCL 1 A, 2 (B, C, D), 3 E;
