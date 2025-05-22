@@ -25,9 +25,11 @@ describe("Find references", () => {
  DCL 1 <|1:A|>,
      2 <|2><|2:B|> CHAR(8) VALUE("B");
  PUT(<|2:B|>);
- PUT(<|1:<|1>A|>.<|2:B|>);`));
+ PUT(<|1><|1:A|>.<|2:B|>);`));
 
   test("Can find references of qualified name variables on reference #2", () =>
+    // Note that the marker is placed after the variable name
+    // However, it should still be able to perform the request
     expectReferences(`
  DCL 1 <|1:A|>,
      2 <|2><|2:B|> CHAR(8) VALUE("B");
