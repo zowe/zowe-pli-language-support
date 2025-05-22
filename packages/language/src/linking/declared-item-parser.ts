@@ -10,7 +10,7 @@
  */
 
 import { Severity, tokenToRange, tokenToUri } from "../language-server/types";
-import { DeclaredItem } from "../syntax-tree/ast";
+import { DeclaredItem, SyntaxKind } from "../syntax-tree/ast";
 import { PliValidationAcceptor } from "../validation/validator";
 import * as PLICodes from "../validation/messages/pli-codes";
 import { SymbolTable } from "./symbol-table";
@@ -58,10 +58,24 @@ export class DeclaredItemParser {
     return this.items.shift();
   }
 
+  private unshift(...items: DeclaredItem[]): void {
+    this.items.unshift(...items);
+  }
+
   private getLevel(item: DeclaredItem): number {
-    // When level is not set, we assume 1 like the PL1 compiler seems to do.
     // TODO: When creating a structured declaration, throw a IBM1364I E if level is not set.
-    let level = item.level ?? 1;
+    let level = item.level;
+
+    // Unwrap factorized declarations in an attempt to find the level.
+    while (level === null && item.container?.kind === SyntaxKind.DeclaredItem) {
+      item = item.container;
+      level = item.level;
+    }
+
+    if (level === null) {
+      // When level is not set, we assume 1 like the PL1 compiler seems to do.
+      level = 1;
+    }
 
     // TODO: get max level from compilation unit? If e.g. compilation flags can change this.
     if (level > 255) {
@@ -102,8 +116,7 @@ export class DeclaredItemParser {
       this.pop();
 
       // In the case of factorized variables, a single
-      // DeclaredItem can contain multiple names.
-      // TODO: Unroll factorized declarations, e.g.:
+      // DeclaredItem can contain multiple names. e.g.:
       // ```
       // DCL 1 A,
       //       2 (B,C,D),
@@ -117,31 +130,40 @@ export class DeclaredItemParser {
       //         2 D,
       //           3 E;
       // ```
+      const factorized: DeclaredItem[] = [];
       forEachNode(item, (child) => {
-        const nameToken = getNameToken(child);
-        if (!nameToken) {
-          return;
+        if (child.kind === SyntaxKind.DeclaredItem) {
+          // We have a factorized variable declaration at hand here.
+          // Note that we need to push them to a separate list first, so they don't end up in reverse order
+          factorized.push(child);
+        } else {
+          const nameToken = getNameToken(child);
+          if (!nameToken) {
+            return;
+          }
+
+          const name = nameToken.image;
+
+          // TODO: Replace name by asterix, somehow ...
+          const isRedeclared = nodes.get(name).length > 0;
+          if (isRedeclared) {
+            this.accept(Severity.E, PLICodes.Error.IBM1308I.message(name), {
+              code: PLICodes.Error.IBM1308I.fullCode,
+              range: tokenToRange(nameToken),
+              uri: tokenToUri(nameToken) ?? "",
+            });
+          }
+
+          // Otherwise, we can add the node to the symbol table.
+          const node = new QualifiedSyntaxNode(nameToken, child, parent, level);
+
+          nodes.add(name, node);
+          table.addSymbolDeclaration(name, node);
+          this._generate(table, node, level);
         }
-
-        const name = nameToken.image;
-
-        // TODO: Replace name by asterix, somehow ...
-        const isRedeclared = nodes.get(name).length > 0;
-        if (isRedeclared) {
-          this.accept(Severity.E, PLICodes.Error.IBM1308I.message(name), {
-            code: PLICodes.Error.IBM1308I.fullCode,
-            range: tokenToRange(nameToken),
-            uri: tokenToUri(nameToken) ?? "",
-          });
-        }
-
-        // Otherwise, we can add the node to the symbol table.
-        const node = new QualifiedSyntaxNode(nameToken, child, parent, level);
-
-        nodes.add(name, node);
-        table.addSymbolDeclaration(name, node);
-        this._generate(table, node, level);
       });
+      // Unshift the factorized variables to the top of the stack, so we can process them immediately
+      this.unshift(...factorized);
     }
   }
 
