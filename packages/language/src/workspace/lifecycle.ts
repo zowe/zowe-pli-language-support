@@ -70,6 +70,7 @@ export function link(compilationUnit: CompilationUnit): ReferencesCache {
   const resolveDiagnostics = resolveReferences(compilationUnit);
   const linkingDiagnostics = linkingErrorsToDiagnostics(
     compilationUnit.references,
+    compilationUnit.scopeCaches,
   );
 
   compilationUnit.diagnostics.linking = [

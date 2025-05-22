@@ -41,7 +41,7 @@ import { Scope, ScopeCache } from "./scope";
  */
 
 export class SymbolTable {
-  private symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
+  symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
 
   addDeclarationStatement(
     declaration: DeclareStatement,
@@ -133,6 +133,45 @@ export class SymbolTable {
   }
 }
 
+const RedeclarationPriority = [SyntaxKind.LabelPrefix];
+
+/**
+ * Assigns the `isRedeclared` property to all symbols that are redeclared.
+ *
+ * Caution: side effect of this function is that the `isRedeclared` property is set on all symbols.
+ */
+export function assignRedeclaredSymbols(scopeCache: ScopeCache) {
+  for (const scope of scopeCache.values()) {
+    // Get the symbols that are at the first level of scope.
+    const symbolsGroups = Array.from(
+      scope.symbolTable.symbols.entriesGroupedByKey(),
+      ([, symbols]) => symbols.filter((symbol) => symbol.level === 1),
+    );
+
+    for (const symbols of symbolsGroups) {
+      // A group of symbols is colliding if it contains more than one symbol.
+      const isColliding = symbols.length > 1;
+      for (const symbol of symbols) {
+        symbol.isRedeclared = isColliding;
+      }
+
+      // During a collision, we determine which symbols should be
+      // marked as redeclared. In the case of a colliding label prefix
+      // and variable declaration, the label prefix should always
+      // take precedence (i.e, be marked as not redeclared).
+      if (isColliding) {
+        symbols.sort(
+          (a, b) =>
+            RedeclarationPriority.indexOf(b.node.kind) -
+            RedeclarationPriority.indexOf(a.node.kind),
+        );
+
+        symbols[0].isRedeclared = false;
+      }
+    }
+  }
+}
+
 export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   const { scopeCaches, references } = unit;
 
@@ -154,6 +193,8 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
     unit.preprocessorAst,
     preprocessorScope,
   );
+  // TODO: Active this when we have some tests
+  // assignRedeclaredSymbols(scopeCaches.preprocessor);
 
   // Todo: The root scope should contain global PL1 standard library symbols.
   const builtInSymbols = new SymbolTable();
@@ -165,6 +206,7 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
     unit.ast,
     scope,
   );
+  assignRedeclaredSymbols(scopeCaches.regular);
 
   return validationBuffer.getDiagnostics();
 }

@@ -14,6 +14,7 @@ import {
   assertDiagnostic,
   expectLinks as expectLinksRoot,
   parseAndLink,
+  TestBuilder,
 } from "./utils";
 import * as PLICodes from "../src/validation/messages/pli-codes";
 import { Severity } from "../src/language-server/types";
@@ -74,7 +75,7 @@ describe("Linking tests", () => {
 
  CALL <|1>OUTER;`));
 
-  test("Must handle implicit declaration (use before declaration)", () =>
+  test("Must handle use before declaration", () =>
     expectLinks(`
  DCL <|1:A|> CHAR(8) INIT("A");
  PUT(<|1>A); // -> "A"
@@ -89,7 +90,7 @@ describe("Linking tests", () => {
  CALL LABL;
  PUT(<|1>A); // -> "A"`));
 
-  test("Must handle implicit declaration (use before declaration)", () =>
+  test("Must handle use before declaration", () =>
     expectLinks(`
  PUT(<|1>A);
  DCL <|1:A|> CHAR(8) INIT("A");
@@ -305,70 +306,94 @@ describe("Linking tests", () => {
   });
 
   describe("Faulty cases", () => {
-    /**
-     * @WILLFIX: We currently cannot detect multiple declarations in the same scope.
-     */
-    test.skip("Redeclaration of label must fail", () => {
-      const doc = parseAndLink(`
+    describe("Redeclarations", () => {
+      test("Redeclaration must fail", () => {
+        const doc = parseAndLink(`
+ DCL A CHAR(8) INIT("A");
+ DCL A CHAR(8) INIT("A2");`);
+        assertDiagnostic(doc, {
+          code: PLICodes.Error.IBM1306I.fullCode,
+          severity: Severity.E,
+        });
+      });
+
+      test("Redeclaration within the same block must fail", () => {
+        /**
+         * We don't have levels here, so it acts like sequential declarations,
+         * unlike nested sublevels which have another error.
+         */
+        const doc = parseAndLink(`
+ DCL A CHAR(8) INIT("A"), A CHAR(8) INIT("B");`);
+        assertDiagnostic(doc, {
+          code: PLICodes.Error.IBM1306I.fullCode,
+          severity: Severity.E,
+        });
+      });
+
+      test("Redeclaration within nested sublevels must fail", () => {
+        new TestBuilder(`
+ DCL 1 A,
+       2 B,
+         3 C CHAR(8) VALUE("C"),
+       2 <|1:B|>,
+         3 D CHAR(8) VALUE("D");
+`).expectErrorCodeAt("1", PLICodes.Error.IBM1308I.fullCode);
+      });
+
+      test("Redeclaration of label must fail", () => {
+        new TestBuilder(`
  OUTER: PROCEDURE;
  END OUTER;
- OUTER: PROCEDURE;
- END OUTER;`);
-      assertDiagnostic(doc, {
-        code: PLICodes.Severe.IBM1916I.fullCode,
-        severity: Severity.S,
+ <|1:OUTER|>: PROCEDURE;
+ END OUTER;
+ CALL OUTER;
+`).expectErrorCodeAt("1", PLICodes.Severe.IBM1916I.fullCode);
+      });
+
+      test("Repeated declaration of label is invalid (procedure label first)", () => {
+        new TestBuilder(`
+ A: PROCEDURE;
+ END A;
+ DCL <|1:A|> CHAR(8) INIT("A");
+`).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode);
+      });
+
+      test("Repeated declaration of label is invalid (variable label first)", () => {
+        new TestBuilder(`
+ DCL <|1:A|> CHAR(8) INIT("A");
+ A: PROCEDURE;
+ END A;
+`).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode);
+      });
+
+      /**
+       * @WILLFIX @didrikmunther: currently, we don't have a way to know
+       * if a label is a statement label or a procedure label.
+       */
+      test.skip("Repeated statement label must fail", () => {
+        new TestBuilder(`
+ GO TO A;
+ <|1:A|>:
+ A:
+`).expectErrorCodeAt("1", PLICodes.Severe.IBM1911I.fullCode);
       });
     });
 
     test("Unused label should warn", () => {
-      const doc = parseAndLink(`
- OUTER: PROCEDURE;
- END OUTER;`);
-      assertDiagnostic(doc, {
-        code: PLICodes.Warning.IBM1213I.fullCode,
-        severity: Severity.W,
-      });
-    });
-
-    /**
-     * @WILLFIX: We currently cannot detect multiple declarations in the same scope.
-     */
-    test.skip("Redeclaration must fail", () => {
-      const doc = parseAndLink(`
- DCL A CHAR(8) INIT("A");
- DCL A CHAR(8) INIT("A2");`);
-      assertDiagnostic(doc, {
-        code: PLICodes.Error.IBM1306I.fullCode,
-        severity: Severity.E,
-      });
+      new TestBuilder(`
+ <|1:OUTER|>: PROCEDURE;
+ END OUTER;
+`).expectErrorCodeAt("1", PLICodes.Warning.IBM1213I.fullCode);
     });
 
     test("Ambiguous reference must fail", () => {
-      const doc = parseAndLink(`
+      new TestBuilder(`
  DCL 1 A1,
      2 B CHAR(8) VALUE("B1");
  DCL 1 A2,
      2 B CHAR(8) VALUE("B2");
- PUT(B);
- `);
-      assertDiagnostic(doc, {
-        code: PLICodes.Severe.IBM1881I.fullCode,
-        severity: Severity.S,
-      });
-    });
-
-    /**
-     * @WILLFIX: We currently cannot detect multiple declarations in the same scope.
-     */
-    test.skip("Repeated declaration of label is invalid", () => {
-      const doc = parseAndLink(`
- A: PROCEDURE;
- END A;
- DCL A CHAR(8) INIT("A");`);
-      assertDiagnostic(doc, {
-        code: PLICodes.Error.IBM1306I.fullCode,
-        severity: Severity.E,
-      });
+ PUT(<|1:B|>);
+`).expectErrorCodeAt("1", PLICodes.Severe.IBM1881I.fullCode);
     });
 
     /**

@@ -27,6 +27,13 @@ export class QualifiedSyntaxNode {
   level: number;
   nameToken: IToken;
 
+  /**
+   * Whether the node is redeclared.
+   *
+   * Will be assigned to a value by the linker after the symbol table has been built.
+   */
+  isRedeclared: boolean | undefined = undefined;
+
   constructor(
     nameToken: IToken,
     node: SyntaxNode,
@@ -52,7 +59,7 @@ export class QualifiedSyntaxNode {
    *
    * Example:
    *
-   * ```
+   * ```pli
    * DCL 1 A, 2 B, 3 C;
    * PUT (A.B.C); // `C` has `FullQualification`
    * PUT (A.C);   // `C` has `PartialQualification`

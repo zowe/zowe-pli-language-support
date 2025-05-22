@@ -148,8 +148,8 @@ export class MultiMap<K, V> {
   /**
    * Returns a stream of values in the map.
    */
-  values(): MapIterator<V> {
-    return this.map.values().flatMap((a) => a);
+  values(): V[] {
+    return Array.from(this.map.values()).flatMap((a) => a);
   }
 
   /**

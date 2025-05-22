@@ -162,7 +162,10 @@ function resolveReference(
     return;
   }
 
-  const symbols = scope.getSymbols(qualifiedName);
+  // Don't resolve a reference to redeclared symbols.
+  const symbols = scope
+    .getSymbols(qualifiedName)
+    .filter((symbol) => !symbol.isRedeclared);
 
   const isAmbiguous = symbols.length > 1;
   if (isAmbiguous) {
