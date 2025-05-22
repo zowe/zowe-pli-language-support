@@ -430,7 +430,7 @@ translator.rule(
 
 /** {@link CompilerOptions.codepage} */
 translator.rule(
-  ["CODEPAGE"],
+  ["CODEPAGE", "CP"],
   plainTranslate((options, value) => {
     options.codepage = value.value;
   }),
@@ -442,7 +442,8 @@ translator.flag("common", ["COMMON"], ["NOCOMMON"]);
 /** {@link CompilerOptions.compile} */
 translator.rule(
   ["COMPILE", "C"],
-  (_, options) => {
+  (option, options) => {
+    ensureArguments(option, 0, 0);
     options.compile = true;
   },
   ["NOCOMPILE", "NC"],
@@ -483,13 +484,14 @@ translator.rule(
     options.copyright = valueOption.value;
   },
   ["NOCOPYRIGHT"],
-  (_, options) => {
+  (option, options) => {
+    ensureArguments(option, 0, 0);
     options.copyright = false;
   },
 );
 
 /** {@link CompilerOptions.csect} */
-translator.flag("csect", ["CSECT"], ["NOCSECT"]);
+translator.flag("csect", ["CSECT", "CSE"], ["NOCSECT", "NOCSE"]);
 
 /** {@link CompilerOptions.csectcut} */
 translator.rule(
@@ -508,7 +510,7 @@ translator.rule(
 
 /** {@link CompilerOptions.currency} */
 translator.rule(
-  ["CURRENCY"],
+  ["CURRENCY", "CURR"],
   stringTranslate((options, value) => {
     if (value.value.length === 0) {
       throw new TranslationError(
@@ -582,7 +584,7 @@ translator.rule(["DDSQL"], (option, options) => {
 });
 
 /** {@link CompilerOptions.decimal} */
-translator.rule(["DECIMAL"], (option, options) => {
+translator.rule(["DECIMAL", "DEC"], (option, options) => {
   options.decimal = {};
   for (const opt of option.values) {
     ensureType(opt, "plain");
@@ -650,7 +652,7 @@ translator.rule(["DECIMAL"], (option, options) => {
 translator.flag("decomp", ["DECOMP"], ["NODECOMP"]);
 
 /** {@link CompilerOptions.default} */
-translator.rule(["DEFAULT"], (option, options) => {
+translator.rule(["DEFAULT", "DFT"], (option, options) => {
   const def: CompilerOptions.Default = (options.default = {});
   for (const opt of option.values) {
     if (opt.kind === SyntaxKind.CompilerOptionText) {
