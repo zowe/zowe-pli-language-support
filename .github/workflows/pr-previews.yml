@@ -27,6 +27,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Actually checkout the PR branch
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Install pnpm
         if: github.event.action != 'closed'
         uses: pnpm/action-setup@v4
