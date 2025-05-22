@@ -183,6 +183,13 @@ function linkingRedeclarationErrorsToDiagnostics(
       continue;
     }
 
+    const uri = tokenToUri(nameToken);
+    if (!uri) {
+      continue;
+    }
+
+    const range = tokenToRange(nameToken);
+
     /**
      * Throw different errors depending on if the declaration is a label for a procedure or a declaration statement.
      *
@@ -194,16 +201,16 @@ function linkingRedeclarationErrorsToDiagnostics(
         severity: Severity.S,
         message: PLICodes.Severe.IBM1916I.message(symbol.name),
         code: PLICodes.Severe.IBM1916I.fullCode,
-        uri: tokenToUri(nameToken) ?? "",
-        range: tokenToRange(nameToken),
+        uri,
+        range,
       });
     } else {
       diagnostics.push({
         severity: Severity.E,
         message: PLICodes.Error.IBM1306I.message(symbol.name),
         code: PLICodes.Error.IBM1306I.fullCode,
-        uri: tokenToUri(nameToken) ?? "",
-        range: tokenToRange(nameToken),
+        uri,
+        range,
       });
     }
   }
@@ -265,11 +272,16 @@ export function linkingErrorsToDiagnostics(
 
       const payload: TokenPayload = node.nameToken.payload;
 
+      const uri = payload.uri?.toString();
+      if (!uri) {
+        continue;
+      }
+
       diagnostics.push({
         severity: Severity.W,
         message: PLICodes.Warning.IBM1213I.message(node.name!),
         code: PLICodes.Warning.IBM1213I.fullCode,
-        uri: payload.uri?.toString() ?? "",
+        uri,
         range: tokenToRange(node.nameToken),
       });
     }
