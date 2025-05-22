@@ -33,7 +33,7 @@ The extension enables syntax highlighting for PL/I code.
 Contrasting colors are used in displayed code for ease of identifying and distinguishing keywords, variables, compiler options, paragraphs, and sections.
 
 ### Code Snippets
-Before you write your COBOL code from scratch, search the snippet library for useful templates.
+Before you write your PL/I code from scratch, search the snippet library for useful templates.
 
 1. Press **F1** to open the command palette.
 2. Run the command **Snippets: Insert PL/I Snippet**.
