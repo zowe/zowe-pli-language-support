@@ -199,10 +199,12 @@ const iterateSymbolTable = (
   switch (node.kind) {
     case SyntaxKind.LabelPrefix:
     case SyntaxKind.OrdinalValue:
-      parentScope.symbolTable.addSymbolDeclaration(
-        node.name!,
-        new QualifiedSyntaxNode(node.nameToken!, node),
-      );
+      if (node.name && node.nameToken) {
+        parentScope.symbolTable.addSymbolDeclaration(
+          node.name,
+          new QualifiedSyntaxNode(node.nameToken, node),
+        );
+      }
       break;
     case SyntaxKind.ProcedureStatement:
       // Create a new scope for the procedure statement.

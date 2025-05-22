@@ -9,7 +9,7 @@
  *
  */
 
-import { describe, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
   assertDiagnostic,
   expectLinks as expectLinksRoot,
@@ -195,6 +195,35 @@ describe("Linking tests", () => {
 
  PUT (<|b1>B.<|c>C);
  PUT (<|b2>B.<|d>D);`));
+
+    test("Factorized names can be used as variables", () =>
+      expectLinks(`
+        DCL (<|1:A|>, <|2:B|>) CHAR(8);
+        PUT(<|1>A);
+        PUT(<|2>B);
+        `));
+
+    test("Factorized names in structures are correctly unrolled", () =>
+      expectLinks(`
+        DCL 1 A, 2 (B, C, <|1:D|>), 3 <|2:E|>;
+        PUT(A.<|1>D.<|2>E);
+        PUT(<|1>D.<|2>E);
+        `));
+
+    test("Factorized names in structures do only appear on the last symbol", () => {
+      const doc = parseAndLink(`
+        DCL 1 A, 2 (B, C, D), 3 E;
+        PUT(A.B.E);
+        PUT(A.C.E);
+        PUT(A.D.E);
+      `);
+      const linkingIssues = doc.diagnostics.linking;
+      const eLinkIssues = linkingIssues.filter((e) =>
+        e.message.includes("'E'"),
+      );
+      // Both A.B.E and A.C.E are invalid links, while A.D.E is valid
+      expect(eLinkIssues).toHaveLength(2);
+    });
 
     /**
      * @WILLFIX: We currently do not have explicit handling for factorized names in structures,
