@@ -175,4 +175,44 @@ describe("CompilerOptions translator", () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toMatch("Unknown compiler option");
   });
+
+  test("Produce issue for arguments at COMPILE", () => {
+    const options = parseAbstractCompilerOptions("COMPILE(E)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe("Expected 0 arguments, but received 1.");
+  });
+
+  test("Produce issue for arguments at NOCOPYRIGHT", () => {
+    const options = parseAbstractCompilerOptions("NOCOPYRIGHT(E)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe("Expected 0 arguments, but received 1.");
+  });
+
+  test("Produce issue for text value when option is expected in DEPRECATE", () => {
+    const options = parseAbstractCompilerOptions("DEPRECATE(BUILTIN)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "Expected a compiler option with arguments.",
+    );
+  });
+
+  test("Test compiler option abbreviations", () => {
+    const abbreviations = ["CURR", "CP", "CSE", "NOCSE", "DEC", "DFT"];
+    for (const abbr of abbreviations) {
+      const options = parseAbstractCompilerOptions(abbr);
+      const issues = translateCompilerOptions(options).issues;
+      if (
+        issues.some((issue) =>
+          issue.message.includes("Unknown compiler option:"),
+        )
+      ) {
+        throw new Error(
+          `Abbreviation ${abbr} was not recognized as a valid compiler option.`,
+        );
+      }
+    }
+  });
 });
