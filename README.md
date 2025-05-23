@@ -15,6 +15,8 @@ PL/I Language Support recognizes files with the extension `.pli` and `.pl1` as P
 
 This extension is a part of the Zowe open-source project. To contribute and report issues, visit our [Git repository](https://github.com/zowe/zowe-pli-language-support).
 
+<a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v3 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev3/explorer-vs-code/color/zowe-conformant-zowev3-explorer-vs-code-color.png" width=20% height=20% /></a>
+
 ## Prerequisites
 
 There are no client or server-side prerequisites for PL/I Language Support.
