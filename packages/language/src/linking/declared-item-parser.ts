@@ -16,7 +16,6 @@ import * as PLICodes from "../validation/messages/pli-codes";
 import { SymbolTable } from "./symbol-table";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { MultiMap } from "../utils/collections";
-import { forEachNode } from "../syntax-tree/ast-iterator";
 import { getNameToken } from "./tokens";
 
 /**
@@ -95,7 +94,7 @@ export class DeclaredItemParser {
     table: SymbolTable,
     parent: QualifiedSyntaxNode | null,
     parentLevel: number,
-  ) {
+  ): void {
     // Keep track of all nodes we've seen on the current level, for redeclaration detection.
     const nodes = new MultiMap<string, QualifiedSyntaxNode>();
 
@@ -131,7 +130,8 @@ export class DeclaredItemParser {
       //           3 E;
       // ```
       const factorized: DeclaredItem[] = [];
-      forEachNode(item, (child) => {
+
+      for (const child of item.elements) {
         if (child.kind === SyntaxKind.DeclaredItem) {
           // We have a factorized variable declaration at hand here.
           // Note that we need to push them to a separate list first, so they don't end up in reverse order
@@ -139,19 +139,22 @@ export class DeclaredItemParser {
         } else {
           const nameToken = getNameToken(child);
           if (!nameToken) {
-            return;
+            continue;
           }
 
           const name = nameToken.image;
 
-          // TODO: Replace name by asterix, somehow ...
-          const isRedeclared = nodes.get(name).length > 0;
-          if (isRedeclared) {
-            this.accept(Severity.E, PLICodes.Error.IBM1308I.message(name), {
-              code: PLICodes.Error.IBM1308I.fullCode,
-              range: tokenToRange(nameToken),
-              uri: tokenToUri(nameToken) ?? "",
-            });
+          // A wildcard item is not a name, so we don't need to check for redeclarations.
+          if (child.kind !== SyntaxKind.WildcardItem) {
+            // TODO: Replace name by asterix, somehow ...
+            const isRedeclared = nodes.get(name).length > 0;
+            if (isRedeclared) {
+              this.accept(Severity.E, PLICodes.Error.IBM1308I.message(name), {
+                code: PLICodes.Error.IBM1308I.fullCode,
+                range: tokenToRange(nameToken),
+                uri: tokenToUri(nameToken) ?? "",
+              });
+            }
           }
 
           // Otherwise, we can add the node to the symbol table.
@@ -161,13 +164,14 @@ export class DeclaredItemParser {
           table.addSymbolDeclaration(name, node);
           this._generate(table, node, level);
         }
-      });
+      }
+
       // Unshift the factorized variables to the top of the stack, so we can process them immediately
       this.unshift(...factorized);
     }
   }
 
-  generate(table: SymbolTable) {
+  generate(table: SymbolTable): void {
     // Use 0 as a default level to start the generation.
     // TODO: Maybe make this `null` to represent the root scope.
     this._generate(table, null, 0);

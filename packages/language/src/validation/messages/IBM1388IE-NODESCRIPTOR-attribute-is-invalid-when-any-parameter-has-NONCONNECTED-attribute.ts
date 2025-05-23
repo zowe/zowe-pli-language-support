@@ -51,7 +51,7 @@ export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_h
       .filter((i) =>
         i.elements.some(
           (e) =>
-            e !== "*" &&
+            e.kind !== SyntaxKind.WildcardItem &&
             "name" in e &&
             e.name &&
             parameterNames.has(normalizeIdentifier(e.name)),

@@ -52,6 +52,7 @@ export enum SyntaxKind {
   DataSpecificationOptions,
   DateAttribute,
   DeclaredItem,
+  WildcardItem,
   DeclaredVariable,
   DeclareStatement,
   DefaultAttributeExpression,
@@ -282,6 +283,7 @@ export type SyntaxNode =
   | DataSpecificationOptions
   | DateAttribute
   | DeclaredItem
+  | WildcardItem
   | DeclaredVariable
   | DeclareStatement
   | DefaultAttributeExpression
@@ -979,10 +981,14 @@ export interface DateAttribute extends AstNode {
   kind: SyntaxKind.DateAttribute;
   pattern: string | null;
 }
+export interface WildcardItem extends AstNode {
+  kind: SyntaxKind.WildcardItem;
+  nameToken: IToken | null;
+}
 export interface DeclaredItem extends AstNode {
   kind: SyntaxKind.DeclaredItem;
   level: number | null;
-  elements: Wildcard<DeclaredVariable | DeclaredItem>[];
+  elements: (DeclaredVariable | DeclaredItem | WildcardItem)[];
   levelToken: IToken | null;
   attributes: DeclarationAttribute[];
 }

@@ -142,7 +142,9 @@ class DeclareSymbolBuilder implements SymbolBuilder {
       kind = SymbolKind.Constant;
     }
 
-    for (const element of item.elements.filter((e) => e !== "*")) {
+    for (const element of item.elements.filter(
+      (e) => e.kind !== SyntaxKind.WildcardItem,
+    )) {
       if (element.kind === SyntaxKind.DeclaredItem) {
         // Declared struct items can inherit their level from the parent,
         // e.g., 11 (XX, ZZ) char(10).
