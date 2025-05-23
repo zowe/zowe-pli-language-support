@@ -201,21 +201,18 @@ describe("Linking tests", () => {
       expectLinks(`
         DCL (<|1:A|>, <|2:B|>) CHAR(8);
         PUT(<|1>A);
-        PUT(<|2>B);
-        `));
+        PUT(<|2>B);`));
 
     test("Factorized names in structures are correctly unrolled", () =>
       expectLinks(`
         DCL 1 A, 2 (B, C, <|1:D|>), 3 <|2:E|>;
         PUT(A.<|1>D.<|2>E);
-        PUT(<|1>D.<|2>E);
-        `));
+        PUT(<|1>D.<|2>E);`));
 
-    test.skip("Factorized names in structures are correctly unrolled with level embedded", () =>
+    test("Factorized names in structures are correctly unrolled with level embedded", () =>
       expectLinks(`
          DCL 1 A, (2 <|1:B|>);
-         PUT(A.<|1>B);
-        `));
+         PUT(A.<|1>B);`));
 
     test("Factorized names in structures do only appear on the last symbol", () => {
       const doc = parseAndLink(`
@@ -230,21 +227,6 @@ describe("Linking tests", () => {
       );
       // Both A.B.E and A.C.E are invalid links, while A.D.E is valid
       expect(eLinkIssues).toHaveLength(2);
-    });
-
-    /**
-     * @WILLFIX: We currently do not have explicit handling for factorized names in structures,
-     * they just get rolled out.
-     */
-    test.skip("Should error when using factorized names in structures", () => {
-      const doc = parseAndLink(`
- DCL 1 A,
-       2 (B,C),
-          3 D CHAR(8) VALUE("D");`);
-      assertDiagnostic(doc, {
-        code: PLICodes.Severe.IBM2203I.fullCode,
-        severity: Severity.S,
-      });
     });
   });
 
