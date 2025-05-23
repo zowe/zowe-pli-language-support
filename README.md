@@ -48,3 +48,7 @@ The Find All References and Go To Definition functionalities are extended to wor
 
 * **Find All References** identifies all occurrences of variables and paragraphs from include files in the code.
 * **Go To Definition** enables you to right-click on any variable or paragraph to reveal a definition of the element. If the definition is in an include file, or the name of an include file, the include file opens.
+
+## Integrate with Zowe Explorer
+
+We recommend the use of [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) to access your mainframe data sets containing PL/I source code directly in the VS Code interface.
