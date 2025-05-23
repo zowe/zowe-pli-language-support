@@ -13,7 +13,7 @@ PL/I Language Support enhances the PL/I programming experience on your IDE. The 
 
 PL/I Language Support recognizes files with the extension `.pli` and `.pl1` as PL/I files.
 
-This extension is a part of the Zowe open-source project. To contribute and report issues, visit our [Git repository](https://github.com/zowe/zowe-pli-language-support).
+This extension is a part of the Zowe open-source project, hosted by the Open Mainframe Project. To contribute and report issues, visit our [Git repository](https://github.com/zowe/zowe-pli-language-support).
 
 <a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v3 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev3/explorer-vs-code/color/zowe-conformant-zowev3-explorer-vs-code-color.png" width=20% height=20% /></a>
 
