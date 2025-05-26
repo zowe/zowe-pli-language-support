@@ -251,8 +251,11 @@ export function generateAndAssertValidSymbolTable(
  * ---------- Linking utilities ----------
  */
 
-export function parseAndLink(text: string): CompilationUnit {
-  const unit = parse(text);
+export function parseAndLink(
+  text: string,
+  options?: { validate: boolean },
+): CompilationUnit {
+  const unit = parse(text, options);
   lifecycle.generateSymbolTable(unit);
   lifecycle.link(unit);
 
@@ -427,11 +430,15 @@ export class TestBuilder {
    */
   constructor(text: string) {
     const { output, indices, ranges } = replaceNamedIndices(text);
-    this.unit = parseAndLink(output);
+    this.unit = this.compileUnit(output);
     this.diagnostics = collectDiagnostics(this.unit);
     this.output = output;
     this.indices = indices;
     this.ranges = ranges;
+  }
+
+  protected compileUnit(text: string): CompilationUnit {
+    return parseAndLink(text);
   }
 
   /**
@@ -570,6 +577,15 @@ export class TestBuilder {
     }
 
     return this;
+  }
+}
+
+/**
+ * A test builder that also validates the PL/I text after linking.
+ */
+export class ValidatorTestBuilder extends TestBuilder {
+  override compileUnit(text: string): CompilationUnit {
+    return parseAndLink(text, { validate: true });
   }
 }
 

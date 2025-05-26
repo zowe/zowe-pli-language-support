@@ -395,16 +395,6 @@ describe("Linking tests", () => {
  `).expectExclusiveErrorCodesAt("1", PLICodes.Severe.IBM1881I.fullCode);
     });
 
-    /**
-     * @WILLFIX: We currently do not have explicit handling for factorized names in structures,
-     * they just get rolled out.
-     */
-    test.skip("Factoring of level numbers into declaration lists containing level numbers is invalid", () =>
-      new TestBuilder(`
- DCL 1 A,
-       2(B, <|a:3|> C, D) (3,2) binary fixed (15);
- `).expectExclusiveErrorCodesAt("a", PLICodes.Error.IBM1376I.fullCode));
-
     test("Structure level greater than 255 is invalid", () =>
       new TestBuilder(`
  DCL 1 A,
