@@ -11,13 +11,11 @@
 
 import { describe, expect, test } from "vitest";
 import {
-  assertDiagnostic,
   expectLinks as expectLinksRoot,
   parseAndLink,
   TestBuilder,
 } from "./utils";
 import * as PLICodes from "../src/validation/messages/pli-codes";
-import { Severity } from "../src/language-server/types";
 
 /**
  * Scoping report: https://github.com/zowe/zowe-pli-language-support/issues/94
@@ -331,13 +329,12 @@ describe("Linking tests", () => {
   describe("Faulty cases", () => {
     describe("Redeclarations", () => {
       test("Redeclaration must fail", () => {
-        const doc = parseAndLink(`
+        new TestBuilder(`
  DCL A CHAR(8) INIT("A");
- DCL A CHAR(8) INIT("A2");`);
-        assertDiagnostic(doc, {
-          code: PLICodes.Error.IBM1306I.fullCode,
-          severity: Severity.E,
-        });
+ DCL <|1:A|> CHAR(8) INIT("A2");`).expectErrorCodeAt(
+          "1",
+          PLICodes.Error.IBM1306I.fullCode,
+        );
       });
 
       test("Redeclaration within the same block must fail", () => {
@@ -345,12 +342,11 @@ describe("Linking tests", () => {
          * We don't have levels here, so it acts like sequential declarations,
          * unlike nested sublevels which have another error.
          */
-        const doc = parseAndLink(`
- DCL A CHAR(8) INIT("A"), A CHAR(8) INIT("B");`);
-        assertDiagnostic(doc, {
-          code: PLICodes.Error.IBM1306I.fullCode,
-          severity: Severity.E,
-        });
+        new TestBuilder(`
+ DCL A CHAR(8) INIT("A"), <|1:A|> CHAR(8) INIT("B");`).expectErrorCodeAt(
+          "1",
+          PLICodes.Error.IBM1306I.fullCode,
+        );
       });
 
       test("Redeclaration within nested sublevels must fail", () => {
@@ -424,23 +420,18 @@ describe("Linking tests", () => {
      * they just get rolled out.
      */
     test.skip("Factoring of level numbers into declaration lists containing level numbers is invalid", () => {
-      const doc = parseAndLink(`
+      new TestBuilder(`
  DCL 1 A,
-       2(B, 3 C, D) (3,2) binary fixed (15);`);
-      assertDiagnostic(doc, {
-        code: PLICodes.Error.IBM1376I.fullCode,
-        severity: Severity.E,
-      });
+       2(B, <|a:3|> C, D) (3,2) binary fixed (15);`).expectErrorCodeAt(
+        "a",
+        PLICodes.Error.IBM1376I.fullCode,
+      );
     });
 
     test("Structure level greater than 255 is invalid", () => {
-      const doc = parseAndLink(`
+      new TestBuilder(`
  DCL 1 A,
-       256 B;`);
-      assertDiagnostic(doc, {
-        code: PLICodes.Error.IBM1363I.fullCode,
-        severity: Severity.E,
-      });
+       <|a:256|> B;`).expectErrorCodeAt("a", PLICodes.Error.IBM1363I.fullCode);
     });
   });
 
