@@ -276,6 +276,15 @@ describe("Linking tests", () => {
   PUT (<|a2_c>C.<|a2_c_b>B);
   PUT (<|a>A.<|a_b>B);`));
 
+    test("Full qualification should take precedence over partial qualification", () =>
+      expectLinks(`
+ DCL 1 A,
+        2 B,
+          3 C,
+        2 <|1:C|>;
+
+ PUT(A.<|1>C);`));
+
     test("Star name in structure should not need to be qualified", () =>
       expectLinks(`
  DCL 1 A,
