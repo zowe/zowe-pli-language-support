@@ -16,12 +16,9 @@ import {
   DiagnosticInfo,
   Range,
   Severity,
-  tokenToRange,
-  tokenToUri,
 } from "../language-server/types";
 import { ReferencesCache } from "../linking/resolver";
 import { isValidToken } from "../linking/tokens";
-import { TokenPayload } from "../parser/abstract-parser";
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import {
@@ -29,10 +26,10 @@ import {
   PliValidationFunction,
   registerValidationChecks,
 } from "./pli-validator";
-import * as PLICodes from "../validation/messages/pli-codes";
 import { LexingError } from "../preprocessor/pli-lexer";
 import { isMainProcedure } from "./utils";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
+import { LinkerErrorReporter } from "../linking/error";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -168,7 +165,7 @@ export function parserErrorsToDiagnostics(
 
 function linkingRedeclarationErrorsToDiagnostics(
   regularScopeCache: ScopeCache,
-  diagnostics: Diagnostic[],
+  reporter: LinkerErrorReporter,
 ) {
   const symbols = new Set(
     regularScopeCache
@@ -183,13 +180,6 @@ function linkingRedeclarationErrorsToDiagnostics(
       continue;
     }
 
-    const uri = tokenToUri(nameToken);
-    if (!uri) {
-      continue;
-    }
-
-    const range = tokenToRange(nameToken);
-
     /**
      * Throw different errors depending on if the declaration is a label for a procedure or a declaration statement.
      *
@@ -197,21 +187,9 @@ function linkingRedeclarationErrorsToDiagnostics(
      * Currently, we don't have a way to know if a label is a statement label or a procedure label.
      */
     if (symbol.node.kind === SyntaxKind.LabelPrefix) {
-      diagnostics.push({
-        severity: Severity.S,
-        message: PLICodes.Severe.IBM1916I.message(symbol.name),
-        code: PLICodes.Severe.IBM1916I.fullCode,
-        uri,
-        range,
-      });
+      reporter.reportAlreadyDeclared(nameToken, symbol.name);
     } else {
-      diagnostics.push({
-        severity: Severity.E,
-        message: PLICodes.Error.IBM1306I.message(symbol.name),
-        code: PLICodes.Error.IBM1306I.fullCode,
-        uri,
-        range,
-      });
+      reporter.reportRepeatedDeclaration(nameToken, symbol.name);
     }
   }
 }
@@ -220,29 +198,16 @@ export function linkingErrorsToDiagnostics(
   references: ReferencesCache,
   scopeCaches: ScopeCacheGroups,
 ): Diagnostic[] {
-  const diagnostics: Diagnostic[] = [];
+  const validationBuffer = new PliValidationBuffer();
+  const reporter = new LinkerErrorReporter(validationBuffer.getAcceptor());
 
   // @didrikmunther Only checking the regular scope for now
-  linkingRedeclarationErrorsToDiagnostics(scopeCaches.regular, diagnostics);
+  linkingRedeclarationErrorsToDiagnostics(scopeCaches.regular, reporter);
 
   for (const reference of references.allReferences()) {
-    const payload = reference.token.payload as TokenPayload;
-
-    if (
-      reference.node === null &&
-      isValidToken(reference.token) &&
-      payload.uri
-    ) {
-      diagnostics.push({
-        uri: payload.uri.toString(),
-        severity: Severity.W,
-        range: {
-          start: reference.token.startOffset,
-          end: reference.token.endOffset! + 1,
-        },
-        message: `Cannot find symbol '${reference.text}'`,
-        source: "linking",
-      });
+    if (reference.node === null && isValidToken(reference.token)) {
+      // Question: is reference.text and token.image the same?
+      reporter.reportCannotFindSymbol(reference.token, reference.text);
     }
   }
 
@@ -270,22 +235,9 @@ export function linkingErrorsToDiagnostics(
         continue;
       }
 
-      const payload: TokenPayload = node.nameToken.payload;
-
-      const uri = payload.uri?.toString();
-      if (!uri) {
-        continue;
-      }
-
-      diagnostics.push({
-        severity: Severity.W,
-        message: PLICodes.Warning.IBM1213I.message(node.name!),
-        code: PLICodes.Warning.IBM1213I.fullCode,
-        uri,
-        range: tokenToRange(node.nameToken),
-      });
+      reporter.reportUnreferencedSymbol(node.nameToken);
     }
   }
 
-  return diagnostics;
+  return validationBuffer.getDiagnostics();
 }
