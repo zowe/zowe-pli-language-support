@@ -43,7 +43,6 @@ export class LinkerErrorReporter {
         code: PLICodes.Error.IBM1363I.fullCode,
         range,
         uri,
-        source: "linking",
       }),
     );
   }
@@ -57,7 +56,6 @@ export class LinkerErrorReporter {
         code: PLICodes.Error.IBM1308I.fullCode,
         range,
         uri,
-        source: "linking",
       }),
     );
   }
@@ -71,7 +69,6 @@ export class LinkerErrorReporter {
         uri,
         range,
         code: PLICodes.Severe.IBM1916I.fullCode,
-        source: "linking",
       }),
     );
   }
@@ -85,7 +82,6 @@ export class LinkerErrorReporter {
         uri,
         range,
         code: PLICodes.Error.IBM1306I.fullCode,
-        source: "linking",
       }),
     );
   }
@@ -98,7 +94,6 @@ export class LinkerErrorReporter {
       this.accept(Severity.W, `Cannot find symbol '${name}'`, {
         uri,
         range,
-        source: "linking",
       }),
     );
   }
@@ -112,7 +107,6 @@ export class LinkerErrorReporter {
         uri,
         range,
         code: PLICodes.Warning.IBM1213I.fullCode,
-        source: "linking",
       }),
     );
   }
