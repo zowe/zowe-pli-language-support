@@ -23,7 +23,7 @@ import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { MultiMap } from "../utils/collections";
 import { getNameToken } from "./tokens";
 import { IToken } from "chevrotain";
-import { LinkerError } from "./error";
+import { LinkerErrorReporter } from "./error";
 
 type UnrolledItem = {
   kind: SyntaxKind;
@@ -157,12 +157,13 @@ function unrollFactorized(
  * C -> A1
  * ```
  */
-export class DeclaredItemParser extends LinkerError {
+export class DeclaredItemParser {
   private items: UnrolledItem[];
+  private reporter: LinkerErrorReporter;
 
   constructor(items: readonly DeclaredItem[], accept: PliValidationAcceptor) {
-    super(accept);
     this.items = unrollFactorized(items);
+    this.reporter = new LinkerErrorReporter(accept);
   }
 
   private peek(): UnrolledItem | undefined {
@@ -184,7 +185,7 @@ export class DeclaredItemParser extends LinkerError {
 
     // TODO: get max level from compilation unit? If e.g. compilation flags can change this.
     if (level > 255) {
-      this.reportLevelError(item.levelToken!);
+      this.reporter.reportLevelError(item.levelToken!);
 
       return 255;
     }
@@ -227,7 +228,7 @@ export class DeclaredItemParser extends LinkerError {
         // TODO: Replace name by asterix, somehow ...
         const isRedeclared = nodes.get(name).length > 0;
         if (isRedeclared) {
-          this.reportRedeclaration(token);
+          this.reporter.reportRedeclaration(token);
         }
       }
 

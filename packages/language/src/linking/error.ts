@@ -8,7 +8,7 @@ import {
 import { PLICodes } from "../validation/messages";
 import { PliValidationAcceptor } from "../validation/validator";
 
-export class LinkerError {
+export class LinkerErrorReporter {
   constructor(protected accept: PliValidationAcceptor) {}
 
   private getLocation(token: IToken) {
