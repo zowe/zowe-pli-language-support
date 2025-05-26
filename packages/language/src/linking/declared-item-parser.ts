@@ -10,13 +10,25 @@
  */
 
 import { Severity, tokenToRange, tokenToUri } from "../language-server/types";
-import { DeclaredItem, SyntaxKind } from "../syntax-tree/ast";
+import { DeclaredItem, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { PliValidationAcceptor } from "../validation/validator";
 import * as PLICodes from "../validation/messages/pli-codes";
 import { SymbolTable } from "./symbol-table";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { MultiMap } from "../utils/collections";
 import { getNameToken } from "./tokens";
+import { IToken } from "chevrotain";
+
+/**
+ * A wildcard item is not a name token, but we need the get the token to index it.
+ */
+function getDeclaredItemToken(node: SyntaxNode): IToken | undefined {
+  if (node.kind === SyntaxKind.WildcardItem) {
+    return node.token ?? undefined;
+  }
+
+  return getNameToken(node);
+}
 
 /**
  * Handles "parsing" the hierarchy of a list of `DeclaredItem`s.
@@ -137,12 +149,12 @@ export class DeclaredItemParser {
           // Note that we need to push them to a separate list first, so they don't end up in reverse order
           factorized.push(child);
         } else {
-          const nameToken = getNameToken(child);
-          if (!nameToken) {
+          const token = getDeclaredItemToken(child);
+          if (!token) {
             continue;
           }
 
-          const name = nameToken.image;
+          const name = token.image;
 
           // A wildcard item is not a name, so we don't need to check for redeclarations.
           if (child.kind !== SyntaxKind.WildcardItem) {
@@ -151,14 +163,14 @@ export class DeclaredItemParser {
             if (isRedeclared) {
               this.accept(Severity.E, PLICodes.Error.IBM1308I.message(name), {
                 code: PLICodes.Error.IBM1308I.fullCode,
-                range: tokenToRange(nameToken),
-                uri: tokenToUri(nameToken) ?? "",
+                range: tokenToRange(token),
+                uri: tokenToUri(token) ?? "",
               });
             }
           }
 
           // Otherwise, we can add the node to the symbol table.
-          const node = new QualifiedSyntaxNode(nameToken, child, parent, level);
+          const node = new QualifiedSyntaxNode(token, child, parent, level);
 
           nodes.add(name, node);
           table.addSymbolDeclaration(name, node);

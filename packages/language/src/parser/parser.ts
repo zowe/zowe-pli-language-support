@@ -6743,7 +6743,7 @@ export class PliParser extends AbstractParser {
     return {
       kind: ast.SyntaxKind.WildcardItem,
       container: null,
-      nameToken: null,
+      token: null,
     };
   }
 
@@ -6770,9 +6770,13 @@ export class PliParser extends AbstractParser {
       {
         ALT: () => {
           this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.DeclaredItem_Star);
             const wildcard = this.createWildcardItem();
-            wildcard.nameToken = token;
+            wildcard.token = token;
+            this.tokenPayload(
+              token,
+              wildcard,
+              CstNodeKind.WildcardItem_Asterix,
+            );
             element.elements.push(wildcard);
           });
         },

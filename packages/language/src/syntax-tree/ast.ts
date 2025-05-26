@@ -983,12 +983,16 @@ export interface DateAttribute extends AstNode {
 }
 export interface WildcardItem extends AstNode {
   kind: SyntaxKind.WildcardItem;
-  nameToken: IToken | null;
+  token: IToken | null;
 }
+export type DeclaredItemElement =
+  | DeclaredVariable
+  | DeclaredItem
+  | WildcardItem;
 export interface DeclaredItem extends AstNode {
   kind: SyntaxKind.DeclaredItem;
   level: number | null;
-  elements: (DeclaredVariable | DeclaredItem | WildcardItem)[];
+  elements: DeclaredItemElement[];
   levelToken: IToken | null;
   attributes: DeclarationAttribute[];
 }

@@ -43,8 +43,6 @@ export function getNameToken(node: SyntaxNode): IToken | undefined {
       return node.nameToken ?? undefined;
     case SyntaxKind.OrdinalValue:
       return node.nameToken ?? undefined;
-    case SyntaxKind.WildcardItem:
-      return node.nameToken ?? undefined;
   }
   return undefined;
 }

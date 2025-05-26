@@ -25,7 +25,7 @@ export class QualifiedSyntaxNode {
   node: SyntaxNode;
   parent: QualifiedSyntaxNode | null;
   level: number;
-  nameToken: IToken;
+  token: IToken | null;
 
   /**
    * Whether the node is redeclared.
@@ -35,19 +35,19 @@ export class QualifiedSyntaxNode {
   isRedeclared: boolean | undefined = undefined;
 
   constructor(
-    nameToken: IToken,
+    token: IToken,
     node: SyntaxNode,
     parent: QualifiedSyntaxNode | null = null,
     level: number = 1,
   ) {
-    this.nameToken = nameToken;
+    this.token = token;
     this.node = node;
     this.parent = parent;
     this.level = level;
   }
 
   get name(): string {
-    return this.nameToken.image;
+    return this.token?.image ?? "";
   }
 
   getParent(): QualifiedSyntaxNode | null {

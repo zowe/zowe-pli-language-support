@@ -178,7 +178,7 @@ function linkingRedeclarationErrorsToDiagnostics(
   );
 
   for (const symbol of symbols) {
-    const nameToken = symbol.nameToken;
+    const nameToken = symbol.token;
     if (!nameToken) {
       continue;
     }

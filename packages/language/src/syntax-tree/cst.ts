@@ -547,7 +547,7 @@ export enum CstNodeKind {
   DeclareStatement_Comma,
   DeclareStatement_Semicolon,
   DeclaredItem_LevelNumber,
-  DeclaredItem_Star,
+  WildcardItem_Asterix,
   DeclaredItem_OpenParen,
   DeclaredItem_Comma,
   DeclaredItem_CloseParen,
