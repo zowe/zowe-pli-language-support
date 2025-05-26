@@ -469,7 +469,7 @@ export class PliPreprocessorGenerator {
   private getVariableNames(decl: ast.DeclaredItem): string[] {
     const names: string[] = [];
     for (const element of decl.elements) {
-      if (element === "*") {
+      if (element.kind === ast.SyntaxKind.WildcardItem) {
         continue;
       }
       if (element.kind === ast.SyntaxKind.DeclaredItem) {

@@ -142,10 +142,12 @@ const RedeclarationPriority = [SyntaxKind.LabelPrefix];
  */
 export function assignRedeclaredSymbols(scopeCache: ScopeCache) {
   for (const scope of scopeCache.values()) {
-    // Get the symbols that are at the first level of scope.
     const symbolsGroups = Array.from(
       scope.symbolTable.symbols.entriesGroupedByKey(),
-      ([, symbols]) => symbols.filter((symbol) => symbol.level === 1),
+      ([, symbols]) =>
+        symbols
+          .filter((symbol) => symbol.level === 1) // Get the symbols that are at the first level of scope.
+          .filter((symbol) => symbol.node.kind !== SyntaxKind.WildcardItem), // Wildcard items are not checked for redeclarations.
     );
 
     for (const symbols of symbolsGroups) {
@@ -160,13 +162,13 @@ export function assignRedeclaredSymbols(scopeCache: ScopeCache) {
       // and variable declaration, the label prefix should always
       // take precedence (i.e, be marked as not redeclared).
       if (isColliding) {
-        symbols.sort(
+        const [first] = symbols.toSorted(
           (a, b) =>
             RedeclarationPriority.indexOf(b.node.kind) -
             RedeclarationPriority.indexOf(a.node.kind),
         );
 
-        symbols[0].isRedeclared = false;
+        first.isRedeclared = false;
       }
     }
   }

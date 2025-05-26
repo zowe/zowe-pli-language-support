@@ -6739,6 +6739,14 @@ export class PliParser extends AbstractParser {
     return this.pop<ast.DeclareStatement>();
   });
 
+  private createWildcardItem(): ast.WildcardItem {
+    return {
+      kind: ast.SyntaxKind.WildcardItem,
+      container: null,
+      token: null,
+    };
+  }
+
   DeclaredItem = this.RULE("DeclaredItem", () => {
     let element = this.push(ast.createDeclaredItem());
 
@@ -6762,8 +6770,14 @@ export class PliParser extends AbstractParser {
       {
         ALT: () => {
           this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.DeclaredItem_Star);
-            element.elements.push(token.image as "*");
+            const wildcard = this.createWildcardItem();
+            wildcard.token = token;
+            this.tokenPayload(
+              token,
+              wildcard,
+              CstNodeKind.WildcardItem_Asterisk,
+            );
+            element.elements.push(wildcard);
           });
         },
       },

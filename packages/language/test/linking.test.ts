@@ -285,7 +285,7 @@ describe("Linking tests", () => {
 
  PUT(A.<|1>C);`));
 
-    test("Star name in structure should not need to be qualified", () =>
+    test("Star name in structure should result in partial qualification", () =>
       expectLinks(`
  DCL 1 A,
        2 *,
@@ -293,10 +293,7 @@ describe("Linking tests", () => {
 
  PUT(A.<|b>B);`));
 
-    /**
-     * @WILLFIX: We currently do not handle star names in any way.
-     */
-    test.skip("Star name in structure should result in partial qualification", () =>
+    test("Fully qualified name precedes star name", () =>
       expectLinks(`
  DCL 1 A,
         2 *,

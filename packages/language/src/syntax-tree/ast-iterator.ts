@@ -191,9 +191,7 @@ export function forEachNode(
       break;
     case SyntaxKind.DeclaredItem:
       for (const element of node.elements) {
-        if (element !== "*") {
-          action(element);
-        }
+        action(element);
       }
       node.attributes.forEach(action);
       break;
