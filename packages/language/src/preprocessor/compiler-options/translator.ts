@@ -24,6 +24,7 @@ import {
   CompilerOptionValue,
   SyntaxKind,
 } from "../../syntax-tree/ast";
+import { Warning as PLIWarning } from "../../validation/messages/pli-codes";
 
 interface TranslatorRule {
   positive?: string[];
@@ -34,9 +35,23 @@ interface TranslatorRule {
 
 type Translate = (option: CompilerOption, options: CompilerOptions) => void;
 
+/**
+ * Tracks how a rule is applied, either positively or negatively
+ */
+enum Applied {
+  POSITIVE = 1,
+  NEGATIVE = -1,
+}
+
 class Translator {
   options: CompilerOptions = {};
   issues: CompilerOptionIssue[] = [];
+
+  /**
+   * Translator rules that have been applied to the current options,
+   * along w/ info on whether they were applied positively or negatively
+   */
+  appliedRules = new Map<TranslatorRule, Applied>();
 
   private rules: TranslatorRule[] = [];
 
@@ -69,19 +84,58 @@ class Translator {
     });
   }
 
+  /**
+   * Indicates whether a translator rule has been applied to a given option on this run
+   */
+  isRuleApplied(rule: TranslatorRule): boolean {
+    return this.appliedRules.get(rule) !== undefined;
+  }
+
+  /**
+   * Assumes a rule has been applied, checks if it was applied positively
+   */
+  isRuleAppliedPositively(rule: TranslatorRule): boolean {
+    return this.appliedRules.get(rule) === Applied.POSITIVE;
+  }
+
   translate(option: CompilerOption) {
     const name = option.name.toUpperCase();
     let found = false;
+
     try {
       for (const rule of this.rules) {
         if (rule.positive && rule.positive.includes(name)) {
           found = true;
           rule.positiveTranslate?.(option, this.options);
+
+          if (!this.isRuleApplied(rule)) {
+            // new application
+            this.appliedRules.set(rule, Applied.POSITIVE);
+          } else if (this.isRuleAppliedPositively(rule)) {
+            // duplicate application (pos)
+            this.reportDupeOptIssue(option, name);
+          } else {
+            // mutex application
+            this.reportMutexOptIssue(option, name);
+          }
           return;
         }
+
         if (rule.negative && rule.negative.includes(name)) {
           found = true;
           rule.negativeTranslate?.(option, this.options);
+
+          if (!this.isRuleApplied(rule)) {
+            // new application
+            this.appliedRules.set(rule, Applied.NEGATIVE);
+          } else if (!this.isRuleAppliedPositively(rule)) {
+            // duplicate application (neg)
+            this.reportDupeOptIssue(option, name);
+          } else {
+            // mutex application
+            this.reportMutexOptIssue(option, name);
+          }
+
           return;
         }
       }
@@ -100,13 +154,36 @@ class Translator {
         );
       }
     }
+
     if (!found) {
       this.issues.push({
         range: tokenToRange(option.token),
-        message: `Unknown compiler option: ${option.name}`,
-        severity: Severity.E,
+        message: PLIWarning.IBM1159I.message(option.name),
+        severity: Severity.W,
       });
     }
+  }
+
+  /**
+   * Adds a duplicate compiler option issue to the list of issues.
+   */
+  reportDupeOptIssue(option: CompilerOption, name: string): void {
+    this.issues.push({
+      range: tokenToRange(option.token),
+      message: `Duplicate compiler option ${name}`,
+      severity: Severity.W,
+    });
+  }
+
+  /**
+   * Adds a mutually exclusive compiler option issue to the list of issues.
+   */
+  reportMutexOptIssue(option: CompilerOption, name: string): void {
+    this.issues.push({
+      range: tokenToRange(option.token),
+      message: `Mutually exclusive compiler options found for ${name}, only the last one will take effect.`,
+      severity: Severity.W,
+    });
   }
 }
 
@@ -1139,6 +1216,7 @@ export function translateCompilerOptions(
   input: AbstractCompilerOptions,
 ): CompilerOptionResult {
   translator.options = {};
+  translator.appliedRules.clear();
   translator.issues = [...input.issues];
   for (const option of input.options) {
     translator.translate(option);

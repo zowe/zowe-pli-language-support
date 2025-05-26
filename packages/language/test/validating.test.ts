@@ -253,6 +253,103 @@ describe("Validating", () => {
     });
   });
 
+  describe("*PROCESS Validations", () => {
+    test("No options valid", async () => {
+      const doc = parseWithValidations(`*PROCESS;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertNoDiagnostics(doc);
+    });
+
+    test("Single option is valid", async () => {
+      const doc = parseWithValidations(`*PROCESS NOEXIT;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertNoDiagnostics(doc);
+    });
+
+    test("Warn on mutex opts", async () => {
+      const doc = parseWithValidations(`*PROCESS NOAGGREGATE, AGGREGATE;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message:
+          "Mutually exclusive compiler options found for AGGREGATE, only the last one will take effect.",
+        severity: Severity.W,
+      });
+    });
+
+    test("Warn on duplicate opts", async () => {
+      const doc = parseWithValidations(`*PROCESS AGGREGATE, AGGREGATE;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message: "Duplicate compiler option AGGREGATE",
+        severity: Severity.W,
+      });
+    });
+
+    test("Warn on unrecognized compiler option", async () => {
+      const doc = parseWithValidations(`*PROCESS TYPEFOXOPT;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message: PLICodes.Warning.IBM1159I.message("TYPEFOXOPT"),
+        severity: Severity.W,
+      });
+    });
+
+    test("Warn on complex case w/ mutex opt", async () => {
+      const doc =
+        parseWithValidations(`*PROCESS NODBRMLIB, COMPILE, AGGREGATE, NOCOMPILE;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message:
+          "Mutually exclusive compiler options found for NOCOMPILE, only the last one will take effect.",
+        severity: Severity.W,
+      });
+    });
+
+    test("Warn on duplicate w/ aliased form", async () => {
+      const doc = parseWithValidations(`*PROCESS AG, AGGREGATE;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message: "Duplicate compiler option AGGREGATE",
+        severity: Severity.W,
+      });
+    });
+
+    test("Warn on mutex case w/ aliased form", async () => {
+      const doc = parseWithValidations(`*PROCESS NAG, AGGREGATE;
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertDiagnostic(doc, {
+        message:
+          "Mutually exclusive compiler options found for AGGREGATE, only the last one will take effect.",
+        severity: Severity.W,
+      });
+    });
+
+    test("Valid on complex case w/ no issues", async () => {
+      const doc =
+        parseWithValidations(`*PROCESS COMPILE, NODBRMLIB, AGGREGATE, MARGINS(2,72);
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+        `);
+      assertNoDiagnostics(doc);
+    });
+  });
+
   //
   //     test('check no errors', async () => {
   //         document = await parseWithValidations(`
