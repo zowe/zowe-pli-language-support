@@ -160,7 +160,6 @@ describe("Linking tests", () => {
         DCL ARRAY_ENTRY;
         DCL TWO_DIM_TABLE_ENTRY;
         DCL TYPE#;
-       
         DCL 1  <|1:TWO_DIM_TABLE|>,
                2  <|2:TWO_DIM_TABLE_ENTRY|>          CHAR(32);
         DCL 1  TABLE_WITH_ARRAY,
@@ -170,11 +169,9 @@ describe("Linking tests", () => {
                2  NON_ARRAY_ENTRY,
                   3  NAME                          CHAR(32) VARYING,
                   3  <|4:TYPE#|>                     CHAR(8);
-       
         DCL ARRAY_ENTRY;
         DCL TWO_DIM_TABLE_ENTRY;
         DCL TYPE#;
-       
         PUT (<|1>TWO_DIM_TABLE);
         PUT (TWO_DIM_TABLE.<|2>TWO_DIM_TABLE_ENTRY);
         PUT (TABLE_WITH_ARRAY.ARRAY_ENTRY(0).<|3>TYPE#);
@@ -186,12 +183,10 @@ describe("Linking tests", () => {
         2 <|b1:B|>,
           3 K, // Should be skipped in qualification
             4 <|c:C|> CHAR(8) VALUE("C");
-
  DCL 1 A2,
         2 <|b2:B|>,
           3 K, // Should be skipped in qualification
             4 <|d:D|> CHAR(8) VALUE("D");
-
  PUT (<|b1>B.<|c>C);
  PUT (<|b2>B.<|d>D);`));
 
@@ -248,11 +243,9 @@ describe("Linking tests", () => {
       expectLinks(`
   DCL 1 <|a:A|>,
       2 <|a_b:B|> CHAR(8) VALUE("B");
-
   DCL 1 A2,
       2 <|a2_c:C|>,
         3 <|a2_c_b:B|> CHAR(8) VALUE("B2");
-
   PUT (<|a2_c>C.<|a2_c_b>B);
   PUT (<|a>A.<|a_b>B);`));
 
@@ -262,7 +255,6 @@ describe("Linking tests", () => {
         2 B,
           3 C,
         2 <|1:C|>;
-
  PUT(A.<|1>C);`));
 
     test("Star name in structure should result in partial qualification", () =>
@@ -270,7 +262,6 @@ describe("Linking tests", () => {
  DCL 1 A,
        2 *,
          3 <|b:B|> CHAR(8) VALUE("B");
-
  PUT(A.<|b>B);`));
 
     test("Fully qualified name precedes star name", () =>
@@ -279,7 +270,6 @@ describe("Linking tests", () => {
         2 *,
           3 B CHAR(8) VALUE("B"),
         2 <|b:B|> CHAR(8) VALUE("B2");
-
  PUT(A.<|b>B);`));
 
     test("Must work before declaration", () =>
@@ -328,62 +318,60 @@ describe("Linking tests", () => {
 
   describe("Faulty cases", () => {
     describe("Redeclarations", () => {
-      test("Redeclaration must fail", () => {
+      test("Redeclaration must fail", () =>
         new TestBuilder(`
  DCL A CHAR(8) INIT("A");
- DCL <|1:A|> CHAR(8) INIT("A2");`).expectErrorCodeAt(
-          "1",
-          PLICodes.Error.IBM1306I.fullCode,
-        );
-      });
+ DCL <|1:A|> CHAR(8) INIT("A2");
+ `).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode));
 
-      test("Redeclaration within the same block must fail", () => {
-        /**
-         * We don't have levels here, so it acts like sequential declarations,
-         * unlike nested sublevels which have another error.
-         */
+      /**
+       * We don't have levels here, so it acts like sequential declarations,
+       * unlike nested sublevels which have another error.
+       */
+      test("Redeclaration within the same block must fail", () =>
         new TestBuilder(`
- DCL A CHAR(8) INIT("A"), <|1:A|> CHAR(8) INIT("B");`).expectErrorCodeAt(
-          "1",
-          PLICodes.Error.IBM1306I.fullCode,
-        );
-      });
+ DCL A CHAR(8) INIT("A"), <|1:A|> CHAR(8) INIT("B");
+ `).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode));
 
-      test("Redeclaration within nested sublevels must fail", () => {
+      test.fails(
+        "Redeclaration within the same block at root level should not trigger nested redeclaration error",
+        () =>
+          new TestBuilder(`
+ DCL A CHAR(8) INIT("A"), <|1:A|> CHAR(8) INIT("B");
+ `).expectErrorCodeAt("1", PLICodes.Error.IBM1308I.fullCode),
+      );
+
+      test("Redeclaration within nested sublevels must fail", () =>
         new TestBuilder(`
  DCL 1 A,
        2 B,
          3 C CHAR(8) VALUE("C"),
        2 <|1:B|>,
          3 D CHAR(8) VALUE("D");
-`).expectErrorCodeAt("1", PLICodes.Error.IBM1308I.fullCode);
-      });
+ `).expectErrorCodeAt("1", PLICodes.Error.IBM1308I.fullCode));
 
-      test("Redeclaration of label must fail", () => {
+      test("Redeclaration of label must fail", () =>
         new TestBuilder(`
  OUTER: PROCEDURE;
  END OUTER;
  <|1:OUTER|>: PROCEDURE;
  END OUTER;
  CALL OUTER;
-`).expectErrorCodeAt("1", PLICodes.Severe.IBM1916I.fullCode);
-      });
+ `).expectErrorCodeAt("1", PLICodes.Severe.IBM1916I.fullCode));
 
-      test("Repeated declaration of label is invalid (procedure label first)", () => {
+      test("Repeated declaration of label is invalid (procedure label first)", () =>
         new TestBuilder(`
  A: PROCEDURE;
  END A;
  DCL <|1:A|> CHAR(8) INIT("A");
-`).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode);
-      });
+ `).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode));
 
-      test("Repeated declaration of label is invalid (variable label first)", () => {
+      test("Repeated declaration of label is invalid (variable label first)", () =>
         new TestBuilder(`
  DCL <|1:A|> CHAR(8) INIT("A");
  A: PROCEDURE;
  END A;
-`).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode);
-      });
+ `).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode));
 
       /**
        * @WILLFIX @didrikmunther: currently, we don't have a way to know
@@ -394,7 +382,7 @@ describe("Linking tests", () => {
  GO TO A;
  <|1:A|>:
  A:
-`).expectErrorCodeAt("1", PLICodes.Severe.IBM1911I.fullCode);
+ `).expectErrorCodeAt("1", PLICodes.Severe.IBM1911I.fullCode);
       });
     });
 
@@ -402,7 +390,7 @@ describe("Linking tests", () => {
       new TestBuilder(`
  <|1:OUTER|>: PROCEDURE;
  END OUTER;
-`).expectErrorCodeAt("1", PLICodes.Warning.IBM1213I.fullCode);
+ `).expectErrorCodeAt("1", PLICodes.Warning.IBM1213I.fullCode);
     });
 
     test("Ambiguous reference must fail", () => {
@@ -412,34 +400,30 @@ describe("Linking tests", () => {
  DCL 1 A2,
      2 B CHAR(8) VALUE("B2");
  PUT(<|1:B|>);
-`).expectErrorCodeAt("1", PLICodes.Severe.IBM1881I.fullCode);
+ `).expectErrorCodeAt("1", PLICodes.Severe.IBM1881I.fullCode);
     });
 
     /**
      * @WILLFIX: We currently do not have explicit handling for factorized names in structures,
      * they just get rolled out.
      */
-    test.skip("Factoring of level numbers into declaration lists containing level numbers is invalid", () => {
+    test.skip("Factoring of level numbers into declaration lists containing level numbers is invalid", () =>
       new TestBuilder(`
  DCL 1 A,
-       2(B, <|a:3|> C, D) (3,2) binary fixed (15);`).expectErrorCodeAt(
-        "a",
-        PLICodes.Error.IBM1376I.fullCode,
-      );
-    });
+       2(B, <|a:3|> C, D) (3,2) binary fixed (15);
+ `).expectErrorCodeAt("a", PLICodes.Error.IBM1376I.fullCode));
 
-    test("Structure level greater than 255 is invalid", () => {
+    test("Structure level greater than 255 is invalid", () =>
       new TestBuilder(`
  DCL 1 A,
-       <|a:256|> B;`).expectErrorCodeAt("a", PLICodes.Error.IBM1363I.fullCode);
-    });
+       <|a:256|> B;
+ `).expectErrorCodeAt("a", PLICodes.Error.IBM1363I.fullCode));
   });
 
-  test("fetch linking", () => {
+  test("fetch linking", () =>
     expectLinks(`
  MAINPR: PROCEDURE OPTIONS(MAIN);
  dcl <|a:A|> entry;
  fetch <|a>A;
- end MAINPR;`);
-  });
+ end MAINPR;`));
 });
