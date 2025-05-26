@@ -322,7 +322,7 @@ describe("Linking tests", () => {
         new TestBuilder(`
  DCL A CHAR(8) INIT("A");
  DCL <|1:A|> CHAR(8) INIT("A2");
- `).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode));
+ `).expectExclusiveErrorCodesAt("1", PLICodes.Error.IBM1306I.fullCode));
 
       /**
        * We don't have levels here, so it acts like sequential declarations,
@@ -331,15 +331,7 @@ describe("Linking tests", () => {
       test("Redeclaration within the same block must fail", () =>
         new TestBuilder(`
  DCL A CHAR(8) INIT("A"), <|1:A|> CHAR(8) INIT("B");
- `).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode));
-
-      test.fails(
-        "Redeclaration within the same block at root level should not trigger nested redeclaration error",
-        () =>
-          new TestBuilder(`
- DCL A CHAR(8) INIT("A"), <|1:A|> CHAR(8) INIT("B");
- `).expectErrorCodeAt("1", PLICodes.Error.IBM1308I.fullCode),
-      );
+ `).expectExclusiveErrorCodesAt("1", PLICodes.Error.IBM1306I.fullCode));
 
       test("Redeclaration within nested sublevels must fail", () =>
         new TestBuilder(`
@@ -348,7 +340,7 @@ describe("Linking tests", () => {
          3 C CHAR(8) VALUE("C"),
        2 <|1:B|>,
          3 D CHAR(8) VALUE("D");
- `).expectErrorCodeAt("1", PLICodes.Error.IBM1308I.fullCode));
+ `).expectExclusiveErrorCodesAt("1", PLICodes.Error.IBM1308I.fullCode));
 
       test("Redeclaration of label must fail", () =>
         new TestBuilder(`
@@ -357,21 +349,21 @@ describe("Linking tests", () => {
  <|1:OUTER|>: PROCEDURE;
  END OUTER;
  CALL OUTER;
- `).expectErrorCodeAt("1", PLICodes.Severe.IBM1916I.fullCode));
+ `).expectExclusiveErrorCodesAt("1", PLICodes.Severe.IBM1916I.fullCode));
 
       test("Repeated declaration of label is invalid (procedure label first)", () =>
         new TestBuilder(`
  A: PROCEDURE;
  END A;
  DCL <|1:A|> CHAR(8) INIT("A");
- `).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode));
+ `).expectExclusiveErrorCodesAt("1", PLICodes.Error.IBM1306I.fullCode));
 
       test("Repeated declaration of label is invalid (variable label first)", () =>
         new TestBuilder(`
  DCL <|1:A|> CHAR(8) INIT("A");
  A: PROCEDURE;
  END A;
- `).expectErrorCodeAt("1", PLICodes.Error.IBM1306I.fullCode));
+ `).expectExclusiveErrorCodesAt("1", PLICodes.Error.IBM1306I.fullCode));
 
       /**
        * @WILLFIX @didrikmunther: currently, we don't have a way to know
@@ -382,7 +374,7 @@ describe("Linking tests", () => {
  GO TO A;
  <|1:A|>:
  A:
- `).expectErrorCodeAt("1", PLICodes.Severe.IBM1911I.fullCode);
+ `).expectExclusiveErrorCodesAt("1", PLICodes.Severe.IBM1911I.fullCode);
       });
     });
 
@@ -390,7 +382,7 @@ describe("Linking tests", () => {
       new TestBuilder(`
  <|1:OUTER|>: PROCEDURE;
  END OUTER;
- `).expectErrorCodeAt("1", PLICodes.Warning.IBM1213I.fullCode);
+ `).expectExclusiveErrorCodesAt("1", PLICodes.Warning.IBM1213I.fullCode);
     });
 
     test("Ambiguous reference must fail", () => {
@@ -400,7 +392,7 @@ describe("Linking tests", () => {
  DCL 1 A2,
      2 B CHAR(8) VALUE("B2");
  PUT(<|1:B|>);
- `).expectErrorCodeAt("1", PLICodes.Severe.IBM1881I.fullCode);
+ `).expectExclusiveErrorCodesAt("1", PLICodes.Severe.IBM1881I.fullCode);
     });
 
     /**
@@ -411,13 +403,13 @@ describe("Linking tests", () => {
       new TestBuilder(`
  DCL 1 A,
        2(B, <|a:3|> C, D) (3,2) binary fixed (15);
- `).expectErrorCodeAt("a", PLICodes.Error.IBM1376I.fullCode));
+ `).expectExclusiveErrorCodesAt("a", PLICodes.Error.IBM1376I.fullCode));
 
     test("Structure level greater than 255 is invalid", () =>
       new TestBuilder(`
  DCL 1 A,
        <|a:256|> B;
- `).expectErrorCodeAt("a", PLICodes.Error.IBM1363I.fullCode));
+ `).expectExclusiveErrorCodesAt("a", PLICodes.Error.IBM1363I.fullCode));
   });
 
   test("fetch linking", () =>
