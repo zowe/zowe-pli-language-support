@@ -9,7 +9,6 @@
  *
  */
 
-import { Severity, tokenToRange, tokenToUri } from "../language-server/types";
 import {
   DeclaredItem,
   DeclaredItemElement,
@@ -19,12 +18,12 @@ import {
   WildcardItem,
 } from "../syntax-tree/ast";
 import { PliValidationAcceptor } from "../validation/validator";
-import * as PLICodes from "../validation/messages/pli-codes";
 import { SymbolTable } from "./symbol-table";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { MultiMap } from "../utils/collections";
 import { getNameToken } from "./tokens";
 import { IToken } from "chevrotain";
+import { LinkerError } from "./error";
 
 type UnrolledItem = {
   kind: SyntaxKind;
@@ -158,13 +157,12 @@ function unrollFactorized(
  * C -> A1
  * ```
  */
-export class DeclaredItemParser {
+export class DeclaredItemParser extends LinkerError {
   private items: UnrolledItem[];
-  private accept: PliValidationAcceptor;
 
   constructor(items: readonly DeclaredItem[], accept: PliValidationAcceptor) {
+    super(accept);
     this.items = unrollFactorized(items);
-    this.accept = accept;
   }
 
   private peek(): UnrolledItem | undefined {
@@ -186,11 +184,7 @@ export class DeclaredItemParser {
 
     // TODO: get max level from compilation unit? If e.g. compilation flags can change this.
     if (level > 255) {
-      this.accept(Severity.E, PLICodes.Error.IBM1363I.message, {
-        code: PLICodes.Error.IBM1363I.fullCode,
-        range: tokenToRange(item.levelToken!),
-        uri: tokenToUri(item.levelToken!) ?? "",
-      });
+      this.reportLevelError(item.levelToken!);
 
       return 255;
     }
@@ -221,28 +215,24 @@ export class DeclaredItemParser {
 
       // This item is part of the current scope, let's consume it.
       this.pop();
-      const nameToken = getDeclaredItemToken(item.node);
-      if (!nameToken) {
+      const token = getDeclaredItemToken(item.node);
+      if (!token) {
         continue;
       }
 
-      const name = nameToken.image;
+      const name = token.image;
 
       // A wildcard item is not a name, so we don't need to check for redeclarations.
       if (item.kind !== SyntaxKind.WildcardItem) {
         // TODO: Replace name by asterix, somehow ...
         const isRedeclared = nodes.get(name).length > 0;
         if (isRedeclared) {
-          this.accept(Severity.E, PLICodes.Error.IBM1308I.message(name), {
-            code: PLICodes.Error.IBM1308I.fullCode,
-            range: tokenToRange(nameToken),
-            uri: tokenToUri(nameToken) ?? "",
-          });
+          this.reportRedeclaration(token);
         }
       }
 
       // Otherwise, we can add the node to the symbol table.
-      const node = new QualifiedSyntaxNode(nameToken, item.node, parent, level);
+      const node = new QualifiedSyntaxNode(token, item.node, parent, level);
 
       nodes.add(name, node);
       table.addSymbolDeclaration(name, node);
