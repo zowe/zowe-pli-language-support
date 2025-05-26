@@ -6775,7 +6775,7 @@ export class PliParser extends AbstractParser {
             this.tokenPayload(
               token,
               wildcard,
-              CstNodeKind.WildcardItem_Asterix,
+              CstNodeKind.WildcardItem_Asterisk,
             );
             element.elements.push(wildcard);
           });
