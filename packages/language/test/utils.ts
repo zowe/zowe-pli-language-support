@@ -434,7 +434,35 @@ export class TestBuilder {
     this.ranges = ranges;
   }
 
-  expectErrorCodeAt(label: string, codes: string | string[]): TestBuilder {
+  /**
+   * Expects the given label to have only the given error codes.
+   *
+   * @param label Label to expect the error codes at
+   * @param codes Error codes to expect
+   * @returns This test builder
+   */
+  expectExclusiveErrorCodesAt(
+    label: string,
+    codes: string | string[],
+  ): TestBuilder {
+    const codesArray = Array.isArray(codes) ? codes : [codes];
+
+    return this.expectExclusiveDiagnosticsAt(
+      label,
+      codesArray.map((code) => ({
+        code,
+      })),
+    );
+  }
+
+  /**
+   * Expects the given label to have the given error codes. But might have other error codes as well.
+   *
+   * @param label Label to expect the error codes at
+   * @param codes Error codes to expect
+   * @returns This test builder
+   */
+  expectErrorCodesAt(label: string, codes: string | string[]): TestBuilder {
     const codesArray = Array.isArray(codes) ? codes : [codes];
 
     return this.expectDiagnosticsAt(
@@ -445,10 +473,7 @@ export class TestBuilder {
     );
   }
 
-  expectDiagnosticsAt(
-    label: string,
-    diagnostics: Partial<Diagnostic>[],
-  ): TestBuilder {
+  private getMatchingDiagnostics(label: string): Diagnostic[] {
     const range = this.ranges[label];
     if (!range || range.length === 0) {
       throw new Error(`Label "${label}" not found`);
@@ -465,10 +490,34 @@ export class TestBuilder {
         diagnostic.range.start === start && diagnostic.range.end === end,
     );
 
+    return matchingDiagnostics;
+  }
+
+  expectExclusiveDiagnosticsAt(
+    label: string,
+    diagnostics: Partial<Diagnostic>[],
+  ): TestBuilder {
+    const matchingDiagnostics = this.getMatchingDiagnostics(label);
+
     expect(
       matchingDiagnostics,
       `Expected ${diagnostics.length} diagnostics at label "${label}" but received ${matchingDiagnostics.length}`,
     ).toHaveLength(diagnostics.length);
+
+    for (const diagnostic of diagnostics) {
+      expect(matchingDiagnostics).toContainEqual(
+        expect.objectContaining(diagnostic),
+      );
+    }
+
+    return this;
+  }
+
+  expectDiagnosticsAt(
+    label: string,
+    diagnostics: Partial<Diagnostic>[],
+  ): TestBuilder {
+    const matchingDiagnostics = this.getMatchingDiagnostics(label);
 
     for (const diagnostic of diagnostics) {
       expect(matchingDiagnostics).toContainEqual(

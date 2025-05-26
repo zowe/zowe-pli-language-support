@@ -216,6 +216,7 @@ export class DeclaredItemParser {
 
       // This item is part of the current scope, let's consume it.
       this.pop();
+
       const token = getDeclaredItemToken(item.node);
       if (!token) {
         continue;
@@ -223,13 +224,16 @@ export class DeclaredItemParser {
 
       const name = token.image;
 
-      // A wildcard item is not a name, so we don't need to check for redeclarations.
-      if (item.kind !== SyntaxKind.WildcardItem) {
+      // Check for redeclarations: A wildcard item is not a name, so we don't need to check for redeclarations.
+      // Lazy `isRedeclared` function
+      const isRedeclared = () => nodes.get(name).length > 0;
+      if (
+        item.kind !== SyntaxKind.WildcardItem &&
+        item.level !== null &&
+        isRedeclared()
+      ) {
         // TODO: Replace name by asterix, somehow ...
-        const isRedeclared = nodes.get(name).length > 0;
-        if (isRedeclared) {
-          this.reporter.reportRedeclaration(token);
-        }
+        this.reporter.reportRedeclaration(token);
       }
 
       // Otherwise, we can add the node to the symbol table.
