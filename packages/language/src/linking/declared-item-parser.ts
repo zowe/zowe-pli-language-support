@@ -216,7 +216,6 @@ export class DeclaredItemParser {
 
       // This item is part of the current scope, let's consume it.
       this.pop();
-
       const token = getDeclaredItemToken(item.node);
       if (!token) {
         continue;

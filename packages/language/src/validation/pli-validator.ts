@@ -9,8 +9,14 @@
  *
  */
 
-import { getSyntaxNodeRange, Severity } from "../language-server/types";
+import {
+  getSyntaxNodeRange,
+  Severity,
+  tokenToRange,
+  tokenToUri,
+} from "../language-server/types";
 import * as AST from "../syntax-tree/ast";
+import { forEachNode } from "../syntax-tree/ast-iterator";
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./messages/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
 import { IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute } from "./messages/IBM1388IE-NODESCRIPTOR-attribute-is-invalid-when-any-parameter-has-NONCONNECTED-attribute.js";
 import * as PLICodes from "./messages/pli-codes";
@@ -48,6 +54,7 @@ export function registerValidationChecks(): PliValidationChecks {
     LabelReference: [validator.checkLabelReference],
     CallStatement: [validator.checkCallStatement],
     DefineOrdinalStatement: [validator.checkDefineOrdinalStatement],
+    DeclareStatement: [validator.checkDeclareStatement],
   };
 
   return checks;
@@ -68,6 +75,36 @@ export class Pl1Validator {
         uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
       });
     }
+  }
+
+  checkDeclareStatement(
+    node: AST.DeclareStatement,
+    accept: PliValidationAcceptor,
+  ): void {
+    const checkNode = (hasLevel: boolean) => (child: AST.SyntaxNode) => {
+      if (child.kind === AST.SyntaxKind.DeclaredItem) {
+        if (hasLevel && child.levelToken) {
+          const uri = tokenToUri(child.levelToken);
+          const range = tokenToRange(child.levelToken);
+
+          if (uri) {
+            accept(Severity.E, PLICodes.Error.IBM1376I.message, {
+              code: PLICodes.Error.IBM1376I.fullCode,
+              range,
+              uri,
+            });
+          }
+        }
+
+        const childHasLevel = child.level !== undefined;
+        const nextCheckNode = checkNode(childHasLevel);
+        child.elements.forEach(nextCheckNode);
+      } else {
+        forEachNode(child, checkNode(false));
+      }
+    };
+
+    node.items.forEach(checkNode(false));
   }
 
   /**

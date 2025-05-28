@@ -262,8 +262,11 @@ export function generateAndAssertValidSymbolTable(
  * ---------- Linking utilities ----------
  */
 
-export function parseAndLink(text: string): CompilationUnit {
-  const unit = parse(text);
+export function parseAndLink(
+  text: string,
+  options?: { validate: boolean },
+): CompilationUnit {
+  const unit = parse(text, options);
   lifecycle.generateSymbolTable(unit);
   lifecycle.link(unit);
 
@@ -411,6 +414,10 @@ export function replaceIndices(base: ExpectedBase): {
   return { output: input, indices, ranges: ranges.sort((a, b) => a[0] - b[0]) };
 }
 
+/**
+ * TODO: Move the entire TestBuilder system to a separate file, and don't export it.
+ * Instead, use the `createTestBuilder` and `createValidatorTestBuilder` functions to create instances.
+ */
 export class TestBuilder {
   private unit: CompilationUnit;
   private output: string;
@@ -436,9 +443,9 @@ export class TestBuilder {
    *  }
    * ]);
    */
-  constructor(text: string) {
+  constructor(text: string, options?: { validate: boolean }) {
     const { output, indices, ranges } = replaceNamedIndices(text);
-    this.unit = parseAndLink(output);
+    this.unit = parseAndLink(output, options);
     this.diagnostics = collectDiagnostics(this.unit);
     this.output = output;
     this.indices = indices;
@@ -582,6 +589,28 @@ export class TestBuilder {
 
     return this;
   }
+}
+
+/**
+ * Create a test builder that does not validate the PL/I text after linking.
+ *
+ * @param text PL/I text to parse and link, with range and index markers (as specified in `replaceNamedIndices`)
+ * @returns A test builder that can be used to chain assertions
+ */
+export function createTestBuilder(text: string) {
+  return new TestBuilder(text);
+}
+
+/**
+ * Create a test builder that validates the PL/I text after linking.
+ *
+ * @param text PL/I text to parse and link, with range and index markers (as specified in `replaceNamedIndices`)
+ * @returns A test builder that can be used to chain assertions
+ */
+export function createValidatorTestBuilder(text: string) {
+  return new TestBuilder(text, {
+    validate: true,
+  });
 }
 
 /**

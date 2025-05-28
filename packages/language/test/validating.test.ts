@@ -13,7 +13,12 @@ import { describe, expect, test } from "vitest";
 import { Severity } from "../src/language-server/types";
 import * as PLICodes from "../src/validation/messages/pli-codes";
 import { collectDiagnostics } from "../src/workspace/compilation-unit";
-import { assertDiagnostic, assertNoDiagnostics, parse } from "./utils";
+import {
+  assertDiagnostic,
+  assertNoDiagnostics,
+  createValidatorTestBuilder,
+  parse,
+} from "./utils";
 
 // beforeAll(async () => {
 //   services = createPliServices(EmptyFileSystem);
@@ -251,6 +256,16 @@ describe("Validating", () => {
       const diagnostics = collectDiagnostics(doc);
       expect(diagnostics.length).toBe(0);
     });
+
+    test("Factoring of level numbers into declaration lists containing level numbers is invalid", () =>
+      createValidatorTestBuilder(`
+ DCL 1 A,
+       2 (B, <|a:3|> C),
+       2 (<|b:3|> D),
+       2 (3 E, (<|c:4|> F));`)
+        .expectExclusiveErrorCodesAt("a", PLICodes.Error.IBM1376I.fullCode)
+        .expectExclusiveErrorCodesAt("b", PLICodes.Error.IBM1376I.fullCode)
+        .expectExclusiveErrorCodesAt("c", PLICodes.Error.IBM1376I.fullCode));
   });
 
   describe("*PROCESS Validations", () => {
