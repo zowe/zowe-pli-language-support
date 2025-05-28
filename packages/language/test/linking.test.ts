@@ -11,9 +11,9 @@
 
 import { describe, expect, test } from "vitest";
 import {
+  createTestBuilder,
   expectLinks as expectLinksRoot,
   parseAndLink,
-  TestBuilder,
 } from "./utils";
 import * as PLICodes from "../src/validation/messages/pli-codes";
 
@@ -319,7 +319,7 @@ describe("Linking tests", () => {
   describe("Faulty cases", () => {
     describe("Redeclarations", () => {
       test("Redeclaration must fail", () =>
-        new TestBuilder(`
+        createTestBuilder(`
  DCL A CHAR(8) INIT("A");
  DCL <|1:A|> CHAR(8) INIT("A2");
  `).expectExclusiveErrorCodesAt("1", PLICodes.Error.IBM1306I.fullCode));
@@ -329,12 +329,12 @@ describe("Linking tests", () => {
        * unlike nested sublevels which have another error.
        */
       test("Redeclaration within the same block must fail", () =>
-        new TestBuilder(`
+        createTestBuilder(`
  DCL A CHAR(8) INIT("A"), <|1:A|> CHAR(8) INIT("B");
  `).expectExclusiveErrorCodesAt("1", PLICodes.Error.IBM1306I.fullCode));
 
       test("Redeclaration within nested sublevels must fail", () =>
-        new TestBuilder(`
+        createTestBuilder(`
  DCL 1 A,
        2 B,
          3 C CHAR(8) VALUE("C"),
@@ -343,7 +343,7 @@ describe("Linking tests", () => {
  `).expectExclusiveErrorCodesAt("1", PLICodes.Error.IBM1308I.fullCode));
 
       test("Redeclaration of label must fail", () =>
-        new TestBuilder(`
+        createTestBuilder(`
  OUTER: PROCEDURE;
  END OUTER;
  <|1:OUTER|>: PROCEDURE;
@@ -352,14 +352,14 @@ describe("Linking tests", () => {
  `).expectExclusiveErrorCodesAt("1", PLICodes.Severe.IBM1916I.fullCode));
 
       test("Repeated declaration of label is invalid (procedure label first)", () =>
-        new TestBuilder(`
+        createTestBuilder(`
  A: PROCEDURE;
  END A;
  DCL <|1:A|> CHAR(8) INIT("A");
  `).expectExclusiveErrorCodesAt("1", PLICodes.Error.IBM1306I.fullCode));
 
       test("Repeated declaration of label is invalid (variable label first)", () =>
-        new TestBuilder(`
+        createTestBuilder(`
  DCL <|1:A|> CHAR(8) INIT("A");
  A: PROCEDURE;
  END A;
@@ -370,7 +370,7 @@ describe("Linking tests", () => {
        * if a label is a statement label or a procedure label.
        */
       test.skip("Repeated statement label must fail", () => {
-        new TestBuilder(`
+        createTestBuilder(`
  GO TO A;
  <|1:A|>:
  A:
@@ -379,14 +379,14 @@ describe("Linking tests", () => {
     });
 
     test("Unused label should warn", () => {
-      new TestBuilder(`
+      createTestBuilder(`
  <|1:OUTER|>: PROCEDURE;
  END OUTER;
  `).expectExclusiveErrorCodesAt("1", PLICodes.Warning.IBM1213I.fullCode);
     });
 
     test("Ambiguous reference must fail", () => {
-      new TestBuilder(`
+      createTestBuilder(`
  DCL 1 A1,
      2 B CHAR(8) VALUE("B1");
  DCL 1 A2,
@@ -396,7 +396,7 @@ describe("Linking tests", () => {
     });
 
     test("Structure level greater than 255 is invalid", () =>
-      new TestBuilder(`
+      createTestBuilder(`
  DCL 1 A,
        <|a:256|> B;
  `).expectExclusiveErrorCodesAt("a", PLICodes.Error.IBM1363I.fullCode));

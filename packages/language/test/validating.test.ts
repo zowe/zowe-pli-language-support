@@ -16,8 +16,8 @@ import { collectDiagnostics } from "../src/workspace/compilation-unit";
 import {
   assertDiagnostic,
   assertNoDiagnostics,
+  createValidatorTestBuilder,
   parse,
-  ValidatorTestBuilder,
 } from "./utils";
 
 // beforeAll(async () => {
@@ -258,7 +258,7 @@ describe("Validating", () => {
     });
 
     test("Factoring of level numbers into declaration lists containing level numbers is invalid", () =>
-      new ValidatorTestBuilder(`
+      createValidatorTestBuilder(`
  DCL 1 A,
        2 (B, <|a:3|> C),
        2 (<|b:3|> D),
