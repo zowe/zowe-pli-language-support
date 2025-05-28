@@ -9,12 +9,11 @@
  *
  */
 
-import { describe, expect, test } from "vitest";
+import { describe, test } from "vitest";
 import {
   createTestBuilder,
   expectLinks as expectLinksRoot,
-  parseAndLink,
-} from "./utils";
+} from "./test-builder";
 import * as PLICodes from "../src/validation/messages/pli-codes";
 
 /**
@@ -207,20 +206,16 @@ describe("Linking tests", () => {
          DCL 1 A, (2 <|1:B|>);
          PUT(A.<|1>B);`));
 
-    test("Factorized names in structures do only appear on the last symbol", () => {
-      const doc = parseAndLink(`
-        DCL 1 A, 2 (B, C, D), 3 E;
-        PUT(A.B.E);
-        PUT(A.C.E);
-        PUT(A.D.E);
-      `);
-      const linkingIssues = doc.diagnostics.linking;
-      const eLinkIssues = linkingIssues.filter((e) =>
-        e.message.includes("'E'"),
-      );
-      // Both A.B.E and A.C.E are invalid links, while A.D.E is valid
-      expect(eLinkIssues).toHaveLength(2);
-    });
+    test("Factorized names in structures do only appear on the last symbol", () =>
+      createTestBuilder(`
+ DCL 1 A, 2 (B, C, D), 3 <|def3:E|>;
+ PUT(A.B.<|1>E);
+ PUT(A.C.<|2>E);
+ PUT(A.D.<|def3>E);
+      `)
+        .expectNoLinksAt("1")
+        .expectNoLinksAt("2")
+        .expectLinks());
   });
 
   describe("Implicit qualification", () => {
