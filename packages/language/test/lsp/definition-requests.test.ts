@@ -10,18 +10,21 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { TestBuilder } from "../utils";
 import {
   VirtualFileSystemProvider,
   setFileSystemProvider,
 } from "../../src/workspace/file-system-provider";
+import { createTestBuilder, PliTestFile, TestBuilder } from "../test-builder";
 
 describe("Go To Definition request", () => {
   let vfs: VirtualFileSystemProvider;
+  let createFsTestBuilder: (content: string | PliTestFile[]) => TestBuilder;
 
   beforeAll(() => {
     vfs = new VirtualFileSystemProvider();
     setFileSystemProvider(vfs);
+    createFsTestBuilder = (content: string | PliTestFile[]) =>
+      createTestBuilder(content, { fs: vfs });
   });
 
   afterAll(() => {
@@ -29,19 +32,17 @@ describe("Go To Definition request", () => {
   });
 
   it("should resolve definition in same file", () => {
-    const content = ` DCL <|1:X|> FIXED;
+    const content = `
+ DCL <|1:X|> FIXED;
  <|1>X = 1;`;
-
-    new TestBuilder(content, undefined, vfs).expectLinks();
+    createFsTestBuilder(content).expectLinks();
   });
 
   it("should not resolve wrong request in TestBuilder", () => {
     const content = ` DCL <|1:X|> FIXED;
  <|2>X = 1;`;
 
-    expect(() =>
-      new TestBuilder(content, undefined, vfs).expectLinks(),
-    ).toThrow();
+    expect(() => createFsTestBuilder(content).expectLinks()).toThrow();
   });
 
   it("should resolve definition in included file", () => {
@@ -49,14 +50,10 @@ describe("Go To Definition request", () => {
     const main = ` %INCLUDE "include.pli";
  <|1>Y = 42;`;
 
-    new TestBuilder(
-      [
-        { uri: "file:///main.pli", content: main },
-        { uri: "file:///include.pli", content: include },
-      ],
-      undefined,
-      vfs,
-    ).expectLinks();
+    createFsTestBuilder([
+      { uri: "file:///main.pli", content: main },
+      { uri: "file:///include.pli", content: include },
+    ]).expectLinks();
   });
 
   it("should resolve multiple requests", () => {
@@ -65,14 +62,10 @@ describe("Go To Definition request", () => {
  <|1>Y = 42;
  <|1>Y = 45;`;
 
-    new TestBuilder(
-      [
-        { uri: "file:///main.pli", content: main },
-        { uri: "file:///include.pli", content: include },
-      ],
-      undefined,
-      vfs,
-    ).expectLinks();
+    createFsTestBuilder([
+      { uri: "file:///main.pli", content: main },
+      { uri: "file:///include.pli", content: include },
+    ]).expectLinks();
   });
 
   it("should resolve definition across multiple files", () => {
@@ -83,14 +76,10 @@ describe("Go To Definition request", () => {
  <|1>X = 42;
  <|2>Y = 43;`;
 
-    new TestBuilder(
-      [
-        { uri: "file:///main.pli", content: main },
-        { uri: "file:///include.pli", content: include },
-        { uri: "file:///include2.pli", content: include2 },
-      ],
-      undefined,
-      vfs,
-    ).expectLinks();
+    createFsTestBuilder([
+      { uri: "file:///main.pli", content: main },
+      { uri: "file:///include.pli", content: include },
+      { uri: "file:///include2.pli", content: include2 },
+    ]).expectLinks();
   });
 });
