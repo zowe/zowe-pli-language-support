@@ -19,6 +19,7 @@ import { Diagnostic, Range } from "../src/language-server/types";
 import { parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
+import { assignDebugKinds } from "../src/utils/debug-kinds";
 
 const DEFAULT_FILE_URI = "file:///main.pli";
 
@@ -71,15 +72,6 @@ export class TestBuilder {
    *  }
    * ]);
    */
-  // constructor(text: string, options?: { validate: boolean }) {
-  //   const { output, indices, ranges } = replaceNamedIndices(text);
-  //   this.unit = parseAndLink(output, options);
-  //   this.diagnostics = collectDiagnostics(this.unit);
-  //   this.output = output;
-  //   this.indices = indices;
-  //   this.ranges = ranges;
-  // }
-
   constructor(
     textOrFiles: string | PliTestFile[],
     options?: TestBuilderOptions,
@@ -107,6 +99,9 @@ export class TestBuilder {
       validate: options?.validate,
       uri: URI.parse(Object.keys(this.files)[0]),
     });
+
+    assignDebugKinds(this.unit.ast);
+    assignDebugKinds(this.unit.preprocessorAst);
 
     this.output = output;
     this.indices = indices;

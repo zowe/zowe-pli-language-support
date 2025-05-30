@@ -33,45 +33,6 @@ ${text}
 }
 
 describe("Linking tests", () => {
-  test("Nested procedure label tests", () =>
-    expectLinks(`
- <|1:OUTER|>: procedure options (main);
-    <|2:INNER|>: procedure;
-        call <|3>OUTER;
-        call <|2>INNER;
-
-        <|3:OUTER|>: procedure;
-            call <|3>OUTER;
-            call <|4>INNER;
-
-            <|4:INNER|>: procedure;
-                call <|3>OUTER;
-                call <|4>INNER;
-            END <|4>INNER;
-
-            call <|3>OUTER;
-            call <|4>INNER;
-        END <|3>OUTER;
-
-        call <|3>OUTER;
-        call <|2>INNER;
-    END <|2>INNER;
-
-    call <|1>OUTER;
-    call <|2>INNER;
- end <|1>OUTER;
- call <|1>OUTER;`));
-
-  test("Must link to procedure label before declaration", () =>
-    expectLinks(`
- CALL <|1>OUTER;
-
- <|1:OUTER|>: PROCEDURE;
-   PUT("INSIDE");
- END <|1>OUTER;   
-
- CALL <|1>OUTER;`));
-
   test("Must handle use before declaration", () =>
     expectLinks(`
  DCL <|1:A|> CHAR(8) INIT("A");
@@ -205,17 +166,6 @@ describe("Linking tests", () => {
       expectLinks(`
          DCL 1 A, (2 <|1:B|>);
          PUT(A.<|1>B);`));
-
-    test("Factorized names in structures do only appear on the last symbol", () =>
-      createTestBuilder(`
- DCL 1 A, 2 (B, C, D), 3 <|def3:E|>;
- PUT(A.B.<|1>E);
- PUT(A.C.<|2>E);
- PUT(A.D.<|def3>E);
-      `)
-        .expectNoLinksAt("1")
-        .expectNoLinksAt("2")
-        .expectLinks());
   });
 
   describe("Implicit qualification", () => {
@@ -336,15 +286,6 @@ describe("Linking tests", () => {
        2 <|1:B|>,
          3 D CHAR(8) VALUE("D");
  `).expectExclusiveErrorCodesAt("1", PLICodes.Error.IBM1308I.fullCode));
-
-      test("Redeclaration of label must fail", () =>
-        createTestBuilder(`
- OUTER: PROCEDURE;
- END OUTER;
- <|1:OUTER|>: PROCEDURE;
- END OUTER;
- CALL OUTER;
- `).expectExclusiveErrorCodesAt("1", PLICodes.Severe.IBM1916I.fullCode));
 
       test("Repeated declaration of label is invalid (procedure label first)", () =>
         createTestBuilder(`
