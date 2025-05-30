@@ -94,7 +94,7 @@ export function startLanguageServer(connection: Connection): void {
       const definition = definitionRequest(compilationUnit, uri, offset);
       const lspDefinitions: Location[] = [];
       for (const def of definition) {
-        const doc = TextDocuments.get(def.uri);
+        const doc = TextDocuments.get(def.uri, { loadFromURI: true });
         if (doc) {
           const range = rangeToLSP(doc, def.range);
           lspDefinitions.push({
@@ -119,7 +119,7 @@ export function startLanguageServer(connection: Connection): void {
       const definition = referencesRequest(compilationUnit, parsedUri, offset);
       const lspDefinitions: Location[] = [];
       for (const def of definition) {
-        const doc = TextDocuments.get(def.uri);
+        const doc = TextDocuments.get(def.uri, { loadFromURI: true });
         if (doc) {
           const range = rangeToLSP(doc, def.range);
           lspDefinitions.push({
@@ -174,7 +174,7 @@ export function startLanguageServer(connection: Connection): void {
       const offset = textDocument.offsetAt(position);
       const renameLocations = renameRequest(unit, parsedUri, offset);
       const changes = mapValues(renameLocations, (locations, key) => {
-        const textDocument = TextDocuments.get(key);
+        const textDocument = TextDocuments.get(key, { loadFromURI: true });
         if (!textDocument) {
           return [];
         } else {

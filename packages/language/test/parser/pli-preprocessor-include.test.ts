@@ -15,7 +15,10 @@ describe("PL/1 Includes", () => {
   beforeAll(async () => {
     const vtsfs = new VirtualFileSystemProvider();
     setFileSystemProvider(vtsfs);
-    vtsfs.writeFile(URI.file("/test/payroll.pli"), " DECLARE PAYROLL FIXED;");
+    vtsfs.writeFileSync(
+      URI.file("/test/payroll.pli"),
+      " DECLARE PAYROLL FIXED;",
+    );
     const lexer = new PliLexer();
     tokenize = (text: string) => {
       const uri = URI.file("/test/test.pli");

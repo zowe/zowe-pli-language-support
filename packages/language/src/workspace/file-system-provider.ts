@@ -14,6 +14,7 @@ import { URI } from "../utils/uri";
 export interface FileSystemProvider {
   readFileSync(uri: URI): string | undefined;
   fileExistsSync(uri: URI): boolean;
+  writeFileSync(uri: URI, value: string): void;
 }
 
 /**
@@ -26,6 +27,10 @@ class _EmptyFileSystemProvider implements FileSystemProvider {
 
   fileExistsSync(_uri: URI): boolean {
     return false;
+  }
+
+  writeFileSync(_uri: URI, _value: string): void {
+    return;
   }
 }
 
@@ -46,7 +51,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
   /**
    * Write a file to the virtualized file system
    */
-  writeFile(uri: URI, value: string): void {
+  writeFileSync(uri: URI, value: string): void {
     this.files.set(uri.path, value);
   }
 

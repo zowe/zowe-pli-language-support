@@ -28,6 +28,10 @@ class NodeFileSystemProvider implements FileSystemProvider {
   fileExistsSync(uri: URI): boolean {
     return fs.existsSync(uri.fsPath);
   }
+  writeFileSync(uri: URI, value: string): void {
+    // Do nothing for now.
+    // Todo (ssmifi): Should we throw an error here?
+  }
 }
 
 setFileSystemProvider(new NodeFileSystemProvider());

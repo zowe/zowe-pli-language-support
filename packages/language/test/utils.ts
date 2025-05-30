@@ -26,6 +26,7 @@ import { IToken } from "@chevrotain/types";
 import { escapeRegExp } from "../src/parser/tokens";
 import { referencesRequest } from "../src/language-server/references-request";
 import { completionRequest } from "../src/language-server/completion/completion-request";
+import { FileSystemProvider } from "../src/workspace/file-system-provider";
 
 interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
@@ -129,9 +130,11 @@ export function assertDiagnostic(
  */
 export function parse(
   text: string,
-  options?: { validate: boolean },
+  options?: { validate?: boolean; uri?: URI },
 ): CompilationUnit {
-  const sourceFile = createCompilationUnit(URI.file("test.pli"));
+  const sourceFile = createCompilationUnit(
+    options?.uri ?? URI.file("test.pli"),
+  );
   if (!options?.validate) {
     lifecycle.tokenize(sourceFile, text);
     lifecycle.parse(sourceFile);
@@ -264,7 +267,7 @@ export function generateAndAssertValidSymbolTable(
 
 export function parseAndLink(
   text: string,
-  options?: { validate: boolean },
+  options?: { validate?: boolean; uri?: URI },
 ): CompilationUnit {
   const unit = parse(text, options);
   lifecycle.generateSymbolTable(unit);
@@ -414,15 +417,25 @@ export function replaceIndices(base: ExpectedBase): {
   return { output: input, indices, ranges: ranges.sort((a, b) => a[0] - b[0]) };
 }
 
+export type PliTestFile = {
+  uri: string;
+  content: string;
+};
+
 /**
  * TODO: Move the entire TestBuilder system to a separate file, and don't export it.
  * Instead, use the `createTestBuilder` and `createValidatorTestBuilder` functions to create instances.
  */
 export class TestBuilder {
   private unit: CompilationUnit;
-  private output: string;
-  private indices: Record<string, number[]>;
-  private ranges: Record<string, Array<[number, number]>>;
+  private files: Record<
+    string,
+    {
+      output: string;
+      indices: Record<string, number[]>;
+      ranges: Record<string, Array<[number, number]>>;
+    }
+  > = {};
   private diagnostics: Diagnostic[];
 
   /**
@@ -443,13 +456,30 @@ export class TestBuilder {
    *  }
    * ]);
    */
-  constructor(text: string, options?: { validate: boolean }) {
-    const { output, indices, ranges } = replaceNamedIndices(text);
-    this.unit = parseAndLink(output, options);
+  constructor(
+    textOrFiles: string | PliTestFile[],
+    options?: { validate?: boolean },
+    fs?: FileSystemProvider,
+  ) {
+    if (typeof textOrFiles === "string") {
+      this.files["file:///main.pli"] = replaceNamedIndices(textOrFiles);
+    } else {
+      for (const file of textOrFiles) {
+        this.files[file.uri] = replaceNamedIndices(file.content);
+      }
+    }
+
+    if (fs) {
+      for (const [uri, file] of Object.entries(this.files)) {
+        fs.writeFileSync(URI.parse(uri), file.output);
+      }
+    }
+
+    this.unit = parseAndLink(Object.values(this.files)[0].output, {
+      validate: options?.validate,
+      uri: URI.parse(Object.keys(this.files)[0]),
+    });
     this.diagnostics = collectDiagnostics(this.unit);
-    this.output = output;
-    this.indices = indices;
-    this.ranges = ranges;
   }
 
   /**
@@ -492,7 +522,7 @@ export class TestBuilder {
   }
 
   private getMatchingDiagnostics(label: string): Diagnostic[] {
-    const range = this.ranges[label];
+    const range = Object.values(this.files)[0].ranges[label];
     if (!range || range.length === 0) {
       throw new Error(`Label "${label}" not found`);
     }
@@ -547,22 +577,26 @@ export class TestBuilder {
   }
 
   expectLinks(): TestBuilder {
-    const requests = Object.entries(this.indices).flatMap(([index, offsets]) =>
-      offsets.map((offset) => ({
-        label: index,
-        offset,
-        rangeIndex: this.ranges[index],
-      })),
+    const requests = Object.entries(this.files).flatMap(([uri, file]) =>
+      Object.entries(file.indices).flatMap(([index, offsets]) =>
+        offsets.map((offset) => ({
+          label: index,
+          offset,
+          rangeIndex: Object.values(this.files).flatMap(
+            (f) => f.ranges[index] || [],
+          ),
+          uri,
+        })),
+      ),
     );
 
-    const unit = parseAndLink(this.output);
-
-    for (const { label, offset, rangeIndex } of requests) {
-      const result = definitionRequest(unit, unit.uri, offset);
+    for (const { label, offset, rangeIndex, uri } of requests) {
+      const result = definitionRequest(this.unit, URI.parse(uri), offset);
 
       // Produce a small snippet with a margin of 10 characters to give a hint of where the error is
-      const snippet = `${this.output.slice(offset - 10, offset).trimStart()}<|${label}>${this.output.slice(offset, offset + 10).trimEnd()}`;
-      const line = this.output.slice(0, offset).split("\n").length + 1;
+      const snippet = `${this.files[uri].output.slice(offset - 10, offset).trimStart()}<|${label}>${this.files[uri].output.slice(offset, offset + 10).trimEnd()}`;
+      const line =
+        this.files[uri].output.slice(0, offset).split("\n").length + 1;
 
       expect(
         result,
