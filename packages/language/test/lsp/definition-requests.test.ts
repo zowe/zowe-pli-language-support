@@ -32,14 +32,16 @@ describe("Go To Definition request", () => {
     const content = ` DCL <|1:X|> FIXED;
  <|1>X = 1;`;
 
-    new TestBuilder(content, vfs).expectLinks();
+    new TestBuilder(content, undefined, vfs).expectLinks();
   });
 
   it("should not resolve wrong request in TestBuilder", () => {
     const content = ` DCL <|1:X|> FIXED;
  <|2>X = 1;`;
 
-    expect(() => new TestBuilder(content, vfs).expectLinks()).toThrow();
+    expect(() =>
+      new TestBuilder(content, undefined, vfs).expectLinks(),
+    ).toThrow();
   });
 
   it("should resolve definition in included file", () => {
@@ -52,6 +54,7 @@ describe("Go To Definition request", () => {
         { uri: "file:///main.pli", content: main },
         { uri: "file:///include.pli", content: include },
       ],
+      undefined,
       vfs,
     ).expectLinks();
   });
@@ -67,6 +70,7 @@ describe("Go To Definition request", () => {
         { uri: "file:///main.pli", content: main },
         { uri: "file:///include.pli", content: include },
       ],
+      undefined,
       vfs,
     ).expectLinks();
   });
@@ -85,6 +89,7 @@ describe("Go To Definition request", () => {
         { uri: "file:///include.pli", content: include },
         { uri: "file:///include2.pli", content: include2 },
       ],
+      undefined,
       vfs,
     ).expectLinks();
   });

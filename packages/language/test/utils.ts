@@ -266,8 +266,8 @@ export function generateAndAssertValidSymbolTable(
  */
 
 export function parseAndLink(
-  text: string, 
-  options?: { validate?: boolean; uri?: URI }
+  text: string,
+  options?: { validate?: boolean; uri?: URI },
 ): CompilationUnit {
   const unit = parse(text, options);
   lifecycle.generateSymbolTable(unit);
@@ -458,7 +458,7 @@ export class TestBuilder {
    */
   constructor(
     textOrFiles: string | PliTestFile[],
-    options?: { validate: boolean },
+    options?: { validate?: boolean },
     fs?: FileSystemTestProvider,
   ) {
     if (typeof textOrFiles === "string") {
