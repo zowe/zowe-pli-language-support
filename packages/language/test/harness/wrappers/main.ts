@@ -1,3 +1,3 @@
 //// STARTPR: PROCEDURE OPTIONS (MAIN);
-//// <...>
+////<...>
 //// END STARTPR;`;

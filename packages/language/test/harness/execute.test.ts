@@ -11,13 +11,25 @@
 
 import { readdirSync } from "fs";
 import path from "path";
-import { describe, test } from "vitest";
+import { afterAll, beforeAll, describe, test } from "vitest";
 import { parseHarnessTestFile } from "./harness-parser";
 import { runHarnessTest } from "./harness-runner";
 import { getWrappers } from "./wrapper";
+import { setFileSystemProvider, VirtualFileSystemProvider } from "../../src";
 
 const frameworkFileName = "framework.ts";
 const testsPath = path.resolve(__dirname, "tests");
+
+let vfs: VirtualFileSystemProvider;
+
+beforeAll(() => {
+  vfs = new VirtualFileSystemProvider();
+  setFileSystemProvider(vfs);
+});
+
+afterAll(() => {
+  setFileSystemProvider(undefined);
+});
 
 describe("Harness tests", runHarnessTests);
 
@@ -45,6 +57,7 @@ function runHarnessTests() {
       path.resolve(testsPath, file),
       context,
     );
-    test(`${file}`, () => runHarnessTest(testFile));
+
+    test(`${file}`, () => runHarnessTest(testFile, vfs));
   }
 }

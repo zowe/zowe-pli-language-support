@@ -13,6 +13,7 @@ import { readFileSync } from "fs";
 import { HarnessFile, HarnessTest, UnnamedFile } from "./types";
 import { getFileName } from "./utils";
 import { Wrapper } from "./wrapper";
+import path from "path";
 
 const HarnessFileTag = {
   // The name of the file
@@ -60,6 +61,7 @@ class HarnessTestParser {
 
   constructor(
     text: string,
+    private fileName: string,
     private context: Context,
   ) {
     // Reverse it for performance reasons, faster to pop than shift
@@ -226,16 +228,38 @@ class HarnessTestParser {
     const commands = this.lines.toReversed().join("\n").trim();
 
     return {
+      fileName: this.fileName,
       files,
       commands,
     };
   }
 }
 
-function parseHarnessTest(text: string, context: Context): HarnessTest {
-  return new HarnessTestParser(text, context).parse();
+/**
+ * Parse a harness test file into a `HarnessTest` object.
+ *
+ * @param text - The text of the harness test file.
+ * @param filename - The filename of the harness test file.
+ * @param context - The context of the harness test file.
+ * @returns The `HarnessTest` object.
+ */
+function parseHarnessTest(
+  text: string,
+  filename: string,
+  context: Context,
+): HarnessTest {
+  return new HarnessTestParser(text, filename, context).parse();
 }
 
+/**
+ * Parse a harness test file into a `HarnessTest` object.
+ *
+ * Will throw if parsing fails.
+ *
+ * @param filename - The filename of the harness test file.
+ * @param context - The context of the harness test file.
+ * @returns The `HarnessTest` object.
+ */
 export function parseHarnessTestFile(
   filename: string,
   context: Context,
@@ -243,7 +267,8 @@ export function parseHarnessTestFile(
   const text = readFileSync(filename, "utf-8");
 
   try {
-    return parseHarnessTest(text, context);
+    const testName = path.relative(__dirname, filename);
+    return parseHarnessTest(text, testName, context);
   } catch (e: unknown) {
     throw new Error(
       `Error in harness test: ${filename}: ${(e as Error).message}`,

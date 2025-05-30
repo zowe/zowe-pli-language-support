@@ -45,17 +45,6 @@ describe("Go To Definition request", () => {
     expect(() => createFsTestBuilder(content).expectLinks()).toThrow();
   });
 
-  it("should resolve definition in included file", () => {
-    const include = ` DCL <|1:Y|> FIXED;`;
-    const main = ` %INCLUDE "include.pli";
- <|1>Y = 42;`;
-
-    createFsTestBuilder([
-      { uri: "file:///main.pli", content: main },
-      { uri: "file:///include.pli", content: include },
-    ]).expectLinks();
-  });
-
   it("should resolve multiple requests", () => {
     const include = ` DCL <|1:Y|> FIXED;`;
     const main = ` %INCLUDE "include.pli";

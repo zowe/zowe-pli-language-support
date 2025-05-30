@@ -21,7 +21,7 @@ import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
 import { assignDebugKinds } from "../src/utils/debug-kinds";
 
-const DEFAULT_FILE_URI = "file:///main.pli";
+export const DEFAULT_FILE_URI = "file:///main.pli";
 
 export type TestBuilderOptions = {
   validate?: boolean;
@@ -209,7 +209,12 @@ export class TestBuilder {
    * @returns The linking requests
    */
   private getLinkingRequests(label: string): LinkingRequest[] {
-    return this.indices[label].map((offset) => ({
+    const indices = this.indices[label];
+    if (!indices) {
+      throw new Error(`Label "${label}" not found`);
+    }
+
+    return indices.map((offset) => ({
       label,
       offset,
       rangeIndex: Object.values(this.files).flatMap(

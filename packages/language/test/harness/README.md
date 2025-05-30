@@ -19,7 +19,6 @@ Inspired by the [TypeScript Fourslash testing system](https://github.com/microso
 //// CALL OUTER;
 
 verify.expectExclusiveErrorCodesAt(1, code.Severe.IBM1916I.fullCode);
-
 ```
 
 ## Usage
@@ -32,8 +31,7 @@ All test files must include the framework reference.
 
 ### Virtual File System
 
-A single test file can describe multiple PL/I files.
-The test runner will create a virtual file system.
+A single test file can describe multiple PL/I files. The test runner will create a virtual file system. Files are inserted into the unit compiler in reverse order (i.e., your main file should be last).
 
 A file is defined by the `// @filename: ...` tag on a file definition, e.g.:
 
