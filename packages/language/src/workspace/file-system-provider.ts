@@ -14,20 +14,13 @@ import { URI } from "../utils/uri";
 export interface FileSystemProvider {
   readFileSync(uri: URI): string | undefined;
   fileExistsSync(uri: URI): boolean;
-}
-
-/**
- * File system provider that can write files.
- * Mainly used for testing purposes.
- */
-export interface FileSystemTestProvider extends FileSystemProvider {
-  writeFile(uri: URI, value: string): void;
+  writeFileSync(uri: URI, value: string): void;
 }
 
 /**
  * Empty file system, the default file system provider, which just returns empty strings for all URIs
  */
-class _EmptyFileSystemProvider implements FileSystemTestProvider {
+class _EmptyFileSystemProvider implements FileSystemProvider {
   readFileSync(_uri: URI): string {
     return "";
   }
@@ -36,7 +29,7 @@ class _EmptyFileSystemProvider implements FileSystemTestProvider {
     return false;
   }
 
-  writeFile(_uri: URI, _value: string): void {
+  writeFileSync(_uri: URI, _value: string): void {
     return;
   }
 }
@@ -49,7 +42,7 @@ export const EmptyFileSystemProvider = new _EmptyFileSystemProvider();
 /**
  * Virtualized file system, internally represented as a flat map of files
  */
-export class VirtualFileSystemProvider implements FileSystemTestProvider {
+export class VirtualFileSystemProvider implements FileSystemProvider {
   /**
    * A flat map of files in the virtualized file system, all files are accessible whether in a directory or not this way
    */
@@ -58,7 +51,7 @@ export class VirtualFileSystemProvider implements FileSystemTestProvider {
   /**
    * Write a file to the virtualized file system
    */
-  writeFile(uri: URI, value: string): void {
+  writeFileSync(uri: URI, value: string): void {
     this.files.set(uri.path, value);
   }
 

@@ -26,7 +26,7 @@ import { IToken } from "@chevrotain/types";
 import { escapeRegExp } from "../src/parser/tokens";
 import { referencesRequest } from "../src/language-server/references-request";
 import { completionRequest } from "../src/language-server/completion/completion-request";
-import { FileSystemTestProvider } from "../src/workspace/file-system-provider";
+import { FileSystemProvider } from "../src/workspace/file-system-provider";
 
 interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
@@ -459,7 +459,7 @@ export class TestBuilder {
   constructor(
     textOrFiles: string | PliTestFile[],
     options?: { validate?: boolean },
-    fs?: FileSystemTestProvider,
+    fs?: FileSystemProvider,
   ) {
     if (typeof textOrFiles === "string") {
       this.files["file:///main.pli"] = replaceNamedIndices(textOrFiles);
@@ -471,7 +471,7 @@ export class TestBuilder {
 
     if (fs) {
       for (const [uri, file] of Object.entries(this.files)) {
-        fs.writeFile(URI.parse(uri), file.output);
+        fs.writeFileSync(URI.parse(uri), file.output);
       }
     }
 
