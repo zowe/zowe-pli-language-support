@@ -16,6 +16,9 @@ import { HarnessTest } from "./types";
 const vm = require("vm");
 
 export function runHarnessTest(testFile: HarnessTest) {
+  /**
+   * @WILLFIX @didrikmunther: Support multiple files
+   */
   const firstFile = testFile.files.values().next().value!;
 
   const testBuilder = createTestBuilder(firstFile.content);
