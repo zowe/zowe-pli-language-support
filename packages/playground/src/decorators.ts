@@ -9,11 +9,12 @@
  *
  */
 
+import * as vscode from "vscode";
+import * as monaco from "@codingame/monaco-vscode-editor-api";
 import { MonacoEditorLanguageClientWrapper } from "monaco-editor-wrapper";
-import { editor } from "monaco-editor";
 
-let skippedCodeDecorationType: editor.IModelDecorationOptions;
-let skippedCodeDecorations: editor.IEditorDecorationsCollection | undefined;
+let skippedCodeDecorationType: monaco.editor.IModelDecorationOptions;
+let skippedCodeDecorations: string[] = [];
 
 export function registerSkipDecoratorType(
   wrapper: MonacoEditorLanguageClientWrapper,
@@ -29,30 +30,28 @@ export function registerSkipDecoratorType(
       (params: {
         uri: string;
         ranges: Array<{
-          range: {
-            start: { line: number; character: number };
-            end: { line: number; character: number };
-          };
+          start: { line: number; character: number };
+          end: { line: number; character: number };
         }>;
       }) => {
-        const editor = wrapper.getEditor();
-        if (editor) {
-          if (skippedCodeDecorations) {
-            skippedCodeDecorations.clear();
-          }
-
-          const ranges = params.ranges.map(({ range }) => ({
+        const model = monaco.editor.getModel(vscode.Uri.parse(params.uri));
+        if (model) {
+          const ranges = params.ranges.map((range) => ({
             startLineNumber: range.start.line + 1,
             startColumn: range.start.character + 1,
             endLineNumber: range.end.line + 1,
             endColumn: range.end.character + 1,
           }));
-          skippedCodeDecorations = editor.createDecorationsCollection(
+
+          skippedCodeDecorations = model.deltaDecorations(
+            skippedCodeDecorations,
             ranges.map((range) => ({
               range,
               options: skippedCodeDecorationType,
             })),
           );
+        } else {
+          console.warn("No model found for", params.uri);
         }
       },
     );

@@ -104,6 +104,14 @@
             ],
             "smartStep": true,
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug Playground in Chrome",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}/packages/playground",
+            "sourceMaps": true
         }
     ],
     "compounds": [

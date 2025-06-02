@@ -14,7 +14,9 @@
     "coverage": "vitest --coverage",
     "lint": "prettier -c \"**/*.ts\"",
     "pretty": "prettier -w \"**/*.ts\"",
-    "playground": "pnpm --dir packages/playground build"
+    "playground": "pnpm --dir packages/playground build",
+    "playground:clean": "pnpm --dir packages/playground clean",
+    "watch": "tsc -b tsconfig.build.json --watch"
   },
   "devDependencies": {
     "@types/node": "^18.19.70",
