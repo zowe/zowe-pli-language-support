@@ -57,5 +57,4 @@ After the file definitions, the commands follow.
 
 ## Contributing
 
-When adding a test command, it first needs to be declared in the `tests/framework.ts` file to be exposed to the test files.
-Following that, the semantics needs to be implemented in the `harness-implementation.ts` file.
+When adding a test command, it first needs to be declared in the `harness-interface.ts` and `tests/framework.ts` file to be exposed to the test files. Following that, the semantics needs to be implemented in the `harness-implementation.ts` file.

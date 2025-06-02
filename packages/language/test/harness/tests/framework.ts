@@ -9,37 +9,10 @@
  *
  */
 
-import { PLICodes } from "../../../src/validation/messages";
-
-declare namespace HarnessTesterInterface {
-  class verify {
-    expectExclusiveErrorCodesAt(
-      label: string | number,
-      codes: string[] | string,
-    ): void;
-  }
-
-  class linker {
-    /**
-     * Expect that the defined links actually links to the correct target.
-     */
-    expectLinks(): void;
-    /**
-     * Expect that the defined links do not link to the given label.
-     */
-    expectNoLinksAt(label: string | number): void;
-  }
-
-  class code {
-    Severe: typeof PLICodes.Severe;
-    Warning: typeof PLICodes.Warning;
-    Information: typeof PLICodes.Info;
-    Error: typeof PLICodes.Error;
-  }
-}
+import { HarnessTesterInterface } from "../harness-interface";
 
 declare global {
-  var verify: HarnessTesterInterface.verify;
-  var linker: HarnessTesterInterface.linker;
-  var code: HarnessTesterInterface.code; // Declare 'code' as a global variable.
+  var verify: HarnessTesterInterface["verify"];
+  var linker: HarnessTesterInterface["linker"];
+  var code: HarnessTesterInterface["code"];
 }

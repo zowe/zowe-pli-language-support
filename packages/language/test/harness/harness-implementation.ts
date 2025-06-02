@@ -11,16 +11,17 @@
 
 import { PLICodes } from "../../src/validation/messages";
 import { TestBuilder } from "../test-builder";
+import { HarnessTesterInterface } from "./harness-interface";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
  *
- * This implementation should conform to `tests/framework.ts:HarnessTesterInterface`.
- *
  * @param testBuilder - The test builder to use to verify the harness test.
  * @returns A harness implementation that can be used to run the harness test.
  */
-export function createHarnessImplementation(testBuilder: TestBuilder) {
+export function createHarnessImplementation(
+  testBuilder: TestBuilder,
+): HarnessTesterInterface {
   return {
     linker: {
       expectLinks: () => testBuilder.expectLinks(),
