@@ -77,7 +77,8 @@ function runHarnessTests() {
  * @param filePath - The path to the test file.
  */
 function runSingleHarnessTest(filePath: string) {
-  test(`${filePath}`, () => {
+  const relativePath = path.relative(__dirname, filePath);
+  test(`${relativePath}`, () => {
     const wrappers = getWrappers();
 
     const context = {
