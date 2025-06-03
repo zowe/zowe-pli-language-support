@@ -15,7 +15,7 @@ import {
   DEFAULT_FILE_URI,
   PliTestFile,
 } from "../test-builder";
-import { createHarnessImplementation } from "./harness-implementation";
+import { createTestBuilderHarnessImplementation } from "./implementation/test-builder";
 import { HarnessTest, UnnamedFile } from "./types";
 
 const vm = require("vm");
@@ -46,7 +46,8 @@ export function runHarnessTest(
   // We want to load the files in reverse order, so that the included files are inserted in the correct order.
   const files = getFiles(testFile).toReversed();
   const testBuilder = createTestBuilder(files, { fs: fileSystemProvider });
-  const implementationSandbox = createHarnessImplementation(testBuilder);
+  const implementationSandbox =
+    createTestBuilderHarnessImplementation(testBuilder);
   const vmContext = vm.createContext(implementationSandbox);
 
   vm.runInContext(testFile.commands, vmContext, {

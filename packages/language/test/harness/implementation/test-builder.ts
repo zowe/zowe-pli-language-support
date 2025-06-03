@@ -9,9 +9,9 @@
  *
  */
 
-import { PLICodes } from "../../src/validation/messages";
-import { TestBuilder } from "../test-builder";
-import { HarnessTesterInterface } from "./harness-interface";
+import { TestBuilder } from "../../test-builder";
+import { HarnessTesterInterface } from "../harness-interface";
+import { HarnessCodes } from "./codes";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -19,26 +19,18 @@ import { HarnessTesterInterface } from "./harness-interface";
  * @param testBuilder - The test builder to use to verify the harness test.
  * @returns A harness implementation that can be used to run the harness test.
  */
-export function createHarnessImplementation(
+export function createTestBuilderHarnessImplementation(
   testBuilder: TestBuilder,
 ): HarnessTesterInterface {
   return {
     linker: {
       expectLinks: () => testBuilder.expectLinks(),
-      expectNoLinksAt: (label: string | number) =>
-        testBuilder.expectNoLinksAt(label.toString()),
+      expectNoLinksAt: (label) => testBuilder.expectNoLinksAt(label.toString()),
     },
     verify: {
-      expectExclusiveErrorCodesAt: (
-        label: string | number,
-        codes: string[] | string,
-      ) => testBuilder.expectExclusiveErrorCodesAt(label.toString(), codes),
+      expectExclusiveErrorCodesAt: (label, codes) =>
+        testBuilder.expectExclusiveErrorCodesAt(label.toString(), codes),
     },
-    code: {
-      Severe: PLICodes.Severe,
-      Warning: PLICodes.Warning,
-      Information: PLICodes.Info,
-      Error: PLICodes.Error,
-    },
+    code: HarnessCodes,
   };
 }
