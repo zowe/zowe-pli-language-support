@@ -4,9 +4,14 @@
       "name": "default",
       "compiler-options": [],
       "libs": [
-        "b.pli"
+        "cpy",
+        "*"
       ],
-      "copybook-extensions": []
+      "copybook-extensions": [
+        ".pli",
+        ".cpy",
+        ".inc"
+      ]
     }
   ]
 }
