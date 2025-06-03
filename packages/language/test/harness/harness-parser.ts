@@ -242,7 +242,7 @@ class HarnessTestParser {
  * @param context - The context of the harness test file.
  * @returns The `HarnessTest` object.
  */
-function parseHarnessTest(
+export function parseHarnessTest(
   text: string,
   fileName: string,
   context: Context,

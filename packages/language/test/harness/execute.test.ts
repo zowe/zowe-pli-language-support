@@ -16,6 +16,13 @@ import { parseHarnessTestFile } from "./harness-parser";
 import { runHarnessTest } from "./harness-runner";
 import { getWrappers } from "./wrapper";
 import { setFileSystemProvider, VirtualFileSystemProvider } from "../../src";
+import { HarnessTest, UnnamedFile } from "./types";
+import {
+  createTestBuilder,
+  DEFAULT_FILE_URI,
+  PliTestFile,
+} from "../test-builder";
+import { createTestBuilderHarnessImplementation } from "./implementation/test-builder";
 
 const frameworkFileName = "framework.ts";
 const testsPath = path.resolve(__dirname, "tests");
@@ -39,6 +46,19 @@ function getTestFiles() {
 }
 
 /**
+ * Get the files to load for a harness test.
+ *
+ * @param testFile - The test file to get the files for.
+ * @returns The files to load for the harness test.
+ */
+function getFiles(testFile: HarnessTest): PliTestFile[] {
+  return Array.from(testFile.files.entries()).map(([uri, file]) => ({
+    uri: uri === UnnamedFile ? DEFAULT_FILE_URI : uri,
+    content: file.content,
+  }));
+}
+
+/**
  * Get all test files in the `tests` directory, parse them, and create a
  * vitest test for each test.
  */
@@ -57,15 +77,22 @@ function runHarnessTests() {
  * @param filePath - The path to the test file.
  */
 function runSingleHarnessTest(filePath: string) {
-  const wrappers = getWrappers();
+  test(`${filePath}`, () => {
+    const wrappers = getWrappers();
 
-  const context = {
-    wrappers,
-  };
+    const context = {
+      wrappers,
+    };
 
-  const testFile = parseHarnessTestFile(filePath, context);
+    const testFile = parseHarnessTestFile(filePath, context);
 
-  test(`${filePath}`, () => runHarnessTest(testFile, vfs));
+    // We want to load the files in reverse order, so that the included files are inserted in the correct order.
+    const files = getFiles(testFile).toReversed();
+    const testBuilder = createTestBuilder(files, { fs: vfs });
+    const implementation = createTestBuilderHarnessImplementation(testBuilder);
+
+    runHarnessTest(testFile, implementation);
+  });
 }
 
 /**
