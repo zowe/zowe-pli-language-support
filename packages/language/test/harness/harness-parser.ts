@@ -56,6 +56,7 @@ type Context = {
  * ```
  */
 class HarnessTestParser {
+  private text: string;
   private lines: string[];
   private seenReference: boolean = false;
 
@@ -66,6 +67,7 @@ class HarnessTestParser {
   ) {
     // Reverse it for performance reasons, faster to pop than shift
     this.lines = text.split("\n").toReversed();
+    this.text = text;
   }
 
   private peek(): string | undefined {
@@ -224,13 +226,10 @@ class HarnessTestParser {
       break;
     }
 
-    // The commands are simply the remaining lines
-    const commands = this.lines.toReversed().join("\n").trim();
-
     return {
       fileName: this.fileName,
       files,
-      commands,
+      commands: this.text,
     };
   }
 }
@@ -245,10 +244,10 @@ class HarnessTestParser {
  */
 function parseHarnessTest(
   text: string,
-  filename: string,
+  fileName: string,
   context: Context,
 ): HarnessTest {
-  return new HarnessTestParser(text, filename, context).parse();
+  return new HarnessTestParser(text, fileName, context).parse();
 }
 
 /**
@@ -256,22 +255,22 @@ function parseHarnessTest(
  *
  * Will throw if parsing fails.
  *
- * @param filename - The filename of the harness test file.
+ * @param fileName - The filename of the harness test file.
  * @param context - The context of the harness test file.
  * @returns The `HarnessTest` object.
  */
 export function parseHarnessTestFile(
-  filename: string,
+  fileName: string,
   context: Context,
 ): HarnessTest {
-  const text = readFileSync(filename, "utf-8");
+  const text = readFileSync(fileName, "utf-8");
 
   try {
-    const testName = path.relative(__dirname, filename);
-    return parseHarnessTest(text, testName, context);
+    return parseHarnessTest(text, fileName, context);
   } catch (e: unknown) {
+    const relativePath = path.relative(__dirname, fileName);
     throw new Error(
-      `Error in harness test: ${filename}: ${(e as Error).message}`,
+      `Error in harness test: ${relativePath}: ${(e as Error).message}`,
     );
   }
 }

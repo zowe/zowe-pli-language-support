@@ -89,5 +89,6 @@ if (!HARNESS_TEST_FILE) {
     );
   }
 
-  runSingleHarnessTest(HARNESS_TEST_FILE);
+  const fullPath = path.resolve(HARNESS_TEST_FILE);
+  runSingleHarnessTest(fullPath);
 }

@@ -49,5 +49,7 @@ export function runHarnessTest(
   const implementationSandbox = createHarnessImplementation(testBuilder);
   const vmContext = vm.createContext(implementationSandbox);
 
-  vm.runInContext(testFile.commands, vmContext);
+  vm.runInContext(testFile.commands, vmContext, {
+    filename: testFile.fileName,
+  });
 }
