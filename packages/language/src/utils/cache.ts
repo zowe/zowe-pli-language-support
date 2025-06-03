@@ -32,6 +32,10 @@ export class Cache<T extends Record<string, any>, U> {
   }
 
   onRevalidate<K extends keyof T>(key: K, callback: (param: U) => void): this {
+    if (!(key in this.cache)) {
+      // Make sure the key exists in the cache for the callback.
+      this.cache[key] = undefined;
+    }
     this.callbacks.set(key, callback);
     return this;
   }
