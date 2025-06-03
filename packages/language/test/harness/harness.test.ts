@@ -15,6 +15,7 @@ import { HarnessCodes } from "./implementation/codes";
 import { HarnessTest } from "./types";
 import { runHarnessTest } from "./harness-runner";
 import { parseHarnessTest } from "./harness-parser";
+import { parseWrapperFile } from "./wrapper";
 
 type HarnessImplementationListener = (method: string, ...args: any[]) => void;
 
@@ -133,5 +134,12 @@ ${content1
     expect(mainFile).toBeDefined();
     expect(mainFile?.wrap).toBe("main");
     expect(mainFile?.content).toBe(`WRAP_BEGIN MY CONTENT WRAP_END`);
+  });
+
+  test("should parse a wrapper file", () => {
+    const wrapFileContent = `////WRAP_BEGIN <...> WRAP_END`;
+    const wrapper = parseWrapperFile(wrapFileContent);
+
+    expect(wrapper("MY CONTENT")).toBe("WRAP_BEGIN MY CONTENT WRAP_END");
   });
 });

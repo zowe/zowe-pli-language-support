@@ -21,9 +21,28 @@ const WRAPPER_CONTENT_TAG = "<...>";
 export type Wrapper = (content: string) => string;
 
 /**
+ * Parse a wrapper file into a function that can be used to wrap content.
+ *
+ * We use the <...> tag to mark where the content will be inserted in the wrapper file.
+ *
+ * @param content - The content of the wrapper file.
+ * @returns A function that can be used to wrap content.
+ */
+export function parseWrapperFile(content: string): Wrapper {
+  const wrapperContent = content
+    .split("\n")
+    .map((v) => v.substring(HARNESS_FILE_PREFIX.length))
+    .join("\n");
+  const wrapperFunction = (content: string) =>
+    wrapperContent.replace(WRAPPER_CONTENT_TAG, content);
+
+  return wrapperFunction;
+}
+
+/**
  * By using the `@wrap` tag, we can specify a wrapper file to use for the test.
  *
- * We use the <...>
+ * We use the <...> tag to mark where the content will be inserted in the wrapper file.
  *
  * @returns
  */
@@ -36,12 +55,7 @@ export function getWrappers(): Record<string, Wrapper> {
   for (const file of files) {
     const wrapperName = file.replace(/\.ts$/, "");
     const wrapper = readFileSync(path.resolve(wrapperPaths, file), "utf8");
-    const wrapperContent = wrapper
-      .split("\n")
-      .map((v) => v.substring(HARNESS_FILE_PREFIX.length))
-      .join("\n");
-    wrappers[wrapperName] = (content: string) =>
-      wrapperContent.replace(WRAPPER_CONTENT_TAG, content);
+    wrappers[wrapperName] = parseWrapperFile(wrapper);
   }
 
   return wrappers;
