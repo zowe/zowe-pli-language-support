@@ -17,7 +17,7 @@ This extension is a part of the Zowe open-source project, hosted by the Open Mai
 
 <a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v3 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev3/explorer-vs-code/color/zowe-conformant-zowev3-explorer-vs-code-color.png" width=260 height=195 /></a>
 
-## Prerequisites
+## Address Software Requirements
 
 There are no client or server-side prerequisites for PL/I Language Support.
 
@@ -27,6 +27,8 @@ PL/I Language Support provides the following PL/I syntax awareness features:
 
 ### Syntax and Semantic Check for Code
 This feature checks for mistakes and errors in PL/I code. The syntax check feature reviews the whole content of the code and suggests fixes, and the semantic analysis highlights incorrect names of variables and include files.
+
+The syntax check feature also validates built-in functions, pseudovariables, and subroutines which must be explicitly declared.
 
 ### Syntax Highlighting
 The extension enables syntax highlighting for PL/I code.
