@@ -51,7 +51,10 @@ async function setupPluginConfiguration() {
       pgroup: "testgroup",
     },
   ];
-  PluginConfigurationProviderInstance.setProgramConfigs("/test", programConfigs);
+  PluginConfigurationProviderInstance.setProgramConfigs(
+    "/test",
+    programConfigs,
+  );
 
   const processGroups: ProcessGroup[] = [
     {
@@ -111,23 +114,26 @@ describe("PL/1 Includes without Plugin Config", () => {
   });
 
   // intended failure
-  test.fails("Include should fail to resolve bare identifier without lib lookup", () => {
-    expect(
-      tokenize(`
+  test.fails(
+    "Include should fail to resolve bare identifier without lib lookup",
+    () => {
+      expect(
+        tokenize(`
             %INCLUDE LIB2;
             LIB2_VAR = 3;
         `),
-    ).toStrictEqual([
-      "DECLARE:DECLARE",
-      "LIB2_VAR:ID",
-      "FIXED:FIXED",
-      ";:;",
-      "LIB2_VAR:ID",
-      "=:=",
-      "3:NUMBER",
-      ";:;",
-    ]);
-  });
+      ).toStrictEqual([
+        "DECLARE:DECLARE",
+        "LIB2_VAR:ID",
+        "FIXED:FIXED",
+        ";:;",
+        "LIB2_VAR:ID",
+        "=:=",
+        "3:NUMBER",
+        ";:;",
+      ]);
+    },
+  );
 
   test("Include bare identifier without quotes or extension", () => {
     expect(
