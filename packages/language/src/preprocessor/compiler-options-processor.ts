@@ -16,6 +16,7 @@ import { translateCompilerOptions } from "./compiler-options/translator";
 import { createSyntheticTokenInstance, PROCESS, Token } from "../parser/tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI } from "../utils/uri";
+import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 
 export interface CompilerOptionsProcessorResult {
   result: CompilerOptionResult | undefined;
@@ -28,18 +29,36 @@ export class CompilerOptionsProcessor {
     uri: URI,
   ): CompilerOptionsProcessorResult {
     const range = this.getCompilerOptionsRange(text, uri);
+    let optionsText: string | undefined = undefined;
+    let newText = text;
     if (range) {
       // Magic number 8 is the length of the string "*PROCESS"
       const offset = range.start + 8;
-      const optionsText = text.substring(offset, range.end);
-      const newText =
+      optionsText = text.substring(offset, range.end);
+      newText =
         text.substring(0, range.start) +
         " ".repeat(range.end - range.start) +
         text.substring(range.end);
-      const abstractOptions = parseAbstractCompilerOptions(optionsText, offset);
+    }
+
+    // Retrieve compiler options from the plugin configuration provider
+    const programConfig = PluginConfigurationProviderInstance.getProgramConfig(uri.toString());
+    const processGroupConfig = programConfig ? PluginConfigurationProviderInstance.getProcessGroupConfig(programConfig.pgroup) : undefined;
+
+    if (processGroupConfig?.["compiler-options"]?.length) {
+      const additionalOptions = processGroupConfig["compiler-options"].join(" ");
+      optionsText = `${additionalOptions} ${optionsText}`.trim();
+    }
+
+    if (optionsText) {
+      const abstractOptions = parseAbstractCompilerOptions(optionsText, range ? range.start + 8 : 0);
       const compilerOptionsResult = translateCompilerOptions(abstractOptions);
-      // Prepend the *PROCESS token to the compiler options result
-      compilerOptionsResult.tokens.unshift(range.token);
+
+      if (range) {
+        // Prepend the *PROCESS token to the compiler options result
+        compilerOptionsResult.tokens.unshift(range.token);
+      }
+
       return {
         result: compilerOptionsResult,
         text: newText,
@@ -47,7 +66,7 @@ export class CompilerOptionsProcessor {
     } else {
       return {
         result: undefined,
-        text,
+        text: newText,
       };
     }
   }
