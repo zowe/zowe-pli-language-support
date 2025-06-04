@@ -12,9 +12,9 @@
 import { IToken } from "chevrotain";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import * as lsp from "vscode-languageserver-types";
-import { TextDocuments } from "./text-documents";
 import { getNameToken } from "../linking/tokens";
 import { SyntaxNode } from "../syntax-tree/ast";
+import { TextDocuments } from "./text-documents";
 
 export type Offset = number;
 

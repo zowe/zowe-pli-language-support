@@ -9,7 +9,15 @@
  *
  */
 
-export const BuiltinsUri = "pli-builtin:///builtins.pli";
+import { TextDocument } from "vscode-languageserver-textdocument";
+import { URI } from "../utils/uri";
+
+/**
+ * For CTRL+F: pli-builtin:///builtins.pli
+ */
+
+export const BuiltinsUriSchema = "pli-builtin";
+export const BuiltinsUri = `${BuiltinsUriSchema}:///builtins.pli`;
 export const Builtins = ` // Mathematical functions
  ABS: PROC (value) RETURNS ();
  END;
@@ -426,3 +434,10 @@ export const Builtins = ` // Mathematical functions
  define alias __SIGNED_INT signed fixed bin(31,0);
  define alias __UNSIGNED_INT unsigned fixed bin(32,0);
  `;
+
+export const BuiltinsTextDocument = TextDocument.create(
+  URI.parse(BuiltinsUri).toString(),
+  "pli",
+  0,
+  Builtins,
+);

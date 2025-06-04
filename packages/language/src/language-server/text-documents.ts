@@ -225,7 +225,6 @@ export class NormalizedTextDocuments<T extends { uri: string }>
         syncedDocument = this._configuration.create(uriName, "pli", 0, content);
         this.set(syncedDocument);
       } catch (error) {
-        console.error(`Failed to load document from URI ${uri}: ${error}`);
         return undefined;
       }
     }
@@ -374,4 +373,41 @@ export class NormalizedTextDocuments<T extends { uri: string }>
   }
 }
 
-export const TextDocuments = new NormalizedTextDocuments(TextDocument);
+class BuiltinTextDocuments<T extends { uri: string }> {
+  private readonly documents: Map<string, T> = new Map();
+
+  public get(uri: string | URI): T | undefined {
+    return this.documents.get(uri.toString());
+  }
+
+  public set(document: T) {
+    this.documents.set(document.uri, document);
+  }
+}
+
+export class DocumentConsolidator<T extends { uri: string }> {
+  public constructor(
+    private readonly realDocuments: NormalizedTextDocuments<T>,
+    private readonly builtInDocuments: BuiltinTextDocuments<T>,
+  ) {}
+
+  public get(
+    uri: string | URI,
+    options?: { loadFromURI?: boolean },
+  ): T | undefined {
+    return (
+      this.realDocuments.get(uri, options) ?? this.builtInDocuments.get(uri)
+    );
+  }
+
+  public set(document: T) {
+    this.realDocuments.set(document);
+  }
+}
+
+export const BuiltinDocuments = new BuiltinTextDocuments<TextDocument>();
+export const RealDocuments = new NormalizedTextDocuments(TextDocument);
+export const TextDocuments = new DocumentConsolidator(
+  RealDocuments,
+  BuiltinDocuments,
+);

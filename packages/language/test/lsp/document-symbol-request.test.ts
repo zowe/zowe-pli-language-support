@@ -14,8 +14,8 @@ import { parse, replaceNamedIndices } from "../utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "../../src/utils/uri";
 import { documentSymbolRequest } from "../../src/language-server/document-symbol-request";
-import { TextDocuments } from "../../src/language-server/text-documents";
 import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types";
+import { TextDocuments } from "../../src/language-server/text-documents";
 
 type SymbolWithLevel = {
   symbol: DocumentSymbol;

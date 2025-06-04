@@ -22,7 +22,6 @@ import { IToken } from "chevrotain";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { URI, UriUtils } from "../utils/uri";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
-import { TextDocuments } from "../language-server/text-documents";
 import * as ast from "../syntax-tree/ast";
 import {
   constructBinaryExpression,
@@ -31,6 +30,7 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { LexingError } from "./pli-lexer";
+import { TextDocuments } from "../language-server/text-documents";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];

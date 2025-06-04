@@ -13,10 +13,10 @@ import { describe, test, expect } from "vitest";
 import { replaceNamedIndices } from "../utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "../../src/utils/uri";
-import { TextDocuments } from "../../src/language-server/text-documents";
 import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import * as lifecycle from "../../src/workspace/lifecycle";
 import { workspaceSymbolRequest } from "../../src/language-server/workspace-symbol-request";
+import { TextDocuments } from "../../src/language-server/text-documents";
 
 const formatTestPLI = (code: string): string =>
   code.startsWith("\n") ? code.slice(1) : code;

@@ -12,7 +12,6 @@
 import { IToken } from "chevrotain";
 import { PliProgram, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
-import { TextDocuments } from "../language-server/text-documents.js";
 import { Connection } from "vscode-languageserver";
 import { ReferencesCache } from "../linking/resolver.js";
 import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
@@ -23,6 +22,7 @@ import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
 import { ScopeCacheGroups } from "../linking/scope.js";
+import { RealDocuments } from "../language-server/text-documents.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -160,7 +160,7 @@ export class CompilationUnitHandler {
   }
 
   listen(connection: Connection): void {
-    const textDocuments = TextDocuments;
+    const textDocuments = RealDocuments;
     textDocuments.listen(connection);
     textDocuments.onDidChangeContent((event) => {
       const unit = this.getOrCreateCompilationUnit(

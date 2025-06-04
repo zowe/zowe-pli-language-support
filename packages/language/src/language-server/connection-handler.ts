@@ -20,7 +20,6 @@ import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
 import { Location, TextEdit } from "vscode-languageserver-types";
-import { TextDocuments } from "./text-documents";
 import { rangeToLSP } from "./types";
 import { renameRequest } from "./rename-request";
 import { mapValues } from "../utils/common";
@@ -29,6 +28,8 @@ import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { completionRequest } from "./completion/completion-request";
+import { BuiltinsTextDocument } from "../workspace/builtins";
+import { BuiltinDocuments, TextDocuments } from "./text-documents";
 
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
@@ -39,6 +40,9 @@ export function startLanguageServer(connection: Connection): void {
     for (const folder of params.workspaceFolders?.reverse() ?? []) {
       PluginConfigurationProviderInstance.init(folder.uri);
     }
+
+    BuiltinDocuments.set(BuiltinsTextDocument);
+
     return {
       capabilities: {
         workspace: {
