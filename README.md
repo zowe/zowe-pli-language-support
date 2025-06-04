@@ -46,12 +46,16 @@ Before you write your PL/I code from scratch, search the snippet library for use
 You can also insert a code snippet by typing the name of the snippet in your code and clicking on the autocomplete text.
 
 ### Include File Support
-The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace. Files with the extensions `.inc` and `.mac` or with no extension are recognised as PL/I include files.
+The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace. Files with the extensions `.inc` and `.mac` or with no extension are recognised as PL/I include files. The `%INCLUDE` statement is supported by default, variations on it such as `++INCLUDE` must be specified in `proc.grps.json`.XGGM
 
 The Find All References and Go To Definition functionalities are extended to work for occurrences of include file names, variables and paragraphs in the main PL/I file.
 
 * **Find All References** identifies all occurrences of variables and paragraphs from include files in the code.
 * **Go To Definition** enables you to right-click on any variable or paragraph to reveal a definition of the element. If the definition is in an include file, or the name of an include file, the include file opens.
+
+### Preprocessor Support
+
+### Define Compiler Options
 
 ## Integrate with Zowe Explorer
 
