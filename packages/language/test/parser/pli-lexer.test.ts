@@ -679,19 +679,27 @@ describe("PL/1 Lexer", () => {
       DCL A fixed bin(31);`;
 
       const programConfig = {
-          program: "test.pli",
-          pgroup: "testGroup",
+        program: "test.pli",
+        pgroup: "testGroup",
       };
       const processGroupConfig = {
-          name: "testGroup",
-          "compiler-options": ["ASSERT(ENTRY)"],
+        name: "testGroup",
+        "compiler-options": ["ASSERT(ENTRY)"],
       };
 
       await PluginConfigurationProviderInstance.init("/test");
-      PluginConfigurationProviderInstance.setProgramConfigs("/test", [programConfig]);
-      PluginConfigurationProviderInstance.setProcessGroupConfigs([processGroupConfig]);
+      PluginConfigurationProviderInstance.setProgramConfigs("/test", [
+        programConfig,
+      ]);
+      PluginConfigurationProviderInstance.setProcessGroupConfigs([
+        processGroupConfig,
+      ]);
 
-      const { compilerOptions } = lexer.tokenize(createCompilationUnit(uri), inputText, uri);
+      const { compilerOptions } = lexer.tokenize(
+        createCompilationUnit(uri),
+        inputText,
+        uri,
+      );
 
       expect(compilerOptions.result?.options.arch).toBeDefined();
       expect(compilerOptions.result?.options.assert).toBeDefined();
@@ -705,14 +713,20 @@ describe("PL/1 Lexer", () => {
       DCL A fixed bin(31);`;
 
       const programConfig = {
-          program: "test.pli",
-          pgroup: "missingGroup",
+        program: "test.pli",
+        pgroup: "missingGroup",
       };
 
       await PluginConfigurationProviderInstance.init("/test");
-      PluginConfigurationProviderInstance.setProgramConfigs("/test", [programConfig]);
+      PluginConfigurationProviderInstance.setProgramConfigs("/test", [
+        programConfig,
+      ]);
 
-      const { compilerOptions } = lexer.tokenize(createCompilationUnit(uri), inputText, uri);
+      const { compilerOptions } = lexer.tokenize(
+        createCompilationUnit(uri),
+        inputText,
+        uri,
+      );
 
       expect(compilerOptions.result?.options.arch).toBeDefined();
     });
@@ -723,19 +737,27 @@ describe("PL/1 Lexer", () => {
       const inputText = " DCL A fixed bin(31);";
 
       const programConfig = {
-          program: "test.pli",
-          pgroup: "testGroup",
+        program: "test.pli",
+        pgroup: "testGroup",
       };
       const processGroupConfig = {
-          name: "testGroup",
-          "compiler-options": ["ASSERT(ENTRY)"],
+        name: "testGroup",
+        "compiler-options": ["ASSERT(ENTRY)"],
       };
 
       await PluginConfigurationProviderInstance.init("/test");
-      PluginConfigurationProviderInstance.setProgramConfigs("/test", [programConfig]);
-      PluginConfigurationProviderInstance.setProcessGroupConfigs([processGroupConfig]);
+      PluginConfigurationProviderInstance.setProgramConfigs("/test", [
+        programConfig,
+      ]);
+      PluginConfigurationProviderInstance.setProcessGroupConfigs([
+        processGroupConfig,
+      ]);
 
-      const { compilerOptions } = lexer.tokenize(createCompilationUnit(uri), inputText, uri);
+      const { compilerOptions } = lexer.tokenize(
+        createCompilationUnit(uri),
+        inputText,
+        uri,
+      );
 
       expect(compilerOptions.result?.options.assert).toBeDefined();
       expect(compilerOptions.result?.options.assert).toBe("ENTRY");

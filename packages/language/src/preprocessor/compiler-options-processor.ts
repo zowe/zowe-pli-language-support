@@ -46,12 +46,16 @@ export class CompilerOptionsProcessor {
     const processGroupConfig = programConfig ? PluginConfigurationProviderInstance.getProcessGroupConfig(programConfig.pgroup) : undefined;
 
     if (processGroupConfig?.["compiler-options"]?.length) {
-      const additionalOptions = processGroupConfig["compiler-options"].join(" ");
+      const additionalOptions =
+        processGroupConfig["compiler-options"].join(" ");
       optionsText = `${additionalOptions} ${optionsText}`.trim();
     }
 
     if (optionsText) {
-      const abstractOptions = parseAbstractCompilerOptions(optionsText, range ? range.start + 8 : 0);
+      const abstractOptions = parseAbstractCompilerOptions(
+        optionsText,
+        range ? range.start + 8 : 0,
+      );
       const compilerOptionsResult = translateCompilerOptions(abstractOptions);
 
       if (range) {
