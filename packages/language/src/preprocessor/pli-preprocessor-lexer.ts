@@ -14,6 +14,7 @@ import {
   Lexer as ChevrotainLexer,
   TokenTypeDictionary,
   IToken,
+  Lexer,
 } from "chevrotain";
 import {
   AllPreprocessorTokens,
