@@ -86,7 +86,34 @@ export class PliPreprocessorParser {
 
   private consumeTokenStatement(state: PreprocessorParserState): ast.Statement {
     const tokenStatement = ast.createTokenStatement();
-    tokenStatement.tokens = state.consumeUntil((tk) => tk.image === ";");
+    const tokens: IToken[] = [];
+    const word = /\w$/u;
+    // We can assume that the first token is always a non-% token
+    // Otherwise we wouldn't be able to get here in the first place
+    let currentToken: IToken | undefined = state.current;
+    let nextToken: IToken | undefined = state.tokens[state.index + 1];
+    while (currentToken) {
+      state.index++;
+      // Usually we break on % tokens
+      // However, if the % token immediately follows a word character,
+      // it indicates a replacement, so we continue parsing the statement
+      if (
+        nextToken?.tokenTypeIdx === PreprocessorTokens.Percentage.tokenTypeIdx
+      ) {
+        if (
+          currentToken.endOffset! + 1 !== nextToken.startOffset ||
+          !word.test(currentToken.image)
+        ) {
+          // If the next token is a standalone % token, we break but add the current token to the list
+          tokens.push(currentToken);
+          break;
+        }
+      }
+      tokens.push(currentToken);
+      currentToken = nextToken;
+      nextToken = state.tokens[state.index + 1];
+    }
+    tokenStatement.tokens = tokens;
     const statement = ast.createStatement();
     statement.value = tokenStatement;
     return statement;
@@ -135,41 +162,54 @@ export class PliPreprocessorParser {
       statement.labels.push(label);
     }
     let unit: ast.Unit | undefined = undefined;
-    switch (state.current?.tokenType) {
-      case PreprocessorTokens.Activate:
+    switch (state.current?.tokenTypeIdx) {
+      case PreprocessorTokens.Activate.tokenTypeIdx:
         unit = this.activateStatement(state);
         break;
-      case PreprocessorTokens.Deactivate:
+      case PreprocessorTokens.Deactivate.tokenTypeIdx:
         unit = this.deactivateStatement(state);
         break;
-      case PreprocessorTokens.Declare:
+      case PreprocessorTokens.Declare.tokenTypeIdx:
         unit = this.declareStatement(state);
         break;
-      case PreprocessorTokens.Directive:
-        unit = this.directive(state);
+      case PreprocessorTokens.Page.tokenTypeIdx:
+        unit = this.pageDirective(state);
         break;
-      case PreprocessorTokens.Skip:
+      case PreprocessorTokens.Pop.tokenTypeIdx:
+        unit = this.popDirective(state);
+        break;
+      case PreprocessorTokens.Push.tokenTypeIdx:
+        unit = this.pushDirective(state);
+        break;
+      case PreprocessorTokens.Print.tokenTypeIdx:
+        unit = this.printDirective(state);
+        break;
+      case PreprocessorTokens.NoPrint.tokenTypeIdx:
+        unit = this.noprintDirective(state);
+        break;
+      case PreprocessorTokens.Skip.tokenTypeIdx:
         unit = this.skipStatement(state);
         break;
-      case PreprocessorTokens.Include:
+      case PreprocessorTokens.Include.tokenTypeIdx:
         unit = this.includeStatement(state);
         break;
-      case PreprocessorTokens.Id:
+      case PreprocessorTokens.Id.tokenTypeIdx:
         unit = this.assignmentStatement(state);
         break;
-      case PreprocessorTokens.If:
+      case PreprocessorTokens.If.tokenTypeIdx:
         unit = this.ifStatement(state);
         break;
-      case PreprocessorTokens.Do:
+      case PreprocessorTokens.Do.tokenTypeIdx:
         unit = this.doStatement(state);
         break;
-      case PreprocessorTokens.Go:
+      case PreprocessorTokens.Goto.tokenTypeIdx:
+      case PreprocessorTokens.Go.tokenTypeIdx:
         unit = this.goToStatement(state);
         break;
-      case PreprocessorTokens.Leave:
+      case PreprocessorTokens.Leave.tokenTypeIdx:
         unit = this.leaveStatement(state);
         break;
-      case PreprocessorTokens.Iterate:
+      case PreprocessorTokens.Iterate.tokenTypeIdx:
         unit = this.iterateStatement(state);
         break;
       default:
@@ -371,16 +411,26 @@ export class PliPreprocessorParser {
 
   goToStatement(state: PreprocessorParserState): ast.GoToStatement {
     const statement = ast.createGoToStatement();
-    state.consume(
-      statement,
-      CstNodeKind.GoToStatement_GO,
-      PreprocessorTokens.Go,
-    );
-    state.consumeKeyword(
-      statement,
-      CstNodeKind.GoToStatement_TO,
-      PreprocessorTokens.To,
-    );
+    // First, attempt to consume the GOTO keyword
+    if (
+      !state.tryConsume(
+        statement,
+        CstNodeKind.GoToStatement_GOTO,
+        PreprocessorTokens.Goto,
+      )
+    ) {
+      // Otherwise, consume the GO and TO keywords
+      state.consume(
+        statement,
+        CstNodeKind.GoToStatement_GO,
+        PreprocessorTokens.Go,
+      );
+      state.consume(
+        statement,
+        CstNodeKind.GoToStatement_TO,
+        PreprocessorTokens.To,
+      );
+    }
     statement.label = this.labelReference(state);
     state.consume(
       statement,
@@ -828,34 +878,76 @@ export class PliPreprocessorParser {
     return statement;
   }
 
-  directive(state: PreprocessorParserState): ast.Unit {
-    const token = state.consume(
-      undefined,
-      undefined,
-      PreprocessorTokens.Directive,
-    );
-    const which = token.image.toUpperCase();
-    let directive: ast.Unit;
-    if (which === "PUSH") {
-      directive = ast.createPushDirective();
-      token.payload.kind = CstNodeKind.PushDirective_PUSH;
-    } else if (which === "POP") {
-      directive = ast.createPopDirective();
-      token.payload.kind = CstNodeKind.PopDirective_POP;
-    } else if (which === "PRINT") {
-      directive = ast.createPrintDirective();
-      token.payload.kind = CstNodeKind.PrintDirective_PRINT;
-    } else if (which === "NOPRINT") {
-      directive = ast.createNoPrintDirective();
-      token.payload.kind = CstNodeKind.NoPrintDirective_NOPRINT;
-    } else {
-      directive = ast.createPageDirective();
-      token.payload.kind = CstNodeKind.PageDirective_PAGE;
-    }
-    token.payload.element = directive;
+  popDirective(state: PreprocessorParserState): ast.PopDirective {
+    const directive = ast.createPopDirective();
     state.consume(
       directive,
       CstNodeKind.PopDirective_POP,
+      PreprocessorTokens.Pop,
+    );
+    state.consume(
+      directive,
+      CstNodeKind.PopDirective_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return directive;
+  }
+
+  pushDirective(state: PreprocessorParserState): ast.PushDirective {
+    const directive = ast.createPushDirective();
+    state.consume(
+      directive,
+      CstNodeKind.PushDirective_PUSH,
+      PreprocessorTokens.Push,
+    );
+    state.consume(
+      directive,
+      CstNodeKind.PushDirective_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return directive;
+  }
+
+  pageDirective(state: PreprocessorParserState): ast.PageDirective {
+    const directive = ast.createPageDirective();
+    state.consume(
+      directive,
+      CstNodeKind.PageDirective_PAGE,
+      PreprocessorTokens.Page,
+    );
+    state.consume(
+      directive,
+      CstNodeKind.PageDirective_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return directive;
+  }
+
+  printDirective(state: PreprocessorParserState): ast.PrintDirective {
+    const directive = ast.createPrintDirective();
+    state.consume(
+      directive,
+      CstNodeKind.PrintDirective_PRINT,
+      PreprocessorTokens.Print,
+    );
+    state.consume(
+      directive,
+      CstNodeKind.PrintDirective_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return directive;
+  }
+
+  noprintDirective(state: PreprocessorParserState): ast.NoPrintDirective {
+    const directive = ast.createNoPrintDirective();
+    state.consume(
+      directive,
+      CstNodeKind.NoPrintDirective_NOPRINT,
+      PreprocessorTokens.NoPrint,
+    );
+    state.consume(
+      directive,
+      CstNodeKind.NoPrintDirective_Semicolon,
       PreprocessorTokens.Semicolon,
     );
     return directive;
@@ -1139,14 +1231,7 @@ export class PliPreprocessorParser {
       return this.numberLiteral(state);
     } else if (state.canConsume(PreprocessorTokens.String)) {
       return this.stringLiteral(state);
-    } else if (state.canConsumeKeyword(PreprocessorTokens.Id)) {
-      if (state.isOnlyInStatement()) {
-        state.consume(
-          undefined,
-          CstNodeKind.Percentage,
-          PreprocessorTokens.Percentage,
-        );
-      }
+    } else if (state.canConsume(PreprocessorTokens.Id)) {
       return this.locatorCall(state, true);
     } else if (state.canConsume(PreprocessorTokens.LParen)) {
       state.consume(

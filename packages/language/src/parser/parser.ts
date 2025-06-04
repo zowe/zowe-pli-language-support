@@ -905,19 +905,13 @@ export class PliParser extends AbstractParser {
     this.IfStatement,
     this.IterateStatement,
     this.LeaveStatement,
-    this.LineDirective,
+    this.LineDirective, // TODO integrate into preprocessor
     this.LocateStatement,
-    this.NoPrintDirective,
-    this.NoteDirective,
+    this.NoteDirective, // TODO integrate into preprocessor
     this.NullStatement,
     this.OnStatement,
     this.OpenStatement,
-    this.PageDirective,
-    this.PopDirective,
-    this.PrintDirective,
-    this.ProcessDirective,
-    this.ProcincDirective,
-    this.PushDirective,
+    this.ProcincDirective, // TODO integrate into preprocessor
     this.PutStatement,
     this.QualifyStatement,
     this.ReadStatement,
@@ -929,7 +923,6 @@ export class PliParser extends AbstractParser {
     this.RewriteStatement,
     this.SelectStatement,
     this.SignalStatement,
-    this.SkipDirective,
     this.StopStatement,
     this.WaitStatement,
     this.WriteStatement,
@@ -4696,22 +4689,6 @@ export class PliParser extends AbstractParser {
     return this.pop<ast.LocateStatementOption>();
   });
 
-  private createNoPrintDirective(): ast.NoPrintDirective {
-    return { kind: ast.SyntaxKind.NoPrintDirective, container: null };
-  }
-
-  NoPrintDirective = this.RULE("NoPrintDirective", () => {
-    let element = this.push(this.createNoPrintDirective());
-
-    this.CONSUME_ASSIGN1(tokens.PercentNOPRINT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NoPrintDirective_NOPRINT);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NoPrintDirective_Semicolon);
-    });
-
-    return this.pop<ast.NoPrintDirective>();
-  });
   private createNoteDirective(): ast.NoteDirective {
     return {
       kind: ast.SyntaxKind.NoteDirective,
@@ -5026,108 +5003,6 @@ export class PliParser extends AbstractParser {
     return this.pop<ast.OpenOption>();
   });
 
-  private createPageDirective(): ast.PageDirective {
-    return { kind: ast.SyntaxKind.PageDirective, container: null };
-  }
-
-  PageDirective = this.RULE("PageDirective", () => {
-    let element = this.push(this.createPageDirective());
-
-    this.CONSUME_ASSIGN1(tokens.PercentPAGE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PageDirective_PAGE);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PageDirective_Semicolon);
-    });
-
-    return this.pop<ast.PageDirective>();
-  });
-  private createPopDirective(): ast.PopDirective {
-    return { kind: ast.SyntaxKind.PopDirective, container: null };
-  }
-
-  PopDirective = this.RULE("PopDirective", () => {
-    let element = this.push(this.createPopDirective());
-
-    this.CONSUME_ASSIGN1(tokens.PercentPOP, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PopDirective_POP);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PopDirective_Semicolon);
-    });
-
-    return this.pop<ast.PopDirective>();
-  });
-  private createPrintDirective(): ast.PrintDirective {
-    return { kind: ast.SyntaxKind.PrintDirective, container: null };
-  }
-
-  PrintDirective = this.RULE("PrintDirective", () => {
-    let element = this.push(this.createPrintDirective());
-
-    this.CONSUME_ASSIGN1(tokens.PercentPRINT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PrintDirective_PRINT);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PrintDirective_Semicolon);
-    });
-
-    return this.pop<ast.PrintDirective>();
-  });
-  private createProcessDirective(): ast.ProcessDirective {
-    return {
-      kind: ast.SyntaxKind.ProcessDirective,
-      container: null,
-      compilerOptions: [],
-    };
-  }
-
-  ProcessDirective = this.RULE("ProcessDirective", () => {
-    let element = this.push(this.createProcessDirective());
-
-    this.CONSUME_ASSIGN1(tokens.PROCESS, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ProcessDirective_PROCESS);
-    });
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.CompilerOptions, {
-        assign: (result) => {
-          element.compilerOptions.push(result);
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.ProcessDirective_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.CompilerOptions, {
-        assign: (result) => {
-          element.compilerOptions.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ProcessDirective_Semicolon);
-    });
-
-    return this.pop<ast.ProcessDirective>();
-  });
-  private createCompilerOptions(): ast.CompilerOptions {
-    return {
-      kind: ast.SyntaxKind.CompilerOptions,
-      container: null,
-      value: null,
-    };
-  }
-
-  // TODO: IMPLEMENT REAL COMPILER OPTIONS SUPPORT IN PARSER
-  CompilerOptions = this.RULE("CompilerOptions", () => {
-    let element = this.push(this.createCompilerOptions());
-
-    this.CONSUME_ASSIGN1(tokens.TODO, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CompilerOptions_value_TODO);
-      element.value = token.image as "TODO";
-    });
-
-    return this.pop<ast.CompilerOptions>();
-  });
   private createProcincDirective(): ast.ProcincDirective {
     return {
       kind: ast.SyntaxKind.ProcincDirective,
@@ -5156,22 +5031,7 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.ProcincDirective>();
   });
-  private createPushDirective(): ast.PushDirective {
-    return { kind: ast.SyntaxKind.PushDirective, container: null };
-  }
 
-  PushDirective = this.RULE("PushDirective", () => {
-    let element = this.push(this.createPushDirective());
-
-    this.CONSUME_ASSIGN1(tokens.PercentPUSH, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PushDirective_PUSH);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PushDirective_Semicolon);
-    });
-
-    return this.pop<ast.PushDirective>();
-  });
   private createPutFileStatement(): ast.PutFileStatement {
     return {
       kind: ast.SyntaxKind.PutFileStatement,
@@ -6047,40 +5907,7 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.SignalStatement>();
   });
-  private createSkipDirective(): ast.SkipDirective {
-    return {
-      kind: ast.SyntaxKind.SkipDirective,
-      container: null,
-      lines: null,
-      lineCount: 1,
-    };
-  }
 
-  SkipDirective = this.RULE("SkipDirective", () => {
-    let element = this.push(this.createSkipDirective());
-
-    this.CONSUME_ASSIGN1(tokens.PercentSKIP, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.SkipDirective_SKIP);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.SkipDirective_OpenParen);
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.lines = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.SkipDirective_CloseParen);
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.SkipDirective_Semicolon);
-    });
-
-    return this.pop<ast.SkipDirective>();
-  });
   private createStopStatement(): ast.StopStatement {
     return { kind: ast.SyntaxKind.StopStatement, container: null };
   }

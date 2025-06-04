@@ -91,7 +91,7 @@ describe("PL/1 Lexer", () => {
             %A = 'B';
             dcl A%C fixed bin(31);
         `),
-    ).toStrictEqual(["Expected token type '=', got 'id' instead."]);
+    ).toStrictEqual(["Expected token type '=', got 'ID' instead."]);
   });
 
   test("Tokenize multiple errors in declaration with preprocessor", () => {
@@ -101,7 +101,7 @@ describe("PL/1 Lexer", () => {
             %%A = 'B';
         `),
     ).toStrictEqual([
-      "Expected token type '=', got 'id' instead.",
+      "Expected token type '=', got 'ID' instead.",
       "Unexpected token '%'.",
     ]);
   });
@@ -339,8 +339,8 @@ describe("PL/1 Lexer", () => {
       tokenize(`
             %A = 123;
             %IF 1 %THEN %DO;
-              %A = %A + 1;
-              %A = %A + 2;
+              %A = A + 1;
+              %A = A + 2;
             %END;
             %ACTIVATE A;
             dcl X fixed;
@@ -364,9 +364,9 @@ describe("PL/1 Lexer", () => {
             %DCL X FIXED;
             %X = 1;
             %DO
-                %WHILE(%X <= 3);
+                %WHILE(X <= 3);
                 DCL Variable%X FIXED;
-                %X = %X + 1;
+                %X = X + 1;
             %END;
         `),
     ).toStrictEqual([
@@ -391,10 +391,10 @@ describe("PL/1 Lexer", () => {
             %DCL X FIXED;
             %X = 1;
             %DO
-                %WHILE(%X > 0)
-                %UNTIL(%X > 3);
+                %WHILE(X > 0)
+                %UNTIL(X > 3);
                 DCL Variable%X FIXED;
-                %X = %X + 1;
+                %X = X + 1;
             %END;
         `),
     ).toStrictEqual([
@@ -419,9 +419,9 @@ describe("PL/1 Lexer", () => {
             %DCL X FIXED;
             %X = 1;
             %DO
-                %UNTIL(%X > 3);
+                %UNTIL(X > 3);
                 DCL Variable%X FIXED;
-                %X = %X + 1;
+                %X = X + 1;
             %END;
         `),
     ).toStrictEqual([
@@ -446,10 +446,10 @@ describe("PL/1 Lexer", () => {
             %DCL X FIXED;
             %X = 1;
             %DO
-                %UNTIL(%X > 3)
-                %WHILE(%X > 0);
+                %UNTIL(X > 3)
+                %WHILE(X > 0);
                 DCL Variable%X FIXED;
-                %X = %X + 1;
+                %X = X + 1;
             %END;
         `),
     ).toStrictEqual([
@@ -522,8 +522,8 @@ describe("PL/1 Lexer", () => {
             %A = 3;
             %DO %FOREVER;
                 dcl X%A fixed;
-                %A = %A - 1;
-                %IF %A = 0 %THEN %LEAVE;
+                %A = A - 1;
+                %IF A = 0 %THEN %LEAVE;
             %END;
         `),
     ).toStrictEqual([
@@ -548,13 +548,27 @@ describe("PL/1 Lexer", () => {
             %declare A fixed;
             %A = 3;
             %DO %FOREVER;
-                %A = %A - 1;
-                %IF %A = 0 %THEN %LEAVE;
+                %A = A - 1;
+                %IF A = 0 %THEN %LEAVE;
                 %ELSE %ITERATE;
                 dcl X%A fixed;
             %END;
         `),
     ).toStrictEqual([]);
+  });
+
+  test("DO with GO TO loop", () => {
+    expect(
+      tokenize(`
+            %declare A fixed;
+            %A = 3;
+            %myLoop: DO;
+                %A = A - 1;
+                %IF A <> 0 %THEN %GO TO myLoop;
+                DCL X%A FIXED;
+            %END;
+        `),
+    ).toStrictEqual(["DCL:DECLARE", "X0:ID", "FIXED:FIXED", ";:;"]);
   });
 
   test("DO with GOTO loop", () => {
@@ -563,8 +577,8 @@ describe("PL/1 Lexer", () => {
             %declare A fixed;
             %A = 3;
             %myLoop: DO;
-                %A = %A - 1;
-                %IF %A <> 0 %THEN %GO %TO myLoop;
+                %A = A - 1;
+                %IF A <> 0 %THEN %GOTO myLoop;
                 DCL X%A FIXED;
             %END;
         `),
