@@ -11,7 +11,7 @@
 
 import { Range } from "../language-server/types";
 import { CompilerOptionResult } from "./compiler-options/options";
-import { parseAbstractCompilerOptions } from "./compiler-options/parser";
+import { parseAbstractCompilerOptions, AbstractCompilerOptions } from "./compiler-options/parser";
 import { translateCompilerOptions } from "./compiler-options/translator";
 import { createSyntheticTokenInstance, PROCESS, Token } from "../parser/tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
@@ -29,12 +29,12 @@ export class CompilerOptionsProcessor {
     uri: URI,
   ): CompilerOptionsProcessorResult {
     const range = this.getCompilerOptionsRange(text, uri);
-    let optionsText: string | undefined = undefined;
+    let srcCompilerOpts: string | undefined = undefined;
     let newText = text;
     if (range) {
       // Magic number 8 is the length of the string "*PROCESS"
       const offset = range.start + 8;
-      optionsText = text.substring(offset, range.end);
+      srcCompilerOpts = text.substring(offset, range.end);
       newText =
         text.substring(0, range.start) +
         " ".repeat(range.end - range.start) +
@@ -45,17 +45,40 @@ export class CompilerOptionsProcessor {
     const programConfig = PluginConfigurationProviderInstance.getProgramConfig(uri.toString());
     const processGroupConfig = programConfig ? PluginConfigurationProviderInstance.getProcessGroupConfig(programConfig.pgroup) : undefined;
 
+    let configCompilerOpts: string | undefined = undefined;
     if (processGroupConfig?.["compiler-options"]?.length) {
-      const additionalOptions =
+      configCompilerOpts =
         processGroupConfig["compiler-options"].join(" ");
-      optionsText = `${additionalOptions} ${optionsText}`.trim();
     }
 
-    if (optionsText) {
-      const abstractOptions = parseAbstractCompilerOptions(
-        optionsText,
-        range ? range.start + 8 : 0,
-      );
+    if (srcCompilerOpts || configCompilerOpts) {
+      // prepare a common structure for config & src compiler options
+      const abstractOptions: AbstractCompilerOptions = {
+        options: [],
+        tokens: [],
+        issues: [],
+      };
+
+      // check to parse and merge config options
+      if (configCompilerOpts) {
+        const configAbstractOptions = parseAbstractCompilerOptions(configCompilerOpts);
+        abstractOptions.options = configAbstractOptions.options;
+        abstractOptions.tokens = configAbstractOptions.tokens;
+        abstractOptions.issues = configAbstractOptions.issues;
+      }
+
+      // check to parse and merge src options (directly from the *PROCESS directive)
+      if (srcCompilerOpts) {
+        const srcAbstractOptions = parseAbstractCompilerOptions(
+          srcCompilerOpts,
+          range ? range.start + 8 : 0,
+        );
+        abstractOptions.options.push(...srcAbstractOptions.options);
+        abstractOptions.tokens.push(...srcAbstractOptions.tokens);
+        abstractOptions.issues.push(...srcAbstractOptions.issues);
+      }
+
+      // translate altogether
       const compilerOptionsResult = translateCompilerOptions(abstractOptions);
 
       if (range) {
