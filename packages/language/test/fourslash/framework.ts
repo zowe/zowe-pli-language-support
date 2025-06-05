@@ -9,7 +9,7 @@
  *
  */
 
-import { HarnessTesterInterface } from "../harness-interface";
+import { HarnessTesterInterface } from "../fourslash-harness/harness-interface";
 
 declare global {
   var verify: HarnessTesterInterface["verify"];

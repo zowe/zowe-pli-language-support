@@ -25,7 +25,7 @@ import {
 import { createTestBuilderHarnessImplementation } from "./implementation/test-builder";
 
 const frameworkFileName = "framework.ts";
-const testsPath = path.resolve(__dirname, "tests");
+const testsPath = "packages/language/test/fourslash";
 
 let vfs: VirtualFileSystemProvider;
 

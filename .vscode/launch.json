@@ -100,7 +100,7 @@
             "args": [
                 "vitest",
                 "run",
-                "packages/language/test/harness/execute.test.ts"
+                "packages/language/test/fourslash-harness/execute.test.ts"
             ],
             "smartStep": true,
             "console": "integratedTerminal"
