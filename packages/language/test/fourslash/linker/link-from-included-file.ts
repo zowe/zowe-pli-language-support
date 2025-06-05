@@ -4,7 +4,7 @@
 //// DCL <|1:Y|> FIXED;
 
 // @filename: file:///main.pli
-//// %INCLUDE "include.pli";
+//// %INCLUDE "./include.pli";
 //// <|1>Y = 42;
 
 linker.expectLinks();
