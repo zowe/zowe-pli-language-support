@@ -462,6 +462,7 @@ export class PliPreprocessorParser {
     while (true) {
       const item = ast.createIncludeItem();
       if (state.canConsume(PreprocessorTokens.Id)) {
+        // member include
         const token = state.consume(
           item,
           CstNodeKind.IncludeItem_FileID0,
@@ -471,14 +472,17 @@ export class PliPreprocessorParser {
         item.file = fileName;
         item.token = token;
       } else if (state.canConsume(PreprocessorTokens.String)) {
-        const file = state.consume(
+        // literal file include (relative or absolute)
+        const token = state.consume(
           item,
           CstNodeKind.IncludeItem_FileString0,
           PreprocessorTokens.String,
-        ).image;
+        );
+        const file = token.image;
         const fileName = file.substring(1, file.length - 1);
         item.file = fileName;
         item.string = true;
+        item.token = token;
       } else {
         break;
       }
@@ -512,7 +516,7 @@ export class PliPreprocessorParser {
       const failToResolveInclude = () => {
         throw new PreprocessorError(
           `Cannot resolve include file '${item.file}' at '${state.uri.toString()}'.`,
-          state.last!, // TODO @montymxb state range of both current & last are wrong, need a better way to get the range of the include directive
+          item.token! || state.current || state.last!,
           state.uri,
         );
       };
@@ -1370,7 +1374,7 @@ function resolveIncludeFileUri(
       : `expected no extension`;
     throw new PreprocessorError(
       `Unsupported copybook extension for included file, '${item.file}', ${msg}`,
-      state.last!, // TODO @montymxb state range of both current & last are wrong, need a better way to get the range of the include directive
+      item.token! || state.current || state.last!,
       state.uri,
     );
   }
