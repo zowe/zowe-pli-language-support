@@ -93,7 +93,6 @@ export const configure = (htmlContainer?: HTMLElement): ConfigResult => {
           "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors":
             false,
           "editor.guides.bracketPairsHorizontal": true,
-          "oct.serverUrl": "https://api.open-collab.tools/",
           "editor.experimental.asyncTokenization": false,
         }),
       },

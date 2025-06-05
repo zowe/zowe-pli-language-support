@@ -42,25 +42,6 @@ export function registerButtons() {
     }
   });
 
-  const shareOpenButton = document.getElementById("share-open-button");
-  shareOpenButton?.addEventListener("click", () => {
-    const documents: vscode.TextDocument[] = [];
-    for (let uriPath of getOpenTabUris()) {
-      console.log("uriPath", uriPath);
-      // If the tab is in preview mode, it will not have the workspace path.
-      if (!uriPath.startsWith("/workspace/")) {
-        uriPath = "/workspace/" + uriPath;
-      }
-      const doc = vscode.workspace.textDocuments.find(
-        (d) => d.uri.path === uriPath,
-      )!;
-      if (doc) {
-        documents.push(doc);
-      }
-    }
-    share(createWorkspaceFiles(documents));
-  });
-
   const shareWorkspaceButton = document.getElementById(
     "share-workspace-button",
   );
@@ -149,28 +130,6 @@ export async function handleSharedWorkspace(
   }
 
   return defaultUri;
-}
-
-function getOpenTabUris() {
-  // Since the tab groups are not exposed, try to get the tabs from the dom.
-  const tabsContainer = document.querySelector(".tabs-container");
-  if (!tabsContainer) {
-    console.warn("No tabs-container found!");
-    return [];
-  }
-
-  const tabElements = tabsContainer.querySelectorAll(".tab .monaco-icon-label");
-  const openTabs: string[] = [];
-
-  tabElements.forEach((tabEl) => {
-    const uriString = tabEl.getAttribute("aria-label");
-    if (uriString) {
-      // In the dom: "\workspace\RXGIM.pli • 50 problems in this file"
-      openTabs.push(uriString.replace(/\\/g, "/").split(" • ")[0]);
-    }
-  });
-
-  return openTabs;
 }
 
 function getWorkspaceDocuments() {
