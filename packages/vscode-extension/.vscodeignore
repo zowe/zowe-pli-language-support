@@ -8,5 +8,6 @@
 !out/language/main.cjs
 !out/language/main-browser.js
 !language-configuration.json
+!c4z.pli.code-snippets
 !syntaxes/pli.merged.json
 !LICENSE

@@ -15,7 +15,8 @@
     "vscode": "^1.67.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Snippets"
   ],
   "contributes": {
     "languages": [
@@ -31,6 +32,12 @@
           ".pli"
         ],
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "pli",
+        "path": "./c4z.pli.code-snippets"
       }
     ],
     "grammars": [
