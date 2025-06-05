@@ -472,7 +472,7 @@ export class PliPreprocessorParser {
         item.file = fileName;
         item.token = token;
       } else if (state.canConsume(PreprocessorTokens.String)) {
-        // literal file include (relative or absolute)
+        // literal file include (relative, absolute, or lib sourced)
         const token = state.consume(
           item,
           CstNodeKind.IncludeItem_FileString0,
