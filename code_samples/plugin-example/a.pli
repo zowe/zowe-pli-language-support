@@ -1,5 +1,5 @@
 *PROCESS MARGINS(2,120);
- %INCLUDE "b.pli";
+ %INCLUDE "./b.pli";
  VARB = 2;
  %INCLUDE "./c.pli";
  VARC = 3;

@@ -47,13 +47,28 @@ describe("Go To Definition request", () => {
 
   it("should resolve multiple requests", () => {
     const include = ` DCL <|1:Y|> FIXED;`;
-    const main = ` %INCLUDE "include.pli";
+    const main = ` %INCLUDE "./include.pli";
  <|1>Y = 42;
  <|1>Y = 45;`;
 
     createFsTestBuilder([
       { uri: "file:///main.pli", content: main },
       { uri: "file:///include.pli", content: include },
+    ]).expectLinks();
+  });
+
+  it("should resolve definition across multiple files", () => {
+    const include = ` DCL <|1:X|> FIXED;`;
+    const include2 = ` DCL <|2:Y|> FIXED;`;
+    const main = ` %INCLUDE "./include.pli";
+ %INCLUDE "./include2.pli";
+ <|1>X = 42;
+ <|2>Y = 43;`;
+
+    createFsTestBuilder([
+      { uri: "file:///main.pli", content: main },
+      { uri: "file:///include.pli", content: include },
+      { uri: "file:///include2.pli", content: include2 },
     ]).expectLinks();
   });
 });

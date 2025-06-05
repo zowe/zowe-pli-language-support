@@ -4,8 +4,7 @@
       "name": "default",
       "compiler-options": [],
       "libs": [
-        "cpy",
-        "*"
+        "cpy"
       ],
       "copybook-extensions": [
         ".pli",

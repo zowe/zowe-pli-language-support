@@ -154,7 +154,8 @@ describe("PL/1 Includes without Plugin Config", () => {
     },
   );
 
-  test("Include bare identifier without quotes or extension", () => {
+  // expected failure, we cannot resolve member includes w/out plugin config
+  test.fails("Include bare identifier without quotes or extension", () => {
     expect(
       tokenize(`
             %INCLUDE LIB3;
@@ -192,7 +193,7 @@ describe("PL/1 Includes with Plugin Config", () => {
       tokenize(`
             %DECLARE PAYROLL CHARACTER;
             %PAYROLL = 'CUM_PAY';
-            %INCLUDE "payroll.pli";
+            %INCLUDE "./payroll.pli";
             %DEACTIVATE PAYROLL;
             %INCLUDE "./payroll.pli";
         `),

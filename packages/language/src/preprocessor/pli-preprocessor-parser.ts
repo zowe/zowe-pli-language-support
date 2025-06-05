@@ -522,14 +522,9 @@ export class PliPreprocessorParser {
       };
 
       if (!uri) {
-        // TODO @montymxb Jun. 3rd, 2025: TEMPORARY Modification to always resolve lookups via a relative path, even when we can't find a matching program config
-        //  Once we're at a point where we no longer need this behavior, we should drop the 2 lines below, and reinstate the other lines below
-        const currentDir = UriUtils.dirname(state.uri);
-        uri = UriUtils.joinPath(currentDir, item.file);
-        // TODO @montymxb Jun. 3rd, 2025: Logic we ultimately want to reinstate instead of the lines above, failing & continuing to the next entry
         // fail to resolve & skip to nxt
-        // failToResolveInclude();
-        // continue;
+        failToResolveInclude();
+        continue;
       }
 
       // attempt to resolve this file
