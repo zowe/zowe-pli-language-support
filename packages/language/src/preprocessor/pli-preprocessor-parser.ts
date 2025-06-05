@@ -462,12 +462,14 @@ export class PliPreprocessorParser {
     while (true) {
       const item = ast.createIncludeItem();
       if (state.canConsume(PreprocessorTokens.Id)) {
-        const fileName = state.consume(
+        const token = state.consume(
           item,
           CstNodeKind.IncludeItem_FileID0,
           PreprocessorTokens.Id,
-        ).image;
+        );
+        const fileName = token.image;
         item.file = fileName;
+        item.token = token;
       } else if (state.canConsume(PreprocessorTokens.String)) {
         const file = state.consume(
           item,
@@ -1338,7 +1340,7 @@ function resolveIncludeFileUri(
   state: PreprocessorParserState,
 ): URI | undefined {
   const absPathRegex = /^\/|[A-Z]:|~/i;
-  const relativePathRegex = /^\.\//;
+  const relativePathRegex = /^\.\.\/|^\.\//;
 
   const currentDir = UriUtils.dirname(state.uri);
 

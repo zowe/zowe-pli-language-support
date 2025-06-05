@@ -28,6 +28,7 @@ function setupFileSystemAndLexer(): TokenizeFunction {
   );
   vtsfs.writeFileSync(URI.file("/test/cpy/LIB2"), " DECLARE LIB2_VAR FIXED;");
   vtsfs.writeFileSync(URI.file("/test/LIB3"), " DECLARE LIB3_VAR FIXED;");
+  vtsfs.writeFileSync(URI.file("/LIB4"), " DECLARE LIB4_VAR FIXED;");
 
   const lexer = new PliLexer();
   const tokenize = (text: string) => {
@@ -109,6 +110,24 @@ describe("PL/1 Includes without Plugin Config", () => {
       "LIB2_VAR:ID",
       "=:=",
       "2:NUMBER",
+      ";:;",
+    ]);
+  });
+
+  test("Include relative path with '../'", () => {
+    expect(
+      tokenize(`
+            %INCLUDE "../LIB4";
+            LIB4_VAR = 1;
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "LIB4_VAR:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "LIB4_VAR:ID",
+      "=:=",
+      "1:NUMBER",
       ";:;",
     ]);
   });
