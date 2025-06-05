@@ -21,7 +21,12 @@ describe("Completion", () => {
       DCL C char(10);
       A = <|>123;
     `,
-      [["A", "B", "C"]],
+      [
+        {
+          includes: ["A", "B", "C"],
+          excludes: ["XXX"],
+        },
+      ],
     );
   });
 
@@ -32,7 +37,20 @@ describe("Completion", () => {
       DCL X char(10);
       X = <|>A.<|>B.<|>C.<|>D;
     `,
-      [["A", "B", "C", "D", "X"], ["B", "C", "D"], ["C", "D"], ["D"]],
+      [
+        {
+          includes: ["A", "B", "C", "D", "X"],
+        },
+        {
+          includes: ["B", "C", "D"],
+        },
+        {
+          includes: ["C", "D"],
+        },
+        {
+          includes: ["D"],
+        },
+      ],
     );
   });
 
@@ -43,7 +61,14 @@ describe("Completion", () => {
       DCL X char(10);
       X = <|>C.<|>D;
     `,
-      [["A", "B", "C", "D", "X"], ["D"]],
+      [
+        {
+          includes: ["A", "B", "C", "D", "X"],
+        },
+        {
+          includes: ["D"],
+        },
+      ],
     );
   });
 });
