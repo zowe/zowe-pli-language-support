@@ -1434,7 +1434,7 @@ export function createIncludeItem(): IncludeItem {
     string: false,
     ddname: false,
     result: null,
-    token: null
+    token: null,
   };
 }
 export interface IndForAttribute extends AstNode {
