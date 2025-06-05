@@ -12,10 +12,10 @@
 import { DocumentSymbol, Range, SymbolKind } from "vscode-languageserver-types";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { URI } from "../utils/uri";
-import { TextDocuments } from "./text-documents";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { DOCUMENT_SYMBOL_BUILDERS } from "./document-symbol-builder";
 import { IToken } from "chevrotain";
+import { TextDocuments } from "./text-documents";
 
 export function documentSymbolRequest(
   uri: URI,

@@ -10,13 +10,13 @@
  */
 
 import * as vscode from "vscode";
-import { Builtins } from "pli-language";
+import { Builtins, BuiltinsUriSchema } from "pli-language";
 
 export class BuiltinFileSystemProvider implements vscode.FileSystemProvider {
   static register(context: vscode.ExtensionContext) {
     context.subscriptions.push(
       vscode.workspace.registerFileSystemProvider(
-        "pli-builtin",
+        BuiltinsUriSchema,
         new BuiltinFileSystemProvider(),
         {
           isReadonly: true,

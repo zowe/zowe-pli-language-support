@@ -1,7 +1,7 @@
 import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols } from "../linking/symbol-table";
 import { PliParserInstance } from "../parser/parser";
-import { CompilationUnit } from "./compilation-unit";
+import { CompilationUnit, createCompilationUnit } from "./compilation-unit";
 import { PliProgram } from "../syntax-tree/ast";
 import {
   generateValidationDiagnostics,
@@ -12,6 +12,11 @@ import {
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { URI } from "../utils/uri";
 import { compilerOptionIssueToDiagnostics } from "../preprocessor/compiler-options/options";
+import { Scope } from "../linking/scope";
+import { Builtins, BuiltinsUri, BuiltinsUriSchema } from "./builtins";
+
+const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
+const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
 
 export function lifecycle(
   compilationUnit: CompilationUnit,
@@ -61,8 +66,30 @@ export function parse(compilationUnit: CompilationUnit): PliProgram {
   return ast;
 }
 
+function loadBuiltinSymbolTable(): Scope {
+  const unit = createCompilationUnit(URI.parse(BuiltinsUri));
+  tokenize(unit, Builtins);
+  parse(unit);
+  generateSymbolTable(unit);
+
+  // Get the root scope of the builtins
+  return unit.scopeCaches.regular.get(unit.ast)!;
+}
+
 export function generateSymbolTable(compilationUnit: CompilationUnit) {
-  const symbolTableDiagnostics = iterateSymbols(compilationUnit);
+  // Don't load the builtin symbol table for builtin files
+  const rootScope = isBuiltinFile(compilationUnit.uri)
+    ? undefined
+    : loadBuiltinSymbolTable();
+
+  // TODO: Add preprocessor scope for builtins?
+  const rootPreprocessorScope = undefined;
+
+  const symbolTableDiagnostics = iterateSymbols(compilationUnit, {
+    rootScope,
+    rootPreprocessorScope,
+  });
+
   compilationUnit.diagnostics.symbolTable = symbolTableDiagnostics;
 }
 

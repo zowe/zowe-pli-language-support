@@ -13,10 +13,10 @@ import { describe, test, expect } from "vitest";
 import { replaceNamedIndices } from "../utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "../../src/utils/uri";
-import { TextDocuments } from "../../src/language-server/text-documents";
 import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import * as lifecycle from "../../src/workspace/lifecycle";
 import { workspaceSymbolRequest } from "../../src/language-server/workspace-symbol-request";
+import { EditorDocuments } from "../../src/language-server/text-documents";
 
 const formatTestPLI = (code: string): string =>
   code.startsWith("\n") ? code.slice(1) : code;
@@ -44,7 +44,7 @@ function expectWorkspaceSymbols(annotatedCode: string[]): void {
   );
 
   const handler = new CompilationUnitHandler();
-  textDocuments.forEach((doc) => TextDocuments.set(doc));
+  textDocuments.forEach((doc) => EditorDocuments.set(doc));
   outputs.map((output, i) => {
     const unit = handler.createAndStoreCompilationUnit(
       URI.file(`/test${i}.pli`),
