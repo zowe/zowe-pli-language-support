@@ -2,7 +2,10 @@
   "pgroups": [
     {
       "name": "default",
-      "compiler-options": [],
+      "compiler-options": [
+        "AGGREGATE",
+        "MARGINS(2,72)"
+      ],
       "libs": [
         "cpy"
       ],

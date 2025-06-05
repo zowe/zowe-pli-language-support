@@ -10,8 +10,11 @@
  */
 
 import { Range } from "../language-server/types";
-import { CompilerOptionResult } from "./compiler-options/options";
-import { parseAbstractCompilerOptions, AbstractCompilerOptions } from "./compiler-options/parser";
+import {
+  CompilerOptionResult,
+  CompilerOptionIssue,
+} from "./compiler-options/options";
+import { parseAbstractCompilerOptions } from "./compiler-options/parser";
 import { translateCompilerOptions } from "./compiler-options/translator";
 import { createSyntheticTokenInstance, PROCESS, Token } from "../parser/tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
@@ -24,6 +27,15 @@ export interface CompilerOptionsProcessorResult {
 }
 
 export class CompilerOptionsProcessor {
+  // constant for the *PROCESS token length
+  private static readonly PROCESS_TOKEN_LENGTH = 8;
+
+  /**
+   * Extracts compiler options from the given text
+   * @param text - The source text containing compiler options.
+   * @param uri - The URI of the source file, for configuration lookup.
+   * @returns Processed compiler options and modified text.
+   */
   extractCompilerOptions(
     text: string,
     uri: URI,
@@ -33,7 +45,8 @@ export class CompilerOptionsProcessor {
     let newText = text;
     if (range) {
       // Magic number 8 is the length of the string "*PROCESS"
-      const offset = range.start + 8;
+      const offset =
+        range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH;
       srcCompilerOpts = text.substring(offset, range.end);
       newText =
         text.substring(0, range.start) +
@@ -47,47 +60,54 @@ export class CompilerOptionsProcessor {
 
     let configCompilerOpts: string | undefined = undefined;
     if (processGroupConfig?.["compiler-options"]?.length) {
-      configCompilerOpts =
-        processGroupConfig["compiler-options"].join(" ");
+      configCompilerOpts = processGroupConfig["compiler-options"].join(" ");
     }
 
     if (srcCompilerOpts || configCompilerOpts) {
-      // prepare a common structure for config & src compiler options
-      const abstractOptions: AbstractCompilerOptions = {
-        options: [],
-        tokens: [],
-        issues: [],
-      };
+      let configCompilerResult: CompilerOptionResult | undefined = undefined;
+      let srcCompilerResult: CompilerOptionResult | undefined = undefined;
 
-      // check to parse and merge config options
+      // process compiler options from the config
       if (configCompilerOpts) {
-        const configAbstractOptions = parseAbstractCompilerOptions(configCompilerOpts);
-        abstractOptions.options = configAbstractOptions.options;
-        abstractOptions.tokens = configAbstractOptions.tokens;
-        abstractOptions.issues = configAbstractOptions.issues;
+        const configAbstractOptions =
+          parseAbstractCompilerOptions(configCompilerOpts);
+        configCompilerResult = translateCompilerOptions(configAbstractOptions);
+        // adjust all issues from config
+        this.adjustIssuesFromConfig(configCompilerResult.issues, range);
       }
 
-      // check to parse and merge src options (directly from the *PROCESS directive)
+      // process compiler options from the *PROCESS directive
       if (srcCompilerOpts) {
         const srcAbstractOptions = parseAbstractCompilerOptions(
           srcCompilerOpts,
-          range ? range.start + 8 : 0,
+          0,
         );
-        abstractOptions.options.push(...srcAbstractOptions.options);
-        abstractOptions.tokens.push(...srcAbstractOptions.tokens);
-        abstractOptions.issues.push(...srcAbstractOptions.issues);
+
+        srcCompilerResult = translateCompilerOptions(srcAbstractOptions);
       }
 
-      // translate altogether
-      const compilerOptionsResult = translateCompilerOptions(abstractOptions);
+      // merge option results
+      const compilerOptionResult: CompilerOptionResult = {
+        options: {
+          ...configCompilerResult?.options,
+          ...srcCompilerResult?.options,
+        },
+        tokens: [
+          ...(configCompilerResult?.tokens || []),
+          ...(srcCompilerResult?.tokens || []),
+        ],
+        issues: [
+          ...(configCompilerResult?.issues || []),
+          ...(srcCompilerResult?.issues || []),
+        ],
+      };
 
       if (range) {
-        // Prepend the *PROCESS token to the compiler options result
-        compilerOptionsResult.tokens.unshift(range.token);
+        compilerOptionResult.tokens.unshift(range.token);
       }
 
       return {
-        result: compilerOptionsResult,
+        result: compilerOptionResult,
         text: newText,
       };
     } else {
@@ -95,6 +115,26 @@ export class CompilerOptionsProcessor {
         result: undefined,
         text: newText,
       };
+    }
+  }
+
+  /**
+   * Helper function to adjust issue ranges & messages from the config
+   * Primarily to try and avoid conflating the sourcing of these issues w/ *PROCESS related issues
+   */
+  private adjustIssuesFromConfig(
+    issues: CompilerOptionIssue[],
+    range?: Range & { token: IToken },
+  ): void {
+    for (const issue of issues) {
+      // adjust range & message for issues from config
+      issue.range = range
+        ? {
+            start: range.start,
+            end: range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
+          }
+        : { start: 0, end: 0 };
+      issue.message = `PLI Plugin Config: ${issue.message}`;
     }
   }
 
