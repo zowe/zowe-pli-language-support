@@ -13,12 +13,8 @@ import { describe, expect, test } from "vitest";
 import { Severity } from "../src/language-server/types";
 import * as PLICodes from "../src/validation/messages/pli-codes";
 import { collectDiagnostics } from "../src/workspace/compilation-unit";
-import {
-  assertDiagnostic,
-  assertNoDiagnostics,
-  createValidatorTestBuilder,
-  parse,
-} from "./utils";
+import { assertDiagnostic, assertNoDiagnostics, parse } from "./utils";
+import { createValidatorTestBuilder } from "./test-builder";
 
 // beforeAll(async () => {
 //   services = createPliServices(EmptyFileSystem);

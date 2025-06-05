@@ -84,6 +84,26 @@
             ],
             "smartStep": true,
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Vitest: Run Selected Harness Test File",
+            "type": "node",
+            "request": "launch",
+            "autoAttachChildProcesses": true,
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "runtimeExecutable": "pnpm",
+            "env": {
+                "HARNESS_TEST_FILE": "${relativeFile}"
+            },
+            "args": [
+                "vitest",
+                "run",
+                "packages/language/test/fourslash-harness/execute.test.ts"
+            ],
+            "smartStep": true,
+            "console": "integratedTerminal"
         }
     ],
     "compounds": [
