@@ -89,10 +89,7 @@ function registerOnDidOpenTextDocListener() {
             {
               name: "default",
               "compiler-options": [],
-              libs: [
-                "cpy",
-                "inc"
-              ],
+              libs: ["cpy", "inc"],
               "copybook-extensions": [],
             },
           ],
