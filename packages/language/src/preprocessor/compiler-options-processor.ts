@@ -74,14 +74,21 @@ export class CompilerOptionsProcessor {
         configCompilerResult = translateCompilerOptions(configAbstractOptions);
         // adjust all issues from config
         this.adjustIssuesFromConfig(configCompilerResult.issues, range);
+        if (!range) {
+          // don't report config issues if we don't have a *PROCESS directive to attach them to
+          configCompilerResult.issues = [];
+        }
       }
 
       // process compiler options from the *PROCESS directive
       if (srcCompilerOpts) {
         const srcAbstractOptions = parseAbstractCompilerOptions(
           srcCompilerOpts,
-          0,
+          range ? range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH : 0,
         );
+        
+        // TODO @montymxb Jun 6th, 2025: Duplicates across both config & src options are not yet accounted for
+        // due to the separate processing of each src
 
         srcCompilerResult = translateCompilerOptions(srcAbstractOptions);
       }
@@ -127,14 +134,23 @@ export class CompilerOptionsProcessor {
     range?: Range & { token: IToken },
   ): void {
     for (const issue of issues) {
-      // adjust range & message for issues from config
-      issue.range = range
-        ? {
-            start: range.start,
-            end: range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
-          }
-        : { start: 0, end: 0 };
-      issue.message = `PLI Plugin Config: ${issue.message}`;
+      // only retain issues that have a range
+      if (range) {
+        // adjust range & message for issues from config, placing on *PROCESS directive
+        issue.range = range
+          ? {
+              start: range.start,
+              end: range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
+            }
+          : { start: 0, end: 0 };
+        issue.message = `PLI Plugin Config: ${issue.message}`;
+      } else {
+        // report as is, don't adjust
+        console.warn(
+          `PLI Plugin Config: ${issue.message}`,
+          issue.range,
+        );
+      }
     }
   }
 
