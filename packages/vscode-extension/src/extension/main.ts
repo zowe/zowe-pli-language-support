@@ -30,6 +30,11 @@ export function activate(context: vscode.ExtensionContext): void {
   settings = Settings.getInstance();
   client = startLanguageClient(context);
   context.subscriptions.push(registerOnDidOpenTextDocListener());
+
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (workspaceFolder) {
+    watchPlipluginFolder(client, workspaceFolder, context);
+  }
 }
 
 /**
@@ -160,4 +165,29 @@ function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
   // Start the client. This will also launch the server
   client.start();
   return client;
+}
+
+/**
+ * Watches the .pliplugin folder for changes to pgm_conf.json and proc_grps.json files.
+ * Sends a notification to the LS when changes are detected
+ */
+function watchPlipluginFolder(client: LanguageClient, workspaceFolder: string, context: vscode.ExtensionContext): void {
+  const plipluginPath = path.join(workspaceFolder, ".pliplugin");
+
+  if (!fs.existsSync(plipluginPath)) {
+    return;
+  }
+
+  const watcher = fs.watch(plipluginPath, (_eventType, filename) => {
+    if (filename === "pgm_conf.json" || filename === "proc_grps.json") {
+      client.sendNotification("workspace/didChangePlipluginConfig");
+    }
+  });
+
+  watcher.on("error", (error) => {
+    console.error("Error watching .pliplugin folder:", error);
+    watcher.close();
+  });
+
+  context.subscriptions.push({ dispose: () => watcher.close() });
 }

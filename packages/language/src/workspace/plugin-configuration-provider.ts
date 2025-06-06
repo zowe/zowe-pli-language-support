@@ -79,6 +79,19 @@ class PluginConfigurationProvider {
   }
 
   /**
+   * Reloads plugin configurations from the existing workspace path.
+   */
+  public reloadConfigurations(): void {
+    const plipluginPath = this.workspacePath + "/.pliplugin";
+    const programConfigPath = plipluginPath + "/pgm_conf.json";
+    const processGroupConfigPath = plipluginPath + "/proc_grps.json";
+
+    console.log("Reloading .pliplugin configurations...");
+    this.loadProgramConfig(programConfigPath, this.workspacePath);
+    this.loadProcessGroupConfig(processGroupConfigPath);
+  }
+
+  /**
    * Loads the program config from the given path, and sets it in our provider
    * @param programConfigPath Path to the program config file
    * @param workspacePath Used to set program configs in relation to our workspace path
