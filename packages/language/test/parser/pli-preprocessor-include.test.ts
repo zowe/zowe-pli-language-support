@@ -27,6 +27,7 @@ function setupFileSystemAndLexer(): TokenizeFunction {
     " DECLARE LIB1_VAR FIXED;",
   );
   vtsfs.writeFileSync(URI.file("/test/cpy/LIB2"), " DECLARE LIB2_VAR FIXED;");
+  vtsfs.writeFileSync(URI.file("/test/cpy/PLILIB.pli"), " DECLARE PLILIB_VAR FIXED;");
   vtsfs.writeFileSync(URI.file("/test/LIB3"), " DECLARE LIB3_VAR FIXED;");
   vtsfs.writeFileSync(URI.file("/LIB4"), " DECLARE LIB4_VAR FIXED;");
 
@@ -259,6 +260,59 @@ describe("PL/1 Includes with Plugin Config", () => {
       "LIB2_VAR:ID",
       "=:=",
       "3:NUMBER",
+      ";:;",
+    ]);
+  });
+
+  test("Include using non-quoted identifier syntax w/out extension", () => {
+    // lib includes should resolve with or w/out their extension
+    expect(
+      tokenize(`
+            %INCLUDE PLILIB;
+            PLILIB_VAR = 32;
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "PLILIB_VAR:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "PLILIB_VAR:ID",
+      "=:=",
+      "32:NUMBER",
+      ";:;",
+    ]);
+  });
+
+  test("Include using quoted identifier syntax w/out extension", () => {
+    // lib includes should resolve with or w/out their extension
+    expect(
+      tokenize(`
+            %INCLUDE 'PLILIB';
+            PLILIB_VAR = 32;
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "PLILIB_VAR:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "PLILIB_VAR:ID",
+      "=:=",
+      "32:NUMBER",
+      ";:;",
+    ]);
+  });
+
+  test("Include doesn't pickup wrong file", () => {
+    // incomplete identifier, should not resolve (skipping included contents here) even w/ glob lookup
+    expect(
+      tokenize(`
+            %INCLUDE PLIL;
+            PLILIB_VAR = 32;
+        `),
+    ).toStrictEqual([
+      "PLILIB_VAR:ID",
+      "=:=",
+      "32:NUMBER",
       ";:;",
     ]);
   });

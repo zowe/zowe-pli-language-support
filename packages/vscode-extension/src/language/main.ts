@@ -20,6 +20,7 @@ import {
   setFileSystemProvider,
 } from "pli-language";
 import * as fs from "fs";
+import * as glob from "glob";
 
 class NodeFileSystemProvider implements FileSystemProvider {
   readFileSync(uri: URI): string {
@@ -31,6 +32,12 @@ class NodeFileSystemProvider implements FileSystemProvider {
   writeFileSync(uri: URI, value: string): void {
     // Do nothing for now.
     // Todo (ssmifi): Should we throw an error here?
+  }
+  findFilesByGlobSync(pattern: string): string[] {
+    return glob.sync(pattern, {
+      nodir: true,
+      absolute: true,
+    });
   }
 }
 
