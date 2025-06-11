@@ -180,7 +180,7 @@ export const ExecFragment = createToken({
 });
 export const ID = createToken({
   name: "ID",
-  pattern: /[$@#_a-zA-Z][\w_$@#]*/iy,
+  pattern: /[$@#_a-z][\w_$@#]*/iy,
 });
 export const NUMBER = createToken({
   name: "NUMBER",
@@ -444,7 +444,7 @@ export const RECURSIVE = createToken({
 });
 export const PROCEDURE = createToken({
   name: "PROCEDURE",
-  pattern: /(X)?PROC(EDURE)?/iy,
+  pattern: /X?PROC(EDURE)?/iy,
   categories: [ID],
   longer_alt: ID,
 });
@@ -714,7 +714,7 @@ export const DOWNTHRU = createToken({
 });
 export const INCLUDE = createToken({
   name: "INCLUDE",
-  pattern: /(X)?INCLUDE/iy,
+  pattern: /X?INCLUDE/iy,
   categories: [ID],
 });
 export const NOPRINT = createToken({
@@ -1028,7 +1028,7 @@ export const INITIAL = createToken({
 });
 export const DECLARE = createToken({
   name: "DECLARE",
-  pattern: /DECLARE|DCL|XDECLARE|XDCL/iy,
+  pattern: /X?(DECLARE|DCL)/iy,
   categories: [ID],
   longer_alt: ID,
 });
@@ -1190,7 +1190,7 @@ export const UPDATE = createToken({
 });
 export const DEFINE = createToken({
   name: "DEFINE",
-  pattern: /(X)?DEFINE/iy,
+  pattern: /X?DEFINE/iy,
   categories: [ID],
   longer_alt: ID,
 });

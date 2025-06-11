@@ -14,7 +14,6 @@ import {
   Lexer as ChevrotainLexer,
   TokenTypeDictionary,
   IToken,
-  Lexer,
 } from "chevrotain";
 import {
   AllPreprocessorTokens,
@@ -43,21 +42,6 @@ export class PliPreprocessorLexer {
     this.tokenTypeDictionary = {};
     for (const token of this.vocabulary) {
       this.tokenTypeDictionary[token.name] = token;
-      if (
-        token.PATTERN instanceof RegExp &&
-        token.PATTERN !== Lexer.NA &&
-        !token.PATTERN.sticky
-      ) {
-        // Sticky patterns are required for the lexer to work correctly
-        // Usually we shouldn't need to warn, but just in case
-        console.warn(
-          `Token ${token.name} has a non-sticky pattern. This may lead to unexpected behavior.`,
-        );
-        token.PATTERN = new RegExp(
-          token.PATTERN.source,
-          token.PATTERN.flags + "y",
-        );
-      }
     }
     this.hiddenTokenTypes = this.vocabulary.filter(
       (v) => v.GROUP === ChevrotainLexer.SKIPPED,
