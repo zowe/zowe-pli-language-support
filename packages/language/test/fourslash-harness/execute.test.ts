@@ -11,7 +11,7 @@
 
 import { readdirSync } from "fs";
 import path from "path";
-import { afterAll, beforeAll, describe, test } from "vitest";
+import { afterEach, beforeEach, describe, test } from "vitest";
 import { parseHarnessTestFile } from "./harness-parser";
 import { runHarnessTest } from "./harness-runner";
 import { getWrappers } from "./wrapper";
@@ -23,18 +23,20 @@ import {
   PliTestFile,
 } from "../test-builder";
 import { createTestBuilderHarnessImplementation } from "./implementation/test-builder";
+import { resetDocumentProviders } from "../../src/language-server/text-documents";
 
 const frameworkFileName = "framework.ts";
 const testsPath = "packages/language/test/fourslash";
 
 let vfs: VirtualFileSystemProvider;
 
-beforeAll(() => {
+beforeEach(() => {
   vfs = new VirtualFileSystemProvider();
   setFileSystemProvider(vfs);
+  resetDocumentProviders();
 });
 
-afterAll(() => {
+afterEach(() => {
   setFileSystemProvider(undefined);
 });
 

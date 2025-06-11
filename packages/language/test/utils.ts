@@ -461,7 +461,15 @@ export function expectReferences(text: string) {
  * ---------- End of Linking utilities ----------
  */
 
-export function expectCompletions(text: string, completions: string[][]) {
+interface ExpectedCompletion {
+  includes: string[];
+  excludes?: string[];
+}
+
+export function expectCompletions(
+  text: string,
+  completions: ExpectedCompletion[],
+) {
   const { output, indices } = replaceIndices({ text });
 
   const unit = parseAndLink(output);
@@ -476,6 +484,11 @@ export function expectCompletions(text: string, completions: string[][]) {
         return aLabel.localeCompare(bLabel);
       })
       .map((e) => e.label);
-    expect(completionResult).toEqual(completionItems);
+
+    expect(completionResult).containSubset(completionItems.includes);
+
+    if (completionItems.excludes && completionItems.excludes.length > 0) {
+      expect(completionResult).not.containSubset(completionItems.excludes);
+    }
   }
 }

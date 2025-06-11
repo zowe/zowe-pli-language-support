@@ -20,7 +20,6 @@ import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
 import { Location, TextEdit } from "vscode-languageserver-types";
-import { TextDocuments } from "./text-documents";
 import { rangeToLSP } from "./types";
 import { renameRequest } from "./rename-request";
 import { mapValues } from "../utils/common";
@@ -29,6 +28,8 @@ import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { completionRequest } from "./completion/completion-request";
+import { BuiltinsTextDocument } from "../workspace/builtins";
+import { BuiltinDocuments, TextDocuments } from "./text-documents";
 
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
@@ -39,6 +40,9 @@ export function startLanguageServer(connection: Connection): void {
     for (const folder of params.workspaceFolders?.reverse() ?? []) {
       PluginConfigurationProviderInstance.init(folder.uri);
     }
+
+    BuiltinDocuments.set(BuiltinsTextDocument);
+
     return {
       capabilities: {
         workspace: {
@@ -94,7 +98,7 @@ export function startLanguageServer(connection: Connection): void {
       const definition = definitionRequest(compilationUnit, uri, offset);
       const lspDefinitions: Location[] = [];
       for (const def of definition) {
-        const doc = TextDocuments.get(def.uri, { loadFromURI: true });
+        const doc = TextDocuments.get(def.uri);
         if (doc) {
           const range = rangeToLSP(doc, def.range);
           lspDefinitions.push({
@@ -119,7 +123,7 @@ export function startLanguageServer(connection: Connection): void {
       const definition = referencesRequest(compilationUnit, parsedUri, offset);
       const lspDefinitions: Location[] = [];
       for (const def of definition) {
-        const doc = TextDocuments.get(def.uri, { loadFromURI: true });
+        const doc = TextDocuments.get(def.uri);
         if (doc) {
           const range = rangeToLSP(doc, def.range);
           lspDefinitions.push({
@@ -174,7 +178,7 @@ export function startLanguageServer(connection: Connection): void {
       const offset = textDocument.offsetAt(position);
       const renameLocations = renameRequest(unit, parsedUri, offset);
       const changes = mapValues(renameLocations, (locations, key) => {
-        const textDocument = TextDocuments.get(key, { loadFromURI: true });
+        const textDocument = TextDocuments.get(key);
         if (!textDocument) {
           return [];
         } else {

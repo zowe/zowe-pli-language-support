@@ -161,6 +161,7 @@ export class NormalizedTextDocuments<T extends { uri: string }>
   private readonly _configuration: TextDocumentsConfiguration<T>;
 
   private readonly _syncedDocuments: Map<string, T>;
+  private readonly _loadFromURI: boolean;
 
   private readonly _onDidChangeContent: Emitter<TextDocumentChangeEvent<T>>;
   private readonly _onDidOpen: Emitter<TextDocumentEvent<T>>;
@@ -171,9 +172,15 @@ export class NormalizedTextDocuments<T extends { uri: string }>
     | RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void>
     | undefined;
 
-  public constructor(configuration: TextDocumentsConfiguration<T>) {
+  public constructor(
+    configuration: TextDocumentsConfiguration<T>,
+    options: {
+      loadFromURI?: boolean;
+    } = {},
+  ) {
     this._configuration = configuration;
     this._syncedDocuments = new Map();
+    this._loadFromURI = options.loadFromURI ?? false;
 
     this._onDidChangeContent = new Emitter<TextDocumentChangeEvent<T>>();
     this._onDidOpen = new Emitter<TextDocumentChangeEvent<T>>();
@@ -208,12 +215,9 @@ export class NormalizedTextDocuments<T extends { uri: string }>
     return this._onDidClose.event;
   }
 
-  public get(
-    uri: string | URI,
-    options?: { loadFromURI?: boolean },
-  ): T | undefined {
+  public get(uri: string | URI): T | undefined {
     let syncedDocument = this._syncedDocuments.get(UriUtils.normalize(uri));
-    if (syncedDocument === undefined && options?.loadFromURI) {
+    if (syncedDocument === undefined && this._loadFromURI) {
       try {
         const uriName = UriUtils.normalize(uri);
         const content = FileSystemProviderInstance.readFileSync(
@@ -225,7 +229,6 @@ export class NormalizedTextDocuments<T extends { uri: string }>
         syncedDocument = this._configuration.create(uriName, "pli", 0, content);
         this.set(syncedDocument);
       } catch (error) {
-        console.error(`Failed to load document from URI ${uri}: ${error}`);
         return undefined;
       }
     }
@@ -374,4 +377,55 @@ export class NormalizedTextDocuments<T extends { uri: string }>
   }
 }
 
-export const TextDocuments = new NormalizedTextDocuments(TextDocument);
+class BuiltinTextDocuments<T extends { uri: string }> {
+  private readonly documents: Map<string, T> = new Map();
+
+  public get(uri: string | URI): T | undefined {
+    return this.documents.get(uri.toString());
+  }
+
+  public set(document: T) {
+    this.documents.set(document.uri, document);
+  }
+}
+
+export class DocumentConsolidator<T extends { uri: string }> {
+  public constructor(
+    private readonly editorDocuments: NormalizedTextDocuments<T>,
+    private readonly fileDocuments: NormalizedTextDocuments<T>,
+    private readonly builtInDocuments: BuiltinTextDocuments<T>,
+  ) {}
+
+  public get(uri: string | URI): T | undefined {
+    return (
+      this.builtInDocuments.get(uri) ??
+      this.editorDocuments.get(uri) ??
+      this.fileDocuments.get(uri)
+    );
+  }
+}
+
+export let EditorDocuments: NormalizedTextDocuments<TextDocument>;
+export let FileDocuments: NormalizedTextDocuments<TextDocument>;
+export let BuiltinDocuments: BuiltinTextDocuments<TextDocument>;
+export let TextDocuments: DocumentConsolidator<TextDocument>;
+
+/**
+ * Reset the document providers to their default values.
+ *
+ * This is useful for testing purposes, to ensure that the document providers are cleared.
+ */
+export function resetDocumentProviders() {
+  EditorDocuments = new NormalizedTextDocuments(TextDocument);
+  FileDocuments = new NormalizedTextDocuments(TextDocument, {
+    loadFromURI: true,
+  });
+  BuiltinDocuments = new BuiltinTextDocuments<TextDocument>();
+  TextDocuments = new DocumentConsolidator(
+    EditorDocuments,
+    FileDocuments,
+    BuiltinDocuments,
+  );
+}
+
+resetDocumentProviders();

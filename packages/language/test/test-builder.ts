@@ -230,7 +230,9 @@ export class TestBuilder {
    * @returns The snippet and the line number
    */
   private getSnippet(offset: number, label: string) {
-    const snippet = `${this.output.slice(offset - 10, offset).trimStart()}<|${label}>${this.output.slice(offset, offset + 10).trimEnd()}`;
+    const start = this.output.slice(offset - 10, offset).trimStart();
+    const end = this.output.slice(offset, offset + 10).trimEnd();
+    const snippet = `${start}<|${label}>${end}`.replaceAll("\n", "\\n");
     const line = this.output.slice(0, offset).split("\n").length + 1;
 
     return { snippet, line };

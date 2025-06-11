@@ -12,8 +12,8 @@
 import { Connection, NotificationType, Range } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { TextDocuments } from "./text-documents";
 import { isEqual } from "lodash-es";
+import { TextDocuments } from "./text-documents";
 
 export interface SkippedCodeNotificationParams {
   uri: string;

@@ -14,7 +14,7 @@ import { parse, replaceIndices } from "../utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "../../src/utils/uri";
 import { skippedCodeRanges } from "../../src/language-server/skipped-code";
-import { TextDocuments } from "../../src/language-server/text-documents";
+import { EditorDocuments } from "../../src/language-server/text-documents";
 
 function formatTestPLI(code: string) {
   if (code.startsWith("\n")) {
@@ -35,7 +35,7 @@ function expectSkippedCode(annotatedCode: string) {
     1,
     output,
   );
-  TextDocuments.set(textDocument);
+  EditorDocuments.set(textDocument);
   const unit = parse(output, { validate: true });
   const codeRanges = skippedCodeRanges(unit);
 

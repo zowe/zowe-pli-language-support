@@ -174,7 +174,19 @@ export function assignRedeclaredSymbols(scopeCache: ScopeCache) {
   }
 }
 
-export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
+type IterateSymbolsOptions = {
+  rootScope?: Scope;
+  rootPreprocessorScope?: Scope;
+};
+
+function getDefaultScope(): Scope {
+  return new Scope(null, new SymbolTable());
+}
+
+export function iterateSymbols(
+  unit: CompilationUnit,
+  { rootScope, rootPreprocessorScope }: IterateSymbolsOptions = {},
+): Diagnostic[] {
   const { scopeCaches, references } = unit;
 
   // Set child containers for all nodes.
@@ -185,28 +197,22 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   const acceptor = validationBuffer.getAcceptor();
 
   // Iterate over the PLI program creating the symbol table.
-  // Todo: The root preprocessor scope should contain global preprocessor variables.
-  const builtInPreprocessorSymbols = new SymbolTable();
-  const preprocessorScope = new Scope(null, builtInPreprocessorSymbols);
   iterateSymbolTable(
     scopeCaches.preprocessor,
     references,
     acceptor,
     unit.preprocessorAst,
-    preprocessorScope,
+    rootPreprocessorScope ?? getDefaultScope(),
   );
   // TODO: Active this when we have some tests
   // assignRedeclaredSymbols(scopeCaches.preprocessor);
 
-  // Todo: The root scope should contain global PL1 standard library symbols.
-  const builtInSymbols = new SymbolTable();
-  const scope = new Scope(null, builtInSymbols);
   iterateSymbolTable(
     scopeCaches.regular,
     references,
     acceptor,
     unit.ast,
-    scope,
+    rootScope ?? getDefaultScope(),
   );
   assignRedeclaredSymbols(scopeCaches.regular);
 

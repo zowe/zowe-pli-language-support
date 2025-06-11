@@ -14,8 +14,8 @@ import { parse, replaceNamedIndices } from "../utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "../../src/utils/uri";
 import { documentSymbolRequest } from "../../src/language-server/document-symbol-request";
-import { TextDocuments } from "../../src/language-server/text-documents";
 import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types";
+import { EditorDocuments } from "../../src/language-server/text-documents";
 
 type SymbolWithLevel = {
   symbol: DocumentSymbol;
@@ -39,7 +39,7 @@ function expectDocumentSymbols(annotatedCode: string): void {
     output,
   );
 
-  TextDocuments.set(textDocument);
+  EditorDocuments.set(textDocument);
   const unit = parse(output, { validate: true });
   const documentSymbols = documentSymbolRequest(URI.file("/test.pli"), unit);
 

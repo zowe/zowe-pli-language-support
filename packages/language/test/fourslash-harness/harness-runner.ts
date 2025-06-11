@@ -18,7 +18,7 @@ const vm = require("vm");
  * Run a harness test.
  *
  * @param testFile - The test file to run.
- * @param fileSystemProvider - The file system provider to use to load the files.
+ * @param implementation - The implementation to use to run the harness test.
  */
 export function runHarnessTest(
   testFile: HarnessTest,
