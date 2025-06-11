@@ -18,6 +18,7 @@ import {
   CompilerOptionText,
   SyntaxKind,
 } from "../../src/syntax-tree/ast";
+import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
 
 describe("CompilerOptions parser", () => {
   test("simple word based compiler option", () => {
@@ -230,4 +231,99 @@ describe("CompilerOptions translator", () => {
       }
     }
   });
+});
+
+test("compiler option with parameter insensitive", () => {
+  const testCases: {
+    input: string;
+    toTest: (options: CompilerOptions) => unknown;
+    expected: unknown;
+  }[] = [
+    {
+      input: "AGGREGATE(DeCiMaL)",
+      toTest: (options) =>
+        (options.aggregate as CompilerOptions.Aggregate).offsets,
+      expected: "DECIMAL",
+    },
+    {
+      input: "ASSERT(entry)",
+      toTest: (options) => options.assert,
+      expected: "ENTRY",
+    },
+    {
+      input: "ATTRIBUTES(f)",
+      toTest: (options) => options.attributes?.identifiers,
+      expected: "FULL",
+    },
+    {
+      input: "CASE(asis)",
+      toTest: (options) => options.case,
+      expected: "ASIS",
+    },
+    {
+      input: "CASERULES(keyword(lower))",
+      toTest: (options) => options.caserules,
+      expected: "LOWER",
+    },
+    {
+      input: "CHECK(stg)",
+      toTest: (options) => options.check?.storage,
+      expected: "STORAGE",
+    },
+    { input: "CMPAT(v1)", toTest: (options) => options.cmpat, expected: "V1" },
+    {
+      input: "NOCOMPILE(e)",
+      toTest: (options) =>
+        (options.compile as CompilerOptions.Compile).severity,
+      expected: "ERROR",
+    },
+    {
+      input: "DECIMAL(checkfloat)",
+      toTest: (options) => options.decimal?.checkfloat,
+      expected: true,
+    },
+    {
+      input: "DEFAULT(aligned)",
+      toTest: (options) => options.default?.aligned,
+      expected: true,
+    },
+    {
+      input: "DEPRECATE(builtin(x))",
+      toTest: (options) => options.deprecate?.items,
+      expected: [{ type: "BUILTIN", value: "x" }],
+    },
+    {
+      input: "DISPLAY(wto(RoUTcDE(1)))",
+      toTest: (options) => options.display?.routcde,
+      expected: ["1"],
+    },
+    {
+      input: "EXTRN(short)",
+      toTest: (options) => options.extrn,
+      expected: "SHORT",
+    },
+    {
+      input: "FILEREF(hash)",
+      toTest: (options) => (options.fileRef as CompilerOptions.FileRef).hash,
+      expected: true,
+    },
+    { input: "FLAG(s)", toTest: (options) => options.flag, expected: "S" },
+    {
+      input: "FLOAT(dfp)",
+      toTest: (options) => (options.float as CompilerOptions.Float).dfp,
+      expected: true,
+    },
+    {
+      input: "FLOATINMATH(long)",
+      toTest: (options) =>
+        (options.floatInMath as CompilerOptions.FloatInMath).type,
+      expected: "LONG",
+    },
+  ];
+
+  for (const testCase of testCases) {
+    const parsed = parseAbstractCompilerOptions(testCase.input);
+    const options = translateCompilerOptions(parsed).options;
+    expect(testCase.toTest(options)).toEqual(testCase.expected);
+  }
 });

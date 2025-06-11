@@ -286,6 +286,7 @@ function plainTranslate(
     ensureArguments(option, 1, 1);
     const value = option.values[0];
     ensureType(value, "plain");
+    value.value = value.value.toUpperCase();
     if (values.length > 0 && !values.includes(value.value)) {
       throw new TranslationError(
         value.token,
@@ -305,7 +306,7 @@ translator.rule(
     const value = option.values[0];
     if (value) {
       ensureType(value, "plain");
-      const text = value.value;
+      const text = value.value.toUpperCase();
       if (text === "DECIMAL" || text === "HEXADEC") {
         options.aggregate = {
           offsets: text,
@@ -362,7 +363,7 @@ translator.rule(
     const value = option.values[0];
     if (value) {
       ensureType(value, "plain");
-      const text = value.value;
+      const text = value.value.toUpperCase();
       if (text === "F" || text === "FULL") {
         identifiers = "FULL";
       } else if (text === "S" || text === "SHORT") {
@@ -448,7 +449,7 @@ translator.rule(["CASERULES"], (option, options) => {
   ensureArguments(option, 1, 1);
   const keyword = option.values[0];
   ensureType(keyword, "option");
-  if (keyword.name !== "KEYWORD") {
+  if (keyword.name.toUpperCase() !== "KEYWORD") {
     throw new TranslationError(
       keyword.token,
       `Expected "KEYWORD" as compiler option value.`,
@@ -530,7 +531,7 @@ translator.rule(
     let sev: CompilerOptions.Compile["severity"] | undefined;
     if (severity) {
       ensureType(severity, "plain");
-      const value = severity.value;
+      const value = severity.value.toUpperCase();
       if (value === "S") {
         sev = "SEVERE";
       } else if (value === "W") {
@@ -665,7 +666,7 @@ translator.rule(["DECIMAL", "DEC"], (option, options) => {
   options.decimal = {};
   for (const opt of option.values) {
     ensureType(opt, "plain");
-    const value = opt.value;
+    const value = opt.value.toUpperCase();
     switch (value) {
       case "CHECKFLOAT":
         options.decimal.checkfloat = true;
@@ -733,7 +734,7 @@ translator.rule(["DEFAULT", "DFT"], (option, options) => {
   const def: CompilerOptions.Default = (options.default = {});
   for (const opt of option.values) {
     if (opt.kind === SyntaxKind.CompilerOptionText) {
-      const val = opt.value;
+      const val = opt.value.toUpperCase();
       switch (val) {
         case "ALIGNED":
           def.aligned = true;
@@ -882,9 +883,8 @@ translator.rule(["DEPRECATE", "DEPRECATENEXT"], (option, options) => {
   const items: CompilerOptions.DeprecateItem[] = [];
   for (const opt of option.values) {
     ensureType(opt, "option");
-    if (
-      !["BUILTIN", "ENTRY", "INCLUDE", "STMT", "VARIABLE"].includes(opt.name)
-    ) {
+    const name = opt.name.toUpperCase();
+    if (!["BUILTIN", "ENTRY", "INCLUDE", "STMT", "VARIABLE"].includes(name)) {
       throw new TranslationError(
         opt.token,
         `Invalid DEPRECATE option. Expected one of BUILTIN, ENTRY, INCLUDE, STMT or VARIABLE, but received '${opt.name}'`,
@@ -895,7 +895,7 @@ translator.rule(["DEPRECATE", "DEPRECATENEXT"], (option, options) => {
     const optionValue = opt.values[0];
     ensureType(optionValue, "plain");
     items.push({
-      type: opt.name as CompilerOptions.DeprecateItem["type"],
+      type: name as CompilerOptions.DeprecateItem["type"],
       value: optionValue.value,
     });
   }
@@ -912,9 +912,10 @@ translator.rule(["DISPLAY"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   if (value.kind === SyntaxKind.CompilerOptionText) {
-    if (value.value === "STD") {
+    const text = value.value.toUpperCase();
+    if (text === "STD") {
       display.std = true;
-    } else if (value.value === "WTO") {
+    } else if (text === "WTO") {
       display.wto = true;
     } else {
       throw new TranslationError(
@@ -924,7 +925,7 @@ translator.rule(["DISPLAY"], (option, options) => {
       );
     }
   } else if (value.kind === SyntaxKind.CompilerOption) {
-    if (value.name !== "WTO") {
+    if (value.name.toUpperCase() !== "WTO") {
       throw new TranslationError(
         value.token,
         `Invalid display option. Expected WTO, but received '${value.name}'.`,
@@ -939,11 +940,12 @@ translator.rule(["DISPLAY"], (option, options) => {
         ensureType(param, "plain");
         parameters.push(param.value);
       }
-      if (opt.name === "ROUTCDE") {
+      const name = opt.name.toUpperCase();
+      if (name === "ROUTCDE") {
         display.routcde = parameters;
-      } else if (opt.name === "DESC") {
+      } else if (name === "DESC") {
         display.desc = parameters;
-      } else if (opt.name === "REPLY") {
+      } else if (name === "REPLY") {
         display.reply = parameters;
       } else {
         throw new TranslationError(
@@ -1028,7 +1030,7 @@ translator.rule(["FLAG", "F"], (option, options) => {
   const value = option.values[0];
   if (value) {
     ensureType(value, "plain");
-    const flag = value.value;
+    const flag = value.value.toUpperCase();
     if (flag === "S" || flag === "E" || flag === "I" || flag === "W") {
       options.flag = flag;
     } else {
