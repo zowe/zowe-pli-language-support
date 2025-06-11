@@ -12,6 +12,7 @@
 import { TestBuilder } from "../../test-builder";
 import { HarnessTesterInterface } from "../harness-interface";
 import { HarnessCodes } from "./codes";
+import { HarnessConstants } from "./constants";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -31,6 +32,13 @@ export function createTestBuilderHarnessImplementation(
       expectExclusiveErrorCodesAt: (label, codes) =>
         testBuilder.expectExclusiveErrorCodesAt(label.toString(), codes),
     },
+    completion: {
+      expectExclusiveAt: (label, content) =>
+        testBuilder.expectExclusiveCompletions(label.toString(), content),
+      expectAt: (label, content) =>
+        testBuilder.expectCompletions(label.toString(), content),
+    },
     code: HarnessCodes,
+    constants: HarnessConstants,
   };
 }

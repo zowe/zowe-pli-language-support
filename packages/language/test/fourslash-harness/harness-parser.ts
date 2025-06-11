@@ -27,8 +27,6 @@ const HarnessFileTag = {
  */
 const HARNESS_TAG_PREFIX = "//";
 export const HARNESS_FILE_PREFIX = "////";
-const HARNESS_DESCRIPTION_PREFIX = "/**";
-const HARNESS_DESCRIPTION_SUFFIX = " */";
 const REFERENCE_PATH_PREFIX = "/// <reference path=";
 const HARNESS_TAG_PATTERN = /^\/\/\s*@(?<name>\w+)\s*:(?<value>.*)$/;
 
@@ -145,33 +143,6 @@ class HarnessTestParser {
     };
   }
 
-  private consumeDescription(): void {
-    const line = this.peek();
-    if (line === undefined) {
-      return;
-    }
-
-    if (!line.startsWith(HARNESS_DESCRIPTION_PREFIX)) {
-      return;
-    }
-
-    this.next();
-
-    while (true) {
-      const line = this.peek();
-      if (line === undefined) {
-        throw new Error("Unexpected end of file while parsing comment");
-      }
-
-      if (line.startsWith(HARNESS_DESCRIPTION_SUFFIX)) {
-        this.next();
-        break;
-      }
-
-      this.next();
-    }
-  }
-
   parse(): HarnessTest {
     const files: Map<string | UnnamedFile, HarnessFile> = new Map();
 
@@ -199,11 +170,6 @@ class HarnessTestParser {
         continue;
       }
 
-      if (line.startsWith(HARNESS_DESCRIPTION_PREFIX)) {
-        this.consumeDescription();
-        continue;
-      }
-
       const isComment =
         line.startsWith(HARNESS_TAG_PREFIX) ||
         line.startsWith(HARNESS_FILE_PREFIX);
@@ -223,7 +189,9 @@ class HarnessTestParser {
         continue;
       }
 
-      break;
+      // We didn't find a code block or reference path, so we continue.
+      // Probably, we're looking at a JS command.
+      this.next();
     }
 
     return {
