@@ -36,6 +36,7 @@ export const PreprocessorTokens = {
   Builtin: tokens.BUILTIN,
   Entry: tokens.ENTRY,
   Character: tokens.CHARACTER,
+  XInclude: tokens.XINCLUDE,
   Include: tokens.INCLUDE,
   Internal: tokens.INTERNAL,
   External: tokens.EXTERNAL,
