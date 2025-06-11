@@ -4,8 +4,8 @@
     <title>PL/I Playground</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script type="module" crossorigin src="./assets/index-BkWb27M2.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-Cn8VAaXK.css">
+    <script type="module" crossorigin src="./assets/index-B2Owkx8d.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BFuLPLBF.css">
   </head>
 
   <body>
@@ -16,11 +16,23 @@
           >Link copied to clipboard!</span
         >
         <span
-          id="share-button"
+        id="reset-button"
+        class="share"
+        title="Click to reset the playground"
+        >Reset</span
+      > | 
+        <span
+          id="share-current-button"
           class="share"
-          title="Click to share the current code"
-          >Share</span
-        >
+          title="Click to share the code in the editor"
+          >Share Current</span
+        > | 
+      <span
+        id="share-workspace-button"
+        class="share"
+        title="Click to share the workspace"
+        >Share Workspace</span
+      >
       </div>
       <div id="vscode-views-root"></div>
     </div>
