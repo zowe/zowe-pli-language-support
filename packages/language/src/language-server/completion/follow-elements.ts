@@ -14,9 +14,10 @@ import { MemberCall, SyntaxKind, SyntaxNode } from "../../syntax-tree/ast";
 import { CstNodeKind } from "../../syntax-tree/cst";
 import { CompletionKeywords, PreprocessorCompletionKeywords } from "./keywords";
 
-const CompletionKeywordsArray = CompletionKeywords.keys().toArray();
-const PreprocessorCompletionKeywordsArray =
-  PreprocessorCompletionKeywords.keys().toArray();
+const CompletionKeywordsArray = new Array(...CompletionKeywords.keys());
+const PreprocessorCompletionKeywordsArray = new Array(
+  ...PreprocessorCompletionKeywords.keys(),
+);
 const AllKeywordsArray = [
   ...CompletionKeywordsArray,
   ...PreprocessorCompletionKeywordsArray,
