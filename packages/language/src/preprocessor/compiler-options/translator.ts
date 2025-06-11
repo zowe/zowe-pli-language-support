@@ -408,12 +408,24 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.blank} */
-translator.rule(
-  ["BLANK"],
-  stringTranslate((options, value) => {
-    options.blank = value.value;
-  }),
-);
+translator.rule(["BLANK"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "string");
+
+  // Test for every single character in the string.
+  // Not allowed: A-Z, 0-9, space, =, +, -, *, /, (, ),,, ., ', ", %, ;, :, &, |, <, >, _,
+  const disallowedChars = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/i;
+  if (disallowedChars.test(value.value)) {
+    throw new TranslationError(
+      value.token,
+      "BLANK option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
+      1,
+    );
+  }
+
+  options.blank = value.value;
+});
 
 /** {@link CompilerOptions.blkoff} */
 translator.flag("blkoff", ["BLKOFF"], ["NOBLKOFF"]);

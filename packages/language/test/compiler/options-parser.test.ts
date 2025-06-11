@@ -133,6 +133,7 @@ describe("CompilerOptions translator", () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe("Expected a number.");
   });
+
   test("Produce issue for text value in MARGINS n", () => {
     const options = parseAbstractCompilerOptions("MARGINS(112, R)");
     const issues = translateCompilerOptions(options).issues;
@@ -231,6 +232,15 @@ describe("CompilerOptions translator", () => {
       }
     }
   });
+});
+
+test("Test BLANK validation", () => {
+  const options = parseAbstractCompilerOptions("BLANK('dssssdD')");
+  const issues = translateCompilerOptions(options).issues;
+  expect(issues).toHaveLength(1);
+  expect(issues[0].message).toBe(
+    "BLANK option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
+  );
 });
 
 test("compiler option with parameter insensitive", () => {
