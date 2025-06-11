@@ -644,7 +644,8 @@ translator.rule(
     options.dbrmlib = dataSetName.value;
   },
   ["NODBRMLIB"],
-  (_, options) => {
+  (option, options) => {
+    ensureArguments(option, 0, 0);
     options.dbrmlib = false;
   },
 );
