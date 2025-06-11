@@ -355,33 +355,45 @@ translator.rule(
 
 /** {@link CompilerOptions.attributes} */
 translator.rule(
-  ["ATTRIBUTES", "A", "NOATTRIBUTES", "NA"],
+  ["ATTRIBUTES", "A"],
   (option, options) => {
     ensureArguments(option, 0, 1);
-    const include = option.name.startsWith("A");
-    let identifiers: "FULL" | "SHORT" | undefined = undefined;
-    const value = option.values[0];
-    if (value) {
-      ensureType(value, "plain");
-      const text = value.value.toUpperCase();
-      if (text === "F" || text === "FULL") {
-        identifiers = "FULL";
-      } else if (text === "S" || text === "SHORT") {
-        identifiers = "SHORT";
-      } else {
-        throw new TranslationError(
-          value.token,
-          "Invalid attribute value. Expected FULL or SHORT.",
-          1,
-        );
-      }
-    }
     options.attributes = {
-      include,
-      identifiers,
+      include: true,
+      identifiers: attributeIdentifiers(option),
+    };
+  },
+  ["NOATTRIBUTES", "NA"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    options.attributes = {
+      include: false,
+      identifiers: attributeIdentifiers(option) ?? undefined,
     };
   },
 );
+
+function attributeIdentifiers(
+  option: CompilerOption,
+): "FULL" | "SHORT" | undefined {
+  const value = option.values[0];
+  if (value) {
+    ensureType(value, "plain");
+    const text = value.value.toUpperCase();
+    if (text === "F" || text === "FULL") {
+      return "FULL";
+    } else if (text === "S" || text === "SHORT") {
+      return "SHORT";
+    } else {
+      throw new TranslationError(
+        value.token,
+        "Invalid attribute value. Expected FULL or SHORT.",
+        1,
+      );
+    }
+  }
+  return undefined;
+}
 
 /** {@link CompilerOptions.backreg} */
 translator.rule(
