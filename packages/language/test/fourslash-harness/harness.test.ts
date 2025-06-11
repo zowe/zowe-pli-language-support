@@ -16,16 +16,27 @@ import { HarnessTest } from "./types";
 import { runHarnessTest } from "./harness-runner";
 import { parseHarnessTest } from "./harness-parser";
 import { parseWrapperFile } from "./wrapper";
+import { HarnessConstants } from "./implementation/constants";
 
 type HarnessImplementationListener = (method: string, ...args: any[]) => void;
+
+const INTERNAL_METHOD_NAME_PREFIX = "__methodName";
+
+function createListenerCreator(listener: HarnessImplementationListener) {
+  return (methodName: string) => {
+    const _listener = function (...args: any[]) {
+      listener(methodName, ...args);
+    };
+    _listener[INTERNAL_METHOD_NAME_PREFIX] = methodName;
+
+    return _listener;
+  };
+}
 
 function createTestingHarnessImplementation(
   listener: HarnessImplementationListener,
 ): HarnessTesterInterface {
-  const listen =
-    (methodName: string) =>
-    (...args: any[]) =>
-      listener(methodName, ...args);
+  const listen = createListenerCreator(listener);
 
   return {
     linker: {
@@ -35,7 +46,11 @@ function createTestingHarnessImplementation(
     verify: {
       expectExclusiveErrorCodesAt: listen("verify.expectExclusiveErrorCodesAt"),
     },
+    completion: {
+      expectAt: listen("completion.expectAt"),
+    },
     code: HarnessCodes,
+    constants: HarnessConstants,
   };
 }
 
@@ -59,6 +74,43 @@ describe("Harness test framework tests", () => {
     );
   });
 
+  test("should run all commands", () => {
+    const mockFunction = vitest.fn().mockImplementation(() => {});
+    const implementation = createTestingHarnessImplementation(mockFunction);
+
+    const functionCalls = Object.values(implementation).flatMap(
+      (group, groupId) =>
+        Object.values(group)
+          .filter(
+            (method) =>
+              (method as any)?.[INTERNAL_METHOD_NAME_PREFIX] !== undefined,
+          )
+          .map((method, methodId) => [
+            (method as any)[INTERNAL_METHOD_NAME_PREFIX],
+            `${groupId}.${methodId}`,
+          ]),
+    );
+
+    const commands = functionCalls
+      .map(
+        ([methodName, methodArguments]) =>
+          `${methodName}("${methodArguments}")`,
+      )
+      .join("\n");
+
+    const file: HarnessTest = {
+      commands,
+      fileName: "test.pli",
+      files: new Map(),
+    };
+
+    runHarnessTest(file, implementation);
+
+    for (const [method, methodArguments] of functionCalls) {
+      expect(mockFunction).toHaveBeenCalledWith(method, methodArguments);
+    }
+  });
+
   test("should extract code from multiple file blocks", () => {
     const wrap1 = "main";
     const fileName1 = "file1.pli";
@@ -74,6 +126,8 @@ two newlines`;
 
     const commands = `
 /// <reference path="../framework.ts" />
+
+import { whatever } from "wherever";
 
 /**
  Ignore this comment please

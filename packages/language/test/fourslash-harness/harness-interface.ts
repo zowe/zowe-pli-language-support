@@ -1,11 +1,18 @@
+import {
+  CompletionKeywords,
+  PreprocessorCompletionKeywords,
+} from "../../src/language-server/completion/keywords";
 import { PLICodes } from "../../src/validation/messages";
+
+type Label = string | number;
 
 export interface HarnessTesterInterface {
   verify: {
-    expectExclusiveErrorCodesAt(
-      label: string | number,
-      codes: string[] | string,
-    ): void;
+    /**
+     * Expect that the given label has no errors.
+     * @param label The label to expect no errors at.
+     */
+    expectExclusiveErrorCodesAt(label: Label, codes: string[] | string): void;
   };
 
   linker: {
@@ -15,8 +22,19 @@ export interface HarnessTesterInterface {
     expectLinks(): void;
     /**
      * Expect that the defined links do not link to the given label.
+     * @param label The label to expect no links at.
      */
-    expectNoLinksAt(label: string | number): void;
+    expectNoLinksAt(label: Label): void;
+  };
+
+  completion: {
+    /**
+     * Expect that the completion items at the given label contains the given content.
+     *
+     * @param label The label to expect the completion items at.
+     * @param content The completion items to expect.
+     */
+    expectAt(label: Label, content: string[]): void;
   };
 
   code: {
@@ -24,5 +42,10 @@ export interface HarnessTesterInterface {
     Warning: typeof PLICodes.Warning;
     Information: typeof PLICodes.Info;
     Error: typeof PLICodes.Error;
+  };
+
+  constants: {
+    CompletionKeywords: typeof CompletionKeywords;
+    PreprocessorCompletionKeywords: typeof PreprocessorCompletionKeywords;
   };
 }

@@ -20,6 +20,7 @@ import { parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
 import { assignDebugKinds } from "../src/utils/debug-kinds";
+import { completionRequest } from "../src/language-server/completion/completion-request";
 
 export const DEFAULT_FILE_URI = "file:///main.pli";
 
@@ -311,6 +312,43 @@ export class TestBuilder {
     }
 
     return this;
+  }
+
+  private _expectCompletions(
+    label: string,
+    check: (completionResult: string[]) => void,
+  ) {
+    const indices = this.indices[label];
+    if (!indices) {
+      throw new Error(`Label "${label}" not found`);
+    }
+
+    for (let i = 0; i < indices.length; i++) {
+      const index = indices[i];
+      const completionResult = completionRequest(
+        this.unit,
+        this.unit.uri,
+        index,
+      )
+        .sort((a, b) => {
+          const aLabel = a.sortText ?? a.label;
+          const bLabel = b.sortText ?? b.label;
+          return aLabel.localeCompare(bLabel);
+        })
+        .map((e) => e.label);
+
+      check(completionResult);
+    }
+  }
+
+  expectCompletions(label: string, completions: string[]) {
+    const message = `Unexpected completions at label "${label}"`;
+
+    this._expectCompletions(label, (completionResult) => {
+      for (const completion of completions) {
+        expect(completionResult, message).toContain(completion);
+      }
+    });
   }
 }
 

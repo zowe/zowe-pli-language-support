@@ -15,9 +15,26 @@ import { CompilationUnit } from "../../workspace/compilation-unit";
 import { CompletionItem } from "../types";
 import { FollowElement, FollowKind } from "./follow-elements";
 import { getQualifiedName } from "../../linking/resolver";
+import { CompletionKeywords, PreprocessorCompletionKeywords } from "./keywords";
+import { CstNodeKind } from "../../syntax-tree/cst";
 
 export interface SimpleCompletionItem extends Omit<CompletionItem, "edit"> {
   text: string;
+}
+
+function getCompletionKeywords(kind: CstNodeKind): SimpleCompletionItem[] {
+  return [
+    ...CompletionKeywords.get(kind).map((keyword) => ({
+      label: keyword,
+      kind: CompletionItemKind.Keyword,
+      text: keyword,
+    })),
+    ...PreprocessorCompletionKeywords.get(kind).map((keyword) => ({
+      label: `%${keyword}`,
+      kind: CompletionItemKind.Keyword,
+      text: `%${keyword}`,
+    })),
+  ];
 }
 
 export function generateCompletionItems(
@@ -26,14 +43,15 @@ export function generateCompletionItems(
   followElement: FollowElement,
 ): SimpleCompletionItem[] {
   const items: SimpleCompletionItem[] = [];
+
   if (followElement.kind === FollowKind.CstNode) {
-    // TODO: implement completion for keywords
-    return [];
+    const keywords = followElement.types.flatMap(getCompletionKeywords);
+    items.push(...keywords);
   }
   if (followElement.kind === FollowKind.QualifiedReference) {
     context = followElement.previous;
   } else if (!context) {
-    return [];
+    return items;
   }
   const scopeCache = isPreprocessorNode(context, unit)
     ? unit.scopeCaches.preprocessor
