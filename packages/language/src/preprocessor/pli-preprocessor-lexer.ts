@@ -42,12 +42,6 @@ export class PliPreprocessorLexer {
     this.tokenTypeDictionary = {};
     for (const token of this.vocabulary) {
       this.tokenTypeDictionary[token.name] = token;
-      if (token.PATTERN instanceof RegExp && !token.PATTERN.sticky) {
-        token.PATTERN = new RegExp(
-          token.PATTERN.source,
-          token.PATTERN.flags + "y",
-        );
-      }
     }
     this.hiddenTokenTypes = this.vocabulary.filter(
       (v) => v.GROUP === ChevrotainLexer.SKIPPED,

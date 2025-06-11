@@ -130,7 +130,7 @@ export namespace Values {
     return Number(0);
   }
   export function sameType(lhs: TokenType, rhs: TokenType) {
-    return lhs.name.toLocaleUpperCase() === rhs.name.toLocaleUpperCase();
+    return lhs.tokenTypeIdx === rhs.tokenTypeIdx;
   }
   export const add = numericArithmticOp((lhs, rhs) => lhs + rhs);
   export const subtract = numericArithmticOp((lhs, rhs) => lhs - rhs);

@@ -11,12 +11,28 @@
 
 import { describe, expect, test } from "vitest";
 import { collectDiagnostics } from "../src/workspace/compilation-unit";
+import * as tokens from "../src/parser/tokens";
 import {
   assertNoParseErrors,
   generateAndAssertValidSymbolTable,
   parse,
   parseStmts,
 } from "./utils";
+import { PreprocessorTokens } from "../src/preprocessor/pli-preprocessor-tokens";
+import { Lexer } from "chevrotain";
+
+test("PL/I tokens are all using sticky regex", () => {
+  for (const token of tokens.all) {
+    if (token.PATTERN instanceof RegExp && token.PATTERN !== Lexer.NA) {
+      expect(token.PATTERN.sticky).toBe(true);
+    }
+  }
+  for (const token of Object.values(PreprocessorTokens)) {
+    if (token.PATTERN instanceof RegExp && token.PATTERN !== Lexer.NA) {
+      expect(token.PATTERN.sticky).toBe(true);
+    }
+  }
+});
 
 describe("PL/I Parsing tests", () => {
   test("empty program parses as valid", () => {

@@ -57,7 +57,6 @@ export interface PreprocessorParserState {
     tokenType: TokenType,
   ): IToken;
 
-  consumeUntil(predicate: (token: IToken) => boolean): IToken[];
   advanceLines(lineCount: number): void;
   push(location: ParserLocation): void;
   pop(): void;
@@ -80,19 +79,6 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     this.tokens = [];
     this.index = 0;
     this.uri = uri;
-  }
-
-  consumeUntil(predicate: (token: IToken) => boolean): IToken[] {
-    const result: IToken[] = [];
-    while (!this.eof && this.current && !predicate(this.current)) {
-      result.push(this.current);
-      this.index++;
-    }
-    if (this.current && predicate(this.current)) {
-      result.push(this.current);
-      this.index++;
-    }
-    return result;
   }
 
   advanceLines(lineCount: number): void {

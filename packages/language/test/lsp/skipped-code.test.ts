@@ -67,10 +67,10 @@ describe("Skipped Code", () => {
  IGNO: PROCEDURE OPTIONS (MAIN);
    dcl A fixed bin(31);
    dcl B fixed bin(31);
-   dcl WHAT fixed bin(31);  
+   dcl WHAT fixed bin(31);
    %DECLARE C fixed;
-   %C = 1;   
-   %IF %C %THEN %DO;
+   %C = 1;
+   %IF C %THEN %DO;
      WHAT = 123;
    %END;
    %ELSE <|%DO;
@@ -86,10 +86,10 @@ describe("Skipped Code", () => {
  IGNO: PROCEDURE OPTIONS (MAIN);
    dcl A fixed bin(31);
    dcl B fixed bin(31);
-   dcl WHAT fixed bin(31);  
+   dcl WHAT fixed bin(31);
    %DECLARE C fixed;
-   %C = 0;   
-   %IF %C %THEN <|%DO;
+   %C = 0;
+   %IF C %THEN <|%DO;
      WHAT = 123;
    %END;|>
    %ELSE %DO;
