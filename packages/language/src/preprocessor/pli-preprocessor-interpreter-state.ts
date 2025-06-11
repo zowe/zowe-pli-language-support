@@ -226,6 +226,7 @@ export class PliPreprocessorInterpreterState
               value = Values.eq(lhs, rhs);
               break;
             case "<>":
+            case "^=":
               value = Values.neq(lhs, rhs);
               break;
             case "&":

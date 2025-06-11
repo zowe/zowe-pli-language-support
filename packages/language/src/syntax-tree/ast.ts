@@ -426,7 +426,7 @@ export type SyntaxNode =
   | Statement
   | StopStatement
   | StringLiteral
-  | SubStructure
+  | StructureItem
   | TypeAttribute
   | UnaryExpression
   | ValueAttribute
@@ -1095,10 +1095,7 @@ export interface DefineOrdinalStatement extends AstNode {
 export interface DefineStructureStatement extends AstNode {
   kind: SyntaxKind.DefineStructureStatement;
   xDefine: boolean;
-  level: string | null;
-  name: FQN | null;
-  union: boolean;
-  substructures: SubStructure[];
+  items: StructureItem[];
 }
 export interface DelayStatement extends AstNode {
   kind: SyntaxKind.DelayStatement;
@@ -1689,7 +1686,7 @@ export interface OrdinalValue extends AstNode {
   kind: SyntaxKind.OrdinalValue;
   name: string | null;
   nameToken: IToken | null;
-  value: string | null;
+  value: Expression | null;
 }
 export interface OrdinalValueList extends AstNode {
   kind: SyntaxKind.OrdinalValueList;
@@ -2083,7 +2080,7 @@ export function createStringLiteral(): StringLiteral {
     tokens: [],
   };
 }
-export interface SubStructure extends AstNode {
+export interface StructureItem extends AstNode {
   kind: SyntaxKind.SubStructure;
   level: string | null;
   name: string | null;

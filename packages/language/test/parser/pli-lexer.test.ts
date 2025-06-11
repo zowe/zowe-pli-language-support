@@ -607,6 +607,62 @@ describe("PL/1 Lexer", () => {
     ).toStrictEqual(["HelloWorld:ID", "=:=", "123:NUMBER", ";:;"]);
   });
 
+  test("Preprocessor statement can appear inside of a random other statement and successfully evaluate #1", () => {
+    expect(
+      tokenize(`
+          MAIN: PROC OPTIONS(
+            MAIN
+            %IF 1 = 1 %THEN %DO;
+            ,ORDER
+            %END;
+            );
+          END MAIN;
+        `),
+    ).toStrictEqual([
+      "MAIN:MAIN",
+      ":::",
+      "PROC:PROCEDURE",
+      "OPTIONS:OPTIONS",
+      "(:(",
+      "MAIN:MAIN",
+      ",:,",
+      "ORDER:ORDER",
+      "):)",
+      ";:;",
+      "END:END",
+      "MAIN:MAIN",
+      ";:;",
+    ]);
+  });
+
+  test("Preprocessor statement can appear inside of a random other statement and successfully evaluate #2", () => {
+    expect(
+      tokenize(`
+          MAIN: PROC OPTIONS(
+            MAIN
+            %IF 1 = 2 %THEN %DO;
+            ,ORDER
+            %END;
+            );
+          END MAIN;
+        `),
+    ).toStrictEqual([
+      "MAIN:MAIN",
+      ":::",
+      "PROC:PROCEDURE",
+      "OPTIONS:OPTIONS",
+      "(:(",
+      "MAIN:MAIN",
+      // In this case, the preprocessor statement is not evaluated since 1 != 2
+      // Therefore, the comma and ORDER tokens are not added
+      "):)",
+      ";:;",
+      "END:END",
+      "MAIN:MAIN",
+      ";:;",
+    ]);
+  });
+
   test.skip("XYZ", () => {
     expect(
       tokenize(`

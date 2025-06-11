@@ -64,7 +64,10 @@ export const PreprocessorTokens = {
   Or: tokens.Pipe,
   And: tokens.Ampersand,
   Eq: tokens.Equals,
+  // Default not equals token is <>
   Neq: tokens.LessThanGreaterThan,
+  // We have a second "not equals" token ^=, that can be adjusted via compiler options
+  Neq2: tokens.NotEquals,
   LE: tokens.LessThanEquals,
   GE: tokens.GreaterThanEquals,
   GT: tokens.GreaterThan,
@@ -87,6 +90,7 @@ export const PreprocessorBinaryTokens = [
   PreprocessorTokens.GE,
   PreprocessorTokens.Eq,
   PreprocessorTokens.Neq,
+  PreprocessorTokens.Neq2,
   PreprocessorTokens.And,
   PreprocessorTokens.Or,
 ];

@@ -181,6 +181,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       element,
     };
     this.index++;
+    this.skipHiddenTokens();
     return true;
   }
 
@@ -204,7 +205,14 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       element,
     };
     this.index++;
+    this.skipHiddenTokens();
     return token;
+  }
+
+  private skipHiddenTokens() {
+    while (this.tokens[this.index]?.tokenType.GROUP) {
+      this.index++;
+    }
   }
 
   canConsumeKeyword(...tokenTypes: TokenType[]): boolean {

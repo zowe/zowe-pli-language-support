@@ -254,7 +254,7 @@ export function forEachNode(
       }
       break;
     case SyntaxKind.DefineStructureStatement:
-      node.substructures.forEach(action);
+      node.items.forEach(action);
       break;
     case SyntaxKind.DelayStatement:
       if (node.delay) {
@@ -666,6 +666,9 @@ export function forEachNode(
     case SyntaxKind.OrdinalTypeAttribute:
       break;
     case SyntaxKind.OrdinalValue:
+      if (node.value) {
+        action(node.value);
+      }
       break;
     case SyntaxKind.OrdinalValueList:
       node.members.forEach(action);

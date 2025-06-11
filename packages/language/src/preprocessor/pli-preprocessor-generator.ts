@@ -301,6 +301,12 @@ export class PliPreprocessorGenerator {
         list.push(token);
       }
     });
+    // if any tokens are left, simply push them
+    if (list.length > 0) {
+      builder.pushInstruction(Instructions.push(list));
+      builder.pushInstruction(Instructions.scan());
+      builder.pushInstruction(Instructions.print());
+    }
   }
 
   handleStatements(

@@ -2342,9 +2342,14 @@ export class PliParser extends AbstractParser {
       this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
         this.tokenPayload(token, element, CstNodeKind.OrdinalValue_OpenParen);
       });
-      this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.OrdinalValue_ValueNumber);
-        element.value = token.image;
+      // The spec says that the value is *just* a number.
+      // However, the compiler allows unary expressions in here as well
+      // (e.g. -1, +2, etc.). For consistency, we allow any expression here.
+      // We can later add a check to ensure that the value is a number.
+      this.SUBRULE_ASSIGN(this.Expression, {
+        assign: (result) => {
+          element.value = result;
+        },
       });
       this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
         this.tokenPayload(token, element, CstNodeKind.OrdinalValue_CloseParen);
@@ -2358,17 +2363,14 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.DefineStructureStatement,
       container: null,
       xDefine: false,
-      level: null,
-      name: null,
-      union: false,
-      substructures: [],
+      items: [],
     };
   }
 
   DefineStructureStatement = this.RULE("DefineStructureStatement", () => {
     let element = this.push(this.createDefineStructureStatement());
 
-    this.CONSUME_ASSIGN1(tokens.DEFINE, (token) => {
+    this.CONSUME_ASSIGN(tokens.DEFINE, (token) => {
       this.tokenPayload(
         token,
         element,
@@ -2378,51 +2380,33 @@ export class PliParser extends AbstractParser {
         element.xDefine = true;
       }
     });
-    this.CONSUME_ASSIGN1(tokens.STRUCTURE, (token) => {
+    this.CONSUME_ASSIGN(tokens.STRUCTURE, (token) => {
       this.tokenPayload(
         token,
         element,
         CstNodeKind.DefineStructureStatement_STRUCTURE,
       );
     });
-    this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.DefineStructureStatement_LevelNumber,
-      );
-      element.level = token.image;
-    });
-    this.SUBRULE_ASSIGN1(this.FQN, {
+    this.SUBRULE_ASSIGN1(this.StructureItem, {
       assign: (result) => {
-        element.name = result;
+        element.items.push(result);
       },
     });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.UNION, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DefineStructureStatement_UNION,
-        );
-        element.union = true;
-      });
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
+    this.MANY(() => {
+      this.CONSUME_ASSIGN(tokens.Comma, (token) => {
         this.tokenPayload(
           token,
           element,
           CstNodeKind.DefineStructureStatement_Comma,
         );
       });
-      this.SUBRULE_ASSIGN1(this.SubStructure, {
+      this.SUBRULE_ASSIGN2(this.StructureItem, {
         assign: (result) => {
-          element.substructures.push(result);
+          element.items.push(result);
         },
       });
     });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
+    this.CONSUME_ASSIGN(tokens.Semicolon, (token) => {
       this.tokenPayload(
         token,
         element,
@@ -2432,7 +2416,8 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.DefineStructureStatement>();
   });
-  private createSubStructure(): ast.SubStructure {
+
+  private createStructureItem(): ast.StructureItem {
     return {
       kind: ast.SyntaxKind.SubStructure,
       container: null,
@@ -2442,8 +2427,8 @@ export class PliParser extends AbstractParser {
     };
   }
 
-  SubStructure = this.RULE("SubStructure", () => {
-    let element = this.push(this.createSubStructure());
+  StructureItem = this.RULE("SubStructure", () => {
+    let element = this.push(this.createStructureItem());
 
     this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
       this.tokenPayload(token, element, CstNodeKind.SubStructure_LevelNumber);
@@ -2461,7 +2446,7 @@ export class PliParser extends AbstractParser {
       });
     });
 
-    return this.pop<ast.SubStructure>();
+    return this.pop<ast.StructureItem>();
   });
 
   private createDelayStatement(): ast.DelayStatement {
