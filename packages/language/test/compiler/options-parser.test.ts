@@ -243,6 +243,19 @@ test("Test BLANK validation", () => {
   );
 });
 
+test("Test DEFAULT SHORT validation", () => {
+  const options = parseAbstractCompilerOptions("DEFAULT(SHORT(IEEEp98))");
+  const issues = translateCompilerOptions(options).issues;
+  expect(issues).toHaveLength(1);
+  expect(issues[0].message).toBe("Invalid default option value: IEEEp98");
+});
+
+test("Test DEFAULT RETURNS validation", () => {
+  const options = parseAbstractCompilerOptions("DEFAULT(RETURNS())");
+  const translated = translateCompilerOptions(options).options;
+  expect(translated.default?.returns).toEqual({ type: "BYADDR" });
+});
+
 test("compiler option with parameter insensitive", () => {
   const testCases: {
     input: string;

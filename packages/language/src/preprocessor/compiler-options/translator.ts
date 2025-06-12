@@ -898,6 +898,52 @@ translator.rule(["DEFAULT", "DFT"], (option, options) => {
             1,
           );
       }
+    } else if (opt.kind === SyntaxKind.CompilerOption) {
+      ensureArguments(opt, 1, 1);
+      ensureType(opt.values[0], "plain");
+      const value = opt.values[0].value.toUpperCase();
+      switch (opt.name) {
+        case "RETURNS":
+          // Diagram specifies that no option inside the parenthesesis valid. Default is BYADDR.
+          if (value === "" || value === "BYADDR") {
+            def.returns = { type: "BYADDR" };
+          } else if (value === "BYVALUE") {
+            def.returns = { type: "BYVALUE" };
+          } else {
+            throw new TranslationError(
+              opt.values[0].token,
+              `Invalid default option value: ${opt.values[0].value}`,
+              1,
+            );
+          }
+          break;
+        case "SHORT":
+          // Diagram specifies that no option inside the parentheses is valid. Default is HEXADEC.
+          if (value === "" || value === "HEXADEC") {
+            def.short = { format: "HEXADEC" };
+          } else if (value === "IEEE") {
+            def.short = { format: "IEEE" };
+          } else {
+            throw new TranslationError(
+              opt.values[0].token,
+              `Invalid default option value: ${opt.values[0].value}`,
+              1,
+            );
+          }
+          break;
+        default:
+          throw new TranslationError(
+            opt.values[0].token,
+            `Invalid default option value: ${opt.values[0].value}`,
+            1,
+          );
+      }
+    } else {
+      throw new TranslationError(
+        opt.token,
+        `Invalid default option value: ${opt.value}`,
+        1,
+      );
     }
   }
 });
