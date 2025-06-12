@@ -14,5 +14,7 @@ import { HarnessTesterInterface } from "../fourslash-harness/harness-interface";
 declare global {
   var verify: HarnessTesterInterface["verify"];
   var linker: HarnessTesterInterface["linker"];
+  var completion: HarnessTesterInterface["completion"];
   var code: HarnessTesterInterface["code"];
+  var constants: HarnessTesterInterface["constants"];
 }

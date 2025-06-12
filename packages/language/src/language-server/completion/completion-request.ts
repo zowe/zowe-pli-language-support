@@ -16,17 +16,14 @@ import {
 } from "../../utils/search";
 import { URI } from "../../utils/uri";
 import { CompilationUnit } from "../../workspace/compilation-unit";
-import { CompletionItem, Range } from "../types";
+import { CompletionItem, Range, SimpleCompletionItem } from "../types";
 import { SyntaxNode } from "../../syntax-tree/ast";
 import {
   FollowElement,
   getFollowElements,
   provideEntryPointFollowElements,
 } from "./follow-elements";
-import {
-  generateCompletionItems,
-  SimpleCompletionItem,
-} from "./completion-generator";
+import { generateCompletionItems } from "./completion-generator";
 
 export function completionRequest(
   unit: CompilationUnit,
@@ -85,13 +82,15 @@ function convertSimpleToItem(
     range.end = token.endOffset! + 1;
   }
   const completionItems: CompletionItem[] = [];
+  const loweredExistingText = existingText.toLowerCase();
   for (const item of items) {
-    if (item.text.startsWith(existingText)) {
+    if (item.text.toLowerCase().startsWith(loweredExistingText)) {
       const completionItem: CompletionItem = {
         label: item.label,
         kind: item.kind,
         detail: item.detail,
         documentation: item.documentation,
+        insertTextFormat: item.insertTextFormat,
         edit: {
           range: range,
           text: item.text,
