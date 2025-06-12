@@ -15,6 +15,7 @@ import * as lsp from "vscode-languageserver-types";
 import { getNameToken } from "../linking/tokens";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { TextDocuments } from "./text-documents";
+import { InsertTextFormat } from "vscode-languageserver-types";
 
 export type Offset = number;
 
@@ -170,6 +171,11 @@ export interface CompletionItem {
   sortText?: string;
   filterText?: string;
   edit: TextEdit;
+  insertTextFormat?: lsp.InsertTextFormat;
+}
+
+export interface SimpleCompletionItem extends Omit<CompletionItem, "edit"> {
+  text: string;
 }
 
 export function completionItemToLSP(
@@ -184,6 +190,7 @@ export function completionItemToLSP(
     sortText: item.sortText,
     filterText: item.filterText,
     textEdit: textEditToLSP(textDocument, item.edit),
+    insertTextFormat: item.insertTextFormat ?? InsertTextFormat.PlainText,
   };
 }
 

@@ -5,6 +5,6 @@
 completion.expectAt(
   1,
   constants.PreprocessorCompletionKeywords.values().map(
-    (keyword) => `%${keyword}`,
+    (keyword) => keyword.label,
   ),
 );

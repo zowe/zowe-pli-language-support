@@ -1,59 +1,89 @@
+import { CompletionItemKind, InsertTextFormat } from "vscode-languageserver";
 import { CstNodeKind } from "../../syntax-tree/cst";
 import { MultiMap } from "../../utils/collections";
+import { SimpleCompletionItem } from "../types";
 
-export const PreprocessorCompletionKeywords: MultiMap<CstNodeKind, string> =
-  new MultiMap([
-    [CstNodeKind.DeactivateStatement_DEACTIVATE, "DEACTIVATE"],
-    [CstNodeKind.DeactivateStatement_DEACTIVATE, "DEACT"],
-    [CstNodeKind.ActivateStatement_ACTIVATE, "ACTIVATE"],
-    [CstNodeKind.ActivateStatement_ACTIVATE, "ACT"],
-  ]);
+const createSimpleCompletionItemCreator =
+  (properties: Omit<SimpleCompletionItem, "label" | "text">) =>
+  (label: string, text?: string): SimpleCompletionItem => {
+    return {
+      ...properties,
+      label,
+      text: text ?? label,
+    };
+  };
 
-export const CompletionKeywords: MultiMap<CstNodeKind, string> = new MultiMap([
-  [CstNodeKind.ProcedureStatement_PROCEDURE, "PROCEDURE"],
-  [CstNodeKind.EntryStatement_ENTRY, "ENTRY"],
-  [CstNodeKind.AllocateStatement_ALLOCATE, "ALLOCATE"],
-  [CstNodeKind.AssertStatement_ASSERT, "ASSERT"],
-  [CstNodeKind.AttachStatement_ATTACH, "ATTACH"],
-  [CstNodeKind.BeginStatement_BEGIN, "BEGIN"],
-  [CstNodeKind.EndStatement_END, "END"],
-  [CstNodeKind.CallStatement_CALL, "CALL"],
-  [CstNodeKind.CloseStatement_CLOSE, "CLOSE"],
-  [CstNodeKind.DefaultStatement_DEFAULT, "DEFAULT"],
-  [CstNodeKind.DelayStatement_DELAY, "DELAY"],
-  [CstNodeKind.DeleteStatement_DELETE, "DELETE"],
-  [CstNodeKind.DetachStatement_DETACH, "DETACH"],
-  [CstNodeKind.DisplayStatement_DISPLAY, "DISPLAY"],
-  [CstNodeKind.DoStatement_DO, "DO"],
-  [CstNodeKind.ExecStatement_EXEC, "EXEC"],
-  [CstNodeKind.ExitStatement_EXIT, "EXIT"],
-  [CstNodeKind.FetchStatement_FETCH, "FETCH"],
-  [CstNodeKind.FlushStatement_FLUSH, "FLUSH"],
-  [CstNodeKind.FormatStatement_FORMAT, "FORMAT"],
-  [CstNodeKind.FreeStatement_FREE, "FREE"],
-  [CstNodeKind.GetStatement_GET, "GET"],
-  [CstNodeKind.GoToStatement_GOTO, "GOTO"],
-  [CstNodeKind.IfStatement_IF, "IF"],
-  [CstNodeKind.IterateStatement_ITERATE, "ITERATE"],
-  [CstNodeKind.LeaveStatement_LEAVE, "LEAVE"],
-  [CstNodeKind.LocateStatement_LOCATE, "LOCATE"],
-  [CstNodeKind.OnStatement_ON, "ON"],
-  [CstNodeKind.OpenStatement_OPEN, "OPEN"],
-  [CstNodeKind.PutStatement_PUT, "PUT"],
-  [CstNodeKind.QualifyStatement_QUALIFY, "QUALIFY"],
-  [CstNodeKind.ReadStatement_READ, "READ"],
-  [CstNodeKind.ReinitStatement_REINIT, "REINIT"],
-  [CstNodeKind.ReleaseStatement_RELEASE, "RELEASE"],
-  [CstNodeKind.ResignalStatement_RESIGNAL, "RESIGNAL"],
-  [CstNodeKind.ReturnStatement_RETURN, "RETURN"],
-  [CstNodeKind.RevertStatement_REVERT, "REVERT"],
-  [CstNodeKind.RewriteStatement_REWRITE, "REWRITE"],
-  [CstNodeKind.SelectStatement_SELECT, "SELECT"],
-  [CstNodeKind.WhenStatement_WHEN, "WHEN"],
-  [CstNodeKind.OtherwiseStatement_OTHERWISE, "OTHERWISE"],
-  [CstNodeKind.SignalStatement_SIGNAL, "SIGNAL"],
-  [CstNodeKind.StopStatement_STOP, "STOP"],
-  [CstNodeKind.WaitStatement_WAIT, "WAIT"],
-  [CstNodeKind.WriteStatement_WRITE, "WRITE"],
-  [CstNodeKind.DeclareStatement_DECLARE, "DECLARE"],
+/**
+ * Plaintext Keyword
+ */
+const kw = createSimpleCompletionItemCreator({
+  kind: CompletionItemKind.Keyword,
+});
+
+/**
+ * Snippet Keyword
+ */
+const kws = createSimpleCompletionItemCreator({
+  kind: CompletionItemKind.Keyword,
+  insertTextFormat: InsertTextFormat.Snippet,
+});
+
+export const PreprocessorCompletionKeywords: MultiMap<
+  CstNodeKind,
+  SimpleCompletionItem
+> = new MultiMap([
+  [CstNodeKind.DeactivateStatement_DEACTIVATE, kw("%DEACTIVATE")],
+  [CstNodeKind.DeactivateStatement_DEACTIVATE, kw("%DEACT")],
+  [CstNodeKind.ActivateStatement_ACTIVATE, kw("%ACTIVATE")],
+  [CstNodeKind.ActivateStatement_ACTIVATE, kw("%ACT")],
 ]);
+
+export const CompletionKeywords: MultiMap<CstNodeKind, SimpleCompletionItem> =
+  new MultiMap([
+    [CstNodeKind.ProcedureStatement_PROCEDURE, kw("PROCEDURE")],
+    [CstNodeKind.EntryStatement_ENTRY, kw("ENTRY")],
+    [CstNodeKind.AllocateStatement_ALLOCATE, kw("ALLOCATE")],
+    [CstNodeKind.AssertStatement_ASSERT, kw("ASSERT")],
+    [CstNodeKind.AttachStatement_ATTACH, kw("ATTACH")],
+    [CstNodeKind.BeginStatement_BEGIN, kw("BEGIN")],
+    [CstNodeKind.EndStatement_END, kw("END")],
+    [CstNodeKind.CallStatement_CALL, kw("CALL")],
+    [CstNodeKind.CloseStatement_CLOSE, kw("CLOSE")],
+    [CstNodeKind.DefaultStatement_DEFAULT, kw("DEFAULT")],
+    [CstNodeKind.DelayStatement_DELAY, kw("DELAY")],
+    [CstNodeKind.DeleteStatement_DELETE, kw("DELETE")],
+    [CstNodeKind.DetachStatement_DETACH, kw("DETACH")],
+    [CstNodeKind.DisplayStatement_DISPLAY, kw("DISPLAY")],
+    [CstNodeKind.DoStatement_DO, kw("DO")],
+    [CstNodeKind.ExecStatement_EXEC, kw("EXEC")],
+    [CstNodeKind.ExitStatement_EXIT, kw("EXIT")],
+    [CstNodeKind.FetchStatement_FETCH, kw("FETCH")],
+    [CstNodeKind.FlushStatement_FLUSH, kw("FLUSH")],
+    [CstNodeKind.FormatStatement_FORMAT, kw("FORMAT")],
+    [CstNodeKind.FreeStatement_FREE, kw("FREE")],
+    [CstNodeKind.GetStatement_GET, kw("GET")],
+    [CstNodeKind.GoToStatement_GOTO, kw("GOTO")],
+    [CstNodeKind.IfStatement_IF, kw("IF")],
+    [CstNodeKind.IterateStatement_ITERATE, kw("ITERATE")],
+    [CstNodeKind.LeaveStatement_LEAVE, kw("LEAVE")],
+    [CstNodeKind.LocateStatement_LOCATE, kw("LOCATE")],
+    [CstNodeKind.OnStatement_ON, kw("ON")],
+    [CstNodeKind.OpenStatement_OPEN, kw("OPEN")],
+    [CstNodeKind.PutStatement_PUT, kws("PUT", "PUT(${1:value})")],
+    [CstNodeKind.QualifyStatement_QUALIFY, kw("QUALIFY")],
+    [CstNodeKind.ReadStatement_READ, kw("READ")],
+    [CstNodeKind.ReinitStatement_REINIT, kw("REINIT")],
+    [CstNodeKind.ReleaseStatement_RELEASE, kw("RELEASE")],
+    [CstNodeKind.ResignalStatement_RESIGNAL, kw("RESIGNAL")],
+    [CstNodeKind.ReturnStatement_RETURN, kw("RETURN")],
+    [CstNodeKind.RevertStatement_REVERT, kw("REVERT")],
+    [CstNodeKind.RewriteStatement_REWRITE, kw("REWRITE")],
+    [CstNodeKind.SelectStatement_SELECT, kw("SELECT")],
+    [CstNodeKind.WhenStatement_WHEN, kw("WHEN")],
+    [CstNodeKind.OtherwiseStatement_OTHERWISE, kw("OTHERWISE")],
+    [CstNodeKind.SignalStatement_SIGNAL, kw("SIGNAL")],
+    [CstNodeKind.StopStatement_STOP, kw("STOP")],
+    [CstNodeKind.WaitStatement_WAIT, kw("WAIT")],
+    [CstNodeKind.WriteStatement_WRITE, kw("WRITE")],
+    [CstNodeKind.DeclareStatement_DECLARE, kw("DECLARE")],
+  ]);

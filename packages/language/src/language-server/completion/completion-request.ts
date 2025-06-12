@@ -16,17 +16,14 @@ import {
 } from "../../utils/search";
 import { URI } from "../../utils/uri";
 import { CompilationUnit } from "../../workspace/compilation-unit";
-import { CompletionItem, Range } from "../types";
+import { CompletionItem, Range, SimpleCompletionItem } from "../types";
 import { SyntaxNode } from "../../syntax-tree/ast";
 import {
   FollowElement,
   getFollowElements,
   provideEntryPointFollowElements,
 } from "./follow-elements";
-import {
-  generateCompletionItems,
-  SimpleCompletionItem,
-} from "./completion-generator";
+import { generateCompletionItems } from "./completion-generator";
 
 export function completionRequest(
   unit: CompilationUnit,
@@ -92,6 +89,7 @@ function convertSimpleToItem(
         kind: item.kind,
         detail: item.detail,
         documentation: item.documentation,
+        insertTextFormat: item.insertTextFormat,
         edit: {
           range: range,
           text: item.text,

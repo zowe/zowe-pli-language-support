@@ -4,8 +4,8 @@
 //// <|1>
 
 completion.expectAt(1, [
-  ...constants.CompletionKeywords.values(),
+  ...constants.CompletionKeywords.values().map((keyword) => keyword.label),
   ...constants.PreprocessorCompletionKeywords.values().map(
-    (keyword) => `%${keyword}`,
+    (keyword) => keyword.label,
   ),
 ]);

@@ -12,28 +12,16 @@
 import { CompletionItemKind } from "vscode-languageserver-types";
 import { Statement, SyntaxKind, SyntaxNode } from "../../syntax-tree/ast";
 import { CompilationUnit } from "../../workspace/compilation-unit";
-import { CompletionItem } from "../types";
 import { FollowElement, FollowKind } from "./follow-elements";
 import { getQualifiedName } from "../../linking/resolver";
 import { CompletionKeywords, PreprocessorCompletionKeywords } from "./keywords";
 import { CstNodeKind } from "../../syntax-tree/cst";
-
-export interface SimpleCompletionItem extends Omit<CompletionItem, "edit"> {
-  text: string;
-}
+import { SimpleCompletionItem } from "../types";
 
 function getCompletionKeywords(kind: CstNodeKind): SimpleCompletionItem[] {
   return [
-    ...CompletionKeywords.get(kind).map((keyword) => ({
-      label: keyword,
-      kind: CompletionItemKind.Keyword,
-      text: keyword,
-    })),
-    ...PreprocessorCompletionKeywords.get(kind).map((keyword) => ({
-      label: `%${keyword}`,
-      kind: CompletionItemKind.Keyword,
-      text: `%${keyword}`,
-    })),
+    ...CompletionKeywords.get(kind),
+    ...PreprocessorCompletionKeywords.get(kind),
   ];
 }
 
