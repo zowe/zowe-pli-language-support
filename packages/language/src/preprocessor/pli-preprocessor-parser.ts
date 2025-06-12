@@ -31,6 +31,7 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { LexingError } from "./pli-lexer";
 import { TextDocuments } from "../language-server/text-documents";
+import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
@@ -461,24 +462,27 @@ export class PliPreprocessorParser {
     while (true) {
       const item = ast.createIncludeItem();
       if (state.canConsume(PreprocessorTokens.Id)) {
-        // TODO: read file extension from config
-        // TODO#2 use SYSLIB (i.e. compiler options) to determine the file location
-        const fileName =
-          state.consume(
-            item,
-            CstNodeKind.IncludeItem_FileID0,
-            PreprocessorTokens.Id,
-          ).image + ".pli";
+        // member include
+        const token = state.consume(
+          item,
+          CstNodeKind.IncludeItem_FileID0,
+          PreprocessorTokens.Id,
+        );
+        const fileName = token.image;
         item.file = fileName;
+        item.token = token;
       } else if (state.canConsume(PreprocessorTokens.String)) {
-        const file = state.consume(
+        // literal file include (relative, absolute, or lib sourced)
+        const token = state.consume(
           item,
           CstNodeKind.IncludeItem_FileString0,
           PreprocessorTokens.String,
-        ).image;
+        );
+        const file = token.image;
         const fileName = file.substring(1, file.length - 1);
         item.file = fileName;
         item.string = true;
+        item.token = token;
       } else {
         break;
       }
@@ -496,12 +500,34 @@ export class PliPreprocessorParser {
       PreprocessorTokens.Semicolon,
     );
     // TODO: cache included files
-    const currentDir = UriUtils.dirname(state.uri);
     for (const item of directive.items) {
       if (!item.file) {
         continue;
       }
-      const uri = UriUtils.joinPath(currentDir, item.file);
+
+      // TODO @montymxb Jun 3rd, 2025: Use SYSLIB from compiler opts to add to the lookup path for includes
+
+      // Resolve the URI of the include file
+      let uri = resolveIncludeFileUri(item, state);
+
+      /**
+       * Helper function to throw a preprocessor error when an include file cannot be resolved.
+       */
+      const failToResolveInclude = () => {
+        throw new PreprocessorError(
+          `Cannot resolve include file '${item.file}' at '${state.uri.toString()}'.`,
+          item.token! || state.current || state.last!,
+          state.uri,
+        );
+      };
+
+      if (!uri) {
+        // fail to resolve & skip to nxt
+        failToResolveInclude();
+        continue;
+      }
+
+      // attempt to resolve this file
       try {
         const content =
           TextDocuments.get(uri)?.getText() ??
@@ -516,9 +542,10 @@ export class PliPreprocessorParser {
         }
         item.result = subProgram;
       } catch {
-        // do nothing
+        failToResolveInclude();
       }
     }
+
     return directive;
   }
 
@@ -1297,5 +1324,84 @@ export class PliPreprocessorParser {
 
   private unpackCharacterValue(literal: string): string {
     return literal.substring(1, literal.length - 1);
+  }
+}
+
+/**
+ * Attempts to resolve the URI of an include file factoring in process group libs, relative & absolute paths
+ *
+ * @param item Include item to resolve a URI for
+ * @param state Current PP state, used to resolve relative paths, program configs, and report errors
+ * @returns URI of the included file if found, otherwise undefined
+ */
+function resolveIncludeFileUri(
+  item: ast.IncludeItem,
+  state: PreprocessorParserState,
+): URI | undefined {
+  const absPathRegex = /^\/|[A-Z]:|~/i;
+  const relativePathRegex = /^\.\.\/|^\.\//;
+
+  const currentDir = UriUtils.dirname(state.uri);
+
+  if (!item.file) {
+    throw new Error("Include item does not have a file specified.");
+  }
+
+  // check to validate copybook extension, if a program config & process group is available
+  const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
+    state.uri.toString(),
+  );
+  const pgroup = programConfig
+    ? PluginConfigurationProviderInstance.getProcessGroupConfig(
+        programConfig.pgroup,
+      )
+    : undefined;
+  const ext = UriUtils.extname(URI.parse(item.file));
+  if (
+    ext !== "" &&
+    programConfig &&
+    pgroup &&
+    (!pgroup["copybook-extensions"]?.includes(ext) ||
+      !pgroup["copybook-extensions"])
+  ) {
+    const msg = pgroup["copybook-extensions"]?.length
+      ? `expected one of: ${pgroup["copybook-extensions"]?.join(", ")}`
+      : `expected no extension`;
+    throw new PreprocessorError(
+      `Unsupported copybook extension for included file, '${item.file}', ${msg}`,
+      item.token! || state.current || state.last!,
+      state.uri,
+    );
+  }
+
+  if (absPathRegex.test(item.file)) {
+    // absolute path, use as is
+    return URI.parse(item.file);
+  } else if (relativePathRegex.test(item.file)) {
+    // relative path, combine with currentDir
+    return UriUtils.joinPath(currentDir, item.file);
+  } else if (programConfig && pgroup) {
+    // lib file as either a string or a member from a known process group
+    for (const lib of pgroup.libs ?? []) {
+      if (lib === "*") {
+        // wildcard lib, use currentDir
+        return UriUtils.joinPath(currentDir, item.file);
+      } else {
+        const libFileUri = UriUtils.joinPath(
+          URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
+          lib,
+          item.file,
+        );
+        if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
+          // match found in this lib, take it
+          return libFileUri;
+        }
+      }
+    }
+    // no match
+    return undefined;
+  } else {
+    // no recognized process group or program config, nothing to lookup
+    return undefined;
   }
 }

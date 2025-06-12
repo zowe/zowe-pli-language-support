@@ -47,7 +47,7 @@ describe("Go To Definition request", () => {
 
   it("should resolve multiple requests", () => {
     const include = ` DCL <|1:Y|> FIXED;`;
-    const main = ` %INCLUDE "include.pli";
+    const main = ` %INCLUDE "./include.pli";
  <|1>Y = 42;
  <|1>Y = 45;`;
 

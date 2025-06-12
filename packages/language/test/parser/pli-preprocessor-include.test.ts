@@ -6,35 +6,186 @@ import {
 } from "../../src/workspace/file-system-provider";
 import { URI } from "../../src/utils/uri";
 import { createCompilationUnit } from "../../src/workspace/compilation-unit";
+import {
+  PluginConfigurationProviderInstance,
+  ProgramConfig,
+  ProcessGroup,
+} from "../../src/workspace/plugin-configuration-provider";
 
 type TokenizeFunction = (text: string) => string[];
 
-describe("PL/1 Includes", () => {
+/**
+ * Helper to set up the virtual file system w/ files, and lexer for testing.
+ * @returns tokenizer func
+ */
+function setupFileSystemAndLexer(): TokenizeFunction {
+  const vtsfs = new VirtualFileSystemProvider();
+  setFileSystemProvider(vtsfs);
+  vtsfs.writeFileSync(URI.file("/test/payroll.pli"), " DECLARE PAYROLL FIXED;");
+  vtsfs.writeFileSync(
+    URI.file("/test/cpy/lib1.pli"),
+    " DECLARE LIB1_VAR FIXED;",
+  );
+  vtsfs.writeFileSync(URI.file("/test/cpy/LIB2"), " DECLARE LIB2_VAR FIXED;");
+  vtsfs.writeFileSync(URI.file("/test/LIB3"), " DECLARE LIB3_VAR FIXED;");
+  vtsfs.writeFileSync(URI.file("/LIB4"), " DECLARE LIB4_VAR FIXED;");
+
+  const lexer = new PliLexer();
+  const tokenize = (text: string) => {
+    const uri = URI.file("/test/test.pli");
+    const compilationUnit = createCompilationUnit(uri);
+    const { all: allTokens } = lexer.tokenize(compilationUnit, text, uri);
+    return allTokens.map((t) => t.image + ":" + t.tokenType.name.toUpperCase());
+  };
+  return tokenize;
+}
+
+/**
+ * Helper to set up plugin configuration.
+ */
+async function setupPluginConfiguration() {
+  await PluginConfigurationProviderInstance.init("/test");
+
+  const programConfigs: ProgramConfig[] = [
+    {
+      program: "test.pli",
+      pgroup: "testgroup",
+    },
+  ];
+  PluginConfigurationProviderInstance.setProgramConfigs(
+    "/test",
+    programConfigs,
+  );
+
+  const processGroups: ProcessGroup[] = [
+    {
+      name: "testgroup",
+      libs: ["cpy"],
+      "copybook-extensions": [".pli"],
+    },
+  ];
+  PluginConfigurationProviderInstance.setProcessGroupConfigs(processGroups);
+}
+
+describe("PL/1 Includes without Plugin Config", () => {
   let tokenize: TokenizeFunction;
 
-  beforeAll(async () => {
-    const vtsfs = new VirtualFileSystemProvider();
-    setFileSystemProvider(vtsfs);
-    vtsfs.writeFileSync(
-      URI.file("/test/payroll.pli"),
-      " DECLARE PAYROLL FIXED;",
-    );
-    const lexer = new PliLexer();
-    tokenize = (text: string) => {
-      const uri = URI.file("/test/test.pli");
-      const { all: allTokens } = lexer.tokenize(
-        createCompilationUnit(uri),
-        text,
-        uri,
-      );
-      return allTokens.map(
-        (t) => t.image + ":" + t.tokenType.name.toUpperCase(),
-      );
-    };
+  beforeAll(() => {
+    tokenize = setupFileSystemAndLexer();
   });
 
   afterAll(() => {
     setFileSystemProvider(undefined);
+  });
+
+  test("Include relative path with extension", () => {
+    expect(
+      tokenize(`
+            %INCLUDE "./cpy/lib1.pli";
+            LIB1_VAR = 1;
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "LIB1_VAR:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "LIB1_VAR:ID",
+      "=:=",
+      "1:NUMBER",
+      ";:;",
+    ]);
+  });
+
+  test("Include relative path without extension", () => {
+    expect(
+      tokenize(`
+            %INCLUDE "./cpy/LIB2";
+            LIB2_VAR = 2;
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "LIB2_VAR:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "LIB2_VAR:ID",
+      "=:=",
+      "2:NUMBER",
+      ";:;",
+    ]);
+  });
+
+  test("Include relative path with '../'", () => {
+    expect(
+      tokenize(`
+            %INCLUDE "../LIB4";
+            LIB4_VAR = 1;
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "LIB4_VAR:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "LIB4_VAR:ID",
+      "=:=",
+      "1:NUMBER",
+      ";:;",
+    ]);
+  });
+
+  // intended failure
+  test.fails(
+    "Include should fail to resolve bare identifier without lib lookup",
+    () => {
+      expect(
+        tokenize(`
+            %INCLUDE LIB2;
+            LIB2_VAR = 3;
+        `),
+      ).toStrictEqual([
+        "DECLARE:DECLARE",
+        "LIB2_VAR:ID",
+        "FIXED:FIXED",
+        ";:;",
+        "LIB2_VAR:ID",
+        "=:=",
+        "3:NUMBER",
+        ";:;",
+      ]);
+    },
+  );
+
+  // expected failure, we cannot resolve member includes w/out plugin config
+  test.fails("Include bare identifier without quotes or extension", () => {
+    expect(
+      tokenize(`
+            %INCLUDE LIB3;
+            LIB3_VAR = 4;
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "LIB3_VAR:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "LIB3_VAR:ID",
+      "=:=",
+      "4:NUMBER",
+      ";:;",
+    ]);
+  });
+});
+
+describe("PL/1 Includes with Plugin Config", () => {
+  let tokenize: TokenizeFunction;
+
+  beforeAll(async () => {
+    tokenize = setupFileSystemAndLexer();
+    await setupPluginConfiguration();
+  });
+
+  afterAll(() => {
+    setFileSystemProvider(undefined);
+    PluginConfigurationProviderInstance.setProgramConfigs("", []);
+    PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
   });
 
   test("Include twice with different IDs", () => {
@@ -42,9 +193,9 @@ describe("PL/1 Includes", () => {
       tokenize(`
             %DECLARE PAYROLL CHARACTER;
             %PAYROLL = 'CUM_PAY';
-            %INCLUDE "payroll.pli";
+            %INCLUDE "./payroll.pli";
             %DEACTIVATE PAYROLL;
-            %INCLUDE "payroll.pli";
+            %INCLUDE "./payroll.pli";
         `),
     ).toStrictEqual([
       "DECLARE:DECLARE",
@@ -54,6 +205,60 @@ describe("PL/1 Includes", () => {
       "DECLARE:DECLARE",
       "PAYROLL:ID",
       "FIXED:FIXED",
+      ";:;",
+    ]);
+  });
+
+  test("Include from lib paths", () => {
+    expect(
+      tokenize(`
+            %INCLUDE "lib1.pli";
+            LIB1_VAR = 1;
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "LIB1_VAR:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "LIB1_VAR:ID",
+      "=:=",
+      "1:NUMBER",
+      ";:;",
+    ]);
+  });
+
+  test("Include from lib paths w/out extension", () => {
+    expect(
+      tokenize(`
+            %INCLUDE 'LIB2';
+            LIB2_VAR = 2;
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "LIB2_VAR:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "LIB2_VAR:ID",
+      "=:=",
+      "2:NUMBER",
+      ";:;",
+    ]);
+  });
+
+  test("Include using non-quoted identifier syntax", () => {
+    expect(
+      tokenize(`
+            %INCLUDE LIB2;
+            LIB2_VAR = 3;
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "LIB2_VAR:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "LIB2_VAR:ID",
+      "=:=",
+      "3:NUMBER",
       ";:;",
     ]);
   });

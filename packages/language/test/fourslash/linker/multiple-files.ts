@@ -11,8 +11,8 @@
 //// DCL <|2:Y|> FIXED;
 
 // @filename: main.pli
-//// %INCLUDE "include.pli";
-//// %INCLUDE "include2.pli";
+//// %INCLUDE "./include.pli";
+//// %INCLUDE "./include2.pli";
 //// <|1>X = 42;
 //// <|2>Y = 43;
 

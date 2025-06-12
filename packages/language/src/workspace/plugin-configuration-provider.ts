@@ -32,9 +32,9 @@ export interface ProgramConfig {
  */
 export interface ProcessGroup {
   name: string;
-  compilerOptions: string[];
-  libs: string[];
-  copybookExtensions: string[];
+  "compiler-options"?: string[];
+  libs?: string[];
+  "copybook-extensions"?: string[];
 }
 
 class PluginConfigurationProvider {
@@ -50,9 +50,15 @@ class PluginConfigurationProvider {
    */
   private processGroupConfigs: Map<string, ProcessGroup>;
 
+  /**
+   * The workspace path that we're initialized with.
+   */
+  private workspacePath: string;
+
   constructor() {
     this.programConfigs = new Map<string, ProgramConfig>();
     this.processGroupConfigs = new Map<string, ProcessGroup>();
+    this.workspacePath = ""; // empty workspace to start with
   }
 
   /**
@@ -67,6 +73,9 @@ class PluginConfigurationProvider {
     // load configs
     this.loadProgramConfig(programConfigPath, workspacePath);
     this.loadProcessGroupConfig(processGroupConfigPath);
+
+    // set the workspace path
+    this.workspacePath = workspacePath;
   }
 
   /**
@@ -103,6 +112,13 @@ class PluginConfigurationProvider {
   }
 
   /**
+   * Return the workspace path that this provider was initialized with
+   */
+  public getWorkspacePath(): string {
+    return this.workspacePath;
+  }
+
+  /**
    * Loads the process group config from the given path, and sets it in our provider
    * @param processGroupConfigPath Path to the process group config file
    */
@@ -118,6 +134,7 @@ class PluginConfigurationProvider {
           const processGroupConfigs: ProcessGroup[] = JSON.parse(
             processGrpConfig.toString(),
           ).pgroups;
+
           this.setProcessGroupConfigs(processGroupConfigs);
         } catch (e) {
           console.error("Failed to load process group config, skipping:", e);
