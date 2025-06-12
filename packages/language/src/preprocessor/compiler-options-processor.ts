@@ -84,9 +84,11 @@ export class CompilerOptionsProcessor {
       if (srcCompilerOpts) {
         const srcAbstractOptions = parseAbstractCompilerOptions(
           srcCompilerOpts,
-          range ? range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH : 0,
+          range
+            ? range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH
+            : 0,
         );
-        
+
         // TODO @montymxb Jun 6th, 2025: Duplicates across both config & src options are not yet accounted for
         // due to the separate processing of each src
 
@@ -146,10 +148,7 @@ export class CompilerOptionsProcessor {
         issue.message = `PLI Plugin Config: ${issue.message}`;
       } else {
         // report as is, don't adjust
-        console.warn(
-          `PLI Plugin Config: ${issue.message}`,
-          issue.range,
-        );
+        console.warn(`PLI Plugin Config: ${issue.message}`, issue.range);
       }
     }
   }
