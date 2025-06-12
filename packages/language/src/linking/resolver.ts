@@ -167,14 +167,14 @@ function resolveReference(
     .filter((symbol) => !symbol.isRedeclared);
 
   const isAmbiguous = symbols.length > 1;
-  if (isAmbiguous) {
+  if (isAmbiguous && reference.token.payload.uri) {
     const fullName = qualifiedName.toReversed().join(".");
     // TODO: Currently only emitting on the last member call symbol (`reference.token`)
     // We want to underline the entire qualified name.
     acceptor(Severity.S, PLICodes.Severe.IBM1881I.message(fullName), {
       code: PLICodes.Severe.IBM1881I.fullCode,
       range: tokenToRange(reference.token),
-      uri: reference.token.payload?.uri?.toString() ?? "",
+      uri: reference.token.payload.uri.toString(),
     });
   }
 
@@ -255,7 +255,7 @@ export function getReferenceLocations(
   const reverseReferences = findElementReferences(unit, element);
 
   const nameToken = getNameToken(element);
-  if (nameToken?.payload?.uri) {
+  if (nameToken?.payload.uri) {
     locations.push({
       uri: nameToken.payload.uri.toString(),
       range: tokenToRange(nameToken),
@@ -263,7 +263,7 @@ export function getReferenceLocations(
   }
 
   for (const ref of reverseReferences) {
-    if (ref.token.payload?.uri) {
+    if (ref.token.payload.uri) {
       locations.push({
         uri: ref.token.payload.uri.toString(),
         range: tokenToRange(ref.token),

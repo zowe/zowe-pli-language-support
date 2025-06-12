@@ -87,12 +87,12 @@ export class PliPreprocessorParser {
 
   private consumeTokenStatement(state: PreprocessorParserState): ast.Statement {
     const tokenStatement = ast.createTokenStatement();
-    const tokens: IToken[] = [];
+    const tokens: Token[] = [];
     const word = /\w$/u;
     // We can assume that the first token is always a non-% token
     // Otherwise we wouldn't be able to get here in the first place
-    let currentToken: IToken | undefined = state.current;
-    let nextToken: IToken | undefined = state.tokens[state.index + 1];
+    let currentToken: Token | undefined = state.current;
+    let nextToken: Token | undefined = state.tokens[state.index + 1];
     while (currentToken) {
       state.index++;
       // Usually we break on % tokens
@@ -102,7 +102,7 @@ export class PliPreprocessorParser {
         nextToken?.tokenTypeIdx === PreprocessorTokens.Percentage.tokenTypeIdx
       ) {
         if (
-          currentToken.endOffset! + 1 !== nextToken.startOffset ||
+          currentToken.endOffset + 1 !== nextToken.startOffset ||
           !word.test(currentToken.image)
         ) {
           // If the next token is a standalone % token, we break but add the current token to the list
@@ -756,7 +756,7 @@ export class PliPreprocessorParser {
       end: NaN,
     };
     statement.unit = this.statement(state);
-    statement.unitRange.end = state.last!.endOffset! + 1;
+    statement.unitRange.end = state.last!.endOffset + 1;
     if (state.canConsumeKeyword(PreprocessorTokens.Else)) {
       state.consumeKeyword(
         statement,
@@ -768,7 +768,7 @@ export class PliPreprocessorParser {
         end: NaN,
       };
       statement.else = this.statement(state);
-      statement.elseRange.end = state.last!.endOffset! + 1;
+      statement.elseRange.end = state.last!.endOffset + 1;
     }
     return statement;
   }

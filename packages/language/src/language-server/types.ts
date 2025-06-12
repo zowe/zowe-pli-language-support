@@ -58,7 +58,7 @@ export function rangeToLSP(
 }
 
 export function tokenToUri(token: Token): string | undefined {
-  return token.payload?.uri?.toString();
+  return token.payload.uri?.toString();
 }
 
 export function tokenToRange(token: Token): Range {

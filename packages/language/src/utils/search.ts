@@ -19,7 +19,7 @@ export function binaryTokenIndexSearch(
     mid = Math.floor((low + high) / 2);
     token = tokens[mid];
     const start = token.startOffset;
-    const end = token.endOffset!;
+    const end = token.endOffset;
     if (start === offset) {
       const previousToken = tokens[mid - 1];
       if (previousToken && isAtTokenEnd(previousToken, offset)) {
@@ -43,13 +43,13 @@ export function binaryTokenIndexSearch(
 }
 
 function isAtTokenEnd(token: Token, offset: number): boolean {
-  const end = token.endOffset!;
+  const end = token.endOffset;
   // If the offset is right after the end of a word token, return that token
   return offset - end === 1 && /\w$/u.test(token.image);
 }
 
 function isBeforeTokenEnd(token: Token, offset: number): boolean {
-  return token.endOffset! >= offset || isAtTokenEnd(token, offset);
+  return token.endOffset >= offset || isAtTokenEnd(token, offset);
 }
 
 export function completionTokenIndexSearch(

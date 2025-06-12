@@ -9,12 +9,11 @@
  *
  */
 
-import { createTokenInstance } from "chevrotain";
 import { Range } from "../language-server/types";
 import { CompilerOptionResult } from "./compiler-options/options";
 import { parseAbstractCompilerOptions } from "./compiler-options/parser";
 import { translateCompilerOptions } from "./compiler-options/translator";
-import { PROCESS, Token } from "../parser/tokens";
+import { createSyntheticTokenInstance, PROCESS, Token } from "../parser/tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI } from "../utils/uri";
 
@@ -73,16 +72,12 @@ export class CompilerOptionsProcessor {
         .toUpperCase();
       if (process === "PROCESS") {
         offset += processLength;
-        const token = createTokenInstance(
+        const token = createSyntheticTokenInstance(
           PROCESS,
           text.substring(start, offset),
-          start,
-          offset,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-        ) as Token;
+        );
+        token.startOffset = start;
+        token.endOffset = offset;
         token.payload = {
           uri,
           kind: CstNodeKind.ProcessDirective_PROCESS,

@@ -37,7 +37,7 @@ export function definitionRequest(
         uri: payload.uri.toString(),
         range: {
           start: token.startOffset,
-          end: token.endOffset! + 1,
+          end: token.endOffset + 1,
         },
       },
     ];
@@ -47,7 +47,7 @@ export function definitionRequest(
       return [];
     }
     const nameToken = getNameToken(ref.node);
-    if (!nameToken?.payload?.uri) {
+    if (!nameToken?.payload.uri) {
       return [];
     }
     return [
@@ -55,7 +55,7 @@ export function definitionRequest(
         uri: nameToken.payload.uri.toString(),
         range: {
           start: nameToken.startOffset,
-          end: nameToken.endOffset! + 1,
+          end: nameToken.endOffset + 1,
         },
       },
     ];

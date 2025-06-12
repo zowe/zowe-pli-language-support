@@ -983,7 +983,7 @@ export interface DateAttribute extends AstNode {
 }
 export interface WildcardItem extends AstNode {
   kind: SyntaxKind.WildcardItem;
-  token: IToken | null;
+  token: Token | null;
 }
 export type DeclaredItemElement =
   | DeclaredVariable
@@ -1424,7 +1424,7 @@ export interface IncludeItem extends AstNode {
   string: boolean;
   ddname: boolean;
   result: PreprocessorParserResult | null;
-  token: IToken | null;
+  token: Token | null;
 }
 export function createIncludeItem(): IncludeItem {
   return {

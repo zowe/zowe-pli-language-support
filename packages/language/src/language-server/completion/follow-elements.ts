@@ -58,8 +58,7 @@ export function getFollowElements(
   token: Token,
 ): FollowElement[] {
   const elements: FollowElement[] = [];
-  const kind = token.payload?.kind as CstNodeKind | undefined;
-  switch (kind) {
+  switch (token.payload.kind) {
     // TODO: add more entry points for the completion of expressions
     case CstNodeKind.DeactivateStatement_Semicolon:
     case CstNodeKind.ActivateStatement_Semicolon:

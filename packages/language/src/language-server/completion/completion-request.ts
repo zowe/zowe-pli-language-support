@@ -60,14 +60,14 @@ function getTokenContext(
     let token = tokens[index - i];
     if (!token) {
       return undefined;
-    } else if (token.payload?.element) {
+    } else if (token.payload.element) {
       return token.payload.element;
     }
   }
   return undefined;
 }
 
-function getCompletionItemElements(token: IToken | undefined, offset: number) {
+function getCompletionItemElements(token: Token | undefined, offset: number) {
   if (!token) {
     return {
       query: "",
@@ -82,7 +82,7 @@ function getCompletionItemElements(token: IToken | undefined, offset: number) {
     query: token.image.substring(0, offset - token.startOffset),
     range: {
       start: token.startOffset,
-      end: token.endOffset! + 1,
+      end: token.endOffset + 1,
     },
   };
 }

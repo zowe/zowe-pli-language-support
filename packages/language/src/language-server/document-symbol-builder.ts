@@ -106,7 +106,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
     const levelSymbols: LevelSymbol[] = [];
     const hierarchyBuilder = new LevelHierarchyBuilder();
 
-    const declareStatement = token.payload?.element as DeclareStatement;
+    const declareStatement = token.payload.element as DeclareStatement;
     for (const item of declareStatement.items.filter(
       (i: DeclaredItem) => i.kind === SyntaxKind.DeclaredItem,
     )) {
@@ -242,7 +242,7 @@ class LabelSymbolBuilder implements SymbolBuilder {
       return false;
     }
 
-    const container = token.payload?.element.container;
+    const container = token.payload.element.container;
     if (!container || container.kind !== SyntaxKind.Statement) {
       return true;
     }
