@@ -65,6 +65,9 @@ export const StatementStartCompletionKeywords: MultiMap<
   [CstNodeKind.FreeStatement_FREE, kw("FREE")],
   [CstNodeKind.GetStatement_GET, kw("GET")],
   [CstNodeKind.GoToStatement_GOTO, kws("GO TO", "GO TO $1")],
+  [CstNodeKind.GoToStatement_GOTO, kws("GOTO", "GOTO $1")],
+  [CstNodeKind.GoToStatement_GO, kws("GO")],
+  [CstNodeKind.GoToStatement_TO, kws("TO")], // This only appears after the `GO` keyword (can be done later)
   [CstNodeKind.IfStatement_IF, kw("IF")],
   [CstNodeKind.IterateStatement_ITERATE, kw("ITERATE")],
   [CstNodeKind.LeaveStatement_LEAVE, kw("LEAVE")],
