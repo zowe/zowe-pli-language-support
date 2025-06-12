@@ -5,8 +5,10 @@
 
 completion.expectAt(1, {
   includes: [
-    ...constants.CompletionKeywords.values().map((keyword) => keyword.label),
-    ...constants.PreprocessorCompletionKeywords.values().map(
+    ...constants.StatementStartCompletionKeywords.values().map(
+      (keyword) => keyword.label,
+    ),
+    ...constants.StatementStartPreprocessorCompletionKeywords.values().map(
       (keyword) => keyword.label,
     ),
   ],

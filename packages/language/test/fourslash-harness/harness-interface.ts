@@ -46,7 +46,7 @@ export interface HarnessTesterInterface {
   };
 
   constants: {
-    CompletionKeywords: typeof StatementStartCompletionKeywords;
-    PreprocessorCompletionKeywords: typeof StatementStartPreprocessorCompletionKeywords;
+    StatementStartCompletionKeywords: typeof StatementStartCompletionKeywords;
+    StatementStartPreprocessorCompletionKeywords: typeof StatementStartPreprocessorCompletionKeywords;
   };
 }

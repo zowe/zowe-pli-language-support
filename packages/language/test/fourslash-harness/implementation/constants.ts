@@ -5,6 +5,7 @@ import {
 import { HarnessTesterInterface } from "../harness-interface";
 
 export const HarnessConstants: HarnessTesterInterface["constants"] = {
-  CompletionKeywords: StatementStartCompletionKeywords,
-  PreprocessorCompletionKeywords: StatementStartPreprocessorCompletionKeywords,
+  StatementStartCompletionKeywords: StatementStartCompletionKeywords,
+  StatementStartPreprocessorCompletionKeywords:
+    StatementStartPreprocessorCompletionKeywords,
 };

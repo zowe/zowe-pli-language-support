@@ -3,7 +3,7 @@
 //// %<|1>
 
 completion.expectAt(1, {
-  includes: constants.PreprocessorCompletionKeywords.values().map(
+  includes: constants.StatementStartPreprocessorCompletionKeywords.values().map(
     (keyword) => keyword.label,
   ),
 });
