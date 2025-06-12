@@ -40,6 +40,11 @@ type LinkingRequest = {
   rangeIndex: [number, number][];
 };
 
+export type ExpectedCompletion = {
+  includes?: string[];
+  excludes?: string[];
+};
+
 export class TestBuilder {
   private unit: CompilationUnit;
   private files: Record<
@@ -341,12 +346,15 @@ export class TestBuilder {
     }
   }
 
-  expectCompletions(label: string, completions: string[]) {
+  expectCompletions(label: string, expectedCompletion: ExpectedCompletion) {
     const message = `Unexpected completions at label "${label}"`;
 
     this._expectCompletions(label, (completionResult) => {
-      for (const completion of completions) {
+      for (const completion of expectedCompletion.includes ?? []) {
         expect(completionResult, message).toContain(completion);
+      }
+      for (const completion of expectedCompletion.excludes ?? []) {
+        expect(completionResult, message).not.toContain(completion);
       }
     });
   }

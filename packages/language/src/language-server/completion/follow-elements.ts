@@ -12,15 +12,20 @@
 import { IToken } from "chevrotain";
 import { MemberCall, SyntaxKind, SyntaxNode } from "../../syntax-tree/ast";
 import { CstNodeKind } from "../../syntax-tree/cst";
-import { CompletionKeywords, PreprocessorCompletionKeywords } from "./keywords";
+import {
+  StatementStartCompletionKeywords,
+  StatementStartPreprocessorCompletionKeywords,
+} from "./keywords";
 
-const CompletionKeywordsArray = new Array(...CompletionKeywords.keys());
-const PreprocessorCompletionKeywordsArray = new Array(
-  ...PreprocessorCompletionKeywords.keys(),
+const StatementStartCompletionKeywordsArray = new Array(
+  ...StatementStartCompletionKeywords.keys(),
 );
-const AllKeywordsArray = [
-  ...CompletionKeywordsArray,
-  ...PreprocessorCompletionKeywordsArray,
+const StatementStartPreprocessorCompletionKeywordsArray = new Array(
+  ...StatementStartPreprocessorCompletionKeywords.keys(),
+);
+const AllStatementStartKeywordsArray = [
+  ...StatementStartCompletionKeywordsArray,
+  ...StatementStartPreprocessorCompletionKeywordsArray,
 ];
 
 export enum FollowKind {
@@ -112,7 +117,7 @@ export function getFollowElements(
     case CstNodeKind.DeclareStatement_Semicolon:
       elements.push({
         kind: FollowKind.CstNode,
-        types: AllKeywordsArray,
+        types: AllStatementStartKeywordsArray,
       });
       break;
     case CstNodeKind.AssignmentStatement_Operator:
@@ -130,7 +135,7 @@ export function getFollowElements(
         },
         {
           kind: FollowKind.CstNode,
-          types: PreprocessorCompletionKeywordsArray,
+          types: StatementStartPreprocessorCompletionKeywordsArray,
         },
       );
       break;
@@ -156,7 +161,7 @@ export function provideEntryPointFollowElements(): FollowElement[] {
   return [
     {
       kind: FollowKind.CstNode,
-      types: AllKeywordsArray,
+      types: AllStatementStartKeywordsArray,
     },
   ];
 }

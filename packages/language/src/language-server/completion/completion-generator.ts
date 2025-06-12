@@ -14,14 +14,17 @@ import { Statement, SyntaxKind, SyntaxNode } from "../../syntax-tree/ast";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { FollowElement, FollowKind } from "./follow-elements";
 import { getQualifiedName } from "../../linking/resolver";
-import { CompletionKeywords, PreprocessorCompletionKeywords } from "./keywords";
+import {
+  StatementStartCompletionKeywords,
+  StatementStartPreprocessorCompletionKeywords,
+} from "./keywords";
 import { CstNodeKind } from "../../syntax-tree/cst";
 import { SimpleCompletionItem } from "../types";
 
 function getCompletionKeywords(kind: CstNodeKind): SimpleCompletionItem[] {
   return [
-    ...CompletionKeywords.get(kind),
-    ...PreprocessorCompletionKeywords.get(kind),
+    ...StatementStartCompletionKeywords.get(kind),
+    ...StatementStartPreprocessorCompletionKeywords.get(kind),
   ];
 }
 

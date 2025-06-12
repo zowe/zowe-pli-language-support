@@ -1,8 +1,9 @@
 import {
-  CompletionKeywords,
-  PreprocessorCompletionKeywords,
+  StatementStartCompletionKeywords,
+  StatementStartPreprocessorCompletionKeywords,
 } from "../../src/language-server/completion/keywords";
 import { PLICodes } from "../../src/validation/messages";
+import { ExpectedCompletion } from "../test-builder";
 
 type Label = string | number;
 
@@ -32,9 +33,9 @@ export interface HarnessTesterInterface {
      * Expect that the completion items at the given label contains the given content.
      *
      * @param label The label to expect the completion items at.
-     * @param content The completion items to expect.
+     * @param expected The expected completion items.
      */
-    expectAt(label: Label, content: string[]): void;
+    expectAt(label: Label, expected: ExpectedCompletion): void;
   };
 
   code: {
@@ -45,7 +46,7 @@ export interface HarnessTesterInterface {
   };
 
   constants: {
-    CompletionKeywords: typeof CompletionKeywords;
-    PreprocessorCompletionKeywords: typeof PreprocessorCompletionKeywords;
+    CompletionKeywords: typeof StatementStartCompletionKeywords;
+    PreprocessorCompletionKeywords: typeof StatementStartPreprocessorCompletionKeywords;
   };
 }
