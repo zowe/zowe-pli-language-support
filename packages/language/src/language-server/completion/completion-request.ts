@@ -82,8 +82,9 @@ function convertSimpleToItem(
     range.end = token.endOffset! + 1;
   }
   const completionItems: CompletionItem[] = [];
+  const loweredExistingText = existingText.toLowerCase();
   for (const item of items) {
-    if (item.text.startsWith(existingText)) {
+    if (item.text.toLowerCase().startsWith(loweredExistingText)) {
       const completionItem: CompletionItem = {
         label: item.label,
         kind: item.kind,
