@@ -12,7 +12,7 @@
 import type { LexingError } from "./pli-lexer";
 import { Range } from "../language-server/types";
 import { URI } from "../utils/uri";
-import { IToken } from "chevrotain";
+import { Token } from "../parser/tokens";
 
 export class PreprocessorError implements LexingError {
   private _uri: URI;
@@ -31,14 +31,14 @@ export class PreprocessorError implements LexingError {
     return this._message;
   }
 
-  constructor(message: string, range: Range | IToken, uri: URI) {
+  constructor(message: string, range: Range | Token, uri: URI) {
     this._message = message;
     if ("start" in range) {
       this._range = range;
     } else {
       this._range = {
         start: range.startOffset,
-        end: range.endOffset!,
+        end: range.endOffset,
       };
     }
     this._uri = uri;

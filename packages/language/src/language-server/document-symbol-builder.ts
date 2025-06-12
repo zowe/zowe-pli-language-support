@@ -22,39 +22,40 @@ import {
   SyntaxKind,
 } from "../syntax-tree/ast";
 import { Range, rangeToLSP, getSyntaxNodeRange, tokenToRange } from "./types";
-import { IToken } from "chevrotain";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { isValidToken } from "../linking/tokens";
+import { Token } from "../parser/tokens";
+
 interface LevelSymbol {
   level: number | null;
   symbol: DocumentSymbol;
 }
 
 interface SymbolBuilder {
-  canHandle(token: IToken): boolean;
+  canHandle(token: Token): boolean;
   buildSymbols(
-    token: IToken,
-    elementTokens: IToken[],
+    token: Token,
+    elementTokens: Token[],
     textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[];
 }
 
 class ProcedureSymbolBuilder implements SymbolBuilder {
-  canHandle(token: IToken): boolean {
+  canHandle(token: Token): boolean {
     return (
       token.payload.kind === CstNodeKind.ProcedureStatement_PROCEDURE &&
-      token.payload.element.kind === SyntaxKind.ProcedureStatement
+      token.payload.element?.kind === SyntaxKind.ProcedureStatement
     );
   }
 
   buildSymbols(
-    token: IToken,
-    elementTokens: IToken[],
+    token: Token,
+    elementTokens: Token[],
     textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
-    const labelPrefixStatement = token.payload?.element.container as Statement;
+    const labelPrefixStatement = token.payload.element?.container as Statement;
     const procedureName = labelPrefixStatement.labels
       .map((label) => label.name)
       .join(" ");
@@ -81,10 +82,10 @@ class ProcedureSymbolBuilder implements SymbolBuilder {
 }
 
 class DeclareSymbolBuilder implements SymbolBuilder {
-  canHandle(token: IToken): boolean {
+  canHandle(token: Token): boolean {
     if (
       token.payload.kind !== CstNodeKind.DeclareStatement_DECLARE ||
-      token.payload.element.kind !== SyntaxKind.DeclareStatement
+      token.payload.element?.kind !== SyntaxKind.DeclareStatement
     ) {
       return false;
     }
@@ -96,8 +97,8 @@ class DeclareSymbolBuilder implements SymbolBuilder {
   }
 
   buildSymbols(
-    token: IToken,
-    elementTokens: IToken[],
+    token: Token,
+    elementTokens: Token[],
     textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
@@ -105,7 +106,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
     const levelSymbols: LevelSymbol[] = [];
     const hierarchyBuilder = new LevelHierarchyBuilder();
 
-    const declareStatement = token.payload?.element as DeclareStatement;
+    const declareStatement = token.payload.element as DeclareStatement;
     for (const item of declareStatement.items.filter(
       (i: DeclaredItem) => i.kind === SyntaxKind.DeclaredItem,
     )) {
@@ -233,15 +234,15 @@ class LevelHierarchyBuilder {
 }
 
 class LabelSymbolBuilder implements SymbolBuilder {
-  canHandle(token: IToken): boolean {
+  canHandle(token: Token): boolean {
     if (
       token.payload.kind !== CstNodeKind.LabelPrefix_Name ||
-      token.payload.element.kind !== SyntaxKind.LabelPrefix
+      token.payload.element?.kind !== SyntaxKind.LabelPrefix
     ) {
       return false;
     }
 
-    const container = token.payload?.element.container;
+    const container = token.payload.element.container;
     if (!container || container.kind !== SyntaxKind.Statement) {
       return true;
     }
@@ -250,12 +251,12 @@ class LabelSymbolBuilder implements SymbolBuilder {
   }
 
   buildSymbols(
-    token: IToken,
-    elementTokens: IToken[],
+    token: Token,
+    elementTokens: Token[],
     textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
-    const labelPrefixStatement = token.payload?.element.container as Statement;
+    const labelPrefixStatement = token.payload.element?.container as Statement;
     if (!labelPrefixStatement?.labels?.length) {
       return [];
     }

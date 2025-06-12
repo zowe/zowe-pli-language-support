@@ -9,13 +9,14 @@
  *
  */
 
-import { IToken, TokenType, createTokenInstance } from "chevrotain";
+import { TokenType } from "chevrotain";
 import { Instructions, Values } from "./pli-preprocessor-instructions";
 import {
   PliPreprocessorProgram,
   PliPreprocessorProgramBuilder,
 } from "./pli-preprocessor-program-builder";
 import * as ast from "../syntax-tree/ast";
+import { createSyntheticTokenInstance, Token } from "../parser/tokens";
 export class PliPreprocessorGenerator {
   private readonly numberTokenType: TokenType;
 
@@ -275,7 +276,7 @@ export class PliPreprocessorGenerator {
     statement: ast.TokenStatement,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    let list: IToken[] = [];
+    let list: Token[] = [];
     let hadConcat = false;
     statement.tokens.forEach((token) => {
       if (token.image === "%" || token.image === ";") {
@@ -445,15 +446,9 @@ export class PliPreprocessorGenerator {
   ) {
     builder.pushInstruction(
       Instructions.push([
-        createTokenInstance(
+        createSyntheticTokenInstance(
           this.numberTokenType,
           expression.value?.toString() ?? "0",
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
         ),
       ]),
     );
@@ -507,7 +502,7 @@ export class PliPreprocessorGenerator {
         if (types.includes("FIXED")) {
           builder.pushInstruction(
             Instructions.push([
-              createTokenInstance(this.numberTokenType, "0", 0, 0, 0, 0, 0, 0),
+              createSyntheticTokenInstance(this.numberTokenType, "0"),
             ]),
           );
         }

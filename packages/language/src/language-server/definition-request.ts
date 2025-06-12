@@ -11,7 +11,6 @@
 
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { binaryTokenSearch } from "../utils/search";
-import { TokenPayload } from "../parser/abstract-parser";
 import { Location } from "./types";
 import {
   getNameToken,
@@ -28,8 +27,8 @@ export function definitionRequest(
 ): Location[] {
   const tokens = compilationUnit.tokens.fileTokens[uri.toString()] ?? [];
   const token = binaryTokenSearch(tokens, offset);
-  const payload = token?.payload as TokenPayload;
-  if (!payload || !token) {
+  const payload = token?.payload;
+  if (!payload) {
     return [];
   }
   if (isNameToken(payload.kind) && payload.uri) {
@@ -38,17 +37,17 @@ export function definitionRequest(
         uri: payload.uri.toString(),
         range: {
           start: token.startOffset,
-          end: token.endOffset! + 1,
+          end: token.endOffset + 1,
         },
       },
     ];
-  } else if (isReferenceToken(payload.kind)) {
+  } else if (isReferenceToken(payload.kind) && payload.element) {
     const ref = getReference(payload.element);
     if (!ref || !ref.node) {
       return [];
     }
     const nameToken = getNameToken(ref.node);
-    if (!nameToken?.payload?.uri) {
+    if (!nameToken?.payload.uri) {
       return [];
     }
     return [
@@ -56,7 +55,7 @@ export function definitionRequest(
         uri: nameToken.payload.uri.toString(),
         range: {
           start: nameToken.startOffset,
-          end: nameToken.endOffset! + 1,
+          end: nameToken.endOffset + 1,
         },
       },
     ];

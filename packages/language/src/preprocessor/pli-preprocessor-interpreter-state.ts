@@ -9,12 +9,13 @@
  *
  */
 
-import { createTokenInstance, IToken, TokenType } from "chevrotain";
+import { TokenType } from "chevrotain";
 import { PPInstruction, Values } from "./pli-preprocessor-instructions";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { CompilationUnitTokens } from "../workspace/compilation-unit";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
+import { createSyntheticTokenInstance, Token } from "../parser/tokens";
 
 export type EvaluationResults = Map<ast.IfStatement, boolean | undefined>;
 
@@ -27,7 +28,7 @@ export interface PreprocessorInterpreterState {
   deactivate(name: string): void;
   hasVariable(name: string): boolean;
   getVariable(name: string): PreprocessorVariable;
-  assign(name: string, value: IToken[]): void;
+  assign(name: string, value: Token[]): void;
   declare(name: string, variable: PreprocessorVariable): void;
   step(): void;
   getEvaluationResults(): EvaluationResults;
@@ -119,7 +120,7 @@ export class PliPreprocessorInterpreterState
     }
   }
 
-  assign(name: string, value: IToken[]) {
+  assign(name: string, value: Token[]) {
     if (Selectors.hasVariable(this.plainState, name)) {
       const variable = Selectors.getVariable(this.plainState, name);
       Mutators.assignVariable(this.plainState, name, {
@@ -140,7 +141,7 @@ export class PliPreprocessorInterpreterState
     Mutators.assignVariable(this.plainState, name, variable);
   }
 
-  private isIdentifier(token: IToken) {
+  private isIdentifier(token: Token) {
     // TODO: optimize this!
     return (
       token.tokenType.name === "ID" ||
@@ -190,7 +191,7 @@ export class PliPreprocessorInterpreterState
         if (this.plainState.stack.length >= 2) {
           const rhs = this.plainState.stack.pop()!;
           const lhs = this.plainState.stack.pop()!;
-          let value: IToken[] = [];
+          let value: Token[] = [];
           switch (instruction.operator) {
             case "+":
               value = Values.add(lhs, rhs);
@@ -330,7 +331,7 @@ export class PliPreprocessorInterpreterState
     return this.evaluationResults;
   }
 
-  private areEqual(lhs: IToken[], rhs: IToken[]): boolean {
+  private areEqual(lhs: Token[], rhs: Token[]): boolean {
     if (lhs.length !== rhs.length) {
       return false;
     }
@@ -343,7 +344,7 @@ export class PliPreprocessorInterpreterState
     });
   }
 
-  private concat(lhs: IToken[], rhs: IToken[]): IToken[] {
+  private concat(lhs: Token[], rhs: Token[]): Token[] {
     if (lhs.length === 0) {
       return rhs;
     } else if (rhs.length === 0) {
@@ -357,18 +358,12 @@ export class PliPreprocessorInterpreterState
           Values.sameType(first.tokenType, PreprocessorTokens.Number))
       ) {
         const part1 = lhs.slice(0, lhs.length - 1);
-        const part2 = [
-          createTokenInstance(
-            this.idTokenType,
-            last.image + first.image,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-          ),
-        ];
+        const token = createSyntheticTokenInstance(
+          this.idTokenType,
+          last.image + first.image,
+        );
+
+        const part2 = [token];
         const part3 = rhs.slice(1);
         return part1.concat(part2).concat(part3);
       } else {
@@ -376,14 +371,14 @@ export class PliPreprocessorInterpreterState
       }
     }
   }
-  private scan(tokens: IToken[]) {
+  private scan(tokens: Token[]) {
     const activeScanVariables = new Set<string>();
     const activeRescanVariables = new Set<string>();
 
     const simpleScan = (
-      tokens: IToken[],
+      tokens: Token[],
       activeVariables: Set<string>,
-    ): IToken[] => {
+    ): Token[] => {
       return tokens.flatMap((tk) => {
         if (this.isIdentifier(tk) && activeVariables.has(tk.image)) {
           const variable = this.getVariable(tk.image);
@@ -417,7 +412,7 @@ export type PreprocessorVariable = {
   scanMode: ast.ScanMode;
   active: boolean;
   dataType: "CHARACTER" | "FIXED";
-  value: IToken[];
+  value: Token[];
 };
 
 export type PreprocessorScan = Readonly<{
@@ -429,7 +424,7 @@ export type PreprocessorScan = Readonly<{
 
 export type PlainPreprocessorInterpreterState = {
   program: PPInstruction[];
-  stack: IToken[][];
+  stack: Token[][];
   output: CompilationUnitTokens;
   programCounter: number;
   variables: Record<string, PreprocessorVariable>;

@@ -9,11 +9,11 @@
  *
  */
 
-import { IToken } from "chevrotain";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import * as lsp from "vscode-languageserver-types";
 import { getNameToken } from "../linking/tokens";
 import { SyntaxNode } from "../syntax-tree/ast";
+import { Token } from "../parser/tokens";
 import { TextDocuments } from "./text-documents";
 import { InsertTextFormat } from "vscode-languageserver-types";
 
@@ -57,14 +57,14 @@ export function rangeToLSP(
   };
 }
 
-export function tokenToUri(token: IToken): string | undefined {
-  return token.payload?.uri?.toString();
+export function tokenToUri(token: Token): string | undefined {
+  return token.payload.uri?.toString();
 }
 
-export function tokenToRange(token: IToken): Range {
+export function tokenToRange(token: Token): Range {
   return {
     start: token.startOffset,
-    end: token.endOffset! + 1,
+    end: token.endOffset + 1,
   };
 }
 

@@ -43,10 +43,10 @@ import {
   ILexerDefinitionError,
   ILineTerminatorsTester,
   IMultiModeLexerDefinition,
-  IToken,
   TokenType,
 } from "@chevrotain/types";
 import { getRegExpAst } from "./chevrotain-regexp-parser.js";
+import { Token } from "../../parser/tokens.js";
 
 const PATTERN = "PATTERN";
 export const DEFAULT_MODE = "defaultMode";
@@ -65,12 +65,12 @@ export type CustomPatternMatcherFunc = (
   /**
    * Previously scanned Tokens
    */
-  tokens: IToken[],
+  tokens: Token[],
   /**
    * Token Groups
    */
   groups: {
-    [groupName: string]: IToken[];
+    [groupName: string]: Token[];
   },
 ) => CustomPatternMatcherReturn | RegExpExecArray | null; // RegExpExecArray included for legacy reasons
 
@@ -94,7 +94,7 @@ export interface IPatternConfig {
 export interface IAnalyzeResult {
   patternIdxToConfig: (TokenType & IPatternConfig)[];
   charCodeToPatternIdxToConfig: { [charCode: number]: TokenType[] };
-  emptyGroups: { [groupName: string]: IToken[] };
+  emptyGroups: { [groupName: string]: Token[] };
   hasCustom: boolean;
   unoptimizedPatterns: TokenType[];
 }
@@ -301,7 +301,7 @@ export function analyzeTokenTypes(
 
   let patternIdxToIsCustom: boolean[];
   let patternIdxToShort: (number | false)[];
-  let emptyGroups!: { [groupName: string]: IToken[] };
+  let emptyGroups!: { [groupName: string]: Token[] };
   let patternIdxToConfig!: (TokenType & IPatternConfig)[];
   tracer("Misc Mapping #2", () => {
     patternIdxToIsCustom = map(onlyRelevantTypes, isCustomPattern);
@@ -316,7 +316,7 @@ export function analyzeTokenTypes(
         }
         return acc;
       },
-      {} as { [groupName: string]: IToken[] },
+      {} as { [groupName: string]: Token[] },
     );
 
     patternIdxToConfig = map(
@@ -1015,9 +1015,9 @@ export function performWarningRuntimeChecks(
   return warnings;
 }
 
-export function cloneEmptyGroups(emptyGroups: {
-  [groupName: string]: IToken;
-}): { [groupName: string]: IToken } {
+export function cloneEmptyGroups(emptyGroups: { [groupName: string]: Token }): {
+  [groupName: string]: Token;
+} {
   const clonedResult: any = {};
   const groupKeys = keys(emptyGroups);
 

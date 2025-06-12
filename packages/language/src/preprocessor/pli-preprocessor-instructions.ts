@@ -9,12 +9,13 @@
  *
  */
 
-import { createTokenInstance, IToken, TokenType } from "chevrotain";
+import { TokenType } from "chevrotain";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PreprocessorInterpreterState } from "./pli-preprocessor-interpreter-state";
 import { PliPreprocessorProgram } from "./pli-preprocessor-program-builder";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
+import { createSyntheticTokenInstance, Token } from "../parser/tokens";
 
 export type Label = {
   address: number | undefined;
@@ -66,7 +67,7 @@ export interface PPIScan extends PPInstructionBase {
 
 export interface PPIPush extends PPInstructionBase {
   type: "push";
-  value: IToken[];
+  value: Token[];
 }
 
 export interface PPIPrint extends PPInstructionBase {
@@ -109,24 +110,15 @@ export type PPProgram = PPInstruction[];
 export type VariableDataType = "FIXED" | "CHARACTER";
 
 export namespace Values {
-  export function Number(value: number): IToken[] {
+  export function Number(value: number): Token[] {
     return [
-      createTokenInstance(
-        PreprocessorTokens.Number,
-        value.toString(),
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-      ),
+      createSyntheticTokenInstance(PreprocessorTokens.Number, value.toString()),
     ];
   }
-  export function True(): IToken[] {
+  export function True(): Token[] {
     return Number(1);
   }
-  export function False(): IToken[] {
+  export function False(): Token[] {
     return Number(0);
   }
   export function sameType(lhs: TokenType, rhs: TokenType) {
@@ -137,7 +129,7 @@ export namespace Values {
   export const multiply = numericArithmticOp((lhs, rhs) => lhs * rhs);
   export const divide = numericArithmticOp((lhs, rhs) => lhs / rhs);
   export const power = numericArithmticOp((lhs, rhs) => Math.pow(lhs, rhs));
-  export const concat = (lhs: IToken[], rhs: IToken[]) => lhs.concat(rhs);
+  export const concat = (lhs: Token[], rhs: Token[]) => lhs.concat(rhs);
   export const lt = numericComparisonOp((lhs, rhs) => lhs < rhs);
   export const le = numericComparisonOp((lhs, rhs) => lhs <= rhs);
   export const gt = numericComparisonOp((lhs, rhs) => lhs > rhs);
@@ -148,7 +140,7 @@ export namespace Values {
   export const or = numericArithmticOp((lhs, rhs) => lhs | rhs);
 
   function numericComparisonOp(op: (lhs: number, rhs: number) => boolean) {
-    return function func(lhs: IToken[], rhs: IToken[]) {
+    return function func(lhs: Token[], rhs: Token[]) {
       if (
         lhs.length !== 1 ||
         !sameType(lhs[0].tokenType, PreprocessorTokens.Number)
@@ -168,7 +160,7 @@ export namespace Values {
   }
 
   function numericArithmticOp(op: (lhs: number, rhs: number) => number) {
-    return function func(lhs: IToken[], rhs: IToken[]) {
+    return function func(lhs: Token[], rhs: Token[]) {
       if (
         lhs.length !== 1 ||
         !sameType(lhs[0].tokenType, PreprocessorTokens.Number)
@@ -238,7 +230,7 @@ export namespace Instructions {
       type: "concat",
     };
   }
-  export function push(value: IToken[]): PPIPush {
+  export function push(value: Token[]): PPIPush {
     return {
       type: "push",
       value,

@@ -18,7 +18,6 @@ import {
   PreprocessorParserState,
 } from "./pli-preprocessor-parser-state";
 import { PreprocessorError } from "./pli-preprocessor-error";
-import { IToken } from "chevrotain";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { URI, UriUtils } from "../utils/uri";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
@@ -30,13 +29,14 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { LexingError } from "./pli-lexer";
+import { Token } from "../parser/tokens";
 import { TextDocuments } from "../language-server/text-documents";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
   errors: LexingError[];
-  perFileTokens: Record<string, IToken[]>;
+  perFileTokens: Record<string, Token[]>;
 };
 
 export class PliPreprocessorParser {
@@ -87,12 +87,12 @@ export class PliPreprocessorParser {
 
   private consumeTokenStatement(state: PreprocessorParserState): ast.Statement {
     const tokenStatement = ast.createTokenStatement();
-    const tokens: IToken[] = [];
+    const tokens: Token[] = [];
     const word = /\w$/u;
     // We can assume that the first token is always a non-% token
     // Otherwise we wouldn't be able to get here in the first place
-    let currentToken: IToken | undefined = state.current;
-    let nextToken: IToken | undefined = state.tokens[state.index + 1];
+    let currentToken: Token | undefined = state.current;
+    let nextToken: Token | undefined = state.tokens[state.index + 1];
     while (currentToken) {
       state.index++;
       // Usually we break on % tokens
@@ -102,7 +102,7 @@ export class PliPreprocessorParser {
         nextToken?.tokenTypeIdx === PreprocessorTokens.Percentage.tokenTypeIdx
       ) {
         if (
-          currentToken.endOffset! + 1 !== nextToken.startOffset ||
+          currentToken.endOffset + 1 !== nextToken.startOffset ||
           !word.test(currentToken.image)
         ) {
           // If the next token is a standalone % token, we break but add the current token to the list
@@ -756,7 +756,7 @@ export class PliPreprocessorParser {
       end: NaN,
     };
     statement.unit = this.statement(state);
-    statement.unitRange.end = state.last!.endOffset! + 1;
+    statement.unitRange.end = state.last!.endOffset + 1;
     if (state.canConsumeKeyword(PreprocessorTokens.Else)) {
       state.consumeKeyword(
         statement,
@@ -768,7 +768,7 @@ export class PliPreprocessorParser {
         end: NaN,
       };
       statement.else = this.statement(state);
-      statement.elseRange.end = state.last!.endOffset! + 1;
+      statement.elseRange.end = state.last!.endOffset + 1;
     }
     return statement;
   }
@@ -1310,7 +1310,7 @@ export class PliPreprocessorParser {
   }
 
   private tokenizePurePliCode(content: string) {
-    const result: IToken[] = [];
+    const result: Token[] = [];
     const lexerState = new PliPreprocessorLexerState(
       content,
       undefined, // URI is unknown, use undefined

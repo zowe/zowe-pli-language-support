@@ -21,8 +21,7 @@ import { Diagnostic, Severity } from "../src/language-server/types";
 import { SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
 import { forEachNode } from "../src/syntax-tree/ast-iterator";
 import { IntermediateBinaryExpression } from "../src/parser/abstract-parser";
-import { IToken } from "@chevrotain/types";
-import { escapeRegExp } from "../src/parser/tokens";
+import { escapeRegExp, Token } from "../src/parser/tokens";
 import { referencesRequest } from "../src/language-server/references-request";
 import { completionRequest } from "../src/language-server/completion/completion-request";
 import { assignDebugKinds } from "../src/utils/debug-kinds";
@@ -160,11 +159,11 @@ export function generateAndAssertValidSymbolTable(
   const tokens = compilationUnit.tokens.all.filter((token) => {
     expect(token.payload).toBeDefined();
 
-    // FQN rule (token payload === -1) does not reset the token kind.
+    // FQN rule (token payload === undefined) does not reset the token kind.
     // Todo: Remove this exception once the FQN rule is updated.
     // Intermediate binary expressions are not AST nodes.
     if (
-      token.payload.kind === -1 ||
+      token.payload.kind === undefined ||
       isIntermediateBinaryExpression(token.payload.element)
     ) {
       return false;
@@ -197,12 +196,13 @@ export function generateAndAssertValidSymbolTable(
     addProperty(node, "_beforeSymbolTable"),
   );
 
-  const verifyNodeReachability = (node: SyntaxNode) => {
+  const verifyNodeReachability = (node: SyntaxNode | undefined) => {
+    expect(node).toBeDefined();
     expect(
       (node as any)._beforeSymbolTable,
-      `Node of kind ${node.kind} (${SyntaxKind[node.kind]}) was not reached by the AST iterator at all.`,
+      `Node of kind ${node!.kind} (${SyntaxKind[node!.kind]}) was not reached by the AST iterator at all.`,
     ).toBeDefined();
-    forEachNode(node, verifyNodeReachability);
+    forEachNode(node!, verifyNodeReachability);
   };
 
   tokens.forEach((token) => verifyNodeReachability(token.payload.element));
@@ -214,8 +214,9 @@ export function generateAndAssertValidSymbolTable(
     addProperty(node, "_afterSymbolTable"),
   );
 
-  const verifyNodeContainer = (node: SyntaxNode, token: IToken) => {
-    const kind = node.kind;
+  const verifyNodeContainer = (node: SyntaxNode | undefined, token: Token) => {
+    expect(node).toBeDefined();
+    const kind = node!.kind;
     const kindName = SyntaxKind[kind];
     const reachedBefore = (node as any)._beforeSymbolTable !== undefined;
     const image = token.image;
@@ -230,15 +231,15 @@ export function generateAndAssertValidSymbolTable(
 
     // All nodes should have a non-null container.
     expect(
-      node.container,
+      node!.container,
       `Node of kind ${kind} (${kindName}) (${image}) should have a defined container`,
     ).toBeDefined();
     expect(
-      node.container,
+      node!.container,
       `Node of kind ${kind} (${kindName}) (${image}) should have a non-null container.`,
     ).not.toBeNull();
 
-    forEachNode(node, (child) => verifyNodeContainer(child, token));
+    forEachNode(node!, (child) => verifyNodeContainer(child, token));
   };
 
   tokens.forEach((token) => verifyNodeContainer(token.payload.element, token));

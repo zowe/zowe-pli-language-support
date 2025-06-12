@@ -13,7 +13,6 @@ import {
   EmbeddedActionsParser,
   IOrAlt,
   IParserConfig,
-  IToken,
   ParserMethod,
   SubruleMethodOpts,
   TokenType,
@@ -26,7 +25,7 @@ import {
 } from "../syntax-tree/ast";
 import type { CstNodeKind } from "../syntax-tree/cst";
 import * as tokens from "./tokens";
-import { URI } from "../utils/uri";
+import { Token } from "./tokens";
 
 /**
  * Options for assigning a result to a subrule.
@@ -62,26 +61,6 @@ export interface IntermediateBinaryExpression {
   infix: true;
 }
 
-/**
- * Payload for a token, containing metadata about its syntax and element.
- */
-export interface TokenPayload {
-  /**
-   * The URI associated with the token, if any.
-   */
-  uri?: URI;
-
-  /**
-   * The kind of CST (Concrete Syntax Tree) node.
-   */
-  kind: CstNodeKind;
-
-  /**
-   * The syntax node associated with the token.
-   */
-  element: SyntaxNode;
-}
-
 export class AbstractParser extends EmbeddedActionsParser {
   constructor(tokens: TokenType[], config?: IParserConfig) {
     super(tokens, {
@@ -98,22 +77,15 @@ export class AbstractParser extends EmbeddedActionsParser {
    * @param kind - The kind of CST node
    */
   protected tokenPayload(
-    token: IToken,
+    token: Token,
     element: SyntaxNode,
     kind: CstNodeKind,
   ): void {
     if (isNaN(token.startOffset)) {
       return;
     }
-    if (token.payload === undefined) {
-      token.payload = {
-        kind,
-        element,
-      };
-    } else {
-      token.payload.kind = kind;
-      token.payload.element = element;
-    }
+    token.payload.kind = kind;
+    token.payload.element = element;
   }
 
   private stack: any[] = [];
@@ -173,43 +145,43 @@ export class AbstractParser extends EmbeddedActionsParser {
   protected consume_assign(
     index: number,
     tokenType: TokenType,
-    assign: (value: IToken) => void,
+    assign: (value: Token) => void,
   ): void {
-    const token = this.consume(index, tokenType);
+    const token = this.consume(index, tokenType) as Token;
     this.ACTION(() => assign(token));
   }
 
   protected CONSUME_ASSIGN(
     tokenType: TokenType,
-    assign: (value: IToken) => void,
+    assign: (value: Token) => void,
   ): void {
     this.consume_assign(0, tokenType, assign);
   }
 
   protected CONSUME_ASSIGN1(
     tokenType: TokenType,
-    assign: (value: IToken) => void,
+    assign: (value: Token) => void,
   ): void {
     this.consume_assign(1, tokenType, assign);
   }
 
   protected CONSUME_ASSIGN2(
     tokenType: TokenType,
-    assign: (value: IToken) => void,
+    assign: (value: Token) => void,
   ): void {
     this.consume_assign(2, tokenType, assign);
   }
 
   protected CONSUME_ASSIGN3(
     tokenType: TokenType,
-    assign: (value: IToken) => void,
+    assign: (value: Token) => void,
   ): void {
     this.consume_assign(3, tokenType, assign);
   }
 
   protected CONSUME_ASSIGN4(
     tokenType: TokenType,
-    assign: (value: IToken) => void,
+    assign: (value: Token) => void,
   ): void {
     this.consume_assign(4, tokenType, assign);
   }

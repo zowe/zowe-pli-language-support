@@ -13,7 +13,6 @@ import {
   TokenType,
   Lexer as ChevrotainLexer,
   TokenTypeDictionary,
-  IToken,
 } from "chevrotain";
 import {
   AllPreprocessorTokens,
@@ -25,6 +24,7 @@ import {
 } from "./pli-token-picker-optimizer";
 import { PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import * as tokens from "../parser/tokens";
+import { Token } from "../parser/tokens";
 
 export class PliPreprocessorLexer {
   private readonly vocabulary: TokenType[];
@@ -62,9 +62,9 @@ export class PliPreprocessorLexer {
     );
   }
 
-  tokenizePliTokensUntilSemicolon(state: PreprocessorLexerState): IToken[] {
-    let token: IToken | undefined = undefined;
-    const list: IToken[] = [];
+  tokenizePliTokensUntilSemicolon(state: PreprocessorLexerState): Token[] {
+    let token: Token | undefined = undefined;
+    const list: Token[] = [];
     do {
       token = this.getNextPliToken(state);
       if (token) {
@@ -75,7 +75,7 @@ export class PliPreprocessorLexer {
     return list;
   }
 
-  private getNextPliToken(state: PreprocessorLexerState): IToken | undefined {
+  private getNextPliToken(state: PreprocessorLexerState): Token | undefined {
     if (state.eof()) {
       return undefined;
     }
@@ -96,7 +96,7 @@ export class PliPreprocessorLexer {
   }
 
   tokenizePreprocessorTokensUntilSemicolon(state: PreprocessorLexerState) {
-    const result: IToken[] = [];
+    const result: Token[] = [];
     let foundAny: boolean;
     do {
       foundAny = false;

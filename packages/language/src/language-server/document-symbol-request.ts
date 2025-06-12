@@ -14,7 +14,7 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { URI } from "../utils/uri";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { DOCUMENT_SYMBOL_BUILDERS } from "./document-symbol-builder";
-import { IToken } from "chevrotain";
+import { Token } from "../parser/tokens";
 import { TextDocuments } from "./text-documents";
 
 export function documentSymbolRequest(
@@ -29,11 +29,11 @@ export function documentSymbolRequest(
   // Find all tokens that carry payload and while we are at it,
   // collect all related elements.
   const documentSymbols: DocumentSymbol[] = [];
-  const tokensByElement = new Map<SyntaxNode, IToken[]>();
+  const tokensByElement = new Map<SyntaxNode, Token[]>();
   const tokens = compilationUnit.tokens.fileTokens[textDocument.uri]
-    .filter((token) => token.payload?.element)
+    .filter((token) => token.payload.element)
     .map((token) => {
-      const element = token.payload.element;
+      const element = token.payload.element!;
       if (!tokensByElement.has(element)) {
         tokensByElement.set(element, []);
       }
@@ -48,7 +48,7 @@ export function documentSymbolRequest(
 
     const symbols = builder.buildSymbols(
       token,
-      tokensByElement.get(token.payload.element)!,
+      tokensByElement.get(token.payload.element!)!,
       textDocument,
       [],
     );

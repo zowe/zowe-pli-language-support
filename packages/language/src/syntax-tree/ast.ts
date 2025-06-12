@@ -9,9 +9,9 @@
  *
  */
 
-import { IToken } from "chevrotain";
 import type { PreprocessorParserResult } from "../preprocessor/pli-preprocessor-parser";
 import { Range } from "../language-server/types";
+import { Token } from "../parser/tokens";
 
 export enum SyntaxKind {
   // Preprocessor AST
@@ -223,14 +223,14 @@ export interface AstNode {
 export interface Reference<T extends SyntaxNode = SyntaxNode> {
   owner: SyntaxNode;
   text: string;
-  token: IToken;
+  token: Token;
   node: T | null | undefined;
   preprocessor: boolean;
 }
 
 export function createReference<T extends SyntaxNode>(
   owner: SyntaxNode,
-  token: IToken,
+  token: Token,
   preprocessor = false,
 ): Reference<T> {
   return {
@@ -766,7 +766,7 @@ export function createDeactivateStatement(): DeactivateStatement {
 
 export interface TokenStatement extends AstNode {
   kind: SyntaxKind.TokenStatement;
-  tokens: IToken[];
+  tokens: Token[];
 }
 
 export function createTokenStatement(): TokenStatement {
@@ -923,19 +923,19 @@ export type CompilerOptionValue =
 export interface CompilerOption extends AstNode {
   kind: SyntaxKind.CompilerOption;
   name: string;
-  token: IToken;
+  token: Token;
   values: CompilerOptionValue[];
 }
 
 export interface CompilerOptionString extends AstNode {
   kind: SyntaxKind.CompilerOptionString;
-  token: IToken;
+  token: Token;
   value: string;
 }
 
 export interface CompilerOptionText extends AstNode {
   kind: SyntaxKind.CompilerOptionText;
-  token: IToken;
+  token: Token;
   value: string;
 }
 
@@ -983,7 +983,7 @@ export interface DateAttribute extends AstNode {
 }
 export interface WildcardItem extends AstNode {
   kind: SyntaxKind.WildcardItem;
-  token: IToken | null;
+  token: Token | null;
 }
 export type DeclaredItemElement =
   | DeclaredVariable
@@ -993,7 +993,7 @@ export interface DeclaredItem extends AstNode {
   kind: SyntaxKind.DeclaredItem;
   level: number | null;
   elements: DeclaredItemElement[];
-  levelToken: IToken | null;
+  levelToken: Token | null;
   attributes: DeclarationAttribute[];
 }
 export function createDeclaredItem(): DeclaredItem {
@@ -1008,7 +1008,7 @@ export function createDeclaredItem(): DeclaredItem {
 }
 export interface DeclaredVariable extends AstNode {
   kind: SyntaxKind.DeclaredVariable;
-  nameToken: IToken | null;
+  nameToken: Token | null;
   name: string | null;
 }
 export function createDeclaredVariable(): DeclaredVariable {
@@ -1424,7 +1424,7 @@ export interface IncludeItem extends AstNode {
   string: boolean;
   ddname: boolean;
   result: PreprocessorParserResult | null;
-  token: IToken | null;
+  token: Token | null;
 }
 export function createIncludeItem(): IncludeItem {
   return {
@@ -1515,7 +1515,7 @@ export interface KeywordCondition extends AstNode {
 }
 export interface LabelPrefix extends AstNode {
   kind: SyntaxKind.LabelPrefix;
-  nameToken: IToken | null;
+  nameToken: Token | null;
   name: string | null;
 }
 export function createLabelPrefix(): LabelPrefix {
@@ -1690,7 +1690,7 @@ export interface OrdinalTypeAttribute extends AstNode {
 export interface OrdinalValue extends AstNode {
   kind: SyntaxKind.OrdinalValue;
   name: string | null;
-  nameToken: IToken | null;
+  nameToken: Token | null;
   value: string | null;
 }
 export interface OrdinalValueList extends AstNode {
@@ -1786,7 +1786,7 @@ export interface ProcedureCallArgs extends AstNode {
 export interface ProcedureParameter extends AstNode {
   kind: SyntaxKind.ProcedureParameter;
   name: string | null;
-  nameToken: IToken | null;
+  nameToken: Token | null;
 }
 export function createProcedureParameter(): ProcedureParameter {
   return {
@@ -2075,7 +2075,7 @@ export interface StopStatement extends AstNode {
 export interface StringLiteral extends AstNode {
   kind: SyntaxKind.StringLiteral;
   value: string | null;
-  tokens: IToken[];
+  tokens: Token[];
 }
 export function createStringLiteral(): StringLiteral {
   return {

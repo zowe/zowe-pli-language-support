@@ -9,7 +9,6 @@
  *
  */
 
-import { IToken } from "chevrotain";
 import {
   CompilerOptionIssue,
   CompilerOptionResult,
@@ -25,6 +24,7 @@ import {
   SyntaxKind,
 } from "../../syntax-tree/ast";
 import { Warning as PLIWarning } from "../../validation/messages/pli-codes";
+import { Token } from "../../parser/tokens";
 
 interface TranslatorRule {
   positive?: string[];
@@ -188,11 +188,11 @@ class Translator {
 }
 
 class TranslationError {
-  token: IToken;
+  token: Token;
   message: string;
   severity: Severity;
 
-  constructor(token: IToken, message: string, severity: Severity) {
+  constructor(token: Token, message: string, severity: Severity) {
     this.token = token;
     this.message = message;
     this.severity = severity;

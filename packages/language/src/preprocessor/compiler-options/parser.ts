@@ -9,7 +9,13 @@
  *
  */
 
-import { createToken, EmbeddedActionsParser, IToken, Lexer } from "chevrotain";
+import {
+  ConsumeMethodOpts,
+  createToken,
+  EmbeddedActionsParser,
+  Lexer,
+  TokenType,
+} from "chevrotain";
 import { CompilerOptionIssue } from "./options";
 import { Severity, tokenToRange } from "../../language-server/types";
 import { CstNodeKind } from "../../syntax-tree/cst";
@@ -20,6 +26,7 @@ import {
   CompilerOptionValue,
   SyntaxKind,
 } from "../../syntax-tree/ast";
+import { Token } from "../../parser/tokens";
 
 const commaToken = createToken({ name: "comma", pattern: "," });
 const stringToken = createToken({
@@ -48,6 +55,17 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
     this.performSelfAnalysis();
   }
 
+  protected override LA(howMuch: number): Token {
+    return super.LA(howMuch) as Token;
+  }
+
+  protected override CONSUME(
+    tokType: TokenType,
+    options?: ConsumeMethodOpts,
+  ): Token {
+    return super.CONSUME(tokType, options) as Token;
+  }
+
   compilerOptions = this.RULE<
     () => Omit<AbstractCompilerOptions, "issues" | "tokens">
   >(
@@ -66,8 +84,9 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
             const comma = this.CONSUME(commaToken);
             this.ACTION(() => {
               comma.payload = {
+                uri: undefined,
                 kind: CstNodeKind.CompilerOptions_Comma,
-                element: options,
+                element: options[options.length - 1],
               };
             });
           });
@@ -112,6 +131,7 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
       this.ACTION(() => {
         const num = Number(nameToken.image);
         nameToken.payload = {
+          uri: undefined,
           kind: isNaN(num)
             ? CstNodeKind.CompilerOption_Name
             : CstNodeKind.CompilerOption_Number,
@@ -132,6 +152,7 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
         const parenOpenToken = this.CONSUME(parenOpen);
         this.ACTION(() => {
           parenOpenToken.payload = {
+            uri: undefined,
             kind: CstNodeKind.CompilerOption_OpenParen,
             element,
           };
@@ -147,6 +168,7 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
             const comma = this.CONSUME(commaToken);
             this.ACTION(() => {
               comma.payload = {
+                uri: undefined,
                 kind: CstNodeKind.CompilerOption_Comma,
                 element,
               };
@@ -161,6 +183,7 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
         const parenCloseToken = this.CONSUME(parenClose);
         this.ACTION(() => {
           parenCloseToken.payload = {
+            uri: undefined,
             kind: CstNodeKind.CompilerOption_CloseParen,
             element,
           };
@@ -193,6 +216,7 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
             };
             this.ACTION(() => {
               string.payload = {
+                uri: undefined,
                 kind: CstNodeKind.CompilerOptionsValue_STRING,
                 element: result,
               };
@@ -235,7 +259,7 @@ const parser = new CompilerOptionsParser();
 
 export interface AbstractCompilerOptions {
   options: CompilerOption[];
-  tokens: IToken[];
+  tokens: Token[];
   issues: CompilerOptionIssue[];
 }
 
@@ -244,7 +268,15 @@ export function parseAbstractCompilerOptions(
   offset?: number,
 ): AbstractCompilerOptions {
   const lexerResult = lexer.tokenize(" ".repeat(offset ?? 0) + input);
-  parser.input = lexerResult.tokens;
+  const tokens = lexerResult.tokens as Token[];
+  for (let i = 0; i < tokens.length; i++) {
+    tokens[i].payload = {
+      uri: undefined,
+      kind: undefined,
+      element: undefined,
+    };
+  }
+  parser.input = tokens;
   const compilerOptions = parser.compilerOptions();
   const issues: CompilerOptionIssue[] = [];
   for (const lexerError of lexerResult.errors) {
@@ -260,13 +292,13 @@ export function parseAbstractCompilerOptions(
   for (const parserError of parser.errors) {
     issues.push({
       message: parserError.message,
-      range: tokenToRange(parserError.token),
+      range: tokenToRange(parserError.token as Token),
       severity: 1,
     });
   }
   return {
     options: compilerOptions.options,
-    tokens: lexerResult.tokens,
+    tokens,
     issues,
   };
 }

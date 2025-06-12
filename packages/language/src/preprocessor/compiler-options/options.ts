@@ -9,12 +9,12 @@
  *
  */
 
-import { IToken } from "chevrotain";
 import { Diagnostic, Range, Severity } from "../../language-server/types";
+import { Token } from "../../parser/tokens";
 
 export interface CompilerOptionResult {
   options: CompilerOptions;
-  tokens: IToken[];
+  tokens: Token[];
   issues: CompilerOptionIssue[];
 }
 

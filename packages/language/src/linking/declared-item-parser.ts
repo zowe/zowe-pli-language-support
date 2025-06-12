@@ -22,13 +22,13 @@ import { SymbolTable } from "./symbol-table";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { MultiMap } from "../utils/collections";
 import { getNameToken } from "./tokens";
-import { IToken } from "chevrotain";
 import { LinkerErrorReporter } from "./error";
+import { Token } from "../parser/tokens";
 
 type UnrolledItem = {
   kind: SyntaxKind;
   level: number | null;
-  levelToken: IToken | null;
+  levelToken: Token | null;
   node: DeclaredVariable | WildcardItem;
   container: SyntaxNode;
 };
@@ -42,7 +42,7 @@ type UnrolledItem = {
  * @param node - The node to find the level token for.
  * @returns The level and level token for the given node, or `null` if no level is set.
  */
-function findLevel(node: SyntaxNode): [number, IToken] | null {
+function findLevel(node: SyntaxNode): [number, Token] | null {
   if (
     node.kind === SyntaxKind.DeclaredItem &&
     node.level !== null &&
@@ -61,7 +61,7 @@ function findLevel(node: SyntaxNode): [number, IToken] | null {
 /**
  * A wildcard item is not a name token, but we need the get the token to index it.
  */
-function getDeclaredItemToken(node: SyntaxNode): IToken | undefined {
+function getDeclaredItemToken(node: SyntaxNode): Token | undefined {
   if (node.kind === SyntaxKind.WildcardItem) {
     return node.token ?? undefined;
   }
