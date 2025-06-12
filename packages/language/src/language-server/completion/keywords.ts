@@ -74,7 +74,7 @@ export const StatementStartCompletionKeywords: MultiMap<
   [CstNodeKind.LocateStatement_LOCATE, kw("LOCATE")],
   [CstNodeKind.OnStatement_ON, kw("ON")],
   [CstNodeKind.OpenStatement_OPEN, kw("OPEN")],
-  [CstNodeKind.PutStatement_PUT, kws("PUT", "PUT(${1:value})")],
+  [CstNodeKind.PutStatement_PUT, kws("PUT", "PUT(${1:value});")],
   [CstNodeKind.QualifyStatement_QUALIFY, kw("QUALIFY")],
   [CstNodeKind.ReadStatement_READ, kw("READ")],
   [CstNodeKind.ReinitStatement_REINIT, kw("REINIT")],
