@@ -27,7 +27,10 @@ function setupFileSystemAndLexer(): TokenizeFunction {
     " DECLARE LIB1_VAR FIXED;",
   );
   vtsfs.writeFileSync(URI.file("/test/cpy/LIB2"), " DECLARE LIB2_VAR FIXED;");
-  vtsfs.writeFileSync(URI.file("/test/cpy/PLILIB.pli"), " DECLARE PLILIB_VAR FIXED;");
+  vtsfs.writeFileSync(
+    URI.file("/test/cpy/PLILIB.pli"),
+    " DECLARE PLILIB_VAR FIXED;",
+  );
   vtsfs.writeFileSync(URI.file("/test/LIB3"), " DECLARE LIB3_VAR FIXED;");
   vtsfs.writeFileSync(URI.file("/LIB4"), " DECLARE LIB4_VAR FIXED;");
 
@@ -309,11 +312,6 @@ describe("PL/1 Includes with Plugin Config", () => {
             %INCLUDE PLIL;
             PLILIB_VAR = 32;
         `),
-    ).toStrictEqual([
-      "PLILIB_VAR:ID",
-      "=:=",
-      "32:NUMBER",
-      ";:;",
-    ]);
+    ).toStrictEqual(["PLILIB_VAR:ID", "=:=", "32:NUMBER", ";:;"]);
   });
 });
