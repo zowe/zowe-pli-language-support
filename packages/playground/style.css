@@ -15,6 +15,7 @@ html {
   font-size: 14px;
   padding: 0;
   margin: 0;
+  overflow: hidden;
 }
 
 body {
@@ -73,19 +74,22 @@ body {
 #editorsDiv {
    flex: 1;
    min-width: 0;
+   height: 100%;
 }
 
 #editors {
   position: relative;
   min-width: 0;
-  height: 99%;
+  height: 75%;
   border: 1px solid var(--vscode-editorWidget-border);
 }
 
 #panel {
-  flex: 1;
+  position: relative;
+  flex: none;
   border: 1px solid var(--vscode-editorWidget-border);
   min-height: 0;
+  height: 25%;
 }
 
 #titleBar {
@@ -107,11 +111,7 @@ body {
   display: flex;
   gap: 4px;
   flex: 2;
-  min-height: 0
-}
-
-.action-label[aria-label="New Folder..."] {
-  display: none !important;
+  min-height: 0;
 }
 
 .pli-skippedCode {

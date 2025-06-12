@@ -13,38 +13,46 @@ import * as vscode from "vscode";
 import { MonacoEditorLanguageClientWrapper } from "monaco-editor-wrapper";
 import { registerSkipDecoratorType } from "./decorators.js";
 import { configure } from "./config.js";
-import helloWorld from "../hello-world.pli?raw";
-import pliTestCode from "../../../code_samples/RXGIM.pli?raw";
-import includeExample from "../../../code_samples/preprocessor/include.pli?raw";
-import includedExample from "../../../code_samples/preprocessor/included.pli?raw";
+import helloWorld from "../workspace/hello-world.pli?raw";
+import includeExample from "../workspace/include.pli?raw";
+import includedExample from "../workspace/lib/included.pli?raw";
+import pgmconf from "../workspace/.pliplugin/pgm_conf.json?raw";
+import procgrps from "../workspace/.pliplugin/proc_grps.json?raw";
 import {
+  redirectOutlineCancelReporting,
   handleSharedWorkspace,
-  deactivateExplorerContextMenu,
   registerButtons,
 } from "./workspace.js";
 import {
+  BuiltinFileSystemProvider,
   createFileSystemProvider,
   FileSystemProvider,
+  watchWorkspaceChanges,
 } from "./file-system-provider.js";
+import { Builtins, BuiltinsUri } from "pli-language";
 
 let wrapper: MonacoEditorLanguageClientWrapper | undefined;
 
 export async function startClient() {
   try {
-    const config = configure(document.getElementById("vscode-views-root")!);
+    redirectOutlineCancelReporting();
+    const config = await configure(
+      document.getElementById("vscode-views-root")!,
+    );
     wrapper = new MonacoEditorLanguageClientWrapper();
-    const fileSystemProvider = createFileSystemProvider(config);
+    const fileSystemProvider = await createFileSystemProvider(config);
     await wrapper.init(config.wrapperConfig);
-    await wrapper.startLanguageClients();
     registerSkipDecoratorType(wrapper);
     registerButtons();
-    deactivateExplorerContextMenu();
 
     let defaultUri: vscode.Uri | undefined = undefined;
     defaultUri = await handleSharedWorkspace(fileSystemProvider);
     if (!defaultUri) {
       defaultUri = await loadDefaultWorkspace(fileSystemProvider);
     }
+    await wrapper.startLanguageClients();
+    BuiltinFileSystemProvider.register();
+    watchWorkspaceChanges(wrapper, fileSystemProvider);
 
     await vscode.window.showTextDocument(defaultUri, { preserveFocus: true });
   } catch (e) {
@@ -55,21 +63,33 @@ export async function startClient() {
 async function loadDefaultWorkspace(
   fileSystemProvider: FileSystemProvider,
 ): Promise<vscode.Uri> {
-  let defaultUri = await fileSystemProvider.addFileToWorkspace(
+  const defaultUri = await fileSystemProvider.addFileToWorkspace(
     "/workspace/hello-world.pli",
     helloWorld,
   );
+  await fileSystemProvider.mkdir(vscode.Uri.parse("/workspace/.pliplugin"));
+  await fileSystemProvider.mkdir(vscode.Uri.parse("/workspace/lib"));
   await fileSystemProvider.addFileToWorkspace(
-    "/workspace/RXGIM.pli",
-    pliTestCode,
+    "/workspace/.pliplugin/pgm_conf.json",
+    pgmconf,
+  );
+  await fileSystemProvider.addFileToWorkspace(
+    "/workspace/.pliplugin/proc_grps.json",
+    procgrps,
   );
   await fileSystemProvider.addFileToWorkspace(
     "/workspace/include.pli",
     includeExample,
   );
   await fileSystemProvider.addFileToWorkspace(
-    "/workspace/included.pli",
+    "/workspace/lib/included.pli",
     includedExample,
+  );
+
+  await fileSystemProvider.writeFile(
+    vscode.Uri.parse(BuiltinsUri),
+    new TextEncoder().encode(Builtins),
+    FileSystemProvider.fileOptions,
   );
 
   return defaultUri;
