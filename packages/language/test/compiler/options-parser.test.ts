@@ -232,31 +232,38 @@ describe("CompilerOptions translator", () => {
       }
     }
   });
-});
 
-test("Test BLANK validation", () => {
-  const options = parseAbstractCompilerOptions("BLANK('dssssdD')");
-  const issues = translateCompilerOptions(options).issues;
-  expect(issues).toHaveLength(1);
-  expect(issues[0].message).toBe(
-    "BLANK option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
-  );
-});
+  test("Test BLANK validation", () => {
+    const options = parseAbstractCompilerOptions("BLANK('dssssdD')");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "BLANK option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
+    );
+  });
 
-test("Test DEFAULT SHORT validation", () => {
-  const options = parseAbstractCompilerOptions("DEFAULT(SHORT(IEEEp98))");
-  const issues = translateCompilerOptions(options).issues;
-  expect(issues).toHaveLength(1);
-  expect(issues[0].message).toBe("Invalid default option value: IEEEp98");
-});
+  test("Test DEFAULT SHORT validation", () => {
+    const options = parseAbstractCompilerOptions("DEFAULT(SHORT(IEEEp98))");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe("Invalid default option value: IEEEp98");
+  });
 
-test("Test DEFAULT RETURNS validation", () => {
-  const options = parseAbstractCompilerOptions("DEFAULT(RETURNS())");
-  const translated = translateCompilerOptions(options).options;
-  expect(translated.default?.returns).toEqual({ type: "BYADDR" });
-});
+  test("Test DEFAULT RETURNS validation", () => {
+    const options = parseAbstractCompilerOptions("DEFAULT(RETURNS())");
+    const translated = translateCompilerOptions(options).options;
+    expect(translated.default?.returns).toEqual({ type: "BYADDR" });
+  });
 
-test("compiler option with parameter insensitive", () => {
+  test("Test CODEPAGE validation", () => {
+    const options = parseAbstractCompilerOptions("CODEPAGE(0114dd0)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "Invalid codepage value. Expected one of 01047, 01140, 01141, 01142, 01143, 01144, 01025, 01145, 01146, 01147, 01148, 01149, 00037, 01155, 00273, 00277, 00278, 00280, 00284, 00285, 00297, 00500, 00871, 00819, 00813, 00920, but received '0114dd0'.",
+    );
+  });
+
   const testCases: {
     input: string;
     toTest: (options: CompilerOptions) => unknown;
@@ -345,8 +352,10 @@ test("compiler option with parameter insensitive", () => {
   ];
 
   for (const testCase of testCases) {
-    const parsed = parseAbstractCompilerOptions(testCase.input);
-    const options = translateCompilerOptions(parsed).options;
-    expect(testCase.toTest(options)).toEqual(testCase.expected);
+    test(`Translates option with parameter case-insensitively: ${testCase.input}`, () => {
+      const parsed = parseAbstractCompilerOptions(testCase.input);
+      const options = translateCompilerOptions(parsed).options;
+      expect(testCase.toTest(options)).toEqual(testCase.expected);
+    });
   }
 });

@@ -426,7 +426,7 @@ translator.rule(["BLANK"], (option, options) => {
   ensureType(value, "string");
 
   // Test for every single character in the string.
-  // Not allowed: A-Z, 0-9, space, =, +, -, *, /, (, ),,, ., ', ", %, ;, :, &, |, <, >, _,
+  // Not allowed: A-Z, 0-9, space, =, +, -, *, /, (, ),,, ., ', ", %, ;, :, &, |, <, >, _, ¬
   const disallowedChars = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/i;
   if (disallowedChars.test(value.value)) {
     throw new TranslationError(
@@ -531,12 +531,46 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.codepage} */
-translator.rule(
-  ["CODEPAGE", "CP"],
-  plainTranslate((options, value) => {
-    options.codepage = value.value;
-  }),
-);
+translator.rule(["CODEPAGE", "CP"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  ensureType(option.values[0], "plain");
+  const validCodepages = [
+    "01047",
+    "01140",
+    "01141",
+    "01142",
+    "01143",
+    "01144",
+    "01025",
+    "01145",
+    "01146",
+    "01147",
+    "01148",
+    "01149",
+    "00037",
+    "01155",
+    "00273",
+    "00277",
+    "00278",
+    "00280",
+    "00284",
+    "00285",
+    "00297",
+    "00500",
+    "00871",
+    "00819",
+    "00813",
+    "00920",
+  ];
+  if (!validCodepages.includes(option.values[0].value)) {
+    throw new TranslationError(
+      option.values[0].token,
+      `Invalid codepage value. Expected one of ${validCodepages.join(", ")}, but received '${option.values[0].value}'.`,
+      1,
+    );
+  }
+  options.codepage = option.values[0].value;
+});
 
 /** {@link CompilerOptions.common} */
 translator.flag("common", ["COMMON"], ["NOCOMMON"]);
