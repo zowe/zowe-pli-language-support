@@ -1229,26 +1229,23 @@ export class PliPreprocessorParser {
     };
     infixOperatorItem.items.push(this.primary(state));
     while (true) {
-      let operator: string | undefined = undefined;
-      for (const tokenType of PreprocessorBinaryTokens) {
-        if (
-          state.tryConsume(
-            infixOperatorItem as any,
-            CstNodeKind.BinaryExpression_Operator,
-            tokenType,
-          )
-        ) {
-          operator = tokenType.name;
-          break;
-        }
-      }
-      if (operator) {
-        const item = this.primary(state);
-        infixOperatorItem.items.push(item);
-        infixOperatorItem.operators.push(operator);
-      } else {
+      const operatorTokenType = PreprocessorBinaryTokens.find((tokenType) =>
+        state.canConsume(tokenType),
+      );
+
+      if (!operatorTokenType) {
         break;
       }
+
+      const operator = state.consume(
+        infixOperatorItem as any,
+        CstNodeKind.BinaryExpression_Operator,
+        operatorTokenType,
+      );
+
+      const item = this.primary(state);
+      infixOperatorItem.items.push(item);
+      infixOperatorItem.operators.push(operator);
     }
     return constructBinaryExpression(infixOperatorItem);
   }
