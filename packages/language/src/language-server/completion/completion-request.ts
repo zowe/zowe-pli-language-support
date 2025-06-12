@@ -16,7 +16,7 @@ import {
 } from "../../utils/search";
 import { URI } from "../../utils/uri";
 import { CompilationUnit } from "../../workspace/compilation-unit";
-import { CompletionItem, Range, SimpleCompletionItem } from "../types";
+import { CompletionItem, SimpleCompletionItem } from "../types";
 import { SyntaxNode } from "../../syntax-tree/ast";
 import {
   FollowElement,
@@ -24,6 +24,7 @@ import {
   provideEntryPointFollowElements,
 } from "./follow-elements";
 import { generateCompletionItems } from "./completion-generator";
+import { fuzzyMatch } from "../../utils/fuzzy-matcher";
 
 export function completionRequest(
   unit: CompilationUnit,
@@ -66,38 +67,46 @@ function getTokenContext(
   return undefined;
 }
 
+function getCompletionItemElements(token: IToken | undefined, offset: number) {
+  if (!token) {
+    return {
+      query: "",
+      range: {
+        start: offset,
+        end: offset,
+      },
+    };
+  }
+
+  return {
+    query: token.image.substring(0, offset - token.startOffset),
+    range: {
+      start: token.startOffset,
+      end: token.endOffset! + 1,
+    },
+  };
+}
+
 function convertSimpleToItem(
   items: SimpleCompletionItem[],
   offset: number,
   token?: IToken,
 ): CompletionItem[] {
-  let existingText = "";
-  let range: Range = {
-    start: offset,
-    end: offset,
-  };
-  if (token) {
-    existingText = token.image.substring(0, offset - token.startOffset);
-    range.start = token.startOffset;
-    range.end = token.endOffset! + 1;
-  }
-  const completionItems: CompletionItem[] = [];
-  const loweredExistingText = existingText.toLowerCase();
-  for (const item of items) {
-    if (item.text.toLowerCase().startsWith(loweredExistingText)) {
-      const completionItem: CompletionItem = {
+  const { query, range } = getCompletionItemElements(token, offset);
+
+  return items
+    .filter((item) => fuzzyMatch(query, item.text))
+    .map(
+      (item): CompletionItem => ({
         label: item.label,
         kind: item.kind,
         detail: item.detail,
         documentation: item.documentation,
         insertTextFormat: item.insertTextFormat,
         edit: {
-          range: range,
+          range,
           text: item.text,
         },
-      };
-      completionItems.push(completionItem);
-    }
-  }
-  return completionItems;
+      }),
+    );
 }
