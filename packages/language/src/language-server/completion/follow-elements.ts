@@ -83,10 +83,8 @@ export function getFollowElements(
   context: SyntaxNode | undefined,
   token: Token,
 ): FollowElement[] {
-  const kind = token.payload?.kind as CstNodeKind | undefined;
-
   // TODO: add more entry points for the completion of expressions
-  switch (kind) {
+  switch (token.payload.kind) {
     case undefined:
       return getFollowElementsForUnknownToken(token);
     case CstNodeKind.BinaryExpression_Operator:
