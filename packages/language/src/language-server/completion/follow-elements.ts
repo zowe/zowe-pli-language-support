@@ -79,6 +79,10 @@ function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
   switch (token.tokenType.name) {
     // We probably are in an assignment statement
     case "=":
+    // We probably are in a parenthesis expression
+    case "(":
+    // We probably are in a parenthesis expression, after a comma
+    case ",":
       return [
         {
           kind: FollowKind.LocalReference,
@@ -170,6 +174,89 @@ export function getFollowElements(
           kind: FollowKind.CstNode,
           types: AllStatementStartKeywordsArray,
         },
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
+    case CstNodeKind.ConditionPrefix_OpenParen:
+    case CstNodeKind.Exports_OpenParen:
+    case CstNodeKind.Reserves_OpenParen:
+    case CstNodeKind.Options_OpenParen:
+    case CstNodeKind.LinkageOptionsItem_OpenParen:
+    case CstNodeKind.CMPATOptionsItem_OpenParen:
+    case CstNodeKind.NoMapOptionsItem_OpenParen:
+    case CstNodeKind.AllocateLocationReferenceIn_OpenParen:
+    case CstNodeKind.AllocateLocationReferenceSet_OpenParen:
+    case CstNodeKind.CancelThreadStatement_OpenParen:
+    case CstNodeKind.CloseStatement_OpenParen:
+    case CstNodeKind.CloseStatement_OpenParen:
+    case CstNodeKind.OrdinalValue_OpenParen:
+    case CstNodeKind.DelayStatement_OpenParen:
+    case CstNodeKind.DetachStatement_OpenParen:
+    case CstNodeKind.FlushStatement_OpenParen:
+    case CstNodeKind.FormatStatement_OpenParen:
+    case CstNodeKind.FormatListItem_OpenParen:
+    case CstNodeKind.FormatListItemLevel_OpenParen:
+    case CstNodeKind.AFormatItem_OpenParen:
+    case CstNodeKind.BFormatItem_OpenParen:
+    case CstNodeKind.CFormatItem_OpenParen:
+    case CstNodeKind.FFormatItem_OpenParen:
+    case CstNodeKind.EFormatItem_OpenParen:
+    case CstNodeKind.ColumnFormatItem_OpenParen:
+    case CstNodeKind.GFormatItem_OpenParen:
+    case CstNodeKind.LineFormatItem_OpenParen:
+    case CstNodeKind.RFormatItem_OpenParen:
+    case CstNodeKind.SkipFormatItem_OpenParen:
+    case CstNodeKind.XFormatItem_OpenParen:
+    case CstNodeKind.GetStatement_OpenParen:
+    case CstNodeKind.GetFile_OpenParen:
+    case CstNodeKind.GetCopy_OpenParen:
+    case CstNodeKind.GetSkip_OpenParen:
+    case CstNodeKind.GenericAttribute_OpenParen:
+    case CstNodeKind.GenericReference_OpenParen:
+    case CstNodeKind.IncludeItem_OpenParen:
+    case CstNodeKind.LineDirective_OpenParen:
+    case CstNodeKind.LocateStatementOption_OpenParen:
+    case CstNodeKind.LocateStatementSet_OpenParen:
+    case CstNodeKind.NoteDirective_OpenParen:
+    case CstNodeKind.NamedCondition_OpenParen:
+    case CstNodeKind.FileReferenceCondition_OpenParen:
+    case CstNodeKind.OpenOption_OpenParen:
+    case CstNodeKind.CompilerOption_OpenParen:
+    case CstNodeKind.PutStatement_OpenParen:
+    case CstNodeKind.PutItem_OpenParen:
+    case CstNodeKind.ReadStatementFile_OpenParen:
+    case CstNodeKind.ReturnStatement_OpenParen:
+    case CstNodeKind.RewriteStatementFile_OpenParen:
+    case CstNodeKind.SelectStatement_OpenParen:
+    case CstNodeKind.WhenStatement_OpenParen:
+    case CstNodeKind.SkipDirective_OpenParen:
+    case CstNodeKind.WaitStatement_OpenParen:
+    case CstNodeKind.WriteStatementFile_OpenParen:
+    case CstNodeKind.InitAcrossExpression_OpenParen:
+    case CstNodeKind.InitialAttributeSpecification_OpenParen:
+    case CstNodeKind.InitialAttributeSpecificationIterationValue_OpenParen:
+    case CstNodeKind.DeclaredItem_OpenParen:
+    case CstNodeKind.DateAttribute_OpenParen:
+    case CstNodeKind.TypeAttribute_OpenParen:
+    case CstNodeKind.OrdinalTypeAttribute_OpenParen:
+    case CstNodeKind.ReturnsAttribute_OpenParen:
+    case CstNodeKind.DefaultValueAttribute_OpenParen:
+    case CstNodeKind.ValueAttribute_OpenParen:
+    case CstNodeKind.ValueListAttribute_OpenParen:
+    case CstNodeKind.ValueRangeAttribute_OpenParen:
+    case CstNodeKind.Dimensions_OpenParen:
+    case CstNodeKind.Bound_OpenParen:
+    case CstNodeKind.EnvironmentAttribute_OpenParen:
+    case CstNodeKind.EnvironmentAttributeItem_OpenParen:
+    case CstNodeKind.ReturnsOption_OpenParen:
+    case CstNodeKind.ParenthesizedExpression_OpenParen:
+    case CstNodeKind.ProcedureCallArgs_OpenParen:
+    // Happens on '(' in `PUT(f)`;
+    case CstNodeKind.DataSpecificationOptions_OpenParenList:
+    // Happens on ',' in `PUT(A, B<|1>)`;
+    case CstNodeKind.DataSpecificationDataList_Comma:
+      return [
         {
           kind: FollowKind.LocalReference,
         },
