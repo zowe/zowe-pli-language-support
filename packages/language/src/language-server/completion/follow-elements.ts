@@ -95,14 +95,14 @@ function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
     ];
   }
 
-  const categories = new Set(token.tokenType.CATEGORIES?.map(v => v.name));
+  const categories = token.tokenType.CATEGORIES?.values() ?? [];
 
   /**
    * We are maybe inside a declaration which is not followed by other statements, e.g.:
    *
    * `DCL A `
    */
-  if (categories.has("ID")) {
+  if (categories.some((v) => v.name === "ID")) {
     return [
       {
         kind: FollowKind.CstNode,
