@@ -16,6 +16,7 @@ import {
   StatementStartCompletionKeywords,
   StatementStartPreprocessorCompletionKeywords,
 } from "./keywords";
+import * as tokens from "../../parser/tokens";
 
 const StatementStartCompletionKeywordsArray = new Array(
   ...StatementStartCompletionKeywords.keys(),
@@ -53,27 +54,44 @@ export type FollowElement =
   | FollowLocalReference
   | FollowQualifiedReference;
 
+const binaryTokens = [
+  tokens.StarStar,
+  tokens.Star,
+  tokens.Slash,
+  tokens.Plus,
+  tokens.Minus,
+  tokens.PipePipe,
+  tokens.LessThan,
+  tokens.NotLessThan,
+  tokens.LessThanEquals,
+  tokens.Equals,
+  tokens.NotEquals,
+  tokens.LessThanGreaterThan,
+  tokens.GreaterThanEquals,
+  tokens.GreaterThan,
+  tokens.NotGreaterThan,
+  tokens.Ampersand,
+  tokens.Pipe,
+  tokens.Not,
+].map((token) => token.name);
+
 function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
   switch (token.tokenType.name) {
     // We probably are in an assignment statement
     case "=":
-    // We are probably in a binary expression
-    case "+":
-    case "-":
-    case "*":
-    case "**":
-    case "/":
-    case "|":
-    case "<":
-    case ">":
-    case "<=":
-    case ">=":
-    case "&":
       return [
         {
           kind: FollowKind.LocalReference,
         },
       ];
+  }
+
+  if (binaryTokens.includes(token.tokenType.name)) {
+    return [
+      {
+        kind: FollowKind.LocalReference,
+      },
+    ];
   }
 
   return [];
@@ -151,6 +169,9 @@ export function getFollowElements(
         {
           kind: FollowKind.CstNode,
           types: AllStatementStartKeywordsArray,
+        },
+        {
+          kind: FollowKind.LocalReference,
         },
       ];
     case CstNodeKind.AssignmentStatement_Operator:
