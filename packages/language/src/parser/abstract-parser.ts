@@ -53,7 +53,7 @@ export interface IntermediateBinaryExpression {
   /**
    * The operators in the binary expression.
    */
-  operators: string[];
+  operators: Token[];
 
   /**
    * Indicates that this is an infix expression.
@@ -339,7 +339,8 @@ export function constructBinaryExpression(
 
   for (let i = 0; i < obj.operators.length; i++) {
     const operator = obj.operators[i];
-    const precedenceValue = binaryPrecedence.get(operator) ?? Infinity;
+    const precedenceValue =
+      binaryPrecedence.get(operator.tokenType.name) ?? Infinity;
 
     // If we find an operator with lower precedence or equal precedence
     // (for left-to-right evaluation), update our tracking
@@ -372,12 +373,18 @@ export function constructBinaryExpression(
   const leftTree = constructBinaryExpression(leftInfix);
   const rightTree = constructBinaryExpression(rightInfix);
 
+  const operatorToken = obj.operators[lowestPrecedenceIdx];
+
   // Create the final binary expression
-  return {
+  const result: BinaryExpression = {
     kind: SyntaxKind.BinaryExpression,
     container: null,
     left: leftTree,
-    op: obj.operators[lowestPrecedenceIdx],
+    op: operatorToken.tokenType.name,
     right: rightTree,
   };
+
+  operatorToken.payload.element = result;
+
+  return result;
 }

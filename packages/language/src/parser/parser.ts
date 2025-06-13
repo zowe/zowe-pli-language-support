@@ -8048,7 +8048,7 @@ export class PliParser extends AbstractParser {
         // TODO: maybe use token.image as well?
         // Depends on whether we need it
         // For now, the name of the token is required to perform the transformation
-        element.operators.push(token.tokenType.name);
+        element.operators.push(token);
       });
       this.SUBRULE_ASSIGN2(this.PrimaryExpression, {
         assign: (result) => {

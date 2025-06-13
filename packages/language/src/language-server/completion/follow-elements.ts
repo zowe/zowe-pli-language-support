@@ -16,6 +16,7 @@ import {
   StatementStartCompletionKeywords,
   StatementStartPreprocessorCompletionKeywords,
 } from "./keywords";
+import * as tokens from "../../parser/tokens";
 
 const StatementStartCompletionKeywordsArray = new Array(
   ...StatementStartCompletionKeywords.keys(),
@@ -53,13 +54,63 @@ export type FollowElement =
   | FollowLocalReference
   | FollowQualifiedReference;
 
+const binaryTokens = [
+  tokens.StarStar,
+  tokens.Star,
+  tokens.Slash,
+  tokens.Plus,
+  tokens.Minus,
+  tokens.PipePipe,
+  tokens.LessThan,
+  tokens.NotLessThan,
+  tokens.LessThanEquals,
+  tokens.Equals,
+  tokens.NotEquals,
+  tokens.LessThanGreaterThan,
+  tokens.GreaterThanEquals,
+  tokens.GreaterThan,
+  tokens.NotGreaterThan,
+  tokens.Ampersand,
+  tokens.Pipe,
+  tokens.Not,
+].map((token) => token.name);
+
+function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
+  switch (token.tokenType.name) {
+    // We probably are in an assignment statement
+    case "=":
+      return [
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
+  }
+
+  if (binaryTokens.includes(token.tokenType.name)) {
+    return [
+      {
+        kind: FollowKind.LocalReference,
+      },
+    ];
+  }
+
+  return [];
+}
+
 export function getFollowElements(
   context: SyntaxNode | undefined,
   token: Token,
 ): FollowElement[] {
-  const elements: FollowElement[] = [];
+  // TODO: add more entry points for the completion of expressions
   switch (token.payload.kind) {
-    // TODO: add more entry points for the completion of expressions
+    case undefined:
+      return getFollowElementsForUnknownToken(token);
+    case CstNodeKind.BinaryExpression_Operator:
+      return [
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
     case CstNodeKind.DeactivateStatement_Semicolon:
     case CstNodeKind.ActivateStatement_Semicolon:
     case CstNodeKind.ProcedureStatement_Semicolon0:
@@ -114,21 +165,26 @@ export function getFollowElements(
     case CstNodeKind.WaitStatement_Semicolon:
     case CstNodeKind.WriteStatement_Semicolon:
     case CstNodeKind.DeclareStatement_Semicolon:
-      elements.push({
-        kind: FollowKind.CstNode,
-        types: AllStatementStartKeywordsArray,
-      });
-      break;
+      return [
+        {
+          kind: FollowKind.CstNode,
+          types: AllStatementStartKeywordsArray,
+        },
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
     case CstNodeKind.AssignmentStatement_Operator:
     case CstNodeKind.BinaryExpression_Operator:
     case CstNodeKind.UnaryExpression_Operator:
     case CstNodeKind.InitialAttribute_OpenParenDirect:
-      elements.push({
-        kind: FollowKind.LocalReference,
-      });
-      break;
+      return [
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
     case CstNodeKind.Percentage:
-      elements.push(
+      return [
         {
           kind: FollowKind.LocalReference,
         },
@@ -136,21 +192,23 @@ export function getFollowElements(
           kind: FollowKind.CstNode,
           types: StatementStartPreprocessorCompletionKeywordsArray,
         },
-      );
-      break;
+      ];
     case CstNodeKind.MemberCall_Dot:
       if (context?.kind === SyntaxKind.MemberCall) {
         const parent = context.previous;
         if (parent) {
-          elements.push({
-            kind: FollowKind.QualifiedReference,
-            previous: parent,
-          });
+          return [
+            {
+              kind: FollowKind.QualifiedReference,
+              previous: parent,
+            },
+          ];
         }
       }
       break;
   }
-  return elements;
+
+  return [];
 }
 
 export function provideEntryPointFollowElements(): FollowElement[] {

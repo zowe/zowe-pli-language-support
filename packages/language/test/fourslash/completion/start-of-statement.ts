@@ -5,6 +5,10 @@
 
 completion.expectAt(1, {
   includes: [
+    "A",
+    "B",
+    "C",
+    "D",
     ...constants.StatementStartCompletionKeywords.values().map(
       (keyword) => keyword.label,
     ),
