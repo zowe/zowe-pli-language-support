@@ -18,6 +18,7 @@ import {
   CompilerOptionText,
   SyntaxKind,
 } from "../../src/syntax-tree/ast";
+import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
 
 describe("CompilerOptions parser", () => {
   test("simple word based compiler option", () => {
@@ -88,7 +89,7 @@ describe("CompilerOptions parser", () => {
 });
 
 describe("CompilerOptions translator", () => {
-  test("Translates MARGINS #1", () => {
+  test("Translates MARGINS with values", () => {
     const options = parseAbstractCompilerOptions("MARGINS(4, 80)");
     const translated = translateCompilerOptions(options).options;
     expect(translated.margins).toEqual({ m: 4, n: 80 });
@@ -100,10 +101,10 @@ describe("CompilerOptions translator", () => {
     expect(translated.margins).toEqual({ m: 4, n: 80 });
   });
 
-  test("Translates MARGINS #2", () => {
+  test("Translates MARGINS default value", () => {
     const options = parseAbstractCompilerOptions("MARGINS(4,)");
     const translated = translateCompilerOptions(options).options;
-    expect(translated.margins).toEqual({ m: 4, n: NaN });
+    expect(translated.margins).toEqual({ m: 4, n: 72 });
   });
 
   test("Translates MARGINS - negative", () => {
@@ -114,16 +115,30 @@ describe("CompilerOptions translator", () => {
     expect(translated.margins).toBeUndefined();
   });
 
-  test("Translates MARGINS #3", () => {
+  test("Translates MARGINS with c", () => {
     const options = parseAbstractCompilerOptions("MARGINS(0, 14,)");
     const translated = translateCompilerOptions(options).options;
     expect(translated.margins).toEqual({ m: 0, n: 14, c: "" });
   });
 
-  test("Translates MARGINS #4", () => {
+  test("Translates NOMARGINS", () => {
     const options = parseAbstractCompilerOptions("NOMARGINS");
     const translated = translateCompilerOptions(options).options;
     expect(translated.margins).toEqual(false);
+  });
+
+  test("Produce issue for text value in MARGINS m", () => {
+    const options = parseAbstractCompilerOptions("MARGINS(M,444)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe("Expected a number.");
+  });
+
+  test("Produce issue for text value in MARGINS n", () => {
+    const options = parseAbstractCompilerOptions("MARGINS(112, R)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe("Expected a number.");
   });
 
   test("Produce issue for text value when string is expected", () => {
@@ -217,4 +232,130 @@ describe("CompilerOptions translator", () => {
       }
     }
   });
+
+  test("Test BLANK validation", () => {
+    const options = parseAbstractCompilerOptions("BLANK('dssssdD')");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "BLANK option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
+    );
+  });
+
+  test("Test DEFAULT SHORT validation", () => {
+    const options = parseAbstractCompilerOptions("DEFAULT(SHORT(IEEEp98))");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe("Invalid default option value: IEEEp98");
+  });
+
+  test("Test DEFAULT RETURNS validation", () => {
+    const options = parseAbstractCompilerOptions("DEFAULT(RETURNS())");
+    const translated = translateCompilerOptions(options).options;
+    expect(translated.default?.returns).toEqual({ type: "BYADDR" });
+  });
+
+  test("Test CODEPAGE validation", () => {
+    const options = parseAbstractCompilerOptions("CODEPAGE(0114dd0)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "Invalid codepage value. Expected one of 01047, 01140, 01141, 01142, 01143, 01144, 01025, 01145, 01146, 01147, 01148, 01149, 00037, 01155, 00273, 00277, 00278, 00280, 00284, 00285, 00297, 00500, 00871, 00819, 00813, 00920, but received '0114dd0'.",
+    );
+  });
+
+  const testCases: {
+    input: string;
+    toTest: (options: CompilerOptions) => unknown;
+    expected: unknown;
+  }[] = [
+    {
+      input: "AGGREGATE(DeCiMaL)",
+      toTest: (options) =>
+        (options.aggregate as CompilerOptions.Aggregate).offsets,
+      expected: "DECIMAL",
+    },
+    {
+      input: "ASSERT(entry)",
+      toTest: (options) => options.assert,
+      expected: "ENTRY",
+    },
+    {
+      input: "ATTRIBUTES(f)",
+      toTest: (options) => options.attributes?.identifiers,
+      expected: "FULL",
+    },
+    {
+      input: "CASE(asis)",
+      toTest: (options) => options.case,
+      expected: "ASIS",
+    },
+    {
+      input: "CASERULES(keyword(lower))",
+      toTest: (options) => options.caserules,
+      expected: "LOWER",
+    },
+    {
+      input: "CHECK(stg)",
+      toTest: (options) => options.check?.storage,
+      expected: "STORAGE",
+    },
+    { input: "CMPAT(v1)", toTest: (options) => options.cmpat, expected: "V1" },
+    {
+      input: "NOCOMPILE(e)",
+      toTest: (options) =>
+        (options.compile as CompilerOptions.Compile).severity,
+      expected: "ERROR",
+    },
+    {
+      input: "DECIMAL(checkfloat)",
+      toTest: (options) => options.decimal?.checkfloat,
+      expected: true,
+    },
+    {
+      input: "DEFAULT(aligned)",
+      toTest: (options) => options.default?.aligned,
+      expected: true,
+    },
+    {
+      input: "DEPRECATE(builtin(x))",
+      toTest: (options) => options.deprecate?.items,
+      expected: [{ type: "BUILTIN", value: "x" }],
+    },
+    {
+      input: "DISPLAY(wto(RoUTcDE(1)))",
+      toTest: (options) => options.display?.routcde,
+      expected: ["1"],
+    },
+    {
+      input: "EXTRN(short)",
+      toTest: (options) => options.extrn,
+      expected: "SHORT",
+    },
+    {
+      input: "FILEREF(hash)",
+      toTest: (options) => (options.fileRef as CompilerOptions.FileRef).hash,
+      expected: true,
+    },
+    { input: "FLAG(s)", toTest: (options) => options.flag, expected: "S" },
+    {
+      input: "FLOAT(dfp)",
+      toTest: (options) => (options.float as CompilerOptions.Float).dfp,
+      expected: true,
+    },
+    {
+      input: "FLOATINMATH(long)",
+      toTest: (options) =>
+        (options.floatInMath as CompilerOptions.FloatInMath).type,
+      expected: "LONG",
+    },
+  ];
+
+  for (const testCase of testCases) {
+    test(`Translates option with parameter case-insensitively: ${testCase.input}`, () => {
+      const parsed = parseAbstractCompilerOptions(testCase.input);
+      const options = translateCompilerOptions(parsed).options;
+      expect(testCase.toTest(options)).toEqual(testCase.expected);
+    });
+  }
 });

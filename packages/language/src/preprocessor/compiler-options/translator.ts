@@ -286,6 +286,7 @@ function plainTranslate(
     ensureArguments(option, 1, 1);
     const value = option.values[0];
     ensureType(value, "plain");
+    value.value = value.value.toUpperCase();
     if (values.length > 0 && !values.includes(value.value)) {
       throw new TranslationError(
         value.token,
@@ -305,7 +306,7 @@ translator.rule(
     const value = option.values[0];
     if (value) {
       ensureType(value, "plain");
-      const text = value.value;
+      const text = value.value.toUpperCase();
       if (text === "DECIMAL" || text === "HEXADEC") {
         options.aggregate = {
           offsets: text,
@@ -354,33 +355,45 @@ translator.rule(
 
 /** {@link CompilerOptions.attributes} */
 translator.rule(
-  ["ATTRIBUTES", "A", "NOATTRIBUTES", "NA"],
+  ["ATTRIBUTES", "A"],
   (option, options) => {
     ensureArguments(option, 0, 1);
-    const include = option.name.startsWith("A");
-    let identifiers: "FULL" | "SHORT" | undefined = undefined;
-    const value = option.values[0];
-    if (value) {
-      ensureType(value, "plain");
-      const text = value.value;
-      if (text === "F" || text === "FULL") {
-        identifiers = "FULL";
-      } else if (text === "S" || text === "SHORT") {
-        identifiers = "SHORT";
-      } else {
-        throw new TranslationError(
-          value.token,
-          "Invalid attribute value. Expected FULL or SHORT.",
-          1,
-        );
-      }
-    }
     options.attributes = {
-      include,
-      identifiers,
+      include: true,
+      identifiers: attributeIdentifiers(option),
+    };
+  },
+  ["NOATTRIBUTES", "NA"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    options.attributes = {
+      include: false,
+      identifiers: attributeIdentifiers(option) ?? undefined,
     };
   },
 );
+
+function attributeIdentifiers(
+  option: CompilerOption,
+): "FULL" | "SHORT" | undefined {
+  const value = option.values[0];
+  if (value) {
+    ensureType(value, "plain");
+    const text = value.value.toUpperCase();
+    if (text === "F" || text === "FULL") {
+      return "FULL";
+    } else if (text === "S" || text === "SHORT") {
+      return "SHORT";
+    } else {
+      throw new TranslationError(
+        value.token,
+        "Invalid attribute value. Expected FULL or SHORT.",
+        1,
+      );
+    }
+  }
+  return undefined;
+}
 
 /** {@link CompilerOptions.backreg} */
 translator.rule(
@@ -407,12 +420,24 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.blank} */
-translator.rule(
-  ["BLANK"],
-  stringTranslate((options, value) => {
-    options.blank = value.value;
-  }),
-);
+translator.rule(["BLANK"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "string");
+
+  // Test for every single character in the string.
+  // Not allowed: A-Z, 0-9, space, =, +, -, *, /, (, ),,, ., ', ", %, ;, :, &, |, <, >, _, ¬
+  const disallowedChars = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/i;
+  if (disallowedChars.test(value.value)) {
+    throw new TranslationError(
+      value.token,
+      "BLANK option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
+      1,
+    );
+  }
+
+  options.blank = value.value;
+});
 
 /** {@link CompilerOptions.blkoff} */
 translator.flag("blkoff", ["BLKOFF"], ["NOBLKOFF"]);
@@ -448,7 +473,7 @@ translator.rule(["CASERULES"], (option, options) => {
   ensureArguments(option, 1, 1);
   const keyword = option.values[0];
   ensureType(keyword, "option");
-  if (keyword.name !== "KEYWORD") {
+  if (keyword.name.toUpperCase() !== "KEYWORD") {
     throw new TranslationError(
       keyword.token,
       `Expected "KEYWORD" as compiler option value.`,
@@ -506,12 +531,46 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.codepage} */
-translator.rule(
-  ["CODEPAGE", "CP"],
-  plainTranslate((options, value) => {
-    options.codepage = value.value;
-  }),
-);
+translator.rule(["CODEPAGE", "CP"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  ensureType(option.values[0], "plain");
+  const validCodepages = [
+    "01047",
+    "01140",
+    "01141",
+    "01142",
+    "01143",
+    "01144",
+    "01025",
+    "01145",
+    "01146",
+    "01147",
+    "01148",
+    "01149",
+    "00037",
+    "01155",
+    "00273",
+    "00277",
+    "00278",
+    "00280",
+    "00284",
+    "00285",
+    "00297",
+    "00500",
+    "00871",
+    "00819",
+    "00813",
+    "00920",
+  ];
+  if (!validCodepages.includes(option.values[0].value)) {
+    throw new TranslationError(
+      option.values[0].token,
+      `Invalid codepage value. Expected one of ${validCodepages.join(", ")}, but received '${option.values[0].value}'.`,
+      1,
+    );
+  }
+  options.codepage = option.values[0].value;
+});
 
 /** {@link CompilerOptions.common} */
 translator.flag("common", ["COMMON"], ["NOCOMMON"]);
@@ -530,7 +589,7 @@ translator.rule(
     let sev: CompilerOptions.Compile["severity"] | undefined;
     if (severity) {
       ensureType(severity, "plain");
-      const value = severity.value;
+      const value = severity.value.toUpperCase();
       if (value === "S") {
         sev = "SEVERE";
       } else if (value === "W") {
@@ -619,7 +678,8 @@ translator.rule(
     options.dbrmlib = dataSetName.value;
   },
   ["NODBRMLIB"],
-  (_, options) => {
+  (option, options) => {
+    ensureArguments(option, 0, 0);
     options.dbrmlib = false;
   },
 );
@@ -665,7 +725,7 @@ translator.rule(["DECIMAL", "DEC"], (option, options) => {
   options.decimal = {};
   for (const opt of option.values) {
     ensureType(opt, "plain");
-    const value = opt.value;
+    const value = opt.value.toUpperCase();
     switch (value) {
       case "CHECKFLOAT":
         options.decimal.checkfloat = true;
@@ -733,7 +793,7 @@ translator.rule(["DEFAULT", "DFT"], (option, options) => {
   const def: CompilerOptions.Default = (options.default = {});
   for (const opt of option.values) {
     if (opt.kind === SyntaxKind.CompilerOptionText) {
-      const val = opt.value;
+      const val = opt.value.toUpperCase();
       switch (val) {
         case "ALIGNED":
           def.aligned = true;
@@ -872,6 +932,52 @@ translator.rule(["DEFAULT", "DFT"], (option, options) => {
             1,
           );
       }
+    } else if (opt.kind === SyntaxKind.CompilerOption) {
+      ensureArguments(opt, 1, 1);
+      ensureType(opt.values[0], "plain");
+      const value = opt.values[0].value.toUpperCase();
+      switch (opt.name) {
+        case "RETURNS":
+          // Diagram specifies that no option inside the parenthesesis valid. Default is BYADDR.
+          if (value === "" || value === "BYADDR") {
+            def.returns = { type: "BYADDR" };
+          } else if (value === "BYVALUE") {
+            def.returns = { type: "BYVALUE" };
+          } else {
+            throw new TranslationError(
+              opt.values[0].token,
+              `Invalid default option value: ${opt.values[0].value}`,
+              1,
+            );
+          }
+          break;
+        case "SHORT":
+          // Diagram specifies that no option inside the parentheses is valid. Default is HEXADEC.
+          if (value === "" || value === "HEXADEC") {
+            def.short = { format: "HEXADEC" };
+          } else if (value === "IEEE") {
+            def.short = { format: "IEEE" };
+          } else {
+            throw new TranslationError(
+              opt.values[0].token,
+              `Invalid default option value: ${opt.values[0].value}`,
+              1,
+            );
+          }
+          break;
+        default:
+          throw new TranslationError(
+            opt.values[0].token,
+            `Invalid default option value: ${opt.values[0].value}`,
+            1,
+          );
+      }
+    } else {
+      throw new TranslationError(
+        opt.token,
+        `Invalid default option value: ${opt.value}`,
+        1,
+      );
     }
   }
 });
@@ -882,9 +988,8 @@ translator.rule(["DEPRECATE", "DEPRECATENEXT"], (option, options) => {
   const items: CompilerOptions.DeprecateItem[] = [];
   for (const opt of option.values) {
     ensureType(opt, "option");
-    if (
-      !["BUILTIN", "ENTRY", "INCLUDE", "STMT", "VARIABLE"].includes(opt.name)
-    ) {
+    const name = opt.name.toUpperCase();
+    if (!["BUILTIN", "ENTRY", "INCLUDE", "STMT", "VARIABLE"].includes(name)) {
       throw new TranslationError(
         opt.token,
         `Invalid DEPRECATE option. Expected one of BUILTIN, ENTRY, INCLUDE, STMT or VARIABLE, but received '${opt.name}'`,
@@ -895,7 +1000,7 @@ translator.rule(["DEPRECATE", "DEPRECATENEXT"], (option, options) => {
     const optionValue = opt.values[0];
     ensureType(optionValue, "plain");
     items.push({
-      type: opt.name as CompilerOptions.DeprecateItem["type"],
+      type: name as CompilerOptions.DeprecateItem["type"],
       value: optionValue.value,
     });
   }
@@ -912,9 +1017,10 @@ translator.rule(["DISPLAY"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   if (value.kind === SyntaxKind.CompilerOptionText) {
-    if (value.value === "STD") {
+    const text = value.value.toUpperCase();
+    if (text === "STD") {
       display.std = true;
-    } else if (value.value === "WTO") {
+    } else if (text === "WTO") {
       display.wto = true;
     } else {
       throw new TranslationError(
@@ -924,7 +1030,7 @@ translator.rule(["DISPLAY"], (option, options) => {
       );
     }
   } else if (value.kind === SyntaxKind.CompilerOption) {
-    if (value.name !== "WTO") {
+    if (value.name.toUpperCase() !== "WTO") {
       throw new TranslationError(
         value.token,
         `Invalid display option. Expected WTO, but received '${value.name}'.`,
@@ -939,11 +1045,12 @@ translator.rule(["DISPLAY"], (option, options) => {
         ensureType(param, "plain");
         parameters.push(param.value);
       }
-      if (opt.name === "ROUTCDE") {
+      const name = opt.name.toUpperCase();
+      if (name === "ROUTCDE") {
         display.routcde = parameters;
-      } else if (opt.name === "DESC") {
+      } else if (name === "DESC") {
         display.desc = parameters;
-      } else if (opt.name === "REPLY") {
+      } else if (name === "REPLY") {
         display.reply = parameters;
       } else {
         throw new TranslationError(
@@ -1028,7 +1135,7 @@ translator.rule(["FLAG", "F"], (option, options) => {
   const value = option.values[0];
   if (value) {
     ensureType(value, "plain");
-    const flag = value.value;
+    const flag = value.value.toUpperCase();
     if (flag === "S" || flag === "E" || flag === "I" || flag === "W") {
       options.flag = flag;
     } else {
@@ -1111,16 +1218,30 @@ translator.rule(
     const c = option.values[2];
     ensureType(m, "plain");
     ensureType(n, "plain");
+    // Default values for the margins are 2, 72.
+    const mValue: number = m.value === "" ? 2 : Number(m.value);
+    const nValue: number = n.value === "" ? 72 : Number(n.value);
     let cValue: string | undefined = undefined;
+    if (isNaN(mValue)) {
+      throw new TranslationError(m.token, "Expected a number.", 1);
+    }
+    if (isNaN(nValue)) {
+      throw new TranslationError(n.token, "Expected a number.", 1);
+    }
+    if (mValue >= nValue) {
+      throw new TranslationError(
+        option.token,
+        "Left margin must be smaller than right margin.",
+        1,
+      );
+    }
     if (c) {
       ensureType(c, "plain");
       cValue = c.value;
     }
-    const start = m.value ? Number(m.value) : NaN;
-    const end = n.value ? Number(n.value) : NaN;
     options.margins = {
-      m: start,
-      n: end,
+      m: mValue,
+      n: nValue,
       c: cValue,
     };
   },

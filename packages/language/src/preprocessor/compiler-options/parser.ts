@@ -158,7 +158,15 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
           };
         });
         this.OPTION2(() => {
-          const firstValue = this.SUBRULE1(this.compilerValue);
+          let firstValue: CompilerOptionValue = {
+            container: element,
+            kind: SyntaxKind.CompilerOptionText,
+            token: this.LA(1),
+            value: "",
+          };
+          this.OPTION3(() => {
+            firstValue = this.SUBRULE1(this.compilerValue);
+          });
           this.ACTION(() => {
             firstValue.container = element;
           });
