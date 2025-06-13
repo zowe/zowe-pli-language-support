@@ -82,7 +82,7 @@ function getCompletionItemElements(token: Token | undefined, offset: number) {
     query: token.image.substring(0, offset - token.startOffset),
     range: {
       start: token.startOffset,
-      end: token.endOffset + 1,
+      end: token.endOffset,
     },
   };
 }
