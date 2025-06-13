@@ -9,10 +9,10 @@ completion.expectAt(1, {
     "B",
     "C",
     "D",
-    ...constants.StatementStartCompletionKeywords.values().map(
+    ...constants.CompletionKeywords.StatementStart.values().map(
       (keyword) => keyword.label,
     ),
-    ...constants.StatementStartPreprocessorCompletionKeywords.values().map(
+    ...constants.CompletionKeywords.StatementStartPreprocessor.values().map(
       (keyword) => keyword.label,
     ),
   ],

@@ -1,7 +1,4 @@
-import {
-  StatementStartCompletionKeywords,
-  StatementStartPreprocessorCompletionKeywords,
-} from "../../src/language-server/completion/keywords";
+import { CompletionKeywords } from "../../src/language-server/completion/keywords";
 import { PLICodes } from "../../src/validation/messages";
 import { ExpectedCompletion } from "../test-builder";
 
@@ -46,7 +43,6 @@ export interface HarnessTesterInterface {
   };
 
   constants: {
-    StatementStartCompletionKeywords: typeof StatementStartCompletionKeywords;
-    StatementStartPreprocessorCompletionKeywords: typeof StatementStartPreprocessorCompletionKeywords;
+    CompletionKeywords: typeof CompletionKeywords;
   };
 }
