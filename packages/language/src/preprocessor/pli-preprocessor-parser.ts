@@ -1392,6 +1392,14 @@ function resolveIncludeFileUri(
         if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
           // match found in this lib, take it
           return libFileUri;
+        } else {
+          // Perform additional lookup using the new glob method
+          const patt = `${libFileUri.path}\\.*`;
+          const matches = FileSystemProviderInstance.findFilesByGlobSync(patt);
+          if (matches.length > 0) {
+            // Return the first match found
+            return URI.file(matches[0]);
+          }
         }
       }
     }

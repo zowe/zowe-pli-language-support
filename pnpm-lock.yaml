@@ -154,6 +154,9 @@ importers:
       browserify-fs:
         specifier: ^1.0.0
         version: 1.0.0
+      glob:
+        specifier: ^11.0.2
+        version: 11.0.2
       langium:
         specifier: ~3.4.0
         version: 3.4.0
@@ -1614,8 +1617,8 @@ packages:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
     hasBin: true
 
-  glob@11.0.0:
-    resolution: {integrity: sha512-9UiX/Bl6J2yaBbxKoEBRm4Cipxgok8kQYcOPEhScPwebu2I0HoQOuYdIO6S3hLuWoZgpDpwQZMzTFxgpkyT76g==}
+  glob@11.0.2:
+    resolution: {integrity: sha512-YT7U7Vye+t5fZ/QMkBFrTJ7ZQxInIUjwyAjVj84CYXqgBdv30MFUPGnBR6sQaVq6Is15wYJUsnzTuWaGRBhBAQ==}
     engines: {node: 20 || >=22}
     hasBin: true
 
@@ -4024,7 +4027,7 @@ snapshots:
       cockatiel: 3.2.1
       commander: 6.2.1
       form-data: 4.0.1
-      glob: 11.0.0
+      glob: 11.0.2
       hosted-git-info: 4.1.0
       jsonc-parser: 3.3.1
       leven: 3.1.0
@@ -4514,7 +4517,7 @@ snapshots:
       package-json-from-dist: 1.0.1
       path-scurry: 1.11.1
 
-  glob@11.0.0:
+  glob@11.0.2:
     dependencies:
       foreground-child: 3.3.0
       jackspeak: 4.0.2

@@ -5,3 +5,5 @@
  VARC = 3;
  %INCLUDE LIB;
  LIBREF = 44;
+ %INCLUDE LIB2; // resolves w/out extension
+ ABC = 24;

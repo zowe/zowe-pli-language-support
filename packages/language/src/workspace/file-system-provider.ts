@@ -15,6 +15,15 @@ export interface FileSystemProvider {
   readFileSync(uri: URI): string | undefined;
   fileExistsSync(uri: URI): boolean;
   writeFileSync(uri: URI, value: string): void;
+
+  /**
+   * Synchronously find files matching a glob pattern
+   * (used for lib lookups where `%INCLUDE ABC` could be `cpy/ABC` or `cpy/ABC.xyz`, among others)
+   *
+   * @param pattern - The glob pattern to search for.
+   * @returns Array of file paths that match, if any
+   */
+  findFilesByGlobSync(pattern: string): string[];
 }
 
 /**
@@ -31,6 +40,10 @@ class _EmptyFileSystemProvider implements FileSystemProvider {
 
   writeFileSync(_uri: URI, _value: string): void {
     return;
+  }
+
+  findFilesByGlobSync(_pattern: string): string[] {
+    return [];
   }
 }
 
@@ -68,6 +81,14 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    */
   fileExistsSync(uri: URI): boolean {
     return this.files.has(uri.path);
+  }
+
+  /**
+   * Simulates a glob lookup in the virtual file system
+   */
+  findFilesByGlobSync(pattern: string): string[] {
+    const regex = new RegExp(pattern.replace(/\*/g, ".*"));
+    return Array.from(this.files.keys()).filter((fp) => regex.test(fp));
   }
 }
 
