@@ -191,6 +191,7 @@ export class PliPreprocessorParser {
       case PreprocessorTokens.Skip.tokenTypeIdx:
         unit = this.skipStatement(state);
         break;
+      case PreprocessorTokens.XInclude.tokenTypeIdx:
       case PreprocessorTokens.Include.tokenTypeIdx:
         unit = this.includeStatement(state);
         break;
@@ -454,11 +455,21 @@ export class PliPreprocessorParser {
 
   includeStatement(state: PreprocessorParserState): ast.IncludeDirective {
     const directive = ast.createIncludeDirective();
-    state.consume(
-      directive,
-      CstNodeKind.IncludeDirective_INCLUDE,
-      PreprocessorTokens.Include,
-    );
+    let xinclude = false;
+    if (
+      !state.tryConsume(
+        directive,
+        CstNodeKind.IncludeDirective_INCLUDE,
+        PreprocessorTokens.Include,
+      )
+    ) {
+      state.consume(
+        directive,
+        CstNodeKind.IncludeDirective_INCLUDE,
+        PreprocessorTokens.XInclude,
+      );
+      xinclude = true;
+    }
     while (true) {
       const item = ast.createIncludeItem();
       if (state.canConsume(PreprocessorTokens.Id)) {
@@ -527,12 +538,17 @@ export class PliPreprocessorParser {
         continue;
       }
 
+      if (xinclude && state.hasInclude(uri)) {
+        continue;
+      }
+
       // attempt to resolve this file
       try {
         const content =
           TextDocuments.get(uri)?.getText() ??
           FileSystemProviderInstance.readFileSync(uri) ??
           "";
+        state.addInclude(uri);
         const subState = this.initializeState(content, uri);
         const subProgram = this.start(subState);
         // Ensure that we store the tokens of included files in our state

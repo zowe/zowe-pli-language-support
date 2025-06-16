@@ -63,6 +63,8 @@ export interface PreprocessorParserState {
   pop(): void;
   isOnlyInStatement(): boolean;
   isInProcedure(): boolean;
+  addInclude(uri: URI): void;
+  hasInclude(uri: URI): boolean;
 }
 
 export class PliPreprocessorParserState implements PreprocessorParserState {
@@ -73,6 +75,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   public index: number;
   public uri: URI;
   private location: ParserLocation[] = [];
+  private includes: Set<string> = new Set();
 
   constructor(lexer: PliPreprocessorLexer, text: string, uri: URI) {
     this.lexer = lexer;
@@ -257,5 +260,13 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       );
     }
     return this.consume(element, kind, tokenType);
+  }
+
+  addInclude(uri: URI): void {
+    this.includes.add(uri.toString());
+  }
+
+  hasInclude(uri: URI): boolean {
+    return this.includes.has(uri.toString());
   }
 }

@@ -176,6 +176,42 @@ describe("PL/1 Includes without Plugin Config", () => {
       ";:;",
     ]);
   });
+
+  test("Should include only once with 2 XINCLUDE statements", () => {
+    expect(
+      tokenize(`
+            %XINCLUDE "/test/payroll.pli";
+            %XINCLUDE "/test/payroll.pli";
+        `),
+    ).toStrictEqual(["DECLARE:DECLARE", "PAYROLL:ID", "FIXED:FIXED", ";:;"]);
+  });
+
+  test("Should include twice with INCLUDE after XINCLUDE", () => {
+    expect(
+      tokenize(`
+            %XINCLUDE "/test/payroll.pli";
+            %INCLUDE "/test/payroll.pli";
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "PAYROLL:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "DECLARE:DECLARE",
+      "PAYROLL:ID",
+      "FIXED:FIXED",
+      ";:;",
+    ]);
+  });
+
+  test("Should include once with XINCLUDE after INCLUDE", () => {
+    expect(
+      tokenize(`
+            %INCLUDE "/test/payroll.pli";
+            %XINCLUDE "/test/payroll.pli";
+        `),
+    ).toStrictEqual(["DECLARE:DECLARE", "PAYROLL:ID", "FIXED:FIXED", ";:;"]);
+  });
 });
 
 describe("PL/1 Includes with Plugin Config", () => {

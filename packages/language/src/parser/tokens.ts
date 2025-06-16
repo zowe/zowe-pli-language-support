@@ -769,9 +769,14 @@ export const DOWNTHRU = createToken({
   categories: [ID],
   longer_alt: ID,
 });
+export const XINCLUDE = createToken({
+  name: "XINCLUDE",
+  pattern: /XINCLUDE/iy,
+  categories: [ID],
+});
 export const INCLUDE = createToken({
   name: "INCLUDE",
-  pattern: /X?INCLUDE/iy,
+  pattern: /INCLUDE/iy,
   categories: [ID],
 });
 export const NOPRINT = createToken({
@@ -2325,6 +2330,7 @@ export const keywords = [
   VARYINGZ,
   DOWNTHRU,
   RESIGNAL,
+  XINCLUDE,
   INCLUDE,
   NOPRINT,
   OVERFLOW,
