@@ -20,6 +20,7 @@ import { LanguageClient, TransportKind } from "vscode-languageclient/node.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Settings } from "./settings";
 import { registerCustomDecorators } from "./decorators";
+import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -184,7 +185,7 @@ function watchPlipluginFolder(
 
   const watcher = fs.watch(plipluginPath, (_eventType, filename) => {
     if (filename === "pgm_conf.json" || filename === "proc_grps.json") {
-      client.sendNotification("workspace/didChangePlipluginConfig");
+      client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
     }
   });
 
