@@ -16,7 +16,7 @@ const createSimpleCompletionItemCreator =
     return {
       ...properties,
       label: options.trim ? label.trim() : label,
-      text: options.trim ? text.trim() : text,
+      text
     };
   };
 
