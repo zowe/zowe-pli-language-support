@@ -55,8 +55,14 @@ export class CompilerOptionsProcessor {
     }
 
     // Retrieve compiler options from the plugin configuration provider
-    const programConfig = PluginConfigurationProviderInstance.getProgramConfig(uri.toString());
-    const processGroupConfig = programConfig ? PluginConfigurationProviderInstance.getProcessGroupConfig(programConfig.pgroup) : undefined;
+    const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
+      uri.toString(),
+    );
+    const processGroupConfig = programConfig
+      ? PluginConfigurationProviderInstance.getProcessGroupConfig(
+          programConfig.pgroup,
+        )
+      : undefined;
 
     let mergedAbstractOptions: AbstractCompilerOptions | undefined = undefined;
     if (processGroupConfig?.abstractOptions) {
