@@ -122,4 +122,14 @@ describe("Semantic Tokens", () => {
 
     expectSemanticTokens(code);
   });
+
+  test("should highlight function calls", () => {
+    const code = `
+ <|function:EXAMPLE|>: PROC;
+   DCL <|variable:X|> FIXED;
+   <|variable:X|> = <|function:EXAMPLE|>(5);
+ END <|function:EXAMPLE|>;`;
+
+    expectSemanticTokens(code);
+  });
 });

@@ -642,7 +642,7 @@ export type InitialAttributeSpecificationIteration =
   | InitialAttributeItemStar
   | InitialAttributeSpecificationIterationValue;
 export type LiteralValue = NumberLiteral | StringLiteral;
-export type NamedElement = DeclaredVariable | OrdinalValue | ProcedureStatement;
+export type NamedElement = DeclaredVariable | OrdinalValue | LabelPrefix;
 export type NamedType = DefineAliasStatement;
 export type OptionsItem =
   | CMPATOptionsItem

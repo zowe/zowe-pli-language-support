@@ -1797,6 +1797,7 @@ export const POP = createToken({
   name: "POP",
   pattern: /POP/iy,
   categories: [ID],
+  longer_alt: ID,
 });
 export const DATA = createToken({
   name: "DATA",
