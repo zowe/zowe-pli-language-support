@@ -31,6 +31,12 @@ import { completionRequest } from "./completion/completion-request";
 import { BuiltinsTextDocument } from "../workspace/builtins";
 import { BuiltinDocuments, TextDocuments } from "./text-documents";
 
+/**
+ * Notification sent to the LS when the workspace's plugin configuration changes.
+ */
+export const WorkspaceDidChangePlipluginConfigNotification =
+  "workspace/didChangePlipluginConfig";
+
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
   compilationUnitHandler.listen(connection);
@@ -220,5 +226,12 @@ export function startLanguageServer(connection: Connection): void {
       compilationUnitHandler.getAllCompilationUnits(),
     );
   });
+  connection.onNotification(
+    WorkspaceDidChangePlipluginConfigNotification,
+    () => {
+      // handle changes to the .pliplugin config folder's contents
+      PluginConfigurationProviderInstance.reloadConfigurations();
+    },
+  );
   connection.listen();
 }

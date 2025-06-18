@@ -271,6 +271,11 @@ export interface AbstractCompilerOptions {
   issues: CompilerOptionIssue[];
 }
 
+/**
+ * Parses a string containing PL/I compiler options to generate an abstract opts object, ready for translation
+ * @param input String containing the compiler options to parse.
+ * @param offset Offset to apply to the input string, to preserve the original positions of tokens for diagnostics
+ */
 export function parseAbstractCompilerOptions(
   input: string,
   offset?: number,

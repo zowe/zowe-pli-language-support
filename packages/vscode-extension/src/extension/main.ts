@@ -20,6 +20,7 @@ import { LanguageClient, TransportKind } from "vscode-languageclient/node.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Settings } from "./settings";
 import { registerCustomDecorators } from "./decorators";
+import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -30,6 +31,11 @@ export function activate(context: vscode.ExtensionContext): void {
   settings = Settings.getInstance();
   client = startLanguageClient(context);
   context.subscriptions.push(registerOnDidOpenTextDocListener());
+
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (workspaceFolder) {
+    watchPlipluginFolder(client, workspaceFolder, context);
+  }
 }
 
 /**
@@ -160,4 +166,50 @@ function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
   // Start the client. This will also launch the server
   client.start();
   return client;
+}
+
+/**
+ * Watches the .pliplugin folder for changes to pgm_conf.json and proc_grps.json files.
+ * Sends a notification to the LS when changes are detected
+ */
+function watchPlipluginFolder(
+  client: LanguageClient,
+  workspaceFolder: string,
+  context: vscode.ExtensionContext,
+): void {
+  const folderPattern = new vscode.RelativePattern(
+    workspaceFolder,
+    ".pliplugin",
+  );
+  const filePattern = new vscode.RelativePattern(
+    workspaceFolder,
+    ".pliplugin/*.json",
+  );
+
+  const folderWatcher = vscode.workspace.createFileSystemWatcher(folderPattern);
+  const fileWatcher = vscode.workspace.createFileSystemWatcher(filePattern);
+
+  // watch for folder create/delete events
+  folderWatcher.onDidCreate(() => {
+    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+  });
+
+  folderWatcher.onDidDelete(() => {
+    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+  });
+
+  // watch for file create/update/delete events
+  fileWatcher.onDidChange(() => {
+    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+  });
+
+  fileWatcher.onDidCreate(() => {
+    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+  });
+
+  fileWatcher.onDidDelete(() => {
+    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+  });
+
+  context.subscriptions.push(folderWatcher, fileWatcher);
 }

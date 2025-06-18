@@ -1,7 +1,8 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test, afterAll } from "vitest";
 import { PliLexer } from "../../src/preprocessor/pli-lexer";
 import { URI } from "../../src/utils/uri";
 import { createCompilationUnit } from "../../src/workspace/compilation-unit";
+import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
 
 type TokenizeFunction = (text: string) => string[];
 
@@ -662,5 +663,105 @@ describe("PL/1 Lexer", () => {
       // A4 WHEN (FIXED, FIXED, FIXED, FIXED),
       // A5 WHEN (FIXED, FIXED, FIXED, FIXED, FIXED));
     ]);
+  });
+
+  describe("Compiler Options", () => {
+    afterAll(() => {
+      // Reset the plugin configuration state
+      PluginConfigurationProviderInstance.setProgramConfigs("", []);
+      PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+    });
+
+    test("Inject process group compiler options after *PROCESS directive", async () => {
+      const lexer = new PliLexer();
+      const uri = URI.file("/test/test.pli");
+      const inputText = `*PROCESS ARCH(10);
+      DCL A fixed bin(31);`;
+
+      const programConfig = {
+        program: "test.pli",
+        pgroup: "testGroup",
+      };
+      const processGroupConfig = {
+        name: "testGroup",
+        "compiler-options": ["ASSERT(ENTRY)"],
+      };
+
+      await PluginConfigurationProviderInstance.init("/test");
+      PluginConfigurationProviderInstance.setProgramConfigs("/test", [
+        programConfig,
+      ]);
+      PluginConfigurationProviderInstance.setProcessGroupConfigs([
+        processGroupConfig,
+      ]);
+
+      const { compilerOptions } = lexer.tokenize(
+        createCompilationUnit(uri),
+        inputText,
+        uri,
+      );
+
+      expect(compilerOptions.result?.options.arch).toBeDefined();
+      expect(compilerOptions.result?.options.assert).toBeDefined();
+      expect(compilerOptions.result?.options.assert).toBe("ENTRY");
+    });
+
+    test("Missing process group configuration is OK", async () => {
+      const lexer = new PliLexer();
+      const uri = URI.file("/test/test.pli");
+      const inputText = `*PROCESS ARCH(10);
+      DCL A fixed bin(31);`;
+
+      const programConfig = {
+        program: "test.pli",
+        pgroup: "missingGroup",
+      };
+
+      await PluginConfigurationProviderInstance.init("/test");
+      PluginConfigurationProviderInstance.setProgramConfigs("/test", [
+        programConfig,
+      ]);
+
+      const { compilerOptions } = lexer.tokenize(
+        createCompilationUnit(uri),
+        inputText,
+        uri,
+      );
+
+      expect(compilerOptions.result?.options.arch).toBeDefined();
+    });
+
+    test("Inject compiler options when *PROCESS directive is absent", async () => {
+      const lexer = new PliLexer();
+      const uri = URI.file("/test/test.pli");
+      const inputText = " DCL A fixed bin(31);";
+
+      const programConfig = {
+        program: "test.pli",
+        pgroup: "testGroup",
+      };
+      const processGroupConfig = {
+        name: "testGroup",
+        "compiler-options": ["ASSERT(ENTRY)"],
+      };
+
+      await PluginConfigurationProviderInstance.init("/test");
+      PluginConfigurationProviderInstance.setProgramConfigs("/test", [
+        programConfig,
+      ]);
+      PluginConfigurationProviderInstance.setProcessGroupConfigs([
+        processGroupConfig,
+      ]);
+
+      const { compilerOptions } = lexer.tokenize(
+        createCompilationUnit(uri),
+        inputText,
+        uri,
+      );
+
+      expect(compilerOptions.result?.options.assert).toBeDefined();
+      expect(compilerOptions.result?.options.assert).toBe("ENTRY");
+      expect(compilerOptions.result?.options.arch).toBeUndefined();
+    });
   });
 });

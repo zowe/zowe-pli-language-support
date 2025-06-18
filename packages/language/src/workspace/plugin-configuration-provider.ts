@@ -11,6 +11,11 @@
 
 import { FileSystemProviderInstance } from "./file-system-provider";
 import { URI, UriUtils } from "../utils/uri";
+import {
+  AbstractCompilerOptions,
+  parseAbstractCompilerOptions,
+} from "../preprocessor/compiler-options/parser";
+import { translateCompilerOptions } from "../preprocessor/compiler-options/translator";
 
 /**
  * Plugin configuration provider for loading up '.pliplugin' (when it exists), processing its contents,
@@ -35,6 +40,13 @@ export interface ProcessGroup {
   "compiler-options"?: string[];
   libs?: string[];
   "copybook-extensions"?: string[];
+  abstractOptions?: AbstractCompilerOptions;
+
+  /**
+   * Number of issues found in the compiler options for this process group.
+   * Used to avoid duplicate issue reporting later on when running translation in a program context
+   */
+  issueCount?: number;
 }
 
 class PluginConfigurationProvider {
@@ -79,6 +91,19 @@ class PluginConfigurationProvider {
   }
 
   /**
+   * Reloads plugin configurations from the existing workspace path.
+   */
+  public reloadConfigurations(): void {
+    const plipluginPath = this.workspacePath + "/.pliplugin";
+    const programConfigPath = plipluginPath + "/pgm_conf.json";
+    const processGroupConfigPath = plipluginPath + "/proc_grps.json";
+
+    console.log("Reloading .pliplugin configurations...");
+    this.loadProgramConfig(programConfigPath, this.workspacePath);
+    this.loadProcessGroupConfig(processGroupConfigPath);
+  }
+
+  /**
    * Loads the program config from the given path, and sets it in our provider
    * @param programConfigPath Path to the program config file
    * @param workspacePath Used to set program configs in relation to our workspace path
@@ -102,6 +127,7 @@ class PluginConfigurationProvider {
           ).pgms;
           // set w/ respect to the cur workspace path
           this.setProgramConfigs(workspacePath, programConfigs);
+          return;
         } catch (e) {
           console.error("Failed to load program config, skipping:", e);
         }
@@ -109,6 +135,10 @@ class PluginConfigurationProvider {
         console.warn("No program config found.");
       }
     }
+
+    // clear otherwise, no valid program config to use
+    this.programConfigs.clear();
+    console.warn("No program config found, clearing existing configurations.");
   }
 
   /**
@@ -134,13 +164,47 @@ class PluginConfigurationProvider {
           const processGroupConfigs: ProcessGroup[] = JSON.parse(
             processGrpConfig.toString(),
           ).pgroups;
-
           this.setProcessGroupConfigs(processGroupConfigs);
+          this.postProcessGroupConfigs();
+          return;
         } catch (e) {
           console.error("Failed to load process group config, skipping:", e);
         }
       } else {
         console.warn("No process group config found.");
+      }
+    }
+
+    // clear otherwise, no valid PG to use
+    this.processGroupConfigs.clear();
+    console.warn(
+      "No process group config found, clearing existing configurations.",
+    );
+  }
+
+  /**
+   * Post-processes group configs after they've been loaded or set,
+   * updates abstractOptions & issue counts
+   */
+  private postProcessGroupConfigs() {
+    const processGroupConfigs = this.processGroupConfigs.values();
+    for (const config of processGroupConfigs) {
+      if (config["compiler-options"]?.length) {
+        const abstractOptions = parseAbstractCompilerOptions(
+          config["compiler-options"].join(" "),
+        );
+
+        const translatedOptions = translateCompilerOptions(abstractOptions);
+        for (const issue of [
+          ...translatedOptions.issues,
+          ...abstractOptions.issues,
+        ]) {
+          console.error(
+            `Error in compiler options for process group "${config.name}": ${issue.message}`,
+          );
+        }
+        config.abstractOptions = abstractOptions;
+        config.issueCount = translatedOptions.issues.length;
       }
     }
   }
@@ -171,6 +235,7 @@ class PluginConfigurationProvider {
     for (const config of processGroupConfigs) {
       this.processGroupConfigs.set(config.name, config);
     }
+    this.postProcessGroupConfigs();
   }
 
   /**
