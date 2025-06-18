@@ -17,7 +17,7 @@ import {
   SemanticTokensLegend,
   SemanticTokenTypes,
 } from "vscode-languageserver-types";
-import { SyntaxKind } from "../syntax-tree/ast";
+import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { Token, TokenPayload } from "../parser/tokens";
 
@@ -81,25 +81,41 @@ function tokenType(token: Token): string | undefined {
 }
 
 function isProcedureType(payload: TokenPayload): boolean {
+  const kind = payload.kind;
+  const element = payload.element;
   if (
-    payload.kind === CstNodeKind.LabelPrefix_Name &&
-    payload.element?.container?.kind === SyntaxKind.Statement &&
-    payload.element?.container.value?.kind === SyntaxKind.ProcedureStatement
+    kind === CstNodeKind.ReferenceItem_Ref &&
+    element?.kind === SyntaxKind.ReferenceItem
+  ) {
+    const ref = element.ref?.node;
+    return isProcedurePrefix(ref);
+  }
+  if (
+    kind === CstNodeKind.LabelPrefix_Name &&
+    isProcedurePrefix(payload.element)
   ) {
     return true;
   }
   if (
-    payload.kind === CstNodeKind.LabelReference_LabelRef &&
-    payload.element?.container?.kind === SyntaxKind.EndStatement &&
-    payload.element?.container.container?.kind === SyntaxKind.ProcedureStatement
+    kind === CstNodeKind.LabelReference_LabelRef &&
+    element?.container?.kind === SyntaxKind.EndStatement &&
+    element?.container.container?.kind === SyntaxKind.ProcedureStatement
   ) {
     return true;
   }
-  if (payload.kind === CstNodeKind.ProcedureCall_ProcedureRef) {
+  if (kind === CstNodeKind.ProcedureCall_ProcedureRef) {
     return true;
   }
 
   return false;
+}
+
+function isProcedurePrefix(node: SyntaxNode | null | undefined): boolean {
+  return (
+    node?.kind === SyntaxKind.LabelPrefix &&
+    node.container?.kind === SyntaxKind.Statement &&
+    node.container.value?.kind === SyntaxKind.ProcedureStatement
+  );
 }
 
 function isVariableType(payload: TokenPayload): boolean {

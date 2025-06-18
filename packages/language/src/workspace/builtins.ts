@@ -18,7 +18,7 @@ import { URI } from "../utils/uri";
 
 export const BuiltinsUriSchema = "pli-builtin";
 export const BuiltinsUri = `${BuiltinsUriSchema}:///builtins.pli`;
-export const Builtins = ` // Mathematical functions
+export const Builtins = ` /* Arithmetic built-in functions */
  ABS: PROC (value) RETURNS ();
  END;
 
@@ -76,7 +76,7 @@ export const Builtins = ` // Mathematical functions
  TRUNC: PROC (value) RETURNS ();
  END;
 
- // Array handling functions
+ /* Array handling functions */
  ALL: PROC (array) RETURNS ();
  END;
 
@@ -116,7 +116,7 @@ export const Builtins = ` // Mathematical functions
  SUM: PROC (array) RETURNS ();
  END;
 
- // Buffer management functions
+ /* Buffer management functions */
  COMPARE: PROC (buffer1, buffer2) RETURNS ();
  END;
 
@@ -208,7 +208,7 @@ export const Builtins = ` // Mathematical functions
  XMLUCHAR: PROC (buffer) RETURNS ();
  END;
 
- // Condition handling builtins
+ /* Condition handling builtins */
  DATAFIELD: PROC () RETURNS ();
  END;
  ONACTUAL: PROC () RETURNS ();
@@ -266,7 +266,7 @@ export const Builtins = ` // Mathematical functions
  ONWSOURCE: PROC () RETURNS ();
  END;
 
- // Date and time functions
+ /* Date and time functions */
  DATE: PROC () RETURNS ();
  END;
 
@@ -354,7 +354,7 @@ export const Builtins = ` // Mathematical functions
  Y4YEAR: PROC (date) RETURNS ();
  END;
 
- // Encoding and hashing functions
+ /* Encoding and hashing functions */
  BASE64DECODE: PROC (buffer) RETURNS ();
  END;
  BASE64DECODE8: PROC (buffer) RETURNS ();
@@ -397,8 +397,8 @@ export const Builtins = ` // Mathematical functions
  END;
  SHA3UPDATEx: PROC (buffer) RETURNS ();
  END;
- 
- // Floating point inquiry functions
+
+ /* Floating point inquiry functions */
  EPSILON: PROC () RETURNS ();
  END;
  HUGE: PROC () RETURNS ();
@@ -431,6 +431,320 @@ export const Builtins = ` // Mathematical functions
  END;
  SUCC: PROC (value) RETURNS ();
  END;
+
+ /* INPUT/OUTPUT functions */
+ COUNT: PROC (value) RETURNS (); END;
+ ENDFILE: PROC (value) RETURNS (); END;
+ FILEDDINT: PROC (value) RETURNS (); END;
+ FILEDDTEST: PROC (value) RETURNS (); END;
+ FILEDDWORD: PROC (value) RETURNS (); END;
+ FILEID: PROC (value) RETURNS (); END;
+ FILENEW: PROC (value) RETURNS (); END;
+ FILEOPEN: PROC (value) RETURNS (); END;
+ FILEREAD: PROC (value) RETURNS (); END;
+ FILESEEK: PROC (value) RETURNS (); END;
+ FILETELL: PROC (value) RETURNS (); END;
+ FILEWRITE: PROC (value) RETURNS (); END;
+ LINENO: PROC (value) RETURNS (); END;
+ ONSUBCODE: PROC (value) RETURNS (); END;
+ ONSUBCODE2: PROC (value) RETURNS (); END;
+ PAGENO: PROC (value) RETURNS (); END;
+ SAMEKEY: PROC (value) RETURNS (); END;
+
+ /* Integer manipulation built-in functions */
+ IAND: PROC (value) RETURNS (); END;
+ ICLZ: PROC (value) RETURNS (); END;
+ IEOR: PROC (value) RETURNS (); END;
+ INOT: PROC (value) RETURNS (); END;
+ IOR: PROC (value) RETURNS (); END;
+ ISIGNED: PROC (value) RETURNS (); END;
+ ISLL: PROC (value) RETURNS (); END;
+ ISRL: PROC (value) RETURNS (); END;
+ IUNSIGNED: PROC (value) RETURNS (); END;
+ LOWER2: PROC (value) RETURNS (); END;
+ RAISE2: PROC (value) RETURNS (); END;
+
+ /* JSON built-in functions */
+ JSONGETARRAYEND: PROC (value) RETURNS (); END;
+ JSONGETARRAYSTART: PROC (value) RETURNS (); END;
+ JSONGETCOLON: PROC (value) RETURNS (); END;
+ JSONGETCOMMA: PROC (value) RETURNS (); END;
+ JSONGETMEMBER: PROC (value) RETURNS (); END;
+ JSONGETOBJECTEND: PROC (value) RETURNS (); END;
+ JSONGETOBJECTSTART: PROC (value) RETURNS (); END;
+ JSONGETVALUE: PROC (value) RETURNS (); END;
+ JSONPUTARRAYEND: PROC (value) RETURNS (); END;
+ JSONPUTARRAYSTART: PROC (value) RETURNS (); END;
+ JSONPUTCOLON: PROC (value) RETURNS (); END;
+ JSONPUTCOMMA: PROC (value) RETURNS (); END;
+ JSONPUTMEMBER: PROC (value) RETURNS (); END;
+ JSONPUTOBJECTEND: PROC (value) RETURNS (); END;
+ JSONPUTOBJECTSTART: PROC (value) RETURNS (); END;
+ JSONPUTVALUE: PROC (value) RETURNS (); END;
+ JSONVALID: PROC (value) RETURNS (); END;
+
+ /* Mathematical built-in functions */
+ ACOS: PROC (value) RETURNS (); END;
+ ASIN: PROC (value) RETURNS (); END;
+ ATAN: PROC (value) RETURNS (); END;
+ ATAND: PROC (value) RETURNS (); END;
+ ATANH: PROC (value) RETURNS (); END;
+ COS: PROC (value) RETURNS (); END;
+ COSD: PROC (value) RETURNS (); END;
+ COSH: PROC (value) RETURNS (); END;
+ ERF: PROC (value) RETURNS (); END;
+ ERFC: PROC (value) RETURNS (); END;
+ EXP: PROC (value) RETURNS (); END;
+ GAMMA: PROC (value) RETURNS (); END;
+ LOG: PROC (value) RETURNS (); END;
+ LOG10: PROC (value) RETURNS (); END;
+ LOG2: PROC (value) RETURNS (); END;
+ LOGGAMMA: PROC (value) RETURNS (); END;
+ SIN: PROC (value) RETURNS (); END;
+ SIND: PROC (value) RETURNS (); END;
+ SINH: PROC (value) RETURNS (); END;
+ SQRT: PROC (value) RETURNS (); END;
+ SQRTF: PROC (value) RETURNS (); END;
+ TAN: PROC (value) RETURNS (); END;
+ TAND: PROC (value) RETURNS (); END;
+ TANH: PROC (value) RETURNS (); END;
+
+ /* Miscellaneous built-in functions */
+ ALLCOMPARE: PROC (value) RETURNS (); END;
+ BETWEEN: PROC (value) RETURNS (); END;
+ BETWEENEXCLUSIVE: PROC (value) RETURNS (); END;
+ BETWEENLEFTEXCLUSIVE: PROC (value) RETURNS (); END;
+ BETWEENRIGHTEXCLUSIVE: PROC (value) RETURNS (); END;
+ BINSEARCH: PROC (value) RETURNS (); END;
+ BINSEARCHX: PROC (value) RETURNS (); END;
+ BYTE: PROC (value) RETURNS (); END;
+ BYTELENGTH: PROC (value) RETURNS (); END;
+ CDS: PROC (value) RETURNS (); END;
+ CHARVAL: PROC (value) RETURNS (); END;
+ CODEPAGE: PROC (value) RETURNS (); END;
+ COLLATE: PROC (value) RETURNS (); END;
+ CS: PROC (value) RETURNS (); END;
+ FOLDEDFULLMATCH: PROC (value) RETURNS (); END;
+ FOLDEDSIMPLEMATCH: PROC (value) RETURNS (); END;
+ GETENV: PROC (value) RETURNS (); END;
+ GETJCLSYMBOL: PROC (value) RETURNS (); END;
+ GETSYSINT: PROC (value) RETURNS (); END;
+ GETSYSWORD: PROC (value) RETURNS (); END;
+ GTCA: PROC (value) RETURNS (); END;
+ HEX: PROC (value) RETURNS (); END;
+ HEX8: PROC (value) RETURNS (); END;
+ IFTHENELSE: PROC (value) RETURNS (); END;
+ INDICATORS: PROC (value) RETURNS (); END;
+ INLIST: PROC (value) RETURNS (); END;
+ ISJCLSYMBOL: PROC (value) RETURNS (); END;
+ ISMAIN: PROC (value) RETURNS (); END;
+ MAINNAME: PROC (value) RETURNS (); END;
+ OMITTED: PROC (value) RETURNS (); END;
+ PACKAGENAME: PROC (value) RETURNS (); END;
+ PLIRETV: PROC (value) RETURNS (); END;
+ POPCNT: PROC (value) RETURNS (); END;
+ PRESENT: PROC (value) RETURNS (); END;
+ PROCEDURENAME: PROC (value) RETURNS (); END;
+ PUTENV: PROC (value) RETURNS (); END;
+ RANK: PROC (value) RETURNS (); END;
+ SOURCEFILE: PROC (value) RETURNS (); END;
+ SOURCELINE: PROC (value) RETURNS (); END;
+ STACKADDR: PROC (value) RETURNS (); END;
+ STRING: PROC (value) RETURNS (); END;
+ SYSTEM: PROC (value) RETURNS (); END;
+ THREADID: PROC (value) RETURNS (); END;
+ UNHEX: PROC (value) RETURNS (); END;
+ UNSPEC: PROC (value) RETURNS (); END;
+ UUID: PROC (value) RETURNS (); END;
+ UUID4: PROC (value) RETURNS (); END;
+ VALID: PROC (value) RETURNS (); END;
+ VALIDVALUE: PROC (value) RETURNS (); END;
+ WCHARVAL: PROC (value) RETURNS (); END;
+
+ /* Ordinal-handling built-in functions */
+ ORDINALNAME: PROC (value) RETURNS (); END;
+ ORDINALPRED: PROC (value) RETURNS (); END;
+ ORDINALSUCC: PROC (value) RETURNS (); END;
+
+ /* Precision-handling built-in functions */
+ ADD: PROC (value) RETURNS (); END;
+ BINARY: PROC (value) RETURNS (); END;
+ DECIMAL: PROC (value) RETURNS (); END;
+ DIVIDE: PROC (value) RETURNS (); END;
+ FIXED: PROC (value) RETURNS (); END;
+ FIXEDBIN: PROC (value) RETURNS (); END;
+ FIXEDDEC: PROC (value) RETURNS (); END;
+ FLOAT: PROC (value) RETURNS (); END;
+ FLOATBIN: PROC (value) RETURNS (); END;
+ FLOATDEC: PROC (value) RETURNS (); END;
+ MULTIPLY: PROC (value) RETURNS (); END;
+ PRECVAL: PROC (value) RETURNS (); END;
+ PRECISION: PROC (value) RETURNS (); END;
+ SCALEVAL: PROC (value) RETURNS (); END;
+ SIGNED: PROC (value) RETURNS (); END;
+ SUBTRACT: PROC (value) RETURNS (); END;
+ UNSIGNED: PROC (value) RETURNS (); END;
+
+ /* Pseudovariables: THESE ARE ALREADY DEFINED IN OTHER PLACES */
+ /* ENTRYADDR: PROC (value) RETURNS (); END;
+ IMAG: PROC (value) RETURNS (); END;
+ ONCHAR: PROC (value) RETURNS (); END;
+ ONGSOURCE: PROC (value) RETURNS (); END;
+ ONSOURCE: PROC (value) RETURNS (); END;
+ REAL: PROC (value) RETURNS (); END;
+ STRING: PROC (value) RETURNS (); END;
+ SUBSTR: PROC (value) RETURNS (); END;
+ SUBTO: PROC (value) RETURNS (); END;
+ ONUCHAR: PROC (value) RETURNS (); END;
+ ONUSOURCE: PROC (value) RETURNS (); END;
+ ONWCHAR: PROC (value) RETURNS (); END;
+ ONWSOURCE: PROC (value) RETURNS (); END;
+ TYPE: PROC (value) RETURNS (); END;
+ UNSPEC: PROC (value) RETURNS (); END; */
+
+ /* Storage control built-in functions */
+ ADDR: PROC (value) RETURNS (); END;
+ ADDRDATA: PROC (value) RETURNS (); END;
+ ALLOC31: PROC (value) RETURNS (); END;
+ ALLOCATE: PROC (value) RETURNS (); END;
+ ALLOCATION: PROC (value) RETURNS (); END;
+ ALLOCNEXT: PROC (value) RETURNS (); END;
+ ALLOCSIZE: PROC (value) RETURNS (); END;
+ AUTOMATIC: PROC (value) RETURNS (); END;
+ AVAILABLEAREA: PROC (value) RETURNS (); END;
+ BINARYVALUE: PROC (value) RETURNS (); END;
+ BITLOCATION: PROC (value) RETURNS (); END;
+ CHECKSTG: PROC (value) RETURNS (); END;
+ CURRENTSIZE: PROC (value) RETURNS (); END;
+ CURRENTSTORAGE: PROC (value) RETURNS (); END;
+ EMPTY: PROC (value) RETURNS (); END;
+ ENTRYADDR: PROC (value) RETURNS (); END;
+ HANDLE: PROC (value) RETURNS (); END;
+ LOCATION: PROC (value) RETURNS (); END;
+ LOCSTG: PROC (value) RETURNS (); END;
+ LOCVAL: PROC (value) RETURNS (); END;
+ NULL: PROC (value) RETURNS (); END;
+ NULLENTRY: PROC (value) RETURNS (); END;
+ OFFSET: PROC (value) RETURNS (); END;
+ OFFSETADD: PROC (value) RETURNS (); END;
+ OFFSETDIFF: PROC (value) RETURNS (); END;
+ OFFSETSUBTRACT: PROC (value) RETURNS (); END;
+ OFFSETVALUE: PROC (value) RETURNS (); END;
+ POINTER: PROC (value) RETURNS (); END;
+ POINTERADD: PROC (value) RETURNS (); END;
+ POINTERDIFF: PROC (value) RETURNS (); END;
+ POINTERSUBTRACT: PROC (value) RETURNS (); END;
+ POINTERVALUE: PROC (value) RETURNS (); END;
+ SIZE: PROC (value) RETURNS (); END;
+ STORAGE: PROC (value) RETURNS (); END;
+ /* Only available if declared explicitly */
+ /* SYSNULL: PROC (value) RETURNS (); END; */
+ TYPE: PROC (value) RETURNS (); END;
+ UNALLOCATED: PROC (value) RETURNS (); END;
+ VARGLIST: PROC (value) RETURNS (); END;
+ VARGSIZE: PROC (value) RETURNS (); END;
+
+ /* String-handling built-in functions */
+ BIT: PROC (value) RETURNS (); END;
+ BOOL: PROC (value) RETURNS (); END;
+ CENTERLEFT: PROC (value) RETURNS (); END;
+ CENTERRIGHT: PROC (value) RETURNS (); END;
+ CENTRELEFT: PROC (value) RETURNS (); END;
+ CENTRERIGHT: PROC (value) RETURNS (); END;
+ CHARACTER: PROC (value) RETURNS (); END;
+ CHARGRAPHIC: PROC (value) RETURNS (); END;
+ COLLAPSE: PROC (value) RETURNS (); END;
+ COPY: PROC (value) RETURNS (); END;
+ EDIT: PROC (value) RETURNS (); END;
+ GRAPHIC: PROC (value) RETURNS (); END;
+ HIGH: PROC (value) RETURNS (); END;
+ INDEX: PROC (value) RETURNS (); END;
+ INDEXR: PROC (value) RETURNS (); END;
+ LEFT: PROC (value) RETURNS (); END;
+ LENGTH: PROC (value) RETURNS (); END;
+ LOW: PROC (value) RETURNS (); END;
+ LOWERASCII: PROC (value) RETURNS (); END;
+ LOWERCASE: PROC (value) RETURNS (); END;
+ LOWERLATIN1: PROC (value) RETURNS (); END;
+ MAXLENGTH: PROC (value) RETURNS (); END;
+ MPSTR: PROC (value) RETURNS (); END;
+ PICSPEC: PROC (value) RETURNS (); END;
+ REGEX: PROC (value) RETURNS (); END;
+ REPEAT: PROC (value) RETURNS (); END;
+ REPLACE: PROC (value) RETURNS (); END;
+ REPLACEBY2: PROC (value) RETURNS (); END;
+ REVERSE: PROC (value) RETURNS (); END;
+ RIGHT: PROC (value) RETURNS (); END;
+ SCRUBOUT: PROC (value) RETURNS (); END;
+ SEARCH: PROC (value) RETURNS (); END;
+ SEARCHR: PROC (value) RETURNS (); END;
+ SQUEEZE: PROC (value) RETURNS (); END;
+ SUBSTR: PROC (value) RETURNS (); END;
+ SUBTO: PROC (value) RETURNS (); END;
+ TALLY: PROC (value) RETURNS (); END;
+ TRANSLATE: PROC (value) RETURNS (); END;
+ TRIM: PROC (value) RETURNS (); END;
+ UHIGH: PROC (value) RETURNS (); END;
+ ULENGTH: PROC (value) RETURNS (); END;
+ ULENGTH8: PROC (value) RETURNS (); END;
+ ULENGTH16: PROC (value) RETURNS (); END;
+ ULOW: PROC (value) RETURNS (); END;
+ UPOS: PROC (value) RETURNS (); END;
+ UPPERASCII: PROC (value) RETURNS (); END;
+ UPPERCASE: PROC (value) RETURNS (); END;
+ UPPERLATIN1: PROC (value) RETURNS (); END;
+ USUBSTR: PROC (value) RETURNS (); END;
+ USUPPLEMENTARY: PROC (value) RETURNS (); END;
+ UTF8: PROC (value) RETURNS (); END;
+ UTF8STG: PROC (value) RETURNS (); END;
+ UTF8TOCHAR: PROC (value) RETURNS (); END;
+ UTF8TOWCHAR: PROC (value) RETURNS (); END;
+ UVALID: PROC (value) RETURNS (); END;
+ UWIDTH: PROC (value) RETURNS (); END;
+ VERIFY: PROC (value) RETURNS (); END;
+ VERIFYR: PROC (value) RETURNS (); END;
+ WHIGH: PROC (value) RETURNS (); END;
+ WIDECHAR: PROC (value) RETURNS (); END;
+ WLOW: PROC (value) RETURNS (); END;
+
+ /* Subroutines */
+ LOCNEWSPACE: PROC (value) RETURNS (); END;
+ LOCNEWVALUE: PROC (value) RETURNS (); END;
+ PLIASCII: PROC (value) RETURNS (); END;
+ PLIATTN: PROC (value) RETURNS (); END;
+ PLICANC: PROC (value) RETURNS (); END;
+ PLICKPT: PROC (value) RETURNS (); END;
+ PLIDELETE: PROC (value) RETURNS (); END;
+ PLIDUMP: PROC (value) RETURNS (); END;
+ PLIEBCDIC: PROC (value) RETURNS (); END;
+ PLIFILL: PROC (value) RETURNS (); END;
+ PLIFREE: PROC (value) RETURNS (); END;
+ PLIMOVE: PROC (value) RETURNS (); END;
+ PLIOVER: PROC (value) RETURNS (); END;
+ PLIPARSE: PROC (value) RETURNS (); END;
+ PLIREST: PROC (value) RETURNS (); END;
+ PLIRETC: PROC (value) RETURNS (); END;
+ PLISAXA: PROC (value) RETURNS (); END;
+ PLISAXB: PROC (value) RETURNS (); END;
+ PLISAXC: PROC (value) RETURNS (); END;
+ PLISAXD: PROC (value) RETURNS (); END;
+ PLISRTA: PROC (value) RETURNS (); END;
+ PLISRTB: PROC (value) RETURNS (); END;
+ PLISRTC: PROC (value) RETURNS (); END;
+ PLISRTD: PROC (value) RETURNS (); END;
+ PLISTCK: PROC (value) RETURNS (); END;
+ PLISTCKE: PROC (value) RETURNS (); END;
+ PLISTCKF: PROC (value) RETURNS (); END;
+ PLISTCKLOCAL: PROC (value) RETURNS (); END;
+ PLISTCKELOCAL: PROC (value) RETURNS (); END;
+ PLISTCKP: PROC (value) RETURNS (); END;
+ PLISTCKPLOCAL: PROC (value) RETURNS (); END;
+ PLISTCKPUTC: PROC (value) RETURNS (); END;
+ PLISTCKUTC: PROC (value) RETURNS (); END;
+ PLISTCKEUTC: PROC (value) RETURNS (); END;
+ PLITRANxy: PROC (value) RETURNS (); END;
+
+
  define alias __SIGNED_INT signed fixed bin(31,0);
  define alias __UNSIGNED_INT unsigned fixed bin(32,0);
  `;
