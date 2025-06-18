@@ -10,11 +10,11 @@
  */
 
 import { Range } from "../language-server/types";
+import { CompilerOptionResult } from "./compiler-options/options";
 import {
-  CompilerOptionResult,
-  CompilerOptionIssue,
-} from "./compiler-options/options";
-import { parseAbstractCompilerOptions } from "./compiler-options/parser";
+  parseAbstractCompilerOptions,
+  AbstractCompilerOptions,
+} from "./compiler-options/parser";
 import { translateCompilerOptions } from "./compiler-options/translator";
 import { createSyntheticTokenInstance, PROCESS, Token } from "../parser/tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
@@ -58,58 +58,65 @@ export class CompilerOptionsProcessor {
     const programConfig = PluginConfigurationProviderInstance.getProgramConfig(uri.toString());
     const processGroupConfig = programConfig ? PluginConfigurationProviderInstance.getProcessGroupConfig(programConfig.pgroup) : undefined;
 
-    let configCompilerOpts: string | undefined = undefined;
-    if (processGroupConfig?.["compiler-options"]?.length) {
-      configCompilerOpts = processGroupConfig["compiler-options"].join(" ");
+    let mergedAbstractOptions: AbstractCompilerOptions | undefined = undefined;
+    if (processGroupConfig?.abstractOptions) {
+      mergedAbstractOptions = {
+        options: [...processGroupConfig.abstractOptions.options],
+        tokens: [...processGroupConfig.abstractOptions.tokens],
+        issues: [],
+      };
     }
 
-    if (srcCompilerOpts || configCompilerOpts) {
-      let configCompilerResult: CompilerOptionResult | undefined = undefined;
-      let srcCompilerResult: CompilerOptionResult | undefined = undefined;
+    if (srcCompilerOpts) {
+      const srcAbstractOptions = parseAbstractCompilerOptions(
+        srcCompilerOpts,
+        range ? range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH : 0,
+      );
 
-      // process compiler options from the config
-      if (configCompilerOpts) {
-        const configAbstractOptions =
-          parseAbstractCompilerOptions(configCompilerOpts);
-        configCompilerResult = translateCompilerOptions(configAbstractOptions);
-        // adjust all issues from config
-        this.adjustIssuesFromConfig(configCompilerResult.issues, range);
-        if (!range) {
-          // don't report config issues if we don't have a *PROCESS directive to attach them to
-          configCompilerResult.issues = [];
+      if (mergedAbstractOptions) {
+        mergedAbstractOptions.options.push(...srcAbstractOptions.options);
+        mergedAbstractOptions.tokens.push(...srcAbstractOptions.tokens);
+        mergedAbstractOptions.issues = srcAbstractOptions.issues;
+      } else {
+        mergedAbstractOptions = srcAbstractOptions;
+      }
+    }
+
+    if (mergedAbstractOptions) {
+      const compilerOptionResult = translateCompilerOptions(
+        mergedAbstractOptions,
+      );
+
+      // TODO @montymxb Jun. 18th, 2025: Block below is a temporary fix to avoid reporting the same issues repeatedly
+      //  i.e. parsing & translation from config reveals duplicate or bad options,
+      //  and translation again (in a program context) reinvokes duplicate + validation checks.
+      //  We want a subset of the dupe checks, but we don't want the validation issues again (however these come together atm)
+      //  this should be removed once we break up the translation process to avoid this issue
+
+      //  shave off the issues that are already present in the process group config
+      if (processGroupConfig?.issueCount) {
+        if (range) {
+          // update just these first 'issueCount' issues to report on *PROCESS
+          for (let i = 0; i < processGroupConfig.issueCount; i++) {
+            if (i < compilerOptionResult.issues.length) {
+              const issue = compilerOptionResult.issues[i];
+              issue.range = {
+                start: range.start,
+                end: range.end,
+              };
+              issue.message = `PLI Plugin Config: ${issue.message}`;
+            } else {
+              // leave the rest alone
+              break;
+            }
+          }
+        } else {
+          // no *PROCESS to attach to, slice them off instead
+          compilerOptionResult.issues = compilerOptionResult.issues.slice(
+            processGroupConfig.issueCount,
+          );
         }
       }
-
-      // process compiler options from the *PROCESS directive
-      if (srcCompilerOpts) {
-        const srcAbstractOptions = parseAbstractCompilerOptions(
-          srcCompilerOpts,
-          range
-            ? range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH
-            : 0,
-        );
-
-        // TODO @montymxb Jun 6th, 2025: Duplicates across both config & src options are not yet accounted for
-        // due to the separate processing of each src
-
-        srcCompilerResult = translateCompilerOptions(srcAbstractOptions);
-      }
-
-      // merge option results
-      const compilerOptionResult: CompilerOptionResult = {
-        options: {
-          ...configCompilerResult?.options,
-          ...srcCompilerResult?.options,
-        },
-        tokens: [
-          ...(configCompilerResult?.tokens || []),
-          ...(srcCompilerResult?.tokens || []),
-        ],
-        issues: [
-          ...(configCompilerResult?.issues || []),
-          ...(srcCompilerResult?.issues || []),
-        ],
-      };
 
       if (range) {
         compilerOptionResult.tokens.unshift(range.token);
@@ -124,32 +131,6 @@ export class CompilerOptionsProcessor {
         result: undefined,
         text: newText,
       };
-    }
-  }
-
-  /**
-   * Helper function to adjust issue ranges & messages from the config
-   * Primarily to try and avoid conflating the sourcing of these issues w/ *PROCESS related issues
-   */
-  private adjustIssuesFromConfig(
-    issues: CompilerOptionIssue[],
-    range?: Range & { token: IToken },
-  ): void {
-    for (const issue of issues) {
-      // only retain issues that have a range
-      if (range) {
-        // adjust range & message for issues from config, placing on *PROCESS directive
-        issue.range = range
-          ? {
-              start: range.start,
-              end: range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
-            }
-          : { start: 0, end: 0 };
-        issue.message = `PLI Plugin Config: ${issue.message}`;
-      } else {
-        // report as is, don't adjust
-        console.warn(`PLI Plugin Config: ${issue.message}`, issue.range);
-      }
     }
   }
 

@@ -11,6 +11,11 @@
 
 import { FileSystemProviderInstance } from "./file-system-provider";
 import { URI, UriUtils } from "../utils/uri";
+import {
+  AbstractCompilerOptions,
+  parseAbstractCompilerOptions,
+} from "../preprocessor/compiler-options/parser";
+import { translateCompilerOptions } from "../preprocessor/compiler-options/translator";
 
 /**
  * Plugin configuration provider for loading up '.pliplugin' (when it exists), processing its contents,
@@ -35,6 +40,13 @@ export interface ProcessGroup {
   "compiler-options"?: string[];
   libs?: string[];
   "copybook-extensions"?: string[];
+  abstractOptions?: AbstractCompilerOptions;
+
+  /**
+   * Number of issues found in the compiler options for this process group.
+   * Used to avoid duplicate issue reporting later on when running translation in a program context
+   */
+  issueCount?: number;
 }
 
 class PluginConfigurationProvider {
@@ -147,13 +159,40 @@ class PluginConfigurationProvider {
           const processGroupConfigs: ProcessGroup[] = JSON.parse(
             processGrpConfig.toString(),
           ).pgroups;
-
           this.setProcessGroupConfigs(processGroupConfigs);
+          this.postProcessGroupConfigs();
         } catch (e) {
           console.error("Failed to load process group config, skipping:", e);
         }
       } else {
         console.warn("No process group config found.");
+      }
+    }
+  }
+
+  /**
+   * Post-processes group configs after they've been loaded or set,
+   * updates abstractOptions & issue counts
+   */
+  private postProcessGroupConfigs() {
+    const processGroupConfigs = this.processGroupConfigs.values();
+    for (const config of processGroupConfigs) {
+      if (config["compiler-options"]?.length) {
+        const abstractOptions = parseAbstractCompilerOptions(
+          config["compiler-options"].join(" "),
+        );
+
+        const translatedOptions = translateCompilerOptions(abstractOptions);
+        for (const issue of [
+          ...translatedOptions.issues,
+          ...abstractOptions.issues,
+        ]) {
+          console.error(
+            `Error in compiler options for process group "${config.name}": ${issue.message}`,
+          );
+        }
+        config.abstractOptions = abstractOptions;
+        config.issueCount = translatedOptions.issues.length;
       }
     }
   }
@@ -184,6 +223,7 @@ class PluginConfigurationProvider {
     for (const config of processGroupConfigs) {
       this.processGroupConfigs.set(config.name, config);
     }
+    this.postProcessGroupConfigs();
   }
 
   /**

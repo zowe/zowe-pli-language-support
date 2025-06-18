@@ -226,9 +226,12 @@ export function startLanguageServer(connection: Connection): void {
       compilationUnitHandler.getAllCompilationUnits(),
     );
   });
-  connection.onNotification(WorkspaceDidChangePlipluginConfigNotification, () => {
-    // handle changes to the .pliplugin config folder's contents
-    PluginConfigurationProviderInstance.reloadConfigurations();
-  });
+  connection.onNotification(
+    WorkspaceDidChangePlipluginConfigNotification,
+    () => {
+      // handle changes to the .pliplugin config folder's contents
+      PluginConfigurationProviderInstance.reloadConfigurations();
+    },
+  );
   connection.listen();
 }
