@@ -127,6 +127,7 @@ class PluginConfigurationProvider {
           ).pgms;
           // set w/ respect to the cur workspace path
           this.setProgramConfigs(workspacePath, programConfigs);
+          return;
         } catch (e) {
           console.error("Failed to load program config, skipping:", e);
         }
@@ -134,6 +135,12 @@ class PluginConfigurationProvider {
         console.warn("No program config found.");
       }
     }
+
+    // clear otherwise, no valid program config to use
+    this.programConfigs.clear();
+    console.warn(
+      "No program config found, clearing existing configurations."
+    );
   }
 
   /**
@@ -161,6 +168,7 @@ class PluginConfigurationProvider {
           ).pgroups;
           this.setProcessGroupConfigs(processGroupConfigs);
           this.postProcessGroupConfigs();
+          return;
         } catch (e) {
           console.error("Failed to load process group config, skipping:", e);
         }
@@ -168,6 +176,12 @@ class PluginConfigurationProvider {
         console.warn("No process group config found.");
       }
     }
+
+    // clear otherwise, no valid PG to use
+    this.processGroupConfigs.clear();
+    console.warn(
+      "No process group config found, clearing existing configurations."
+    );
   }
 
   /**

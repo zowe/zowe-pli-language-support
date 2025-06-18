@@ -177,22 +177,33 @@ function watchPlipluginFolder(
   workspaceFolder: string,
   context: vscode.ExtensionContext,
 ): void {
-  const plipluginPath = path.join(workspaceFolder, ".pliplugin");
+  const folderPattern = new vscode.RelativePattern(workspaceFolder, ".pliplugin");
+  const filePattern = new vscode.RelativePattern(workspaceFolder, ".pliplugin/*.json");
 
-  if (!fs.existsSync(plipluginPath)) {
-    return;
-  }
+  const folderWatcher = vscode.workspace.createFileSystemWatcher(folderPattern);
+  const fileWatcher = vscode.workspace.createFileSystemWatcher(filePattern);
 
-  const watcher = fs.watch(plipluginPath, (_eventType, filename) => {
-    if (filename === "pgm_conf.json" || filename === "proc_grps.json") {
-      client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
-    }
+  // watch for folder create/delete events
+  folderWatcher.onDidCreate(() => {
+    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
   });
 
-  watcher.on("error", (error) => {
-    console.error("Error watching .pliplugin folder:", error);
-    watcher.close();
+  folderWatcher.onDidDelete(() => {
+    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
   });
 
-  context.subscriptions.push({ dispose: () => watcher.close() });
+  // watch for file create/update/delete events
+  fileWatcher.onDidChange(() => {
+    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+  });
+
+  fileWatcher.onDidCreate(() => {
+    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+  });
+
+  fileWatcher.onDidDelete(() => {
+    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+  });
+
+  context.subscriptions.push(folderWatcher, fileWatcher);
 }
