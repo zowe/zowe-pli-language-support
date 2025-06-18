@@ -177,8 +177,14 @@ function watchPlipluginFolder(
   workspaceFolder: string,
   context: vscode.ExtensionContext,
 ): void {
-  const folderPattern = new vscode.RelativePattern(workspaceFolder, ".pliplugin");
-  const filePattern = new vscode.RelativePattern(workspaceFolder, ".pliplugin/*.json");
+  const folderPattern = new vscode.RelativePattern(
+    workspaceFolder,
+    ".pliplugin",
+  );
+  const filePattern = new vscode.RelativePattern(
+    workspaceFolder,
+    ".pliplugin/*.json",
+  );
 
   const folderWatcher = vscode.workspace.createFileSystemWatcher(folderPattern);
   const fileWatcher = vscode.workspace.createFileSystemWatcher(filePattern);

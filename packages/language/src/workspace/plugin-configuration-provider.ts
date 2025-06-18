@@ -138,9 +138,7 @@ class PluginConfigurationProvider {
 
     // clear otherwise, no valid program config to use
     this.programConfigs.clear();
-    console.warn(
-      "No program config found, clearing existing configurations."
-    );
+    console.warn("No program config found, clearing existing configurations.");
   }
 
   /**
@@ -180,7 +178,7 @@ class PluginConfigurationProvider {
     // clear otherwise, no valid PG to use
     this.processGroupConfigs.clear();
     console.warn(
-      "No process group config found, clearing existing configurations."
+      "No process group config found, clearing existing configurations.",
     );
   }
 
