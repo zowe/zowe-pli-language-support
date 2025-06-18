@@ -7,8 +7,7 @@
 !out/extension/main-browser.js
 !out/language/main.cjs
 !out/language/main-browser.js
-!icon/PL_1_red.png
-!icon/PL_1_red.svg
+!icons/*
 !language-configuration.json
 !c4z.pli.code-snippets
 !syntaxes/pli.merged.json
