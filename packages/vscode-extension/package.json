@@ -5,7 +5,7 @@
   "license": "EPL-2.0",
   "preview": false,
   "publisher": "Zowe",
-  "icon": "icon/PL_1_red.png",
+  "icon": "icons/PL_1_red.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/zowe/zowe-pli-language-support"
@@ -32,6 +32,10 @@
         "extensions": [
           ".pli"
         ],
+        "icon": {
+          "light": "icons/PL1-light_max-height.svg",
+          "dark": "icons/PL1-dark_max-height.svg"
+        },
         "configuration": "./language-configuration.json"
       }
     ],
@@ -86,7 +90,6 @@
   },
   "dependencies": {
     "browserify-fs": "^1.0.0",
-    "glob": "^11.0.2",
     "langium": "~3.4.0",
     "path-browserify": "^1.0.1",
     "pli-language": "workspace:*",
