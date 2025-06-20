@@ -82,6 +82,13 @@ The program configuration file, `pgm_conf.json`, links programs to processor gro
 }
 ```
 
+Each element contains the following parameters:
+
+- **"program":** (string)
+    - Specify a program name. This field can be wildcarded.
+- **"pgroup":** (string)
+    - Specify the name of a procecssor group that is defined in `proc_grps.json`.
+
 ### Example Processor Group Configuration
 
 Using the example `pgm_conf.json` file in the section above, the following `proc_grps.json` example enables the following:
