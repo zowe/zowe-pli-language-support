@@ -21,7 +21,7 @@ This extension is a part of the Zowe open-source project, hosted by the Open Mai
 
 There are no client or server-side prerequisites for PL/I Language Support.
 
-## Features
+## Language Support Features
 
 PL/I Language Support provides the following PL/I syntax awareness features:
 
@@ -46,16 +46,73 @@ Before you write your PL/I code from scratch, search the snippet library for use
 You can also insert a code snippet by typing the name of the snippet in your code and clicking on the autocomplete text.
 
 ### Include File Support
-The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace. Files with the extensions `.inc` and `.mac` or with no extension are recognised as PL/I include files. The `%INCLUDE` statement is supported by default, variations on it such as `++INCLUDE` must be specified in `proc.grps.json`.XGGM
+The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace. Files with the extensions `.inc` and `.mac` or with no extension are recognised as PL/I include files. The `%INCLUDE` statement is supported by default, variations on it such as `++INCLUDE` must be specified in `proc.grps.json`.
 
 The Find All References and Go To Definition functionalities are extended to work for occurrences of include file names, variables and paragraphs in the main PL/I file.
 
 * **Find All References** identifies all occurrences of variables and paragraphs from include files in the code.
 * **Go To Definition** enables you to right-click on any variable or paragraph to reveal a definition of the element. If the definition is in an include file, or the name of an include file, the include file opens.
 
-### Preprocessor Support
+## Processor Groups
 
-### Define Compiler Options
+Use processor groups to link specific programs with compiler options, folders that contain include files, and include file extensions. You define processor groups in a `proc_grps.json` file and associate processor groups with programs in a `pgm_conf.json` file. Create both of these files in a **/.pliplugin** folder in your workspace root.
+
+The `proc_grps.json` file is formatted as an array of JSON elements, with one JSON per processor group. Each processor group can contain the following elements:
+
+- **"name":** (string)  
+    - Specify a name for the processor group.
+- (Optional) **"libs":** (array)  
+    - Specify local folders that contain include files. Specify local folders as either absolute or relative local paths.
+- (Optional) **"copybook-extensions":** (array)  
+    - Specify file extensions that you use for the include files in programs linked with this processor groups.
+- (Optional) **"compiler-options":** (array)  
+    - Specify compiler directives that you want to apply to the programs linked with this processor group. 
+	- For more information on COBOL compiler options, see the [IBM Enterprise COBOL documentation](https://www.ibm.com/docs/en/cobol-zos/6.3?topic=guide-enterprise-cobol-compiler-options).
+
+### Example Program Configuration File
+
+The program configuration file, `pgm_conf.json`, links programs to processor groups. The program configuration file has the following format:
+
+```
+{
+    "pgms": [
+        { "program": "PROGRAM1", "pgroup": "GROUP1" },
+        { "program": "PROGRAM2", "pgroup": "GROUP2" },
+    ]
+}
+```
+
+### Example Processor Group Configuration
+
+Using the example `pgm_conf.json` file in the section above, the following `proc_grps.json` example enables the following:
+
+- Include files from local folder /lib1, with the extensions ".cpy" and ".copy" are used with PROGRAM1.
+- The INCAFTER(PROCESS(FWKMACRO)) compiler option is enabled for PROGRAM1.
+- Include files from local folders /lib2 and /lib3 are used with PROGRAM2.
+
+```
+{
+  "pgroups": [
+    {
+      "name": "GROUP1",
+      "compiler-options": ["INCAFTER(PROCESS(FWKMACRO))"],
+      "libs": [
+        "lib1"
+      ],
+      "copybook-extensions": [
+        ".cpy", ".copy"
+      ]
+    },
+{
+      "name": "GROUP2",
+      "libs": [
+        "lib2",
+        "lib3"
+      ]
+    }
+  ]
+}
+```
 
 ## Integrate with Zowe Explorer
 
