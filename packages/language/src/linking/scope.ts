@@ -22,8 +22,8 @@ export class Scope {
   public symbolTable: SymbolTable;
   private parent: Scope | null;
 
-  constructor(parent: Scope | null, symbolTable: SymbolTable | null = null) {
-    this.parent = parent;
+  constructor(parent?: Scope | null, symbolTable?: SymbolTable) {
+    this.parent = parent ?? null;
     this.symbolTable = symbolTable ?? new SymbolTable();
   }
 
@@ -68,9 +68,11 @@ export class ScopeCacheGroups {
  */
 export class ScopeCache {
   private scopes: Map<SyntaxNode, Scope> = new Map();
+  private uniqueScopes = new Set<Scope>();
 
   add(node: SyntaxNode, scope: Scope): void {
     this.scopes.set(node, scope);
+    this.uniqueScopes.add(scope);
   }
 
   get(node: SyntaxNode): Scope | undefined {
@@ -79,9 +81,10 @@ export class ScopeCache {
 
   clear(): void {
     this.scopes.clear();
+    this.uniqueScopes.clear();
   }
 
   values(): Scope[] {
-    return Array.from(this.scopes.values());
+    return Array.from(this.uniqueScopes);
   }
 }
