@@ -26,7 +26,7 @@ There are no client or server-side prerequisites for PL/I Language Support.
 PL/I Language Support provides the following PL/I syntax awareness features:
 
 ### Syntax and Semantic Check for Code
-This feature checks for mistakes and errors in PL/I code. The syntax check feature reviews the whole content of the code and suggests fixes, and the semantic analysis highlights incorrect names of variables and include files.
+This feature checks for mistakes and errors in PL/I code, including compiler options. The syntax check feature reviews the whole content of the code and suggests fixes, and the semantic analysis highlights incorrect names of variables and include files.
 
 The syntax check feature also validates built-in functions, pseudovariables, and subroutines which must be explicitly declared.
 
@@ -45,8 +45,16 @@ Before you write your PL/I code from scratch, search the snippet library for use
 
 You can also insert a code snippet by typing the name of the snippet in your code and clicking on the autocomplete text.
 
+### Core Preprocessor Support
+
+The following preprocessor statements are supported:
+
+* Listing control statements (`PAGE`, `SKIP`, `PRINT`, `PUSH`, `POP`)
+* Standard include statements (`%INCLUDE`, `%XINCLUDE`, `%INSCAN`, `%INSCAN`)
+* Core preprocessor statements (`%DECLARE`, `%ACTIVATE`, `%DEACTIVATE`, `%DO`, `%SELECT`, `%IF`, `%ELSE`, `%THEN`, `%GOTO`, `%END`, `%ITERATE`, `%LEAVE`, `%NOTE`, `%null`, `%REPLACE`)
+
 ### Include File Support
-The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace. Files with the extensions `.inc` and `.mac` or with no extension are recognised as PL/I include files. The `%INCLUDE` statement is supported by default, variations on it such as `++INCLUDE` must be specified in `proc.grps.json`.
+The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace, or in another workspace folder which you specify in a processor group. Files with the extensions `.inc` and `.mac` or with no extension are recognised as PL/I include files. The `%INCLUDE` statement is supported by default, variations on it such as `++INCLUDE` must be specified as compiler options in a processor group.
 
 The Find All References and Go To Definition functionalities are extended to work for occurrences of include file names, variables and paragraphs in the main PL/I file.
 
@@ -67,7 +75,6 @@ The `proc_grps.json` file is formatted as an array of JSON elements, with one JS
     - Specify file extensions that you use for the include files in programs linked with this processor groups.
 - (Optional) **"compiler-options":** (array)  
     - Specify compiler directives that you want to apply to the programs linked with this processor group. 
-	- For more information on COBOL compiler options, see the [IBM Enterprise COBOL documentation](https://www.ibm.com/docs/en/cobol-zos/6.3?topic=guide-enterprise-cobol-compiler-options).
 
 ### Example Program Configuration File
 
