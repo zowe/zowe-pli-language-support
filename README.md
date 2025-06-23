@@ -101,7 +101,7 @@ Each element contains the following parameters:
 Using the example `pgm_conf.json` file in the section above, the following `proc_grps.json` example enables the following:
 
 - Include files from local folder /lib1, with the extensions ".cpy" and ".copy" are used with PROGRAM1.
-- The INCAFTER(PROCESS(FWKMACRO)) compiler option is enabled for PROGRAM1.
+- The `INCAFTER(PROCESS(FWKMACRO))` compiler option is enabled for PROGRAM1.
 - Include files from local folders /lib2 and /lib3 are used with PROGRAM2.
 
 ```
