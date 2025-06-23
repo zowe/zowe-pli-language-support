@@ -88,7 +88,7 @@ export class LinkerErrorReporter {
    */
   reportCannotFindSymbol(token: Token, name: string) {
     withLocation(token, ({ range, uri }) =>
-      this.accept(Severity.W, `Cannot find symbol '${name}'`, {
+      this.accept(Severity.E, `Unknown identifier '${name}'`, {
         uri,
         range,
       }),

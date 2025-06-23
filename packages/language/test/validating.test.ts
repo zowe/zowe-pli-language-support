@@ -84,7 +84,7 @@ describe("Validating", () => {
     expect(diagnostics.length).toBe(3);
 
     // verify the first diagnostic is a warning
-    expect(diagnostics[0].severity).toBe(Severity.W);
+    expect(diagnostics[0].severity).toBe(Severity.E);
 
     // verify the 2nd diagnostic is an error w/ the IBM3332I as the code
     expect(diagnostics[1].code).toBe(PLICodes.Warning.IBM3332I.fullCode);
