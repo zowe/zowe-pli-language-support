@@ -179,10 +179,6 @@ type IterateSymbolsOptions = {
   rootPreprocessorScope?: Scope;
 };
 
-function getDefaultScope(): Scope {
-  return new Scope(null, new SymbolTable());
-}
-
 export function iterateSymbols(
   unit: CompilationUnit,
   { rootScope, rootPreprocessorScope }: IterateSymbolsOptions = {},
@@ -196,23 +192,29 @@ export function iterateSymbols(
   const validationBuffer = new PliValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
 
+  const preprocessorScope = new Scope(rootPreprocessorScope);
+
   // Iterate over the PLI program creating the symbol table.
   iterateSymbolTable(
     scopeCaches.preprocessor,
     references,
     acceptor,
     unit.preprocessorAst,
-    rootPreprocessorScope ?? getDefaultScope(),
+    preprocessorScope,
   );
   // TODO: Active this when we have some tests
   // assignRedeclaredSymbols(scopeCaches.preprocessor);
+
+  // Generate a new scope
+  // Otherwise we will add symbols to the root scope (which contains builtins)
+  const regularScope = new Scope(rootScope);
 
   iterateSymbolTable(
     scopeCaches.regular,
     references,
     acceptor,
     unit.ast,
-    rootScope ?? getDefaultScope(),
+    regularScope,
   );
   assignRedeclaredSymbols(scopeCaches.regular);
 

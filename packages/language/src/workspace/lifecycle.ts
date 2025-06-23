@@ -66,14 +66,20 @@ export function parse(compilationUnit: CompilationUnit): PliProgram {
   return ast;
 }
 
+let builtinsScope: Scope | undefined;
+
 function loadBuiltinSymbolTable(): Scope {
+  if (builtinsScope) {
+    return builtinsScope;
+  }
   const unit = createCompilationUnit(URI.parse(BuiltinsUri));
   tokenize(unit, Builtins);
   parse(unit);
   generateSymbolTable(unit);
 
   // Get the root scope of the builtins
-  return unit.scopeCaches.regular.get(unit.ast)!;
+  builtinsScope = unit.scopeCaches.regular.get(unit.ast)!;
+  return builtinsScope;
 }
 
 export function generateSymbolTable(compilationUnit: CompilationUnit) {
