@@ -1,0 +1,240 @@
+{
+    "hello world program": {
+      "prefix": "PLI-HELLO-WORLD",
+      "body": [
+        " ${1:HELLO}.",
+        "   PROCEDURE OPTIONS(MAIN);",
+        " /*A PROGRAM TO OUTPUT HELLO WORLD*/  ",
+        " PUT LIST ('HELLO, WELCOME TO PLI/1 WORLD ')",   
+        " END ${1:HELLO};"
+      ]
+    }, 
+    "declare variable with string datatype": {
+      "prefix": "PLI-DECLARE-STRING-VAR",
+      "body": [" DCL ${1:VAR-NAME}. CHARACTER(${2:PRECISION}) VARYING;"] 
+    },
+    "declare variable with fixed binary datatype": {
+      "prefix": "PLI-DECLARE-FIXED-BINARY-VAR",
+      "body": [" DCL ${1:VAR-NAME} FIXED BINARY(${2:PRECISION})"] 
+    },
+     "declare variable with fixed decimal datatype": {
+      "prefix": "PLI-DECLARE-FIXED-DECIMAL-VAR",
+      "body": [" DCL ${1:VAR-NAME} FIXED DECIMAL(${2:PRECISION},${3:SCALE})"] 
+    }, 
+     "declare variable with float binary datatype": {
+      "prefix": "PLI-DECLARE-FLOAT-BINARY-VAR",
+      "body": [" DCL ${1:VAR-NAME} FLOAT BINARY(${2:PRECISION})"] 
+    },   
+    "declare variable with pointer datatype": {
+      "prefix": "PLI-DECLARE-POINTER-VAR",
+      "body": [" DCL ${1:VAR-NAME}. POINTER;"] 
+    },  
+    "declare variable with file datatype": {
+      "prefix": "PLI-DECLARE-FILE-VAR",
+      "body": [" DCL ${1:VAR-NAME}. FILE;"] 
+    },
+    "declare variable as structure": {
+      "prefix": "PLI-DECLARE-STRUCTURE-VAR",
+      "body": [ 
+        "  DCL 1 ${1:STRUCTURE}. ${1:DATATYPE};",
+        "         2 ${2:LEVEL-IN}. ${2:DATATYPE};",   
+        "            3 ${3:LEVEL-INNER}. ${3:DATATYPE};" 
+      ] 
+    },    
+     "declare variable as array": {
+      "prefix": "PLI-DECLARE-ARRAY-FIXED-BINARY-VAR",
+      "body": [ 
+        "  DCL ${1:VAR-NAME}(${1:ROWS},${1:COLS}) FIXED BINARY;" 
+      ] 
+    }, 
+    "assign variable": {
+      "prefix": "PLI-ASSIGN-VAR",
+      "body": ["  ${1:VAR-NAME} = ${2:VAR-VALUE};"] 
+    }, 
+    "call procedure": {
+      "prefix": "PLI-CALL-SUBROUTINE",
+      "body": [" CALL ${1:PROC-NAME}."] 
+    },
+    "define procedure": {
+      "prefix": "PLI-PROCEDURE-DEF",
+      "body": [
+        " ${1:procName}: ",
+        "    PROCEDURE(${2:ARGS});",
+        "        ${3:BODY};",
+        " END ${1:procName};"
+      ] 
+    },    
+    "define function": {
+      "prefix": "PLI-FUNCTION-DEF",
+      "body": [
+        " ${1:functionName}: ",
+        "    PROCEDURE(${2:ARGS}) RETURNS(${3:DATATYPE});",
+        " END ${1:functionName};"
+      ] 
+    },
+    "define do group": {
+      "prefix": "PLI-DO-GROUP",
+      "body": [
+        " DO;",
+        "    ${1:BODY}.",
+        " END;"
+      ] 
+    },
+    "define begin block": {
+      "prefix": "PLI-BEGIN-BLOCK",
+       "body": [
+        " BEGIN;",
+        "    ${1:BODY}.",
+        " END;"
+      ] 
+    }, 
+    "define do-while loop": {
+      "prefix": "PLI-DO-WHILE",
+       "body": [
+        " DO WHILE (${1:VAR1} ¬=${2:VAR2};",
+        "    ${3:BODY}.",
+        " END;"
+      ] 
+    },
+    "define if-then condition": {
+      "prefix": "PLI-IF-THEN-COND",
+       "body": [
+        " IF ${1:COND} THEN ${2:GROUP} ;" 
+      ] 
+    },
+    "define if-then-else condition": {
+      "prefix": "PLI-IF-THEN-ELSE-COND",
+      "body": [
+        " IF ${1:COND} THEN ${2:GROUP1} ;" ,
+        " ELSE ${3:GROUP2}"
+      ] 
+    },
+    "put list": {
+      "prefix": "PLI-PUT-LIST",
+      "body": [" PUT LIST ('${1:INPUT}');"] 
+    },
+    "define compiler options, e.g. *PROCESS CHECK(NOSTORAGE);": {
+      "prefix": "PLI-COMPILER-OPTIONS",
+      "body": ["*PROCESS ${1:COMPILER-OPTION};"] 
+    },    
+    "preprocessor activate statement": {
+      "prefix": "PLI-STATEMENT-ACTIVATE",
+      "body": ["%ACTIVATE ${1:BODY};"]       
+    },
+    "preprocessor assignment statement": {
+      "prefix": "PLI-STATEMENT-ASSIGNMENT",
+      "body": ["%${1:LABEL:} ${2:PP-VARIABLE}=${3:PP-EXPRESSION};"],
+      
+    },
+    "preprocessor deactivate statement": {
+      "prefix": "PLI-STATEMENT-DEACTIVATE",
+      "body": ["%${1:LABEL:} DEACTIVATE ${2:IDENTIFIER};"]
+    },
+    "preprocessor declare statement": {
+      "prefix": "PLI-STATEMENT-DECLARE",
+      "body": ["%DECLARE ${1:BODY};"] 
+    },
+    "preprocessor do statement": {
+      "prefix": "PLI-STATEMENT-DO",
+       "body": [
+        "%DO;" ,
+        "  ${1:BODY};",
+        "%END;"
+      ]
+    },
+    "preprocessor end statement": {
+      "prefix": "PLI-STATEMENT-END",
+      "body": ["%${1:LABEL:} END ${1:LABEL};"] 
+    },
+    "preprocessor goto statement": {
+      "prefix": "PLI-STATEMENT-GOTO",
+      "body": ["%${1:LABEL:} GOTO ${1:LABEL};"],
+      
+    },  
+    "preprocessor if-then-else statement": {
+      "prefix": "PLI-STATEMENT-IF",
+       "body": [
+        "%${1:LABEL:} " ,
+        "    IF ${2:PP-EXPRESSION};",
+        "    %THEN ${3:PREPROCESSOR-UNIT1};",
+        "    %ELSE ${4:PREPROCESSOR-UNIT2};" 
+      ] 
+    }, 
+    "preprocessor include statement": {
+      "prefix": "PLI-INCLUDE",
+      "body": ["%INCLUDE \"${1:DD-NAME}\";"] 
+    },
+    "preprocessor xinclude statement": {
+      "prefix": "PLI-XINCLUDE",
+      "body": ["%INCLUDE \"${1:DD-NAME}\";"] 
+    },
+    "preprocessor inscan statement": {
+      "prefix": "PLI-INSCAN",
+      "body": ["%INSCAN \"${1:FILE-NAME}\";"] 
+    },
+    "preprocessor xinscan statement": {
+      "prefix": "PLI-XINSCAN",
+      "body": ["%XINSCAN \"${1:FILE-NAME}\";"],
+      
+    },
+    "preprocessor iterate statement": {
+      "prefix": "PLI-STATEMENT-ITERATE",
+      "body": ["%${1:LABEL:} ITERATE ${1:LABEL};"] 
+    }, 
+    "preprocessor leave statement": {
+      "prefix": "PLI-STATEMENT-LEAVE",
+      "body": ["%${1:LABEL:} LEAVE ${1:LABEL};"] 
+    },
+    "preprocessor note statement": {
+      "prefix": "PLI-STATEMENT-NOTE",
+      "body": ["%${1:LABEL:} NOTE ${1:LABEL};"] 
+    },
+    "preprocessor null statement": {
+      "prefix": "PLI-STATEMENT-null",
+      "body": ["% ;"] 
+    },
+    "preprocessor replace statement": {
+      "prefix": "PLI-STATEMENT-REPLACE",
+      "body": ["%${1:LABEL:} REPLACE ${1:IDENTIFIER} WITH | BY {2:VALUE};"] 
+    },
+    "preprocessor select statement": {
+      "prefix": "PLI-STATEMENT-SELECT",
+       "body": [
+        "%SELECT;" ,
+        "  ${1:BODY};",
+        "%END;"
+      ],      
+    },
+    "preprocessor procedure statement": {
+     "prefix": "PLI-STATEMENT-PROCEDURE",
+     "body": [
+        "%${1:ENTRY-NAME} PROCEDURE;",
+        "  ${2:BODY};",
+        "%END;",
+      ] 
+    },
+    "preprocessor print listing control statement": {
+      "prefix": "PLI-LISTING-CTRL-PRINT",
+      "body": ["%PRINT;"] 
+    },
+    "preprocessor noprint listing control statement": {
+      "prefix": "PLI-LISTING-CTRL-NOPRINT",
+      "body": ["%NOPRINT;"]
+    },
+    "preprocessor page listing control statement": {
+      "prefix": "PLI-LISTING-CTRL-PAGE",
+      "body": ["%PAGE;"]
+    },
+    "preprocessor pop listing control statement": {
+      "prefix": "PLI-LISTING-CTRL-POP",
+      "body": ["%POP;"]
+    },
+    "preprocessor push listing control statement": {
+      "prefix": "PLI-LISTING-CTRL-PUSH",
+      "body": ["%PUSH;"]
+    },
+    "preprocessor skip listing control statement": {
+      "prefix": "PLI-LISTING-CTRL-SKIP",
+      "body": ["%SKIP(${1:LINE-COUNT});"]
+    }
+  }

@@ -1,0 +1,9 @@
+*PROCESS MARGINS(2,120);
+ %INCLUDE "./b.pli";
+ VARB = 2;
+ %INCLUDE "./c.pli";
+ VARC = 3;
+ %INCLUDE LIB;
+ LIBREF = 44;
+ %INCLUDE LIB2; // resolves w/out extension
+ ABC = 24;

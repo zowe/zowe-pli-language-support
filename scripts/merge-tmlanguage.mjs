@@ -37,6 +37,8 @@ const controlKeywords = [
     'then',
     'do',
     'end',
+    'select',
+    'otherwise',
     'on',
     'while',
     'next',
@@ -45,25 +47,26 @@ const controlKeywords = [
     'goto',
     'return',
     'when',
-    'begin'
+    'begin',
+    'process',
+    'include',
+    'deactivate',
+    'activate',
 ];
 
-const storageKeywords = keywords.exclude(controlKeywords).toArray();
+const storageKeywords = keywords.map(e => e.toLowerCase()).exclude(controlKeywords).toArray();
+storageKeywords.push('SCAN', 'RESCAN');
 
 function toPattern(keywords) {
     const patterns = [];
     for (const keyword of keywords) {
         let keywordPattern = '';
         for (const char of keyword) {
-            if (char.toUpperCase() !== char.toLowerCase()) {
-                keywordPattern += `[${char.toUpperCase()}${char.toLowerCase()}]`;
-            } else {
-                keywordPattern += RegExpUtils.escapeRegExp(char);
-            }
+            keywordPattern += RegExpUtils.escapeRegExp(char);
         }
         patterns.push(keywordPattern);
     }
-    return `\\b(${patterns.join('|')})\\b`;
+    return `(?i)\\b(${patterns.join('|')})\\b`;
 }
 
 const controlPattern = toPattern(controlKeywords);

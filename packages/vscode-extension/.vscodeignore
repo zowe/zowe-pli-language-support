@@ -7,6 +7,8 @@
 !out/extension/main-browser.js
 !out/language/main.cjs
 !out/language/main-browser.js
+!icons/*
 !language-configuration.json
+!c4z.pli.code-snippets
 !syntaxes/pli.merged.json
 !LICENSE

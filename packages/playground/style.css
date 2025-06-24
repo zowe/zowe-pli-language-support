@@ -18,8 +18,10 @@ html {
 }
 
 body {
-  padding: 0;
+  background-color: var(--vscode-editorWidget-background);
+  color: var(--vscode-editorWidget-foreground);
   margin: 0;
+  padding: 0;
 }
 
 .header {
@@ -33,6 +35,7 @@ body {
 }
 
 .share {
+  margin-left: 12px;
   margin-right: 12px;
   cursor: pointer;
 }
@@ -57,36 +60,62 @@ body {
   flex-direction: column;
 }
 
-#vscode-views-root {
-  height: calc(100vh - 43px);
+#sidebarDiv {
+  display: flex;
+  flex: none;
+  border: 1px solid var(--vscode-editorWidget-border);
+}
+
+#sidebar {
+  width: 300px;
 }
 
 #editorsDiv {
-  flex: 1;
-  min-width: 0;
+   flex: 1;
+   min-width: 0;
 }
 
 #editors {
-  display: none;
-}
-
-#monaco-root {
-  flex: 1;
-  height: 100%;
+  position: relative;
+  min-width: 0;
+  height: 99%;
+  border: 1px solid var(--vscode-editorWidget-border);
 }
 
 #panel {
   flex: 1;
+  border: 1px solid var(--vscode-editorWidget-border);
   min-height: 0;
 }
 
+#titleBar {
+  position: relative;
+  flex: none;
+}
+
+#banner {
+  flex: none;
+}
+
 #workbench-container {
-  height: calc(100vh - 43px);
+  height: 95vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: column
 }
 
 #workbench-top {
   display: flex;
+  gap: 4px;
   flex: 2;
+  min-height: 0
 }
+
+.action-label[aria-label="New Folder..."] {
+  display: none !important;
+}
+
+.pli-skippedCode {
+  opacity: 0.55;
+}
+
+

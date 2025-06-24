@@ -5,6 +5,7 @@
   "license": "EPL-2.0",
   "preview": false,
   "publisher": "Zowe",
+  "icon": "icons/PL_1_red.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/zowe/zowe-pli-language-support"
@@ -15,7 +16,8 @@
     "vscode": "^1.67.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Snippets"
   ],
   "keywords": [
     "pli",
@@ -39,7 +41,17 @@
         "extensions": [
           ".pli"
         ],
+        "icon": {
+          "light": "icons/PL1-light_max-height.svg",
+          "dark": "icons/PL1-dark_max-height.svg"
+        },
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "pli",
+        "path": "./c4z.pli.code-snippets"
       }
     ],
     "grammars": [
@@ -48,7 +60,30 @@
         "scopeName": "source.pli",
         "path": "syntaxes/pli.merged.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "PL/I Language Support",
+      "properties": {
+        "pli.skippedCode.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable the skipped code feature."
+        },
+        "pli.skippedCode.opacity": {
+          "type": "number",
+          "default": 0.55,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Opacity level for skipped code (0-1)"
+        },
+        "pli.marginIndicator.rulers": {
+          "type": "string",
+          "enum": ["off", "default", "automatic"],
+          "default": "automatic",
+          "description": "Controls the rulers for the margin compiler option. 'off' disables rulers, 'default' shows the PL/I default rulers [2, 72], 'automatic' adds rulers based on margin compiler options."
+        }
+      }
+    }
   },
   "activationEvents": [],
   "main": "./out/extension/main.cjs",
@@ -63,8 +98,13 @@
     "dependencies": false
   },
   "dependencies": {
-    "langium": "~3.3.1",
+    "browserify-fs": "^1.0.0",
+    "langium": "~3.4.0",
+    "path-browserify": "^1.0.1",
+    "glob": "^11.0.2",
     "pli-language": "workspace:*",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5",
     "vscode-languageclient": "~9.0.1",
     "vscode-languageserver": "~9.0.1"
   },

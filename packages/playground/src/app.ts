@@ -9,56 +9,68 @@
  *
  */
 
+import * as vscode from "vscode";
 import { MonacoEditorLanguageClientWrapper } from "monaco-editor-wrapper";
-import { setupClient } from "./config.js";
+import { registerSkipDecoratorType } from "./decorators.js";
+import { configure } from "./config.js";
+import helloWorld from "../hello-world.pli?raw";
+import pliTestCode from "../../../code_samples/RXGIM.pli?raw";
+import includeExample from "../../../code_samples/preprocessor/include.pli?raw";
+import includedExample from "../../../code_samples/preprocessor/included.pli?raw";
 import {
-  compressToEncodedURIComponent,
-  decompressFromEncodedURIComponent,
-} from "lz-string";
+  handleSharedWorkspace,
+  deactivateExplorerContextMenu,
+  registerButtons,
+} from "./workspace.js";
+import {
+  createFileSystemProvider,
+  FileSystemProvider,
+} from "./file-system-provider.js";
 
 let wrapper: MonacoEditorLanguageClientWrapper | undefined;
-let shareTimeout: number | undefined;
 
 export async function startClient() {
-  const url = new URL(window.location.toString());
-  const encodedContent = url.searchParams.get("content") ?? undefined;
-  registerShareButton();
   try {
-    let content: string | undefined = undefined;
-    if (encodedContent) {
-      content = decompressFromEncodedURIComponent(encodedContent);
-    }
-    const config = await setupClient(content);
+    const config = configure(document.getElementById("vscode-views-root")!);
     wrapper = new MonacoEditorLanguageClientWrapper();
-    await wrapper.init(config);
-    const element = document.getElementById("monaco-root")!;
-    wrapper.start(element);
+    const fileSystemProvider = createFileSystemProvider(config);
+    await wrapper.init(config.wrapperConfig);
+    await wrapper.startLanguageClients();
+    registerSkipDecoratorType(wrapper);
+    registerButtons();
+    deactivateExplorerContextMenu();
+
+    let defaultUri: vscode.Uri | undefined = undefined;
+    defaultUri = await handleSharedWorkspace(fileSystemProvider);
+    if (!defaultUri) {
+      defaultUri = await loadDefaultWorkspace(fileSystemProvider);
+    }
+
+    await vscode.window.showTextDocument(defaultUri, { preserveFocus: true });
   } catch (e) {
     console.log(e);
   }
 }
 
-export function registerShareButton() {
-  const shareButton = document.getElementById("share-button");
-  shareButton?.addEventListener("click", () => {
-    if (wrapper) {
-      const text = wrapper.getEditor()?.getValue();
-      if (typeof text === "string") {
-        share(text);
-      }
-    }
-  });
-}
+async function loadDefaultWorkspace(
+  fileSystemProvider: FileSystemProvider,
+): Promise<vscode.Uri> {
+  let defaultUri = await fileSystemProvider.addFileToWorkspace(
+    "/workspace/hello-world.pli",
+    helloWorld,
+  );
+  await fileSystemProvider.addFileToWorkspace(
+    "/workspace/RXGIM.pli",
+    pliTestCode,
+  );
+  await fileSystemProvider.addFileToWorkspace(
+    "/workspace/include.pli",
+    includeExample,
+  );
+  await fileSystemProvider.addFileToWorkspace(
+    "/workspace/included.pli",
+    includedExample,
+  );
 
-async function share(content: string): Promise<void> {
-  const compressedContent = compressToEncodedURIComponent(content);
-  const url = new URL(window.location.toString(), window.origin);
-  url.searchParams.append("content", compressedContent);
-  await navigator.clipboard.writeText(url.toString());
-  const shareInfo = document.getElementById("share-info");
-  shareInfo?.classList.remove("hidden");
-  window.clearTimeout(shareTimeout);
-  shareTimeout = window.setTimeout(() => {
-    shareInfo?.classList.add("hidden");
-  }, 4000);
+  return defaultUri;
 }

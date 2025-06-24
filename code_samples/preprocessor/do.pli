@@ -1,0 +1,18 @@
+ /* DO Groups */
+ %DCL X FIXED;
+ %X = 1;
+
+ %DO
+   /* Synthesize 3 new declarations */
+   %WHILE(X <= 3);
+     DCL Variable%X FIXED;
+     %X = X + 1;
+ %END;
+
+ /* Reference these new declarations */
+ Variable1 = 1;
+ Variable2 = 2;
+ Variable3 = 3;
+
+ /* But not this one... */
+ /* Variable4 = 4; */

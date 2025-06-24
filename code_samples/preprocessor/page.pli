@@ -1,0 +1,4 @@
+ %PAGE;
+ dcl WHAT fixed bin(31);
+ %PAGE;
+ %PAGE;
