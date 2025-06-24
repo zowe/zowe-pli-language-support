@@ -189,22 +189,28 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   const validationBuffer = new PliValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
 
+  const preprocessorScope = new Scope(unit.rootPreprocessorScope);
+
   iterateSymbolTable(
     scopeCaches.preprocessor,
     references,
     acceptor,
     unit.preprocessorAst,
-    new Scope(unit.rootPreprocessorScope),
+    preprocessorScope,
   );
   // TODO: Active this when we have some tests
   // assignRedeclaredSymbols(scopeCaches.preprocessor);
+
+  // Generate a new scope
+  // Otherwise we will add symbols to the root scope (which contains builtins)
+  const regularScope = new Scope(unit.rootScope);
 
   iterateSymbolTable(
     scopeCaches.regular,
     references,
     acceptor,
     unit.ast,
-    new Scope(unit.rootScope),
+    regularScope,
   );
   assignRedeclaredSymbols(scopeCaches.regular);
 
