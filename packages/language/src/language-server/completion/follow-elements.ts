@@ -179,9 +179,6 @@ export function getFollowElements(
         },
       ];
     case CstNodeKind.ConditionPrefix_OpenParen:
-    case CstNodeKind.Exports_OpenParen:
-    case CstNodeKind.Reserves_OpenParen:
-    case CstNodeKind.Options_OpenParen:
     case CstNodeKind.LinkageOptionsItem_OpenParen:
     case CstNodeKind.CMPATOptionsItem_OpenParen:
     case CstNodeKind.NoMapOptionsItem_OpenParen:
