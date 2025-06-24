@@ -15,10 +15,12 @@ import { Location } from "./types";
 import {
   getNameToken,
   getReference,
+  isIncludeItemToken,
   isNameToken,
   isReferenceToken,
 } from "../linking/tokens";
 import { URI } from "../utils/uri";
+import { SyntaxKind } from "../syntax-tree/ast";
 
 export function definitionRequest(
   compilationUnit: CompilationUnit,
@@ -59,6 +61,20 @@ export function definitionRequest(
         },
       },
     ];
+  } else if (isIncludeItemToken(payload.kind) && payload.element?.kind === SyntaxKind.IncludeItem) {
+    // allow jumping to the resolved file when present
+    const filePath = payload.element.filePath;
+    if (filePath) {
+      return [
+        {
+          uri: filePath,
+          range: {
+            start: 0,
+            end: 0,
+          },
+        },
+      ];
+    }
   }
   return [];
 }

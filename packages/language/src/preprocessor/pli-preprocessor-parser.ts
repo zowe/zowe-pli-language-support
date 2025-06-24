@@ -480,7 +480,7 @@ export class PliPreprocessorParser {
           PreprocessorTokens.Id,
         );
         const fileName = token.image;
-        item.file = fileName;
+        item.fileName = fileName;
         item.token = token;
       } else if (state.canConsume(PreprocessorTokens.String)) {
         // literal file include (relative, absolute, or lib sourced)
@@ -491,7 +491,7 @@ export class PliPreprocessorParser {
         );
         const file = token.image;
         const fileName = file.substring(1, file.length - 1);
-        item.file = fileName;
+        item.fileName = fileName;
         item.string = true;
         item.token = token;
       } else {
@@ -512,7 +512,7 @@ export class PliPreprocessorParser {
     );
     // TODO: cache included files
     for (const item of directive.items) {
-      if (!item.file) {
+      if (!item.fileName) {
         continue;
       }
 
@@ -526,7 +526,7 @@ export class PliPreprocessorParser {
        */
       const failToResolveInclude = () => {
         throw new PreprocessorError(
-          `Cannot resolve include file '${item.file}' at '${state.uri.toString()}'.`,
+          `Cannot resolve include file '${item.fileName}' at '${state.uri.toString()}'.`,
           item.token! || state.current || state.last!,
           state.uri,
         );
@@ -557,6 +557,7 @@ export class PliPreprocessorParser {
           state.perFileTokens[uri] = tokens;
         }
         item.result = subProgram;
+        item.filePath = uri.toString();
       } catch {
         failToResolveInclude();
       }
@@ -1341,7 +1342,7 @@ export class PliPreprocessorParser {
 }
 
 /**
- * Attempts to resolve the URI of an include file factoring in process group libs, relative & absolute paths
+ * Attempts to resolve the URI of an include file factoring in process group libs (previously also relative & absolute paths)
  *
  * @param item Include item to resolve a URI for
  * @param state Current PP state, used to resolve relative paths, program configs, and report errors
@@ -1353,7 +1354,7 @@ function resolveIncludeFileUri(
 ): URI | undefined {
   const currentDir = UriUtils.dirname(state.uri);
 
-  if (!item.file) {
+  if (!item.fileName) {
     throw new Error("Include item does not have a file specified.");
   }
 
@@ -1366,7 +1367,7 @@ function resolveIncludeFileUri(
         programConfig.pgroup,
       )
     : undefined;
-  const ext = UriUtils.extname(URI.parse(item.file));
+  const ext = UriUtils.extname(URI.parse(item.fileName));
   if (
     ext !== "" &&
     programConfig &&
@@ -1378,7 +1379,7 @@ function resolveIncludeFileUri(
       ? `expected one of: ${pgroup["include-extensions"]?.join(", ")}`
       : `expected no extension`;
     throw new PreprocessorError(
-      `Unsupported copybook extension for included file, '${item.file}', ${msg}`,
+      `Unsupported copybook extension for included file, '${item.fileName}', ${msg}`,
       item.token! || state.current || state.last!,
       state.uri,
     );
@@ -1404,12 +1405,12 @@ function resolveIncludeFileUri(
       if (lib === "*") {
         // wildcard lib, use currentDir
         // TODO @montymxb Disable this wildcard resolution
-        return UriUtils.joinPath(currentDir, item.file);
+        return UriUtils.joinPath(currentDir, item.fileName);
       } else {
         const libFileUri = UriUtils.joinPath(
           URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
           lib,
-          item.file,
+          item.fileName,
         );
         if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
           // match found in this lib, take it

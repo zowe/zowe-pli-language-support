@@ -1420,20 +1420,22 @@ export function createIncludeDirective(): IncludeDirective {
 }
 export interface IncludeItem extends AstNode {
   kind: SyntaxKind.IncludeItem;
-  file: string | null;
+  fileName: string | null;
   string: boolean;
   ddname: boolean;
   result: PreprocessorParserResult | null;
+  filePath: string | null;
   token: Token | null;
 }
 export function createIncludeItem(): IncludeItem {
   return {
     kind: SyntaxKind.IncludeItem,
     container: null,
-    file: null,
+    fileName: null,
     string: false,
     ddname: false,
     result: null,
+    filePath: null,
     token: null,
   };
 }
