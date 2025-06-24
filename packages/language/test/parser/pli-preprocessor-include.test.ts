@@ -65,7 +65,7 @@ async function setupPluginConfiguration() {
     {
       name: "testgroup",
       libs: ["cpy"],
-      "copybook-extensions": [".pli"],
+      "include-extensions": [".pli"],
     },
   ];
   PluginConfigurationProviderInstance.setProcessGroupConfigs(processGroups);

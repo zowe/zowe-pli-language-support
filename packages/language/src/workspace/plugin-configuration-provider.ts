@@ -39,7 +39,7 @@ export interface ProcessGroup {
   name: string;
   "compiler-options"?: string[];
   libs?: string[];
-  "copybook-extensions"?: string[];
+  "include-extensions"?: string[];
   abstractOptions?: AbstractCompilerOptions;
 
   /**

@@ -1374,11 +1374,11 @@ function resolveIncludeFileUri(
     ext !== "" &&
     programConfig &&
     pgroup &&
-    (!pgroup["copybook-extensions"]?.includes(ext) ||
-      !pgroup["copybook-extensions"])
+    (!pgroup["include-extensions"]?.includes(ext) ||
+      !pgroup["include-extensions"])
   ) {
-    const msg = pgroup["copybook-extensions"]?.length
-      ? `expected one of: ${pgroup["copybook-extensions"]?.join(", ")}`
+    const msg = pgroup["include-extensions"]?.length
+      ? `expected one of: ${pgroup["include-extensions"]?.join(", ")}`
       : `expected no extension`;
     throw new PreprocessorError(
       `Unsupported copybook extension for included file, '${item.file}', ${msg}`,
