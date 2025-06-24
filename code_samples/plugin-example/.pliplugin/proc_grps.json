@@ -9,7 +9,7 @@
       "libs": [
         "cpy"
       ],
-      "copybook-extensions": [
+      "include-extensions": [
         ".pli",
         ".cpy",
         ".inc"

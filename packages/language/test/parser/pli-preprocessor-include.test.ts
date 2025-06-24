@@ -21,7 +21,10 @@ type TokenizeFunction = (text: string) => string[];
 function setupFileSystemAndLexer(): TokenizeFunction {
   const vtsfs = new VirtualFileSystemProvider();
   setFileSystemProvider(vtsfs);
-  vtsfs.writeFileSync(URI.file("/test/payroll.pli"), " DECLARE PAYROLL FIXED;");
+  vtsfs.writeFileSync(
+    URI.file("/test/cpy/payroll.pli"),
+    " DECLARE PAYROLL FIXED;",
+  );
   vtsfs.writeFileSync(
     URI.file("/test/cpy/lib1.pli"),
     " DECLARE LIB1_VAR FIXED;",
@@ -52,7 +55,7 @@ async function setupPluginConfiguration() {
 
   const programConfigs: ProgramConfig[] = [
     {
-      program: "test.pli",
+      program: "*.pli",
       pgroup: "testgroup",
     },
   ];
@@ -65,7 +68,7 @@ async function setupPluginConfiguration() {
     {
       name: "testgroup",
       libs: ["cpy"],
-      "copybook-extensions": [".pli"],
+      "include-extensions": [".pli"],
     },
   ];
   PluginConfigurationProviderInstance.setProcessGroupConfigs(processGroups);
@@ -82,7 +85,8 @@ describe("PL/1 Includes without Plugin Config", () => {
     setFileSystemProvider(undefined);
   });
 
-  test("Include relative path with extension", () => {
+  // TODO @montymxb relative path looksup are intended to fail currently
+  test.fails("Include relative path with extension", () => {
     expect(
       tokenize(`
             %INCLUDE "./cpy/lib1.pli";
@@ -100,7 +104,8 @@ describe("PL/1 Includes without Plugin Config", () => {
     ]);
   });
 
-  test("Include relative path without extension", () => {
+  // TODO @montymxb relative path looksup are intended to fail currently
+  test.fails("Include relative path without extension", () => {
     expect(
       tokenize(`
             %INCLUDE "./cpy/LIB2";
@@ -118,7 +123,8 @@ describe("PL/1 Includes without Plugin Config", () => {
     ]);
   });
 
-  test("Include relative path with '../'", () => {
+  // TODO @montymxb relative path looksup are intended to fail currently
+  test.fails("Include relative path with '../'", () => {
     expect(
       tokenize(`
             %INCLUDE "../LIB4";
@@ -176,42 +182,6 @@ describe("PL/1 Includes without Plugin Config", () => {
       ";:;",
     ]);
   });
-
-  test("Should include only once with 2 XINCLUDE statements", () => {
-    expect(
-      tokenize(`
-            %XINCLUDE "/test/payroll.pli";
-            %XINCLUDE "/test/payroll.pli";
-        `),
-    ).toStrictEqual(["DECLARE:DECLARE", "PAYROLL:ID", "FIXED:FIXED", ";:;"]);
-  });
-
-  test("Should include twice with INCLUDE after XINCLUDE", () => {
-    expect(
-      tokenize(`
-            %XINCLUDE "/test/payroll.pli";
-            %INCLUDE "/test/payroll.pli";
-        `),
-    ).toStrictEqual([
-      "DECLARE:DECLARE",
-      "PAYROLL:ID",
-      "FIXED:FIXED",
-      ";:;",
-      "DECLARE:DECLARE",
-      "PAYROLL:ID",
-      "FIXED:FIXED",
-      ";:;",
-    ]);
-  });
-
-  test("Should include once with XINCLUDE after INCLUDE", () => {
-    expect(
-      tokenize(`
-            %INCLUDE "/test/payroll.pli";
-            %XINCLUDE "/test/payroll.pli";
-        `),
-    ).toStrictEqual(["DECLARE:DECLARE", "PAYROLL:ID", "FIXED:FIXED", ";:;"]);
-  });
 });
 
 describe("PL/1 Includes with Plugin Config", () => {
@@ -228,14 +198,50 @@ describe("PL/1 Includes with Plugin Config", () => {
     PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
   });
 
+  test("Should include only once with 2 XINCLUDE statements", () => {
+    expect(
+      tokenize(`
+            %XINCLUDE "payroll.pli";
+            %XINCLUDE "payroll.pli";
+        `),
+    ).toStrictEqual(["DECLARE:DECLARE", "PAYROLL:ID", "FIXED:FIXED", ";:;"]);
+  });
+
+  test("Should include twice with INCLUDE after XINCLUDE", () => {
+    expect(
+      tokenize(`
+            %XINCLUDE "payroll.pli";
+            %INCLUDE "payroll.pli";
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "PAYROLL:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "DECLARE:DECLARE",
+      "PAYROLL:ID",
+      "FIXED:FIXED",
+      ";:;",
+    ]);
+  });
+
+  test("Should include once with XINCLUDE after INCLUDE", () => {
+    expect(
+      tokenize(`
+            %INCLUDE "payroll.pli";
+            %XINCLUDE "payroll.pli";
+        `),
+    ).toStrictEqual(["DECLARE:DECLARE", "PAYROLL:ID", "FIXED:FIXED", ";:;"]);
+  });
+
   test("Include twice with different IDs", () => {
     expect(
       tokenize(`
             %DECLARE PAYROLL CHARACTER;
             %PAYROLL = 'CUM_PAY';
-            %INCLUDE "./payroll.pli";
+            %INCLUDE "payroll.pli";
             %DEACTIVATE PAYROLL;
-            %INCLUDE "./payroll.pli";
+            %INCLUDE "payroll.pli";
         `),
     ).toStrictEqual([
       "DECLARE:DECLARE",

@@ -480,7 +480,7 @@ export class PliPreprocessorParser {
           PreprocessorTokens.Id,
         );
         const fileName = token.image;
-        item.file = fileName;
+        item.fileName = fileName;
         item.token = token;
       } else if (state.canConsume(PreprocessorTokens.String)) {
         // literal file include (relative, absolute, or lib sourced)
@@ -491,7 +491,7 @@ export class PliPreprocessorParser {
         );
         const file = token.image;
         const fileName = file.substring(1, file.length - 1);
-        item.file = fileName;
+        item.fileName = fileName;
         item.string = true;
         item.token = token;
       } else {
@@ -512,7 +512,7 @@ export class PliPreprocessorParser {
     );
     // TODO: cache included files
     for (const item of directive.items) {
-      if (!item.file) {
+      if (!item.fileName) {
         continue;
       }
 
@@ -526,7 +526,7 @@ export class PliPreprocessorParser {
        */
       const failToResolveInclude = () => {
         throw new PreprocessorError(
-          `Cannot resolve include file '${item.file}' at '${state.uri.toString()}'.`,
+          `Cannot resolve include file '${item.fileName}' at '${state.uri.toString()}'.`,
           item.token! || state.current || state.last!,
           state.uri,
         );
@@ -557,6 +557,7 @@ export class PliPreprocessorParser {
           state.perFileTokens[uri] = tokens;
         }
         item.result = subProgram;
+        item.filePath = uri.toString();
       } catch {
         failToResolveInclude();
       }
@@ -1341,7 +1342,7 @@ export class PliPreprocessorParser {
 }
 
 /**
- * Attempts to resolve the URI of an include file factoring in process group libs, relative & absolute paths
+ * Attempts to resolve the URI of an include file factoring in process group libs (previously also relative & absolute paths)
  *
  * @param item Include item to resolve a URI for
  * @param state Current PP state, used to resolve relative paths, program configs, and report errors
@@ -1351,12 +1352,7 @@ function resolveIncludeFileUri(
   item: ast.IncludeItem,
   state: PreprocessorParserState,
 ): URI | undefined {
-  const absPathRegex = /^\/|[A-Z]:|~/i;
-  const relativePathRegex = /^\.\.\/|^\.\//;
-
-  const currentDir = UriUtils.dirname(state.uri);
-
-  if (!item.file) {
+  if (!item.fileName) {
     throw new Error("Include item does not have a file specified.");
   }
 
@@ -1369,53 +1365,56 @@ function resolveIncludeFileUri(
         programConfig.pgroup,
       )
     : undefined;
-  const ext = UriUtils.extname(URI.parse(item.file));
+  const ext = UriUtils.extname(URI.parse(item.fileName));
   if (
     ext !== "" &&
     programConfig &&
     pgroup &&
-    (!pgroup["copybook-extensions"]?.includes(ext) ||
-      !pgroup["copybook-extensions"])
+    (!pgroup["include-extensions"]?.includes(ext) ||
+      !pgroup["include-extensions"])
   ) {
-    const msg = pgroup["copybook-extensions"]?.length
-      ? `expected one of: ${pgroup["copybook-extensions"]?.join(", ")}`
+    const msg = pgroup["include-extensions"]?.length
+      ? `expected one of: ${pgroup["include-extensions"]?.join(", ")}`
       : `expected no extension`;
     throw new PreprocessorError(
-      `Unsupported copybook extension for included file, '${item.file}', ${msg}`,
+      `Unsupported copybook extension for included file, '${item.fileName}', ${msg}`,
       item.token! || state.current || state.last!,
       state.uri,
     );
   }
 
+  // TODO @montymxb Jun 24th, 2025: Disabled relative & absolute pathing per request, however mainframe tests do show this works w/ the right JCL config
+  // temporarily retaining here until we know we won't need this going forward, or we decide to re-enable it based on some configuration setting
+  /*
+  const absPathRegex = /^\/|[A-Z]:|~/i;
+  const relativePathRegex = /^\.\.\/|^\.\//;
   if (absPathRegex.test(item.file)) {
     // absolute path, use as is
     return URI.parse(item.file);
   } else if (relativePathRegex.test(item.file)) {
     // relative path, combine with currentDir
     return UriUtils.joinPath(currentDir, item.file);
-  } else if (programConfig && pgroup) {
+  } else ....
+  */
+
+  if (programConfig && pgroup) {
     // lib file as either a string or a member from a known process group
     for (const lib of pgroup.libs ?? []) {
-      if (lib === "*") {
-        // wildcard lib, use currentDir
-        return UriUtils.joinPath(currentDir, item.file);
+      const libFileUri = UriUtils.joinPath(
+        URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
+        lib,
+        item.fileName,
+      );
+      if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
+        // match found in this lib, take it
+        return libFileUri;
       } else {
-        const libFileUri = UriUtils.joinPath(
-          URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
-          lib,
-          item.file,
-        );
-        if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
-          // match found in this lib, take it
-          return libFileUri;
-        } else {
-          // Perform additional lookup using the new glob method
-          const patt = `${libFileUri.path}\\.*`;
-          const matches = FileSystemProviderInstance.findFilesByGlobSync(patt);
-          if (matches.length > 0) {
-            // Return the first match found
-            return URI.file(matches[0]);
-          }
+        // Perform additional lookup using the new glob method
+        const patt = `${libFileUri.path}\\.*`;
+        const matches = FileSystemProviderInstance.findFilesByGlobSync(patt);
+        if (matches.length > 0) {
+          // Return the first match found
+          return URI.file(matches[0]);
         }
       }
     }

@@ -24,6 +24,7 @@ import {
 } from "../test-builder";
 import { createTestBuilderHarnessImplementation } from "./implementation/test-builder";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
+import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
 
 const frameworkFileName = "framework.ts";
 const testsPath = "packages/language/test/fourslash";
@@ -34,10 +35,27 @@ beforeEach(() => {
   vfs = new VirtualFileSystemProvider();
   setFileSystemProvider(vfs);
   resetDocumentProviders();
+
+  // ensure the 'cpy' directory is always resolvable for includes via config
+  PluginConfigurationProviderInstance.setProgramConfigs("", [
+    {
+      program: "*.pli",
+      pgroup: "default",
+    },
+  ]);
+  PluginConfigurationProviderInstance.setProcessGroupConfigs([
+    {
+      name: "default",
+      libs: ["cpy"],
+      "include-extensions": [".pli"],
+    },
+  ]);
 });
 
 afterEach(() => {
   setFileSystemProvider(undefined);
+  PluginConfigurationProviderInstance.setProgramConfigs("", []);
+  PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
 });
 
 function getTestFiles() {

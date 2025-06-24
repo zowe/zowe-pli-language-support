@@ -16,6 +16,7 @@ import {
   parseAbstractCompilerOptions,
 } from "../preprocessor/compiler-options/parser";
 import { translateCompilerOptions } from "../preprocessor/compiler-options/translator";
+import { minimatch } from "minimatch";
 
 /**
  * Plugin configuration provider for loading up '.pliplugin' (when it exists), processing its contents,
@@ -39,7 +40,7 @@ export interface ProcessGroup {
   name: string;
   "compiler-options"?: string[];
   libs?: string[];
-  "copybook-extensions"?: string[];
+  "include-extensions"?: string[];
   abstractOptions?: AbstractCompilerOptions;
 
   /**
@@ -218,6 +219,7 @@ class PluginConfigurationProvider {
     partialKey: string,
     programConfigs: ProgramConfig[],
   ): void {
+    this.programConfigs.clear();
     for (const config of programConfigs) {
       // TODO @montymxb Apr. 23rd, 2025: Path sep is not cross-platform
       const workspaceUri = URI.parse(partialKey);
@@ -232,6 +234,7 @@ class PluginConfigurationProvider {
    *  .pliplugin/proc_grps.json (when present)
    */
   public setProcessGroupConfigs(processGroupConfigs: ProcessGroup[]): void {
+    this.processGroupConfigs.clear();
     for (const config of processGroupConfigs) {
       this.processGroupConfigs.set(config.name, config);
     }
@@ -239,19 +242,44 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Returns the program config for the given program
-   * @param program File name of the program to get a config for (entry point)
+   * Returns the program config for the given program.
+   * If no exact match is found, will attempt to match against
+   * any glob patterns registered as a config keys using minimatch.
+   * See: https://github.com/isaacs/minimatch for ref
+   * @param program Name of the program to get a config for
    * @returns Associated program config, or undefined if not found
    */
   public getProgramConfig(program: string): ProgramConfig | undefined {
-    return this.programConfigs.get(program);
+    // try direct match first
+    const direct = this.programConfigs.get(program);
+    if (direct) {
+      return direct;
+    }
+    // fallback to glob matching
+    for (const [pattern, config] of this.programConfigs.entries()) {
+      if (pattern === program) {
+        continue; // already checked
+      }
+      try {
+        // attempt match on decoded URI
+        if (minimatch(program, decodeURIComponent(pattern))) {
+          return config;
+        }
+      } catch (e) {
+        console.error(
+          `Invalid glob pattern "${pattern}" for program "${program}": ${e}`,
+        );
+      }
+    }
+    // no match
+    return undefined;
   }
 
   /**
    * Returns true if the given program has a config (i.e. is a listed entry point)
    */
   public hasProgramConfig(program: string): boolean {
-    return this.programConfigs.has(program);
+    return this.getProgramConfig(program) !== undefined;
   }
 
   /**

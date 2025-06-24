@@ -63,6 +63,15 @@ export function isReferenceToken(kind: CstNodeKind | undefined): boolean {
   return false;
 }
 
+export function isIncludeItemToken(kind: CstNodeKind | undefined): boolean {
+  switch (kind) {
+    case CstNodeKind.IncludeItem_FileString0:
+    case CstNodeKind.IncludeItem_FileID0:
+      return true;
+  }
+  return false;
+}
+
 /**
  * Returns a reference contained within a node, when present
  */
