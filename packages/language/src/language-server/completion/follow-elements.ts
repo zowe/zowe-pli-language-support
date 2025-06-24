@@ -79,6 +79,10 @@ function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
   switch (token.tokenType.name) {
     // We probably are in an assignment statement
     case "=":
+    // We probably are in a parenthesis expression
+    case "(":
+    // We probably are in a parenthesis expression, after a comma
+    case ",":
       return [
         {
           kind: FollowKind.LocalReference,
@@ -170,6 +174,17 @@ export function getFollowElements(
           kind: FollowKind.CstNode,
           types: AllStatementStartKeywordsArray,
         },
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
+    // Happens on '(' in `PUT()`
+    case CstNodeKind.Dimensions_OpenParen:
+    // Happens on '(' in `PUT(f)`
+    case CstNodeKind.DataSpecificationOptions_OpenParenList:
+    // Happens on ',' in `PUT(A, )`
+    case CstNodeKind.DataSpecificationDataList_Comma:
+      return [
         {
           kind: FollowKind.LocalReference,
         },
