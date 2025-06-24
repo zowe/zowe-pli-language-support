@@ -79,7 +79,7 @@ The `proc_grps.json` file is formatted as an array of JSON elements, with one JS
 - (Optional) **"compiler-options":** (array)  
     - Specify compiler directives that you want to apply to the programs linked with this processor group. 
 
-#### Example Program Configuration File
+### Example Program Configuration File
 
 The program configuration file, `pgm_conf.json`, links programs to processor groups. The program configuration file has the following format:
 
@@ -99,7 +99,7 @@ Each element contains the following parameters:
 - **"pgroup":** (string)
     - Specify the name of a procecssor group that is defined in `proc_grps.json`.
 
-#### Example Processor Group Configuration
+### Example Processor Group Configuration
 
 Using the example `pgm_conf.json` file in the section above, the following `proc_grps.json` example enables the following:
 
