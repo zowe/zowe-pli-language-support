@@ -1398,7 +1398,7 @@ function resolveIncludeFileUri(
     return UriUtils.joinPath(currentDir, item.file);
   } else ....
   */
-    
+
   if (programConfig && pgroup) {
     // lib file as either a string or a member from a known process group
     for (const lib of pgroup.libs ?? []) {

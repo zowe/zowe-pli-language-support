@@ -61,7 +61,10 @@ export function definitionRequest(
         },
       },
     ];
-  } else if (isIncludeItemToken(payload.kind) && payload.element?.kind === SyntaxKind.IncludeItem) {
+  } else if (
+    isIncludeItemToken(payload.kind) &&
+    payload.element?.kind === SyntaxKind.IncludeItem
+  ) {
     // allow jumping to the resolved file when present
     const filePath = payload.element.filePath;
     if (filePath) {

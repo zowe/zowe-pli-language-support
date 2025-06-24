@@ -21,7 +21,10 @@ type TokenizeFunction = (text: string) => string[];
 function setupFileSystemAndLexer(): TokenizeFunction {
   const vtsfs = new VirtualFileSystemProvider();
   setFileSystemProvider(vtsfs);
-  vtsfs.writeFileSync(URI.file("/test/cpy/payroll.pli"), " DECLARE PAYROLL FIXED;");
+  vtsfs.writeFileSync(
+    URI.file("/test/cpy/payroll.pli"),
+    " DECLARE PAYROLL FIXED;",
+  );
   vtsfs.writeFileSync(
     URI.file("/test/cpy/lib1.pli"),
     " DECLARE LIB1_VAR FIXED;",

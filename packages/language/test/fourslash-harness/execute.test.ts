@@ -35,17 +35,21 @@ beforeEach(() => {
   vfs = new VirtualFileSystemProvider();
   setFileSystemProvider(vfs);
   resetDocumentProviders();
-  
+
   // ensure the 'cpy' directory is always resolvable for includes via config
-  PluginConfigurationProviderInstance.setProgramConfigs("", [{
-    program: "*.pli",
-    pgroup: "default"
-  }]);
-  PluginConfigurationProviderInstance.setProcessGroupConfigs([{
-    name: "default",
-    libs: ["cpy"],
-    "include-extensions": [".pli"],
-  }]);
+  PluginConfigurationProviderInstance.setProgramConfigs("", [
+    {
+      program: "*.pli",
+      pgroup: "default",
+    },
+  ]);
+  PluginConfigurationProviderInstance.setProcessGroupConfigs([
+    {
+      name: "default",
+      libs: ["cpy"],
+      "include-extensions": [".pli"],
+    },
+  ]);
 });
 
 afterEach(() => {

@@ -24,15 +24,19 @@ describe("Go To Definition request", () => {
   beforeAll(() => {
     vfs = new VirtualFileSystemProvider();
     // ensure that the Pli plugin provider has the default path set for includes to resolve
-    PluginConfigurationProviderInstance.setProgramConfigs("", [{
-      program: "*.pli",
-      pgroup: "default"
-    }]);
-    PluginConfigurationProviderInstance.setProcessGroupConfigs([{
-      name: "default",
-      libs: ["./"],
-      "include-extensions": [".pli"],
-    }]);
+    PluginConfigurationProviderInstance.setProgramConfigs("", [
+      {
+        program: "*.pli",
+        pgroup: "default",
+      },
+    ]);
+    PluginConfigurationProviderInstance.setProcessGroupConfigs([
+      {
+        name: "default",
+        libs: ["./"],
+        "include-extensions": [".pli"],
+      },
+    ]);
     setFileSystemProvider(vfs);
     createFsTestBuilder = (content: string | PliTestFile[]) =>
       createTestBuilder(content, { fs: vfs });

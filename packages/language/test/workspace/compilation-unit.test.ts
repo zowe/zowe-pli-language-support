@@ -93,7 +93,7 @@ describe("Compilation Unit Tests", () => {
       uriEntry2.toString(),
     );
     expect(config2).toBeDefined();
-    
+
     // entry 3 should not match
     const configOther = PluginConfigurationProviderInstance.getProgramConfig(
       uriOther.toString(),
