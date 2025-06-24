@@ -233,7 +233,6 @@ export function getFollowElements(
     case CstNodeKind.InitAcrossExpression_OpenParen:
     case CstNodeKind.InitialAttributeSpecification_OpenParen:
     case CstNodeKind.InitialAttributeSpecificationIterationValue_OpenParen:
-    case CstNodeKind.DeclaredItem_OpenParen:
     case CstNodeKind.DateAttribute_OpenParen:
     case CstNodeKind.TypeAttribute_OpenParen:
     case CstNodeKind.OrdinalTypeAttribute_OpenParen:
