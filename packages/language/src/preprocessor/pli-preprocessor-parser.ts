@@ -1352,8 +1352,6 @@ function resolveIncludeFileUri(
   item: ast.IncludeItem,
   state: PreprocessorParserState,
 ): URI | undefined {
-  const currentDir = UriUtils.dirname(state.uri);
-
   if (!item.fileName) {
     throw new Error("Include item does not have a file specified.");
   }
@@ -1402,27 +1400,21 @@ function resolveIncludeFileUri(
   if (programConfig && pgroup) {
     // lib file as either a string or a member from a known process group
     for (const lib of pgroup.libs ?? []) {
-      if (lib === "*") {
-        // wildcard lib, use currentDir
-        // TODO @montymxb Disable this wildcard resolution
-        return UriUtils.joinPath(currentDir, item.fileName);
+      const libFileUri = UriUtils.joinPath(
+        URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
+        lib,
+        item.fileName,
+      );
+      if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
+        // match found in this lib, take it
+        return libFileUri;
       } else {
-        const libFileUri = UriUtils.joinPath(
-          URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
-          lib,
-          item.fileName,
-        );
-        if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
-          // match found in this lib, take it
-          return libFileUri;
-        } else {
-          // Perform additional lookup using the new glob method
-          const patt = `${libFileUri.path}\\.*`;
-          const matches = FileSystemProviderInstance.findFilesByGlobSync(patt);
-          if (matches.length > 0) {
-            // Return the first match found
-            return URI.file(matches[0]);
-          }
+        // Perform additional lookup using the new glob method
+        const patt = `${libFileUri.path}\\.*`;
+        const matches = FileSystemProviderInstance.findFilesByGlobSync(patt);
+        if (matches.length > 0) {
+          // Return the first match found
+          return URI.file(matches[0]);
         }
       }
     }
