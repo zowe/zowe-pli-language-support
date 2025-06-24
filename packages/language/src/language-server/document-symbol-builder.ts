@@ -55,7 +55,14 @@ class ProcedureSymbolBuilder implements SymbolBuilder {
     textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
-    const labelPrefixStatement = token.payload.element?.container as Statement;
+    const labelPrefixStatement = token.payload.element?.container;
+    // Return early if the label prefix statement is not a valid statement
+    if (
+      labelPrefixStatement?.kind !== SyntaxKind.Statement ||
+      labelPrefixStatement.labels.length === 0
+    ) {
+      return [];
+    }
     const procedureName = labelPrefixStatement.labels
       .map((label) => label.name)
       .join(" ");
