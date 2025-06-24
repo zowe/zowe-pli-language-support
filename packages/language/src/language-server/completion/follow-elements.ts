@@ -16,7 +16,7 @@ import { CompletionKeywords } from "./keywords";
 import * as tokens from "../../parser/tokens";
 
 const DataSpecificationCompletionKeywordsArray =
-  CompletionKeywords.DataSpecification.keysArray();
+  CompletionKeywords.DeclarationKeyword.keysArray();
 const StatementStartCompletionKeywordsArray =
   CompletionKeywords.StatementStart.keysArray();
 const StatementStartPreprocessorCompletionKeywordsArray =
@@ -91,22 +91,6 @@ function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
     return [
       {
         kind: FollowKind.LocalReference,
-      },
-    ];
-  }
-
-  const categories = token.tokenType.CATEGORIES?.values() ?? [];
-
-  /**
-   * We are maybe inside a declaration which is not followed by other statements, e.g.:
-   *
-   * `DCL A `
-   */
-  if (categories.some((v) => v.name === "ID")) {
-    return [
-      {
-        kind: FollowKind.CstNode,
-        types: DataSpecificationCompletionKeywordsArray,
       },
     ];
   }

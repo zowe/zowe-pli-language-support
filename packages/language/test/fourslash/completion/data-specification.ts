@@ -5,7 +5,7 @@
 
 completion.expectAt(1, {
   includes: [
-    ...constants.CompletionKeywords.DataSpecification.values().map(
+    ...constants.CompletionKeywords.DeclarationKeyword.values().map(
       (keyword) => keyword.label,
     ),
   ],
