@@ -17,26 +17,29 @@ This extension is a part of the Zowe open-source project, hosted by the Open Mai
 
 <a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v3 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev3/explorer-vs-code/color/zowe-conformant-zowev3-explorer-vs-code-color.png" width=260 height=195 /></a>
 
-## Address Software Requirements
-
+<details>
+<summary id="address-software-requirements"><span style="font-size: 1.5em"><b>Address Software Requirements</b></span><hr></summary>
+    
 There are no client or server-side prerequisites for PL/I Language Support.
 
-## Language Support Features
+</details>
 
+<details>
+<summary id="language-support-features"><span style="font-size: 1.5em"><b>Language Support Features</b></span><hr></summary>
 PL/I Language Support provides the following PL/I syntax awareness features:
 
-### Syntax and Semantic Check for Code
+#### Syntax and Semantic Check for Code
 This feature checks for mistakes and errors in PL/I code, including compiler options. The syntax check feature reviews the whole content of the code and suggests fixes, and the semantic analysis highlights incorrect names of variables and include files.
 
 The syntax check feature also validates built-in functions, pseudovariables, and subroutines which must be explicitly declared.
 
-### Syntax Highlighting
+#### Syntax Highlighting
 The extension enables syntax highlighting for PL/I code.
 
-### Syntax Coloring
+#### Syntax Coloring
 Contrasting colors are used in displayed code for ease of identifying and distinguishing keywords, variables, compiler options, paragraphs, and sections.
 
-### Code Snippets
+#### Code Snippets
 Before you write your PL/I code from scratch, search the snippet library for useful templates.
 
 1. Press **F1** to open the command palette.
@@ -45,7 +48,7 @@ Before you write your PL/I code from scratch, search the snippet library for use
 
 You can also insert a code snippet by typing the name of the snippet in your code and clicking on the autocomplete text.
 
-### Core Preprocessor Support
+#### Core Preprocessor Support
 
 The following preprocessor statements are supported:
 
@@ -53,16 +56,21 @@ The following preprocessor statements are supported:
 * Standard include statements (`%INCLUDE`, `%XINCLUDE`, `%INSCAN`, `%INSCAN`)
 * Core preprocessor statements (`%DECLARE`, `%ACTIVATE`, `%DEACTIVATE`, `%DO`, `%SELECT`, `%IF`, `%ELSE`, `%THEN`, `%GOTO`, `%END`, `%ITERATE`, `%LEAVE`, `%NOTE`, `%null`, `%REPLACE`)
 
-### Include File Support
-The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace, or in another workspace folder which you specify in a processor group. Files with the extensions `.inc` and `.mac` or with no extension are recognised as PL/I include files. The `%INCLUDE` statement is supported by default, variations on it such as `++INCLUDE` must be specified as compiler options in a processor group.
+#### Include File Support
+
+The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace, or in another workspace folder which you specify in a processor group. Files with the extensions `.inc` and `.mac` or with no extension are recognised by default as PL/I include files. If your include files use other extensions, specify them in a processor group. 
+
+The `%INCLUDE` statement is supported by default, variations on it such as `++INCLUDE` must be specified as compiler options in a processor group.
 
 The Find All References and Go To Definition functionalities are extended to work for occurrences of include file names, variables and paragraphs in the main PL/I file.
 
 * **Find All References** identifies all occurrences of variables and paragraphs from include files in the code.
 * **Go To Definition** enables you to right-click on any variable or paragraph to reveal a definition of the element. If the definition is in an include file, or the name of an include file, the include file opens.
 
-## Processor Groups
+</details>
 
+<details>
+<summary id="configure-processor-groups"><span style="font-size: 1.5em"><b>Configure Processor Groups</b></span><hr></summary>
 Use processor groups to link specific programs with compiler options, folders that contain include files, and include file extensions. You define processor groups in a `proc_grps.json` file and associate processor groups with programs in a `pgm_conf.json` file. Create both of these files in a **/.pliplugin** folder in your workspace root.
 
 The `proc_grps.json` file is formatted as an array of JSON elements, with one JSON per processor group. Each processor group can contain the following elements:
@@ -76,7 +84,7 @@ The `proc_grps.json` file is formatted as an array of JSON elements, with one JS
 - (Optional) **"compiler-options":** (array)  
     - Specify compiler directives that you want to apply to the programs linked with this processor group. 
 
-### Example Program Configuration File
+#### Example Program Configuration File
 
 The program configuration file, `pgm_conf.json`, links programs to processor groups. The program configuration file has the following format:
 
@@ -96,7 +104,7 @@ Each element contains the following parameters:
 - **"pgroup":** (string)
     - Specify the name of a procecssor group that is defined in `proc_grps.json`.
 
-### Example Processor Group Configuration
+#### Example Processor Group Configuration
 
 Using the example `pgm_conf.json` file in the section above, the following `proc_grps.json` example enables the following:
 
@@ -128,6 +136,8 @@ Using the example `pgm_conf.json` file in the section above, the following `proc
 }
 ```
 
-## Integrate with Zowe Explorer
-
+<details>
+<summary id="integrate-with-zowe-explorer"><span style="font-size: 1.5em"><b>Integrate with Zowe Explorer</b></span><hr></summary>
 We recommend the use of [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) to access your mainframe data sets containing PL/I source code directly in the VS Code interface.
+
+</details>
