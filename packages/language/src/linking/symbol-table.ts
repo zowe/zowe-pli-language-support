@@ -174,15 +174,12 @@ export function assignRedeclaredSymbols(scopeCache: ScopeCache) {
   }
 }
 
-type IterateSymbolsOptions = {
-  rootScope?: Scope;
-  rootPreprocessorScope?: Scope;
-};
-
-export function iterateSymbols(
-  unit: CompilationUnit,
-  { rootScope, rootPreprocessorScope }: IterateSymbolsOptions = {},
-): Diagnostic[] {
+/**
+ * Iterate over the PLI program creating the symbol table.
+ * @param unit - The compilation unit to iterate over.
+ * @returns The diagnostics of the validation.
+ */
+export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   const { scopeCaches, references } = unit;
 
   // Set child containers for all nodes.
@@ -192,29 +189,22 @@ export function iterateSymbols(
   const validationBuffer = new PliValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
 
-  const preprocessorScope = new Scope(rootPreprocessorScope);
-
-  // Iterate over the PLI program creating the symbol table.
   iterateSymbolTable(
     scopeCaches.preprocessor,
     references,
     acceptor,
     unit.preprocessorAst,
-    preprocessorScope,
+    new Scope(unit.rootPreprocessorScope),
   );
   // TODO: Active this when we have some tests
   // assignRedeclaredSymbols(scopeCaches.preprocessor);
-
-  // Generate a new scope
-  // Otherwise we will add symbols to the root scope (which contains builtins)
-  const regularScope = new Scope(rootScope);
 
   iterateSymbolTable(
     scopeCaches.regular,
     references,
     acceptor,
     unit.ast,
-    regularScope,
+    new Scope(unit.rootScope),
   );
   assignRedeclaredSymbols(scopeCaches.regular);
 

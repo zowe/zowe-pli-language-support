@@ -14,15 +14,21 @@ import { URI } from "../utils/uri.js";
 import { Connection } from "vscode-languageserver";
 import { ReferencesCache } from "../linking/resolver.js";
 import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
-import { lifecycle } from "./lifecycle.js";
+import {
+  generateSymbolTable,
+  lifecycle,
+  parse,
+  tokenize,
+} from "./lifecycle.js";
 import { CompilerOptions } from "../preprocessor/compiler-options/options.js";
 import { skippedCode } from "../language-server/skipped-code.js";
 import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-state.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
-import { ScopeCacheGroups } from "../linking/scope.js";
+import { Scope, ScopeCacheGroups } from "../linking/scope.js";
 import { Token } from "../parser/tokens.js";
 import { EditorDocuments } from "../language-server/text-documents.js";
+import { Builtins, BuiltinsUri, BuiltinsUriSchema } from "./builtins.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -49,6 +55,8 @@ export interface CompilationUnit {
   diagnostics: CompilationUnitDiagnostics;
   scopeCaches: ScopeCacheGroups;
   requestCaches: LSRequestCache;
+  rootScope: Scope;
+  rootPreprocessorScope: Scope;
 }
 
 export interface CompilationUnitTokens {
@@ -75,6 +83,42 @@ export function collectDiagnostics(sourceFile: CompilationUnit): Diagnostic[] {
     ...sourceFile.diagnostics.validation,
   ];
 }
+
+const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
+const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
+
+/**
+ * Creates a function that returns the root scope, with builtins.
+ *
+ * Caches the scope for reuse.
+ */
+function createBuiltinScopeGetter() {
+  let builtinSymbolTable: Scope | undefined = undefined;
+
+  return (uri: URI): Scope => {
+    // Don't load the builtin symbol table for builtin files
+    if (isBuiltinFile(uri)) {
+      return new Scope(null);
+    }
+
+    if (builtinSymbolTable === undefined) {
+      const unit = createCompilationUnit(URI.parse(BuiltinsUri));
+      tokenize(unit, Builtins);
+      parse(unit);
+      generateSymbolTable(unit);
+
+      builtinSymbolTable =
+        unit.scopeCaches.regular.get(unit.ast) ?? new Scope(null);
+    }
+
+    return builtinSymbolTable;
+  };
+}
+
+const getBuiltinScope = createBuiltinScopeGetter();
+
+// TODO: Add preprocessor scope for builtins?
+const getRootPreprocessorScope = () => new Scope(null);
 
 export function createCompilationUnit(uri: URI): CompilationUnit {
   return {
@@ -113,6 +157,8 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       .onRevalidate("skippedCodeRanges", ({ connection, unit }) => {
         skippedCode(connection, unit);
       }),
+    rootScope: getBuiltinScope(uri),
+    rootPreprocessorScope: getRootPreprocessorScope(),
   };
 }
 

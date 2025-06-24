@@ -11,6 +11,10 @@ export interface HarnessTesterInterface {
      * @param label The label to expect no errors at.
      */
     expectExclusiveErrorCodesAt(label: Label, codes: string[] | string): void;
+    /**
+     * Expect that the compilation unit has no diagnostics.
+     */
+    noDiagnostics(): void;
   };
 
   linker: {
