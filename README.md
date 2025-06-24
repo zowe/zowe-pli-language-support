@@ -140,7 +140,7 @@ The extensions for Visual Studio Code developed by Broadcom Inc., including its 
 
 This data collection uses built-in Microsoft VS Code Telemetry, which can be disabled, at your sole discretion, if you do not want to send Usage Data.
 
-The current release of Zowe PL/I Language Support collects anonymous data for the following events:
+The current release of PL/I Language Support collects anonymous data for the following events:
 - Activation of this VS Code extension
 - Opening, editing, creating or deleting a PL/I file
 - Creating or deleting the /.pliplugin folder in the workspace root.
@@ -150,4 +150,4 @@ Each such event is logged with the following information:
 - Operating system and version
 - Country or region
 - Anonymous user and session ID
-- Version numbers of Microsoft VS Code and Zowe PL/I Language Support
+- Version numbers of Microsoft VS Code and PL/I Language Support
