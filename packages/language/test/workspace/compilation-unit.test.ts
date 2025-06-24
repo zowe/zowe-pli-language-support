@@ -67,4 +67,46 @@ describe("Compilation Unit Tests", () => {
     const unit2 = ch.getOrCreateCompilationUnit(uriEntry);
     expect(unit2).toBeDefined();
   });
+
+  test("Create with wildcard config", () => {
+    const uriEntry1 = URI.parse("file:///test/entry1.pli");
+    const uriEntry2 = URI.parse("file:///test/entry2.pli");
+    const uriOther = URI.parse("file:///other/entry3.pli");
+    const ch = new CompilationUnitHandler();
+
+    // register wildcard config
+    PluginConfigurationProviderInstance.setProgramConfigs("", [
+      {
+        program: "test/*.pli",
+        pgroup: "",
+      },
+    ]);
+
+    // entry 1 should match wildcard config
+    const config1 = PluginConfigurationProviderInstance.getProgramConfig(
+      uriEntry1.toString(),
+    );
+    expect(config1).toBeDefined();
+
+    // entry 2 should also match
+    const config2 = PluginConfigurationProviderInstance.getProgramConfig(
+      uriEntry2.toString(),
+    );
+    expect(config2).toBeDefined();
+    
+    // entry 3 should not match
+    const configOther = PluginConfigurationProviderInstance.getProgramConfig(
+      uriOther.toString(),
+    );
+    expect(configOther).toBeUndefined();
+
+    // compilation units should be created for matching uris
+    const unit1 = ch.getOrCreateCompilationUnit(uriEntry1);
+    expect(unit1).toBeDefined();
+    const unit2 = ch.getOrCreateCompilationUnit(uriEntry2);
+    expect(unit2).toBeDefined();
+    // compilation unit for non-matching uri should still be created
+    const unitOther = ch.getOrCreateCompilationUnit(uriOther);
+    expect(unitOther).toBeDefined();
+  });
 });
