@@ -135,6 +135,7 @@ Using the example `pgm_conf.json` file in the section above, the following `proc
   ]
 }
 ```
+</details>
 
 <details>
 <summary id="integrate-with-zowe-explorer"><span style="font-size: 1.5em"><b>Integrate with Zowe Explorer</b></span><hr></summary>
