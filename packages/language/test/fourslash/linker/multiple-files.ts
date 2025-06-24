@@ -4,15 +4,15 @@
  * Must link on included files
  */
 
-// @filename: include.pli
+// @filename: cpy/include.pli
 //// DCL <|1:X|> FIXED;
 
-// @filename: include2.pli
+// @filename: cpy/include2.pli
 //// DCL <|2:Y|> FIXED;
 
 // @filename: main.pli
-//// %INCLUDE "./include.pli";
-//// %INCLUDE "./include2.pli";
+//// %INCLUDE "include.pli";
+//// %INCLUDE "include2.pli";
 //// <|1>X = 42;
 //// <|2>Y = 43;
 

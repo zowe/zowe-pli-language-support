@@ -1351,9 +1351,6 @@ function resolveIncludeFileUri(
   item: ast.IncludeItem,
   state: PreprocessorParserState,
 ): URI | undefined {
-  const absPathRegex = /^\/|[A-Z]:|~/i;
-  const relativePathRegex = /^\.\.\/|^\.\//;
-
   const currentDir = UriUtils.dirname(state.uri);
 
   if (!item.file) {
@@ -1387,17 +1384,26 @@ function resolveIncludeFileUri(
     );
   }
 
+  // TODO @montymxb Jun 24th, 2025: Disabled relative & absolute pathing per request, however mainframe tests do show this works w/ the right JCL config
+  // temporarily retaining here until we know we won't need this going forward, or we decide to re-enable it based on some configuration setting
+  /*
+  const absPathRegex = /^\/|[A-Z]:|~/i;
+  const relativePathRegex = /^\.\.\/|^\.\//;
   if (absPathRegex.test(item.file)) {
     // absolute path, use as is
     return URI.parse(item.file);
   } else if (relativePathRegex.test(item.file)) {
     // relative path, combine with currentDir
     return UriUtils.joinPath(currentDir, item.file);
-  } else if (programConfig && pgroup) {
+  } else ....
+  */
+    
+  if (programConfig && pgroup) {
     // lib file as either a string or a member from a known process group
     for (const lib of pgroup.libs ?? []) {
       if (lib === "*") {
         // wildcard lib, use currentDir
+        // TODO @montymxb Disable this wildcard resolution
         return UriUtils.joinPath(currentDir, item.file);
       } else {
         const libFileUri = UriUtils.joinPath(

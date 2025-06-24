@@ -15,6 +15,7 @@ import {
   setFileSystemProvider,
 } from "../../src/workspace/file-system-provider";
 import { createTestBuilder, PliTestFile, TestBuilder } from "../test-builder";
+import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
 
 describe("Go To Definition request", () => {
   let vfs: VirtualFileSystemProvider;
@@ -22,6 +23,16 @@ describe("Go To Definition request", () => {
 
   beforeAll(() => {
     vfs = new VirtualFileSystemProvider();
+    // ensure that the Pli plugin provider has the default path set for includes to resolve
+    PluginConfigurationProviderInstance.setProgramConfigs("", [{
+      program: "*.pli",
+      pgroup: "default"
+    }]);
+    PluginConfigurationProviderInstance.setProcessGroupConfigs([{
+      name: "default",
+      libs: ["./"],
+      "include-extensions": [".pli"],
+    }]);
     setFileSystemProvider(vfs);
     createFsTestBuilder = (content: string | PliTestFile[]) =>
       createTestBuilder(content, { fs: vfs });
@@ -29,6 +40,8 @@ describe("Go To Definition request", () => {
 
   afterAll(() => {
     setFileSystemProvider(undefined);
+    PluginConfigurationProviderInstance.setProgramConfigs("", []);
+    PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
   });
 
   it("should resolve definition in same file", () => {
@@ -47,7 +60,7 @@ describe("Go To Definition request", () => {
 
   it("should resolve multiple requests", () => {
     const include = ` DCL <|1:Y|> FIXED;`;
-    const main = ` %INCLUDE "./include.pli";
+    const main = ` %INCLUDE "include.pli";
  <|1>Y = 42;
  <|1>Y = 45;`;
 
