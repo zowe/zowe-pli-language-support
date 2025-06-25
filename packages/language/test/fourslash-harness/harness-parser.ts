@@ -57,6 +57,7 @@ class HarnessTestParser {
   private text: string;
   private lines: string[];
   private seenReference: boolean = false;
+  private lineOffset: number = 0;
 
   constructor(
     text: string,
@@ -73,6 +74,8 @@ class HarnessTestParser {
   }
 
   private next(): string | undefined {
+    this.lineOffset++;
+
     return this.lines.pop();
   }
 
@@ -106,12 +109,23 @@ class HarnessTestParser {
     return tags;
   }
 
+  private getWrapper(wrap: string): Wrapper {
+    const wrapper = this.context.wrappers[wrap];
+    if (!wrapper) {
+      throw new Error(`Wrapper '${wrap}' not found`);
+    }
+
+    return wrapper;
+  }
+
   private parseHarnessFile(): HarnessFile {
     const lines: string[] = [];
 
     const tags = this.parseTags();
     const fileName = tags[HarnessFileTag.FileName];
-    const wrap = tags[HarnessFileTag.Wrap];
+    const wrap: string | undefined = tags[HarnessFileTag.Wrap];
+
+    const lineOffsetPreWrap = this.lineOffset;
 
     while (true) {
       const line = this.peek();
@@ -127,19 +141,21 @@ class HarnessTestParser {
     }
 
     let content = lines.join("\n");
-    if (wrap) {
-      const wrapper = this.context.wrappers[wrap];
-      if (!wrapper) {
-        throw new Error(`Wrapper '${wrap}' not found`);
-      }
-
-      content = wrapper(content);
+    const wrapper = wrap ? this.getWrapper(wrap) : undefined;
+    if (wrapper) {
+      content = wrapper.wrap(content);
     }
+
+    const wrapperLineOffset = wrapper ? wrapper.headerLength : 0;
+    const lineOffset = lineOffsetPreWrap - wrapperLineOffset + 1;
+    const characterOffset = HARNESS_FILE_PREFIX.length;
 
     return {
       fileName,
       wrap,
       content,
+      lineOffset,
+      characterOffset,
     };
   }
 

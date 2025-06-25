@@ -20,6 +20,7 @@ import { HarnessTest, UnnamedFile } from "./types";
 import {
   createTestBuilder,
   DEFAULT_FILE_URI,
+  LocationOverride,
   PliTestFile,
 } from "../test-builder";
 import { createTestBuilderHarnessImplementation } from "./implementation/test-builder";
@@ -28,6 +29,20 @@ import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-
 
 const frameworkFileName = "framework.ts";
 const testsPath = "packages/language/test/fourslash";
+
+/**
+ * The root of the project.
+ *
+ * Important: Assume that the test files exist in the `packages/language/test/fourslash` directory.
+ */
+const projectRoot = path.join(__dirname, "../../../..");
+
+/**
+ * The path to the `fourslash` directory.
+ *
+ * Important: Assume that the test files exist in the `packages/language/test/fourslash` directory.
+ */
+const fourslashPath = path.join(__dirname, "../fourslash");
 
 let fs: VirtualFileSystemProvider;
 
@@ -65,6 +80,10 @@ function getTestFiles() {
     .filter((file) => file !== frameworkFileName); // No framework file
 }
 
+function getUri(uri: string | typeof UnnamedFile): string {
+  return uri === UnnamedFile ? DEFAULT_FILE_URI : uri;
+}
+
 /**
  * Get the files to load for a harness test.
  *
@@ -73,9 +92,25 @@ function getTestFiles() {
  */
 function getFiles(testFile: HarnessTest): PliTestFile[] {
   return Array.from(testFile.files.entries()).map(([uri, file]) => ({
-    uri: uri === UnnamedFile ? DEFAULT_FILE_URI : uri,
+    uri: getUri(uri),
     content: file.content,
   }));
+}
+
+function getLocationOverrides(
+  testFile: HarnessTest,
+  path: string,
+): Record<string, LocationOverride> {
+  return Object.fromEntries(
+    Array.from(testFile.files.entries()).map(([uri, file]) => [
+      getUri(uri),
+      {
+        uri: path,
+        lineOffset: file.lineOffset,
+        characterOffset: file.characterOffset,
+      },
+    ]),
+  );
 }
 
 /**
@@ -97,7 +132,10 @@ function runHarnessTests() {
  * @param filePath - The path to the test file.
  */
 function runSingleHarnessTest(filePath: string) {
-  const relativePath = path.relative(__dirname, filePath);
+  // e.g. 'linker/implicit-declaration.ts'
+  const relativePath = path.relative(fourslashPath, filePath);
+  // e.g. 'packages/language/test/fourslash/linker/implicit-declaration.ts'
+  const relativePathToProjectRoot = path.relative(projectRoot, filePath);
 
   test(`${relativePath}`, () => {
     const wrappers = getWrappers();
@@ -105,9 +143,18 @@ function runSingleHarnessTest(filePath: string) {
       wrappers,
     });
 
+    const locationOverrides = getLocationOverrides(
+      testFile,
+      relativePathToProjectRoot,
+    );
+
     // We want to load the files in reverse order, so that the included files are inserted in the correct order.
     const files = getFiles(testFile).toReversed();
-    const testBuilder = createTestBuilder(files, { fs, validate: true });
+    const testBuilder = createTestBuilder(files, {
+      fs,
+      validate: true,
+      locationOverrides,
+    });
     const implementation = createTestBuilderHarnessImplementation(testBuilder);
 
     runHarnessTest(testFile, implementation);

@@ -15,22 +15,38 @@ import {
   CompilationUnit,
 } from "../src/workspace/compilation-unit";
 import { URI } from "vscode-uri";
-import { Diagnostic, Range } from "../src/language-server/types";
+import { Diagnostic, Range, Severity } from "../src/language-server/types";
 import { parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
 import { assignDebugKinds } from "../src/utils/debug-kinds";
 import { completionRequest } from "../src/language-server/completion/completion-request";
+import { fail } from "assert";
+import { Position } from "vscode-languageserver";
 
 export const DEFAULT_FILE_URI = "file:///main.pli";
+
+type Path = string;
+export type LocationOverride = {
+  uri: Path;
+  lineOffset: number;
+  characterOffset: number;
+};
 
 export type TestBuilderOptions = {
   validate?: boolean;
   fs?: FileSystemProvider;
+
+  /**
+   * Override the location of files.
+   *
+   * This is useful for harness tests, where files are 'virtually' created inside a single test file
+   */
+  locationOverrides?: Record<Path, LocationOverride>;
 };
 
 export type PliTestFile = {
-  uri: string;
+  uri: Path;
   content: string;
 };
 
@@ -59,6 +75,21 @@ export class TestBuilder {
   private indices: Record<string, number[]>;
   private ranges: Record<string, Array<[number, number]>>;
   private diagnostics: Diagnostic[];
+  private options: TestBuilderOptions;
+
+  private static getFiles(
+    textOrFiles: string | PliTestFile | PliTestFile[],
+  ): PliTestFile[] {
+    if (typeof textOrFiles === "string") {
+      return [{ uri: DEFAULT_FILE_URI, content: textOrFiles }];
+    }
+
+    if (Array.isArray(textOrFiles)) {
+      return textOrFiles;
+    }
+
+    return [textOrFiles];
+  }
 
   /**
    * Construct a test builder from a PL/I text with range and index markers. Used to chain assertions.
@@ -79,16 +110,17 @@ export class TestBuilder {
    * ]);
    */
   constructor(
-    textOrFiles: string | PliTestFile[],
-    options?: TestBuilderOptions,
+    textOrFiles: string | PliTestFile | PliTestFile[],
+    options: TestBuilderOptions = {},
   ) {
-    const files =
-      typeof textOrFiles === "string"
-        ? [{ uri: DEFAULT_FILE_URI, content: textOrFiles }]
-        : textOrFiles;
-    for (const file of files) {
-      this.files[file.uri] = replaceNamedIndices(file.content);
-    }
+    this.options = options;
+
+    this.files = Object.fromEntries(
+      TestBuilder.getFiles(textOrFiles).map((file) => [
+        file.uri,
+        replaceNamedIndices(file.content),
+      ]),
+    );
 
     if (options?.fs) {
       for (const [uri, file] of Object.entries(this.files)) {
@@ -210,7 +242,13 @@ export class TestBuilder {
   }
 
   expectNoDiagnostics(): TestBuilder {
-    expect(this.diagnostics).toHaveLength(0);
+    if (this.diagnostics.length > 0) {
+      const message = this.diagnostics
+        .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
+        .join("\n- ");
+      fail(`Expected no diagnostics but received:\n- ${message}`);
+    }
+
     return this;
   }
 
@@ -363,6 +401,39 @@ export class TestBuilder {
       }
     });
   }
+
+  private createDiagnosticMessage(diagnostic: Diagnostic): string {
+    const severity = Severity[diagnostic.severity];
+    const { line, character } = offsetAt(
+      this.output,
+      diagnostic.range.start,
+      diagnostic.range.end,
+    );
+
+    const locationOverride = this.options.locationOverrides?.[diagnostic.uri];
+    const uri = locationOverride?.uri ?? diagnostic.uri;
+    const lineOffset = locationOverride?.lineOffset ?? 0;
+    const characterOffset = locationOverride?.characterOffset ?? 0;
+
+    const location = `${uri}:${line + lineOffset}:${character + characterOffset}`;
+
+    if (diagnostic.code !== undefined) {
+      return `${severity} ${diagnostic.code}: ${diagnostic.message} (${location})`;
+    }
+
+    return `${severity}: ${diagnostic.message} (${location})`;
+  }
+}
+
+function offsetAt(text: string, start: number, end: number): Position {
+  const lines = text.slice(0, start).split("\n");
+  const line = lines.length - 1;
+  const character = lines[line].length + 1;
+
+  return {
+    line,
+    character,
+  };
 }
 
 /**

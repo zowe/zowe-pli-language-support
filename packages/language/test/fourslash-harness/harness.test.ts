@@ -148,8 +148,16 @@ ${content1
 
     const file = parseHarnessTest(commands, "test.ts", {
       wrappers: {
-        main: (content) => content,
-        main2: (content) => content,
+        main: {
+          wrap: (content) => content,
+          headerLength: 0,
+          footerLength: 0,
+        },
+        main2: {
+          wrap: (content) => content,
+          headerLength: 0,
+          footerLength: 0,
+        },
       },
     });
 
@@ -180,7 +188,11 @@ ${content1
 
     const file = parseHarnessTest(commands, "test.ts", {
       wrappers: {
-        main: (content) => `WRAP_BEGIN ${content} WRAP_END`,
+        main: {
+          wrap: (content) => `WRAP_BEGIN ${content} WRAP_END`,
+          headerLength: 1,
+          footerLength: 1,
+        },
       },
     });
 
@@ -195,6 +207,6 @@ ${content1
     const wrapFileContent = `////WRAP_BEGIN <...> WRAP_END`;
     const wrapper = parseWrapperFile(wrapFileContent);
 
-    expect(wrapper("MY CONTENT")).toBe("WRAP_BEGIN MY CONTENT WRAP_END");
+    expect(wrapper.wrap("MY CONTENT")).toBe("WRAP_BEGIN MY CONTENT WRAP_END");
   });
 });
