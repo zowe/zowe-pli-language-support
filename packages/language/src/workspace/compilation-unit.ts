@@ -98,7 +98,7 @@ function createBuiltinScopeGetter() {
   return (uri: URI): Scope => {
     // Don't load the builtin symbol table for builtin files
     if (isBuiltinFile(uri)) {
-      return new Scope(null);
+      return new Scope();
     }
 
     if (builtinSymbolTable === undefined) {
@@ -108,7 +108,7 @@ function createBuiltinScopeGetter() {
       generateSymbolTable(unit);
 
       builtinSymbolTable =
-        unit.scopeCaches.regular.get(unit.ast) ?? new Scope(null);
+        unit.scopeCaches.regular.get(unit.ast) ?? new Scope();
     }
 
     return builtinSymbolTable;
@@ -118,7 +118,7 @@ function createBuiltinScopeGetter() {
 const getBuiltinScope = createBuiltinScopeGetter();
 
 // TODO: Add preprocessor scope for builtins?
-const getRootPreprocessorScope = () => new Scope(null);
+const getRootPreprocessorScope = () => new Scope();
 
 export function createCompilationUnit(uri: URI): CompilationUnit {
   return {

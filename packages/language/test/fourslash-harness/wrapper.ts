@@ -18,7 +18,11 @@ import { HARNESS_FILE_PREFIX } from "./harness-parser";
  */
 const WRAPPER_CONTENT_TAG = "<...>";
 
-export type Wrapper = (content: string) => string;
+export type Wrapper = {
+  wrap: (content: string) => string;
+  headerLength: number;
+  footerLength: number;
+};
 
 /**
  * Parse a wrapper file into a function that can be used to wrap content.
@@ -29,14 +33,23 @@ export type Wrapper = (content: string) => string;
  * @returns A function that can be used to wrap content.
  */
 export function parseWrapperFile(content: string): Wrapper {
-  const wrapperContent = content
+  const wrapperLines = content
     .split("\n")
-    .map((v) => v.substring(HARNESS_FILE_PREFIX.length))
-    .join("\n");
+    .map((v) => v.substring(HARNESS_FILE_PREFIX.length));
+  const wrapperContent = wrapperLines.join("\n");
   const wrapperFunction = (content: string) =>
     wrapperContent.replace(WRAPPER_CONTENT_TAG, content);
 
-  return wrapperFunction;
+  const headerLength = wrapperLines.findIndex((v) =>
+    v.includes(WRAPPER_CONTENT_TAG),
+  );
+  const footerLength = wrapperLines.length - headerLength - 1;
+
+  return {
+    wrap: wrapperFunction,
+    headerLength,
+    footerLength,
+  };
 }
 
 /**

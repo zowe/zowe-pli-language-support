@@ -16,6 +16,16 @@ export interface HarnessFile {
   fileName: string | undefined;
   wrap: string | undefined;
   content: string;
+
+  /**
+   * The line offset of the file, e.g. the number of lines to skip before the file content
+   */
+  lineOffset: number;
+
+  /**
+   * The general character offset of the file, e.g. the fourslash `////` prefix
+   */
+  characterOffset: number;
 }
 
 export interface HarnessTest {
