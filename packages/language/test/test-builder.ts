@@ -209,6 +209,11 @@ export class TestBuilder {
     return this;
   }
 
+  expectNoDiagnostics(): TestBuilder {
+    expect(this.diagnostics).toHaveLength(0);
+    return this;
+  }
+
   /**
    * Get the linking requests for a given label
    * @param label - The label to get the linking requests for

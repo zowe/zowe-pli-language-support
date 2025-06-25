@@ -24,7 +24,6 @@ import { IntermediateBinaryExpression } from "../src/parser/abstract-parser";
 import { escapeRegExp, Token } from "../src/parser/tokens";
 import { referencesRequest } from "../src/language-server/references-request";
 import { completionRequest } from "../src/language-server/completion/completion-request";
-import { assignDebugKinds } from "../src/utils/debug-kinds";
 
 interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
@@ -253,12 +252,15 @@ export function parseAndLink(
   text: string,
   options?: { validate?: boolean; uri?: URI },
 ): CompilationUnit {
-  const unit = parse(text, options);
+  const unit = createCompilationUnit(options?.uri ?? URI.file("test.pli"));
+
+  lifecycle.tokenize(unit, text);
+  lifecycle.parse(unit);
   lifecycle.generateSymbolTable(unit);
   lifecycle.link(unit);
-
-  assignDebugKinds(unit.ast);
-  assignDebugKinds(unit.preprocessorAst);
+  if (options?.validate) {
+    lifecycle.validate(unit);
+  }
 
   return unit;
 }

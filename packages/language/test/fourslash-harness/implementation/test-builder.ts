@@ -31,6 +31,7 @@ export function createTestBuilderHarnessImplementation(
     verify: {
       expectExclusiveErrorCodesAt: (label, codes) =>
         testBuilder.expectExclusiveErrorCodesAt(label.toString(), codes),
+      noDiagnostics: () => testBuilder.expectNoDiagnostics(),
     },
     completion: {
       expectAt: (label, content) =>

@@ -29,11 +29,11 @@ import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-
 const frameworkFileName = "framework.ts";
 const testsPath = "packages/language/test/fourslash";
 
-let vfs: VirtualFileSystemProvider;
+let fs: VirtualFileSystemProvider;
 
 beforeEach(() => {
-  vfs = new VirtualFileSystemProvider();
-  setFileSystemProvider(vfs);
+  fs = new VirtualFileSystemProvider();
+  setFileSystemProvider(fs);
   resetDocumentProviders();
 
   // ensure the 'cpy' directory is always resolvable for includes via config
@@ -98,18 +98,16 @@ function runHarnessTests() {
  */
 function runSingleHarnessTest(filePath: string) {
   const relativePath = path.relative(__dirname, filePath);
+
   test(`${relativePath}`, () => {
     const wrappers = getWrappers();
-
-    const context = {
+    const testFile = parseHarnessTestFile(filePath, {
       wrappers,
-    };
-
-    const testFile = parseHarnessTestFile(filePath, context);
+    });
 
     // We want to load the files in reverse order, so that the included files are inserted in the correct order.
     const files = getFiles(testFile).toReversed();
-    const testBuilder = createTestBuilder(files, { fs: vfs });
+    const testBuilder = createTestBuilder(files, { fs, validate: true });
     const implementation = createTestBuilderHarnessImplementation(testBuilder);
 
     runHarnessTest(testFile, implementation);
