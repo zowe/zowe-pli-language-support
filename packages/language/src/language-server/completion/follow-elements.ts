@@ -12,18 +12,15 @@
 import { Token } from "../../parser/tokens";
 import { MemberCall, SyntaxKind, SyntaxNode } from "../../syntax-tree/ast";
 import { CstNodeKind } from "../../syntax-tree/cst";
-import {
-  StatementStartCompletionKeywords,
-  StatementStartPreprocessorCompletionKeywords,
-} from "./keywords";
+import { CompletionKeywords } from "./keywords";
 import * as tokens from "../../parser/tokens";
 
-const StatementStartCompletionKeywordsArray = new Array(
-  ...StatementStartCompletionKeywords.keys(),
-);
-const StatementStartPreprocessorCompletionKeywordsArray = new Array(
-  ...StatementStartPreprocessorCompletionKeywords.keys(),
-);
+const DataSpecificationCompletionKeywordsArray =
+  CompletionKeywords.DeclarationKeyword.keysArray();
+const StatementStartCompletionKeywordsArray =
+  CompletionKeywords.StatementStart.keysArray();
+const StatementStartPreprocessorCompletionKeywordsArray =
+  CompletionKeywords.StatementStartPreprocessor.keysArray();
 const AllStatementStartKeywordsArray = [
   ...StatementStartCompletionKeywordsArray,
   ...StatementStartPreprocessorCompletionKeywordsArray,
@@ -113,6 +110,15 @@ export function getFollowElements(
       return [
         {
           kind: FollowKind.LocalReference,
+        },
+      ];
+    // We are inside a declaration, e.g.:
+    // `DCL A <|1>;`
+    case CstNodeKind.DeclaredVariable_Name:
+      return [
+        {
+          kind: FollowKind.CstNode,
+          types: DataSpecificationCompletionKeywordsArray,
         },
       ];
     case CstNodeKind.DeactivateStatement_Semicolon:

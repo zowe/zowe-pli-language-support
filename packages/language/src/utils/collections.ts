@@ -145,6 +145,10 @@ export class MultiMap<K, V> {
     return this.map.keys();
   }
 
+  keysArray(): K[] {
+    return Array.from(this.map.keys());
+  }
+
   /**
    * Returns a stream of values in the map.
    */

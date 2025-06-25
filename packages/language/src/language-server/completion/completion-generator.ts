@@ -14,19 +14,8 @@ import { Statement, SyntaxKind, SyntaxNode } from "../../syntax-tree/ast";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { FollowElement, FollowKind } from "./follow-elements";
 import { getQualifiedName } from "../../linking/resolver";
-import {
-  StatementStartCompletionKeywords,
-  StatementStartPreprocessorCompletionKeywords,
-} from "./keywords";
-import { CstNodeKind } from "../../syntax-tree/cst";
+import { getCompletionKeywords } from "./keywords";
 import { SimpleCompletionItem } from "../types";
-
-function getCompletionKeywords(kind: CstNodeKind): SimpleCompletionItem[] {
-  return [
-    ...StatementStartCompletionKeywords.get(kind),
-    ...StatementStartPreprocessorCompletionKeywords.get(kind),
-  ];
-}
 
 export function generateCompletionItems(
   unit: CompilationUnit,
@@ -49,7 +38,7 @@ export function generateCompletionItems(
     : unit.scopeCaches.regular;
   const scope = scopeCache.get(context);
   if (!scope) {
-    return [];
+    return items;
   }
   if (followElement.kind === FollowKind.LocalReference) {
     const symbols = scope.allDistinctSymbols([]);
@@ -65,7 +54,7 @@ export function generateCompletionItems(
   } else if (followElement.kind === FollowKind.QualifiedReference) {
     const ref = followElement.previous.element?.ref;
     if (!ref) {
-      return [];
+      return items;
     }
     const qualifiedName = getQualifiedName(ref);
     const symbols = scope.allDistinctSymbols(qualifiedName);
