@@ -107,4 +107,17 @@ export class LinkerErrorReporter {
       }),
     );
   }
+
+  /**
+   * S IBM1881I
+   */
+  reportAmbiguousReference(token: Token, name: string) {
+    withLocation(token, ({ range, uri }) =>
+      this.accept(Severity.S, PLICodes.Severe.IBM1881I.message(name), {
+        range,
+        uri,
+        code: PLICodes.Severe.IBM1881I.fullCode,
+      }),
+    );
+  }
 }

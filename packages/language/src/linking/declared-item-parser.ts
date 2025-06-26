@@ -236,7 +236,12 @@ export class DeclaredItemParser {
       }
 
       // Otherwise, we can add the node to the symbol table.
-      const node = new QualifiedSyntaxNode(token, item.node, parent, level);
+      const node = QualifiedSyntaxNode.createExplicit(
+        token,
+        item.node,
+        parent,
+        level,
+      );
 
       nodes.add(name, node);
       table.addSymbolDeclaration(name, node);

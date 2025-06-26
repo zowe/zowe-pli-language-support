@@ -18,10 +18,10 @@ import { getWrappers } from "./wrapper";
 import { setFileSystemProvider, VirtualFileSystemProvider } from "../../src";
 import { HarnessTest, UnnamedFile } from "./types";
 import {
-  createTestBuilder,
   DEFAULT_FILE_URI,
   LocationOverride,
   PliTestFile,
+  TestBuilder,
 } from "../test-builder";
 import { createTestBuilderHarnessImplementation } from "./implementation/test-builder";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
@@ -160,11 +160,9 @@ function runSingleHarnessTest(filePath: string) {
       relativePathToProjectRoot,
     );
 
-    console.log(locationOverrides);
-
     // We want to load the files in reverse order, so that the included files are inserted in the correct order.
     const files = getFiles(testFile).toReversed();
-    const testBuilder = createTestBuilder(files, {
+    const testBuilder = TestBuilder.create(files, {
       fs,
       validate: true,
       locationOverrides,

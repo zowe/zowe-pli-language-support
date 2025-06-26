@@ -9,12 +9,7 @@
  *
  */
 
-import {
-  Diagnostic,
-  Location,
-  Severity,
-  tokenToRange,
-} from "../language-server/types";
+import { Diagnostic, Location, tokenToRange } from "../language-server/types";
 import { TokenPayload, Token } from "../parser/tokens";
 import {
   MemberCall,
@@ -31,12 +26,10 @@ import {
 } from "./tokens";
 import { URI } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import {
-  PliValidationAcceptor,
-  PliValidationBuffer,
-} from "../validation/validator";
-import * as PLICodes from "../validation/messages/pli-codes";
+import { PliValidationBuffer } from "../validation/validator";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
+import { LinkerErrorReporter } from "./error";
+import { Scope } from "./scope";
 
 export class ReferencesCache {
   private list: Reference[] = [];
@@ -145,42 +138,76 @@ function assignReference(
   reference.node = resolved.node;
 }
 
+/**
+ * Get the matching symbols for a reference given a qualified name.
+ *
+ * Will return explicitly declared symbols if they exist, otherwise it will return implicit symbols.
+ *
+ * Side effect: If the reference is ambiguous, the reporter will be used to report the error.
+ *
+ * @param scope The scope to search in.
+ * @param qualifiedName The qualified name to search for.
+ * @param token The token to report the error on.
+ * @param reporter The reporter to use for errors.
+ * @returns The matching symbols.
+ */
+function getMatchingSymbols(
+  scope: Scope,
+  qualifiedName: string[],
+  token: Token,
+  reporter: LinkerErrorReporter,
+) {
+  const scopeSymbols = scope.getSymbols(qualifiedName);
+
+  const explicitlyDeclaredSymbols = scopeSymbols
+    .filter((symbol) => !symbol.isImplicit)
+    .filter((symbol) => !symbol.isRedeclared); // Don't resolve reference to redeclared symbols.
+
+  const isAmbiguous = explicitlyDeclaredSymbols.length > 1;
+  if (isAmbiguous && token.payload.uri) {
+    const fullName = qualifiedName.toReversed().join(".");
+    // TODO: Currently only emitting on the last member call symbol (`reference.token`)
+    // We want to underline the entire qualified name.
+    reporter.reportAmbiguousReference(token, fullName);
+  }
+
+  if (explicitlyDeclaredSymbols.length > 0) {
+    return explicitlyDeclaredSymbols;
+  }
+
+  const implicitSymbols = scopeSymbols.filter((symbol) => symbol.isImplicit);
+  if (implicitSymbols.length > 0) {
+    return implicitSymbols;
+  }
+
+  return [];
+}
+
 function resolveReference(
   unit: CompilationUnit,
   reference: Reference,
-  acceptor: PliValidationAcceptor,
+  reporter: LinkerErrorReporter,
 ) {
   if (reference.node === null || reference.node !== undefined) {
     return;
   }
-
-  const qualifiedName = getQualifiedName(reference);
 
   const scope = unit.scopeCaches.get(reference.owner);
   if (!scope) {
     return;
   }
 
-  // Don't resolve a reference to redeclared symbols.
-  const symbols = scope
-    .getSymbols(qualifiedName)
-    .filter((symbol) => !symbol.isRedeclared);
-
-  const isAmbiguous = symbols.length > 1;
-  if (isAmbiguous && reference.token.payload.uri) {
-    const fullName = qualifiedName.toReversed().join(".");
-    // TODO: Currently only emitting on the last member call symbol (`reference.token`)
-    // We want to underline the entire qualified name.
-    acceptor(Severity.S, PLICodes.Severe.IBM1881I.message(fullName), {
-      code: PLICodes.Severe.IBM1881I.fullCode,
-      range: tokenToRange(reference.token),
-      uri: reference.token.payload.uri.toString(),
-    });
-  }
+  const qualifiedName = getQualifiedName(reference);
+  const matchingSymbols = getMatchingSymbols(
+    scope,
+    qualifiedName,
+    reference.token,
+    reporter,
+  );
 
   // We take the first symbol, even if there are multiple matching.
   // Ideally, we'd want to reference all matching symbols, but the AST currently only supports a single reference per symbol.
-  const symbol = symbols[0];
+  const symbol = matchingSymbols[0];
   if (!symbol) {
     reference.node = null;
     return;
@@ -194,9 +221,10 @@ function resolveReference(
 export function resolveReferences(unit: CompilationUnit): Diagnostic[] {
   const validationBuffer = new PliValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
+  const reporter = new LinkerErrorReporter(acceptor);
 
   for (const reference of unit.references.allReferences()) {
-    resolveReference(unit, reference, acceptor);
+    resolveReference(unit, reference, reporter);
     // Add the reference to the reverse map so we can use it for LSP services
     unit.references.addInverse(reference);
   }

@@ -11,6 +11,7 @@
 
 import { Diagnostic } from "../language-server/types";
 import {
+  AssignmentStatement,
   DeclareStatement,
   ProcedureStatement,
   SyntaxKind,
@@ -33,6 +34,10 @@ import {
 import { MultiMap } from "../utils/collections";
 import { Scope, ScopeCache } from "./scope";
 
+function nonNull<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}
+
 /**
  * Terminology:
  * - Redeclaration: A symbol that is declared with the same name in the same scope.
@@ -43,7 +48,23 @@ import { Scope, ScopeCache } from "./scope";
 export class SymbolTable {
   symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
 
-  addDeclarationStatement(
+  addImplicitDeclarationStatement(
+    assignment: AssignmentStatement,
+    acceptor: PliValidationAcceptor,
+  ): void {
+    const candidates = assignment.refs
+      .map((ref) => ref.element?.element?.ref)
+      .filter(nonNull);
+
+    for (const candidate of candidates) {
+      this.symbols.add(
+        candidate.text,
+        QualifiedSyntaxNode.createImplicit(candidate.token, candidate.owner),
+      );
+    }
+  }
+
+  addExplicitDeclarationStatement(
     declaration: DeclareStatement,
     acceptor: PliValidationAcceptor,
   ): void {
@@ -57,7 +78,6 @@ export class SymbolTable {
   }
 
   allDistinctSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
-    const allSymbols: QualifiedSyntaxNode[] = [];
     const map = new Map<string, QualifiedSyntaxNode[]>();
     for (const [name, symbols] of this.symbols.entriesGroupedByKey()) {
       if (qualifiedName.length > 0) {
@@ -87,13 +107,13 @@ export class SymbolTable {
         map.set(name, symbols);
       }
     }
-    for (const symbols of map.values()) {
-      if (symbols.length === 1) {
-        // Symbol is unique, add it to the list.
-        allSymbols.push(symbols[0]);
-      }
-    }
-    return allSymbols;
+
+    const uniqueSymbols = map
+      .values()
+      .map((symbols) => symbols.filter((symbol) => !symbol.isImplicit))
+      .filter((symbols) => symbols.length === 1);
+
+    return Array.from(uniqueSymbols).flat();
   }
 
   // Return all qualified symbols
@@ -146,6 +166,7 @@ export function assignRedeclaredSymbols(scopeCache: ScopeCache) {
       scope.symbolTable.symbols.entriesGroupedByKey(),
       ([, symbols]) =>
         symbols
+          .filter((symbol) => !symbol.isImplicit) // We don't want to check implicit declarations for redeclarations.
           .filter((symbol) => symbol.level === 1) // Get the symbols that are at the first level of scope.
           .filter((symbol) => symbol.node.kind !== SyntaxKind.WildcardItem), // Wildcard items are not checked for redeclarations.
     );
@@ -250,7 +271,7 @@ const iterateSymbolTable = (
       if (node.name && node.nameToken) {
         parentScope.symbolTable.addSymbolDeclaration(
           node.name,
-          new QualifiedSyntaxNode(node.nameToken, node),
+          QualifiedSyntaxNode.createExplicit(node.nameToken, node),
         );
       }
       break;
@@ -271,8 +292,10 @@ const iterateSymbolTable = (
       }
       break;
     case SyntaxKind.DeclareStatement:
-      parentScope.symbolTable.addDeclarationStatement(node, acceptor);
+      parentScope.symbolTable.addExplicitDeclarationStatement(node, acceptor);
       break;
+    case SyntaxKind.AssignmentStatement:
+      parentScope.symbolTable.addImplicitDeclarationStatement(node, acceptor);
     default:
       forEachNode(node, iterateChild(parentScope));
   }

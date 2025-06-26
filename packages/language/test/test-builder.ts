@@ -19,7 +19,6 @@ import { Diagnostic, Range, Severity } from "../src/language-server/types";
 import { parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
-import { assignDebugKinds } from "../src/utils/debug-kinds";
 import { completionRequest } from "../src/language-server/completion/completion-request";
 import { fail } from "assert";
 import { Position } from "vscode-languageserver";
@@ -138,13 +137,39 @@ export class TestBuilder {
       uri: URI.parse(Object.keys(this.files)[0]),
     });
 
-    assignDebugKinds(this.unit.ast);
-    assignDebugKinds(this.unit.preprocessorAst);
-
     this.output = output;
     this.indices = indices;
     this.ranges = ranges;
     this.diagnostics = collectDiagnostics(this.unit);
+  }
+
+  /**
+   * Create a test builder that does not validate the PL/I text after linking.
+   *
+   * @param text PL/I text to parse and link, with range and index markers (as specified in `replaceNamedIndices`)
+   * @returns A test builder that can be used to chain assertions
+   */
+  static create(
+    textOrFiles: string | PliTestFile[],
+    options?: TestBuilderOptions,
+  ) {
+    return new TestBuilder(textOrFiles, options);
+  }
+
+  /**
+   * Create a test builder that validates the PL/I text after linking.
+   *
+   * @param text PL/I text to parse and link, with range and index markers (as specified in `replaceNamedIndices`)
+   * @returns A test builder that can be used to chain assertions
+   */
+  static createValidating(
+    textOrFiles: string | PliTestFile[],
+    options?: TestBuilderOptions,
+  ) {
+    return new TestBuilder(textOrFiles, {
+      ...options,
+      validate: true,
+    });
   }
 
   /**
@@ -456,38 +481,10 @@ function offsetAt(text: string, start: number): Position {
 }
 
 /**
- * Create a test builder that does not validate the PL/I text after linking.
- *
- * @param text PL/I text to parse and link, with range and index markers (as specified in `replaceNamedIndices`)
- * @returns A test builder that can be used to chain assertions
- */
-export function createTestBuilder(
-  textOrFiles: string | PliTestFile[],
-  options?: TestBuilderOptions,
-) {
-  return new TestBuilder(textOrFiles, options);
-}
-
-/**
- * Create a test builder that validates the PL/I text after linking.
- *
- * @param text PL/I text to parse and link, with range and index markers (as specified in `replaceNamedIndices`)
- * @returns A test builder that can be used to chain assertions
- */
-export function createValidatorTestBuilder(
-  textOrFiles: string | PliTestFile[],
-  options?: TestBuilderOptions,
-) {
-  return new TestBuilder(textOrFiles, {
-    ...options,
-    validate: true,
-  });
-}
-
-/**
  * Extract named range and index information and verify that linking works as expected.
  *
  * @param text PL/I text to parse and link, with range and index markers (as specified in `replaceNamedIndices`)
+ * @returns A test builder that can be used to chain assertions
  *
  * @example
  * ```ts
@@ -498,6 +495,6 @@ export function createValidatorTestBuilder(
  * `)
  * ```
  */
-export function expectLinks(textOrFiles: string | PliTestFile[]) {
-  createTestBuilder(textOrFiles).expectLinks();
+export function expectLinks(textOrFiles: string | PliTestFile[]): TestBuilder {
+  return TestBuilder.create(textOrFiles).expectLinks();
 }

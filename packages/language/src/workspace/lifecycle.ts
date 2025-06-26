@@ -22,12 +22,6 @@ export function lifecycle(
   compilationUnit.scopeCaches.clear();
   tokenize(compilationUnit, text);
   parse(compilationUnit);
-
-  if (process.env.NODE_ENV === "development") {
-    assignDebugKinds(compilationUnit.ast);
-    assignDebugKinds(compilationUnit.preprocessorAst);
-  }
-
   generateSymbolTable(compilationUnit);
   link(compilationUnit);
   validate(compilationUnit);
@@ -65,6 +59,11 @@ export function parse(compilationUnit: CompilationUnit): PliProgram {
   compilationUnit.diagnostics.parser = parserErrorsToDiagnostics(
     PliParserInstance.errors,
   );
+
+  if (process.env.NODE_ENV === "development") {
+    assignDebugKinds(ast);
+  }
+
   return ast;
 }
 
