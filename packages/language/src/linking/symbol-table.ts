@@ -108,12 +108,11 @@ export class SymbolTable {
       }
     }
 
-    const uniqueSymbols = map
-      .values()
+    const uniqueSymbols = Array.from(map.values())
       .map((symbols) => symbols.filter((symbol) => !symbol.isImplicit))
       .filter((symbols) => symbols.length === 1);
 
-    return Array.from(uniqueSymbols).flat();
+    return uniqueSymbols.flat();
   }
 
   // Return all qualified symbols
