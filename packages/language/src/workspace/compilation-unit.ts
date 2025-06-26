@@ -231,7 +231,7 @@ export class CompilationUnitHandler {
   /**
    * Process a unit by running it through the lifecycle and generating diagnostics to report back.
    * @param unit The compilation unit
-   * @param text Program content content to use for the lifecycle
+   * @param text Program content to use for the lifecycle
    * @param connection The connection to send diagnostics to
    */
   private process(
@@ -255,7 +255,7 @@ export class CompilationUnitHandler {
 
   /**
    * Reindexes all compilation units that are reachable, and reports fresh diagnostics.
-   * Reachable as in the compilation units that are currently open in the editor.
+   * Reachable as in the units w/ associated docs that are currently open in the editor.
    * @param connection The connection to send diagnostics to
    */
   reindex(connection: Connection): void {
