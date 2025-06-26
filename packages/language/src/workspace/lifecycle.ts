@@ -12,6 +12,7 @@ import {
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { URI } from "../utils/uri";
 import { compilerOptionIssueToDiagnostics } from "../preprocessor/compiler-options/options";
+import { assignDebugKinds } from "../utils/debug-kinds";
 
 export function lifecycle(
   compilationUnit: CompilationUnit,
@@ -21,6 +22,12 @@ export function lifecycle(
   compilationUnit.scopeCaches.clear();
   tokenize(compilationUnit, text);
   parse(compilationUnit);
+
+  if (process.env.NODE_ENV === "development") {
+    assignDebugKinds(compilationUnit.ast);
+    assignDebugKinds(compilationUnit.preprocessorAst);
+  }
+
   generateSymbolTable(compilationUnit);
   link(compilationUnit);
   validate(compilationUnit);

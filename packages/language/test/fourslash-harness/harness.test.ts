@@ -45,6 +45,9 @@ function createTestingHarnessImplementation(
     },
     verify: {
       expectExclusiveErrorCodesAt: listen("verify.expectExclusiveErrorCodesAt"),
+      expectExclusiveDiagnosticsAt: listen(
+        "verify.expectExclusiveDiagnosticsAt",
+      ),
       noDiagnostics: listen("verify.noDiagnostics"),
     },
     completion: {

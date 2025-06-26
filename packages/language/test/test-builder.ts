@@ -208,17 +208,23 @@ export class TestBuilder {
 
   expectExclusiveDiagnosticsAt(
     label: string,
-    diagnostics: Partial<Diagnostic>[],
+    diagnostics: Partial<Diagnostic> | Partial<Diagnostic>[],
   ): TestBuilder {
+    const expectedDiagnostics = Array.isArray(diagnostics)
+      ? diagnostics
+      : [diagnostics];
+
     const matchingDiagnostics = this.getMatchingDiagnostics(label);
+    const rangeMessage = this.createLabelRangeMessage(label);
 
-    expect(
-      matchingDiagnostics,
-      `Expected ${diagnostics.length} diagnostics at label "${label}" but received ${matchingDiagnostics.length}`,
-    ).toHaveLength(diagnostics.length);
+    const message = `At label "${label}" (${rangeMessage})\n\ngot\n\n${JSON.stringify(matchingDiagnostics, null, 2)}\n\nexpected\n\n${JSON.stringify(expectedDiagnostics, null, 2)}\n\n`;
+    expect(matchingDiagnostics, message).toHaveLength(
+      expectedDiagnostics.length,
+    );
 
-    for (const diagnostic of diagnostics) {
-      expect(matchingDiagnostics).toContainEqual(
+    for (const diagnostic of expectedDiagnostics) {
+      const message = `At label "${label}" (${rangeMessage})`;
+      expect(matchingDiagnostics, message).toContainEqual(
         expect.objectContaining(diagnostic),
       );
     }
@@ -273,21 +279,6 @@ export class TestBuilder {
   }
 
   /**
-   * Produce a small snippet with a margin of 10 characters to give a hint of where the error is
-   * @param offset - The offset of the label in the output
-   * @param label - The label to get the snippet for
-   * @returns The snippet and the line number
-   */
-  private getSnippet(offset: number, label: string) {
-    const start = this.output.slice(offset - 10, offset).trimStart();
-    const end = this.output.slice(offset, offset + 10).trimEnd();
-    const snippet = `${start}<|${label}>${end}`.replaceAll("\n", "\\n");
-    const line = this.output.slice(0, offset).split("\n").length + 1;
-
-    return { snippet, line };
-  }
-
-  /**
    * Expect no links for a given label
    * @param label - The label to expect no links for
    * @returns This test builder
@@ -304,11 +295,10 @@ export class TestBuilder {
 
     for (const { label, offset } of requests) {
       const result = definitionRequest(this.unit, this.unit.uri, offset);
-      const { snippet, line } = this.getSnippet(offset, label);
 
       expect(
         result,
-        `Expected no links for label "${label}" at offset ${offset} on line ${line} near \`${snippet}\``,
+        `Expected no links for label "${label}" (${this.createLabelPositionMessage(label)})`,
       ).toHaveLength(0);
     }
 
@@ -334,12 +324,9 @@ export class TestBuilder {
 
     for (const { label, offset, rangeIndex } of requests) {
       const result = definitionRequest(this.unit, this.unit.uri, offset);
-      const { snippet, line } = this.getSnippet(offset, label);
+      const message = `Expected ${rangeIndex.length} definitions but received ${result.length} for label "${label}" (${this.createLabelPositionMessage(label)})`;
 
-      expect(
-        result,
-        `Expected ${rangeIndex.length} definitions but received ${result.length} on line ${line} for label "${label}" near \`${snippet}\``,
-      ).toHaveLength(rangeIndex.length);
+      expect(result, message).toHaveLength(rangeIndex.length);
 
       if (rangeIndex.length > 1) {
         throw new Error("TODO: Range index is not supported yet");
@@ -354,7 +341,7 @@ export class TestBuilder {
 
         expect(
           definition.range,
-          `Expected range does not match actual range for label "${label}" on line ${line} near \`${snippet}\``,
+          `Expected range does not match actual range for label "${label}" (${this.createLabelPositionMessage(label)})`,
         ).toEqual(expectedRange);
       }
     }
@@ -372,13 +359,13 @@ export class TestBuilder {
     }
 
     for (let i = 0; i < indices.length; i++) {
-      const index = indices[i];
+      const offset = indices[i];
       const completionResult = completionRequest(
         this.unit,
         this.unit.uri,
-        index,
+        offset,
       )
-        .sort((a, b) => {
+        .toSorted((a, b) => {
           const aLabel = a.sortText ?? a.label;
           const bLabel = b.sortText ?? b.label;
           return aLabel.localeCompare(bLabel);
@@ -390,7 +377,7 @@ export class TestBuilder {
   }
 
   expectCompletions(label: string, expectedCompletion: ExpectedCompletion) {
-    const message = `Unexpected completions at label "${label}"`;
+    const message = `Unexpected completions at label "${label}" (${this.createLabelPositionMessage(label)})`;
 
     this._expectCompletions(label, (completionResult) => {
       for (const completion of expectedCompletion.includes ?? []) {
@@ -402,30 +389,62 @@ export class TestBuilder {
     });
   }
 
-  private createDiagnosticMessage(diagnostic: Diagnostic): string {
-    const severity = Severity[diagnostic.severity];
-    const { line, character } = offsetAt(
-      this.output,
-      diagnostic.range.start,
-      diagnostic.range.end,
-    );
+  private createLabelRangeMessage(label: string): string {
+    const [start, _end] = this.getLabelRange(label);
+    return this.createPositionMessage(start, this.unit.uri.toString());
+  }
 
-    const locationOverride = this.options.locationOverrides?.[diagnostic.uri];
-    const uri = locationOverride?.uri ?? diagnostic.uri;
+  private createLabelPositionMessage(label: string): string {
+    const position = this.getLabelPosition(label);
+    return this.createPositionMessage(position, this.unit.uri.toString());
+  }
+
+  private getLabelRange(label: string): [number, number] {
+    const range = this.ranges[label];
+    if (!range || range.length === 0) {
+      throw new Error(`Label "${label}" not found`);
+    }
+
+    // @didrikmunther TODO: support multiple ranges, for now we just return the first one
+    return range[0];
+  }
+
+  private getLabelPosition(label: string): number {
+    const indices = this.indices[label];
+    if (!indices) {
+      throw new Error(`Label "${label}" not found`);
+    }
+
+    return indices[0];
+  }
+
+  private createDiagnosticMessage(diagnostic: Diagnostic): string {
+    const position = this.createPositionMessage(
+      diagnostic.range.start,
+      diagnostic.uri,
+    );
+    const severity = Severity[diagnostic.severity];
+
+    if (diagnostic.code !== undefined) {
+      return `${severity} ${diagnostic.code}: ${diagnostic.message} (${position})`;
+    }
+
+    return `${severity}: ${diagnostic.message} (${position})`;
+  }
+
+  private createPositionMessage(position: number, uri: string): string {
+    const { line, character } = offsetAt(this.output, position);
+
+    const locationOverride = this.options.locationOverrides?.[uri];
+    const uriOverride = locationOverride?.uri ?? uri;
     const lineOffset = locationOverride?.lineOffset ?? 0;
     const characterOffset = locationOverride?.characterOffset ?? 0;
 
-    const location = `${uri}:${line + lineOffset}:${character + characterOffset}`;
-
-    if (diagnostic.code !== undefined) {
-      return `${severity} ${diagnostic.code}: ${diagnostic.message} (${location})`;
-    }
-
-    return `${severity}: ${diagnostic.message} (${location})`;
+    return `${uriOverride}:${line + lineOffset}:${character + characterOffset}`;
   }
 }
 
-function offsetAt(text: string, start: number, end: number): Position {
+function offsetAt(text: string, start: number): Position {
   const lines = text.slice(0, start).split("\n");
   const line = lines.length - 1;
   const character = lines[line].length + 1;

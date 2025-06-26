@@ -80,6 +80,18 @@ function getTestFiles() {
     .filter((file) => file !== frameworkFileName); // No framework file
 }
 
+function prefixUri(uri: string): string {
+  if (uri.startsWith("file:///")) {
+    return uri;
+  }
+
+  if (uri.startsWith("/")) {
+    return `file://${uri}`;
+  }
+
+  return `file:///${uri}`;
+}
+
 function getUri(uri: string | typeof UnnamedFile): string {
   return uri === UnnamedFile ? DEFAULT_FILE_URI : uri;
 }
@@ -103,7 +115,7 @@ function getLocationOverrides(
 ): Record<string, LocationOverride> {
   return Object.fromEntries(
     Array.from(testFile.files.entries()).map(([uri, file]) => [
-      getUri(uri),
+      prefixUri(getUri(uri)),
       {
         uri: path,
         lineOffset: file.lineOffset,
@@ -147,6 +159,8 @@ function runSingleHarnessTest(filePath: string) {
       testFile,
       relativePathToProjectRoot,
     );
+
+    console.log(locationOverrides);
 
     // We want to load the files in reverse order, so that the included files are inserted in the correct order.
     const files = getFiles(testFile).toReversed();

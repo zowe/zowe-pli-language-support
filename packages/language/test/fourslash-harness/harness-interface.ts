@@ -1,16 +1,28 @@
 import { CompletionKeywords } from "../../src/language-server/completion/keywords";
+import { Diagnostic } from "../../src/language-server/types";
 import { PLICodes } from "../../src/validation/messages";
 import { ExpectedCompletion } from "../test-builder";
+import { type Severity } from "../../src/language-server/types";
 
 type Label = string | number;
 
 export interface HarnessTesterInterface {
   verify: {
     /**
-     * Expect that the given label has no errors.
-     * @param label The label to expect no errors at.
+     * Expect that the given label has the given error codes.
+     * @param label The label to expect the error codes at.
+     * @param codes The error codes to expect.
      */
     expectExclusiveErrorCodesAt(label: Label, codes: string[] | string): void;
+    /**
+     * Expect that the given label has the given diagnostics.
+     * @param label The label to expect the diagnostics at.
+     * @param diagnostics The diagnostics to expect.
+     */
+    expectExclusiveDiagnosticsAt(
+      label: Label,
+      diagnostics: Partial<Diagnostic> | Partial<Diagnostic>[],
+    ): void;
     /**
      * Expect that the compilation unit has no diagnostics.
      */
@@ -48,5 +60,6 @@ export interface HarnessTesterInterface {
 
   constants: {
     CompletionKeywords: typeof CompletionKeywords;
+    Severity: typeof Severity;
   };
 }
