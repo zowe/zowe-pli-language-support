@@ -9,10 +9,7 @@
  *
  */
 
-import {
-  CompilationUnitHandler,
-  collectDiagnostics,
-} from "../workspace/compilation-unit";
+import { CompilationUnitHandler } from "../workspace/compilation-unit";
 import {
   Connection,
   DocumentHighlight,
@@ -23,7 +20,7 @@ import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
 import { Location, TextEdit } from "vscode-languageserver-types";
-import { completionItemToLSP, rangeToLSP, diagnosticsToLSP } from "./types";
+import { completionItemToLSP, rangeToLSP } from "./types";
 import { renameRequest } from "./rename-request";
 import { mapValues } from "../utils/common";
 import { getReferenceLocations } from "../linking/resolver";
@@ -33,7 +30,6 @@ import { PluginConfigurationProviderInstance } from "../workspace/plugin-configu
 import { completionRequest } from "./completion/completion-request";
 import { BuiltinsTextDocument } from "../workspace/builtins";
 import { BuiltinDocuments, TextDocuments } from "./text-documents";
-import { lifecycle } from "../workspace/lifecycle";
 
 /**
  * Notification sent to the LS when the workspace's plugin configuration changes.
@@ -235,28 +231,8 @@ export function startLanguageServer(connection: Connection): void {
     () => {
       // handle changes to the .pliplugin config folder's contents
       PluginConfigurationProviderInstance.reloadConfigurations();
-
-      // re-parse all compilation units for open files, and update diagnostics (so we can see config updates in realtime)
-      for (const unit of compilationUnitHandler.getAllCompilationUnits()) {
-        const textDocument = TextDocuments.get(unit.uri.toString());
-        let text: string | undefined = undefined;
-
-        if (textDocument) {
-          text = textDocument.getText();
-        }
-
-        if (text !== undefined) {
-          lifecycle(unit, text);
-          const allDiagnostics = diagnosticsToLSP(collectDiagnostics(unit));
-          for (const file of unit.files) {
-            const fileDiagnostics = allDiagnostics.get(file.toString());
-            connection.sendDiagnostics({
-              uri: file.toString(),
-              diagnostics: fileDiagnostics ?? [],
-            });
-          }
-        }
-      }
+      // reindex reachable compilation units
+      compilationUnitHandler.reindex(connection);
     },
   );
   connection.listen();
