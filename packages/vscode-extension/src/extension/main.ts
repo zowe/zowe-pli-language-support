@@ -21,6 +21,12 @@ import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Settings } from "./settings";
 import { registerCustomDecorators } from "./decorators";
 import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
+import {
+  loadProcessGroupsCache,
+  loadProgramConfigsCache,
+  isPLILibFile,
+  isExtensionlessProgramEntry,
+} from "./pli-config-cache";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -35,6 +41,8 @@ export function activate(context: vscode.ExtensionContext): void {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (workspaceFolder) {
     watchPlipluginFolder(client, workspaceFolder, context);
+    loadProcessGroupsCache(workspaceFolder);
+    loadProgramConfigsCache(workspaceFolder);
   }
 }
 
@@ -47,7 +55,36 @@ function registerOnDidOpenTextDocListener() {
     // settle on the 1st workspace folder available
     // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-    if (!workspaceFolder) {
+    if (workspaceFolder === undefined) {
+      return;
+    }
+
+    // any process group lib entry is a pli file
+    if (
+      document.languageId !== "pli" &&
+      isPLILibFile(document.fileName, workspaceFolder)
+    ) {
+      try {
+        await vscode.languages.setTextDocumentLanguage(document, "pli");
+      } catch {
+        console.error(
+          `Failed to set language for ${document.fileName} to 'pli'.`,
+        );
+      }
+      return;
+    }
+
+    // any extension-less file matching a program config entry is a pli file
+    // (extensionless to avoid conflicts with COBOL files, which may also be present)
+    if (
+      document.languageId !== "pli" &&
+      isExtensionlessProgramEntry(document.fileName, workspaceFolder)
+    ) {
+      try {
+        await vscode.languages.setTextDocumentLanguage(document, "pli");
+      } catch {
+        // ignore errors
+      }
       return;
     }
 
@@ -189,27 +226,23 @@ function watchPlipluginFolder(
   const folderWatcher = vscode.workspace.createFileSystemWatcher(folderPattern);
   const fileWatcher = vscode.workspace.createFileSystemWatcher(filePattern);
 
-  // watch for folder create/delete events
-  folderWatcher.onDidCreate(() => {
+  // handler for all watcher events
+  const handlePlipluginChange = () => {
     client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
-  });
+    if (workspaceFolder) {
+      loadProcessGroupsCache(workspaceFolder);
+      loadProgramConfigsCache(workspaceFolder);
+    }
+  };
 
-  folderWatcher.onDidDelete(() => {
-    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
-  });
+  // watch for folder create/delete events
+  folderWatcher.onDidCreate(handlePlipluginChange);
+  folderWatcher.onDidDelete(handlePlipluginChange);
 
   // watch for file create/update/delete events
-  fileWatcher.onDidChange(() => {
-    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
-  });
-
-  fileWatcher.onDidCreate(() => {
-    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
-  });
-
-  fileWatcher.onDidDelete(() => {
-    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
-  });
+  fileWatcher.onDidChange(handlePlipluginChange);
+  fileWatcher.onDidCreate(handlePlipluginChange);
+  fileWatcher.onDidDelete(handlePlipluginChange);
 
   context.subscriptions.push(folderWatcher, fileWatcher);
 }

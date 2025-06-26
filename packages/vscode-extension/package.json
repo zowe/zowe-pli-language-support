@@ -97,7 +97,8 @@
     "stream-browserify": "^3.0.0",
     "util": "^0.12.5",
     "vscode-languageclient": "~9.0.1",
-    "vscode-languageserver": "~9.0.1"
+    "vscode-languageserver": "~9.0.1",
+    "minimatch": "^10.0.3"
   },
   "devDependencies": {
     "@types/vscode": "~1.67.0",

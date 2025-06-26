@@ -163,6 +163,9 @@ importers:
       langium:
         specifier: ~3.4.0
         version: 3.4.0
+      minimatch:
+        specifier: ^10.0.3
+        version: 10.0.3
       path-browserify:
         specifier: ^1.0.1
         version: 1.0.1
