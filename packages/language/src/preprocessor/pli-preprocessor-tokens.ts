@@ -38,6 +38,7 @@ export const PreprocessorTokens = {
   Character: tokens.CHARACTER,
   XInclude: tokens.XINCLUDE,
   Include: tokens.INCLUDE,
+  IncludeAlt: tokens.INCLUDE_ALT,
   Internal: tokens.INTERNAL,
   External: tokens.EXTERNAL,
   Page: tokens.PAGE,
@@ -66,6 +67,7 @@ export const PreprocessorTokens = {
   And: tokens.Ampersand,
   Eq: tokens.Equals,
   Neq: tokens.LessThanGreaterThan,
+  Neq2: tokens.NotEquals,
   LE: tokens.LessThanEquals,
   GE: tokens.GreaterThanEquals,
   GT: tokens.GreaterThan,
@@ -88,6 +90,7 @@ export const PreprocessorBinaryTokens = [
   PreprocessorTokens.GE,
   PreprocessorTokens.Eq,
   PreprocessorTokens.Neq,
+  PreprocessorTokens.Neq2,
   PreprocessorTokens.And,
   PreprocessorTokens.Or,
 ];

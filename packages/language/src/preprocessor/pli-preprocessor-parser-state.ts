@@ -12,6 +12,7 @@
 import { TokenType } from "chevrotain";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import {
+  Mutators,
   PliPreprocessorLexerState,
   PreprocessorLexerState,
 } from "./pli-preprocessor-lexer-state";
@@ -74,19 +75,31 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   readonly perFileTokens: Record<string, Token[]> = {};
   public index: number;
   public uri: URI;
+  private text: string;
   private location: ParserLocation[] = [];
   private includes: Set<string> = new Set();
 
   constructor(lexer: PliPreprocessorLexer, text: string, uri: URI) {
     this.lexer = lexer;
     this.lexerState = new PliPreprocessorLexerState(text, uri);
-    this.tokens = [];
+    this.text = text;
+    this.tokens = this.lexer.tokenize(this.lexerState);
     this.index = 0;
     this.uri = uri;
   }
 
   advanceLines(lineCount: number): void {
-    this.lexerState.advanceLines(lineCount);
+    if (!this.current) {
+      return;
+    } 
+    const newPosition = Mutators.advanceLines(this.current.startOffset, this.text, lineCount);
+    while (this.index < this.tokens.length) {
+      const token = this.tokens[this.index];
+      if (token.startOffset >= newPosition) {
+        break;
+      }
+      this.index++;
+    }
   }
   push(location: ParserLocation): void {
     this.location.push(location);
@@ -114,50 +127,16 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   }
 
   get eof() {
-    //end of statement
-    if (this.index >= this.tokens.length && !this.lexerState.eof()) {
-      this.fetchNextChunkOfTokens();
-    }
     return this.index >= this.tokens.length;
   }
 
   canConsume(...tokenTypes: TokenType[]) {
-    if (this.index + tokenTypes.length - 1 >= this.tokens.length) {
-      if (!this.lexerState.eof()) {
-        this.fetchNextChunkOfTokens();
-      }
-    }
     if (this.index + tokenTypes.length - 1 >= this.tokens.length) {
       return false;
     }
     return tokenTypes.every((t, index) =>
       Values.sameType(t, this.tokens[this.index + index].tokenType),
     );
-  }
-
-  private fetchNextChunkOfTokens() {
-    this.lexer.skipHiddenTokens(this.lexerState);
-    if (this.isInProcedure()) {
-      //only fetch preprocessor tokens until the first semicolon
-      const newTokens = this.lexer.tokenizePreprocessorTokensUntilSemicolon(
-        this.lexerState,
-      );
-      this.tokens.push(...newTokens);
-    } else if (this.isOnlyInStatement()) {
-      //if an percentage occurs, fetch preprocessor tokens. Otherwise only % and PL/I tokens
-      //until the first semicolon
-      if (this.lexerState.canConsume(PreprocessorTokens.Percentage)) {
-        const newTokens = this.lexer.tokenizePreprocessorTokensUntilSemicolon(
-          this.lexerState,
-        );
-        this.tokens.push(...newTokens);
-      } else {
-        const newTokens = this.lexer.tokenizePliTokensUntilSemicolon(
-          this.lexerState,
-        );
-        this.tokens.push(...newTokens);
-      }
-    }
   }
 
   isOnlyInStatement() {
@@ -169,6 +148,12 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
 
   isInProcedure() {
     return this.location.some((l) => l === "in-procedure");
+  }
+
+  private skipHiddenTokens() {
+    while (this.tokens[this.index]?.tokenType.GROUP) {
+      this.index++;
+    }
   }
 
   tryConsume(
@@ -185,6 +170,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       element,
     };
     this.index++;
+    this.skipHiddenTokens();
     return true;
   }
 
@@ -208,6 +194,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       element,
     };
     this.index++;
+    this.skipHiddenTokens();
     return token;
   }
 

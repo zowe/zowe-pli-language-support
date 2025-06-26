@@ -302,7 +302,7 @@ export function printProgram(program: PliPreprocessorProgram) {
         programText.push(" ", instruction.variableName);
         break;
       case "compute":
-        programText.push(" ", instruction.operator);
+        // programText.push(" ", instruction.operator);
         break;
       default:
         assertUnreachable(instruction);
@@ -356,7 +356,7 @@ export function printInstruction(
       programText.push(" ", instruction.variableName);
       break;
     case "compute":
-      programText.push(" ", instruction.operator);
+      // programText.push(" ", instruction.operator);
       break;
     default:
       assertUnreachable(instruction);

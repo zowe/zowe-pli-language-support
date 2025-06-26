@@ -359,6 +359,8 @@ export enum CstNodeKind {
   IncludeDirective_INCLUDE,
   IncludeDirective_Comma,
   IncludeDirective_Semicolon,
+  IncludeAltDirective_INCLUDE_ALT,
+  IncludeAltDirective_Semicolon,
   IncludeItem_FileString0,
   IncludeItem_FileID0,
   IncludeItem_DDName,

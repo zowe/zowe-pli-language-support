@@ -15,15 +15,15 @@ import { URI } from "../utils/uri";
 import { Token } from "../parser/tokens";
 
 export class PreprocessorError implements LexingError {
-  private _uri: URI;
-  private _range: Range;
+  private _uri: URI | undefined;
+  private _range: Range | undefined;
   private _message: string;
 
-  get uri(): URI {
+  get uri(): URI | undefined {
     return this._uri;
   }
 
-  get range(): Range {
+  get range(): Range | undefined {
     return this._range;
   }
 
@@ -31,15 +31,17 @@ export class PreprocessorError implements LexingError {
     return this._message;
   }
 
-  constructor(message: string, range: Range | Token, uri: URI) {
+  constructor(message: string, range: Range | Token | null | undefined, uri: URI | undefined) {
     this._message = message;
-    if ("start" in range) {
-      this._range = range;
-    } else {
-      this._range = {
-        start: range.startOffset,
-        end: range.endOffset,
-      };
+    if (range) {
+      if ("start" in range) {
+        this._range = range;
+      } else {
+        this._range = {
+          start: range.startOffset,
+          end: range.endOffset,
+        };
+      }
     }
     this._uri = uri;
   }

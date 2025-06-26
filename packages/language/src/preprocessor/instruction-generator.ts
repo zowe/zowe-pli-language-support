@@ -1,0 +1,452 @@
+import * as inst from "./instructions";
+import * as ast from "../syntax-tree/ast";
+
+interface GenerateInstructionContext {
+  labels: Map<string, inst.InstructionNode>;
+  nodes: Map<ast.SyntaxNode, inst.InstructionNode>;
+  onFinish: (callback: () => void) => void;
+}
+
+export function generateInstructions(statements: ast.Statement[]): inst.InstructionNode {
+  const callbacks: (() => void)[] = [];
+  const context: GenerateInstructionContext = {
+    labels: new Map(),
+    nodes: new Map(),
+    onFinish: (callback) => {
+      callbacks.push(callback);
+    }
+  };
+
+  let first: inst.InstructionNode | undefined = undefined;
+  let previous: inst.InstructionNode | undefined = undefined;
+  for (const statement of statements) {
+    const node = generateInstructionForStatement(statement, context);
+    if (node) {
+      if (!first) {
+        first = node;
+      }
+      if (previous) {
+        previous.next = node;
+      }
+      previous = node;
+    }
+  }
+  for (const callback of callbacks) {
+    if (first) {
+      callback();
+    }
+  }
+  return first ?? {
+    labels: [],
+    instruction: {
+      kind: inst.InstructionKind.Tokens,
+      tokens: []
+    }
+  };
+}
+
+function generateInstructionForStatement(statement: ast.Statement | null, context: GenerateInstructionContext): inst.InstructionNode | undefined {
+  if (!statement) {
+    return undefined; // No statement to generate instructions for
+  }
+  const value = statement.value;
+  const labels: string[] = [];
+  if (!value) {
+    return undefined; // No value to generate instructions for
+  }
+  for (const label of statement.labels) {
+    if (label.name) {
+      labels.push(label.name);
+    }
+  }
+  let instruction: inst.Instruction | undefined = undefined;
+  switch (value.kind) {
+    case ast.SyntaxKind.DeclareStatement:
+      instruction = generateDeclareInstruction(value);
+      break;
+    case ast.SyntaxKind.IfStatement:
+      instruction = generateIfInstruction(value, context);
+      break;
+    case ast.SyntaxKind.IterateStatement:
+      instruction = generateIterateInstruction(value, context);
+      break;
+    case ast.SyntaxKind.LeaveStatement:
+      instruction = generateLeaveInstruction(value, context);
+      break;
+    case ast.SyntaxKind.GoToStatement:
+      instruction = generateGotoInstruction(value, context);
+      break;
+    case ast.SyntaxKind.AssignmentStatement:
+      instruction = generateAssignmentInstruction(value, context);
+      break;
+    case ast.SyntaxKind.IncludeDirective:
+    case ast.SyntaxKind.IncludeAltDirective:
+      instruction = generateIncludeInstruction(value);
+      break;
+    case ast.SyntaxKind.ActivateStatement:
+      instruction = generateActivateInstruction(value);
+      break;
+    case ast.SyntaxKind.DeactivateStatement:
+      instruction = generateDeactivateInstruction(value);
+      break;
+    case ast.SyntaxKind.TokenStatement:
+      instruction = generateTokenInstruction(value);
+      break;
+    default:
+      return undefined;
+  }
+  if (!instruction) {
+    return undefined; // No instruction generated
+  }
+  const node: inst.InstructionNode = {
+    labels,
+    instruction
+  };
+  context.nodes.set(statement, node);
+  for (const label of labels) {
+    context.labels.set(label, node);
+  }
+  return node;
+}
+
+export function generateTokenInstruction(node: ast.TokenStatement): inst.TokensInstruction {
+  return {
+    kind: inst.InstructionKind.Tokens,
+    tokens: node.tokens
+  };
+}
+
+function generateActivateInstruction(node: ast.ActivateStatement): inst.Instruction | undefined {
+  const instructions: inst.ActivateInstruction[] = [];
+  for (const item of node.items) {
+    if (!item.reference) {
+      continue; // Skip items without a reference
+    }
+    const reference = generateReferenceItemInstruction(item.reference);
+    let scanMode: inst.ScanMode = inst.ScanMode.SCAN;
+    if (item.scanMode === 'RESCAN') {
+      scanMode = inst.ScanMode.RESCAN;
+    } else if (item.scanMode === 'NOSCAN') {
+      scanMode = inst.ScanMode.NOSCAN;
+    }
+    instructions.push({
+      kind: inst.InstructionKind.Activate,
+      variable: reference,
+      scanMode
+    });
+  }
+  return inst.createCompoundInstruction(instructions);
+}
+
+function generateDeactivateInstruction(node: ast.DeactivateStatement): inst.Instruction | undefined {
+  const instructions: inst.DeactivateInstruction[] = [];
+  for (const item of node.references) {
+    const reference = generateReferenceItemInstruction(item);
+    instructions.push({
+      kind: inst.InstructionKind.Deactivate,
+      variable: reference
+    });
+  }
+  return inst.createCompoundInstruction(instructions);
+}
+
+function generateDeclareInstruction(declaration: ast.DeclareStatement): inst.Instruction {
+  const items = getAllDeclarations(declaration.items);
+  const instructions: inst.Instruction[] = [];
+  for (const item of items) {
+    if (!item.name) {
+      continue; // Skip variables without a name
+    }
+    // Generate an instruction for each declared variable
+    const attributes = getAttributes(item);
+    let type: inst.DeclaredType = inst.DeclaredType.CHARACTER;
+    if (attributes.includes("FIXED")) {
+      type = inst.DeclaredType.FIXED;
+    } else if (attributes.includes("CHARACTER")) {
+      type = inst.DeclaredType.CHARACTER;
+    }
+    let scanMode: inst.ScanMode = inst.ScanMode.SCAN;
+    if (attributes.includes("RESCAN")) {
+      scanMode = inst.ScanMode.RESCAN;
+    } else if (attributes.includes("NOSCAN")) {
+      scanMode = inst.ScanMode.NOSCAN;
+    }
+    let visibility: inst.VariableVisibility | null = null;
+    if (attributes.includes("INTERNAL")) {
+      visibility = inst.VariableVisibility.INTERNAL;
+    } else if (attributes.includes("EXTERNAL")) {
+      visibility = inst.VariableVisibility.EXTERNAL;
+    }
+    instructions.push(inst.createDeclareInstruction(item.name, type, scanMode, visibility));
+  }
+  return inst.createCompoundInstruction(instructions);
+}
+
+function getAllDeclarations(items: ast.DeclaredItemElement[]): ast.DeclaredVariable[] {
+  const declarations: ast.DeclaredVariable[] = [];
+  for (const item of items) {
+    if (item.kind === ast.SyntaxKind.DeclaredVariable) {
+      declarations.push(item);
+    } else if (item.kind === ast.SyntaxKind.DeclaredItem) {
+      declarations.push(...getAllDeclarations(item.elements));
+    }
+  }
+  return declarations;
+}
+
+function getAttributes(item: ast.DeclaredVariable): string[] {
+  const attributes: string[] = [];
+  let container = item.container;
+  while (container?.kind === ast.SyntaxKind.DeclaredItem) {
+    const itemAttributes = container.attributes;
+    for (const attr of itemAttributes) {
+      if (attr.kind === ast.SyntaxKind.ComputationDataAttribute && attr.type) {
+        attributes.push(attr.type.toUpperCase());
+      }
+    }
+  }
+  return attributes;
+}
+
+function generateIfInstruction(node: ast.IfStatement, context: GenerateInstructionContext): inst.IfInstruction | undefined {
+  const condition = node.expression;
+  if (!condition) {
+    return undefined; // No condition to generate instructions for
+  }
+  const conditionInstruction = generateExpressionInstruction(condition) ?? {
+    kind: inst.InstructionKind.Number,
+    value: '0'
+  };
+  const trueBranch = generateInstructionForStatement(node.unit, context);
+  const falseBranch = node.else ? generateInstructionForStatement(node.else, context) : undefined;
+  const instruction: inst.IfInstruction = {
+    kind: inst.InstructionKind.If,
+    condition: conditionInstruction, // Assuming condition.value is the expression to evaluate
+    trueBranch,
+    falseBranch
+  };
+  context.onFinish(() => {
+    const instructionNode = context.nodes.get(node);
+    // Both branches should point to the next instruction after the IF statement
+    if (trueBranch) {
+      trueBranch.next = instructionNode?.next;
+    }
+    if (falseBranch) {
+      falseBranch.next = instructionNode?.next;
+    }
+  });
+  return instruction;
+}
+
+function generateIterateInstruction(node: ast.IterateStatement, context: GenerateInstructionContext): inst.GotoInstruction | undefined {
+  const gotoInstruction: inst.GotoInstruction = {
+    kind: inst.InstructionKind.Goto
+  };
+  const label = node.label?.label?.text;
+  context.onFinish(() => {
+    const doNode = lookupDoNode(context, node, label);
+    if (doNode) {
+      // Go back to the start of the DO loop
+      gotoInstruction.node = doNode;
+    }
+  });
+  return gotoInstruction;
+}
+
+function generateLeaveInstruction(node: ast.LeaveStatement, context: GenerateInstructionContext): inst.GotoInstruction | undefined {
+  const gotoInstruction: inst.GotoInstruction = {
+    kind: inst.InstructionKind.Goto
+  };
+  const label = node.label?.label?.text;
+  context.onFinish(() => {
+    const doNode = lookupDoNode(context, node, label);
+    if (doNode) {
+      // Go to the next node after the DO loop
+      gotoInstruction.node = doNode.next;
+    }
+  });
+  return gotoInstruction;
+}
+
+function generateGotoInstruction(node: ast.GoToStatement, context: GenerateInstructionContext): inst.GotoInstruction | undefined {
+  const gotoInstruction: inst.GotoInstruction = {
+    kind: inst.InstructionKind.Goto
+  };
+  const label = node.label?.label?.text;
+  if (label) {
+    context.onFinish(() => {
+      const nodeByLabel = context.labels.get(label);
+      gotoInstruction.node = nodeByLabel;
+    });
+  }
+  return gotoInstruction;
+}
+
+function generateAssignmentInstruction(node: ast.AssignmentStatement, context: GenerateInstructionContext): inst.AssignmentInstruction | undefined {
+  if (!node.expression) {
+    return undefined;
+  }
+  const value = generateExpressionInstruction(node.expression);
+  if (!value) {
+    return undefined; // Cannot generate instruction without a value
+  }
+  const refs = node.refs.map(ref => generateLocatorCallInstruction(ref)).filter(e => e !== undefined);
+  if (refs.length === 0) {
+    return undefined; // No references to assign
+  }
+  return {
+    kind: inst.InstructionKind.Assignment,
+    refs,
+    operator: node.operator ?? '=',
+    value
+  };
+}
+
+function generateIncludeInstruction(node: ast.IncludeDirective | ast.IncludeAltDirective): inst.CompoundInstruction | undefined {
+  const instructions: inst.IncludeInstruction[] = [];
+  for (const item of node.items) {
+    if (item.file) {
+      const instruction: inst.IncludeInstruction = {
+        kind: inst.InstructionKind.Include,
+        xInclude: node.xInclude,
+        file: item.file,
+        token: item.token || node.token
+      };
+      instructions.push(instruction);
+    }
+  }
+  if (instructions.length === 0) {
+    return undefined; // No files to include
+  }
+  return {
+    kind: inst.InstructionKind.Compound,
+    instructions
+  };
+}
+
+function lookupDoNode(context: GenerateInstructionContext, node: ast.SyntaxNode | null, label?: string): inst.InstructionNode | undefined {
+  while (node) {
+    if (node.kind === ast.SyntaxKind.DoStatement && node.container?.kind === ast.SyntaxKind.Statement) {
+      const instructionNode = context.nodes.get(node);
+      if (!instructionNode) {
+        return undefined;
+      }
+      if (!label || instructionNode.labels.includes(label)) {
+        return instructionNode;
+      }
+    }
+    node = node.container;
+  }
+  return undefined;
+}
+
+function generateExpressionInstruction(node: ast.Expression): inst.ExpressionInstruction | undefined {
+  switch (node.kind) {
+    case ast.SyntaxKind.Literal:
+      switch (node.value?.kind) {
+        case ast.SyntaxKind.NumberLiteral:
+          return generateNumberInstruction(node.value);
+        case ast.SyntaxKind.StringLiteral:
+          return generateStringInstruction(node.value);
+        default:
+          return undefined; // Unsupported literal type
+      }
+    case ast.SyntaxKind.BinaryExpression:
+      return generateBinaryExpressionInstruction(node);
+    case ast.SyntaxKind.UnaryExpression:
+      return generateUnaryExpressionInstruction(node);
+    case ast.SyntaxKind.LocatorCall:
+      return generateLocatorCallInstruction(node);
+    default:
+      return undefined; // Unsupported expression type
+  }
+}
+
+function generateLocatorCallInstruction(node: ast.LocatorCall): inst.ReferenceItemInstruction | undefined {
+  if (!node.element) {
+    return undefined; // No element to generate instructions for
+  }
+  return generateMemberCallInstruction(node.element);
+}
+
+function generateMemberCallInstruction(member: ast.MemberCall): inst.ReferenceItemInstruction | undefined {
+  const reference = member.element;
+  if (!reference) {
+    return undefined;
+  }
+  return generateReferenceItemInstruction(reference);
+}
+
+function generateNumberInstruction(node: ast.NumberLiteral): inst.NumberInstruction {
+  return {
+    kind: inst.InstructionKind.Number,
+    value: node.value ?? '0'
+  };
+}
+
+function generateStringInstruction(node: ast.StringLiteral): inst.StringInstruction {
+  return {
+    kind: inst.InstructionKind.String,
+    value: node.value ?? ''
+  };
+}
+
+function generateReferenceItemInstruction(node: ast.ReferenceItem): inst.ReferenceItemInstruction {
+  const args: inst.ExpressionInstruction[] = [];
+  if (node.dimensions) {
+    for (const dimension of node.dimensions.dimensions) {
+      const def: inst.StringInstruction = {
+        kind: inst.InstructionKind.String,
+        value: ''
+      };
+      if (dimension.lower?.expression && dimension.lower.expression !== '*') {
+        const instruction = generateExpressionInstruction(dimension.lower.expression);
+        if (instruction) {
+          args.push(instruction);
+        } else {
+          args.push(def);
+        }
+      } else {
+        args.push(def);
+      }
+    }
+  }
+  return {
+    kind: inst.InstructionKind.ReferenceItem,
+    variable: node.ref?.text ?? '',
+    token: node.ref?.token ?? null,
+    args
+  };
+}
+
+function generateBinaryExpressionInstruction(node: ast.BinaryExpression): inst.BinaryExpressionInstruction | undefined {
+  if (!node.left || !node.right || !node.op) {
+    return undefined; // Cannot generate instruction without both sides and operator
+  }
+  const left = generateExpressionInstruction(node.left);
+  const right = generateExpressionInstruction(node.right);
+  if (!left || !right) {
+    return undefined; // Cannot generate instruction without both sides
+  }
+  return {
+    kind: inst.InstructionKind.BinaryExpression,
+    left,
+    right,
+    operator: node.op
+  };
+}
+
+function generateUnaryExpressionInstruction(node: ast.UnaryExpression): inst.UnaryExpressionInstruction | undefined {
+  if (!node.expr || !node.op) {
+    return undefined;
+  }
+  const operand = generateExpressionInstruction(node.expr);
+  if (!operand) {
+    return undefined;
+  }
+  return {
+    kind: inst.InstructionKind.UnaryExpression,
+    operand,
+    operator: node.op
+  };
+}

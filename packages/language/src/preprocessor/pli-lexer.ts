@@ -15,7 +15,6 @@ import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { PliPreprocessorGenerator } from "./pli-preprocessor-generator";
-import { PliSmartTokenPickerOptimizer } from "./pli-token-picker-optimizer";
 import * as tokens from "../parser/tokens";
 import { URI } from "../utils/uri";
 import {
@@ -27,11 +26,14 @@ import { Statement } from "../syntax-tree/ast";
 import { EvaluationResults } from "./pli-preprocessor-interpreter-state";
 import { Range } from "../language-server/types";
 import { Token } from "../parser/tokens";
+import { recursivelySetContainer } from "../linking/symbol-table";
+import { generateInstructions } from "./instruction-generator";
+import { runInstructions } from "./instruction-interpreter";
 
 export interface LexingError {
   readonly message: string;
-  readonly range: Range;
-  readonly uri: URI;
+  readonly range: Range | undefined;
+  readonly uri: URI | undefined;
 }
 
 export interface LexerResult {
@@ -58,10 +60,7 @@ export class PliLexer {
   constructor() {
     this.compilerOptionsPreprocessor = new CompilerOptionsProcessor();
     this.marginsProcessor = new PliMarginsProcessor();
-    this.preprocessorLexer = new PliPreprocessorLexer(
-      new PliSmartTokenPickerOptimizer(),
-      tokens.all,
-    );
+    this.preprocessorLexer = new PliPreprocessorLexer();
     this.preprocessorParser = new PliPreprocessorParser(this.preprocessorLexer);
     this.preprocessorGenerator = new PliPreprocessorGenerator(tokens.NUMBER);
     this.preprocessorInterpreter = new PliPreprocessorInterpreter();
@@ -78,17 +77,18 @@ export class PliLexer {
       textWithoutMargins,
       uri,
     );
-    const { statements, errors } = this.preprocessorParser.start(state);
-    const program = this.preprocessorGenerator.generateProgram(statements);
-    const { output, evaluationResults } = this.preprocessorInterpreter.run(
-      program,
-      this.preprocessorLexer.idTokenType,
-    );
-    for (const uri in state.perFileTokens) {
-      state.perFileTokens[uri] = this.filterHiddenTokens(
-        state.perFileTokens[uri],
-      );
-    }
+    // Do a full parsing of the input text to extract all *local* statements
+    const { statements, errors, tokens: fileTokens } = this.preprocessorParser.parse(state);
+    unit.preprocessorAst.statements = statements;
+    recursivelySetContainer(unit.preprocessorAst);
+
+    const instructionNode = generateInstructions(statements);
+    const output = runInstructions(uri, instructionNode, {
+      compilerOptions: compilerOptionsResult.result,
+      marginsProcessor: this.marginsProcessor,
+      parser: this.preprocessorParser,
+    });
+    output.fileTokens[uri.toString()] = fileTokens;
     if (compilerOptionsResult.result) {
       state.perFileTokens[uri.toString()].unshift(
         ...compilerOptionsResult.result.tokens,
@@ -100,7 +100,7 @@ export class PliLexer {
       errors,
       statements,
       fileTokens: state.perFileTokens,
-      evaluationResults: evaluationResults,
+      evaluationResults: new Map(),
     };
   }
 

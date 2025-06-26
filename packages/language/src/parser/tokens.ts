@@ -187,6 +187,12 @@ export function escapeRegExp(value: string): string {
 export function setCompilerOptions(options: CompilerOptions): void {
   const orChars = escapeRegExp(options.or || "|");
   const notChars = escapeRegExp(options.not || "¬^");
+  const includeAlt = '++include';
+  if (includeAlt) {
+    includeAltRegex = new RegExp(escapeRegExp(includeAlt), 'y');
+  } else {
+    includeAltRegex = undefined;
+  }
   or = new RegExp(`[${orChars}]`, "y");
   orEq = new RegExp(`[${orChars}]=`, "y");
   orDouble = new RegExp(`[${orChars}]{2}`, "y");
@@ -206,6 +212,7 @@ let not: RegExp;
 let notEq: RegExp;
 let notGT: RegExp;
 let notLT: RegExp;
+let includeAltRegex: RegExp | undefined;
 
 setCompilerOptions({});
 
@@ -773,16 +780,30 @@ export const XINCLUDE = createToken({
   name: "XINCLUDE",
   pattern: /XINCLUDE/iy,
   categories: [ID],
+  longer_alt: ID,
 });
 export const INCLUDE = createToken({
   name: "INCLUDE",
   pattern: /INCLUDE/iy,
   categories: [ID],
+  longer_alt: ID,
+});
+export const INCLUDE_ALT = createToken({
+  name: "INCLUDE_ALT",
+  pattern: (text, offset) => {
+    if (includeAltRegex) {
+      includeAltRegex.lastIndex = offset;
+      return includeAltRegex.exec(text);
+    }
+    return null;
+  },
+  line_breaks: false
 });
 export const NOPRINT = createToken({
   name: "NOPRINT",
   pattern: /NOPRINT/iy,
   categories: [ID],
+  longer_alt: ID,
 });
 export const OVERFLOW = createToken({
   name: "OVERFLOW",
@@ -818,11 +839,13 @@ export const PROCESS = createToken({
   name: "PROCESS",
   pattern: /[*%]PROCESS/iy,
   categories: [ID],
+  longer_alt: ID,
 });
 export const PROCINC = createToken({
   name: "PROCINC",
   pattern: /[*%]PROCINC/iy,
   categories: [ID],
+  longer_alt: ID,
 });
 export const XMLNAME = createToken({
   name: "XMLNAME",
@@ -2333,6 +2356,7 @@ export const keywords = [
   RESIGNAL,
   XINCLUDE,
   INCLUDE,
+  INCLUDE_ALT,
   NOPRINT,
   OVERFLOW,
   TRANSMIT,

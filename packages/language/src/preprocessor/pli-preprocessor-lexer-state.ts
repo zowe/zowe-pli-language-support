@@ -233,7 +233,7 @@ namespace Selectors {
 
 // MUTATORS
 
-namespace Mutators {
+export namespace Mutators {
   export function advanceCharacters(
     state: PlainPreprocessorLexerState,
     length: number,

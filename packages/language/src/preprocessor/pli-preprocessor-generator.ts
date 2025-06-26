@@ -118,11 +118,11 @@ export class PliPreprocessorGenerator {
         this.handleDoGroup(unit, builder);
         break;
       case ast.SyntaxKind.IncludeDirective:
-        for (const item of unit.items) {
-          if (item.result) {
-            this.handleStatements(item.result.statements, builder);
-          }
-        }
+        // for (const item of unit.items) {
+        //   if (item.result) {
+        //     this.handleStatements(item.result.statements, builder);
+        //   }
+        // }
         break;
       case ast.SyntaxKind.GoToStatement:
         this.handleGoTo(unit, builder);
@@ -419,8 +419,8 @@ export class PliPreprocessorGenerator {
     expression: ast.BinaryExpression,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    this.handleExpression(expression.left, builder);
-    this.handleExpression(expression.right, builder);
+    // this.handleExpression(expression.left, builder);
+    // this.handleExpression(expression.right, builder);
     builder.pushInstruction(Instructions.compute(expression.op));
   }
 

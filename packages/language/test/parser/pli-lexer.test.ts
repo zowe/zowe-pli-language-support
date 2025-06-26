@@ -33,7 +33,7 @@ describe("PL/1 Lexer", () => {
       if (errors.length > 0) {
         throw new Error(
           errors
-            .map((e) => `${e.range.start}:${e.range.end}: ${e.message}`)
+            .map((e) => `${e.range?.start}:${e.range?.end}: ${e.message}`)
             .join("\n"),
         );
       }
@@ -323,7 +323,39 @@ describe("PL/1 Lexer", () => {
     ]);
   });
 
-  test("Simple IF-THEN-ELSE", () => {
+  test("Simple IF-THEN-ELSE #1", () => {
+    expect(
+      tokenize(`
+            %IF 1 %THEN
+              dcl X fixed;
+            %ELSE
+              dcl Y fixed;
+        `),
+    ).toStrictEqual([
+      "dcl:DECLARE",
+      "X:X", // Expect to generate the X declaration
+      "fixed:FIXED",
+      ";:;",
+    ]);
+  });
+
+  test("Simple IF-THEN-ELSE #2", () => {
+    expect(
+      tokenize(`
+            %IF 0 %THEN
+              dcl X fixed;
+            %ELSE
+              dcl Y fixed;
+        `),
+    ).toStrictEqual([
+      "dcl:DECLARE",
+      "Y:ID", // Expect to generate the Y declaration
+      "fixed:FIXED",
+      ";:;",
+    ]);
+  });
+
+  test("Simple IF-THEN-ELSE with inline replacement", () => {
     expect(
       tokenize(`
             %IF 1 %THEN
