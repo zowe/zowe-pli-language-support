@@ -26,6 +26,7 @@ const semanticTokenTypes = [
   SemanticTokenTypes.keyword,
   SemanticTokenTypes.number,
   SemanticTokenTypes.function,
+  SemanticTokenTypes.parameter,
 ];
 
 export const tokenTypes = new Map<string, number>(
@@ -71,6 +72,8 @@ function tokenType(token: Token): string | undefined {
 
   if (isVariableType(payload)) {
     return SemanticTokenTypes.variable;
+  } else if (payload.kind === CstNodeKind.ProcedureParameter_Id) {
+    return SemanticTokenTypes.parameter;
   } else if (payload.kind === CstNodeKind.CompilerOption_Name) {
     return SemanticTokenTypes.keyword;
   } else if (payload.kind === CstNodeKind.CompilerOption_Number) {
