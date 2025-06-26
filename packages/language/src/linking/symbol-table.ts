@@ -50,7 +50,7 @@ export class SymbolTable {
 
   addImplicitDeclarationStatement(
     assignment: AssignmentStatement,
-    acceptor: PliValidationAcceptor,
+    _acceptor: PliValidationAcceptor,
   ): void {
     const candidates = assignment.refs
       .map((ref) => ref.element?.element?.ref)
@@ -296,6 +296,7 @@ const iterateSymbolTable = (
       break;
     case SyntaxKind.AssignmentStatement:
       parentScope.symbolTable.addImplicitDeclarationStatement(node, acceptor);
+    // Fallthrough to default case
     default:
       forEachNode(node, iterateChild(parentScope));
   }
