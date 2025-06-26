@@ -176,11 +176,23 @@ function getMatchingSymbols(
   }
 
   const implicitSymbols = scopeSymbols.filter((symbol) => symbol.isImplicit);
-  if (implicitSymbols.length > 0) {
-    return implicitSymbols;
+  if (implicitSymbols.length <= 0) {
+    return [];
   }
 
-  return [];
+  /**
+   * We don't have any explicitly matching symbols, but we have implicit symbols.
+   * During the 'NOLAXDCL' compiler flag, we want to emit a warning on the implicit symbols.
+   * The mainframe will actually emit an E: IBM1373I compilation error on the _last_ usage of an implicitly declared symbol.
+   * See https://github.com/zowe/zowe-pli-language-support/pull/216
+   *
+   * Another solution was proposed, where we emit the error on the first implicit declaration instead, leading to better developer experience.
+   */
+
+  const firstImplicitSymbol = implicitSymbols[0];
+  reporter.reportImplicitDeclaration(firstImplicitSymbol);
+
+  return [firstImplicitSymbol];
 }
 
 function resolveReference(

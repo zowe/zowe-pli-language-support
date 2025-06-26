@@ -5,5 +5,6 @@
 //// PUT(<|1>A);
 //// PUT(<|2>B);
 
-verify.noDiagnostics();
+verify.expectExclusiveErrorCodesAt(1, code.Error.IBM1373I.fullCode);
+verify.expectExclusiveErrorCodesAt(2, code.Error.IBM1373I.fullCode);
 linker.expectLinks();
