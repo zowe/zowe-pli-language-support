@@ -18,7 +18,7 @@ export function lifecycle(
   compilationUnit: CompilationUnit,
   text: string,
 ): void {
-  compilationUnit.references.clear();
+  compilationUnit.referencesCache.clear();
   compilationUnit.scopeCaches.clear();
   tokenize(compilationUnit, text);
   parse(compilationUnit);
@@ -74,7 +74,7 @@ export function generateSymbolTable(compilationUnit: CompilationUnit) {
 export function link(compilationUnit: CompilationUnit): ReferencesCache {
   const resolveDiagnostics = resolveReferences(compilationUnit);
   const linkingDiagnostics = linkingErrorsToDiagnostics(
-    compilationUnit.references,
+    compilationUnit.referencesCache,
     compilationUnit.scopeCaches,
   );
 
@@ -83,7 +83,7 @@ export function link(compilationUnit: CompilationUnit): ReferencesCache {
     ...linkingDiagnostics,
   ];
 
-  return compilationUnit.references;
+  return compilationUnit.referencesCache;
 }
 
 /**

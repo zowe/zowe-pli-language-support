@@ -150,4 +150,17 @@ export class LinkerErrorReporter {
       }),
     );
   }
+
+  /**
+   * W IBM1085I
+   */
+  reportPotentialUnsetVariable(token: Token, name: string) {
+    withLocation(token, ({ range, uri }) =>
+      this.accept(Severity.W, PLICodes.Warning.IBM1085I.message(name), {
+        uri,
+        range,
+        code: PLICodes.Warning.IBM1085I.fullCode,
+      }),
+    );
+  }
 }

@@ -24,7 +24,7 @@ import {
   PliValidationBuffer,
 } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { ReferencesCache } from "./resolver";
+import { ReferencesCache, StatementOrderCache } from "./resolver";
 import { getReference } from "./tokens";
 import { DeclaredItemParser } from "./declared-item-parser";
 import {
@@ -200,7 +200,7 @@ export function assignRedeclaredSymbols(scopeCache: ScopeCache) {
  * @returns The diagnostics of the validation.
  */
 export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
-  const { scopeCaches, references } = unit;
+  const { scopeCaches, referencesCache, statementOrderCache } = unit;
 
   // Set child containers for all nodes.
   recursivelySetContainer(unit.ast);
@@ -211,13 +211,12 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
 
   const preprocessorScope = new Scope(unit.rootPreprocessorScope);
 
-  iterateSymbolTable(
-    scopeCaches.preprocessor,
-    references,
+  iterateSymbolTable(unit.preprocessorAst, preprocessorScope, {
     acceptor,
-    unit.preprocessorAst,
-    preprocessorScope,
-  );
+    scopeCache: scopeCaches.preprocessor,
+    referencesCache,
+    statementOrderCache,
+  });
   // TODO: Active this when we have some tests
   // assignRedeclaredSymbols(scopeCaches.preprocessor);
 
@@ -225,13 +224,12 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   // Otherwise we will add symbols to the root scope (which contains builtins)
   const regularScope = new Scope(unit.rootScope);
 
-  iterateSymbolTable(
-    scopeCaches.regular,
-    references,
+  iterateSymbolTable(unit.ast, regularScope, {
     acceptor,
-    unit.ast,
-    regularScope,
-  );
+    scopeCache: scopeCaches.regular,
+    referencesCache,
+    statementOrderCache,
+  });
   assignRedeclaredSymbols(scopeCaches.regular);
 
   return validationBuffer.getDiagnostics();
@@ -244,24 +242,29 @@ function recursivelySetContainer(node: SyntaxNode) {
   });
 }
 
+type IterateSymbolTableContext = {
+  scopeCache: ScopeCache;
+  referencesCache: ReferencesCache;
+  acceptor: PliValidationAcceptor;
+  statementOrderCache: StatementOrderCache;
+};
+
 const iterateSymbolTable = (
-  scopeCache: ScopeCache,
-  referenceCache: ReferencesCache,
-  acceptor: PliValidationAcceptor,
   node: SyntaxNode,
   parentScope: Scope,
+  context: IterateSymbolTableContext,
 ) => {
   const ref = getReference(node);
   if (ref) {
-    referenceCache.add(ref);
+    context.referencesCache.add(ref);
   }
 
   // We connect the current node to its scope for usage in the linking phase.
-  scopeCache.add(node, parentScope);
+  context.scopeCache.add(node, parentScope);
 
   // Function to recursively iterate over the child nodes to build their symbol table.
   const iterateChild = (scope: Scope) => (child: SyntaxNode) =>
-    iterateSymbolTable(scopeCache, referenceCache, acceptor, child, scope);
+    iterateSymbolTable(child, scope, context);
 
   // This switch statement handles the special case of a procedure statement.
   switch (node.kind) {
@@ -291,11 +294,22 @@ const iterateSymbolTable = (
       }
       break;
     case SyntaxKind.DeclareStatement:
-      parentScope.symbolTable.addExplicitDeclarationStatement(node, acceptor);
+      parentScope.symbolTable.addExplicitDeclarationStatement(
+        node,
+        context.acceptor,
+      );
       break;
     case SyntaxKind.AssignmentStatement:
-      parentScope.symbolTable.addImplicitDeclarationStatement(node, acceptor);
-    // Fallthrough to default case
+      parentScope.symbolTable.addImplicitDeclarationStatement(
+        node,
+        context.acceptor,
+      );
+      forEachNode(node, iterateChild(parentScope));
+      break;
+    case SyntaxKind.Statement:
+      context.statementOrderCache.add(node);
+      forEachNode(node, iterateChild(parentScope));
+      break;
     default:
       forEachNode(node, iterateChild(parentScope));
   }

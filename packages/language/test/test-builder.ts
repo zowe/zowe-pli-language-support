@@ -242,7 +242,13 @@ export class TestBuilder {
     const matchingDiagnostics = this.getMatchingDiagnostics(label);
     const rangeMessage = this.createLabelRangeMessage(label);
 
-    const message = `At label "${label}" (${rangeMessage})\n\ngot\n\n${JSON.stringify(matchingDiagnostics, null, 2)}\n\nexpected\n\n${JSON.stringify(expectedDiagnostics, null, 2)}\n\n`;
+    const message = [
+      `At label "${label}" (${rangeMessage})`,
+      `Got errors:\n\n${JSON.stringify(matchingDiagnostics, null, 2)}`,
+      `Expected errors:\n\n${JSON.stringify(expectedDiagnostics, null, 2)}`,
+      "",
+    ].join("\n\n");
+
     expect(matchingDiagnostics, message).toHaveLength(
       expectedDiagnostics.length,
     );
