@@ -41,6 +41,32 @@ export interface HarnessTesterInterface {
     expectNoLinksAt(label: Label): void;
   };
 
+  hover: {
+    /**
+     * Expect that the hover at the given label is the given markdown.
+     *
+     * @param label The label to expect the hover at.
+     * @param markdown The expected hover markdown.
+     */
+    expectMarkdownAt(label: Label, markdown: string): void;
+    /**
+     * Expect that the hover at the given label is the given text.
+     *
+     * @param label The label to expect the hover at.
+     * @param text The expected hover text.
+     */
+    expectTextAt(label: Label, text: string): void;
+    /**
+     * Format the given text as a code block.
+     * @param text The text to format as a code block.
+     * @returns The formatted text.
+     *
+     * @example
+     * hover.codeBlock("DCL A;") === "```pli\nDCL A;\n```\n"
+     */
+    codeBlock(text: string): string;
+  };
+
   completion: {
     /**
      * Expect that the completion items at the given label contains the given content.

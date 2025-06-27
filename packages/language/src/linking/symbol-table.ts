@@ -47,6 +47,7 @@ function nonNull<T>(value: T | null | undefined): value is T {
 
 export class SymbolTable {
   symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
+  nodeLookup: Map<SyntaxNode, QualifiedSyntaxNode> = new Map();
 
   addImplicitDeclarationStatement(
     assignment: AssignmentStatement,
@@ -68,13 +69,12 @@ export class SymbolTable {
     declaration: DeclareStatement,
     acceptor: PliValidationAcceptor,
   ): void {
-    const generator = new DeclaredItemParser(declaration.items, acceptor);
-
-    generator.generate(this);
+    DeclaredItemParser.parseAndAddToTable(this, declaration.items, acceptor);
   }
 
   addSymbolDeclaration(name: string, node: QualifiedSyntaxNode): void {
     this.symbols.add(name, node);
+    this.nodeLookup.set(node.node, node);
   }
 
   allDistinctSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {

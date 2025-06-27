@@ -9,10 +9,12 @@
  *
  */
 
+import { MarkupKind } from "vscode-languageserver";
 import { TestBuilder } from "../../test-builder";
 import { HarnessTesterInterface } from "../harness-interface";
 import { HarnessCodes } from "./codes";
 import { HarnessConstants } from "./constants";
+import { formatPliCodeBlock } from "../../../src/utils/code-block";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -38,6 +40,19 @@ export function createTestBuilderHarnessImplementation(
     completion: {
       expectAt: (label, content) =>
         testBuilder.expectCompletions(label.toString(), content),
+    },
+    hover: {
+      expectMarkdownAt: (label, markdown) =>
+        testBuilder.expectHover(label.toString(), {
+          kind: MarkupKind.Markdown,
+          value: markdown,
+        }),
+      expectTextAt: (label, text) =>
+        testBuilder.expectHover(label.toString(), {
+          kind: MarkupKind.PlainText,
+          value: text,
+        }),
+      codeBlock: formatPliCodeBlock,
     },
     code: HarnessCodes,
     constants: HarnessConstants,

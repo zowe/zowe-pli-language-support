@@ -15,6 +15,7 @@ declare global {
   var verify: HarnessTesterInterface["verify"];
   var linker: HarnessTesterInterface["linker"];
   var completion: HarnessTesterInterface["completion"];
+  var hover: HarnessTesterInterface["hover"];
   var code: HarnessTesterInterface["code"];
   var constants: HarnessTesterInterface["constants"];
 }
