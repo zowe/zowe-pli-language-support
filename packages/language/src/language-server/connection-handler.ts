@@ -30,6 +30,7 @@ import { PluginConfigurationProviderInstance } from "../workspace/plugin-configu
 import { completionRequest } from "./completion/completion-request";
 import { BuiltinsTextDocument } from "../workspace/builtins";
 import { BuiltinDocuments, TextDocuments } from "./text-documents";
+import { hoverRequest } from "./hover-request";
 
 /**
  * Notification sent to the LS when the workspace's plugin configuration changes.
@@ -64,6 +65,7 @@ export function startLanguageServer(connection: Connection): void {
         completionProvider: {
           triggerCharacters: [".", "%"],
         },
+        hoverProvider: true,
         renameProvider: true,
         definitionProvider: true,
         referencesProvider: true,
@@ -79,6 +81,29 @@ export function startLanguageServer(connection: Connection): void {
           skippedPliCode: true,
         },
       },
+    };
+  });
+  connection.onHover((params) => {
+    const uri = params.textDocument.uri;
+    const position = params.position;
+    const textDocument = TextDocuments.get(uri);
+    const parsedUri = URI.parse(uri);
+    const compilationUnit =
+      compilationUnitHandler.getCompilationUnit(parsedUri);
+
+    if (!textDocument || !compilationUnit) {
+      return null;
+    }
+
+    const offset = textDocument.offsetAt(position);
+    const response = hoverRequest(compilationUnit, parsedUri, offset);
+    if (!response) {
+      return null;
+    }
+
+    return {
+      contents: response.contents,
+      range: response.range && rangeToLSP(textDocument, response.range),
     };
   });
   connection.onCompletion((params) => {

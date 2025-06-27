@@ -42,18 +42,18 @@ import { Scope, ScopeCache } from "./scope";
 
 export class SymbolTable {
   symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
+  nodeLookup: Map<SyntaxNode, QualifiedSyntaxNode> = new Map();
 
   addDeclarationStatement(
     declaration: DeclareStatement,
     acceptor: PliValidationAcceptor,
   ): void {
-    const generator = new DeclaredItemParser(declaration.items, acceptor);
-
-    generator.generate(this);
+    DeclaredItemParser.parseAndAddToTable(this, declaration.items, acceptor);
   }
 
   addSymbolDeclaration(name: string, node: QualifiedSyntaxNode): void {
     this.symbols.add(name, node);
+    this.nodeLookup.set(node.node, node);
   }
 
   allDistinctSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
@@ -272,6 +272,7 @@ const iterateSymbolTable = (
       break;
     case SyntaxKind.DeclareStatement:
       parentScope.symbolTable.addDeclarationStatement(node, acceptor);
+      forEachNode(node, iterateChild(parentScope));
       break;
     default:
       forEachNode(node, iterateChild(parentScope));

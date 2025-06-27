@@ -161,9 +161,22 @@ export class DeclaredItemParser {
   private items: UnrolledItem[];
   private reporter: LinkerErrorReporter;
 
-  constructor(items: readonly DeclaredItem[], accept: PliValidationAcceptor) {
+  private constructor(
+    items: readonly DeclaredItem[],
+    accept: PliValidationAcceptor,
+  ) {
     this.items = unrollFactorized(items);
     this.reporter = new LinkerErrorReporter(accept);
+  }
+
+  static parseAndAddToTable(
+    table: SymbolTable,
+    items: readonly DeclaredItem[],
+    accept: PliValidationAcceptor,
+  ): void {
+    // Use 0 as a default level to start the generation.
+    // TODO: Maybe make this `null` to represent the root scope.
+    new DeclaredItemParser(items, accept).generate(table, null, 0);
   }
 
   private peek(): UnrolledItem | undefined {
@@ -193,7 +206,7 @@ export class DeclaredItemParser {
     return level;
   }
 
-  private _generate(
+  private generate(
     table: SymbolTable,
     parent: QualifiedSyntaxNode | null,
     parentLevel: number,
@@ -240,13 +253,7 @@ export class DeclaredItemParser {
 
       nodes.add(name, node);
       table.addSymbolDeclaration(name, node);
-      this._generate(table, node, level);
+      this.generate(table, node, level);
     }
-  }
-
-  generate(table: SymbolTable): void {
-    // Use 0 as a default level to start the generation.
-    // TODO: Maybe make this `null` to represent the root scope.
-    this._generate(table, null, 0);
   }
 }

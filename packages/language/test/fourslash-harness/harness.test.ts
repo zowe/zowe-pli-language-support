@@ -50,6 +50,11 @@ function createTestingHarnessImplementation(
     completion: {
       expectAt: listen("completion.expectAt"),
     },
+    hover: {
+      codeBlock: (text) => text,
+      expectMarkdownAt: listen("hover.expectMarkdownAt"),
+      expectTextAt: listen("hover.expectTextAt"),
+    },
     code: HarnessCodes,
     constants: HarnessConstants,
   };
