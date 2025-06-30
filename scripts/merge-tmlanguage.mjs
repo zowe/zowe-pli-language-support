@@ -55,7 +55,7 @@ const controlKeywords = [
 ];
 
 const storageKeywords = keywords.map(e => e.toLowerCase()).exclude(controlKeywords).toArray();
-storageKeywords.push('SCAN', 'RESCAN');
+storageKeywords.push('scan', 'rescan', 'noscan', 'norescan', 'activate', 'act', 'deactivate', 'deact');
 
 function toPattern(keywords) {
     const patterns = [];

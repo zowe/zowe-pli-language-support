@@ -471,7 +471,7 @@ export const NOEXECOPS = createToken({
 });
 export const DEACTIVATE = createToken({
   name: "DEACTIVATE",
-  pattern: /DEACTIVATE/iy,
+  pattern: /DEACT(IVATE)?/iy,
   categories: [ID],
   longer_alt: ID,
 });
@@ -1064,7 +1064,7 @@ export const ITERATE = createToken({
 });
 export const ACTIVATE = createToken({
   name: "ACTIVATE",
-  pattern: /ACTIVATE/iy,
+  pattern: /ACT(IVATE)?/iy,
   categories: [ID],
   longer_alt: ID,
 });
