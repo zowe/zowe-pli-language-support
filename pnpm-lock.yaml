@@ -154,6 +154,9 @@ importers:
 
   packages/vscode-extension:
     dependencies:
+      '@vscode/extension-telemetry':
+        specifier: ^0.9.8
+        version: 0.9.9(tslib@2.8.0)
       browserify-fs:
         specifier: ^1.0.0
         version: 1.0.0
@@ -1015,6 +1018,44 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
+  '@microsoft/1ds-core-js@4.3.9':
+    resolution: {integrity: sha512-T8s5qROH7caBNiFrUpN8vgC6wg7QysVPryZKprgl3kLQQPpoMFM6ffIYvUWD74KM9fWWLU7vzFFNBWDBsrTyWg==}
+
+  '@microsoft/1ds-post-js@4.3.9':
+    resolution: {integrity: sha512-BvxI4CW8Ws+gfXKy+Y/9pmEXp88iU1GYVjkUfqXP7La59VHARTumlG5iIgMVvaifOrvSW7G6knvQM++0tEfMBQ==}
+
+  '@microsoft/applicationinsights-channel-js@3.3.9':
+    resolution: {integrity: sha512-/yEgSe6vT2ycQJkXu6VF04TB5XBurk46ECV7uo6KkNhWyDEctAk1VDWB7EqXYdwLhKMbNOYX1pvz7fj43fGNqg==}
+    peerDependencies:
+      tslib: '>= 1.0.0'
+
+  '@microsoft/applicationinsights-common@3.3.9':
+    resolution: {integrity: sha512-IgruOuDBxmBK9jYo7SqLJG7Z9OwmAmlvHET49srpN6pqQlEjRpjD1nfA3Ps4RSEbF89a/ad2phQaBp8jvm122g==}
+    peerDependencies:
+      tslib: '>= 1.0.0'
+
+  '@microsoft/applicationinsights-core-js@3.3.9':
+    resolution: {integrity: sha512-xliiE9H09xCycndlua4QjajN8q5k/ET6VCv+e0Jjodxr9+cmoOP/6QY9dun9ptokuwR8TK0qOaIJ8z4fgslVSA==}
+    peerDependencies:
+      tslib: '>= 1.0.0'
+
+  '@microsoft/applicationinsights-shims@3.0.1':
+    resolution: {integrity: sha512-DKwboF47H1nb33rSUfjqI6ryX29v+2QWcTrRvcQDA32AZr5Ilkr7whOOSsD1aBzwqX0RJEIP1Z81jfE3NBm/Lg==}
+
+  '@microsoft/applicationinsights-web-basic@3.3.9':
+    resolution: {integrity: sha512-8tLaAgsCpWjoaxit546RqeuECnHQPBLnOZhzTYG76oPG1ku7dNXaRNieuZLbO+XmAtg/oxntKLAVoPND8NRgcA==}
+    peerDependencies:
+      tslib: '>= 1.0.0'
+
+  '@microsoft/dynamicproto-js@2.0.3':
+    resolution: {integrity: sha512-JTWTU80rMy3mdxOjjpaiDQsTLZ6YSGGqsjURsY6AUQtIj0udlF/jYmhdLZu8693ZIC0T1IwYnFa0+QeiMnziBA==}
+
+  '@nevware21/ts-async@0.5.4':
+    resolution: {integrity: sha512-IBTyj29GwGlxfzXw2NPnzty+w0Adx61Eze1/lknH/XIVdxtF9UnOpk76tnrHXWa6j84a1RR9hsOcHQPFv9qJjA==}
+
+  '@nevware21/ts-utils@0.12.5':
+    resolution: {integrity: sha512-JPQZWPKQJjj7kAftdEZL0XDFfbMgXCGiUAZe0d7EhLC3QlXTlZdSckGqqRIQ2QNl0VTEZyZUvRBw6Ednw089Fw==}
+
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
@@ -1174,6 +1215,10 @@ packages:
 
   '@vitest/utils@3.0.7':
     resolution: {integrity: sha512-xePVpCRfooFX3rANQjwoditoXgWb1MaFbzmGuPP59MK6i13mrnDw/yEIyJudLeW6/38mCNcwCiJIGmpDPibAIg==}
+
+  '@vscode/extension-telemetry@0.9.9':
+    resolution: {integrity: sha512-WG/H+H/JRMPnpbXMufXgXlaeJwKszXfAanOERV/nkXBbYyNw0KR84JjUjSg+TgkzYEF/ttRoHTP6fFZWkXdoDQ==}
+    engines: {vscode: ^1.75.0}
 
   '@vscode/iconv-lite-umd@0.7.0':
     resolution: {integrity: sha512-bRRFxLfg5dtAyl5XyiVWz/ZBPahpOpPrNYnnHpOpUZvam4tKH35wdhP4Kj6PbM0+KdliOsPzbGWpkxcdpNB/sg==}
@@ -3854,6 +3899,77 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
+  '@microsoft/1ds-core-js@4.3.9(tslib@2.8.0)':
+    dependencies:
+      '@microsoft/applicationinsights-core-js': 3.3.9(tslib@2.8.0)
+      '@microsoft/applicationinsights-shims': 3.0.1
+      '@microsoft/dynamicproto-js': 2.0.3
+      '@nevware21/ts-async': 0.5.4
+      '@nevware21/ts-utils': 0.12.5
+    transitivePeerDependencies:
+      - tslib
+
+  '@microsoft/1ds-post-js@4.3.9(tslib@2.8.0)':
+    dependencies:
+      '@microsoft/1ds-core-js': 4.3.9(tslib@2.8.0)
+      '@microsoft/applicationinsights-shims': 3.0.1
+      '@microsoft/dynamicproto-js': 2.0.3
+      '@nevware21/ts-async': 0.5.4
+      '@nevware21/ts-utils': 0.12.5
+    transitivePeerDependencies:
+      - tslib
+
+  '@microsoft/applicationinsights-channel-js@3.3.9(tslib@2.8.0)':
+    dependencies:
+      '@microsoft/applicationinsights-common': 3.3.9(tslib@2.8.0)
+      '@microsoft/applicationinsights-core-js': 3.3.9(tslib@2.8.0)
+      '@microsoft/applicationinsights-shims': 3.0.1
+      '@microsoft/dynamicproto-js': 2.0.3
+      '@nevware21/ts-async': 0.5.4
+      '@nevware21/ts-utils': 0.12.5
+      tslib: 2.8.0
+
+  '@microsoft/applicationinsights-common@3.3.9(tslib@2.8.0)':
+    dependencies:
+      '@microsoft/applicationinsights-core-js': 3.3.9(tslib@2.8.0)
+      '@microsoft/applicationinsights-shims': 3.0.1
+      '@microsoft/dynamicproto-js': 2.0.3
+      '@nevware21/ts-utils': 0.12.5
+      tslib: 2.8.0
+
+  '@microsoft/applicationinsights-core-js@3.3.9(tslib@2.8.0)':
+    dependencies:
+      '@microsoft/applicationinsights-shims': 3.0.1
+      '@microsoft/dynamicproto-js': 2.0.3
+      '@nevware21/ts-async': 0.5.4
+      '@nevware21/ts-utils': 0.12.5
+      tslib: 2.8.0
+
+  '@microsoft/applicationinsights-shims@3.0.1':
+    dependencies:
+      '@nevware21/ts-utils': 0.12.5
+
+  '@microsoft/applicationinsights-web-basic@3.3.9(tslib@2.8.0)':
+    dependencies:
+      '@microsoft/applicationinsights-channel-js': 3.3.9(tslib@2.8.0)
+      '@microsoft/applicationinsights-common': 3.3.9(tslib@2.8.0)
+      '@microsoft/applicationinsights-core-js': 3.3.9(tslib@2.8.0)
+      '@microsoft/applicationinsights-shims': 3.0.1
+      '@microsoft/dynamicproto-js': 2.0.3
+      '@nevware21/ts-async': 0.5.4
+      '@nevware21/ts-utils': 0.12.5
+      tslib: 2.8.0
+
+  '@microsoft/dynamicproto-js@2.0.3':
+    dependencies:
+      '@nevware21/ts-utils': 0.12.5
+
+  '@nevware21/ts-async@0.5.4':
+    dependencies:
+      '@nevware21/ts-utils': 0.12.5
+
+  '@nevware21/ts-utils@0.12.5': {}
+
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
@@ -3990,6 +4106,14 @@ snapshots:
       '@vitest/pretty-format': 3.0.7
       loupe: 3.1.3
       tinyrainbow: 2.0.0
+
+  '@vscode/extension-telemetry@0.9.9(tslib@2.8.0)':
+    dependencies:
+      '@microsoft/1ds-core-js': 4.3.9(tslib@2.8.0)
+      '@microsoft/1ds-post-js': 4.3.9(tslib@2.8.0)
+      '@microsoft/applicationinsights-web-basic': 3.3.9(tslib@2.8.0)
+    transitivePeerDependencies:
+      - tslib
 
   '@vscode/iconv-lite-umd@0.7.0': {}
 

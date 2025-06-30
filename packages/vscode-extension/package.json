@@ -30,7 +30,7 @@
           "PL/1"
         ],
         "extensions": [
-          ".pli"
+          ".pli", ".pl1"
         ],
         "icon": {
           "light": "icons/PL1-light_max-height.svg",
@@ -97,7 +97,8 @@
     "stream-browserify": "^3.0.0",
     "util": "^0.12.5",
     "vscode-languageclient": "~9.0.1",
-    "vscode-languageserver": "~9.0.1"
+    "vscode-languageserver": "~9.0.1", 
+    "@vscode/extension-telemetry": "^0.9.8"
   },
   "devDependencies": {
     "@types/vscode": "~1.67.0",
