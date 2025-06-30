@@ -27,6 +27,15 @@ interface HoverResponse {
 
 type MarkupResponse = string | null;
 
+interface MarkupGeneratorContext {
+  unit: CompilationUnit;
+  payload: TokenPayload;
+}
+
+interface MarkupGenerator {
+  (context: MarkupGeneratorContext): MarkupResponse;
+}
+
 function getParents(node: QualifiedSyntaxNode): QualifiedSyntaxNode[] {
   const parent = node.getParent();
   if (!parent) {
@@ -40,6 +49,14 @@ function getQualifiedNodeRepresentation(node: QualifiedSyntaxNode): string {
   return `${node.level} ${node.name}`;
 }
 
+/**
+ * Generates a string representation of a declared variable.
+ *
+ * @param unit - The compilation unit containing the declared variable.
+ * @param node - The declared variable node to generate a representation for.
+ * @returns A string representation of the declared variable.
+ * @throws An error if the qualified node is not found.
+ */
 function getDeclaredVariableRepresentation(
   unit: CompilationUnit,
   node: DeclaredVariable,
@@ -48,13 +65,13 @@ function getDeclaredVariableRepresentation(
     .get(node)
     ?.symbolTable.nodeLookup.get(node);
   if (!qualifiedNode) {
-    return "Qualified node not found";
+    throw new Error("Qualified node not found");
   }
 
   const parents = getParents(qualifiedNode).map(getQualifiedNodeRepresentation);
   const elements = [...parents, getQualifiedNodeRepresentation(qualifiedNode)];
 
-  return formatPliCodeBlock(`DCL ${elements.join(", ")}`);
+  return formatPliCodeBlock(`DCL ${elements.join(", ")};`);
 }
 
 function getNodeRepresentation(
@@ -69,10 +86,7 @@ function getNodeRepresentation(
   }
 }
 
-function getReferenceTokenContent(
-  unit: CompilationUnit,
-  payload: TokenPayload,
-): MarkupResponse {
+const getReferenceTokenContent: MarkupGenerator = ({ unit, payload }) => {
   if (!isReferenceToken(payload.kind) || !payload.element) {
     return null;
   }
@@ -83,6 +97,23 @@ function getReferenceTokenContent(
   }
 
   return getNodeRepresentation(unit, ref.node);
+};
+
+function generateMarkup(
+  generators: MarkupGenerator[],
+  context: MarkupGeneratorContext,
+): MarkupResponse[] {
+  const tryGenerate = (generator: MarkupGenerator) => {
+    try {
+      return generator(context);
+    } catch {
+      return null;
+    }
+  };
+
+  return generators
+    .map(tryGenerate)
+    .filter((response): response is string => response !== null);
 }
 
 export function hoverRequest(
@@ -97,11 +128,11 @@ export function hoverRequest(
     return null;
   }
 
-  const responses: MarkupResponse[] = [getReferenceTokenContent(unit, payload)];
+  const generators: MarkupGenerator[] = [getReferenceTokenContent];
+  const context: MarkupGeneratorContext = { unit, payload };
 
-  const value = responses
-    .filter((response): response is string => response !== null)
-    .join("\n\n");
+  const responses = generateMarkup(generators, context);
+  const value = responses.join("\n\n");
 
   return {
     contents: {

@@ -9,5 +9,5 @@
 
 hover.expectMarkdownAt(
   1,
-  [hover.codeBlock("DCL 1 A, 2 C2, 3 C3")].join("\n\n"),
+  [hover.codeBlock("DCL 1 A, 2 C2, 3 C3;")].join("\n\n"),
 );

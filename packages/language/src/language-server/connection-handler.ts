@@ -101,9 +101,12 @@ export function startLanguageServer(connection: Connection): void {
       return null;
     }
 
+    const contents = response.contents;
+    const range = response.range && rangeToLSP(textDocument, response.range);
+
     return {
-      contents: response.contents,
-      range: response.range && rangeToLSP(textDocument, response.range),
+      contents,
+      range,
     };
   });
   connection.onCompletion((params) => {
