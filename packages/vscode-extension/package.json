@@ -1,6 +1,6 @@
 {
   "name": "pli-vscode",
-  "description": "VS Code extension for PL/I language support",
+  "description": "Provides rich language support for PL/I code. Powered by Zowe, hosted by the Open Mainframe Project.",
   "author": "Zowe",
   "license": "EPL-2.0",
   "preview": false,
@@ -18,6 +18,15 @@
   "categories": [
     "Programming Languages",
     "Snippets"
+  ],
+  "keywords": [
+    "pli",
+    "pl/i",
+    "pl1",
+    "pl/1",
+    "mainframe",
+    "lsp",
+    "zowe"
   ],
   "contributes": {
     "languages": [
