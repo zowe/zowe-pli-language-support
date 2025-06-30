@@ -14,9 +14,7 @@ import {
   Lexer as ChevrotainLexer,
   TokenTypeDictionary,
 } from "chevrotain";
-import {
-  AllPreprocessorTokens,
-} from "./pli-preprocessor-tokens";
+import { AllPreprocessorTokens } from "./pli-preprocessor-tokens";
 import {
   PliSmartTokenPickerOptimizer,
   TokenPicker,
@@ -44,8 +42,9 @@ export class PliPreprocessorLexer {
     );
     this.numberTokenType = tokens.NUMBER;
     this.idTokenType = tokens.ID;
-    this.normalTokenTypePicker =
-      new PliSmartTokenPickerOptimizer().optimize(this.vocabulary);
+    this.normalTokenTypePicker = new PliSmartTokenPickerOptimizer().optimize(
+      this.vocabulary,
+    );
   }
 
   skipHiddenTokens(state: PreprocessorLexerState) {
@@ -56,13 +55,17 @@ export class PliPreprocessorLexer {
 
   tokenize(state: PreprocessorLexerState): Token[] {
     let token: Token | undefined = undefined;
+    let previous: Token | undefined = undefined;
     const list: Token[] = [];
     do {
       token = this.getNextPliToken(state);
-      if (token) {
-        // TODO: Ignore hidden tokens already here?
+      if (token && !token.tokenType.GROUP) {
+        if (previous && previous.endOffset + 1 === token.startOffset) {
+          previous.immediateFollow = true;
+        }
         list.push(token);
       }
+      previous = token;
     } while (token);
     return list;
   }

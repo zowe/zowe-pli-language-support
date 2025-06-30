@@ -10,6 +10,7 @@
  */
 
 import { Token } from "../parser/tokens";
+import * as ast from "../syntax-tree/ast";
 
 export interface InstructionNode {
   labels: string[];
@@ -17,26 +18,34 @@ export interface InstructionNode {
   next?: InstructionNode;
 }
 
+export function getLastInstruction(node: InstructionNode): InstructionNode {
+  let current = node;
+  while (current.next) {
+    current = current.next;
+  }
+  return current;
+}
+
 export interface CompoundInstruction {
   kind: InstructionKind.Compound;
   instructions: Instruction[];
 }
 
-export function createCompoundInstruction(instructions: Instruction[]): CompoundInstruction {
+export function createCompoundInstruction(
+  instructions: Instruction[],
+): CompoundInstruction {
   return {
     kind: InstructionKind.Compound,
-    instructions
+    instructions,
   };
 }
 
 export enum InstructionKind {
+  Halt,
   Compound,
   Tokens,
   If,
   Do,
-  DoUntil,
-  DoWhile,
-  DoType3,
   Declare,
   Assignment,
   Activate,
@@ -50,15 +59,16 @@ export enum InstructionKind {
   UnaryExpression,
   Number,
   String,
-  ReferenceItem
+  ReferenceItem,
 }
 
 export type Instruction =
-  CompoundInstruction
-  | IfInstruction 
-  | TokensInstruction 
-  | AssignmentInstruction 
-  | DoInstruction 
+  | CompoundInstruction
+  | HaltInstruction
+  | IfInstruction
+  | TokensInstruction
+  | AssignmentInstruction
+  | DoInstruction
   | GotoInstruction
   | IncludeInstruction
   | InscanInstruction
@@ -66,14 +76,35 @@ export type Instruction =
   | DeactivateInstruction
   | DeclareInstruction;
 
+export interface HaltInstruction {
+  kind: InstructionKind.Halt;
+}
+
+export const Halt: HaltInstruction = {
+  kind: InstructionKind.Halt,
+};
+
+export function createHaltNode(): InstructionNode {
+  return {
+    labels: [],
+    instruction: Halt,
+  };
+}
+
 export interface IfInstruction {
   kind: InstructionKind.If;
+  element: ast.IfStatement;
   condition: ExpressionInstruction;
   trueBranch?: InstructionNode;
   falseBranch?: InstructionNode;
 }
 
-export type ExpressionInstruction = NumberInstruction | StringInstruction | ReferenceItemInstruction | BinaryExpressionInstruction | UnaryExpressionInstruction;
+export type ExpressionInstruction =
+  | NumberInstruction
+  | StringInstruction
+  | ReferenceItemInstruction
+  | BinaryExpressionInstruction
+  | UnaryExpressionInstruction;
 
 export interface BinaryExpressionInstruction {
   kind: InstructionKind.BinaryExpression;
@@ -120,25 +151,17 @@ export interface TokensInstruction {
 export interface DoInstruction {
   kind: InstructionKind.Do;
   content: InstructionNode;
-  doType2: DoUntilInstruction | DoWhileInstruction | null;
+  doType2: DoType2Instruction | null;
   doType3: DoType3Instruction | null;
   doType4: boolean; // DO FOREVER;
 }
 
-export interface DoUntilInstruction {
-  kind: InstructionKind.DoUntil;
-  until: ExpressionInstruction;
-  while: ExpressionInstruction;
-}
-
-export interface DoWhileInstruction {
-  kind: InstructionKind.DoWhile;
-  until: ExpressionInstruction;
-  while: ExpressionInstruction;
+export interface DoType2Instruction {
+  until: ExpressionInstruction | null;
+  while: ExpressionInstruction | null;
 }
 
 export interface DoType3Instruction {
-  kind: InstructionKind.DoType3;
   variable: ReferenceItemInstruction;
   specificationItems: DoType3SpecificationItem[];
 }
@@ -155,18 +178,18 @@ export interface DoType3SpecificationItem {
 
 export enum DeclaredType {
   CHARACTER,
-  FIXED
+  FIXED,
 }
 
 export enum ScanMode {
   SCAN, // NORESCAN is a synonym for SCAN
   NOSCAN,
-  RESCAN
+  RESCAN,
 }
 
 export enum VariableVisibility {
   EXTERNAL,
-  INTERNAL
+  INTERNAL,
 }
 
 export interface DeclareInstruction {
@@ -177,13 +200,18 @@ export interface DeclareInstruction {
   visibility: VariableVisibility | null;
 }
 
-export function createDeclareInstruction(name: string, type: DeclaredType, mode: ScanMode, visibility?: VariableVisibility | null): DeclareInstruction {
+export function createDeclareInstruction(
+  name: string,
+  type: DeclaredType,
+  mode: ScanMode,
+  visibility?: VariableVisibility | null,
+): DeclareInstruction {
   return {
     kind: InstructionKind.Declare,
     name,
     type,
     mode,
-    visibility: visibility ?? null
+    visibility: visibility ?? null,
   };
 }
 

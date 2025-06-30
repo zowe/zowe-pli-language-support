@@ -31,7 +31,11 @@ export class PreprocessorError implements LexingError {
     return this._message;
   }
 
-  constructor(message: string, range: Range | Token | null | undefined, uri: URI | undefined) {
+  constructor(
+    message: string,
+    range: Range | Token | null | undefined,
+    uri: URI | undefined,
+  ) {
     this._message = message;
     if (range) {
       if ("start" in range) {

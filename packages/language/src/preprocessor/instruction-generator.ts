@@ -3,20 +3,46 @@ import * as ast from "../syntax-tree/ast";
 
 interface GenerateInstructionContext {
   labels: Map<string, inst.InstructionNode>;
-  nodes: Map<ast.SyntaxNode, inst.InstructionNode>;
+  nodes: Map<ast.SyntaxNode | null, inst.InstructionNode>;
   onFinish: (callback: () => void) => void;
 }
 
-export function generateInstructions(statements: ast.Statement[]): inst.InstructionNode {
+export function generateInstructions(
+  statements: ast.Statement[],
+): inst.InstructionNode {
   const callbacks: (() => void)[] = [];
   const context: GenerateInstructionContext = {
     labels: new Map(),
     nodes: new Map(),
     onFinish: (callback) => {
       callbacks.push(callback);
-    }
+    },
   };
 
+  const instruction =
+    doGenerateInstruction(statements, context) ?? inst.createHaltNode();
+  // Always halt on the last instruction
+  inst.getLastInstruction(instruction).next = inst.createHaltNode();
+  // Traverse callbacks in reverse order
+  // This is required to correctly set the `next` nodes in the instruction chain
+  for (let i = callbacks.length - 1; i >= 0; i--) {
+    callbacks[i]();
+  }
+  return (
+    instruction ?? {
+      labels: [],
+      instruction: {
+        kind: inst.InstructionKind.Tokens,
+        tokens: [],
+      },
+    }
+  );
+}
+
+function doGenerateInstruction(
+  statements: ast.Statement[],
+  context: GenerateInstructionContext,
+): inst.InstructionNode | undefined {
   let first: inst.InstructionNode | undefined = undefined;
   let previous: inst.InstructionNode | undefined = undefined;
   for (const statement of statements) {
@@ -31,21 +57,13 @@ export function generateInstructions(statements: ast.Statement[]): inst.Instruct
       previous = node;
     }
   }
-  for (const callback of callbacks) {
-    if (first) {
-      callback();
-    }
-  }
-  return first ?? {
-    labels: [],
-    instruction: {
-      kind: inst.InstructionKind.Tokens,
-      tokens: []
-    }
-  };
+  return first;
 }
 
-function generateInstructionForStatement(statement: ast.Statement | null, context: GenerateInstructionContext): inst.InstructionNode | undefined {
+function generateInstructionForStatement(
+  statement: ast.Statement | null,
+  context: GenerateInstructionContext,
+): inst.InstructionNode | undefined {
   if (!statement) {
     return undefined; // No statement to generate instructions for
   }
@@ -66,6 +84,9 @@ function generateInstructionForStatement(statement: ast.Statement | null, contex
       break;
     case ast.SyntaxKind.IfStatement:
       instruction = generateIfInstruction(value, context);
+      break;
+    case ast.SyntaxKind.DoStatement:
+      instruction = generateDoInstruction(value, context);
       break;
     case ast.SyntaxKind.IterateStatement:
       instruction = generateIterateInstruction(value, context);
@@ -100,7 +121,7 @@ function generateInstructionForStatement(statement: ast.Statement | null, contex
   }
   const node: inst.InstructionNode = {
     labels,
-    instruction
+    instruction,
   };
   context.nodes.set(statement, node);
   for (const label of labels) {
@@ -109,14 +130,18 @@ function generateInstructionForStatement(statement: ast.Statement | null, contex
   return node;
 }
 
-export function generateTokenInstruction(node: ast.TokenStatement): inst.TokensInstruction {
+export function generateTokenInstruction(
+  node: ast.TokenStatement,
+): inst.TokensInstruction {
   return {
     kind: inst.InstructionKind.Tokens,
-    tokens: node.tokens
+    tokens: node.tokens,
   };
 }
 
-function generateActivateInstruction(node: ast.ActivateStatement): inst.Instruction | undefined {
+function generateActivateInstruction(
+  node: ast.ActivateStatement,
+): inst.Instruction | undefined {
   const instructions: inst.ActivateInstruction[] = [];
   for (const item of node.items) {
     if (!item.reference) {
@@ -124,33 +149,37 @@ function generateActivateInstruction(node: ast.ActivateStatement): inst.Instruct
     }
     const reference = generateReferenceItemInstruction(item.reference);
     let scanMode: inst.ScanMode = inst.ScanMode.SCAN;
-    if (item.scanMode === 'RESCAN') {
+    if (item.scanMode === "RESCAN") {
       scanMode = inst.ScanMode.RESCAN;
-    } else if (item.scanMode === 'NOSCAN') {
+    } else if (item.scanMode === "NOSCAN") {
       scanMode = inst.ScanMode.NOSCAN;
     }
     instructions.push({
       kind: inst.InstructionKind.Activate,
       variable: reference,
-      scanMode
+      scanMode,
     });
   }
   return inst.createCompoundInstruction(instructions);
 }
 
-function generateDeactivateInstruction(node: ast.DeactivateStatement): inst.Instruction | undefined {
+function generateDeactivateInstruction(
+  node: ast.DeactivateStatement,
+): inst.Instruction | undefined {
   const instructions: inst.DeactivateInstruction[] = [];
   for (const item of node.references) {
     const reference = generateReferenceItemInstruction(item);
     instructions.push({
       kind: inst.InstructionKind.Deactivate,
-      variable: reference
+      variable: reference,
     });
   }
   return inst.createCompoundInstruction(instructions);
 }
 
-function generateDeclareInstruction(declaration: ast.DeclareStatement): inst.Instruction {
+function generateDeclareInstruction(
+  declaration: ast.DeclareStatement,
+): inst.Instruction {
   const items = getAllDeclarations(declaration.items);
   const instructions: inst.Instruction[] = [];
   for (const item of items) {
@@ -177,12 +206,16 @@ function generateDeclareInstruction(declaration: ast.DeclareStatement): inst.Ins
     } else if (attributes.includes("EXTERNAL")) {
       visibility = inst.VariableVisibility.EXTERNAL;
     }
-    instructions.push(inst.createDeclareInstruction(item.name, type, scanMode, visibility));
+    instructions.push(
+      inst.createDeclareInstruction(item.name, type, scanMode, visibility),
+    );
   }
   return inst.createCompoundInstruction(instructions);
 }
 
-function getAllDeclarations(items: ast.DeclaredItemElement[]): ast.DeclaredVariable[] {
+function getAllDeclarations(
+  items: ast.DeclaredItemElement[],
+): ast.DeclaredVariable[] {
   const declarations: ast.DeclaredVariable[] = [];
   for (const item of items) {
     if (item.kind === ast.SyntaxKind.DeclaredVariable) {
@@ -204,29 +237,36 @@ function getAttributes(item: ast.DeclaredVariable): string[] {
         attributes.push(attr.type.toUpperCase());
       }
     }
+    container = container.container;
   }
   return attributes;
 }
 
-function generateIfInstruction(node: ast.IfStatement, context: GenerateInstructionContext): inst.IfInstruction | undefined {
+function generateIfInstruction(
+  node: ast.IfStatement,
+  context: GenerateInstructionContext,
+): inst.IfInstruction | undefined {
   const condition = node.expression;
   if (!condition) {
     return undefined; // No condition to generate instructions for
   }
   const conditionInstruction = generateExpressionInstruction(condition) ?? {
     kind: inst.InstructionKind.Number,
-    value: '0'
+    value: "0",
   };
   const trueBranch = generateInstructionForStatement(node.unit, context);
-  const falseBranch = node.else ? generateInstructionForStatement(node.else, context) : undefined;
+  const falseBranch = node.else
+    ? generateInstructionForStatement(node.else, context)
+    : undefined;
   const instruction: inst.IfInstruction = {
     kind: inst.InstructionKind.If,
+    element: node,
     condition: conditionInstruction, // Assuming condition.value is the expression to evaluate
     trueBranch,
-    falseBranch
+    falseBranch,
   };
   context.onFinish(() => {
-    const instructionNode = context.nodes.get(node);
+    const instructionNode = context.nodes.get(node.container);
     // Both branches should point to the next instruction after the IF statement
     if (trueBranch) {
       trueBranch.next = instructionNode?.next;
@@ -238,9 +278,58 @@ function generateIfInstruction(node: ast.IfStatement, context: GenerateInstructi
   return instruction;
 }
 
-function generateIterateInstruction(node: ast.IterateStatement, context: GenerateInstructionContext): inst.GotoInstruction | undefined {
+function generateDoInstruction(
+  node: ast.DoStatement,
+  context: GenerateInstructionContext,
+): inst.DoInstruction | undefined {
+  const instructions = doGenerateInstruction(node.statements, context);
+  if (!instructions) {
+    return undefined;
+  }
+  let last = instructions;
+  while (last.next) {
+    last = last.next;
+  }
+  let doType1 = true;
+  const doInstruction: inst.DoInstruction = {
+    kind: inst.InstructionKind.Do,
+    content: instructions,
+    doType2: null,
+    doType3: null,
+    doType4: node.doType4,
+  };
+  if (node.doType2) {
+    const until = generateExpressionInstruction(node.doType2.until) ?? null;
+    const whileCond = generateExpressionInstruction(node.doType2.while) ?? null;
+    doInstruction.doType2 = {
+      until,
+      while: whileCond,
+    };
+  }
+  if (node.doType2 || node.doType3 || node.doType4) {
+    doType1 = false;
+  }
+  context.onFinish(() => {
+    const instructionNode = context.nodes.get(node.container);
+    if (instructionNode) {
+      if (doType1) {
+        // DoType1 will simply go to the next instruction
+        last.next = instructionNode.next;
+      } else {
+        // Loop back to the do node
+        last.next = instructionNode;
+      }
+    }
+  });
+  return doInstruction;
+}
+
+function generateIterateInstruction(
+  node: ast.IterateStatement,
+  context: GenerateInstructionContext,
+): inst.GotoInstruction | undefined {
   const gotoInstruction: inst.GotoInstruction = {
-    kind: inst.InstructionKind.Goto
+    kind: inst.InstructionKind.Goto,
   };
   const label = node.label?.label?.text;
   context.onFinish(() => {
@@ -253,9 +342,12 @@ function generateIterateInstruction(node: ast.IterateStatement, context: Generat
   return gotoInstruction;
 }
 
-function generateLeaveInstruction(node: ast.LeaveStatement, context: GenerateInstructionContext): inst.GotoInstruction | undefined {
+function generateLeaveInstruction(
+  node: ast.LeaveStatement,
+  context: GenerateInstructionContext,
+): inst.GotoInstruction | undefined {
   const gotoInstruction: inst.GotoInstruction = {
-    kind: inst.InstructionKind.Goto
+    kind: inst.InstructionKind.Goto,
   };
   const label = node.label?.label?.text;
   context.onFinish(() => {
@@ -268,9 +360,12 @@ function generateLeaveInstruction(node: ast.LeaveStatement, context: GenerateIns
   return gotoInstruction;
 }
 
-function generateGotoInstruction(node: ast.GoToStatement, context: GenerateInstructionContext): inst.GotoInstruction | undefined {
+function generateGotoInstruction(
+  node: ast.GoToStatement,
+  context: GenerateInstructionContext,
+): inst.GotoInstruction | undefined {
   const gotoInstruction: inst.GotoInstruction = {
-    kind: inst.InstructionKind.Goto
+    kind: inst.InstructionKind.Goto,
   };
   const label = node.label?.label?.text;
   if (label) {
@@ -282,7 +377,10 @@ function generateGotoInstruction(node: ast.GoToStatement, context: GenerateInstr
   return gotoInstruction;
 }
 
-function generateAssignmentInstruction(node: ast.AssignmentStatement, context: GenerateInstructionContext): inst.AssignmentInstruction | undefined {
+function generateAssignmentInstruction(
+  node: ast.AssignmentStatement,
+  context: GenerateInstructionContext,
+): inst.AssignmentInstruction | undefined {
   if (!node.expression) {
     return undefined;
   }
@@ -290,19 +388,23 @@ function generateAssignmentInstruction(node: ast.AssignmentStatement, context: G
   if (!value) {
     return undefined; // Cannot generate instruction without a value
   }
-  const refs = node.refs.map(ref => generateLocatorCallInstruction(ref)).filter(e => e !== undefined);
+  const refs = node.refs
+    .map((ref) => generateLocatorCallInstruction(ref))
+    .filter((e) => e !== undefined);
   if (refs.length === 0) {
     return undefined; // No references to assign
   }
   return {
     kind: inst.InstructionKind.Assignment,
     refs,
-    operator: node.operator ?? '=',
-    value
+    operator: node.operator ?? "=",
+    value,
   };
 }
 
-function generateIncludeInstruction(node: ast.IncludeDirective | ast.IncludeAltDirective): inst.CompoundInstruction | undefined {
+function generateIncludeInstruction(
+  node: ast.IncludeDirective | ast.IncludeAltDirective,
+): inst.CompoundInstruction | undefined {
   const instructions: inst.IncludeInstruction[] = [];
   for (const item of node.items) {
     if (item.file) {
@@ -310,7 +412,7 @@ function generateIncludeInstruction(node: ast.IncludeDirective | ast.IncludeAltD
         kind: inst.InstructionKind.Include,
         xInclude: node.xInclude,
         file: item.file,
-        token: item.token || node.token
+        token: item.token || node.token,
       };
       instructions.push(instruction);
     }
@@ -320,14 +422,21 @@ function generateIncludeInstruction(node: ast.IncludeDirective | ast.IncludeAltD
   }
   return {
     kind: inst.InstructionKind.Compound,
-    instructions
+    instructions,
   };
 }
 
-function lookupDoNode(context: GenerateInstructionContext, node: ast.SyntaxNode | null, label?: string): inst.InstructionNode | undefined {
+function lookupDoNode(
+  context: GenerateInstructionContext,
+  node: ast.SyntaxNode | null,
+  label?: string,
+): inst.InstructionNode | undefined {
   while (node) {
-    if (node.kind === ast.SyntaxKind.DoStatement && node.container?.kind === ast.SyntaxKind.Statement) {
-      const instructionNode = context.nodes.get(node);
+    if (
+      node.kind === ast.SyntaxKind.DoStatement &&
+      node.container?.kind === ast.SyntaxKind.Statement
+    ) {
+      const instructionNode = context.nodes.get(node.container);
       if (!instructionNode) {
         return undefined;
       }
@@ -340,7 +449,12 @@ function lookupDoNode(context: GenerateInstructionContext, node: ast.SyntaxNode 
   return undefined;
 }
 
-function generateExpressionInstruction(node: ast.Expression): inst.ExpressionInstruction | undefined {
+function generateExpressionInstruction(
+  node: ast.Expression | undefined | null,
+): inst.ExpressionInstruction | undefined {
+  if (!node) {
+    return undefined;
+  }
   switch (node.kind) {
     case ast.SyntaxKind.Literal:
       switch (node.value?.kind) {
@@ -362,14 +476,18 @@ function generateExpressionInstruction(node: ast.Expression): inst.ExpressionIns
   }
 }
 
-function generateLocatorCallInstruction(node: ast.LocatorCall): inst.ReferenceItemInstruction | undefined {
+function generateLocatorCallInstruction(
+  node: ast.LocatorCall,
+): inst.ReferenceItemInstruction | undefined {
   if (!node.element) {
     return undefined; // No element to generate instructions for
   }
   return generateMemberCallInstruction(node.element);
 }
 
-function generateMemberCallInstruction(member: ast.MemberCall): inst.ReferenceItemInstruction | undefined {
+function generateMemberCallInstruction(
+  member: ast.MemberCall,
+): inst.ReferenceItemInstruction | undefined {
   const reference = member.element;
   if (!reference) {
     return undefined;
@@ -377,30 +495,38 @@ function generateMemberCallInstruction(member: ast.MemberCall): inst.ReferenceIt
   return generateReferenceItemInstruction(reference);
 }
 
-function generateNumberInstruction(node: ast.NumberLiteral): inst.NumberInstruction {
+function generateNumberInstruction(
+  node: ast.NumberLiteral,
+): inst.NumberInstruction {
   return {
     kind: inst.InstructionKind.Number,
-    value: node.value ?? '0'
+    value: node.value ?? "0",
   };
 }
 
-function generateStringInstruction(node: ast.StringLiteral): inst.StringInstruction {
+function generateStringInstruction(
+  node: ast.StringLiteral,
+): inst.StringInstruction {
   return {
     kind: inst.InstructionKind.String,
-    value: node.value ?? ''
+    value: node.value ?? "",
   };
 }
 
-function generateReferenceItemInstruction(node: ast.ReferenceItem): inst.ReferenceItemInstruction {
+function generateReferenceItemInstruction(
+  node: ast.ReferenceItem,
+): inst.ReferenceItemInstruction {
   const args: inst.ExpressionInstruction[] = [];
   if (node.dimensions) {
     for (const dimension of node.dimensions.dimensions) {
       const def: inst.StringInstruction = {
         kind: inst.InstructionKind.String,
-        value: ''
+        value: "",
       };
-      if (dimension.lower?.expression && dimension.lower.expression !== '*') {
-        const instruction = generateExpressionInstruction(dimension.lower.expression);
+      if (dimension.lower?.expression && dimension.lower.expression !== "*") {
+        const instruction = generateExpressionInstruction(
+          dimension.lower.expression,
+        );
         if (instruction) {
           args.push(instruction);
         } else {
@@ -413,13 +539,15 @@ function generateReferenceItemInstruction(node: ast.ReferenceItem): inst.Referen
   }
   return {
     kind: inst.InstructionKind.ReferenceItem,
-    variable: node.ref?.text ?? '',
+    variable: node.ref?.text ?? "",
     token: node.ref?.token ?? null,
-    args
+    args,
   };
 }
 
-function generateBinaryExpressionInstruction(node: ast.BinaryExpression): inst.BinaryExpressionInstruction | undefined {
+function generateBinaryExpressionInstruction(
+  node: ast.BinaryExpression,
+): inst.BinaryExpressionInstruction | undefined {
   if (!node.left || !node.right || !node.op) {
     return undefined; // Cannot generate instruction without both sides and operator
   }
@@ -432,11 +560,13 @@ function generateBinaryExpressionInstruction(node: ast.BinaryExpression): inst.B
     kind: inst.InstructionKind.BinaryExpression,
     left,
     right,
-    operator: node.op
+    operator: node.op,
   };
 }
 
-function generateUnaryExpressionInstruction(node: ast.UnaryExpression): inst.UnaryExpressionInstruction | undefined {
+function generateUnaryExpressionInstruction(
+  node: ast.UnaryExpression,
+): inst.UnaryExpressionInstruction | undefined {
   if (!node.expr || !node.op) {
     return undefined;
   }
@@ -447,6 +577,6 @@ function generateUnaryExpressionInstruction(node: ast.UnaryExpression): inst.Una
   return {
     kind: inst.InstructionKind.UnaryExpression,
     operand,
-    operator: node.op
+    operator: node.op,
   };
 }

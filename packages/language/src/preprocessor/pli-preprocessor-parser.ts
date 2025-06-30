@@ -29,6 +29,8 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { LexingError } from "./pli-lexer";
 import { Token } from "../parser/tokens";
+import { performAssignmentLookahead } from "../parser/parser";
+import { tokenMatcher } from "chevrotain";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
@@ -85,34 +87,18 @@ export class PliPreprocessorParser {
   private consumeTokenStatement(state: PreprocessorParserState): ast.Statement {
     const tokenStatement = ast.createTokenStatement();
     const tokens: Token[] = [];
-    const word = /\w$/u;
     // We can assume that the first token is always a non-% token
     // Otherwise we wouldn't be able to get here in the first place
     let currentToken: Token | undefined = state.current;
     let nextToken: Token | undefined = state.tokens[state.index + 1];
     while (currentToken) {
-
-      if (currentToken.tokenTypeIdx === PreprocessorTokens.IncludeAlt.tokenTypeIdx) {
-        // Instantly break on the include-alt token, since this indicates a new preprocessor statement
+      if (
+        tokenMatcher(currentToken, PreprocessorTokens.Percentage) ||
+        tokenMatcher(currentToken, PreprocessorTokens.IncludeAlt)
+      ) {
         break;
       }
-
       state.index++;
-      // Usually we break on % tokens
-      // However, if the % token immediately follows a word character,
-      // it indicates a replacement, so we continue parsing the statement
-      if (
-        nextToken?.tokenTypeIdx === PreprocessorTokens.Percentage.tokenTypeIdx
-      ) {
-        if (
-          currentToken.endOffset + 1 !== nextToken.startOffset ||
-          !word.test(currentToken.image)
-        ) {
-          // If the next token is a standalone % token, we break but add the current token to the list
-          tokens.push(currentToken);
-          break;
-        }
-      }
       tokens.push(currentToken);
       currentToken = nextToken;
       nextToken = state.tokens[state.index + 1];
@@ -166,92 +152,97 @@ export class PliPreprocessorParser {
       statement.labels.push(label);
     }
     let unit: ast.Unit | undefined = undefined;
-    switch (state.current?.tokenTypeIdx) {
-      case PreprocessorTokens.Activate.tokenTypeIdx:
-        unit = this.activateStatement(state);
-        break;
-      case PreprocessorTokens.Deactivate.tokenTypeIdx:
-        unit = this.deactivateStatement(state);
-        break;
-      case PreprocessorTokens.Declare.tokenTypeIdx:
-        unit = this.declareStatement(state);
-        break;
-      case PreprocessorTokens.Page.tokenTypeIdx:
-        unit = this.pageDirective(state);
-        break;
-      case PreprocessorTokens.Pop.tokenTypeIdx:
-        unit = this.popDirective(state);
-        break;
-      case PreprocessorTokens.Push.tokenTypeIdx:
-        unit = this.pushDirective(state);
-        break;
-      case PreprocessorTokens.Print.tokenTypeIdx:
-        unit = this.printDirective(state);
-        break;
-      case PreprocessorTokens.NoPrint.tokenTypeIdx:
-        unit = this.noprintDirective(state);
-        break;
-      case PreprocessorTokens.Skip.tokenTypeIdx:
-        unit = this.skipStatement(state);
-        break;
-      case PreprocessorTokens.XInclude.tokenTypeIdx:
-      case PreprocessorTokens.Include.tokenTypeIdx:
-        unit = this.includeStatement(state);
-        break;
-      case PreprocessorTokens.Id.tokenTypeIdx:
-        unit = this.assignmentStatement(state);
-        break;
-      case PreprocessorTokens.If.tokenTypeIdx:
-        unit = this.ifStatement(state);
-        break;
-      case PreprocessorTokens.Do.tokenTypeIdx:
-        unit = this.doStatement(state);
-        break;
-      case PreprocessorTokens.Goto.tokenTypeIdx:
-      case PreprocessorTokens.Go.tokenTypeIdx:
-        unit = this.goToStatement(state);
-        break;
-      case PreprocessorTokens.Leave.tokenTypeIdx:
-        unit = this.leaveStatement(state);
-        break;
-      case PreprocessorTokens.Iterate.tokenTypeIdx:
-        unit = this.iterateStatement(state);
-        break;
-      default:
-        if (state.isOnlyInStatement()) {
-          if (state.current?.tokenType === PreprocessorTokens.Procedure) {
-            unit = this.procedureStatement(state);
+    if (performAssignmentLookahead((la) => state.lookahead(la))) {
+      unit = this.assignmentStatement(state);
+    } else {
+      switch (state.current?.tokenTypeIdx) {
+        case PreprocessorTokens.Semicolon.tokenTypeIdx:
+          unit = this.nullStatement(state);
+          break;
+        case PreprocessorTokens.Activate.tokenTypeIdx:
+          unit = this.activateStatement(state);
+          break;
+        case PreprocessorTokens.Deactivate.tokenTypeIdx:
+          unit = this.deactivateStatement(state);
+          break;
+        case PreprocessorTokens.Declare.tokenTypeIdx:
+          unit = this.declareStatement(state);
+          break;
+        case PreprocessorTokens.Page.tokenTypeIdx:
+          unit = this.pageDirective(state);
+          break;
+        case PreprocessorTokens.Pop.tokenTypeIdx:
+          unit = this.popDirective(state);
+          break;
+        case PreprocessorTokens.Push.tokenTypeIdx:
+          unit = this.pushDirective(state);
+          break;
+        case PreprocessorTokens.Print.tokenTypeIdx:
+          unit = this.printDirective(state);
+          break;
+        case PreprocessorTokens.NoPrint.tokenTypeIdx:
+          unit = this.noprintDirective(state);
+          break;
+        case PreprocessorTokens.Skip.tokenTypeIdx:
+          unit = this.skipStatement(state);
+          break;
+        case PreprocessorTokens.XInclude.tokenTypeIdx:
+        case PreprocessorTokens.Include.tokenTypeIdx:
+          unit = this.includeStatement(state);
+          break;
+        case PreprocessorTokens.If.tokenTypeIdx:
+          unit = this.ifStatement(state);
+          break;
+        case PreprocessorTokens.Do.tokenTypeIdx:
+          unit = this.doStatement(state);
+          break;
+        case PreprocessorTokens.Goto.tokenTypeIdx:
+        case PreprocessorTokens.Go.tokenTypeIdx:
+          unit = this.goToStatement(state);
+          break;
+        case PreprocessorTokens.Leave.tokenTypeIdx:
+          unit = this.leaveStatement(state);
+          break;
+        case PreprocessorTokens.Iterate.tokenTypeIdx:
+          unit = this.iterateStatement(state);
+          break;
+        default:
+          if (state.isOnlyInStatement()) {
+            if (state.current?.tokenType === PreprocessorTokens.Procedure) {
+              unit = this.procedureStatement(state);
+            }
+          } else {
+            //state.isInProcedure()
+            const returnStatement = ast.createReturnStatement();
+            if (
+              state.tryConsume(
+                returnStatement,
+                CstNodeKind.ReturnStatement_RETURN,
+                PreprocessorTokens.Return,
+              )
+            ) {
+              state.consume(
+                returnStatement,
+                CstNodeKind.ReturnStatement_OpenParen,
+                PreprocessorTokens.LParen,
+              );
+              returnStatement.expression = this.expression(state);
+              unit = returnStatement;
+              state.consume(
+                returnStatement,
+                CstNodeKind.ReturnStatement_CloseParen,
+                PreprocessorTokens.RParen,
+              );
+              state.consume(
+                returnStatement,
+                CstNodeKind.ReturnStatement_Semicolon,
+                PreprocessorTokens.Semicolon,
+              );
+            }
           }
-        } else {
-          //state.isInProcedure()
-          const returnStatement = ast.createReturnStatement();
-          if (
-            state.tryConsume(
-              returnStatement,
-              CstNodeKind.ReturnStatement_RETURN,
-              PreprocessorTokens.Return,
-            )
-          ) {
-            state.consume(
-              returnStatement,
-              CstNodeKind.ReturnStatement_OpenParen,
-              PreprocessorTokens.LParen,
-            );
-            returnStatement.expression = this.expression(state);
-            unit = returnStatement;
-            state.consume(
-              returnStatement,
-              CstNodeKind.ReturnStatement_CloseParen,
-              PreprocessorTokens.RParen,
-            );
-            state.consume(
-              returnStatement,
-              CstNodeKind.ReturnStatement_Semicolon,
-              PreprocessorTokens.Semicolon,
-            );
-          }
-        }
+      }
     }
+
     if (unit === undefined) {
       throw new PreprocessorError(
         "Unexpected token '" + state.current?.image + "'.",
@@ -458,11 +449,7 @@ export class PliPreprocessorParser {
 
   includeStatement(state: PreprocessorParserState): ast.IncludeDirective {
     const directive = ast.createIncludeDirective();
-    if (
-      state.canConsume(
-        PreprocessorTokens.Include,
-      )
-    ) {
+    if (state.canConsume(PreprocessorTokens.Include)) {
       const token = state.consume(
         directive,
         CstNodeKind.IncludeDirective_INCLUDE,
@@ -793,6 +780,16 @@ export class PliPreprocessorParser {
     return statements;
   }
 
+  nullStatement(state: PreprocessorParserState): ast.NullStatement {
+    const statement = ast.createNullStatement();
+    state.consume(
+      statement,
+      CstNodeKind.NullStatement_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return statement;
+  }
+
   ifStatement(state: PreprocessorParserState): ast.IfStatement {
     const statement = ast.createIfStatement();
     state.consume(statement, CstNodeKind.IfStatement_IF, PreprocessorTokens.If);
@@ -952,7 +949,7 @@ export class PliPreprocessorParser {
       CstNodeKind.SkipDirective_Semicolon,
       PreprocessorTokens.Semicolon,
     );
-    state.advanceLines(lineCount + 1);
+    state.advanceLines(lineCount);
     return statement;
   }
 
@@ -1226,40 +1223,40 @@ export class PliPreprocessorParser {
     let lastIndex = 0;
     do {
       lastIndex = state.index;
-      switch (state.current?.tokenType) {
-        case PreprocessorTokens.Builtin:
+      switch (state.current?.tokenTypeIdx) {
+        case PreprocessorTokens.Builtin.tokenTypeIdx:
           attributes.push("BUILTIN");
           state.index++;
           break;
-        case PreprocessorTokens.Entry:
+        case PreprocessorTokens.Entry.tokenTypeIdx:
           attributes.push("ENTRY");
           state.index++;
           break;
-        case PreprocessorTokens.Internal:
+        case PreprocessorTokens.Internal.tokenTypeIdx:
           attributes.push("INTERNAL");
           state.index++;
           break;
-        case PreprocessorTokens.External:
+        case PreprocessorTokens.External.tokenTypeIdx:
           attributes.push("EXTERNAL");
           state.index++;
           break;
-        case PreprocessorTokens.Character:
+        case PreprocessorTokens.Character.tokenTypeIdx:
           attributes.push("CHARACTER");
           state.index++;
           break;
-        case PreprocessorTokens.Fixed:
+        case PreprocessorTokens.Fixed.tokenTypeIdx:
           attributes.push("FIXED");
           state.index++;
           break;
-        case PreprocessorTokens.Scan:
+        case PreprocessorTokens.Scan.tokenTypeIdx:
           attributes.push("SCAN");
           state.index++;
           break;
-        case PreprocessorTokens.Rescan:
+        case PreprocessorTokens.Rescan.tokenTypeIdx:
           attributes.push("RESCAN");
           state.index++;
           break;
-        case PreprocessorTokens.Noscan:
+        case PreprocessorTokens.Noscan.tokenTypeIdx:
           attributes.push("NOSCAN");
           state.index++;
           break;

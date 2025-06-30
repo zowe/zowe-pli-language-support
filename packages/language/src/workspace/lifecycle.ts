@@ -31,22 +31,11 @@ export function lifecycle(
 ): void {
   compilationUnit.referencesCache.clear();
   compilationUnit.scopeCaches.clear();
-  console.time("tokenize");
   tokenize(compilationUnit, text);
-  console.timeEnd("tokenize");
-  console.time("parse");
   parse(compilationUnit);
-  console.timeEnd("parse");
-  console.time("generateSymbolTable");
   generateSymbolTable(compilationUnit);
-  console.timeEnd("generateSymbolTable");
-  console.time("link");
   link(compilationUnit);
-  console.timeEnd("link");
-  console.time("validate");
   validate(compilationUnit);
-  console.timeEnd("validate");
-  console.timeEnd("lifecycle");
 }
 
 const lexer = new PliLexer();

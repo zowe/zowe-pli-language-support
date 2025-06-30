@@ -9,7 +9,7 @@
  *
  */
 
-import { TokenType } from "chevrotain";
+import { tokenMatcher, TokenType } from "chevrotain";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import {
   Mutators,
@@ -17,7 +17,6 @@ import {
   PreprocessorLexerState,
 } from "./pli-preprocessor-lexer-state";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import { Values } from "./pli-preprocessor-instructions";
 import { PreprocessorError } from "./pli-preprocessor-error";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
@@ -64,6 +63,7 @@ export interface PreprocessorParserState {
   pop(): void;
   isOnlyInStatement(): boolean;
   isInProcedure(): boolean;
+  lookahead(la: number): Token | undefined;
   addInclude(uri: URI): void;
   hasInclude(uri: URI): boolean;
 }
@@ -88,11 +88,20 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     this.uri = uri;
   }
 
+  lookahead(la: number): Token | undefined {
+    const index = this.index + la - 1;
+    return this.tokens[index];
+  }
+
   advanceLines(lineCount: number): void {
     if (!this.current) {
       return;
-    } 
-    const newPosition = Mutators.advanceLines(this.current.startOffset, this.text, lineCount);
+    }
+    const newPosition = Mutators.advanceLines(
+      this.current.startOffset,
+      this.text,
+      lineCount,
+    );
     while (this.index < this.tokens.length) {
       const token = this.tokens[this.index];
       if (token.startOffset >= newPosition) {
@@ -115,7 +124,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   }
 
   get current() {
-    return this.eof ? undefined : this.tokens[this.index];
+    return this.tokens[this.index];
   }
 
   get last() {
@@ -134,9 +143,16 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     if (this.index + tokenTypes.length - 1 >= this.tokens.length) {
       return false;
     }
-    return tokenTypes.every((t, index) =>
-      Values.sameType(t, this.tokens[this.index + index].tokenType),
-    );
+    for (let i = 0; i < tokenTypes.length; i++) {
+      const token = this.tokens[this.index + i];
+      if (!token) {
+        return false;
+      }
+      if (!tokenMatcher(token, tokenTypes[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   isOnlyInStatement() {
@@ -148,12 +164,6 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
 
   isInProcedure() {
     return this.location.some((l) => l === "in-procedure");
-  }
-
-  private skipHiddenTokens() {
-    while (this.tokens[this.index]?.tokenType.GROUP) {
-      this.index++;
-    }
   }
 
   tryConsume(
@@ -170,7 +180,6 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       element,
     };
     this.index++;
-    this.skipHiddenTokens();
     return true;
   }
 
@@ -194,7 +203,6 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       element,
     };
     this.index++;
-    this.skipHiddenTokens();
     return token;
   }
 

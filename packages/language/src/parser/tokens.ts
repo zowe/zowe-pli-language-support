@@ -44,6 +44,10 @@ export interface TokenPayload {
 
 export interface Token extends Omit<IToken, "endOffset" | "payload"> {
   endOffset: number;
+  /**
+   * Whether this token is followed immediately by the next token (without whitespace)
+   */
+  immediateFollow?: boolean;
   payload: TokenPayload;
 }
 
@@ -66,6 +70,7 @@ export function createSyntheticTokenInstance(
     kind: undefined,
     element: undefined,
   };
+  token.immediateFollow = false;
   return token;
 }
 
@@ -187,9 +192,9 @@ export function escapeRegExp(value: string): string {
 export function setCompilerOptions(options: CompilerOptions): void {
   const orChars = escapeRegExp(options.or || "|");
   const notChars = escapeRegExp(options.not || "¬^");
-  const includeAlt = '++include';
+  const includeAlt = "++include";
   if (includeAlt) {
-    includeAltRegex = new RegExp(escapeRegExp(includeAlt), 'y');
+    includeAltRegex = new RegExp(escapeRegExp(includeAlt), "y");
   } else {
     includeAltRegex = undefined;
   }
@@ -797,7 +802,7 @@ export const INCLUDE_ALT = createToken({
     }
     return null;
   },
-  line_breaks: false
+  line_breaks: false,
 });
 export const NOPRINT = createToken({
   name: "NOPRINT",
@@ -1357,11 +1362,6 @@ export const DIRECT = createToken({
   categories: [ID, OpenOptionType],
   longer_alt: ID,
 });
-export const PercentPRINT = createToken({
-  name: "%PRINT",
-  pattern: /%PRINT/iy,
-  categories: [ID],
-});
 export const IGNORE = createToken({
   name: "IGNORE",
   pattern: /IGNORE/iy,
@@ -1590,26 +1590,11 @@ export const LEAVE = createToken({
   categories: [ID],
   longer_alt: ID,
 });
-export const PercentLINE = createToken({
-  name: "%LINE",
-  pattern: /%LINE/iy,
-  categories: [ID],
-});
-export const PercentNOTE = createToken({
-  name: "%NOTE",
-  pattern: /%NOTE/iy,
-  categories: [ID],
-});
 export const ERROR = createToken({
   name: "ERROR",
   pattern: /ERROR/iy,
   categories: [ID, KeywordConditions],
   longer_alt: ID,
-});
-export const PercentPAGE = createToken({
-  name: "%PAGE",
-  pattern: /%PAGE/iy,
-  categories: [ID],
 });
 export const PUSH = createToken({
   name: "PUSH",
@@ -1628,11 +1613,6 @@ export const REVERT = createToken({
   categories: [ID],
   longer_alt: ID,
 });
-export const PercentSKIP = createToken({
-  name: "PercentSKIP",
-  pattern: /%SKIP/iy,
-  categories: [ID],
-});
 export const WRITE = createToken({
   name: "WRITE",
   pattern: /WRITE/iy,
@@ -1644,6 +1624,11 @@ export const REFER = createToken({
   pattern: /REFER/iy,
   categories: [ID],
   longer_alt: ID,
+});
+export const NOTE = createToken({
+  name: "NOTE",
+  pattern: /NOTE/iy,
+  categories: [ID],
 });
 export const MAIN = createToken({
   name: "MAIN",
@@ -2447,7 +2432,6 @@ export const keywords = [
   LOCATE,
   FINISH,
   DIRECT,
-  PercentPRINT,
   IGNORE,
   REINIT,
   RETURN,
@@ -2486,16 +2470,13 @@ export const keywords = [
   TITLE,
   FLUSH,
   LEAVE,
-  PercentLINE,
-  PercentNOTE,
   ERROR,
-  PercentPAGE,
   PUSH,
   KEYTO,
   REVERT,
-  PercentSKIP,
   WRITE,
   REFER,
+  NOTE,
   MAIN,
   RENT,
   AREA,

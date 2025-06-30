@@ -15,6 +15,7 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { isEqual } from "lodash-es";
 import { SyntaxKind } from "../syntax-tree/ast";
 import { TextDocuments } from "./text-documents";
+import { IfEvaluationKind } from "../preprocessor/instruction-interpreter";
 
 export interface SkippedCodeNotificationParams {
   uri: string;
@@ -78,19 +79,20 @@ export function skippedCodeRanges(compilationUnit: CompilationUnit): Range[] {
     ) {
       const element = token.payload.element;
       const evaluationResult =
-        compilationUnit.preprocessorEvaluationResults.get(element);
-      if (evaluationResult !== undefined) {
+        compilationUnit.preprocessorEvaluationResults.ifStatements.get(element);
+      if (
+        evaluationResult !== undefined &&
+        evaluationResult !== IfEvaluationKind.BOTH
+      ) {
         const { elseRange, unitRange } = element;
-        const startOffset = evaluationResult
-          ? (elseRange?.start ?? 0)
-          : (unitRange?.start ?? 0);
-        const endOffset = evaluationResult
-          ? (elseRange?.end ?? 0)
-          : (unitRange?.end ?? 0);
-        result.push({
-          start: textDocument.positionAt(startOffset),
-          end: textDocument.positionAt(endOffset),
-        });
+        const range =
+          evaluationResult === IfEvaluationKind.FALSE ? unitRange : elseRange;
+        if (range) {
+          result.push({
+            start: textDocument.positionAt(range.start),
+            end: textDocument.positionAt(range.end),
+          });
+        }
       }
     }
   }

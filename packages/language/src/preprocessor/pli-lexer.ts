@@ -9,7 +9,6 @@
  *
  */
 
-import { Lexer } from "chevrotain";
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
@@ -23,12 +22,11 @@ import {
 } from "./compiler-options-processor";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { Statement } from "../syntax-tree/ast";
-import { EvaluationResults } from "./pli-preprocessor-interpreter-state";
 import { Range } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { recursivelySetContainer } from "../linking/symbol-table";
 import { generateInstructions } from "./instruction-generator";
-import { runInstructions } from "./instruction-interpreter";
+import { EvaluationResults, runInstructions } from "./instruction-interpreter";
 
 export interface LexingError {
   readonly message: string;
@@ -78,7 +76,11 @@ export class PliLexer {
       uri,
     );
     // Do a full parsing of the input text to extract all *local* statements
-    const { statements, errors, tokens: fileTokens } = this.preprocessorParser.parse(state);
+    const {
+      statements,
+      errors,
+      tokens: fileTokens,
+    } = this.preprocessorParser.parse(state);
     unit.preprocessorAst.statements = statements;
     recursivelySetContainer(unit.preprocessorAst);
 
@@ -90,24 +92,17 @@ export class PliLexer {
     });
     output.fileTokens[uri.toString()] = fileTokens;
     if (compilerOptionsResult.result) {
-      state.perFileTokens[uri.toString()].unshift(
+      output.fileTokens[uri.toString()].unshift(
         ...compilerOptionsResult.result.tokens,
       );
     }
     return {
-      all: this.filterHiddenTokens(output.all),
+      all: output.all,
       compilerOptions: compilerOptionsResult,
       errors,
       statements,
-      fileTokens: state.perFileTokens,
-      evaluationResults: new Map(),
+      fileTokens: output.fileTokens,
+      evaluationResults: output.evaluationResults,
     };
-  }
-
-  private filterHiddenTokens(tokens: Token[]): Token[] {
-    return tokens.filter((token) => {
-      const tokenType = token.tokenType;
-      return tokenType.GROUP !== Lexer.SKIPPED;
-    });
   }
 }

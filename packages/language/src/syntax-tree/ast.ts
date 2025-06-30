@@ -1671,6 +1671,9 @@ export interface NoteDirective extends AstNode {
 export interface NullStatement extends AstNode {
   kind: SyntaxKind.NullStatement;
 }
+export function createNullStatement(): NullStatement {
+  return { kind: SyntaxKind.NullStatement, container: null };
+}
 export interface NumberLiteral extends AstNode {
   kind: SyntaxKind.NumberLiteral;
   value: string | null;

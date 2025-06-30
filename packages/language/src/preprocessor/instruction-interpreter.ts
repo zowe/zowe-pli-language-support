@@ -7,6 +7,7 @@ import { PluginConfigurationProviderInstance } from "../workspace/plugin-configu
 import { CompilerOptionResult } from "./compiler-options/options";
 import { generateInstructions } from "./instruction-generator";
 import * as inst from "./instructions";
+import * as ast from "../syntax-tree/ast";
 import { LexingError } from "./pli-lexer";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PreprocessorError } from "./pli-preprocessor-error";
@@ -23,7 +24,7 @@ interface Variable {
 
 interface Value {
   // Preprocessor variables are always strings or numbers.
-  // We store them as strings for simplicity and convert them as needed.
+  // We store them as strings for simplicity and convert them as needed based on the type.
   value: string;
   type: inst.DeclaredType;
 }
@@ -34,12 +35,22 @@ function generateVariable(instruction: inst.DeclareInstruction): Variable {
     // Initial value is empty or 0 (for numbers)
     value: {
       value: instruction.type === inst.DeclaredType.CHARACTER ? "" : "0",
-      type: instruction.type
-    }, 
+      type: instruction.type,
+    },
     mode: instruction.mode,
     // NOSCAN means the variable is not active
     active: instruction.mode !== inst.ScanMode.NOSCAN,
   };
+}
+
+export enum IfEvaluationKind {
+  TRUE = 1,
+  FALSE = 2,
+  BOTH = 3,
+}
+
+export interface EvaluationResults {
+  ifStatements: Map<ast.IfStatement, IfEvaluationKind>;
 }
 
 interface InterpreterContext {
@@ -47,9 +58,15 @@ interface InterpreterContext {
   variables: Map<string, Variable>;
   result: CompilationUnitTokens;
   errors: LexingError[];
+  counter: Map<inst.InstructionNode, number>;
+  evaluations: EvaluationResults;
   xIncludes: Set<string>;
   options: InterpreterOptions;
 }
+
+export type InstructionInterpreterResult = CompilationUnitTokens & {
+  evaluationResults: EvaluationResults;
+};
 
 // TODO: We need this just because those services aren't functions yet
 // Eventually, these should become functions as well
@@ -59,34 +76,64 @@ export interface InterpreterOptions {
   parser: PliPreprocessorParser;
 }
 
-export function runInstructions(uri: URI, start: inst.InstructionNode, options: InterpreterOptions): CompilationUnitTokens {
+export function runInstructions(
+  uri: URI,
+  start: inst.InstructionNode,
+  options: InterpreterOptions,
+): InstructionInterpreterResult {
   const context: InterpreterContext = {
     uri,
     errors: [],
     xIncludes: new Set(),
     variables: new Map(),
+    evaluations: {
+      ifStatements: new Map(),
+    },
     result: {
       all: [],
-      fileTokens: {}
+      fileTokens: {},
     },
-    options
+    options,
+    counter: new Map(),
   };
 
-  return doRunInstructions(uri, context, start);
+  const tokenResult = doRunInstructions(context, start);
+  return {
+    ...tokenResult,
+    evaluationResults: context.evaluations,
+  };
 }
 
-export function doRunInstructions(uri: URI, context: InterpreterContext, start: inst.InstructionNode): CompilationUnitTokens {
+const MAX_INSTRUCTION_COUNTER = 5000;
+
+export function doRunInstructions(
+  context: InterpreterContext,
+  start: inst.InstructionNode,
+): CompilationUnitTokens {
   let currentNode: inst.InstructionNode | undefined = start;
   while (currentNode) {
+    const value = context.counter.get(currentNode) || 0;
+    // Prevent infinite loops by limiting the number of iterations
+    if (value > MAX_INSTRUCTION_COUNTER) {
+      console.log("Long running preprocessor code detected. Stopping.");
+      return context.result;
+    }
+    context.counter.set(currentNode, value + 1);
     currentNode = runInstructionNode(currentNode, context);
   }
   return context.result;
 }
 
-function runInstructionNode(node: inst.InstructionNode, context: InterpreterContext): inst.InstructionNode | undefined {
+function runInstructionNode(
+  node: inst.InstructionNode,
+  context: InterpreterContext,
+): inst.InstructionNode | undefined {
   const instruction = node.instruction;
   let result = node.next;
   try {
+    if (node.instruction.kind === inst.InstructionKind.Halt) {
+      return undefined; // Stop execution
+    }
     const instructionResult = runInstruction(instruction, context);
     if (instructionResult) {
       result = instructionResult;
@@ -101,11 +148,14 @@ function handleInstructionError(err: any, context: InterpreterContext): void {
   if (err instanceof PreprocessorError) {
     context.errors.push(err);
   } else {
-    console.error('Unhandled error in instruction interpreter:', err);
+    console.error("Unhandled error in instruction interpreter:", err);
   }
 }
 
-function runInstruction(instruction: inst.Instruction, context: InterpreterContext): inst.InstructionNode | undefined {
+function runInstruction(
+  instruction: inst.Instruction,
+  context: InterpreterContext,
+): inst.InstructionNode | undefined {
   switch (instruction.kind) {
     case inst.InstructionKind.Assignment:
       runAssignmentInstruction(instruction, context);
@@ -120,6 +170,8 @@ function runInstruction(instruction: inst.Instruction, context: InterpreterConte
       return instruction.node;
     case inst.InstructionKind.If:
       return runIfInstruction(instruction, context);
+    case inst.InstructionKind.Do:
+      return runDoInstruction(instruction, context);
     case inst.InstructionKind.Include:
       runIncludeInstruction(instruction, context);
       break;
@@ -139,12 +191,45 @@ function runInstruction(instruction: inst.Instruction, context: InterpreterConte
   return undefined;
 }
 
-function runAssignmentInstruction(instruction: inst.AssignmentInstruction, context: InterpreterContext): void {
+function runDoInstruction(
+  instruction: inst.DoInstruction,
+  context: InterpreterContext,
+): inst.InstructionNode | undefined {
+  let condition = true;
+  if (instruction.doType2) {
+    const type2 = instruction.doType2;
+    if (type2.until) {
+      // If UNTIL is specified, we don't run the instruction if it evaluates to true
+      condition &&= !valueToBool(evaluateExpression(type2.until, context));
+    }
+    if (type2.while) {
+      // If WHILE is specified, we only run the instruction if it evaluates to true
+      condition &&= valueToBool(evaluateExpression(type2.while, context));
+    }
+  }
+  if (instruction.doType3) {
+    throw new Error("DoType3 instructions are not implemented yet!");
+  }
+  if (condition) {
+    return instruction.content;
+  }
+  return undefined;
+}
+
+function runAssignmentInstruction(
+  instruction: inst.AssignmentInstruction,
+  context: InterpreterContext,
+): void {
   const value = evaluateExpression(instruction.value, context);
   for (const ref of instruction.refs) {
     let variable = context.variables.get(ref.variable);
     if (!variable) {
-      variable = { name: ref.variable, value, active: true, mode: inst.ScanMode.SCAN };
+      variable = {
+        name: ref.variable,
+        value,
+        active: true,
+        mode: inst.ScanMode.SCAN,
+      };
       context.variables.set(ref.variable, variable);
     } else {
       variable.value = value;
@@ -152,16 +237,31 @@ function runAssignmentInstruction(instruction: inst.AssignmentInstruction, conte
   }
 }
 
-function runIfInstruction(instruction: inst.IfInstruction, context: InterpreterContext): inst.InstructionNode | undefined {
+function runIfInstruction(
+  instruction: inst.IfInstruction,
+  context: InterpreterContext,
+): inst.InstructionNode | undefined {
   const condition = evaluateExpression(instruction.condition, context);
+  const existing = context.evaluations.ifStatements.get(instruction.element);
   if (valueToBool(condition)) {
+    context.evaluations.ifStatements.set(
+      instruction.element,
+      existing ? IfEvaluationKind.BOTH : IfEvaluationKind.TRUE,
+    );
     return instruction.trueBranch;
   } else {
+    context.evaluations.ifStatements.set(
+      instruction.element,
+      existing ? IfEvaluationKind.BOTH : IfEvaluationKind.FALSE,
+    );
     return instruction.falseBranch;
   }
 }
 
-function evaluateExpression(expression: inst.ExpressionInstruction, context: InterpreterContext): Value {
+function evaluateExpression(
+  expression: inst.ExpressionInstruction,
+  context: InterpreterContext,
+): Value {
   switch (expression.kind) {
     case inst.InstructionKind.String:
     case inst.InstructionKind.Number:
@@ -175,63 +275,119 @@ function evaluateExpression(expression: inst.ExpressionInstruction, context: Int
   }
 }
 
-function evaluateBinaryExpression(expression: inst.BinaryExpressionInstruction, context: InterpreterContext): Value {
+function evaluateBinaryExpression(
+  expression: inst.BinaryExpressionInstruction,
+  context: InterpreterContext,
+): Value {
   const left = evaluateExpression(expression.left, context);
   const right = evaluateExpression(expression.right, context);
   switch (expression.operator) {
-    case "+": return valueToNumber((parseInt(left.value) + parseInt(right.value)).toString());
-    case "-": return valueToNumber((parseInt(left.value) - parseInt(right.value)).toString());
-    case "*": return valueToNumber((parseInt(left.value) * parseInt(right.value)).toString());
-    case "/": return valueToNumber((parseInt(left.value) / parseInt(right.value)).toString());
-    case "**": return valueToNumber((parseInt(left.value) ** parseInt(right.value)).toString());
-    case "||": return valueToString(left.value + right.value);
-    case "<": return valueToNumber(boolToString(parseInt(left.value) < parseInt(right.value)));
-    case "<=": return valueToNumber(boolToString(parseInt(left.value) <= parseInt(right.value)));
-    case ">": return valueToNumber(boolToString(parseInt(left.value) > parseInt(right.value)));
-    case ">=": return valueToNumber(boolToString(parseInt(left.value) >= parseInt(right.value)));
-    case "=": return valueToNumber(boolToString(left.value === right.value));
+    case "+":
+      return valueToNumber(
+        (parseInt(left.value) + parseInt(right.value)).toString(),
+      );
+    case "-":
+      return valueToNumber(
+        (parseInt(left.value) - parseInt(right.value)).toString(),
+      );
+    case "*":
+      return valueToNumber(
+        (parseInt(left.value) * parseInt(right.value)).toString(),
+      );
+    case "/":
+      return valueToNumber(
+        (parseInt(left.value) / parseInt(right.value)).toString(),
+      );
+    case "**":
+      return valueToNumber(
+        (parseInt(left.value) ** parseInt(right.value)).toString(),
+      );
+    case "||":
+      return valueToString(left.value + right.value);
+    case "<":
+      return valueToNumber(
+        boolToString(parseInt(left.value) < parseInt(right.value)),
+      );
+    case "<=":
+      return valueToNumber(
+        boolToString(parseInt(left.value) <= parseInt(right.value)),
+      );
+    case ">":
+      return valueToNumber(
+        boolToString(parseInt(left.value) > parseInt(right.value)),
+      );
+    case ">=":
+      return valueToNumber(
+        boolToString(parseInt(left.value) >= parseInt(right.value)),
+      );
+    case "=":
+      return valueToNumber(boolToString(left.value === right.value));
     case "^=":
-    case "<>": return valueToNumber(boolToString(left !== right));
-    case "&": return valueToNumber((parseInt(left.value) & parseInt(right.value)).toString());
-    case "|": return valueToNumber((parseInt(left.value) | parseInt(right.value)).toString());
+    case "<>":
+      return valueToNumber(boolToString(left.value !== right.value));
+    case "&":
+      return valueToNumber(
+        (parseInt(left.value) & parseInt(right.value)).toString(),
+      );
+    case "|":
+      return valueToNumber(
+        (parseInt(left.value) | parseInt(right.value)).toString(),
+      );
   }
   return valueToNumber("0");
 }
 
-function evaluateUnaryExpression(expression: inst.UnaryExpressionInstruction, context: InterpreterContext): Value {
+function evaluateUnaryExpression(
+  expression: inst.UnaryExpressionInstruction,
+  context: InterpreterContext,
+): Value {
   const operand = evaluateExpression(expression.operand, context);
   switch (expression.operator) {
-    case "+": return operand; // Unary plus, no change
-    case "-": return valueToNumber((-parseInt(operand.value)).toString());
-    case "!": return valueToNumber(boolToString(operand.value === "0"));
+    case "+":
+      return operand; // Unary plus, no change
+    case "-":
+      return valueToNumber((-parseInt(operand.value)).toString());
+    case "!":
+      return valueToNumber(boolToString(operand.value === "0"));
   }
   return valueToNumber("0");
 }
 
-function evaluateReferenceExpression(expression: inst.ReferenceItemInstruction, context: InterpreterContext): Value {
+function evaluateReferenceExpression(
+  expression: inst.ReferenceItemInstruction,
+  context: InterpreterContext,
+): Value {
   const variable = context.variables.get(expression.variable);
-  return variable ? variable.value : {
-    type: inst.DeclaredType.CHARACTER,
-    value: ""
-  };
+  return variable
+    ? variable.value
+    : {
+        type: inst.DeclaredType.CHARACTER,
+        value: "",
+      };
 }
 
-function evaluateLiteralExpression(expression: inst.NumberInstruction | inst.StringInstruction, context: InterpreterContext): Value {
+function evaluateLiteralExpression(
+  expression: inst.NumberInstruction | inst.StringInstruction,
+  context: InterpreterContext,
+): Value {
   return {
-    type: expression.kind === inst.InstructionKind.String ? inst.DeclaredType.CHARACTER : inst.DeclaredType.FIXED,
-    value: expression.value
+    type:
+      expression.kind === inst.InstructionKind.String
+        ? inst.DeclaredType.CHARACTER
+        : inst.DeclaredType.FIXED,
+    value: expression.value,
   };
 }
 
 function boolToString(value: boolean): string {
-  return value ? '1' : '0';
+  return value ? "1" : "0";
 }
 
 function valueToBool(value: Value): boolean {
   if (value.type === inst.DeclaredType.FIXED) {
     return parseInt(value.value) !== 0;
   } else if (value.type === inst.DeclaredType.CHARACTER) {
-    return value.value.trim() !== '';
+    return value.value.trim() !== "";
   }
   return false;
 }
@@ -239,23 +395,29 @@ function valueToBool(value: Value): boolean {
 function valueToNumber(value: string): Value {
   return {
     type: inst.DeclaredType.FIXED,
-    value
+    value,
   };
 }
 
 function valueToString(value: string): Value {
   return {
     type: inst.DeclaredType.CHARACTER,
-    value
+    value,
   };
 }
 
-function runDeclareInstruction(instruction: inst.DeclareInstruction, context: InterpreterContext): void {
+function runDeclareInstruction(
+  instruction: inst.DeclareInstruction,
+  context: InterpreterContext,
+): void {
   const variable = generateVariable(instruction);
   context.variables.set(variable.name, variable);
 }
 
-function runActivateInstruction(instruction: inst.ActivateInstruction, context: InterpreterContext): void {
+function runActivateInstruction(
+  instruction: inst.ActivateInstruction,
+  context: InterpreterContext,
+): void {
   const variable = context.variables.get(instruction.variable.variable);
   if (variable) {
     if (instruction.scanMode !== undefined) {
@@ -265,19 +427,27 @@ function runActivateInstruction(instruction: inst.ActivateInstruction, context: 
   }
 }
 
-function runDeactivateInstruction(instruction: inst.DeactivateInstruction, context: InterpreterContext): void {
+function runDeactivateInstruction(
+  instruction: inst.DeactivateInstruction,
+  context: InterpreterContext,
+): void {
   const variable = context.variables.get(instruction.variable.variable);
   if (variable) {
     variable.active = false;
   }
 }
 
-function runCompoundInstruction(instruction: inst.CompoundInstruction, context: InterpreterContext): void {
+function runCompoundInstruction(
+  instruction: inst.CompoundInstruction,
+  context: InterpreterContext,
+): void {
   for (const subInstruction of instruction.instructions) {
     try {
       const result = runInstruction(subInstruction, context);
       if (result) {
-        throw new Error(`Only non-jump instructions are allowed in a compound instruction. Found: ${subInstruction.kind}`);
+        throw new Error(
+          `Only non-jump instructions are allowed in a compound instruction. Found: ${subInstruction.kind}`,
+        );
       }
     } catch (err) {
       handleInstructionError(err, context);
@@ -285,13 +455,32 @@ function runCompoundInstruction(instruction: inst.CompoundInstruction, context: 
   }
 }
 
-function runTokenInstruction(instruction: inst.TokensInstruction, context: InterpreterContext): void {
-  context.result.all.push(...replaceTokensInText(instruction.tokens, context));
+function runTokenInstruction(
+  instruction: inst.TokensInstruction,
+  context: InterpreterContext,
+): void {
+  const replacedTokens = replaceTokensInText(instruction.tokens, context);
+  const prefix = context.result.all[context.result.all.length - 1];
+  if (prefix && prefix.immediateFollow) {
+    // Remove the last token if it was immediately followed by the new tokens
+    context.result.all.pop();
+    // In the next step, we need to merge them again
+    const firstToken = replacedTokens.shift();
+    const mergedTokens = lex(prefix.image + (firstToken?.image ?? ""));
+    setImmediateFollowProperty(firstToken, mergedTokens);
+    // Push merged and new tokens to the stack
+    context.result.all.push(...mergedTokens, ...replacedTokens);
+  } else {
+    context.result.all.push(...replacedTokens);
+  }
 }
 
 const lexer = new PliPreprocessorLexer();
 
-function replaceTokensInText(tokens: Token[], context: InterpreterContext): Token[] {
+function replaceTokensInText(
+  tokens: Token[],
+  context: InterpreterContext,
+): Token[] {
   const tokenList: Token[] = [];
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
@@ -305,28 +494,55 @@ function replaceTokensInText(tokens: Token[], context: InterpreterContext): Toke
   return tokenList;
 }
 
-function performTokenScan(token: Token, context: InterpreterContext): Token[] | undefined {
+function performTokenScan(
+  token: Token,
+  context: InterpreterContext,
+): Token[] | undefined {
   const image = token.image;
   const variable = context.variables.get(image);
   if (!variable || !variable.active) {
     return undefined;
   }
   const variableValue = variable.value;
-  const lexerState = new PliPreprocessorLexerState(variableValue.value, undefined);
-  const tokens = lexer.tokenize(lexerState);
+  const tokens = lex(variableValue.value);
+  setImmediateFollowProperty(token, tokens);
   return replaceTokensInText(tokens, context);
 }
 
-function runInscanInstruction(instruction: inst.InscanInstruction, context: InterpreterContext): void {
-  const value = evaluateReferenceExpression(instruction.variable, context);
-  runInclude({
-    file: value.value,
-    token: instruction.variable.token,
-    xInclude: false
-  }, context);
+function lex(text: string): Token[] {
+  const lexerState = new PliPreprocessorLexerState(text, undefined);
+  return lexer.tokenize(lexerState);
 }
 
-function runIncludeInstruction(instruction: inst.IncludeInstruction, context: InterpreterContext): void {
+function setImmediateFollowProperty(
+  token: Token | undefined,
+  tokens: Token[],
+): void {
+  if (token?.immediateFollow && tokens.length > 0) {
+    // The last token inherits the immediateFollow property of the original token
+    tokens[tokens.length - 1].immediateFollow = true;
+  }
+}
+
+function runInscanInstruction(
+  instruction: inst.InscanInstruction,
+  context: InterpreterContext,
+): void {
+  const value = evaluateReferenceExpression(instruction.variable, context);
+  runInclude(
+    {
+      file: value.value,
+      token: instruction.variable.token,
+      xInclude: false,
+    },
+    context,
+  );
+}
+
+function runIncludeInstruction(
+  instruction: inst.IncludeInstruction,
+  context: InterpreterContext,
+): void {
   runInclude(instruction, context);
 }
 
@@ -337,10 +553,14 @@ interface IncludeItem {
 }
 
 function runInclude(item: IncludeItem, context: InterpreterContext): void {
-const uri = resolveIncludeFileUri(item, context);
+  const uri = resolveIncludeFileUri(item, context);
 
   function failToResolve(): never {
-    throw new PreprocessorError(`Cannot resolve include file '${item.file}' at '${context.uri?.toString(true)}'.`, item.token, context.uri);
+    throw new PreprocessorError(
+      `Cannot resolve include file '${item.file}' at '${context.uri?.toString(true)}'.`,
+      item.token,
+      context.uri,
+    );
   }
 
   if (!uri) {
@@ -356,12 +576,15 @@ const uri = resolveIncludeFileUri(item, context);
   context.xIncludes.add(uri.toString());
 
   try {
-    const content = TextDocuments.get(uri)?.getText() ?? '';
+    const content = TextDocuments.get(uri)?.getText() ?? "";
     const processedContent = context.options.marginsProcessor.processMargins({
       result: context.options.compilerOptions,
-      text: content
+      text: content,
     });
-    const subState = context.options.parser.initializeState(processedContent, uri);
+    const subState = context.options.parser.initializeState(
+      processedContent,
+      uri,
+    );
     const subProgram = context.options.parser.parse(subState);
     for (const [uri, tokens] of Object.entries(subState.perFileTokens)) {
       context.result.fileTokens[uri] = tokens;
@@ -370,15 +593,13 @@ const uri = resolveIncludeFileUri(item, context);
     const instruction = generateInstructions(subProgram.statements);
     const newContext: InterpreterContext = {
       ...context,
-      uri: uri
+      uri: uri,
     };
-    doRunInstructions(uri, newContext, instruction);
+    doRunInstructions(newContext, instruction);
   } catch {
     failToResolve();
   }
 }
-
-
 
 /**
  * Attempts to resolve the URI of an include file factoring in process group libs, relative & absolute paths

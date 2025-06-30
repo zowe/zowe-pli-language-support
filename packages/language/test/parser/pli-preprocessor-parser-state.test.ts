@@ -179,8 +179,8 @@ describe("Preprocessor parser state", () => {
       ).toBeTruthy();
       expect(state.eof).toBeFalsy();
       expect(state.current).not.toBeUndefined();
-      expect(state.current!.image).toBe(" ");
-      expect(state.current!.tokenType.name).toBe("WS");
+      expect(state.current!.image).toBe("123");
+      expect(state.current!.tokenType.name).toBe("NUMBER");
       expect(state.last).not.toBeUndefined();
       expect(state.last!.image).toBe("ABC");
     });
