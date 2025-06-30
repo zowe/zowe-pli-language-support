@@ -75,6 +75,14 @@ describe("Semantic Tokens", () => {
     expectSemanticTokens(code);
   });
 
+  test("should highlight procedure declarations and parameters", () => {
+    const code = `
+ <|function:EXAMPLE|>: PROC(<|parameter:PARAM|>);
+ END <|function:EXAMPLE|>;`;
+
+    expectSemanticTokens(code);
+  });
+
   test("should highlight procedure declarations and calls", () => {
     const code = `
  <|function:EXAMPLE|>: PROC OPTIONS(MAIN);
