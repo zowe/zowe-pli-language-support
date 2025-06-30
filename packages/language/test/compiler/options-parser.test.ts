@@ -19,6 +19,7 @@ import {
   SyntaxKind,
 } from "../../src/syntax-tree/ast";
 import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
+import { parse } from "../utils";
 
 describe("CompilerOptions parser", () => {
   test("simple word based compiler option", () => {
@@ -358,4 +359,63 @@ describe("CompilerOptions translator", () => {
       expect(testCase.toTest(options)).toEqual(testCase.expected);
     });
   }
+});
+
+describe("Process directives", () => {
+  test("should parse multiple process directives", () => {
+    const code = `
+%PROCESS F(I) AG A(F); 
+*PROCESS MARGINS(2,75);
+%PROCESS F(I) AG A(F); 
+ DECLARE LIBREF FIXED;
+ LIBREF = 44;`;
+
+    const doc = parse(code, { validate: true });
+    expect(doc.compilerOptions.margins).toEqual({ m: 2, n: 75 });
+    expect(doc.diagnostics.compilerOptions).toHaveLength(3);
+    expect(
+      doc.diagnostics.compilerOptions.every((issue) =>
+        issue.message.startsWith("Duplicate compiler option"),
+      ),
+    );
+  });
+
+  test("should parse multiple process directives with comments", () => {
+    const code = `
+%PROCESS F(I) AG A(F); /* XX */
+*PROCESS MARGINS(2,75); // test
+%PROCESS DEFAULT(RETURNS()); 
+ DECLARE LIBREF FIXED;
+ LIBREF = 44;`;
+
+    const doc = parse(code, { validate: true });
+    expect(doc.compilerOptions.flag).toBe("I");
+    expect(doc.compilerOptions.aggregate).toBeDefined();
+    expect(doc.compilerOptions.attributes?.identifiers).toBe("FULL");
+    expect(doc.compilerOptions.margins).toEqual({ m: 2, n: 75 });
+    expect(doc.compilerOptions.default?.returns).toEqual({ type: "BYADDR" });
+  });
+
+  test("should parse multiple process directives with comments inbetween", () => {
+    const code = `
+%PROCESS F(I) AG A(F); /* XX */
+*PROCESS MARGINS(2,75); // test
+ /* You can add multiline comments here as well
+ */
+ /* You can add multiline comments here as well
+ */
+
+   // Or somewhere over here
+
+%PROCESS DEFAULT(RETURNS()); 
+ DECLARE LIBREF FIXED;
+ LIBREF = 44;`;
+
+    const doc = parse(code, { validate: true });
+    expect(doc.compilerOptions.flag).toBe("I");
+    expect(doc.compilerOptions.aggregate).toBeDefined();
+    expect(doc.compilerOptions.attributes?.identifiers).toBe("FULL");
+    expect(doc.compilerOptions.margins).toEqual({ m: 2, n: 75 });
+    expect(doc.compilerOptions.default?.returns).toEqual({ type: "BYADDR" });
+  });
 });

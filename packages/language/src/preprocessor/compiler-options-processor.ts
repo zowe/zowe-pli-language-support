@@ -40,18 +40,18 @@ export class CompilerOptionsProcessor {
     text: string,
     uri: URI,
   ): CompilerOptionsProcessorResult {
-    const range = this.getCompilerOptionsRange(text, uri);
-    let srcCompilerOpts: string | undefined = undefined;
+    const ranges = this.getCompilerOptionsRange(text, uri);
+    let sourceCompilerOptions: string[] = [];
     let newText = text;
-    if (range) {
+    for (const range of ranges) {
       // Magic number 8 is the length of the string "*PROCESS"
       const offset =
         range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH;
-      srcCompilerOpts = text.substring(offset, range.end);
+      sourceCompilerOptions.push(text.substring(offset, range.end));
       newText =
-        text.substring(0, range.start) +
+        newText.substring(0, range.start) +
         " ".repeat(range.end - range.start) +
-        text.substring(range.end);
+        newText.substring(range.end);
     }
 
     // Retrieve compiler options from the plugin configuration provider
@@ -73,10 +73,10 @@ export class CompilerOptionsProcessor {
       };
     }
 
-    if (srcCompilerOpts) {
+    for (const [index, srcCompilerOpts] of sourceCompilerOptions.entries()) {
       const srcAbstractOptions = parseAbstractCompilerOptions(
         srcCompilerOpts,
-        range ? range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH : 0,
+        ranges[index].start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
       );
 
       if (mergedAbstractOptions) {
@@ -101,7 +101,7 @@ export class CompilerOptionsProcessor {
 
       //  shave off the issues that are already present in the process group config
       if (processGroupConfig?.issueCount) {
-        if (range) {
+        for (const range of ranges) {
           // update just these first 'issueCount' issues to report on *PROCESS
           for (let i = 0; i < processGroupConfig.issueCount; i++) {
             if (i < compilerOptionResult.issues.length) {
@@ -116,7 +116,8 @@ export class CompilerOptionsProcessor {
               break;
             }
           }
-        } else {
+        }
+        if (ranges.length === 0) {
           // no *PROCESS to attach to, slice them off instead
           compilerOptionResult.issues = compilerOptionResult.issues.slice(
             processGroupConfig.issueCount,
@@ -124,7 +125,7 @@ export class CompilerOptionsProcessor {
         }
       }
 
-      if (range) {
+      for (const range of ranges) {
         compilerOptionResult.tokens.unshift(range.token);
       }
 
@@ -143,46 +144,70 @@ export class CompilerOptionsProcessor {
   private getCompilerOptionsRange(
     text: string,
     uri: URI,
-  ): (Range & { token: Token }) | undefined {
-    let start = 0;
-    const ws = /\s+/y;
-    ws.lastIndex = 0;
-    const match = ws.exec(text);
-    if (match) {
-      start = match.index;
+  ): (Range & { token: Token })[] {
+    const ranges: (Range & { token: Token })[] = [];
+    const processRegex = /([%*]PROCESS[^;\n]*[;\n])/iy;
+    let match: RegExpExecArray | null;
+    let currentPosition = 0;
+
+    processRegex.lastIndex = this.advanceToNextProcessLocation(
+      currentPosition,
+      text,
+    );
+    while ((match = processRegex.exec(text))) {
+      const directiveStart = match.index;
+      const directiveEnd = match.index + match[0].length;
+      const processStart = directiveStart + 1; // Skip the % or *
+      const tokenEnd = processStart + "PROCESS".length;
+
+      const token = createSyntheticTokenInstance(
+        PROCESS,
+        text.substring(directiveStart, tokenEnd),
+      );
+      token.startOffset = directiveStart;
+      token.endOffset = tokenEnd;
+      token.payload = {
+        uri,
+        kind: CstNodeKind.ProcessDirective_PROCESS,
+        element: undefined,
+      };
+
+      ranges.push({
+        token,
+        start: directiveStart,
+        end: directiveEnd,
+      });
+
+      processRegex.lastIndex = this.advanceToNextProcessLocation(
+        directiveEnd,
+        text,
+      );
     }
-    const current = text.charAt(start);
-    if (current === "*" || current === "%") {
-      const processLength = "PROCESS".length;
-      let offset = start + 1;
-      const process = text
-        .substring(offset, offset + processLength)
-        .toUpperCase();
-      if (process === "PROCESS") {
-        offset += processLength;
-        const token = createSyntheticTokenInstance(
-          PROCESS,
-          text.substring(start, offset),
-        );
-        token.startOffset = start;
-        token.endOffset = offset;
-        token.payload = {
-          uri,
-          kind: CstNodeKind.ProcessDirective_PROCESS,
-          element: undefined,
-        };
-        for (let i = offset; i < text.length; i++) {
-          const char = text.charAt(i);
-          if (char === ";" || char === "\n") {
-            return {
-              token,
-              start,
-              end: i,
-            };
-          }
-        }
+    return ranges;
+  }
+
+  private advanceToNextProcessLocation(
+    currentPosition: number,
+    text: string,
+  ): number {
+    const skipPatterns: RegExp[] = [
+      /\s*\/\*[\s\S]*?\*\//my, // Multi-line comments
+      /\s*\/\/[^\n\r]*/y, // Single-line comments
+      /[ \t]*\n/y, // End on newline
+    ];
+
+    let patternIndex = 0;
+    while (patternIndex < skipPatterns.length) {
+      const pattern = skipPatterns[patternIndex];
+      patternIndex++;
+      pattern.lastIndex = currentPosition;
+      const match = pattern.exec(text);
+      if (match) {
+        currentPosition = match.index + match[0].length;
+        patternIndex = 0; // Restart patterns from currentPosition.
       }
     }
-    return undefined;
+
+    return currentPosition;
   }
 }

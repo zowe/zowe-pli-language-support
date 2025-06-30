@@ -280,7 +280,9 @@ export function parseAbstractCompilerOptions(
   input: string,
   offset?: number,
 ): AbstractCompilerOptions {
-  const lexerResult = lexer.tokenize(" ".repeat(offset ?? 0) + input);
+  const lexerResult = lexer.tokenize(
+    " ".repeat(offset ?? 0) + input.replace(/;$/, ""),
+  );
   const tokens = lexerResult.tokens as Token[];
   for (let i = 0; i < tokens.length; i++) {
     tokens[i].payload = {

@@ -318,6 +318,9 @@ translator.rule(
           1,
         );
       }
+    } else {
+      // AGGREGATE can be set without the suboption.
+      options.aggregate = {};
     }
   },
   ["NOAGGREGATE", "NAG"],
