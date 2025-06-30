@@ -217,7 +217,8 @@ export function createDeclareInstruction(
 
 export interface IncludeInstruction {
   kind: InstructionKind.Include;
-  file: string;
+  item: ast.IncludeItem;
+  fileName: string;
   xInclude: boolean;
   token: Token | null; // Token for error reporting, if available
 }

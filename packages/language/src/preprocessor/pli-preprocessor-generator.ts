@@ -458,7 +458,7 @@ export class PliPreprocessorGenerator {
     expression: ast.StringLiteral,
     builder: PliPreprocessorProgramBuilder,
   ) {
-    builder.pushInstruction(Instructions.push(expression.tokens));
+    builder.pushInstruction(Instructions.push([]));
   }
 
   private getVariableNames(decl: ast.DeclaredItem): string[] {

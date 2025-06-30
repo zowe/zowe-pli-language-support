@@ -2102,14 +2102,12 @@ export interface StopStatement extends AstNode {
 export interface StringLiteral extends AstNode {
   kind: SyntaxKind.StringLiteral;
   value: string | null;
-  tokens: Token[];
 }
 export function createStringLiteral(): StringLiteral {
   return {
     kind: SyntaxKind.StringLiteral,
     container: null,
     value: null,
-    tokens: [],
   };
 }
 export interface SubStructure extends AstNode {

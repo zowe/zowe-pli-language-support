@@ -531,7 +531,9 @@ function runInscanInstruction(
   const value = evaluateReferenceExpression(instruction.variable, context);
   runInclude(
     {
-      file: value.value,
+      // No item is provided here, which is only availble in the IncludeInstruction
+      item: null,
+      fileName: value.value,
       token: instruction.variable.token,
       xInclude: false,
     },
@@ -547,7 +549,8 @@ function runIncludeInstruction(
 }
 
 interface IncludeItem {
-  file: string;
+  fileName: string;
+  item: ast.IncludeItem | null;
   token: Token | null;
   xInclude: boolean;
 }
@@ -557,7 +560,7 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
 
   function failToResolve(): never {
     throw new PreprocessorError(
-      `Cannot resolve include file '${item.file}' at '${context.uri?.toString(true)}'.`,
+      `Cannot resolve include file '${item.fileName}' at '${context.uri?.toString(true)}'.`,
       item.token,
       context.uri,
     );
@@ -565,6 +568,12 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
 
   if (!uri) {
     failToResolve();
+  }
+
+  if (item.item) {
+    // Set the resolved file path on the item
+    // This will be used later in the LSP definition provider
+    item.item.filePath = uri.toString();
   }
 
   if (item.xInclude && context.xIncludes.has(uri.toString())) {
@@ -612,17 +621,12 @@ function resolveIncludeFileUri(
   item: IncludeItem,
   context: InterpreterContext,
 ): URI | undefined {
-  const absPathRegex = /^\/|[A-Z]:|~/i;
-  const relativePathRegex = /^\.\.\/|^\.\//;
+  if (!item.fileName) {
+    throw new Error("Include item does not have a file specified.");
+  }
 
   if (!context.uri) {
     return undefined;
-  }
-
-  const currentDir = UriUtils.dirname(context.uri);
-
-  if (!item.file) {
-    throw new Error("Include item does not have a file specified.");
   }
 
   // check to validate copybook extension, if a program config & process group is available
@@ -634,53 +638,56 @@ function resolveIncludeFileUri(
         programConfig.pgroup,
       )
     : undefined;
-  const ext = UriUtils.extname(URI.parse(item.file));
+  const ext = UriUtils.extname(URI.parse(item.fileName));
   if (
     ext !== "" &&
     programConfig &&
     pgroup &&
-    (!pgroup["copybook-extensions"]?.includes(ext) ||
-      !pgroup["copybook-extensions"])
+    (!pgroup["include-extensions"]?.includes(ext) ||
+      !pgroup["include-extensions"])
   ) {
-    const msg = pgroup["copybook-extensions"]?.length
-      ? `expected one of: ${pgroup["copybook-extensions"]?.join(", ")}`
+    const msg = pgroup["include-extensions"]?.length
+      ? `expected one of: ${pgroup["include-extensions"]?.join(", ")}`
       : `expected no extension`;
     throw new PreprocessorError(
-      `Unsupported copybook extension for included file, '${item.file}', ${msg}`,
+      `Unsupported copybook extension for included file, '${item.fileName}', ${msg}`,
       item.token,
       context.uri,
     );
   }
 
+  // TODO @montymxb Jun 24th, 2025: Disabled relative & absolute pathing per request, however mainframe tests do show this works w/ the right JCL config
+  // temporarily retaining here until we know we won't need this going forward, or we decide to re-enable it based on some configuration setting
+  /*
+  const absPathRegex = /^\/|[A-Z]:|~/i;
+  const relativePathRegex = /^\.\.\/|^\.\//;
   if (absPathRegex.test(item.file)) {
     // absolute path, use as is
     return URI.parse(item.file);
   } else if (relativePathRegex.test(item.file)) {
     // relative path, combine with currentDir
     return UriUtils.joinPath(currentDir, item.file);
-  } else if (programConfig && pgroup) {
+  } else ....
+  */
+
+  if (programConfig && pgroup) {
     // lib file as either a string or a member from a known process group
     for (const lib of pgroup.libs ?? []) {
-      if (lib === "*") {
-        // wildcard lib, use currentDir
-        return UriUtils.joinPath(currentDir, item.file);
+      const libFileUri = UriUtils.joinPath(
+        URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
+        lib,
+        item.fileName,
+      );
+      if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
+        // match found in this lib, take it
+        return libFileUri;
       } else {
-        const libFileUri = UriUtils.joinPath(
-          URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
-          lib,
-          item.file,
-        );
-        if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
-          // match found in this lib, take it
-          return libFileUri;
-        } else {
-          // Perform additional lookup using the new glob method
-          const patt = `${libFileUri.path}\\.*`;
-          const matches = FileSystemProviderInstance.findFilesByGlobSync(patt);
-          if (matches.length > 0) {
-            // Return the first match found
-            return URI.file(matches[0]);
-          }
+        // Perform additional lookup using the new glob method
+        const patt = `${libFileUri.path}\\.*`;
+        const matches = FileSystemProviderInstance.findFilesByGlobSync(patt);
+        if (matches.length > 0) {
+          // Return the first match found
+          return URI.file(matches[0]);
         }
       }
     }

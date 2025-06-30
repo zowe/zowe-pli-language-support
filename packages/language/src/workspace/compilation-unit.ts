@@ -140,7 +140,7 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       statements: [],
     },
     preprocessorEvaluationResults: {
-      ifStatements: new Map()
+      ifStatements: new Map(),
     },
     tokens: {
       fileTokens: {},

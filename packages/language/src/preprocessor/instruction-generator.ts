@@ -407,11 +407,12 @@ function generateIncludeInstruction(
 ): inst.CompoundInstruction | undefined {
   const instructions: inst.IncludeInstruction[] = [];
   for (const item of node.items) {
-    if (item.file) {
+    if (item.fileName) {
       const instruction: inst.IncludeInstruction = {
         kind: inst.InstructionKind.Include,
+        item,
         xInclude: node.xInclude,
-        file: item.file,
+        fileName: item.fileName,
         token: item.token || node.token,
       };
       instructions.push(instruction);
