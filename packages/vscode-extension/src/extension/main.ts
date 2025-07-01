@@ -21,7 +21,6 @@ import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Settings } from "./settings";
 import { registerCustomDecorators } from "./decorators";
 import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
-import TelemetryReporter from "@vscode/extension-telemetry";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -32,13 +31,10 @@ export function activate(context: vscode.ExtensionContext): void {
   settings = Settings.getInstance();
   client = startLanguageClient(context);
   context.subscriptions.push(registerOnDidOpenTextDocListener());
-  const telemetryReporter: TelemetryReporter | undefined =
-    getTelemetryReporter(context);
-  sendTelemetryEvent("pli.language.support.activated", telemetryReporter);
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (workspaceFolder) {
-    watchPlipluginFolder(client, workspaceFolder, context, telemetryReporter);
+    watchPlipluginFolder(client, workspaceFolder, context);
   }
 }
 
@@ -172,24 +168,6 @@ function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
   return client;
 }
 
-function getTelemetryReporter(
-  context: vscode.ExtensionContext,
-): TelemetryReporter | undefined {
-  const extension = context.extension;
-  if (extension) {
-    return new TelemetryReporter("2493c87d-82ee-403a-ac45-dccab714590b");
-  } else {
-    return undefined;
-  }
-}
-
-function sendTelemetryEvent(
-  eventName: string,
-  telemetryReporter?: TelemetryReporter,
-): void {
-  telemetryReporter?.sendTelemetryEvent(eventName);
-}
-
 /**
  * Watches the .pliplugin folder for changes to pgm_conf.json and proc_grps.json files.
  * Sends a notification to the LS when changes are detected
@@ -198,7 +176,6 @@ function watchPlipluginFolder(
   client: LanguageClient,
   workspaceFolder: string,
   context: vscode.ExtensionContext,
-  telemetryReporter: TelemetryReporter | undefined,
 ): void {
   const folderPattern = new vscode.RelativePattern(
     workspaceFolder,
@@ -215,43 +192,23 @@ function watchPlipluginFolder(
   // watch for folder create/delete events
   folderWatcher.onDidCreate(() => {
     client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
-    sendTelemetryEvent(
-      "pli.language.support.onDidCreate.folder",
-      telemetryReporter,
-    );
   });
 
   folderWatcher.onDidDelete(() => {
     client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
-    sendTelemetryEvent(
-      "pli.language.support.onDidDelete.folder",
-      telemetryReporter,
-    );
   });
 
   // watch for file create/update/delete events
   fileWatcher.onDidChange(() => {
     client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
-    sendTelemetryEvent(
-      "pli.language.support.onDidChange.file",
-      telemetryReporter,
-    );
   });
 
   fileWatcher.onDidCreate(() => {
     client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
-    sendTelemetryEvent(
-      "pli.language.support.onDidCreate.file",
-      telemetryReporter,
-    );
   });
 
   fileWatcher.onDidDelete(() => {
     client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
-    sendTelemetryEvent(
-      "pli.language.support.onDidDelete.file",
-      telemetryReporter,
-    );
   });
 
   context.subscriptions.push(folderWatcher, fileWatcher);
