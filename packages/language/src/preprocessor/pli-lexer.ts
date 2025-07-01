@@ -11,9 +11,7 @@
 
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
-import { PliPreprocessorInterpreter } from "./pli-preprocessor-interpreter";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
-import { PliPreprocessorGenerator } from "./pli-preprocessor-generator";
 import * as tokens from "../parser/tokens";
 import { URI } from "../utils/uri";
 import {
@@ -52,16 +50,12 @@ export class PliLexer {
   readonly marginsProcessor: MarginsProcessor;
   readonly preprocessorLexer: PliPreprocessorLexer;
   readonly preprocessorParser: PliPreprocessorParser;
-  readonly preprocessorGenerator: PliPreprocessorGenerator;
-  readonly preprocessorInterpreter: PliPreprocessorInterpreter;
 
   constructor() {
     this.compilerOptionsPreprocessor = new CompilerOptionsProcessor();
     this.marginsProcessor = new PliMarginsProcessor();
     this.preprocessorLexer = new PliPreprocessorLexer();
     this.preprocessorParser = new PliPreprocessorParser(this.preprocessorLexer);
-    this.preprocessorGenerator = new PliPreprocessorGenerator(tokens.NUMBER);
-    this.preprocessorInterpreter = new PliPreprocessorInterpreter();
   }
 
   tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
