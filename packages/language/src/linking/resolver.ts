@@ -213,14 +213,12 @@ function getMatchingSymbols(
 ): QualifiedSyntaxNode[] {
   const getFullName = () => qualifiedName.toReversed().join(".");
 
-  const scopeSymbols = scope.getSymbols(qualifiedName);
-
-  const explicitlyDeclaredSymbols = scopeSymbols
-    .filter((symbol) => !symbol.isImplicit)
+  const explicitlyDeclaredSymbols = scope
+    .getExplicitSymbols(qualifiedName)
     .filter((symbol) => !symbol.isRedeclared); // Don't resolve reference to redeclared symbols.
 
   const isAmbiguous = explicitlyDeclaredSymbols.length > 1;
-  if (isAmbiguous && token.payload.uri) {
+  if (isAmbiguous) {
     // TODO: Currently only emitting on the last member call symbol (`reference.token`)
     // We want to underline the entire qualified name.
     reporter.reportAmbiguousReference(token, getFullName());
@@ -230,7 +228,7 @@ function getMatchingSymbols(
     return explicitlyDeclaredSymbols;
   }
 
-  const implicitSymbols = scopeSymbols.filter((symbol) => symbol.isImplicit);
+  const implicitSymbols = scope.getImplicitSymbols(qualifiedName);
   if (implicitSymbols.length <= 0) {
     return [];
   }

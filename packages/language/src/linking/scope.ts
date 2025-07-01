@@ -27,10 +27,22 @@ export class Scope {
     this.symbolTable = symbolTable ?? new SymbolTable();
   }
 
-  getSymbols(qualifiedName: readonly string[]): readonly QualifiedSyntaxNode[] {
+  getExplicitSymbols(
+    qualifiedName: readonly string[],
+  ): readonly QualifiedSyntaxNode[] {
     return (
-      this.symbolTable?.getSymbols(qualifiedName) ??
-      this.parent?.getSymbols(qualifiedName) ??
+      this.symbolTable?.getExplicitSymbols(qualifiedName) ??
+      this.parent?.getExplicitSymbols(qualifiedName) ??
+      []
+    );
+  }
+
+  getImplicitSymbols(
+    qualifiedName: readonly string[],
+  ): readonly QualifiedSyntaxNode[] {
+    return (
+      this.symbolTable?.getImplicitSymbols(qualifiedName) ??
+      this.parent?.getImplicitSymbols(qualifiedName) ??
       []
     );
   }
