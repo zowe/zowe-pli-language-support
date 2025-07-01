@@ -11,19 +11,14 @@
 
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { binaryTokenSearch } from "../utils/search";
-import { Range, tokenToRange } from "./types";
+import { HoverResponse, tokenToRange } from "./types";
 import { URI } from "../utils/uri";
-import { MarkupContent, MarkupKind } from "vscode-languageserver-types";
+import { MarkupKind } from "vscode-languageserver-types";
 import { getReference, isReferenceToken } from "../linking/tokens";
 import { TokenPayload } from "../parser/tokens";
 import { DeclaredVariable, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { formatPliCodeBlock } from "../utils/code-block";
 import { QualifiedSyntaxNode } from "../linking/qualified-syntax-node";
-
-interface HoverResponse {
-  range?: Range;
-  contents: MarkupContent;
-}
 
 type MarkupResponse = string | null;
 

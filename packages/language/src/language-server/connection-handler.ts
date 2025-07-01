@@ -20,7 +20,7 @@ import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
 import { Location, TextEdit } from "vscode-languageserver-types";
-import { completionItemToLSP, rangeToLSP } from "./types";
+import { completionItemToLSP, hoverResponseToLSP, rangeToLSP } from "./types";
 import { renameRequest } from "./rename-request";
 import { mapValues } from "../utils/common";
 import { getReferenceLocations } from "../linking/resolver";
@@ -101,13 +101,7 @@ export function startLanguageServer(connection: Connection): void {
       return null;
     }
 
-    const contents = response.contents;
-    const range = response.range && rangeToLSP(textDocument, response.range);
-
-    return {
-      contents,
-      range,
-    };
+    return hoverResponseToLSP(textDocument, response);
   });
   connection.onCompletion((params) => {
     const uri = params.textDocument.uri;
