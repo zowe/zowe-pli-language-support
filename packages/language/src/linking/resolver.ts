@@ -48,6 +48,11 @@ function getParentStatement(node: SyntaxNode): SyntaxNode {
   return getParentStatement(node.container);
 }
 
+/**
+ * Keep track of the order of statements.
+ *
+ * This is used to determine if a node is before another node in the statement order, e.g. for unset variable warnings.
+ */
 export class StatementOrderCache {
   private id: number = 0;
   private map = new Map<SyntaxNode, number>();
