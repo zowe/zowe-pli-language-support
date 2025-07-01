@@ -115,8 +115,7 @@ export class SymbolTable {
     return uniqueSymbols.flat();
   }
 
-  // Return all qualified symbols
-  getSymbols(
+  getExplicitSymbols(
     qualifiedName: readonly string[],
   ): readonly QualifiedSyntaxNode[] | undefined {
     const [name] = qualifiedName;
@@ -124,11 +123,33 @@ export class SymbolTable {
       return undefined;
     }
 
-    const symbols = this.symbols.get(name);
-    if (!symbols) {
+    const symbols = this.symbols
+      .get(name)
+      .filter((symbol) => !symbol.isImplicit);
+
+    return this.getQualifiedSymbols(qualifiedName, symbols);
+  }
+
+  getImplicitSymbols(
+    qualifiedName: readonly string[],
+  ): readonly QualifiedSyntaxNode[] | undefined {
+    const [name] = qualifiedName;
+    if (!name) {
       return undefined;
     }
 
+    const symbols = this.symbols
+      .get(name)
+      .filter((symbol) => symbol.isImplicit);
+
+    return this.getQualifiedSymbols(qualifiedName, symbols);
+  }
+
+  // Return all qualified symbols
+  private getQualifiedSymbols(
+    qualifiedName: readonly string[],
+    symbols: readonly QualifiedSyntaxNode[],
+  ): readonly QualifiedSyntaxNode[] | undefined {
     const qualifiedSymbols = groupBy(symbols, (symbol) =>
       symbol.getQualificationStatus(qualifiedName),
     );
