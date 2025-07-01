@@ -19,8 +19,13 @@ export interface InstructionNode {
 }
 
 export function getLastInstruction(node: InstructionNode): InstructionNode {
+  const set = new Set<InstructionNode>();
   let current = node;
   while (current.next) {
+    if (set.has(current.next)) {
+      throw new Error("Circular reference detected in instruction nodes.");
+    }
+    set.add(current);
     current = current.next;
   }
   return current;

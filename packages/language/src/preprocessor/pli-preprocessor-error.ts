@@ -43,7 +43,7 @@ export class PreprocessorError implements LexingError {
       } else {
         this._range = {
           start: range.startOffset,
-          end: range.endOffset,
+          end: range.endOffset + 1,
         };
       }
     }
