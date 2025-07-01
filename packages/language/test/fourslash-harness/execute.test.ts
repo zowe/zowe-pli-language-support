@@ -151,7 +151,7 @@ function runSingleHarnessTest(filePath: string) {
 
   test(`${relativePath}`, () => {
     const wrappers = getWrappers();
-    const testFile = parseHarnessTestFile(filePath, {
+    const testFile = parseHarnessTestFile(relativePath, filePath, {
       wrappers,
     });
 
