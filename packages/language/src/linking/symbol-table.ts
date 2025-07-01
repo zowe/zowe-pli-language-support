@@ -319,6 +319,7 @@ const iterateSymbolTable = (
         node,
         context.acceptor,
       );
+      forEachNode(node, iterateChild(parentScope));
       break;
     case SyntaxKind.AssignmentStatement:
       parentScope.symbolTable.addImplicitDeclarationStatement(

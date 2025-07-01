@@ -436,11 +436,9 @@ export class TestBuilder {
     for (const index of indices) {
       const hoverResult = hoverRequest(this.unit, this.unit.uri, index);
 
-      expect(hoverResult, `Expected hover for label "${label}"`).toBeDefined();
-      expect(
-        hoverResult?.contents,
-        `Expected hover for label "${label}"`,
-      ).toEqual(content);
+      const message = `Expected hover for label "${label}" (${this.createLabelPositionMessage(label)})`;
+      expect(hoverResult, message).toBeDefined();
+      expect(hoverResult?.contents, message).toEqual(content);
     }
   }
 
