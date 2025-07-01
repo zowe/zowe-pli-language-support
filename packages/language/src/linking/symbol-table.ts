@@ -33,6 +33,7 @@ import {
 } from "./qualified-syntax-node";
 import { MultiMap } from "../utils/collections";
 import { Scope, ScopeCache } from "./scope";
+import { Token } from "../parser/tokens";
 
 function nonNull<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
@@ -68,6 +69,22 @@ export class SymbolTable {
     acceptor: PliValidationAcceptor,
   ): void {
     DeclaredItemParser.parseAndAddToTable(this, declaration.items, acceptor);
+  }
+
+  addLabelStatement(
+    node: SyntaxNode,
+    name: string | null,
+    nameToken: Token | null,
+    _acceptor: PliValidationAcceptor,
+  ) {
+    if (!name || !nameToken) {
+      return;
+    }
+
+    this.addSymbolDeclaration(
+      name,
+      QualifiedSyntaxNode.createExplicit(nameToken, node),
+    );
   }
 
   addSymbolDeclaration(name: string, node: QualifiedSyntaxNode): void {
@@ -281,65 +298,70 @@ const iterateSymbolTable = (
   // We connect the current node to its scope for usage in the linking phase.
   context.scopeCache.add(node, parentScope);
 
-  // Function to recursively iterate over the child nodes to build their symbol table.
-  const iterateChild = (scope: Scope) => (child: SyntaxNode) =>
-    iterateSymbolTable(child, scope, context);
+  /**
+   * A procedure statement's end node is a child node, but scope-wise, the end
+   * node should be part of the parent scope of the procedure statement, to
+   * properly link to the procedure's label.
+   * We remove the end node from the procedure statement, to process it as a sibling node.
+   */
+  if (node.kind === SyntaxKind.ProcedureStatement) {
+    // Create a new scope for the procedure statement.
+    const scope = new Scope(parentScope);
+    const procedure: ProcedureStatement = {
+      ...node,
+      end: null,
+    };
 
-  // This switch statement handles the special case of a procedure statement.
+    forEachNode(procedure, (child) =>
+      iterateSymbolTable(child, scope, context),
+    );
+    if (node.end) {
+      iterateSymbolTable(node.end, parentScope, context);
+    }
+
+    // Early return to avoid below switch statement.
+    return;
+  }
+
+  // This switch statement handles special cases for certain syntax nodes.
   switch (node.kind) {
+    // E.g. `MY_PROC: PROCEDURE;`
     case SyntaxKind.LabelPrefix:
     case SyntaxKind.OrdinalValue:
-      if (node.name && node.nameToken) {
-        parentScope.symbolTable.addSymbolDeclaration(
-          node.name,
-          QualifiedSyntaxNode.createExplicit(node.nameToken, node),
-        );
-      }
+      parentScope.symbolTable.addLabelStatement(
+        node,
+        node.name,
+        node.nameToken,
+        context.acceptor,
+      );
       break;
-    case SyntaxKind.ProcedureStatement:
-      // Create a new scope for the procedure statement.
-      const scope = new Scope(parentScope);
-      // A procedure statement's end node is a child node, but scope-wise, the end
-      // node should be part of the parent scope of the procedure statement, to
-      // properly link to the procedure's label.
-      // We remove the end node from the procedure statement, to process it as a sibling node.
-      const procedure: ProcedureStatement = {
-        ...node,
-        end: null,
-      };
-      forEachNode(procedure, iterateChild(scope));
-      if (node.end) {
-        iterateChild(parentScope)(node.end);
-      }
-      break;
+    // E.g. `DCL A FIXED;`
     case SyntaxKind.DeclareStatement:
       parentScope.symbolTable.addExplicitDeclarationStatement(
         node,
         context.acceptor,
       );
-      forEachNode(node, iterateChild(parentScope));
       break;
-    // E.g. DO I = 1 TO 300 BY 100; END DO;
+    // E.g. `DO I = 1 TO 300 BY 100; END DO;`
     case SyntaxKind.DoType3:
       parentScope.symbolTable.addImplicitDeclarationStatement(
         [node.variable].filter(nonNull),
         context.acceptor,
       );
-      forEachNode(node, iterateChild(parentScope));
       break;
-    // E.g. A = 1;
+    // E.g. `A = 1;`
     case SyntaxKind.AssignmentStatement:
       parentScope.symbolTable.addImplicitDeclarationStatement(
         node.refs.map((ref) => ref.element?.element).filter(nonNull),
         context.acceptor,
       );
-      forEachNode(node, iterateChild(parentScope));
       break;
+    // Any statement is added to the statement order cache
+    // to keep track of the order of statements.
     case SyntaxKind.Statement:
       context.statementOrderCache.add(node);
-      forEachNode(node, iterateChild(parentScope));
       break;
-    default:
-      forEachNode(node, iterateChild(parentScope));
   }
+
+  forEachNode(node, (child) => iterateSymbolTable(child, parentScope, context));
 };
