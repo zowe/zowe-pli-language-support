@@ -35,7 +35,10 @@ export function createTestBuilderHarnessImplementation(
         testBuilder.expectExclusiveErrorCodesAt(label.toString(), codes),
       expectExclusiveDiagnosticsAt: (label, diagnostics) =>
         testBuilder.expectExclusiveDiagnosticsAt(label.toString(), diagnostics),
-      noDiagnostics: () => testBuilder.expectNoDiagnostics(),
+      noDiagnostics: (label) =>
+        label !== undefined
+          ? testBuilder.expectNoDiagnosticsAt(label.toString())
+          : testBuilder.expectNoDiagnostics(),
     },
     completion: {
       expectAt: (label, content) =>

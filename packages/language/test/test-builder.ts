@@ -279,6 +279,21 @@ export class TestBuilder {
     return this;
   }
 
+  expectNoDiagnosticsAt(label: string): TestBuilder {
+    const matchingDiagnostics = this.getMatchingDiagnostics(label);
+
+    if (matchingDiagnostics.length > 0) {
+      const message = matchingDiagnostics
+        .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
+        .join("\n- ");
+      fail(
+        `Expected no diagnostics at label "${label}" (${this.createLabelRangeMessage(label)}) but received:\n- ${message}`,
+      );
+    }
+
+    return this;
+  }
+
   expectNoDiagnostics(): TestBuilder {
     if (this.diagnostics.length > 0) {
       const message = this.diagnostics

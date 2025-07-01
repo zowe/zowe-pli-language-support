@@ -11,9 +11,9 @@
 
 import { Diagnostic } from "../language-server/types";
 import {
-  AssignmentStatement,
   DeclareStatement,
   ProcedureStatement,
+  ReferenceItem,
   SyntaxKind,
   SyntaxNode,
 } from "../syntax-tree/ast";
@@ -50,12 +50,10 @@ export class SymbolTable {
   nodeLookup: Map<SyntaxNode, QualifiedSyntaxNode> = new Map();
 
   addImplicitDeclarationStatement(
-    assignment: AssignmentStatement,
+    refs: ReferenceItem[],
     _acceptor: PliValidationAcceptor,
   ): void {
-    const candidates = assignment.refs
-      .map((ref) => ref.element?.element?.ref)
-      .filter(nonNull);
+    const candidates = refs.map(({ ref }) => ref).filter(nonNull);
 
     for (const candidate of candidates) {
       this.symbols.add(
@@ -321,9 +319,18 @@ const iterateSymbolTable = (
       );
       forEachNode(node, iterateChild(parentScope));
       break;
+    // E.g. DO I = 1 TO 300 BY 100; END DO;
+    case SyntaxKind.DoType3:
+      parentScope.symbolTable.addImplicitDeclarationStatement(
+        [node.variable].filter(nonNull),
+        context.acceptor,
+      );
+      forEachNode(node, iterateChild(parentScope));
+      break;
+    // E.g. A = 1;
     case SyntaxKind.AssignmentStatement:
       parentScope.symbolTable.addImplicitDeclarationStatement(
-        node,
+        node.refs.map((ref) => ref.element?.element).filter(nonNull),
         context.acceptor,
       );
       forEachNode(node, iterateChild(parentScope));

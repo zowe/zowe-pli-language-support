@@ -25,8 +25,15 @@ export interface HarnessTesterInterface {
     ): void;
     /**
      * Expect that the compilation unit has no diagnostics.
+     *
+     * @param label The label to expect no diagnostics at. If not provided, all diagnostics are expected to be absent.
+     * @example
+     * ```ts
+     * verify.noDiagnostics();
+     * verify.noDiagnostics('i');
+     * ```
      */
-    noDiagnostics(): void;
+    noDiagnostics(label?: string | number): void;
   };
 
   linker: {

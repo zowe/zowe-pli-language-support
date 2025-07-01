@@ -5,9 +5,9 @@
  */
 
 // @wrap: main
-//// DCL <|I:I> FIXED;
-//// DO <|I>I = 0 TO 10;
-////   PUT(<|I>I);
+//// DCL <|1:I|> FIXED;
+//// DO <|1>I = 0 TO 10;
+////   PUT(<|1>I);
 //// END;
 
 linker.expectLinks();
