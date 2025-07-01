@@ -90,8 +90,7 @@ export const configure = (htmlContainer?: HTMLElement): ConfigResult => {
           "workbench.colorTheme": "Default Dark Modern",
           "editor.wordBasedSuggestions": "off",
           "typescript.tsserver.web.projectWideIntellisense.enabled": true,
-          "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors":
-            false,
+          "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": false,
           "editor.guides.bracketPairsHorizontal": true,
           "editor.experimental.asyncTokenization": false,
         }),

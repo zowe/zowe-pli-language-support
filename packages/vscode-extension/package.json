@@ -98,19 +98,16 @@
     "dependencies": false
   },
   "dependencies": {
-    "browserify-fs": "^1.0.0",
     "langium": "~3.4.0",
-    "path-browserify": "^1.0.1",
     "glob": "^11.0.2",
     "pli-language": "workspace:*",
-    "stream-browserify": "^3.0.0",
     "util": "^0.12.5",
     "vscode-languageclient": "~9.0.1",
     "vscode-languageserver": "~9.0.1"
   },
   "devDependencies": {
     "@types/vscode": "~1.67.0",
-    "@vscode/vsce": "^3.0.0",
-    "esbuild": "~0.21.5"
+    "@vscode/vsce": "^3.6.0",
+    "esbuild": "~0.25.5"
   }
 }
