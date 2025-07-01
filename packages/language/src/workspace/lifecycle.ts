@@ -12,12 +12,13 @@ import {
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { URI } from "../utils/uri";
 import { compilerOptionIssueToDiagnostics } from "../preprocessor/compiler-options/options";
+import { assignDebugKinds } from "../utils/debug-kinds";
 
 export function lifecycle(
   compilationUnit: CompilationUnit,
   text: string,
 ): void {
-  compilationUnit.references.clear();
+  compilationUnit.referencesCache.clear();
   compilationUnit.scopeCaches.clear();
   tokenize(compilationUnit, text);
   parse(compilationUnit);
@@ -58,6 +59,11 @@ export function parse(compilationUnit: CompilationUnit): PliProgram {
   compilationUnit.diagnostics.parser = parserErrorsToDiagnostics(
     PliParserInstance.errors,
   );
+
+  if (process.env.NODE_ENV === "development") {
+    assignDebugKinds(ast);
+  }
+
   return ast;
 }
 
@@ -68,7 +74,7 @@ export function generateSymbolTable(compilationUnit: CompilationUnit) {
 export function link(compilationUnit: CompilationUnit): ReferencesCache {
   const resolveDiagnostics = resolveReferences(compilationUnit);
   const linkingDiagnostics = linkingErrorsToDiagnostics(
-    compilationUnit.references,
+    compilationUnit.referencesCache,
     compilationUnit.scopeCaches,
   );
 
@@ -77,7 +83,7 @@ export function link(compilationUnit: CompilationUnit): ReferencesCache {
     ...linkingDiagnostics,
   ];
 
-  return compilationUnit.references;
+  return compilationUnit.referencesCache;
 }
 
 /**

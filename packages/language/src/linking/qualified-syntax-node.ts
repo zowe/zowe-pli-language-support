@@ -22,28 +22,55 @@ export enum QualificationStatus {
 }
 
 export class QualifiedSyntaxNode {
-  node: SyntaxNode;
-  parent: QualifiedSyntaxNode | null;
-  level: number;
-  token: Token | null;
-
+  public parent: QualifiedSyntaxNode | null = null;
+  public level: number = 1;
+  /**
+   * Whether the node is an implicit declaration.
+   */
+  public isImplicit: boolean = false;
   /**
    * Whether the node is redeclared.
    *
    * Will be assigned to a value by the linker after the symbol table has been built.
    */
-  isRedeclared: boolean | undefined = undefined;
+  public isRedeclared: boolean | undefined = undefined;
 
-  constructor(
+  private constructor(
+    public token: Token,
+    public node: SyntaxNode,
+    options: {
+      parent?: QualifiedSyntaxNode | null;
+      level?: number;
+      isImplicit?: boolean;
+    } = {},
+  ) {
+    this.parent = options.parent ?? null;
+    this.level = options.level ?? 1;
+    this.isImplicit = options.isImplicit ?? false;
+  }
+
+  /**
+   * A qualified syntax node that is explicitly declared. E.g.: `DCL 1 A;` or the 'B' in `DCL 1 A, 2 B;`
+   */
+  static createExplicit(
     token: Token,
     node: SyntaxNode,
     parent: QualifiedSyntaxNode | null = null,
     level: number = 1,
-  ) {
-    this.token = token;
-    this.node = node;
-    this.parent = parent;
-    this.level = level;
+  ): QualifiedSyntaxNode {
+    return new QualifiedSyntaxNode(token, node, {
+      parent,
+      level,
+    });
+  }
+
+  /**
+   * A qualified syntax node that is implicitly declared. E.g.: `A = 123;` or the 'B' in `A, B = 123;`
+   */
+  static createImplicit(token: Token, node: SyntaxNode): QualifiedSyntaxNode {
+    return new QualifiedSyntaxNode(token, node, {
+      isImplicit: true,
+    });
   }
 
   get name(): string {

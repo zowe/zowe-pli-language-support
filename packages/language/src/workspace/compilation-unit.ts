@@ -12,7 +12,7 @@
 import { PliProgram, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
 import { Connection } from "vscode-languageserver";
-import { ReferencesCache } from "../linking/resolver.js";
+import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
 import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
 import {
   generateSymbolTable,
@@ -54,7 +54,8 @@ export interface CompilationUnit {
   preprocessorAst: PliProgram;
   preprocessorEvaluationResults: EvaluationResults;
   tokens: CompilationUnitTokens;
-  references: ReferencesCache;
+  referencesCache: ReferencesCache;
+  statementOrderCache: StatementOrderCache;
   diagnostics: CompilationUnitDiagnostics;
   scopeCaches: ScopeCacheGroups;
   requestCaches: LSRequestCache;
@@ -143,7 +144,8 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       fileTokens: {},
       all: [],
     },
-    references: new ReferencesCache(),
+    referencesCache: new ReferencesCache(),
+    statementOrderCache: new StatementOrderCache(),
     scopeCaches: new ScopeCacheGroups(),
     diagnostics: {
       lexer: [],

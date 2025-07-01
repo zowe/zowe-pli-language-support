@@ -14,7 +14,7 @@ import {
   VirtualFileSystemProvider,
   setFileSystemProvider,
 } from "../../src/workspace/file-system-provider";
-import { createTestBuilder, PliTestFile, TestBuilder } from "../test-builder";
+import { PliTestFile, TestBuilder } from "../test-builder";
 import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
 
 describe("Go To Definition request", () => {
@@ -39,7 +39,7 @@ describe("Go To Definition request", () => {
     ]);
     setFileSystemProvider(vfs);
     createFsTestBuilder = (content: string | PliTestFile[]) =>
-      createTestBuilder(content, { fs: vfs });
+      TestBuilder.create(content, { fs: vfs });
   });
 
   afterAll(() => {

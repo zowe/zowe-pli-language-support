@@ -65,6 +65,9 @@
                 "run",
                 "--no-watch"
             ],
+            "env": {
+                "NODE_ENV": "development"
+            },
             "smartStep": true,
             "console": "integratedTerminal"
         },
@@ -82,6 +85,9 @@
                 "run",
                 "${relativeFile}"
             ],
+            "env": {
+                "NODE_ENV": "development"
+            },
             "smartStep": true,
             "console": "integratedTerminal"
         },
@@ -95,7 +101,8 @@
             ],
             "runtimeExecutable": "pnpm",
             "env": {
-                "HARNESS_TEST_FILE": "${relativeFile}"
+                "HARNESS_TEST_FILE": "${relativeFile}",
+                "NODE_ENV": "development"
             },
             "args": [
                 "vitest",

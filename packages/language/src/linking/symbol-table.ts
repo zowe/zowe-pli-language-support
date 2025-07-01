@@ -11,6 +11,7 @@
 
 import { Diagnostic } from "../language-server/types";
 import {
+  AssignmentStatement,
   DeclareStatement,
   ProcedureStatement,
   SyntaxKind,
@@ -23,7 +24,7 @@ import {
   PliValidationBuffer,
 } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { ReferencesCache } from "./resolver";
+import { ReferencesCache, StatementOrderCache } from "./resolver";
 import { getReference } from "./tokens";
 import { DeclaredItemParser } from "./declared-item-parser";
 import {
@@ -32,6 +33,10 @@ import {
 } from "./qualified-syntax-node";
 import { MultiMap } from "../utils/collections";
 import { Scope, ScopeCache } from "./scope";
+
+function nonNull<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}
 
 /**
  * Terminology:
@@ -43,7 +48,23 @@ import { Scope, ScopeCache } from "./scope";
 export class SymbolTable {
   symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
 
-  addDeclarationStatement(
+  addImplicitDeclarationStatement(
+    assignment: AssignmentStatement,
+    _acceptor: PliValidationAcceptor,
+  ): void {
+    const candidates = assignment.refs
+      .map((ref) => ref.element?.element?.ref)
+      .filter(nonNull);
+
+    for (const candidate of candidates) {
+      this.symbols.add(
+        candidate.text,
+        QualifiedSyntaxNode.createImplicit(candidate.token, candidate.owner),
+      );
+    }
+  }
+
+  addExplicitDeclarationStatement(
     declaration: DeclareStatement,
     acceptor: PliValidationAcceptor,
   ): void {
@@ -57,7 +78,6 @@ export class SymbolTable {
   }
 
   allDistinctSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
-    const allSymbols: QualifiedSyntaxNode[] = [];
     const map = new Map<string, QualifiedSyntaxNode[]>();
     for (const [name, symbols] of this.symbols.entriesGroupedByKey()) {
       if (qualifiedName.length > 0) {
@@ -87,13 +107,12 @@ export class SymbolTable {
         map.set(name, symbols);
       }
     }
-    for (const symbols of map.values()) {
-      if (symbols.length === 1) {
-        // Symbol is unique, add it to the list.
-        allSymbols.push(symbols[0]);
-      }
-    }
-    return allSymbols;
+
+    const uniqueSymbols = Array.from(map.values())
+      .map((symbols) => symbols.filter((symbol) => !symbol.isImplicit))
+      .filter((symbols) => symbols.length === 1);
+
+    return uniqueSymbols.flat();
   }
 
   // Return all qualified symbols
@@ -146,6 +165,7 @@ export function assignRedeclaredSymbols(scopeCache: ScopeCache) {
       scope.symbolTable.symbols.entriesGroupedByKey(),
       ([, symbols]) =>
         symbols
+          .filter((symbol) => !symbol.isImplicit) // We don't want to check implicit declarations for redeclarations.
           .filter((symbol) => symbol.level === 1) // Get the symbols that are at the first level of scope.
           .filter((symbol) => symbol.node.kind !== SyntaxKind.WildcardItem), // Wildcard items are not checked for redeclarations.
     );
@@ -180,7 +200,7 @@ export function assignRedeclaredSymbols(scopeCache: ScopeCache) {
  * @returns The diagnostics of the validation.
  */
 export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
-  const { scopeCaches, references } = unit;
+  const { scopeCaches, referencesCache, statementOrderCache } = unit;
 
   // Set child containers for all nodes.
   recursivelySetContainer(unit.ast);
@@ -191,13 +211,12 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
 
   const preprocessorScope = new Scope(unit.rootPreprocessorScope);
 
-  iterateSymbolTable(
-    scopeCaches.preprocessor,
-    references,
+  iterateSymbolTable(unit.preprocessorAst, preprocessorScope, {
     acceptor,
-    unit.preprocessorAst,
-    preprocessorScope,
-  );
+    scopeCache: scopeCaches.preprocessor,
+    referencesCache,
+    statementOrderCache,
+  });
   // TODO: Active this when we have some tests
   // assignRedeclaredSymbols(scopeCaches.preprocessor);
 
@@ -205,13 +224,12 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   // Otherwise we will add symbols to the root scope (which contains builtins)
   const regularScope = new Scope(unit.rootScope);
 
-  iterateSymbolTable(
-    scopeCaches.regular,
-    references,
+  iterateSymbolTable(unit.ast, regularScope, {
     acceptor,
-    unit.ast,
-    regularScope,
-  );
+    scopeCache: scopeCaches.regular,
+    referencesCache,
+    statementOrderCache,
+  });
   assignRedeclaredSymbols(scopeCaches.regular);
 
   return validationBuffer.getDiagnostics();
@@ -224,24 +242,29 @@ function recursivelySetContainer(node: SyntaxNode) {
   });
 }
 
+type IterateSymbolTableContext = {
+  scopeCache: ScopeCache;
+  referencesCache: ReferencesCache;
+  acceptor: PliValidationAcceptor;
+  statementOrderCache: StatementOrderCache;
+};
+
 const iterateSymbolTable = (
-  scopeCache: ScopeCache,
-  referenceCache: ReferencesCache,
-  acceptor: PliValidationAcceptor,
   node: SyntaxNode,
   parentScope: Scope,
+  context: IterateSymbolTableContext,
 ) => {
   const ref = getReference(node);
   if (ref) {
-    referenceCache.add(ref);
+    context.referencesCache.add(ref);
   }
 
   // We connect the current node to its scope for usage in the linking phase.
-  scopeCache.add(node, parentScope);
+  context.scopeCache.add(node, parentScope);
 
   // Function to recursively iterate over the child nodes to build their symbol table.
   const iterateChild = (scope: Scope) => (child: SyntaxNode) =>
-    iterateSymbolTable(scopeCache, referenceCache, acceptor, child, scope);
+    iterateSymbolTable(child, scope, context);
 
   // This switch statement handles the special case of a procedure statement.
   switch (node.kind) {
@@ -250,7 +273,7 @@ const iterateSymbolTable = (
       if (node.name && node.nameToken) {
         parentScope.symbolTable.addSymbolDeclaration(
           node.name,
-          new QualifiedSyntaxNode(node.nameToken, node),
+          QualifiedSyntaxNode.createExplicit(node.nameToken, node),
         );
       }
       break;
@@ -271,7 +294,21 @@ const iterateSymbolTable = (
       }
       break;
     case SyntaxKind.DeclareStatement:
-      parentScope.symbolTable.addDeclarationStatement(node, acceptor);
+      parentScope.symbolTable.addExplicitDeclarationStatement(
+        node,
+        context.acceptor,
+      );
+      break;
+    case SyntaxKind.AssignmentStatement:
+      parentScope.symbolTable.addImplicitDeclarationStatement(
+        node,
+        context.acceptor,
+      );
+      forEachNode(node, iterateChild(parentScope));
+      break;
+    case SyntaxKind.Statement:
+      context.statementOrderCache.add(node);
+      forEachNode(node, iterateChild(parentScope));
       break;
     default:
       forEachNode(node, iterateChild(parentScope));

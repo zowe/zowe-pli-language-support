@@ -43,6 +43,8 @@ export function getNameToken(node: SyntaxNode): Token | undefined {
       return node.nameToken ?? undefined;
     case SyntaxKind.OrdinalValue:
       return node.nameToken ?? undefined;
+    case SyntaxKind.ReferenceItem:
+      return node.ref?.token ?? undefined;
   }
   return undefined;
 }
