@@ -15,7 +15,7 @@ import { getNameToken } from "../linking/tokens";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { Token } from "../parser/tokens";
 import { TextDocuments } from "./text-documents";
-import { InsertTextFormat } from "vscode-languageserver-types";
+import { InsertTextFormat, MarkupContent } from "vscode-languageserver-types";
 
 export type Offset = number;
 
@@ -206,5 +206,20 @@ export function textEditToLSP(
   return {
     range: rangeToLSP(textDocument, edit.range),
     newText: edit.text,
+  };
+}
+
+export interface HoverResponse {
+  range?: Range;
+  contents: MarkupContent;
+}
+
+export function hoverResponseToLSP(
+  textDocument: TextDocument,
+  response: HoverResponse,
+): lsp.Hover {
+  return {
+    range: response.range && rangeToLSP(textDocument, response.range),
+    contents: response.contents,
   };
 }

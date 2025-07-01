@@ -21,7 +21,8 @@ import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
 import { completionRequest } from "../src/language-server/completion/completion-request";
 import { fail } from "assert";
-import { Position } from "vscode-languageserver";
+import { MarkupContent, Position } from "vscode-languageserver";
+import { hoverRequest } from "../src/language-server/hover-request";
 
 export const DEFAULT_FILE_URI = "file:///main.pli";
 
@@ -290,17 +291,27 @@ export class TestBuilder {
   }
 
   /**
-   * Get the linking requests for a given label
-   * @param label - The label to get the linking requests for
-   * @returns The linking requests
+   * Get the positions of a label
+   * @param label - The label to get the positions for
+   * @returns The positions of the label
+   * @throws If the label is not found
    */
-  private getLinkingRequests(label: string): LinkingRequest[] {
+  private getLabelPositions(label: string): number[] {
     const indices = this.indices[label];
     if (!indices) {
       throw new Error(`Label "${label}" not found`);
     }
 
-    return indices.map((offset) => ({
+    return indices;
+  }
+
+  /**
+   * Get the linking requests for a given label
+   * @param label - The label to get the linking requests for
+   * @returns The linking requests
+   */
+  private getLinkingRequests(label: string): LinkingRequest[] {
+    return this.getLabelPositions(label).map((offset) => ({
       label,
       offset,
       rangeIndex: Object.values(this.files).flatMap(
@@ -384,13 +395,8 @@ export class TestBuilder {
     label: string,
     check: (completionResult: string[]) => void,
   ) {
-    const indices = this.indices[label];
-    if (!indices) {
-      throw new Error(`Label "${label}" not found`);
-    }
-
-    for (let i = 0; i < indices.length; i++) {
-      const offset = indices[i];
+    const indices = this.getLabelPositions(label);
+    for (const offset of indices) {
       const completionResult = completionRequest(
         this.unit,
         this.unit.uri,
@@ -423,6 +429,17 @@ export class TestBuilder {
   private createLabelRangeMessage(label: string): string {
     const [start, _end] = this.getLabelRange(label);
     return this.createPositionMessage(start, this.unit.uri.toString());
+  }
+  expectHover(label: string, content: MarkupContent) {
+    const indices = this.getLabelPositions(label);
+
+    for (const index of indices) {
+      const hoverResult = hoverRequest(this.unit, this.unit.uri, index);
+
+      const message = `Expected hover for label "${label}" (${this.createLabelPositionMessage(label)})`;
+      expect(hoverResult, message).toBeDefined();
+      expect(hoverResult?.contents, message).toEqual(content);
+    }
   }
 
   private createLabelPositionMessage(label: string): string {
