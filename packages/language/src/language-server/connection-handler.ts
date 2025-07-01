@@ -231,6 +231,8 @@ export function startLanguageServer(connection: Connection): void {
     () => {
       // handle changes to the .pliplugin config folder's contents
       PluginConfigurationProviderInstance.reloadConfigurations();
+      // reindex reachable compilation units
+      compilationUnitHandler.reindex(connection);
     },
   );
   connection.listen();

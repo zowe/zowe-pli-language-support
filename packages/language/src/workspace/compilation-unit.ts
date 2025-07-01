@@ -27,7 +27,10 @@ import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
 import { Scope, ScopeCacheGroups } from "../linking/scope.js";
 import { Token } from "../parser/tokens.js";
-import { EditorDocuments } from "../language-server/text-documents.js";
+import {
+  EditorDocuments,
+  TextDocuments,
+} from "../language-server/text-documents.js";
 import { Builtins, BuiltinsUri, BuiltinsUriSchema } from "./builtins.js";
 
 /**
@@ -213,18 +216,7 @@ export class CompilationUnitHandler {
         URI.parse(event.document.uri),
       );
       const document = textDocuments.get(unit.uri) ?? event.document;
-      lifecycle(unit, document.getText());
-      unit.files.forEach((file) => {
-        this.compilationUnits.set(file.toString(), unit);
-      });
-      const allDiagnostics = diagnosticsToLSP(collectDiagnostics(unit));
-      for (const file of unit.files) {
-        const fileDiagnostics = allDiagnostics.get(file.toString());
-        connection.sendDiagnostics({
-          uri: file.toString(),
-          diagnostics: fileDiagnostics ?? [],
-        });
-      }
+      this.process(unit, document.getText(), connection);
       unit.requestCaches.revalidateAll({ connection, unit });
     });
     textDocuments.onDidClose((event) => {
@@ -234,5 +226,44 @@ export class CompilationUnitHandler {
         diagnostics: [],
       });
     });
+  }
+
+  /**
+   * Process a unit by running it through the lifecycle and generating diagnostics to report back.
+   * @param unit The compilation unit
+   * @param text Program content to use for the lifecycle
+   * @param connection The connection to send diagnostics to
+   */
+  private process(
+    unit: CompilationUnit,
+    text: string,
+    connection: Connection,
+  ): void {
+    lifecycle(unit, text);
+    for (const file of unit.files) {
+      this.compilationUnits.set(file.toString(), unit);
+    }
+    const allDiagnostics = diagnosticsToLSP(collectDiagnostics(unit));
+    for (const file of unit.files) {
+      const fileDiagnostics = allDiagnostics.get(file.toString());
+      connection.sendDiagnostics({
+        uri: file.toString(),
+        diagnostics: fileDiagnostics ?? [],
+      });
+    }
+  }
+
+  /**
+   * Reindexes all compilation units that are reachable, and reports fresh diagnostics.
+   * Reachable as in the units w/ associated docs that are currently open in the editor.
+   * @param connection The connection to send diagnostics to
+   */
+  reindex(connection: Connection): void {
+    for (const unit of this.getAllCompilationUnits()) {
+      const textDocument = TextDocuments.get(unit.uri.toString());
+      if (textDocument) {
+        this.process(unit, textDocument.getText(), connection);
+      }
+    }
   }
 }
