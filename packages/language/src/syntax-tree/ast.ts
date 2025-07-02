@@ -9,7 +9,6 @@
  *
  */
 
-import type { PreprocessorParserResult } from "../preprocessor/pli-preprocessor-parser";
 import { Range } from "../language-server/types";
 import { Token } from "../parser/tokens";
 
@@ -115,6 +114,7 @@ export enum SyntaxKind {
   HandleAttribute,
   IfStatement,
   IncludeDirective,
+  IncludeAltDirective,
   IncludeItem,
   IndForAttribute,
   InitAcrossExpression,
@@ -345,6 +345,7 @@ export type SyntaxNode =
   | HandleAttribute
   | IfStatement
   | IncludeDirective
+  | IncludeAltDirective
   | IncludeItem
   | IndForAttribute
   | InitAcrossExpression
@@ -709,6 +710,7 @@ export type Unit =
   // Exclusive to preprocessor
   | TokenStatement
   | IncludeDirective
+  | IncludeAltDirective
   | ActivateStatement
   | DeactivateStatement
   | ProcessDirective
@@ -869,9 +871,29 @@ export interface BFormatItem extends AstNode {
 }
 export interface BinaryExpression extends AstNode {
   kind: SyntaxKind.BinaryExpression;
-  left: Expression;
-  right: Expression;
-  op: string; //'|' | '¬' | '^' | '&' | '<' | '¬<' | '<=' | '=' | '¬=' | '^=' | '<>' | '>=' | '>' | '¬>' | '||' | '!!' | '+' | '-' | '*' | '/' | '**';
+  left: Expression | null;
+  right: Expression | null;
+  op:
+    | "^="
+    | "<>"
+    | "^<"
+    | "<="
+    | ">="
+    | "^>"
+    | "<="
+    | "||"
+    | "**"
+    | "*"
+    | "="
+    | "|"
+    | "^"
+    | "&"
+    | "<"
+    | ">"
+    | "+"
+    | "-"
+    | "/"
+    | null;
 }
 export interface Bound extends AstNode {
   kind: SyntaxKind.Bound;
@@ -1409,12 +1431,34 @@ export function createIfStatement(): IfStatement {
 }
 export interface IncludeDirective extends AstNode {
   kind: SyntaxKind.IncludeDirective;
+  xInclude: boolean;
+  token: Token | null;
   items: IncludeItem[];
 }
 export function createIncludeDirective(): IncludeDirective {
   return {
     kind: SyntaxKind.IncludeDirective,
     container: null,
+    token: null,
+    xInclude: false,
+    items: [],
+  };
+}
+/**
+ * @see https://www.ibm.com/docs/en/pli-for-aix/3.1.0?topic=preprocessors-include-preprocessor
+ */
+export interface IncludeAltDirective extends AstNode {
+  kind: SyntaxKind.IncludeAltDirective;
+  xInclude: boolean;
+  token: Token | null;
+  items: IncludeItem[];
+}
+export function createIncludeAltDirective(): IncludeAltDirective {
+  return {
+    kind: SyntaxKind.IncludeAltDirective,
+    container: null,
+    token: null,
+    xInclude: false,
     items: [],
   };
 }
@@ -1422,8 +1466,7 @@ export interface IncludeItem extends AstNode {
   kind: SyntaxKind.IncludeItem;
   fileName: string | null;
   string: boolean;
-  ddname: boolean;
-  result: PreprocessorParserResult | null;
+  ddname: string | null;
   filePath: string | null;
   token: Token | null;
 }
@@ -1433,8 +1476,7 @@ export function createIncludeItem(): IncludeItem {
     container: null,
     fileName: null,
     string: false,
-    ddname: false,
-    result: null,
+    ddname: null,
     filePath: null,
     token: null,
   };
@@ -1648,6 +1690,9 @@ export interface NoteDirective extends AstNode {
 }
 export interface NullStatement extends AstNode {
   kind: SyntaxKind.NullStatement;
+}
+export function createNullStatement(): NullStatement {
+  return { kind: SyntaxKind.NullStatement, container: null };
 }
 export interface NumberLiteral extends AstNode {
   kind: SyntaxKind.NumberLiteral;
@@ -2077,14 +2122,12 @@ export interface StopStatement extends AstNode {
 export interface StringLiteral extends AstNode {
   kind: SyntaxKind.StringLiteral;
   value: string | null;
-  tokens: Token[];
 }
 export function createStringLiteral(): StringLiteral {
   return {
     kind: SyntaxKind.StringLiteral,
     container: null,
     value: null,
-    tokens: [],
   };
 }
 export interface SubStructure extends AstNode {
@@ -2099,7 +2142,7 @@ export interface TypeAttribute extends AstNode {
 }
 export interface UnaryExpression extends AstNode {
   kind: SyntaxKind.UnaryExpression;
-  op: "+" | "-" | "¬" | "^" | null;
+  op: "+" | "-" | "^" | null;
   expr: Expression | null;
 }
 export interface ValueAttribute extends AstNode {

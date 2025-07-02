@@ -1177,10 +1177,10 @@ function addToMapOfArrays<T>(
   initial: T[],
 ): void {
   if (map[key] === undefined) {
-    map[key] = [value];
+    // map[key] = [value];
     // TODO: Figure out whether this is required
     // Currently, we do not need to keep the unoptimized patterns in the map
-    // map[key] = [...initial, value];
+    map[key] = [...initial, value];
   } else {
     map[key].push(value);
   }

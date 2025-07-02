@@ -110,7 +110,7 @@ export function lexerErrorsToDiagnostics(
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   for (const error of lexerErrors) {
-    if (!isNaN(error.range.start)) {
+    if (error.uri && error.range && !isNaN(error.range.start)) {
       diagnostics.push({
         uri: error.uri.toString(),
         severity: Severity.E,

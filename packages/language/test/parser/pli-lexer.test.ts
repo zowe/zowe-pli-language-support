@@ -33,7 +33,7 @@ describe("PL/1 Lexer", () => {
       if (errors.length > 0) {
         throw new Error(
           errors
-            .map((e) => `${e.range.start}:${e.range.end}: ${e.message}`)
+            .map((e) => `${e.range?.start}:${e.range?.end}: ${e.message}`)
             .join("\n"),
         );
       }
@@ -54,7 +54,7 @@ describe("PL/1 Lexer", () => {
 
   test("Preprocessor garbage", () => {
     expect(tokenizeWithErrors(" %garbage")).toStrictEqual([
-      `Expected token type '=', got '' instead.`,
+      `Unexpected token 'garbage'.`,
     ]);
   });
 
@@ -82,7 +82,7 @@ describe("PL/1 Lexer", () => {
       tokenize(`
             %dcl A char;
             %A = 'B';
-            dcl A%C fixed bin(31);
+            dcl A%;C fixed bin(31);
         `),
     ).toStrictEqual([
       "dcl:DECLARE",
@@ -101,9 +101,9 @@ describe("PL/1 Lexer", () => {
       tokenizeWithErrors(`
             %decl A char;
             %A = 'B';
-            dcl A%C fixed bin(31);
+            dcl A%;C fixed bin(31);
         `),
-    ).toStrictEqual(["Expected token type '=', got 'ID' instead."]);
+    ).toStrictEqual(["Unexpected token 'decl'."]);
   });
 
   test("Tokenize multiple errors in declaration with preprocessor", () => {
@@ -112,10 +112,7 @@ describe("PL/1 Lexer", () => {
             %decl A char;
             %%A = 'B';
         `),
-    ).toStrictEqual([
-      "Expected token type '=', got 'ID' instead.",
-      "Unexpected token '%'.",
-    ]);
+    ).toStrictEqual(["Unexpected token 'decl'.", "Unexpected token '%'."]);
   });
 
   test("Replace with empty string", () => {
@@ -123,7 +120,7 @@ describe("PL/1 Lexer", () => {
       tokenize(`
             %dcl A char;
             %A = '';
-            dcl A%C fixed bin(31);
+            dcl A%;C fixed bin(31);
         `),
     ).toStrictEqual([
       "dcl:DECLARE",
@@ -323,7 +320,39 @@ describe("PL/1 Lexer", () => {
     ]);
   });
 
-  test("Simple IF-THEN-ELSE", () => {
+  test("Simple IF-THEN-ELSE #1", () => {
+    expect(
+      tokenize(`
+            %IF 1 %THEN
+              dcl X fixed;
+            %ELSE
+              dcl Y fixed;
+        `),
+    ).toStrictEqual([
+      "dcl:DECLARE",
+      "X:X", // Expect to generate the X declaration
+      "fixed:FIXED",
+      ";:;",
+    ]);
+  });
+
+  test("Simple IF-THEN-ELSE #2", () => {
+    expect(
+      tokenize(`
+            %IF 0 %THEN
+              dcl X fixed;
+            %ELSE
+              dcl Y fixed;
+        `),
+    ).toStrictEqual([
+      "dcl:DECLARE",
+      "Y:ID", // Expect to generate the Y declaration
+      "fixed:FIXED",
+      ";:;",
+    ]);
+  });
+
+  test("Simple IF-THEN-ELSE with inline replacement", () => {
     expect(
       tokenize(`
             %IF 1 %THEN
@@ -377,7 +406,7 @@ describe("PL/1 Lexer", () => {
             %X = 1;
             %DO
                 %WHILE(X <= 3);
-                DCL Variable%X FIXED;
+                DCL Variable%;X FIXED;
                 %X = X + 1;
             %END;
         `),
@@ -405,7 +434,7 @@ describe("PL/1 Lexer", () => {
             %DO
                 %WHILE(X > 0)
                 %UNTIL(X > 3);
-                DCL Variable%X FIXED;
+                DCL Variable%;X FIXED;
                 %X = X + 1;
             %END;
         `),
@@ -432,7 +461,7 @@ describe("PL/1 Lexer", () => {
             %X = 1;
             %DO
                 %UNTIL(X > 3);
-                DCL Variable%X FIXED;
+                DCL Variable%;X FIXED;
                 %X = X + 1;
             %END;
         `),
@@ -460,7 +489,7 @@ describe("PL/1 Lexer", () => {
             %DO
                 %UNTIL(X > 3)
                 %WHILE(X > 0);
-                DCL Variable%X FIXED;
+                DCL Variable%;X FIXED;
                 %X = X + 1;
             %END;
         `),
@@ -533,7 +562,7 @@ describe("PL/1 Lexer", () => {
             %declare A fixed;
             %A = 3;
             %DO %FOREVER;
-                dcl X%A fixed;
+                dcl X%;A fixed;
                 %A = A - 1;
                 %IF A = 0 %THEN %LEAVE;
             %END;
@@ -563,7 +592,7 @@ describe("PL/1 Lexer", () => {
                 %A = A - 1;
                 %IF A = 0 %THEN %LEAVE;
                 %ELSE %ITERATE;
-                dcl X%A fixed;
+                dcl X%;A fixed;
             %END;
         `),
     ).toStrictEqual([]);
@@ -577,7 +606,7 @@ describe("PL/1 Lexer", () => {
             %myLoop: DO;
                 %A = A - 1;
                 %IF A <> 0 %THEN %GO TO myLoop;
-                DCL X%A FIXED;
+                DCL X%;A FIXED;
             %END;
         `),
     ).toStrictEqual(["DCL:DECLARE", "X0:ID", "FIXED:FIXED", ";:;"]);
@@ -591,7 +620,7 @@ describe("PL/1 Lexer", () => {
             %myLoop: DO;
                 %A = A - 1;
                 %IF A <> 0 %THEN %GOTO myLoop;
-                DCL X%A FIXED;
+                DCL X%;A FIXED;
             %END;
         `),
     ).toStrictEqual(["DCL:DECLARE", "X0:ID", "FIXED:FIXED", ";:;"]);
@@ -603,7 +632,7 @@ describe("PL/1 Lexer", () => {
             %declare A character, B fixed;
             %A = 'Hello';
             %B = 2;
-            A%B = 123;
+            A%;B = 123;
         `),
     ).toStrictEqual(["Hello2:ID", "=:=", "123:NUMBER", ";:;"]);
   });
@@ -614,7 +643,7 @@ describe("PL/1 Lexer", () => {
             %declare (A, B) character;
             %A = 'Hello';
             %B = 'World';
-            A%B = 123;
+            A%;B = 123;
         `),
     ).toStrictEqual(["HelloWorld:ID", "=:=", "123:NUMBER", ";:;"]);
   });

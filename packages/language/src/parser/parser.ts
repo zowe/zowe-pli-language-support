@@ -16,7 +16,7 @@ import {
 import * as tokens from "./tokens";
 import * as ast from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { ParserMethod } from "chevrotain";
+import { ParserMethod, tokenMatcher } from "chevrotain";
 
 export class PliParser extends AbstractParser {
   constructor() {
@@ -905,9 +905,7 @@ export class PliParser extends AbstractParser {
     this.IfStatement,
     this.IterateStatement,
     this.LeaveStatement,
-    this.LineDirective, // TODO integrate into preprocessor
     this.LocateStatement,
-    this.NoteDirective, // TODO integrate into preprocessor
     this.NullStatement,
     this.OnStatement,
     this.OpenStatement,
@@ -4579,44 +4577,7 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.LeaveStatement>();
   });
-  private createLineDirective(): ast.LineDirective {
-    return {
-      kind: ast.SyntaxKind.LineDirective,
-      container: null,
-      line: null,
-      file: null,
-    };
-  }
 
-  LineDirective = this.RULE("LineDirective", () => {
-    let element = this.push(this.createLineDirective());
-
-    this.CONSUME_ASSIGN1(tokens.PercentLINE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LineDirective_PercentLINE);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LineDirective_OpenParen);
-    });
-    this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LineDirective_line_NUMBER);
-      element.line = token.image;
-    });
-    this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LineDirective_Comma);
-    });
-    this.CONSUME_ASSIGN1(tokens.STRING_TERM, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LineDirective_FileString);
-      element.file = token.image;
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LineDirective_CloseParen);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LineDirective_Semicolon);
-    });
-
-    return this.pop<ast.LineDirective>();
-  });
   private createLocateStatement(): ast.LocateStatement {
     return {
       kind: ast.SyntaxKind.LocateStatement,
@@ -4689,48 +4650,6 @@ export class PliParser extends AbstractParser {
     return this.pop<ast.LocateStatementOption>();
   });
 
-  private createNoteDirective(): ast.NoteDirective {
-    return {
-      kind: ast.SyntaxKind.NoteDirective,
-      container: null,
-      message: null,
-      code: null,
-    };
-  }
-
-  NoteDirective = this.RULE("NoteDirective", () => {
-    let element = this.push(this.createNoteDirective());
-
-    this.CONSUME_ASSIGN1(tokens.PercentNOTE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NoteDirective_PercentNOTE);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NoteDirective_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.message = result;
-      },
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.NoteDirective_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.Expression, {
-        assign: (result) => {
-          element.code = result;
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NoteDirective_CloseParen);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NoteDirective_Semicolon);
-    });
-
-    return this.pop<ast.NoteDirective>();
-  });
   private createNullStatement(): ast.NullStatement {
     return { kind: ast.SyntaxKind.NullStatement, container: null };
   }
@@ -8269,19 +8188,49 @@ export class PliParser extends AbstractParser {
 
   ProcedureCallArgs = this.RULE("ProcedureCallArgs", () => {
     const element = this.push(this.createProcedureCallArgs());
+    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
+      this.tokenPayload(
+        token,
+        element,
+        CstNodeKind.ProcedureCallArgs_OpenParen,
+      );
+    });
     this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.ProcedureCallArgs_OpenParen,
-        );
-      });
-      this.OPTION2(() => {
-        this.OR1([
+      this.OR1([
+        {
+          ALT: () => {
+            this.SUBRULE_ASSIGN1(this.Expression, {
+              assign: (result) => {
+                element.list.push(result);
+              },
+            });
+          },
+        },
+        {
+          ALT: () => {
+            this.CONSUME_ASSIGN1(tokens.Star, (token) => {
+              this.tokenPayload(
+                token,
+                element,
+                CstNodeKind.ProcedureCallArgs_Star0,
+              );
+              element.list.push(token.image as "*");
+            });
+          },
+        },
+      ]);
+      this.MANY1(() => {
+        this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
+          this.tokenPayload(
+            token,
+            element,
+            CstNodeKind.ProcedureCallArgs_Comma,
+          );
+        });
+        this.OR2([
           {
             ALT: () => {
-              this.SUBRULE_ASSIGN1(this.Expression, {
+              this.SUBRULE_ASSIGN2(this.Expression, {
                 assign: (result) => {
                   element.list.push(result);
                 },
@@ -8290,57 +8239,25 @@ export class PliParser extends AbstractParser {
           },
           {
             ALT: () => {
-              this.CONSUME_ASSIGN1(tokens.Star, (token) => {
+              this.CONSUME_ASSIGN2(tokens.Star, (token) => {
                 this.tokenPayload(
                   token,
                   element,
-                  CstNodeKind.ProcedureCallArgs_Star0,
+                  CstNodeKind.ProcedureCallArgs_Star1,
                 );
                 element.list.push(token.image as "*");
               });
             },
           },
         ]);
-        this.MANY1(() => {
-          this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.ProcedureCallArgs_Comma,
-            );
-          });
-          this.OR2([
-            {
-              ALT: () => {
-                this.SUBRULE_ASSIGN2(this.Expression, {
-                  assign: (result) => {
-                    element.list.push(result);
-                  },
-                });
-              },
-            },
-            {
-              ALT: () => {
-                this.CONSUME_ASSIGN2(tokens.Star, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.ProcedureCallArgs_Star1,
-                  );
-                  element.list.push(token.image as "*");
-                });
-              },
-            },
-          ]);
-        });
       });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.ProcedureCallArgs_CloseParen,
-        );
-      });
+    });
+    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
+      this.tokenPayload(
+        token,
+        element,
+        CstNodeKind.ProcedureCallArgs_CloseParen,
+      );
     });
     return this.pop<ast.ProcedureCallArgs>();
   });
@@ -8468,3 +8385,62 @@ export class PliParser extends AbstractParser {
 }
 
 export const PliParserInstance = new PliParser();
+
+const expressionTokenTypes = [
+  tokens.ID,
+  tokens.BinaryOperator,
+  tokens.UnaryOperator,
+  tokens.AssignmentOperator,
+  tokens.STRING_TERM,
+  tokens.NUMBER,
+];
+
+export function performAssignmentLookahead(
+  lookahead: (la: number) => tokens.Token | undefined,
+): boolean {
+  let i = 1;
+  let token = lookahead(i++);
+  // First token of an assigment needs to be an ID
+  if (!token || !tokenMatcher(token, tokens.ID)) {
+    return false;
+  }
+  token = lookahead(i++);
+  // We have found a match immediately with the assignment operator
+  if (token && tokenMatcher(token, tokens.AssignmentOperator)) {
+    return true;
+  }
+  // Otherwise expect an opening parenthesis
+  if (!token || !tokenMatcher(token, tokens.OpenParen)) {
+    return false;
+  }
+  // The compiler will not use more than 160 tokens to perform the lookahead
+  const max = 160;
+  let parenthesis = 1;
+  while (i < max) {
+    const token = lookahead(i++);
+    if (!token) {
+      return false;
+    }
+    if (parenthesis === 0) {
+      // If we are outside of the parentheses, we always try to match the assignment operator
+      return tokenMatcher(token, tokens.AssignmentOperator);
+    }
+    if (tokenMatcher(token, tokens.OpenParen)) {
+      parenthesis++;
+    } else if (tokenMatcher(token, tokens.CloseParen)) {
+      parenthesis--;
+    } else if (tokenMatcher(token, tokens.Semicolon)) {
+      // Semicolon indicates the end of the statement
+      return false;
+    } else {
+      for (const tokenType of expressionTokenTypes) {
+        if (!tokenMatcher(token, tokenType)) {
+          return false;
+        }
+      }
+      // Continue with the next token, the current token is a valid expression token
+    }
+  }
+  // If we reach this point, the lookahead was not successful
+  return false;
+}

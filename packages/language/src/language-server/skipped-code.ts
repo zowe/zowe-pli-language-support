@@ -15,6 +15,7 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { isEqual } from "lodash-es";
 import { SyntaxKind } from "../syntax-tree/ast";
 import { TextDocuments } from "./text-documents";
+import { IfEvaluationResult } from "../preprocessor/instruction-interpreter";
 
 export interface SkippedCodeNotificationParams {
   uri: string;
@@ -78,19 +79,25 @@ export function skippedCodeRanges(compilationUnit: CompilationUnit): Range[] {
     ) {
       const element = token.payload.element;
       const evaluationResult =
-        compilationUnit.preprocessorEvaluationResults.get(element);
-      if (evaluationResult !== undefined) {
+        compilationUnit.preprocessorEvaluationResults.ifStatements.get(element);
+      if (
+        // If the code block hasn't been evaluated, it likely was included in another un-evaluated block
+        // This will automatically skip the block already, so we don't have to do anything
+        evaluationResult !== undefined &&
+        // If both branches have been evaluated (maybe as part of a loop), do nothing
+        evaluationResult !== IfEvaluationResult.Both
+      ) {
         const { elseRange, unitRange } = element;
-        const startOffset = evaluationResult
-          ? (elseRange?.start ?? 0)
-          : (unitRange?.start ?? 0);
-        const endOffset = evaluationResult
-          ? (elseRange?.end ?? 0)
-          : (unitRange?.end ?? 0);
-        result.push({
-          start: textDocument.positionAt(startOffset),
-          end: textDocument.positionAt(endOffset),
-        });
+        // If the "else" branch has been evaluated, it means we need to skip the "then" branch
+        // If the "then" branch has been evaluated, it means we need to skip the "else" branch
+        const range =
+          evaluationResult === IfEvaluationResult.False ? unitRange : elseRange;
+        if (range) {
+          result.push({
+            start: textDocument.positionAt(range.start),
+            end: textDocument.positionAt(range.end),
+          });
+        }
       }
     }
   }

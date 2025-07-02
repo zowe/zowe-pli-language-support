@@ -19,24 +19,22 @@ import {
 } from "./pli-preprocessor-parser-state";
 import { PreprocessorError } from "./pli-preprocessor-error";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
-import { URI, UriUtils } from "../utils/uri";
-import { FileSystemProviderInstance } from "../workspace/file-system-provider";
+import { URI } from "../utils/uri";
 import * as ast from "../syntax-tree/ast";
 import {
   constructBinaryExpression,
   IntermediateBinaryExpression,
 } from "../parser/abstract-parser";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { LexingError } from "./pli-lexer";
 import { Token } from "../parser/tokens";
-import { TextDocuments } from "../language-server/text-documents";
-import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import { performAssignmentLookahead } from "../parser/parser";
+import { tokenMatcher } from "chevrotain";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
   errors: LexingError[];
-  perFileTokens: Record<string, Token[]>;
+  tokens: Token[];
 };
 
 export class PliPreprocessorParser {
@@ -50,23 +48,24 @@ export class PliPreprocessorParser {
     return new PliPreprocessorParserState(this.lexer, text, uri);
   }
 
-  start(state: PreprocessorParserState): PreprocessorParserResult {
+  parse(state: PreprocessorParserState): PreprocessorParserResult {
     const statements: ast.Statement[] = [];
     const errors: LexingError[] = [];
     while (!state.eof) {
       try {
-        if (
-          state.isInProcedure() ||
-          state.canConsume(PreprocessorTokens.Percentage)
-        ) {
+        if (state.canConsume(PreprocessorTokens.Percentage)) {
+          // Parse a preprocessor statement
           const statement = this.statement(state);
-          if (statement.value?.kind === ast.SyntaxKind.IncludeDirective) {
-            errors.push(
-              ...statement.value.items.flatMap((e) => e.result?.errors ?? []),
-            );
-          }
+          statements.push(statement);
+        } else if (state.canConsume(PreprocessorTokens.IncludeAlt)) {
+          // Parse the "include-alt" statement
+          // This is the only preprocessor statement that does not start with a percentage token
+          const includeAlt = this.includeAltStatement(state);
+          const statement = ast.createStatement();
+          statement.value = includeAlt;
           statements.push(statement);
         } else {
+          // Otherwise construct a token statement
           statements.push(this.consumeTokenStatement(state));
         }
       } catch (error) {
@@ -77,39 +76,28 @@ export class PliPreprocessorParser {
         }
       }
     }
-    state.perFileTokens[state.uri.toString()] = state.tokens;
     return {
       statements,
       errors,
-      perFileTokens: state.perFileTokens,
+      tokens: state.tokens,
     };
   }
 
   private consumeTokenStatement(state: PreprocessorParserState): ast.Statement {
     const tokenStatement = ast.createTokenStatement();
     const tokens: Token[] = [];
-    const word = /\w$/u;
     // We can assume that the first token is always a non-% token
     // Otherwise we wouldn't be able to get here in the first place
     let currentToken: Token | undefined = state.current;
     let nextToken: Token | undefined = state.tokens[state.index + 1];
     while (currentToken) {
-      state.index++;
-      // Usually we break on % tokens
-      // However, if the % token immediately follows a word character,
-      // it indicates a replacement, so we continue parsing the statement
       if (
-        nextToken?.tokenTypeIdx === PreprocessorTokens.Percentage.tokenTypeIdx
+        tokenMatcher(currentToken, PreprocessorTokens.Percentage) ||
+        tokenMatcher(currentToken, PreprocessorTokens.IncludeAlt)
       ) {
-        if (
-          currentToken.endOffset + 1 !== nextToken.startOffset ||
-          !word.test(currentToken.image)
-        ) {
-          // If the next token is a standalone % token, we break but add the current token to the list
-          tokens.push(currentToken);
-          break;
-        }
+        break;
       }
+      state.index++;
       tokens.push(currentToken);
       currentToken = nextToken;
       nextToken = state.tokens[state.index + 1];
@@ -163,92 +151,97 @@ export class PliPreprocessorParser {
       statement.labels.push(label);
     }
     let unit: ast.Unit | undefined = undefined;
-    switch (state.current?.tokenTypeIdx) {
-      case PreprocessorTokens.Activate.tokenTypeIdx:
-        unit = this.activateStatement(state);
-        break;
-      case PreprocessorTokens.Deactivate.tokenTypeIdx:
-        unit = this.deactivateStatement(state);
-        break;
-      case PreprocessorTokens.Declare.tokenTypeIdx:
-        unit = this.declareStatement(state);
-        break;
-      case PreprocessorTokens.Page.tokenTypeIdx:
-        unit = this.pageDirective(state);
-        break;
-      case PreprocessorTokens.Pop.tokenTypeIdx:
-        unit = this.popDirective(state);
-        break;
-      case PreprocessorTokens.Push.tokenTypeIdx:
-        unit = this.pushDirective(state);
-        break;
-      case PreprocessorTokens.Print.tokenTypeIdx:
-        unit = this.printDirective(state);
-        break;
-      case PreprocessorTokens.NoPrint.tokenTypeIdx:
-        unit = this.noprintDirective(state);
-        break;
-      case PreprocessorTokens.Skip.tokenTypeIdx:
-        unit = this.skipStatement(state);
-        break;
-      case PreprocessorTokens.XInclude.tokenTypeIdx:
-      case PreprocessorTokens.Include.tokenTypeIdx:
-        unit = this.includeStatement(state);
-        break;
-      case PreprocessorTokens.Id.tokenTypeIdx:
-        unit = this.assignmentStatement(state);
-        break;
-      case PreprocessorTokens.If.tokenTypeIdx:
-        unit = this.ifStatement(state);
-        break;
-      case PreprocessorTokens.Do.tokenTypeIdx:
-        unit = this.doStatement(state);
-        break;
-      case PreprocessorTokens.Goto.tokenTypeIdx:
-      case PreprocessorTokens.Go.tokenTypeIdx:
-        unit = this.goToStatement(state);
-        break;
-      case PreprocessorTokens.Leave.tokenTypeIdx:
-        unit = this.leaveStatement(state);
-        break;
-      case PreprocessorTokens.Iterate.tokenTypeIdx:
-        unit = this.iterateStatement(state);
-        break;
-      default:
-        if (state.isOnlyInStatement()) {
-          if (state.current?.tokenType === PreprocessorTokens.Procedure) {
-            unit = this.procedureStatement(state);
+    if (performAssignmentLookahead((la) => state.lookahead(la))) {
+      unit = this.assignmentStatement(state);
+    } else {
+      switch (state.current?.tokenTypeIdx) {
+        case PreprocessorTokens.Semicolon.tokenTypeIdx:
+          unit = this.nullStatement(state);
+          break;
+        case PreprocessorTokens.Activate.tokenTypeIdx:
+          unit = this.activateStatement(state);
+          break;
+        case PreprocessorTokens.Deactivate.tokenTypeIdx:
+          unit = this.deactivateStatement(state);
+          break;
+        case PreprocessorTokens.Declare.tokenTypeIdx:
+          unit = this.declareStatement(state);
+          break;
+        case PreprocessorTokens.Page.tokenTypeIdx:
+          unit = this.pageDirective(state);
+          break;
+        case PreprocessorTokens.Pop.tokenTypeIdx:
+          unit = this.popDirective(state);
+          break;
+        case PreprocessorTokens.Push.tokenTypeIdx:
+          unit = this.pushDirective(state);
+          break;
+        case PreprocessorTokens.Print.tokenTypeIdx:
+          unit = this.printDirective(state);
+          break;
+        case PreprocessorTokens.NoPrint.tokenTypeIdx:
+          unit = this.noprintDirective(state);
+          break;
+        case PreprocessorTokens.Skip.tokenTypeIdx:
+          unit = this.skipStatement(state);
+          break;
+        case PreprocessorTokens.XInclude.tokenTypeIdx:
+        case PreprocessorTokens.Include.tokenTypeIdx:
+          unit = this.includeStatement(state);
+          break;
+        case PreprocessorTokens.If.tokenTypeIdx:
+          unit = this.ifStatement(state);
+          break;
+        case PreprocessorTokens.Do.tokenTypeIdx:
+          unit = this.doStatement(state);
+          break;
+        case PreprocessorTokens.Goto.tokenTypeIdx:
+        case PreprocessorTokens.Go.tokenTypeIdx:
+          unit = this.goToStatement(state);
+          break;
+        case PreprocessorTokens.Leave.tokenTypeIdx:
+          unit = this.leaveStatement(state);
+          break;
+        case PreprocessorTokens.Iterate.tokenTypeIdx:
+          unit = this.iterateStatement(state);
+          break;
+        default:
+          if (state.isOnlyInStatement()) {
+            if (state.current?.tokenType === PreprocessorTokens.Procedure) {
+              unit = this.procedureStatement(state);
+            }
+          } else {
+            //state.isInProcedure()
+            const returnStatement = ast.createReturnStatement();
+            if (
+              state.tryConsume(
+                returnStatement,
+                CstNodeKind.ReturnStatement_RETURN,
+                PreprocessorTokens.Return,
+              )
+            ) {
+              state.consume(
+                returnStatement,
+                CstNodeKind.ReturnStatement_OpenParen,
+                PreprocessorTokens.LParen,
+              );
+              returnStatement.expression = this.expression(state);
+              unit = returnStatement;
+              state.consume(
+                returnStatement,
+                CstNodeKind.ReturnStatement_CloseParen,
+                PreprocessorTokens.RParen,
+              );
+              state.consume(
+                returnStatement,
+                CstNodeKind.ReturnStatement_Semicolon,
+                PreprocessorTokens.Semicolon,
+              );
+            }
           }
-        } else {
-          //state.isInProcedure()
-          const returnStatement = ast.createReturnStatement();
-          if (
-            state.tryConsume(
-              returnStatement,
-              CstNodeKind.ReturnStatement_RETURN,
-              PreprocessorTokens.Return,
-            )
-          ) {
-            state.consume(
-              returnStatement,
-              CstNodeKind.ReturnStatement_OpenParen,
-              PreprocessorTokens.LParen,
-            );
-            returnStatement.expression = this.expression(state);
-            unit = returnStatement;
-            state.consume(
-              returnStatement,
-              CstNodeKind.ReturnStatement_CloseParen,
-              PreprocessorTokens.RParen,
-            );
-            state.consume(
-              returnStatement,
-              CstNodeKind.ReturnStatement_Semicolon,
-              PreprocessorTokens.Semicolon,
-            );
-          }
-        }
+      }
     }
+
     if (unit === undefined) {
       throw new PreprocessorError(
         "Unexpected token '" + state.current?.image + "'.",
@@ -455,20 +448,21 @@ export class PliPreprocessorParser {
 
   includeStatement(state: PreprocessorParserState): ast.IncludeDirective {
     const directive = ast.createIncludeDirective();
-    let xinclude = false;
-    if (
-      !state.tryConsume(
+    if (state.canConsume(PreprocessorTokens.Include)) {
+      const token = state.consume(
         directive,
         CstNodeKind.IncludeDirective_INCLUDE,
         PreprocessorTokens.Include,
-      )
-    ) {
-      state.consume(
+      );
+      directive.token = token;
+    } else {
+      const token = state.consume(
         directive,
         CstNodeKind.IncludeDirective_INCLUDE,
         PreprocessorTokens.XInclude,
       );
-      xinclude = true;
+      directive.token = token;
+      directive.xInclude = true;
     }
     while (true) {
       const item = ast.createIncludeItem();
@@ -510,59 +504,33 @@ export class PliPreprocessorParser {
       CstNodeKind.IncludeDirective_Semicolon,
       PreprocessorTokens.Semicolon,
     );
-    // TODO: cache included files
-    for (const item of directive.items) {
-      if (!item.fileName) {
-        continue;
-      }
+    return directive;
+  }
 
-      // TODO @montymxb Jun 3rd, 2025: Use SYSLIB from compiler opts to add to the lookup path for includes
-
-      // Resolve the URI of the include file
-      let uri = resolveIncludeFileUri(item, state);
-
-      /**
-       * Helper function to throw a preprocessor error when an include file cannot be resolved.
-       */
-      const failToResolveInclude = () => {
-        throw new PreprocessorError(
-          `Cannot resolve include file '${item.fileName}' at '${state.uri.toString()}'.`,
-          item.token! || state.current || state.last!,
-          state.uri,
-        );
-      };
-
-      if (!uri) {
-        // fail to resolve & skip to nxt
-        failToResolveInclude();
-        continue;
-      }
-
-      if (xinclude && state.hasInclude(uri)) {
-        continue;
-      }
-
-      // attempt to resolve this file
-      try {
-        const content =
-          TextDocuments.get(uri)?.getText() ??
-          FileSystemProviderInstance.readFileSync(uri) ??
-          "";
-        state.addInclude(uri);
-        const subState = this.initializeState(content, uri);
-        const subProgram = this.start(subState);
-        // Ensure that we store the tokens of included files in our state
-        // That way we can use them later for LSP services!
-        for (const [uri, tokens] of Object.entries(subState.perFileTokens)) {
-          state.perFileTokens[uri] = tokens;
-        }
-        item.result = subProgram;
-        item.filePath = uri.toString();
-      } catch {
-        failToResolveInclude();
-      }
-    }
-
+  includeAltStatement(state: PreprocessorParserState): ast.IncludeAltDirective {
+    // See https://www.ibm.com/docs/en/pli-for-aix/3.1.0?topic=preprocessors-include-preprocessor
+    const directive = ast.createIncludeAltDirective();
+    state.consume(
+      directive,
+      CstNodeKind.IncludeAltDirective_INCLUDE_ALT,
+      PreprocessorTokens.IncludeAlt,
+    );
+    const item = ast.createIncludeItem();
+    const token = state.consume(
+      item,
+      CstNodeKind.IncludeItem_FileID0,
+      PreprocessorTokens.Id,
+    );
+    const fileName = token.image;
+    item.fileName = fileName;
+    item.token = token;
+    directive.items.push(item);
+    // Spec says the semicolon is optional
+    state.tryConsume(
+      directive,
+      CstNodeKind.IncludeAltDirective_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
     return directive;
   }
 
@@ -759,6 +727,16 @@ export class PliPreprocessorParser {
     return statements;
   }
 
+  nullStatement(state: PreprocessorParserState): ast.NullStatement {
+    const statement = ast.createNullStatement();
+    state.consume(
+      statement,
+      CstNodeKind.NullStatement_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return statement;
+  }
+
   ifStatement(state: PreprocessorParserState): ast.IfStatement {
     const statement = ast.createIfStatement();
     state.consume(statement, CstNodeKind.IfStatement_IF, PreprocessorTokens.If);
@@ -918,7 +896,7 @@ export class PliPreprocessorParser {
       CstNodeKind.SkipDirective_Semicolon,
       PreprocessorTokens.Semicolon,
     );
-    state.advanceLines(lineCount + 1);
+    state.advanceLines(lineCount);
     return statement;
   }
 
@@ -1192,40 +1170,40 @@ export class PliPreprocessorParser {
     let lastIndex = 0;
     do {
       lastIndex = state.index;
-      switch (state.current?.tokenType) {
-        case PreprocessorTokens.Builtin:
+      switch (state.current?.tokenTypeIdx) {
+        case PreprocessorTokens.Builtin.tokenTypeIdx:
           attributes.push("BUILTIN");
           state.index++;
           break;
-        case PreprocessorTokens.Entry:
+        case PreprocessorTokens.Entry.tokenTypeIdx:
           attributes.push("ENTRY");
           state.index++;
           break;
-        case PreprocessorTokens.Internal:
+        case PreprocessorTokens.Internal.tokenTypeIdx:
           attributes.push("INTERNAL");
           state.index++;
           break;
-        case PreprocessorTokens.External:
+        case PreprocessorTokens.External.tokenTypeIdx:
           attributes.push("EXTERNAL");
           state.index++;
           break;
-        case PreprocessorTokens.Character:
+        case PreprocessorTokens.Character.tokenTypeIdx:
           attributes.push("CHARACTER");
           state.index++;
           break;
-        case PreprocessorTokens.Fixed:
+        case PreprocessorTokens.Fixed.tokenTypeIdx:
           attributes.push("FIXED");
           state.index++;
           break;
-        case PreprocessorTokens.Scan:
+        case PreprocessorTokens.Scan.tokenTypeIdx:
           attributes.push("SCAN");
           state.index++;
           break;
-        case PreprocessorTokens.Rescan:
+        case PreprocessorTokens.Rescan.tokenTypeIdx:
           attributes.push("RESCAN");
           state.index++;
           break;
-        case PreprocessorTokens.Noscan:
+        case PreprocessorTokens.Noscan.tokenTypeIdx:
           attributes.push("NOSCAN");
           state.index++;
           break;
@@ -1319,109 +1297,10 @@ export class PliPreprocessorParser {
     );
     const content = this.unpackCharacterValue(stringToken.image);
     stringLiteral.value = content;
-    stringLiteral.tokens = this.tokenizePurePliCode(content);
     return literal;
-  }
-
-  private tokenizePurePliCode(content: string) {
-    const result: Token[] = [];
-    const lexerState = new PliPreprocessorLexerState(
-      content,
-      undefined, // URI is unknown, use undefined
-    );
-    while (!lexerState.eof()) {
-      const tokens = this.lexer.tokenizePliTokensUntilSemicolon(lexerState);
-      result.push(...tokens);
-    }
-    return result;
   }
 
   private unpackCharacterValue(literal: string): string {
     return literal.substring(1, literal.length - 1);
-  }
-}
-
-/**
- * Attempts to resolve the URI of an include file factoring in process group libs (previously also relative & absolute paths)
- *
- * @param item Include item to resolve a URI for
- * @param state Current PP state, used to resolve relative paths, program configs, and report errors
- * @returns URI of the included file if found, otherwise undefined
- */
-function resolveIncludeFileUri(
-  item: ast.IncludeItem,
-  state: PreprocessorParserState,
-): URI | undefined {
-  if (!item.fileName) {
-    throw new Error("Include item does not have a file specified.");
-  }
-
-  // check to validate copybook extension, if a program config & process group is available
-  const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
-    state.uri.toString(),
-  );
-  const pgroup = programConfig
-    ? PluginConfigurationProviderInstance.getProcessGroupConfig(
-        programConfig.pgroup,
-      )
-    : undefined;
-  const ext = UriUtils.extname(URI.parse(item.fileName));
-  if (
-    ext !== "" &&
-    programConfig &&
-    pgroup &&
-    (!pgroup["include-extensions"]?.includes(ext) ||
-      !pgroup["include-extensions"])
-  ) {
-    const msg = pgroup["include-extensions"]?.length
-      ? `expected one of: ${pgroup["include-extensions"]?.join(", ")}`
-      : `expected no extension`;
-    throw new PreprocessorError(
-      `Unsupported copybook extension for included file, '${item.fileName}', ${msg}`,
-      item.token! || state.current || state.last!,
-      state.uri,
-    );
-  }
-
-  // TODO @montymxb Jun 24th, 2025: Disabled relative & absolute pathing per request, however mainframe tests do show this works w/ the right JCL config
-  // temporarily retaining here until we know we won't need this going forward, or we decide to re-enable it based on some configuration setting
-  /*
-  const absPathRegex = /^\/|[A-Z]:|~/i;
-  const relativePathRegex = /^\.\.\/|^\.\//;
-  if (absPathRegex.test(item.file)) {
-    // absolute path, use as is
-    return URI.parse(item.file);
-  } else if (relativePathRegex.test(item.file)) {
-    // relative path, combine with currentDir
-    return UriUtils.joinPath(currentDir, item.file);
-  } else ....
-  */
-
-  if (programConfig && pgroup) {
-    // lib file as either a string or a member from a known process group
-    for (const lib of pgroup.libs ?? []) {
-      const libFileUri = UriUtils.joinPath(
-        URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
-        lib,
-        item.fileName,
-      );
-      if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
-        // match found in this lib, take it
-        return libFileUri;
-      } else {
-        // Perform additional lookup using the new glob method
-        const patt = `${libFileUri.path}\\.*`;
-        const matches = FileSystemProviderInstance.findFilesByGlobSync(patt);
-        if (matches.length > 0) {
-          // Return the first match found
-          return URI.file(matches[0]);
-        }
-      }
-    }
-    // no match
-    return undefined;
-  } else {
-    // no recognized process group or program config, nothing to lookup
-    return undefined;
   }
 }

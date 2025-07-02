@@ -302,6 +302,24 @@ describe("PL/1 Includes with Plugin Config", () => {
     ]);
   });
 
+  test("Include using ++include", () => {
+    expect(
+      tokenize(`
+            ++include LIB2
+            LIB2_VAR = 3;
+        `),
+    ).toStrictEqual([
+      "DECLARE:DECLARE",
+      "LIB2_VAR:ID",
+      "FIXED:FIXED",
+      ";:;",
+      "LIB2_VAR:ID",
+      "=:=",
+      "3:NUMBER",
+      ";:;",
+    ]);
+  });
+
   test("Include using non-quoted identifier syntax", () => {
     expect(
       tokenize(`

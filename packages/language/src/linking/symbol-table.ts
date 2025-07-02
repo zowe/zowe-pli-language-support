@@ -240,7 +240,6 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
 
   // Set child containers for all nodes.
   recursivelySetContainer(unit.ast);
-  recursivelySetContainer(unit.preprocessorAst);
 
   const validationBuffer = new PliValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
@@ -271,7 +270,7 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   return validationBuffer.getDiagnostics();
 }
 
-function recursivelySetContainer(node: SyntaxNode) {
+export function recursivelySetContainer(node: SyntaxNode) {
   forEachNode(node, (child) => {
     child.container = node;
     recursivelySetContainer(child);

@@ -22,7 +22,6 @@ import {
 } from "./lifecycle.js";
 import { CompilerOptions } from "../preprocessor/compiler-options/options.js";
 import { skippedCode } from "../language-server/skipped-code.js";
-import { EvaluationResults } from "../preprocessor/pli-preprocessor-interpreter-state.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
 import { Scope, ScopeCacheGroups } from "../linking/scope.js";
@@ -32,6 +31,7 @@ import {
   TextDocuments,
 } from "../language-server/text-documents.js";
 import { Builtins, BuiltinsUri, BuiltinsUriSchema } from "./builtins.js";
+import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -139,7 +139,9 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       container: null,
       statements: [],
     },
-    preprocessorEvaluationResults: new Map(),
+    preprocessorEvaluationResults: {
+      ifStatements: new Map(),
+    },
     tokens: {
       fileTokens: {},
       all: [],

@@ -14,13 +14,10 @@ import {
   Lexer as ChevrotainLexer,
   TokenTypeDictionary,
 } from "chevrotain";
+import { AllPreprocessorTokens } from "./pli-preprocessor-tokens";
 import {
-  AllPreprocessorTokens,
-  PreprocessorTokens,
-} from "./pli-preprocessor-tokens";
-import {
+  PliSmartTokenPickerOptimizer,
   TokenPicker,
-  TokenPickerOptimizer,
 } from "./pli-token-picker-optimizer";
 import { PreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import * as tokens from "../parser/tokens";
@@ -34,11 +31,8 @@ export class PliPreprocessorLexer {
   public readonly idTokenType: TokenType;
   public readonly normalTokenTypePicker: TokenPicker;
 
-  constructor(
-    tokenPickerOptimizer: TokenPickerOptimizer,
-    vocabulary: TokenType[],
-  ) {
-    this.vocabulary = vocabulary;
+  constructor() {
+    this.vocabulary = tokens.all;
     this.tokenTypeDictionary = {};
     for (const token of this.vocabulary) {
       this.tokenTypeDictionary[token.name] = token;
@@ -46,20 +40,34 @@ export class PliPreprocessorLexer {
     this.hiddenTokenTypes = this.vocabulary.filter(
       (v) => v.GROUP === ChevrotainLexer.SKIPPED,
     );
-
-    const normalTokenTypes = [PreprocessorTokens.Percentage].concat(
-      this.vocabulary,
-    );
     this.numberTokenType = tokens.NUMBER;
     this.idTokenType = tokens.ID;
-    this.normalTokenTypePicker =
-      tokenPickerOptimizer.optimize(normalTokenTypes);
+    this.normalTokenTypePicker = new PliSmartTokenPickerOptimizer().optimize(
+      this.vocabulary,
+    );
   }
 
   skipHiddenTokens(state: PreprocessorLexerState) {
     while (
       this.hiddenTokenTypes.some((h) => state.tryConsume(h) !== undefined)
     );
+  }
+
+  tokenize(state: PreprocessorLexerState): Token[] {
+    let token: Token | undefined = undefined;
+    let previous: Token | undefined = undefined;
+    const list: Token[] = [];
+    do {
+      token = this.getNextPliToken(state);
+      if (token && !token.tokenType.GROUP) {
+        if (previous && previous.endOffset + 1 === token.startOffset) {
+          previous.immediateFollow = true;
+        }
+        list.push(token);
+      }
+      previous = token;
+    } while (token);
+    return list;
   }
 
   tokenizePliTokensUntilSemicolon(state: PreprocessorLexerState): Token[] {
