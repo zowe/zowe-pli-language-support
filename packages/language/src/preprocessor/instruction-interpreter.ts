@@ -240,7 +240,7 @@ function runAssignmentInstruction(
       variable = {
         name: ref.variable,
         value,
-        active: true,
+        active: false, // Implicitly declared variables are inactive by default
         mode: inst.ScanMode.Scan,
       };
       context.variables.set(ref.variable, variable);
