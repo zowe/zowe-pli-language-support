@@ -22,6 +22,7 @@ export default defineConfig({
     },
     include: ["packages/**/test/**/*.test.ts"],
     coverage: {
+      enabled: true,
       reporter: ["text"],
       include: ["packages/**/src/**/*.ts"],
     },
