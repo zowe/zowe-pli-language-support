@@ -781,15 +781,9 @@ export const DOWNTHRU = createToken({
   categories: [ID],
   longer_alt: ID,
 });
-export const XINCLUDE = createToken({
-  name: "XINCLUDE",
-  pattern: /XINCLUDE/iy,
-  categories: [ID],
-  longer_alt: ID,
-});
 export const INCLUDE = createToken({
   name: "INCLUDE",
-  pattern: /INCLUDE/iy,
+  pattern: /X?INCLUDE/iy,
   categories: [ID],
   longer_alt: ID,
 });
@@ -803,6 +797,12 @@ export const INCLUDE_ALT = createToken({
     return null;
   },
   line_breaks: false,
+});
+export const INSCAN = createToken({
+  name: "INSCAN",
+  pattern: /X?INSCAN/iy,
+  categories: [ID],
+  longer_alt: ID,
 });
 export const NOPRINT = createToken({
   name: "NOPRINT",
@@ -2339,7 +2339,6 @@ export const keywords = [
   VARYINGZ,
   DOWNTHRU,
   RESIGNAL,
-  XINCLUDE,
   INCLUDE,
   INCLUDE_ALT,
   NOPRINT,
@@ -2397,6 +2396,7 @@ export const keywords = [
   WIDEPIC,
   RETURNS,
   SYSTEM,
+  INSCAN,
   INLINE,
   BYADDR,
   STATIC,

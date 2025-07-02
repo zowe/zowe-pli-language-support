@@ -116,6 +116,7 @@ export enum SyntaxKind {
   IncludeDirective,
   IncludeAltDirective,
   IncludeItem,
+  InscanDirective,
   IndForAttribute,
   InitAcrossExpression,
   InitialAttribute,
@@ -347,6 +348,7 @@ export type SyntaxNode =
   | IncludeDirective
   | IncludeAltDirective
   | IncludeItem
+  | InscanDirective
   | IndForAttribute
   | InitAcrossExpression
   | InitialAttribute
@@ -711,6 +713,7 @@ export type Unit =
   | TokenStatement
   | IncludeDirective
   | IncludeAltDirective
+  | InscanDirective
   | ActivateStatement
   | DeactivateStatement
   | ProcessDirective
@@ -1479,6 +1482,21 @@ export function createIncludeItem(): IncludeItem {
     ddname: null,
     filePath: null,
     token: null,
+  };
+}
+export interface InscanDirective extends AstNode {
+  kind: SyntaxKind.InscanDirective;
+  token: Token | null;
+  item: ReferenceItem | null;
+  xInscan: boolean;
+}
+export function createInscanDirective(): InscanDirective {
+  return {
+    kind: SyntaxKind.InscanDirective,
+    container: null,
+    token: null,
+    item: null,
+    xInscan: false,
   };
 }
 export interface IndForAttribute extends AstNode {

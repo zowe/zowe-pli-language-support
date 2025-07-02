@@ -257,6 +257,7 @@ export interface IncludeInstruction {
 export interface InscanInstruction {
   kind: InstructionKind.Inscan;
   variable: ReferenceItemInstruction;
+  xInscan: boolean;
 }
 
 export interface ActivateInstruction {

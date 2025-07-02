@@ -102,6 +102,9 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.IncludeAltDirective:
       instruction = generateIncludeInstruction(value);
       break;
+    case ast.SyntaxKind.InscanDirective:
+      instruction = generateInscanInstruction(value);
+      break;
     case ast.SyntaxKind.ActivateStatement:
       instruction = generateActivateInstruction(value);
       break;
@@ -423,6 +426,20 @@ function generateIncludeInstruction(
     kind: inst.InstructionKind.Compound,
     instructions,
   };
+}
+
+function generateInscanInstruction(
+  node: ast.InscanDirective,
+): inst.InscanInstruction | undefined {
+  if (!node.item) {
+    return undefined;
+  }
+  const instruction: inst.InscanInstruction = {
+    kind: inst.InstructionKind.Inscan,
+    variable: generateReferenceItemInstruction(node.item),
+    xInscan: node.xInscan,
+  };
+  return instruction;
 }
 
 function lookupDoNode(
