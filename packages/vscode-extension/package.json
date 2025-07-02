@@ -39,7 +39,7 @@
           "PL/1"
         ],
         "extensions": [
-          ".pli"
+          ".pli", ".pl1", ".inc"
         ],
         "icon": {
           "light": "icons/PL-1-light_max-height.svg",
