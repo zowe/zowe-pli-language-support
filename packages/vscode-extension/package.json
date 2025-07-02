@@ -42,8 +42,8 @@
           ".pli"
         ],
         "icon": {
-          "light": "icons/PL1-light_max-height.svg",
-          "dark": "icons/PL1-dark_max-height.svg"
+          "light": "icons/PL-1-light_max-height.svg",
+          "dark": "icons/PL-1-dark_max-height.svg"
         },
         "configuration": "./language-configuration.json"
       }
