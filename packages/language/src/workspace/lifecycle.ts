@@ -29,6 +29,7 @@ export function lifecycle(
   compilationUnit: CompilationUnit,
   text: string,
 ): void {
+  compilationUnit.statementOrderCache.clear();
   compilationUnit.referencesCache.clear();
   compilationUnit.scopeCaches.clear();
   tokenize(compilationUnit, text);

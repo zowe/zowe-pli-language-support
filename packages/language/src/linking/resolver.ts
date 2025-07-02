@@ -65,6 +65,11 @@ export class StatementOrderCache {
     return this.map.get(node);
   }
 
+  clear(): void {
+    this.id = 0;
+    this.map.clear();
+  }
+
   /**
    * Returns true if `a` is before `b` in the statement order.
    *
@@ -75,12 +80,12 @@ export class StatementOrderCache {
    */
   isBefore(a: SyntaxNode, b: SyntaxNode) {
     const aId = this.get(getParentStatement(a));
-    if (!aId) {
+    if (aId === undefined) {
       throw new Error("Node not found in statement order cache");
     }
 
     const bId = this.get(getParentStatement(b));
-    if (!bId) {
+    if (bId === undefined) {
       throw new Error("Node not found in statement order cache");
     }
 
