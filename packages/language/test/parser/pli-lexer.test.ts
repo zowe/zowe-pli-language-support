@@ -157,6 +157,18 @@ describe("PL/1 Lexer", () => {
     ).toStrictEqual(["X:X", "=:=", "B:B", "+:+", "C:C", ";:;"]);
   });
 
+  test("Example 1.2 from documentation with shorthand DEACT", () => {
+    expect(
+      tokenize(`
+            %DECLARE A CHARACTER, B FIXED;
+            %A = 'B+C';
+            %B = 2;
+            %DEACT B;
+            X = A;
+        `),
+    ).toStrictEqual(["X:X", "=:=", "B:B", "+:+", "C:C", ";:;"]);
+  });
+
   test("Replace once then twice", () => {
     expect(
       tokenize(`
@@ -318,6 +330,41 @@ describe("PL/1 Lexer", () => {
       "a:A",
       ";:;",
     ]);
+  });
+
+  test("Implicitly declared preprocessor variable is not active", () => {
+    expect(
+      tokenize(`
+        %A = "B";
+        DCL A CHARACTER;
+        `),
+    ).toStrictEqual([
+      "DCL:DECLARE",
+      // A is not replaced
+      "A:A",
+      "CHARACTER:CHARACTER",
+      ";:;",
+    ]);
+  });
+
+  test("Implicitly declared preprocessor variable can be activated", () => {
+    expect(
+      tokenize(`
+        %A = "B";
+        %ACTIVATE A;
+        DCL A CHARACTER;
+        `),
+    ).toStrictEqual(["DCL:DECLARE", "B:B", "CHARACTER:CHARACTER", ";:;"]);
+  });
+
+  test("Implicitly declared preprocessor variable can be activated with shorthand ACT", () => {
+    expect(
+      tokenize(`
+        %A = "B";
+        %ACT A;
+        DCL A CHARACTER;
+        `),
+    ).toStrictEqual(["DCL:DECLARE", "B:B", "CHARACTER:CHARACTER", ";:;"]);
   });
 
   test("Simple IF-THEN-ELSE #1", () => {
