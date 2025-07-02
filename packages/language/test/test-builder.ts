@@ -16,7 +16,7 @@ import {
 } from "../src/workspace/compilation-unit";
 import { URI } from "vscode-uri";
 import { Diagnostic, Range, Severity } from "../src/language-server/types";
-import { parseAndLink, replaceNamedIndices } from "./utils";
+import { parse, parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
 import { completionRequest } from "../src/language-server/completion/completion-request";
@@ -190,6 +190,21 @@ export class TestBuilder {
       ...options,
       validate: true,
     });
+  }
+
+  expectPreprocessorTokens(textOrTokens: string | string[]): void {
+    const actualTokens = this.unit.tokens.all.map((e) => e.image);
+    let expectedTokens: string[] = [];
+    // TODO: Instead of calling the lifecycle, we should simply call the lexer
+    // Currently, everything related to the lexer lives in rather complicated services
+    // Eventually, we want to refactor those to use functions
+    if (Array.isArray(textOrTokens)) {
+      expectedTokens = textOrTokens;
+    } else {
+      const expectedUnit = parse(textOrTokens);
+      expectedTokens = expectedUnit.tokens.all.map((e) => e.image);
+    }
+    expect(actualTokens).toEqual(expectedTokens);
   }
 
   /**

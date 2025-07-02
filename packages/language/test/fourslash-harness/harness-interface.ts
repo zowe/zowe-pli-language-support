@@ -99,6 +99,10 @@ export interface HarnessTesterInterface {
      */
     expectAt(label: Label, tokenType: SemanticTokenTypesValues): void;
   };
+  
+  preprocessor: {
+    expectTokens(textOrTokens: string | string[]): void;
+  };
 
   code: {
     Severe: typeof PLICodes.Severe;

@@ -61,6 +61,9 @@ function createTestingHarnessImplementation(
     semanticTokens: {
       expectAt: listen("semanticTokens.expectAt"),
     },
+    preprocessor: {
+      expectTokens: listen("preprocessor.expectTokens"),
+    },
     code: HarnessCodes,
     constants: HarnessConstants,
   };
