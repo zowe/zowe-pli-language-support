@@ -1434,7 +1434,7 @@ export function createIfStatement(): IfStatement {
 }
 export interface IncludeDirective extends AstNode {
   kind: SyntaxKind.IncludeDirective;
-  xInclude: boolean;
+  idempotent: boolean;
   token: Token | null;
   items: IncludeItem[];
 }
@@ -1443,7 +1443,7 @@ export function createIncludeDirective(): IncludeDirective {
     kind: SyntaxKind.IncludeDirective,
     container: null,
     token: null,
-    xInclude: false,
+    idempotent: false,
     items: [],
   };
 }
@@ -1452,7 +1452,7 @@ export function createIncludeDirective(): IncludeDirective {
  */
 export interface IncludeAltDirective extends AstNode {
   kind: SyntaxKind.IncludeAltDirective;
-  xInclude: boolean;
+  idempotent: boolean;
   token: Token | null;
   items: IncludeItem[];
 }
@@ -1461,7 +1461,7 @@ export function createIncludeAltDirective(): IncludeAltDirective {
     kind: SyntaxKind.IncludeAltDirective,
     container: null,
     token: null,
-    xInclude: false,
+    idempotent: false,
     items: [],
   };
 }
@@ -1488,7 +1488,7 @@ export interface InscanDirective extends AstNode {
   kind: SyntaxKind.InscanDirective;
   token: Token | null;
   item: ReferenceItem | null;
-  xInscan: boolean;
+  idempotent: boolean;
 }
 export function createInscanDirective(): InscanDirective {
   return {
@@ -1496,7 +1496,7 @@ export function createInscanDirective(): InscanDirective {
     container: null,
     token: null,
     item: null,
-    xInscan: false,
+    idempotent: false,
   };
 }
 export interface IndForAttribute extends AstNode {

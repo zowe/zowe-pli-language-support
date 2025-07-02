@@ -456,7 +456,7 @@ export class PliPreprocessorParser {
       PreprocessorTokens.Include,
     );
     directive.token = token;
-    directive.xInclude = this.isXInstruction(token);
+    directive.idempotent = this.isXInstruction(token);
     while (true) {
       const item = ast.createIncludeItem();
       if (state.canConsume(PreprocessorTokens.Id)) {
@@ -536,7 +536,7 @@ export class PliPreprocessorParser {
     );
     directive.token = token;
     directive.item = this.parseReferenceItem(state, true);
-    directive.xInscan = this.isXInstruction(token);
+    directive.idempotent = this.isXInstruction(token);
     state.consume(
       directive,
       CstNodeKind.InscanDirective_Semicolon,

@@ -412,7 +412,7 @@ function generateIncludeInstruction(
       const instruction: inst.IncludeInstruction = {
         kind: inst.InstructionKind.Include,
         item,
-        xInclude: node.xInclude,
+        idempotent: node.idempotent,
         fileName: item.fileName,
         token: item.token || node.token,
       };
@@ -437,7 +437,7 @@ function generateInscanInstruction(
   const instruction: inst.InscanInstruction = {
     kind: inst.InstructionKind.Inscan,
     variable: generateReferenceItemInstruction(node.item),
-    xInscan: node.xInscan,
+    idempotent: node.idempotent,
   };
   return instruction;
 }

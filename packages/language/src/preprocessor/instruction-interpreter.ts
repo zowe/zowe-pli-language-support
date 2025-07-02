@@ -533,6 +533,7 @@ function runTokenInstruction(
     // Push merged and new tokens to the stack
     context.result.all.push(...mergedTokens, ...replacedTokens);
   } else {
+    // If there is no need to merge the tokens, simply push them to the output
     context.result.all.push(...replacedTokens);
   }
 }
@@ -548,8 +549,11 @@ function replaceTokensInText(
     const token = tokens[i];
     const result = performTokenScan(token, context);
     if (result) {
+      // Replace the token with the scan result
+      // i.e. the variable content, recursively replaced
       tokenList.push(...result);
     } else {
+      // If the scan found no active variable, push the original token
       tokenList.push(token);
     }
   }
@@ -562,7 +566,9 @@ function performTokenScan(
 ): Token[] | undefined {
   const image = token.image;
   const variable = context.variables.get(image);
-  if (!variable || !variable.active) {
+  // If there is no active variable with that name, return undefined
+  // The caller side will simply push the token to the output
+  if (!variable?.active) {
     return undefined;
   } else if (token.payload.uri && variable.declarationNode) {
     // If the token has a URI, we assume it actually exists in the source code
@@ -619,7 +625,7 @@ function runInscanInstruction(
       item: null,
       fileName: value.value,
       token: instruction.variable.reference?.token,
-      xInclude: false,
+      idempotent: instruction.idempotent,
     },
     context,
   );
@@ -636,7 +642,7 @@ interface IncludeItem {
   fileName: string;
   item: ast.IncludeItem | null;
   token?: Token | null;
-  xInclude: boolean;
+  idempotent: boolean;
 }
 
 function runInclude(item: IncludeItem, context: InterpreterContext): void {
@@ -663,7 +669,7 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
     item.item.filePath = uri.toString();
   }
 
-  if (item.xInclude && context.xIncludes.has(uri.toString())) {
+  if (item.idempotent && context.xIncludes.has(uri.toString())) {
     // Do nothing
     // TODO: Display a warning?
     return;
