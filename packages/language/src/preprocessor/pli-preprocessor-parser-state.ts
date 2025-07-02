@@ -29,7 +29,6 @@ export interface PreprocessorParserState {
   index: number;
   uri: URI;
   get tokens(): Token[];
-  get perFileTokens(): Record<string, Token[]>;
   get current(): Token | undefined;
   get last(): Token | undefined;
   get eof(): boolean;
@@ -72,7 +71,6 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   private readonly lexer: PliPreprocessorLexer;
   private readonly lexerState: PreprocessorLexerState;
   readonly tokens: Token[];
-  readonly perFileTokens: Record<string, Token[]> = {};
   public index: number;
   public uri: URI;
   private text: string;

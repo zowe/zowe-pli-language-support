@@ -18,6 +18,29 @@ export interface InstructionNode {
   next?: InstructionNode;
 }
 
+export class LinkedInstructionList {
+  private _head?: InstructionNode;
+  private _last?: InstructionNode;
+
+  get head(): InstructionNode | undefined {
+    return this._head;
+  }
+
+  get last(): InstructionNode | undefined {
+    return this._last;
+  }
+
+  public append(newNode: InstructionNode): void {
+    if (!this._head) {
+      this._head = newNode;
+      this._last = newNode;
+    } else {
+      this._last!.next = newNode;
+      this._last = newNode;
+    }
+  }
+}
+
 export function getLastInstruction(node: InstructionNode): InstructionNode {
   const set = new Set<InstructionNode>();
   let current = node;
@@ -115,13 +138,13 @@ export interface BinaryExpressionInstruction {
   kind: InstructionKind.BinaryExpression;
   left: ExpressionInstruction;
   right: ExpressionInstruction;
-  operator: string; // e.g., '+', '-', '*', '/'
+  operator: ast.BinaryExpression["op"];
 }
 
 export interface UnaryExpressionInstruction {
   kind: InstructionKind.UnaryExpression;
   operand: ExpressionInstruction;
-  operator: string; // e.g., '!', '-', etc.
+  operator: ast.UnaryExpression["op"];
 }
 
 export interface NumberInstruction {
@@ -182,19 +205,19 @@ export interface DoType3SpecificationItem {
 }
 
 export enum DeclaredType {
-  CHARACTER,
-  FIXED,
+  Character,
+  Fixed,
 }
 
 export enum ScanMode {
-  SCAN, // NORESCAN is a synonym for SCAN
-  NOSCAN,
-  RESCAN,
+  Scan, // NORESCAN is a synonym for SCAN
+  NoScan,
+  ReScan,
 }
 
 export enum VariableVisibility {
-  EXTERNAL,
-  INTERNAL,
+  External,
+  Internal,
 }
 
 export interface DeclareInstruction {

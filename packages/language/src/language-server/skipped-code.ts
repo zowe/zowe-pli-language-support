@@ -15,7 +15,7 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { isEqual } from "lodash-es";
 import { SyntaxKind } from "../syntax-tree/ast";
 import { TextDocuments } from "./text-documents";
-import { IfEvaluationKind } from "../preprocessor/instruction-interpreter";
+import { IfEvaluationResult } from "../preprocessor/instruction-interpreter";
 
 export interface SkippedCodeNotificationParams {
   uri: string;
@@ -81,12 +81,17 @@ export function skippedCodeRanges(compilationUnit: CompilationUnit): Range[] {
       const evaluationResult =
         compilationUnit.preprocessorEvaluationResults.ifStatements.get(element);
       if (
+        // If the code block hasn't been evaluated, it likely was included in another un-evaluated block
+        // This will automatically skip the block already, so we don't have to do anything
         evaluationResult !== undefined &&
-        evaluationResult !== IfEvaluationKind.BOTH
+        // If both branches have been evaluated (maybe as part of a loop), do nothing
+        evaluationResult !== IfEvaluationResult.Both
       ) {
         const { elseRange, unitRange } = element;
+        // If the "else" branch has been evaluated, it means we need to skip the "then" branch
+        // If the "then" branch has been evaluated, it means we need to skip the "else" branch
         const range =
-          evaluationResult === IfEvaluationKind.FALSE ? unitRange : elseRange;
+          evaluationResult === IfEvaluationResult.False ? unitRange : elseRange;
         if (range) {
           result.push({
             start: textDocument.positionAt(range.start),

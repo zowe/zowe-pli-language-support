@@ -30,45 +30,32 @@ export function generateInstructions(
     },
   };
 
-  const instruction =
-    doGenerateInstruction(statements, context) ?? inst.createHaltNode();
-  // Always halt on the last instruction
-  inst.getLastInstruction(instruction).next = inst.createHaltNode();
+  const list = generateInstructionList(statements, context);
+  const last = list.last;
+  if (last) {
+    // Always halt on the last instruction
+    last.next = inst.createHaltNode();
+  }
   // Traverse callbacks in reverse order
   // This is required to correctly set the `next` nodes in the instruction chain
   for (let i = callbacks.length - 1; i >= 0; i--) {
     callbacks[i]();
   }
-  return (
-    instruction ?? {
-      labels: [],
-      instruction: {
-        kind: inst.InstructionKind.Tokens,
-        tokens: [],
-      },
-    }
-  );
+  return list.head ?? inst.createHaltNode();
 }
 
-function doGenerateInstruction(
+function generateInstructionList(
   statements: ast.Statement[],
   context: GenerateInstructionContext,
-): inst.InstructionNode | undefined {
-  let first: inst.InstructionNode | undefined = undefined;
-  let previous: inst.InstructionNode | undefined = undefined;
+): inst.LinkedInstructionList {
+  const list = new inst.LinkedInstructionList();
   for (const statement of statements) {
     const node = generateInstructionForStatement(statement, context);
     if (node) {
-      if (!first) {
-        first = node;
-      }
-      if (previous) {
-        previous.next = node;
-      }
-      previous = node;
+      list.append(node);
     }
   }
-  return first;
+  return list;
 }
 
 function generateInstructionForStatement(
@@ -159,11 +146,11 @@ function generateActivateInstruction(
       continue; // Skip items without a reference
     }
     const reference = generateReferenceItemInstruction(item.reference);
-    let scanMode: inst.ScanMode = inst.ScanMode.SCAN;
+    let scanMode: inst.ScanMode = inst.ScanMode.Scan;
     if (item.scanMode === "RESCAN") {
-      scanMode = inst.ScanMode.RESCAN;
+      scanMode = inst.ScanMode.ReScan;
     } else if (item.scanMode === "NOSCAN") {
-      scanMode = inst.ScanMode.NOSCAN;
+      scanMode = inst.ScanMode.NoScan;
     }
     instructions.push({
       kind: inst.InstructionKind.Activate,
@@ -199,21 +186,21 @@ function generateDeclareInstruction(
     }
     // Generate an instruction for each declared variable
     const attributes = getAttributes(item);
-    let type: inst.DeclaredType = inst.DeclaredType.CHARACTER;
+    let type: inst.DeclaredType = inst.DeclaredType.Character;
     if (attributes.includes("FIXED")) {
-      type = inst.DeclaredType.FIXED;
+      type = inst.DeclaredType.Fixed;
     }
-    let scanMode: inst.ScanMode = inst.ScanMode.SCAN;
+    let scanMode: inst.ScanMode = inst.ScanMode.Scan;
     if (attributes.includes("RESCAN")) {
-      scanMode = inst.ScanMode.RESCAN;
+      scanMode = inst.ScanMode.ReScan;
     } else if (attributes.includes("NOSCAN")) {
-      scanMode = inst.ScanMode.NOSCAN;
+      scanMode = inst.ScanMode.NoScan;
     }
     let visibility: inst.VariableVisibility | null = null;
     if (attributes.includes("INTERNAL")) {
-      visibility = inst.VariableVisibility.INTERNAL;
+      visibility = inst.VariableVisibility.Internal;
     } else if (attributes.includes("EXTERNAL")) {
-      visibility = inst.VariableVisibility.EXTERNAL;
+      visibility = inst.VariableVisibility.External;
     }
     instructions.push(
       inst.createDeclareInstruction(item.name, type, scanMode, visibility),
@@ -291,18 +278,14 @@ function generateDoInstruction(
   node: ast.DoStatement,
   context: GenerateInstructionContext,
 ): inst.DoInstruction | undefined {
-  const instructions = doGenerateInstruction(node.statements, context);
-  if (!instructions) {
+  const { head, last } = generateInstructionList(node.statements, context);
+  if (!head || !last) {
     return undefined;
-  }
-  let last = instructions;
-  while (last.next) {
-    last = last.next;
   }
   let doType1 = true;
   const doInstruction: inst.DoInstruction = {
     kind: inst.InstructionKind.Do,
-    content: instructions,
+    content: head,
     doType2: null,
     doType3: null,
     doType4: node.doType4,

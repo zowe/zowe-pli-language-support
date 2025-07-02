@@ -45,23 +45,23 @@ function generateVariable(instruction: inst.DeclareInstruction): Variable {
     name: instruction.name,
     // Initial value is empty or 0 (for numbers)
     value: {
-      value: instruction.type === inst.DeclaredType.CHARACTER ? "" : "0",
+      value: instruction.type === inst.DeclaredType.Character ? "" : "0",
       type: instruction.type,
     },
     mode: instruction.mode,
     // NOSCAN means the variable is not active
-    active: instruction.mode !== inst.ScanMode.NOSCAN,
+    active: instruction.mode !== inst.ScanMode.NoScan,
   };
 }
 
-export enum IfEvaluationKind {
-  TRUE = 1,
-  FALSE = 2,
-  BOTH = 3,
+export enum IfEvaluationResult {
+  True = 1,
+  False = 2,
+  Both = 3,
 }
 
 export interface EvaluationResults {
-  ifStatements: Map<ast.IfStatement, IfEvaluationKind>;
+  ifStatements: Map<ast.IfStatement, IfEvaluationResult>;
 }
 
 interface InterpreterContext {
@@ -72,6 +72,7 @@ interface InterpreterContext {
   counter: Map<inst.InstructionNode, number>;
   evaluations: EvaluationResults;
   xIncludes: Set<string>;
+  uris: string[];
   options: InterpreterOptions;
 }
 
@@ -94,6 +95,7 @@ export function runInstructions(
 ): InstructionInterpreterResult {
   const context: InterpreterContext = {
     uri,
+    uris: [uri.toString()],
     errors: [],
     xIncludes: new Set(),
     variables: new Map(),
@@ -239,10 +241,12 @@ function runAssignmentInstruction(
         name: ref.variable,
         value,
         active: true,
-        mode: inst.ScanMode.SCAN,
+        mode: inst.ScanMode.Scan,
       };
       context.variables.set(ref.variable, variable);
     } else {
+      // Currently, we simply assume that a user has used `=` as the assignment operator
+      // TODO: Add more assignment operators in a separate PR.
       variable.value = value;
     }
   }
@@ -257,13 +261,13 @@ function runIfInstruction(
   if (valueToBool(condition)) {
     context.evaluations.ifStatements.set(
       instruction.element,
-      existing ? IfEvaluationKind.BOTH : IfEvaluationKind.TRUE,
+      existing ? IfEvaluationResult.Both : IfEvaluationResult.True,
     );
     return instruction.trueBranch;
   } else {
     context.evaluations.ifStatements.set(
       instruction.element,
-      existing ? IfEvaluationKind.BOTH : IfEvaluationKind.FALSE,
+      existing ? IfEvaluationResult.Both : IfEvaluationResult.False,
     );
     return instruction.falseBranch;
   }
@@ -286,6 +290,52 @@ function evaluateExpression(
   }
 }
 
+type ValueOperation = (left: Value, right: Value) => Value;
+
+function intOperation(
+  callback: (left: number, right: number) => number,
+): ValueOperation {
+  return (left: Value, right: Value) => {
+    return valueToNumber(
+      callback(parseInt(left.value), parseInt(right.value)).toString(),
+    );
+  };
+}
+
+function intBoolOperation(
+  callback: (left: number, right: number) => boolean,
+): ValueOperation {
+  return (left: Value, right: Value) => {
+    return boolToValue(callback(parseInt(left.value), parseInt(right.value)));
+  };
+}
+
+function stringOperation(
+  callback: (left: string, right: string) => string,
+): ValueOperation {
+  return (left: Value, right: Value) => {
+    return valueToString(callback(left.value, right.value));
+  };
+}
+
+const plus = intOperation((left, right) => left + right);
+const minus = intOperation((left, right) => left - right);
+const multiply = intOperation((left, right) => left * right);
+const divide = intOperation((left, right) => left / right);
+const exponentiate = intOperation((left, right) => left ** right);
+const concat = stringOperation((left, right) => left + right);
+const lessThan = intBoolOperation((left, right) => left < right);
+const greaterThan = intBoolOperation((left, right) => left > right);
+const equals = intBoolOperation((left, right) => left === right);
+const lessThanEquals = intBoolOperation((left, right) => left <= right);
+const greaterThanEquals = intBoolOperation((left, right) => left >= right);
+const notEquals = intBoolOperation((left, right) => left !== right);
+const and = intOperation((left, right) => left & right);
+const or = intOperation((left, right) => left | right);
+const xor = intOperation((left, right) => left ^ right);
+const notGreaterThan = lessThanEquals;
+const notLessThan = greaterThanEquals;
+
 function evaluateBinaryExpression(
   expression: inst.BinaryExpressionInstruction,
   context: InterpreterContext,
@@ -294,56 +344,40 @@ function evaluateBinaryExpression(
   const right = evaluateExpression(expression.right, context);
   switch (expression.operator) {
     case "+":
-      return valueToNumber(
-        (parseInt(left.value) + parseInt(right.value)).toString(),
-      );
+      return plus(left, right);
     case "-":
-      return valueToNumber(
-        (parseInt(left.value) - parseInt(right.value)).toString(),
-      );
+      return minus(left, right);
     case "*":
-      return valueToNumber(
-        (parseInt(left.value) * parseInt(right.value)).toString(),
-      );
+      return multiply(left, right);
     case "/":
-      return valueToNumber(
-        (parseInt(left.value) / parseInt(right.value)).toString(),
-      );
+      return divide(left, right);
     case "**":
-      return valueToNumber(
-        (parseInt(left.value) ** parseInt(right.value)).toString(),
-      );
+      return exponentiate(left, right);
     case "||":
-      return valueToString(left.value + right.value);
+      return concat(left, right);
     case "<":
-      return valueToNumber(
-        boolToString(parseInt(left.value) < parseInt(right.value)),
-      );
+      return lessThan(left, right);
     case "<=":
-      return valueToNumber(
-        boolToString(parseInt(left.value) <= parseInt(right.value)),
-      );
+      return lessThanEquals(left, right);
     case ">":
-      return valueToNumber(
-        boolToString(parseInt(left.value) > parseInt(right.value)),
-      );
+      return greaterThan(left, right);
     case ">=":
-      return valueToNumber(
-        boolToString(parseInt(left.value) >= parseInt(right.value)),
-      );
+      return greaterThanEquals(left, right);
     case "=":
-      return valueToNumber(boolToString(left.value === right.value));
+      return equals(left, right);
     case "^=":
     case "<>":
-      return valueToNumber(boolToString(left.value !== right.value));
+      return notEquals(left, right);
     case "&":
-      return valueToNumber(
-        (parseInt(left.value) & parseInt(right.value)).toString(),
-      );
+      return and(left, right);
     case "|":
-      return valueToNumber(
-        (parseInt(left.value) | parseInt(right.value)).toString(),
-      );
+      return or(left, right);
+    case "^":
+      return xor(left, right);
+    case "^<":
+      return notLessThan(left, right);
+    case "^>":
+      return notGreaterThan(left, right);
   }
   return valueToNumber("0");
 }
@@ -353,14 +387,13 @@ function evaluateUnaryExpression(
   context: InterpreterContext,
 ): Value {
   const operand = evaluateExpression(expression.operand, context);
-  // TODO: Finish this once we support unary operator parsing in the preprocessor
   switch (expression.operator) {
     case "+":
-      return operand; // Unary plus, no change
+      return operand;
     case "-":
       return valueToNumber((-parseInt(operand.value)).toString());
-    case "!":
-      return valueToNumber(boolToString(operand.value === "0"));
+    case "^":
+      return boolToValue(!valueToBool(operand));
   }
   return valueToNumber("0");
 }
@@ -373,7 +406,7 @@ function evaluateReferenceExpression(
   return variable
     ? variable.value
     : {
-        type: inst.DeclaredType.CHARACTER,
+        type: inst.DeclaredType.Character,
         value: "",
       };
 }
@@ -385,8 +418,8 @@ function evaluateLiteralExpression(
   return {
     type:
       expression.kind === inst.InstructionKind.String
-        ? inst.DeclaredType.CHARACTER
-        : inst.DeclaredType.FIXED,
+        ? inst.DeclaredType.Character
+        : inst.DeclaredType.Fixed,
     value: expression.value,
   };
 }
@@ -395,10 +428,17 @@ function boolToString(value: boolean): string {
   return value ? "1" : "0";
 }
 
+function boolToValue(value: boolean): Value {
+  return {
+    type: inst.DeclaredType.Fixed,
+    value: boolToString(value),
+  };
+}
+
 function valueToBool(value: Value): boolean {
-  if (value.type === inst.DeclaredType.FIXED) {
+  if (value.type === inst.DeclaredType.Fixed) {
     return parseInt(value.value) !== 0;
-  } else if (value.type === inst.DeclaredType.CHARACTER) {
+  } else if (value.type === inst.DeclaredType.Character) {
     return value.value.trim() !== "";
   }
   return false;
@@ -406,14 +446,14 @@ function valueToBool(value: Value): boolean {
 
 function valueToNumber(value: string): Value {
   return {
-    type: inst.DeclaredType.FIXED,
+    type: inst.DeclaredType.Fixed,
     value,
   };
 }
 
 function valueToString(value: string): Value {
   return {
-    type: inst.DeclaredType.CHARACTER,
+    type: inst.DeclaredType.Character,
     value,
   };
 }
@@ -570,7 +610,10 @@ interface IncludeItem {
 function runInclude(item: IncludeItem, context: InterpreterContext): void {
   const uri = resolveIncludeFileUri(item, context);
 
-  function failToResolve(): never {
+  function failToResolve(error?: any): never {
+    if (error) {
+      console.log("Failed to resolve include file:", error);
+    }
     throw new PreprocessorError(
       `Cannot resolve include file '${item.fileName}' at '${context.uri?.toString(true)}'.`,
       item.token,
@@ -596,6 +639,14 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
 
   context.xIncludes.add(uri.toString());
 
+  if (context.uris.includes(uri.toString())) {
+    throw new PreprocessorError(
+      `Circular include detected: ${uri.toString(true)}`,
+      item.token,
+      context.uri,
+    );
+  }
+
   try {
     const content = TextDocuments.get(uri)?.getText() ?? "";
     const processedContent = context.options.marginsProcessor.processMargins({
@@ -607,18 +658,17 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
       uri,
     );
     const subProgram = context.options.parser.parse(subState);
-    for (const [uri, tokens] of Object.entries(subState.perFileTokens)) {
-      context.result.fileTokens[uri] = tokens;
-    }
+    context.result.fileTokens[uri.toString()] = subProgram.tokens;
     context.errors.push(...subProgram.errors);
     const instruction = generateInstructions(subProgram.statements);
     const newContext: InterpreterContext = {
       ...context,
       uri: uri,
+      uris: [uri.toString(), ...context.uris],
     };
     doRunInstructions(newContext, instruction);
-  } catch {
-    failToResolve();
+  } catch (err) {
+    failToResolve(err);
   }
 }
 

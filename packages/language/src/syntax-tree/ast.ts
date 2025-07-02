@@ -873,7 +873,27 @@ export interface BinaryExpression extends AstNode {
   kind: SyntaxKind.BinaryExpression;
   left: Expression | null;
   right: Expression | null;
-  op: string | null; //'|' | '¬' | '^' | '&' | '<' | '¬<' | '<=' | '=' | '¬=' | '^=' | '<>' | '>=' | '>' | '¬>' | '||' | '!!' | '+' | '-' | '*' | '/' | '**';
+  op:
+    | "^="
+    | "<>"
+    | "^<"
+    | "<="
+    | ">="
+    | "^>"
+    | "<="
+    | "||"
+    | "**"
+    | "*"
+    | "="
+    | "|"
+    | "^"
+    | "&"
+    | "<"
+    | ">"
+    | "+"
+    | "-"
+    | "/"
+    | null;
 }
 export interface Bound extends AstNode {
   kind: SyntaxKind.Bound;
@@ -2122,7 +2142,7 @@ export interface TypeAttribute extends AstNode {
 }
 export interface UnaryExpression extends AstNode {
   kind: SyntaxKind.UnaryExpression;
-  op: "+" | "-" | "¬" | "^" | null;
+  op: "+" | "-" | "^" | null;
   expr: Expression | null;
 }
 export interface ValueAttribute extends AstNode {

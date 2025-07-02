@@ -380,7 +380,7 @@ export function constructBinaryExpression(
     kind: SyntaxKind.BinaryExpression,
     container: null,
     left: leftTree,
-    op: operatorToken.tokenType.name,
+    op: operatorToken.tokenType.name as BinaryExpression["op"],
     right: rightTree,
   };
 
