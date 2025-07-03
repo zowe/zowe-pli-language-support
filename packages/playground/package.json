@@ -1,7 +1,7 @@
 {
   "name": "pli-playground",
   "description": "PL/I language playground",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"
