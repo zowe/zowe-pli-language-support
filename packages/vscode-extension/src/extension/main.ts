@@ -96,7 +96,7 @@ function registerOnDidOpenTextDocListener() {
               name: "default",
               "compiler-options": [],
               libs: ["cpy", "inc"],
-              "include-extensions": [],
+              "include-extensions": [".pli", ".pl1", ".inc"],
             },
           ],
         },

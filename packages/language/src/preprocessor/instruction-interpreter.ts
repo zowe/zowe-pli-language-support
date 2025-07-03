@@ -78,6 +78,7 @@ interface InterpreterContext {
 
 export type InstructionInterpreterResult = CompilationUnitTokens & {
   evaluationResults: EvaluationResults;
+  errors: LexingError[];
 };
 
 // TODO: We need this just because those services aren't functions yet
@@ -114,6 +115,7 @@ export function runInstructions(
   return {
     ...tokenResult,
     evaluationResults: context.evaluations,
+    errors: context.errors,
   };
 }
 
@@ -615,7 +617,7 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
       console.log("Failed to resolve include file:", error);
     }
     throw new PreprocessorError(
-      `Cannot resolve include file '${item.fileName}' at '${context.uri?.toString(true)}'.`,
+      `Cannot resolve include file '${item.fileName}'`,
       item.token,
       context.uri,
     );

@@ -90,6 +90,9 @@ export class PliLexer {
         ...compilerOptionsResult.result.tokens,
       );
     }
+    if (output.errors) {
+      errors.push(...output.errors);
+    }
     return {
       all: output.all,
       compilerOptions: compilerOptionsResult,
