@@ -99,8 +99,14 @@ export interface HarnessTesterInterface {
      */
     expectAt(label: Label, tokenType: SemanticTokenTypesValues): void;
   };
-  
+
   preprocessor: {
+    /**
+     * Expect that the preprocessor produces the given text or tokens.
+     * @param textOrTokens The text or tokens to expect.
+     * If an array of strings is provided, it is treated as a list of tokens.
+     * If a string is provided, it is piped through the lexer and the resulting tokens are expected.
+     */
     expectTokens(textOrTokens: string | string[]): void;
   };
 

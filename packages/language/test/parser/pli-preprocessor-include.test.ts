@@ -211,5 +211,7 @@ describe("PL/1 Includes with Plugin Config", () => {
 
   // Tests have been ported to the fourslash framework
   // But in the future, we might need more involved tests here
-  test("Stub", () => {});
+  test("Stub", () => {
+    tokenize.toString();
+  });
 });
