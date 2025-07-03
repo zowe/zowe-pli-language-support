@@ -90,10 +90,13 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
               };
             });
           });
+
           const subsequentResult = this.SUBRULE2(this.compilerOption, {
             ARGS: [false],
           });
-          options.push(subsequentResult as CompilerOption);
+          if (subsequentResult) {
+            options.push(subsequentResult as CompilerOption);
+          }
         });
       });
       return {
@@ -108,7 +111,7 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
   );
 
   compilerOption = this.RULE<
-    (text: boolean) => CompilerOption | CompilerOptionText
+    (text: boolean) => CompilerOption | CompilerOptionText | undefined
   >(
     "compilerOption",
     (text) => {
@@ -172,14 +175,15 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
           });
           values.push(firstValue);
           this.MANY(() => {
-            // TODO: This comma might also be optional?
-            const comma = this.CONSUME(commaToken);
-            this.ACTION(() => {
-              comma.payload = {
-                uri: undefined,
-                kind: CstNodeKind.CompilerOption_Comma,
-                element,
-              };
+            this.OPTION4(() => {
+              const comma = this.CONSUME(commaToken);
+              this.ACTION(() => {
+                comma.payload = {
+                  uri: undefined,
+                  kind: CstNodeKind.CompilerOption_Comma,
+                  element,
+                };
+              });
             });
             const subsequentValue = this.SUBRULE2(this.compilerValue);
             this.ACTION(() => {
@@ -200,12 +204,7 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
       return element;
     },
     {
-      recoveryValueFunc: () => ({
-        container: null,
-        kind: SyntaxKind.CompilerOptionText,
-        token: this.LA(1),
-        value: "",
-      }),
+      recoveryValueFunc: () => undefined,
     },
   );
 

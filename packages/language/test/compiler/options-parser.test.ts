@@ -185,6 +185,33 @@ describe("CompilerOptions translator", () => {
     );
   });
 
+  test("Accept multiple same options on CHECK", () => {
+    const options = parseAbstractCompilerOptions("CHECK(storage, stg)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(0);
+  });
+
+  test("Accept multiple same options on CHECK without comma", () => {
+    const options = parseAbstractCompilerOptions("CHECK(storage stg)");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(0);
+  });
+
+  test("Produce issue for empty DDSQL", () => {
+    const options = parseAbstractCompilerOptions("DDSQL()");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      `DDSQL option value cannot be empty without parentheses.`,
+    );
+  });
+
+  test("Accept DDSQL with empty string", () => {
+    const options = parseAbstractCompilerOptions("DDSQL('')");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(0);
+  });
+
   test("Produce issue for unknown compiler option", () => {
     const options = parseAbstractCompilerOptions("UNKNOWNOPTION");
     const issues = translateCompilerOptions(options).issues;
@@ -234,8 +261,8 @@ describe("CompilerOptions translator", () => {
     }
   });
 
-  test("Test BLANK validation", () => {
-    const options = parseAbstractCompilerOptions("BLANK('dssssdD')");
+  test("Test BLANK validation, disallowed characters", () => {
+    const options = parseAbstractCompilerOptions("BLANK('D')");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -243,11 +270,47 @@ describe("CompilerOptions translator", () => {
     );
   });
 
+  test("Test BLANK validation, single character", () => {
+    const options = parseAbstractCompilerOptions("BLANK('$$$##')");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "BLANK option value must be a single character.",
+    );
+  });
+
+  test("Test BRACKETS validation, double character", () => {
+    const options = parseAbstractCompilerOptions("BRACKETS('D')");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "BRACKETS option value must be two characters.",
+    );
+  });
+
+  test("Test BRACKETS validation, disallowed characters", () => {
+    const options = parseAbstractCompilerOptions("BRACKETS('  ')");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "BRACKETS option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
+    );
+  });
+
+  test("Test BRACKETS validation, same character", () => {
+    const options = parseAbstractCompilerOptions("BRACKETS('[[')");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "BRACKETS option value must be two different characters.",
+    );
+  });
+
   test("Test DEFAULT SHORT validation", () => {
     const options = parseAbstractCompilerOptions("DEFAULT(SHORT(IEEEp98))");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
-    expect(issues[0].message).toBe("Invalid default option value: IEEEp98");
+    expect(issues[0].message).toBe("Invalid default option value: IEEEP98");
   });
 
   test("Test DEFAULT RETURNS validation", () => {
@@ -265,7 +328,25 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  const testCases: {
+  test("Test DECIMAL validation, mandatory argument", () => {
+    const options = parseAbstractCompilerOptions("DECIMAL");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "Expected at least 1 arguments, but received 0.",
+    );
+  });
+
+  test("Test DECIMAL validation, mandatory argument #2", () => {
+    const options = parseAbstractCompilerOptions("DECIMAL()");
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toBe(
+      "Invalid decimal option. Expected one of 'CHECKFLOAT', 'NOCHECKFLOAT', 'FOFLONADD', 'NOFOFLONADD', 'FOFLONASGN', 'NOFOFLONASGN', 'FOFLONDIV', 'NOFOFLONDIV', 'FOFLONMULT', 'NOFOFLONMULT', 'FORCEDSIGN', 'NOFORCEDSIGN', 'KEEPMINUS', 'NOKEEPMINUS', 'TRUNCFLOAT', 'NOTRUNCFLOAT', but received ''.",
+    );
+  });
+
+  const testCasesSensitivity: {
     input: string;
     toTest: (options: CompilerOptions) => unknown;
     expected: unknown;
@@ -352,12 +433,129 @@ describe("CompilerOptions translator", () => {
     },
   ];
 
-  for (const testCase of testCases) {
+  for (const testCase of testCasesSensitivity) {
     test(`Translates option with parameter case-insensitively: ${testCase.input}`, () => {
       const parsed = parseAbstractCompilerOptions(testCase.input);
       const options = translateCompilerOptions(parsed).options;
       expect(testCase.toTest(options)).toEqual(testCase.expected);
     });
+  }
+
+  const testCasesDefaultOptions: {
+    input: string[];
+    toTest: (options: CompilerOptions) => unknown;
+    expected: unknown[];
+  }[] = [
+    {
+      input: ["ALIGNED", "UNALIGNED"],
+      toTest: (options) => options.default?.aligned,
+      expected: [true, false],
+    },
+    {
+      input: ["IBM", "ANS"],
+      toTest: (options) => options.default?.architecture,
+      expected: ["IBM", "ANS"],
+    },
+    {
+      input: ["EBCDIC", "ASCII"],
+      toTest: (options) => options.default?.encoding,
+      expected: ["EBCDIC", "ASCII"],
+    },
+    {
+      input: ["ASSIGNABLE", "NONASSIGNABLE"],
+      toTest: (options) => options.default?.assignable,
+      expected: [true, false],
+    },
+    {
+      input: ["BIN1ARG", "NOBIN1ARG"],
+      toTest: (options) => options.default?.bin1arg,
+      expected: [true, false],
+    },
+    {
+      input: ["BYADDR", "BYVALUE"],
+      toTest: (options) => options.default?.allocator,
+      expected: ["BYADDR", "BYVALUE"],
+    },
+    {
+      input: ["CONNECTED", "NONCONNECTED"],
+      toTest: (options) => options.default?.connected,
+      expected: [true, false],
+    },
+    {
+      input: ["LOWERINC", "UPPERINC"],
+      toTest: (options) => options.default?.inc,
+      expected: ["LOWERINC", "UPPERINC"],
+    },
+    {
+      input: ["NATIVE", "NONNATIVE"],
+      toTest: (options) => options.default?.native,
+      expected: [true, false],
+    },
+    {
+      input: ["NATIVEADDR", "NONATIVEADDR"],
+      toTest: (options) => options.default?.nativeAddr,
+      expected: [true, false],
+    },
+    {
+      input: ["NULLSYS", "NULL370"],
+      toTest: (options) => options.default?.nullsys,
+      expected: ["NULLSYS", "NULL370"],
+    },
+    {
+      input: ["NULLSTRADDR", "NONULLSTRADDR"],
+      toTest: (options) => options.default?.nullStrAddr,
+      expected: [true, false],
+    },
+    {
+      input: ["ORDER", "REORDER"],
+      toTest: (options) => options.default?.order,
+      expected: ["ORDER", "REORDER"],
+    },
+    {
+      input: ["OVERLAP", "NOOVERLAP"],
+      toTest: (options) => options.default?.overlap,
+      expected: [true, false],
+    },
+    {
+      input: ["PADDING", "NOPADDING"],
+      toTest: (options) => options.default?.padding,
+      expected: [true, false],
+    },
+    {
+      input: ["PSEUDODUMMY", "NOPSEUDODUMMY"],
+      toTest: (options) => options.default?.pseudodummy,
+      expected: [true, false],
+    },
+    {
+      input: ["RECURSIVE", "NORECURSIVE"],
+      toTest: (options) => options.default?.recursive,
+      expected: [true, false],
+    },
+    {
+      input: ["RETCODE", "NORETCODE"],
+      toTest: (options) => options.default?.retcode,
+      expected: [true, false],
+    },
+  ];
+
+  for (const testCase of testCasesDefaultOptions) {
+    for (const [index, input] of testCase.input.entries()) {
+      test(`Translates default option: ${input}`, () => {
+        const defaultOption = `DEFAULT(${input})`;
+        const parsed = parseAbstractCompilerOptions(defaultOption);
+        const options = translateCompilerOptions(parsed).options;
+        expect(testCase.toTest(options)).toEqual(testCase.expected[index]);
+      });
+      test(`Translates default option with conflicts: ${input}`, () => {
+        const defaultOption = `DEFAULT(${input}, ${testCase.input.join(", ")})`;
+        const parsed = parseAbstractCompilerOptions(defaultOption);
+        const issues = translateCompilerOptions(parsed).issues;
+        expect(issues).toHaveLength(1);
+        expect(issues[0].message).toMatch(
+          /The compiler option value \w+ conflicts with other options: \w+/,
+        );
+      });
+    }
   }
 });
 
