@@ -41,6 +41,7 @@
         "extensions": [
           ".pli", ".pl1", ".inc"
         ],
+        "firstLine": "^[*%][Pp][Rr][Oo][Cc][Ee][Ss][Ss]|\\s+[Dd][Ee][Cc][Ll][Aa][Rr][Ee]|\\s+[Dd][Cc][Ll]|\\s+\\w+: [Pp][Rr][Oo][Cc]",
         "icon": {
           "light": "icons/PL-1-light_max-height.svg",
           "dark": "icons/PL-1-dark_max-height.svg"
