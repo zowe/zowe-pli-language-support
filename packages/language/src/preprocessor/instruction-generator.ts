@@ -203,7 +203,13 @@ function generateDeclareInstruction(
       visibility = inst.VariableVisibility.External;
     }
     instructions.push(
-      inst.createDeclareInstruction(item.name, type, scanMode, visibility),
+      inst.createDeclareInstruction(
+        item.name,
+        type,
+        scanMode,
+        visibility,
+        item,
+      ),
     );
   }
   return inst.createCompoundInstruction(instructions);
@@ -533,7 +539,7 @@ function generateReferenceItemInstruction(
   return {
     kind: inst.InstructionKind.ReferenceItem,
     variable: node.ref?.text ?? "",
-    token: node.ref?.token ?? null,
+    reference: node.ref,
     args,
   };
 }

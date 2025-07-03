@@ -25,10 +25,12 @@ import { PreprocessorError } from "./pli-preprocessor-error";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
+import { CstNodeKind } from "../syntax-tree/cst";
 
 interface Variable {
   name: string;
   value: Value;
+  declarationNode?: ast.SyntaxNode | null;
   mode: inst.ScanMode;
   active: boolean;
 }
@@ -48,6 +50,7 @@ function generateVariable(instruction: inst.DeclareInstruction): Variable {
       value: instruction.type === inst.DeclaredType.Character ? "" : "0",
       type: instruction.type,
     },
+    declarationNode: instruction.node,
     mode: instruction.mode,
     // NOSCAN means the variable is not active
     active: instruction.mode !== inst.ScanMode.NoScan,
@@ -70,6 +73,7 @@ interface InterpreterContext {
   result: CompilationUnitTokens;
   errors: LexingError[];
   counter: Map<inst.InstructionNode, number>;
+  references: ast.Reference[];
   evaluations: EvaluationResults;
   xIncludes: Set<string>;
   uris: string[];
@@ -79,6 +83,7 @@ interface InterpreterContext {
 export type InstructionInterpreterResult = CompilationUnitTokens & {
   evaluationResults: EvaluationResults;
   errors: LexingError[];
+  references: ast.Reference[];
 };
 
 // TODO: We need this just because those services aren't functions yet
@@ -100,6 +105,7 @@ export function runInstructions(
     errors: [],
     xIncludes: new Set(),
     variables: new Map(),
+    references: [],
     evaluations: {
       ifStatements: new Map(),
     },
@@ -116,6 +122,7 @@ export function runInstructions(
     ...tokenResult,
     evaluationResults: context.evaluations,
     errors: context.errors,
+    references: context.references,
   };
 }
 
@@ -241,6 +248,7 @@ function runAssignmentInstruction(
     if (!variable) {
       variable = {
         name: ref.variable,
+        declarationNode: ref.reference?.owner,
         value,
         active: false, // Implicitly declared variables are inactive by default
         mode: inst.ScanMode.Scan,
@@ -556,11 +564,33 @@ function performTokenScan(
   const variable = context.variables.get(image);
   if (!variable || !variable.active) {
     return undefined;
+  } else if (token.payload.uri && variable.declarationNode) {
+    // If the token has a URI, we assume it actually exists in the source code
+    // We can now create a synthetic reference to the variable for it
+    token.payload.element = generateSyntheticRefItem(
+      token,
+      variable.declarationNode,
+      context,
+    );
+    token.payload.kind = CstNodeKind.ReferenceItem_Ref;
   }
   const variableValue = variable.value;
   const tokens = lex(variableValue.value);
   setImmediateFollowProperty(token, tokens);
   return replaceTokensInText(tokens, context);
+}
+
+function generateSyntheticRefItem(
+  token: Token,
+  targetNode: ast.SyntaxNode,
+  context: InterpreterContext,
+): ast.ReferenceItem {
+  const refItem = ast.createReferenceItem();
+  const ref = ast.createReference<ast.NamedElement>(refItem, token, true);
+  ref.node = targetNode as ast.NamedElement;
+  refItem.ref = ref;
+  context.references.push(ref);
+  return refItem;
 }
 
 function lex(text: string): Token[] {
@@ -588,7 +618,7 @@ function runInscanInstruction(
       // No item is provided here, which is only availble in the IncludeInstruction
       item: null,
       fileName: value.value,
-      token: instruction.variable.token,
+      token: instruction.variable.reference?.token,
       xInclude: false,
     },
     context,
@@ -605,7 +635,7 @@ function runIncludeInstruction(
 interface IncludeItem {
   fileName: string;
   item: ast.IncludeItem | null;
-  token: Token | null;
+  token?: Token | null;
   xInclude: boolean;
 }
 

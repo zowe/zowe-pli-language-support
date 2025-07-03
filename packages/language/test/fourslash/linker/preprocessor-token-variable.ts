@@ -9,16 +9,14 @@
  *
  */
 
-export function formatCodeBlock(language: string) {
-  return (text: string): string => {
-    return `\`\`\`${language}\n${text}\n\`\`\`\n`;
-  };
-}
+/// <reference path="../framework.ts" />
 
 /**
- * Format a code block for Pli.
- *
- * @example
- * formatPliCodeBlock("DCL A") === "```pli\nDCL A\n```\n"
+ Preprocessor variables can be linked from PL/I code.
  */
-export const formatPliCodeBlock = formatCodeBlock("pli");
+// @wrap: main
+//// %DECLARE <|1:ABC|> CHARACTER;
+//// %ABC = 'PAY_ROLL';
+//// PUT(<|1>ABC);
+
+linker.expectLinks();
