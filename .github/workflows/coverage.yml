@@ -16,9 +16,11 @@ defaults:
 
 jobs:
   coverage:
+    name: Deploy Coverage
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
