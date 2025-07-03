@@ -65,6 +65,9 @@ export function createTestBuilderHarnessImplementation(
           tokenType as `${SemanticTokenTypes}`,
         ),
     },
+    preprocessor: {
+      expectTokens: (text) => testBuilder.expectPreprocessorTokens(text),
+    },
     code: HarnessCodes,
     constants: HarnessConstants,
   };

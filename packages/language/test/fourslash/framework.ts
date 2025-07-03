@@ -9,7 +9,7 @@
  *
  */
 
-import { HarnessTesterInterface } from "../fourslash-harness/harness-interface";
+import type { HarnessTesterInterface } from "../fourslash-harness/harness-interface";
 
 declare global {
   var verify: HarnessTesterInterface["verify"];
@@ -19,4 +19,5 @@ declare global {
   var hover: HarnessTesterInterface["hover"];
   var code: HarnessTesterInterface["code"];
   var constants: HarnessTesterInterface["constants"];
+  var preprocessor: HarnessTesterInterface["preprocessor"];
 }
