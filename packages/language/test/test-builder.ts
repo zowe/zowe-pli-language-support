@@ -23,6 +23,13 @@ import { completionRequest } from "../src/language-server/completion/completion-
 import { fail } from "assert";
 import { MarkupContent, Position } from "vscode-languageserver";
 import { hoverRequest } from "../src/language-server/hover-request";
+import {
+  semanticTokens,
+  tokenTypes,
+} from "../src/language-server/semantic-tokens";
+import { TextDocument } from "vscode-languageserver-textdocument";
+import { SemanticTokenDecoder } from "../src/language-server/semantic-token-decoder";
+import { SemanticTokenTypes } from "vscode-languageserver-types";
 
 export const DEFAULT_FILE_URI = "file:///main.pli";
 
@@ -61,16 +68,28 @@ export type ExpectedCompletion = {
   excludes?: string[];
 };
 
+type TestFile = {
+  output: string;
+  indices: Record<string, number[]>;
+  ranges: Record<string, Array<[number, number]>>;
+  textDocument: TextDocument;
+};
+
+function replaceNamedIndicesWithDocument(file: PliTestFile): TestFile {
+  const { output, indices, ranges } = replaceNamedIndices(file.content);
+  const textDocument = TextDocument.create(file.uri, "pli", 1, output);
+
+  return {
+    output,
+    indices,
+    ranges,
+    textDocument,
+  };
+}
+
 export class TestBuilder {
   private unit: CompilationUnit;
-  private files: Record<
-    string,
-    {
-      output: string;
-      indices: Record<string, number[]>;
-      ranges: Record<string, Array<[number, number]>>;
-    }
-  > = {};
+  private files: Record<string, TestFile> = {};
   private output: string;
   private indices: Record<string, number[]>;
   private ranges: Record<string, Array<[number, number]>>;
@@ -109,7 +128,7 @@ export class TestBuilder {
    *  }
    * ]);
    */
-  constructor(
+  private constructor(
     textOrFiles: string | PliTestFile | PliTestFile[],
     options: TestBuilderOptions = {},
   ) {
@@ -118,7 +137,7 @@ export class TestBuilder {
     this.files = Object.fromEntries(
       TestBuilder.getFiles(textOrFiles).map((file) => [
         file.uri,
-        replaceNamedIndices(file.content),
+        replaceNamedIndicesWithDocument(file),
       ]),
     );
 
@@ -128,14 +147,14 @@ export class TestBuilder {
       }
     }
 
-    const firstFile = Object.values(this.files)[0];
+    const [[firstFileUri, firstFile]] = Object.entries(this.files);
     const output = firstFile.output;
     const indices = firstFile.indices;
     const ranges = firstFile.ranges;
 
     this.unit = parseAndLink(output, {
       validate: options?.validate,
-      uri: URI.parse(Object.keys(this.files)[0]),
+      uri: URI.parse(firstFileUri),
     });
 
     this.output = output;
@@ -406,6 +425,50 @@ export class TestBuilder {
     return this;
   }
 
+  /**
+   * Expects the given label to have the given semantic token type.
+   * @param label - The label to expect the semantic token type at
+   * @param tokenType - The semantic token type to expect
+   * @returns This test builder
+   *
+   * @example
+   * ```ts
+   * new TestBuilder(`
+   *  DCL <|1:A|>;
+   * `).expectSemanticTokens("1", "variable"); // Passes
+   * ```
+   */
+  expectSemanticTokens(label: string, tokenType: `${SemanticTokenTypes}`) {
+    const ranges = this.getLabelRanges(label);
+
+    for (const file of Object.values(this.files)) {
+      const textDocument = file.textDocument;
+
+      const tokens = semanticTokens(textDocument, this.unit);
+      const decodedTokens = SemanticTokenDecoder.decode(
+        tokens,
+        tokenTypes,
+        textDocument,
+      );
+
+      for (const [start, end] of ranges) {
+        const matchingToken = decodedTokens.find(
+          (t) => t.offsetStart === start && t.offsetEnd === end,
+        );
+
+        expect(
+          matchingToken,
+          `Semantic token for label "${label}" (${this.createPositionMessage(start)}) not found`,
+        ).toBeDefined();
+
+        expect(
+          matchingToken?.semanticTokenType,
+          `Semantic token for label "${label}" (${this.createPositionMessage(start)}) has wrong token type`,
+        ).toBe(tokenType);
+      }
+    }
+  }
+
   private _expectCompletions(
     label: string,
     check: (completionResult: string[]) => void,
@@ -442,9 +505,10 @@ export class TestBuilder {
   }
 
   private createLabelRangeMessage(label: string): string {
-    const [start, _end] = this.getLabelRange(label);
+    const [[start, _end]] = this.getLabelRanges(label);
     return this.createPositionMessage(start, this.unit.uri.toString());
   }
+
   expectHover(label: string, content: MarkupContent) {
     const indices = this.getLabelPositions(label);
 
@@ -462,14 +526,13 @@ export class TestBuilder {
     return this.createPositionMessage(position, this.unit.uri.toString());
   }
 
-  private getLabelRange(label: string): [number, number] {
-    const range = this.ranges[label];
-    if (!range || range.length === 0) {
+  private getLabelRanges(label: string): [number, number][] {
+    const ranges = this.ranges[label];
+    if (!ranges || ranges.length === 0) {
       throw new Error(`Label "${label}" not found`);
     }
 
-    // @didrikmunther TODO: support multiple ranges, for now we just return the first one
-    return range[0];
+    return ranges;
   }
 
   private getLabelPosition(label: string): number {
@@ -495,7 +558,10 @@ export class TestBuilder {
     return `${severity}: ${diagnostic.message} (${position})`;
   }
 
-  private createPositionMessage(position: number, uri: string): string {
+  private createPositionMessage(
+    position: number,
+    uri: string = this.unit.uri.toString(),
+  ): string {
     const { line, character } = offsetAt(this.output, position);
 
     const locationOverride = this.options.locationOverrides?.[uri];

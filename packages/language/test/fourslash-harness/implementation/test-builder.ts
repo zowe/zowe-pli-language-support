@@ -15,6 +15,7 @@ import { HarnessTesterInterface } from "../harness-interface";
 import { HarnessCodes } from "./codes";
 import { HarnessConstants } from "./constants";
 import { formatPliCodeBlock } from "../../../src/utils/code-block";
+import { SemanticTokenTypes } from "vscode-languageserver-types";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -56,6 +57,13 @@ export function createTestBuilderHarnessImplementation(
           value: text,
         }),
       codeBlock: formatPliCodeBlock,
+    },
+    semanticTokens: {
+      expectAt: (label, tokenType = label.toString()) =>
+        testBuilder.expectSemanticTokens(
+          label.toString(),
+          tokenType as `${SemanticTokenTypes}`,
+        ),
     },
     code: HarnessCodes,
     constants: HarnessConstants,

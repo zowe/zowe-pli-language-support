@@ -3,8 +3,10 @@ import { Diagnostic } from "../../src/language-server/types";
 import { PLICodes } from "../../src/validation/messages";
 import { ExpectedCompletion } from "../test-builder";
 import { type Severity } from "../../src/language-server/types";
+import { SemanticTokenTypes } from "vscode-languageserver-types";
 
 type Label = string | number;
+type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
 export interface HarnessTesterInterface {
   verify: {
@@ -82,6 +84,20 @@ export interface HarnessTesterInterface {
      * @param expected The expected completion items.
      */
     expectAt(label: Label, expected: ExpectedCompletion): void;
+  };
+
+  semanticTokens: {
+    /**
+     * Expect that the semantic tokens at the given label are the given token type.
+     * @param label The label to expect the semantic tokens at.
+     */
+    expectAt(label: SemanticTokenTypesValues): void;
+    /**
+     * Expect that the semantic tokens at the given label are the given token type.
+     * @param label The label to expect the semantic tokens at.
+     * @param tokenType The token type to expect.
+     */
+    expectAt(label: Label, tokenType: SemanticTokenTypesValues): void;
   };
 
   code: {
