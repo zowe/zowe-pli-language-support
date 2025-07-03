@@ -361,6 +361,17 @@ describe("Validating", () => {
         `);
       assertNoDiagnostics(doc);
     });
+
+    test("Error on invalid %INCLUDE directive", async () => {
+      const doc = parseWithValidations(` %INCLUDE 'nonexistent.pli';
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+      `);
+      assertDiagnostic(doc, {
+        message: "Cannot resolve include file 'nonexistent.pli'",
+        severity: Severity.E,
+      });
+    });
   });
 
   //
