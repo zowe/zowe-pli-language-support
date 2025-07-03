@@ -22,9 +22,9 @@ export default defineConfig({
     },
     include: ["packages/**/test/**/*.test.ts"],
     coverage: {
-      enabled: true,
-      reporter: ["text"],
-      include: ["packages/**/src/**/*.ts"],
+      provider: "v8",
+      reporter: ["text", "html"],
+      include: ["packages/language/src/**/*.ts"],
     },
   },
 });
