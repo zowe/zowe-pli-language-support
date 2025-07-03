@@ -74,7 +74,7 @@ The `proc_grps.json` file is formatted as an array of JSON elements, with one JS
     - Specify a name for the processor group.
 - (Optional) **"libs":** (array)  
     - Specify local folders that contain include files. Specify local folders as either absolute or relative local paths.
-- (Optional) **"copybook-extensions":** (array)  
+- (Optional) **"include-extensions":** (array)  
     - Specify file extensions that you use for the include files in programs linked with this processor groups.
 - (Optional) **"compiler-options":** (array)  
     - Specify compiler directives that you want to apply to the programs linked with this processor group. 
@@ -116,7 +116,7 @@ Using the example `pgm_conf.json` file in the section above, the following `proc
       "libs": [
         "lib1"
       ],
-      "copybook-extensions": [
+      "include-extensions": [
         ".cpy", ".copy"
       ]
     },

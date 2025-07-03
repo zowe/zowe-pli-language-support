@@ -6,7 +6,7 @@
       "libs": [
         "lib"
       ],
-      "copybook-extensions": [
+      "include-extensions": [
         ".pli",
         ".pl1",
         ".cpy",

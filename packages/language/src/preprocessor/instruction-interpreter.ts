@@ -693,7 +693,7 @@ function resolveIncludeFileUri(
     return undefined;
   }
 
-  // check to validate copybook extension, if a program config & process group is available
+  // check to validate include extension, if a program config & process group is available
   const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
     context.uri.toString(),
   );
@@ -714,7 +714,7 @@ function resolveIncludeFileUri(
       ? `expected one of: ${pgroup["include-extensions"]?.join(", ")}`
       : `expected no extension`;
     throw new PreprocessorError(
-      `Unsupported copybook extension for included file, '${item.fileName}', ${msg}`,
+      `Unsupported include extension for included file, '${item.fileName}', ${msg}`,
       item.token,
       context.uri,
     );
