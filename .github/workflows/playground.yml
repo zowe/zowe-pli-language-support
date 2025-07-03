@@ -41,10 +41,11 @@ jobs:
         with:
           folder: packages/playground/out
           branch: previews
-          clean-exclude: | # Ensure that we don't delete the pr & dev previews
+          clean-exclude: | # Ensure that we don't delete the other playgrounds and the coverage
             dev/
             pr/
-          force: false # Ensure that we don't override the pr previews
+            coverage/
+          force: false # Ensure that we don't override anything else
           target-folder: main
       - name: Deploy Dev 🚀
         if: github.ref == 'refs/heads/development'
@@ -52,8 +53,9 @@ jobs:
         with:
           folder: packages/playground/out
           branch: previews
-          clean-exclude: | # Ensure that we don't delete the pr & main previews
+          clean-exclude: | # Ensure that we don't delete the other playgrounds and the coverage
             main/
             pr/
-          force: false # Ensure that we don't override the pr previews
+            coverage/
+          force: false # Ensure that we don't override anything else
           target-folder: dev
