@@ -67,6 +67,8 @@ export function createTestBuilderHarnessImplementation(
     },
     preprocessor: {
       expectTokens: (text) => testBuilder.expectPreprocessorTokens(text),
+      expectSkippedCodeAt: (label) =>
+        testBuilder.expectSkippedCode(label.toString()),
     },
     code: HarnessCodes,
     constants: HarnessConstants,

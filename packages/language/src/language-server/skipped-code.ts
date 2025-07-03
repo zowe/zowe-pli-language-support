@@ -16,6 +16,7 @@ import { isEqual } from "lodash-es";
 import { SyntaxKind } from "../syntax-tree/ast";
 import { TextDocuments } from "./text-documents";
 import { IfEvaluationResult } from "../preprocessor/instruction-interpreter";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 export interface SkippedCodeNotificationParams {
   uri: string;
@@ -33,7 +34,10 @@ export function skippedCode(
   connection: Connection,
   compilationUnit: CompilationUnit,
 ) {
-  const ranges = compilationUnit ? skippedCodeRanges(compilationUnit) : [];
+  const textDocument = TextDocuments.get(compilationUnit.uri.toString());
+  const ranges = textDocument
+    ? skippedCodeRanges(compilationUnit, textDocument)
+    : [];
   const cachedRanges = compilationUnit.requestCaches.get("skippedCodeRanges");
 
   if (
@@ -53,12 +57,10 @@ export function skippedCode(
  * Returns the ranges of skipped code in the given compilation unit.
  * Handles both SKIP and IF preprocessor directives.
  */
-export function skippedCodeRanges(compilationUnit: CompilationUnit): Range[] {
-  const textDocument = TextDocuments.get(compilationUnit.uri.toString());
-  if (!textDocument) {
-    return [];
-  }
-
+export function skippedCodeRanges(
+  compilationUnit: CompilationUnit,
+  textDocument: TextDocument,
+): Range[] {
   const tokens = compilationUnit.tokens.fileTokens[textDocument.uri] ?? [];
   const result: Range[] = [];
 
