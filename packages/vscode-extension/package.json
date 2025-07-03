@@ -10,7 +10,7 @@
     "type": "git",
     "url": "https://github.com/zowe/zowe-pli-language-support"
   },
-  "version": "0.0.1",
+  "version": "1.0.0",
   "displayName": "PL/I Language Support",
   "engines": {
     "vscode": "^1.67.0"

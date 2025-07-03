@@ -1,7 +1,7 @@
 {
   "name": "pli-language",
   "description": "The language specific package",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"
