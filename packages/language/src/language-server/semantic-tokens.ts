@@ -21,7 +21,7 @@ import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { Token, TokenPayload } from "../parser/tokens";
 
-const semanticTokenTypes = [
+export const semanticTokenTypes = [
   SemanticTokenTypes.variable,
   SemanticTokenTypes.keyword,
   SemanticTokenTypes.number,

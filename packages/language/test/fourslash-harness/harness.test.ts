@@ -58,6 +58,9 @@ function createTestingHarnessImplementation(
       expectMarkdownAt: listen("hover.expectMarkdownAt"),
       expectTextAt: listen("hover.expectTextAt"),
     },
+    semanticTokens: {
+      expectAt: listen("semanticTokens.expectAt"),
+    },
     code: HarnessCodes,
     constants: HarnessConstants,
   };
