@@ -10,6 +10,7 @@
  */
 
 import { SyntaxNode } from "../syntax-tree/ast";
+import { CompilationUnit } from "../workspace/compilation-unit";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { SymbolTable } from "./symbol-table";
 
@@ -19,13 +20,11 @@ import { SymbolTable } from "./symbol-table";
  * then the parent scope, and so on.
  */
 export class Scope {
-  public symbolTable: SymbolTable;
-  private parent: Scope | null;
-
-  constructor(parent?: Scope | null, symbolTable?: SymbolTable) {
-    this.parent = parent ?? null;
-    this.symbolTable = symbolTable ?? new SymbolTable();
-  }
+  constructor(
+    unit: CompilationUnit,
+    private readonly parent: Scope | null = null,
+    readonly symbolTable: SymbolTable = new SymbolTable(unit),
+  ) {}
 
   getExplicitSymbols(
     qualifiedName: readonly string[],

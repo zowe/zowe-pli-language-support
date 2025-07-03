@@ -30,6 +30,7 @@ import { PliValidationBuffer } from "../validation/validator";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { LinkerErrorReporter } from "./error";
 import { Scope } from "./scope";
+import { getSymbolName } from "./util";
 
 function getParentStatement(node: SyntaxNode): SyntaxNode {
   if (node.container?.kind === SyntaxKind.Statement) {
@@ -159,12 +160,13 @@ export function getQualifiedName(reference: Reference): string[] {
  * ```
  */
 function assignQualifiedReference(
+  unit: CompilationUnit,
   reference: Reference,
   memberCall: MemberCall,
   resolved: QualifiedSyntaxNode,
 ) {
   // The names are not matching, this is a partial qualification.
-  if (reference.text !== resolved.name) {
+  if (getSymbolName(unit, reference.text) !== resolved.name) {
     if (!resolved.parent) {
       throw new Error(
         "Resolved parent is null, should not happen. There is probably a mistake in the symbol table.",
@@ -172,7 +174,7 @@ function assignQualifiedReference(
     }
 
     // Try to match the resolved symbol with a reference further up the chain.
-    assignReference(reference, resolved.parent);
+    assignReference(unit, reference, resolved.parent);
     return;
   }
 
@@ -180,11 +182,12 @@ function assignQualifiedReference(
 
   // There are more qualified names to resolve, continue up the chain.
   if (memberCall.previous?.element?.ref && resolved.parent) {
-    assignReference(memberCall.previous.element.ref, resolved.parent);
+    assignReference(unit, memberCall.previous.element.ref, resolved.parent);
   }
 }
 
 function assignReference(
+  unit: CompilationUnit,
   reference: Reference<SyntaxNode>,
   resolved: QualifiedSyntaxNode,
 ) {
@@ -192,7 +195,7 @@ function assignReference(
   // We want to assign the resolved references to the entire chain of references.
   if (reference.owner.container?.kind === SyntaxKind.MemberCall) {
     const memberCall = reference.owner.container;
-    assignQualifiedReference(reference, memberCall, resolved);
+    assignQualifiedReference(unit, reference, memberCall, resolved);
 
     return;
   }
@@ -297,7 +300,7 @@ function resolveReference(
 
   // Assign the resolved symbol to the reference.
   // This function handles assigning references to member calls.
-  assignReference(reference, symbol);
+  assignReference(unit, reference, symbol);
 }
 
 export function resolveReferences(unit: CompilationUnit): Diagnostic[] {

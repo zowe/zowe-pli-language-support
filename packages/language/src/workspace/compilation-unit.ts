@@ -99,10 +99,10 @@ const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
 function createBuiltinScopeGetter() {
   let builtinSymbolTable: Scope | undefined = undefined;
 
-  return (uri: URI): Scope => {
+  return (uri: URI, unit: CompilationUnit): Scope => {
     // Don't load the builtin symbol table for builtin files
     if (isBuiltinFile(uri)) {
-      return new Scope();
+      return new Scope(unit);
     }
 
     if (builtinSymbolTable === undefined) {
@@ -112,7 +112,7 @@ function createBuiltinScopeGetter() {
       generateSymbolTable(unit);
 
       builtinSymbolTable =
-        unit.scopeCaches.regular.get(unit.ast) ?? new Scope();
+        unit.scopeCaches.regular.get(unit.ast) ?? new Scope(unit);
     }
 
     return builtinSymbolTable;
@@ -122,10 +122,10 @@ function createBuiltinScopeGetter() {
 const getBuiltinScope = createBuiltinScopeGetter();
 
 // TODO: Add preprocessor scope for builtins?
-const getRootPreprocessorScope = () => new Scope();
+const getRootPreprocessorScope = (unit: CompilationUnit) => new Scope(unit);
 
 export function createCompilationUnit(uri: URI): CompilationUnit {
-  return {
+  const unit: CompilationUnit = {
     uri,
     files: [],
     compilerOptions: {},
@@ -164,9 +164,14 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       .onRevalidate("skippedCodeRanges", ({ connection, unit }) => {
         skippedCode(connection, unit);
       }),
-    rootScope: getBuiltinScope(uri),
-    rootPreprocessorScope: getRootPreprocessorScope(),
+    rootScope: undefined!, // Assigned later
+    rootPreprocessorScope: undefined!, // Assigned later
   };
+
+  unit.rootScope = getBuiltinScope(uri, unit);
+  unit.rootPreprocessorScope = getRootPreprocessorScope(unit);
+
+  return unit;
 }
 
 export class CompilationUnitHandler {

@@ -34,6 +34,7 @@ import {
 import { MultiMap } from "../utils/collections";
 import { Scope, ScopeCache } from "./scope";
 import { Token } from "../parser/tokens";
+import { getSymbolName } from "./util";
 
 function nonNull<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
@@ -50,6 +51,12 @@ export class SymbolTable {
   symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
   nodeLookup: Map<SyntaxNode, QualifiedSyntaxNode> = new Map();
 
+  constructor(private readonly unit: CompilationUnit) {}
+
+  private getSymbolName(name: string) {
+    return getSymbolName(this.unit, name);
+  }
+
   addImplicitDeclarationStatement(
     refs: ReferenceItem[],
     _acceptor: PliValidationAcceptor,
@@ -57,9 +64,13 @@ export class SymbolTable {
     const candidates = refs.map(({ ref }) => ref).filter(nonNull);
 
     for (const candidate of candidates) {
-      this.symbols.add(
+      this.addSymbolDeclaration(
         candidate.text,
-        QualifiedSyntaxNode.createImplicit(candidate.token, candidate.owner),
+        QualifiedSyntaxNode.createImplicit(
+          this.unit,
+          candidate.token,
+          candidate.owner,
+        ),
       );
     }
   }
@@ -68,7 +79,14 @@ export class SymbolTable {
     declaration: DeclareStatement,
     acceptor: PliValidationAcceptor,
   ): void {
-    DeclaredItemParser.parseAndAddToTable(this, declaration.items, acceptor);
+    const parsedEntries = DeclaredItemParser.parse(
+      this.unit,
+      declaration.items,
+      acceptor,
+    );
+    for (const [name, node] of parsedEntries.entries()) {
+      this.addSymbolDeclaration(name, node);
+    }
   }
 
   addLabelStatement(
@@ -83,20 +101,23 @@ export class SymbolTable {
 
     this.addSymbolDeclaration(
       name,
-      QualifiedSyntaxNode.createExplicit(nameToken, node),
+      QualifiedSyntaxNode.createExplicit(this.unit, nameToken, node),
     );
   }
 
   addSymbolDeclaration(name: string, node: QualifiedSyntaxNode): void {
-    this.symbols.add(name, node);
+    this.symbols.add(this.getSymbolName(name), node);
     this.nodeLookup.set(node.node, node);
   }
 
-  allDistinctSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
+  allDistinctSymbols(_qualifiedName: string[]): QualifiedSyntaxNode[] {
+    const qualifiedName = _qualifiedName.map(this.getSymbolName.bind(this));
+
     const map = new Map<string, QualifiedSyntaxNode[]>();
     for (const [name, symbols] of this.symbols.entriesGroupedByKey()) {
       if (qualifiedName.length > 0) {
         for (const symbol of symbols) {
+          const symbolName = symbol.name;
           let parent = symbol.getParent();
           let i = 0;
           // Iterate over the qualified name and the parent chain in one loop
@@ -109,10 +130,10 @@ export class SymbolTable {
           }
           if (i === qualifiedName.length) {
             // The full qualified name has been used to find the symbol
-            if (!map.get(symbol.name)) {
-              map.set(symbol.name, []);
+            if (!map.get(symbolName)) {
+              map.set(symbolName, []);
             }
-            map.get(name)!.push(symbol);
+            map.get(symbolName)!.push(symbol);
           }
           // Everything else indicates that the name could either not be found
           // or the qualified name is longer than the chain of parents,
@@ -131,8 +152,9 @@ export class SymbolTable {
   }
 
   getExplicitSymbols(
-    qualifiedName: readonly string[],
+    _qualifiedName: readonly string[],
   ): readonly QualifiedSyntaxNode[] | undefined {
+    const qualifiedName = _qualifiedName.map(this.getSymbolName.bind(this));
     const [name] = qualifiedName;
     if (!name) {
       return undefined;
@@ -146,8 +168,9 @@ export class SymbolTable {
   }
 
   getImplicitSymbols(
-    qualifiedName: readonly string[],
+    _qualifiedName: readonly string[],
   ): readonly QualifiedSyntaxNode[] | undefined {
+    const qualifiedName = _qualifiedName.map(this.getSymbolName.bind(this));
     const [name] = qualifiedName;
     if (!name) {
       return undefined;
@@ -181,10 +204,6 @@ export class SymbolTable {
     } else {
       return undefined;
     }
-  }
-
-  clear(): void {
-    this.symbols.clear();
   }
 }
 
@@ -244,9 +263,10 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   const validationBuffer = new PliValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
 
-  const preprocessorScope = new Scope(unit.rootPreprocessorScope);
+  const preprocessorScope = new Scope(unit, unit.rootPreprocessorScope);
 
   iterateSymbolTable(unit.preprocessorAst, preprocessorScope, {
+    unit,
     acceptor,
     scopeCache: scopeCaches.preprocessor,
     referencesCache,
@@ -257,9 +277,10 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
 
   // Generate a new scope
   // Otherwise we will add symbols to the root scope (which contains builtins)
-  const regularScope = new Scope(unit.rootScope);
+  const regularScope = new Scope(unit, unit.rootScope);
 
   iterateSymbolTable(unit.ast, regularScope, {
+    unit,
     acceptor,
     scopeCache: scopeCaches.regular,
     referencesCache,
@@ -278,6 +299,7 @@ export function recursivelySetContainer(node: SyntaxNode) {
 }
 
 type IterateSymbolTableContext = {
+  unit: CompilationUnit;
   scopeCache: ScopeCache;
   referencesCache: ReferencesCache;
   acceptor: PliValidationAcceptor;
@@ -305,7 +327,7 @@ const iterateSymbolTable = (
    */
   if (node.kind === SyntaxKind.ProcedureStatement) {
     // Create a new scope for the procedure statement.
-    const scope = new Scope(parentScope);
+    const scope = new Scope(context.unit, parentScope);
     const procedure: ProcedureStatement = {
       ...node,
       end: null,
