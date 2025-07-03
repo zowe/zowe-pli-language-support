@@ -31,6 +31,7 @@ import {
   TextDocuments,
 } from "../language-server/text-documents.js";
 import { Builtins, BuiltinsUri, BuiltinsUriSchema } from "./builtins.js";
+import { PluginConfigurationProviderInstance } from "./plugin-configuration-provider.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
 
 /**
@@ -177,15 +178,23 @@ export class CompilationUnitHandler {
   }
 
   /**
-   * Gets an existing or creates a new compilation unit for the given URI
+   * Gets an existing or creates a new compilation unit for the given URI, except for standalone library files
    *
-   * @returns Pre-existing or new compilation unit
+   * @returns Pre-existing or new compilation unit, or undefined if it's a standalone library file
    */
-  getOrCreateCompilationUnit(uri: URI): CompilationUnit {
-    return (
-      this.compilationUnits.get(uri.toString()) ||
-      this.createAndStoreCompilationUnit(uri)
-    );
+  getOrCreateCompilationUnit(uri: URI): CompilationUnit | undefined {
+    if (this.compilationUnits.has(uri.toString())) {
+      // existing compilation unit
+      return this.compilationUnits.get(uri.toString());
+    } else if (
+      !PluginConfigurationProviderInstance.isLibFileCandidate(uri.toString())
+    ) {
+      // non-library files should always generate a compilation unit
+      return this.createAndStoreCompilationUnit(uri);
+    } else {
+      // do not generate compilation units for standalone library files
+      return undefined;
+    }
   }
 
   createAndStoreCompilationUnit(uri: URI): CompilationUnit {
@@ -219,6 +228,10 @@ export class CompilationUnitHandler {
       const unit = this.getOrCreateCompilationUnit(
         URI.parse(event.document.uri),
       );
+      if (!unit) {
+        // standalone library files do not synthesize new compilation units
+        return;
+      }
       const document = textDocuments.get(unit.uri) ?? event.document;
       this.process(unit, document.getText(), connection);
       unit.requestCaches.revalidateAll({ connection, unit });

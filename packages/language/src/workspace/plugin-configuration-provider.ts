@@ -52,6 +52,11 @@ export interface ProcessGroup {
 
 class PluginConfigurationProvider {
   /**
+   * Prebuilt list of glob patterns for library file matching.
+   */
+  private libFileGlobPatterns: string[] | undefined;
+
+  /**
    * Map of program configs, keyed by their entry program
    * These correlate to the entry point of a compile unit
    */
@@ -89,6 +94,50 @@ class PluginConfigurationProvider {
 
     // set the workspace path
     this.workspacePath = workspacePath;
+  }
+
+  /**
+   * Builds and saves the glob patterns for library file matching.
+   */
+  private buildLibFileGlobPatterns(): void {
+    const patterns: string[] = [];
+    // Normalize workspace path for URI prefix
+    let wsPrefix = this.workspacePath;
+    if (wsPrefix && !wsPrefix.endsWith("/")) {
+      wsPrefix += "/";
+    }
+    for (const processGroup of this.processGroupConfigs.values()) {
+      const libs = processGroup.libs || [];
+      const extensions = processGroup["include-extensions"] || [];
+      for (let lib of libs) {
+        lib = lib.replace(/[\\/]+$/, "");
+        for (const ext of extensions) {
+          patterns.push(`${wsPrefix}${lib}/*${ext}`);
+        }
+      }
+    }
+    this.libFileGlobPatterns = patterns;
+  }
+
+  /**
+   * Checks if the given file path matches any known library file pattern
+   * Patterns are memoized and rebuilt when process group configs change.
+   * @param filePath The file path to check for lib membership
+   * @returns true if the file path matches any lib file pattern, false otherwise
+   */
+  public isLibFileCandidate(filePath: string): boolean {
+    if (!this.libFileGlobPatterns) {
+      this.buildLibFileGlobPatterns();
+    }
+    const patterns = this.libFileGlobPatterns || [];
+    for (const pattern of patterns) {
+      // normalize a bit
+      filePath = filePath.replace(/[\\/]+$/, "");
+      if (minimatch(filePath, pattern, { nocase: true })) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -239,6 +288,7 @@ class PluginConfigurationProvider {
       this.processGroupConfigs.set(config.name, config);
     }
     this.postProcessGroupConfigs();
+    this.libFileGlobPatterns = undefined;
   }
 
   /**
