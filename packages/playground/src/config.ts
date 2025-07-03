@@ -110,7 +110,7 @@ export const configure = async (
             languages: [
               {
                 id: "pli",
-                extensions: [".pli"],
+                extensions: [".pli",".pl1",".inc"],
                 aliases: ["PL/I", "pli"],
                 configuration: "./configuration.json",
               },
