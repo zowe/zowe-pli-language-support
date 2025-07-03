@@ -110,8 +110,8 @@ export class SymbolTable {
     this.nodeLookup.set(node.node, node);
   }
 
-  allDistinctSymbols(_qualifiedName: string[]): QualifiedSyntaxNode[] {
-    const qualifiedName = _qualifiedName.map(this.getSymbolName.bind(this));
+  allDistinctSymbols(rawQualifiedName: string[]): QualifiedSyntaxNode[] {
+    const qualifiedName = rawQualifiedName.map(this.getSymbolName.bind(this));
 
     const map = new Map<string, QualifiedSyntaxNode[]>();
     for (const [name, symbols] of this.symbols.entriesGroupedByKey()) {
@@ -152,9 +152,9 @@ export class SymbolTable {
   }
 
   getExplicitSymbols(
-    _qualifiedName: readonly string[],
+    rawQualifiedName: readonly string[],
   ): readonly QualifiedSyntaxNode[] | undefined {
-    const qualifiedName = _qualifiedName.map(this.getSymbolName.bind(this));
+    const qualifiedName = rawQualifiedName.map(this.getSymbolName.bind(this));
     const [name] = qualifiedName;
     if (!name) {
       return undefined;
@@ -168,9 +168,9 @@ export class SymbolTable {
   }
 
   getImplicitSymbols(
-    _qualifiedName: readonly string[],
+    rawQualifiedName: readonly string[],
   ): readonly QualifiedSyntaxNode[] | undefined {
-    const qualifiedName = _qualifiedName.map(this.getSymbolName.bind(this));
+    const qualifiedName = rawQualifiedName.map(this.getSymbolName.bind(this));
     const [name] = qualifiedName;
     if (!name) {
       return undefined;

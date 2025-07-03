@@ -157,8 +157,8 @@ export class MultiMap<K, V> {
   }
 
   extend(other: MultiMap<K, V>): this {
-    for (const [key, value] of other.entries()) {
-      this.add(key, value);
+    for (const [key, values] of other.entriesGroupedByKey()) {
+      this.addAll(key, values);
     }
 
     return this;
