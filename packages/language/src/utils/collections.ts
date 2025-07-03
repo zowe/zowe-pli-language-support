@@ -123,19 +123,12 @@ export class MultiMap<K, V> {
   }
 
   /**
-   * Returns an iterator of key, value pairs for every entry in the map.
-   */
-  [Symbol.iterator](): Iterator<[K, V]> {
-    return this.entries();
-  }
-
-  /**
    * Returns a stream of key, value pairs for every entry in the map.
    */
-  entries(): MapIterator<[K, V]> {
-    return this.map
-      .entries()
-      .flatMap(([key, array]) => array.map((value) => [key, value] as [K, V]));
+  entries(): [K, V][] {
+    return Array.from(this.map.entries(), ([key, array]) =>
+      array.map((value) => [key, value] as [K, V]),
+    ).flat();
   }
 
   /**
@@ -161,5 +154,13 @@ export class MultiMap<K, V> {
    */
   entriesGroupedByKey(): MapIterator<[K, V[]]> {
     return this.map.entries();
+  }
+
+  extend(other: MultiMap<K, V>): this {
+    for (const [key, values] of other.entriesGroupedByKey()) {
+      this.addAll(key, values);
+    }
+
+    return this;
   }
 }

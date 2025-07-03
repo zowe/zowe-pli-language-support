@@ -43,11 +43,11 @@ export function generateCompletionItems(
   if (followElement.kind === FollowKind.LocalReference) {
     const symbols = scope.allDistinctSymbols([]);
     for (const symbol of symbols) {
-      if (symbol.name) {
+      if (symbol.rawName) {
         items.push({
-          label: symbol.name,
+          label: symbol.rawName,
           kind: getCompletionKind(symbol.node),
-          text: symbol.name,
+          text: symbol.rawName,
         });
       }
     }
@@ -59,11 +59,11 @@ export function generateCompletionItems(
     const qualifiedName = getQualifiedName(ref);
     const symbols = scope.allDistinctSymbols(qualifiedName);
     for (const symbol of symbols) {
-      if (symbol.name) {
+      if (symbol.rawName) {
         items.push({
-          label: symbol.name,
+          label: symbol.rawName,
           kind: getCompletionKind(symbol.node),
-          text: symbol.name,
+          text: symbol.rawName,
         });
       }
     }

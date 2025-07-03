@@ -11,6 +11,8 @@
 
 import { Token } from "../parser/tokens";
 import type { SyntaxNode } from "../syntax-tree/ast";
+import { CompilationUnit } from "../workspace/compilation-unit";
+import { getSymbolName } from "./util";
 
 /**
  * Always take full qualification over partial qualification.
@@ -36,8 +38,9 @@ export class QualifiedSyntaxNode {
   public isRedeclared: boolean | undefined = undefined;
 
   private constructor(
-    public token: Token,
-    public node: SyntaxNode,
+    public readonly token: Token,
+    public readonly node: SyntaxNode,
+    private readonly unit: CompilationUnit,
     options: {
       parent?: QualifiedSyntaxNode | null;
       level?: number;
@@ -53,12 +56,13 @@ export class QualifiedSyntaxNode {
    * A qualified syntax node that is explicitly declared. E.g.: `DCL 1 A;` or the 'B' in `DCL 1 A, 2 B;`
    */
   static createExplicit(
+    unit: CompilationUnit,
     token: Token,
     node: SyntaxNode,
     parent: QualifiedSyntaxNode | null = null,
     level: number = 1,
   ): QualifiedSyntaxNode {
-    return new QualifiedSyntaxNode(token, node, {
+    return new QualifiedSyntaxNode(token, node, unit, {
       parent,
       level,
     });
@@ -67,18 +71,36 @@ export class QualifiedSyntaxNode {
   /**
    * A qualified syntax node that is implicitly declared. E.g.: `A = 123;` or the 'B' in `A, B = 123;`
    */
-  static createImplicit(token: Token, node: SyntaxNode): QualifiedSyntaxNode {
-    return new QualifiedSyntaxNode(token, node, {
+  static createImplicit(
+    unit: CompilationUnit,
+    token: Token,
+    node: SyntaxNode,
+  ): QualifiedSyntaxNode {
+    return new QualifiedSyntaxNode(token, node, unit, {
       isImplicit: true,
     });
   }
 
+  /**
+   * The name of the node after compilation option case transformations.
+   */
   get name(): string {
+    return getSymbolName(this.unit, this.rawName);
+  }
+
+  /**
+   * The raw name of the node, before compilation option case transformations.
+   */
+  get rawName(): string {
     return this.token?.image ?? "";
   }
 
   getParent(): QualifiedSyntaxNode | null {
     return this.parent;
+  }
+
+  private getSymbolName(name: string) {
+    return getSymbolName(this.unit, name);
   }
 
   /**
@@ -92,8 +114,10 @@ export class QualifiedSyntaxNode {
    * PUT (A.C);   // `C` has `PartialQualification`
    * ```
    */
-  getQualificationStatus(qualifiers: readonly string[]): QualificationStatus {
-    const qualifier = qualifiers[0];
+  getQualificationStatus(_qualifiers: readonly string[]): QualificationStatus {
+    const qualifiers = _qualifiers.map(this.getSymbolName.bind(this));
+    const [qualifier] = qualifiers;
+
     if (!qualifier) {
       return QualificationStatus.NoQualification;
     }

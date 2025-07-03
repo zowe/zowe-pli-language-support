@@ -18,12 +18,12 @@ import {
   WildcardItem,
 } from "../syntax-tree/ast";
 import { PliValidationAcceptor } from "../validation/validator";
-import { SymbolTable } from "./symbol-table";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { MultiMap } from "../utils/collections";
 import { getNameToken } from "./tokens";
 import { LinkerErrorReporter } from "./error";
 import { Token } from "../parser/tokens";
+import { CompilationUnit } from "../workspace/compilation-unit";
 
 type UnrolledItem = {
   kind: SyntaxKind;
@@ -162,6 +162,7 @@ export class DeclaredItemParser {
   private reporter: LinkerErrorReporter;
 
   private constructor(
+    private readonly unit: CompilationUnit,
     items: readonly DeclaredItem[],
     accept: PliValidationAcceptor,
   ) {
@@ -169,14 +170,20 @@ export class DeclaredItemParser {
     this.reporter = new LinkerErrorReporter(accept);
   }
 
-  static parseAndAddToTable(
-    table: SymbolTable,
+  static parse(
+    unit: CompilationUnit,
     items: readonly DeclaredItem[],
     accept: PliValidationAcceptor,
-  ): void {
+  ): MultiMap<string, QualifiedSyntaxNode> {
+    const buffer = new MultiMap<string, QualifiedSyntaxNode>();
+    const onAdd = (name: string, node: QualifiedSyntaxNode) =>
+      buffer.add(name, node);
+
     // Use 0 as a default level to start the generation.
     // TODO: Maybe make this `null` to represent the root scope.
-    new DeclaredItemParser(items, accept).generate(table, null, 0);
+    new DeclaredItemParser(unit, items, accept).generate(null, 0, onAdd);
+
+    return buffer;
   }
 
   private peek(): UnrolledItem | undefined {
@@ -207,9 +214,9 @@ export class DeclaredItemParser {
   }
 
   private generate(
-    table: SymbolTable,
     parent: QualifiedSyntaxNode | null,
     parentLevel: number,
+    onAdd: (name: string, node: QualifiedSyntaxNode) => void,
   ): void {
     // Keep track of all nodes we've seen on the current level, for redeclaration detection.
     const nodes = new MultiMap<string, QualifiedSyntaxNode>();
@@ -250,6 +257,7 @@ export class DeclaredItemParser {
 
       // Otherwise, we can add the node to the symbol table.
       const node = QualifiedSyntaxNode.createExplicit(
+        this.unit,
         token,
         item.node,
         parent,
@@ -257,8 +265,8 @@ export class DeclaredItemParser {
       );
 
       nodes.add(name, node);
-      table.addSymbolDeclaration(name, node);
-      this.generate(table, node, level);
+      onAdd(name, node);
+      this.generate(node, level, onAdd);
     }
   }
 }
