@@ -110,20 +110,15 @@ export async function handleSharedWorkspace(
     const workspaceFiles: WorkspaceFile[] = JSON.parse(
       decompressFromEncodedURIComponent(encodedWorkspace),
     );
-    for (const [index, file] of workspaceFiles.entries()) {
+    for (const file of workspaceFiles) {
+      console.debug("Loading document", file.uri);
       const uri = await fileSystemProvider.addFileToWorkspace(
         file.uri,
         file.content,
       );
-      // Use the preview option to set the editor tab in the correct mode.
-      // preserveFocus also enforces sequential processing of the editor tabs,
-      // which prevents deferred loading of editor resources, which can cause
-      // issues with the virtual workspace fs operations.
-      await vscode.window.showTextDocument(uri, {
-        preview: false,
-        preserveFocus: true,
-      });
-      if (index === 0) {
+
+      // Open the first .pli file.
+      if (defaultUri === undefined && uri.path.endsWith(".pli")) {
         defaultUri = uri;
       }
     }
@@ -145,25 +140,24 @@ function getWorkspaceDocuments() {
 function createWorkspaceFiles(workspaceDocuments: vscode.TextDocument[]) {
   const workspaceFiles: WorkspaceFile[] = [];
   for (const doc of workspaceDocuments) {
+    console.debug("Saving document", doc.uri.path);
     const text = doc.getText();
     workspaceFiles.push({ uri: doc.uri.path, content: text });
   }
   return workspaceFiles;
 }
 
-export function deactivateExplorerContextMenu() {
-  const explorer = document.querySelector(
-    '.explorer-folders-view .monaco-list[role="tree"]',
-  );
-  if (explorer) {
-    explorer.addEventListener(
-      "contextmenu",
-      (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      },
-      true,
-    );
-  }
+export function redirectOutlineCancelReporting() {
+  // There is a bug that is reported by the outline in combination with the InMemoryFileSystemProvider.
+  // The issue is already reported and the outline works fine.
+  // To avoid spamming the console with the known issue, we redirect this to debug level.
+  // TODO ssmifi: Come back as soon as there is reasonable fix for https://github.com/TypeFox/monaco-languageclient/issues/935
+  window.addEventListener("unhandledrejection", (event) => {
+    const reason = event.reason;
+
+    if (reason?.name === "Canceled") {
+      console.debug("[Redirected VS Code Outline Cancel]", reason);
+      event.preventDefault();
+    }
+  });
 }

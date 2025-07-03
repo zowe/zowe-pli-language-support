@@ -15,6 +15,7 @@ export interface FileSystemProvider {
   readFileSync(uri: URI): string | undefined;
   fileExistsSync(uri: URI): boolean;
   writeFileSync(uri: URI, value: string): void;
+  deleteFileSync(uri: URI): void;
 
   /**
    * Synchronously find files matching a glob pattern
@@ -39,6 +40,10 @@ class _EmptyFileSystemProvider implements FileSystemProvider {
   }
 
   writeFileSync(_uri: URI, _value: string): void {
+    return;
+  }
+
+  deleteFileSync(_uri: URI): void {
     return;
   }
 
@@ -81,6 +86,13 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    */
   fileExistsSync(uri: URI): boolean {
     return this.files.has(uri.path);
+  }
+
+  /**
+   * Deletes a file from the virtualized file system
+   */
+  deleteFileSync(uri: URI): void {
+    this.files.delete(uri.path);
   }
 
   /**

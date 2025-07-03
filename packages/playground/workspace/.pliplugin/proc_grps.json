@@ -1,0 +1,17 @@
+{
+  "pgroups": [
+    {
+      "name": "default",
+      "compiler-options": [],
+      "libs": [
+        "lib"
+      ],
+      "copybook-extensions": [
+        ".pli",
+        ".pl1",
+        ".cpy",
+        ".inc"
+      ]
+    }
+  ]
+}

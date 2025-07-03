@@ -14,6 +14,7 @@ import { LogLevel } from "@codingame/monaco-vscode-api";
 import getKeybindingsServiceOverride from "@codingame/monaco-vscode-keybindings-service-override";
 import getMarkersServiceOverride from "@codingame/monaco-vscode-markers-service-override";
 import getExplorerServiceOverride from "@codingame/monaco-vscode-explorer-service-override";
+import getOutlineServiceOverride from "@codingame/monaco-vscode-outline-service-override";
 import { configureDefaultWorkerFactory } from "monaco-editor-wrapper/workers/workerLoaders";
 import type { WrapperConfig } from "monaco-editor-wrapper";
 import workerUrl from "./language-server?worker&url";
@@ -24,16 +25,15 @@ import textmateGrammar from "../../vscode-extension/syntaxes/pli.merged.json?raw
 
 export type ConfigResult = {
   wrapperConfig: WrapperConfig;
-  workspaceFile: vscode.Uri;
+  workspaceFileUri: vscode.Uri;
+  pliWorker: Worker;
 };
 
-export const configure = (htmlContainer?: HTMLElement): ConfigResult => {
+export const configure = async (
+  htmlContainer?: HTMLElement,
+): Promise<ConfigResult> => {
   // Should lie outside of the /workspace folder.
-  // TODO ssmifi: However, this leaves a warning marker at the workspace.
-  // Query monaco-languageclient to provide a prettier solution.
-  const workspaceFile = vscode.Uri.file(
-    "/home/.vscode/workspace.code-workspace",
-  );
+  const workspaceFileUri = vscode.Uri.file("/workspace.code-workspace");
 
   const extensionFilesOrContents = new Map<string, string | URL>();
   extensionFilesOrContents.set("/configuration.json", languageConfig);
@@ -53,6 +53,7 @@ export const configure = (htmlContainer?: HTMLElement): ConfigResult => {
         ...getKeybindingsServiceOverride(),
         ...getExplorerServiceOverride(),
         ...getMarkersServiceOverride(),
+        ...getOutlineServiceOverride(),
       },
       enableExtHostWorker: true,
       viewsConfig: {
@@ -74,7 +75,7 @@ export const configure = (htmlContainer?: HTMLElement): ConfigResult => {
             return true;
           },
           workspace: {
-            workspaceUri: workspaceFile,
+            workspaceUri: workspaceFileUri,
           },
         },
         configurationDefaults: {
@@ -149,7 +150,8 @@ export const configure = (htmlContainer?: HTMLElement): ConfigResult => {
 
   return {
     wrapperConfig,
-    workspaceFile,
+    workspaceFileUri,
+    pliWorker,
   };
 };
 
@@ -160,9 +162,9 @@ const viewsHtml = `<div id="workbench-container">
         </div>
         <div id="editorsDiv">
             <div id="editors"></div>
+            <div id="panel"></div>
         </div>
     </div>
-    <div id="panel"></div>
 </div>`;
 
 const htmlAugmentationInstructions = (

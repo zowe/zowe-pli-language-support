@@ -30,8 +30,10 @@ class NodeFileSystemProvider implements FileSystemProvider {
     return fs.existsSync(uri.fsPath);
   }
   writeFileSync(uri: URI, value: string): void {
-    // Do nothing for now.
-    // Todo (ssmifi): Should we throw an error here?
+    throw new Error("Not supported.");
+  }
+  deleteFileSync(uri: URI): void {
+    throw new Error("Not supported.");
   }
   findFilesByGlobSync(pattern: string): string[] {
     return glob.sync(pattern, {
