@@ -30,6 +30,7 @@ import {
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenDecoder } from "../src/language-server/semantic-token-decoder";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
+import { skippedCodeRanges } from "../src/language-server/skipped-code";
 
 export const DEFAULT_FILE_URI = "file:///main.pli";
 
@@ -484,6 +485,27 @@ export class TestBuilder {
     }
   }
 
+  expectSkippedCode(label: string) {
+    const ranges = this.getLabelRanges(label);
+
+    for (const file of Object.values(this.files)) {
+      const textDocument = file.textDocument;
+      const codeRanges = skippedCodeRanges(this.unit, textDocument);
+
+      const message = `Expected ${ranges.length} skipped code ranges but received ${codeRanges.length} for label "${label}" (${this.createLabelRangeMessage(label)})`;
+      expect(codeRanges, message).toHaveLength(ranges.length);
+
+      for (let i = 0; i < ranges.length; i++) {
+        const startPosition = textDocument.positionAt(ranges[i][0]);
+        const endPosition = textDocument.positionAt(ranges[i][1]);
+        const messageStart = `Expected skipped code to start at ${formatPosition(startPosition)} but received ${formatPosition(codeRanges[i].start)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
+        expect(codeRanges[i].start, messageStart).toEqual(startPosition);
+        const messageEnd = `Expected skipped code to end at ${formatPosition(endPosition)} but received ${formatPosition(codeRanges[i].end)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
+        expect(codeRanges[i].end, messageEnd).toEqual(endPosition);
+      }
+    }
+  }
+
   private _expectCompletions(
     label: string,
     check: (completionResult: string[]) => void,
@@ -586,6 +608,10 @@ export class TestBuilder {
 
     return `${uriOverride}:${line + lineOffset}:${character + characterOffset}`;
   }
+}
+
+function formatPosition(position: Position): string {
+  return `${position.line}:${position.character}`;
 }
 
 function offsetAt(text: string, start: number): Position {

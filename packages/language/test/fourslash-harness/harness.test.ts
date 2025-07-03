@@ -63,6 +63,7 @@ function createTestingHarnessImplementation(
     },
     preprocessor: {
       expectTokens: listen("preprocessor.expectTokens"),
+      expectSkippedCodeAt: listen("preprocessor.expectSkippedCodeAt"),
     },
     code: HarnessCodes,
     constants: HarnessConstants,

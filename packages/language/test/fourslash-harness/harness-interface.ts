@@ -108,6 +108,11 @@ export interface HarnessTesterInterface {
      * If a string is provided, it is piped through the lexer and the resulting tokens are expected.
      */
     expectTokens(textOrTokens: string | string[]): void;
+    /**
+     * Expect that the code is skipped at the given range.
+     * @param label The label to expect the skipped code at.
+     */
+    expectSkippedCodeAt(label: Label): void;
   };
 
   code: {

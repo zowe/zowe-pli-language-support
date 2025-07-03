@@ -17,7 +17,7 @@ declare global {
   var semanticTokens: HarnessTesterInterface["semanticTokens"];
   var completion: HarnessTesterInterface["completion"];
   var hover: HarnessTesterInterface["hover"];
+  var preprocessor: HarnessTesterInterface["preprocessor"];
   var code: HarnessTesterInterface["code"];
   var constants: HarnessTesterInterface["constants"];
-  var preprocessor: HarnessTesterInterface["preprocessor"];
 }
