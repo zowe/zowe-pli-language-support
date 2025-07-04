@@ -160,7 +160,7 @@ export interface StringInstruction {
 export interface ReferenceItemInstruction {
   kind: InstructionKind.ReferenceItem;
   variable: string;
-  token: Token | null;
+  reference: ast.Reference | null;
   args: ExpressionInstruction[];
 }
 
@@ -223,6 +223,7 @@ export enum VariableVisibility {
 export interface DeclareInstruction {
   kind: InstructionKind.Declare;
   name: string;
+  node: ast.SyntaxNode | null;
   type: DeclaredType;
   mode: ScanMode;
   visibility: VariableVisibility | null;
@@ -233,12 +234,14 @@ export function createDeclareInstruction(
   type: DeclaredType,
   mode: ScanMode,
   visibility?: VariableVisibility | null,
+  node: ast.SyntaxNode | null = null,
 ): DeclareInstruction {
   return {
     kind: InstructionKind.Declare,
     name,
     type,
     mode,
+    node,
     visibility: visibility ?? null,
   };
 }

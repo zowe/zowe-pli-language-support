@@ -19,7 +19,7 @@ import {
   CompilerOptionsProcessorResult,
 } from "./compiler-options-processor";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { Statement } from "../syntax-tree/ast";
+import { Reference, Statement } from "../syntax-tree/ast";
 import { Range } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { recursivelySetContainer } from "../linking/symbol-table";
@@ -39,6 +39,7 @@ export interface LexerResult {
   statements: Statement[];
   fileTokens: Record<string, Token[]>;
   evaluationResults: EvaluationResults;
+  tokenReferences: Reference[];
 }
 
 /**
@@ -90,9 +91,7 @@ export class PliLexer {
         ...compilerOptionsResult.result.tokens,
       );
     }
-    if (output.errors) {
-      errors.push(...output.errors);
-    }
+    errors.push(...output.errors);
     return {
       all: output.all,
       compilerOptions: compilerOptionsResult,
@@ -100,6 +99,7 @@ export class PliLexer {
       statements,
       fileTokens: output.fileTokens,
       evaluationResults: output.evaluationResults,
+      tokenReferences: output.references,
     };
   }
 }

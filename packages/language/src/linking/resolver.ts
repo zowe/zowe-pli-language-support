@@ -107,6 +107,10 @@ export class ReferencesCache {
     this.list.push(reference);
   }
 
+  addAll(references: Reference[]): void {
+    this.list.push(...references);
+  }
+
   addInverse(reference: Reference): void {
     if (reference.node) {
       let list = this.reverseMap.get(reference.node);

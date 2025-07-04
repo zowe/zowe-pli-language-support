@@ -35,4 +35,10 @@ describe("Find references", () => {
      2 <|2><|2:B|> CHAR(8) VALUE("B");
  PUT(<|2:B|>);
  PUT(<|1:A|><|1>.<|2:B|>);`));
+
+  test("Can find references of processor variables", () =>
+    expectReferences(`
+ %DECLARE <|1><|1:ABC|> CHARACTER;
+ %<|1:ABC|> = 'PAY_ROLL';
+ PUT(<|1:ABC|>);`));
 });
