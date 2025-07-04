@@ -87,6 +87,7 @@ export function generateSymbolTable(compilationUnit: CompilationUnit) {
 export function link(compilationUnit: CompilationUnit): ReferencesCache {
   const resolveDiagnostics = resolveReferences(compilationUnit);
   const linkingDiagnostics = linkingErrorsToDiagnostics(
+    compilationUnit,
     compilationUnit.referencesCache,
     compilationUnit.scopeCaches,
   );

@@ -167,7 +167,7 @@ export class DeclaredItemParser {
     accept: PliValidationAcceptor,
   ) {
     this.items = unrollFactorized(items);
-    this.reporter = new LinkerErrorReporter(accept);
+    this.reporter = new LinkerErrorReporter(unit, accept);
   }
 
   static parse(

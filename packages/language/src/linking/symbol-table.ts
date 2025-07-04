@@ -164,7 +164,7 @@ export class SymbolTable {
       .get(name)
       .filter((symbol) => !symbol.isImplicit);
 
-    return this.getQualifiedSymbols(qualifiedName, symbols);
+    return getQualifiedSymbols(qualifiedName, symbols);
   }
 
   getImplicitSymbols(
@@ -180,30 +180,30 @@ export class SymbolTable {
       .get(name)
       .filter((symbol) => symbol.isImplicit);
 
-    return this.getQualifiedSymbols(qualifiedName, symbols);
+    return getQualifiedSymbols(qualifiedName, symbols);
   }
+}
 
-  // Return all qualified symbols
-  private getQualifiedSymbols(
-    qualifiedName: readonly string[],
-    symbols: readonly QualifiedSyntaxNode[],
-  ): readonly QualifiedSyntaxNode[] | undefined {
-    const qualifiedSymbols = groupBy(symbols, (symbol) =>
-      symbol.getQualificationStatus(qualifiedName),
-    );
+// Return all qualified symbols
+function getQualifiedSymbols(
+  qualifiedName: readonly string[],
+  symbols: readonly QualifiedSyntaxNode[],
+): readonly QualifiedSyntaxNode[] | undefined {
+  const qualifiedSymbols = groupBy(symbols, (symbol) =>
+    symbol.getQualificationStatus(qualifiedName),
+  );
 
-    const fullQualification =
-      qualifiedSymbols[QualificationStatus.FullQualification];
-    const partialQualification =
-      qualifiedSymbols[QualificationStatus.PartialQualification];
+  const fullQualification =
+    qualifiedSymbols[QualificationStatus.FullQualification];
+  const partialQualification =
+    qualifiedSymbols[QualificationStatus.PartialQualification];
 
-    if (fullQualification) {
-      return fullQualification;
-    } else if (partialQualification) {
-      return partialQualification;
-    } else {
-      return undefined;
-    }
+  if (fullQualification) {
+    return fullQualification;
+  } else if (partialQualification) {
+    return partialQualification;
+  } else {
+    return undefined;
   }
 }
 
@@ -214,7 +214,7 @@ const RedeclarationPriority = [SyntaxKind.LabelPrefix];
  *
  * Caution: side effect of this function is that the `isRedeclared` property is set on all symbols.
  */
-export function assignRedeclaredSymbols(scopeCache: ScopeCache) {
+function assignRedeclaredSymbols(scopeCache: ScopeCache) {
   for (const scope of scopeCache.values()) {
     const symbolsGroups = Array.from(
       scope.symbolTable.symbols.entriesGroupedByKey(),
@@ -263,7 +263,7 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   const validationBuffer = new PliValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
 
-  const preprocessorScope = new Scope(unit, unit.rootPreprocessorScope);
+  const preprocessorScope = Scope.createChild(unit.rootPreprocessorScope);
 
   iterateSymbolTable(unit.preprocessorAst, preprocessorScope, {
     unit,
@@ -277,7 +277,7 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
 
   // Generate a new scope
   // Otherwise we will add symbols to the root scope (which contains builtins)
-  const regularScope = new Scope(unit, unit.rootScope);
+  const regularScope = Scope.createChild(unit.rootScope);
 
   iterateSymbolTable(unit.ast, regularScope, {
     unit,
@@ -327,7 +327,7 @@ const iterateSymbolTable = (
    */
   if (node.kind === SyntaxKind.ProcedureStatement) {
     // Create a new scope for the procedure statement.
-    const scope = new Scope(context.unit, parentScope);
+    const scope = Scope.createChild(parentScope);
     const procedure: ProcedureStatement = {
       ...node,
       end: null,

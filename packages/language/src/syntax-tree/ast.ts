@@ -1965,6 +1965,7 @@ export interface ReferenceItem extends AstNode {
   kind: SyntaxKind.ReferenceItem;
   ref: Reference<NamedElement> | null;
   dimensions: Dimensions | null;
+  token: Token | null;
 }
 export function createReferenceItem(): ReferenceItem {
   return {
@@ -1972,6 +1973,7 @@ export function createReferenceItem(): ReferenceItem {
     container: null,
     ref: null,
     dimensions: null,
+    token: null,
   };
 }
 export interface ReinitStatement extends AstNode {
