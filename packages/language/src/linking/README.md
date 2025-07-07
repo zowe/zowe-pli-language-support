@@ -4,7 +4,12 @@ The linker handles connecting symbols to their definitions, to later be used in 
 
 ## The Linker Algorithm
 
-The linker works in two steps: (1) symbol table and scope creation and (2) symbol resolution. The symbol table and scope creation step handles extracting declarations from AST nodes (e.g., from variable declarations, implicit assignments, procedure declarations, and do-loop constructs) and filing them into the correct scope. Certain constructs requires additional handling, such as _unrolling_.
+The linker works in two steps:
+
+1. symbol table and scope creation
+2. symbol resolution
+
+The symbol table and scope creation step handles extracting declarations from AST nodes (e.g., from variable declarations, implicit assignments, procedure declarations, and do-loop constructs) and filing them into the correct scope. Certain constructs requires additional handling, such as _unrolling_.
 
 ### Symbol Table and Scope Creation
 
