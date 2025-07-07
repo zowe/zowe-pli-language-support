@@ -1838,15 +1838,13 @@ export interface ProcedureCallArgs extends AstNode {
 }
 export interface ProcedureParameter extends AstNode {
   kind: SyntaxKind.ProcedureParameter;
-  name: string | null;
-  nameToken: Token | null;
+  ref: Reference<NamedElement> | null;
 }
 export function createProcedureParameter(): ProcedureParameter {
   return {
     kind: SyntaxKind.ProcedureParameter,
     container: null,
-    name: null,
-    nameToken: null,
+    ref: null,
   };
 }
 export interface ProcedureStatement extends AstNode {

@@ -35,7 +35,7 @@ export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_h
   if (item) {
     const parameterNames = new Set(
       procedureStatement.parameters.map((p) =>
-        p.name ? normalizeIdentifier(p.name) : p.name,
+        p.ref?.text ? normalizeIdentifier(p.ref.text) : p.ref?.text,
       ),
     );
 

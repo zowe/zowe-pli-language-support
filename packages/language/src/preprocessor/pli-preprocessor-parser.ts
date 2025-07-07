@@ -283,8 +283,7 @@ export class PliPreprocessorParser {
           CstNodeKind.ProcedureParameter_Id,
           PreprocessorTokens.Id,
         );
-        parameter.name = nameToken.image;
-        parameter.nameToken = nameToken;
+        parameter.ref = ast.createReference(parameter, nameToken);
         statement.parameters.push(parameter);
       } while (
         state.tryConsume(

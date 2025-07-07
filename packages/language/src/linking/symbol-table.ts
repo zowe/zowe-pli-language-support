@@ -13,17 +13,15 @@ import { Diagnostic } from "../language-server/types";
 import {
   DeclareStatement,
   Package,
+  ProcedureParameter,
   ProcedureStatement,
-  ReferenceItem,
+  Reference,
   SyntaxKind,
   SyntaxNode,
 } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { groupBy } from "../utils/common";
-import {
-  PliValidationAcceptor,
-  PliValidationBuffer,
-} from "../validation/validator";
+import { PliValidationBuffer } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache, StatementOrderCache } from "./resolver";
 import { getReference } from "./tokens";
@@ -36,6 +34,7 @@ import { MultiMap } from "../utils/collections";
 import { Scope, ScopeCache } from "./scope";
 import { Token } from "../parser/tokens";
 import { getSymbolName } from "./util";
+import { LinkerErrorReporter } from "./error";
 
 function nonNull<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
@@ -58,43 +57,64 @@ export class SymbolTable {
     return getSymbolName(this.unit, name);
   }
 
-  addImplicitDeclarationStatement(
-    refs: ReferenceItem[],
-    _acceptor: PliValidationAcceptor,
-  ): void {
-    const candidates = refs.map(({ ref }) => ref).filter(nonNull);
+  addImplicitDeclaration(
+    text: string,
+    token: Token,
+    node: SyntaxNode,
+    _reporter: LinkerErrorReporter,
+  ) {
+    this.addSymbolDeclaration(
+      text,
+      QualifiedSyntaxNode.createImplicit(this.unit, token, node),
+    );
+  }
 
-    for (const candidate of candidates) {
-      this.addSymbolDeclaration(
-        candidate.text,
-        QualifiedSyntaxNode.createImplicit(
-          this.unit,
-          candidate.token,
-          candidate.owner,
-        ),
-      );
-    }
+  addImplicitDeclarationByReference(
+    ref: Reference,
+    _reporter: LinkerErrorReporter,
+  ): void {
+    this.addImplicitDeclaration(ref.text, ref.token, ref.owner, _reporter);
   }
 
   addExplicitDeclarationStatement(
     declaration: DeclareStatement,
-    acceptor: PliValidationAcceptor,
+    reporter: LinkerErrorReporter,
   ): void {
     const parsedEntries = DeclaredItemParser.parse(
       this.unit,
       declaration.items,
-      acceptor,
+      reporter,
     );
     for (const [name, node] of parsedEntries.entries()) {
       this.addSymbolDeclaration(name, node);
     }
   }
 
+  /**
+   * Adds an explicit declaration of a procedure parameter to the symbol table.
+   *
+   * This is used to dynamically create explicit declarations for implicitly declared
+   * procedure parameters who, to ensure that symbol resolutions inside this procedure scope
+   * will always link to this parameter symbol.
+   *
+   * @param reference - The reference to the procedure parameter.
+   */
+  addProcedureParameter(reference: Reference<ProcedureParameter>) {
+    this.addSymbolDeclaration(
+      reference.text,
+      QualifiedSyntaxNode.createExplicit(
+        this.unit,
+        reference.token,
+        reference.owner,
+      ),
+    );
+  }
+
   addLabelStatement(
     node: SyntaxNode,
     name: string | null,
     nameToken: Token | null,
-    _acceptor: PliValidationAcceptor,
+    _reporter: LinkerErrorReporter,
   ) {
     if (!name || !nameToken) {
       return;
@@ -262,13 +282,16 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   recursivelySetContainer(unit.ast);
 
   const validationBuffer = new PliValidationBuffer();
-  const acceptor = validationBuffer.getAcceptor();
+  const reporter = new LinkerErrorReporter(
+    unit,
+    validationBuffer.getAcceptor(),
+  );
 
   const preprocessorScope = Scope.createChild(unit.rootPreprocessorScope);
 
   iterateSymbolTable(unit.preprocessorAst, preprocessorScope, {
     unit,
-    acceptor,
+    reporter,
     scopeCache: scopeCaches.preprocessor,
     referencesCache,
     statementOrderCache,
@@ -282,7 +305,7 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
 
   iterateSymbolTable(unit.ast, regularScope, {
     unit,
-    acceptor,
+    reporter,
     scopeCache: scopeCaches.regular,
     referencesCache,
     statementOrderCache,
@@ -325,7 +348,7 @@ type IterateSymbolTableContext = {
   unit: CompilationUnit;
   scopeCache: ScopeCache;
   referencesCache: ReferencesCache;
-  acceptor: PliValidationAcceptor;
+  reporter: LinkerErrorReporter;
   statementOrderCache: StatementOrderCache;
 };
 
@@ -357,29 +380,44 @@ const iterateSymbolTable = (
         node,
         node.name,
         node.nameToken,
-        context.acceptor,
+        context.reporter,
       );
       break;
     // E.g. `DCL A FIXED;`
     case SyntaxKind.DeclareStatement:
       parentScope.symbolTable.addExplicitDeclarationStatement(
         node,
-        context.acceptor,
+        context.reporter,
       );
+      break;
+    case SyntaxKind.ProcedureParameter:
+      if (node.ref) {
+        parentScope.symbolTable.addImplicitDeclarationByReference(
+          node.ref,
+          context.reporter,
+        );
+      }
       break;
     // E.g. `DO I = 1 TO 300 BY 100; END DO;`
     case SyntaxKind.DoType3:
-      parentScope.symbolTable.addImplicitDeclarationStatement(
-        [node.variable].filter(nonNull),
-        context.acceptor,
-      );
+      if (node.variable?.ref) {
+        parentScope.symbolTable.addImplicitDeclarationByReference(
+          node.variable.ref,
+          context.reporter,
+        );
+      }
       break;
-    // E.g. `A = 1;`
+    // E.g. `A, B = 1;`
     case SyntaxKind.AssignmentStatement:
-      parentScope.symbolTable.addImplicitDeclarationStatement(
-        node.refs.map((ref) => ref.element?.element).filter(nonNull),
-        context.acceptor,
-      );
+      const refs = node.refs
+        .map((ref) => ref.element?.element?.ref)
+        .filter(nonNull);
+      for (const ref of refs) {
+        parentScope.symbolTable.addImplicitDeclarationByReference(
+          ref,
+          context.reporter,
+        );
+      }
       break;
     // Any statement is added to the statement order cache
     // to keep track of the order of statements.
