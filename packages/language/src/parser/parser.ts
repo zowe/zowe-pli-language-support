@@ -7930,8 +7930,7 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ProcedureParameter_Id);
-      element.name = token.image;
-      element.nameToken = token;
+      element.ref = ast.createReference(element, token);
     });
 
     return this.pop<ast.ProcedureParameter>();

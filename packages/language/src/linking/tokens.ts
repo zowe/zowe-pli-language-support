@@ -61,6 +61,7 @@ export function isReferenceToken(kind: CstNodeKind | undefined): boolean {
     case CstNodeKind.LabelReference_LabelRef:
     case CstNodeKind.ReferenceItem_Ref:
     case CstNodeKind.Exports_Procedure:
+    case CstNodeKind.ProcedureParameter_Id:
       return true;
   }
   return false;
@@ -80,6 +81,8 @@ export function isIncludeItemToken(kind: CstNodeKind | undefined): boolean {
  */
 export function getReference(node: SyntaxNode): Reference | undefined {
   switch (node.kind) {
+    case SyntaxKind.ProcedureParameter:
+      return node.ref ?? undefined;
     case SyntaxKind.HandleAttribute:
       return node.type ?? undefined;
     case SyntaxKind.LabelReference:

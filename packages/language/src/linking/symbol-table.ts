@@ -14,7 +14,7 @@ import {
   DeclareStatement,
   Package,
   ProcedureStatement,
-  ReferenceItem,
+  Reference,
   SyntaxKind,
   SyntaxNode,
 } from "../syntax-tree/ast";
@@ -58,22 +58,23 @@ export class SymbolTable {
     return getSymbolName(this.unit, name);
   }
 
-  addImplicitDeclarationStatement(
-    refs: ReferenceItem[],
+  addImplicitDeclaration(
+    text: string,
+    token: Token,
+    node: SyntaxNode,
+    _acceptor: PliValidationAcceptor,
+  ) {
+    this.addSymbolDeclaration(
+      text,
+      QualifiedSyntaxNode.createImplicit(this.unit, token, node),
+    );
+  }
+
+  addImplicitDeclarationByReference(
+    ref: Reference,
     _acceptor: PliValidationAcceptor,
   ): void {
-    const candidates = refs.map(({ ref }) => ref).filter(nonNull);
-
-    for (const candidate of candidates) {
-      this.addSymbolDeclaration(
-        candidate.text,
-        QualifiedSyntaxNode.createImplicit(
-          this.unit,
-          candidate.token,
-          candidate.owner,
-        ),
-      );
-    }
+    this.addImplicitDeclaration(ref.text, ref.token, ref.owner, _acceptor);
   }
 
   addExplicitDeclarationStatement(
@@ -367,19 +368,34 @@ const iterateSymbolTable = (
         context.acceptor,
       );
       break;
+    case SyntaxKind.ProcedureParameter:
+      if (node.ref) {
+        parentScope.symbolTable.addImplicitDeclarationByReference(
+          node.ref,
+          context.acceptor,
+        );
+      }
+      break;
     // E.g. `DO I = 1 TO 300 BY 100; END DO;`
     case SyntaxKind.DoType3:
-      parentScope.symbolTable.addImplicitDeclarationStatement(
-        [node.variable].filter(nonNull),
-        context.acceptor,
-      );
+      if (node.variable?.ref) {
+        parentScope.symbolTable.addImplicitDeclarationByReference(
+          node.variable?.ref,
+          context.acceptor,
+        );
+      }
       break;
-    // E.g. `A = 1;`
+    // E.g. `A, B = 1;`
     case SyntaxKind.AssignmentStatement:
-      parentScope.symbolTable.addImplicitDeclarationStatement(
-        node.refs.map((ref) => ref.element?.element).filter(nonNull),
-        context.acceptor,
-      );
+      const refs = node.refs
+        .map((ref) => ref.element?.element?.ref)
+        .filter(nonNull);
+      for (const ref of refs) {
+        parentScope.symbolTable.addImplicitDeclarationByReference(
+          ref,
+          context.acceptor,
+        );
+      }
       break;
     // Any statement is added to the statement order cache
     // to keep track of the order of statements.
