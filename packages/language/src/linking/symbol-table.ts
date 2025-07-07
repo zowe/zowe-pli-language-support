@@ -380,7 +380,7 @@ const iterateSymbolTable = (
     case SyntaxKind.DoType3:
       if (node.variable?.ref) {
         parentScope.symbolTable.addImplicitDeclarationByReference(
-          node.variable?.ref,
+          node.variable.ref,
           context.acceptor,
         );
       }
