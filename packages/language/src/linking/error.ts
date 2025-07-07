@@ -54,7 +54,7 @@ function getQualifiedReferenceRange(
     case SyntaxKind.ReferenceItem:
       return getQualifiedReferenceRange(node.container);
     case SyntaxKind.MemberCall:
-      const token = node.element?.token;
+      const token = node.element?.ref?.token;
       if (!token) {
         return undefined;
       }

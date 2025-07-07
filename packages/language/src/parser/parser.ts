@@ -7924,7 +7924,6 @@ export class PliParser extends AbstractParser {
       container: null,
       ref: null,
       dimensions: null,
-      token: null,
     };
   }
 
@@ -7934,7 +7933,6 @@ export class PliParser extends AbstractParser {
     this.CONSUME_ASSIGN(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ReferenceItem_Ref);
       element.ref = ast.createReference(element, token);
-      element.token = token;
     });
     this.OPTION(() => {
       this.SUBRULE_ASSIGN(this.Dimensions, {
