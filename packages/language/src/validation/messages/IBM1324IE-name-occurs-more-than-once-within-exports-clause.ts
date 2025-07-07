@@ -19,8 +19,8 @@ export function IBM1324IE_name_occurs_more_than_once_within_exports_clause(
 ): void {
   const set = new Set<string>();
   exports.procedures.forEach((procedure) => {
-    if (!set.has(procedure.name ?? "")) {
-      set.add(procedure.name ?? "");
+    if (!set.has(procedure.reference?.text ?? "")) {
+      set.add(procedure.reference?.text ?? "");
     } else {
       accept(
         Severity.E,

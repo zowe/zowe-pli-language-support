@@ -1298,7 +1298,6 @@ export interface ExitStatement extends AstNode {
 }
 export interface ExportsItem extends AstNode {
   kind: SyntaxKind.ExportsItem;
-  name: string | null;
   reference: Reference<ProcedureStatement> | null;
 }
 export interface Exports extends AstNode {
@@ -1972,7 +1971,6 @@ export interface ReferenceItem extends AstNode {
   kind: SyntaxKind.ReferenceItem;
   ref: Reference<NamedElement> | null;
   dimensions: Dimensions | null;
-  token: Token | null;
 }
 export function createReferenceItem(): ReferenceItem {
   return {
@@ -1980,7 +1978,6 @@ export function createReferenceItem(): ReferenceItem {
     container: null,
     ref: null,
     dimensions: null,
-    token: null,
   };
 }
 export interface ReinitStatement extends AstNode {

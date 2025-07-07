@@ -190,7 +190,6 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.ExportsItem,
       container: null,
       reference: null,
-      name: null,
     };
   }
 
@@ -200,7 +199,6 @@ export class PliParser extends AbstractParser {
     this.CONSUME_ASSIGN1(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.Exports_Procedure);
       element.reference = ast.createReference(element, token);
-      element.name = token.image;
     });
 
     return this.pop<ast.ExportsItem>();
@@ -7944,7 +7942,6 @@ export class PliParser extends AbstractParser {
       container: null,
       ref: null,
       dimensions: null,
-      token: null,
     };
   }
 
@@ -7954,7 +7951,6 @@ export class PliParser extends AbstractParser {
     this.CONSUME_ASSIGN(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ReferenceItem_Ref);
       element.ref = ast.createReference(element, token);
-      element.token = token;
     });
     this.OPTION(() => {
       this.SUBRULE_ASSIGN(this.Dimensions, {
