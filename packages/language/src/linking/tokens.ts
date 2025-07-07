@@ -37,6 +37,8 @@ export function isNameToken(kind: CstNodeKind | undefined): boolean {
  */
 export function getNameToken(node: SyntaxNode): Token | undefined {
   switch (node.kind) {
+    case SyntaxKind.ProcedureParameter:
+      return node.ref?.token ?? undefined;
     case SyntaxKind.DeclaredVariable:
       return node.nameToken ?? undefined;
     case SyntaxKind.LabelPrefix:

@@ -13,6 +13,7 @@ import { Diagnostic, Location, tokenToRange } from "../language-server/types";
 import { TokenPayload, Token } from "../parser/tokens";
 import {
   MemberCall,
+  ProcedureParameter,
   Reference,
   SyntaxKind,
   SyntaxNode,
@@ -207,6 +208,11 @@ function assignReference(
   reference.node = resolved.node;
 }
 
+const isProcedureParameterReference = (
+  reference: Reference,
+): reference is Reference<ProcedureParameter> =>
+  reference.owner.kind === SyntaxKind.ProcedureParameter;
+
 /**
  * Get the matching symbols for a reference given a qualified name.
  *
@@ -230,7 +236,13 @@ function getMatchingSymbols(
   const getFullName = () => qualifiedName.toReversed().join(".");
 
   const explicitlyDeclaredSymbols = scope
-    .getExplicitSymbols(qualifiedName)
+    .getExplicitSymbols(qualifiedName, {
+      /**
+       * If the symbol is a procedure parameter, it is only permitted to
+       * link against a symbol in the immediate procedure scope.
+       */
+      searchOnlyImmediateScope: isProcedureParameterReference(reference),
+    })
     .filter((symbol) => !symbol.isRedeclared); // Don't resolve reference to redeclared symbols.
 
   const isAmbiguous = explicitlyDeclaredSymbols.length > 1;
@@ -264,6 +276,18 @@ function getMatchingSymbols(
   ) {
     // If the node is before the first implicit symbol, we report a potential unset variable.
     reporter.reportPotentialUnsetVariable(reference.token, getFullName());
+  }
+
+  /**
+   * We're currently looking at the implicit declaration of a procedure parameter,
+   * meaning that there is no explicit declaration for this parameter inside this procedure.
+   *
+   * In order to make sure that all references to this parameter actually link to the parameter location,
+   * we add a "fake" explicit declaration at this location dynamically. This ensures that symbol resolutions
+   * inside this procedure scope will always link to this parameter symbol.
+   */
+  if (isProcedureParameterReference(reference)) {
+    scope.symbolTable.addProcedureParameter(reference);
   }
 
   return [firstImplicitSymbol];

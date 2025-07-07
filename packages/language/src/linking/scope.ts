@@ -14,6 +14,10 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { SymbolTable } from "./symbol-table";
 
+export interface GetSymbolsOptions {
+  searchOnlyImmediateScope?: boolean;
+}
+
 /**
  * The Scope class is used to store the symbol table for a given scope.
  * When getting a symbol, the scope will check its own symbol table first,
@@ -36,21 +40,33 @@ export class Scope {
 
   getExplicitSymbols(
     qualifiedName: readonly string[],
+    options: GetSymbolsOptions = {},
   ): readonly QualifiedSyntaxNode[] {
+    const immediateSymbols =
+      this.symbolTable?.getExplicitSymbols(qualifiedName);
+
+    if (options.searchOnlyImmediateScope) {
+      return immediateSymbols ?? [];
+    }
+
     return (
-      this.symbolTable?.getExplicitSymbols(qualifiedName) ??
-      this.parent?.getExplicitSymbols(qualifiedName) ??
-      []
+      immediateSymbols ?? this.parent?.getExplicitSymbols(qualifiedName) ?? []
     );
   }
 
   getImplicitSymbols(
     qualifiedName: readonly string[],
+    options: GetSymbolsOptions = {},
   ): readonly QualifiedSyntaxNode[] {
+    const immediateSymbols =
+      this.symbolTable?.getImplicitSymbols(qualifiedName);
+
+    if (options.searchOnlyImmediateScope) {
+      return immediateSymbols ?? [];
+    }
+
     return (
-      this.symbolTable?.getImplicitSymbols(qualifiedName) ??
-      this.parent?.getImplicitSymbols(qualifiedName) ??
-      []
+      immediateSymbols ?? this.parent?.getImplicitSymbols(qualifiedName) ?? []
     );
   }
 

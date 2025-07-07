@@ -48,6 +48,10 @@ export function definitionRequest(
     if (!ref || !ref.node) {
       return [];
     }
+    // If we're looking at ourselves, we don't report the definition.
+    if (ref.node === payload.element) {
+      return [];
+    }
     const nameToken = getNameToken(ref.node);
     if (!nameToken?.payload.uri) {
       return [];

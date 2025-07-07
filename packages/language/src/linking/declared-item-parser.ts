@@ -17,7 +17,6 @@ import {
   SyntaxNode,
   WildcardItem,
 } from "../syntax-tree/ast";
-import { PliValidationAcceptor } from "../validation/validator";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { MultiMap } from "../utils/collections";
 import { getNameToken } from "./tokens";
@@ -159,21 +158,19 @@ function unrollFactorized(
  */
 export class DeclaredItemParser {
   private items: UnrolledItem[];
-  private reporter: LinkerErrorReporter;
 
   private constructor(
     private readonly unit: CompilationUnit,
     items: readonly DeclaredItem[],
-    accept: PliValidationAcceptor,
+    private reporter: LinkerErrorReporter,
   ) {
     this.items = unrollFactorized(items);
-    this.reporter = new LinkerErrorReporter(unit, accept);
   }
 
   static parse(
     unit: CompilationUnit,
     items: readonly DeclaredItem[],
-    accept: PliValidationAcceptor,
+    reporter: LinkerErrorReporter,
   ): MultiMap<string, QualifiedSyntaxNode> {
     const buffer = new MultiMap<string, QualifiedSyntaxNode>();
     const onAdd = (name: string, node: QualifiedSyntaxNode) =>
@@ -181,7 +178,7 @@ export class DeclaredItemParser {
 
     // Use 0 as a default level to start the generation.
     // TODO: Maybe make this `null` to represent the root scope.
-    new DeclaredItemParser(unit, items, accept).generate(null, 0, onAdd);
+    new DeclaredItemParser(unit, items, reporter).generate(null, 0, onAdd);
 
     return buffer;
   }
