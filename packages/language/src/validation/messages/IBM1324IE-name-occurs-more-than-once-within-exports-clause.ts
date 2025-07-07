@@ -18,9 +18,9 @@ export function IBM1324IE_name_occurs_more_than_once_within_exports_clause(
   accept: PliValidationAcceptor,
 ): void {
   const set = new Set<string>();
-  exports.procedures.forEach((procedure, index) => {
-    if (!set.has(procedure)) {
-      set.add(procedure);
+  exports.procedures.forEach((procedure) => {
+    if (!set.has(procedure.reference?.text ?? "")) {
+      set.add(procedure.reference?.text ?? "");
     } else {
       accept(
         Severity.E,

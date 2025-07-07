@@ -12,6 +12,7 @@
 import { Diagnostic } from "../language-server/types";
 import {
   DeclareStatement,
+  Package,
   ProcedureStatement,
   ReferenceItem,
   SyntaxKind,
@@ -298,6 +299,28 @@ export function recursivelySetContainer(node: SyntaxNode) {
   });
 }
 
+/**
+ * Procedure and package statements' end node are child nodes, but scope-wise, an end node
+ * should be part of the parent scope of the procedure statement, to properly link to the label.
+ * We remove the end node from the procedure statement, to process it as a sibling node.
+ */
+function handleProcedureStatement(
+  node: ProcedureStatement | Package,
+  parentScope: Scope,
+  context: IterateSymbolTableContext,
+) {
+  const scope = Scope.createChild(parentScope);
+  const newNode: ProcedureStatement | Package = {
+    ...node,
+    end: null,
+  };
+
+  forEachNode(newNode, (child) => iterateSymbolTable(child, scope, context));
+  if (node.end) {
+    iterateSymbolTable(node.end, parentScope, context);
+  }
+}
+
 type IterateSymbolTableContext = {
   unit: CompilationUnit;
   scopeCache: ScopeCache;
@@ -319,33 +342,14 @@ const iterateSymbolTable = (
   // We connect the current node to its scope for usage in the linking phase.
   context.scopeCache.add(node, parentScope);
 
-  /**
-   * A procedure statement's end node is a child node, but scope-wise, the end
-   * node should be part of the parent scope of the procedure statement, to
-   * properly link to the procedure's label.
-   * We remove the end node from the procedure statement, to process it as a sibling node.
-   */
-  if (node.kind === SyntaxKind.ProcedureStatement) {
-    // Create a new scope for the procedure statement.
-    const scope = Scope.createChild(parentScope);
-    const procedure: ProcedureStatement = {
-      ...node,
-      end: null,
-    };
-
-    forEachNode(procedure, (child) =>
-      iterateSymbolTable(child, scope, context),
-    );
-    if (node.end) {
-      iterateSymbolTable(node.end, parentScope, context);
-    }
-
-    // Early return to avoid below switch statement.
-    return;
-  }
-
   // This switch statement handles special cases for certain syntax nodes.
   switch (node.kind) {
+    // We handle procedure and package statements separately, to properly scope the end node.
+    case SyntaxKind.ProcedureStatement:
+    case SyntaxKind.Package:
+      handleProcedureStatement(node, parentScope, context);
+      // Early return to avoid below `forEachNode`.
+      return;
     // E.g. `MY_PROC: PROCEDURE;`
     case SyntaxKind.LabelPrefix:
     case SyntaxKind.OrdinalValue:

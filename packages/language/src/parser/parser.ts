@@ -184,6 +184,26 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.ConditionPrefixItem>();
   });
+
+  private createExportsItem(): ast.ExportsItem {
+    return {
+      kind: ast.SyntaxKind.ExportsItem,
+      container: null,
+      reference: null,
+    };
+  }
+
+  ExportsItem = this.RULE("ExportsItem", () => {
+    let element = this.push(this.createExportsItem());
+
+    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
+      this.tokenPayload(token, element, CstNodeKind.Exports_Procedure);
+      element.reference = ast.createReference(element, token);
+    });
+
+    return this.pop<ast.ExportsItem>();
+  });
+
   private createExports(): ast.Exports {
     return {
       kind: ast.SyntaxKind.Exports,
@@ -213,21 +233,19 @@ export class PliParser extends AbstractParser {
       },
       {
         ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.Exports_Procedures0);
-            element.procedures.push(token.image);
+          this.SUBRULE_ASSIGN1(this.ExportsItem, {
+            assign: (result) => {
+              element.procedures.push(result);
+            },
           });
           this.MANY1(() => {
             this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
               this.tokenPayload(token, element, CstNodeKind.Exports_Comma);
             });
-            this.CONSUME_ASSIGN2(tokens.ID, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.Exports_Procedures1,
-              );
-              element.procedures.push(token.image);
+            this.SUBRULE_ASSIGN2(this.ExportsItem, {
+              assign: (result) => {
+                element.procedures.push(result);
+              },
             });
           });
         },

@@ -43,3 +43,18 @@ export function isMainProcedure(node: LabelPrefix): boolean {
     .filter((item) => item.kind === SyntaxKind.SimpleOptionsItem)
     .some((item) => item.value?.toLowerCase() === "main");
 }
+
+/**
+ * The label prefix points to a package.
+ *
+ * @example
+ * ```pli
+ * RGT005: PACKAGE EXPORTS(RGT005);
+ * ```
+ */
+export function labelPrefixPointsToPackage(labelPrefix: LabelPrefix) {
+  return (
+    labelPrefix.container?.kind === SyntaxKind.Statement &&
+    labelPrefix.container.value?.kind === SyntaxKind.Package
+  );
+}

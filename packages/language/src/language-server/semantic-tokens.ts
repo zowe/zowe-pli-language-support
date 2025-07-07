@@ -83,6 +83,22 @@ function tokenType(token: Token): string | undefined {
   return undefined;
 }
 
+function isProcedureKind(container: SyntaxNode | null | undefined): boolean {
+  if (!container) {
+    return false;
+  }
+
+  if (container.kind === SyntaxKind.ProcedureStatement) {
+    return true;
+  }
+
+  if (container.kind === SyntaxKind.Package) {
+    return true;
+  }
+
+  return false;
+}
+
 function isProcedureType(payload: TokenPayload): boolean {
   const kind = payload.kind;
   const element = payload.element;
@@ -102,11 +118,14 @@ function isProcedureType(payload: TokenPayload): boolean {
   if (
     kind === CstNodeKind.LabelReference_LabelRef &&
     element?.container?.kind === SyntaxKind.EndStatement &&
-    element?.container.container?.kind === SyntaxKind.ProcedureStatement
+    isProcedureKind(element?.container.container)
   ) {
     return true;
   }
   if (kind === CstNodeKind.ProcedureCall_ProcedureRef) {
+    return true;
+  }
+  if (kind === CstNodeKind.Exports_Procedure) {
     return true;
   }
 
@@ -114,11 +133,19 @@ function isProcedureType(payload: TokenPayload): boolean {
 }
 
 function isProcedurePrefix(node: SyntaxNode | null | undefined): boolean {
-  return (
-    node?.kind === SyntaxKind.LabelPrefix &&
+  if (!node) {
+    return false;
+  }
+
+  if (
+    node.kind === SyntaxKind.LabelPrefix &&
     node.container?.kind === SyntaxKind.Statement &&
-    node.container.value?.kind === SyntaxKind.ProcedureStatement
-  );
+    isProcedureKind(node.container.value)
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function isVariableType(payload: TokenPayload): boolean {

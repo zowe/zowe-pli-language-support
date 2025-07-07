@@ -27,7 +27,7 @@ import {
   registerValidationChecks,
 } from "./pli-validator";
 import { LexingError } from "../preprocessor/pli-lexer";
-import { isMainProcedure } from "./utils";
+import { isMainProcedure, labelPrefixPointsToPackage } from "./utils";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
 import { LinkerErrorReporter } from "../linking/error";
 
@@ -215,32 +215,39 @@ export function linkingErrorsToDiagnostics(
     }
   }
 
+  // Warn if a label is never referenced
   for (const [node, nodeReferences] of references.allReverseReferences()) {
-    // Warn if a label is never referenced
-    if (node.kind === SyntaxKind.LabelPrefix) {
-      // If the node has no name token, we can't even create a diagnostic, skip it
-      if (!node.nameToken) {
-        continue;
-      }
-
-      // The main procedure is never directly referenced anyway, so we can skip it
-      if (isMainProcedure(node)) {
-        continue;
-      }
-
-      // Ignore all `END` nodes, since a procedure will always have one `END` node referencing itself
-      const actualReferences = nodeReferences.filter(
-        (reference) =>
-          reference.owner.container?.kind !== SyntaxKind.EndStatement,
-      );
-
-      // The label is referenced, so we don't generate a warning
-      if (actualReferences.length > 0) {
-        continue;
-      }
-
-      reporter.reportUnreferencedSymbol(node.nameToken);
+    if (node.kind !== SyntaxKind.LabelPrefix) {
+      continue;
     }
+
+    // If the node has no name token, we can't even create a diagnostic, skip it
+    if (!node.nameToken) {
+      continue;
+    }
+
+    // If the label prefix points to a package, don't warn
+    if (labelPrefixPointsToPackage(node)) {
+      continue;
+    }
+
+    // The main procedure is never directly referenced anyway, so we don't need to warn
+    if (isMainProcedure(node)) {
+      continue;
+    }
+
+    // Ignore all `END` nodes, since a procedure will always have one `END` node referencing itself
+    const actualReferences = nodeReferences.filter(
+      (reference) =>
+        reference.owner.container?.kind !== SyntaxKind.EndStatement,
+    );
+
+    // The label is referenced, so we don't generate a warning
+    if (actualReferences.length > 0) {
+      continue;
+    }
+
+    reporter.reportUnreferencedSymbol(node.nameToken);
   }
 
   return validationBuffer.getDiagnostics();
