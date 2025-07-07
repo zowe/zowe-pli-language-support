@@ -398,7 +398,10 @@ export function forEachNode(
       break;
     case SyntaxKind.ExitStatement:
       break;
+    case SyntaxKind.ExportsItem:
+      break;
     case SyntaxKind.Exports:
+      node.procedures.forEach(action);
       break;
     case SyntaxKind.FetchEntry:
       if (node.entry) {

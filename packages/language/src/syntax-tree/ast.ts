@@ -91,6 +91,7 @@ export enum SyntaxKind {
   ExecStatement,
   ExitStatement,
   Exports,
+  ExportsItem,
   FetchEntry,
   FetchStatement,
   FFormatItem,
@@ -322,6 +323,7 @@ export type SyntaxNode =
   | ExecStatement
   | ExitStatement
   | Exports
+  | ExportsItem
   | FetchEntry
   | FetchStatement
   | FFormatItem
@@ -1294,10 +1296,15 @@ export interface ExecStatement extends AstNode {
 export interface ExitStatement extends AstNode {
   kind: SyntaxKind.ExitStatement;
 }
+export interface ExportsItem extends AstNode {
+  kind: SyntaxKind.ExportsItem;
+  name: string | null;
+  reference: Reference<ProcedureStatement> | null;
+}
 export interface Exports extends AstNode {
   kind: SyntaxKind.Exports;
   all: boolean;
-  procedures: string[];
+  procedures: ExportsItem[];
 }
 export interface FetchEntry extends AstNode {
   kind: SyntaxKind.FetchEntry;
