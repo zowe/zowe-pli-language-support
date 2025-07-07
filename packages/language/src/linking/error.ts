@@ -23,10 +23,10 @@ import { PliValidationAcceptor } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 
-function mergeRanges(range1: Range, range2: Range): Range {
+function mergeRanges(...ranges: Range[]): Range {
   return {
-    start: Math.min(range1.start, range2.start),
-    end: Math.max(range1.end, range2.end),
+    start: Math.min(...ranges.map((r) => r.start).filter((n) => !isNaN(n))),
+    end: Math.max(...ranges.map((r) => r.end).filter((n) => !isNaN(n))),
   };
 }
 
