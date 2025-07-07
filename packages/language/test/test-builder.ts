@@ -76,6 +76,11 @@ type TestFile = {
   textDocument: TextDocument;
 };
 
+type MatchingDiagnosticsResult = {
+  exactMatches: Diagnostic[];
+  containingMatches: Diagnostic[];
+};
+
 function replaceNamedIndicesWithDocument(file: PliTestFile): TestFile {
   const { output, indices, ranges } = replaceNamedIndices(file.content);
   const textDocument = TextDocument.create(file.uri, "pli", 1, output);
@@ -247,7 +252,7 @@ export class TestBuilder {
     );
   }
 
-  private getMatchingDiagnostics(label: string): Diagnostic[] {
+  private getMatchingDiagnostics(label: string): MatchingDiagnosticsResult {
     const range = this.ranges[label];
     if (!range || range.length === 0) {
       throw new Error(`Label "${label}" not found`);
@@ -259,12 +264,20 @@ export class TestBuilder {
 
     const [[start, end]] = range;
 
-    const matchingDiagnostics = this.diagnostics.filter(
+    const exactMatches = this.diagnostics.filter(
       (diagnostic) =>
         diagnostic.range.start === start && diagnostic.range.end === end,
     );
 
-    return matchingDiagnostics;
+    const containingMatches = this.diagnostics.filter(
+      (diagnostic) =>
+        diagnostic.range.start >= start && diagnostic.range.end <= end,
+    );
+
+    return {
+      exactMatches,
+      containingMatches,
+    };
   }
 
   expectExclusiveDiagnosticsAt(
@@ -275,23 +288,24 @@ export class TestBuilder {
       ? diagnostics
       : [diagnostics];
 
-    const matchingDiagnostics = this.getMatchingDiagnostics(label);
+    const { exactMatches, containingMatches } =
+      this.getMatchingDiagnostics(label);
     const rangeMessage = this.createLabelRangeMessage(label);
 
     const message = [
       `At label "${label}" (${rangeMessage})`,
-      `Got errors:\n\n${JSON.stringify(matchingDiagnostics, null, 2)}`,
+      `Got errors:\n\n${JSON.stringify(exactMatches, null, 2)}`,
       `Expected errors:\n\n${JSON.stringify(expectedDiagnostics, null, 2)}`,
-      "",
+      containingMatches.length > 0
+        ? `Note! This label also contains other diagnostics: ${JSON.stringify(containingMatches, null, 2)}\n\n`
+        : "",
     ].join("\n\n");
 
-    expect(matchingDiagnostics, message).toHaveLength(
-      expectedDiagnostics.length,
-    );
+    expect(exactMatches, message).toHaveLength(expectedDiagnostics.length);
 
     for (const diagnostic of expectedDiagnostics) {
       const message = `At label "${label}" (${rangeMessage})`;
-      expect(matchingDiagnostics, message).toContainEqual(
+      expect(exactMatches, message).toContainEqual(
         expect.objectContaining(diagnostic),
       );
     }
@@ -303,10 +317,19 @@ export class TestBuilder {
     label: string,
     diagnostics: Partial<Diagnostic>[],
   ): TestBuilder {
-    const matchingDiagnostics = this.getMatchingDiagnostics(label);
+    const { exactMatches, containingMatches } =
+      this.getMatchingDiagnostics(label);
+
+    const getMessage = () => {
+      if (containingMatches.length > 0) {
+        return `At label "${label}" (${this.createLabelRangeMessage(label)}), but also contains other diagnostics: ${JSON.stringify(containingMatches, null, 2)}`;
+      } else {
+        return `At label "${label}" (${this.createLabelRangeMessage(label)})`;
+      }
+    };
 
     for (const diagnostic of diagnostics) {
-      expect(matchingDiagnostics).toContainEqual(
+      expect(exactMatches, getMessage()).toContainEqual(
         expect.objectContaining(diagnostic),
       );
     }
@@ -315,10 +338,10 @@ export class TestBuilder {
   }
 
   expectNoDiagnosticsAt(label: string): TestBuilder {
-    const matchingDiagnostics = this.getMatchingDiagnostics(label);
+    const { exactMatches } = this.getMatchingDiagnostics(label);
 
-    if (matchingDiagnostics.length > 0) {
-      const message = matchingDiagnostics
+    if (exactMatches.length > 0) {
+      const message = exactMatches
         .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
         .join("\n- ");
       fail(

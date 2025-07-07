@@ -20,11 +20,19 @@ import { SymbolTable } from "./symbol-table";
  * then the parent scope, and so on.
  */
 export class Scope {
-  constructor(
-    unit: CompilationUnit,
-    private readonly parent: Scope | null = null,
-    readonly symbolTable: SymbolTable = new SymbolTable(unit),
+  private constructor(
+    private readonly unit: CompilationUnit,
+    private readonly parent: Scope | null,
+    public readonly symbolTable: SymbolTable,
   ) {}
+
+  static createRoot(unit: CompilationUnit) {
+    return new Scope(unit, null, new SymbolTable(unit));
+  }
+
+  static createChild(parent: Scope) {
+    return new Scope(parent.unit, parent, new SymbolTable(parent.unit));
+  }
 
   getExplicitSymbols(
     qualifiedName: readonly string[],

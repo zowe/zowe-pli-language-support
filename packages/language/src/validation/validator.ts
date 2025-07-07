@@ -195,11 +195,15 @@ function linkingRedeclarationErrorsToDiagnostics(
 }
 
 export function linkingErrorsToDiagnostics(
+  unit: CompilationUnit,
   references: ReferencesCache,
   scopeCaches: ScopeCacheGroups,
 ): Diagnostic[] {
   const validationBuffer = new PliValidationBuffer();
-  const reporter = new LinkerErrorReporter(validationBuffer.getAcceptor());
+  const reporter = new LinkerErrorReporter(
+    unit,
+    validationBuffer.getAcceptor(),
+  );
 
   // @didrikmunther Only checking the regular scope for now
   linkingRedeclarationErrorsToDiagnostics(scopeCaches.regular, reporter);

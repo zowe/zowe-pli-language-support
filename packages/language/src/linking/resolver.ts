@@ -224,8 +224,7 @@ function getMatchingSymbols(
   unit: CompilationUnit,
   scope: Scope,
   qualifiedName: string[],
-  token: Token,
-  node: SyntaxNode,
+  reference: Reference,
   reporter: LinkerErrorReporter,
 ): QualifiedSyntaxNode[] {
   const getFullName = () => qualifiedName.toReversed().join(".");
@@ -236,9 +235,7 @@ function getMatchingSymbols(
 
   const isAmbiguous = explicitlyDeclaredSymbols.length > 1;
   if (isAmbiguous) {
-    // TODO: Currently only emitting on the last member call symbol (`reference.token`)
-    // We want to underline the entire qualified name.
-    reporter.reportAmbiguousReference(token, getFullName());
+    reporter.reportAmbiguousReference(reference, getFullName());
   }
 
   if (explicitlyDeclaredSymbols.length > 0) {
@@ -262,9 +259,11 @@ function getMatchingSymbols(
   const firstImplicitSymbol = implicitSymbols[0];
   reporter.reportImplicitDeclaration(firstImplicitSymbol);
 
-  if (unit.statementOrderCache.isBefore(node, firstImplicitSymbol.node)) {
+  if (
+    unit.statementOrderCache.isBefore(reference.owner, firstImplicitSymbol.node)
+  ) {
     // If the node is before the first implicit symbol, we report a potential unset variable.
-    reporter.reportPotentialUnsetVariable(token, getFullName());
+    reporter.reportPotentialUnsetVariable(reference.token, getFullName());
   }
 
   return [firstImplicitSymbol];
@@ -289,8 +288,7 @@ function resolveReference(
     unit,
     scope,
     qualifiedName,
-    reference.token,
-    reference.owner,
+    reference,
     reporter,
   );
 
@@ -309,8 +307,10 @@ function resolveReference(
 
 export function resolveReferences(unit: CompilationUnit): Diagnostic[] {
   const validationBuffer = new PliValidationBuffer();
-  const acceptor = validationBuffer.getAcceptor();
-  const reporter = new LinkerErrorReporter(acceptor);
+  const reporter = new LinkerErrorReporter(
+    unit,
+    validationBuffer.getAcceptor(),
+  );
 
   for (const reference of unit.referencesCache.allReferences()) {
     resolveReference(unit, reference, reporter);

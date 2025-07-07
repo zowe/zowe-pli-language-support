@@ -24,12 +24,12 @@ export enum QualificationStatus {
 }
 
 export class QualifiedSyntaxNode {
-  public parent: QualifiedSyntaxNode | null = null;
-  public level: number = 1;
+  public readonly parent: QualifiedSyntaxNode | null;
+  public readonly level: number;
   /**
    * Whether the node is an implicit declaration.
    */
-  public isImplicit: boolean = false;
+  public readonly isImplicit: boolean;
   /**
    * Whether the node is redeclared.
    *
@@ -114,8 +114,10 @@ export class QualifiedSyntaxNode {
    * PUT (A.C);   // `C` has `PartialQualification`
    * ```
    */
-  getQualificationStatus(_qualifiers: readonly string[]): QualificationStatus {
-    const qualifiers = _qualifiers.map(this.getSymbolName.bind(this));
+  getQualificationStatus(
+    rawQualifiers: readonly string[],
+  ): QualificationStatus {
+    const qualifiers = rawQualifiers.map(this.getSymbolName.bind(this));
     const [qualifier] = qualifiers;
 
     if (!qualifier) {
