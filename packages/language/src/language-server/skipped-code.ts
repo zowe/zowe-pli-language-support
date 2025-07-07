@@ -67,7 +67,7 @@ export function skippedCodeRanges(
   }
   const result: Range[] = [];
 
-  for (const token of tokens) {
+  for (const [index, token] of tokens.entries()) {
     if (
       token.payload.kind === CstNodeKind.SkipDirective_SKIP &&
       token.payload.element?.kind === SyntaxKind.SkipDirective
@@ -104,6 +104,29 @@ export function skippedCodeRanges(
           });
         }
       }
+    } else if (
+      token.payload.kind === CstNodeKind.DoStatement_SKIP &&
+      token.payload.element?.kind === SyntaxKind.DoStatement &&
+      token.payload.element.skip
+    ) {
+      const endStatement = token.payload.element.end;
+      let endToken = token;
+      for (let i = index + 1; i < tokens.length; i++) {
+        if (
+          tokens[i].payload.kind === CstNodeKind.EndStatement_END &&
+          tokens[i].payload.element?.kind === SyntaxKind.EndStatement &&
+          tokens[i].payload.element === endStatement
+        ) {
+          endToken = tokens[i];
+          break;
+        }
+      }
+      const start = textDocument.positionAt(token.endOffset + 2);
+      const end = textDocument.positionAt(endToken.startOffset - 1);
+      result.push({
+        start,
+        end,
+      });
     }
   }
 

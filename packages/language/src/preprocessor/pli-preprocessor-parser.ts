@@ -544,10 +544,44 @@ export class PliPreprocessorParser {
     return directive;
   }
 
+  endStatement(state: PreprocessorParserState): ast.EndStatement {
+    const statement = ast.createEndStatement();
+
+    state.consumeKeyword(
+      statement,
+      CstNodeKind.EndStatement_END,
+      PreprocessorTokens.End,
+    );
+
+    return statement;
+  }
+
   doStatement(state: PreprocessorParserState): ast.DoStatement {
     const statement = ast.createDoStatement();
     state.consume(statement, CstNodeKind.DoStatement_DO, PreprocessorTokens.Do);
-    if (state.canConsumeKeyword(PreprocessorTokens.While)) {
+
+    if (state.canConsume(PreprocessorTokens.Skip)) {
+      // skip command
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_SKIP,
+        PreprocessorTokens.Skip,
+      );
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon0,
+        PreprocessorTokens.Semicolon,
+      );
+      this.doSkip(state);
+      statement.skip = true;
+      statement.end = this.endStatement(state);
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon1,
+        PreprocessorTokens.Semicolon,
+      );
+      return statement;
+    } else if (state.canConsumeKeyword(PreprocessorTokens.While)) {
       //type-2-do-while-first
       const type2 = this.doWhile(state);
       state.consume(
@@ -558,11 +592,7 @@ export class PliPreprocessorParser {
       const body = this.statements(state);
       statement.doType2 = type2;
       statement.statements = body;
-      state.consumeKeyword(
-        statement,
-        CstNodeKind.EndStatement_END,
-        PreprocessorTokens.End,
-      );
+      statement.end = this.endStatement(state);
       state.consume(
         statement,
         CstNodeKind.DoStatement_Semicolon1,
@@ -580,11 +610,7 @@ export class PliPreprocessorParser {
       const body = this.statements(state);
       statement.doType2 = type2;
       statement.statements = body;
-      state.consumeKeyword(
-        statement,
-        CstNodeKind.EndStatement_END,
-        PreprocessorTokens.End,
-      );
+      statement.end = this.endStatement(state);
       state.consume(
         statement,
         CstNodeKind.DoStatement_Semicolon1,
@@ -607,11 +633,7 @@ export class PliPreprocessorParser {
       );
       const body = this.statements(state);
       statement.statements = body;
-      state.consumeKeyword(
-        statement,
-        CstNodeKind.EndStatement_END,
-        PreprocessorTokens.End,
-      );
+      statement.end = this.endStatement(state);
       state.consume(
         statement,
         CstNodeKind.DoStatement_Semicolon1,
@@ -623,16 +645,13 @@ export class PliPreprocessorParser {
         statement,
         CstNodeKind.DoStatement_Semicolon0,
         PreprocessorTokens.Semicolon,
-      )
+      ) ||
+      statement.skip // If it is a skip do, the semicolon has been consumed already
     ) {
       //type-1-do
       const statements = this.statements(state);
       statement.statements = statements;
-      state.consumeKeyword(
-        statement,
-        CstNodeKind.EndStatement_END,
-        PreprocessorTokens.End,
-      );
+      statement.end = this.endStatement(state);
       state.consume(
         statement,
         CstNodeKind.DoStatement_Semicolon1,
@@ -726,6 +745,21 @@ export class PliPreprocessorParser {
       );
     }
     return statement;
+  }
+
+  private doSkip(state: PreprocessorParserState): void {
+    let nestingLevel = 0;
+    while (!state.eof) {
+      if (state.canConsumeKeyword(PreprocessorTokens.Do)) {
+        nestingLevel++;
+      } else if (state.canConsumeKeyword(PreprocessorTokens.End)) {
+        if (nestingLevel === 0) {
+          break;
+        }
+        nestingLevel--;
+      }
+      state.index++;
+    }
   }
 
   private statements(state: PreprocessorParserState): ast.Statement[] {

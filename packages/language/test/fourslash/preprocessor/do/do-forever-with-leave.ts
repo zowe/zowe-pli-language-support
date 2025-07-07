@@ -9,19 +9,14 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// %DCL X FIXED;
-//// %X = 1;
-//// %DO
-////   %WHILE(X > 0)
-////   %UNTIL(X > 3);
-////   DCL Variable%;X FIXED;
-////   %X = X + 1;
+//// %DCL VAR CHARACTER;
+//// %VAR = "A";
+//// %DO %FOREVER;
+////   %LEAVE;
+////   VAR = "B";
 //// %END;
+//// DCL VAR CHARACTER;
 
-preprocessor.expectTokens(`
-  DCL Variable1 FIXED;
-  DCL Variable2 FIXED;
-  DCL Variable3 FIXED;  
-`);
+preprocessor.expectTokens(" DCL A CHARACTER;");

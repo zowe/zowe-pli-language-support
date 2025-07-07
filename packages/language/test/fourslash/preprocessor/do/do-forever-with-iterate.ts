@@ -9,15 +9,16 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-/*
-  This might be an intermediate step in the development of a DO FOREVER loop
-  The preprocessor should eventually terminate anyway
-*/
+//// %declare A fixed;
+//// %A = 3;
 //// %DO %FOREVER;
-////   /* EVENTUALLY TERMINATE */
+////   %A = A - 1;
+////   %IF A = 0 %THEN %LEAVE;
+////   %ELSE %ITERATE;
+////   dcl X%;A fixed;
 //// %END;
-//// DCL VAR CHARACTER;
+////
 
-preprocessor.expectTokens(" DCL VAR CHARACTER;");
+preprocessor.expectTokens([]);
