@@ -237,7 +237,7 @@ export interface DeclareInstruction {
   mode: ScanMode;
   /**
    * If defined, it indicates whether the variable is part of a PROCEDURE or not.
-   * 
+   *
    * However, this information is not used in the preprocessor, it is only used for error reporting.
    */
   visibility: VariableVisibility | null;
@@ -250,7 +250,6 @@ export function createDeclareInstruction(
   mode: ScanMode,
   visibility?: VariableVisibility | null,
   node: ast.SyntaxNode | null = null,
-  visibility: VariableVisibility | null,
 ): DeclareInstruction {
   return {
     kind: InstructionKind.Declare,

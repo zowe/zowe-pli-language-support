@@ -1165,6 +1165,13 @@ export interface DimensionsDataAttribute extends AstNode {
   kind: SyntaxKind.DimensionsDataAttribute;
   dimensions: Dimensions | null;
 }
+export function createDimensionsDataAttribute(): DimensionsDataAttribute {
+  return {
+    kind: SyntaxKind.DimensionsDataAttribute,
+    container: null,
+    dimensions: null,
+  };
+}
 export interface DisplayStatement extends AstNode {
   kind: SyntaxKind.DisplayStatement;
   expression: Expression | null;

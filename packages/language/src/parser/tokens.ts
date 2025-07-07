@@ -1071,7 +1071,7 @@ export const ACTIVATE = createToken({
 export const NORESCAN = createToken({
   name: "NORESCAN",
   pattern: /NORESCAN/iy,
-  categories: [ID],
+  categories: [ID, DefaultAttribute],
   longer_alt: ID,
 });
 export const KEYFROM = createToken({
@@ -1335,13 +1335,13 @@ export const STRING = createToken({
 export const NOSCAN = createToken({
   name: "NOSCAN",
   pattern: /NOSCAN/iy,
-  categories: [ID],
+  categories: [ID, DefaultAttribute],
   longer_alt: ID,
 });
 export const RESCAN = createToken({
   name: "RESCAN",
   pattern: /RESCAN/iy,
-  categories: [ID],
+  categories: [ID, DefaultAttribute],
   longer_alt: ID,
 });
 export const ddname = createToken({
@@ -1443,7 +1443,7 @@ export const INTER = createToken({
 export const ENTRY = createToken({
   name: "ENTRY",
   pattern: /ENTRY/iy,
-  categories: [ID],
+  categories: [ID, DefaultAttribute],
   longer_alt: ID,
 });
 export const UCHAR = createToken({
@@ -1756,7 +1756,7 @@ export const SKIP = createToken({
 export const SCAN = createToken({
   name: "SCAN",
   pattern: /SCAN/iy,
-  categories: [ID],
+  categories: [ID, DefaultAttribute],
   longer_alt: ID,
 });
 export const FREE = createToken({
@@ -2354,6 +2354,7 @@ export const keywords = [
   LINESIZE,
   PAGESIZE,
   ACTIVATE,
+  NORESCAN,
   PROCESS,
   PROCINC,
   XMLNAME,

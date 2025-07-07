@@ -978,7 +978,7 @@ export class PliPreprocessorParser {
 
   assignmentStatement(state: PreprocessorParserState): ast.AssignmentStatement {
     const assignment = ast.createAssignmentStatement();
-    assignment.refs.push(this.locatorCall(state, false));
+    assignment.refs.push(this.locatorCall(state, true));
     // TODO: add support for more assignment operators (+=, -=, etc)
     state.consume(
       assignment,
@@ -1034,19 +1034,6 @@ export class PliPreprocessorParser {
       ) {
         do {
           declaredItem.elements.push(this.declaredVariable(state));
-          // TODO: Figure out whether dimensions are allowed in multi variable declarations
-          // if (state.tryConsume(PreprocessorTokens.LParen)) {
-          //   const dimensions = this.dimensions(state);
-          //   state.consume(PreprocessorTokens.RParen);
-          //   names.push({
-          //     name: variable,
-          //     dimensions,
-          //   });
-          // } else {
-          //   names.push({
-          //     name: variable,
-          //   });
-          // }
         } while (
           state.tryConsume(
             declaredItem,
@@ -1063,11 +1050,7 @@ export class PliPreprocessorParser {
         declaredItem.elements.push(this.declaredVariable(state));
       }
       const attributes = this.attributes(state);
-      for (const attribute of attributes) {
-        const dataAttribute = ast.createComputationDataAttribute();
-        dataAttribute.type = attribute as ast.DefaultAttribute;
-        declaredItem.attributes.push(dataAttribute);
-      }
+      declaredItem.attributes = attributes;
     } while (
       state.tryConsume(
         statement,
@@ -1166,51 +1149,27 @@ export class PliPreprocessorParser {
     }
   }
 
-  attributes(state: PreprocessorParserState) {
-    const attributes: string[] = [];
-    let lastIndex = 0;
-    do {
-      lastIndex = state.index;
-      switch (state.current?.tokenTypeIdx) {
-        case PreprocessorTokens.Builtin.tokenTypeIdx:
-          attributes.push("BUILTIN");
-          state.index++;
-          break;
-        case PreprocessorTokens.Entry.tokenTypeIdx:
-          attributes.push("ENTRY");
-          state.index++;
-          break;
-        case PreprocessorTokens.Internal.tokenTypeIdx:
-          attributes.push("INTERNAL");
-          state.index++;
-          break;
-        case PreprocessorTokens.External.tokenTypeIdx:
-          attributes.push("EXTERNAL");
-          state.index++;
-          break;
-        case PreprocessorTokens.Character.tokenTypeIdx:
-          attributes.push("CHARACTER");
-          state.index++;
-          break;
-        case PreprocessorTokens.Fixed.tokenTypeIdx:
-          attributes.push("FIXED");
-          state.index++;
-          break;
-        case PreprocessorTokens.Scan.tokenTypeIdx:
-        case PreprocessorTokens.Norescan.tokenTypeIdx:
-          attributes.push("SCAN");
-          state.index++;
-          break;
-        case PreprocessorTokens.Rescan.tokenTypeIdx:
-          attributes.push("RESCAN");
-          state.index++;
-          break;
-        case PreprocessorTokens.Noscan.tokenTypeIdx:
-          attributes.push("NOSCAN");
-          state.index++;
-          break;
+  attributes(state: PreprocessorParserState): ast.DeclarationAttribute[] {
+    const attributes: ast.DeclarationAttribute[] = [];
+    while (!state.eof) {
+      if (state.canConsume(PreprocessorTokens.DefaultAttribute)) {
+        const dataAttribute = ast.createComputationDataAttribute();
+        const attributeToken = state.consume(
+          dataAttribute,
+          CstNodeKind.DefaultAttribute_Value,
+          PreprocessorTokens.DefaultAttribute,
+        );
+        dataAttribute.type = attributeToken.image as ast.DefaultAttribute;
+        attributes.push(dataAttribute);
+      } else if (state.canConsume(PreprocessorTokens.LParen)) {
+        const dimensions = this.dimensions(state);
+        const dimensionAttribute = ast.createDimensionsDataAttribute();
+        dimensionAttribute.dimensions = dimensions;
+        attributes.push(dimensionAttribute);
+      } else {
+        break;
       }
-    } while (lastIndex != state.index);
+    }
     return attributes;
   }
 
