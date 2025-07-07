@@ -50,6 +50,7 @@ export const PreprocessorTokens = {
   Scan: tokens.SCAN,
   Rescan: tokens.RESCAN,
   Noscan: tokens.NOSCAN,
+  Norescan: tokens.NORESCAN,
   Fixed: tokens.FIXED,
   LParen: tokens.OpenParen,
   RParen: tokens.CloseParen,

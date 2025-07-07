@@ -846,16 +846,17 @@ export class PliPreprocessorParser {
 
   tryScanMode(state: PreprocessorParserState): ast.ScanMode | null {
     let scanMode: ast.ScanMode | null = null;
-    switch (state.current!.tokenType) {
-      case PreprocessorTokens.Scan:
+    switch (state.current!.tokenTypeIdx) {
+      case PreprocessorTokens.Scan.tokenTypeIdx:
+      case PreprocessorTokens.Norescan.tokenTypeIdx:
         scanMode = "SCAN";
         state.index++;
         break;
-      case PreprocessorTokens.Rescan:
+      case PreprocessorTokens.Rescan.tokenTypeIdx:
         scanMode = "RESCAN";
         state.index++;
         break;
-      case PreprocessorTokens.Noscan:
+      case PreprocessorTokens.Noscan.tokenTypeIdx:
         scanMode = "NOSCAN";
         state.index++;
         break;
@@ -1196,6 +1197,7 @@ export class PliPreprocessorParser {
           state.index++;
           break;
         case PreprocessorTokens.Scan.tokenTypeIdx:
+        case PreprocessorTokens.Norescan.tokenTypeIdx:
           attributes.push("SCAN");
           state.index++;
           break;

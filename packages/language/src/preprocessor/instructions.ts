@@ -134,6 +134,11 @@ export type ExpressionInstruction =
   | BinaryExpressionInstruction
   | UnaryExpressionInstruction;
 
+export interface DimensionBoundsInstruction {
+  lowerBound: ExpressionInstruction | null;
+  upperBound: ExpressionInstruction | null;
+}
+
 export interface BinaryExpressionInstruction {
   kind: InstructionKind.BinaryExpression;
   left: ExpressionInstruction;
@@ -224,21 +229,33 @@ export interface DeclareInstruction {
   kind: InstructionKind.Declare;
   name: string;
   node: ast.SyntaxNode | null;
+  /**
+   * If defined, it contains the lower and upper bounds of the n-dimensional array
+   */
+  dimensions: DimensionBoundsInstruction[] | undefined;
   type: DeclaredType;
   mode: ScanMode;
+  /**
+   * If defined, it indicates whether the variable is part of a PROCEDURE or not.
+   * 
+   * However, this information is not used in the preprocessor, it is only used for error reporting.
+   */
   visibility: VariableVisibility | null;
 }
 
 export function createDeclareInstruction(
   name: string,
+  dimensions: DimensionBoundsInstruction[] | undefined,
   type: DeclaredType,
   mode: ScanMode,
   visibility?: VariableVisibility | null,
   node: ast.SyntaxNode | null = null,
+  visibility: VariableVisibility | null,
 ): DeclareInstruction {
   return {
     kind: InstructionKind.Declare,
     name,
+    dimensions,
     type,
     mode,
     node,

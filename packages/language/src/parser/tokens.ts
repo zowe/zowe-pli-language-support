@@ -1068,6 +1068,12 @@ export const ACTIVATE = createToken({
   categories: [ID],
   longer_alt: ID,
 });
+export const NORESCAN = createToken({
+  name: "NORESCAN",
+  pattern: /NORESCAN/iy,
+  categories: [ID],
+  longer_alt: ID,
+});
 export const KEYFROM = createToken({
   name: "KEYFROM",
   pattern: /KEYFROM/iy,
