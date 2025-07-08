@@ -1,8 +1,0 @@
-HELLO: PROCEDURE OPTIONS (MAIN);
-/*program output*/
-/*just a comment*/ FLAG=0;
-LOOP: DO WHILE (FLAG= 0);        
-             PUT SKIP DATA(HELLO);
-          END LOOP;
-END HELLO;
-

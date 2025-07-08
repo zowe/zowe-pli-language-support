@@ -1,0 +1,10 @@
+<ivy-module version="2.0">
+  <info organisation="bundledPlugin" module="org.jetbrains.plugins.textmate" revision="2024.1+730"/>
+  <configurations>
+    <conf name="default" visibility="public"/>
+  </configurations>
+  <publications>
+    <artifact name="/Users/Admin/.gradle/caches/transforms-3/f71ba5240b8fbaa05f3e8efa97048db8/transformed/ideaIC-2024.1/plugins/textmate" type="directory" conf="default"/>
+  </publications>
+  <dependencies/>
+</ivy-module>
