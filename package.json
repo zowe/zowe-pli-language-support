@@ -10,6 +10,7 @@
     "bundle": "pnpm --dir packages/vscode-extension esbuild:bundle",
     "merge": "node ./scripts/merge-tmlanguage.mjs",
     "build": "pnpm clean && pnpm compile && pnpm bundle && pnpm merge",
+    "package": "pnpm build && pnpm --dir packages/vscode-extension package",
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "prettier -c \"**/*.ts\"",

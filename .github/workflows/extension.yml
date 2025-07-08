@@ -1,4 +1,4 @@
-name: Build
+name: Build Extension
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
       - development
   pull_request:
     branches:
-      - main
       - development
 
 defaults:
@@ -16,12 +15,8 @@ defaults:
 
 jobs:
   build:
-    name: CI (${{ matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    name: PLI extension build
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
     - name: Checkout
@@ -36,16 +31,13 @@ jobs:
         node-version-file: '.nvmrc'
         cache: 'pnpm'
     - name: Install node modules
-      shell: bash
       run: |
         pnpm install --frozen-lockfile
-    - name: Lint sources
+    - name: Build & package extension
       run: |
-        pnpm lint
-    - name: Build monorepo
-      run: |
-        pnpm build
-    - name: Test monorepo
-      if: success() || failure()
-      run: |
-        pnpm test
+        pnpm package
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: extension
+        path: pli-vscode-*.vsix

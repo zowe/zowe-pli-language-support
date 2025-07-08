@@ -11,6 +11,10 @@ on:
       - main
       - development
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   docs:
     name: Build and Publish PL/I Playground
