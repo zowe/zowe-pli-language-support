@@ -90,6 +90,35 @@ These will be unrolled into non-factorized variables:
           3 E;
 ```
 
+#### Procedure Parameters
+
+A procedure parameter is declared inside the parenthesis of a procedure. The parameter expects an explicit declaration of itself inside the procedure, and will create an implicit declaration error if this is not the case.
+
+```pli
+ MYPROC: PROCEDURE(MYPARAM); /* Implicit declaration error */
+  /* DCL MYPARAM; */ /* Expects an explicit declaration inside the procedure. */
+  PUT(MYPARAM);
+ END MYPROC;
+```
+
+If an explicit declaration of the parameter name is declared outside of the procedure, we don't link to it, as the explicit declaration must reside inside the procedure to properly declare the parameter. That is, this code would still result in an implicit declaration error:
+
+```pli
+ DCL MYPARAM; /* Explicit declaration outside does not propagate into the below procedure */
+ MYPROC: PROCEDURE(MYPARAM); /* Implicit declaration error */
+  PUT(MYPARAM);
+ END MYPROC;
+```
+
+To properly support this, we dynamically add a virtual explicit declaration in the symbol table at the location of the procedure parameter when detection an implicitly declared procedure parameter during symbol resolution. This causes all containing nodes to link to the implicitly declared procedure parameter, as it behaves as an explicitly declared variable. This is showcased below (NOTE, this is not parsable code):
+
+```pli
+ DCL MYPARAM; /* Explicit declaration outside does not propagate into the below procedure */
+ MYPROC: PROCEDURE(MYPARAM; DCL MYPARAM); /* We create a virtual explicitly declared variable at the position of the implicitly declared procedure parameter */
+  PUT(MYPARAM);
+ END MYPROC;
+```
+
 ### Symbol Resolution
 
 The symbol resolution step (`resolveReferences`) iterates through all possible references (collected from the previous step) and tries to resolve them. Resolution is done by walking up the scope chain to find a potential match. It first tries to find explicit declarations (e.g., `DCL` statements, or procedure labels). If multiple explicit declarations are found, we report an ambiguity error. If no explicit declarations are found, we try to find implicit declarations (e.g., `A = 1;` or `DO I = 1 TO 300 BY 100;`). When resolving an implicit variable declaration, we check if the usage of the symbol is before or after the declaration (using the `StatementOrderCache`), and report a possible `W IBM1085I: Potential unset variable`.
