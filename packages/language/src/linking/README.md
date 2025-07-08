@@ -110,7 +110,7 @@ If an explicit declaration of the parameter name is declared outside of the proc
  END MYPROC;
 ```
 
-To properly support this, we dynamically add a virtual explicit declaration in the symbol table at the location of the procedure parameter when detection an implicitly declared procedure parameter during symbol resolution. This causes all containing nodes to link to the implicitly declared procedure parameter, as it behaves as an explicitly declared variable. This is showcased below (NOTE, this is not parsable code):
+To properly support this, we dynamically add a virtual explicit declaration in the symbol table at the location of the procedure parameter when detecting an implicitly declared procedure parameter during symbol resolution. This causes all containing nodes to link to the implicitly declared procedure parameter, as it behaves as an explicitly declared variable. This is showcased below (NOTE, this is not parsable code):
 
 ```pli
  DCL MYPARAM; /* Explicit declaration outside does not propagate into the below procedure */
