@@ -2,8 +2,7 @@
 
 [![Build Status](https://github.com/zowe/zowe-pli-language-support/actions/workflows/build.yml/badge.svg)](https://github.com/zowe/zowe-pli-language-support/actions/workflows/build.yml)
 [![GitHub issues](https://img.shields.io/github/issues-raw/zowe/zowe-pli-language-support)](https://github.com/zowe/zowe-pli-language-support/issues)
-[![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://join.slack.com/t/che4z/shared_invite/zt-22b0064vn-nBh~Fs9Fl47Prp5ItWOLWw)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=zowe_zowe-pli-language-support&metric=alert_status)](https://sonarcloud.io/dashboard?id=zowe_zowe-pli-language-support)
+[![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://join.slack.com/t/che4z/shared_invite/zt-37ewynplx-wCoabaIDxN6Ofm4_XBinZA)
 
 </div>
 
@@ -133,21 +132,3 @@ Using the example `pgm_conf.json` file in the section above, the following `proc
 ## Integrate with Zowe Explorer
 
 We recommend the use of [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) to access your mainframe data sets containing PL/I source code directly in the VS Code interface.
-
-## Privacy Notice
-
-The extensions for Visual Studio Code developed by Broadcom Inc., including its corporate affiliates and subsidiaries, ("Broadcom") are provided free of charge, but in order to better understand and meet its users’ needs, Broadcom may collect, use, analyze and retain anonymous users’ metadata and interaction data, (collectively, “Usage Data”) and aggregate such Usage Data with similar Usage Data of other Broadcom customers. Please find more detailed information in [License and Service Terms & Repository](https://www.broadcom.com/company/legal/licensing).
-
-This data collection uses built-in Microsoft VS Code Telemetry, which can be disabled, at your sole discretion, if you do not want to send Usage Data.
-
-The current release of PL/I Language Support collects anonymous data for the following events:
-- Activation of this VS Code extension
-- Opening, editing, creating or deleting a PL/I file
-- Creating or deleting the /.pliplugin folder in the workspace root.
-
-Each such event is logged with the following information:
-- Event time
-- Operating system and version
-- Country or region
-- Anonymous user and session ID
-- Version numbers of Microsoft VS Code and PL/I Language Support

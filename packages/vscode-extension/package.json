@@ -26,7 +26,8 @@
     "pl/1",
     "mainframe",
     "lsp",
-    "zowe"
+    "zowe",
+    "code4z"
   ],
   "contributes": {
     "languages": [
