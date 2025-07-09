@@ -187,7 +187,9 @@ export class CompilationUnitHandler {
       // existing compilation unit
       return this.compilationUnits.get(uri.toString());
     } else if (
-      !PluginConfigurationProviderInstance.isLibFileCandidate(uri.toString())
+      !PluginConfigurationProviderInstance.isLibFileCandidate(
+        uri.toString(true),
+      )
     ) {
       // non-library files should always generate a compilation unit
       return this.createAndStoreCompilationUnit(uri);
