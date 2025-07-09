@@ -185,9 +185,11 @@ export class PliPreprocessorParser {
         case PreprocessorTokens.Skip.tokenTypeIdx:
           unit = this.skipStatement(state);
           break;
-        case PreprocessorTokens.XInclude.tokenTypeIdx:
         case PreprocessorTokens.Include.tokenTypeIdx:
           unit = this.includeStatement(state);
+          break;
+        case PreprocessorTokens.Inscan.tokenTypeIdx:
+          unit = this.inscanStatement(state);
           break;
         case PreprocessorTokens.If.tokenTypeIdx:
           unit = this.ifStatement(state);
@@ -447,22 +449,13 @@ export class PliPreprocessorParser {
 
   includeStatement(state: PreprocessorParserState): ast.IncludeDirective {
     const directive = ast.createIncludeDirective();
-    if (state.canConsume(PreprocessorTokens.Include)) {
-      const token = state.consume(
-        directive,
-        CstNodeKind.IncludeDirective_INCLUDE,
-        PreprocessorTokens.Include,
-      );
-      directive.token = token;
-    } else {
-      const token = state.consume(
-        directive,
-        CstNodeKind.IncludeDirective_INCLUDE,
-        PreprocessorTokens.XInclude,
-      );
-      directive.token = token;
-      directive.xInclude = true;
-    }
+    const token = state.consume(
+      directive,
+      CstNodeKind.IncludeDirective_INCLUDE,
+      PreprocessorTokens.Include,
+    );
+    directive.token = token;
+    directive.idempotent = this.isXInstruction(token);
     while (true) {
       const item = ast.createIncludeItem();
       if (state.canConsume(PreprocessorTokens.Id)) {
@@ -528,6 +521,24 @@ export class PliPreprocessorParser {
     state.tryConsume(
       directive,
       CstNodeKind.IncludeAltDirective_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
+    return directive;
+  }
+
+  inscanStatement(state: PreprocessorParserState): ast.InscanDirective {
+    const directive = ast.createInscanDirective();
+    const token = state.consume(
+      directive,
+      CstNodeKind.InscanDirective_INSCAN,
+      PreprocessorTokens.Inscan,
+    );
+    directive.token = token;
+    directive.item = this.parseReferenceItem(state, true);
+    directive.idempotent = this.isXInstruction(token);
+    state.consume(
+      directive,
+      CstNodeKind.InscanDirective_Semicolon,
       PreprocessorTokens.Semicolon,
     );
     return directive;
@@ -1301,5 +1312,9 @@ export class PliPreprocessorParser {
 
   private unpackCharacterValue(literal: string): string {
     return literal.substring(1, literal.length - 1);
+  }
+
+  private isXInstruction(token: Token): boolean {
+    return token.image.toUpperCase().startsWith("X");
   }
 }

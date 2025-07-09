@@ -250,13 +250,14 @@ export interface IncludeInstruction {
   kind: InstructionKind.Include;
   item: ast.IncludeItem;
   fileName: string;
-  xInclude: boolean;
+  idempotent: boolean;
   token: Token | null; // Token for error reporting, if available
 }
 
 export interface InscanInstruction {
   kind: InstructionKind.Inscan;
   variable: ReferenceItemInstruction;
+  idempotent: boolean;
 }
 
 export interface ActivateInstruction {

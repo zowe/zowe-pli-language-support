@@ -117,6 +117,7 @@ export enum SyntaxKind {
   IncludeDirective,
   IncludeAltDirective,
   IncludeItem,
+  InscanDirective,
   IndForAttribute,
   InitAcrossExpression,
   InitialAttribute,
@@ -349,6 +350,7 @@ export type SyntaxNode =
   | IncludeDirective
   | IncludeAltDirective
   | IncludeItem
+  | InscanDirective
   | IndForAttribute
   | InitAcrossExpression
   | InitialAttribute
@@ -713,6 +715,7 @@ export type Unit =
   | TokenStatement
   | IncludeDirective
   | IncludeAltDirective
+  | InscanDirective
   | ActivateStatement
   | DeactivateStatement
   | ProcessDirective
@@ -1437,7 +1440,7 @@ export function createIfStatement(): IfStatement {
 }
 export interface IncludeDirective extends AstNode {
   kind: SyntaxKind.IncludeDirective;
-  xInclude: boolean;
+  idempotent: boolean;
   token: Token | null;
   items: IncludeItem[];
 }
@@ -1446,7 +1449,7 @@ export function createIncludeDirective(): IncludeDirective {
     kind: SyntaxKind.IncludeDirective,
     container: null,
     token: null,
-    xInclude: false,
+    idempotent: false,
     items: [],
   };
 }
@@ -1455,7 +1458,7 @@ export function createIncludeDirective(): IncludeDirective {
  */
 export interface IncludeAltDirective extends AstNode {
   kind: SyntaxKind.IncludeAltDirective;
-  xInclude: boolean;
+  idempotent: boolean;
   token: Token | null;
   items: IncludeItem[];
 }
@@ -1464,7 +1467,7 @@ export function createIncludeAltDirective(): IncludeAltDirective {
     kind: SyntaxKind.IncludeAltDirective,
     container: null,
     token: null,
-    xInclude: false,
+    idempotent: false,
     items: [],
   };
 }
@@ -1485,6 +1488,21 @@ export function createIncludeItem(): IncludeItem {
     ddname: null,
     filePath: null,
     token: null,
+  };
+}
+export interface InscanDirective extends AstNode {
+  kind: SyntaxKind.InscanDirective;
+  token: Token | null;
+  item: ReferenceItem | null;
+  idempotent: boolean;
+}
+export function createInscanDirective(): InscanDirective {
+  return {
+    kind: SyntaxKind.InscanDirective,
+    container: null,
+    token: null,
+    item: null,
+    idempotent: false,
   };
 }
 export interface IndForAttribute extends AstNode {

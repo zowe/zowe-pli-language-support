@@ -367,6 +367,8 @@ export enum CstNodeKind {
   IncludeItem_FileString1,
   IncludeItem_FileID1,
   IncludeItem_CloseParen,
+  InscanDirective_INSCAN,
+  InscanDirective_Semicolon,
   IndForAttribute_INDFOR,
   IterateStatement_ITERATE,
   IterateStatement_Semicolon,

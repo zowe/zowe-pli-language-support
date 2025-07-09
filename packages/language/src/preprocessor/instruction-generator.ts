@@ -102,6 +102,9 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.IncludeAltDirective:
       instruction = generateIncludeInstruction(value);
       break;
+    case ast.SyntaxKind.InscanDirective:
+      instruction = generateInscanInstruction(value);
+      break;
     case ast.SyntaxKind.ActivateStatement:
       instruction = generateActivateInstruction(value);
       break;
@@ -409,7 +412,7 @@ function generateIncludeInstruction(
       const instruction: inst.IncludeInstruction = {
         kind: inst.InstructionKind.Include,
         item,
-        xInclude: node.xInclude,
+        idempotent: node.idempotent,
         fileName: item.fileName,
         token: item.token || node.token,
       };
@@ -423,6 +426,20 @@ function generateIncludeInstruction(
     kind: inst.InstructionKind.Compound,
     instructions,
   };
+}
+
+function generateInscanInstruction(
+  node: ast.InscanDirective,
+): inst.InscanInstruction | undefined {
+  if (!node.item) {
+    return undefined;
+  }
+  const instruction: inst.InscanInstruction = {
+    kind: inst.InstructionKind.Inscan,
+    variable: generateReferenceItemInstruction(node.item),
+    idempotent: node.idempotent,
+  };
+  return instruction;
 }
 
 function lookupDoNode(

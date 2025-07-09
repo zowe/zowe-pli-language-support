@@ -529,6 +529,11 @@ export function forEachNode(
       break;
     case SyntaxKind.IncludeItem:
       break;
+    case SyntaxKind.InscanDirective:
+      if (node.item) {
+        action(node.item);
+      }
+      break;
     case SyntaxKind.IndForAttribute:
       if (node.reference) {
         action(node.reference);
