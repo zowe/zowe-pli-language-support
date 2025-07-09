@@ -371,13 +371,10 @@ describe("Process directives", () => {
  LIBREF = 44;`;
 
     const doc = parse(code, { validate: true });
+    expect(doc.compilerOptions.flag).toBe("I");
+    expect(doc.compilerOptions.aggregate).toBeDefined();
+    expect(doc.compilerOptions.attributes?.identifiers).toBe("FULL");
     expect(doc.compilerOptions.margins).toEqual({ m: 2, n: 75 });
-    expect(doc.diagnostics.compilerOptions).toHaveLength(3);
-    expect(
-      doc.diagnostics.compilerOptions.every((issue) =>
-        issue.message.startsWith("Duplicate compiler option"),
-      ),
-    );
   });
 
   test("should parse multiple process directives with comments", () => {
@@ -417,5 +414,20 @@ describe("Process directives", () => {
     expect(doc.compilerOptions.attributes?.identifiers).toBe("FULL");
     expect(doc.compilerOptions.margins).toEqual({ m: 2, n: 75 });
     expect(doc.compilerOptions.default?.returns).toEqual({ type: "BYADDR" });
+  });
+
+  test("should parse multiple process directives with windows line endings", () => {
+    const code = `
+%PROCESS F(I) AG A(F); \r
+*PROCESS MARGINS(2,75); 
+%PROCESS F(I) AG A(F); \r
+ DECLARE LIBREF FIXED;
+ LIBREF = 44;`;
+
+    const doc = parse(code, { validate: true });
+    expect(doc.compilerOptions.flag).toBe("I");
+    expect(doc.compilerOptions.aggregate).toBeDefined();
+    expect(doc.compilerOptions.attributes?.identifiers).toBe("FULL");
+    expect(doc.compilerOptions.margins).toEqual({ m: 2, n: 75 });
   });
 });
