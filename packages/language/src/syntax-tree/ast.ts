@@ -1139,7 +1139,19 @@ export interface DetachStatement extends AstNode {
 }
 export interface DimensionBound extends AstNode {
   kind: SyntaxKind.DimensionBound;
+  /**
+   * Contains the lower bound of the dimension.
+   * In most cases, this will be null, as the lower bound is usually 1.
+   * However, it can be set to a different value in the source code.
+   * PLI declarations like `VAR(3:5)` will have a lower bound of 3.
+   * If this is part of a variable reference,
+   * the lower and upper bound will indicate a slice of the array
+   */
   lower: Bound | null;
+  /**
+   * Contains the upper bound of the dimension.
+   * It can never be null, unless a parser error occurs.
+   */
   upper: Bound | null;
 }
 export function createDimensionBound(): DimensionBound {
