@@ -49,6 +49,12 @@ function expectWorkspaceSymbols(annotatedCode: string[]): void {
     const unit = handler.createAndStoreCompilationUnit(
       URI.file(`/test${i}.pli`),
     );
+
+    if (!unit) {
+      // standalone library files do not synthesize new compilation units
+      return unit;
+    }
+
     lifecycle.lifecycle(unit, output);
     return unit;
   });
