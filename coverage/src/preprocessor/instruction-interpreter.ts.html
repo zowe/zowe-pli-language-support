@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.01% </span>
+                <span class="strong">87.14% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>543/624</span>
+                <span class='fraction'>549/630</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">81.13% </span>
+                <span class="strong">81.36% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>129/159</span>
+                <span class='fraction'>131/161</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">94.59% </span>
+                <span class="strong">94.73% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>35/37</span>
+                <span class='fraction'>36/38</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.01% </span>
+                <span class="strong">87.14% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>543/624</span>
+                <span class='fraction'>549/630</span>
             </div>
         
             
@@ -863,7 +863,17 @@
 <a name='L798'></a><a href='#L798'>798</a>
 <a name='L799'></a><a href='#L799'>799</a>
 <a name='L800'></a><a href='#L800'>800</a>
-<a name='L801'></a><a href='#L801'>801</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L801'></a><a href='#L801'>801</a>
+<a name='L802'></a><a href='#L802'>802</a>
+<a name='L803'></a><a href='#L803'>803</a>
+<a name='L804'></a><a href='#L804'>804</a>
+<a name='L805'></a><a href='#L805'>805</a>
+<a name='L806'></a><a href='#L806'>806</a>
+<a name='L807'></a><a href='#L807'>807</a>
+<a name='L808'></a><a href='#L808'>808</a>
+<a name='L809'></a><a href='#L809'>809</a>
+<a name='L810'></a><a href='#L810'>810</a>
+<a name='L811'></a><a href='#L811'>811</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1397,11 +1407,21 @@
 <span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-yes">526x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">505x</span>
 <span class="cline-any cline-yes">505x</span>
 <span class="cline-any cline-yes">526x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">547x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">547x</span>
+<span class="cline-any cline-yes">80338x</span>
+<span class="cline-any cline-yes">80338x</span>
+<span class="cline-any cline-yes">547x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2196,10 +2216,20 @@ function runTokenInstruction(
     const mergedTokens = lex(prefix.image + (firstToken?.<span class="branch-0 cbranch-no" title="branch not covered" >image ?? ""))</span>;
     setImmediateFollowProperty(firstToken, mergedTokens);
     // Push merged and new tokens to the stack
-    context.result.all.push(...mergedTokens, ...replacedTokens);
+    largePush(context.result.all, mergedTokens);
+    largePush(context.result.all, replacedTokens);
   } else {
     // If there is no need to merge the tokens, simply push them to the output
-    context.result.all.push(...replacedTokens);
+    largePush(context.result.all, replacedTokens);
+  }
+}
+&nbsp;
+function largePush&lt;T&gt;(target: T[], source: T[]): void {
+  // This is a workaround for the V8 engine's limit on the number of arguments
+  // that can be passed to a function. We use this to push large arrays into
+  // the result array.
+  for (const item of source) {
+    target.push(item);
   }
 }
 &nbsp;
@@ -2396,7 +2426,7 @@ function resolveIncludeFileUri(
 &nbsp;
   // check to validate include extension, if a program config &amp; process group is available
   const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
-    context.uri.toString(),
+    context.uri.toString(true),
   );
   const pgroup = programConfig
     ? PluginConfigurationProviderInstance.getProcessGroupConfig(
@@ -2470,7 +2500,7 @@ function resolveIncludeFileUri(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-09T09:12:11.793Z
+                at 2025-07-09T09:44:46.921Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
