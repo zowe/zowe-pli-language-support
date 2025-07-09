@@ -193,7 +193,7 @@ export class CompilerOptionsProcessor {
     const skipPatterns: RegExp[] = [
       /\s*\/\*[\s\S]*?\*\//my, // Multi-line comments
       /\s*\/\/[^\n\r]*/y, // Single-line comments
-      /[ \t]*\n/y, // End on newline
+      /[ \t\r]*\n/y, // End on newline
     ];
 
     let patternIndex = 0;
