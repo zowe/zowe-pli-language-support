@@ -124,10 +124,10 @@ describe("Compilation Unit Tests", () => {
   test("Cannot create compile unit from copybook directly", () => {
     const ch = new CompilationUnitHandler();
 
-    PluginConfigurationProviderInstance.init("file://");
+    PluginConfigurationProviderInstance.init("file:///");
 
     // Simulate a process group 'default' with a cpy folder and include-extensions
-    PluginConfigurationProviderInstance.setProgramConfigs("file://", [
+    PluginConfigurationProviderInstance.setProgramConfigs("file:///", [
       {
         program: "src/*.pli",
         pgroup: "default",
@@ -144,9 +144,9 @@ describe("Compilation Unit Tests", () => {
     ]);
 
     // File in the cpy folder
-    const libUri = URI.parse("file://cpy/b.inc");
+    const libUri = URI.parse("file:///cpy/b.inc");
     // File in the src folder (should be valid)
-    const mainUri = URI.parse("file://src/a.pli");
+    const mainUri = URI.parse("file:///src/a.pli");
 
     // Should not create a compilation unit for a file in the cpy folder
     const libUnit = ch.getOrCreateCompilationUnit(libUri);

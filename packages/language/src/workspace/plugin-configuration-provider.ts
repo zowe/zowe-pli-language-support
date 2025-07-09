@@ -19,11 +19,6 @@ import { translateCompilerOptions } from "../preprocessor/compiler-options/trans
 import { minimatch } from "minimatch";
 
 /**
- * Plugin configuration provider for loading up '.pliplugin' (when it exists), processing its contents,
- * and making those settings available to the language server.
- */
-
-/**
  * Program configuration, this corresponds to the entry point of a compile unit
  * and the process group that belongs to it
  */
@@ -50,6 +45,10 @@ export interface ProcessGroup {
   issueCount?: number;
 }
 
+/**
+ * Plugin configuration provider for loading up '.pliplugin' (when it exists), processing its contents,
+ * and making those settings available to the language server.
+ */
 class PluginConfigurationProvider {
   /**
    * Prebuilt list of glob patterns for library file matching.
@@ -83,21 +82,13 @@ class PluginConfigurationProvider {
    * Initializes the plugin configuration provider with a workspace path, using any plugins present in the workspace
    */
   public async init(workspacePath: string) {
-    // TODO @montymxb Apr. 23rd, 2025: Path sep is not cross-platform (vscode-uri does the same)
-    const plipluginPath = workspacePath + "/.pliplugin";
-    const programConfigPath = plipluginPath + "/pgm_conf.json";
-    const processGroupConfigPath = plipluginPath + "/proc_grps.json";
-
-    // load configs
-    this.loadProgramConfig(programConfigPath, workspacePath);
-    this.loadProcessGroupConfig(processGroupConfigPath);
-
-    // set the workspace path
     this.workspacePath = workspacePath;
+    this.loadConfigurations();
   }
 
   /**
    * Builds and saves the glob patterns for library file matching.
+   * Patterns are prefixed with the workspace path and are intended to match full file URIs.
    */
   private buildLibFileGlobPatterns(): void {
     const patterns: string[] = [];
@@ -120,10 +111,10 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Checks if the given file path matches any known library file pattern
+   * Checks if the given file URI matches any known library file pattern.
    * Patterns are memoized and rebuilt when process group configs change.
-   * @param filePath The file path to check for lib membership
-   * @returns true if the file path matches any lib file pattern, false otherwise
+   * @param filePath The file URI to check for lib membership
+   * @returns true if the file URI matches any lib file pattern, false otherwise
    */
   public isLibFileCandidate(filePath: string): boolean {
     if (!this.libFileGlobPatterns) {
@@ -144,30 +135,35 @@ class PluginConfigurationProvider {
    * Reloads plugin configurations from the existing workspace path.
    */
   public reloadConfigurations(): void {
-    const plipluginPath = this.workspacePath + "/.pliplugin";
-    const programConfigPath = plipluginPath + "/pgm_conf.json";
-    const processGroupConfigPath = plipluginPath + "/proc_grps.json";
-
     console.log("Reloading .pliplugin configurations...");
-    this.loadProgramConfig(programConfigPath, this.workspacePath);
-    this.loadProcessGroupConfig(processGroupConfigPath);
+    this.loadConfigurations();
+  }
+
+  /**
+   * Loads the plugin configurations from the workspace path, overwriting any existing configs
+   */
+  private loadConfigurations(): void {
+    const workspaceUri = URI.parse(this.workspacePath);
+
+    // load configs
+    this.loadProgramConfig(
+      UriUtils.joinPath(workspaceUri, ".pliplugin", "pgm_conf.json"),
+    );
+
+    this.loadProcessGroupConfig(
+      UriUtils.joinPath(workspaceUri, ".pliplugin", "proc_grps.json"),
+    );
   }
 
   /**
    * Loads the program config from the given path, and sets it in our provider
-   * @param programConfigPath Path to the program config file
-   * @param workspacePath Used to set program configs in relation to our workspace path
+   * @param programConfigURI URI to the program config file
    */
-  private loadProgramConfig(
-    programConfigPath: string,
-    workspacePath: string,
-  ): void {
+  private loadProgramConfig(programConfigUri: URI): void {
     // attempt to read configs
-    const programConfigUri = URI.parse(programConfigPath);
     if (FileSystemProviderInstance.fileExistsSync(programConfigUri)) {
-      const progConfig = FileSystemProviderInstance.readFileSync(
-        URI.parse(programConfigPath),
-      );
+      const progConfig =
+        FileSystemProviderInstance.readFileSync(programConfigUri);
 
       // add configs to our provider if they exist
       if (progConfig !== undefined) {
@@ -176,7 +172,7 @@ class PluginConfigurationProvider {
             progConfig.toString(),
           ).pgms;
           // set w/ respect to the cur workspace path
-          this.setProgramConfigs(workspacePath, programConfigs);
+          this.setProgramConfigs(this.workspacePath, programConfigs);
           return;
         } catch (e) {
           console.error("Failed to load program config, skipping:", e);
@@ -202,11 +198,10 @@ class PluginConfigurationProvider {
    * Loads the process group config from the given path, and sets it in our provider
    * @param processGroupConfigPath Path to the process group config file
    */
-  private loadProcessGroupConfig(processGroupConfigPath: string): void {
-    const processGroupConfigUri = URI.parse(processGroupConfigPath);
+  private loadProcessGroupConfig(processGroupConfigUri: URI): void {
     if (FileSystemProviderInstance.fileExistsSync(processGroupConfigUri)) {
       const processGrpConfig = FileSystemProviderInstance.readFileSync(
-        URI.parse(processGroupConfigPath),
+        processGroupConfigUri,
       );
 
       if (processGrpConfig !== undefined) {
@@ -260,25 +255,25 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Sets program config of our plugin configuration provider, overriding prior configs
-   * @param partialKey Workspace path as a partial key (program name takes the rest)
-   * @param programConfigs Program configs loaded from .pliplugin/pgm_confg.json (when present)
+   * Sets program config of our plugin configuration provider, overriding prior configs.
+   * @param workspacePath The full workspace path (used as a prefix for program config keys)
+   * @param programConfigs Program configs loaded from .pliplugin/pgm_conf.json (when present)
    */
   public setProgramConfigs(
-    partialKey: string,
+    workspacePath: string,
     programConfigs: ProgramConfig[],
   ): void {
     this.programConfigs.clear();
+    const workspaceUri = URI.parse(workspacePath);
     for (const config of programConfigs) {
-      // TODO @montymxb Apr. 23rd, 2025: Path sep is not cross-platform
-      const workspaceUri = URI.parse(partialKey);
       const newPath = UriUtils.joinPath(workspaceUri, config.program);
       this.programConfigs.set(newPath.toString(), config);
     }
   }
 
   /**
-   * Sets process group configs of our plugin configuration provider, overriding prior configs
+   * Sets process group configs of our plugin configuration provider, overriding prior configs.
+   * Also invalidates the saved library file patterns.
    * @param processGroupConfigs List of process group configs loaded from
    *  .pliplugin/proc_grps.json (when present)
    */
