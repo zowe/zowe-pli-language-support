@@ -50,6 +50,9 @@ const controlKeywords = [
     'begin',
     'process',
     'include',
+    'xinclude',
+    'inscan',
+    'xinscan',
     'deactivate',
     'activate',
 ];
