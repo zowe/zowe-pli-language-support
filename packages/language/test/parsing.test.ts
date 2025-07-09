@@ -668,6 +668,47 @@ describe("PL/I Parsing tests", () => {
       expect(diagnostics).not.toHaveLength(0);
     });
 
+    test("Can specify value on ordinal definition", async () => {
+      const doc = parseStmts(`
+      define ordinal day (
+        Monday VALUE(1)
+      );
+       `);
+      assertNoParseErrors(doc);
+      generateAndAssertValidSymbolTable(doc);
+    });
+
+    test("Can specify negative value on ordinal definition", async () => {
+      const doc = parseStmts(`
+      define ordinal day (
+        Monday VALUE(-1)
+      );
+       `);
+      assertNoParseErrors(doc);
+      generateAndAssertValidSymbolTable(doc);
+    });
+
+    test("Can use non-UNION attributes in DEFINE STRUCTURE statement", () => {
+      // The Enterprise PL/I for z/OS Language Reference specifies that UNION is the only allowed attribute for the first structure item
+      // However, this is not true, we can use non-UNION attributes as well, the compiler will accept it
+      const doc = parse(`
+       DEFINE STRUCTURE
+        01 MEMORY_USAGE       UNALIGNED
+          ,05 TOT_24B_BYT_CT      BIN FIXED(31)
+          ,05 AVL_24B_BYT_CT      BIN FIXED(31)
+          ,05 USD_24B_BYT_CT      BIN FIXED(31)
+          ,05 TOT_32B_BYT_CT      BIN FIXED(31)
+          ,05 AVL_32B_BYT_CT      BIN FIXED(31)
+          ,05 USD_32B_BYT_CT      BIN FIXED(31)
+          ,05 TOT_64B_BYT_CT      BIN FIXED(63)
+          ,05 AVL_64B_BYT_CT      BIN FIXED(63)
+          ,05 USD_64B_BYT_CT      BIN FIXED(63);
+       ;
+      `);
+      assertNoParseErrors(doc);
+      generateAndAssertValidSymbolTable(doc);
+    });
+
     /**
      * Ensure both forms of precision are parsable
      */
