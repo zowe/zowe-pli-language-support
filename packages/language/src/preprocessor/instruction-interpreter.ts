@@ -197,7 +197,7 @@ export function runInstructions(
     },
     result: {
       all: [],
-      fileTokens: {},
+      fileTokens: new Map(),
     },
     options,
     counter: new Map(),
@@ -852,7 +852,7 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
       uri,
     );
     const subProgram = context.options.parser.parse(subState);
-    context.result.fileTokens[uri.toString()] = subProgram.tokens;
+    context.result.fileTokens.set(uri.toString(), subProgram.tokens);
     context.errors.push(...subProgram.errors);
     const instruction = generateInstructions(subProgram.statements);
     const newContext: InterpreterContext = {

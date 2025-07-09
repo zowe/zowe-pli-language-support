@@ -46,7 +46,7 @@ export function tokenize(
   text: string,
 ): LexerResult {
   const result = lexer.tokenize(compilationUnit, text, compilationUnit.uri);
-  compilationUnit.files = Object.keys(result.fileTokens).map((e) =>
+  compilationUnit.files = [...result.fileTokens.keys()].map((e) =>
     URI.parse(e),
   );
   compilationUnit.tokens.all = result.all;

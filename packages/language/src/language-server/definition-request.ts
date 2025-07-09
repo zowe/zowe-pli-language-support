@@ -27,7 +27,10 @@ export function definitionRequest(
   uri: URI,
   offset: number,
 ): Location[] {
-  const tokens = compilationUnit.tokens.fileTokens[uri.toString()] ?? [];
+  const tokens = compilationUnit.tokens.fileTokens.get(uri.toString());
+  if (!tokens) {
+    return [];
+  }
   const token = binaryTokenSearch(tokens, offset);
   const payload = token?.payload;
   if (!payload) {

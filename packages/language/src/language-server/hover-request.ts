@@ -116,7 +116,10 @@ export function hoverRequest(
   uri: URI,
   offset: number,
 ): HoverResponse | null {
-  const tokens = unit.tokens.fileTokens[uri.toString()] ?? [];
+  const tokens = unit.tokens.fileTokens.get(uri.toString());
+  if (!tokens) {
+    return null;
+  }
   const token = binaryTokenSearch(tokens, offset);
   const payload = token?.payload;
   if (!payload) {
