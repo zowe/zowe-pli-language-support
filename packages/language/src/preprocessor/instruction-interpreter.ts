@@ -531,10 +531,20 @@ function runTokenInstruction(
     const mergedTokens = lex(prefix.image + (firstToken?.image ?? ""));
     setImmediateFollowProperty(firstToken, mergedTokens);
     // Push merged and new tokens to the stack
-    context.result.all.push(...mergedTokens, ...replacedTokens);
+    largePush(context.result.all, mergedTokens);
+    largePush(context.result.all, replacedTokens);
   } else {
     // If there is no need to merge the tokens, simply push them to the output
-    context.result.all.push(...replacedTokens);
+    largePush(context.result.all, replacedTokens);
+  }
+}
+
+function largePush<T>(target: T[], source: T[]): void {
+  // This is a workaround for the V8 engine's limit on the number of arguments
+  // that can be passed to a function. We use this to push large arrays into
+  // the result array.
+  for (const item of source) {
+    target.push(item);
   }
 }
 
@@ -731,7 +741,7 @@ function resolveIncludeFileUri(
 
   // check to validate include extension, if a program config & process group is available
   const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
-    context.uri.toString(),
+    context.uri.toString(true),
   );
   const pgroup = programConfig
     ? PluginConfigurationProviderInstance.getProcessGroupConfig(
