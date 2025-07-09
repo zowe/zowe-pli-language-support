@@ -942,8 +942,15 @@ function resolveIncludeFileUri(
         const patt = `${libFileUri.path}\\.*`;
         const matches = FileSystemProviderInstance.findFilesByGlobSync(patt);
         if (matches.length > 0) {
-          // Return the first match found
-          return URI.file(matches[0]);
+          // ensure this extension is allowed
+          const ext = matches[0].match(/\.\w+$/);
+          if (
+            ext &&
+            ext?.length &&
+            pgroup["include-extensions"]?.includes(ext[0].toLowerCase())
+          ) {
+            return URI.file(matches[0]);
+          }
         }
       }
     }
