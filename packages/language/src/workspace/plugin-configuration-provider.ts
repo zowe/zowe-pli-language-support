@@ -19,8 +19,8 @@ import { translateCompilerOptions } from "../preprocessor/compiler-options/trans
 import { minimatch } from "minimatch";
 
 /**
- * Program configuration, this corresponds to the entry point of a compile unit
- * and the process group that belongs to it
+ * Program configuration. Corresponds to the entry point of a compile unit
+ * and the process group that it belongs to.
  */
 export interface ProgramConfig {
   program: string;
@@ -28,8 +28,8 @@ export interface ProgramConfig {
 }
 
 /**
- * Process group configuration, this corresponds to libs, compiler options, and other
- * settings that are associated will be associated with a program config
+ * Process group configuration. Corresponds to libraries, compiler options, and other
+ * settings that are associated with a program config.
  */
 export interface ProcessGroup {
   name: string;
@@ -46,8 +46,8 @@ export interface ProcessGroup {
 }
 
 /**
- * Plugin configuration provider for loading up '.pliplugin' (when it exists), processing its contents,
- * and making those settings available to the language server.
+ * Plugin configuration provider for loading '.pliplugin/pgm_conf.json' and '.pliplugin/proc_grps.json' (when they exist),
+ * processing their contents, and making those settings available to the language server.
  */
 class PluginConfigurationProvider {
   /**
@@ -56,14 +56,14 @@ class PluginConfigurationProvider {
   private libFileGlobPatterns: string[] | undefined;
 
   /**
-   * Map of program configs, keyed by their entry program
-   * These correlate to the entry point of a compile unit
+   * Map of program configs, keyed by their entry program.
+   * These correspond to the entry point of a compile unit.
    */
   private programConfigs: Map<string, ProgramConfig>;
 
   /**
    * Map of process group configs, keyed by their group name.
-   * These serve as a collection of libs, compiler options, and other settings
+   * These serve as a collection of libraries, compiler options, and other settings.
    */
   private processGroupConfigs: Map<string, ProcessGroup>;
 
@@ -79,7 +79,7 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Initializes the plugin configuration provider with a workspace path, using any plugins present in the workspace
+   * Initializes the plugin configuration provider with a workspace path, using any plugin configs present in the workspace.
    */
   public async init(workspacePath: string) {
     this.workspacePath = workspacePath;
@@ -88,7 +88,7 @@ class PluginConfigurationProvider {
 
   /**
    * Builds and saves the glob patterns for library file matching.
-   * Patterns are prefixed with the workspace path and are intended to match full file URIs.
+   * Patterns are prefixed with the workspace path and are intended to match full file paths.
    */
   private buildLibFileGlobPatterns(): void {
     const patterns: string[] = [];
@@ -111,10 +111,10 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Checks if the given file URI matches any known library file pattern.
+   * Checks if the given file path matches any known library file pattern.
    * Patterns are memoized and rebuilt when process group configs change.
-   * @param filePath The file URI to check for lib membership
-   * @returns true if the file URI matches any lib file pattern, false otherwise
+   * @param filePath The file path to check for library membership
+   * @returns true if the file path matches any library file pattern, false otherwise
    */
   public isLibFileCandidate(filePath: string): boolean {
     if (!this.libFileGlobPatterns) {
@@ -140,7 +140,7 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Loads the plugin configurations from the workspace path, overwriting any existing configs
+   * Loads the plugin configurations from the workspace path, overwriting any existing configs.
    */
   private loadConfigurations(): void {
     const workspaceUri = URI.parse(this.workspacePath);
@@ -156,8 +156,8 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Loads the program config from the given path, and sets it in our provider
-   * @param programConfigURI URI to the program config file
+   * Loads the program config from the given path, and sets it in this provider.
+   * @param programConfigUri URI to the program config file
    */
   private loadProgramConfig(programConfigUri: URI): void {
     // attempt to read configs
@@ -171,7 +171,7 @@ class PluginConfigurationProvider {
           const programConfigs: ProgramConfig[] = JSON.parse(
             progConfig.toString(),
           ).pgms;
-          // set w/ respect to the cur workspace path
+          // set w/ respect to the current workspace path
           this.setProgramConfigs(this.workspacePath, programConfigs);
           return;
         } catch (e) {
@@ -195,8 +195,8 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Loads the process group config from the given path, and sets it in our provider
-   * @param processGroupConfigPath Path to the process group config file
+   * Loads the process group config from the given path, and sets it in this provider.
+   * @param processGroupConfigUri URI to the process group config file
    */
   private loadProcessGroupConfig(processGroupConfigUri: URI): void {
     if (FileSystemProviderInstance.fileExistsSync(processGroupConfigUri)) {
@@ -255,7 +255,8 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Sets program config of our plugin configuration provider, overriding prior configs.
+   * Sets the program configs of this plugin configuration provider, overwriting any existing configs.
+   * The config key is set as the full path relative to the workspace.
    * @param workspacePath The full workspace path (used as a prefix for program config keys)
    * @param programConfigs Program configs loaded from .pliplugin/pgm_conf.json (when present)
    */
@@ -272,7 +273,7 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Sets process group configs of our plugin configuration provider, overriding prior configs.
+   * Sets the process group configs of this plugin configuration provider, overwriting any existing configs.
    * Also invalidates the saved library file patterns.
    * @param processGroupConfigs List of process group configs loaded from
    *  .pliplugin/proc_grps.json (when present)
@@ -329,14 +330,14 @@ class PluginConfigurationProvider {
 
   /**
    * Returns whether any program configs have been registered.
-   * Without any, all programs are treated as valid entry points
+   * If none are registered, all programs are treated as valid entry points.
    */
   public hasRegisteredProgramConfigs(): boolean {
     return this.programConfigs.size > 0;
   }
 
   /**
-   * Returns the process group config for the given process group
+   * Returns the process group config for the given process group name.
    * @param pgroup Name of the process group to get a config for
    * @returns Associated process group config, or undefined if not found
    */
@@ -346,7 +347,7 @@ class PluginConfigurationProvider {
 }
 
 /**
- * Single instance of the pli plugin configuration provider.
+ * Singleton instance of the pli plugin configuration provider.
  */
 export const PluginConfigurationProviderInstance: PluginConfigurationProvider =
   new PluginConfigurationProvider();
