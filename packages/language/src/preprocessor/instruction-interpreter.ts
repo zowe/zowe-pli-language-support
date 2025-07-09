@@ -29,11 +29,13 @@ import { CstNodeKind } from "../syntax-tree/cst";
 
 interface Variable {
   name: string;
-  value: Value;
+  value: VariableValue;
   declarationNode?: ast.SyntaxNode | null;
   mode: inst.ScanMode;
   active: boolean;
 }
+
+type VariableValue = Value | ArrayValue;
 
 interface Value {
   // Preprocessor variables are always strings or numbers.
@@ -42,19 +44,103 @@ interface Value {
   type: inst.DeclaredType;
 }
 
-function generateVariable(instruction: inst.DeclareInstruction): Variable {
+function isValue(value: VariableValue): value is Value {
+  return "value" in value && "type" in value;
+}
+
+function copyValue(value: Value): Value {
+  return {
+    value: value.value,
+    type: value.type,
+  };
+}
+
+interface ArrayValue {
+  array: VariableValue[];
+  lower: number;
+  upper: number;
+}
+
+function isArrayValue(value: VariableValue): value is ArrayValue {
+  return "array" in value && "lower" in value && "upper" in value;
+}
+
+function copyArrayValue(value: ArrayValue): ArrayValue {
+  return {
+    array: value.array.map(copyVariableValue),
+    lower: value.lower,
+    upper: value.upper,
+  };
+}
+
+function copyVariableValue(value: VariableValue): VariableValue {
+  if (isArrayValue(value)) {
+    return copyArrayValue(value);
+  } else {
+    return copyValue(value);
+  }
+}
+
+function generateVariable(
+  instruction: inst.DeclareInstruction,
+  context: InterpreterContext,
+): Variable {
   return {
     name: instruction.name,
-    // Initial value is empty or 0 (for numbers)
-    value: {
-      value: instruction.type === inst.DeclaredType.Character ? "" : "0",
-      type: instruction.type,
-    },
+    value: generateVariableValue(instruction, context),
     declarationNode: instruction.node,
     mode: instruction.mode,
     // NOSCAN means the variable is not active
     active: instruction.mode !== inst.ScanMode.NoScan,
   };
+}
+
+function generateVariableValue(
+  instruction: inst.DeclareInstruction,
+  context: InterpreterContext,
+): VariableValue {
+  let value: VariableValue;
+  // Initial value is empty or 0 (for numbers)
+  if (instruction.type === inst.DeclaredType.Character) {
+    value = {
+      value: "",
+      type: inst.DeclaredType.Character,
+    };
+  } else {
+    value = {
+      value: "0",
+      type: inst.DeclaredType.Fixed,
+    };
+  }
+  if (instruction.dimensions && instruction.dimensions.length > 0) {
+    // Evaluate the dimensions in reverse order to construct the nested array correctly
+    for (const { lowerBound, upperBound } of instruction.dimensions.reverse()) {
+      let lower = 1;
+      if (lowerBound) {
+        const evaluatedLower = evaluateExpression(lowerBound, context);
+        const parsedLower = parseInt(evaluatedLower.value);
+        lower = parsedLower;
+      }
+      let upper = 1;
+      if (upperBound) {
+        const evaluatedUpper = evaluateExpression(upperBound, context);
+        const parsedUpper = parseInt(evaluatedUpper.value);
+        upper = parsedUpper;
+      }
+      const length = upper - lower + 1;
+      const array: VariableValue[] = [];
+      for (let i = 0; i < length; i++) {
+        // Initialize the array with the copied value
+        array.push(copyVariableValue(value));
+      }
+      value = {
+        array,
+        lower,
+        upper,
+      };
+    }
+  }
+  return value;
 }
 
 export enum IfEvaluationResult {
@@ -246,6 +332,12 @@ function runAssignmentInstruction(
   for (const ref of instruction.refs) {
     let variable = context.variables.get(ref.variable);
     if (!variable) {
+      if (ref.args.length > 0) {
+        // This seems to write into an undeclared array variable
+        // Array variables cannot be implicitly declared, so we simply return
+        // TODO: We should report an error here
+        return;
+      }
       variable = {
         name: ref.variable,
         declarationNode: ref.reference?.owner,
@@ -255,9 +347,36 @@ function runAssignmentInstruction(
       };
       context.variables.set(ref.variable, variable);
     } else {
+      let setter: ((val: VariableValue) => void) | undefined = (val) => {
+        variable!.value = val;
+      };
+      if (ref.args.length > 0) {
+        let variableValue = variable.value;
+        // If we access an array variable, we need to evaluate the args
+        for (const arg of ref.args) {
+          const argValue = evaluateExpression(arg, context);
+          const numValue = parseInt(argValue.value);
+          const currentValue = variableValue;
+          let arrayValue: VariableValue | undefined;
+          if (isArrayValue(variableValue)) {
+            const index = numValue - variableValue.lower;
+            // Manipulate the array in place
+            setter = (val) => {
+              (currentValue as ArrayValue).array[index] = val;
+            };
+            arrayValue = variableValue.array[index];
+          } else {
+            // The variable that we want to access is not an array
+            // TODO: We should report an error here
+            setter = undefined;
+            break;
+          }
+          variableValue = arrayValue;
+        }
+      }
       // Currently, we simply assume that a user has used `=` as the assignment operator
       // TODO: Add more assignment operators in a separate PR.
-      variable.value = value;
+      setter?.(value);
     }
   }
 }
@@ -283,6 +402,7 @@ function runIfInstruction(
   }
 }
 
+// TODO: We should be able to return an `ArrayValue` here as well
 function evaluateExpression(
   expression: inst.ExpressionInstruction,
   context: InterpreterContext,
@@ -408,17 +528,38 @@ function evaluateUnaryExpression(
   return valueToNumber("0");
 }
 
+const defaultEmptyValue: Value = {
+  type: inst.DeclaredType.Character,
+  value: "",
+};
+
 function evaluateReferenceExpression(
   expression: inst.ReferenceItemInstruction,
   context: InterpreterContext,
 ): Value {
   const variable = context.variables.get(expression.variable);
-  return variable
-    ? variable.value
-    : {
-        type: inst.DeclaredType.Character,
-        value: "",
-      };
+  const value = variable?.value;
+  if (!value) {
+    return defaultEmptyValue;
+  } else if (isValue(value)) {
+    return value;
+  } else if (isArrayValue(value)) {
+    let arrayValue = value;
+    const args = expression.args.map((arg) => evaluateExpression(arg, context));
+    for (const arg of args) {
+      const numValue = parseInt(arg.value);
+      const argValue = arrayValue.array[numValue - arrayValue.lower];
+      if (!argValue) {
+        return defaultEmptyValue;
+      } else if (isValue(argValue)) {
+        return argValue;
+      } else {
+        arrayValue = argValue;
+      }
+    }
+  }
+  // If we exhaust all args without finding a value, return default
+  return defaultEmptyValue;
 }
 
 function evaluateLiteralExpression(
@@ -472,7 +613,7 @@ function runDeclareInstruction(
   instruction: inst.DeclareInstruction,
   context: InterpreterContext,
 ): void {
-  const variable = generateVariable(instruction);
+  const variable = generateVariable(instruction, context);
   context.variables.set(variable.name, variable);
 }
 
@@ -591,6 +732,11 @@ function performTokenScan(
     token.payload.kind = CstNodeKind.ReferenceItem_Ref;
   }
   const variableValue = variable.value;
+  if (!isValue(variableValue)) {
+    // Cannot replace tokens for array variables
+    // TODO: There is a warning/error for this, that should be reported
+    return undefined;
+  }
   const tokens = lex(variableValue.value);
   setImmediateFollowProperty(token, tokens);
   return replaceTokensInText(tokens, context);

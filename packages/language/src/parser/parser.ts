@@ -8410,6 +8410,7 @@ const expressionTokenTypes = [
   tokens.AssignmentOperator,
   tokens.STRING_TERM,
   tokens.NUMBER,
+  tokens.Comma,
 ];
 
 export function performAssignmentLookahead(
@@ -8450,10 +8451,12 @@ export function performAssignmentLookahead(
       // Semicolon indicates the end of the statement
       return false;
     } else {
-      for (const tokenType of expressionTokenTypes) {
-        if (!tokenMatcher(token, tokenType)) {
-          return false;
-        }
+      if (
+        !expressionTokenTypes.some((tokenType) =>
+          tokenMatcher(token, tokenType),
+        )
+      ) {
+        return false;
       }
       // Continue with the next token, the current token is a valid expression token
     }

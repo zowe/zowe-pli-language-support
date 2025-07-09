@@ -187,6 +187,7 @@ function generateDeclareInstruction(
     if (!item.name) {
       continue; // Skip variables without a name
     }
+    const dimensions = getDimensions(item);
     // Generate an instruction for each declared variable
     const attributes = getAttributes(item);
     let type: inst.DeclaredType = inst.DeclaredType.Character;
@@ -208,6 +209,7 @@ function generateDeclareInstruction(
     instructions.push(
       inst.createDeclareInstruction(
         item.name,
+        dimensions,
         type,
         scanMode,
         visibility,
@@ -245,6 +247,44 @@ function getAttributes(item: ast.DeclaredVariable): string[] {
     container = container.container;
   }
   return attributes;
+}
+
+function getDimensions(
+  item: ast.DeclaredVariable,
+): inst.DimensionBoundsInstruction[] | undefined {
+  const container = item.container;
+  if (
+    container?.kind !== ast.SyntaxKind.DeclaredItem ||
+    !container.attributes.length
+  ) {
+    return undefined;
+  }
+  const firstAttribute = container.attributes[0];
+  if (
+    firstAttribute.kind !== ast.SyntaxKind.DimensionsDataAttribute ||
+    !firstAttribute.dimensions
+  ) {
+    return undefined; // No dimensions attribute found
+  }
+  const instructions: inst.DimensionBoundsInstruction[] = [];
+  const dimensions = firstAttribute.dimensions.dimensions;
+  for (const { lower, upper } of dimensions) {
+    let upperBound: inst.ExpressionInstruction | undefined = undefined;
+    if (upper && upper.expression && upper.expression !== "*") {
+      upperBound = generateExpressionInstruction(upper.expression);
+    }
+
+    let lowerBound: inst.ExpressionInstruction | undefined = undefined;
+    if (lower && lower.expression && lower.expression !== "*") {
+      lowerBound = generateExpressionInstruction(lower.expression);
+    }
+
+    instructions.push({
+      lowerBound: lowerBound ?? null,
+      upperBound: upperBound ?? null,
+    });
+  }
+  return instructions;
 }
 
 function generateIfInstruction(
@@ -539,9 +579,9 @@ function generateReferenceItemInstruction(
         kind: inst.InstructionKind.String,
         value: "",
       };
-      if (dimension.lower?.expression && dimension.lower.expression !== "*") {
+      if (dimension.upper?.expression && dimension.upper.expression !== "*") {
         const instruction = generateExpressionInstruction(
-          dimension.lower.expression,
+          dimension.upper.expression,
         );
         if (instruction) {
           args.push(instruction);
