@@ -43,6 +43,8 @@ enum Applied {
   NEGATIVE = -1,
 }
 
+const PLI_CHARACTER_SET = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/i;
+
 class Translator {
   options: CompilerOptions = {};
   issues: CompilerOptionIssue[] = [];
@@ -199,11 +201,16 @@ class TranslationError {
   }
 }
 
-function ensureArguments(option: CompilerOption, min: number, max: number) {
-  if (option.values.length < min || option.values.length > max) {
+function ensureArguments(option: CompilerOption, min: number, max?: number) {
+  if (
+    option.values.length < min ||
+    (max !== undefined && option.values.length > max)
+  ) {
     let message: string;
     if (min === max) {
       message = `Expected ${min} arguments, but received ${option.values.length}.`;
+    } else if (max === undefined) {
+      message = `Expected at least ${min} arguments, but received ${option.values.length}.`;
     } else {
       message = `Expected between ${min} and ${max} arguments, but received ${option.values.length}.`;
     }
@@ -428,10 +435,15 @@ translator.rule(["BLANK"], (option, options) => {
   const value = option.values[0];
   ensureType(value, "string");
 
-  // Test for every single character in the string.
-  // Not allowed: A-Z, 0-9, space, =, +, -, *, /, (, ),,, ., ', ", %, ;, :, &, |, <, >, _, ¬
-  const disallowedChars = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/i;
-  if (disallowedChars.test(value.value)) {
+  if (value.value.length !== 1) {
+    throw new TranslationError(
+      value.token,
+      "BLANK option value must be a single character.",
+      1,
+    );
+  }
+
+  if (PLI_CHARACTER_SET.test(value.value)) {
     throw new TranslationError(
       value.token,
       "BLANK option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
@@ -451,10 +463,31 @@ translator.rule(
   stringTranslate((options, value) => {
     const length = value.value.length;
     if (length !== 2) {
-      throw new TranslationError(value.token, "Expected two characters.", 1);
+      throw new TranslationError(
+        value.token,
+        "BRACKETS option value must be two characters.",
+        1,
+      );
     }
     const start = value.value.charAt(0);
     const end = value.value.charAt(1);
+
+    if (PLI_CHARACTER_SET.test(start) || PLI_CHARACTER_SET.test(end)) {
+      throw new TranslationError(
+        value.token,
+        "BRACKETS option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
+        1,
+      );
+    }
+
+    if (start === end) {
+      throw new TranslationError(
+        value.token,
+        "BRACKETS option value must be two different characters.",
+        1,
+      );
+    }
+
     options.brackets = [start, end];
   }),
 );
@@ -498,26 +531,42 @@ translator.rule(["CASERULES"], (option, options) => {
 });
 
 /** {@link CompilerOptions.check} */
-translator.rule(
-  ["CHECK"],
-  plainTranslate(
-    (options, value) => {
-      let text = value.value;
-      if (text === "STG") {
-        text = "STORAGE";
-      } else if (text === "NSTG") {
-        text = "NOSTORAGE";
+translator.rule(["CHECK"], (option, options) => {
+  ensureArguments(option, 1);
+  for (const value of option.values) {
+    ensureType(value, "plain");
+    const text = value.value.toUpperCase();
+    if (text === "STORAGE" || text === "STG") {
+      if (options.check?.storage === "NOSTORAGE") {
+        throw new TranslationError(
+          value.token,
+          `The compiler option value ${text} conflicts with other options: NOSTORAGE.`,
+          1,
+        );
       }
       options.check = {
-        storage: text as "STORAGE" | "NOSTORAGE",
+        storage: "STORAGE",
       };
-    },
-    "STORAGE",
-    "STG",
-    "NOSTORAGE",
-    "NSTG",
-  ),
-);
+    } else if (text === "NOSTORAGE" || text === "NSTG") {
+      if (options.check?.storage === "STORAGE") {
+        throw new TranslationError(
+          value.token,
+          `The compiler option value ${text} conflicts with other options: STORAGE.`,
+          1,
+        );
+      }
+      options.check = {
+        storage: "NOSTORAGE",
+      };
+    } else {
+      throw new TranslationError(
+        value.token,
+        `Invalid check option value. Expected STORAGE or NOSTORAGE, but received '${text}'.`,
+        1,
+      );
+    }
+  }
+});
 
 /** {@link CompilerOptions.cmpat} */
 translator.rule(
@@ -720,12 +769,22 @@ translator.rule(["DDSQL"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   ensureType(value, "plainOrString");
+  if (value.kind === SyntaxKind.CompilerOptionText) {
+    if (value.value.length === 0) {
+      throw new TranslationError(
+        value.token,
+        "DDSQL option value cannot be empty without parentheses.",
+        1,
+      );
+    }
+  }
   options.ddsql = value.value;
 });
 
 /** {@link CompilerOptions.decimal} */
 translator.rule(["DECIMAL", "DEC"], (option, options) => {
   options.decimal = {};
+  ensureArguments(option, 1);
   for (const opt of option.values) {
     ensureType(opt, "plain");
     const value = opt.value.toUpperCase();
@@ -793,140 +852,161 @@ translator.flag("decomp", ["DECOMP"], ["NODECOMP"]);
 
 /** {@link CompilerOptions.default} */
 translator.rule(["DEFAULT", "DFT"], (option, options) => {
+  ensureArguments(option, 1);
   const def: CompilerOptions.Default = (options.default = {});
+  if (
+    option.values.length === 1 &&
+    option.values[0].kind === SyntaxKind.CompilerOptionText &&
+    option.values[0].value === ""
+  ) {
+    return;
+  }
+  const setOptions = new Set<string>();
+
+  const ensureNotAlreadySet = (
+    option: CompilerOptionText,
+    exclusive: string[],
+  ) => {
+    const value = option.value.toUpperCase();
+    for (const exclude of exclusive) {
+      if (setOptions.has(exclude) && value !== exclude) {
+        throw new TranslationError(
+          option.token,
+          `The compiler option value ${value} conflicts with other options: ${exclusive.join(", ")}.`,
+          1,
+        );
+      }
+    }
+  };
+
   for (const opt of option.values) {
     if (opt.kind === SyntaxKind.CompilerOptionText) {
       const val = opt.value.toUpperCase();
       switch (val) {
         case "ALIGNED":
-          def.aligned = true;
-          break;
         case "UNALIGNED":
-          def.aligned = false;
+          ensureNotAlreadySet(opt, ["ALIGNED", "UNALIGNED"]);
+          def.aligned = val === "ALIGNED";
           break;
         case "IBM":
         case "ANS":
+          ensureNotAlreadySet(opt, ["IBM", "ANS"]);
           def.architecture = val;
           break;
         case "EBCDIC":
         case "ASCII":
+          ensureNotAlreadySet(opt, ["EBCDIC", "ASCII"]);
           def.encoding = val;
           break;
         case "ASSIGNABLE":
-          def.assignable = true;
-          break;
         case "NONASSIGNABLE":
-          def.assignable = false;
+          ensureNotAlreadySet(opt, ["ASSIGNABLE", "NONASSIGNABLE"]);
+          def.assignable = val === "ASSIGNABLE";
           break;
         case "BIN1ARG":
-          def.bin1arg = true;
-          break;
         case "NOBIN1ARG":
-          def.bin1arg = false;
+          ensureNotAlreadySet(opt, ["BIN1ARG", "NOBIN1ARG"]);
+          def.bin1arg = val === "BIN1ARG";
           break;
         case "BYADDR":
         case "BYVALUE":
+          ensureNotAlreadySet(opt, ["BYADDR", "BYVALUE"]);
           def.allocator = val;
           break;
         case "CONNECTED":
-          def.connected = true;
-          break;
         case "NONCONNECTED":
-          def.connected = false;
+          ensureNotAlreadySet(opt, ["CONNECTED", "NONCONNECTED"]);
+          def.connected = val === "CONNECTED";
           break;
         case "DESCLIST":
-          def.desc = "LIST";
-          break;
         case "DESCLOCATOR":
-          def.desc = "LOCATOR";
+          ensureNotAlreadySet(opt, ["DESCLIST", "DESCLOCATOR"]);
+          def.desc = val.substring(4) as "LIST" | "LOCATOR";
           break;
         case "DESCRIPTOR":
-          def.descriptor = true;
-          break;
         case "NODESCRIPTOR":
-          def.descriptor = false;
+          ensureNotAlreadySet(opt, ["DESCRIPTOR", "NODESCRIPTOR"]);
+          def.descriptor = val === "DESCRIPTOR";
           break;
         case "EVENDEC":
-          def.evendec = true;
-          break;
         case "NOEVENDEC":
-          def.evendec = false;
+          ensureNotAlreadySet(opt, ["EVENDEC", "NOEVENDEC"]);
+          def.evendec = val === "EVENDEC";
           break;
         case "HEXADEC":
         case "IEEE":
+          ensureNotAlreadySet(opt, ["HEXADEC", "IEEE"]);
           def.format = val;
           break;
-        case "INLINE":
-          def.inline = true;
+        case "INITFILL":
+        case "NOINITFILL":
+          ensureNotAlreadySet(opt, ["INITFILL", "NOINITFILL"]);
+          def.initfill = val === "INITFILL" ? "00" : false;
           break;
+        case "INLINE":
         case "NOINLINE":
-          def.inline = false;
+          ensureNotAlreadySet(opt, ["INLINE", "NOINLINE"]);
+          def.inline = val === "INLINE";
           break;
         case "LAXQUAL":
-          def.laxqual = true;
-          break;
         case "NOLAXQUAL":
-          def.laxqual = false;
+          ensureNotAlreadySet(opt, ["LAXQUAL", "NOLAXQUAL"]);
+          def.laxqual = val === "LAXQUAL";
           break;
         case "LOWERINC":
         case "UPPERINC":
+          ensureNotAlreadySet(opt, ["LOWERINC", "UPPERINC"]);
           def.inc = val;
           break;
         case "NATIVE":
-          def.native = true;
-          break;
         case "NONNATIVE":
-          def.native = false;
+          ensureNotAlreadySet(opt, ["NATIVE", "NONNATIVE"]);
+          def.native = val === "NATIVE";
           break;
         case "NATIVEADDR":
-          def.nativeAddr = true;
-          break;
-        case "NONNATIVEADDR":
-          def.nativeAddr = false;
+        case "NONATIVEADDR":
+          ensureNotAlreadySet(opt, ["NATIVEADDR", "NONNATIVEADDR"]);
+          def.nativeAddr = val === "NATIVEADDR";
           break;
         case "NULLSYS":
         case "NULL370":
+          ensureNotAlreadySet(opt, ["NULLSYS", "NULL370"]);
           def.nullsys = val;
           break;
         case "NULLSTRADDR":
-          def.nullStrAddr = true;
-          break;
         case "NONULLSTRADDR":
-          def.nullStrAddr = false;
+          ensureNotAlreadySet(opt, ["NULLSTRADDR", "NONULLSTRADDR"]);
+          def.nullStrAddr = val === "NULLSTRADDR";
           break;
         case "ORDER":
         case "REORDER":
+          ensureNotAlreadySet(opt, ["ORDER", "REORDER"]);
           def.order = val;
           break;
         case "OVERLAP":
-          def.overlap = true;
-          break;
         case "NOOVERLAP":
-          def.overlap = false;
+          ensureNotAlreadySet(opt, ["OVERLAP", "NOOVERLAP"]);
+          def.overlap = val === "OVERLAP";
           break;
         case "PADDING":
-          def.padding = true;
-          break;
         case "NOPADDING":
-          def.padding = false;
+          ensureNotAlreadySet(opt, ["PADDING", "NOPADDING"]);
+          def.padding = val === "PADDING";
           break;
         case "PSEUDODUMMY":
-          def.pseudodummy = true;
-          break;
         case "NOPSEUDODUMMY":
-          def.pseudodummy = false;
+          ensureNotAlreadySet(opt, ["PSEUDODUMMY", "NOPSEUDODUMMY"]);
+          def.pseudodummy = val === "PSEUDODUMMY";
           break;
         case "RECURSIVE":
-          def.recursive = true;
-          break;
         case "NORECURSIVE":
-          def.recursive = false;
+          ensureNotAlreadySet(opt, ["RECURSIVE", "NORECURSIVE"]);
+          def.recursive = val === "RECURSIVE";
           break;
         case "RETCODE":
-          def.retcode = true;
-          break;
         case "NORETCODE":
-          def.retcode = false;
+          ensureNotAlreadySet(opt, ["RETCODE", "NORETCODE"]);
+          def.retcode = val === "RETCODE";
           break;
         default:
           throw new TranslationError(
@@ -935,11 +1015,101 @@ translator.rule(["DEFAULT", "DFT"], (option, options) => {
             1,
           );
       }
+      setOptions.add(val);
     } else if (opt.kind === SyntaxKind.CompilerOption) {
       ensureArguments(opt, 1, 1);
       ensureType(opt.values[0], "plain");
       const value = opt.values[0].value.toUpperCase();
-      switch (opt.name) {
+
+      const invalidOption = () => {
+        throw new TranslationError(
+          opt.values[0].token,
+          `Invalid default option value: ${value}`,
+          1,
+        );
+      };
+
+      switch (opt.name.toUpperCase()) {
+        case "DUMMY":
+          def.dummy = {};
+          if (value === "ALIGNED" || value === "") {
+            def.dummy.aligned = true;
+          } else if (value === "UNALIGNED") {
+            def.dummy.aligned = false;
+          } else {
+            invalidOption();
+          }
+          break;
+
+        case "E":
+          def.e = {};
+          if (value === "HEXADEC" || value === "") {
+            def.e.format = "HEXADEC";
+          } else if (value === "IEEE") {
+            def.e.format = "IEEE";
+          } else {
+            invalidOption();
+          }
+          break;
+
+        case "INITFILL":
+          // TODO ssmifi: INITFILL can also accept a string value in which case the hex value should not have an X suffix.
+          if (/[0-9a-fA-F]{2}x/i.test(value)) {
+            def.initfill = value;
+          } else {
+            throw new TranslationError(
+              opt.values[0].token,
+              `INITFILL expects a hex value, but received '${value}'.`,
+              1,
+            );
+          }
+          break;
+
+        case "LINKAGE":
+          def.linkage = {};
+          if (value === "OPTLINK" || value === "") {
+            def.linkage.type = "OPTLINK";
+          } else if (value === "SYSTEM") {
+            def.linkage.type = "SYSTEM";
+          } else {
+            invalidOption();
+          }
+          break;
+
+        case "NULLINIT":
+          def.nullinit = {};
+          if (value === "NULL" || value === "") {
+            def.nullinit.type = "NULL";
+          } else if (value === "SYSNULL") {
+            def.nullinit.type = "SYSNULL";
+          } else {
+            invalidOption();
+          }
+          break;
+
+        case "NULLSTRPTR":
+          def.nullStrPtr = {};
+          if (value === "NULL") {
+            def.nullStrPtr.type = "NULL";
+          } else if (value === "STRICT") {
+            def.nullStrPtr.type = "STRICT";
+          } else if (value === "SYSNULL") {
+            def.nullStrPtr.type = "SYSNULL";
+          } else {
+            invalidOption();
+          }
+          break;
+
+        case "ORDINAL":
+          if (value === "MIN") {
+            def.ordinal = { type: "MIN" };
+          } else if (value === "MAX") {
+            def.ordinal = { type: "MAX" };
+          } else {
+            invalidOption();
+          }
+          break;
+
         case "RETURNS":
           // Diagram specifies that no option inside the parenthesesis valid. Default is BYADDR.
           if (value === "" || value === "BYADDR") {
@@ -947,13 +1117,10 @@ translator.rule(["DEFAULT", "DFT"], (option, options) => {
           } else if (value === "BYVALUE") {
             def.returns = { type: "BYVALUE" };
           } else {
-            throw new TranslationError(
-              opt.values[0].token,
-              `Invalid default option value: ${opt.values[0].value}`,
-              1,
-            );
+            invalidOption();
           }
           break;
+
         case "SHORT":
           // Diagram specifies that no option inside the parentheses is valid. Default is HEXADEC.
           if (value === "" || value === "HEXADEC") {
@@ -961,19 +1128,12 @@ translator.rule(["DEFAULT", "DFT"], (option, options) => {
           } else if (value === "IEEE") {
             def.short = { format: "IEEE" };
           } else {
-            throw new TranslationError(
-              opt.values[0].token,
-              `Invalid default option value: ${opt.values[0].value}`,
-              1,
-            );
+            invalidOption();
           }
           break;
+
         default:
-          throw new TranslationError(
-            opt.values[0].token,
-            `Invalid default option value: ${opt.values[0].value}`,
-            1,
-          );
+          invalidOption();
       }
     } else {
       throw new TranslationError(

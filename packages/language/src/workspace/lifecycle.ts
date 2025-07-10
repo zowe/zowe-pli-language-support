@@ -15,6 +15,7 @@ import { PliParserInstance } from "../parser/parser";
 import { CompilationUnit } from "./compilation-unit";
 import { PliProgram } from "../syntax-tree/ast";
 import {
+  compilerOptionIssuesToDiagnostics,
   generateValidationDiagnostics,
   lexerErrorsToDiagnostics,
   linkingErrorsToDiagnostics,
@@ -22,7 +23,6 @@ import {
 } from "../validation/validator";
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { URI } from "../utils/uri";
-import { compilerOptionIssueToDiagnostics } from "../preprocessor/compiler-options/options";
 import { assignDebugKinds } from "../utils/debug-kinds";
 
 export function lifecycle(
@@ -59,9 +59,10 @@ export function tokenize(
   const uri = compilationUnit.uri.toString();
   compilationUnit.diagnostics.lexer = lexerErrorsToDiagnostics(result.errors);
   compilationUnit.diagnostics.compilerOptions =
-    result.compilerOptions.result?.issues.map((e) =>
-      compilerOptionIssueToDiagnostics(e, uri),
-    ) ?? [];
+    compilerOptionIssuesToDiagnostics(
+      result.compilerOptions.result?.issues,
+      uri,
+    );
   return result;
 }
 

@@ -30,6 +30,10 @@ import { LexingError } from "../preprocessor/pli-lexer";
 import { isMainProcedure, labelPrefixPointsToPackage } from "./utils";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
 import { LinkerErrorReporter } from "../linking/error";
+import {
+  CompilerOptionIssue,
+  compilerOptionIssueToDiagnostics,
+} from "../preprocessor/compiler-options/options";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -103,6 +107,22 @@ function validateSyntaxNode(
   forEachNode(node, (childNode: SyntaxNode) => {
     validateSyntaxNode(childNode, acceptor, handlers);
   });
+}
+
+export function compilerOptionIssuesToDiagnostics(
+  compilerOptionIssues: CompilerOptionIssue[] | undefined,
+  uri: string,
+): Diagnostic[] {
+  if (!compilerOptionIssues) {
+    return [];
+  }
+  const diagnostics: Diagnostic[] = [];
+  for (const issue of compilerOptionIssues) {
+    if (!isNaN(issue.range.start)) {
+      diagnostics.push(compilerOptionIssueToDiagnostics(issue, uri));
+    }
+  }
+  return diagnostics;
 }
 
 export function lexerErrorsToDiagnostics(
