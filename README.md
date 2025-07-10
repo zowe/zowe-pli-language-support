@@ -129,6 +129,3 @@ Using the example `pgm_conf.json` file in the section above, the following `proc
   ]
 }
 ```
-## Integrate with Zowe Explorer
-
-We recommend the use of [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) to access your mainframe data sets containing PL/I source code directly in the VS Code interface.
