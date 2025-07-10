@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95.15% </span>
+                <span class="strong">95.58% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>157/165</span>
+                <span class='fraction'>173/181</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.8% </span>
+                <span class="strong">89.36% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>36/41</span>
+                <span class='fraction'>42/47</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95.15% </span>
+                <span class="strong">95.58% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>157/165</span>
+                <span class='fraction'>173/181</span>
             </div>
         
             
@@ -317,7 +317,27 @@
 <a name='L252'></a><a href='#L252'>252</a>
 <a name='L253'></a><a href='#L253'>253</a>
 <a name='L254'></a><a href='#L254'>254</a>
-<a name='L255'></a><a href='#L255'>255</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -349,6 +369,10 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -423,6 +447,22 @@
 <span class="cline-any cline-yes">3887x</span>
 <span class="cline-any cline-yes">4059x</span>
 <span class="cline-any cline-yes">4059x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">468x</span>
+<span class="cline-any cline-yes">468x</span>
+<span class="cline-any cline-yes">468x</span>
+<span class="cline-any cline-yes">468x</span>
+<span class="cline-any cline-yes">452x</span>
+<span class="cline-any cline-yes">452x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">468x</span>
@@ -603,6 +643,10 @@ import { LexingError } from "../preprocessor/pli-lexer";
 import { isMainProcedure, labelPrefixPointsToPackage } from "./utils";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
 import { LinkerErrorReporter } from "../linking/error";
+import {
+  CompilerOptionIssue,
+  compilerOptionIssueToDiagnostics,
+} from "../preprocessor/compiler-options/options";
 &nbsp;
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -676,6 +720,22 @@ function validateSyntaxNode(
   forEachNode(node, (childNode: SyntaxNode) =&gt; {
     validateSyntaxNode(childNode, acceptor, handlers);
   });
+}
+&nbsp;
+export function compilerOptionIssuesToDiagnostics(
+  compilerOptionIssues: CompilerOptionIssue[] | undefined,
+  uri: string,
+): Diagnostic[] {
+  if (!compilerOptionIssues) {
+    return [];
+  }
+  const diagnostics: Diagnostic[] = [];
+  for (const issue of compilerOptionIssues) {
+    if (!isNaN(issue.range.start)) {
+      diagnostics.push(compilerOptionIssueToDiagnostics(issue, uri));
+    }
+  }
+  return diagnostics;
 }
 &nbsp;
 export function lexerErrorsToDiagnostics(
@@ -832,7 +892,7 @@ export function linkingErrorsToDiagnostics(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-09T14:46:13.418Z
+                at 2025-07-10T09:10:37.711Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
