@@ -1,10 +1,10 @@
 {
   "name": "pli-vscode",
   "description": "Provides rich language support for PL/I code. Powered by Zowe, hosted by the Open Mainframe Project.",
-  "author": "Zowe",
+  "author": "Broadcom",
   "license": "EPL-2.0",
   "preview": false,
-  "publisher": "Zowe",
+  "publisher": "BroadcomMFD",
   "icon": "icons/PL_1_red.png",
   "repository": {
     "type": "git",

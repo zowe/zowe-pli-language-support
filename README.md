@@ -14,7 +14,7 @@ PL/I Language Support recognizes files with the extension `.pli` and `.pl1` as P
 
 This extension is a part of the Zowe open-source project, hosted by the Open Mainframe Project. To contribute and report issues, visit our [Git repository](https://github.com/zowe/zowe-pli-language-support).
 
-<a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v3 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev3/explorer-vs-code/color/zowe-conformant-zowev3-explorer-vs-code-color.png" width=260 height=195 /></a>
+PL/I Language Support is also part of [Code4z](https://techdocs.broadcom.com/code4z), an all-round VS Code extension package that offers a modern experience for mainframe application developers, including tools for language support, data editing, testing, and source code management. For an interactive overview of Code4z, see the [Code4z Developer Cockpit](https://mainframe.broadcom.com/code4z-developer-cockpit).
 
 ## Address Software Requirements
     
@@ -129,6 +129,3 @@ Using the example `pgm_conf.json` file in the section above, the following `proc
   ]
 }
 ```
-## Integrate with Zowe Explorer
-
-We recommend the use of [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) to access your mainframe data sets containing PL/I source code directly in the VS Code interface.
