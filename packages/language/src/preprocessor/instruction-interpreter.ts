@@ -154,7 +154,8 @@ export interface EvaluationResults {
 }
 
 interface InterpreterContext {
-  uri?: URI;
+  currentUri?: URI;
+  entryUri?: URI;
   variables: Map<string, Variable>;
   result: CompilationUnitTokens;
   errors: LexingError[];
@@ -186,7 +187,8 @@ export function runInstructions(
   options: InterpreterOptions,
 ): InstructionInterpreterResult {
   const context: InterpreterContext = {
-    uri,
+    currentUri: uri,
+    entryUri: uri,
     uris: [uri.toString()],
     errors: [],
     xIncludes: new Set(),
@@ -811,7 +813,7 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
     throw new PreprocessorError(
       `Cannot resolve include file '${item.fileName}'`,
       item.token,
-      context.uri,
+      context.currentUri,
     );
   }
 
@@ -837,7 +839,7 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
     throw new PreprocessorError(
       `Circular include detected: ${uri.toString(true)}`,
       item.token,
-      context.uri,
+      context.currentUri,
     );
   }
 
@@ -857,7 +859,7 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
     const instruction = generateInstructions(subProgram.statements);
     const newContext: InterpreterContext = {
       ...context,
-      uri: uri,
+      currentUri: uri,
       uris: [uri.toString(), ...context.uris],
     };
     doRunInstructions(newContext, instruction);
@@ -881,13 +883,13 @@ function resolveIncludeFileUri(
     throw new Error("Include item does not have a file specified.");
   }
 
-  if (!context.uri) {
+  if (!context.entryUri) {
     return undefined;
   }
 
   // check to validate include extension, if a program config & process group is available
   const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
-    context.uri.toString(true),
+    context.entryUri.toString(true),
   );
   const pgroup = programConfig
     ? PluginConfigurationProviderInstance.getProcessGroupConfig(
@@ -908,7 +910,7 @@ function resolveIncludeFileUri(
     throw new PreprocessorError(
       `Unsupported include extension for included file, '${item.fileName}', ${msg}`,
       item.token,
-      context.uri,
+      context.currentUri,
     );
   }
 
