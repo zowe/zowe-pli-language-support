@@ -37,7 +37,7 @@ export interface LexerResult {
   errors: LexingError[];
   compilerOptions: CompilerOptionsProcessorResult;
   statements: Statement[];
-  fileTokens: Record<string, Token[]>;
+  fileTokens: Map<string, Token[]>;
   evaluationResults: EvaluationResults;
   tokenReferences: Reference[];
 }
@@ -85,11 +85,11 @@ export class PliLexer {
       marginsProcessor: this.marginsProcessor,
       parser: this.preprocessorParser,
     });
-    output.fileTokens[uri.toString()] = fileTokens;
+    output.fileTokens.set(uri.toString(), fileTokens);
     if (compilerOptionsResult.result) {
-      output.fileTokens[uri.toString()].unshift(
-        ...compilerOptionsResult.result.tokens,
-      );
+      output.fileTokens
+        .get(uri.toString())
+        ?.unshift(...compilerOptionsResult.result.tokens);
     }
     errors.push(...output.errors);
     return {

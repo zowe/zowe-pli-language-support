@@ -30,7 +30,13 @@ export function documentSymbolRequest(
   // collect all related elements.
   const documentSymbols: DocumentSymbol[] = [];
   const tokensByElement = new Map<SyntaxNode, Token[]>();
-  const tokens = compilationUnit.tokens.fileTokens[textDocument.uri]
+  const fileTokens = compilationUnit.tokens.fileTokens.get(textDocument.uri);
+  if (!fileTokens) {
+    // No tokens found for ${textDocument.uri} in the current compilation unit.
+    return [];
+  }
+
+  const tokens = fileTokens
     .filter((token) => token.payload.element)
     .map((token) => {
       const element = token.payload.element!;

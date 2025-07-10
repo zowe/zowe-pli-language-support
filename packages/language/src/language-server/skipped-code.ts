@@ -61,7 +61,10 @@ export function skippedCodeRanges(
   compilationUnit: CompilationUnit,
   textDocument: TextDocument,
 ): Range[] {
-  const tokens = compilationUnit.tokens.fileTokens[textDocument.uri] ?? [];
+  const tokens = compilationUnit.tokens.fileTokens.get(textDocument.uri);
+  if (!tokens) {
+    return [];
+  }
   const result: Range[] = [];
 
   for (const token of tokens) {

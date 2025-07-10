@@ -45,8 +45,11 @@ export function semanticTokens(
   compilationUnit: CompilationUnit,
   range?: Range,
 ): number[] {
+  const tokens = compilationUnit.tokens.fileTokens.get(textDocument.uri);
+  if (!tokens) {
+    return [];
+  }
   const semanticTokens = new SemanticTokensBuilder();
-  const tokens = compilationUnit.tokens.fileTokens[textDocument.uri] ?? [];
   for (const token of tokens) {
     const type = tokenType(token);
     if (type !== undefined) {

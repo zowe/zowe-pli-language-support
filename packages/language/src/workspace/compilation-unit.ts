@@ -66,7 +66,7 @@ export interface CompilationUnit {
 
 export interface CompilationUnitTokens {
   all: Token[];
-  fileTokens: Record<string, Token[]>;
+  fileTokens: Map<string, Token[]>;
 }
 
 export interface CompilationUnitDiagnostics {
@@ -144,7 +144,7 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
       ifStatements: new Map(),
     },
     tokens: {
-      fileTokens: {},
+      fileTokens: new Map(),
       all: [],
     },
     referencesCache: new ReferencesCache(),
