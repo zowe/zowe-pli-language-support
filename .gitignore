@@ -13,3 +13,4 @@ out/
 **/*.DS_Store
 scripts/*.html
 coverage/
+!img/*
