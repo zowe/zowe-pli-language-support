@@ -35,6 +35,9 @@ The extension enables syntax highlighting for PL/I code.
 ### Syntax Coloring
 Contrasting colors are used in displayed code for ease of identifying and distinguishing keywords, variables, compiler options, paragraphs, and sections.
 
+### Outline View and Breadcrumbs
+The extension enables outline view and the breadcrumbs navigation bar at the top of the edit window, which show the structure of elements within the program and allow easy navigation between them.
+
 ### Code Snippets
 Before you write your PL/I code from scratch, search the snippet library for useful templates.
 
