@@ -63,6 +63,8 @@ The Find All References and Go To Definition functionalities are extended to wor
 * **Find All References** identifies all occurrences of variables and paragraphs from include files in the code.
 * **Go To Definition** enables you to right-click on any variable or paragraph to reveal a definition of the element. If the definition is in an include file, or the name of an include file, the include file opens.
 
+![Animated gif showing the Go To Definition functionality on a PL/I include file and a variable defined in that file](/img/include.gif)  
+
 ## Configure Processor Groups
 
 Configure processor groups to link specific programs with compiler options, folders that contain include files, and non-standard include file extensions. You define processor groups in a `proc_grps.json` file and associate processor groups with programs in a `pgm_conf.json` file. You can use a wildcard in the `pgm_conf.json` file to create a global processor group. Create both of these files in a **/.pliplugin** folder in your workspace root.
