@@ -35,6 +35,9 @@ The extension enables syntax highlighting for PL/I code.
 ### Syntax Coloring
 Contrasting colors are used in displayed code for ease of identifying and distinguishing keywords, variables, compiler options, paragraphs, and sections.
 
+### Outline View and Breadcrumbs
+The extension enables outline view and the breadcrumbs navigation bar at the top of the edit window, which show the structure of elements within the program and allow easy navigation between them.
+
 ### Code Snippets
 Before you write your PL/I code from scratch, search the snippet library for useful templates.
 
@@ -62,6 +65,8 @@ The Find All References and Go To Definition functionalities are extended to wor
 
 * **Find All References** identifies all occurrences of variables and paragraphs from include files in the code.
 * **Go To Definition** enables you to right-click on any variable or paragraph to reveal a definition of the element. If the definition is in an include file, or the name of an include file, the include file opens.
+
+![Animated gif showing the Go To Definition functionality on a PL/I include file and a variable defined in that file](/img/include.gif)  
 
 ## Configure Processor Groups
 
