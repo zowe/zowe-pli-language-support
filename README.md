@@ -15,9 +15,11 @@ PL/I Language Support recognizes files with the extension `.pli` and `.pl1` as P
 
 This extension is a part of the Zowe open-source project, hosted by the Open Mainframe Project. To contribute and report issues, visit our [Git repository](https://github.com/zowe/zowe-pli-language-support).
 
-<img align="left" width="60" height="60" src="https://github.com/BroadcomMFD/code4z/blob/main/icon2.png?raw=true" />
+<img align="left" width="60" height="79" src="https://github.com/BroadcomMFD/code4z/blob/main/icon3.png?raw=true" />
 
 PL/I Language Support is part of the [Code4z](https://techdocs.broadcom.com/code4z) experience from Broadcom, which offers a modern experience for mainframe application developers. To get started with Code4z, check out our foundational [extension pack](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack).
+
+<br />
 
 ## Address Software Requirements
     
