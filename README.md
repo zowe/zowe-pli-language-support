@@ -3,6 +3,7 @@
 [![Build Status](https://github.com/zowe/zowe-pli-language-support/actions/workflows/build.yml/badge.svg)](https://github.com/zowe/zowe-pli-language-support/actions/workflows/build.yml)
 [![GitHub issues](https://img.shields.io/github/issues-raw/zowe/zowe-pli-language-support)](https://github.com/zowe/zowe-pli-language-support/issues)
 [![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://join.slack.com/t/che4z/shared_invite/zt-37ewynplx-wCoabaIDxN6Ofm4_XBinZA)
+[![Code4z](https://img.shields.io/badge/Code4z-marketplace-cc092f)](https://marketplace.visualstudio.com/search?term=code4z&target=VSCode)
 
 </div>
 
@@ -14,7 +15,9 @@ PL/I Language Support recognizes files with the extension `.pli` and `.pl1` as P
 
 This extension is a part of the Zowe open-source project, hosted by the Open Mainframe Project. To contribute and report issues, visit our [Git repository](https://github.com/zowe/zowe-pli-language-support).
 
-PL/I Language Support is also part of [Code4z](https://techdocs.broadcom.com/code4z), an all-round VS Code extension package that offers a modern experience for mainframe application developers, including tools for language support, data editing, testing, and source code management. For an interactive overview of Code4z, see the [Code4z Developer Cockpit](https://mainframe.broadcom.com/code4z-developer-cockpit).
+<img align="left" width="60" height="60" src="https://github.com/BroadcomMFD/code4z/blob/main/icon.png?raw=true" />
+
+PL/I Language Support is part of the [Code4z](https://techdocs.broadcom.com/code4z) experience from Broadcom, which offers a modern experience for mainframe application developers. To get started with Code4z, check out our foundational [extension pack](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack).
 
 ## Address Software Requirements
     
