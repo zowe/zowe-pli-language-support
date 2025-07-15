@@ -21,6 +21,7 @@ import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Settings } from "./settings";
 import { registerCustomDecorators } from "./decorators";
 import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
+import { registerPLILanguageDetectionListener } from "./language-detector";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -31,6 +32,7 @@ export function activate(context: vscode.ExtensionContext): void {
   settings = Settings.getInstance();
   client = startLanguageClient(context);
   context.subscriptions.push(registerOnDidOpenTextDocListener());
+  registerPLILanguageDetectionListener(context);
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (workspaceFolder) {
