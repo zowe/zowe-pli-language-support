@@ -1,0 +1,53 @@
+name: Deploy Coverage
+
+permissions:
+  pages: write
+  id-token: write
+  contents: write
+
+on:
+  push:
+    branches:
+      - development
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  coverage:
+    name: Deploy Coverage
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+      - name: Build
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+      - name: Run Coverage
+        run: |
+          pnpm coverage
+      - name: Deploy Coverage
+        uses: JamesIves/github-pages-deploy-action@v4.7.2
+        with:
+          folder: coverage
+          branch: previews
+          clean-exclude: | # Ensure that we don't delete the playground previews
+            dev/
+            main/
+            pr/
+          force: false # Ensure that we don't override anything else
+          target-folder: coverage

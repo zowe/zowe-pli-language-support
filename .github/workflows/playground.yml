@@ -9,6 +9,11 @@ on:
   push:
     branches:
       - main
+      - development
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   docs:
@@ -34,10 +39,27 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm build
           pnpm playground
-      - name: Deploy 🚀
+      - name: Deploy Main 🚀
+        if: github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@v4.7.2
         with:
           folder: packages/playground/out
           branch: previews
-          clean-exclude: pr/ # Ensure that we don't delete the pr previews
-          force: false # Ensure that we don't override the pr previews
+          clean-exclude: | # Ensure that we don't delete the other playgrounds and the coverage
+            dev/
+            pr/
+            coverage/
+          force: false # Ensure that we don't override anything else
+          target-folder: main
+      - name: Deploy Dev 🚀
+        if: github.ref == 'refs/heads/development'
+        uses: JamesIves/github-pages-deploy-action@v4.7.2
+        with:
+          folder: packages/playground/out
+          branch: previews
+          clean-exclude: | # Ensure that we don't delete the other playgrounds and the coverage
+            main/
+            pr/
+            coverage/
+          force: false # Ensure that we don't override anything else
+          target-folder: dev

@@ -9,56 +9,88 @@
  *
  */
 
+import * as vscode from "vscode";
 import { MonacoEditorLanguageClientWrapper } from "monaco-editor-wrapper";
-import { setupClient } from "./config.js";
+import { registerSkipDecoratorType } from "./decorators.js";
+import { configure } from "./config.js";
+import helloWorld from "../workspace/hello-world.pli?raw";
+import includeExample from "../workspace/include.pli?raw";
+import includedExample from "../workspace/lib/included.pli?raw";
+import pgmconf from "../workspace/.pliplugin/pgm_conf.json?raw";
+import procgrps from "../workspace/.pliplugin/proc_grps.json?raw";
 import {
-  compressToEncodedURIComponent,
-  decompressFromEncodedURIComponent,
-} from "lz-string";
+  redirectOutlineCancelReporting,
+  handleSharedWorkspace,
+  registerButtons,
+} from "./workspace.js";
+import {
+  BuiltinFileSystemProvider,
+  createFileSystemProvider,
+  FileSystemProvider,
+  watchWorkspaceChanges,
+} from "./file-system-provider.js";
+import { Builtins, BuiltinsUri } from "pli-language";
 
 let wrapper: MonacoEditorLanguageClientWrapper | undefined;
-let shareTimeout: number | undefined;
 
 export async function startClient() {
-  const url = new URL(window.location.toString());
-  const encodedContent = url.searchParams.get("content") ?? undefined;
-  registerShareButton();
   try {
-    let content: string | undefined = undefined;
-    if (encodedContent) {
-      content = decompressFromEncodedURIComponent(encodedContent);
-    }
-    const config = await setupClient(content);
+    redirectOutlineCancelReporting();
+    const config = await configure(
+      document.getElementById("vscode-views-root")!,
+    );
     wrapper = new MonacoEditorLanguageClientWrapper();
-    await wrapper.init(config);
-    const element = document.getElementById("monaco-root")!;
-    wrapper.start(element);
+    const fileSystemProvider = await createFileSystemProvider(config);
+    await wrapper.init(config.wrapperConfig);
+    registerSkipDecoratorType(wrapper);
+    registerButtons();
+
+    let defaultUri: vscode.Uri | undefined = undefined;
+    defaultUri = await handleSharedWorkspace(fileSystemProvider);
+    if (!defaultUri) {
+      defaultUri = await loadDefaultWorkspace(fileSystemProvider);
+    }
+    await wrapper.startLanguageClients();
+    BuiltinFileSystemProvider.register();
+    watchWorkspaceChanges(wrapper, fileSystemProvider);
+
+    await vscode.window.showTextDocument(defaultUri, { preserveFocus: true });
   } catch (e) {
     console.log(e);
   }
 }
 
-export function registerShareButton() {
-  const shareButton = document.getElementById("share-button");
-  shareButton?.addEventListener("click", () => {
-    if (wrapper) {
-      const text = wrapper.getEditor()?.getValue();
-      if (typeof text === "string") {
-        share(text);
-      }
-    }
-  });
-}
+async function loadDefaultWorkspace(
+  fileSystemProvider: FileSystemProvider,
+): Promise<vscode.Uri> {
+  const defaultUri = await fileSystemProvider.addFileToWorkspace(
+    "/workspace/hello-world.pli",
+    helloWorld,
+  );
+  await fileSystemProvider.mkdir(vscode.Uri.parse("/workspace/.pliplugin"));
+  await fileSystemProvider.mkdir(vscode.Uri.parse("/workspace/lib"));
+  await fileSystemProvider.addFileToWorkspace(
+    "/workspace/.pliplugin/pgm_conf.json",
+    pgmconf,
+  );
+  await fileSystemProvider.addFileToWorkspace(
+    "/workspace/.pliplugin/proc_grps.json",
+    procgrps,
+  );
+  await fileSystemProvider.addFileToWorkspace(
+    "/workspace/include.pli",
+    includeExample,
+  );
+  await fileSystemProvider.addFileToWorkspace(
+    "/workspace/lib/included.pli",
+    includedExample,
+  );
 
-async function share(content: string): Promise<void> {
-  const compressedContent = compressToEncodedURIComponent(content);
-  const url = new URL(window.location.toString(), window.origin);
-  url.searchParams.append("content", compressedContent);
-  await navigator.clipboard.writeText(url.toString());
-  const shareInfo = document.getElementById("share-info");
-  shareInfo?.classList.remove("hidden");
-  window.clearTimeout(shareTimeout);
-  shareTimeout = window.setTimeout(() => {
-    shareInfo?.classList.add("hidden");
-  }, 4000);
+  await fileSystemProvider.writeFile(
+    vscode.Uri.parse(BuiltinsUri),
+    new TextEncoder().encode(Builtins),
+    FileSystemProvider.fileOptions,
+  );
+
+  return defaultUri;
 }

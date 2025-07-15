@@ -9,52 +9,51 @@
  *
  */
 
-import { ValidationAcceptor } from "langium";
-import {
-  Bound,
-  DimensionBound,
-  isLiteral,
-  isNumberLiteral,
-  isUnaryExpression,
-} from "../../generated/ast";
+import { getSyntaxNodeRange, Severity } from "../../language-server/types";
+import { Bound, DimensionBound, SyntaxKind } from "../../syntax-tree/ast";
+import { PliValidationAcceptor } from "../validator";
+import { Error } from "./pli-codes";
 
 export function IBM1295IE_sole_bound_specified(
   bound: DimensionBound,
-  accept: ValidationAcceptor,
+  accept: PliValidationAcceptor,
 ): void {
-  if (bound.bound2 !== undefined) {
+  if (bound.lower !== undefined) {
     return;
   }
-  const upper = bound.bound1;
+  const upper = bound.upper;
   if (isBoundNegative(upper) || isBoundZero(upper)) {
-    accept(
-      "error",
-      "Sole bound specified is less than 1. An upper bound of 1 is assumed.",
-      {
-        node: bound,
-        property: "bound1",
-        code: "IBM1295IE",
-      },
-    );
+    const code = Error.IBM1295I;
+    accept(Severity.E, code.message, {
+      //   node: bound
+      range: getSyntaxNodeRange(bound)!,
+      uri: "", // TODO: Add URI
+      //   property: "upper",
+      code: code.fullCode,
+    });
   }
 }
 
-function isBoundNegative(bound: Bound) {
+function isBoundNegative(bound: Bound | null) {
   return (
+    bound &&
     bound.expression !== "*" &&
-    isUnaryExpression(bound.expression) &&
+    bound.expression?.kind === SyntaxKind.UnaryExpression &&
     bound.expression.op === "-" &&
-    isLiteral(bound.expression.expr) &&
-    isNumberLiteral(bound.expression.expr.value)
+    bound.expression.expr &&
+    bound.expression.expr.kind === SyntaxKind.Literal &&
+    bound.expression.expr.value &&
+    bound.expression.expr.value.kind === SyntaxKind.NumberLiteral
   );
 }
 
-function isBoundZero(bound: Bound): boolean {
-  return (
+function isBoundZero(bound: Bound | null): boolean {
+  return (bound &&
+    bound.expression &&
     bound.expression !== "*" &&
-    isLiteral(bound.expression) &&
-    isNumberLiteral(bound.expression.value) &&
+    bound.expression.kind === SyntaxKind.Literal &&
+    bound.expression.value &&
+    bound.expression.value.kind === SyntaxKind.NumberLiteral &&
     //TODO find other cases when it is zero
-    bound.expression.value.value === "0"
-  );
+    bound.expression.value.value === "0")!!;
 }

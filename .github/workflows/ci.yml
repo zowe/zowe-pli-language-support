@@ -4,9 +4,15 @@ on:
   push:
     branches:
       - main
+      - development
   pull_request:
     branches:
       - main
+      - development
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   build:
@@ -34,15 +40,12 @@ jobs:
       run: |
         pnpm install --frozen-lockfile
     - name: Lint sources
-      shell: bash
       run: |
         pnpm lint
     - name: Build monorepo
-      shell: bash
       run: |
         pnpm build
     - name: Test monorepo
       if: success() || failure()
-      shell: bash
       run: |
         pnpm test

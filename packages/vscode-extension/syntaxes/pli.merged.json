@@ -1,0 +1,87 @@
+{
+  "name": "pli",
+  "scopeName": "source.pli",
+  "fileTypes": [
+    ".pli"
+  ],
+  "patterns": [
+    {
+      "name": "keyword.storage.pli",
+      "match": "(?i)\\b(package|exports|reserves|options|linkage|cdecl|optlink|stdcall|system|cmpat|v1|v2|v3|nomap|nomapin|nomapout|order|reorder|nochargraphic|chargraphic|noinline|inline|main|noexecops|cobol|fortran|byaddr|byvalue|descriptor|nodescriptor|irreducible|reducible|noreturn|reentrant|fetchable|rent|amode31|amode64|dllinternal|fromalien|retcode|assembler|asm|winmain|inter|recursive|proc|procedure|xproc|xprocedure|recursive|order|reorder|external|ext|proc|procedure|static|dynamic|entry|external|ext|variable|limited|allocate|alloc|in|set|char|character|bit|graphic|uchar|widechar|area|assert|true|false|compare|unreachable|text|by|name|dimacross|attach|thread|environment|tstack|recursive|order|reorder|call|cancel|thread|close|file|file|default|dft|descriptors|range|and|or|not|abnormal|aligned|area|assignable|automatic|auto|backwards|based|bit|buffered|builtin|byaddr|byvalue|bin|binary|character|char|complex|condition|connected|constant|controlled|ctl|decimal|dec|dimacross|event|exclusive|external|ext|file|fixed|float|format|generic|graphic|hex|hexadec|ieee|inonly|inout|internal|int|irreducible|input|keyed|label|list|member|native|nonassignable|nonasgn|nonconnected|nonnative|nonvarying|normal|offset|optional|options|outonly|output|parameter|pointer|ptr|position|precision|prec|print|range|real|record|reserved|sequential|signed|static|stream|structure|task|transient|unal|uchar|unaligned|unbuffered|union|unsigned|update|variable|varying|var|varying4|varyingz|varz|widechar|generic|xmlcontent|jsonignore|xmlignore|jsontrimr|jsonname|jsonnull|jsonomit|nullinit|bigendian|littleendian|xmlname|xmlattr|xmlomit|noinit|indfor|define|xdefine|alias|define|xdefine|ordinal|signed|unsigned|precision|prec|value|define|xdefine|structure|struct|union|delay|delete|file|key|detach|thread|display|reply|routcde|desc|until|until|by|by|upthru|downthru|repeat|exec|exit|fetch|set|title|flush|file|format|a|b|c|f|e|p|column|col|g|l|line|page|r|skip|v|x|free|get|string|file|copy|skip|%include|%xinclude|ddname|iterate|leave|%line|locate|file|set|keyfrom|%noprint|%note|snap|system|anycondition|anycond|area|assertion|attention|conformance|conversion|error|finish|fixedoverflow|fofl|invalidop|overflow|ofl|size|storage|stringrange|stringsize|subscriptrange|underflow|ufl|zerodivide|zdiv|condition|endfile|endpage|key|name|record|transmit|undefinedfile|undf|open|file|stream|record|input|output|update|sequential|seql|direct|unbuffered|unbuf|buf|buffered|keyed|print|title|linesize|pagesize|%page|%pop|%print|\\*process|%process|todo|%procinc|\\*procinc|%push|put|string|page|line|skip|file|list|data|edit|qualify|read|file|ignore|into|set|key|keyto|reinit|release|resignal|revert|rewrite|file|from|key|other|signal|%skip|stop|wait|thread|write|file|from|keyfrom|keyto|initial|init|call|initacross|varying|varying4|varyingz|nonvarying|char|uchar|wchar|dcl|declare|xdeclare|xdcl|date|defined|def|position|pos|picture|widepic|pic|dimension|dim|type|ordinal|byvalue|returns|value|value|valuelist|valuelistfrom|valuerange|like|handle|refer|environment|env|limited|entry|variable|limited|external|ext|returns|scan|rescan|noscan|norescan|activate|act|deactivate|deact)\\b"
+    },
+    {
+      "name": "keyword.control.pli",
+      "match": "(?i)\\b(if|else|then|do|end|select|otherwise|on|while|next|go|to|goto|return|when|begin|process|include|xinclude|inscan|xinscan|deactivate|activate)\\b"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "name": "string.quoted.single.pli",
+      "begin": "'",
+      "end": "'",
+      "patterns": [
+        {
+          "include": "#string-character-escape"
+        }
+      ]
+    },
+    {
+      "name": "string.double.single.pli",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "include": "#string-character-escape"
+        }
+      ]
+    },
+    {
+      "name": "string.exec.pli",
+      "match": "(?<=[eE][xX][eE][cC]\\s*)[a-zA-Z]+\\s[^;]*"
+    },
+    {
+      "name": "constant.numeric.decimal.pli",
+      "match": "([0-9][0-9_]*(\\.[0-9_]+)?)|(\\.[0-9_]+)([ESDQ][-+]?[0-9]+)?([bB]|[iI])*"
+    },
+    {
+      "name": "entity.other.pli",
+      "match": "[a-zA-Z_][a-zA-Z0-9_]*"
+    }
+  ],
+  "repository": {
+    "string-character-escape": {
+      "name": "constant.character.escape.lox",
+      "match": "\\\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\\{[0-9A-Fa-f]+\\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)"
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.pli",
+          "begin": "/\\*",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pli"
+            }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pli"
+            }
+          }
+        },
+        {
+          "begin": "//",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.whitespace.comment.leading.pli"
+            }
+          },
+          "end": "(?=$)",
+          "name": "comment.line.pli"
+        }
+      ]
+    }
+  }
+}

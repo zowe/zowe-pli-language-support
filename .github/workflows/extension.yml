@@ -1,0 +1,43 @@
+name: Build Extension
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  pull_request:
+    branches:
+      - development
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: PLI extension build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'pnpm'
+    - name: Install node modules
+      run: |
+        pnpm install --frozen-lockfile
+    - name: Build & package extension
+      run: |
+        pnpm package
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: extension
+        path: packages/vscode-extension/pli-vscode-*.vsix

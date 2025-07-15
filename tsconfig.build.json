@@ -9,6 +9,9 @@
     },
     {
       "path": "./packages/vscode-extension/tsconfig.json"
+    },
+    {
+      "path": "./packages/playground/tsconfig.json"
     }
   ]
 }

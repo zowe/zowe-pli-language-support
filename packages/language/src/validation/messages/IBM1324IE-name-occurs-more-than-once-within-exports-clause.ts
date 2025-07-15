@@ -9,26 +9,29 @@
  *
  */
 
-import { ValidationAcceptor } from "langium";
-import { Exports } from "../../generated/ast";
+import { getSyntaxNodeRange, Severity } from "../../language-server/types";
+import { Exports } from "../../syntax-tree/ast";
+import { PliValidationAcceptor } from "../validator";
 
 export function IBM1324IE_name_occurs_more_than_once_within_exports_clause(
   exports: Exports,
-  accept: ValidationAcceptor,
+  accept: PliValidationAcceptor,
 ): void {
   const set = new Set<string>();
-  exports.procedures.forEach((procedure, index) => {
-    if (!set.has(procedure)) {
-      set.add(procedure);
+  exports.procedures.forEach((procedure) => {
+    if (!set.has(procedure.reference?.text ?? "")) {
+      set.add(procedure.reference?.text ?? "");
     } else {
       accept(
-        "error",
+        Severity.E,
         `The name '${procedure}' occurs more than once in the EXPORTS clause.`,
         {
           code: "IBM1324IE",
-          node: exports,
-          property: "procedures",
-          index,
+          range: getSyntaxNodeRange(exports)!,
+          uri: "", // TODO: Add URI
+          //   node: exports,
+          //   property: "procedures",
+          //   index,
         },
       );
     }

@@ -1,21 +1,33 @@
 {
   "name": "pli-vscode",
-  "description": "VS Code extension for PL/I language support",
-  "author": "Zowe",
+  "description": "Code4z rich language support extension for PL/I code. Powered by Zowe, hosted by the Open Mainframe Project.",
+  "author": "Broadcom",
   "license": "EPL-2.0",
   "preview": false,
-  "publisher": "Zowe",
+  "publisher": "BroadcomMFD",
+  "icon": "icons/PL_1_red.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/zowe/zowe-pli-language-support"
   },
-  "version": "0.0.1",
+  "version": "1.0.0",
   "displayName": "PL/I Language Support",
   "engines": {
     "vscode": "^1.67.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "pli",
+    "pl/i",
+    "pl1",
+    "pl/1",
+    "mainframe",
+    "lsp",
+    "zowe",
+    "code4z"
   ],
   "contributes": {
     "languages": [
@@ -28,9 +40,20 @@
           "PL/1"
         ],
         "extensions": [
-          ".pli"
+          ".pli", ".pl1", ".inc"
         ],
+        "firstLine": "^[*%][Pp][Rr][Oo][Cc][Ee][Ss][Ss]|\\s+[Dd][Ee][Cc][Ll][Aa][Rr][Ee]|\\s+[Dd][Cc][Ll]|\\s+\\w+: [Pp][Rr][Oo][Cc]",
+        "icon": {
+          "light": "icons/PL-1-light_max-height.svg",
+          "dark": "icons/PL-1-dark_max-height.svg"
+        },
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "pli",
+        "path": "./c4z.pli.code-snippets"
       }
     ],
     "grammars": [
@@ -39,7 +62,30 @@
         "scopeName": "source.pli",
         "path": "syntaxes/pli.merged.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "PL/I Language Support",
+      "properties": {
+        "pli.skippedCode.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable the skipped code feature."
+        },
+        "pli.skippedCode.opacity": {
+          "type": "number",
+          "default": 0.55,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Opacity level for skipped code (0-1)"
+        },
+        "pli.marginIndicator.rulers": {
+          "type": "string",
+          "enum": ["off", "default", "automatic"],
+          "default": "automatic",
+          "description": "Controls the rulers for the margin compiler option. 'off' disables rulers, 'default' shows the PL/I default rulers [2, 72], 'automatic' adds rulers based on margin compiler options."
+        }
+      }
+    }
   },
   "activationEvents": [],
   "main": "./out/extension/main.cjs",
@@ -54,14 +100,16 @@
     "dependencies": false
   },
   "dependencies": {
-    "langium": "~3.3.1",
+    "langium": "~3.4.0",
+    "glob": "^11.0.2",
     "pli-language": "workspace:*",
+    "util": "^0.12.5",
     "vscode-languageclient": "~9.0.1",
     "vscode-languageserver": "~9.0.1"
   },
   "devDependencies": {
     "@types/vscode": "~1.67.0",
-    "@vscode/vsce": "^3.0.0",
-    "esbuild": "~0.21.5"
+    "@vscode/vsce": "^3.6.0",
+    "esbuild": "~0.25.5"
   }
 }

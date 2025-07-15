@@ -1,0 +1,7 @@
+   %DECLARE PAYROLL CHARACTER;
+   %PAYROLL = 'PAY_ROLL';
+   %INCLUDE included;
+   %DEACTIVATE PAYROLL;
+   %INCLUDE included;
+   PAY_ROLL = 0; 
+   PAYROLL = 1;

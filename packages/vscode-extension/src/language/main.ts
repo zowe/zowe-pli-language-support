@@ -9,19 +9,47 @@
  *
  */
 
-import { startLanguageServer } from "langium/lsp";
-import { NodeFileSystem } from "langium/node";
 import {
   createConnection,
   ProposedFeatures,
 } from "vscode-languageserver/node.js";
-import { createPliServices } from "pli-language";
+import {
+  startLanguageServer,
+  FileSystemProvider,
+  URI,
+  setFileSystemProvider,
+} from "pli-language";
+import * as fs from "fs";
+import * as glob from "glob";
+
+class NodeFileSystemProvider implements FileSystemProvider {
+  readFileSync(uri: URI): string {
+    return fs.readFileSync(uri.fsPath, "utf8");
+  }
+  fileExistsSync(uri: URI): boolean {
+    return fs.existsSync(uri.fsPath);
+  }
+  writeFileSync(uri: URI, value: string): void {
+    throw new Error("Not supported.");
+  }
+  deleteFileSync(uri: URI): void {
+    throw new Error("Not supported.");
+  }
+  findFilesByGlobSync(pattern: string): string[] {
+    return glob.sync(pattern, {
+      nodir: true,
+      absolute: true,
+    });
+  }
+}
+
+setFileSystemProvider(new NodeFileSystemProvider());
 
 // Create a connection to the client
 const connection = createConnection(ProposedFeatures.all);
 
-// Inject the shared services and language-specific services
-const { shared } = createPliServices({ connection, ...NodeFileSystem });
+// // Inject the shared services and language-specific services
+// const { shared } = createPliServices({ connection, ...NodeFileSystem });
 
 // Start the language server with the shared services
-startLanguageServer(shared);
+startLanguageServer(connection);
