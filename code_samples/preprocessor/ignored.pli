@@ -1,0 +1,12 @@
+ /* Skipping */
+ 
+ IGNO: PROCEDURE OPTIONS (MAIN);
+    %SKIP (2);
+    dcl A fixed bin(31);
+    dcl B fixed bin(31);
+    dcl WHAT fixed bin(31);  
+    WHAT = 123;
+    
+    // skipped declaration not available
+    /* B = 123; */
+ END;

@@ -1,0 +1,5 @@
+ AVERAGE: PROCEDURE OPTIONS (MAIN);
+   /* Test characters: ^[] € */
+   /* AVERAGE_GRADE = SUM / 5; */
+   PUT LIST ('PROGRAM TO COMPUTE AVERAGE');
+ END AVERAGE;

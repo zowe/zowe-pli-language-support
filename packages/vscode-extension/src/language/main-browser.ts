@@ -9,14 +9,12 @@
  *
  */
 
-import { EmptyFileSystem } from "langium";
-import { startLanguageServer } from "langium/lsp";
 import {
   BrowserMessageReader,
   BrowserMessageWriter,
   createConnection,
 } from "vscode-languageserver/browser.js";
-import { createPliServices } from "pli-language";
+import { startLanguageServer } from "pli-language";
 
 /* browser specific setup code */
 const messageReader = new BrowserMessageReader(self);
@@ -24,8 +22,5 @@ const messageWriter = new BrowserMessageWriter(self);
 
 const connection = createConnection(messageReader, messageWriter);
 
-// Inject the shared services and language-specific services
-const { shared } = createPliServices({ connection, ...EmptyFileSystem });
-
 // Start the language server with the shared services
-startLanguageServer(shared);
+startLanguageServer(connection);

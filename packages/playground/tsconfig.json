@@ -4,7 +4,8 @@
     "noEmit": true,
     "rootDir": ".",
     "lib": ["WebWorker", "ES2022", "DOM"],
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "isolatedModules": false
   },
   "include": ["src/**/*", "test/**/*"]
 }

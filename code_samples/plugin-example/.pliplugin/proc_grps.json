@@ -1,0 +1,19 @@
+{
+  "pgroups": [
+    {
+      "name": "default",
+      "compiler-options": [
+        "AGGREGATE",
+        "MARGINS(2,72)"
+      ],
+      "libs": [
+        "cpy"
+      ],
+      "include-extensions": [
+        ".pli",
+        ".cpy",
+        ".inc"
+      ]
+    }
+  ]
+}

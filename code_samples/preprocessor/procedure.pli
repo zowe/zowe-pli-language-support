@@ -1,0 +1,3 @@
+ P1: procedure;
+    B: entry; // secondary entry point into this procedure
+ end P1;

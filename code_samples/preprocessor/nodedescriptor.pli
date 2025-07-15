@@ -1,0 +1,3 @@
+ a: proc( x ) options(nodescriptor);
+  dcl x(20) fixed bin nonconnected;
+ end a;

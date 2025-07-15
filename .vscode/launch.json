@@ -65,6 +65,9 @@
                 "run",
                 "--no-watch"
             ],
+            "env": {
+                "NODE_ENV": "development"
+            },
             "smartStep": true,
             "console": "integratedTerminal"
         },
@@ -82,8 +85,40 @@
                 "run",
                 "${relativeFile}"
             ],
+            "env": {
+                "NODE_ENV": "development"
+            },
             "smartStep": true,
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Vitest: Run Selected Harness Test File",
+            "type": "node",
+            "request": "launch",
+            "autoAttachChildProcesses": true,
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "runtimeExecutable": "pnpm",
+            "env": {
+                "HARNESS_TEST_FILE": "${relativeFile}",
+                "NODE_ENV": "development"
+            },
+            "args": [
+                "vitest",
+                "run",
+                "packages/language/test/fourslash-harness/execute.test.ts"
+            ],
+            "smartStep": true,
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug Playground in Chrome",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}/packages/playground",
+            "sourceMaps": true
         }
     ],
     "compounds": [

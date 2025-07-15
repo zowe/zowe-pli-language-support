@@ -1,0 +1,8 @@
+{
+  "pgms": [
+    {
+      "program": "*.pli",
+      "pgroup": "default"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "name": "pli-playground",
   "description": "PL/I language playground",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"
@@ -12,24 +12,27 @@
     "serve": "vite -c vite.config.ts serve",
     "preview": "vite -c vite.config.ts preview",
     "build:clean": "npm run clean && npm run build",
-    "langium:generate": "langium generate",
-    "langium:watch": "langium generate --watch"
+    "dev": "vite -c vite.config.ts",
+    "dev:debug": "vite -c vite.config.ts --debug --force"
   },
   "dependencies": {
-    "@codingame/monaco-vscode-files-service-override": "~11.1.2",
-    "@codingame/monaco-vscode-keybindings-service-override": "~11.1.2",
-    "@codingame/monaco-vscode-markers-service-override": "~11.1.2",
-    "@codingame/monaco-vscode-textmate-service-override": "~11.1.2",
-    "@codingame/monaco-vscode-theme-defaults-default-extension": "~11.1.2",
-    "@codingame/monaco-vscode-theme-service-override": "~11.1.2",
-    "@codingame/monaco-vscode-views-service-override": "~11.1.2",
-    "langium": "3.3.1",
+    "@codingame/monaco-vscode-editor-api": "~17.2.1",
+    "@codingame/monaco-vscode-explorer-service-override": "~17.2.1",
+    "@codingame/monaco-vscode-files-service-override": "~17.2.1",
+    "@codingame/monaco-vscode-keybindings-service-override": "~17.2.1",
+    "@codingame/monaco-vscode-markers-service-override": "~17.2.1",
+    "@codingame/monaco-vscode-textmate-service-override": "~17.2.1",
+    "@codingame/monaco-vscode-views-service-override": "~17.2.1",
+    "@codingame/monaco-vscode-configuration-service-override": "~17.2.1",
+    "@codingame/monaco-vscode-outline-service-override": "~17.2.1",
+    "@codingame/monaco-vscode-api": "~17.2.1",
+    "langium": "~3.4.0",
     "lz-string": "~1.5.0",
     "pli-language": "workspace:*",
-    "monaco-editor": "npm:@codingame/monaco-vscode-editor-api@~11.1.2",
-    "monaco-editor-wrapper": "~6.1.0",
-    "monaco-languageclient": "~9.1.0",
-    "vscode": "npm:@codingame/monaco-vscode-api@~11.1.2",
+    "vscode-languageserver-protocol": "~3.17.5",
+    "monaco-editor-wrapper": "~6.8.1",
+    "monaco-languageclient": "~9.7.1",
+    "vscode": "npm:@codingame/monaco-vscode-extension-api@~17.2.1",
     "vscode-json-languageservice": "~5.4.2",
     "vscode-languageclient": "~9.0.1",
     "vscode-languageserver": "~9.0.1",
@@ -37,7 +40,7 @@
     "vscode-ws-jsonrpc": "~3.4.0"
   },
   "devDependencies": {
-    "vite": "~6.0.7",
-    "@codingame/esbuild-import-meta-url-plugin": "~1.0.2"
+    "vite": "~6.3.5",
+    "@codingame/esbuild-import-meta-url-plugin": "~1.0.3"
   }
 }
