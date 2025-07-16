@@ -40,4 +40,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: extension
-        path: packages/vscode-extension/pli-vscode-*.vsix
+        path: packages/vscode-extension/pli-language-support-*.vsix

@@ -1,5 +1,5 @@
 {
-  "name": "pli-vscode",
+  "name": "pli-language-support",
   "description": "Code4z rich language support extension for PL/I code. Powered by Zowe, hosted by the Open Mainframe Project.",
   "author": "Broadcom",
   "license": "EPL-2.0",
