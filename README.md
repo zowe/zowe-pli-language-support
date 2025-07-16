@@ -71,7 +71,7 @@ The Find All References and Go To Definition functionalities are extended to wor
 * **Find All References** identifies all occurrences of variables and paragraphs from include files in the code.
 * **Go To Definition** enables you to right-click on any variable or paragraph to reveal a definition of the element. If the definition is in an include file, or the name of an include file, the include file opens.
 
-![Animated gif showing the Go To Definition functionality on a PL/I include file and a variable defined in that file](https://github.com/zowe/zowe-pli-language-support/blob/development/img/include.gif)  
+![Animated gif showing the Go To Definition functionality on a PL/I include file and a variable defined in that file](https://github.com/zowe/zowe-pli-language-support/blob/main/img/include.gif?raw=true)  
 
 ## Configure Processor Groups
 
