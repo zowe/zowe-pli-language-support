@@ -14,6 +14,12 @@ PL/I Language Support recognizes files with the extension `.pli` and `.pl1` as P
 
 This extension is a part of the Zowe open-source project, hosted by the Open Mainframe Project. To contribute and report issues, visit our [Git repository](https://github.com/zowe/zowe-pli-language-support).
 
+<img align="left" alt="This extension is part of the Code4z experience" width="60" height="82" style="padding-right:20px;" src="https://github.com/BroadcomMFD/code4z/blob/main/icon3.png?raw=true" />
+
+PL/I Language Support is part of the [Code4z](https://techdocs.broadcom.com/code4z) experience from Broadcom, which offers a modern experience for mainframe application developers. To get started with Code4z, check out our foundational [extension pack](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack).
+
+<br />
+
 ## Address Software Requirements
     
 There are no client or server-side prerequisites for PL/I Language Support.
@@ -64,7 +70,7 @@ The Find All References and Go To Definition functionalities are extended to wor
 * **Find All References** identifies all occurrences of variables and paragraphs from include files in the code.
 * **Go To Definition** enables you to right-click on any variable or paragraph to reveal a definition of the element. If the definition is in an include file, or the name of an include file, the include file opens.
 
-![Animated gif showing the Go To Definition functionality on a PL/I include file and a variable defined in that file](https://github.com/zowe/zowe-pli-language-support/blob/development/img/include.gif)  
+![Animated gif showing the Go To Definition functionality on a PL/I include file and a variable defined in that file](https://github.com/zowe/zowe-pli-language-support/blob/main/img/include.gif?raw=true)  
 
 ## Configure Processor Groups
 
