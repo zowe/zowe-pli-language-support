@@ -123,10 +123,14 @@ export namespace MarginIndicatorDecorator {
     const config = vscode.workspace.getConfiguration("editor", {
       languageId: "pli",
     });
+    const existingRulers = config.get<number[]>("rulers") || [];
     let rulers: number[] = [];
 
     if (!settings.marginIndicatorRulersEnabled) {
-      config.update("rulers", rulers, vscode.ConfigurationTarget.Global, true);
+      if (existingRulers.length > 0) {
+        // Ensure that we clear the rulers ONLY if they were previously set
+        config.update("rulers", [], vscode.ConfigurationTarget.Global, true);
+      }
       return;
     }
 
@@ -144,6 +148,13 @@ export namespace MarginIndicatorDecorator {
     }
 
     rulers = rulers.map((r) => r - 1);
+
+    if (rulers.length === existingRulers.length) {
+      // If the rulers are the same, no need to update
+      if (rulers.every((r, i) => r === existingRulers[i])) {
+        return;
+      }
+    }
     config.update("rulers", rulers, vscode.ConfigurationTarget.Global, true);
   }
 }
