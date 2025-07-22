@@ -63,6 +63,16 @@
         "path": "syntaxes/pli.merged.json"
       }
     ],
+    "jsonValidation": [
+      {
+        "fileMatch": "**/.pliplugin/pgm_conf.json",
+        "url": "./schemas/pgm_conf.schema.json"
+      },
+      {
+        "fileMatch": "**/.pliplugin/proc_grps.json",
+        "url": "./schemas/proc_grps.schema.json"
+      }
+    ],
     "configuration": {
       "title": "PL/I Language Support",
       "properties": {
