@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PL/I Plugin Procedure Groups Configuration",
+  "type": "object",
+  "properties": {
+    "pgroups": {
+      "type": "array",
+      "description": "List of procedure groups with build configuration.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the procedure group (e.g., 'default')."
+          },
+          "compiler-options": {
+            "type": "array",
+            "description": "Compiler options for this group.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "libs": {
+            "type": "array",
+            "description": "List of libraries to include during compilation.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "include-extensions": {
+            "type": "array",
+            "description": "List of file extensions to treat as include files.",
+            "items": {
+              "type": "string",
+              "enum": [".pli", ".pl1", ".cpy", ".inc"]
+            }
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["pgroups"],
+  "additionalProperties": false
+}
+  
