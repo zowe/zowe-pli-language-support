@@ -192,7 +192,7 @@ export function escapeRegExp(value: string): string {
 export function setCompilerOptions(options: CompilerOptions): void {
   const orChars = escapeRegExp(options.or || "|");
   const notChars = escapeRegExp(options.not || "¬^");
-  let includeAlt: string | undefined = "++include";
+  let includeAlt: string | undefined = undefined;
   // take last option if multiple are present
   if (Array.isArray(options.pp)) {
     for (let x = options.pp.length - 1; x >= 0; x--) {
