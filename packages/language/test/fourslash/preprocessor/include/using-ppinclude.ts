@@ -15,6 +15,7 @@
 //// DECLARE LIB_VAR FIXED;
 
 // @filename: main.pli
+////*PROCESS PP(INCLUDE('ID(++INCLUDE)'));
 //// ++include lib
 
 preprocessor.expectTokens(`
