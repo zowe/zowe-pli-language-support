@@ -200,9 +200,10 @@ export function setCompilerOptions(options: CompilerOptions): void {
       const val = item.value;
       if (item.name.toLowerCase() === "include" && val) {
         // check for the ID(...) syntax, denoting a new include alternative
-        const match = val.match(/ID\(([^\)]+)\)/);
-        if (match) {
-          includeAlt = match[1].toLowerCase();
+        const match = val.match(/ID\(([^\)]+)\)/g);
+        if (match && match.length > 0) {
+          // take the last match & trim off the ID(...) part
+          includeAlt = match[match.length - 1].slice(3, -1).toLowerCase();
           break;
         }
       }
