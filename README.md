@@ -8,7 +8,7 @@
 
 # PL/I Language Support
 
-PL/I Language Support enhances the PL/I programming experience on your IDE. The extension leverages the language server protocol to provide syntax highlighting and coloring, and diagnostic features for PL/I code, compiler options, and include files. PL/I Language Support is available as a VS Code extension, and on an interactive [playground](https://zowe.github.io/zowe-pli-language-support/).
+PL/I Language Support enhances the PL/I programming experience on your IDE. The extension leverages the language server protocol to provide syntax highlighting and coloring, and diagnostic features for PL/I code, compiler options, and include files. PL/I Language Support is available as a VS Code extension, and on an interactive [playground](https://zowe.github.io/zowe-pli-language-support/main).
 
 PL/I Language Support recognizes files with the extension `.pli` and `.pl1` as PL/I files.
 
