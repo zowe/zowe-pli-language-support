@@ -637,8 +637,7 @@ export const Builtins = ` /* Arithmetic built-in functions */
  POINTERVALUE: PROC (value) RETURNS (); END;
  SIZE: PROC (value) RETURNS (); END;
  STORAGE: PROC (value) RETURNS (); END;
- /* Only available if declared explicitly */
- /* SYSNULL: PROC (value) RETURNS (); END; */
+ SYSNULL: PROC (value) RETURNS (); END; 
  TYPE: PROC (value) RETURNS (); END;
  UNALLOCATED: PROC (value) RETURNS (); END;
  VARGLIST: PROC (value) RETURNS (); END;

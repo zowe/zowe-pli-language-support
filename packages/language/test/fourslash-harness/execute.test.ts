@@ -25,7 +25,10 @@ import {
 } from "../test-builder";
 import { createTestBuilderHarnessImplementation } from "./implementation/test-builder";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
-import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
+import {
+  PluginConfigurationProviderInstance,
+  setPluginConfigurationProvider,
+} from "../../src/workspace/plugin-configuration-provider";
 
 const frameworkFileName = "framework.ts";
 const testsPath = "packages/language/test/fourslash";
@@ -51,7 +54,9 @@ beforeEach(() => {
   setFileSystemProvider(fs);
   resetDocumentProviders();
 
+  // Clear the plugin configuration provider and
   // ensure the 'cpy' directory is always resolvable for includes via config
+  setPluginConfigurationProvider();
   PluginConfigurationProviderInstance.setProgramConfigs("", [
     {
       program: "*.pli",
