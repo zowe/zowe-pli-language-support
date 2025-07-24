@@ -76,8 +76,14 @@ export class CompilerOptionsProcessor {
     }
 
     // check to apply pli-options (key-value pairs which generate compiler options as well)
-    if (programConfig && (programConfig?.["pli-options"] || processGroupConfig?.["pli-options"])) {
-      const optionsStr = PluginConfigurationProviderInstance.pliOptionsStringForProgramConfig(programConfig);
+    if (
+      programConfig &&
+      (programConfig?.["pli-options"] || processGroupConfig?.["pli-options"])
+    ) {
+      const optionsStr =
+        PluginConfigurationProviderInstance.pliOptionsStringForProgramConfig(
+          programConfig,
+        );
       const abstractOptions = parseAbstractCompilerOptions(optionsStr, 0);
       if (mergedAbstractOptions) {
         mergedAbstractOptions.options.push(...abstractOptions.options);

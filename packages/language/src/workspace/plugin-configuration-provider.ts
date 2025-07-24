@@ -248,10 +248,8 @@ export class PluginConfigurationProvider {
     const processGroupConfigs = this.processGroupConfigs.values();
     for (const config of processGroupConfigs) {
       if (config["compiler-options"]?.length) {
-
-        const [abstractOptions, translatedOptions] = this.parseAndTranslateOptions(
-          config["compiler-options"].join(" ")
-        );
+        const [abstractOptions, translatedOptions] =
+          this.parseAndTranslateOptions(config["compiler-options"].join(" "));
 
         for (const issue of [
           ...translatedOptions.issues,
@@ -272,7 +270,9 @@ export class PluginConfigurationProvider {
    * @param options Options string to parse and translate
    * @returns Tuple of AbstractCompilerOptions and CompilerOptionResult
    */
-  private parseAndTranslateOptions(options: string): [AbstractCompilerOptions, CompilerOptionResult] {
+  private parseAndTranslateOptions(
+    options: string,
+  ): [AbstractCompilerOptions, CompilerOptionResult] {
     const abstractOptions = parseAbstractCompilerOptions(options);
     const translatedOptions = translateCompilerOptions(abstractOptions);
     return [abstractOptions, translatedOptions];
@@ -372,11 +372,14 @@ export class PluginConfigurationProvider {
   /**
    * Converts the merged pli-options for a given program config to a string suitable for compiler options.
    * Program config pli-options override process group pli-options.
-   * Example: { SYSPARM: "myval" } => 'SYSPARM("myval")'
+   * Example: { SYSPARM: "'myval'" } => 'SYSPARM('myval')', note the quotes
+   * Example: { SYSTEM: "MVS" } => 'SYSTEM(MVS)'
    * @param programConfig Program config entry to retrieve options for, factoring in process group options too
    * @returns Merged pli-options as a string, or "" if none
    */
-  public pliOptionsStringForProgramConfig(programConfig: ProgramConfig): string {
+  public pliOptionsStringForProgramConfig(
+    programConfig: ProgramConfig,
+  ): string {
     const group = this.getProcessGroupConfig(programConfig.pgroup);
     const groupOpts = group && group["pli-options"] ? group["pli-options"] : {};
     const progOpts = programConfig["pli-options"] || {};
