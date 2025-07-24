@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.87% </span>
+                <span class="strong">93.54% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>58/66</span>
+                <span class='fraction'>58/62</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.47% </span>
+                <span class="strong">86.66% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>13/17</span>
+                <span class='fraction'>13/15</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.87% </span>
+                <span class="strong">93.54% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>58/66</span>
+                <span class='fraction'>58/62</span>
             </div>
         
             
@@ -158,10 +158,7 @@
 <a name='L93'></a><a href='#L93'>93</a>
 <a name='L94'></a><a href='#L94'>94</a>
 <a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a>
-<a name='L97'></a><a href='#L97'>97</a>
-<a name='L98'></a><a href='#L98'>98</a>
-<a name='L99'></a><a href='#L99'>99</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L96'></a><a href='#L96'>96</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -179,6 +176,8 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">7x</span>
@@ -220,7 +219,6 @@
 <span class="cline-any cline-yes">22x</span>
 <span class="cline-any cline-yes">22x</span>
 <span class="cline-any cline-yes">22x</span>
-<span class="cline-any cline-yes">22x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">22x</span>
@@ -230,6 +228,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">22x</span>
 <span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-yes">22x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -252,11 +251,6 @@
 <span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
@@ -270,13 +264,15 @@
  *
  */
 &nbsp;
-import { DocumentSymbol, Range, SymbolKind } from "vscode-languageserver-types";
+import { SymbolKind } from "vscode-languageserver-types";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { URI } from "../utils/uri";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { DOCUMENT_SYMBOL_BUILDERS } from "./document-symbol-builder";
 import { Token } from "../parser/tokens";
 import { TextDocuments } from "./text-documents";
+import { isValidToken } from "../linking/tokens";
+import { DocumentSymbol, Range } from "./types";
 &nbsp;
 export function documentSymbolRequest(
   uri: URI,
@@ -298,7 +294,7 @@ export function documentSymbolRequest(
 <span class="cstat-no" title="statement not covered" >  }</span>
 &nbsp;
   const tokens = fileTokens
-    .filter((token) =&gt; token.payload.element)
+    .filter((token) =&gt; token.payload.element &amp;&amp; isValidToken(token))
     .map((token) =&gt; {
       const element = token.payload.element!;
       if (!tokensByElement.has(element)) {
@@ -316,7 +312,6 @@ export function documentSymbolRequest(
     const symbols = builder.buildSymbols(
       token,
       tokensByElement.get(token.payload.element!)!,
-      textDocument,
       [],
     );
 &nbsp;
@@ -327,7 +322,8 @@ export function documentSymbolRequest(
       );
 &nbsp;
       if (parent) {
-        parent.children!.push(symbol);
+        parent.children ??= [];
+        parent.children.push(symbol);
       } else {
         documentSymbols.push(symbol);
         // Clear hierarchy when encountering a function outside any parent
@@ -349,12 +345,7 @@ export function documentSymbolRequest(
 &nbsp;
 function includes(parentRange: Range, childRange: Range): boolean {
   return (
-    (parentRange.start.line &lt;= childRange.start.<span class="branch-0 cbranch-no" title="branch not covered" >line ||</span>
-<span class="cstat-no" title="statement not covered" >      (parentRange.start.line === childRange.start.line &amp;&amp;</span>
-<span class="cstat-no" title="statement not covered" >        parentRange.start.character &lt;= childRange.start.character)) &amp;&amp;</span>
-    (parentRange.end.line &gt;= childRange.end.<span class="branch-0 cbranch-no" title="branch not covered" >line ||</span>
-<span class="cstat-no" title="statement not covered" >      (parentRange.end.line === childRange.end.line &amp;&amp;</span>
-<span class="cstat-no" title="statement not covered" >        parentRange.end.character &gt;= childRange.end.character))</span>
+    parentRange.start &lt;= childRange.start &amp;&amp; parentRange.end &gt;= childRange.end
   );
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -364,7 +355,7 @@ function includes(parentRange: Range, childRange: Range): boolean {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T13:18:15.306Z
+                at 2025-07-24T13:49:06.378Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
