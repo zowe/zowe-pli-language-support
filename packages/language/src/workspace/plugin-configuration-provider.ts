@@ -32,6 +32,19 @@ export interface ProgramConfig {
   program: string;
   pgroup: string;
   "pli-options"?: PliOptions;
+
+  /**
+   * Prebuilt abstract options for this program config.
+   * This is built from the program group's compiler options + pli-options,
+   * and includes this config's pli-options as well.
+   * This is used to avoid re-parsing the options every time we need them for any programs recognized by this config.
+   */
+  abstractOptions?: AbstractCompilerOptions;
+  /**
+   * Number of issues found in the pli-options for this program config (which generate compiler options)
+   * Used to avoid duplicate issue reporting later on when running translation in a program context
+   */
+  issueCount?: number;
 }
 
 /**
@@ -44,13 +57,6 @@ export interface ProcessGroup {
   "pli-options"?: PliOptions;
   libs?: string[];
   "include-extensions"?: string[];
-  abstractOptions?: AbstractCompilerOptions;
-
-  /**
-   * Number of issues found in the compiler options for this process group.
-   * Used to avoid duplicate issue reporting later on when running translation in a program context
-   */
-  issueCount?: number;
 }
 
 /**
@@ -218,7 +224,7 @@ class PluginConfigurationProvider {
             processGrpConfig.toString(),
           ).pgroups;
           this.setProcessGroupConfigs(processGroupConfigs);
-          this.postProcessGroupConfigs();
+          this.postProcessProgramConfigs();
           return;
         } catch (e) {
           console.error("Failed to load process group config, skipping:", e);
@@ -236,27 +242,34 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Post-processes group configs after they've been loaded or set,
-   * updates abstractOptions & issue counts
+   * Post-processes program configs after they've been loaded or set,
+   * updates abstractOptions & issue counts, sourcing from the associated process group config as well.
    */
-  private postProcessGroupConfigs() {
-    const processGroupConfigs = this.processGroupConfigs.values();
-    for (const config of processGroupConfigs) {
-      if (config["compiler-options"]?.length) {
-        const [abstractOptions, translatedOptions] =
-          this.parseAndTranslateOptions(config["compiler-options"].join(" "));
+  private postProcessProgramConfigs() {
+    const programConfigs = this.programConfigs.values();
+    for (const programConfig of programConfigs) {
+      // get the process group config for this program
+      const processGroupConfig = this.getProcessGroupConfig(
+        programConfig.pgroup,
+      );
 
-        for (const issue of [
-          ...translatedOptions.issues,
-          ...abstractOptions.issues,
-        ]) {
-          console.error(
-            `Error in compiler options for process group "${config.name}": ${issue.message}`,
-          );
-        }
-        config.abstractOptions = abstractOptions;
-        config.issueCount = translatedOptions.issues.length;
+      // collect raw compiler options from the group
+      const rawCompilerOptions = (processGroupConfig?.["compiler-options"] || []).join(" ");
+      // collect raw pli-options from the group & program config
+      const rawPliOptions = this.pliOptionsStringForProgramConfig(programConfig);
+      
+      // combine them and pass them all together to parse and translate
+      const [abstractOptions, translatedOptions, collectedIssues] =
+        this.parseAndTranslateOptions(
+          `${rawCompilerOptions} ${rawPliOptions}`,
+        );
+      for (const issue of collectedIssues) {
+        console.error(
+          `Error in compiler options for program config "${programConfig.program}": ${issue}`,
+        );
       }
+      programConfig.abstractOptions = abstractOptions;
+      programConfig.issueCount = translatedOptions.issues.length; 
     }
   }
 
@@ -267,10 +280,17 @@ class PluginConfigurationProvider {
    */
   private parseAndTranslateOptions(
     options: string,
-  ): [AbstractCompilerOptions, CompilerOptionResult] {
+  ): [AbstractCompilerOptions, CompilerOptionResult, string[]] {
     const abstractOptions = parseAbstractCompilerOptions(options);
     const translatedOptions = translateCompilerOptions(abstractOptions);
-    return [abstractOptions, translatedOptions];
+    const collectedIssues: string[] = [];
+    for (const issue of [
+      ...translatedOptions.issues,
+      ...abstractOptions.issues,
+    ]) {
+      collectedIssues.push(issue.message);
+    }
+    return [abstractOptions, translatedOptions, collectedIssues];
   }
 
   /**
@@ -302,7 +322,7 @@ class PluginConfigurationProvider {
     for (const config of processGroupConfigs) {
       this.processGroupConfigs.set(config.name, config);
     }
-    this.postProcessGroupConfigs();
+    this.postProcessProgramConfigs();
     this.libFileGlobPatterns = undefined;
   }
 
@@ -365,14 +385,12 @@ class PluginConfigurationProvider {
   }
 
   /**
-   * Converts the merged pli-options for a given program config to a string suitable for compiler options.
+   * Extracts & converts the merged pli-options for a given program config & associated process group to a compiler option string
    * Program config pli-options override process group pli-options.
-   * Example: { SYSPARM: "'myval'" } => 'SYSPARM('myval')', note the quotes
-   * Example: { SYSTEM: "MVS" } => 'SYSTEM(MVS)'
    * @param programConfig Program config entry to retrieve options for, factoring in process group options too
    * @returns Merged pli-options as a string, or "" if none
    */
-  public pliOptionsStringForProgramConfig(
+  private pliOptionsStringForProgramConfig(
     programConfig: ProgramConfig,
   ): string {
     const group = this.getProcessGroupConfig(programConfig.pgroup);
@@ -383,6 +401,9 @@ class PluginConfigurationProvider {
     if (Object.keys(merged).length === 0) {
       return "";
     } else {
+      // form literal PP option strings
+      // e.g. { SYSPARM: "'a'"} => "SYSPARM('a')" // note the quotes
+      // e.g. { SYSTEM: "MVS", "SYSTEM(MVS)"
       return Object.entries(merged)
         .map(([key, value]) => `${key}(${value})`)
         .join(" ");
