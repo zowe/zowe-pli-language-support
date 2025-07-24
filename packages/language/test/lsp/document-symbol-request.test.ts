@@ -14,8 +14,9 @@ import { parse, replaceNamedIndices } from "../utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "../../src/utils/uri";
 import { documentSymbolRequest } from "../../src/language-server/document-symbol-request";
-import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types";
+import { SymbolKind } from "vscode-languageserver-types";
 import { EditorDocuments } from "../../src/language-server/text-documents";
+import { DocumentSymbol } from "../../src/language-server/types";
 
 type SymbolWithLevel = {
   symbol: DocumentSymbol;
@@ -71,10 +72,8 @@ function expectDocumentSymbols(annotatedCode: string): void {
         (s) =>
           documentSymbolKindString(s.symbol.kind) === symbolKind &&
           s.level === Number(hierarchyLevel) &&
-          s.symbol.selectionRange.start.line === startPosition.line &&
-          s.symbol.selectionRange.start.character === startPosition.character &&
-          s.symbol.selectionRange.end.line === endPosition.line &&
-          s.symbol.selectionRange.end.character === endPosition.character,
+          s.symbol.selectionRange.start === range[0] &&
+          s.symbol.selectionRange.end === range[1],
       );
       expect(
         matchingSymbol,
