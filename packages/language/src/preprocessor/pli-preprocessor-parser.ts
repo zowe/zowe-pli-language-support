@@ -462,7 +462,7 @@ export class PliPreprocessorParser {
         // member include
         const token = state.consume(
           item,
-          CstNodeKind.IncludeItem_FileID0,
+          CstNodeKind.IncludeItem_FileID,
           PreprocessorTokens.Id,
         );
         const fileName = token.image;
@@ -472,7 +472,7 @@ export class PliPreprocessorParser {
         // literal file include (relative, absolute, or lib sourced)
         const token = state.consume(
           item,
-          CstNodeKind.IncludeItem_FileString0,
+          CstNodeKind.IncludeItem_FileString,
           PreprocessorTokens.String,
         );
         const file = token.image;
@@ -510,7 +510,7 @@ export class PliPreprocessorParser {
     const item = ast.createIncludeItem();
     const token = state.consume(
       item,
-      CstNodeKind.IncludeItem_FileID0,
+      CstNodeKind.IncludeItem_FileID,
       PreprocessorTokens.Id,
     );
     const fileName = token.image;

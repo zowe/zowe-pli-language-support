@@ -701,6 +701,7 @@ export declare namespace CompilerOptions {
   }
   export interface IncAfter {
     process?: string;
+    token?: Token;
   }
   export interface IncDir {
     directory: string;
