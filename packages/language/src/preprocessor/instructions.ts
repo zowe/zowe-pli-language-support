@@ -264,10 +264,25 @@ export function createDeclareInstruction(
 
 export interface IncludeInstruction {
   kind: InstructionKind.Include;
-  item: ast.IncludeItem;
+  item: ast.IncludeItem | null;
   fileName: string;
   idempotent: boolean;
   token: Token | null; // Token for error reporting, if available
+}
+
+export function createIncludeInstruction(
+  item: ast.IncludeItem | null,
+  fileName: string,
+  idempotent: boolean,
+  token?: Token | null,
+): IncludeInstruction {
+  return {
+    kind: InstructionKind.Include,
+    item,
+    fileName,
+    idempotent,
+    token: token ?? null,
+  };
 }
 
 export interface InscanInstruction {

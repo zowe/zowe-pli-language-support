@@ -13,6 +13,7 @@ import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import * as tokens from "../parser/tokens";
+import * as ast from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
 import {
   CompilerOptionsProcessor,
@@ -25,6 +26,9 @@ import { Token } from "../parser/tokens";
 import { recursivelySetContainer } from "../linking/symbol-table";
 import { generateInstructions } from "./instruction-generator";
 import { EvaluationResults, runInstructions } from "./instruction-interpreter";
+import { createIncludeInstruction, InstructionNode } from "./instructions";
+import { CompilerOptions } from "./compiler-options/options";
+import { CstNodeKind } from "../syntax-tree/cst";
 
 export interface LexingError {
   readonly message: string;
@@ -79,7 +83,11 @@ export class PliLexer {
     unit.preprocessorAst.statements = statements;
     recursivelySetContainer(unit.preprocessorAst);
 
-    const instructionNode = generateInstructions(statements);
+    let instructionNode = generateInstructions(statements);
+    const incAfter = compilerOptionsResult.result?.options.incAfter;
+    if (incAfter?.process) {
+      instructionNode = generateIncAfterInstruction(instructionNode, incAfter);
+    }
     const output = runInstructions(uri, instructionNode, {
       compilerOptions: compilerOptionsResult.result,
       marginsProcessor: this.marginsProcessor,
@@ -102,4 +110,36 @@ export class PliLexer {
       tokenReferences: output.references,
     };
   }
+}
+
+function generateIncAfterInstruction(
+  existingNode: InstructionNode,
+  incAfter: CompilerOptions.IncAfter | undefined,
+): InstructionNode {
+  if (!incAfter || !incAfter.process) {
+    return existingNode;
+  }
+  // Generate a synthetic include item here
+  // This allows us to perform LSP operations to jump to the included file
+  const includeItem = ast.createIncludeItem();
+  includeItem.fileName = incAfter.process;
+  includeItem.token = incAfter.token || null;
+  if (incAfter.token) {
+    includeItem.token = incAfter.token;
+    incAfter.token.payload.element = includeItem;
+    incAfter.token.payload.kind = CstNodeKind.IncludeItem_FileID;
+  }
+  // IncAfter runs as the very first instruction in the preprocessor.
+  // It allows to include ONE SINGLE file. Afterwards the preprocessor runs as normal.
+  const instruction: InstructionNode = {
+    labels: [],
+    instruction: createIncludeInstruction(
+      includeItem,
+      incAfter.process,
+      false,
+      incAfter.token,
+    ),
+    next: existingNode,
+  };
+  return instruction;
 }

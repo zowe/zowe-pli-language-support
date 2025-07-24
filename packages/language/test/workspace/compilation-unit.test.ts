@@ -66,7 +66,7 @@ describe("Compilation Unit Tests", () => {
     ).toBe(true);
 
     const config = PluginConfigurationProviderInstance.getProgramConfig(
-      uriEntry.toString(),
+      uriEntry,
     );
     expect(config).toBeDefined();
 
@@ -95,19 +95,19 @@ describe("Compilation Unit Tests", () => {
 
     // entry 1 should match wildcard config
     const config1 = PluginConfigurationProviderInstance.getProgramConfig(
-      uriEntry1.toString(),
+      uriEntry1,
     );
     expect(config1).toBeDefined();
 
     // entry 2 should also match
     const config2 = PluginConfigurationProviderInstance.getProgramConfig(
-      uriEntry2.toString(),
+      uriEntry2,
     );
     expect(config2).toBeDefined();
 
     // entry 3 should not match
     const configOther = PluginConfigurationProviderInstance.getProgramConfig(
-      uriOther.toString(),
+      uriOther,
     );
     expect(configOther).toBeUndefined();
 

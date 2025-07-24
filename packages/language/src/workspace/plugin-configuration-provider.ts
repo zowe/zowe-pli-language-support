@@ -335,20 +335,22 @@ class PluginConfigurationProvider {
    * @param program Name of the program to get a config for
    * @returns Associated program config, or undefined if not found
    */
-  public getProgramConfig(program: string): ProgramConfig | undefined {
+  public getProgramConfig(program: URI): ProgramConfig | undefined {
+    // Note that we need to decode the URI
+    const uri = program.toString(true);
     // try direct match first
-    const direct = this.programConfigs.get(program);
+    const direct = this.programConfigs.get(uri);
     if (direct) {
       return direct;
     }
     // fallback to glob matching
     for (const [pattern, config] of this.programConfigs.entries()) {
-      if (pattern === program) {
+      if (pattern === uri) {
         continue; // already checked
       }
       try {
         // attempt match on decoded URI
-        if (minimatch(program, decodeURIComponent(pattern))) {
+        if (minimatch(uri, decodeURIComponent(pattern))) {
           return config;
         }
       } catch (e) {
@@ -364,7 +366,7 @@ class PluginConfigurationProvider {
   /**
    * Returns true if the given program has a config (i.e. is a listed entry point)
    */
-  public hasProgramConfig(program: string): boolean {
+  public hasProgramConfig(program: URI): boolean {
     return this.getProgramConfig(program) !== undefined;
   }
 

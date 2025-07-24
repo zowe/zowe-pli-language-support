@@ -71,8 +71,8 @@ export function isReferenceToken(kind: CstNodeKind | undefined): boolean {
 
 export function isIncludeItemToken(kind: CstNodeKind | undefined): boolean {
   switch (kind) {
-    case CstNodeKind.IncludeItem_FileString0:
-    case CstNodeKind.IncludeItem_FileID0:
+    case CstNodeKind.IncludeItem_FileString:
+    case CstNodeKind.IncludeItem_FileID:
       return true;
   }
   return false;

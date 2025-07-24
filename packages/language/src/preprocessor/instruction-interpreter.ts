@@ -889,7 +889,7 @@ function resolveIncludeFileUri(
 
   // check to validate include extension, if a program config & process group is available
   const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
-    context.entryUri.toString(true),
+    context.entryUri,
   );
   const pgroup = programConfig
     ? PluginConfigurationProviderInstance.getProcessGroupConfig(

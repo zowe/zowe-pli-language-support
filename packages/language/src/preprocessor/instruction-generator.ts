@@ -449,13 +449,13 @@ function generateIncludeInstruction(
   const instructions: inst.IncludeInstruction[] = [];
   for (const item of node.items) {
     if (item.fileName) {
-      const instruction: inst.IncludeInstruction = {
-        kind: inst.InstructionKind.Include,
-        item,
-        idempotent: node.idempotent,
-        fileName: item.fileName,
-        token: item.token || node.token,
-      };
+      const instruction: inst.IncludeInstruction =
+        inst.createIncludeInstruction(
+          item,
+          item.fileName,
+          node.idempotent,
+          item.token || node.token,
+        );
       instructions.push(instruction);
     }
   }
