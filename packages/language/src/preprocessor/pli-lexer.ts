@@ -79,6 +79,13 @@ export class PliLexer {
     unit.preprocessorAst.statements = statements;
     recursivelySetContainer(unit.preprocessorAst);
 
+    errors.push(
+      ...this.marginsProcessor.issues.map((issue) => ({
+        ...issue,
+        uri: uri,
+      })),
+    );
+
     const instructionNode = generateInstructions(statements);
     const output = runInstructions(uri, instructionNode, {
       compilerOptions: compilerOptionsResult.result,

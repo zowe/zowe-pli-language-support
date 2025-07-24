@@ -45,13 +45,13 @@ describe("PL/I Parsing tests", () => {
   });
 
   test("empty program w/ null statement", () => {
-    const doc = parseStmts(`;`);
+    const doc = parseStmts(` ;`);
     assertNoParseErrors(doc);
     generateAndAssertValidSymbolTable(doc);
   });
 
   test("empty program w/ null %statement", () => {
-    const doc = parseStmts(`%;`);
+    const doc = parseStmts(` %;`);
     assertNoParseErrors(doc);
     generateAndAssertValidSymbolTable(doc);
   });
@@ -280,7 +280,7 @@ describe("PL/I Parsing tests", () => {
   // tests fro declarations
   describe("Declaration tests", () => {
     test("simple char declarations", () => {
-      const doc = parseStmts(`
+      const doc = parseStmts(`*PROCESS MARGINS(2,200)
  declare UserA character (15); // 15 character var
  declare UserB character (15) varying; // varying
  declare UserC character (15) varyingz; // varying w/ null termination
@@ -293,7 +293,7 @@ describe("PL/I Parsing tests", () => {
     });
 
     test("char declaration w/ overflow assignment", () => {
-      const doc = parseStmts(`
+      const doc = parseStmts(`*PROCESS MARGINS(2,200)
  declare Subject char(10);
  Subject = 'Transformations'; // will truncate the last 5 chars, emitting a warning (but valid nonetheless)
 `);
@@ -408,7 +408,7 @@ describe("PL/I Parsing tests", () => {
     });
 
     test("multi-declaration", () => {
-      const doc = parseStmts(`
+      const doc = parseStmts(`*PROCESS MARGINS(2,200)
     declare Result bit(3),
         A fixed decimal(1),
         B fixed binary (15), // precison lower than 15 will trigger a compiler warning, less than storage allows

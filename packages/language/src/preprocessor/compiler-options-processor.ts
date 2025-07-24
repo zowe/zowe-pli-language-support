@@ -44,13 +44,14 @@ export class CompilerOptionsProcessor {
     let sourceCompilerOptions: string[] = [];
     let newText = text;
     for (const range of ranges) {
-      // Magic number 8 is the length of the string "*PROCESS"
+      // newText should recognize the line break for the margins in the first line after the process directive.
       const offset =
         range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH;
       sourceCompilerOptions.push(text.substring(offset, range.end));
       newText =
         newText.substring(0, range.start) +
-        " ".repeat(range.end - range.start) +
+        " ".repeat(range.end - range.start - 1) +
+        "\n" +
         newText.substring(range.end);
     }
 

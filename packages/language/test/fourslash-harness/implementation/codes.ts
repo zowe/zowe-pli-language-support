@@ -11,10 +11,17 @@
 
 import { PLICodes } from "../../../src/validation/messages";
 import { HarnessTesterInterface } from "../harness-interface";
+import { PliMarginsProcessor } from "../../../src/preprocessor/pli-margins-processor";
 
 export const HarnessCodes: HarnessTesterInterface["code"] = {
   Severe: PLICodes.Severe,
   Warning: PLICodes.Warning,
   Information: PLICodes.Info,
   Error: PLICodes.Error,
+  Lexer: {
+    Margins: {
+      ErrorLeft: PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT,
+      ErrorRight: PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT,
+    },
+  },
 };
