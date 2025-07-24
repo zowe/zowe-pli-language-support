@@ -17,31 +17,28 @@ import {
 } from "../language-server/types";
 import * as AST from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
+import { BuiltinsUriSchema } from "../workspace/builtins";
+import { CompilationUnit } from "../workspace/compilation-unit";
+import {
+  PluginConfigurationProviderInstance,
+  ProcessGroup,
+  ProgramConfig,
+} from "../workspace/plugin-configuration-provider";
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./messages/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
 import { IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute } from "./messages/IBM1388IE-NODESCRIPTOR-attribute-is-invalid-when-any-parameter-has-NONCONNECTED-attribute.js";
 import * as PLICodes from "./messages/pli-codes";
-import { PliValidationAcceptor } from "./validator";
+import { ValidationAcceptor, ValidationChecks, Validator } from "./validator";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
  */
-export type PliValidationFunction = (
-  node: any,
-  acceptor: PliValidationAcceptor,
-) => void;
-
-export type SyntaxKindStrings = keyof typeof AST.SyntaxKind;
-
-export type PliValidationChecks = Partial<
-  Record<SyntaxKindStrings, PliValidationFunction | PliValidationFunction[]>
->;
 
 /**
  * Register custom validation checks.
  */
-export function registerValidationChecks(): PliValidationChecks {
-  const validator = new Pl1Validator();
-  const checks: PliValidationChecks = {
+export function registerPliValidationChecks(unit: CompilationUnit): Validator {
+  const validator = new PliValidator(unit);
+  validator.addHandler({
     // DimensionBound: [IBM1295IE_sole_bound_specified],
     PliProgram: [validator.checkPliProgram],
     Exports: [IBM1324IE_name_occurs_more_than_once_within_exports_clause],
@@ -55,19 +52,44 @@ export function registerValidationChecks(): PliValidationChecks {
     CallStatement: [validator.checkCallStatement],
     DefineOrdinalStatement: [validator.checkDefineOrdinalStatement],
     DeclareStatement: [validator.checkDeclareStatement],
-  };
+    ReferenceItem: [validator.checkImplicitBuiltins.bind(validator)],
+  });
 
-  return checks;
+  return validator;
 }
 
 /**
  * Implementation of custom validations.
  */
-export class Pl1Validator {
+export class PliValidator implements Validator {
+  protected handlers: ValidationChecks = {};
+  protected programConfig: ProgramConfig | undefined = undefined;
+  protected processGroup: ProcessGroup | undefined = undefined;
+
+  constructor(protected compilationUnit: CompilationUnit) {
+    this.programConfig = PluginConfigurationProviderInstance.getProgramConfig(
+      compilationUnit.uri.toString(),
+    );
+    if (this.programConfig) {
+      this.processGroup =
+        PluginConfigurationProviderInstance.getProcessGroupConfig(
+          this.programConfig.pgroup,
+        );
+    }
+  }
+
+  getHandlers(): ValidationChecks {
+    return this.handlers;
+  }
+
+  addHandler(handlerConfig: ValidationChecks) {
+    this.handlers = { ...this.handlers, ...handlerConfig };
+  }
+
   /**
    * Verify programs contain at least one parsed statement
    */
-  checkPliProgram(node: AST.PliProgram, acceptor: PliValidationAcceptor): void {
+  checkPliProgram(node: AST.PliProgram, acceptor: ValidationAcceptor): void {
     if (node.statements.length === 0) {
       acceptor(Severity.S, PLICodes.Severe.IBM1917I.message, {
         code: PLICodes.Severe.IBM1917I.fullCode,
@@ -79,7 +101,7 @@ export class Pl1Validator {
 
   checkDeclareStatement(
     node: AST.DeclareStatement,
-    accept: PliValidationAcceptor,
+    accept: ValidationAcceptor,
   ): void {
     const checkNode = (hasLevel: boolean) => (child: AST.SyntaxNode) => {
       if (child.kind === AST.SyntaxKind.DeclaredItem) {
@@ -112,7 +134,7 @@ export class Pl1Validator {
    */
   checkReturnsOption(
     node: AST.ReturnsOption,
-    acceptor: PliValidationAcceptor,
+    acceptor: ValidationAcceptor,
   ): void {
     const attrSet = new Set<string>();
     for (const attr of node.returnAttributes) {
@@ -158,7 +180,7 @@ export class Pl1Validator {
    */
   checkLabelReference(
     node: AST.LabelReference,
-    acceptor: PliValidationAcceptor,
+    acceptor: ValidationAcceptor,
   ): void {
     if (node.label && !node.label.node) {
       acceptor(Severity.W, PLICodes.Warning.IBM3332I.message, {
@@ -185,7 +207,7 @@ export class Pl1Validator {
    */
   checkCallStatement(
     node: AST.CallStatement,
-    acceptor: PliValidationAcceptor,
+    acceptor: ValidationAcceptor,
   ): void {
     // const ref = node.call.procedure.ref;
     const ref = node.call?.procedure?.node;
@@ -233,7 +255,7 @@ export class Pl1Validator {
    */
   checkDefineOrdinalStatement(
     node: AST.DefineOrdinalStatement,
-    acceptor: PliValidationAcceptor,
+    acceptor: ValidationAcceptor,
   ): void {
     // get attributes
     const attrs = node.attributes;
@@ -271,6 +293,39 @@ export class Pl1Validator {
         // add it in, normalizing precision & prec to 'prec' along the way
         attrSet.add(lattr.match(/prec/) ? "prec" : lattr);
       }
+    }
+  }
+
+  checkImplicitBuiltins(
+    node: AST.ReferenceItem,
+    acceptor: ValidationAcceptor,
+  ): void {
+    // Skip if there is no process group information available.
+    if (!this.processGroup) {
+      return;
+    }
+
+    // Check for present name
+    if (!node.ref?.node?.name) {
+      return;
+    }
+
+    // Check if the reference item is a builtin.
+    if (node.ref?.node?.nameToken?.payload.uri?.scheme !== BuiltinsUriSchema) {
+      return;
+    }
+
+    const name = node.ref.node.name.toUpperCase();
+    if (!this.processGroup["implicit-builtins"]?.includes(name)) {
+      acceptor(
+        Severity.E,
+        PLICodes.Error.IBM1373I.message(node.ref.node.name),
+        {
+          code: PLICodes.Error.IBM1373I.fullCode,
+          range: getSyntaxNodeRange(node)!,
+          uri: tokenToUri(node.ref.node.nameToken) || "",
+        },
+      );
     }
   }
 }

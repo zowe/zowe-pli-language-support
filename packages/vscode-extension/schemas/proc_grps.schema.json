@@ -34,6 +34,13 @@
               "type": "string",
               "enum": [".pli", ".pl1", ".cpy", ".inc"]
             }
+          },
+          "implicit-builtins": {
+            "type": "array",
+            "description": "List of builtins to include implicitly.",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["name"],
