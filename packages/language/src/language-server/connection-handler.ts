@@ -20,7 +20,12 @@ import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
 import { Location, TextEdit } from "vscode-languageserver-types";
-import { completionItemToLSP, hoverResponseToLSP, rangeToLSP } from "./types";
+import {
+  completionItemToLSP,
+  documentSymbolToLSP,
+  hoverResponseToLSP,
+  rangeToLSP,
+} from "./types";
 import { renameRequest } from "./rename-request";
 import { mapValues } from "../utils/common";
 import { getReferenceLocations } from "../linking/resolver";
@@ -238,7 +243,9 @@ export function startLanguageServer(connection: Connection): void {
     const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
 
     if (textDocument && unit) {
-      return documentSymbolRequest(parsedUri, unit);
+      return documentSymbolRequest(parsedUri, unit).map((symbol) =>
+        documentSymbolToLSP(textDocument, symbol),
+      );
     }
     return [];
   });
