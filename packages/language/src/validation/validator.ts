@@ -21,11 +21,7 @@ import { ReferencesCache } from "../linking/resolver";
 import { isValidToken } from "../linking/tokens";
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
-import {
-  PliValidationChecks,
-  PliValidationFunction,
-  registerValidationChecks,
-} from "./pli-validator";
+import { registerPliValidationChecks } from "./pli-validator";
 import { LexingError } from "../preprocessor/pli-lexer";
 import { isMainProcedure, labelPrefixPointsToPackage } from "./utils";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
@@ -34,20 +30,36 @@ import {
   CompilerOptionIssue,
   compilerOptionIssueToDiagnostics,
 } from "../preprocessor/compiler-options/options";
+import * as AST from "../syntax-tree/ast";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
  */
-export type PliValidationAcceptor = (
+export type ValidationAcceptor = (
   severity: Severity,
   message: string,
   info: DiagnosticInfo,
 ) => void;
 
-export class PliValidationBuffer {
+export type ValidationFunction = (
+  node: any,
+  acceptor: ValidationAcceptor,
+) => void;
+
+export type SyntaxKindStrings = keyof typeof AST.SyntaxKind;
+
+export type ValidationChecks = Partial<
+  Record<SyntaxKindStrings, ValidationFunction[]>
+>;
+
+export interface Validator {
+  getHandlers(): ValidationChecks;
+}
+
+export class ValidationBuffer {
   private diagnostics: Diagnostic[] = [];
 
-  getAcceptor(): PliValidationAcceptor {
+  getAcceptor(): ValidationAcceptor {
     return (severity: Severity, message: string, d: DiagnosticInfo) => {
       this.diagnostics.push({
         severity,
@@ -67,13 +79,13 @@ export class PliValidationBuffer {
  */
 export function generateValidationDiagnostics(unit: CompilationUnit): void {
   // TODO @montymxb Mar. 27th, 2025: Checks are generated on each invocation, not ideal, needs a rework still
-  const handlers = registerValidationChecks();
+  const validator = registerPliValidationChecks(unit);
 
-  const validationBuffer = new PliValidationBuffer();
+  const validationBuffer = new ValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
 
   // iterate over all nodes and validate them
-  validateSyntaxNode(unit.ast, acceptor, handlers);
+  validateSyntaxNode(unit.ast, acceptor, validator.getHandlers());
 
   unit.diagnostics.validation = validationBuffer.getDiagnostics();
 }
@@ -87,19 +99,13 @@ export function generateValidationDiagnostics(unit: CompilationUnit): void {
 // function validateSyntaxNode(node: SyntaxNode, acceptor: PliValidationAcceptor, handlers: Map<SyntaxKind, AstNodeValidator>): void {
 function validateSyntaxNode(
   node: SyntaxNode,
-  acceptor: PliValidationAcceptor,
-  handlers: PliValidationChecks,
+  acceptor: ValidationAcceptor,
+  handlers: ValidationChecks,
 ): void {
   // get the name of enum value for node.kind
   const name = SyntaxKind[node.kind] as keyof typeof SyntaxKind;
   if (handlers[name]) {
-    let fnOrArray: PliValidationFunction | PliValidationFunction[] =
-      handlers[name] ?? [];
-    if (!(fnOrArray instanceof Array)) {
-      fnOrArray = [fnOrArray];
-    }
-
-    for (const validationFunc of fnOrArray) {
+    for (const validationFunc of handlers[name]) {
       validationFunc(node, acceptor);
     }
   }
@@ -219,7 +225,7 @@ export function linkingErrorsToDiagnostics(
   references: ReferencesCache,
   scopeCaches: ScopeCacheGroups,
 ): Diagnostic[] {
-  const validationBuffer = new PliValidationBuffer();
+  const validationBuffer = new ValidationBuffer();
   const reporter = new LinkerErrorReporter(
     unit,
     validationBuffer.getAcceptor(),

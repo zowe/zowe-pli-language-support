@@ -19,7 +19,7 @@ import {
 import { Token } from "../parser/tokens";
 import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { PLICodes } from "../validation/messages";
-import { PliValidationAcceptor } from "../validation/validator";
+import { ValidationAcceptor } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 
@@ -99,7 +99,7 @@ export class LinkerErrorReporter {
 
   constructor(
     private readonly unit: CompilationUnit,
-    protected readonly accept: PliValidationAcceptor,
+    protected readonly accept: ValidationAcceptor,
   ) {}
 
   /**
