@@ -1456,12 +1456,112 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.pp} */
+translator.rule(["PP"], (option, options) => {
+  // 1 or more pre-processor options to collect
+  ensureArguments(option, 1, Infinity);
+  const ppOptions = option.values.map((value) => {
+    ensureType(value, "option");
+
+    if (value.values.length !== 1) {
+      throw new TranslationError(
+        value.token,
+        `Expected exactly one value for the ${value.name} option, but received ${value.values.length}.`,
+        1,
+      );
+    }
+
+    ensureType(value.values[0], "string");
+
+    return {
+      name: value.name,
+      value: value.values[0].value,
+    };
+  });
+
+  if (!options.pp) {
+    options.pp = [];
+  }
+  options.pp.push(...ppOptions);
+});
+
 /** {@link CompilerOptions.ppCics} */
+translator.rule(["PPCICS"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "string");
+  options.ppCics = value.value;
+});
+
 /** {@link CompilerOptions.ppInclude} */
+translator.rule(
+  ["PPINCLUDE"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    options.ppInclude = value.value;
+  },
+  ["NOPPINCLUDE"],
+  (_, options) => {
+    options.ppInclude = false;
+  },
+);
+
 /** {@link CompilerOptions.ppList} */
+translator.rule(
+  ["PPLIST"],
+  plainTranslate(
+    (options, value) => {
+      options.ppList = value.value as "KEEP" | "ERASE";
+    },
+    "KEEP",
+    "ERASE",
+  ),
+);
+
 /** {@link CompilerOptions.ppMacro} */
+translator.rule(
+  ["PPMACRO"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    options.ppMacro = value.value;
+  },
+  ["NOPPMACRO"],
+  (_, options) => {
+    options.ppMacro = false;
+  },
+);
+
 /** {@link CompilerOptions.ppSql} */
+translator.rule(
+  ["PPSQL"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    options.ppSql = value.value;
+  },
+  ["NOPPSQL"],
+  (_, options) => {
+    options.ppSql = false;
+  },
+);
+
 /** {@link CompilerOptions.ppTrace} */
+translator.rule(
+  ["PPTRACE"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.ppTrace = true;
+  },
+  ["NOPPTRACE"],
+  (_, options) => {
+    options.ppTrace = false;
+  },
+);
+
 /** {@link CompilerOptions.precType} */
 /** {@link CompilerOptions.prefix} */
 /** {@link CompilerOptions.proceed} */
