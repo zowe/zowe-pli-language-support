@@ -254,22 +254,23 @@ class PluginConfigurationProvider {
       );
 
       // collect raw compiler options from the group
-      const rawCompilerOptions = (processGroupConfig?.["compiler-options"] || []).join(" ");
+      const rawCompilerOptions = (
+        processGroupConfig?.["compiler-options"] || []
+      ).join(" ");
       // collect raw pli-options from the group & program config
-      const rawPliOptions = this.pliOptionsStringForProgramConfig(programConfig);
-      
+      const rawPliOptions =
+        this.pliOptionsStringForProgramConfig(programConfig);
+
       // combine them and pass them all together to parse and translate
       const [abstractOptions, translatedOptions, collectedIssues] =
-        this.parseAndTranslateOptions(
-          `${rawCompilerOptions} ${rawPliOptions}`,
-        );
+        this.parseAndTranslateOptions(`${rawCompilerOptions} ${rawPliOptions}`);
       for (const issue of collectedIssues) {
         console.error(
           `Error in compiler options for program config "${programConfig.program}": ${issue}`,
         );
       }
       programConfig.abstractOptions = abstractOptions;
-      programConfig.issueCount = translatedOptions.issues.length; 
+      programConfig.issueCount = translatedOptions.issues.length;
     }
   }
 
