@@ -27,6 +27,10 @@
               "type": "string"
             }
           },
+          "pli-options": {
+            "type": "object",
+            "description": "Macro definitions which will be passed to the PL/I compiler."
+          },
           "include-extensions": {
             "type": "array",
             "description": "List of file extensions to treat as include files.",

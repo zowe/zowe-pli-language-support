@@ -58,17 +58,14 @@ export class CompilerOptionsProcessor {
     const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
       uri.toString(),
     );
-    const processGroupConfig = programConfig
-      ? PluginConfigurationProviderInstance.getProcessGroupConfig(
-          programConfig.pgroup,
-        )
-      : undefined;
 
+    // apply abstract options from the program config
+    // factors in compiler-options as well as pli-options from program & group configs (key-value macro pairs)
     let mergedAbstractOptions: AbstractCompilerOptions | undefined = undefined;
-    if (processGroupConfig?.abstractOptions) {
+    if (programConfig?.abstractOptions) {
       mergedAbstractOptions = {
-        options: [...processGroupConfig.abstractOptions.options],
-        tokens: [...processGroupConfig.abstractOptions.tokens],
+        options: [...programConfig.abstractOptions.options],
+        tokens: [...programConfig.abstractOptions.tokens],
         issues: [],
       };
     }
@@ -100,10 +97,11 @@ export class CompilerOptionsProcessor {
       //  this should be removed once we break up the translation process to avoid this issue
 
       //  shave off the issues that are already present in the process group config
-      if (processGroupConfig?.issueCount) {
+      const issueCount = programConfig?.issueCount;
+      if (issueCount) {
         for (const range of ranges) {
           // update just these first 'issueCount' issues to report on *PROCESS
-          for (let i = 0; i < processGroupConfig.issueCount; i++) {
+          for (let i = 0; i < issueCount; i++) {
             if (i < compilerOptionResult.issues.length) {
               const issue = compilerOptionResult.issues[i];
               issue.range = {
@@ -119,9 +117,8 @@ export class CompilerOptionsProcessor {
         }
         if (ranges.length === 0) {
           // no *PROCESS to attach to, slice them off instead
-          compilerOptionResult.issues = compilerOptionResult.issues.slice(
-            processGroupConfig.issueCount,
-          );
+          compilerOptionResult.issues =
+            compilerOptionResult.issues.slice(issueCount);
         }
       }
 
