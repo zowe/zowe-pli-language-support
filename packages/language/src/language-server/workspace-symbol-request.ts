@@ -9,10 +9,12 @@
  *
  */
 
-import { DocumentSymbol, SymbolInformation } from "vscode-languageserver-types";
+import { SymbolInformation } from "vscode-languageserver-types";
 import { URI } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { documentSymbolRequest } from "./document-symbol-request";
+import { DocumentSymbol, rangeToLSP, WorkspaceSymbol } from "./types";
+import { TextDocuments } from "./text-documents";
 
 export function workspaceSymbolRequest(
   query: string,
@@ -36,20 +38,16 @@ export function workspaceSymbolRequestForCompilationUnit(
   unit: CompilationUnit,
 ): SymbolInformation[] {
   // Get symbols for all files in the compilation unit.
-  const unitSymbols = unit.files.flatMap((file) => {
-    const symbols = collectSymbolsForDocument(file, unit);
-    return symbols.map((symbol) => ({
-      symbol,
-      uri: file,
-    }));
-  });
+  const unitSymbols = unit.files.flatMap((file) =>
+    collectSymbolsForDocument(file, unit),
+  );
 
-  return unitSymbols.map(({ symbol, uri }) => {
+  return unitSymbols.map((symbol) => {
     return SymbolInformation.create(
       symbol.name,
       symbol.kind,
-      symbol.selectionRange,
-      uri.toString(),
+      symbol.range,
+      symbol.uri,
     );
   });
 }
@@ -57,19 +55,28 @@ export function workspaceSymbolRequestForCompilationUnit(
 function collectSymbolsForDocument(
   uri: URI,
   unit: CompilationUnit,
-): DocumentSymbol[] {
+): WorkspaceSymbol[] {
+  const uriString = uri.toString();
   const documentSymbols = documentSymbolRequest(uri, unit);
-
+  const textDocument = TextDocuments.get(uriString);
+  if (!textDocument) {
+    return [];
+  }
   return documentSymbols.flatMap((symbol) => {
-    const symbols: any[] = [];
+    const symbols: WorkspaceSymbol[] = [];
 
-    function collectSymbols(symbol: any) {
-      symbols.push(symbol);
+    function collectSymbols(symbol: DocumentSymbol) {
+      const range = rangeToLSP(textDocument!, symbol.selectionRange);
+      symbols.push({
+        kind: symbol.kind,
+        name: symbol.name,
+        range,
+        uri: uriString,
+      });
       if (symbol.children) {
         symbol.children.forEach(collectSymbols);
       }
     }
-
     collectSymbols(symbol);
     return symbols;
   });

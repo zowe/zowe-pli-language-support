@@ -9,19 +9,14 @@
  *
  */
 
-import {
-  DocumentSymbol,
-  SymbolKind,
-  Position,
-} from "vscode-languageserver-types";
-import { TextDocument } from "vscode-languageserver-textdocument";
+import { SymbolKind } from "vscode-languageserver-types";
 import {
   DeclaredItem,
   DeclareStatement,
   Statement,
   SyntaxKind,
 } from "../syntax-tree/ast";
-import { Range, rangeToLSP, getSyntaxNodeRange, tokenToRange } from "./types";
+import { Range, getSyntaxNodeRange, DocumentSymbol } from "./types";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { isValidToken } from "../linking/tokens";
 import { Token } from "../parser/tokens";
@@ -36,7 +31,6 @@ interface SymbolBuilder {
   buildSymbols(
     token: Token,
     elementTokens: Token[],
-    textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[];
 }
@@ -52,7 +46,6 @@ class ProcedureSymbolBuilder implements SymbolBuilder {
   buildSymbols(
     token: Token,
     elementTokens: Token[],
-    textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
     const labelPrefixStatement = token.payload.element?.container;
@@ -75,15 +68,10 @@ class ProcedureSymbolBuilder implements SymbolBuilder {
     const symbol = createDocumentSymbol(
       procedureName,
       SymbolKind.Function,
+      getTokenRange(elementTokens, range),
       range,
       childSymbols,
-      textDocument,
     );
-
-    symbol.range.end = rangeToLSP(
-      textDocument,
-      tokenToRange(elementTokens[elementTokens.length - 1]),
-    ).end;
     return [symbol];
   }
 }
@@ -106,7 +94,6 @@ class DeclareSymbolBuilder implements SymbolBuilder {
   buildSymbols(
     token: Token,
     elementTokens: Token[],
-    textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
     const documentSymbols: DocumentSymbol[] = [];
@@ -117,9 +104,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
     for (const item of declareStatement.items.filter(
       (i: DeclaredItem) => i.kind === SyntaxKind.DeclaredItem,
     )) {
-      levelSymbols.push(
-        ...this.retrieveLevelSymbols(item, null, childSymbols, textDocument),
-      );
+      levelSymbols.push(...this.retrieveLevelSymbols(item, null, childSymbols));
     }
 
     for (const levelSymbol of levelSymbols) {
@@ -135,7 +120,6 @@ class DeclareSymbolBuilder implements SymbolBuilder {
     item: DeclaredItem,
     inheritedLevel: number | null,
     children: DocumentSymbol[],
-    textDocument: TextDocument,
   ): LevelSymbol[] {
     const levelSymbols: LevelSymbol[] = [];
 
@@ -161,7 +145,6 @@ class DeclareSymbolBuilder implements SymbolBuilder {
             element,
             item.level ?? inheritedLevel,
             children,
-            textDocument,
           ),
         );
       } else if (
@@ -181,8 +164,8 @@ class DeclareSymbolBuilder implements SymbolBuilder {
             element.name,
             kind,
             range,
+            range,
             children,
-            textDocument,
           ),
         });
       }
@@ -217,10 +200,6 @@ class LevelHierarchyBuilder {
       if (parentSymbol) {
         parentSymbol.children = [symbol, ...(parentSymbol.children ?? [])];
         parentSymbol.kind = SymbolKind.Struct;
-        parentSymbol.range.end = getLastPositionOrDefault(
-          parentSymbol.children,
-          symbol.range.end,
-        );
       }
     } else {
       this.rootSymbols.push(symbol);
@@ -260,7 +239,6 @@ class LabelSymbolBuilder implements SymbolBuilder {
   buildSymbols(
     token: Token,
     elementTokens: Token[],
-    textDocument: TextDocument,
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
     const labelPrefixStatement = token.payload.element?.container as Statement;
@@ -281,8 +259,8 @@ class LabelSymbolBuilder implements SymbolBuilder {
           label.name,
           SymbolKind.Key,
           range,
+          range,
           childSymbols,
-          textDocument,
         ),
       );
     }
@@ -294,46 +272,30 @@ class LabelSymbolBuilder implements SymbolBuilder {
 function createDocumentSymbol(
   name: string,
   kind: SymbolKind,
+  range: Range,
   selectionRange: Range,
   children: DocumentSymbol[],
-  textDocument: TextDocument,
 ): DocumentSymbol {
-  const selectionLSPRange = rangeToLSP(textDocument, selectionRange);
-  const range = {
-    start: selectionLSPRange.start,
-    end: getLastPositionOrDefault(children, selectionLSPRange.end),
-  };
-  return DocumentSymbol.create(
+  return {
     name,
-    undefined,
     kind,
     range,
-    selectionLSPRange,
-    children,
-  );
+    selectionRange,
+    children: children.length > 0 ? children : undefined,
+  };
 }
 
-function getLastPositionOrDefault(
-  children: DocumentSymbol[],
-  defaultPosition: Position,
-): Position {
-  if (children.length === 0) {
-    return defaultPosition;
+function getTokenRange(tokens: Token[], outer?: Range): Range {
+  if (tokens.length === 0) {
+    return { start: 0, end: 0 };
   }
-
-  // Among children on the last line, find the one with highest character position
-  const lastLine = Math.max(...children.map((child) => child.range.end.line));
-  const lastLineChildren = children.filter(
-    (child) => child.range.end.line === lastLine,
-  );
-  const lastCharacter = Math.max(
-    ...lastLineChildren.map((child) => child.range.end.character),
-  );
-
-  return {
-    line: lastLine,
-    character: lastCharacter,
-  };
+  let start = tokens[0].startOffset;
+  let end = tokens[tokens.length - 1].endOffset;
+  if (outer) {
+    start = Math.min(start, outer.start);
+    end = Math.max(end, outer.end);
+  }
+  return { start, end };
 }
 
 // The order of the builders does matter. Only the first matching builder will be used.

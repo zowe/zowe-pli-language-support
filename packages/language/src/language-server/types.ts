@@ -223,3 +223,47 @@ export function hoverResponseToLSP(
     contents: response.contents,
   };
 }
+
+export interface DocumentSymbol {
+  name: string;
+  kind: lsp.SymbolKind;
+  range: Range;
+  selectionRange: Range;
+  children?: DocumentSymbol[];
+}
+
+export function documentSymbolToLSP(
+  textDocument: TextDocument,
+  symbol: DocumentSymbol,
+): lsp.DocumentSymbol {
+  let children: lsp.DocumentSymbol[] | undefined = undefined;
+  if (symbol.children && symbol.children.length > 0) {
+    // Ensure that the children are contained within the symbol's range
+    let start = symbol.range.start;
+    let end = symbol.range.end;
+    children = symbol.children.map((child) => {
+      const childSymbol = documentSymbolToLSP(textDocument, child);
+      start = Math.min(start, child.range.start);
+      end = Math.max(end, child.range.end);
+      return childSymbol;
+    });
+    symbol.range = {
+      start,
+      end,
+    };
+  }
+  return {
+    name: symbol.name,
+    kind: symbol.kind,
+    range: rangeToLSP(textDocument, symbol.range),
+    selectionRange: rangeToLSP(textDocument, symbol.selectionRange),
+    children,
+  };
+}
+
+export interface WorkspaceSymbol {
+  name: string;
+  kind: lsp.SymbolKind;
+  range: lsp.Range;
+  uri: string;
+}
