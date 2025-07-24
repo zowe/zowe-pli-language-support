@@ -21,7 +21,7 @@ import {
 } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { groupBy } from "../utils/common";
-import { PliValidationBuffer } from "../validation/validator";
+import { ValidationBuffer } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache, StatementOrderCache } from "./resolver";
 import { getReference } from "./tokens";
@@ -281,7 +281,7 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
   // Set child containers for all nodes.
   recursivelySetContainer(unit.ast);
 
-  const validationBuffer = new PliValidationBuffer();
+  const validationBuffer = new ValidationBuffer();
   const reporter = new LinkerErrorReporter(
     unit,
     validationBuffer.getAcceptor(),

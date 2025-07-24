@@ -37,6 +37,7 @@ export interface ProcessGroup {
   libs?: string[];
   "include-extensions"?: string[];
   abstractOptions?: AbstractCompilerOptions;
+  "implicit-builtins"?: string[];
 
   /**
    * Number of issues found in the compiler options for this process group.
@@ -49,7 +50,11 @@ export interface ProcessGroup {
  * Plugin configuration provider for loading '.pliplugin/pgm_conf.json' and '.pliplugin/proc_grps.json' (when they exist),
  * processing their contents, and making those settings available to the language server.
  */
-class PluginConfigurationProvider {
+export class PluginConfigurationProvider {
+  public static readonly PROGRAM_CONFIG_FILE = ".pliplugin/pgm_conf.json";
+  public static readonly PROCESS_GROUP_CONFIG_FILE =
+    ".pliplugin/proc_grps.json";
+
   /**
    * Prebuilt list of glob patterns for library file matching.
    */
@@ -349,5 +354,12 @@ class PluginConfigurationProvider {
 /**
  * Singleton instance of the pli plugin configuration provider.
  */
-export const PluginConfigurationProviderInstance: PluginConfigurationProvider =
+export let PluginConfigurationProviderInstance: PluginConfigurationProvider =
   new PluginConfigurationProvider();
+
+export function setPluginConfigurationProvider(
+  provider: PluginConfigurationProvider | undefined = undefined,
+): void {
+  PluginConfigurationProviderInstance =
+    provider ?? new PluginConfigurationProvider();
+}

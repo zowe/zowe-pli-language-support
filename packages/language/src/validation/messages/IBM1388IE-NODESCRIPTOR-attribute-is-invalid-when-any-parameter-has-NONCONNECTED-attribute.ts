@@ -17,11 +17,11 @@ import {
   SyntaxKind,
 } from "../../syntax-tree/ast";
 import { compareIdentifiers, normalizeIdentifier } from "../utils";
-import { PliValidationAcceptor } from "../validator";
+import { ValidationAcceptor } from "../validator";
 
 export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute(
   procedureStatement: ProcedureStatement,
-  accept: PliValidationAcceptor,
+  accept: ValidationAcceptor,
 ): void {
   const items = procedureStatement.options
     .filter((e) => e.kind === SyntaxKind.Options)
