@@ -27,7 +27,7 @@ import {
 } from "./tokens";
 import { URI } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { PliValidationBuffer } from "../validation/validator";
+import { ValidationBuffer } from "../validation/validator";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { LinkerErrorReporter } from "./error";
 import { Scope } from "./scope";
@@ -330,7 +330,7 @@ function resolveReference(
 }
 
 export function resolveReferences(unit: CompilationUnit): Diagnostic[] {
-  const validationBuffer = new PliValidationBuffer();
+  const validationBuffer = new ValidationBuffer();
   const reporter = new LinkerErrorReporter(
     unit,
     validationBuffer.getAcceptor(),

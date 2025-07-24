@@ -11,11 +11,11 @@
 
 import { getSyntaxNodeRange, Severity } from "../../language-server/types";
 import { Exports } from "../../syntax-tree/ast";
-import { PliValidationAcceptor } from "../validator";
+import { ValidationAcceptor } from "../validator";
 
 export function IBM1324IE_name_occurs_more_than_once_within_exports_clause(
   exports: Exports,
-  accept: PliValidationAcceptor,
+  accept: ValidationAcceptor,
 ): void {
   const set = new Set<string>();
   exports.procedures.forEach((procedure) => {

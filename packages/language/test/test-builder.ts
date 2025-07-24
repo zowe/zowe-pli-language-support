@@ -31,6 +31,10 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenDecoder } from "../src/language-server/semantic-token-decoder";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
 import { skippedCodeRanges } from "../src/language-server/skipped-code";
+import {
+  PluginConfigurationProvider,
+  PluginConfigurationProviderInstance,
+} from "../src/workspace/plugin-configuration-provider";
 
 export const DEFAULT_FILE_URI = "file:///main.pli";
 
@@ -95,7 +99,7 @@ function replaceNamedIndicesWithDocument(file: PliTestFile): TestFile {
 
 export class TestBuilder {
   private unit: CompilationUnit;
-  private files: Record<string, TestFile> = {};
+  private files: Map<string, TestFile> = new Map();
   private output: string;
   private indices: Record<string, number[]>;
   private ranges: Record<string, Array<[number, number]>>;
@@ -140,7 +144,7 @@ export class TestBuilder {
   ) {
     this.options = options;
 
-    this.files = Object.fromEntries(
+    this.files = new Map(
       TestBuilder.getFiles(textOrFiles).map((file) => [
         file.uri,
         replaceNamedIndicesWithDocument(file),
@@ -148,12 +152,14 @@ export class TestBuilder {
     );
 
     if (options?.fs) {
-      for (const [uri, file] of Object.entries(this.files)) {
+      for (const [uri, file] of this.files) {
         options.fs.writeFileSync(URI.parse(uri), file.output);
       }
     }
 
-    const [[firstFileUri, firstFile]] = Object.entries(this.files);
+    this.configurePluginConfigurationProvider();
+
+    const [[firstFileUri, firstFile]] = this.files.entries();
     const output = firstFile.output;
     const indices = firstFile.indices;
     const ranges = firstFile.ranges;
@@ -167,6 +173,23 @@ export class TestBuilder {
     this.indices = indices;
     this.ranges = ranges;
     this.diagnostics = collectDiagnostics(this.unit);
+  }
+
+  private configurePluginConfigurationProvider() {
+    // Check if the files contain a program config or process group.
+    for (const [uri, file] of this.files) {
+      if (uri.endsWith(PluginConfigurationProvider.PROGRAM_CONFIG_FILE)) {
+        PluginConfigurationProviderInstance.setProgramConfigs(
+          "",
+          JSON.parse(file.output).pgms,
+        );
+      }
+      if (uri.endsWith(PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE)) {
+        PluginConfigurationProviderInstance.setProcessGroupConfigs(
+          JSON.parse(file.output).pgroups,
+        );
+      }
+    }
   }
 
   /**
@@ -387,7 +410,7 @@ export class TestBuilder {
     return this.getLabelPositions(label).map((offset) => ({
       label,
       offset,
-      rangeIndex: Object.values(this.files).flatMap(
+      rangeIndex: [...this.files.values()].flatMap(
         (f) => f.ranges[label] ?? [],
       ),
     }));
@@ -480,7 +503,7 @@ export class TestBuilder {
   expectSemanticTokens(label: string, tokenType: `${SemanticTokenTypes}`) {
     const ranges = this.getLabelRanges(label);
 
-    for (const file of Object.values(this.files)) {
+    for (const file of this.files.values()) {
       const textDocument = file.textDocument;
 
       const tokens = semanticTokens(textDocument, this.unit);
@@ -511,7 +534,7 @@ export class TestBuilder {
   expectSkippedCode(label: string) {
     const ranges = this.getLabelRanges(label);
 
-    for (const file of Object.values(this.files)) {
+    for (const file of this.files.values()) {
       const textDocument = file.textDocument;
       const codeRanges = skippedCodeRanges(this.unit, textDocument);
 
