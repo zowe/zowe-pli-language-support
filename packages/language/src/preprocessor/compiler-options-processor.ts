@@ -117,9 +117,8 @@ export class CompilerOptionsProcessor {
         }
         if (ranges.length === 0) {
           // no *PROCESS to attach to, slice them off instead
-          compilerOptionResult.issues = compilerOptionResult.issues.slice(
-            issueCount,
-          );
+          compilerOptionResult.issues =
+            compilerOptionResult.issues.slice(issueCount);
         }
       }
 
