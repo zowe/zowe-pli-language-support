@@ -1453,8 +1453,8 @@ translator.rule(
 /** {@link CompilerOptions.not} */
 translator.rule(
   ["NOT"],
-  stringTranslate((options, value) => {
-    options.not = value.value;
+  stringTranslate((options, text) => {
+    options.not = text.value;
   }),
 );
 
@@ -1469,8 +1469,8 @@ translator.rule(
 /** {@link CompilerOptions.or} */
 translator.rule(
   ["OR"],
-  stringTranslate((options, value) => {
-    options.or = value.value;
+  stringTranslate((options, text) => {
+    options.or = text.value;
   }),
 );
 
@@ -1503,7 +1503,26 @@ translator.rule(
 /** {@link CompilerOptions.stringOfGraphic} */
 /** {@link CompilerOptions.syntax} */
 /** {@link CompilerOptions.sysParm} */
+translator.rule(
+  ["SYSPARM"],
+  stringTranslate((options, text) => {
+    options.sysParm = text.value;
+  }),
+);
 /** {@link CompilerOptions.system} */
+translator.rule(
+  ["SYSTEM"],
+  plainTranslate(
+    (options, text) => {
+      options.system = text.value.toUpperCase() as CompilerOptions.System;
+    },
+    "MVS",
+    "CICS",
+    "IMS",
+    "OS",
+    "TSO",
+  ),
+);
 /** {@link CompilerOptions.terminal} */
 /** {@link CompilerOptions.test} */
 /** {@link CompilerOptions.unroll} */

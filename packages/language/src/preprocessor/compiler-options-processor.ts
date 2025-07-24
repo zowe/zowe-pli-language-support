@@ -55,9 +55,8 @@ export class CompilerOptionsProcessor {
     }
 
     // Retrieve compiler options from the plugin configuration provider
-    const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
-      uri,
-    );
+    const programConfig =
+      PluginConfigurationProviderInstance.getProgramConfig(uri);
 
     // apply abstract options from the program config
     // factors in compiler-options as well as pli-options from program & group configs (key-value macro pairs)
@@ -111,7 +110,8 @@ export class CompilerOptionsProcessor {
               const issue = compilerOptionResult.issues[i];
               issue.range = {
                 start: range.start + 1,
-                end: range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
+                end:
+                  range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
               };
               issue.message = `PLI Plugin Config: ${issue.message}`;
             } else {

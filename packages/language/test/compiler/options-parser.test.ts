@@ -557,6 +557,20 @@ describe("CompilerOptions translator", () => {
       });
     }
   }
+
+  test('Test "SYSPARM" option', () => {
+    const options = parseAbstractCompilerOptions("SYSPARM('PLIVERSION')");
+    const translated = translateCompilerOptions(options).options;
+    expect(translated.sysParm).toBe("PLIVERSION");
+  });
+
+  for (const systemValue of ["MVS", "CICS", "IMS", "OS", "TSO"]) {
+    test('Test "SYSTEM" option with expected value ' + systemValue, () => {
+      const options = parseAbstractCompilerOptions("SYSTEM(" + systemValue + ")");
+      const translated = translateCompilerOptions(options).options;
+      expect(translated.system).toBe(systemValue);
+    });
+  }
 });
 
 describe("Process directives", () => {

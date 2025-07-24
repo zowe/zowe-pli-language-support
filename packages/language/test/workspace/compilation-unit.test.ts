@@ -65,9 +65,8 @@ describe("Compilation Unit Tests", () => {
       PluginConfigurationProviderInstance.hasRegisteredProgramConfigs(),
     ).toBe(true);
 
-    const config = PluginConfigurationProviderInstance.getProgramConfig(
-      uriEntry,
-    );
+    const config =
+      PluginConfigurationProviderInstance.getProgramConfig(uriEntry);
     expect(config).toBeDefined();
 
     // lib is not an entry point, but still valid for generating a compilation unit
@@ -94,21 +93,18 @@ describe("Compilation Unit Tests", () => {
     ]);
 
     // entry 1 should match wildcard config
-    const config1 = PluginConfigurationProviderInstance.getProgramConfig(
-      uriEntry1,
-    );
+    const config1 =
+      PluginConfigurationProviderInstance.getProgramConfig(uriEntry1);
     expect(config1).toBeDefined();
 
     // entry 2 should also match
-    const config2 = PluginConfigurationProviderInstance.getProgramConfig(
-      uriEntry2,
-    );
+    const config2 =
+      PluginConfigurationProviderInstance.getProgramConfig(uriEntry2);
     expect(config2).toBeDefined();
 
     // entry 3 should not match
-    const configOther = PluginConfigurationProviderInstance.getProgramConfig(
-      uriOther,
-    );
+    const configOther =
+      PluginConfigurationProviderInstance.getProgramConfig(uriOther);
     expect(configOther).toBeUndefined();
 
     // compilation units should be created for matching uris
