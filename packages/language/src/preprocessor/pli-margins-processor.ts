@@ -9,20 +9,51 @@
  *
  */
 
-import { Range } from "../language-server/types";
+import { Range, Severity } from "../language-server/types";
 import { CompilerOptionsProcessorResult } from "./compiler-options-processor";
+import { LexingIssue } from "./pli-lexer";
+import { URI } from "../utils/uri";
+import { Warning } from "../validation/messages/pli-codes";
+import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 
 const NEWLINE = "\n".charCodeAt(0);
+const SPACE = " ".charCodeAt(0);
+const PREFIX_PATTERN = /^[0-9\+\- ]+$/;
+const SEQUENCE_PATTERN = /^\s*[A-Z0-9]*\r?\n?$/;
 
 export interface MarginsProcessor {
-  processMargins(input: CompilerOptionsProcessorResult): string;
+  issues: LexingIssue[];
+  processMargins(input: CompilerOptionsProcessorResult, uri: URI): string;
 }
 
 /**
  * Helper class to replace text margins with space characters (characters 2-72 are normal program text)
  */
 export class PliMarginsProcessor implements MarginsProcessor {
-  processMargins(input: CompilerOptionsProcessorResult): string {
+  static readonly MARGIN_ERROR_MESSAGE_LEFT =
+    "PL/I statements must start from column 2 or as defined in MARGINS(M,N).";
+  static readonly MARGIN_ERROR_MESSAGE_RIGHT = Warning.IBM1084I.message;
+
+  issues: LexingIssue[] = [];
+
+  protected checkMargins: boolean = false;
+
+  processMargins(input: CompilerOptionsProcessorResult, uri: URI): string {
+    this.issues = [];
+
+    const programConfig =
+      PluginConfigurationProviderInstance.getProgramConfig(uri);
+    if (programConfig) {
+      const processGroup =
+        PluginConfigurationProviderInstance.getProcessGroupConfig(
+          programConfig.pgroup,
+        );
+      if (processGroup) {
+        this.checkMargins =
+          processGroup["lsp-options"]?.["check-margins"] ?? false;
+      }
+    }
+
     let margins: Range = {
       start: 2,
       end: 72,
@@ -37,19 +68,121 @@ export class PliMarginsProcessor implements MarginsProcessor {
         margins.end = end;
       }
     }
-    const lines = this.splitLines(input.text);
+
+    const lines = this.splitLines(input.text, margins, uri);
     const adjustedLines = lines.map((line) => this.adjustLine(line, margins));
     return adjustedLines.join("");
   }
 
-  private splitLines(text: string): string[] {
+  private splitLines(text: string, margins: Range, uri: URI): string[] {
     const lines: string[] = [];
+    const prefixLength = margins.start - 1;
+
+    const reportViolation = (
+      side: "left" | "right",
+      start: number,
+      end: number,
+    ) => {
+      this.issues.push({
+        message:
+          side === "left"
+            ? PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT
+            : PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT,
+        severity: Severity.W,
+        range: { start, end },
+        uri,
+      });
+    };
+
+    let possibleViolationLeft = false;
+    let possibleViolationRight = false;
     for (let i = 0; i < text.length; i++) {
       const start = i;
-      while (i < text.length && text.charCodeAt(i) !== NEWLINE) {
-        i++;
+
+      if (this.checkMargins) {
+        // Basically, while scanning the text for the newline, the margins are checked via
+        // if ((i < leftMarginEnd || i > rightMarginStart) && code !== SPACE) {
+        //   possibleViolation = true;
+        // }
+        // Since the the majority of the line usually lives inbetween the margins,
+        // we check the margins in three dedicated loops,
+        // one for the left margin, one for the characters between the margins,
+        // and one for the right margin.
+        let code;
+        const leftMarginEnd = i + prefixLength;
+        const rightMarginStart = i + margins.end;
+        possibleViolationLeft = false;
+        possibleViolationRight = false;
+        const leftMarginSpace = Math.min(leftMarginEnd, text.length);
+        while (i < leftMarginSpace) {
+          code = text.charCodeAt(i);
+          if (code === NEWLINE) {
+            break;
+          }
+          i++;
+          if (code !== SPACE) {
+            possibleViolationLeft = true;
+            // We can stop here, the next loop will take care of the rest of the line.
+            break;
+          }
+        }
+        if (code !== NEWLINE) {
+          const rightMarginSpace = Math.min(rightMarginStart, text.length);
+          while (i < rightMarginSpace) {
+            code = text.charCodeAt(i);
+            if (code === NEWLINE) {
+              break;
+            }
+            i++;
+          }
+          if (code !== NEWLINE) {
+            while (i < text.length) {
+              code = text.charCodeAt(i);
+              if (code === NEWLINE) {
+                break;
+              }
+              if (code !== SPACE) {
+                possibleViolationRight = true;
+              }
+              i++;
+            }
+          }
+        }
+      } else {
+        // Margin check is disabled.
+        while (i < text.length && text.charCodeAt(i) !== NEWLINE) {
+          i++;
+        }
       }
-      lines.push(text.substring(start, i + 1));
+      const line = text.substring(start, i + 1);
+      lines.push(line);
+
+      // Check the left margin.
+      // TODO ssmifi: While COL1 should be reserved for %|*PROCESS, there are examples (ADVNTOPT)
+      // that use single digits, +, and -.
+      if (
+        possibleViolationLeft &&
+        !(
+          (line[0] === "%" || line[0] === "*") &&
+          line.substring(1, 8).toUpperCase().startsWith("PROCESS")
+        ) &&
+        !PREFIX_PATTERN.test(line.substring(0, prefixLength))
+      ) {
+        reportViolation("left", start, start + prefixLength);
+      }
+
+      // Check the right margin.
+      if (possibleViolationRight) {
+        const sequence = line.substring(margins.end).toUpperCase();
+        if (!SEQUENCE_PATTERN.test(sequence)) {
+          // Do not include the newline character.
+          reportViolation(
+            "right",
+            start + margins.end,
+            start + line.length - 1,
+          );
+        }
+      }
     }
     return lines;
   }

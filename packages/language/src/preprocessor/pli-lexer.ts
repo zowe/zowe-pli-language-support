@@ -21,7 +21,7 @@ import {
 } from "./compiler-options-processor";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { Reference, Statement } from "../syntax-tree/ast";
-import { Range } from "../language-server/types";
+import { Range, Severity } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { recursivelySetContainer } from "../linking/symbol-table";
 import { generateInstructions } from "./instruction-generator";
@@ -33,15 +33,16 @@ import {
 } from "./compiler-options/options";
 import { CstNodeKind } from "../syntax-tree/cst";
 
-export interface LexingError {
+export interface LexingIssue {
   readonly message: string;
+  readonly severity: Severity;
   readonly range: Range | undefined;
   readonly uri: URI | undefined;
 }
 
 export interface LexerResult {
   all: Token[];
-  errors: LexingError[];
+  errors: LexingIssue[];
   compilerOptions: CompilerOptionsProcessorResult;
   statements: Statement[];
   fileTokens: Map<string, Token[]>;
@@ -74,6 +75,7 @@ export class PliLexer {
     );
     const textWithoutMargins = this.marginsProcessor.processMargins(
       compilerOptionsResult,
+      uri,
     );
     const state = this.preprocessorParser.initializeState(
       textWithoutMargins,
@@ -87,6 +89,7 @@ export class PliLexer {
     } = this.preprocessorParser.parse(state);
     unit.preprocessorAst.statements = statements;
     recursivelySetContainer(unit.preprocessorAst);
+    errors.push(...this.marginsProcessor.issues);
 
     let instructionNode = generateInstructions(statements);
     const incAfter = compilerOptionsResult.result?.options.incAfter;

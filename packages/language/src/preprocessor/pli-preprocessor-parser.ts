@@ -26,14 +26,14 @@ import {
   IntermediateBinaryExpression,
 } from "../parser/abstract-parser";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { LexingError } from "./pli-lexer";
+import { LexingIssue } from "./pli-lexer";
 import { Token } from "../parser/tokens";
 import { performAssignmentLookahead } from "../parser/parser";
 import { tokenMatcher } from "chevrotain";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
-  errors: LexingError[];
+  errors: LexingIssue[];
   tokens: Token[];
 };
 
@@ -50,7 +50,7 @@ export class PliPreprocessorParser {
 
   parse(state: PreprocessorParserState): PreprocessorParserResult {
     const statements: ast.Statement[] = [];
-    const errors: LexingError[] = [];
+    const errors: LexingIssue[] = [];
     while (!state.eof) {
       try {
         if (state.canConsume(PreprocessorTokens.Percentage)) {

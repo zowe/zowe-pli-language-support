@@ -15,6 +15,7 @@ import { InternalCodes, PLICodes } from "../../src/validation/messages";
 import { ExpectedCompletion, TestBuilder } from "../test-builder";
 import { type Severity } from "../../src/language-server/types";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
+import { PliMarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
 
 type Label = string | number;
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
@@ -166,6 +167,12 @@ export interface HarnessTesterInterface {
     Information: typeof PLICodes.Info;
     Error: typeof PLICodes.Error;
     Internal: typeof InternalCodes.Internal;
+    Lexer: {
+      Margins: {
+        ErrorLeft: typeof PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT;
+        ErrorRight: typeof PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT;
+      };
+    };
   };
 
   constants: {

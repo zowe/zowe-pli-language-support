@@ -17,7 +17,7 @@ import { PliProgram } from "../syntax-tree/ast";
 import {
   compilerOptionIssuesToDiagnostics,
   generateValidationDiagnostics,
-  lexerErrorsToDiagnostics,
+  lexerIssuesToDiagnostics,
   linkingErrorsToDiagnostics,
   parserErrorsToDiagnostics,
 } from "../validation/validator";
@@ -58,7 +58,7 @@ export function tokenize(
   compilationUnit.compilerOptions =
     result.compilerOptions.result?.options ?? getDefaultCompilerOptions();
   const uri = compilationUnit.uri.toString();
-  compilationUnit.diagnostics.lexer = lexerErrorsToDiagnostics(result.errors);
+  compilationUnit.diagnostics.lexer = lexerIssuesToDiagnostics(result.errors);
   compilationUnit.diagnostics.compilerOptions =
     compilerOptionIssuesToDiagnostics(
       result.compilerOptions.result?.issues,

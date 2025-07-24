@@ -45,6 +45,16 @@
             "items": {
               "type": "string"
             }
+          },
+          "lsp-options": {
+            "type": "object",
+            "description": "Options for the Language Server Protocol.",
+            "properties": {
+              "check-margins": {
+                "type": "boolean",
+                "description": "Whether to check for margins in the PL/I code."
+              }
+            }
           }
         },
         "required": ["name"],
