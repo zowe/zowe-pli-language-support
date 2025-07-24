@@ -1443,7 +1443,7 @@ export const INTER = createToken({
 export const ENTRY = createToken({
   name: "ENTRY",
   pattern: /ENTRY/iy,
-  categories: [ID, DefaultAttribute],
+  categories: [ID],
   longer_alt: ID,
 });
 export const UCHAR = createToken({

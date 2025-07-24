@@ -9,13 +9,15 @@
  *
  */
 
-import { DocumentSymbol, Range, SymbolKind } from "vscode-languageserver-types";
+import { SymbolKind } from "vscode-languageserver-types";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { URI } from "../utils/uri";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { DOCUMENT_SYMBOL_BUILDERS } from "./document-symbol-builder";
 import { Token } from "../parser/tokens";
 import { TextDocuments } from "./text-documents";
+import { isValidToken } from "../linking/tokens";
+import { DocumentSymbol, Range } from "./types";
 
 export function documentSymbolRequest(
   uri: URI,
@@ -37,7 +39,7 @@ export function documentSymbolRequest(
   }
 
   const tokens = fileTokens
-    .filter((token) => token.payload.element)
+    .filter((token) => token.payload.element && isValidToken(token))
     .map((token) => {
       const element = token.payload.element!;
       if (!tokensByElement.has(element)) {
@@ -55,7 +57,6 @@ export function documentSymbolRequest(
     const symbols = builder.buildSymbols(
       token,
       tokensByElement.get(token.payload.element!)!,
-      textDocument,
       [],
     );
 
@@ -66,7 +67,8 @@ export function documentSymbolRequest(
       );
 
       if (parent) {
-        parent.children!.push(symbol);
+        parent.children ??= [];
+        parent.children.push(symbol);
       } else {
         documentSymbols.push(symbol);
         // Clear hierarchy when encountering a function outside any parent
@@ -88,11 +90,6 @@ export function documentSymbolRequest(
 
 function includes(parentRange: Range, childRange: Range): boolean {
   return (
-    (parentRange.start.line <= childRange.start.line ||
-      (parentRange.start.line === childRange.start.line &&
-        parentRange.start.character <= childRange.start.character)) &&
-    (parentRange.end.line >= childRange.end.line ||
-      (parentRange.end.line === childRange.end.line &&
-        parentRange.end.character >= childRange.end.character))
+    parentRange.start <= childRange.start && parentRange.end >= childRange.end
   );
 }
