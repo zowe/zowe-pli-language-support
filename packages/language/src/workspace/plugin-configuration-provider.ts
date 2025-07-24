@@ -17,6 +17,12 @@ import {
 } from "../preprocessor/compiler-options/parser";
 import { translateCompilerOptions } from "../preprocessor/compiler-options/translator";
 import { minimatch } from "minimatch";
+import { CompilerOptionResult } from "../preprocessor/compiler-options/options";
+
+/**
+ * Pli options are effectively macros to set w/ the given values
+ */
+export type PliOptions = Record<string, string>;
 
 /**
  * Program configuration. Corresponds to the entry point of a compile unit
@@ -25,6 +31,7 @@ import { minimatch } from "minimatch";
 export interface ProgramConfig {
   program: string;
   pgroup: string;
+  "pli-options"?: PliOptions;
 }
 
 /**
@@ -34,6 +41,7 @@ export interface ProgramConfig {
 export interface ProcessGroup {
   name: string;
   "compiler-options"?: string[];
+  "pli-options"?: PliOptions;
   libs?: string[];
   "include-extensions"?: string[];
   abstractOptions?: AbstractCompilerOptions;
@@ -235,11 +243,11 @@ class PluginConfigurationProvider {
     const processGroupConfigs = this.processGroupConfigs.values();
     for (const config of processGroupConfigs) {
       if (config["compiler-options"]?.length) {
-        const abstractOptions = parseAbstractCompilerOptions(
-          config["compiler-options"].join(" "),
+
+        const [abstractOptions, translatedOptions] = this.parseAndTranslateOptions(
+          config["compiler-options"].join(" ")
         );
 
-        const translatedOptions = translateCompilerOptions(abstractOptions);
         for (const issue of [
           ...translatedOptions.issues,
           ...abstractOptions.issues,
@@ -252,6 +260,17 @@ class PluginConfigurationProvider {
         config.issueCount = translatedOptions.issues.length;
       }
     }
+  }
+
+  /**
+   * Helper to translate some string of compiler options into a tuple of abstract & translated options
+   * @param options Options string to parse and translate
+   * @returns Tuple of AbstractCompilerOptions and CompilerOptionResult
+   */
+  private parseAndTranslateOptions(options: string): [AbstractCompilerOptions, CompilerOptionResult] {
+    const abstractOptions = parseAbstractCompilerOptions(options);
+    const translatedOptions = translateCompilerOptions(abstractOptions);
+    return [abstractOptions, translatedOptions];
   }
 
   /**
@@ -343,6 +362,28 @@ class PluginConfigurationProvider {
    */
   public getProcessGroupConfig(pgroup: string): ProcessGroup | undefined {
     return this.processGroupConfigs.get(pgroup);
+  }
+
+  /**
+   * Converts the merged pli-options for a given program config to a string suitable for compiler options.
+   * Program config pli-options override process group pli-options.
+   * Example: { SYSPARM: "myval" } => 'SYSPARM("myval")'
+   * @param programConfig Program config entry to retrieve options for, factoring in process group options too
+   * @returns Merged pli-options as a string, or "" if none
+   */
+  public pliOptionsStringForProgramConfig(programConfig: ProgramConfig): string {
+    const group = this.getProcessGroupConfig(programConfig.pgroup);
+    const groupOpts = group && group["pli-options"] ? group["pli-options"] : {};
+    const progOpts = programConfig["pli-options"] || {};
+    // merge w/ program config entries taking precedence
+    const merged = { ...groupOpts, ...progOpts };
+    if (Object.keys(merged).length === 0) {
+      return "";
+    } else {
+      return Object.entries(merged)
+        .map(([key, value]) => `${key}(${value})`)
+        .join(" ");
+    }
   }
 }
 

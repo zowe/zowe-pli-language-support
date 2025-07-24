@@ -64,6 +64,8 @@ export class CompilerOptionsProcessor {
         )
       : undefined;
 
+    // apply abstract options from the process group config
+    // factors in compiler-options as well as pli-options (key-value macro pairs)
     let mergedAbstractOptions: AbstractCompilerOptions | undefined = undefined;
     if (processGroupConfig?.abstractOptions) {
       mergedAbstractOptions = {
@@ -71,6 +73,19 @@ export class CompilerOptionsProcessor {
         tokens: [...processGroupConfig.abstractOptions.tokens],
         issues: [],
       };
+    }
+
+    // check to apply pli-options (key-value pairs which generate compiler options as well)
+    if (programConfig && (programConfig?.["pli-options"] || processGroupConfig?.["pli-options"])) {
+      const optionsStr = PluginConfigurationProviderInstance.pliOptionsStringForProgramConfig(programConfig);
+      const abstractOptions = parseAbstractCompilerOptions(optionsStr, 0);
+      if (mergedAbstractOptions) {
+        mergedAbstractOptions.options.push(...abstractOptions.options);
+        mergedAbstractOptions.tokens.push(...abstractOptions.tokens);
+        mergedAbstractOptions.issues = abstractOptions.issues;
+      } else {
+        mergedAbstractOptions = abstractOptions;
+      }
     }
 
     for (const [index, srcCompilerOpts] of sourceCompilerOptions.entries()) {

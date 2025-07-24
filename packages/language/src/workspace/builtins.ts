@@ -552,6 +552,7 @@ export const Builtins = ` /* Arithmetic built-in functions */
  STACKADDR: PROC (value) RETURNS (); END;
  STRING: PROC (value) RETURNS (); END;
  SYSTEM: PROC (value) RETURNS (); END;
+ SYSPARM: PROC (value) RETURNS (); END;
  THREADID: PROC (value) RETURNS (); END;
  UNHEX: PROC (value) RETURNS (); END;
  UNSPEC: PROC (value) RETURNS (); END;
