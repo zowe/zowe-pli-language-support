@@ -134,20 +134,20 @@ export namespace MarginIndicatorDecorator {
       return;
     }
 
+    // The left ruler should be left of the column number (-1), whereas
+    // the right ruler should be right of the column number.
     if (settings.marginIndicatorRulers === "automatic") {
       for (const margins of marginIndicatorRangesByUri.values()) {
         if (!rulers.includes(margins.m)) {
-          rulers.push(margins.m);
+          rulers.push(margins.m - 1);
         }
         if (!rulers.includes(margins.n)) {
           rulers.push(margins.n);
         }
       }
     } else {
-      rulers = [2, 72];
+      rulers = [1, 72];
     }
-
-    rulers = rulers.map((r) => r - 1);
 
     if (rulers.length === existingRulers.length) {
       // If the rulers are the same, no need to update
