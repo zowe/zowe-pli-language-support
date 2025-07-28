@@ -68,7 +68,7 @@ export class PliValidator implements Validator {
 
   constructor(protected compilationUnit: CompilationUnit) {
     this.programConfig = PluginConfigurationProviderInstance.getProgramConfig(
-      compilationUnit.uri.toString(),
+      compilationUnit.uri,
     );
     if (this.programConfig) {
       this.processGroup =
