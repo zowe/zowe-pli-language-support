@@ -192,7 +192,12 @@ export function escapeRegExp(value: string): string {
 export function setCompilerOptions(options: CompilerOptions): void {
   const orChars = escapeRegExp(options.or || "|");
   const notChars = escapeRegExp(options.not || "¬^");
-  const includeAlt = "++include";
+  let includeAlt: string | undefined = undefined;
+
+  if (options.pp && options.pp.ppInclude) {
+    includeAlt = options.pp.ppInclude.value;
+  }
+
   if (includeAlt) {
     includeAltRegex = new RegExp(escapeRegExp(includeAlt), "y");
   } else {
