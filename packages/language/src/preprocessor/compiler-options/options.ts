@@ -828,7 +828,22 @@ export declare namespace CompilerOptions {
         doc?: boolean;
       }
     | false;
-  export type PP = PPItem[] | false;
+
+  export type PPOption = PP | false;
+
+  export type PP = {
+    items: PPItem[];
+
+    /**
+     * Effective PPINCLUDE option value (alt. include keyword)
+     */
+    ppInclude?: PPInclude;
+  };
+
+  export interface PPInclude {
+    value: string;
+  }
+
   export interface PPItem {
     name: string;
     value?: string;

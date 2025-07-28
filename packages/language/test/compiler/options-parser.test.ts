@@ -346,6 +346,32 @@ describe("CompilerOptions translator", () => {
     );
   });
 
+  test("Test PP validation", () => {
+    const options = parseAbstractCompilerOptions(
+      "PP(INCLUDE('ID(++INCLUDE)'))",
+    );
+    const result = translateCompilerOptions(options);
+    const issues = result.issues;
+    expect(issues).toHaveLength(0);
+
+    const pp = result.options.pp as CompilerOptions.PP;
+    expect(pp).toBeDefined();
+    const items = pp.items as CompilerOptions.PPItem[];
+    expect(items).toBeDefined();
+    expect(items).toHaveLength(1);
+
+    const ppItem: CompilerOptions.PPItem = (
+      items as CompilerOptions.PPItem[]
+    )[0];
+    expect(ppItem.name).toBe("INCLUDE");
+    expect(ppItem.value).toBe("ID(++INCLUDE)");
+
+    // expect ppInclude to be normalized & set
+    const ppInclude = pp.ppInclude as CompilerOptions.PPInclude;
+    expect(ppInclude).toBeDefined();
+    expect(ppInclude.value).toBe("++include");
+  });
+
   const testCasesSensitivity: {
     input: string;
     toTest: (options: CompilerOptions) => unknown;
