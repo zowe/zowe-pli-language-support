@@ -426,7 +426,7 @@ export let PluginConfigurationProviderInstance: PluginConfigurationProvider =
   new PluginConfigurationProvider();
 
 export function setPluginConfigurationProvider(
-  provider: PluginConfigurationProvider | undefined = undefined,
+  provider: PluginConfigurationProvider | undefined,
 ): void {
   PluginConfigurationProviderInstance =
     provider ?? new PluginConfigurationProvider();

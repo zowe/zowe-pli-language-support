@@ -27,6 +27,9 @@ export function createTestBuilderHarnessImplementation(
   testBuilder: TestBuilder,
 ): HarnessTesterInterface {
   return {
+    testAPI: {
+      testBuilder,
+    },
     linker: {
       expectLinks: () => testBuilder.expectLinks(),
       expectNoLinksAt: (label) => testBuilder.expectNoLinksAt(label.toString()),
@@ -34,12 +37,18 @@ export function createTestBuilderHarnessImplementation(
     verify: {
       expectExclusiveErrorCodesAt: (label, codes) =>
         testBuilder.expectExclusiveErrorCodesAt(label.toString(), codes),
+      expectErrorCodesAt: (label, codes) =>
+        testBuilder.expectErrorCodesAt(label.toString(), codes),
       expectExclusiveDiagnosticsAt: (label, diagnostics) =>
         testBuilder.expectExclusiveDiagnosticsAt(label.toString(), diagnostics),
+      expectDiagnosticsAt: (label, diagnostics) =>
+        testBuilder.expectDiagnosticsAt(label.toString(), diagnostics),
       noDiagnostics: (label) =>
         label !== undefined
           ? testBuilder.expectNoDiagnosticsAt(label.toString())
           : testBuilder.expectNoDiagnostics(),
+      expectToThrow: (fn, messageToThrow) =>
+        testBuilder.expectToThrow(fn, messageToThrow),
     },
     completion: {
       expectAt: (label, content) =>

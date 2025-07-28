@@ -11,8 +11,8 @@
 
 import { CompletionKeywords } from "../../src/language-server/completion/keywords";
 import { Diagnostic } from "../../src/language-server/types";
-import { PLICodes } from "../../src/validation/messages";
-import { ExpectedCompletion } from "../test-builder";
+import { InternalCodes, PLICodes } from "../../src/validation/messages";
+import { ExpectedCompletion, TestBuilder } from "../test-builder";
 import { type Severity } from "../../src/language-server/types";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
 
@@ -20,6 +20,13 @@ type Label = string | number;
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
 export interface HarnessTesterInterface {
+  testAPI: {
+    /**
+     * Expose the test builder.
+     */
+    testBuilder: TestBuilder;
+  };
+
   verify: {
     /**
      * Expect that the given label has the given error codes.
@@ -28,11 +35,26 @@ export interface HarnessTesterInterface {
      */
     expectExclusiveErrorCodesAt(label: Label, codes: string[] | string): void;
     /**
+     * Expect that the given label has the given error codes.
+     * @param label The label to expect the error codes at.
+     * @param codes The error codes to expect.
+     */
+    expectErrorCodesAt(label: Label, codes: string[] | string): void;
+    /**
      * Expect that the given label has the given diagnostics.
      * @param label The label to expect the diagnostics at.
      * @param diagnostics The diagnostics to expect.
      */
     expectExclusiveDiagnosticsAt(
+      label: Label,
+      diagnostics: Partial<Diagnostic> | Partial<Diagnostic>[],
+    ): void;
+    /**
+     * Expect that the given label has the given diagnostics.
+     * @param label The label to expect the diagnostics at.
+     * @param diagnostics The diagnostics to expect.
+     */
+    expectDiagnosticsAt(
       label: Label,
       diagnostics: Partial<Diagnostic> | Partial<Diagnostic>[],
     ): void;
@@ -47,6 +69,18 @@ export interface HarnessTesterInterface {
      * ```
      */
     noDiagnostics(label?: string | number): void;
+
+    /**
+     * Expect that the given function throws an error.
+     *
+     * @param fn The function that should throw an error.
+     * @param messageToThrow The message that the function is expected to throw.
+     * @example
+     * ```ts
+     * verify.expectToThrow(() => testAPI.testBuilder.checkDiagnosticsURIs());
+     * ```
+     */
+    expectToThrow(fn: () => void, messageToThrow?: string): void;
   };
 
   linker: {
@@ -131,6 +165,7 @@ export interface HarnessTesterInterface {
     Warning: typeof PLICodes.Warning;
     Information: typeof PLICodes.Info;
     Error: typeof PLICodes.Error;
+    Internal: typeof InternalCodes.Internal;
   };
 
   constants: {
