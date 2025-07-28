@@ -1458,7 +1458,7 @@ translator.rule(
 /** {@link CompilerOptions.pp} */
 translator.rule(["PP"], (option, options) => {
   // 1 or more pre-processor options to collect
-  ensureArguments(option, 1, Infinity);
+  ensureArguments(option, 1);
   const ppOptions = option.values.map((value) => {
     ensureType(value, "option");
 
@@ -1466,6 +1466,17 @@ translator.rule(["PP"], (option, options) => {
       throw new TranslationError(
         value.token,
         `Expected exactly one value for the ${value.name} option, but received ${value.values.length}.`,
+        1,
+      );
+    }
+
+    // whitelist for PP systems we can invoke
+    if (
+      !["CISC", "INCLUDE", "MACRO", "SQL"].includes(value.name.toUpperCase())
+    ) {
+      throw new TranslationError(
+        value.token,
+        `Expected CISC, INCLUDE, MACRO, or SQL, but received '${value.name}'.`,
         1,
       );
     }
@@ -1485,12 +1496,20 @@ translator.rule(["PP"], (option, options) => {
 });
 
 /** {@link CompilerOptions.ppCics} */
-translator.rule(["PPCICS"], (option, options) => {
-  ensureArguments(option, 1, 1);
-  const value = option.values[0];
-  ensureType(value, "string");
-  options.ppCics = value.value;
-});
+translator.rule(
+  ["PPCICS"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    options.ppCics = value.value;
+  },
+  ["NOPPCICS"],
+  (option, options) => {
+    options.ppCics = false;
+    ensureArguments(option, 0, 0);
+  },
+);
 
 /** {@link CompilerOptions.ppInclude} */
 translator.rule(
@@ -1502,8 +1521,9 @@ translator.rule(
     options.ppInclude = value.value;
   },
   ["NOPPINCLUDE"],
-  (_, options) => {
+  (option, options) => {
     options.ppInclude = false;
+    ensureArguments(option, 0, 0);
   },
 );
 
@@ -1529,8 +1549,9 @@ translator.rule(
     options.ppMacro = value.value;
   },
   ["NOPPMACRO"],
-  (_, options) => {
+  (option, options) => {
     options.ppMacro = false;
+    ensureArguments(option, 0, 0);
   },
 );
 
@@ -1544,8 +1565,9 @@ translator.rule(
     options.ppSql = value.value;
   },
   ["NOPPSQL"],
-  (_, options) => {
+  (option, options) => {
     options.ppSql = false;
+    ensureArguments(option, 0, 0);
   },
 );
 
@@ -1557,8 +1579,9 @@ translator.rule(
     options.ppTrace = true;
   },
   ["NOPPTRACE"],
-  (_, options) => {
+  (option, options) => {
     options.ppTrace = false;
+    ensureArguments(option, 0, 0);
   },
 );
 
