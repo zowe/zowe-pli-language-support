@@ -1459,40 +1459,57 @@ translator.rule(
 translator.rule(["PP"], (option, options) => {
   // 1 or more pre-processor options to collect
   ensureArguments(option, 1);
-  const ppOptions = option.values.map((value) => {
-    ensureType(value, "option");
 
-    if (value.values.length !== 1) {
+  if (!options.pp) {
+    options.pp = {
+      items: [],
+    };
+  }
+
+  const ppOptions = option.values.map((ppEntry) => {
+    ensureType(ppEntry, "option");
+
+    if (ppEntry.values.length !== 1) {
       throw new TranslationError(
-        value.token,
-        `Expected exactly one value for the ${value.name} option, but received ${value.values.length}.`,
+        ppEntry.token,
+        `Expected exactly one value for the ${ppEntry.name} option, but received ${ppEntry.values.length}.`,
         1,
       );
     }
 
     // whitelist for PP systems we can invoke
     if (
-      !["CISC", "INCLUDE", "MACRO", "SQL"].includes(value.name.toUpperCase())
+      !["CISC", "INCLUDE", "MACRO", "SQL"].includes(ppEntry.name.toUpperCase())
     ) {
       throw new TranslationError(
-        value.token,
-        `Expected CISC, INCLUDE, MACRO, or SQL, but received '${value.name}'.`,
+        ppEntry.token,
+        `Expected CISC, INCLUDE, MACRO, or SQL, but received '${ppEntry.name}'.`,
         1,
       );
     }
 
-    ensureType(value.values[0], "string");
+    ensureType(ppEntry.values[0], "string");
+
+    const value = ppEntry.values[0].value;
+
+    if (ppEntry.name.toUpperCase() === "INCLUDE" && options.pp) {
+      // set this as the effective INCLUDE PP option value, overriding any previous INCLUDE options
+      const match = value.match(/ID\(([^\)]+)\)\s*$/);
+      if (match && match.length > 0) {
+        const ppInclude = match[0].slice(3, -1).toLowerCase();
+        options.pp.ppInclude = {
+          value: ppInclude,
+        };
+      }
+    }
 
     return {
-      name: value.name,
-      value: value.values[0].value,
+      name: ppEntry.name,
+      value,
     };
   });
 
-  if (!options.pp) {
-    options.pp = [];
-  }
-  options.pp.push(...ppOptions);
+  options.pp.items.push(...ppOptions);
 });
 
 /** {@link CompilerOptions.ppCics} */

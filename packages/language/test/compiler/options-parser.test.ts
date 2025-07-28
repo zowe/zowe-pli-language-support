@@ -354,15 +354,23 @@ describe("CompilerOptions translator", () => {
     const issues = result.issues;
     expect(issues).toHaveLength(0);
 
-    const ppItems = result.options.pp;
-    expect(ppItems).toBeDefined();
-    expect(ppItems).toHaveLength(1);
+    const pp = result.options.pp;
+    expect(pp).toBeDefined();
+    expect(pp !== false).toBeTruthy();
+    const items = (pp as any).items as CompilerOptions.PPItem[];
+    expect(items).toBeDefined();
+    expect(items).toHaveLength(1);
 
     const ppItem: CompilerOptions.PPItem = (
-      ppItems as CompilerOptions.PPItem[]
+      items as CompilerOptions.PPItem[]
     )[0];
     expect(ppItem.name).toBe("INCLUDE");
     expect(ppItem.value).toBe("ID(++INCLUDE)");
+
+    // expect ppInclude to be normalized & set
+    const ppInclude = (pp as any).ppInclude as CompilerOptions.PPInclude;
+    expect(ppInclude).toBeDefined();
+    expect(ppInclude.value).toBe("++include");
   });
 
   const testCasesSensitivity: {

@@ -193,21 +193,9 @@ export function setCompilerOptions(options: CompilerOptions): void {
   const orChars = escapeRegExp(options.or || "|");
   const notChars = escapeRegExp(options.not || "¬^");
   let includeAlt: string | undefined = undefined;
-  // take last option if multiple are present
-  if (Array.isArray(options.pp)) {
-    for (let x = options.pp.length - 1; x >= 0; x--) {
-      const item = options.pp[x];
-      const val = item.value;
-      if (item.name.toLowerCase() === "include" && val) {
-        // check for the ID(...) syntax, denoting a new include alternative
-        const match = val.match(/ID\(([^\)]+)\)/g);
-        if (match && match.length > 0) {
-          // take the last match & trim off the ID(...) part
-          includeAlt = match[match.length - 1].slice(3, -1).toLowerCase();
-          break;
-        }
-      }
-    }
+
+  if (options.pp && options.pp.ppInclude) {
+    includeAlt = options.pp.ppInclude.value;
   }
 
   if (includeAlt) {
