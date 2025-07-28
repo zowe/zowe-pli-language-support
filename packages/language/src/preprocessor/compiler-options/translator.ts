@@ -1456,12 +1456,152 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.pp} */
+translator.rule(["PP"], (option, options) => {
+  // 1 or more pre-processor options to collect
+  ensureArguments(option, 1);
+
+  if (!options.pp) {
+    options.pp = {
+      items: [],
+    };
+  }
+
+  const ppOptions = option.values.map((ppEntry) => {
+    ensureType(ppEntry, "option");
+
+    if (ppEntry.values.length !== 1) {
+      throw new TranslationError(
+        ppEntry.token,
+        `Expected exactly one value for the ${ppEntry.name} option, but received ${ppEntry.values.length}.`,
+        1,
+      );
+    }
+
+    // whitelist for PP systems we can invoke
+    if (
+      !["CISC", "INCLUDE", "MACRO", "SQL"].includes(ppEntry.name.toUpperCase())
+    ) {
+      throw new TranslationError(
+        ppEntry.token,
+        `Expected CISC, INCLUDE, MACRO, or SQL, but received '${ppEntry.name}'.`,
+        1,
+      );
+    }
+
+    ensureType(ppEntry.values[0], "string");
+
+    const value = ppEntry.values[0].value;
+
+    if (ppEntry.name.toUpperCase() === "INCLUDE" && options.pp) {
+      // set this as the effective INCLUDE PP option value, overriding any previous INCLUDE options
+      const match = value.match(/ID\(([^\)]+)\)\s*$/);
+      if (match && match.length > 0) {
+        const ppInclude = match[0].slice(3, -1).toLowerCase();
+        options.pp.ppInclude = {
+          value: ppInclude,
+        };
+      }
+    }
+
+    return {
+      name: ppEntry.name,
+      value,
+    };
+  });
+
+  options.pp.items.push(...ppOptions);
+});
+
 /** {@link CompilerOptions.ppCics} */
+translator.rule(
+  ["PPCICS"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    options.ppCics = value.value;
+  },
+  ["NOPPCICS"],
+  (option, options) => {
+    options.ppCics = false;
+    ensureArguments(option, 0, 0);
+  },
+);
+
 /** {@link CompilerOptions.ppInclude} */
+translator.rule(
+  ["PPINCLUDE"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    options.ppInclude = value.value;
+  },
+  ["NOPPINCLUDE"],
+  (option, options) => {
+    options.ppInclude = false;
+    ensureArguments(option, 0, 0);
+  },
+);
+
 /** {@link CompilerOptions.ppList} */
+translator.rule(
+  ["PPLIST"],
+  plainTranslate(
+    (options, value) => {
+      options.ppList = value.value as "KEEP" | "ERASE";
+    },
+    "KEEP",
+    "ERASE",
+  ),
+);
+
 /** {@link CompilerOptions.ppMacro} */
+translator.rule(
+  ["PPMACRO"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    options.ppMacro = value.value;
+  },
+  ["NOPPMACRO"],
+  (option, options) => {
+    options.ppMacro = false;
+    ensureArguments(option, 0, 0);
+  },
+);
+
 /** {@link CompilerOptions.ppSql} */
+translator.rule(
+  ["PPSQL"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    options.ppSql = value.value;
+  },
+  ["NOPPSQL"],
+  (option, options) => {
+    options.ppSql = false;
+    ensureArguments(option, 0, 0);
+  },
+);
+
 /** {@link CompilerOptions.ppTrace} */
+translator.rule(
+  ["PPTRACE"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.ppTrace = true;
+  },
+  ["NOPPTRACE"],
+  (option, options) => {
+    options.ppTrace = false;
+    ensureArguments(option, 0, 0);
+  },
+);
+
 /** {@link CompilerOptions.precType} */
 /** {@link CompilerOptions.prefix} */
 /** {@link CompilerOptions.proceed} */
