@@ -16,6 +16,10 @@
           "pgroup": {
             "type": "string",
             "description": "Program group label (e.g., 'default')."
+          },
+          "pli-options": {
+            "type": "object",
+            "description": "Macro definitions which will be passed to the PL/I compiler."
           }
         },
         "required": ["program", "pgroup"],
