@@ -525,11 +525,11 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-sysparm
    */
-  sysParm?: string;
+  sysParm: string;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-system
    */
-  system?: CompilerOptions.System;
+  system: CompilerOptions.System;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-terminal
    */
@@ -570,6 +570,18 @@ export interface CompilerOptions {
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-xref
    */
   xRef?: CompilerOptions.XRef;
+}
+
+const defaultCompilerOptions: CompilerOptions = {
+  system: "MVS",
+  sysParm: "",
+};
+
+/**
+ * Returns a fresh copy of the default compiler options.
+ */
+export function getDefaultCompilerOptions(): CompilerOptions {
+  return { ...defaultCompilerOptions };
 }
 
 export declare namespace CompilerOptions {
@@ -701,6 +713,7 @@ export declare namespace CompilerOptions {
   }
   export interface IncAfter {
     process?: string;
+    token?: Token;
   }
   export interface IncDir {
     directory: string;

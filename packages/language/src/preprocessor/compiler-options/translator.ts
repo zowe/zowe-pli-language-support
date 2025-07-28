@@ -13,6 +13,7 @@ import {
   CompilerOptionIssue,
   CompilerOptionResult,
   CompilerOptions,
+  getDefaultCompilerOptions,
 } from "./options";
 import { AbstractCompilerOptions } from "./parser";
 import { Severity, tokenToRange } from "../../language-server/types";
@@ -46,7 +47,7 @@ enum Applied {
 const PLI_CHARACTER_SET = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/i;
 
 class Translator {
-  options: CompilerOptions = {};
+  options: CompilerOptions = getDefaultCompilerOptions();
   issues: CompilerOptionIssue[] = [];
 
   /**
@@ -1349,6 +1350,25 @@ translator.flag("goff", ["GOFF"], ["NOGOFF"]);
 /** {@link CompilerOptions.hgpr} */
 /** {@link CompilerOptions.ignore} */
 /** {@link CompilerOptions.incAfter} */
+translator.rule(["INCAFTER"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "option");
+  if (value.name.toUpperCase() !== "PROCESS") {
+    throw new TranslationError(
+      value.token,
+      `Expected "PROCESS", but received '${value.name}'.`,
+      1,
+    );
+  }
+  ensureArguments(value, 1, 1);
+  const processValue = value.values[0];
+  ensureType(processValue, "plain");
+  options.incAfter = {
+    process: processValue.value,
+    token: processValue.token,
+  };
+});
 /** {@link CompilerOptions.incDir} */
 /** {@link CompilerOptions.include} */
 /** {@link CompilerOptions.incPds} */
@@ -1434,8 +1454,8 @@ translator.rule(
 /** {@link CompilerOptions.not} */
 translator.rule(
   ["NOT"],
-  stringTranslate((options, value) => {
-    options.not = value.value;
+  stringTranslate((options, text) => {
+    options.not = text.value;
   }),
 );
 
@@ -1450,8 +1470,8 @@ translator.rule(
 /** {@link CompilerOptions.or} */
 translator.rule(
   ["OR"],
-  stringTranslate((options, value) => {
-    options.or = value.value;
+  stringTranslate((options, text) => {
+    options.or = text.value;
   }),
 );
 
@@ -1624,7 +1644,34 @@ translator.rule(
 /** {@link CompilerOptions.stringOfGraphic} */
 /** {@link CompilerOptions.syntax} */
 /** {@link CompilerOptions.sysParm} */
+translator.rule(
+  ["SYSPARM"],
+  stringTranslate((options, text) => {
+    if (text.value.length > 1023) {
+      throw new TranslationError(
+        text.token,
+        `SYSPARM value exceeds maximum length of 1023 characters. Received '${text.value.slice(0, 10)}...'`,
+        1,
+      );
+    }
+
+    options.sysParm = text.value;
+  }),
+);
 /** {@link CompilerOptions.system} */
+translator.rule(
+  ["SYSTEM"],
+  plainTranslate(
+    (options, text) => {
+      options.system = text.value.toUpperCase() as CompilerOptions.System;
+    },
+    "MVS",
+    "CICS",
+    "IMS",
+    "OS",
+    "TSO",
+  ),
+);
 /** {@link CompilerOptions.terminal} */
 /** {@link CompilerOptions.test} */
 /** {@link CompilerOptions.unroll} */
@@ -1639,7 +1686,7 @@ translator.rule(
 export function translateCompilerOptions(
   input: AbstractCompilerOptions,
 ): CompilerOptionResult {
-  translator.options = {};
+  translator.options = getDefaultCompilerOptions();
   translator.appliedRules.clear();
   translator.issues = [...input.issues];
   for (const option of input.options) {

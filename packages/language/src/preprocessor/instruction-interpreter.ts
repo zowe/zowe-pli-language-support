@@ -813,7 +813,6 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
     throw new PreprocessorError(
       `Cannot resolve include file '${item.fileName}'`,
       item.token,
-      context.currentUri,
     );
   }
 
@@ -839,7 +838,6 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
     throw new PreprocessorError(
       `Circular include detected: ${uri.toString(true)}`,
       item.token,
-      context.currentUri,
     );
   }
 
@@ -889,7 +887,7 @@ function resolveIncludeFileUri(
 
   // check to validate include extension, if a program config & process group is available
   const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
-    context.entryUri.toString(true),
+    context.entryUri,
   );
   const pgroup = programConfig
     ? PluginConfigurationProviderInstance.getProcessGroupConfig(
@@ -910,7 +908,6 @@ function resolveIncludeFileUri(
     throw new PreprocessorError(
       `Unsupported include extension for included file, '${item.fileName}', ${msg}`,
       item.token,
-      context.currentUri,
     );
   }
 
