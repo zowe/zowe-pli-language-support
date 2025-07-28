@@ -17,7 +17,10 @@ import {
   Lexer,
   TokenType,
 } from "chevrotain";
-import { CompilerOptions } from "../preprocessor/compiler-options/options";
+import {
+  CompilerOptions,
+  getDefaultCompilerOptions,
+} from "../preprocessor/compiler-options/options";
 import { URI } from "../utils/uri";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { SyntaxNode } from "../syntax-tree/ast";
@@ -224,7 +227,7 @@ let notGT: RegExp;
 let notLT: RegExp;
 let includeAltRegex: RegExp | undefined;
 
-setCompilerOptions({});
+setCompilerOptions(getDefaultCompilerOptions());
 
 function tokenizeWithCompilerOption(
   getter: () => RegExp,

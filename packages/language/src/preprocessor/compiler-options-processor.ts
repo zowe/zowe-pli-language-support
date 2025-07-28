@@ -55,20 +55,16 @@ export class CompilerOptionsProcessor {
     }
 
     // Retrieve compiler options from the plugin configuration provider
-    const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
-      uri.toString(),
-    );
-    const processGroupConfig = programConfig
-      ? PluginConfigurationProviderInstance.getProcessGroupConfig(
-          programConfig.pgroup,
-        )
-      : undefined;
+    const programConfig =
+      PluginConfigurationProviderInstance.getProgramConfig(uri);
 
+    // apply abstract options from the program config
+    // factors in compiler-options as well as pli-options from program & group configs (key-value macro pairs)
     let mergedAbstractOptions: AbstractCompilerOptions | undefined = undefined;
-    if (processGroupConfig?.abstractOptions) {
+    if (programConfig?.abstractOptions) {
       mergedAbstractOptions = {
-        options: [...processGroupConfig.abstractOptions.options],
-        tokens: [...processGroupConfig.abstractOptions.tokens],
+        options: [...programConfig.abstractOptions.options],
+        tokens: [],
         issues: [],
       };
     }
@@ -100,15 +96,22 @@ export class CompilerOptionsProcessor {
       //  this should be removed once we break up the translation process to avoid this issue
 
       //  shave off the issues that are already present in the process group config
-      if (processGroupConfig?.issueCount) {
-        for (const range of ranges) {
+      const issueCount = programConfig?.issueCount;
+      if (issueCount) {
+        if (ranges.length === 0) {
+          // no *PROCESS to attach to, slice them off instead
+          compilerOptionResult.issues =
+            compilerOptionResult.issues.slice(issueCount);
+        } else {
+          const range = ranges[0];
           // update just these first 'issueCount' issues to report on *PROCESS
-          for (let i = 0; i < processGroupConfig.issueCount; i++) {
+          for (let i = 0; i < issueCount; i++) {
             if (i < compilerOptionResult.issues.length) {
               const issue = compilerOptionResult.issues[i];
               issue.range = {
-                start: range.start,
-                end: range.end,
+                start: range.start + 1,
+                end:
+                  range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
               };
               issue.message = `PLI Plugin Config: ${issue.message}`;
             } else {
@@ -116,12 +119,6 @@ export class CompilerOptionsProcessor {
               break;
             }
           }
-        }
-        if (ranges.length === 0) {
-          // no *PROCESS to attach to, slice them off instead
-          compilerOptionResult.issues = compilerOptionResult.issues.slice(
-            processGroupConfig.issueCount,
-          );
         }
       }
 
