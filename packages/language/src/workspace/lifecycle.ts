@@ -24,6 +24,7 @@ import {
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { URI } from "../utils/uri";
 import { assignDebugKinds } from "../utils/debug-kinds";
+import { getDefaultCompilerOptions } from "../preprocessor/compiler-options/options";
 
 export function lifecycle(
   compilationUnit: CompilationUnit,
@@ -55,7 +56,7 @@ export function tokenize(
   compilationUnit.preprocessorEvaluationResults = result.evaluationResults;
   compilationUnit.referencesCache.addAll(result.tokenReferences);
   compilationUnit.compilerOptions =
-    result.compilerOptions.result?.options ?? {};
+    result.compilerOptions.result?.options ?? getDefaultCompilerOptions();
   const uri = compilationUnit.uri.toString();
   compilationUnit.diagnostics.lexer = lexerErrorsToDiagnostics(result.errors);
   compilationUnit.diagnostics.compilerOptions =

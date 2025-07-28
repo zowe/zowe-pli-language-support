@@ -34,7 +34,7 @@ export class PreprocessorError implements LexingError {
   constructor(
     message: string,
     range: Range | Token | null | undefined,
-    uri: URI | undefined,
+    uri?: URI,
   ) {
     this._message = message;
     if (range) {
@@ -45,8 +45,9 @@ export class PreprocessorError implements LexingError {
           start: range.startOffset,
           end: range.endOffset + 1,
         };
+        this._uri = range.payload.uri;
       }
     }
-    this._uri = uri;
+    this._uri ??= uri;
   }
 }
