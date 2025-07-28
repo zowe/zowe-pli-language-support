@@ -323,7 +323,7 @@ export class PliValidator implements Validator {
         {
           code: PLICodes.Error.IBM1373I.fullCode,
           range: getSyntaxNodeRange(node)!,
-          uri: tokenToUri(node.ref.node.nameToken) || "",
+          uri: tokenToUri(node.ref.token) || "",
         },
       );
     }
