@@ -354,10 +354,9 @@ describe("CompilerOptions translator", () => {
     const issues = result.issues;
     expect(issues).toHaveLength(0);
 
-    const pp = result.options.pp;
+    const pp = result.options.pp as CompilerOptions.PP;
     expect(pp).toBeDefined();
-    expect(pp !== false).toBeTruthy();
-    const items = (pp as any).items as CompilerOptions.PPItem[];
+    const items = pp.items as CompilerOptions.PPItem[];
     expect(items).toBeDefined();
     expect(items).toHaveLength(1);
 
@@ -368,7 +367,7 @@ describe("CompilerOptions translator", () => {
     expect(ppItem.value).toBe("ID(++INCLUDE)");
 
     // expect ppInclude to be normalized & set
-    const ppInclude = (pp as any).ppInclude as CompilerOptions.PPInclude;
+    const ppInclude = pp.ppInclude as CompilerOptions.PPInclude;
     expect(ppInclude).toBeDefined();
     expect(ppInclude.value).toBe("++include");
   });
