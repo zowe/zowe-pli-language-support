@@ -551,8 +551,8 @@ export const Builtins = ` /* Arithmetic built-in functions */
  SOURCELINE: PROC (value) RETURNS (); END;
  STACKADDR: PROC (value) RETURNS (); END;
  STRING: PROC (value) RETURNS (); END;
- SYSTEM: PROC (value) RETURNS (); END;
- SYSPARM: PROC (value) RETURNS (); END;
+ SYSTEM: PROC () RETURNS (); END;
+ SYSPARM: PROC () RETURNS (); END;
  THREADID: PROC (value) RETURNS (); END;
  UNHEX: PROC (value) RETURNS (); END;
  UNSPEC: PROC (value) RETURNS (); END;

@@ -20,7 +20,10 @@ import {
   parse,
   tokenize,
 } from "./lifecycle.js";
-import { CompilerOptions } from "../preprocessor/compiler-options/options.js";
+import {
+  CompilerOptions,
+  getDefaultCompilerOptions,
+} from "../preprocessor/compiler-options/options.js";
 import { skippedCode } from "../language-server/skipped-code.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
@@ -129,7 +132,7 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
   const unit: CompilationUnit = {
     uri,
     files: [],
-    compilerOptions: {},
+    compilerOptions: getDefaultCompilerOptions(),
     ast: {
       kind: SyntaxKind.PliProgram,
       container: null,

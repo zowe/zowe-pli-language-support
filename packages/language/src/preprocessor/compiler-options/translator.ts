@@ -13,6 +13,7 @@ import {
   CompilerOptionIssue,
   CompilerOptionResult,
   CompilerOptions,
+  getDefaultCompilerOptions,
 } from "./options";
 import { AbstractCompilerOptions } from "./parser";
 import { Severity, tokenToRange } from "../../language-server/types";
@@ -46,7 +47,7 @@ enum Applied {
 const PLI_CHARACTER_SET = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/i;
 
 class Translator {
-  options: CompilerOptions = {};
+  options: CompilerOptions = getDefaultCompilerOptions();
   issues: CompilerOptionIssue[] = [];
 
   /**
@@ -1646,6 +1647,14 @@ translator.rule(
 translator.rule(
   ["SYSPARM"],
   stringTranslate((options, text) => {
+    if (text.value.length > 1023) {
+      throw new TranslationError(
+        text.token,
+        `SYSPARM value exceeds maximum length of 1023 characters. Received '${text.value.slice(0, 10)}...'`,
+        1,
+      );
+    }
+
     options.sysParm = text.value;
   }),
 );
@@ -1677,7 +1686,7 @@ translator.rule(
 export function translateCompilerOptions(
   input: AbstractCompilerOptions,
 ): CompilerOptionResult {
-  translator.options = {};
+  translator.options = getDefaultCompilerOptions();
   translator.appliedRules.clear();
   translator.issues = [...input.issues];
   for (const option of input.options) {

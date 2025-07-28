@@ -27,7 +27,10 @@ import { recursivelySetContainer } from "../linking/symbol-table";
 import { generateInstructions } from "./instruction-generator";
 import { EvaluationResults, runInstructions } from "./instruction-interpreter";
 import { createIncludeInstruction, InstructionNode } from "./instructions";
-import { CompilerOptions } from "./compiler-options/options";
+import {
+  CompilerOptions,
+  getDefaultCompilerOptions,
+} from "./compiler-options/options";
 import { CstNodeKind } from "../syntax-tree/cst";
 
 export interface LexingError {
@@ -66,7 +69,9 @@ export class PliLexer {
   tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
     const compilerOptionsResult =
       this.compilerOptionsPreprocessor.extractCompilerOptions(inputText, uri);
-    tokens.setCompilerOptions(compilerOptionsResult.result?.options ?? {});
+    tokens.setCompilerOptions(
+      compilerOptionsResult.result?.options ?? getDefaultCompilerOptions(),
+    );
     const textWithoutMargins = this.marginsProcessor.processMargins(
       compilerOptionsResult,
     );

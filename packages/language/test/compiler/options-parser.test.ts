@@ -584,15 +584,43 @@ describe("CompilerOptions translator", () => {
     }
   }
 
+  test('Test "SYSPARM" default option', () => {
+    // parse any compiler option, we should still expect the default SYSPARM in the complete options object
+    const options = parseAbstractCompilerOptions("AG");
+    const translated = translateCompilerOptions(options).options;
+    expect(translated.sysParm).toBeDefined();
+    expect(translated.sysParm).toBe("");
+  });
+
   test('Test "SYSPARM" option', () => {
     const options = parseAbstractCompilerOptions("SYSPARM('PLIVERSION')");
     const translated = translateCompilerOptions(options).options;
     expect(translated.sysParm).toBe("PLIVERSION");
   });
 
+  test('Test "SYSPARM" error on excessive length', () => {
+    // >= 1023 is an issue
+    const options = parseAbstractCompilerOptions(
+      `SYSPARM('${"i".repeat(1024)}')`,
+    );
+    const issues = translateCompilerOptions(options).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toMatch(
+      /SYSPARM value exceeds maximum length of 1023 characters. Received/,
+    );
+  });
+
+  test('Test "SYSTEM" option default, should be MVS', () => {
+    const options = parseAbstractCompilerOptions("SYSTEM");
+    const translated = translateCompilerOptions(options).options;
+    expect(translated.system).toBe("MVS");
+  });
+
   for (const systemValue of ["MVS", "CICS", "IMS", "OS", "TSO"]) {
     test('Test "SYSTEM" option with expected value ' + systemValue, () => {
-      const options = parseAbstractCompilerOptions("SYSTEM(" + systemValue + ")");
+      const options = parseAbstractCompilerOptions(
+        "SYSTEM(" + systemValue + ")",
+      );
       const translated = translateCompilerOptions(options).options;
       expect(translated.system).toBe(systemValue);
     });
