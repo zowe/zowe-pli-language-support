@@ -1,6 +1,6 @@
 *PROCESS MARGINS(2,120);
  %INCLUDE "b.pli";
- VARB = SYSPARM;
+ VARB = 2;
  %INCLUDE C;
  VARC = 3;
  %INCLUDE lib;
