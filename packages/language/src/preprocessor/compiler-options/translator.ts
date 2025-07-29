@@ -1354,7 +1354,6 @@ translator.rule(["INCAFTER"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   if (value.kind === SyntaxKind.CompilerOption) {
-    ensureType(value, "option");
     if (value.name.toUpperCase() !== "PROCESS") {
       throw new TranslationError(
         value.token,
