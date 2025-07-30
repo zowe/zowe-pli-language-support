@@ -12,6 +12,7 @@
 import type { HarnessTesterInterface } from "../fourslash-harness/harness-interface";
 
 declare global {
+  var testAPI: HarnessTesterInterface["testAPI"];
   var verify: HarnessTesterInterface["verify"];
   var linker: HarnessTesterInterface["linker"];
   var semanticTokens: HarnessTesterInterface["semanticTokens"];
