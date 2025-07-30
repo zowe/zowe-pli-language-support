@@ -17,6 +17,7 @@ import { runHarnessTest } from "./harness-runner";
 import { parseHarnessTest } from "./harness-parser";
 import { parseWrapperFile } from "./wrapper";
 import { HarnessConstants } from "./implementation/constants";
+import { TestBuilder } from "../test-builder";
 
 type HarnessImplementationListener = (method: string, ...args: any[]) => void;
 
@@ -43,12 +44,18 @@ function createTestingHarnessImplementation(
       expectLinks: listen("linker.expectLinks"),
       expectNoLinksAt: listen("linker.expectNoLinksAt"),
     },
+    testAPI: {
+      testBuilder: TestBuilder.create("", {}),
+    },
     verify: {
       expectExclusiveErrorCodesAt: listen("verify.expectExclusiveErrorCodesAt"),
+      expectErrorCodesAt: listen("verify.expectErrorCodesAt"),
       expectExclusiveDiagnosticsAt: listen(
         "verify.expectExclusiveDiagnosticsAt",
       ),
+      expectDiagnosticsAt: listen("verify.expectDiagnosticsAt"),
       noDiagnostics: listen("verify.noDiagnostics"),
+      expectToThrow: listen("verify.expectToThrow"),
     },
     completion: {
       expectAt: listen("completion.expectAt"),

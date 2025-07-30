@@ -35,6 +35,7 @@
 ////*PROCESS;
 //// DCL TEST FIXED;
 
-preprocessor.expectTokens(`*PROCESS;
+preprocessor.expectTokens(`
+  DECLARE LIB_VAR FIXED;
   DCL TEST FIXED;
 `);

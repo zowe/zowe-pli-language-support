@@ -10,3 +10,4 @@
  */
 
 export * as PLICodes from "./pli-codes";
+export * as InternalCodes from "./internal-codes";
