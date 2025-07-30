@@ -186,9 +186,9 @@ class HarnessTestParser {
         continue;
       }
 
+      // Do not include simple // without tags so that comments can still be added to the test file.
       const isComment =
-        line.startsWith(HARNESS_TAG_PREFIX) ||
-        line.startsWith(HARNESS_FILE_PREFIX);
+        HARNESS_TAG_PATTERN.test(line) || line.startsWith(HARNESS_FILE_PREFIX);
       if (isComment) {
         const file = this.parseHarnessFile();
         const fileName = getFileName(file.fileName);

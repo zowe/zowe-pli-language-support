@@ -56,7 +56,7 @@ beforeEach(() => {
 
   // Clear the plugin configuration provider and
   // ensure the 'cpy' directory is always resolvable for includes via config
-  setPluginConfigurationProvider();
+  setPluginConfigurationProvider(undefined);
   PluginConfigurationProviderInstance.setProgramConfigs("", [
     {
       program: "*.pli",
@@ -74,6 +74,7 @@ beforeEach(() => {
 
 afterEach(() => {
   setFileSystemProvider(undefined);
+  setPluginConfigurationProvider(undefined);
   PluginConfigurationProviderInstance.setProgramConfigs("", []);
   PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
 });

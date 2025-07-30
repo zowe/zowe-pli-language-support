@@ -20,7 +20,7 @@ import { parse, parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
 import { completionRequest } from "../src/language-server/completion/completion-request";
-import { fail } from "assert";
+import { AssertionError, fail } from "assert";
 import { MarkupContent, Position } from "vscode-languageserver";
 import { hoverRequest } from "../src/language-server/hover-request";
 import {
@@ -34,7 +34,9 @@ import { skippedCodeRanges } from "../src/language-server/skipped-code";
 import {
   PluginConfigurationProvider,
   PluginConfigurationProviderInstance,
+  setPluginConfigurationProvider,
 } from "../src/workspace/plugin-configuration-provider";
+import { InternalCodes } from "../src/validation/messages";
 
 export const DEFAULT_FILE_URI = "file:///main.pli";
 
@@ -51,10 +53,15 @@ export type TestBuilderOptions = {
 
   /**
    * Override the location of files.
-   *
    * This is useful for harness tests, where files are 'virtually' created inside a single test file
    */
   locationOverrides?: Record<Path, LocationOverride>;
+
+  /**
+   * The test-builder resets the plugin configuration provider automatically for the harness tests.
+   * preservePluginConfiguration can be used to disable this behavior for other test cases.
+   */
+  preservePluginConfiguration?: boolean;
 };
 
 export type PliTestFile = {
@@ -105,6 +112,10 @@ export class TestBuilder {
   private ranges: Record<string, Array<[number, number]>>;
   private diagnostics: Diagnostic[];
   private options: TestBuilderOptions;
+
+  getDiagnostics(): Diagnostic[] {
+    return this.diagnostics;
+  }
 
   private static getFiles(
     textOrFiles: string | PliTestFile | PliTestFile[],
@@ -173,22 +184,15 @@ export class TestBuilder {
     this.indices = indices;
     this.ranges = ranges;
     this.diagnostics = collectDiagnostics(this.unit);
-  }
+    this.checkDiagnosticsURIs();
 
-  private configurePluginConfigurationProvider() {
-    // Check if the files contain a program config or process group.
-    for (const [uri, file] of this.files) {
-      if (uri.endsWith(PluginConfigurationProvider.PROGRAM_CONFIG_FILE)) {
-        PluginConfigurationProviderInstance.setProgramConfigs(
-          "",
-          JSON.parse(file.output).pgms,
-        );
-      }
-      if (uri.endsWith(PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE)) {
-        PluginConfigurationProviderInstance.setProcessGroupConfigs(
-          JSON.parse(file.output).pgroups,
-        );
-      }
+    // After the test-builder is done with its tests, reset the plugin configuration provider
+    // so that potential test functions that invoke functions of the lifecycle are not affected
+    // by a potential test-builder's plugin configuration.
+    // If some test functions in the future need to access the actual test plugin configuration
+    // in the future, we can add a dedicated tag to the harness implementation.
+    if (!options.preservePluginConfiguration) {
+      setPluginConfigurationProvider(undefined);
     }
   }
 
@@ -219,6 +223,63 @@ export class TestBuilder {
       ...options,
       validate: true,
     });
+  }
+
+  private configurePluginConfigurationProvider() {
+    // Check if the files contain a program config or process group.
+    for (const [uri, file] of this.files) {
+      if (uri.endsWith(PluginConfigurationProvider.PROGRAM_CONFIG_FILE)) {
+        PluginConfigurationProviderInstance.setProgramConfigs(
+          "",
+          JSON.parse(file.output).pgms,
+        );
+      }
+      if (uri.endsWith(PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE)) {
+        PluginConfigurationProviderInstance.setProcessGroupConfigs(
+          JSON.parse(file.output).pgroups,
+        );
+      }
+    }
+  }
+
+  public checkDiagnosticsURIs() {
+    // Check all ranges
+    for (const label of Object.keys(this.ranges)) {
+      if (this.ranges[label].length === 0) {
+        continue;
+      }
+
+      // Get all diagnostics for this label
+      const { exactMatches } = this.getMatchingDiagnostics(label);
+
+      // Check where the range originates from
+      let labelFile: string | undefined;
+      for (const file of this.files.keys()) {
+        const fileRanges = this.files.get(file)?.ranges[label];
+        if (fileRanges && fileRanges.length > 0) {
+          labelFile = file;
+          break;
+        }
+      }
+
+      if (!labelFile) {
+        continue;
+      }
+
+      for (const diagnostic of exactMatches) {
+        if (diagnostic.uri.endsWith(labelFile)) {
+          continue;
+        }
+
+        fail(
+          InternalCodes.Internal.DiagnosticURIMismatch.message(
+            label,
+            labelFile,
+            diagnostic.uri,
+          ),
+        );
+      }
+    }
   }
 
   expectPreprocessorTokens(textOrTokens: string | string[]): void {
@@ -276,26 +337,37 @@ export class TestBuilder {
   }
 
   private getMatchingDiagnostics(label: string): MatchingDiagnosticsResult {
-    const range = this.ranges[label];
-    if (!range || range.length === 0) {
+    const ranges = this.ranges[label];
+    if (!ranges || ranges.length === 0) {
       throw new Error(`Label "${label}" not found`);
     }
 
-    if (range.length > 1) {
-      throw new Error("TODO: Multiple ranges are not supported yet");
+    const exactMatches: Diagnostic[] = [];
+    const containingMatches: Diagnostic[] = [];
+
+    for (const range of ranges) {
+      const [start, end] = range;
+
+      // getMatchingDiagnostics is supposed to check against the ranges of the diagnostics.
+      // Make sure there is a range to check against, because ranges from indices diagnostics may be undefined.
+      exactMatches.push(
+        ...this.diagnostics.filter(
+          (diagnostic) =>
+            diagnostic.range &&
+            diagnostic.range.start === start &&
+            diagnostic.range.end === end,
+        ),
+      );
+
+      containingMatches.push(
+        ...this.diagnostics.filter(
+          (diagnostic) =>
+            diagnostic.range &&
+            diagnostic.range.start >= start &&
+            diagnostic.range.end <= end,
+        ),
+      );
     }
-
-    const [[start, end]] = range;
-
-    const exactMatches = this.diagnostics.filter(
-      (diagnostic) =>
-        diagnostic.range.start === start && diagnostic.range.end === end,
-    );
-
-    const containingMatches = this.diagnostics.filter(
-      (diagnostic) =>
-        diagnostic.range.start >= start && diagnostic.range.end <= end,
-    );
 
     return {
       exactMatches,
@@ -338,8 +410,12 @@ export class TestBuilder {
 
   expectDiagnosticsAt(
     label: string,
-    diagnostics: Partial<Diagnostic>[],
+    diagnostics: Partial<Diagnostic> | Partial<Diagnostic>[],
   ): TestBuilder {
+    const expectedDiagnostics = Array.isArray(diagnostics)
+      ? diagnostics
+      : [diagnostics];
+
     const { exactMatches, containingMatches } =
       this.getMatchingDiagnostics(label);
 
@@ -351,7 +427,7 @@ export class TestBuilder {
       }
     };
 
-    for (const diagnostic of diagnostics) {
+    for (const diagnostic of expectedDiagnostics) {
       expect(exactMatches, getMessage()).toContainEqual(
         expect.objectContaining(diagnostic),
       );
@@ -384,6 +460,24 @@ export class TestBuilder {
     }
 
     return this;
+  }
+
+  expectToThrow(fn: () => void, messageToThrow?: string) {
+    const message = `Expected function to throw an error ${
+      messageToThrow ? `with message "${messageToThrow}"` : ""
+    }, but it did not`;
+    try {
+      fn();
+      fail(message);
+    } catch (error) {
+      if (error instanceof AssertionError) {
+        if (messageToThrow) {
+          expect(error.message, message).toContain(messageToThrow);
+        }
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**

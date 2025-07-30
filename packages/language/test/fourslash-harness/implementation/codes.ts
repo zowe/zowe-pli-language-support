@@ -9,7 +9,7 @@
  *
  */
 
-import { PLICodes } from "../../../src/validation/messages";
+import { PLICodes, InternalCodes } from "../../../src/validation/messages";
 import { HarnessTesterInterface } from "../harness-interface";
 
 export const HarnessCodes: HarnessTesterInterface["code"] = {
@@ -17,4 +17,5 @@ export const HarnessCodes: HarnessTesterInterface["code"] = {
   Warning: PLICodes.Warning,
   Information: PLICodes.Info,
   Error: PLICodes.Error,
+  Internal: InternalCodes.Internal,
 };

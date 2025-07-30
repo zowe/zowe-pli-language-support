@@ -15,7 +15,10 @@ import {
   setFileSystemProvider,
 } from "../../src/workspace/file-system-provider";
 import { PliTestFile, TestBuilder } from "../test-builder";
-import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
+import {
+  PluginConfigurationProviderInstance,
+  setPluginConfigurationProvider,
+} from "../../src/workspace/plugin-configuration-provider";
 
 describe("Go To Definition request", () => {
   let vfs: VirtualFileSystemProvider;
@@ -39,11 +42,15 @@ describe("Go To Definition request", () => {
     ]);
     setFileSystemProvider(vfs);
     createFsTestBuilder = (content: string | PliTestFile[]) =>
-      TestBuilder.create(content, { fs: vfs });
+      TestBuilder.create(content, {
+        fs: vfs,
+        preservePluginConfiguration: true,
+      });
   });
 
   afterAll(() => {
     setFileSystemProvider(undefined);
+    setPluginConfigurationProvider(undefined);
     PluginConfigurationProviderInstance.setProgramConfigs("", []);
     PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
   });
