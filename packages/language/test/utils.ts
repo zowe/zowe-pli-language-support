@@ -133,8 +133,17 @@ export function parseStmts(
   text: string,
   options?: { validate: boolean },
 ): CompilationUnit {
+  // TODO ssmifi: Currently, process directives must start at the beginning of the file.
+  let prefix = "";
+  while (text.startsWith("*PROCESS") || text.startsWith("%PROCESS")) {
+    prefix += text.substring(0, text.indexOf("\n") + 1);
+    text = text.substring(text.indexOf("\n") + 1);
+  }
+  if (prefix) {
+    prefix += "\n";
+  }
   return parse(
-    ` STARTPR: PROCEDURE OPTIONS (MAIN);
+    `${prefix} STARTPR: PROCEDURE OPTIONS (MAIN);
 ${text}
  end STARTPR;`,
     options,

@@ -22,7 +22,7 @@ import { isValidToken } from "../linking/tokens";
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { registerPliValidationChecks } from "./pli-validator";
-import { LexingError } from "../preprocessor/pli-lexer";
+import { LexingIssue } from "../preprocessor/pli-lexer";
 import { isMainProcedure, labelPrefixPointsToPackage } from "./utils";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
 import { LinkerErrorReporter } from "../linking/error";
@@ -131,15 +131,15 @@ export function compilerOptionIssuesToDiagnostics(
   return diagnostics;
 }
 
-export function lexerErrorsToDiagnostics(
-  lexerErrors: LexingError[],
+export function lexerIssuesToDiagnostics(
+  lexerErrors: LexingIssue[],
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   for (const error of lexerErrors) {
     if (error.uri && error.range && !isNaN(error.range.start)) {
       diagnostics.push({
         uri: error.uri.toString(),
-        severity: Severity.E,
+        severity: error.severity,
         range: error.range,
         message: error.message,
         source: "lexer",
