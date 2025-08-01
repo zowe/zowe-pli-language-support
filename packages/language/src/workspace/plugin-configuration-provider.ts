@@ -58,6 +58,15 @@ export interface ProcessGroup {
   libs?: string[];
   "include-extensions"?: string[];
   "implicit-builtins"?: string[];
+  "lsp-options"?: {
+    "check-margins"?: boolean;
+  };
+
+  /**
+   * Number of issues found in the compiler options for this process group.
+   * Used to avoid duplicate issue reporting later on when running translation in a program context
+   */
+  issueCount?: number;
 }
 
 /**

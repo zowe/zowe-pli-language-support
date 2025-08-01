@@ -9,15 +9,16 @@
  *
  */
 
-import type { LexingError } from "./pli-lexer";
-import { Range } from "../language-server/types";
+import type { LexingIssue } from "./pli-lexer";
+import { Range, Severity } from "../language-server/types";
 import { URI } from "../utils/uri";
 import { Token } from "../parser/tokens";
 
-export class PreprocessorError implements LexingError {
+export class PreprocessorError implements LexingIssue {
   private _uri: URI | undefined;
   private _range: Range | undefined;
   private _message: string;
+  private _severity: Severity;
 
   get uri(): URI | undefined {
     return this._uri;
@@ -31,12 +32,17 @@ export class PreprocessorError implements LexingError {
     return this._message;
   }
 
+  get severity(): Severity {
+    return this._severity;
+  }
+
   constructor(
     message: string,
     range: Range | Token | null | undefined,
     uri?: URI,
   ) {
     this._message = message;
+    this._severity = Severity.E;
     if (range) {
       if ("start" in range) {
         this._range = range;
