@@ -28,7 +28,7 @@ const HarnessFileTag = {
 const HARNESS_TAG_PREFIX = "//";
 export const HARNESS_FILE_PREFIX = "////";
 const REFERENCE_PATH_PREFIX = "/// <reference path=";
-const HARNESS_TAG_PATTERN = /^\/\/\s*@(?<name>\w+)\s*:(?<value>.*)$/;
+const HARNESS_TAG_PATTERN = /^\/\/\s*@(?<name>\w+)\s*(?<value>:.*)?$/;
 
 type Context = {
   wrappers: Record<string, Wrapper>;
@@ -103,7 +103,11 @@ class HarnessTestParser {
         throw new Error(`Invalid tag: ${line}`);
       }
 
-      tags[match.groups!.name] = match.groups!.value.trim();
+      if (match.groups!.value) {
+        tags[match.groups!.name] = match.groups!.value.substring(1).trim(); // Remove the colon
+      } else {
+        tags[match.groups!.name] = "true";
+      }
     }
 
     return tags;
@@ -126,6 +130,7 @@ class HarnessTestParser {
     const wrap: string | undefined = tags[HarnessFileTag.Wrap];
 
     const lineOffsetPreWrap = this.lineOffset;
+    const eol = tags.crlf ? "\r\n" : "\n";
 
     while (true) {
       const line = this.peek();
@@ -140,7 +145,7 @@ class HarnessTestParser {
       lines.push(content);
     }
 
-    let content = lines.join("\n");
+    let content = lines.join(eol);
     const wrapper = wrap ? this.getWrapper(wrap) : undefined;
     if (wrapper) {
       content = wrapper.wrap(content);
