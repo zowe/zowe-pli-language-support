@@ -749,16 +749,24 @@ export class PliPreprocessorParser {
   private doSkip(state: PreprocessorParserState): void {
     let nestingLevel = 0;
     while (!state.eof) {
-      if (state.canConsumeKeyword(PreprocessorTokens.Do)) {
+      if (!state.canConsume(PreprocessorTokens.Percentage)) {
+        state.index++;
+        continue;
+      }
+      state.index++;
+
+      if (state.canConsume(PreprocessorTokens.Do)) {
         nestingLevel++;
-      } else if (state.canConsumeKeyword(PreprocessorTokens.End)) {
+      } else if (state.canConsume(PreprocessorTokens.End)) {
         if (nestingLevel === 0) {
+          state.index--; // Get the % for the end statement.
           break;
         }
         nestingLevel--;
       }
-      // TODO ssmifi: If a preprocessor statement is encountered that is not valid, the parser should throw an error.
+      // TODO ssmifi: If a *preprocessor* statement is encountered that is not valid, the parser should throw an error.
       // For example, %xyz; is not valid, whereas xyz; is ignored.
+      // Assignments to declared pp variables are considered valid.
       state.index++;
     }
   }
