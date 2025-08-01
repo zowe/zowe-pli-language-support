@@ -13,7 +13,7 @@
 
 //// %DCL VAR CHARACTER;
 //// %VAR = "A";
-//// %DO %FOREVER;
+//// %DO FOREVER;
 ////   %LEAVE;
 ////   VAR = "B";
 //// %END;

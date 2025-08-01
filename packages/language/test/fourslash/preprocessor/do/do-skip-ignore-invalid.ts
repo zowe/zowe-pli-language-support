@@ -15,7 +15,7 @@
 //// %X = 1;
 //// %DO SKIP;
 ////   invalid_code;
-////   %WHILE(X <= 3);
+////   WHILE(X <= 3);
 ////   %X = X + 1;
 //// %END;
 //// DCL Variable%;X FIXED;

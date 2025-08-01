@@ -15,7 +15,7 @@
   This might be an intermediate step in the development of a DO FOREVER loop
   The preprocessor should eventually terminate anyway
 */
-//// %DO %FOREVER;
+//// %DO FOREVER;
 ////   /* EVENTUALLY TERMINATE */
 //// %END;
 //// DCL VAR CHARACTER;

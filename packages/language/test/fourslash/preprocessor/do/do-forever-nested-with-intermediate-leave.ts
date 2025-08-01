@@ -13,9 +13,9 @@
 
 //// %DCL VAR FIXED;
 //// %VAR = 0;
-//// %outer: DO %FOREVER;
+//// %outer: DO FOREVER;
 ////   %VAR = VAR + 1;
-////   %inner: DO %FOREVER;
+////   %inner: DO FOREVER;
 ////     %VAR = VAR + 2;
 ////     %LEAVE inner;
 ////   %END;

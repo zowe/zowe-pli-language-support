@@ -14,7 +14,7 @@
 //// %DCL X FIXED;
 //// %X = 1;
 //// %DO SKIP;
-////   %WHILE(X <= 3);
+////   WHILE(X <= 3);
 ////   DCL Variable%;X FIXED;
 ////   %X = X + 1;
 //// %END;

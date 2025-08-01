@@ -13,7 +13,7 @@
 
 //// %declare A fixed;
 //// %A = 3;
-//// %DO %FOREVER;
+//// %DO FOREVER;
 ////   %A = A - 1;
 ////   %IF A = 0 %THEN %LEAVE;
 ////   %ELSE %ITERATE;
