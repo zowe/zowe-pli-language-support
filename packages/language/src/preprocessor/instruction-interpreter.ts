@@ -19,7 +19,7 @@ import { CompilerOptionResult } from "./compiler-options/options";
 import { generateInstructions } from "./instruction-generator";
 import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
-import { LexingError } from "./pli-lexer";
+import { LexingIssue } from "./pli-lexer";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PreprocessorError } from "./pli-preprocessor-error";
 import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
@@ -158,7 +158,7 @@ interface InterpreterContext {
   entryUri?: URI;
   variables: Map<string, Variable>;
   result: CompilationUnitTokens;
-  errors: LexingError[];
+  errors: LexingIssue[];
   counter: Map<inst.InstructionNode, number>;
   references: ast.Reference[];
   evaluations: EvaluationResults;
@@ -169,7 +169,7 @@ interface InterpreterContext {
 
 export type InstructionInterpreterResult = CompilationUnitTokens & {
   evaluationResults: EvaluationResults;
-  errors: LexingError[];
+  errors: LexingIssue[];
   references: ast.Reference[];
 };
 
@@ -843,10 +843,13 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
 
   try {
     const content = TextDocuments.get(uri)?.getText() ?? "";
-    const processedContent = context.options.marginsProcessor.processMargins({
-      result: context.options.compilerOptions,
-      text: content,
-    });
+    const processedContent = context.options.marginsProcessor.processMargins(
+      {
+        result: context.options.compilerOptions,
+        text: content,
+      },
+      uri,
+    );
     const subState = context.options.parser.initializeState(
       processedContent,
       uri,
