@@ -1353,21 +1353,25 @@ translator.flag("goff", ["GOFF"], ["NOGOFF"]);
 translator.rule(["INCAFTER"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
-  ensureType(value, "option");
-  if (value.name.toUpperCase() !== "PROCESS") {
-    throw new TranslationError(
-      value.token,
-      `Expected "PROCESS", but received '${value.name}'.`,
-      1,
-    );
+  if (value.kind === SyntaxKind.CompilerOption) {
+    if (value.name.toUpperCase() !== "PROCESS") {
+      throw new TranslationError(
+        value.token,
+        `Expected "PROCESS", but received '${value.name}'.`,
+        1,
+      );
+    }
+    ensureArguments(value, 1, 1);
+    const processValue = value.values[0];
+    ensureType(processValue, "plain");
+    options.incAfter = {
+      process: processValue.value,
+      token: processValue.token,
+    };
+  } else {
+    ensureType(value, "plain");
+    options.incAfter = undefined;
   }
-  ensureArguments(value, 1, 1);
-  const processValue = value.values[0];
-  ensureType(processValue, "plain");
-  options.incAfter = {
-    process: processValue.value,
-    token: processValue.token,
-  };
 });
 /** {@link CompilerOptions.incDir} */
 /** {@link CompilerOptions.include} */
