@@ -33,9 +33,7 @@
 
 // @filename: main.pli
 ////*PROCESS;
-//// DCL TEST FIXED;
 
 preprocessor.expectTokens(`
   DECLARE LIB_VAR FIXED;
-  DCL TEST FIXED;
 `);
