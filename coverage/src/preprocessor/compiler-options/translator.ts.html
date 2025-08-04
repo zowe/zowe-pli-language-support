@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">70.98% </span>
+                <span class="strong">70.84% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>976/1375</span>
+                <span class='fraction'>977/1379</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">70.81% </span>
+                <span class="strong">70.54% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>182/257</span>
+                <span class='fraction'>182/258</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">70.98% </span>
+                <span class="strong">70.84% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>976/1375</span>
+                <span class='fraction'>977/1379</span>
             </div>
         
             
@@ -1763,7 +1763,11 @@
 <a name='L1698'></a><a href='#L1698'>1698</a>
 <a name='L1699'></a><a href='#L1699'>1699</a>
 <a name='L1700'></a><a href='#L1700'>1700</a>
-<a name='L1701'></a><a href='#L1701'>1701</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1701'></a><a href='#L1701'>1701</a>
+<a name='L1702'></a><a href='#L1702'>1702</a>
+<a name='L1703'></a><a href='#L1703'>1703</a>
+<a name='L1704'></a><a href='#L1704'>1704</a>
+<a name='L1705'></a><a href='#L1705'>1705</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2000,19 +2004,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">121x</span>
-<span class="cline-any cline-yes">121x</span>
-<span class="cline-any cline-yes">121x</span>
-<span class="cline-any cline-yes">121x</span>
-<span class="cline-any cline-yes">121x</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">118x</span>
+<span class="cline-any cline-yes">118x</span>
+<span class="cline-any cline-yes">118x</span>
+<span class="cline-any cline-yes">118x</span>
+<span class="cline-any cline-yes">118x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">121x</span>
+<span class="cline-any cline-yes">118x</span>
 <span class="cline-any cline-yes">95x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -2036,7 +2040,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">121x</span>
+<span class="cline-any cline-yes">118x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3133,6 +3137,10 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -4818,21 +4826,25 @@ translator.flag("goff", ["GOFF"], ["NOGOFF"]);
 translator.rule(["INCAFTER"], (option, options) =&gt; {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
-  ensureType(value, "option");
-  if (value.name.toUpperCase() !== "PROCESS") <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >    throw new TranslationError(</span>
-<span class="cstat-no" title="statement not covered" >      value.token,</span>
-<span class="cstat-no" title="statement not covered" >      `Expected "PROCESS", but received '${value.name}'.`,</span>
-<span class="cstat-no" title="statement not covered" >      1,</span>
-<span class="cstat-no" title="statement not covered" >    );</span>
+  if (value.kind === SyntaxKind.CompilerOption) {
+    if (value.name.toUpperCase() !== "PROCESS") <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
+<span class="cstat-no" title="statement not covered" >      throw new TranslationError(</span>
+<span class="cstat-no" title="statement not covered" >        value.token,</span>
+<span class="cstat-no" title="statement not covered" >        `Expected "PROCESS", but received '${value.name}'.`,</span>
+<span class="cstat-no" title="statement not covered" >        1,</span>
+<span class="cstat-no" title="statement not covered" >      );</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+    ensureArguments(value, 1, 1);
+    const processValue = value.values[0];
+    ensureType(processValue, "plain");
+    options.incAfter = {
+      process: processValue.value,
+      token: processValue.token,
+    };
+<span class="branch-0 cbranch-no" title="branch not covered" >  } else {</span>
+<span class="cstat-no" title="statement not covered" >    ensureType(value, "plain");</span>
+<span class="cstat-no" title="statement not covered" >    options.incAfter = undefined;</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
-  ensureArguments(value, 1, 1);
-  const processValue = value.values[0];
-  ensureType(processValue, "plain");
-  options.incAfter = {
-    process: processValue.value,
-    token: processValue.token,
-  };
 });
 /** {@link CompilerOptions.incDir} */
 /** {@link CompilerOptions.include} */
@@ -5170,7 +5182,7 @@ export function translateCompilerOptions(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-01T08:33:48.078Z
+                at 2025-08-04T12:13:11.752Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
