@@ -572,7 +572,7 @@ export class PliPreprocessorParser {
         CstNodeKind.DoStatement_Semicolon0,
         PreprocessorTokens.Semicolon,
       );
-      this.doSkip(state);
+      this.statements(state);
       statement.skip = true;
       statement.end = this.endStatement(state);
       state.consume(
@@ -744,31 +744,6 @@ export class PliPreprocessorParser {
       );
     }
     return statement;
-  }
-
-  private doSkip(state: PreprocessorParserState): void {
-    let nestingLevel = 0;
-    while (!state.eof) {
-      if (!state.canConsume(PreprocessorTokens.Percentage)) {
-        state.index++;
-        continue;
-      }
-      state.index++;
-
-      if (state.canConsume(PreprocessorTokens.Do)) {
-        nestingLevel++;
-      } else if (state.canConsume(PreprocessorTokens.End)) {
-        if (nestingLevel === 0) {
-          state.index--; // Get the % for the end statement.
-          break;
-        }
-        nestingLevel--;
-      }
-      // TODO ssmifi: If a *preprocessor* statement is encountered that is not valid, the parser should throw an error.
-      // For example, %xyz; is not valid, whereas xyz; is ignored.
-      // Assignments to declared pp variables are considered valid.
-      state.index++;
-    }
   }
 
   private statements(state: PreprocessorParserState): ast.Statement[] {
