@@ -24,8 +24,12 @@ import {
   CompilerOptionValue,
   SyntaxKind,
 } from "../../syntax-tree/ast";
-import { Warning as PLIWarning } from "../../validation/messages/pli-codes";
+import {
+  ParametricPLICode,
+  Warning as PLIWarning,
+} from "../../validation/messages/pli-codes";
 import { Token } from "../../parser/tokens";
+import { CompilerOptionsCodes } from "./codes";
 
 interface TranslatorRule {
   positive?: string[];
@@ -44,7 +48,7 @@ enum Applied {
   NEGATIVE = -1,
 }
 
-const PLI_CHARACTER_SET = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/i;
+const PLI_CHARACTER_SET = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/;
 
 class Translator {
   options: CompilerOptions = getDefaultCompilerOptions();
@@ -173,8 +177,8 @@ class Translator {
   reportDupeOptIssue(option: CompilerOption, name: string): void {
     this.issues.push({
       range: tokenToRange(option.token),
-      message: `Duplicate compiler option ${name}`,
-      severity: Severity.W,
+      message: CompilerOptionsCodes.DupeOptionIssue.message(name),
+      severity: CompilerOptionsCodes.DupeOptionIssue.severity,
     });
   }
 
@@ -184,8 +188,8 @@ class Translator {
   reportMutexOptIssue(option: CompilerOption, name: string): void {
     this.issues.push({
       range: tokenToRange(option.token),
-      message: `Mutually exclusive compiler options found for ${name}, only the last one will take effect.`,
-      severity: Severity.W,
+      message: CompilerOptionsCodes.MutexOptionIssue.message(name),
+      severity: CompilerOptionsCodes.MutexOptionIssue.severity,
     });
   }
 }
@@ -200,6 +204,10 @@ class TranslationError {
     this.message = message;
     this.severity = severity;
   }
+
+  static fromCode(token: Token, code: ParametricPLICode, ...args: string[]) {
+    return new TranslationError(token, code.message(...args), code.severity);
+  }
 }
 
 function ensureArguments(option: CompilerOption, min: number, max?: number) {
@@ -207,15 +215,13 @@ function ensureArguments(option: CompilerOption, min: number, max?: number) {
     option.values.length < min ||
     (max !== undefined && option.values.length > max)
   ) {
-    let message: string;
-    if (min === max) {
-      message = `Expected ${min} arguments, but received ${option.values.length}.`;
-    } else if (max === undefined) {
-      message = `Expected at least ${min} arguments, but received ${option.values.length}.`;
-    } else {
-      message = `Expected between ${min} and ${max} arguments, but received ${option.values.length}.`;
-    }
-    throw new TranslationError(option.token, message, 1);
+    throw TranslationError.fromCode(
+      option.token,
+      CompilerOptionsCodes.WrongParameterCount,
+      option.values.length.toString(),
+      min.toString(),
+      max?.toString() ?? "",
+    );
   }
 }
 
@@ -1345,10 +1351,105 @@ translator.rule(
 translator.flag("goff", ["GOFF"], ["NOGOFF"]);
 
 /** {@link CompilerOptions.goNumber} */
+translator.rule(
+  ["GONUMBER", "GN"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "plain");
+    if (value.value === "SEPARATE") {
+      options.goNumber = {
+        separate: true,
+      };
+    } else if (value.value === "NOSEPARATE") {
+      options.goNumber = {
+        separate: false,
+      };
+    } else {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.gonumber.WrongParameter,
+        value.value,
+      );
+    }
+  },
+  ["NOGONUMBER", "NGN"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.goNumber = false;
+  },
+);
+
 /** {@link CompilerOptions.graphic} */
+translator.flag("graphic", ["GRAPHIC", "GR"], ["NOGRAPHIC", "NGR"]);
+
 /** {@link CompilerOptions.header} */
+translator.rule(["HEADER"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plain");
+  const headValue = value.value.toUpperCase();
+  if (["ALL", "FILE", "FIRST", "SOURCE"].includes(headValue)) {
+    options.header = headValue as CompilerOptions.Header;
+  } else {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.header.WrongParameter,
+      value.value,
+    );
+  }
+});
+
 /** {@link CompilerOptions.hgpr} */
+translator.rule(["HGPR"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plain");
+  const hgprValue = value.value.toUpperCase();
+  if (["PRESERVE", "NOPRESERVE"].includes(hgprValue)) {
+    options.hgpr = {
+      preserve: hgprValue === "PRESERVE",
+    };
+  } else {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.hgpr.WrongParameter,
+      value.value,
+    );
+  }
+});
+
 /** {@link CompilerOptions.ignore} */
+translator.rule(
+  ["IGNORE"],
+  (option, options) => {
+    ensureArguments(option, 1);
+    options.ignore = {
+      items: [],
+    };
+    for (const opt of option.values) {
+      ensureType(opt, "plain");
+      const ignoreValue = opt.value.toUpperCase();
+      if (["ASSERT", "DISPLAY", "PUT"].includes(ignoreValue)) {
+        options.ignore!.items!.push(
+          ignoreValue as "ASSERT" | "DISPLAY" | "PUT",
+        );
+      } else {
+        throw TranslationError.fromCode(
+          opt.token,
+          CompilerOptionsCodes.ignore.WrongParameter,
+          opt.value,
+        );
+      }
+    }
+  },
+  ["NOIGNORE"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.ignore = false;
+  },
+);
+
 /** {@link CompilerOptions.incAfter} */
 translator.rule(["INCAFTER"], (option, options) => {
   ensureArguments(option, 1, 1);
@@ -1369,6 +1470,7 @@ translator.rule(["INCAFTER"], (option, options) => {
     token: processValue.token,
   };
 });
+
 /** {@link CompilerOptions.incDir} */
 /** {@link CompilerOptions.include} */
 /** {@link CompilerOptions.incPds} */

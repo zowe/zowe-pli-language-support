@@ -12,12 +12,13 @@
 import { CompletionKeywords } from "../../src/language-server/completion/keywords";
 import { Diagnostic } from "../../src/language-server/types";
 import { InternalCodes, PLICodes } from "../../src/validation/messages";
-import { ExpectedCompletion, TestBuilder } from "../test-builder";
+import { ExpectedCompletion, Label, TestBuilder } from "../test-builder";
 import { type Severity } from "../../src/language-server/types";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
 import { PliMarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
+import { CompilerOptionsCodes } from "../../src/preprocessor/compiler-options/codes";
+import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
 
-type Label = string | number;
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
 export interface HarnessTesterInterface {
@@ -72,6 +73,12 @@ export interface HarnessTesterInterface {
     noDiagnostics(label?: string | number): void;
 
     /**
+     * Expect that the compilation unit has no diagnostics apart from the given regexes.
+     * @param regexes The regexes to expect no diagnostics apart from.
+     */
+    noDiagnosticsExcept(regexes: RegExp[]): void;
+
+    /**
      * Expect that the given function throws an error.
      *
      * @param fn The function that should throw an error.
@@ -82,6 +89,12 @@ export interface HarnessTesterInterface {
      * ```
      */
     expectToThrow(fn: () => void, messageToThrow?: string): void;
+
+    /**
+     * Expect that the compiler options are set to the given options.
+     * @param expectedOptions The expected compiler options.
+     */
+    expectCompilerOptions(expectedOptions: Partial<CompilerOptions>): void;
   };
 
   linker: {
@@ -173,6 +186,7 @@ export interface HarnessTesterInterface {
         ErrorRight: typeof PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT;
       };
     };
+    CompilerOptions: typeof CompilerOptionsCodes;
   };
 
   constants: {

@@ -9,12 +9,13 @@
  *
  */
 
+import { Severity } from "../../language-server/types";
 import { ParametricPLICode } from "./pli-codes";
 
 export const Internal = {
   DiagnosticURIMismatch: {
     code: "_TB0001", // TestBuilder diagnostic code
-    severity: "E",
+    severity: Severity.E,
     message: (label: string, file: string, uri: string) =>
       `Expected diagnostic at label "${label}" to be in file "${file}" but received: ${uri}`,
     fullCode: "_TB0001E",
