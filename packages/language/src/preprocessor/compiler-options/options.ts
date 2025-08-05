@@ -237,7 +237,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-incpds
    */
-  incPds?: string | false;
+  incPds?: CompilerOptions.IncPds | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-initauto
    */
@@ -257,7 +257,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-insource
    */
-  inSource?: CompilerOptions.InSource;
+  inSource?: CompilerOptions.InSource | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-interrupt
    */
@@ -716,13 +716,18 @@ export declare namespace CompilerOptions {
     token?: Token;
   }
   export interface IncDir {
-    directory: string;
+    directories: string[];
   }
+
+  export interface IncPds {
+    pds: string[];
+  }
+
   export interface InitAuto {
     length?: Length;
   }
   export interface InSource {
-    type: "FULL" | "SHORT" | "ALL" | "FIRST";
+    type?: "FULL" | "SHORT" | "ALL" | "FIRST";
   }
   export interface Json {
     case?: "UPPER" | "LOWER" | "ASIS";

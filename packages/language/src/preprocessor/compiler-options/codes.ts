@@ -43,6 +43,34 @@ export const CompilerOptionsCodes = {
     fullCode: "_COOP03W",
   } as ParametricPLICode,
 
+  ExpectedOption: {
+    code: "_COOP04",
+    severity: Severity.W,
+    message: (name: string) => `Expected a compiler option with arguments.`,
+    fullCode: "_COOP04W",
+  } as ParametricPLICode,
+
+  ExpectedPlain: {
+    code: "_COOP05",
+    severity: Severity.W,
+    message: (name: string) => `Expected a plain text value.`,
+    fullCode: "_COOP05W",
+  } as ParametricPLICode,
+
+  ExpectedString: {
+    code: "_COOP06",
+    severity: Severity.W,
+    message: (name: string) => `Expected a string value.`,
+    fullCode: "_COOP06W",
+  } as ParametricPLICode,
+
+  ExpectedPlainOrString: {
+    code: "_COOP07",
+    severity: Severity.W,
+    message: (name: string) => `Expected a plain text or string value.`,
+    fullCode: "_COOP07W",
+  } as ParametricPLICode,
+
   gonumber: {
     WrongParameter: {
       code: "_COGN01",
@@ -80,6 +108,26 @@ export const CompilerOptionsCodes = {
       message: (value: string) =>
         `Expected "ASSERT", "DISPLAY" or "PUT", but received '${value}'.`,
       fullCode: "_COIG01W",
+    } as ParametricPLICode,
+  },
+
+  initAuto: {
+    WrongParameter: {
+      code: "_COIA01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "SHORT" or "FULL", but received '${value}'.`,
+      fullCode: "_COIA01W",
+    } as ParametricPLICode,
+  },
+
+  inSource: {
+    WrongParameter: {
+      code: "_COIS01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "FULL", "SHORT", "ALL" or "FIRST", but received '${value}'.`,
+      fullCode: "_COIS01W",
     } as ParametricPLICode,
   },
 };

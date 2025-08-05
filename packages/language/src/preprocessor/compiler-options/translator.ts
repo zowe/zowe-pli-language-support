@@ -43,7 +43,7 @@ type Translate = (option: CompilerOption, options: CompilerOptions) => void;
 /**
  * Tracks how a rule is applied, either positively or negatively
  */
-enum Applied {
+enum RuleAlignment {
   POSITIVE = 1,
   NEGATIVE = -1,
 }
@@ -58,7 +58,7 @@ class Translator {
    * Translator rules that have been applied to the current options,
    * along w/ info on whether they were applied positively or negatively
    */
-  appliedRules = new Map<TranslatorRule, Applied>();
+  appliedRules = new Map<TranslatorRule, RuleAlignment>();
 
   private rules: TranslatorRule[] = [];
 
@@ -101,53 +101,14 @@ class Translator {
   /**
    * Assumes a rule has been applied, checks if it was applied positively
    */
-  isRuleAppliedPositively(rule: TranslatorRule): boolean {
-    return this.appliedRules.get(rule) === Applied.POSITIVE;
+  isRuleAlignedWith(rule: TranslatorRule, alignment: RuleAlignment): boolean {
+    return this.appliedRules.get(rule) === alignment;
   }
 
   translate(option: CompilerOption) {
     const name = option.name.toUpperCase();
-    let found = false;
 
-    try {
-      for (const rule of this.rules) {
-        if (rule.positive && rule.positive.includes(name)) {
-          found = true;
-          rule.positiveTranslate?.(option, this.options);
-
-          if (!this.isRuleApplied(rule)) {
-            // new application
-            this.appliedRules.set(rule, Applied.POSITIVE);
-          } else if (this.isRuleAppliedPositively(rule)) {
-            // duplicate application (pos)
-            this.reportDupeOptIssue(option, name);
-          } else {
-            // mutex application
-            this.reportMutexOptIssue(option, name);
-          }
-          return;
-        }
-
-        if (rule.negative && rule.negative.includes(name)) {
-          found = true;
-          rule.negativeTranslate?.(option, this.options);
-
-          if (!this.isRuleApplied(rule)) {
-            // new application
-            this.appliedRules.set(rule, Applied.NEGATIVE);
-          } else if (!this.isRuleAppliedPositively(rule)) {
-            // duplicate application (neg)
-            this.reportDupeOptIssue(option, name);
-          } else {
-            // mutex application
-            this.reportMutexOptIssue(option, name);
-          }
-
-          return;
-        }
-      }
-    } catch (err) {
-      // We create a new diagnostic for the error
+    const reportError = (err: unknown) => {
       if (err instanceof TranslationError) {
         this.issues.push({
           range: tokenToRange(err.token),
@@ -160,9 +121,36 @@ class Translator {
           String(err),
         );
       }
-    }
+    };
 
-    if (!found) {
+    const rule = this.rules.find(
+      (r) => r.positive?.includes(name) || r.negative?.includes(name),
+    );
+
+    if (rule) {
+      const alignment =
+        rule.positive && rule.positive.includes(name)
+          ? RuleAlignment.POSITIVE
+          : RuleAlignment.NEGATIVE;
+      const translate =
+        alignment === RuleAlignment.POSITIVE
+          ? rule.positiveTranslate
+          : rule.negativeTranslate;
+
+      if (!this.isRuleApplied(rule)) {
+        this.appliedRules.set(rule, alignment);
+      } else if (this.isRuleAlignedWith(rule, alignment)) {
+        this.reportDupeOptIssue(option, name);
+      } else {
+        this.reportMutexOptIssue(option, name);
+      }
+
+      try {
+        translate?.(option, this.options);
+      } catch (err) {
+        reportError(err);
+      }
+    } else {
       this.issues.push({
         range: tokenToRange(option.token),
         message: PLIWarning.IBM1159I.message(option.name),
@@ -249,7 +237,7 @@ function ensureType(
     if (value.kind !== SyntaxKind.CompilerOption) {
       throw new TranslationError(
         value.token,
-        `Expected a compiler option with arguments.`,
+        CompilerOptionsCodes.ExpectedOption.message(),
         1,
       );
     }
@@ -257,13 +245,17 @@ function ensureType(
     if (value.kind !== SyntaxKind.CompilerOptionText) {
       throw new TranslationError(
         value.token,
-        `Expected a plain text value.`,
+        CompilerOptionsCodes.ExpectedPlain.message(),
         1,
       );
     }
   } else if (type === "string") {
     if (value.kind !== SyntaxKind.CompilerOptionString) {
-      throw new TranslationError(value.token, `Expected a string value.`, 1);
+      throw new TranslationError(
+        value.token,
+        CompilerOptionsCodes.ExpectedString.message(),
+        1,
+      );
     }
   } else if (type === "plainOrString") {
     if (
@@ -272,7 +264,7 @@ function ensureType(
     ) {
       throw new TranslationError(
         value.token,
-        `Expected a plain text or string value.`,
+        CompilerOptionsCodes.ExpectedPlainOrString.message(),
         1,
       );
     }
@@ -1476,14 +1468,120 @@ translator.rule(["INCAFTER"], (option, options) => {
 });
 
 /** {@link CompilerOptions.incDir} */
+translator.rule(
+  ["INCDIR"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    if (!options.incDir) {
+      options.incDir = {
+        directories: [],
+      };
+    }
+    options.incDir.directories.push(value.value);
+  },
+  ["NOINCDIR"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.incDir = false;
+  },
+);
+
 /** {@link CompilerOptions.include} */
+translator.flag("include", ["INCLUDE"], ["NOINCLUDE"]);
+
 /** {@link CompilerOptions.incPds} */
+translator.rule(
+  ["INCPDS"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    if (!options.incPds) {
+      options.incPds = {
+        pds: [],
+      };
+    }
+    options.incPds.pds.push(value.value);
+  },
+  ["NOINCPDS"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.incPds = false;
+  },
+);
+
 /** {@link CompilerOptions.initAuto} */
+translator.rule(
+  ["INITAUTO"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      // TODO ssmifi: The spec does not say which one is the default.
+      options.initAuto = {};
+    } else {
+      ensureType(option.values[0], "plain");
+      const value = option.values[0].value.toUpperCase();
+      if (["SHORT", "FULL"].includes(value)) {
+        options.initAuto = {
+          length: value as CompilerOptions.InitAuto["length"],
+        };
+      } else {
+        throw TranslationError.fromCode(
+          option.values[0].token,
+          CompilerOptionsCodes.initAuto.WrongParameter,
+          option.values[0].value,
+        );
+      }
+    }
+  },
+  ["NOINITAUTO"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.initAuto = false;
+  },
+);
+
 /** {@link CompilerOptions.initBased} */
+translator.flag("initBased", ["INITBASED"], ["NOINITBASED"]);
+
 /** {@link CompilerOptions.initCtl} */
+translator.flag("initCtl", ["INITCTL"], ["NOINITCTL"]);
+
 /** {@link CompilerOptions.initStatic} */
+translator.flag("initStatic", ["INITSTATIC"], ["NOINITSTATIC"]);
+
 /** {@link CompilerOptions.inSource} */
+translator.rule(
+  ["INSOURCE"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    options.inSource = {};
+    if (option.values.length > 0) {
+      ensureType(option.values[0], "plain");
+      const value = option.values[0].value.toUpperCase();
+      if (["FULL", "SHORT", "ALL", "FIRST"].includes(value)) {
+        options.inSource!.type = value as CompilerOptions.InSource["type"];
+      } else {
+        throw TranslationError.fromCode(
+          option.values[0].token,
+          CompilerOptionsCodes.inSource.WrongParameter,
+          option.values[0].value,
+        );
+      }
+    }
+  },
+  ["NOINSOURCE"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.inSource = false;
+  },
+);
+
 /** {@link CompilerOptions.interrupt} */
+translator.flag("interrupt", ["INTERRUPT"], ["NOINTERRUPT"]);
+
 /** {@link CompilerOptions.json} */
 /** {@link CompilerOptions.langlvl} */
 /** {@link CompilerOptions.limits} */
