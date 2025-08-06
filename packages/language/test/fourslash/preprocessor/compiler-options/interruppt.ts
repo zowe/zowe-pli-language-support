@@ -15,15 +15,21 @@
 ////*PROCESS NOINTERRUPT;
 ////*PROCESS <|1:INTERRUPT|>();
 ////*PROCESS <|2:INTERRUPT|>;
+////*PROCESS <|3:NINT|>;
+////*PROCESS <|4:INT|>;
 
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.InvalidParameterCount.message(1, 0, 0),
+});
 verify.expectDiagnosticsAt([1, 2], {
   message: code.CompilerOptions.MutexOptionIssue.message("INTERRUPT"),
 });
-
-verify.expectDiagnosticsAt(1, {
-  message: code.CompilerOptions.WrongParameterCount.message("1", "0", "0"),
+verify.expectDiagnosticsAt(4, {
+  message: code.CompilerOptions.MutexOptionIssue.message("INT"),
 });
-
+verify.expectDiagnosticsAt(3, {
+  message: code.CompilerOptions.DupeOptionIssue.message("NINT"),
+});
 verify.expectCompilerOptions({
   interrupt: true,
 });

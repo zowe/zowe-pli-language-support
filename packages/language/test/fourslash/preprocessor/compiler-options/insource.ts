@@ -21,15 +21,12 @@
 verify.expectDiagnosticsAt([1, 2, 4, 6], {
   message: code.CompilerOptions.MutexOptionIssue.message("INSOURCE"),
 });
-
 verify.expectDiagnosticsAt(3, {
-  message: code.CompilerOptions.inSource.WrongParameter.message("INVALID"),
+  message: code.CompilerOptions.InSource.InvalidParameter.message("INVALID"),
 });
-
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.ExpectedPlain.message(),
 });
-
 verify.expectCompilerOptions({
   inSource: {
     type: "FULL",

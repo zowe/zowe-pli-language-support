@@ -21,11 +21,9 @@
 verify.expectDiagnosticsAt([1, 3, 5, 6], {
   message: code.CompilerOptions.MutexOptionIssue.message("INCDIR"),
 });
-
 verify.expectDiagnosticsAt(2, {
   message: code.CompilerOptions.ExpectedString.message(),
 });
-
 verify.expectCompilerOptions({
   incDir: {
     directories: ["lib", "lib2"],

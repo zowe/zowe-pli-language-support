@@ -22,21 +22,15 @@
 verify.expectDiagnosticsAt([1, 2, 4, 6, 8], {
   message: code.CompilerOptions.MutexOptionIssue.message("INITAUTO"),
 });
-
 verify.expectDiagnosticsAt(3, {
-  message: code.CompilerOptions.initAuto.WrongParameter.message(""),
+  message: code.CompilerOptions.InitAuto.InvalidParameter.message(""),
 });
-
 verify.expectDiagnosticsAt(7, {
-  message: code.CompilerOptions.initAuto.WrongParameter.message("LONG"),
+  message: code.CompilerOptions.InitAuto.InvalidParameter.message("LONG"),
 });
-
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.ExpectedPlain.message(),
 });
-
 verify.expectCompilerOptions({
-  initAuto: {
-    length: "FULL",
-  },
+  initAuto: "FULL",
 });

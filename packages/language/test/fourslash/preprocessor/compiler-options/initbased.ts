@@ -19,11 +19,9 @@
 verify.expectDiagnosticsAt([1, 2], {
   message: code.CompilerOptions.MutexOptionIssue.message("INITBASED"),
 });
-
 verify.expectDiagnosticsAt(1, {
-  message: code.CompilerOptions.WrongParameterCount.message("1", "0", "0"),
+  message: code.CompilerOptions.InvalidParameterCount.message(1, 0, 0),
 });
-
 verify.expectCompilerOptions({
   initBased: true,
 });

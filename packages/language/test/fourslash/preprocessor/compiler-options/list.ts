@@ -12,16 +12,16 @@
 /// <reference path="../../framework.ts" />
 
 // @wrap: process
-////*PROCESS NOINCLUDE;
-////*PROCESS <|1:INCLUDE|>;
-////*PROCESS <|2:INCLUDE|>(INVALID);
+////*PROCESS NOLIST;
+////*PROCESS <|1:LIST|>();
+////*PROCESS <|2:LIST|>;
 
-verify.expectDiagnosticsAt([1, 2], {
-  message: code.CompilerOptions.MutexOptionIssue.message("INCLUDE"),
-});
-verify.expectDiagnosticsAt(2, {
+verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.InvalidParameterCount.message(1, 0, 0),
 });
+verify.expectDiagnosticsAt([1, 2], {
+  message: code.CompilerOptions.MutexOptionIssue.message("LIST"),
+});
 verify.expectCompilerOptions({
-  include: true,
+  list: true,
 });

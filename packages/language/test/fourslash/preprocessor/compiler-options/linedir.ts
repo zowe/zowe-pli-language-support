@@ -12,16 +12,16 @@
 /// <reference path="../../framework.ts" />
 
 // @wrap: process
-////*PROCESS NOINCLUDE;
-////*PROCESS <|1:INCLUDE|>;
-////*PROCESS <|2:INCLUDE|>(INVALID);
+////*PROCESS NOLINEDIR;
+////*PROCESS <|1:LINEDIR|>();
+////*PROCESS <|2:LINEDIR|>;
 
-verify.expectDiagnosticsAt([1, 2], {
-  message: code.CompilerOptions.MutexOptionIssue.message("INCLUDE"),
-});
-verify.expectDiagnosticsAt(2, {
+verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.InvalidParameterCount.message(1, 0, 0),
 });
+verify.expectDiagnosticsAt([1, 2], {
+  message: code.CompilerOptions.MutexOptionIssue.message("LINEDIR"),
+});
 verify.expectCompilerOptions({
-  include: true,
+  lineDir: true,
 });

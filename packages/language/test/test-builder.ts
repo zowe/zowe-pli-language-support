@@ -451,15 +451,22 @@ export class TestBuilder {
     return this;
   }
 
-  expectNoDiagnosticsAt(label: string): TestBuilder {
-    const { exactMatches } = this.getMatchingDiagnostics(label);
+  expectNoDiagnosticsAt(label: Label): TestBuilder {
+    if (Array.isArray(label)) {
+      for (const l of label) {
+        this.expectNoDiagnosticsAt(l);
+      }
+      return this;
+    }
+
+    const { exactMatches } = this.getMatchingDiagnostics(label.toString());
 
     if (exactMatches.length > 0) {
       const message = exactMatches
         .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
         .join("\n- ");
       fail(
-        `Expected no diagnostics at label "${label}" (${this.createLabelRangeMessage(label)}) but received:\n- ${message}`,
+        `Expected no diagnostics at label "${label}" (${this.createLabelRangeMessage(label.toString())}) but received:\n- ${message}`,
       );
     }
 

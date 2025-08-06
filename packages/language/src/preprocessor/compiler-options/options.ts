@@ -305,7 +305,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-margini
    */
-  margini?: CompilerOptions.Margini;
+  margini?: CompilerOptions.Margini | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-margins
    */
@@ -317,7 +317,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxinit
    */
-  maxinit?: string;
+  maxinit?: number;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxgen
    */
@@ -329,7 +329,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxmsg
    */
-  maxmsg?: (CompilerOptions.Flag | number)[];
+  maxmsg?: CompilerOptions.MaxMsg;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxnest
    */
@@ -572,18 +572,6 @@ export interface CompilerOptions {
   xRef?: CompilerOptions.XRef;
 }
 
-const defaultCompilerOptions: CompilerOptions = {
-  system: "MVS",
-  sysParm: "",
-};
-
-/**
- * Returns a fresh copy of the default compiler options.
- */
-export function getDefaultCompilerOptions(): CompilerOptions {
-  return { ...defaultCompilerOptions };
-}
-
 export declare namespace CompilerOptions {
   export type Length = "SHORT" | "FULL";
   export interface Attributes {
@@ -723,9 +711,7 @@ export declare namespace CompilerOptions {
     pds: string[];
   }
 
-  export interface InitAuto {
-    length?: Length;
-  }
+  export type InitAuto = "SHORT" | "FULL" | false;
   export interface InSource {
     type?: "FULL" | "SHORT" | "ALL" | "FIRST";
   }
@@ -736,18 +722,19 @@ export declare namespace CompilerOptions {
     trimr?: boolean;
     parse?: "V1" | "V2";
   }
-  export interface LangLvl {
-    os?: boolean;
-    noext?: boolean;
-  }
+  export type LangLvl = "OS" | "NOEXT";
   export interface Limits {
     extname?: number;
-    fixedDec?: {
-      max?: number;
+    fixedBin?: {
       min?: number;
+      max?: number;
+    };
+    fixedDec?: {
+      min?: number;
+      max?: number;
     };
     name?: number;
-    string?: string;
+    string?: number;
   }
   export type ListView =
     | "SOURCE"
@@ -756,7 +743,6 @@ export declare namespace CompilerOptions {
     | "AFTERMACRO"
     | "AFTERSQL";
   export interface Margini {
-    active: boolean;
     character: string;
   }
   export interface Margins {
@@ -783,6 +769,10 @@ export declare namespace CompilerOptions {
      * Specifying MARGINS(,,c) is an alternative to using %PAGE and %SKIP statements .
      */
     c?: string;
+  }
+  export interface MaxMsg {
+    severity: Flag;
+    n: number;
   }
   export interface MaxNest {
     /**
@@ -1099,4 +1089,52 @@ export declare namespace CompilerOptions {
     length?: Length;
     structure?: "EXPLICIT" | "IMPLICIT";
   };
+}
+
+const $1K = 1024;
+const $1M = 1024 * 1024;
+
+const defaultCompilerOptions: CompilerOptions = {
+  json: {
+    case: "UPPER",
+    get: "HEEDCASE",
+    parse: "V1",
+    trimr: true,
+  },
+  limits: {
+    extname: 7,
+    fixedBin: {
+      min: 31,
+      max: 63,
+    },
+    fixedDec: {
+      min: 15,
+      max: 31,
+    },
+    name: 100,
+    string: 32 * $1K,
+  },
+  lineCount: 31415,
+  initAuto: "FULL",
+  margins: {
+    m: 2,
+    n: 72,
+  },
+  maxbranch: 2000,
+  maxinit: 64 * $1K,
+  maxgen: 100000,
+  maxmem: $1M,
+  maxmsg: {
+    severity: "W",
+    n: 250,
+  },
+  system: "MVS",
+  sysParm: "",
+};
+
+/**
+ * Returns a fresh copy of the default compiler options.
+ */
+export function getDefaultCompilerOptions(): CompilerOptions {
+  return { ...defaultCompilerOptions };
 }

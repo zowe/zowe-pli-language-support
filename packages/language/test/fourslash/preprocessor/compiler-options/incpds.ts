@@ -21,15 +21,12 @@
 verify.expectDiagnosticsAt([1, 2, 4, 5], {
   message: code.CompilerOptions.MutexOptionIssue.message("INCPDS"),
 });
-
 verify.expectDiagnosticsAt(1, {
-  message: code.CompilerOptions.WrongParameterCount.message("0", "1", "1"),
+  message: code.CompilerOptions.InvalidParameterCount.message(0, 1, 1),
 });
-
 verify.expectDiagnosticsAt(3, {
   message: code.CompilerOptions.ExpectedString.message(),
 });
-
 verify.expectCompilerOptions({
   incPds: {
     pds: ["PDSName", "PDSName2"],
