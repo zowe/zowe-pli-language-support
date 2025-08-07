@@ -544,10 +544,44 @@ export class PliPreprocessorParser {
     return directive;
   }
 
+  endStatement(state: PreprocessorParserState): ast.EndStatement {
+    const statement = ast.createEndStatement();
+
+    state.consumeKeyword(
+      statement,
+      CstNodeKind.EndStatement_END,
+      PreprocessorTokens.End,
+    );
+
+    return statement;
+  }
+
   doStatement(state: PreprocessorParserState): ast.DoStatement {
     const statement = ast.createDoStatement();
     state.consume(statement, CstNodeKind.DoStatement_DO, PreprocessorTokens.Do);
-    if (state.canConsumeKeyword(PreprocessorTokens.While)) {
+
+    if (state.canConsume(PreprocessorTokens.Skip)) {
+      // skip command
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_SKIP,
+        PreprocessorTokens.Skip,
+      );
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon0,
+        PreprocessorTokens.Semicolon,
+      );
+      this.statements(state);
+      statement.skip = true;
+      statement.end = this.endStatement(state);
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon1,
+        PreprocessorTokens.Semicolon,
+      );
+      return statement;
+    } else if (state.canConsume(PreprocessorTokens.While)) {
       //type-2-do-while-first
       const type2 = this.doWhile(state);
       state.consume(
@@ -558,18 +592,14 @@ export class PliPreprocessorParser {
       const body = this.statements(state);
       statement.doType2 = type2;
       statement.statements = body;
-      state.consumeKeyword(
-        statement,
-        CstNodeKind.EndStatement_END,
-        PreprocessorTokens.End,
-      );
+      statement.end = this.endStatement(state);
       state.consume(
         statement,
         CstNodeKind.DoStatement_Semicolon1,
         PreprocessorTokens.Semicolon,
       );
       return statement;
-    } else if (state.canConsumeKeyword(PreprocessorTokens.Until)) {
+    } else if (state.canConsume(PreprocessorTokens.Until)) {
       //type-2-do-until-first
       const type2 = this.doUntil(state);
       state.consume(
@@ -580,11 +610,7 @@ export class PliPreprocessorParser {
       const body = this.statements(state);
       statement.doType2 = type2;
       statement.statements = body;
-      state.consumeKeyword(
-        statement,
-        CstNodeKind.EndStatement_END,
-        PreprocessorTokens.End,
-      );
+      statement.end = this.endStatement(state);
       state.consume(
         statement,
         CstNodeKind.DoStatement_Semicolon1,
@@ -592,7 +618,7 @@ export class PliPreprocessorParser {
       );
       return statement;
     } else if (
-      state.tryConsumeKeyword(
+      state.tryConsume(
         statement,
         CstNodeKind.DoStatement_LOOP,
         PreprocessorTokens.Loop,
@@ -607,11 +633,7 @@ export class PliPreprocessorParser {
       );
       const body = this.statements(state);
       statement.statements = body;
-      state.consumeKeyword(
-        statement,
-        CstNodeKind.EndStatement_END,
-        PreprocessorTokens.End,
-      );
+      statement.end = this.endStatement(state);
       state.consume(
         statement,
         CstNodeKind.DoStatement_Semicolon1,
@@ -628,11 +650,7 @@ export class PliPreprocessorParser {
       //type-1-do
       const statements = this.statements(state);
       statement.statements = statements;
-      state.consumeKeyword(
-        statement,
-        CstNodeKind.EndStatement_END,
-        PreprocessorTokens.End,
-      );
+      statement.end = this.endStatement(state);
       state.consume(
         statement,
         CstNodeKind.DoStatement_Semicolon1,
@@ -650,7 +668,7 @@ export class PliPreprocessorParser {
 
   private doWhile(state: PreprocessorParserState): ast.DoWhile {
     const statement = ast.createDoWhile();
-    state.consumeKeyword(
+    state.consume(
       statement,
       CstNodeKind.DoWhile_WHILE,
       PreprocessorTokens.While,
@@ -667,7 +685,7 @@ export class PliPreprocessorParser {
       PreprocessorTokens.RParen,
     );
     if (
-      state.tryConsumeKeyword(
+      state.tryConsume(
         statement,
         CstNodeKind.DoWhile_UNTIL,
         PreprocessorTokens.Until,
@@ -690,7 +708,7 @@ export class PliPreprocessorParser {
 
   private doUntil(state: PreprocessorParserState): ast.DoUntil {
     const statement = ast.createDoUntil();
-    state.consumeKeyword(
+    state.consume(
       statement,
       CstNodeKind.DoUntil_UNTIL,
       PreprocessorTokens.Until,
@@ -707,7 +725,7 @@ export class PliPreprocessorParser {
       PreprocessorTokens.RParen,
     );
     if (
-      state.tryConsumeKeyword(
+      state.tryConsume(
         statement,
         CstNodeKind.DoUntil_WHILE,
         PreprocessorTokens.While,

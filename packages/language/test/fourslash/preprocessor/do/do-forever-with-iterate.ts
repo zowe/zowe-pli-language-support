@@ -9,19 +9,16 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 //// %declare A fixed;
 //// %A = 3;
-//// %DO %FOREVER;
-////   dcl X%;A fixed;
+//// %DO FOREVER;
 ////   %A = A - 1;
 ////   %IF A = 0 %THEN %LEAVE;
+////   %ELSE %ITERATE;
+////   dcl X%;A fixed;
 //// %END;
 ////
 
-preprocessor.expectTokens(`
-  dcl X3 fixed;
-  dcl X2 fixed;
-  dcl X1 fixed;  
-`);
+preprocessor.expectTokens([]);

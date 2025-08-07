@@ -9,16 +9,17 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// %declare A fixed;
-//// %A = 3;
-//// %myLoop: DO;
-////   %A = A - 1;
-////   %IF A <> 0 %THEN %GO TO myLoop;
-////   DCL X%;A FIXED;
+//// %DCL X FIXED;
+//// %X = 1;
+//// %DO SKIP;
+////   invalid_code;
+////   WHILE(X <= 3);
+////   %X = X + 1;
 //// %END;
+//// DCL Variable%;X FIXED;
 
 preprocessor.expectTokens(`
-  DCL X0 FIXED;
+    DCL Variable1 FIXED;
 `);
