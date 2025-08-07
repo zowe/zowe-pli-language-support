@@ -1208,6 +1208,7 @@ export interface DoStatement extends AstNode {
   doType2: DoType2 | null;
   doType3: DoType3 | null;
   doType4: boolean;
+  skip: boolean;
 }
 export function createDoStatement(): DoStatement {
   return {
@@ -1218,6 +1219,7 @@ export function createDoStatement(): DoStatement {
     doType2: null,
     doType3: null,
     doType4: false,
+    skip: false,
   };
 }
 export interface DoType3 extends AstNode {
@@ -1269,6 +1271,15 @@ export interface EndStatement extends AstNode {
   kind: SyntaxKind.EndStatement;
   labels: LabelPrefix[];
   label: LabelReference | null;
+}
+
+export function createEndStatement(): EndStatement {
+  return {
+    kind: SyntaxKind.EndStatement,
+    container: null,
+    labels: [],
+    label: null,
+  };
 }
 export interface EntryAttribute extends AstNode {
   kind: SyntaxKind.EntryAttribute;

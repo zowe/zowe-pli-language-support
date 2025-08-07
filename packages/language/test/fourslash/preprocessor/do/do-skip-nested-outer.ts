@@ -9,14 +9,15 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// %DCL VAR CHARACTER;
-//// %VAR = "A";
-//// %DO %FOREVER;
-////   %LEAVE;
-////   VAR = "B";
+//// %DCL X FIXED;
+//// %X = 1;
+//// %DO SKIP;
+////   %DO FOREVER;
+////     DCL Variable%;X FIXED;
+////     %LEAVE;
+////   %END;
 //// %END;
-//// DCL VAR CHARACTER;
 
-preprocessor.expectTokens(" DCL A CHARACTER;");
+preprocessor.expectTokens(``);

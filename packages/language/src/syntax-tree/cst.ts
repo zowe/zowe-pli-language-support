@@ -234,6 +234,7 @@ export enum CstNodeKind {
   DoStatement_LOOP,
   DoStatement_Semicolon0,
   DoStatement_Semicolon1,
+  DoStatement_SKIP,
   DoWhile_WHILE,
   DoWhile_OpenParenWhile,
   DoWhile_CloseParenWhile,
