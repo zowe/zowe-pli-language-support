@@ -1567,17 +1567,9 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.BeginStatement>();
   });
-  private createEndStatement(): ast.EndStatement {
-    return {
-      kind: ast.SyntaxKind.EndStatement,
-      container: null,
-      labels: [],
-      label: null,
-    };
-  }
 
   EndStatement = this.RULE("EndStatement", () => {
-    let element = this.push(this.createEndStatement());
+    let element = this.push(ast.createEndStatement());
 
     this.MANY1(() => {
       this.SUBRULE_ASSIGN1(this.LabelPrefix, {

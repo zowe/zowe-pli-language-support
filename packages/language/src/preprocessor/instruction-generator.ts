@@ -327,6 +327,9 @@ function generateDoInstruction(
   node: ast.DoStatement,
   context: GenerateInstructionContext,
 ): inst.DoInstruction | undefined {
+  if (node.skip) {
+    return undefined;
+  }
   const { head, last } = generateInstructionList(node.statements, context);
   if (!head || !last) {
     return undefined;
