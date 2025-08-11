@@ -864,8 +864,8 @@ export class PliPreprocessorParser {
       PreprocessorTokens.Id,
     );
     reference.ref = ast.createReference(reference, variable, true);
-    variable.payload.kind = CstNodeKind.ReferenceItem_Ref;
-    variable.payload.element = reference;
+    variable.kind = CstNodeKind.ReferenceItem_Ref;
+    variable.element = reference;
     if (withDimensions && state.canConsume(PreprocessorTokens.LParen)) {
       reference.dimensions = this.dimensions(state);
     }

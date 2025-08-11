@@ -16,7 +16,7 @@ import {
   AbstractCompilerOptions,
 } from "./compiler-options/parser";
 import { translateCompilerOptions } from "./compiler-options/translator";
-import { createSyntheticTokenInstance, PROCESS, Token } from "../parser/tokens";
+import { createTokenInstance, PROCESS, Token } from "../parser/tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI } from "../utils/uri";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
@@ -158,17 +158,8 @@ export class CompilerOptionsProcessor {
       const processStart = directiveStart + 1; // Skip the % or *
       const tokenEnd = processStart + "PROCESS".length;
 
-      const token = createSyntheticTokenInstance(
-        PROCESS,
-        text.substring(directiveStart, tokenEnd),
-      );
-      token.startOffset = directiveStart;
-      token.endOffset = tokenEnd;
-      token.payload = {
-        uri,
-        kind: CstNodeKind.ProcessDirective_PROCESS,
-        element: undefined,
-      };
+      const token = createTokenInstance(text.substring(directiveStart, tokenEnd), PROCESS, directiveStart, tokenEnd, uri);
+      token.kind = CstNodeKind.ProcessDirective_PROCESS;
 
       ranges.push({
         token,

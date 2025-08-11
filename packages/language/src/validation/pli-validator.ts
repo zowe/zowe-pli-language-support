@@ -311,7 +311,7 @@ export class PliValidator implements Validator {
     }
 
     // Check if the reference item is a builtin.
-    if (node.ref?.node?.nameToken?.payload.uri?.scheme !== BuiltinsUriSchema) {
+    if (node.ref?.node?.nameToken?.uri?.scheme !== BuiltinsUriSchema) {
       return;
     }
 

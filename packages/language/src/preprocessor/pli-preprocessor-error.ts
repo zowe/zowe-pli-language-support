@@ -51,7 +51,7 @@ export class PreprocessorError implements LexingIssue {
           start: range.startOffset,
           end: range.endOffset + 1,
         };
-        this._uri = range.payload.uri;
+        this._uri = range.uri;
       }
     }
     this._uri ??= uri;

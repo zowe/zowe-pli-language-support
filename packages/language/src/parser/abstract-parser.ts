@@ -84,8 +84,8 @@ export class AbstractParser extends EmbeddedActionsParser {
     if (isNaN(token.startOffset)) {
       return;
     }
-    token.payload.kind = kind;
-    token.payload.element = element;
+    token.kind = kind;
+    token.element = element;
   }
 
   private stack: any[] = [];
@@ -384,7 +384,7 @@ export function constructBinaryExpression(
     right: rightTree,
   };
 
-  operatorToken.payload.element = result;
+  operatorToken.element = result;
 
   return result;
 }

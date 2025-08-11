@@ -11,7 +11,7 @@
 
 import { TokenType } from "chevrotain";
 import { URI } from "../utils/uri";
-import { createSyntheticTokenInstance, Token } from "../parser/tokens";
+import { createTokenInstance, Token } from "../parser/tokens";
 
 export interface PreprocessorLexerState {
   currentChar(): number;
@@ -143,10 +143,7 @@ export class PliPreprocessorLexerState implements PreprocessorLexerState {
     const endOffset = Selectors.position(this.plainState);
     // ATTENTION: mind the -1 for end offset, we do not want to consume the next tokens range!
     // Note that we don't need line/column information for our LSP implementation
-    const token = createSyntheticTokenInstance(tokenType, image);
-    token.startOffset = startOffset;
-    token.endOffset = endOffset - 1;
-    token.payload.uri = this.plainState.uri;
+    const token = createTokenInstance(image, tokenType, startOffset, endOffset - 1, this.plainState.uri);
     return token;
   }
 

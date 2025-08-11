@@ -723,15 +723,15 @@ function performTokenScan(
   // The caller side will simply push the token to the output
   if (!variable?.active) {
     return undefined;
-  } else if (token.payload.uri && variable.declarationNode) {
+  } else if (token.uri && variable.declarationNode) {
     // If the token has a URI, we assume it actually exists in the source code
     // We can now create a synthetic reference to the variable for it
-    token.payload.element = generateSyntheticRefItem(
+    token.element = generateSyntheticRefItem(
       token,
       variable.declarationNode,
       context,
     );
-    token.payload.kind = CstNodeKind.ReferenceItem_Ref;
+    token.kind = CstNodeKind.ReferenceItem_Ref;
   }
   const variableValue = variable.value;
   if (!isValue(variableValue)) {

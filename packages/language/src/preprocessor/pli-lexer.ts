@@ -134,8 +134,8 @@ function generateIncAfterInstruction(
   includeItem.token = incAfter.token || null;
   if (incAfter.token) {
     includeItem.token = incAfter.token;
-    incAfter.token.payload.element = includeItem;
-    incAfter.token.payload.kind = CstNodeKind.IncludeItem_FileID;
+    incAfter.token.element = includeItem;
+    incAfter.token.kind = CstNodeKind.IncludeItem_FileID;
   }
   // IncAfter runs as the very first instruction in the preprocessor.
   // It allows to include ONE SINGLE file. Afterwards the preprocessor runs as normal.

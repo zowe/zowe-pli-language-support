@@ -172,11 +172,9 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     if (!this.canConsume(tokenType)) {
       return false;
     }
-    this.current!.payload = {
-      uri: this.uri,
-      kind,
-      element,
-    };
+    this.current!.uri = this.uri;
+    this.current!.kind = kind;
+    this.current!.element = element;
     this.index++;
     return true;
   }
@@ -195,11 +193,9 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       const message = `Expected token type '${tokenType.name}', got '${actualTokenTypes}' instead.`;
       throw new PreprocessorError(message, token || this.last, this.uri);
     }
-    token.payload = {
-      uri: this.uri,
-      kind,
-      element,
-    };
+    token.uri = this.uri;
+    token.kind = kind;
+    token.element = element;
     this.index++;
     return token;
   }

@@ -11,9 +11,7 @@
 
 import {
   createToken,
-  createTokenInstance,
   CustomPatternMatcherFunc,
-  IToken,
   Lexer,
   TokenType,
 } from "chevrotain";
@@ -25,56 +23,56 @@ import { URI } from "../utils/uri";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { SyntaxNode } from "../syntax-tree/ast";
 
-/**
- * Payload for a token, containing metadata about its syntax and element.
- */
-export interface TokenPayload {
-  /**
-   * The URI associated with the token, if any.
-   */
-  uri: URI | undefined;
-
-  /**
-   * The kind of CST (Concrete Syntax Tree) node.
-   */
-  kind: CstNodeKind | undefined;
-
-  /**
-   * The syntax node associated with the token.
-   */
-  element: SyntaxNode | undefined;
-}
-
-export interface Token extends Omit<IToken, "endOffset" | "payload"> {
+export interface Token {
+  image: string;
+  startOffset: number;
   endOffset: number;
-  /**
-   * Whether this token is followed immediately by the next token (without whitespace)
-   */
-  immediateFollow?: boolean;
-  payload: TokenPayload;
+  tokenTypeIdx: number;
+  isInsertedInRecovery?: boolean;
+  tokenType: TokenType;
+  uri: URI | undefined;
+  kind: CstNodeKind | undefined;
+  element: SyntaxNode | undefined;
+  immediateFollow: boolean;
 }
 
-export function createSyntheticTokenInstance(
+class TokenImpl implements Token {
+  image: string;
+  startOffset: number;
+  endOffset: number;
+  tokenTypeIdx: number;
+  isInsertedInRecovery: boolean;
+  tokenType: TokenType;
+  uri: URI | undefined;
+  kind: CstNodeKind | undefined;
+  element: SyntaxNode | undefined;
+  immediateFollow: boolean;
+  constructor(
+    image: string,
+    tokenType: TokenType,
+    startOffset: number,
+    endOffset: number,
+    uri: URI | undefined,
+  ) {
+    this.image = image;
+    this.startOffset = startOffset;
+    this.endOffset = endOffset;
+    this.tokenTypeIdx = tokenType.tokenTypeIdx!;
+    this.tokenType = tokenType;
+    this.uri = uri;
+    this.kind = undefined;
+    this.element = undefined;
+    this.isInsertedInRecovery = false;
+    this.immediateFollow = false;
+  }
+}
+
+export function createTokenInstance(image: string,
   tokenType: TokenType,
-  image: string,
-): Token {
-  const token = createTokenInstance(
-    tokenType,
-    image,
-    NaN,
-    NaN,
-    NaN,
-    NaN,
-    NaN,
-    NaN,
-  ) as Token;
-  token.payload = {
-    uri: undefined,
-    kind: undefined,
-    element: undefined,
-  };
-  token.immediateFollow = false;
-  return token;
+  startOffset: number,
+  endOffset: number,
+  uri: URI | undefined): Token {
+  return new TokenImpl(image, tokenType, startOffset, endOffset, uri);
 }
 
 // Combination tokens (parser optimization)
@@ -279,6 +277,7 @@ export const SL_COMMENT = createToken({
   pattern: /\/\/[^\n\r]*/y,
   group: Lexer.SKIPPED,
 });
+// Start of keywords
 export const SUBSCRIPTRANGE = createToken({
   name: "SUBSCRIPTRANGE",
   pattern: /SUBSCRIPTRANGE/iy,
@@ -1350,12 +1349,6 @@ export const RESCAN = createToken({
   name: "RESCAN",
   pattern: /RESCAN/iy,
   categories: [ID, DefaultAttribute],
-  longer_alt: ID,
-});
-export const ddname = createToken({
-  name: "ddname",
-  pattern: /ddname/iy,
-  categories: [ID],
   longer_alt: ID,
 });
 export const LOCATE = createToken({
@@ -2443,7 +2436,6 @@ export const keywords = [
   NOSCAN,
   RESCAN,
   STRING,
-  ddname,
   LOCATE,
   FINISH,
   DIRECT,
@@ -2599,6 +2591,316 @@ export const keywords = [
   Percent,
 ];
 
+export const keywordMap = new Map<string, TokenType>();
+
+[
+  [SUBSCRIPTRANGE],
+  [NOCHARGRAPHIC],
+  [NONASSIGNABLE, "NONASGN"],
+  [FIXEDOVERFLOW, "FOFL"],
+  [UNDEFINEDFILE, "UNDF"],
+  [VALUELISTFROM],
+  [NODESCRIPTOR],
+  [NONCONNECTED],
+  [LITTLEENDIAN],
+  [ANYCONDITION, "ANYCOND"],
+  [CHARGRAPHIC],
+  [IRREDUCIBLE, "IRRED"],
+  [DLLINTERNAL],
+  [UNREACHABLE],
+  [ENVIRONMENT, "ENV"],
+  [DESCRIPTORS],
+  [CONFORMANCE],
+  [STRINGRANGE],
+  [DESCRIPTOR],
+  [XMLCONTENT],
+  [JSONIGNORE],
+  [ASSIGNABLE],
+  [CONTROLLED, "CTL"],
+  [NONVARYING, "NONVAR"],
+  [SEQUENTIAL, "SEQ"],
+  [CONVERSION],
+  [STRINGSIZE],
+  [ZERODIVIDE, "ZDIV"],
+  [INITACROSS],
+  [VALUERANGE],
+  [XMLIGNORE],
+  [JSONTRIMR],
+  [NOEXECOPS],
+  [DEACTIVATE, "DEACT"],
+  [REDUCIBLE, "RED"],
+  [REENTRANT],
+  [FETCHABLE],
+  [FROMALIEN],
+  [ASSEMBLER, "ASM"],
+  [RECURSIVE],
+  [PROCEDURE, "XPROCEDURE", "PROC", "XPROC"],
+  [STATEMENT, "STMT"],
+  [CHARACTER, "CHAR"],
+  [DIMACROSS],
+  [AUTOMATIC, "AUTO"],
+  [BACKWARDS],
+  [CONDITION, "COND"],
+  [CONNECTED],
+  [EXCLUSIVE],
+  [NONNATIVE],
+  [PARAMETER],
+  [PRECISION, "PREC"],
+  [STRUCTURE, "STRUCT"],
+  [TRANSIENT],
+  [UNALIGNED, "UNAL"],
+  [BIGENDIAN],
+  [ASSERTION],
+  [ATTENTION],
+  [INVALIDOP],
+  [UNDERFLOW, "UFL"],
+  [OTHERWISE, "OTHER"],
+  [DIMENSION, "DIM"],
+  [VALUELIST],
+  [RESERVES],
+  [JSONNAME],
+  [JSONNULL],
+  [JSONOMIT],
+  [NOMAPOUT],
+  [NOINLINE],
+  [NORETURN],
+  [EXTERNAL, "EXT"],
+  [VARIABLE],
+  [ALLOCATE, "ALLOC"],
+  [WIDECHAR, "WCHAR"],
+  [ABNORMAL],
+  [BUFFERED, "BUF", "UNBUF", "UNBUFFERED"],
+  [CONSTANT],
+  [INTERNAL],
+  [OPTIONAL],
+  [POSITION, "POS"],
+  [RESERVED],
+  [UNSIGNED],
+  [VARYING4],
+  [VARYINGZ, "VARZ"],
+  [DOWNTHRU],
+  [INCLUDE, "XINCLUDE"],
+  // NO INCLUDE_ALT: It has special handling!
+  [INSCAN, "XINSCAN"],
+  [NOPRINT],
+  [OVERFLOW, "OFL"],
+  [TRANSMIT],
+  [LINESIZE],
+  [PAGESIZE],
+  [NULLINIT],
+  [XMLNAME],
+  [XMLATTR],
+  [XMLOMIT],
+  [RESIGNAL],
+  [PACKAGE],
+  [EXPORTS],
+  [OPTIONS],
+  [LINKAGE],
+  [OPTLINK],
+  [STDCALL],
+  [NOMAPIN],
+  [FORTRAN],
+  [BYVALUE],
+  [AMODE31],
+  [AMODE64],
+  [RETCODE],
+  [WINMAIN],
+  [DYNAMIC],
+  [LIMITED],
+  [GRAPHIC],
+  [COMPARE],
+  [DEFAULT, "DFT"],
+  [ALIGNED],
+  [BUILTIN],
+  [COMPLEX],
+  [DECIMAL, "DEC"],
+  [GENERIC],
+  [HEXADEC],
+  [OUTONLY],
+  [POINTER, "PTR"],
+  [VARYING, "VAR"],
+  [ORDINAL],
+  [DISPLAY],
+  [ROUTCDE],
+  [ITERATE],
+  [ACTIVATE, "ACT"],
+  [NORESCAN],
+  [KEYFROM],
+  [STORAGE],
+  [ENDFILE],
+  [ENDPAGE],
+  [QUALIFY],
+  [RELEASE],
+  [REWRITE],
+  [INITIAL, "INIT"],
+  [DECLARE, "DCL", "XDCL", "XDECLARE"],
+  [PICTURE, "PIC"],
+  [WIDEPIC],
+  [RETURNS],
+  [SYSTEM],
+  [INLINE],
+  [BYADDR],
+  [STATIC],
+  [ASSERT],
+  [ATTACH],
+  [THREAD],
+  [TSTACK],
+  [CANCEL],
+  [BINARY, "BIN"],
+  [FORMAT],
+  [NOINIT],
+  [INONLY],
+  [INDFOR],
+  [MEMBER],
+  [NATIVE],
+  [NORMAL],
+  [OFFSET],
+  [OUTPUT],
+  [RECORD],
+  [SIGNED],
+  [STREAM],
+  [UPDATE],
+  [DEFINE, "XDEFINE"],
+  [DEFINED, "DEF"],
+  [DELETE],
+  [DETACH],
+  [UPTHRU],
+  [REPEAT],
+  [COLUMN, "COL"],
+  [STRING],
+  [NOSCAN],
+  [RESCAN],
+  [LOCATE],
+  [FINISH],
+  [DIRECT],
+  [IGNORE],
+  [REINIT],
+  [RETURN],
+  [SELECT],
+  [SIGNAL],
+  [HANDLE],
+  [CDECL],
+  [CMPAT],
+  [NOMAP],
+  [ORDER, "REORDER"],
+  [COBOL],
+  [INTER],
+  [ENTRY],
+  [UCHAR],
+  [FALSE],
+  [BEGIN],
+  [CLOSE],
+  [RANGE],
+  [BASED],
+  [EVENT],
+  [FIXED],
+  [FLOAT],
+  [INOUT],
+  [INPUT],
+  [KEYED],
+  [LABEL],
+  [PRINT],
+  [UNION],
+  [ALIAS],
+  [VALUE],
+  [DELAY],
+  [REPLY],
+  [WHILE],
+  [UNTIL],
+  [FETCH],
+  [TITLE],
+  [FLUSH],
+  [LEAVE],
+  [ERROR],
+  [PUSH],
+  [KEYTO],
+  [REVERT],
+  [WRITE],
+  [REFER],
+  [NOTE],
+  [MAIN],
+  [RENT],
+  [AREA],
+  [TRUE],
+  [TEXT],
+  [NAME],
+  [CALL],
+  [FILE],
+  [IEEE],
+  [LIST],
+  [REAL],
+  [TASK],
+  [DESC],
+  [EXEC],
+  [EXIT],
+  [LINE],
+  [PAGE],
+  [SKIP],
+  [SCAN],
+  [FREE],
+  [COPY],
+  [GOTO],
+  [THEN],
+  [ELSE],
+  [SNAP],
+  [SIZE],
+  [OPEN],
+  [POP],
+  [DATA],
+  [EDIT],
+  [READ],
+  [INTO],
+  [FROM],
+  [LOOP, "FOREVER"],
+  [WHEN],
+  [STOP],
+  [WAIT],
+  [DATE],
+  [TYPE],
+  [LIKE],
+  [SET],
+  [BIT],
+  [END],
+  [AND],
+  [NOT],
+  [HEX],
+  [INT],
+  [KEY],
+  [GET],
+  [PUT],
+  [IN],
+  [BY],
+  [OR],
+  [DO],
+  [TO],
+  [GO],
+  [IF],
+  [ON],
+  [A],
+  [B],
+  [C],
+  [F],
+  [E],
+  [G],
+  [P],
+  [L],
+  [R],
+  [V],
+  [X],
+].forEach(list => {
+  const item = list[0] as TokenType;
+  keywordMap.set(item.name, item);
+  for (let i = 1; i < list.length; i++) {
+    const alias = list[i] as string;
+    keywordMap.set(alias, item);
+  }
+});
+
+// Special handling for VX token
+keywordMap.set("V1", VX);
+keywordMap.set("V2", VX);
+keywordMap.set("V3", VX);
+
 export const all = [
   WS,
   ExecFragment,
@@ -2612,3 +2914,5 @@ export const all = [
 ];
 
 export const LexerInstance = new Lexer(all);
+
+
