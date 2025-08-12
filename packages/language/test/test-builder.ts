@@ -37,6 +37,9 @@ import {
   setPluginConfigurationProvider,
 } from "../src/workspace/plugin-configuration-provider";
 import { InternalCodes } from "../src/validation/messages";
+import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
+
+export type Label = string | number | string[] | number[];
 
 export const DEFAULT_FILE_URI = "file:///main.pli";
 
@@ -409,9 +412,19 @@ export class TestBuilder {
   }
 
   expectDiagnosticsAt(
-    label: string,
+    label: Label,
     diagnostics: Partial<Diagnostic> | Partial<Diagnostic>[],
   ): TestBuilder {
+    if (Array.isArray(label)) {
+      for (const l of label) {
+        this.expectDiagnosticsAt(l, diagnostics);
+      }
+      return this;
+    }
+    if (typeof label === "number") {
+      label = label.toString();
+    }
+
     const expectedDiagnostics = Array.isArray(diagnostics)
       ? diagnostics
       : [diagnostics];
@@ -462,6 +475,22 @@ export class TestBuilder {
     return this;
   }
 
+  noDiagnosticsExcept(regex: RegExp[]): TestBuilder {
+    const remainingDiagnostics = this.diagnostics.filter((diagnostic) => {
+      const message = this.createDiagnosticMessage(diagnostic);
+      return !regex.some((r) => r.test(message));
+    });
+    if (remainingDiagnostics.length > 0) {
+      const message = remainingDiagnostics
+        .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
+        .join("\n- ");
+      fail(
+        `Expected no diagnostics apart from ${regex.map((r) => r.source).join(", ")}, but received:\n- ${message}`,
+      );
+    }
+    return this;
+  }
+
   expectToThrow(fn: () => void, messageToThrow?: string) {
     const message = `Expected function to throw an error ${
       messageToThrow ? `with message "${messageToThrow}"` : ""
@@ -478,6 +507,16 @@ export class TestBuilder {
         throw error;
       }
     }
+  }
+
+  expectCompilerOptions(
+    expectedOptions: Partial<CompilerOptions>,
+  ): TestBuilder {
+    const actualOptions = this.unit.compilerOptions;
+    for (const [key, value] of Object.entries(expectedOptions)) {
+      expect(actualOptions[key as keyof CompilerOptions]).toEqual(value);
+    }
+    return this;
   }
 
   /**

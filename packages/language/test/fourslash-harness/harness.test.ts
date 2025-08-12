@@ -55,7 +55,9 @@ function createTestingHarnessImplementation(
       ),
       expectDiagnosticsAt: listen("verify.expectDiagnosticsAt"),
       noDiagnostics: listen("verify.noDiagnostics"),
+      noDiagnosticsExcept: listen("verify.noDiagnosticsExcept"),
       expectToThrow: listen("verify.expectToThrow"),
+      expectCompilerOptions: listen("verify.expectCompilerOptions"),
     },
     completion: {
       expectAt: listen("completion.expectAt"),

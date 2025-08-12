@@ -12,6 +12,7 @@
 import { PLICodes, InternalCodes } from "../../../src/validation/messages";
 import { HarnessTesterInterface } from "../harness-interface";
 import { PliMarginsProcessor } from "../../../src/preprocessor/pli-margins-processor";
+import { CompilerOptionsCodes } from "../../../src/preprocessor/compiler-options/codes";
 
 export const HarnessCodes: HarnessTesterInterface["code"] = {
   Severe: PLICodes.Severe,
@@ -25,4 +26,5 @@ export const HarnessCodes: HarnessTesterInterface["code"] = {
       ErrorRight: PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT,
     },
   },
+  CompilerOptions: CompilerOptionsCodes,
 };
