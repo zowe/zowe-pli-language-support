@@ -50,6 +50,8 @@ export function createTestBuilderHarnessImplementation(
           : testBuilder.expectNoDiagnostics(),
       noDiagnosticsExcept: (regex: RegExp[]) =>
         testBuilder.noDiagnosticsExcept(regex),
+      noDiagnosticsExceptAt: (label, regexes) =>
+        testBuilder.noDiagnosticsExcept(regexes, label),
       expectToThrow: (fn, messageToThrow) =>
         testBuilder.expectToThrow(fn, messageToThrow),
       expectCompilerOptions: (expectedOptions) =>
