@@ -25,6 +25,7 @@ import { SyntaxNode } from "../syntax-tree/ast";
 
 export interface Token {
   image: string;
+  originalImage: string;
   startOffset: number;
   endOffset: number;
   tokenTypeIdx: number;
@@ -38,6 +39,7 @@ export interface Token {
 
 class TokenImpl implements Token {
   image: string;
+  originalImage: string;
   startOffset: number;
   endOffset: number;
   tokenTypeIdx: number;
@@ -49,12 +51,14 @@ class TokenImpl implements Token {
   immediateFollow: boolean;
   constructor(
     image: string,
+    originalImage: string,
     tokenType: TokenType,
     startOffset: number,
     endOffset: number,
     uri: URI | undefined,
   ) {
     this.image = image;
+    this.originalImage = originalImage;
     this.startOffset = startOffset;
     this.endOffset = endOffset;
     this.tokenTypeIdx = tokenType.tokenTypeIdx!;
@@ -67,12 +71,22 @@ class TokenImpl implements Token {
   }
 }
 
-export function createTokenInstance(image: string,
+export function createTokenInstance(
+  image: string,
+  originalImage: string,
   tokenType: TokenType,
   startOffset: number,
   endOffset: number,
-  uri: URI | undefined): Token {
-  return new TokenImpl(image, tokenType, startOffset, endOffset, uri);
+  uri: URI | undefined,
+): Token {
+  return new TokenImpl(
+    image,
+    originalImage,
+    tokenType,
+    startOffset,
+    endOffset,
+    uri,
+  );
 }
 
 // Combination tokens (parser optimization)
@@ -2887,7 +2901,7 @@ export const keywordMap = new Map<string, TokenType>();
   [R],
   [V],
   [X],
-].forEach(list => {
+].forEach((list) => {
   const item = list[0] as TokenType;
   keywordMap.set(item.name, item);
   for (let i = 1; i < list.length; i++) {
@@ -2914,5 +2928,3 @@ export const all = [
 ];
 
 export const LexerInstance = new Lexer(all);
-
-

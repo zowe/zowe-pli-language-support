@@ -131,8 +131,8 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
       this.ACTION(() => {
         const num = Number(nameToken.image);
         nameToken.kind = isNaN(num)
-            ? CstNodeKind.CompilerOption_Name
-            : CstNodeKind.CompilerOption_Number;
+          ? CstNodeKind.CompilerOption_Name
+          : CstNodeKind.CompilerOption_Number;
         nameToken.element = element;
       });
       this.OPTION1(() => {

@@ -165,7 +165,6 @@ export function generateAndAssertValidSymbolTable(
 ) {
   // Retrieve a list of valid tokens with validated payloads.
   const tokens = compilationUnit.tokens.all.filter((token) => {
-
     // FQN rule (token payload === undefined) does not reset the token kind.
     // Todo: Remove this exception once the FQN rule is updated.
     // Intermediate binary expressions are not AST nodes.

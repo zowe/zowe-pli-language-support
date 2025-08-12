@@ -22,10 +22,9 @@ import * as ast from "../syntax-tree/ast";
 import { LexingIssue } from "./pli-lexer";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PreprocessorError } from "./pli-preprocessor-error";
-import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
-import { PliPreprocessorLexerState } from "./pli-preprocessor-lexer-state";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { tokenize } from "../parser/tokenizer";
 
 interface Variable {
   name: string;
@@ -683,15 +682,19 @@ function runTokenInstruction(
 }
 
 function largePush<T>(target: T[], source: T[]): void {
-  // This is a workaround for the V8 engine's limit on the number of arguments
-  // that can be passed to a function. We use this to push large arrays into
-  // the result array.
-  for (const item of source) {
-    target.push(item);
+  if (source.length < 100_100) {
+    // If the source array is small enough, we can use the spread operator
+    // to push the items into the target array
+    target.push(...source);
+  } else {
+    // This is a workaround for the V8 engine's limit on the number of arguments
+    // that can be passed to a function. We use this to push large arrays into
+    // the result array.
+    for (const item of source) {
+      target.push(item);
+    }
   }
 }
-
-const lexer = new PliPreprocessorLexer();
 
 function replaceTokensInText(
   tokens: Token[],
@@ -758,8 +761,7 @@ function generateSyntheticRefItem(
 }
 
 function lex(text: string): Token[] {
-  const lexerState = new PliPreprocessorLexerState(text, undefined);
-  return lexer.tokenize(lexerState);
+  return tokenize(text, undefined).tokens;
 }
 
 function setImmediateFollowProperty(
@@ -936,25 +938,39 @@ function resolveIncludeFileUri(
         lib,
         item.fileName,
       );
-      if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
-        // match found in this lib, take it
-        return libFileUri;
-      } else {
-        // Perform additional lookup using the new glob method
-        const patt = `${libFileUri.path}\\.*`;
-        const matches = FileSystemProviderInstance.findFilesByGlobSync(patt);
+      const files: [string, URI][] = [[libFileUri.path, libFileUri]];
+      for (const ext of pgroup["include-extensions"] ?? []) {
+        const extFileUri = libFileUri.with({
+          path: `${libFileUri.path}${ext}`,
+        });
+        files.push([extFileUri.path, extFileUri]);
+      }
+      for (const [filePath, fileUri] of files) {
+        const matches =
+          FileSystemProviderInstance.findFilesByGlobSync(filePath);
         if (matches.length > 0) {
-          // ensure this extension is allowed
-          const ext = matches[0].match(/\.\w+$/);
-          if (
-            ext &&
-            ext?.length &&
-            pgroup["include-extensions"]?.includes(ext[0].toLowerCase())
-          ) {
-            return URI.file(matches[0]);
-          }
+          return fileUri;
         }
       }
+      // if (FileSystemProviderInstance.fileExistsSync(libFileUri)) {
+      //   // match found in this lib, take it
+      //   return libFileUri;
+      // } else {
+      //   // Perform additional lookup using the new glob method
+      //   const patt = `{${libFileUri.path}\\.*}`;
+      //   const matches = FileSystemProviderInstance.findFilesByGlobSync(patt);
+      //   if (matches.length > 0) {
+      //     // ensure this extension is allowed
+      //     const ext = matches[0].match(/\.\w+$/);
+      //     if (
+      //       ext &&
+      //       ext?.length &&
+      //       pgroup["include-extensions"]?.includes(ext[0].toLowerCase())
+      //     ) {
+      //       return URI.file(matches[0]);
+      //     }
+      //   }
+      // }
     }
     // no match
     return undefined;

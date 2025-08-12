@@ -10,9 +10,7 @@
  */
 
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
-import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
-import * as tokens from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
 import {
@@ -32,6 +30,7 @@ import {
   getDefaultCompilerOptions,
 } from "./compiler-options/options";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { initLexer } from "../parser/tokenizer";
 
 export interface LexingIssue {
   readonly message: string;
@@ -57,20 +56,18 @@ export interface LexerResult {
 export class PliLexer {
   readonly compilerOptionsPreprocessor: CompilerOptionsProcessor;
   readonly marginsProcessor: MarginsProcessor;
-  readonly preprocessorLexer: PliPreprocessorLexer;
   readonly preprocessorParser: PliPreprocessorParser;
 
   constructor() {
     this.compilerOptionsPreprocessor = new CompilerOptionsProcessor();
     this.marginsProcessor = new PliMarginsProcessor();
-    this.preprocessorLexer = new PliPreprocessorLexer();
-    this.preprocessorParser = new PliPreprocessorParser(this.preprocessorLexer);
+    this.preprocessorParser = new PliPreprocessorParser();
   }
 
   tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
     const compilerOptionsResult =
       this.compilerOptionsPreprocessor.extractCompilerOptions(inputText, uri);
-    tokens.setCompilerOptions(
+    initLexer(
       compilerOptionsResult.result?.options ?? getDefaultCompilerOptions(),
     );
     const textWithoutMargins = this.marginsProcessor.processMargins(

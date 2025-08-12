@@ -158,7 +158,15 @@ export class CompilerOptionsProcessor {
       const processStart = directiveStart + 1; // Skip the % or *
       const tokenEnd = processStart + "PROCESS".length;
 
-      const token = createTokenInstance(text.substring(directiveStart, tokenEnd), PROCESS, directiveStart, tokenEnd, uri);
+      const image = text.substring(directiveStart, tokenEnd);
+      const token = createTokenInstance(
+        image,
+        image,
+        PROCESS,
+        directiveStart,
+        tokenEnd,
+        uri,
+      );
       token.kind = CstNodeKind.ProcessDirective_PROCESS;
 
       ranges.push({

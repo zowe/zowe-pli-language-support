@@ -31,6 +31,7 @@ import {
   compilerOptionIssueToDiagnostics,
 } from "../preprocessor/compiler-options/options";
 import * as AST from "../syntax-tree/ast";
+import { Token } from "../parser/tokens";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -154,14 +155,19 @@ export function parserErrorsToDiagnostics(
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   for (const error of parserErrors) {
+    const token = error.token as Token;
     let range: Range | undefined = undefined;
     let uri: string | undefined = undefined;
-    if (isNaN(error.token.startOffset)) {
+    if (isNaN(token.startOffset)) {
       if ("previousToken" in error) {
-        const token = (error as MismatchedTokenException).previousToken;
-        if (!isNaN(token.startOffset)) {
-          range = { start: token.startOffset, end: token.startOffset };
-          uri = token.payload?.uri?.toString();
+        const previousToken = (error as MismatchedTokenException)
+          .previousToken as Token;
+        if (!isNaN(previousToken.startOffset)) {
+          range = {
+            start: previousToken.startOffset,
+            end: previousToken.startOffset,
+          };
+          uri = previousToken?.uri?.toString();
         } else {
           // No valid prev token. Might be empty document or containing only hidden tokens.
           // Point to document start
@@ -170,10 +176,10 @@ export function parserErrorsToDiagnostics(
       }
     } else {
       range = {
-        start: error.token.startOffset,
-        end: error.token.startOffset,
+        start: token.startOffset,
+        end: token.startOffset,
       };
-      uri = error.token.payload?.uri?.toString();
+      uri = token?.uri?.toString();
     }
     if (range && uri) {
       const diagnostic: Diagnostic = {
