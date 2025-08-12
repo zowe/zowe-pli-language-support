@@ -234,7 +234,7 @@ function getAllDeclarations(
   return declarations;
 }
 
-function getAttributes(item: ast.DeclaredVariable): string[] {
+export function getAttributes(item: ast.DeclaredVariable): string[] {
   const attributes: string[] = [];
   let container = item.container;
   while (container?.kind === ast.SyntaxKind.DeclaredItem) {

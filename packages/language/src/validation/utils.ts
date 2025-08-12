@@ -9,7 +9,11 @@
  *
  */
 
-import { LabelPrefix, SyntaxKind } from "../syntax-tree/ast";
+import {
+  LabelPrefix,
+  ProcedureStatement,
+  SyntaxKind,
+} from "../syntax-tree/ast";
 
 export function normalizeIdentifier<T extends string>(id: T): Uppercase<T> {
   return id.toUpperCase() as Uppercase<T>;
@@ -20,18 +24,32 @@ export function compareIdentifiers<T extends string>(lhs: T, rhs: T) {
 }
 
 /**
+ * Helper to attempt to retrieve a procedure statement from a label prefix.
+ */
+export function retrieveProcedureFromLabelPrefix(
+  labelPrefix: LabelPrefix,
+): ProcedureStatement | null {
+  const statement = labelPrefix.container;
+  if (statement?.kind !== SyntaxKind.Statement) {
+    return null;
+  }
+
+  const procedureStatement = statement.value;
+  if (procedureStatement?.kind !== SyntaxKind.ProcedureStatement) {
+    return null;
+  }
+
+  return procedureStatement;
+}
+
+/**
  * Checks if the given label prefix references a main procedure.
  * @param node Label prefix node to check
  * @returns True if the node is a main procedure, false otherwise
  */
 export function isMainProcedure(node: LabelPrefix): boolean {
-  const statement = node.container;
-  if (statement?.kind !== SyntaxKind.Statement) {
-    return false;
-  }
-
-  const procedureStatement = statement.value;
-  if (procedureStatement?.kind !== SyntaxKind.ProcedureStatement) {
+  const procedureStatement = retrieveProcedureFromLabelPrefix(node);
+  if (!procedureStatement) {
     return false;
   }
 

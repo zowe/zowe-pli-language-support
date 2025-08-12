@@ -9,16 +9,29 @@
  *
  */
 
-import { CompilationUnit } from "../workspace/compilation-unit";
-import { binaryTokenSearch } from "../utils/search";
-import { HoverResponse, tokenToRange } from "./types";
-import { URI } from "../utils/uri";
 import { MarkupKind } from "vscode-languageserver-types";
-import { getReference, isReferenceToken } from "../linking/tokens";
-import { Token } from "../parser/tokens";
-import { DeclaredVariable, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
-import { formatPliCodeBlock } from "../utils/code-block";
 import { QualifiedSyntaxNode } from "../linking/qualified-syntax-node";
+import {
+  getReference,
+  isIncludeItemToken,
+  isNameToken,
+  isReferenceToken,
+} from "../linking/tokens";
+import { Token } from "../parser/tokens";
+import { getAttributes } from "../preprocessor/instruction-generator";
+import {
+  DeclaredVariable,
+  IncludeItem,
+  LabelPrefix,
+  SyntaxKind,
+  SyntaxNode,
+} from "../syntax-tree/ast";
+import { formatPliCodeBlock } from "../utils/code-block";
+import { binaryTokenSearch } from "../utils/search";
+import { URI } from "../utils/uri";
+import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
+import { CompilationUnit } from "../workspace/compilation-unit";
+import { HoverResponse, tokenToRange } from "./types";
 
 type MarkupResponse = string | null;
 
@@ -29,19 +42,6 @@ interface MarkupGeneratorContext {
 
 interface MarkupGenerator {
   (context: MarkupGeneratorContext): MarkupResponse;
-}
-
-function getParents(node: QualifiedSyntaxNode): QualifiedSyntaxNode[] {
-  const parent = node.getParent();
-  if (!parent) {
-    return [];
-  }
-
-  return [...getParents(parent), parent];
-}
-
-function getQualifiedNodeRepresentation(node: QualifiedSyntaxNode): string {
-  return `${node.level} ${node.name}`;
 }
 
 /**
@@ -59,16 +59,81 @@ function getDeclaredVariableRepresentation(
   const qualifiedNode = unit.scopeCaches.regular
     .get(node)
     ?.symbolTable.nodeLookup.get(node);
+
   if (!qualifiedNode) {
     throw new Error("Qualified node not found");
   }
 
-  const parents = getParents(qualifiedNode).map(getQualifiedNodeRepresentation);
-  const elements = [...parents, getQualifiedNodeRepresentation(qualifiedNode)];
-
-  return formatPliCodeBlock(`DCL ${elements.join(", ")};`);
+  if (qualifiedNode.level > 1) {
+    // structure member
+    const hierarchy: string[] = [];
+    let current: QualifiedSyntaxNode | null = qualifiedNode;
+    while (current) {
+      hierarchy.unshift(`${current.level} ${current.name}`);
+      current = current.getParent();
+    }
+    return formatPliCodeBlock(`DCL ${hierarchy.join(", ")};`);
+  } else {
+    // regular declaration
+    const name = node.name;
+    const attrs = getAttributes(node);
+    const decl = attrs.length
+      ? `DCL ${name} ${attrs.join(" ")};`
+      : `DCL ${name};`;
+    return formatPliCodeBlock(decl);
+  }
 }
 
+/**
+ * Retrieves string rep for a label prefix
+ * Ex. "MyLabel: PROC;"
+ */
+function getLabelPrefixRepresentation(labelPrefix: LabelPrefix): string | null {
+  // currently assumes we're dealing with a procedure label prefix
+  const procedureStatement = retrieveProcedureFromLabelPrefix(labelPrefix);
+
+  if (!procedureStatement) {
+    return null;
+  }
+
+  const name = labelPrefix.name ?? "<unnamed>";
+  const optionStrings: string[] = [];
+  for (const option of procedureStatement.options) {
+    if (option.kind === SyntaxKind.Options) {
+      const internalOptions: string[] = [];
+      for (const item of option.items) {
+        if (item.kind === SyntaxKind.SimpleOptionsItem && item.value) {
+          internalOptions.push(item.value);
+        }
+      }
+      if (internalOptions.length > 0) {
+        optionStrings.push(`OPTIONS(${internalOptions.join(", ")})`);
+      }
+    } else if (option.kind === SyntaxKind.ProcedureOrderOption) {
+      if (option.order) {
+        optionStrings.push(option.order);
+      }
+    } else if (option.kind === SyntaxKind.ProcedureRecursiveOption) {
+      optionStrings.push("RECURSIVE");
+    }
+    // TODO @montymxb add additional procedure cases cases as they come up
+  }
+  const options = optionStrings.length > 0 ? optionStrings.join(" ") : "";
+  return formatPliCodeBlock(`${name}: PROC ${options};`);
+}
+
+/**
+ * Converts an IncludeItem node to a string representation.
+ * Ex. %INCLUDE "file:///path/to/file.pli"
+ */
+function getIncludeItemRepresentation(node: IncludeItem): string {
+  const filePath = node.filePath ?? "<unknown>";
+  return formatPliCodeBlock(`%INCLUDE "${filePath}"`);
+}
+
+/**
+ * Get the string representation of a node based on its kind.
+ */
 function getNodeRepresentation(
   unit: CompilationUnit,
   node: SyntaxNode,
@@ -76,12 +141,20 @@ function getNodeRepresentation(
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
       return getDeclaredVariableRepresentation(unit, node);
+    case SyntaxKind.LabelPrefix:
+      return getLabelPrefixRepresentation(node);
+    case SyntaxKind.IncludeItem:
+      return getIncludeItemRepresentation(node);
     default:
       return null;
   }
 }
 
-const getReferenceTokenContent: MarkupGenerator = ({ unit, token }) => {
+/**
+ * Generates markup from a reference token
+ * @returns Markup or null if not applicable
+ */
+const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
   if (!isReferenceToken(token.kind) || !token.element) {
     return null;
   }
@@ -94,6 +167,32 @@ const getReferenceTokenContent: MarkupGenerator = ({ unit, token }) => {
   return getNodeRepresentation(unit, ref.node);
 };
 
+/**
+ * Generates markup from an include item token
+ * @returns Markup or null if not applicable
+ */
+const generateIncludeItemTokenMarkup: MarkupGenerator = ({ unit, token }) => {
+  if (token.element && isIncludeItemToken(token.kind)) {
+    return getNodeRepresentation(unit, token.element);
+  }
+  return null;
+};
+
+/**
+ * Generates markup from a name token
+ * @returns Markup or null if not applicable
+ */
+const generateNameTokenMarkup: MarkupGenerator = ({ unit, token }) => {
+  if (token.element && isNameToken(token.kind)) {
+    return getNodeRepresentation(unit, token.element);
+  }
+  return null;
+};
+
+/**
+ * Generates hover content based on the provided generators and context.
+ * Returns an array of all non-null results from all generators.
+ */
 function generateMarkup(
   generators: MarkupGenerator[],
   context: MarkupGeneratorContext,
@@ -125,9 +224,15 @@ export function hoverRequest(
     return null;
   }
 
-  const generators: MarkupGenerator[] = [getReferenceTokenContent];
+  const generators: MarkupGenerator[] = [
+    generateReferenceTokenMarkup,
+    generateIncludeItemTokenMarkup,
+    generateNameTokenMarkup,
+  ];
   const context: MarkupGeneratorContext = { unit, token };
 
+  // attempt to generate markup using these generators
+  // all matching generators will produce a response here
   const responses = generateMarkup(generators, context);
   const value = responses.join("\n\n");
 
