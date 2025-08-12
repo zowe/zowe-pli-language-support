@@ -131,6 +131,34 @@ function getLocationOverrides(
   );
 }
 
+interface FileTree {
+  [key: string]: FileTree | string[];
+  _files: string[];
+}
+
+function getFileTree(files: string[]): FileTree {
+  const tree: FileTree = { _files: [] };
+  for (const file of files) {
+    const relativePath = path.relative(fourslashPath, file);
+    const segments = relativePath
+      .split(path.sep)
+      .filter((segment) => segment !== "." && segment !== "..");
+    let current = tree;
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      if (i === segments.length - 1) {
+        current._files.push(segment);
+      } else {
+        if (!current[segment]) {
+          current[segment] = { _files: [] };
+        }
+        current = current[segment] as FileTree;
+      }
+    }
+  }
+  return tree;
+}
+
 /**
  * Get all test files in the `tests` directory, parse them, and create a
  * vitest test for each test.
@@ -138,10 +166,26 @@ function getLocationOverrides(
 function runHarnessTests() {
   const files = getTestFiles();
 
-  for (const filePath of files) {
-    const fullPath = path.resolve(testsPath, filePath);
-    runSingleHarnessTest(fullPath);
-  }
+  // Get a tree with all files sorted into their relative path.
+  const fileTree = getFileTree(files);
+
+  const traverseFileTree = (tree: FileTree, currentPath: string) => {
+    for (const key in tree) {
+      if (key === "_files") {
+        continue;
+      }
+      describe(key, () => {
+        traverseFileTree(tree[key] as FileTree, path.join(currentPath, key));
+      });
+    }
+    for (const file of tree._files) {
+      const filepath = path.join(currentPath, file);
+      const fullPath = path.resolve(testsPath, filepath);
+      runSingleHarnessTest(fullPath);
+    }
+  };
+
+  traverseFileTree(fileTree, "");
 }
 
 /**
@@ -154,8 +198,11 @@ function runSingleHarnessTest(filePath: string) {
   const relativePath = path.relative(fourslashPath, filePath);
   // e.g. 'packages/language/test/fourslash/linker/implicit-declaration.ts'
   const relativePathToProjectRoot = path.relative(projectRoot, filePath);
+  const testName = relativePath.includes(path.sep)
+    ? path.basename(relativePath)
+    : relativePath;
 
-  test(`${relativePath}`, () => {
+  test(`${testName}`, () => {
     const wrappers = getWrappers();
     const testFile = parseHarnessTestFile(relativePath, filePath, {
       wrappers,

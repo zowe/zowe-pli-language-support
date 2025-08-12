@@ -42,13 +42,17 @@ export function createTestBuilderHarnessImplementation(
       expectExclusiveDiagnosticsAt: (label, diagnostics) =>
         testBuilder.expectExclusiveDiagnosticsAt(label.toString(), diagnostics),
       expectDiagnosticsAt: (label, diagnostics) =>
-        testBuilder.expectDiagnosticsAt(label.toString(), diagnostics),
+        testBuilder.expectDiagnosticsAt(label, diagnostics),
       noDiagnostics: (label) =>
         label !== undefined
           ? testBuilder.expectNoDiagnosticsAt(label.toString())
           : testBuilder.expectNoDiagnostics(),
+      noDiagnosticsExcept: (regex: RegExp[]) =>
+        testBuilder.noDiagnosticsExcept(regex),
       expectToThrow: (fn, messageToThrow) =>
         testBuilder.expectToThrow(fn, messageToThrow),
+      expectCompilerOptions: (expectedOptions) =>
+        testBuilder.expectCompilerOptions(expectedOptions),
     },
     completion: {
       expectAt: (label, content) =>
