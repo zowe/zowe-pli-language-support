@@ -83,11 +83,8 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
             // However, a lot of code does not use it.
             const comma = this.CONSUME(commaToken);
             this.ACTION(() => {
-              comma.payload = {
-                uri: undefined,
-                kind: CstNodeKind.CompilerOptions_Comma,
-                element: options[options.length - 1],
-              };
+              comma.kind = CstNodeKind.CompilerOptions_Comma;
+              comma.element = options[options.length - 1];
             });
           });
 
@@ -133,13 +130,10 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
           };
       this.ACTION(() => {
         const num = Number(nameToken.image);
-        nameToken.payload = {
-          uri: undefined,
-          kind: isNaN(num)
-            ? CstNodeKind.CompilerOption_Name
-            : CstNodeKind.CompilerOption_Number,
-          element,
-        };
+        nameToken.kind = isNaN(num)
+          ? CstNodeKind.CompilerOption_Name
+          : CstNodeKind.CompilerOption_Number;
+        nameToken.element = element;
       });
       this.OPTION1(() => {
         if (text) {
@@ -150,15 +144,12 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
             token: nameToken,
             values,
           };
-          this.ACTION(() => (nameToken.payload.element = element));
+          this.ACTION(() => (nameToken.element = element));
         }
         const parenOpenToken = this.CONSUME(parenOpen);
         this.ACTION(() => {
-          parenOpenToken.payload = {
-            uri: undefined,
-            kind: CstNodeKind.CompilerOption_OpenParen,
-            element,
-          };
+          parenOpenToken.kind = CstNodeKind.CompilerOption_OpenParen;
+          parenOpenToken.element = element;
         });
         this.OPTION2(() => {
           let firstValue: CompilerOptionValue = {
@@ -178,11 +169,8 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
             this.OPTION4(() => {
               const comma = this.CONSUME(commaToken);
               this.ACTION(() => {
-                comma.payload = {
-                  uri: undefined,
-                  kind: CstNodeKind.CompilerOption_Comma,
-                  element,
-                };
+                comma.kind = CstNodeKind.CompilerOption_Comma;
+                comma.element = element;
               });
             });
             const subsequentValue = this.SUBRULE2(this.compilerValue);
@@ -194,11 +182,8 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
         });
         const parenCloseToken = this.CONSUME(parenClose);
         this.ACTION(() => {
-          parenCloseToken.payload = {
-            uri: undefined,
-            kind: CstNodeKind.CompilerOption_CloseParen,
-            element,
-          };
+          parenCloseToken.kind = CstNodeKind.CompilerOption_CloseParen;
+          parenCloseToken.element = element;
         });
       });
       return element;
@@ -222,11 +207,8 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
               value: string.image.slice(1, -1),
             };
             this.ACTION(() => {
-              string.payload = {
-                uri: undefined,
-                kind: CstNodeKind.CompilerOptionsValue_STRING,
-                element: result,
-              };
+              string.kind = CstNodeKind.CompilerOptionsValue_STRING;
+              string.element = result;
             });
             return result;
           },
@@ -283,13 +265,6 @@ export function parseAbstractCompilerOptions(
     " ".repeat(offset ?? 0) + input.replace(/;$/, ""),
   );
   const tokens = lexerResult.tokens as Token[];
-  for (let i = 0; i < tokens.length; i++) {
-    tokens[i].payload = {
-      uri: undefined,
-      kind: undefined,
-      element: undefined,
-    };
-  }
   parser.input = tokens;
   const compilerOptions = parser.compilerOptions();
   const issues: CompilerOptionIssue[] = [];

@@ -10,18 +10,13 @@
  */
 
 import { tokenMatcher, TokenType } from "chevrotain";
-import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
-import {
-  Mutators,
-  PliPreprocessorLexerState,
-  PreprocessorLexerState,
-} from "./pli-preprocessor-lexer-state";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PreprocessorError } from "./pli-preprocessor-error";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI } from "../utils/uri";
 import { Token } from "../parser/tokens";
+import { tokenize } from "../parser/tokenizer";
 
 type ParserLocation = "in-statement" | "in-procedure";
 
@@ -67,9 +62,9 @@ export interface PreprocessorParserState {
   hasInclude(uri: URI): boolean;
 }
 
+const nl = "\n".charCodeAt(0);
+
 export class PliPreprocessorParserState implements PreprocessorParserState {
-  private readonly lexer: PliPreprocessorLexer;
-  private readonly lexerState: PreprocessorLexerState;
   readonly tokens: Token[];
   public index: number;
   public uri: URI;
@@ -77,11 +72,9 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   private location: ParserLocation[] = [];
   private includes: Set<string> = new Set();
 
-  constructor(lexer: PliPreprocessorLexer, text: string, uri: URI) {
-    this.lexer = lexer;
-    this.lexerState = new PliPreprocessorLexerState(text, uri);
+  constructor(text: string, uri: URI) {
     this.text = text;
-    this.tokens = this.lexer.tokenize(this.lexerState);
+    this.tokens = tokenize(this.text, uri).tokens;
     this.index = 0;
     this.uri = uri;
   }
@@ -95,7 +88,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     if (!this.current) {
       return;
     }
-    const newPosition = Mutators.advanceLines(
+    const newPosition = this.advanceLinePosition(
       this.current.startOffset,
       this.text,
       lineCount,
@@ -106,6 +99,23 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
         break;
       }
       this.index++;
+    }
+  }
+
+  advanceLinePosition(offset: number, text: string, lineCount: number): number {
+    while (true) {
+      const char = text.charCodeAt(offset);
+      if (char === nl) {
+        lineCount--;
+        if (lineCount <= 0) {
+          return offset + 1;
+        }
+      }
+      if (isNaN(char)) {
+        // Reached EOF
+        return offset;
+      }
+      offset++;
     }
   }
   push(location: ParserLocation): void {
@@ -172,11 +182,9 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     if (!this.canConsume(tokenType)) {
       return false;
     }
-    this.current!.payload = {
-      uri: this.uri,
-      kind,
-      element,
-    };
+    this.current!.uri = this.uri;
+    this.current!.kind = kind;
+    this.current!.element = element;
     this.index++;
     return true;
   }
@@ -195,11 +203,9 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       const message = `Expected token type '${tokenType.name}', got '${actualTokenTypes}' instead.`;
       throw new PreprocessorError(message, token || this.last, this.uri);
     }
-    token.payload = {
-      uri: this.uri,
-      kind,
-      element,
-    };
+    token.uri = this.uri;
+    token.kind = kind;
+    token.element = element;
     this.index++;
     return token;
   }

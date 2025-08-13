@@ -52,13 +52,13 @@ describe("CompilerOptions parser", () => {
   });
 
   test("Should lex correct OR compiler option", () => {
-    const doc = parse(`*PROCESS OR('^');
+    const doc = parse(`*PROCESS OR('!');
  MAIN: PROC;
    DECLARE VAR FIXED;
-   VAR = 1 ^ 2;
-   VAR ^= 2;
-   VAR = 1 ^^ 0;
-   VAR ^^= 0;
+   VAR = 1 ! 2;
+   VAR != 2;
+   VAR = 1 !! 0;
+   VAR !!= 0;
  END MAIN;
     `);
     assertNoParseErrors(doc);

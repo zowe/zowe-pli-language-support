@@ -103,7 +103,7 @@ export function getFollowElements(
   token: Token,
 ): FollowElement[] {
   // TODO: add more entry points for the completion of expressions
-  switch (token.payload.kind) {
+  switch (token.kind) {
     case undefined:
       return getFollowElementsForUnknownToken(token);
     case CstNodeKind.BinaryExpression_Operator:

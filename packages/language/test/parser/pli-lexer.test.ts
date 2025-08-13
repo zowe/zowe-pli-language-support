@@ -50,7 +50,7 @@ describe("PL/1 Lexer", () => {
 
   test("Preprocessor garbage", () => {
     expect(tokenizeWithErrors(" %garbage")).toStrictEqual([
-      `Unexpected token 'garbage'.`,
+      `Unexpected token 'GARBAGE'.`,
     ]);
   });
 
@@ -68,10 +68,10 @@ describe("PL/1 Lexer", () => {
             dcl A%;C fixed bin(31);
         `),
     ).toStrictEqual([
-      "dcl:DECLARE",
+      "DCL:DECLARE",
       "BC:ID",
-      "fixed:FIXED",
-      "bin:BINARY",
+      "FIXED:FIXED",
+      "BIN:BINARY",
       "(:(",
       "31:NUMBER",
       "):)",
@@ -86,7 +86,7 @@ describe("PL/1 Lexer", () => {
             %A = 'B';
             dcl A%;C fixed bin(31);
         `),
-    ).toStrictEqual(["Unexpected token 'decl'."]);
+    ).toStrictEqual(["Unexpected token 'DECL'."]);
   });
 
   test("Tokenize multiple errors in declaration with preprocessor", () => {
@@ -95,7 +95,7 @@ describe("PL/1 Lexer", () => {
             %decl A char;
             %%A = 'B';
         `),
-    ).toStrictEqual(["Unexpected token 'decl'.", "Unexpected token '%'."]);
+    ).toStrictEqual(["Unexpected token 'DECL'.", "Unexpected token '%'."]);
   });
 
   test("Skip directive without parentheses should not lex correctly", () => {
@@ -156,28 +156,28 @@ describe("PL/1 Lexer", () => {
             end a;
         `),
     ).toStrictEqual([
-      "a:A",
+      "A:A",
       ":::",
-      "proc:PROCEDURE",
+      "PROC:PROCEDURE",
       "(:(",
-      "x:X",
+      "X:X",
       "):)",
-      "options:OPTIONS",
+      "OPTIONS:OPTIONS",
       "(:(",
-      "nodescriptor:NODESCRIPTOR",
+      "NODESCRIPTOR:NODESCRIPTOR",
       "):)",
       ";:;",
-      "dcl:DECLARE",
-      "x:X",
+      "DCL:DECLARE",
+      "X:X",
       "(:(",
       "20:NUMBER",
       "):)",
-      "fixed:FIXED",
-      "bin:BINARY",
-      "nonconnected:NONCONNECTED",
+      "FIXED:FIXED",
+      "BIN:BINARY",
+      "NONCONNECTED:NONCONNECTED",
       ";:;",
-      "end:END",
-      "a:A",
+      "END:END",
+      "A:A",
       ";:;",
     ]);
   });

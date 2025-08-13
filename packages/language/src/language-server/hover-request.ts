@@ -15,7 +15,7 @@ import { HoverResponse, tokenToRange } from "./types";
 import { URI } from "../utils/uri";
 import { MarkupKind } from "vscode-languageserver-types";
 import { getReference, isReferenceToken } from "../linking/tokens";
-import { TokenPayload } from "../parser/tokens";
+import { Token } from "../parser/tokens";
 import { DeclaredVariable, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { formatPliCodeBlock } from "../utils/code-block";
 import { QualifiedSyntaxNode } from "../linking/qualified-syntax-node";
@@ -24,7 +24,7 @@ type MarkupResponse = string | null;
 
 interface MarkupGeneratorContext {
   unit: CompilationUnit;
-  payload: TokenPayload;
+  token: Token;
 }
 
 interface MarkupGenerator {
@@ -81,12 +81,12 @@ function getNodeRepresentation(
   }
 }
 
-const getReferenceTokenContent: MarkupGenerator = ({ unit, payload }) => {
-  if (!isReferenceToken(payload.kind) || !payload.element) {
+const getReferenceTokenContent: MarkupGenerator = ({ unit, token }) => {
+  if (!isReferenceToken(token.kind) || !token.element) {
     return null;
   }
 
-  const ref = getReference(payload.element);
+  const ref = getReference(token.element);
   if (!ref?.node) {
     return null;
   }
@@ -121,13 +121,12 @@ export function hoverRequest(
     return null;
   }
   const token = binaryTokenSearch(tokens, offset);
-  const payload = token?.payload;
-  if (!payload) {
+  if (!token) {
     return null;
   }
 
   const generators: MarkupGenerator[] = [getReferenceTokenContent];
-  const context: MarkupGeneratorContext = { unit, payload };
+  const context: MarkupGeneratorContext = { unit, token };
 
   const responses = generateMarkup(generators, context);
   const value = responses.join("\n\n");
