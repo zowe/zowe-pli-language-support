@@ -163,10 +163,8 @@ function tokenizeIdentifier(
   );
 }
 
-const stringRegex =
-  /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')(x[nu]?|a|e|b[43x]?|g[x]?|ux|wx|i|m)*/iy;
-const numberRegex =
-  /((((([0-9][0-9_]*(\.[0-9_]+)?)|(\.[0-9_]+))([esdq][-+]?[0-9]+)?))[bi]*)/iy;
+const stringRegex = tokens.STRING_TERM.PATTERN as RegExp;
+const numberRegex = tokens.NUMBER.PATTERN as RegExp;
 
 function tokenizeRegex(tokenType: TokenType, regex: RegExp): TokenizeFunc {
   return function (context: TokenizerContext): tokens.Token | undefined {
