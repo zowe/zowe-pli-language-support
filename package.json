@@ -8,7 +8,7 @@
     "clean": "pnpm --dir packages/language clean && pnpm --dir packages/vscode-extension clean",
     "compile": "tsc -b tsconfig.build.json",
     "bundle": "pnpm --dir packages/vscode-extension esbuild:bundle",
-    "merge": "node ./scripts/merge-tmlanguage.mjs",
+    "merge": "tsx ./scripts/generate-tmlanguage.mts",
     "build": "pnpm clean && pnpm compile && pnpm bundle && pnpm merge",
     "package": "pnpm build && pnpm --dir packages/vscode-extension package",
     "test": "vitest",
@@ -22,11 +22,9 @@
   "devDependencies": {
     "@types/node": "^18.19.113",
     "@vitest/coverage-v8": "~3.2.4",
-    "chevrotain": "^11.0.3",
-    "chevrotain-allstar": "~0.3.1",
-    "langium": "~3.4.0",
     "prettier": "^3.6.2",
     "shx": "~0.4.0",
+    "tsx": "^4.20.4",
     "typescript": "~5.8.3",
     "vitest": "~3.2.4"
   },

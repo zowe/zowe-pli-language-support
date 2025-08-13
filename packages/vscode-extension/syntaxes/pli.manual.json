@@ -27,10 +27,6 @@
       ]
     },
     {
-      "name": "string.exec.pli",
-      "match": "(?<=[eE][xX][eE][cC]\\s*)[a-zA-Z]+\\s[^;]*"
-    },
-    {
       "name": "constant.numeric.decimal.pli",
       "match": "([0-9][0-9_]*(\\.[0-9_]+)?)|(\\.[0-9_]+)([ESDQ][-+]?[0-9]+)?([bB]|[iI])*"
     },
@@ -47,6 +43,11 @@
     "comments": {
       "patterns": [
         {
+          "name": "string.exec.pli",
+          "begin": "(?i)(?<=EXEC\\s+)[a-z]+\\s",
+          "end": "(?=;)"
+        },
+        {
           "name": "comment.block.pli",
           "begin": "/\\*",
           "beginCaptures": {
@@ -62,14 +63,14 @@
           }
         },
         {
+          "name": "comment.line.pli",
           "begin": "//",
           "beginCaptures": {
             "1": {
               "name": "punctuation.whitespace.comment.leading.pli"
             }
           },
-          "end": "(?=$)",
-          "name": "comment.line.pli"
+          "end": "(?=$)"
         }
       ]
     }
