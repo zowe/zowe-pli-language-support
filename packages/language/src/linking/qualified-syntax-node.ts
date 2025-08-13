@@ -92,7 +92,7 @@ export class QualifiedSyntaxNode {
    * The raw name of the node, before compilation option case transformations.
    */
   get rawName(): string {
-    return this.token?.image ?? "";
+    return this.token?.originalImage ?? "";
   }
 
   getParent(): QualifiedSyntaxNode | null {

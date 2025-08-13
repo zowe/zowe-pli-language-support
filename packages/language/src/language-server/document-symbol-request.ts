@@ -39,9 +39,9 @@ export function documentSymbolRequest(
   }
 
   const tokens = fileTokens
-    .filter((token) => token.payload.element && isValidToken(token))
+    .filter((token) => token.element && isValidToken(token))
     .map((token) => {
-      const element = token.payload.element!;
+      const element = token.element!;
       if (!tokensByElement.has(element)) {
         tokensByElement.set(element, []);
       }
@@ -56,7 +56,7 @@ export function documentSymbolRequest(
 
     const symbols = builder.buildSymbols(
       token,
-      tokensByElement.get(token.payload.element!)!,
+      tokensByElement.get(token.element!)!,
       [],
     );
 

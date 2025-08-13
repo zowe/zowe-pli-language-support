@@ -39,6 +39,7 @@ class NodeFileSystemProvider implements FileSystemProvider {
     return glob.sync(pattern, {
       nodir: true,
       absolute: true,
+      nocase: true,
     });
   }
 }

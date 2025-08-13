@@ -15,4 +15,4 @@
 //// %A = 'B';
 //// dcl A%;C fixed bin(31);
 
-preprocessor.expectTokens(["dcl", "BC", "fixed", "bin", "(", "31", ")", ";"]);
+preprocessor.expectTokens(["DCL", "BC", "FIXED", "BIN", "(", "31", ")", ";"]);
