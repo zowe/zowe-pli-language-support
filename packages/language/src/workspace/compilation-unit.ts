@@ -36,6 +36,7 @@ import {
 import { Builtins, BuiltinsUri, BuiltinsUriSchema } from "./builtins.js";
 import { PluginConfigurationProviderInstance } from "./plugin-configuration-provider.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
+import { InstructionCache } from "../preprocessor/instruction-cache.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -63,6 +64,7 @@ export interface CompilationUnit {
   diagnostics: CompilationUnitDiagnostics;
   scopeCaches: ScopeCacheGroups;
   requestCaches: LSRequestCache;
+  instructionCache: InstructionCache;
   rootScope: Scope;
   rootPreprocessorScope: Scope;
 }
@@ -153,6 +155,7 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
     referencesCache: new ReferencesCache(),
     statementOrderCache: new StatementOrderCache(),
     scopeCaches: new ScopeCacheGroups(),
+    instructionCache: new InstructionCache(),
     diagnostics: {
       lexer: [],
       compilerOptions: [],
