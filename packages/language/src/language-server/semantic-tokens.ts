@@ -19,7 +19,7 @@ import {
 } from "vscode-languageserver-types";
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { Token, TokenPayload } from "../parser/tokens";
+import { Token } from "../parser/tokens";
 
 export const semanticTokenTypes = [
   SemanticTokenTypes.variable,
@@ -67,19 +67,17 @@ export function semanticTokens(
 }
 
 function tokenType(token: Token): string | undefined {
-  const payload = token.payload;
-
-  if (isProcedureType(payload)) {
+  if (isProcedureType(token)) {
     return SemanticTokenTypes.function;
   }
 
-  if (isVariableType(payload)) {
+  if (isVariableType(token)) {
     return SemanticTokenTypes.variable;
-  } else if (payload.kind === CstNodeKind.ProcedureParameter_Id) {
+  } else if (token.kind === CstNodeKind.ProcedureParameter_Id) {
     return SemanticTokenTypes.parameter;
-  } else if (payload.kind === CstNodeKind.CompilerOption_Name) {
+  } else if (token.kind === CstNodeKind.CompilerOption_Name) {
     return SemanticTokenTypes.keyword;
-  } else if (payload.kind === CstNodeKind.CompilerOption_Number) {
+  } else if (token.kind === CstNodeKind.CompilerOption_Number) {
     return SemanticTokenTypes.number;
   }
 
@@ -102,9 +100,9 @@ function isProcedureKind(container: SyntaxNode | null | undefined): boolean {
   return false;
 }
 
-function isProcedureType(payload: TokenPayload): boolean {
-  const kind = payload.kind;
-  const element = payload.element;
+function isProcedureType(token: Token): boolean {
+  const kind = token.kind;
+  const element = token.element;
   if (
     kind === CstNodeKind.ReferenceItem_Ref &&
     element?.kind === SyntaxKind.ReferenceItem
@@ -114,7 +112,7 @@ function isProcedureType(payload: TokenPayload): boolean {
   }
   if (
     kind === CstNodeKind.LabelPrefix_Name &&
-    isProcedurePrefix(payload.element)
+    isProcedurePrefix(token.element)
   ) {
     return true;
   }
@@ -151,8 +149,8 @@ function isProcedurePrefix(node: SyntaxNode | null | undefined): boolean {
   return false;
 }
 
-function isVariableType(payload: TokenPayload): boolean {
-  switch (payload.kind) {
+function isVariableType(token: Token): boolean {
+  switch (token.kind) {
     case CstNodeKind.DeclaredVariable_Name:
     case CstNodeKind.ReferenceItem_Ref:
     case CstNodeKind.TypeAttribute_TypeId0:

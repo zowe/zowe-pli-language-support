@@ -165,20 +165,18 @@ export function generateAndAssertValidSymbolTable(
 ) {
   // Retrieve a list of valid tokens with validated payloads.
   const tokens = compilationUnit.tokens.all.filter((token) => {
-    expect(token.payload).toBeDefined();
-
     // FQN rule (token payload === undefined) does not reset the token kind.
     // Todo: Remove this exception once the FQN rule is updated.
     // Intermediate binary expressions are not AST nodes.
     if (
-      token.payload.kind === undefined ||
-      isIntermediateBinaryExpression(token.payload.element)
+      token.kind === undefined ||
+      isIntermediateBinaryExpression(token.element)
     ) {
       return false;
     }
 
-    const element = token.payload.element;
-    const kind = token.payload.kind;
+    const element = token.element;
+    const kind = token.kind;
     const kindName = SyntaxKind[kind];
     const image = token.image;
 
@@ -213,7 +211,7 @@ export function generateAndAssertValidSymbolTable(
     forEachNode(node!, verifyNodeReachability);
   };
 
-  tokens.forEach((token) => verifyNodeReachability(token.payload.element));
+  tokens.forEach((token) => verifyNodeReachability(token.element));
 
   // Generate the symbol table and verify the container structure.
   lifecycle.generateSymbolTable(compilationUnit);
@@ -250,7 +248,7 @@ export function generateAndAssertValidSymbolTable(
     forEachNode(node!, (child) => verifyNodeContainer(child, token));
   };
 
-  tokens.forEach((token) => verifyNodeContainer(token.payload.element, token));
+  tokens.forEach((token) => verifyNodeContainer(token.element, token));
 }
 
 /**

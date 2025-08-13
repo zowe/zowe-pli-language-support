@@ -38,8 +38,8 @@ interface SymbolBuilder {
 class ProcedureSymbolBuilder implements SymbolBuilder {
   canHandle(token: Token): boolean {
     return (
-      token.payload.kind === CstNodeKind.ProcedureStatement_PROCEDURE &&
-      token.payload.element?.kind === SyntaxKind.ProcedureStatement
+      token.kind === CstNodeKind.ProcedureStatement_PROCEDURE &&
+      token.element?.kind === SyntaxKind.ProcedureStatement
     );
   }
 
@@ -48,7 +48,7 @@ class ProcedureSymbolBuilder implements SymbolBuilder {
     elementTokens: Token[],
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
-    const labelPrefixStatement = token.payload.element?.container;
+    const labelPrefixStatement = token.element?.container;
     // Return early if the label prefix statement is not a valid statement
     if (
       labelPrefixStatement?.kind !== SyntaxKind.Statement ||
@@ -79,8 +79,8 @@ class ProcedureSymbolBuilder implements SymbolBuilder {
 class DeclareSymbolBuilder implements SymbolBuilder {
   canHandle(token: Token): boolean {
     if (
-      token.payload.kind !== CstNodeKind.DeclareStatement_DECLARE ||
-      token.payload.element?.kind !== SyntaxKind.DeclareStatement
+      token.kind !== CstNodeKind.DeclareStatement_DECLARE ||
+      token.element?.kind !== SyntaxKind.DeclareStatement
     ) {
       return false;
     }
@@ -100,7 +100,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
     const levelSymbols: LevelSymbol[] = [];
     const hierarchyBuilder = new LevelHierarchyBuilder();
 
-    const declareStatement = token.payload.element as DeclareStatement;
+    const declareStatement = token.element as DeclareStatement;
     for (const item of declareStatement.items.filter(
       (i: DeclaredItem) => i.kind === SyntaxKind.DeclaredItem,
     )) {
@@ -222,13 +222,13 @@ class LevelHierarchyBuilder {
 class LabelSymbolBuilder implements SymbolBuilder {
   canHandle(token: Token): boolean {
     if (
-      token.payload.kind !== CstNodeKind.LabelPrefix_Name ||
-      token.payload.element?.kind !== SyntaxKind.LabelPrefix
+      token.kind !== CstNodeKind.LabelPrefix_Name ||
+      token.element?.kind !== SyntaxKind.LabelPrefix
     ) {
       return false;
     }
 
-    const container = token.payload.element.container;
+    const container = token.element.container;
     if (!container || container.kind !== SyntaxKind.Statement) {
       return true;
     }
@@ -241,7 +241,7 @@ class LabelSymbolBuilder implements SymbolBuilder {
     elementTokens: Token[],
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
-    const labelPrefixStatement = token.payload.element?.container as Statement;
+    const labelPrefixStatement = token.element?.container as Statement;
     if (!labelPrefixStatement?.labels?.length) {
       return [];
     }

@@ -32,36 +32,35 @@ export function definitionRequest(
     return [];
   }
   const token = binaryTokenSearch(tokens, offset);
-  const payload = token?.payload;
-  if (!payload) {
+  if (!token) {
     return [];
   }
-  if (isNameToken(payload.kind) && payload.uri) {
+  if (isNameToken(token.kind) && token.uri) {
     return [
       {
-        uri: payload.uri.toString(),
+        uri: token.uri.toString(),
         range: {
           start: token.startOffset,
           end: token.endOffset + 1,
         },
       },
     ];
-  } else if (isReferenceToken(payload.kind) && payload.element) {
-    const ref = getReference(payload.element);
+  } else if (isReferenceToken(token.kind) && token.element) {
+    const ref = getReference(token.element);
     if (!ref || !ref.node) {
       return [];
     }
     // If we're looking at ourselves, we don't report the definition.
-    if (ref.node === payload.element) {
+    if (ref.node === token.element) {
       return [];
     }
     const nameToken = getNameToken(ref.node);
-    if (!nameToken?.payload.uri) {
+    if (!nameToken?.uri) {
       return [];
     }
     return [
       {
-        uri: nameToken.payload.uri.toString(),
+        uri: nameToken.uri.toString(),
         range: {
           start: nameToken.startOffset,
           end: nameToken.endOffset + 1,
@@ -69,11 +68,11 @@ export function definitionRequest(
       },
     ];
   } else if (
-    isIncludeItemToken(payload.kind) &&
-    payload.element?.kind === SyntaxKind.IncludeItem
+    isIncludeItemToken(token.kind) &&
+    token.element?.kind === SyntaxKind.IncludeItem
   ) {
     // allow jumping to the resolved file when present
-    const filePath = payload.element.filePath;
+    const filePath = token.element.filePath;
     if (filePath) {
       return [
         {
