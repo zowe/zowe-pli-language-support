@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">98% </span>
+                <span class="strong">97.93% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>98/100</span>
+                <span class='fraction'>95/97</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">98% </span>
+                <span class="strong">97.93% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>98/100</span>
+                <span class='fraction'>95/97</span>
             </div>
         
             
@@ -213,10 +213,7 @@
 <a name='L148'></a><a href='#L148'>148</a>
 <a name='L149'></a><a href='#L149'>149</a>
 <a name='L150'></a><a href='#L150'>150</a>
-<a name='L151'></a><a href='#L151'>151</a>
-<a name='L152'></a><a href='#L152'>152</a>
-<a name='L153'></a><a href='#L153'>153</a>
-<a name='L154'></a><a href='#L154'>154</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L151'></a><a href='#L151'>151</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -227,8 +224,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -249,6 +244,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -273,19 +269,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-yes">534x</span>
 <span class="cline-any cline-yes">534x</span>
 <span class="cline-any cline-yes">534x</span>
@@ -336,7 +330,7 @@
 <span class="cline-any cline-yes">534x</span>
 <span class="cline-any cline-yes">534x</span>
 <span class="cline-any cline-yes">534x</span>
-<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -381,9 +375,7 @@
  */
 &nbsp;
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
-import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { PliPreprocessorParser } from "./pli-preprocessor-parser";
-import * as tokens from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
 import {
@@ -403,6 +395,7 @@ import {
   getDefaultCompilerOptions,
 } from "./compiler-options/options";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { initLexer } from "../parser/tokenizer";
 &nbsp;
 export interface LexingIssue {
   readonly message: string;
@@ -428,20 +421,18 @@ export interface LexerResult {
 export class PliLexer {
   readonly compilerOptionsPreprocessor: CompilerOptionsProcessor;
   readonly marginsProcessor: MarginsProcessor;
-  readonly preprocessorLexer: PliPreprocessorLexer;
   readonly preprocessorParser: PliPreprocessorParser;
 &nbsp;
   constructor() {
     this.compilerOptionsPreprocessor = new CompilerOptionsProcessor();
     this.marginsProcessor = new PliMarginsProcessor();
-    this.preprocessorLexer = new PliPreprocessorLexer();
-    this.preprocessorParser = new PliPreprocessorParser(this.preprocessorLexer);
+    this.preprocessorParser = new PliPreprocessorParser();
   }
 &nbsp;
   tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
     const compilerOptionsResult =
       this.compilerOptionsPreprocessor.extractCompilerOptions(inputText, uri);
-    tokens.setCompilerOptions(
+    initLexer(
       compilerOptionsResult.result?.options ?? getDefaultCompilerOptions(),
     );
     const textWithoutMargins = this.marginsProcessor.processMargins(
@@ -505,8 +496,8 @@ function generateIncAfterInstruction(
   includeItem.token = incAfter.<span class="branch-0 cbranch-no" title="branch not covered" >token || null;</span>
   if (incAfter.token) {
     includeItem.token = incAfter.token;
-    incAfter.token.payload.element = includeItem;
-    incAfter.token.payload.kind = CstNodeKind.IncludeItem_FileID;
+    incAfter.token.element = includeItem;
+    incAfter.token.kind = CstNodeKind.IncludeItem_FileID;
   }
   // IncAfter runs as the very first instruction in the preprocessor.
   // It allows to include ONE SINGLE file. Afterwards the preprocessor runs as normal.
@@ -529,7 +520,7 @@ function generateIncAfterInstruction(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-12T11:07:39.626Z
+                at 2025-08-13T11:55:28.335Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
