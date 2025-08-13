@@ -63,8 +63,8 @@ function getTokenContext(
     let token = tokens[index - i];
     if (!token) {
       return undefined;
-    } else if (token.payload.element) {
-      return token.payload.element;
+    } else if (token.element) {
+      return token.element;
     }
   }
   return undefined;

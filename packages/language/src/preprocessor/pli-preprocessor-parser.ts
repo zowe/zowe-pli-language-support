@@ -18,7 +18,6 @@ import {
   PreprocessorParserState,
 } from "./pli-preprocessor-parser-state";
 import { PreprocessorError } from "./pli-preprocessor-error";
-import { PliPreprocessorLexer } from "./pli-preprocessor-lexer";
 import { URI } from "../utils/uri";
 import * as ast from "../syntax-tree/ast";
 import {
@@ -38,14 +37,8 @@ export type PreprocessorParserResult = {
 };
 
 export class PliPreprocessorParser {
-  private readonly lexer: PliPreprocessorLexer;
-
-  constructor(lexer: PliPreprocessorLexer) {
-    this.lexer = lexer;
-  }
-
   initializeState(text: string, uri: URI): PreprocessorParserState {
-    return new PliPreprocessorParserState(this.lexer, text, uri);
+    return new PliPreprocessorParserState(text, uri);
   }
 
   parse(state: PreprocessorParserState): PreprocessorParserResult {
@@ -85,24 +78,22 @@ export class PliPreprocessorParser {
 
   private consumeTokenStatement(state: PreprocessorParserState): ast.Statement {
     const tokenStatement = ast.createTokenStatement();
-    const tokens: Token[] = [];
+    const start = state.index;
     // We can assume that the first token is always a non-% token
     // Otherwise we wouldn't be able to get here in the first place
     let currentToken: Token | undefined = state.current;
-    let nextToken: Token | undefined = state.tokens[state.index + 1];
     while (currentToken) {
       if (
         tokenMatcher(currentToken, PreprocessorTokens.Percentage) ||
-        tokenMatcher(currentToken, PreprocessorTokens.IncludeAlt)
+        tokenMatcher(currentToken, PreprocessorTokens.IncludeAlt) ||
+        // We cap a single token statement to 100_000 tokens to avoid stack overflows
+        state.index - start >= 100_000
       ) {
         break;
       }
-      state.index++;
-      tokens.push(currentToken);
-      currentToken = nextToken;
-      nextToken = state.tokens[state.index + 1];
+      currentToken = state.tokens[++state.index];
     }
-    tokenStatement.tokens = tokens;
+    tokenStatement.tokens = state.tokens.slice(start, state.index);
     const statement = ast.createStatement();
     statement.value = tokenStatement;
     return statement;
@@ -864,8 +855,8 @@ export class PliPreprocessorParser {
       PreprocessorTokens.Id,
     );
     reference.ref = ast.createReference(reference, variable, true);
-    variable.payload.kind = CstNodeKind.ReferenceItem_Ref;
-    variable.payload.element = reference;
+    variable.kind = CstNodeKind.ReferenceItem_Ref;
+    variable.element = reference;
     if (withDimensions && state.canConsume(PreprocessorTokens.LParen)) {
       reference.dimensions = this.dimensions(state);
     }

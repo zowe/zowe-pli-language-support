@@ -10,7 +10,7 @@
  */
 
 import { Diagnostic, Location, tokenToRange } from "../language-server/types";
-import { TokenPayload, Token } from "../parser/tokens";
+import { Token } from "../parser/tokens";
 import {
   MemberCall,
   ProcedureParameter,
@@ -348,18 +348,17 @@ export function resolveReferences(unit: CompilationUnit): Diagnostic[] {
 export function findTokenElementReference(
   token: Token,
 ): SyntaxNode | undefined {
-  const payload = token.payload as TokenPayload;
-  let element = payload.element;
+  let element = token.element;
 
-  if (isReferenceToken(payload.kind) && payload.element) {
-    // Find the reference beloging to the token
-    const ref = getReference(payload.element);
+  if (isReferenceToken(token.kind) && token.element) {
+    // Find the reference belonging to the token
+    const ref = getReference(token.element);
     if (ref?.node) {
       element = ref.node;
     } else {
       return undefined;
     }
-  } else if (!isNameToken(payload.kind)) {
+  } else if (!isNameToken(token.kind)) {
     // Not a reference or a name token
     return undefined;
   }
@@ -396,17 +395,17 @@ export function getReferenceLocations(
   const reverseReferences = findElementReferences(unit, element);
 
   const nameToken = getNameToken(element);
-  if (nameToken?.payload.uri) {
+  if (nameToken?.uri) {
     locations.push({
-      uri: nameToken.payload.uri.toString(),
+      uri: nameToken.uri.toString(),
       range: tokenToRange(nameToken),
     });
   }
 
   for (const ref of reverseReferences) {
-    if (ref.token.payload.uri) {
+    if (ref.token.uri) {
       locations.push({
-        uri: ref.token.payload.uri.toString(),
+        uri: ref.token.uri.toString(),
         range: tokenToRange(ref.token),
       });
     }

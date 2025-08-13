@@ -70,7 +70,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * Write a file to the virtualized file system
    */
   writeFileSync(uri: URI, value: string): void {
-    this.files.set(uri.path, value);
+    this.files.set(uri.path.toLowerCase(), value);
   }
 
   /**
@@ -78,28 +78,28 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * If the file does not exist, undefined is returned.
    */
   readFileSync(uri: URI): string | undefined {
-    return this.files.get(uri.path);
+    return this.files.get(uri.path.toLowerCase());
   }
 
   /**
    * Checks if a file exists in the virtualized file system
    */
   fileExistsSync(uri: URI): boolean {
-    return this.files.has(uri.path);
+    return this.files.has(uri.path.toLowerCase());
   }
 
   /**
    * Deletes a file from the virtualized file system
    */
   deleteFileSync(uri: URI): void {
-    this.files.delete(uri.path);
+    this.files.delete(uri.path.toLowerCase());
   }
 
   /**
    * Simulates a glob lookup in the virtual file system
    */
   findFilesByGlobSync(pattern: string): string[] {
-    const regex = new RegExp(pattern.replace(/\*/g, ".*"));
+    const regex = new RegExp(pattern.replace(/\*/g, ".*") + "$", "i");
     return Array.from(this.files.keys()).filter((fp) => regex.test(fp));
   }
 }

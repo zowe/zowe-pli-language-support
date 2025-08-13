@@ -69,20 +69,20 @@ export function skippedCodeRanges(
 
   for (const [index, token] of tokens.entries()) {
     if (
-      token.payload.kind === CstNodeKind.SkipDirective_SKIP &&
-      token.payload.element?.kind === SyntaxKind.SkipDirective
+      token.kind === CstNodeKind.SkipDirective_SKIP &&
+      token.element?.kind === SyntaxKind.SkipDirective
     ) {
-      const element = token.payload.element;
+      const element = token.element;
       const line = textDocument.positionAt(token.startOffset).line + 1;
       result.push({
         start: { line, character: 0 },
         end: { line: line + element.lineCount, character: 0 },
       });
     } else if (
-      token.payload.kind === CstNodeKind.IfStatement_IF &&
-      token.payload.element?.kind === SyntaxKind.IfStatement
+      token.kind === CstNodeKind.IfStatement_IF &&
+      token.element?.kind === SyntaxKind.IfStatement
     ) {
-      const element = token.payload.element;
+      const element = token.element;
       const evaluationResult =
         compilationUnit.preprocessorEvaluationResults.ifStatements.get(element);
       if (
@@ -105,17 +105,17 @@ export function skippedCodeRanges(
         }
       }
     } else if (
-      token.payload.kind === CstNodeKind.DoStatement_SKIP &&
-      token.payload.element?.kind === SyntaxKind.DoStatement &&
-      token.payload.element.skip
+      token.kind === CstNodeKind.DoStatement_SKIP &&
+      token.element?.kind === SyntaxKind.DoStatement &&
+      token.element.skip
     ) {
-      const endStatement = token.payload.element.end;
+      const endStatement = token.element.end;
       let endToken = token;
       for (let i = index + 1; i < tokens.length; i++) {
         if (
-          tokens[i].payload.kind === CstNodeKind.EndStatement_END &&
-          tokens[i].payload.element?.kind === SyntaxKind.EndStatement &&
-          tokens[i].payload.element === endStatement
+          tokens[i].kind === CstNodeKind.EndStatement_END &&
+          tokens[i].element?.kind === SyntaxKind.EndStatement &&
+          tokens[i].element === endStatement
         ) {
           endToken = tokens[i];
           break;
