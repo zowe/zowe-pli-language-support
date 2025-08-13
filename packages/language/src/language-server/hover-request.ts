@@ -31,6 +31,7 @@ import { binaryTokenSearch } from "../utils/search";
 import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
+import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import { HoverResponse, tokenToRange } from "./types";
 
 type MarkupResponse = string | null;
@@ -126,9 +127,20 @@ function getLabelPrefixRepresentation(labelPrefix: LabelPrefix): string | null {
  * Converts an IncludeItem node to a string representation.
  * Ex. %INCLUDE "file:///path/to/file.pli"
  */
-function getIncludeItemRepresentation(node: IncludeItem): string {
-  const filePath = node.filePath ?? "<unknown>";
-  return formatPliCodeBlock(`%INCLUDE "${filePath}"`);
+function getIncludeItemRepresentation(node: IncludeItem): string | null {
+  if (!node.filePath) {
+    return null;
+  }
+
+  // load up the first 200 chars of content from the file
+  const fileUri = URI.parse(node.filePath);
+  const fileContent = FileSystemProviderInstance.readFileSync(fileUri) || "";
+  const partialContent = fileContent.slice(
+      0,
+      200,
+    ) + (fileContent.length > 200 ? '...' : '');
+
+  return formatPliCodeBlock(`%INCLUDE "${fileUri.fsPath}"\n\n---\n${partialContent}`);
 }
 
 /**
