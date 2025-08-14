@@ -27,7 +27,7 @@ import {
   parseStmts,
 } from "./utils";
 
-test("Block block-492.pli", () => {
+test("Block block-492.pli", async () => {
   // Context:
   //
   // control. It allows multiple ON-units to get control for the same condition.
@@ -43,7 +43,7 @@ test("Block block-492.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.398 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.398 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -55,7 +55,7 @@ test("Block block-492.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-508.pli", () => {
+test("Block block-508.pli", async () => {
   // Context:
   //
   // Example
@@ -71,7 +71,7 @@ test("Block block-508.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.459 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.459 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -90,7 +90,7 @@ test("Block block-508.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-400.pli", () => {
+test("Block block-400.pli", async () => {
   // Context:
   //
   // both specify null ON-units for the same file.
@@ -106,7 +106,7 @@ test("Block block-400.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.331 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.331 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -121,7 +121,7 @@ test("Block block-400.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-204.pli", () => {
+test("Block block-204.pli", async () => {
   // Context:
   //
   // "would be the same as this longer declare:
@@ -137,7 +137,7 @@ test("Block block-204.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.232 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.232 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -148,7 +148,7 @@ test("Block block-204.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-658.pli", () => {
+test("Block block-658.pli", async () => {
   // Context:
   //
   // which is a structure declaration:
@@ -164,7 +164,7 @@ test("Block block-658.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.670 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.670 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -182,7 +182,7 @@ test("Block block-658.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-297.pli", () => {
+test("Block block-297.pli", async () => {
   // Context:
   //
   // is encountered or until a %POP directive that restores the previous %PRINT directive is encountered.
@@ -198,7 +198,7 @@ test("Block block-297.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.278 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.278 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -210,7 +210,7 @@ test("Block block-297.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-477.pli", () => {
+test("Block block-477.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -226,7 +226,7 @@ test("Block block-477.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.386 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.386 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -238,7 +238,7 @@ test("Block block-477.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-610.pli", () => {
+test("Block block-610.pli", async () => {
   // Context:
   //
   // Example
@@ -254,7 +254,7 @@ test("Block block-610.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.603 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.603 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -273,7 +273,7 @@ test("Block block-610.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-278.pli", () => {
+test("Block block-278.pli", async () => {
   // Context:
   //
   // UPTHRU and DOWNTHRU are particularly useful with ordinals. Consider the following example:
@@ -289,7 +289,7 @@ test("Block block-278.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.270 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.270 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -306,7 +306,7 @@ test("Block block-278.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-184.pli", () => {
+test("Block block-184.pli", async () => {
   // Context:
   //
   // precision:
@@ -322,7 +322,7 @@ test("Block block-184.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.222 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.222 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -333,7 +333,7 @@ test("Block block-184.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-129.pli", () => {
+test("Block block-129.pli", async () => {
   // Context:
   //
   // To return from a subroutine, the RETURN statement syntax is as follows:
@@ -349,7 +349,7 @@ test("Block block-129.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.175 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.175 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -361,7 +361,7 @@ test("Block block-129.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-689.pli", () => {
+test("Block block-689.pli", async () => {
   // Context:
   //
   // Upper limits
@@ -377,7 +377,7 @@ test("Block block-689.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.684 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.684 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -489,7 +489,7 @@ test("Block block-689.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-688.pli", () => {
+test("Block block-688.pli", async () => {
   // Context:
   //
   // Upper limits
@@ -505,7 +505,7 @@ test("Block block-688.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.683 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.683 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -615,7 +615,7 @@ test("Block block-688.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-68.pli", () => {
+test("Block block-68.pli", async () => {
   // Context:
   //
   // them separately. Consider the following example:
@@ -631,7 +631,7 @@ test("Block block-68.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.127 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.127 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -644,7 +644,7 @@ test("Block block-68.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-142.pli", () => {
+test("Block block-142.pli", async () => {
   // Context:
   //
   // the parent structure.
@@ -660,7 +660,7 @@ test("Block block-142.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.192 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.192 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -680,7 +680,7 @@ test("Block block-142.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-21.pli", () => {
+test("Block block-21.pli", async () => {
   // Context:
   //
   // of 16 binary digits.
@@ -696,7 +696,7 @@ test("Block block-21.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.78 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.78 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -707,7 +707,7 @@ test("Block block-21.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-20.pli", () => {
+test("Block block-20.pli", async () => {
   // Context:
   //
   //  represents fixed-point data of 3 digits, 2 of which are fractional.
@@ -723,7 +723,7 @@ test("Block block-20.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.78 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.78 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -734,7 +734,7 @@ test("Block block-20.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-389.pli", () => {
+test("Block block-389.pli", async () => {
   // Context:
   //
   // Combined with DIMACROSS, it can become even easier to add elements to this declaration:
@@ -750,7 +750,7 @@ test("Block block-389.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.322 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.322 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -769,7 +769,7 @@ test("Block block-389.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-212.pli", () => {
+test("Block block-212.pli", async () => {
   // Context:
   //
   // This example is based on the following declaration:
@@ -785,7 +785,7 @@ test("Block block-212.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.234 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.234 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -796,7 +796,7 @@ test("Block block-212.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-149.pli", () => {
+test("Block block-149.pli", async () => {
   // Context:
   //
   //  is not.
@@ -812,7 +812,7 @@ test("Block block-149.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.195 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.195 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -830,7 +830,7 @@ test("Block block-149.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-192.pli", () => {
+test("Block block-192.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -846,7 +846,7 @@ test("Block block-192.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.225 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.225 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -857,7 +857,7 @@ test("Block block-192.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-633.pli", () => {
+test("Block block-633.pli", async () => {
   // Context:
   //
   // Example
@@ -873,7 +873,7 @@ test("Block block-633.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.642 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.642 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -891,7 +891,7 @@ test("Block block-633.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-383.pli", () => {
+test("Block block-383.pli", async () => {
   // Context:
   //
   // consists of the elements '9.99' of the picture E.
@@ -907,7 +907,7 @@ test("Block block-383.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.318 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.318 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -919,7 +919,7 @@ test("Block block-383.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-382.pli", () => {
+test("Block block-382.pli", async () => {
   // Context:
   //
   // X is a bit string that consists of 40 elements of C, starting at the 20th element.
@@ -935,7 +935,7 @@ test("Block block-382.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.318 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.318 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -949,7 +949,7 @@ test("Block block-382.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-177.pli", () => {
+test("Block block-177.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -965,7 +965,7 @@ test("Block block-177.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.220 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.220 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -977,7 +977,7 @@ test("Block block-177.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-87.pli", () => {
+test("Block block-87.pli", async () => {
   // Context:
   //
   // The ENTRY statement can define a secondary entry point to a procedure. Consider the following example:
@@ -993,7 +993,7 @@ test("Block block-87.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.145 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.145 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1006,7 +1006,7 @@ test("Block block-87.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-562.pli", () => {
+test("Block block-562.pli", async () => {
   // Context:
   //
   // Example
@@ -1022,7 +1022,7 @@ test("Block block-562.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.541 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.541 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1039,7 +1039,7 @@ test("Block block-562.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-563.pli", () => {
+test("Block block-563.pli", async () => {
   // Context:
   //
   // Example
@@ -1055,7 +1055,7 @@ test("Block block-563.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.542 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.542 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1076,7 +1076,7 @@ test("Block block-563.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-27.pli", () => {
+test("Block block-27.pli", async () => {
   // Context:
   //
   //  in this example do compare as equal:
@@ -1092,7 +1092,7 @@ test("Block block-27.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.83 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.83 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1104,7 +1104,7 @@ test("Block block-27.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-692.pli", () => {
+test("Block block-692.pli", async () => {
   // Context:
   //
   // Upper limits
@@ -1120,7 +1120,7 @@ test("Block block-692.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.687 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.687 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1170,7 +1170,7 @@ test("Block block-692.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-214.pli", () => {
+test("Block block-214.pli", async () => {
   // Context:
   //
   // twentieth and the twenty-first centuries, it might be declared as follows:
@@ -1186,7 +1186,7 @@ test("Block block-214.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.237 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.237 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1208,7 +1208,7 @@ test("Block block-214.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-215.pli", () => {
+test("Block block-215.pli", async () => {
   // Context:
   //
   //  are structures:
@@ -1224,7 +1224,7 @@ test("Block block-215.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.237 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.237 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1240,7 +1240,7 @@ test("Block block-215.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-286.pli", () => {
+test("Block block-286.pli", async () => {
   // Context:
   //
   // The EXIT statement stops the current thread.
@@ -1256,7 +1256,7 @@ test("Block block-286.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.272 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.272 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1268,7 +1268,7 @@ test("Block block-286.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-329.pli", () => {
+test("Block block-329.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -1284,7 +1284,7 @@ test("Block block-329.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.294 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.294 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1299,7 +1299,7 @@ test("Block block-329.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-194.pli", () => {
+test("Block block-194.pli", async () => {
   // Context:
   //
   // its associated name. For example, the items of a payroll record could be declared as follows:
@@ -1315,7 +1315,7 @@ test("Block block-194.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.228 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.228 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1335,7 +1335,7 @@ test("Block block-194.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-317.pli", () => {
+test("Block block-317.pli", async () => {
   // Context:
   //
   // interpreted as fixed-point binary.
@@ -1351,7 +1351,7 @@ test("Block block-317.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.288 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.288 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1362,7 +1362,7 @@ test("Block block-317.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-12.pli", () => {
+test("Block block-12.pli", async () => {
   // Context:
   //
   // DECIMAL with a PRECISION of five digits, four to the right of the decimal point:
@@ -1378,7 +1378,7 @@ test("Block block-12.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.70 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.70 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1389,7 +1389,7 @@ test("Block block-12.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-385.pli", () => {
+test("Block block-385.pli", async () => {
   // Context:
   //
   // containing the names of the weekdays.
@@ -1405,7 +1405,7 @@ test("Block block-385.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.321 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.321 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1423,7 +1423,7 @@ test("Block block-385.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-153.pli", () => {
+test("Block block-153.pli", async () => {
   // Context:
   //
   //  is valid.
@@ -1439,7 +1439,7 @@ test("Block block-153.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.196 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.196 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1454,7 +1454,7 @@ test("Block block-153.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-152.pli", () => {
+test("Block block-152.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -1470,7 +1470,7 @@ test("Block block-152.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.196 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.196 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1483,7 +1483,7 @@ test("Block block-152.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-31.pli", () => {
+test("Block block-31.pli", async () => {
   // Context:
   //
   // false. However, if the window started at 1950, the comparison would return true.
@@ -1499,7 +1499,7 @@ test("Block block-31.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.93 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.93 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1517,7 +1517,7 @@ test("Block block-31.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-629.pli", () => {
+test("Block block-629.pli", async () => {
   // Context:
   //
   // This example is based on the following code fragment:
@@ -1533,7 +1533,7 @@ test("Block block-629.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.634 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.634 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1564,7 +1564,7 @@ test("Block block-629.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-291.pli", () => {
+test("Block block-291.pli", async () => {
   // Context:
   //
   // This example is based on the following declarations.
@@ -1580,7 +1580,7 @@ test("Block block-291.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.276 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.276 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1596,7 +1596,7 @@ test("Block block-291.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-530.pli", () => {
+test("Block block-530.pli", async () => {
   // Context:
   //
   // Example 1
@@ -1612,7 +1612,7 @@ test("Block block-530.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.500 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.500 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1634,7 +1634,7 @@ test("Block block-530.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-399.pli", () => {
+test("Block block-399.pli", async () => {
   // Context:
   //
   // file constants. The file constants can subsequently be assigned to the file variable.
@@ -1650,7 +1650,7 @@ test("Block block-399.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.331 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.331 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1663,7 +1663,7 @@ test("Block block-399.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-471.pli", () => {
+test("Block block-471.pli", async () => {
   // Context:
   //
   // 329
@@ -1679,7 +1679,7 @@ test("Block block-471.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.381 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.381 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1692,7 +1692,7 @@ test("Block block-471.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-183.pli", () => {
+test("Block block-183.pli", async () => {
   // Context:
   //
   // BINARY:
@@ -1708,7 +1708,7 @@ test("Block block-183.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.222 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.222 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1719,7 +1719,7 @@ test("Block block-183.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-236.pli", () => {
+test("Block block-236.pli", async () => {
   // Context:
   //
   // This code sums up all the row elements:
@@ -1735,7 +1735,7 @@ test("Block block-236.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.257 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.257 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1757,7 +1757,7 @@ test("Block block-236.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-209.pli", () => {
+test("Block block-209.pli", async () => {
   // Context:
   //
   //  would be ambiguous:
@@ -1773,7 +1773,7 @@ test("Block block-209.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.233 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.233 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1795,7 +1795,7 @@ test("Block block-209.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-208.pli", () => {
+test("Block block-208.pli", async () => {
   // Context:
   //
   // :
@@ -1811,7 +1811,7 @@ test("Block block-208.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.232 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.232 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1827,7 +1827,7 @@ test("Block block-208.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-393.pli", () => {
+test("Block block-393.pli", async () => {
   // Context:
   //
   // .
@@ -1843,7 +1843,7 @@ test("Block block-393.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.324 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.324 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1854,7 +1854,7 @@ test("Block block-393.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-392.pli", () => {
+test("Block block-392.pli", async () => {
   // Context:
   //
   // (padded on the right to 10 characters) is assigned to it.
@@ -1870,7 +1870,7 @@ test("Block block-392.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.324 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.324 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1881,7 +1881,7 @@ test("Block block-392.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-300.pli", () => {
+test("Block block-300.pli", async () => {
   // Context:
   //
   // The %PAGE directive allows you to start a new page in the compiler source listings.
@@ -1897,7 +1897,7 @@ test("Block block-300.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.279 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.279 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1909,7 +1909,7 @@ test("Block block-300.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-166.pli", () => {
+test("Block block-166.pli", async () => {
   // Context:
   //
   // See the following example:
@@ -1925,7 +1925,7 @@ test("Block block-166.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.206 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.206 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1936,7 +1936,7 @@ test("Block block-166.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-28.pli", () => {
+test("Block block-28.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -1952,7 +1952,7 @@ test("Block block-28.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.91 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.91 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1963,7 +1963,7 @@ test("Block block-28.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-29.pli", () => {
+test("Block block-29.pli", async () => {
   // Context:
   //
   // digits, signs, and the location of the assumed decimal point are assigned. Consider the following example:
@@ -1979,7 +1979,7 @@ test("Block block-29.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.91 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.91 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -1994,7 +1994,7 @@ test("Block block-29.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-516.pli", () => {
+test("Block block-516.pli", async () => {
   // Context:
   //
   //  is too short to contain the result.
@@ -2010,7 +2010,7 @@ test("Block block-516.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.472 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.472 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2023,7 +2023,7 @@ test("Block block-516.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-679.pli", () => {
+test("Block block-679.pli", async () => {
   // Context:
   //
   // preprocessor output generated is as follows:
@@ -2039,7 +2039,7 @@ test("Block block-679.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.676 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.676 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2051,7 +2051,7 @@ test("Block block-679.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-191.pli", () => {
+test("Block block-191.pli", async () => {
   // Context:
   //
   // Consider the following declaration:
@@ -2067,7 +2067,7 @@ test("Block block-191.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.225 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.225 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2078,7 +2078,7 @@ test("Block block-191.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-380.pli", () => {
+test("Block block-380.pli", async () => {
   // Context:
   //
   // V is a two-dimensional array that consists of all the elements in the character string A.
@@ -2094,7 +2094,7 @@ test("Block block-380.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.317 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.317 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2106,7 +2106,7 @@ test("Block block-380.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-528.pli", () => {
+test("Block block-528.pli", async () => {
   // Context:
   //
   // contain the result.
@@ -2122,7 +2122,7 @@ test("Block block-528.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.498 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.498 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2135,7 +2135,7 @@ test("Block block-528.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-486.pli", () => {
+test("Block block-486.pli", async () => {
   // Context:
   //
   // Example 1
@@ -2151,7 +2151,7 @@ test("Block block-486.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.396 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.396 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2166,7 +2166,7 @@ test("Block block-486.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-22.pli", () => {
+test("Block block-22.pli", async () => {
   // Context:
   //
   // Consider this example:
@@ -2182,7 +2182,7 @@ test("Block block-22.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.79 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.79 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2193,7 +2193,7 @@ test("Block block-22.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-23.pli", () => {
+test("Block block-23.pli", async () => {
   // Context:
   //
   // 15:
@@ -2209,7 +2209,7 @@ test("Block block-23.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2220,7 +2220,7 @@ test("Block block-23.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-115.pli", () => {
+test("Block block-115.pli", async () => {
   // Context:
   //
   // applied only for the second parameter.
@@ -2236,7 +2236,7 @@ test("Block block-115.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.167 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.167 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2247,7 +2247,7 @@ test("Block block-115.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-548.pli", () => {
+test("Block block-548.pli", async () => {
   // Context:
   //
   // Example
@@ -2263,7 +2263,7 @@ test("Block block-548.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.525 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.525 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2277,7 +2277,7 @@ test("Block block-548.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-549.pli", () => {
+test("Block block-549.pli", async () => {
   // Context:
   //
   // Example
@@ -2293,7 +2293,7 @@ test("Block block-549.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.526 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.526 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2325,7 +2325,7 @@ test("Block block-549.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-436.pli", () => {
+test("Block block-436.pli", async () => {
   // Context:
   //
   // list. Consider the following example:
@@ -2341,7 +2341,7 @@ test("Block block-436.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.354 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.354 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2357,7 +2357,7 @@ test("Block block-436.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-305.pli", () => {
+test("Block block-305.pli", async () => {
   // Context:
   //
   // A common use of %PUSH and %POP directives is in included files and macros.
@@ -2373,7 +2373,7 @@ test("Block block-305.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.281 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.281 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2385,7 +2385,7 @@ test("Block block-305.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-239.pli", () => {
+test("Block block-239.pli", async () => {
   // Context:
   //
   // :
@@ -2401,7 +2401,7 @@ test("Block block-239.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.258 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.258 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2423,7 +2423,7 @@ test("Block block-239.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-403.pli", () => {
+test("Block block-403.pli", async () => {
   // Context:
   //
   // This example illustrates attribute merging for an explicit opening of a file by using a file variable.
@@ -2439,7 +2439,7 @@ test("Block block-403.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.336 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.336 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2456,7 +2456,7 @@ test("Block block-403.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-402.pli", () => {
+test("Block block-402.pli", async () => {
   // Context:
   //
   // constant.
@@ -2472,7 +2472,7 @@ test("Block block-402.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.336 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.336 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2484,7 +2484,7 @@ test("Block block-402.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-379.pli", () => {
+test("Block block-379.pli", async () => {
   // Context:
   //
   // Examples
@@ -2500,7 +2500,7 @@ test("Block block-379.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.317 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.317 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2512,7 +2512,7 @@ test("Block block-379.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-475.pli", () => {
+test("Block block-475.pli", async () => {
   // Context:
   //
   // .
@@ -2528,7 +2528,7 @@ test("Block block-475.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.384 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.384 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2540,7 +2540,7 @@ test("Block block-475.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-613.pli", () => {
+test("Block block-613.pli", async () => {
   // Context:
   //
   // The following are invalid STRING targets:
@@ -2556,7 +2556,7 @@ test("Block block-613.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.606 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.606 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2571,7 +2571,7 @@ test("Block block-613.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-181.pli", () => {
+test("Block block-181.pli", async () => {
   // Context:
   //
   // These statements are equivalent to the following declaration:
@@ -2587,7 +2587,7 @@ test("Block block-181.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2600,7 +2600,7 @@ test("Block block-181.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-180.pli", () => {
+test("Block block-180.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -2616,7 +2616,7 @@ test("Block block-180.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2633,7 +2633,7 @@ test("Block block-180.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-375.pli", () => {
+test("Block block-375.pli", async () => {
   // Context:
   //
   // Y is a character string that consists of the first 5 characters of B.
@@ -2649,7 +2649,7 @@ test("Block block-375.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.316 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.316 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2661,7 +2661,7 @@ test("Block block-375.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-374.pli", () => {
+test("Block block-374.pli", async () => {
   // Context:
   //
   // element identified by the subscript expressions L, M, and N.
@@ -2677,7 +2677,7 @@ test("Block block-374.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.316 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.316 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2689,7 +2689,7 @@ test("Block block-374.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-506.pli", () => {
+test("Block block-506.pli", async () => {
   // Context:
   //
   // The following example is not a multiple declaration:
@@ -2705,7 +2705,7 @@ test("Block block-506.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.452 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.452 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2716,7 +2716,7 @@ test("Block block-506.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-594.pli", () => {
+test("Block block-594.pli", async () => {
   // Context:
   //
   //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Language Reference
@@ -2732,7 +2732,7 @@ test("Block block-594.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.590 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.590 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2750,7 +2750,7 @@ test("Block block-594.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-479.pli", () => {
+test("Block block-479.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -2766,7 +2766,7 @@ test("Block block-479.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.389 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.389 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2777,7 +2777,7 @@ test("Block block-479.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-478.pli", () => {
+test("Block block-478.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -2793,7 +2793,7 @@ test("Block block-478.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.386 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.386 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2804,7 +2804,7 @@ test("Block block-478.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-94.pli", () => {
+test("Block block-94.pli", async () => {
   // Context:
   //
   // entry variable that is used in a procedure reference, as in the following example:
@@ -2820,7 +2820,7 @@ test("Block block-94.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.151 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.151 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2835,7 +2835,7 @@ test("Block block-94.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-299.pli", () => {
+test("Block block-299.pli", async () => {
   // Context:
   //
   // OTHERWISE statements.
@@ -2851,7 +2851,7 @@ test("Block block-299.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.279 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.279 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2862,7 +2862,7 @@ test("Block block-299.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-302.pli", () => {
+test("Block block-302.pli", async () => {
   // Context:
   //
   // The %PRINT directive causes printing of the source listings to be resumed.
@@ -2878,7 +2878,7 @@ test("Block block-302.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.280 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.280 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2890,7 +2890,7 @@ test("Block block-302.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-165.pli", () => {
+test("Block block-165.pli", async () => {
   // Context:
   //
   // .
@@ -2906,7 +2906,7 @@ test("Block block-165.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.204 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.204 */
 
 
    X: proc options(main);
@@ -2925,7 +2925,7 @@ test("Block block-165.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-150.pli", () => {
+test("Block block-150.pli", async () => {
   // Context:
   //
   // a type as a variable name as well.
@@ -2941,7 +2941,7 @@ test("Block block-150.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.195 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.195 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2953,7 +2953,7 @@ test("Block block-150.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-309.pli", () => {
+test("Block block-309.pli", async () => {
   // Context:
   //
   // Qualify blocks can also be nested. For example, you can nest a qualify block inside the block above:
@@ -2969,7 +2969,7 @@ test("Block block-309.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.282 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.282 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -2985,7 +2985,7 @@ test("Block block-309.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-532.pli", () => {
+test("Block block-532.pli", async () => {
   // Context:
   //
   // Example 1
@@ -3001,7 +3001,7 @@ test("Block block-532.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.501 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.501 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3023,7 +3023,7 @@ test("Block block-532.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-473.pli", () => {
+test("Block block-473.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -3039,7 +3039,7 @@ test("Block block-473.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.381 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.381 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3053,7 +3053,7 @@ test("Block block-473.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-687.pli", () => {
+test("Block block-687.pli", async () => {
   // Context:
   //
   // Upper limits
@@ -3069,7 +3069,7 @@ test("Block block-687.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.682 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.682 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3159,7 +3159,7 @@ test("Block block-687.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-222.pli", () => {
+test("Block block-222.pli", async () => {
   // Context:
   //
   // Example: The usage of the ASSERT COMPARE statement
@@ -3175,7 +3175,7 @@ test("Block block-222.pli", () => {
   //
 
   const doc =
-    parse(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.249 */
+    await parse(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.249 */
 
 
  asserts: package;                                                             
@@ -3241,7 +3241,7 @@ test("Block block-222.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-450.pli", () => {
+test("Block block-450.pli", async () => {
   // Context:
   //
   // Example 2
@@ -3257,7 +3257,7 @@ test("Block block-450.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.358 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.358 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3274,7 +3274,7 @@ test("Block block-450.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-637.pli", () => {
+test("Block block-637.pli", async () => {
   // Context:
   //
   // The preprocessor would produce the output text:
@@ -3290,7 +3290,7 @@ test("Block block-637.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.647 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.647 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3301,7 +3301,7 @@ test("Block block-637.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-196.pli", () => {
+test("Block block-196.pli", async () => {
   // Context:
   //
   // and variant parts. For example, records in a client file can be declared as follows:
@@ -3317,7 +3317,7 @@ test("Block block-196.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.229 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.229 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3339,7 +3339,7 @@ test("Block block-196.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-67.pli", () => {
+test("Block block-67.pli", async () => {
   // Context:
   //
   // Examples
@@ -3355,7 +3355,7 @@ test("Block block-67.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.124 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.124 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3382,7 +3382,7 @@ test("Block block-67.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-315.pli", () => {
+test("Block block-315.pli", async () => {
   // Context:
   //
   // The STOP statement stops the current application.
@@ -3398,7 +3398,7 @@ test("Block block-315.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.285 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.285 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3410,7 +3410,7 @@ test("Block block-315.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-172.pli", () => {
+test("Block block-172.pli", async () => {
   // Context:
   //
   // declaration:
@@ -3426,7 +3426,7 @@ test("Block block-172.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.218 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.218 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3438,7 +3438,7 @@ test("Block block-172.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-387.pli", () => {
+test("Block block-387.pli", async () => {
   // Context:
   //
   // For example, consider the declaration:
@@ -3454,7 +3454,7 @@ test("Block block-387.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.321 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.321 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3471,7 +3471,7 @@ test("Block block-387.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-25.pli", () => {
+test("Block block-25.pli", async () => {
   // Context:
   //
   // .
@@ -3487,7 +3487,7 @@ test("Block block-25.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3499,7 +3499,7 @@ test("Block block-25.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-480.pli", () => {
+test("Block block-480.pli", async () => {
   // Context:
   //
   // the following example:
@@ -3515,7 +3515,7 @@ test("Block block-480.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.389 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.389 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3527,7 +3527,7 @@ test("Block block-480.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-24.pli", () => {
+test("Block block-24.pli", async () => {
   // Context:
   //
   // The following example shows the declaration of a bit variable:
@@ -3543,7 +3543,7 @@ test("Block block-24.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.82 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3554,7 +3554,7 @@ test("Block block-24.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-589.pli", () => {
+test("Block block-589.pli", async () => {
   // Context:
   //
   // substring f in the string x will be replaced by the substring t.
@@ -3570,7 +3570,7 @@ test("Block block-589.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.587 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.587 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3599,7 +3599,7 @@ test("Block block-589.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-147.pli", () => {
+test("Block block-147.pli", async () => {
   // Context:
   //
   // that gets a handle to this typed structure:
@@ -3615,7 +3615,7 @@ test("Block block-147.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.194 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.194 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3645,7 +3645,7 @@ test("Block block-147.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-321.pli", () => {
+test("Block block-321.pli", async () => {
   // Context:
   //
   // . PL/I does not resolve this type of declaration dependency.
@@ -3661,7 +3661,7 @@ test("Block block-321.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.290 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.290 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3675,7 +3675,7 @@ test("Block block-321.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-146.pli", () => {
+test("Block block-146.pli", async () => {
   // Context:
   //
   // previous DEFINE ALIAS statement. See the following example:
@@ -3691,7 +3691,7 @@ test("Block block-146.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.194 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.194 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3703,7 +3703,7 @@ test("Block block-146.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-52.pli", () => {
+test("Block block-52.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -3719,7 +3719,7 @@ test("Block block-52.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.105 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.105 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3732,7 +3732,7 @@ test("Block block-52.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-690.pli", () => {
+test("Block block-690.pli", async () => {
   // Context:
   //
   // Upper limits
@@ -3748,7 +3748,7 @@ test("Block block-690.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.685 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.685 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -3878,7 +3878,7 @@ test("Block block-690.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-691.pli", () => {
+test("Block block-691.pli", async () => {
   // Context:
   //
   // Upper limits
@@ -3894,7 +3894,7 @@ test("Block block-691.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.686 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.686 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4024,7 +4024,7 @@ test("Block block-691.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-216.pli", () => {
+test("Block block-216.pli", async () => {
   // Context:
   //
   // Consider the following union:
@@ -4040,7 +4040,7 @@ test("Block block-216.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.238 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.238 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4059,7 +4059,7 @@ test("Block block-216.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-179.pli", () => {
+test("Block block-179.pli", async () => {
   // Context:
   //
   // an attribute specification. Consider the following example:
@@ -4075,7 +4075,7 @@ test("Block block-179.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4086,7 +4086,7 @@ test("Block block-179.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-178.pli", () => {
+test("Block block-178.pli", async () => {
   // Context:
   //
   // following example:
@@ -4102,7 +4102,7 @@ test("Block block-178.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Language Reference v6.1, pg.221 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4114,7 +4114,7 @@ test("Block block-178.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-271.pli", () => {
+test("Block block-271.pli", async () => {
   // Context:
   //
   // The following example shows a procedure-specific message filter control block:
@@ -4130,7 +4130,7 @@ test("Block block-271.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.518 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.518 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4161,7 +4161,7 @@ test("Block block-271.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-169.pli", () => {
+test("Block block-169.pli", async () => {
   // Context:
   //
   // Table 94. PL/I equivalent for a C file
@@ -4177,7 +4177,7 @@ test("Block block-169.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.400 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.400 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4189,7 +4189,7 @@ test("Block block-169.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-48.pli", () => {
+test("Block block-48.pli", async () => {
   // Context:
   //
   // positions.
@@ -4205,7 +4205,7 @@ test("Block block-48.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.223 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.223 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4229,7 +4229,7 @@ test("Block block-48.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-187.pli", () => {
+test("Block block-187.pli", async () => {
   // Context:
   //
   // Table 113. Incorrect declaration of qsort
@@ -4245,7 +4245,7 @@ test("Block block-187.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.405 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.405 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4262,7 +4262,7 @@ test("Block block-187.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-2.pli", () => {
+test("Block block-2.pli", async () => {
   // Context:
   //
   // Consider the following example:
@@ -4278,7 +4278,7 @@ test("Block block-2.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.81 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.81 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4292,7 +4292,7 @@ test("Block block-2.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-267.pli", () => {
+test("Block block-267.pli", async () => {
   // Context:
   //
   // must execute the statement:
@@ -4308,7 +4308,7 @@ test("Block block-267.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.512 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.512 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4319,7 +4319,7 @@ test("Block block-267.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-283.pli", () => {
+test("Block block-283.pli", async () => {
   // Context:
   //
   // The declare for a CMPAT(V3) array descriptor is as follows:
@@ -4335,7 +4335,7 @@ test("Block block-283.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4352,7 +4352,7 @@ test("Block block-283.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-137.pli", () => {
+test("Block block-137.pli", async () => {
   // Context:
   //
   // string:
@@ -4368,7 +4368,7 @@ test("Block block-137.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.369 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.369 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4382,7 +4382,7 @@ test("Block block-137.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-102.pli", () => {
+test("Block block-102.pli", async () => {
   // Context:
   //
   // preceded by a PUT statement as follows:
@@ -4398,7 +4398,7 @@ test("Block block-102.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.298 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.298 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4409,7 +4409,7 @@ test("Block block-102.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-8.pli", () => {
+test("Block block-8.pli", async () => {
   // Context:
   //
   //   Enterprise PL/I for z/OS: Enterprise PL/I for z/OS Programming Guide
@@ -4425,7 +4425,7 @@ test("Block block-8.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.130 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.130 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4439,7 +4439,7 @@ test("Block block-8.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-289.pli", () => {
+test("Block block-289.pli", async () => {
   // Context:
   //
   // Table 144. Record types encoded as an ordinal value
@@ -4455,7 +4455,7 @@ test("Block block-289.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.529 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.529 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4480,7 +4480,7 @@ test("Block block-289.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-55.pli", () => {
+test("Block block-55.pli", async () => {
   // Context:
   //
   // Here is the sample of the PL/I fetched MAIN program:
@@ -4496,7 +4496,7 @@ test("Block block-55.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.231 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.231 */
 
 
     FMAIN: proc(parm) options(main,noexecops );
@@ -4512,7 +4512,7 @@ test("Block block-55.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-285.pli", () => {
+test("Block block-285.pli", async () => {
   // Context:
   //
   // These are possible values for the dsc_Type field:
@@ -4528,7 +4528,7 @@ test("Block block-285.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4544,7 +4544,7 @@ test("Block block-285.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-284.pli", () => {
+test("Block block-284.pli", async () => {
   // Context:
   //
   // The declare for a descriptor header is as follows:
@@ -4560,7 +4560,7 @@ test("Block block-284.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.525 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4576,7 +4576,7 @@ test("Block block-284.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-131.pli", () => {
+test("Block block-131.pli", async () => {
   // Context:
   //
   // For instance, under RULES(LAXCTL), you can declare a structure as follows:
@@ -4592,7 +4592,7 @@ test("Block block-131.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.364 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.364 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4606,7 +4606,7 @@ test("Block block-131.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-11.pli", () => {
+test("Block block-11.pli", async () => {
   // Context:
   //
   // members that are not level 1 and are not dot qualified. Consider the following example:
@@ -4622,7 +4622,7 @@ test("Block block-11.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.133 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.133 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4640,7 +4640,7 @@ test("Block block-11.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-276.pli", () => {
+test("Block block-276.pli", async () => {
   // Context:
   //
   //  is declared as follows:
@@ -4656,7 +4656,7 @@ test("Block block-276.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.523 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.523 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4668,7 +4668,7 @@ test("Block block-276.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-249.pli", () => {
+test("Block block-249.pli", async () => {
   // Context:
   //
   //  OSRIN is an zFS file, use the following JCL statement instead:
@@ -4684,7 +4684,7 @@ test("Block block-249.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.486 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.486 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4696,7 +4696,7 @@ test("Block block-249.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-94.pli", () => {
+test("Block block-94.pli", async () => {
   // Context:
   //
   // Table 43. Creating a library member in a PL/I program
@@ -4712,7 +4712,7 @@ test("Block block-94.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.283 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.283 */
 
 
   //OPT10#3  JOB
@@ -4744,7 +4744,7 @@ test("Block block-94.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-309.pli", () => {
+test("Block block-309.pli", async () => {
   // Context:
   //
   // Table 162. Declare for the expression kind
@@ -4760,7 +4760,7 @@ test("Block block-309.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.542 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.542 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4788,7 +4788,7 @@ test("Block block-309.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-303.pli", () => {
+test("Block block-303.pli", async () => {
   // Context:
   //
   // Table 157. Declare for the token record kind
@@ -4804,7 +4804,7 @@ test("Block block-303.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.538 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.538 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4824,7 +4824,7 @@ test("Block block-303.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-298.pli", () => {
+test("Block block-298.pli", async () => {
   // Context:
   //
   // Consider the following structure:
@@ -4840,7 +4840,7 @@ test("Block block-298.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.534 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.534 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4858,7 +4858,7 @@ test("Block block-298.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-299.pli", () => {
+test("Block block-299.pli", async () => {
   // Context:
   //
   // Table 154. Data type of a variable
@@ -4874,7 +4874,7 @@ test("Block block-299.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.536 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.536 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4914,7 +4914,7 @@ test("Block block-299.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-101.pli", () => {
+test("Block block-101.pli", async () => {
   // Context:
   //
   // Table 49. PL/I structure PLITABS for modifying the preset tab settings
@@ -4930,7 +4930,7 @@ test("Block block-101.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.297 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.297 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4952,7 +4952,7 @@ test("Block block-101.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-21.pli", () => {
+test("Block block-21.pli", async () => {
   // Context:
   //
   //  declared as follows:
@@ -4968,7 +4968,7 @@ test("Block block-21.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.163 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.163 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -4982,7 +4982,7 @@ test("Block block-21.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-311.pli", () => {
+test("Block block-311.pli", async () => {
   // Context:
   //
   // Table 164. Declare for the lexeme kind
@@ -4998,7 +4998,7 @@ test("Block block-311.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.543 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.543 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5048,7 +5048,7 @@ test("Block block-311.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-310.pli", () => {
+test("Block block-310.pli", async () => {
   // Context:
   //
   // Table 163. Declare for the number kind
@@ -5064,7 +5064,7 @@ test("Block block-310.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.543 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.543 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5087,7 +5087,7 @@ test("Block block-310.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-56.pli", () => {
+test("Block block-56.pli", async () => {
   // Context:
   //
   // Here is the sample of the PL/I MAIN program that fetches another PL/I MAIN program:
@@ -5103,7 +5103,7 @@ test("Block block-56.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.231 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.231 */
 
 
     MainFet: Proc Options(main);
@@ -5123,7 +5123,7 @@ test("Block block-56.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-143.pli", () => {
+test("Block block-143.pli", async () => {
   // Context:
   //
   // compiler generates more optimal code for the pair in the union.
@@ -5139,7 +5139,7 @@ test("Block block-143.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.372 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.372 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5155,7 +5155,7 @@ test("Block block-143.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-281.pli", () => {
+test("Block block-281.pli", async () => {
   // Context:
   //
   // The declare for a CMPAT(V1) array descriptor is as follows:
@@ -5171,7 +5171,7 @@ test("Block block-281.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.524 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.524 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5188,7 +5188,7 @@ test("Block block-281.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-280.pli", () => {
+test("Block block-280.pli", async () => {
   // Context:
   //
   // The possible values for the codepage encoding are defined as follows:
@@ -5204,7 +5204,7 @@ test("Block block-280.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.524 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.524 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5243,7 +5243,7 @@ test("Block block-280.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-135.pli", () => {
+test("Block block-135.pli", async () => {
   // Context:
   //
   // For example, under the DEFAULT( NOOVERLAP ) option, the assignment in this example is invalid:
@@ -5259,7 +5259,7 @@ test("Block block-135.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.367 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.367 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5271,7 +5271,7 @@ test("Block block-135.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-307.pli", () => {
+test("Block block-307.pli", async () => {
   // Context:
   //
   // Table 160. Declare for the syntax record kind
@@ -5287,7 +5287,7 @@ test("Block block-307.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.541 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.541 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5333,7 +5333,7 @@ test("Block block-307.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-128.pli", () => {
+test("Block block-128.pli", async () => {
   // Context:
   //
   // .
@@ -5349,7 +5349,7 @@ test("Block block-128.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.363 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.363 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5369,7 +5369,7 @@ test("Block block-128.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-273.pli", () => {
+test("Block block-273.pli", async () => {
   // Context:
   //
   // Code the termination procedure-specific control block as follows:
@@ -5385,7 +5385,7 @@ test("Block block-273.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.520 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.520 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5397,7 +5397,7 @@ test("Block block-273.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-272.pli", () => {
+test("Block block-272.pli", async () => {
   // Context:
   //
   // 463
@@ -5413,7 +5413,7 @@ test("Block block-272.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.519 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.519 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5427,7 +5427,7 @@ test("Block block-272.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-74.pli", () => {
+test("Block block-74.pli", async () => {
   // Context:
   //
   // how a DD statement should be associated with the value of a file variable:
@@ -5443,7 +5443,7 @@ test("Block block-74.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.250 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.250 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5457,7 +5457,7 @@ test("Block block-74.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-91.pli", () => {
+test("Block block-91.pli", async () => {
   // Context:
   //
   // For example, you can use redirection in the following program:
@@ -5473,7 +5473,7 @@ test("Block block-91.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.279 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.279 */
 
 
  Hello2: proc options(main);
@@ -5484,7 +5484,7 @@ test("Block block-91.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-300.pli", () => {
+test("Block block-300.pli", async () => {
   // Context:
   //
   // The type of the extent is encoded by the values:
@@ -5500,7 +5500,7 @@ test("Block block-300.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.536 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.536 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5518,7 +5518,7 @@ test("Block block-300.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-274.pli", () => {
+test("Block block-274.pli", async () => {
   // Context:
   //
   //  is declared as follows:
@@ -5534,7 +5534,7 @@ test("Block block-274.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.522 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.522 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5546,7 +5546,7 @@ test("Block block-274.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-188.pli", () => {
+test("Block block-188.pli", async () => {
   // Context:
   //
   // Table 114. Correct declaration of qsort
@@ -5562,7 +5562,7 @@ test("Block block-188.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.405 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.405 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5580,7 +5580,7 @@ test("Block block-188.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-220.pli", () => {
+test("Block block-220.pli", async () => {
   // Context:
   //
   // as follows:
@@ -5596,7 +5596,7 @@ test("Block block-220.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.433 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.433 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5610,7 +5610,7 @@ test("Block block-220.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-171.pli", () => {
+test("Block block-171.pli", async () => {
   // Context:
   //
   // Table 96. Declarations for filedump program
@@ -5626,7 +5626,7 @@ test("Block block-171.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.401 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.401 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5644,7 +5644,7 @@ test("Block block-171.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-287.pli", () => {
+test("Block block-287.pli", async () => {
   // Context:
   //
   // These are the possible values for the dsc_String_Type field:
@@ -5660,7 +5660,7 @@ test("Block block-287.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.526 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.526 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5691,7 +5691,7 @@ test("Block block-287.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-215.pli", () => {
+test("Block block-215.pli", async () => {
   // Context:
   //
   // PLIXOPT variable as follows:
@@ -5707,7 +5707,7 @@ test("Block block-215.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.424 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.424 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 
@@ -5718,7 +5718,7 @@ test("Block block-215.pli", () => {
   generateAndAssertValidSymbolTable(doc);
 });
 
-test("Block block-12.pli", () => {
+test("Block block-12.pli", async () => {
   // Context:
   //
   // members that do not include the level-1 name. Consider the following example:
@@ -5734,7 +5734,7 @@ test("Block block-12.pli", () => {
   //
 
   const doc =
-    parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.133 */
+    await parseStmts(` /* Enterprise PL/I for z/OS Programming Guide v6.1, pg.133 */
 
  MAINTP: PROCEDURE OPTIONS (MAIN);
 

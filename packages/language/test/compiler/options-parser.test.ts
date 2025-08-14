@@ -21,9 +21,9 @@ import {
 import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
 import { parse } from "../utils";
 
-describe("CompilerOptions parser", () => {
-  test("simple word based compiler option", () => {
-    const options = parseAbstractCompilerOptions("TERMINAL").options;
+describe("CompilerOptions parser", async () => {
+  test("simple word based compiler option", async () => {
+    const options = await parseAbstractCompilerOptions("TERMINAL").options;
     expect(options).toHaveLength(1);
     expect(options[0].name).toBe("TERMINAL");
     expect(options[0].token.startOffset).toBe(0);
@@ -31,8 +31,9 @@ describe("CompilerOptions parser", () => {
     expect(options[0].values).toHaveLength(0);
   });
 
-  test("compiler option with parameter", () => {
-    const options = parseAbstractCompilerOptions("AGGREGATE(DECIMAL)").options;
+  test("compiler option with parameter", async () => {
+    const options =
+      await parseAbstractCompilerOptions("AGGREGATE(DECIMAL)").options;
     expect(options).toHaveLength(1);
     expect(options[0].name).toBe("AGGREGATE");
     expect(options[0].values).toHaveLength(1);
@@ -41,8 +42,9 @@ describe("CompilerOptions parser", () => {
     expect(parameter.value).toBe("DECIMAL");
   });
 
-  test("compiler option with string parameter", () => {
-    const options = parseAbstractCompilerOptions("BRACKETS('[]')").options;
+  test("compiler option with string parameter", async () => {
+    const options =
+      await parseAbstractCompilerOptions("BRACKETS('[]')").options;
     expect(options).toHaveLength(1);
     expect(options[0].name).toBe("BRACKETS");
     expect(options[0].values).toHaveLength(1);
@@ -51,8 +53,8 @@ describe("CompilerOptions parser", () => {
     expect(parameter.value).toBe("[]");
   });
 
-  test("compiler option with number parameter", () => {
-    const options = parseAbstractCompilerOptions("ARCH(10)").options;
+  test("compiler option with number parameter", async () => {
+    const options = await parseAbstractCompilerOptions("ARCH(10)").options;
     expect(options).toHaveLength(1);
     expect(options[0].name).toBe("ARCH");
     expect(options[0].values).toHaveLength(1);
@@ -61,8 +63,8 @@ describe("CompilerOptions parser", () => {
     expect(parameter.value).toBe("10");
   });
 
-  test("compiler option with nested parameter", () => {
-    const options = parseAbstractCompilerOptions(
+  test("compiler option with nested parameter", async () => {
+    const options = await parseAbstractCompilerOptions(
       "DISPLAY(WTO(ROUTCDE(2)))",
     ).options;
     expect(options).toHaveLength(1);
@@ -81,76 +83,77 @@ describe("CompilerOptions parser", () => {
     expect(nestedParameter.value).toBe("2");
   });
 
-  test("multiple compiler options", () => {
-    const options = parseAbstractCompilerOptions("COMPILE,TERMINAL").options;
+  test("multiple compiler options", async () => {
+    const options =
+      await parseAbstractCompilerOptions("COMPILE,TERMINAL").options;
     expect(options).toHaveLength(2);
     expect(options[0].name).toBe("COMPILE");
     expect(options[1].name).toBe("TERMINAL");
   });
 });
 
-describe("CompilerOptions translator", () => {
-  test("Translates MARGINS with values", () => {
-    const options = parseAbstractCompilerOptions("MARGINS(4, 80)");
+describe("CompilerOptions translator", async () => {
+  test("Translates MARGINS with values", async () => {
+    const options = await parseAbstractCompilerOptions("MARGINS(4, 80)");
     const translated = translateCompilerOptions(options).options;
     expect(translated.margins).toEqual({ m: 4, n: 80 });
   });
 
-  test("Translates MARGINS with short identifier", () => {
-    const options = parseAbstractCompilerOptions("MAR(4, 80)");
+  test("Translates MARGINS with short identifier", async () => {
+    const options = await parseAbstractCompilerOptions("MAR(4, 80)");
     const translated = translateCompilerOptions(options).options;
     expect(translated.margins).toEqual({ m: 4, n: 80 });
   });
 
-  test("Translates MARGINS default value", () => {
-    const options = parseAbstractCompilerOptions("MARGINS(4,)");
+  test("Translates MARGINS default value", async () => {
+    const options = await parseAbstractCompilerOptions("MARGINS(4,)");
     const translated = translateCompilerOptions(options).options;
     expect(translated.margins).toEqual({ m: 4, n: 72 });
   });
 
-  test("Translates MARGINS - negative", () => {
+  test("Translates MARGINS - negative", async () => {
     // Margins requires two or three arguments
-    const options = parseAbstractCompilerOptions("MARGINS(4)");
+    const options = await parseAbstractCompilerOptions("MARGINS(4)");
     const translated = translateCompilerOptions(options).options;
     // If the parsing fails, the option is not set
     expect(translated.margins).toBeUndefined();
   });
 
-  test("Translates MARGINS with c", () => {
-    const options = parseAbstractCompilerOptions("MARGINS(0, 14,)");
+  test("Translates MARGINS with c", async () => {
+    const options = await parseAbstractCompilerOptions("MARGINS(0, 14,)");
     const translated = translateCompilerOptions(options).options;
     expect(translated.margins).toEqual({ m: 0, n: 14, c: "" });
   });
 
-  test("Translates NOMARGINS", () => {
-    const options = parseAbstractCompilerOptions("NOMARGINS");
+  test("Translates NOMARGINS", async () => {
+    const options = await parseAbstractCompilerOptions("NOMARGINS");
     const translated = translateCompilerOptions(options).options;
     expect(translated.margins).toEqual(false);
   });
 
-  test("Produce issue for text value in MARGINS m", () => {
-    const options = parseAbstractCompilerOptions("MARGINS(M,444)");
+  test("Produce issue for text value in MARGINS m", async () => {
+    const options = await parseAbstractCompilerOptions("MARGINS(M,444)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe("Expected a number.");
   });
 
-  test("Produce issue for text value in MARGINS n", () => {
-    const options = parseAbstractCompilerOptions("MARGINS(112, R)");
+  test("Produce issue for text value in MARGINS n", async () => {
+    const options = await parseAbstractCompilerOptions("MARGINS(112, R)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe("Expected a number.");
   });
 
-  test("Produce issue for text value when string is expected", () => {
-    const options = parseAbstractCompilerOptions("BRACKETS(TEST)");
+  test("Produce issue for text value when string is expected", async () => {
+    const options = await parseAbstractCompilerOptions("BRACKETS(TEST)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe("Expected a string value.");
   });
 
-  test("Produce issue for text value when enum is expected", () => {
-    const options = parseAbstractCompilerOptions("CASE(TEST)");
+  test("Produce issue for text value when enum is expected", async () => {
+    const options = await parseAbstractCompilerOptions("CASE(TEST)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -158,8 +161,8 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Produce issue for text value when option is expected in CASERULES", () => {
-    const options = parseAbstractCompilerOptions("CASERULES(TEST)");
+  test("Produce issue for text value when option is expected in CASERULES", async () => {
+    const options = await parseAbstractCompilerOptions("CASERULES(TEST)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -167,8 +170,8 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Produce issue for wrong option in CASERULES", () => {
-    const options = parseAbstractCompilerOptions("CASERULES(TEST())");
+  test("Produce issue for wrong option in CASERULES", async () => {
+    const options = await parseAbstractCompilerOptions("CASERULES(TEST())");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -176,8 +179,10 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Produce issue for wrong option in KEYWORD in CASERULES", () => {
-    const options = parseAbstractCompilerOptions("CASERULES(KEYWORD(TEST))");
+  test("Produce issue for wrong option in KEYWORD in CASERULES", async () => {
+    const options = await parseAbstractCompilerOptions(
+      "CASERULES(KEYWORD(TEST))",
+    );
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -185,20 +190,20 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Accept multiple same options on CHECK", () => {
-    const options = parseAbstractCompilerOptions("CHECK(storage, stg)");
+  test("Accept multiple same options on CHECK", async () => {
+    const options = await parseAbstractCompilerOptions("CHECK(storage, stg)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(0);
   });
 
-  test("Accept multiple same options on CHECK without comma", () => {
-    const options = parseAbstractCompilerOptions("CHECK(storage stg)");
+  test("Accept multiple same options on CHECK without comma", async () => {
+    const options = await parseAbstractCompilerOptions("CHECK(storage stg)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(0);
   });
 
-  test("Produce issue for empty DDSQL", () => {
-    const options = parseAbstractCompilerOptions("DDSQL()");
+  test("Produce issue for empty DDSQL", async () => {
+    const options = await parseAbstractCompilerOptions("DDSQL()");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -206,14 +211,14 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Accept DDSQL with empty string", () => {
-    const options = parseAbstractCompilerOptions("DDSQL('')");
+  test("Accept DDSQL with empty string", async () => {
+    const options = await parseAbstractCompilerOptions("DDSQL('')");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(0);
   });
 
-  test("Produce issue for unknown compiler option", () => {
-    const options = parseAbstractCompilerOptions("UNKNOWNOPTION");
+  test("Produce issue for unknown compiler option", async () => {
+    const options = await parseAbstractCompilerOptions("UNKNOWNOPTION");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toMatch(
@@ -221,22 +226,22 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Produce issue for arguments at COMPILE", () => {
-    const options = parseAbstractCompilerOptions("COMPILE(E)");
+  test("Produce issue for arguments at COMPILE", async () => {
+    const options = await parseAbstractCompilerOptions("COMPILE(E)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe("Expected 0 arguments, but received 1.");
   });
 
-  test("Produce issue for arguments at NOCOPYRIGHT", () => {
-    const options = parseAbstractCompilerOptions("NOCOPYRIGHT(E)");
+  test("Produce issue for arguments at NOCOPYRIGHT", async () => {
+    const options = await parseAbstractCompilerOptions("NOCOPYRIGHT(E)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe("Expected 0 arguments, but received 1.");
   });
 
-  test("Produce issue for text value when option is expected in DEPRECATE", () => {
-    const options = parseAbstractCompilerOptions("DEPRECATE(BUILTIN)");
+  test("Produce issue for text value when option is expected in DEPRECATE", async () => {
+    const options = await parseAbstractCompilerOptions("DEPRECATE(BUILTIN)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -244,10 +249,10 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Test compiler option abbreviations", () => {
+  test("Test compiler option abbreviations", async () => {
     const abbreviations = ["CURR", "CP", "CSE", "NOCSE", "DEC", "DFT"];
     for (const abbr of abbreviations) {
-      const options = parseAbstractCompilerOptions(abbr);
+      const options = await parseAbstractCompilerOptions(abbr);
       const issues = translateCompilerOptions(options).issues;
       if (
         issues.some((issue) =>
@@ -261,8 +266,8 @@ describe("CompilerOptions translator", () => {
     }
   });
 
-  test("Test BLANK validation, disallowed characters", () => {
-    const options = parseAbstractCompilerOptions("BLANK('D')");
+  test("Test BLANK validation, disallowed characters", async () => {
+    const options = await parseAbstractCompilerOptions("BLANK('D')");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -270,8 +275,8 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Test BLANK validation, single character", () => {
-    const options = parseAbstractCompilerOptions("BLANK('$$$##')");
+  test("Test BLANK validation, single character", async () => {
+    const options = await parseAbstractCompilerOptions("BLANK('$$$##')");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -279,8 +284,8 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Test BRACKETS validation, double character", () => {
-    const options = parseAbstractCompilerOptions("BRACKETS('D')");
+  test("Test BRACKETS validation, double character", async () => {
+    const options = await parseAbstractCompilerOptions("BRACKETS('D')");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -288,8 +293,8 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Test BRACKETS validation, disallowed characters", () => {
-    const options = parseAbstractCompilerOptions("BRACKETS('  ')");
+  test("Test BRACKETS validation, disallowed characters", async () => {
+    const options = await parseAbstractCompilerOptions("BRACKETS('  ')");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -297,8 +302,8 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Test BRACKETS validation, same character", () => {
-    const options = parseAbstractCompilerOptions("BRACKETS('[[')");
+  test("Test BRACKETS validation, same character", async () => {
+    const options = await parseAbstractCompilerOptions("BRACKETS('[[')");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -306,21 +311,23 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Test DEFAULT SHORT validation", () => {
-    const options = parseAbstractCompilerOptions("DEFAULT(SHORT(IEEEp98))");
+  test("Test DEFAULT SHORT validation", async () => {
+    const options = await parseAbstractCompilerOptions(
+      "DEFAULT(SHORT(IEEEp98))",
+    );
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe("Invalid default option value: IEEEP98");
   });
 
-  test("Test DEFAULT RETURNS validation", () => {
-    const options = parseAbstractCompilerOptions("DEFAULT(RETURNS())");
+  test("Test DEFAULT RETURNS validation", async () => {
+    const options = await parseAbstractCompilerOptions("DEFAULT(RETURNS())");
     const translated = translateCompilerOptions(options).options;
     expect(translated.default?.returns).toEqual({ type: "BYADDR" });
   });
 
-  test("Test CODEPAGE validation", () => {
-    const options = parseAbstractCompilerOptions("CODEPAGE(0114dd0)");
+  test("Test CODEPAGE validation", async () => {
+    const options = await parseAbstractCompilerOptions("CODEPAGE(0114dd0)");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -328,8 +335,8 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Test DECIMAL validation, mandatory argument", () => {
-    const options = parseAbstractCompilerOptions("DECIMAL");
+  test("Test DECIMAL validation, mandatory argument", async () => {
+    const options = await parseAbstractCompilerOptions("DECIMAL");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -337,8 +344,8 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Test DECIMAL validation, mandatory argument #2", () => {
-    const options = parseAbstractCompilerOptions("DECIMAL()");
+  test("Test DECIMAL validation, mandatory argument #2", async () => {
+    const options = await parseAbstractCompilerOptions("DECIMAL()");
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
@@ -346,8 +353,8 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test("Test PP validation", () => {
-    const options = parseAbstractCompilerOptions(
+  test("Test PP validation", async () => {
+    const options = await parseAbstractCompilerOptions(
       "PP(INCLUDE('ID(++INCLUDE)'))",
     );
     const result = translateCompilerOptions(options);
@@ -460,8 +467,8 @@ describe("CompilerOptions translator", () => {
   ];
 
   for (const testCase of testCasesSensitivity) {
-    test(`Translates option with parameter case-insensitively: ${testCase.input}`, () => {
-      const parsed = parseAbstractCompilerOptions(testCase.input);
+    test(`Translates option with parameter case-insensitively: ${testCase.input}`, async () => {
+      const parsed = await parseAbstractCompilerOptions(testCase.input);
       const options = translateCompilerOptions(parsed).options;
       expect(testCase.toTest(options)).toEqual(testCase.expected);
     });
@@ -566,15 +573,15 @@ describe("CompilerOptions translator", () => {
 
   for (const testCase of testCasesDefaultOptions) {
     for (const [index, input] of testCase.input.entries()) {
-      test(`Translates default option: ${input}`, () => {
+      test(`Translates default option: ${input}`, async () => {
         const defaultOption = `DEFAULT(${input})`;
-        const parsed = parseAbstractCompilerOptions(defaultOption);
+        const parsed = await parseAbstractCompilerOptions(defaultOption);
         const options = translateCompilerOptions(parsed).options;
         expect(testCase.toTest(options)).toEqual(testCase.expected[index]);
       });
-      test(`Translates default option with conflicts: ${input}`, () => {
+      test(`Translates default option with conflicts: ${input}`, async () => {
         const defaultOption = `DEFAULT(${input}, ${testCase.input.join(", ")})`;
-        const parsed = parseAbstractCompilerOptions(defaultOption);
+        const parsed = await parseAbstractCompilerOptions(defaultOption);
         const issues = translateCompilerOptions(parsed).issues;
         expect(issues).toHaveLength(1);
         expect(issues[0].message).toMatch(
@@ -584,23 +591,23 @@ describe("CompilerOptions translator", () => {
     }
   }
 
-  test('Test "SYSPARM" default option', () => {
+  test('Test "SYSPARM" default option', async () => {
     // parse any compiler option, we should still expect the default SYSPARM in the complete options object
-    const options = parseAbstractCompilerOptions("AG");
+    const options = await parseAbstractCompilerOptions("AG");
     const translated = translateCompilerOptions(options).options;
     expect(translated.sysParm).toBeDefined();
     expect(translated.sysParm).toBe("");
   });
 
-  test('Test "SYSPARM" option', () => {
-    const options = parseAbstractCompilerOptions("SYSPARM('PLIVERSION')");
+  test('Test "SYSPARM" option', async () => {
+    const options = await parseAbstractCompilerOptions("SYSPARM('PLIVERSION')");
     const translated = translateCompilerOptions(options).options;
     expect(translated.sysParm).toBe("PLIVERSION");
   });
 
-  test('Test "SYSPARM" error on excessive length', () => {
+  test('Test "SYSPARM" error on excessive length', async () => {
     // >= 1023 is an issue
-    const options = parseAbstractCompilerOptions(
+    const options = await parseAbstractCompilerOptions(
       `SYSPARM('${"i".repeat(1024)}')`,
     );
     const issues = translateCompilerOptions(options).issues;
@@ -610,25 +617,28 @@ describe("CompilerOptions translator", () => {
     );
   });
 
-  test('Test "SYSTEM" option default, should be MVS', () => {
-    const options = parseAbstractCompilerOptions("SYSTEM");
+  test('Test "SYSTEM" option default, should be MVS', async () => {
+    const options = await parseAbstractCompilerOptions("SYSTEM");
     const translated = translateCompilerOptions(options).options;
     expect(translated.system).toBe("MVS");
   });
 
   for (const systemValue of ["MVS", "CICS", "IMS", "OS", "TSO"]) {
-    test('Test "SYSTEM" option with expected value ' + systemValue, () => {
-      const options = parseAbstractCompilerOptions(
-        "SYSTEM(" + systemValue + ")",
-      );
-      const translated = translateCompilerOptions(options).options;
-      expect(translated.system).toBe(systemValue);
-    });
+    test(
+      'Test "SYSTEM" option with expected value ' + systemValue,
+      async () => {
+        const options = await parseAbstractCompilerOptions(
+          "SYSTEM(" + systemValue + ")",
+        );
+        const translated = translateCompilerOptions(options).options;
+        expect(translated.system).toBe(systemValue);
+      },
+    );
   }
 });
 
-describe("Process directives", () => {
-  test("should parse multiple process directives", () => {
+describe("Process directives", async () => {
+  test("should parse multiple process directives", async () => {
     const code = `
 %PROCESS F(I) AG A(F); 
 *PROCESS MARGINS(2,75);
@@ -636,14 +646,14 @@ describe("Process directives", () => {
  DECLARE LIBREF FIXED;
  LIBREF = 44;`;
 
-    const doc = parse(code, { validate: true });
+    const doc = await parse(code, { validate: true });
     expect(doc.compilerOptions.flag).toBe("I");
     expect(doc.compilerOptions.aggregate).toBeDefined();
     expect(doc.compilerOptions.attributes?.identifiers).toBe("FULL");
     expect(doc.compilerOptions.margins).toEqual({ m: 2, n: 75 });
   });
 
-  test("should parse multiple process directives with comments", () => {
+  test("should parse multiple process directives with comments", async () => {
     const code = `
 %PROCESS F(I) AG A(F); /* XX */
 *PROCESS MARGINS(2,75); // test
@@ -651,7 +661,7 @@ describe("Process directives", () => {
  DECLARE LIBREF FIXED;
  LIBREF = 44;`;
 
-    const doc = parse(code, { validate: true });
+    const doc = await parse(code, { validate: true });
     expect(doc.compilerOptions.flag).toBe("I");
     expect(doc.compilerOptions.aggregate).toBeDefined();
     expect(doc.compilerOptions.attributes?.identifiers).toBe("FULL");
@@ -659,7 +669,7 @@ describe("Process directives", () => {
     expect(doc.compilerOptions.default?.returns).toEqual({ type: "BYADDR" });
   });
 
-  test("should parse multiple process directives with comments inbetween", () => {
+  test("should parse multiple process directives with comments inbetween", async () => {
     const code = `
 %PROCESS F(I) AG A(F); /* XX */
 *PROCESS MARGINS(2,75); // test
@@ -674,7 +684,7 @@ describe("Process directives", () => {
  DECLARE LIBREF FIXED;
  LIBREF = 44;`;
 
-    const doc = parse(code, { validate: true });
+    const doc = await parse(code, { validate: true });
     expect(doc.compilerOptions.flag).toBe("I");
     expect(doc.compilerOptions.aggregate).toBeDefined();
     expect(doc.compilerOptions.attributes?.identifiers).toBe("FULL");
@@ -682,7 +692,7 @@ describe("Process directives", () => {
     expect(doc.compilerOptions.default?.returns).toEqual({ type: "BYADDR" });
   });
 
-  test("should parse multiple process directives with windows line endings", () => {
+  test("should parse multiple process directives with windows line endings", async () => {
     const code = `
 %PROCESS F(I) AG A(F); \r
 *PROCESS MARGINS(2,75); 
@@ -690,7 +700,7 @@ describe("Process directives", () => {
  DECLARE LIBREF FIXED;
  LIBREF = 44;`;
 
-    const doc = parse(code, { validate: true });
+    const doc = await parse(code, { validate: true });
     expect(doc.compilerOptions.flag).toBe("I");
     expect(doc.compilerOptions.aggregate).toBeDefined();
     expect(doc.compilerOptions.attributes?.identifiers).toBe("FULL");

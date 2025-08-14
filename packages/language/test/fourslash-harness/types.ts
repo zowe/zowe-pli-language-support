@@ -31,5 +31,5 @@ export interface HarnessFile {
 export interface HarnessTest {
   fileName: string;
   files: Map<string | UnnamedFile, HarnessFile>;
-  commands: string | undefined;
+  commands: string;
 }

@@ -21,7 +21,7 @@ import {
 import { PreprocessorTokens } from "../src/preprocessor/pli-preprocessor-tokens";
 import { Lexer } from "chevrotain";
 
-test("PL/I tokens are all using sticky regex", () => {
+test("PL/I tokens are all using sticky regex", async () => {
   for (const token of tokens.all) {
     if (token.PATTERN instanceof RegExp && token.PATTERN !== Lexer.NA) {
       expect(token.PATTERN.sticky).toBe(true);
@@ -35,29 +35,29 @@ test("PL/I tokens are all using sticky regex", () => {
 });
 
 describe("PL/I Parsing tests", () => {
-  test("empty program parses as valid", () => {
+  test("empty program parses as valid", async () => {
     // no parse error, but...
     // triggers IBM1917IS on the compiler (source has no statements or all stmts are invalid)
     // later for validation
-    const doc = parse("");
+    const doc = await parse("");
     assertNoParseErrors(doc);
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("empty program w/ null statement", () => {
-    const doc = parseStmts(` ;`);
+  test("empty program w/ null statement", async () => {
+    const doc = await parseStmts(` ;`);
     assertNoParseErrors(doc);
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("empty program w/ null %statement", () => {
-    const doc = parseStmts(` %;`);
+  test("empty program w/ null %statement", async () => {
+    const doc = await parseStmts(` %;`);
     assertNoParseErrors(doc);
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("Hello World Program", () => {
-    const doc = parse(`
+  test("Hello World Program", async () => {
+    const doc = await parse(`
  AVERAGE: PROCEDURE OPTIONS (MAIN);
    /* Test characters: ^[] € */
    /* AVERAGE_GRADE = SUM / 5; */
@@ -67,17 +67,17 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  describe("Procedures", () => {
-    test("Simple procedure", () => {
-      const doc = parse(`
+  describe("Procedures", async () => {
+    test("Simple procedure", async () => {
+      const doc = await parse(`
     P1: procedure;
     end P1;`);
       assertNoParseErrors(doc);
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Procedure w/ alternate entry point", () => {
-      const doc = parseStmts(`
+    test("Procedure w/ alternate entry point", async () => {
+      const doc = await parseStmts(`
     P1: procedure;
     B: entry; // secondary entry point into this procedure
     end P1;`);
@@ -85,8 +85,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Procedure with call", () => {
-      const doc = parse(`
+    test("Procedure with call", async () => {
+      const doc = await parse(`
  Control: procedure options(main);
   call A('ok'); // invoke the 'A' subroutine
  end Control;
@@ -98,8 +98,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Simple recursive procedure w/ recursive stated before returns", () => {
-      const doc = parseStmts(`
+    test("Simple recursive procedure w/ recursive stated before returns", async () => {
+      const doc = await parseStmts(`
  Fact: proc (Input) recursive returns (fixed bin(31));
   dcl Input fixed bin(15);
   if Input <= 1 then
@@ -111,8 +111,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Simple recursive procedure w/ recursive stated after returns", () => {
-      const doc = parseStmts(`
+    test("Simple recursive procedure w/ recursive stated after returns", async () => {
+      const doc = await parseStmts(`
  Fact: proc (Input) returns (fixed bin(31)) recursive;
   dcl Input fixed bin(15);
   if Input <= 1 then
@@ -124,8 +124,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Procedures w/ Order & Reorder options", () => {
-      const doc = parseStmts(`
+    test("Procedures w/ Order & Reorder options", async () => {
+      const doc = await parseStmts(`
  P1: proc Options(Order);
  end P1;
  P2: proc Options( Reorder );
@@ -136,8 +136,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Procedure w/ Reorder option & Returns", () => {
-      const doc = parseStmts(`
+    test("Procedure w/ Reorder option & Returns", async () => {
+      const doc = await parseStmts(`
  Double: proc (Input) Options(Reorder) returns(fixed bin(31));
   declare Input fixed bin(15);
   return( Input * 2);
@@ -148,8 +148,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Recursive - Returns - Options for a Procedure in various permutations", () => {
-      const doc = parseStmts(`
+    test("Recursive - Returns - Options for a Procedure in various permutations", async () => {
+      const doc = await parseStmts(`
  // returns - options - recursive
  F1: proc (Input) returns (fixed bin(31)) Options(Order) recursive;
   dcl Input fixed bin(15);
@@ -199,9 +199,9 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Unassigned closing end is OK", () => {
+    test("Unassigned closing end is OK", async () => {
       // validating that an 'end' which implcitly closes the prior procedure is valid
-      const doc = parseStmts(`
+      const doc = await parseStmts(`
   MYPROC: PROCEDURE OPTIONS (MAIN);
   DCL TRUE BIT(1) INIT(1);
   DCL FALSE BIT(1) INIT(0);
@@ -214,8 +214,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Options Separate by Commas & Spaces", () => {
-      const doc = parseStmts(`
+    test("Options Separate by Commas & Spaces", async () => {
+      const doc = await parseStmts(`
     P1: proc Options( Order, Reorder, Recursive );
     end P1;
     P2: proc Options( Order Reorder Recursive);
@@ -228,8 +228,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Complex recursive procedure", () => {
-      const doc = parse(`
+    test("Complex recursive procedure", async () => {
+      const doc = await parse(`
  START: procedure options (main);
  dcl I fixed bin(15);
  I=1; call A;
@@ -252,21 +252,21 @@ describe("PL/I Parsing tests", () => {
   });
 
   // tests for labels
-  describe("Label Tests", () => {
-    test("empty label, null statement", () => {
-      const doc = parseStmts(` main:;`);
+  describe("Label Tests", async () => {
+    test("empty label, null statement", async () => {
+      const doc = await parseStmts(` main:;`);
       assertNoParseErrors(doc);
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Declared label", () => {
-      const doc = parseStmts(` declare Label_x label;`);
+    test("Declared label", async () => {
+      const doc = await parseStmts(` declare Label_x label;`);
       assertNoParseErrors(doc);
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Label assignment", () => {
-      const doc = parseStmts(`
+    test("Label assignment", async () => {
+      const doc = await parseStmts(`
  declare Label_x label;
  Label_a:;
  Label_x = Label_a; // label assignments
@@ -278,9 +278,9 @@ describe("PL/I Parsing tests", () => {
   });
 
   // tests fro declarations
-  describe("Declaration tests", () => {
-    test("simple char declarations", () => {
-      const doc = parseStmts(`*PROCESS MARGINS(2,200)
+  describe("Declaration tests", async () => {
+    test("simple char declarations", async () => {
+      const doc = await parseStmts(`*PROCESS MARGINS(2,200)
  declare UserA character (15); // 15 character var
  declare UserB character (15) varying; // varying
  declare UserC character (15) varyingz; // varying w/ null termination
@@ -292,8 +292,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("char declaration w/ overflow assignment", () => {
-      const doc = parseStmts(`*PROCESS MARGINS(2,200)
+    test("char declaration w/ overflow assignment", async () => {
+      const doc = await parseStmts(`*PROCESS MARGINS(2,200)
  declare Subject char(10);
  Subject = 'Transformations'; // will truncate the last 5 chars, emitting a warning (but valid nonetheless)
 `);
@@ -301,16 +301,16 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("arbitrary length char decl", () => {
-      const doc = parseStmts(`
+    test("arbitrary length char decl", async () => {
+      const doc = await parseStmts(`
  dcl VAL char(*) value('Some text that runs on and on');
 `);
       assertNoParseErrors(doc);
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("nested quotes char decl", () => {
-      const doc = parseStmts(`
+    test("nested quotes char decl", async () => {
+      const doc = await parseStmts(`
  declare User1 character (30) init('Shakespeare''s "Hamlet"');
  declare User2 character (30) init("Shakespeare's ""Hamlet""");
  declare User3 character (30) init('/* blah */');
@@ -319,8 +319,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Bit declarations", () => {
-      const doc = parseStmts(`
+    test("Bit declarations", async () => {
+      const doc = await parseStmts(`
  declare S bit (64); // 64 bit var
  declare Code bit(10);
  Code = '110011'B;
@@ -330,8 +330,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Format constants", () => {
-      const doc = parseStmts(`
+    test("Format constants", async () => {
+      const doc = await parseStmts(`
  Prntexe: format
     ( column(20),A(15), column(40),A(15), column(60),A(15) );
  Prntstf: format
@@ -341,8 +341,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Attribute declarations", () => {
-      const doc = parseStmts(`
+    test("Attribute declarations", async () => {
+      const doc = await parseStmts(`
  declare Account1 file variable, // file var
  Account2 file automatic, // file var too
  File1 file, // file constant
@@ -352,8 +352,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Value List declaration", () => {
-      const doc = parseStmts(`
+    test("Value List declaration", async () => {
+      const doc = await parseStmts(`
  dcl cmonth char(3)
             valuelist( 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' );
@@ -362,8 +362,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("value list from declaration", () => {
-      const doc = parseStmts(`
+    test("value list from declaration", async () => {
+      const doc = await parseStmts(`
  dcl 1 a,
     2 b fixed bin value(31),
     2 c fixed bin value(28),
@@ -375,8 +375,8 @@ describe("PL/I Parsing tests", () => {
     });
 
     // Handle as validation error
-    //         test.fails('fails with duplicate value in value list', () => {
-    //             const doc = parseStmts(`
+    //         test.fails('fails with duplicate value in value list', async () => {
+    //             const doc = await parseStmts(`
     //  dcl 1 a,
     //     2 b fixed bin value(31),
     //     2 d fixed bin value(31);
@@ -386,17 +386,20 @@ describe("PL/I Parsing tests", () => {
     //             expect(doc.parseResult.parserErrors).toHaveLength(0);
     //         });
 
-    test.fails("value list is too long to handle in compiler correctly", () => {
-      const doc = parseStmts(`
+    test.fails(
+      "value list is too long to handle in compiler correctly",
+      async () => {
+        const doc = await parseStmts(`
  dcl 1 a, 2 b fixed bin value(31), 2 c fixed bin value(28), 2 d fixed bin value(31);
  dcl x fixed bin valuelistfrom a;
 `);
-      assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
-    });
+        assertNoParseErrors(doc);
+        generateAndAssertValidSymbolTable(doc);
+      },
+    );
 
-    test("value range declaration", () => {
-      const doc = parseStmts(`
+    test("value range declaration", async () => {
+      const doc = await parseStmts(`
  define alias numeric_month fixed bin(7) valuerange(1,12);
  dcl imonth type numeric_month; // must hold a val between 1 & 12 inclusive
  dcl cmonth char(3) // must be one of the 12 months listed
@@ -407,8 +410,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("multi-declaration", () => {
-      const doc = parseStmts(`*PROCESS MARGINS(2,200)
+    test("multi-declaration", async () => {
+      const doc = await parseStmts(`*PROCESS MARGINS(2,200)
     declare Result bit(3),
         A fixed decimal(1),
         B fixed binary (15), // precison lower than 15 will trigger a compiler warning, less than storage allows
@@ -419,9 +422,9 @@ describe("PL/I Parsing tests", () => {
     });
   });
 
-  test("pseduovariables", () => {
+  test("pseduovariables", async () => {
     // assigns into a sub-section of A from a sub-string of B
-    const doc = parseStmts(`
+    const doc = await parseStmts(`
  declare A character(10),
         B character(30);
  substr(A,6,5) = substr(B,20,5);
@@ -430,8 +433,8 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("assignment from multi-declaration", () => {
-    const doc = parseStmts(`
+  test("assignment from multi-declaration", async () => {
+    const doc = await parseStmts(`
  declare Result bit(4),
     A fixed decimal(1),
     B fixed binary (15),
@@ -446,9 +449,9 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  describe("Expressions", () => {
-    test("Assorted restricted expressions", () => {
-      const doc = parseStmts(`
+  describe("Expressions", async () => {
+    test("Assorted restricted expressions", async () => {
+      const doc = await parseStmts(`
  // from pg. 73
  dcl Max_names fixed bin value (1000),
     Name_size fixed bin value (30),
@@ -472,8 +475,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Simple arithmetic expressions", () => {
-      const doc = parseStmts(`
+    test("Simple arithmetic expressions", async () => {
+      const doc = await parseStmts(`
  dcl A fixed bin(15), B fixed bin(15), C fixed bin(15);
  A = 5;
  B = 10;
@@ -487,8 +490,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Function invocation", () => {
-      const doc = parseStmts(`
+    test("Function invocation", async () => {
+      const doc = await parseStmts(`
  dcl A fixed bin(15), B fixed bin(15), Y fixed bin(15), X fixed bin(15);
  A = 5;
  B = 10;
@@ -505,8 +508,8 @@ describe("PL/I Parsing tests", () => {
     });
   });
 
-  test("Basic branching", () => {
-    const doc = parseStmts(`
+  test("Basic branching", async () => {
+    const doc = await parseStmts(`
  dcl A bit(4),
     D bit(5);
  A=1;
@@ -520,9 +523,9 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  describe("Packages", () => {
-    test("Package with main routine", () => {
-      const doc = parse(`
+  describe("Packages", async () => {
+    test("Package with main routine", async () => {
+      const doc = await parse(`
  Package_Demo: Package exports (T);
  T: PROCEDURE OPTIONS (MAIN);
  END T;
@@ -533,16 +536,16 @@ describe("PL/I Parsing tests", () => {
     });
   });
 
-  test("simple PUT", () => {
+  test("simple PUT", async () => {
     // output a string to the stdout
-    const doc = parseStmts(` put skip list('Hello ' || 'World');`);
+    const doc = await parseStmts(` put skip list('Hello ' || 'World');`);
     assertNoParseErrors(doc);
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("simple GET", () => {
+  test("simple GET", async () => {
     // read a string into a variable 'var'
-    const doc = parseStmts(`
+    const doc = await parseStmts(`
  dcl VAR fixed bin(15);
  get list(var);
 `);
@@ -550,8 +553,8 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("fetch", () => {
-    const doc = parseStmts(`
+  test("fetch", async () => {
+    const doc = await parseStmts(`
  dcl A entry;
  fetch A title('X');
  fetch A;
@@ -566,8 +569,8 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("BEGIN block", () => {
-    const doc = parseStmts(`
+  test("BEGIN block", async () => {
+    const doc = await parseStmts(`
  B: begin;
  declare A fixed bin(15);
  end B;`);
@@ -575,8 +578,8 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("Subscripted entry invocation", () => {
-    const doc = parseStmts(`
+  test("Subscripted entry invocation", async () => {
+    const doc = await parseStmts(`
  declare (A,B,C,D,E) entry;
  declare F(5) entry variable initial (A,B,C,D,E);
  declare I fixed bin(15),
@@ -590,8 +593,8 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("Optional args", () => {
-    const doc = parseStmts(`
+  test("Optional args", async () => {
+    const doc = await parseStmts(`
  dcl Vrtn entry (
     fixed bin,
     ptr optional,
@@ -610,8 +613,8 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("Block 27", () => {
-    const doc = parseStmts(`
+  test("Block 27", async () => {
+    const doc = await parseStmts(`
     /* Enterprise PL/I for z/OS Language Reference v6.1, pg.59 */
     A = '/* This is a constant, not a comment */' ;
     `);
@@ -619,12 +622,12 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  describe("Ordinal Tests", () => {
+  describe("Ordinal Tests", async () => {
     /**
      * Verifies we can parse 'returns(ordinal `type` byvalue)` cases
      */
     test("parse returns ordinal by value", async () => {
-      const doc = parseStmts(`
+      const doc = await parseStmts(`
       define ordinal day (
           Monday,
           Tuesday,
@@ -646,7 +649,7 @@ describe("PL/I Parsing tests", () => {
 
     test("parses ordinals w/ multiple unsigned/signed attributes", async () => {
       // silly example, but this parses as valid on the compiler
-      const doc = parseStmts(`
+      const doc = await parseStmts(`
       define ordinal day (
         Monday
       ) prec(15) signed signed unsigned signed unsigned signed prec(15);
@@ -659,7 +662,7 @@ describe("PL/I Parsing tests", () => {
      * Ensure we can't accidentally add precision onto signed, should be in separate alternatives
      */
     test("Cannot specify precision on sign", async () => {
-      const doc = parseStmts(`
+      const doc = await parseStmts(`
       define ordinal day (
         Monday
       ) signed(15);
@@ -669,7 +672,7 @@ describe("PL/I Parsing tests", () => {
     });
 
     test("Can specify value on ordinal definition", async () => {
-      const doc = parseStmts(`
+      const doc = await parseStmts(`
       define ordinal day (
         Monday VALUE(1)
       );
@@ -679,7 +682,7 @@ describe("PL/I Parsing tests", () => {
     });
 
     test("Can specify negative value on ordinal definition", async () => {
-      const doc = parseStmts(`
+      const doc = await parseStmts(`
       define ordinal day (
         Monday VALUE(-1)
       );
@@ -688,10 +691,10 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("Can use non-UNION attributes in DEFINE STRUCTURE statement", () => {
+    test("Can use non-UNION attributes in DEFINE STRUCTURE statement", async () => {
       // The Enterprise PL/I for z/OS Language Reference specifies that UNION is the only allowed attribute for the first structure item
       // However, this is not true, we can use non-UNION attributes as well, the compiler will accept it
-      const doc = parse(`
+      const doc = await parse(`
        DEFINE STRUCTURE
         01 MEMORY_USAGE       UNALIGNED
           ,05 TOT_24B_BYT_CT      BIN FIXED(31)
@@ -713,7 +716,7 @@ describe("PL/I Parsing tests", () => {
      * Ensure both forms of precision are parsable
      */
     test("PREC & PRECISION are parsable", async () => {
-      const doc = parseStmts(`
+      const doc = await parseStmts(`
       define ordinal D1 (
         Day1
       ) precision(15) prec(15);
@@ -727,9 +730,9 @@ describe("PL/I Parsing tests", () => {
     });
   });
 
-  describe("PL/I Constants", () => {
-    test("xn binary fixed point constants", () => {
-      const doc = parseStmts(`
+  describe("PL/I Constants", async () => {
+    test("xn binary fixed point constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x fixed bin(31) init(0);
       x = '0000ffff'xn;
@@ -739,8 +742,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("xu binary fixed point constants", () => {
-      const doc = parseStmts(`
+    test("xu binary fixed point constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x fixed bin(31) init(0);
       x = '0000ffff'xu;
@@ -750,8 +753,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("x character constants", () => {
-      const doc = parseStmts(`
+    test("x character constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x char(8) init('0000ffff'x);
    end MAINPR;
@@ -760,8 +763,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("a character constants", () => {
-      const doc = parseStmts(`
+    test("a character constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x char(8) init('Hello'a);
    end MAINPR;
@@ -770,8 +773,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("e character constants", () => {
-      const doc = parseStmts(`
+    test("e character constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x char(8) init('Hello'e);
    end MAINPR;
@@ -780,8 +783,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("b3 octal constants", () => {
-      const doc = parseStmts(`
+    test("b3 octal constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x fixed bin(31) init('377'b3);
    end MAINPR;
@@ -790,8 +793,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("b4 hex bit constants", () => {
-      const doc = parseStmts(`
+    test("b4 hex bit constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x bit(16) init('ffff'b4);
    end MAINPR;
@@ -800,8 +803,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("bx hex bit constants", () => {
-      const doc = parseStmts(`
+    test("bx hex bit constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x bit(16) init('ffff'bx);
    end MAINPR;
@@ -810,8 +813,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("b bit constants", () => {
-      const doc = parseStmts(`
+    test("b bit constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x bit(8) init('10101010'b);
    end MAINPR;
@@ -820,8 +823,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("gx hex graphic constants", () => {
-      const doc = parseStmts(`
+    test("gx hex graphic constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x graphic(4) init('81a1'gx);
    end MAINPR;
@@ -830,9 +833,9 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("g graphic constants", () => {
+    test("g graphic constants", async () => {
       // TODO @montymxb Feb. 21st, 2025: This one won't take SBCS on the mainframe, still needs work
-      const doc = parseStmts(`
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x graphic(4) init('<.I.B.M>'g);
    end MAINPR;
@@ -841,8 +844,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("ux hex uchar constants", () => {
-      const doc = parseStmts(`
+    test("ux hex uchar constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x uchar(4) init('F48FBFBF'ux);
    end MAINPR;
@@ -851,8 +854,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("wx hex widechar constants", () => {
-      const doc = parseStmts(`
+    test("wx hex widechar constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x WIDECHAR(4) init('0000ffff'wx);
    end MAINPR;
@@ -861,8 +864,8 @@ describe("PL/I Parsing tests", () => {
       generateAndAssertValidSymbolTable(doc);
     });
 
-    test("m mixed character constants", () => {
-      const doc = parseStmts(`
+    test("m mixed character constants", async () => {
+      const doc = await parseStmts(`
    MAINPR: procedure options (main);
       dcl x char(8) init('<.I.B.M>'m);
    end MAINPR;
@@ -872,8 +875,8 @@ describe("PL/I Parsing tests", () => {
     });
   });
 
-  test("External declaration with returns 'byvalue fixed type'", () => {
-    const doc = parseStmts(`
+  test("External declaration with returns 'byvalue fixed type'", async () => {
+    const doc = await parseStmts(`
  dcl my_external ext('my_external')
         entry( 
             pointer byvalue,
@@ -885,8 +888,8 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("parses GET LIST w/ file", () => {
-    const doc = parseStmts(`
+  test("parses GET LIST w/ file", async () => {
+    const doc = await parseStmts(`
     H: PROC OPTIONS (MAIN);
     DECLARE N BINARY FIXED (31);
     GET LIST (N) FILE(SYSIN);
@@ -896,9 +899,9 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("Procedures w/ aligned & unaligned attributes", () => {
+  test("Procedures w/ aligned & unaligned attributes", async () => {
     // regular parseStmts but with a body that has a procedure w/ align & unaligned attributes
-    const doc = parseStmts(`
+    const doc = await parseStmts(`
  P1: proc returns( bit(4) aligned );
  return(0);
  end P1;
@@ -922,8 +925,8 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("align in returns attributes is valid as well", () => {
-    const doc = parseStmts(`
+  test("align in returns attributes is valid as well", async () => {
+    const doc = await parseStmts(`
       dcl my_external ext('my_external')
         entry( 
             returns ( aligned byvalue bin(7) fixed )
@@ -933,9 +936,9 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-  test("Supports GENERIC attribute", () => {
+  test("Supports GENERIC attribute", async () => {
     // From page 122 of the Enterprise PL/I for z/OS Language Reference
-    const doc = parseStmts(`
+    const doc = await parseStmts(`
       declare Calc generic (
         Fxdcal when (fixed,fixed),
         Flocal when (float,float),
