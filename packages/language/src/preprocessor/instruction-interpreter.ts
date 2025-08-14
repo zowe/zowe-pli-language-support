@@ -957,22 +957,22 @@ function resolveIncludeFileUri(
         lib,
         item.fileName,
       );
-      const files: [string, URI][] = [[libFileUri.path, libFileUri]];
+      const files: string[] = [libFileUri.path];
       // Generate a glob pattern for each include extension
       for (const ext of pgroup["include-extensions"] ?? []) {
         const extFileUri = libFileUri.with({
           path: `${libFileUri.path}${ext}`,
         });
-        files.push([extFileUri.path, extFileUri]);
+        files.push(extFileUri.path);
       }
       // Check whether any of the glob patterns match a file in the file system
       // We cannot check directly whether a file exists, as PL/I handles the file system as case insensitive
       // whereas Unix file systems are case sensitive
-      for (const [filePath, fileUri] of files) {
+      for (const filePath of files) {
         const matches =
           FileSystemProviderInstance.findFilesByGlobSync(filePath);
         if (matches.length > 0) {
-          return fileUri;
+          return URI.file(matches[0]);
         }
       }
     }
