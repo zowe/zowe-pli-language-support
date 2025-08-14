@@ -20,4 +20,11 @@
 
 //// %include <|1>"lib.pli";
 
-hover.expectMarkdownAt(1, hover.codeBlock('%INCLUDE "file:///cpy/lib.pli"'));
+hover.expectMarkdownAt(
+  1,
+  hover.codeBlock(
+    ['%INCLUDE "/cpy/lib.pli"', "", "---", " DECLARE LIB_VAR FIXED;"].join(
+      "\n",
+    ),
+  ),
+);
