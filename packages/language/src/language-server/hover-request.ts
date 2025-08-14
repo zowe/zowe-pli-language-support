@@ -31,7 +31,7 @@ import { binaryTokenSearch } from "../utils/search";
 import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { FileSystemProviderInstance } from "../workspace/file-system-provider";
+import { TextDocuments } from "./text-documents";
 import { HoverResponse, tokenToRange } from "./types";
 
 type MarkupResponse = string | null;
@@ -132,13 +132,28 @@ function getIncludeItemRepresentation(node: IncludeItem): string | null {
     return null;
   }
 
-  // load up the first 200 chars of content from the file
+  let partialContent = node.sourceText;
   const fileUri = URI.parse(node.filePath);
-  const fileContent = FileSystemProviderInstance.readFileSync(fileUri) || "";
-  const partialContent = fileContent.slice(
-      0,
-      200,
-    ) + (fileContent.length > 200 ? '...' : '');
+
+  if (!partialContent) {
+    // load up the first 20 lines of content from the file (semi-arbitrary cutoff)
+    const lineCutoff = 20;
+    const doc = TextDocuments.get(fileUri);
+    if (!doc) {
+      return null;
+    }
+    const fileContent = doc.getText({
+      start: { line: 0, character: 0 },
+      end: { line: lineCutoff + 1, character: 0 },
+    });
+    const lineCount = fileContent.matchAll(/\n/g);
+    partialContent =
+      Array.from(lineCount).length > lineCutoff
+        ? fileContent + "\n...\n"
+        : fileContent;
+    // cache for later requests
+    node.sourceText = partialContent;
+  }
 
   return formatPliCodeBlock(`%INCLUDE "${fileUri.fsPath}"\n\n---\n${partialContent}`);
 }
