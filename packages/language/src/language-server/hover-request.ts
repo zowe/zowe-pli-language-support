@@ -18,7 +18,7 @@ import {
   isReferenceToken,
 } from "../linking/tokens";
 import { Token } from "../parser/tokens";
-import { getAttributes } from "../preprocessor/instruction-generator";
+import { getAttributes } from "../preprocessor/util";
 import {
   DeclaredVariable,
   IncludeItem,
@@ -155,7 +155,9 @@ function getIncludeItemRepresentation(node: IncludeItem): string | null {
     node.sourceText = partialContent;
   }
 
-  return formatPliCodeBlock(`%INCLUDE "${fileUri.fsPath}"\n\n---\n${partialContent}`);
+  return formatPliCodeBlock(
+    `%INCLUDE "${fileUri.fsPath}"\n\n---\n${partialContent}`,
+  );
 }
 
 /**
