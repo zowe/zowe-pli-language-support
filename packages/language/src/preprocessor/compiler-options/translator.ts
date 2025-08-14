@@ -1622,7 +1622,7 @@ translator.rule(["PP"], (option, options) => {
       // set this as the effective INCLUDE PP option value, overriding any previous INCLUDE options
       const match = value.match(/ID\(([^\)]+)\)\s*$/);
       if (match && match.length > 0) {
-        const ppInclude = match[0].slice(3, -1).toLowerCase();
+        const ppInclude = match[0].slice(3, -1).toUpperCase();
         options.pp.ppInclude = {
           value: ppInclude,
         };
