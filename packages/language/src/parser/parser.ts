@@ -17,8 +17,6 @@ import * as tokens from "./tokens";
 import * as ast from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { ParserMethod, tokenMatcher } from "chevrotain";
-import { TextDocuments } from "../language-server/text-documents";
-import { Range, tokenToRange } from "../language-server/types";
 
 export class PliParser extends AbstractParser {
   constructor() {
@@ -537,7 +535,6 @@ export class PliParser extends AbstractParser {
 
   ProcedureStatement = this.RULE("ProcedureStatement", () => {
     let element = this.push(ast.createProcedureStatement());
-    let startRange: Range | undefined;
 
     this.CONSUME_ASSIGN1(tokens.PROCEDURE, (token) => {
       this.tokenPayload(
@@ -545,7 +542,6 @@ export class PliParser extends AbstractParser {
         element,
         CstNodeKind.ProcedureStatement_PROCEDURE,
       );
-      startRange = tokenToRange(token);
     });
     this.OPTION2(() => {
       this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
@@ -662,18 +658,6 @@ export class PliParser extends AbstractParser {
         element,
         CstNodeKind.ProcedureStatement_Semicolon0,
       );
-      // use token ranges to compute returns option src txt, for hover
-      const endRange = tokenToRange(token);
-      if (token.payload.uri && startRange) {
-        const textDoc = TextDocuments.get(token.payload.uri);
-        if (textDoc) {
-          const text = textDoc.getText({
-            start: textDoc.positionAt(startRange.start),
-            end: textDoc.positionAt(endRange.end),
-          });
-          element.sourceText = text;
-        }
-      }
     });
     this.MANY3(() => {
       this.SUBRULE_ASSIGN1(this.Statement, {

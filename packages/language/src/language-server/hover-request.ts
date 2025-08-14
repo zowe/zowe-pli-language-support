@@ -92,16 +92,35 @@ function getDeclaredVariableRepresentation(
 function getLabelPrefixRepresentation(labelPrefix: LabelPrefix): string | null {
   // currently assumes we're dealing with a procedure label prefix
   const procedureStatement = retrieveProcedureFromLabelPrefix(labelPrefix);
+
   if (!procedureStatement) {
     return null;
   }
 
   const name = labelPrefix.name ?? "<unnamed>";
-  if (!procedureStatement.sourceText) {
-    return null;
+  const optionStrings: string[] = [];
+  for (const option of procedureStatement.options) {
+    if (option.kind === SyntaxKind.Options) {
+      const internalOptions: string[] = [];
+      for (const item of option.items) {
+        if (item.kind === SyntaxKind.SimpleOptionsItem && item.value) {
+          internalOptions.push(item.value);
+        }
+      }
+      if (internalOptions.length > 0) {
+        optionStrings.push(`OPTIONS(${internalOptions.join(", ")})`);
+      }
+    } else if (option.kind === SyntaxKind.ProcedureOrderOption) {
+      if (option.order) {
+        optionStrings.push(option.order);
+      }
+    } else if (option.kind === SyntaxKind.ProcedureRecursiveOption) {
+      optionStrings.push("RECURSIVE");
+    }
+    // TODO @montymxb add additional procedure cases cases as they come up
   }
-
-  return formatPliCodeBlock(`${name}: ${procedureStatement.sourceText}`);
+  const options = optionStrings.length > 0 ? optionStrings.join(" ") : "";
+  return formatPliCodeBlock(`${name}: PROC ${options};`);
 }
 
 /**
@@ -113,17 +132,15 @@ function getIncludeItemRepresentation(node: IncludeItem): string | null {
     return null;
   }
 
-  // load up the first 200 chars of content from the file (semi-arbitrary cutoff)
-  const cutoff = 200;
+  // load up the first 200 chars of content from the file
   const fileUri = URI.parse(node.filePath);
-  // TODO use the text document approach to cache file content across requests
   const fileContent = FileSystemProviderInstance.readFileSync(fileUri) || "";
-  const partialContent =
-    fileContent.slice(0, cutoff) + (fileContent.length > cutoff ? "..." : "");
+  const partialContent = fileContent.slice(
+      0,
+      200,
+    ) + (fileContent.length > 200 ? '...' : '');
 
-  return formatPliCodeBlock(
-    `%INCLUDE "${fileUri.fsPath}"\n\n---\n${partialContent}`,
-  );
+  return formatPliCodeBlock(`%INCLUDE "${fileUri.fsPath}"\n\n---\n${partialContent}`);
 }
 
 /**

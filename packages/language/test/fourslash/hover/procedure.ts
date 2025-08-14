@@ -15,10 +15,31 @@
  * Failing test for hover on procedure declaration and call
  */
 
-//// MyProc: PROCEDURE OPTIONS(MAIN) REORDER;
+// @filename: cpy/lib.pli
+//// MyProc2: PROC (A) RETURNS(fixed bin(15));
+//// dcl A fixed bin(15);
+//// END MyProc2;
+
+//// %include "lib.pli";
+//// MyProc: PROC (A, B, C) OPTIONS(MAIN, Order)
+////    RECURSIVE REORDER RETURNS (fixed bin(31));
+//// dcl A fixed bin(31);
+//// dcl B fixed bin(15);
+//// dcl C fixed bin(7);
 //// END <|1>MyProc;
 //// CALL <|2>MyProc;
+//// CALL <|3>MyProc2;
 
-const expectedMarkdown = hover.codeBlock("MyProc: PROC OPTIONS(MAIN) REORDER;");
+verify.noDiagnostics();
+const expectedMarkdown = hover.codeBlock(
+  [
+    "MyProc: PROC (A, B, C) OPTIONS(MAIN, Order)",
+    "    RECURSIVE REORDER RETURNS (fixed bin(31));",
+  ].join("\n"),
+);
 hover.expectMarkdownAt(1, expectedMarkdown);
 hover.expectMarkdownAt(2, expectedMarkdown);
+hover.expectMarkdownAt(
+  3,
+  hover.codeBlock("MyProc2: PROC (A) RETURNS(fixed bin(15));"),
+);

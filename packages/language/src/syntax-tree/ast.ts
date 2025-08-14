@@ -1903,7 +1903,6 @@ export interface ProcedureStatement extends AstNode {
   statements: Statement[];
   options: ProcedureOption[];
   end: EndStatement | null;
-  sourceText: string | null;
 }
 export function createProcedureStatement(): ProcedureStatement {
   return {
@@ -1915,7 +1914,6 @@ export function createProcedureStatement(): ProcedureStatement {
     statements: [],
     options: [],
     end: null,
-    sourceText: null,
   };
 }
 export type ProcedureOption =
