@@ -762,7 +762,7 @@ export class TestBuilder {
 
   private createDiagnosticMessage(diagnostic: Diagnostic): string {
     const position = this.createPositionMessage(
-      diagnostic.range.start,
+      diagnostic.range?.start ?? -1, // range may not be present in some cases
       diagnostic.uri,
     );
     const severity = Severity[diagnostic.severity];
