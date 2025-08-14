@@ -37,20 +37,12 @@ export class InstructionCache {
   private previousCompilerOptions = getDefaultCompilerOptions();
 
   update(compilerOptions: CompilerOptions): void {
-    let update = false;
-    if (compilerOptions.or !== this.previousCompilerOptions.or) {
-      update = true;
-    }
-    if (compilerOptions.not !== this.previousCompilerOptions.not) {
-      update = true;
-    }
     if (
+      compilerOptions.or !== this.previousCompilerOptions.or ||
+      compilerOptions.not !== this.previousCompilerOptions.not ||
       compilerOptions.pp?.ppInclude?.value !==
-      this.previousCompilerOptions.pp?.ppInclude?.value
+        this.previousCompilerOptions.pp?.ppInclude?.value
     ) {
-      update = true;
-    }
-    if (update) {
       this.cache.clear();
     }
     this.previousCompilerOptions = compilerOptions;
