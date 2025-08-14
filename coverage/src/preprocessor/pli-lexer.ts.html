@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">97.93% </span>
+                <span class="strong">98.14% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>95/97</span>
+                <span class='fraction'>106/108</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.33% </span>
+                <span class="strong">84.61% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>10/12</span>
+                <span class='fraction'>11/13</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">97.93% </span>
+                <span class="strong">98.14% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>95/97</span>
+                <span class='fraction'>106/108</span>
             </div>
         
             
@@ -213,7 +213,18 @@
 <a name='L148'></a><a href='#L148'>148</a>
 <a name='L149'></a><a href='#L149'>149</a>
 <a name='L150'></a><a href='#L150'>150</a>
-<a name='L151'></a><a href='#L151'>151</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -236,7 +247,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -293,12 +303,6 @@
 <span class="cline-any cline-yes">538x</span>
 <span class="cline-any cline-yes">538x</span>
 <span class="cline-any cline-yes">538x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">538x</span>
-<span class="cline-any cline-yes">538x</span>
-<span class="cline-any cline-yes">538x</span>
-<span class="cline-any cline-yes">538x</span>
-<span class="cline-any cline-yes">538x</span>
 <span class="cline-any cline-yes">538x</span>
 <span class="cline-any cline-yes">538x</span>
 <span class="cline-any cline-yes">538x</span>
@@ -306,6 +310,24 @@
 <span class="cline-any cline-yes">538x</span>
 <span class="cline-any cline-yes">538x</span>
 <span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">538x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">538x</span>
@@ -386,7 +408,6 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { Reference, Statement } from "../syntax-tree/ast";
 import { Range, Severity } from "../language-server/types";
 import { Token } from "../parser/tokens";
-import { recursivelySetContainer } from "../linking/symbol-table";
 import { generateInstructions } from "./instruction-generator";
 import { EvaluationResults, runInstructions } from "./instruction-interpreter";
 import { createIncludeInstruction, InstructionNode } from "./instructions";
@@ -432,49 +453,61 @@ export class PliLexer {
   tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
     const compilerOptionsResult =
       this.compilerOptionsPreprocessor.extractCompilerOptions(inputText, uri);
-    initLexer(
-      compilerOptionsResult.result?.options ?? getDefaultCompilerOptions(),
-    );
-    const textWithoutMargins = this.marginsProcessor.processMargins(
-      compilerOptionsResult,
-      uri,
-    );
-    const state = this.preprocessorParser.initializeState(
-      textWithoutMargins,
-      uri,
-    );
-    // Do a full parsing of the input text to extract all *local* statements
-    const {
-      statements,
-      errors,
-      tokens: fileTokens,
-    } = this.preprocessorParser.parse(state);
-    unit.preprocessorAst.statements = statements;
-    recursivelySetContainer(unit.preprocessorAst);
-    errors.push(...this.marginsProcessor.issues);
+    const opts =
+      compilerOptionsResult.result?.options ?? getDefaultCompilerOptions();
+    initLexer(opts);
+    unit.instructionCache.update(opts);
+    const allErrors: LexingIssue[] = [];
+    const instruction = unit.instructionCache.get(uri, inputText, () =&gt; {
+      const textWithoutMargins = this.marginsProcessor.processMargins(
+        compilerOptionsResult,
+        uri,
+      );
+      const state = this.preprocessorParser.initializeState(
+        textWithoutMargins,
+        uri,
+      );
+      // Do a full parsing of the input text to extract all *local* statements
+      const {
+        statements,
+        errors,
+        tokens: fileTokens,
+      } = this.preprocessorParser.parse(state);
+      const instructionNode = generateInstructions(statements);
+      return {
+        tokens: fileTokens,
+        node: instructionNode,
+        issues: errors,
+        statements: statements,
+      };
+    });
+    allErrors.push(...instruction.issues);
+    allErrors.push(...this.marginsProcessor.issues);
 &nbsp;
-    let instructionNode = generateInstructions(statements);
     const incAfter = compilerOptionsResult.result?.options.incAfter;
     if (incAfter?.process) {
-      instructionNode = generateIncAfterInstruction(instructionNode, incAfter);
+      instruction.node = generateIncAfterInstruction(
+        instruction.node,
+        incAfter,
+      );
     }
-    const output = runInstructions(uri, instructionNode, {
+    const output = runInstructions(unit, uri, instruction.node, {
       compilerOptions: compilerOptionsResult.result,
       marginsProcessor: this.marginsProcessor,
       parser: this.preprocessorParser,
     });
-    output.fileTokens.set(uri.toString(), fileTokens);
+    output.fileTokens.set(uri.toString(), instruction.tokens);
     if (compilerOptionsResult.result) {
       output.fileTokens
         .get(uri.toString())
         ?.unshift(...compilerOptionsResult.result.tokens);
     }
-    errors.push(...output.errors);
+    allErrors.push(...output.errors);
     return {
       all: output.all,
       compilerOptions: compilerOptionsResult,
-      errors,
-      statements,
+      errors: allErrors,
+      statements: [...instruction.statements, ...output.statements],
       fileTokens: output.fileTokens,
       evaluationResults: output.evaluationResults,
       tokenReferences: output.references,
@@ -520,7 +553,7 @@ function generateIncAfterInstruction(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-14T15:41:14.371Z
+                at 2025-08-14T15:59:24.096Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
