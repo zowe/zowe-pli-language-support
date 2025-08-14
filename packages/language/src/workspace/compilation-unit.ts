@@ -250,7 +250,6 @@ export class CompilationUnitHandler {
       unit.requestCaches.revalidateAll({ connection, unit });
     });
     textDocuments.onDidClose((event) => {
-      this.compilationUnits.delete(event.document.uri);
       connection.sendDiagnostics({
         uri: event.document.uri,
         diagnostics: [],
