@@ -12,7 +12,10 @@
 import { TextDocuments } from "../language-server/text-documents";
 import { Token } from "../parser/tokens";
 import { URI, UriUtils } from "../utils/uri";
-import { CompilationUnitTokens } from "../workspace/compilation-unit";
+import {
+  CompilationUnit,
+  CompilationUnitTokens,
+} from "../workspace/compilation-unit";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { CompilerOptionResult } from "./compiler-options/options";
@@ -153,9 +156,11 @@ export interface EvaluationResults {
 }
 
 interface InterpreterContext {
+  unit: CompilationUnit;
   currentUri?: URI;
   entryUri?: URI;
   variables: Map<string, Variable>;
+  statements: ast.Statement[];
   result: CompilationUnitTokens;
   errors: LexingIssue[];
   counter: Map<inst.InstructionNode, number>;
@@ -169,6 +174,7 @@ interface InterpreterContext {
 export type InstructionInterpreterResult = CompilationUnitTokens & {
   evaluationResults: EvaluationResults;
   errors: LexingIssue[];
+  statements: ast.Statement[];
   references: ast.Reference[];
 };
 
@@ -181,15 +187,18 @@ export interface InterpreterOptions {
 }
 
 export function runInstructions(
+  unit: CompilationUnit,
   uri: URI,
   start: inst.InstructionNode,
   options: InterpreterOptions,
 ): InstructionInterpreterResult {
   const context: InterpreterContext = {
+    unit,
     currentUri: uri,
     entryUri: uri,
     uris: [uri.toString()],
     errors: [],
+    statements: [],
     xIncludes: new Set(),
     variables: new Map(),
     references: [],
@@ -210,6 +219,7 @@ export function runInstructions(
     evaluationResults: context.evaluations,
     errors: context.errors,
     references: context.references,
+    statements: context.statements,
   };
 }
 
@@ -845,27 +855,36 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
 
   try {
     const content = TextDocuments.get(uri)?.getText() ?? "";
-    const processedContent = context.options.marginsProcessor.processMargins(
-      {
-        result: context.options.compilerOptions,
-        text: content,
-      },
-      uri,
-    );
-    const subState = context.options.parser.initializeState(
-      processedContent,
-      uri,
-    );
-    const subProgram = context.options.parser.parse(subState);
-    context.result.fileTokens.set(uri.toString(), subProgram.tokens);
-    context.errors.push(...subProgram.errors);
-    const instruction = generateInstructions(subProgram.statements);
+    const cachedResult = context.unit.instructionCache.get(uri, content, () => {
+      const processedContent = context.options.marginsProcessor.processMargins(
+        {
+          result: context.options.compilerOptions,
+          text: content,
+        },
+        uri,
+      );
+      const subState = context.options.parser.initializeState(
+        processedContent,
+        uri,
+      );
+      const subProgram = context.options.parser.parse(subState);
+      const instruction = generateInstructions(subProgram.statements);
+      return {
+        tokens: subProgram.tokens,
+        issues: subProgram.errors,
+        statements: subProgram.statements,
+        node: instruction,
+      };
+    });
+    context.statements.push(...cachedResult.statements);
+    context.result.fileTokens.set(uri.toString(), cachedResult.tokens);
+    context.errors.push(...cachedResult.issues);
     const newContext: InterpreterContext = {
       ...context,
       currentUri: uri,
       uris: [uri.toString(), ...context.uris],
     };
-    doRunInstructions(newContext, instruction);
+    doRunInstructions(newContext, cachedResult.node);
   } catch (err) {
     failToResolve(err);
   }

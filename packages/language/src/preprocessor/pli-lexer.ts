@@ -21,7 +21,6 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { Reference, Statement } from "../syntax-tree/ast";
 import { Range, Severity } from "../language-server/types";
 import { Token } from "../parser/tokens";
-import { recursivelySetContainer } from "../linking/symbol-table";
 import { generateInstructions } from "./instruction-generator";
 import { EvaluationResults, runInstructions } from "./instruction-interpreter";
 import { createIncludeInstruction, InstructionNode } from "./instructions";
@@ -67,49 +66,61 @@ export class PliLexer {
   tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
     const compilerOptionsResult =
       this.compilerOptionsPreprocessor.extractCompilerOptions(inputText, uri);
-    initLexer(
-      compilerOptionsResult.result?.options ?? getDefaultCompilerOptions(),
-    );
-    const textWithoutMargins = this.marginsProcessor.processMargins(
-      compilerOptionsResult,
-      uri,
-    );
-    const state = this.preprocessorParser.initializeState(
-      textWithoutMargins,
-      uri,
-    );
-    // Do a full parsing of the input text to extract all *local* statements
-    const {
-      statements,
-      errors,
-      tokens: fileTokens,
-    } = this.preprocessorParser.parse(state);
-    unit.preprocessorAst.statements = statements;
-    recursivelySetContainer(unit.preprocessorAst);
-    errors.push(...this.marginsProcessor.issues);
+    const opts =
+      compilerOptionsResult.result?.options ?? getDefaultCompilerOptions();
+    initLexer(opts);
+    unit.instructionCache.update(opts);
+    const allErrors: LexingIssue[] = [];
+    const instruction = unit.instructionCache.get(uri, inputText, () => {
+      const textWithoutMargins = this.marginsProcessor.processMargins(
+        compilerOptionsResult,
+        uri,
+      );
+      const state = this.preprocessorParser.initializeState(
+        textWithoutMargins,
+        uri,
+      );
+      // Do a full parsing of the input text to extract all *local* statements
+      const {
+        statements,
+        errors,
+        tokens: fileTokens,
+      } = this.preprocessorParser.parse(state);
+      const instructionNode = generateInstructions(statements);
+      return {
+        tokens: fileTokens,
+        node: instructionNode,
+        issues: errors,
+        statements: statements,
+      };
+    });
+    allErrors.push(...instruction.issues);
+    allErrors.push(...this.marginsProcessor.issues);
 
-    let instructionNode = generateInstructions(statements);
     const incAfter = compilerOptionsResult.result?.options.incAfter;
     if (incAfter?.process) {
-      instructionNode = generateIncAfterInstruction(instructionNode, incAfter);
+      instruction.node = generateIncAfterInstruction(
+        instruction.node,
+        incAfter,
+      );
     }
-    const output = runInstructions(uri, instructionNode, {
+    const output = runInstructions(unit, uri, instruction.node, {
       compilerOptions: compilerOptionsResult.result,
       marginsProcessor: this.marginsProcessor,
       parser: this.preprocessorParser,
     });
-    output.fileTokens.set(uri.toString(), fileTokens);
+    output.fileTokens.set(uri.toString(), instruction.tokens);
     if (compilerOptionsResult.result) {
       output.fileTokens
         .get(uri.toString())
         ?.unshift(...compilerOptionsResult.result.tokens);
     }
-    errors.push(...output.errors);
+    allErrors.push(...output.errors);
     return {
       all: output.all,
       compilerOptions: compilerOptionsResult,
-      errors,
-      statements,
+      errors: allErrors,
+      statements: [...instruction.statements, ...output.statements],
       fileTokens: output.fileTokens,
       evaluationResults: output.evaluationResults,
       tokenReferences: output.references,
