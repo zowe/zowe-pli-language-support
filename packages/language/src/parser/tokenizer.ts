@@ -410,7 +410,12 @@ function tokenizeIncludeAlt(
     return undefined;
   }
   for (let i = 0; i < includeAlt.length; i++) {
-    if (context.input[context.index + i] !== includeAlt[i]) {
+    let charCode = context.input.charCodeAt(context.index + i);
+    if (charCode >= 97 && charCode <= 122) {
+      // Lowercase character, must be uppercased
+      charCode &= ~0x20;
+    }
+    if (charCode !== includeAlt.charCodeAt(i)) {
       return undefined;
     }
   }

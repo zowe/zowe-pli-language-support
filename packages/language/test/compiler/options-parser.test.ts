@@ -369,7 +369,7 @@ describe("CompilerOptions translator", () => {
     // expect ppInclude to be normalized & set
     const ppInclude = pp.ppInclude as CompilerOptions.PPInclude;
     expect(ppInclude).toBeDefined();
-    expect(ppInclude.value).toBe("++include");
+    expect(ppInclude.value).toBe("++INCLUDE");
   });
 
   const testCasesSensitivity: {
