@@ -29,6 +29,7 @@ import { LexingIssue } from "./pli-lexer";
 import { Token } from "../parser/tokens";
 import { performAssignmentLookahead } from "../parser/parser";
 import { tokenMatcher } from "chevrotain";
+import { recursivelySetContainer } from "../linking/symbol-table";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
@@ -68,6 +69,9 @@ export class PliPreprocessorParser {
           throw error;
         }
       }
+    }
+    for (const statement of statements) {
+      recursivelySetContainer(statement);
     }
     return {
       statements,
