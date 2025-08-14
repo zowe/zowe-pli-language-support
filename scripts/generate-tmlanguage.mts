@@ -10,25 +10,9 @@
  */
 
 import * as fs from 'fs/promises';
+import * as tokens from '../packages/language/src/parser/tokens.js';
 
-import { createLangiumGrammarServices } from 'langium/grammar';
-import { NodeFileSystem } from 'langium/node';
-import { parseHelper } from 'langium/test';
-import { AstUtils, GrammarAST, RegExpUtils } from 'langium';
-import { readFileSync } from 'fs';
-
-const services = createLangiumGrammarServices({
-    fileSystemProvider: NodeFileSystem.fileSystemProvider
-});
-const parse = parseHelper(services.grammar);
-
-const file = readFileSync('./packages/language/src/pli.langium', 'utf8');
-const grammar = await parse(file);
-const keywords = AstUtils.streamAst(grammar.parseResult.value)
-    .filter(GrammarAST.isKeyword)
-    .map(e => e.value)
-    .filter(e => /\w/.test(e));
-
+const keywords = Array.from(tokens.keywordMap, ([key]) => key.toLowerCase()).toSorted();
 const manual = JSON.parse(await fs.readFile('./packages/vscode-extension/syntaxes/pli.manual.json', 'utf8'));
 
 const controlKeywords = [
@@ -54,18 +38,24 @@ const controlKeywords = [
     'inscan',
     'xinscan',
     'deactivate',
+    'deact',
     'activate',
-];
+    'act',
+].sort();
 
-const storageKeywords = keywords.map(e => e.toLowerCase()).exclude(controlKeywords).toArray();
-storageKeywords.push('scan', 'rescan', 'noscan', 'norescan', 'activate', 'act', 'deactivate', 'deact');
+const storageKeywords: string[] = [];
+for (const keyword of keywords) {
+    if (!controlKeywords.includes(keyword)) {
+        storageKeywords.push(keyword);
+    }
+}
 
-function toPattern(keywords) {
-    const patterns = [];
+function toPattern(keywords: string[]) {
+    const patterns: string[] = [];
     for (const keyword of keywords) {
         let keywordPattern = '';
         for (const char of keyword) {
-            keywordPattern += RegExpUtils.escapeRegExp(char);
+            keywordPattern += tokens.escapeRegExp(char);
         }
         patterns.push(keywordPattern);
     }
