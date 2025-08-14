@@ -27,10 +27,6 @@
       ]
     },
     {
-      "name": "string.exec.pli",
-      "match": "(?<=[eE][xX][eE][cC]\\s*)[a-zA-Z]+\\s[^;]*"
-    },
-    {
       "name": "constant.numeric.decimal.pli",
       "match": "([0-9][0-9_]*(\\.[0-9_]+)?)|(\\.[0-9_]+)([ESDQ][-+]?[0-9]+)?([bB]|[iI])*"
     },
@@ -41,11 +37,16 @@
   ],
   "repository": {
     "string-character-escape": {
-      "name": "constant.character.escape.lox",
+      "name": "constant.character.escape.pli",
       "match": "\\\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\\{[0-9A-Fa-f]+\\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)"
     },
     "comments": {
       "patterns": [
+        {
+          "name": "string.exec.pli",
+          "begin": "(?i)(?<=EXEC\\s+)[a-z]+\\s",
+          "end": "(?=;)"
+        },
         {
           "name": "comment.block.pli",
           "begin": "/\\*",
@@ -62,14 +63,14 @@
           }
         },
         {
+          "name": "comment.line.pli",
           "begin": "//",
           "beginCaptures": {
             "1": {
               "name": "punctuation.whitespace.comment.leading.pli"
             }
           },
-          "end": "(?=$)",
-          "name": "comment.line.pli"
+          "end": "(?=$)"
         }
       ]
     }
