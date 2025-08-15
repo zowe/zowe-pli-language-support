@@ -262,10 +262,7 @@ function getIncludeItemRepresentation(node: IncludeItem): string | null {
     // cache for later requests
     node.sourceText = partialContent;
   }
-
-  return formatPliCodeBlock(
-    `%INCLUDE "${fileUri.fsPath}"\n\n---\n${partialContent}`,
-  );
+  return `%INCLUDE "${fileUri.fsPath}"\n\n---\n${formatPliCodeBlock(partialContent)}`;
 }
 
 /**
