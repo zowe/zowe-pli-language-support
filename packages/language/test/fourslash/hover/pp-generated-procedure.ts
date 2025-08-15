@@ -15,18 +15,15 @@
  * Failing test for hover on procedure PP synthesized procedure
  */
 
-//// %DCL GENPROC INIT("MyProc: PROC(A,B,C) OPTIONS(MAIN) RETURNS(fixed bin(31));");
+//// %DCL GENPROC FIXED CHAR(64);
+//// %GENPROC = "P1: PROC(A,B) OPTIONS(MAIN) RETURNS(fixed bin(15));";
 //// GENPROC
-//// END <|1>MyProc;
-//// CALL <|2>MyProc;
+//// END <|1>P1;
+//// CALL <|2>P1;
 
 verify.noDiagnostics();
 const expectedMarkdown2 = hover.codeBlock(
-  "MyProc: PROC(A,B,C) OPTIONS(MAIN,ORDER) RECURSIVE REORDER RETURNS(FIXED BIN(31));",
+  "P1: PROC(A,B) OPTIONS(MAIN) RETURNS(FIXED BIN(15));",
 );
-hover.expectMarkdownAt(1, expectedMarkdown);
-hover.expectMarkdownAt(2, expectedMarkdown);
-hover.expectMarkdownAt(
-  3,
-  hover.codeBlock("MyProc2: PROC(A) RETURNS(FIXED BIN(15));"),
-);
+hover.expectMarkdownAt(1, expectedMarkdown2);
+hover.expectMarkdownAt(2, expectedMarkdown2);

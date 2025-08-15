@@ -20,11 +20,17 @@ import {
 import { Token } from "../parser/tokens";
 import { getAttributes } from "../preprocessor/util";
 import {
+  Bound,
   DeclaredVariable,
+  DimensionBound,
+  Dimensions,
+  Expression,
   IncludeItem,
   LabelPrefix,
+  ProcedureStatement,
   SyntaxKind,
   SyntaxNode,
+  Wildcard,
 } from "../syntax-tree/ast";
 import { formatPliCodeBlock } from "../utils/code-block";
 import { binaryTokenSearch } from "../utils/search";
@@ -86,21 +92,44 @@ function getDeclaredVariableRepresentation(
 }
 
 /**
- * Retrieves string rep for a label prefix
- * Ex. "MyLabel: PROC;"
+ * Extracts the parameters from a procedure statement as a string.
+ * @returns Decoded string representation of parameters or null if any fail to resolve
  */
-function getLabelPrefixRepresentation(labelPrefix: LabelPrefix): string | null {
-  // currently assumes we're dealing with a procedure label prefix
-  const procedureStatement = retrieveProcedureFromLabelPrefix(labelPrefix);
-
-  if (!procedureStatement) {
-    return null;
+function extractProcedureParams(
+  procedureStatement: ProcedureStatement,
+): string | null {
+  if (!procedureStatement?.parameters) {
+    return "";
   }
+  const params: string[] = [];
+  for (const param of procedureStatement.parameters) {
+    const ref = param.ref;
+    if (!ref) {
+      // unresolved param, dip out prematurely
+      return null;
+    }
+    params.push(ref.text);
+  }
+  return params.length ? `(${params.join(",")})` : "";
+}
 
-  const name = labelPrefix.name ?? "<unnamed>";
+/**
+ * Extracts the options from a procedure statement as a string.
+ * Handles OPTIONS, ORDER, RECURSIVE, and RETURNS options.
+ * If no options are present, returns an empty string.
+ * RETURNS options require further decoding of attribute exprs.
+ * @returns string representation of options
+ */
+function extractProcedureOptions(
+  procedureStatement: ProcedureStatement,
+): string {
+  if (!procedureStatement?.options) {
+    return "";
+  }
   const optionStrings: string[] = [];
   for (const option of procedureStatement.options) {
     if (option.kind === SyntaxKind.Options) {
+      // simple options
       const internalOptions: string[] = [];
       for (const item of option.items) {
         if (item.kind === SyntaxKind.SimpleOptionsItem && item.value) {
@@ -110,17 +139,96 @@ function getLabelPrefixRepresentation(labelPrefix: LabelPrefix): string | null {
       if (internalOptions.length > 0) {
         optionStrings.push(`OPTIONS(${internalOptions.join(", ")})`);
       }
-    } else if (option.kind === SyntaxKind.ProcedureOrderOption) {
-      if (option.order) {
-        optionStrings.push(option.order);
-      }
+    } else if (
+      option.kind === SyntaxKind.ProcedureOrderOption &&
+      option.order
+    ) {
+      optionStrings.push(option.order);
     } else if (option.kind === SyntaxKind.ProcedureRecursiveOption) {
       optionStrings.push("RECURSIVE");
+    } else if (option.kind === SyntaxKind.ReturnsOption) {
+      // returns options
+      const attrArr: string[] = [];
+      const attrs = option.returnAttributes;
+      for (const attr of attrs) {
+        if (attr.kind === SyntaxKind.ComputationDataAttribute && attr.type) {
+          if (attr.dimensions) {
+            // type w/ dimens, need to be decoded
+            attrArr.push(attr.type + decodeDimensions(attr.dimensions));
+          } else {
+            // just the type
+            attrArr.push(attr.type);
+          }
+        }
+      }
+      optionStrings.push(`RETURNS(${attrArr.join(" ")})`);
     }
-    // TODO @montymxb add additional procedure cases cases as they come up
+    // TODO @montymxb add additional options cases as they come up
   }
-  const options = optionStrings.length > 0 ? optionStrings.join(" ") : "";
-  return formatPliCodeBlock(`${name}: PROC ${options};`);
+  return optionStrings.length > 0 ? optionStrings.join(" ") : "";
+}
+
+/**
+ * Gets the string representation of a label prefix
+ * (e.g. procedure currently).
+ */
+function getLabelPrefixRepresentation(labelPrefix: LabelPrefix): string | null {
+  // NOTE: currently assumes we're dealing with a procedure label prefix
+  const procedureStatement = retrieveProcedureFromLabelPrefix(labelPrefix);
+
+  if (!procedureStatement) {
+    return null;
+  }
+
+  // extract params
+  const paramsStr = extractProcedureParams(procedureStatement);
+  if (paramsStr === null) {
+    return null;
+  }
+
+  // extract options
+  const optionsStr = extractProcedureOptions(procedureStatement);
+  if (optionsStr === null) {
+    return null;
+  }
+
+  return formatPliCodeBlock(
+    `${labelPrefix.name ?? ""}: PROC${paramsStr} ${optionsStr};`,
+  );
+}
+
+/**
+ * Helper function for decoding dimensions for hover support
+ */
+function decodeDimensions(dimensions: Dimensions): string {
+  const dimensionBounds: DimensionBound[] = dimensions.dimensions;
+  const decodedBounds: string[] = [];
+  for (const bound of dimensionBounds) {
+    const lower: string | null = decodeBound(bound.lower);
+    const upper: string | null = decodeBound(bound.upper);
+    decodedBounds.push(`(${[lower, upper].filter((v) => v).join(",")})`);
+  }
+  return decodedBounds.join("");
+}
+
+/**
+ * Decodes a bound expression to a string.
+ * Handles wildcards and literal expressions.
+ * @returns Decoded bound as a string, or null if we encounter a non lit or missing value
+ */
+function decodeBound(bound: Bound | null): string | null {
+  if (!bound || !bound.expression) {
+    return null;
+  }
+  const expr: Wildcard<Expression> = bound.expression;
+  if (expr === "*") {
+    return "*";
+  } else if (expr.kind === SyntaxKind.Literal) {
+    return expr.value?.value ?? null;
+  } else {
+    // fail to decode on non-literal exprs
+    return null;
+  }
 }
 
 /**

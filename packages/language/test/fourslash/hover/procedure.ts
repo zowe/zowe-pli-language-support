@@ -32,14 +32,11 @@
 
 verify.noDiagnostics();
 const expectedMarkdown = hover.codeBlock(
-  [
-    "MyProc: PROC (A, B, C) OPTIONS(MAIN, Order)",
-    "    RECURSIVE REORDER RETURNS (fixed bin(31));",
-  ].join("\n"),
+  "MYPROC: PROC(A,B,C) OPTIONS(MAIN, ORDER) RECURSIVE REORDER RETURNS(FIXED BIN(31));",
 );
 hover.expectMarkdownAt(1, expectedMarkdown);
 hover.expectMarkdownAt(2, expectedMarkdown);
 hover.expectMarkdownAt(
   3,
-  hover.codeBlock("MyProc2: PROC (A) RETURNS(fixed bin(15));"),
+  hover.codeBlock("MYPROC2: PROC(A) RETURNS(FIXED BIN(15));"),
 );
