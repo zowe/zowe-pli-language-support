@@ -31,26 +31,26 @@ import { tokenize } from "../parser/tokenizer";
 
 interface Variable {
   name: string;
-  value: VariableValue;
+  value: Value;
   declarationNode?: ast.SyntaxNode | null;
   mode: inst.ScanMode;
   active: boolean;
 }
 
-type VariableValue = Value | ArrayValue;
+type Value = ScalarValue | ArrayValue;
 
-interface Value {
-  // Preprocessor variables are always strings or numbers.
+interface ScalarValue {
+  // Scalar preprocessor variables are always strings or numbers.
   // We store them as strings for simplicity and convert them as needed based on the type.
   value: string;
   type: inst.DeclaredType;
 }
 
-function isValue(value: VariableValue): value is Value {
+function isScalarValue(value: Value): value is ScalarValue {
   return "value" in value && "type" in value;
 }
 
-function copyValue(value: Value): Value {
+function copyScalarValue(value: ScalarValue): ScalarValue {
   return {
     value: value.value,
     type: value.type,
@@ -58,28 +58,28 @@ function copyValue(value: Value): Value {
 }
 
 interface ArrayValue {
-  array: VariableValue[];
+  array: Value[];
   lower: number;
   upper: number;
 }
 
-function isArrayValue(value: VariableValue): value is ArrayValue {
+function isArrayValue(value: Value): value is ArrayValue {
   return "array" in value && "lower" in value && "upper" in value;
 }
 
 function copyArrayValue(value: ArrayValue): ArrayValue {
   return {
-    array: value.array.map(copyVariableValue),
+    array: value.array.map(copyValue),
     lower: value.lower,
     upper: value.upper,
   };
 }
 
-function copyVariableValue(value: VariableValue): VariableValue {
+function copyValue(value: Value): Value {
   if (isArrayValue(value)) {
     return copyArrayValue(value);
   } else {
-    return copyValue(value);
+    return copyScalarValue(value);
   }
 }
 
@@ -100,8 +100,8 @@ function generateVariable(
 function generateVariableValue(
   instruction: inst.DeclareInstruction,
   context: InterpreterContext,
-): VariableValue {
-  let value: VariableValue;
+): Value {
+  let value: Value;
   // Initial value is empty or 0 (for numbers)
   if (instruction.type === inst.DeclaredType.Character) {
     value = {
@@ -120,20 +120,26 @@ function generateVariableValue(
       let lower = 1;
       if (lowerBound) {
         const evaluatedLower = evaluateExpression(lowerBound, context);
-        const parsedLower = parseInt(evaluatedLower.value);
-        lower = parsedLower;
+        if (isScalarValue(evaluatedLower)) {
+          // Only numeric values can be used as lower bounds
+          const parsedLower = parseInt(evaluatedLower.value);
+          lower = parsedLower;
+        }
       }
       let upper = 1;
       if (upperBound) {
         const evaluatedUpper = evaluateExpression(upperBound, context);
-        const parsedUpper = parseInt(evaluatedUpper.value);
-        upper = parsedUpper;
+        if (isScalarValue(evaluatedUpper)) {
+          // Only numeric values can be used as upper bounds
+          const parsedUpper = parseInt(evaluatedUpper.value);
+          upper = parsedUpper;
+        }
       }
       const length = upper - lower + 1;
-      const array: VariableValue[] = [];
+      const array: Value[] = [];
       for (let i = 0; i < length; i++) {
         // Initialize the array with the copied value
-        array.push(copyVariableValue(value));
+        array.push(copyValue(value));
       }
       value = {
         array,
@@ -318,12 +324,24 @@ function runDoInstruction(
   if (instruction.doType2) {
     const type2 = instruction.doType2;
     if (type2.until) {
-      // If UNTIL is specified, we don't run the instruction if it evaluates to true
-      condition &&= !valueToBool(evaluateExpression(type2.until, context));
+      const untilConditionValue = evaluateExpression(type2.until, context);
+      if (!isScalarValue(untilConditionValue)) {
+        // Condition cannot be evaluated, don't run the instruction
+        condition = false;
+      } else {
+        // If UNTIL is specified, we don't run the instruction if it evaluates to true
+        condition &&= !valueToBool(untilConditionValue);
+      }
     }
     if (type2.while) {
-      // If WHILE is specified, we only run the instruction if it evaluates to true
-      condition &&= valueToBool(evaluateExpression(type2.while, context));
+      const whileConditionValue = evaluateExpression(type2.while, context);
+      if (!isScalarValue(whileConditionValue)) {
+        // Condition cannot be evaluated, don't run the instruction
+        condition = false;
+      } else {
+        // If WHILE is specified, we only run the instruction if it evaluates to true
+        condition &&= valueToBool(whileConditionValue);
+      }
     }
   }
   if (instruction.doType3) {
@@ -358,36 +376,7 @@ function runAssignmentInstruction(
       };
       context.variables.set(ref.variable, variable);
     } else {
-      let setter: ((val: VariableValue) => void) | undefined = (val) => {
-        variable!.value = val;
-      };
-      if (ref.args.length > 0) {
-        let variableValue = variable.value;
-        // If we access an array variable, we need to evaluate the args
-        for (const arg of ref.args) {
-          const argValue = evaluateExpression(arg, context);
-          const numValue = parseInt(argValue.value);
-          const currentValue = variableValue;
-          let arrayValue: VariableValue | undefined;
-          if (isArrayValue(variableValue)) {
-            const index = numValue - variableValue.lower;
-            // Manipulate the array in place
-            setter = (val) => {
-              (currentValue as ArrayValue).array[index] = val;
-            };
-            arrayValue = variableValue.array[index];
-          } else {
-            // The variable that we want to access is not an array
-            // TODO: We should report an error here
-            setter = undefined;
-            break;
-          }
-          variableValue = arrayValue;
-        }
-      }
-      // Currently, we simply assume that a user has used `=` as the assignment operator
-      // TODO: Add more assignment operators in a separate PR.
-      setter?.(value);
+      evaluateValueAccess(variable, ref.args, context).setter(value);
     }
   }
 }
@@ -397,6 +386,10 @@ function runIfInstruction(
   context: InterpreterContext,
 ): inst.InstructionNode | undefined {
   const condition = evaluateExpression(instruction.condition, context);
+  if (!isScalarValue(condition)) {
+    // Condition cannot be evaluated, simply skip the whole if instruction
+    return undefined;
+  }
   const existing = context.evaluations.ifStatements.get(instruction.element);
   if (valueToBool(condition)) {
     context.evaluations.ifStatements.set(
@@ -413,7 +406,6 @@ function runIfInstruction(
   }
 }
 
-// TODO: We should be able to return an `ArrayValue` here as well
 function evaluateExpression(
   expression: inst.ExpressionInstruction,
   context: InterpreterContext,
@@ -431,12 +423,12 @@ function evaluateExpression(
   }
 }
 
-type ValueOperation = (left: Value, right: Value) => Value;
+type ValueOperation = (left: ScalarValue, right: ScalarValue) => ScalarValue;
 
 function intOperation(
   callback: (left: number, right: number) => number,
 ): ValueOperation {
-  return (left: Value, right: Value) => {
+  return (left: ScalarValue, right: ScalarValue) => {
     return valueToNumber(
       callback(parseInt(left.value), parseInt(right.value)).toString(),
     );
@@ -446,7 +438,7 @@ function intOperation(
 function intBoolOperation(
   callback: (left: number, right: number) => boolean,
 ): ValueOperation {
-  return (left: Value, right: Value) => {
+  return (left: ScalarValue, right: ScalarValue) => {
     return boolToValue(callback(parseInt(left.value), parseInt(right.value)));
   };
 }
@@ -454,7 +446,7 @@ function intBoolOperation(
 function stringOperation(
   callback: (left: string, right: string) => string,
 ): ValueOperation {
-  return (left: Value, right: Value) => {
+  return (left: ScalarValue, right: ScalarValue) => {
     return valueToString(callback(left.value, right.value));
   };
 }
@@ -480,9 +472,12 @@ const notLessThan = greaterThanEquals;
 function evaluateBinaryExpression(
   expression: inst.BinaryExpressionInstruction,
   context: InterpreterContext,
-): Value {
+): ScalarValue {
   const left = evaluateExpression(expression.left, context);
   const right = evaluateExpression(expression.right, context);
+  if (!isScalarValue(left) || !isScalarValue(right)) {
+    return defaultEmptyValue;
+  }
   switch (expression.operator) {
     case "+":
       return plus(left, right);
@@ -526,8 +521,13 @@ function evaluateBinaryExpression(
 function evaluateUnaryExpression(
   expression: inst.UnaryExpressionInstruction,
   context: InterpreterContext,
-): Value {
+): ScalarValue {
   const operand = evaluateExpression(expression.operand, context);
+  if (!isScalarValue(operand)) {
+    // TODO: report error for array operand in unary expression
+    // Thought: Maybe as part of the type system instead?
+    return defaultEmptyValue;
+  }
   switch (expression.operator) {
     case "+":
       return operand;
@@ -539,7 +539,7 @@ function evaluateUnaryExpression(
   return valueToNumber("0");
 }
 
-const defaultEmptyValue: Value = {
+const defaultEmptyValue: ScalarValue = {
   type: inst.DeclaredType.Character,
   value: "",
 };
@@ -549,34 +549,92 @@ function evaluateReferenceExpression(
   context: InterpreterContext,
 ): Value {
   const variable = context.variables.get(expression.variable);
-  const value = variable?.value;
-  if (!value) {
+  if (!variable) {
     return defaultEmptyValue;
-  } else if (isValue(value)) {
-    return value;
-  } else if (isArrayValue(value)) {
-    let arrayValue = value;
-    const args = expression.args.map((arg) => evaluateExpression(arg, context));
-    for (const arg of args) {
+  }
+  return evaluateValueAccess(variable, expression.args, context).getter();
+}
+
+interface ValueAccess {
+  getter: () => Value;
+  setter: (value: Value) => void;
+}
+
+function evaluateValueAccess(
+  variable: Variable,
+  args: inst.ExpressionInstruction[],
+  context: InterpreterContext,
+): ValueAccess {
+  const empty: ValueAccess = {
+    getter: () => defaultEmptyValue,
+    setter: () => {}, // Do nothing
+  };
+  if (args.length === 0) {
+    // If there are no args, we simply return the variable value
+    return {
+      getter: () => variable.value,
+      setter: (val) => {
+        variable.value = val;
+      },
+    };
+  } else {
+    // Note: If any arguments are specified for the variable, we need to go through all of them
+    // In case the variable is a "shorter" or "longer" array (i.e. the arguments don't fit), simply return *empty*
+    // The type system should report the error on the type level
+    if (!isArrayValue(variable.value)) {
+      // If the variable is not an array, we cannot index into it
+      return empty;
+    }
+    let variableValue = variable.value;
+    for (let i = 0; i < args.length; i++) {
+      const arg = evaluateExpression(args[i], context);
+      if (isArrayValue(arg)) {
+        // Array values cannot be used as array indices
+        // TODO: The type system validation should report this, the interpreter can safely ignore it
+        return empty;
+      }
       const numValue = parseInt(arg.value);
-      const argValue = arrayValue.array[numValue - arrayValue.lower];
-      if (!argValue) {
-        return defaultEmptyValue;
-      } else if (isValue(argValue)) {
-        return argValue;
+      if (isNaN(numValue)) {
+        // If the argument is not a number, we cannot index into the array
+        // It seems like the compiler reports IBM3948I in that case
+        return empty;
+      }
+      if (numValue < variableValue.lower) {
+        // TODO: Report IBM3789I
+        return empty;
+      } else if (numValue > variableValue.upper) {
+        // TODO: Report IBM3790I
+        return empty;
+      }
+      const indexedValue = variableValue.array[numValue - variableValue.lower];
+      // If we have evaluated all arguments
+      if (i === args.length - 1) {
+        if (isArrayValue(indexedValue)) {
+          // TODO: Report IBM3793I (in the type system?)
+          return empty;
+        } else {
+          return {
+            getter: () => indexedValue,
+            setter: (val) => {
+              variableValue.array[numValue - variableValue.lower] = val;
+            },
+          };
+        }
+      } else if (isScalarValue(indexedValue)) {
+        // TODO: Report IBM3794I (in the type system?)
+        return empty;
       } else {
-        arrayValue = argValue;
+        variableValue = indexedValue;
       }
     }
+    return empty;
   }
-  // If we exhaust all args without finding a value, return default
-  return defaultEmptyValue;
 }
 
 function evaluateLiteralExpression(
   expression: inst.NumberInstruction | inst.StringInstruction,
   context: InterpreterContext,
-): Value {
+): ScalarValue {
   return {
     type:
       expression.kind === inst.InstructionKind.String
@@ -590,14 +648,14 @@ function boolToString(value: boolean): string {
   return value ? "1" : "0";
 }
 
-function boolToValue(value: boolean): Value {
+function boolToValue(value: boolean): ScalarValue {
   return {
     type: inst.DeclaredType.Fixed,
     value: boolToString(value),
   };
 }
 
-function valueToBool(value: Value): boolean {
+function valueToBool(value: ScalarValue): boolean {
   if (value.type === inst.DeclaredType.Fixed) {
     return parseInt(value.value) !== 0;
   } else if (value.type === inst.DeclaredType.Character) {
@@ -606,14 +664,14 @@ function valueToBool(value: Value): boolean {
   return false;
 }
 
-function valueToNumber(value: string): Value {
+function valueToNumber(value: string): ScalarValue {
   return {
     type: inst.DeclaredType.Fixed,
     value,
   };
 }
 
-function valueToString(value: string): Value {
+function valueToString(value: string): ScalarValue {
   return {
     type: inst.DeclaredType.Character,
     value,
@@ -637,6 +695,7 @@ function runActivateInstruction(
     if (instruction.scanMode !== undefined) {
       variable.mode = instruction.scanMode;
     }
+    // TODO: Report IBM3530I if the variable is an array
     variable.active = true;
   }
 }
@@ -717,7 +776,7 @@ function replaceTokensInText(
     if (result) {
       // Replace the token with the scan result
       // i.e. the variable content, recursively replaced
-      tokenList.push(...result);
+      largePush(tokenList, result);
     } else {
       // If the scan found no active variable, push the original token
       tokenList.push(token);
@@ -747,7 +806,7 @@ function performTokenScan(
     token.kind = CstNodeKind.ReferenceItem_Ref;
   }
   const variableValue = variable.value;
-  if (!isValue(variableValue)) {
+  if (!isScalarValue(variableValue)) {
     // Cannot replace tokens for array variables
     // TODO: There is a warning/error for this, that should be reported
     return undefined;
@@ -789,6 +848,10 @@ function runInscanInstruction(
   context: InterpreterContext,
 ): void {
   const value = evaluateReferenceExpression(instruction.variable, context);
+  if (!isScalarValue(value)) {
+    // Inscan cannot be used with array variables
+    return;
+  }
   runInclude(
     {
       // No item is provided here, which is only availble in the IncludeInstruction
