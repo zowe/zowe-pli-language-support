@@ -144,14 +144,14 @@ export class PluginConfigurationProvider {
    * @param filePath The file path to check for library membership
    * @returns true if the file path matches any library file pattern, false otherwise
    */
-  public isLibFileCandidate(filePath: string): boolean {
+  public isLibFileCandidate(uri: URI): boolean {
     if (!this.libFileGlobPatterns) {
       this.buildLibFileGlobPatterns();
     }
+    // normalize a bit
+    const filePath = uri.toString(true).replace(/[\\/]+$/, "");
     const patterns = this.libFileGlobPatterns || [];
     for (const pattern of patterns) {
-      // normalize a bit
-      filePath = filePath.replace(/[\\/]+$/, "");
       if (minimatch(filePath, pattern, { nocase: true })) {
         return true;
       }

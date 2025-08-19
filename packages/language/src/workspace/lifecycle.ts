@@ -25,19 +25,28 @@ import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { URI } from "../utils/uri";
 import { assignDebugKinds } from "../utils/debug-kinds";
 import { getDefaultCompilerOptions } from "../preprocessor/compiler-options/options";
+import { CancellationToken } from "vscode-languageserver";
+import { interruptAndCheck } from "../utils/promises";
 
-export function lifecycle(
+export async function lifecycle(
   compilationUnit: CompilationUnit,
   text: string,
-): void {
+  cancellation: CancellationToken,
+): Promise<void> {
   compilationUnit.statementOrderCache.clear();
   compilationUnit.referencesCache.clear();
   compilationUnit.scopeCaches.clear();
+  await interruptAndCheck(cancellation);
   tokenize(compilationUnit, text);
+  await interruptAndCheck(cancellation);
   parse(compilationUnit);
+  await interruptAndCheck(cancellation);
   generateSymbolTable(compilationUnit);
+  await interruptAndCheck(cancellation);
   link(compilationUnit);
+  await interruptAndCheck(cancellation);
   validate(compilationUnit);
+  await interruptAndCheck(cancellation);
 }
 
 const lexer = new PliLexer();
