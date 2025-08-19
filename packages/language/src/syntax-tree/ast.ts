@@ -1201,6 +1201,19 @@ export interface DoSpecification extends AstNode {
   to: Expression | null;
   by: Expression | null;
 }
+export function createDoSpecification(): DoSpecification {
+  return {
+    kind: SyntaxKind.DoSpecification,
+    container: null,
+    expression: null,
+    upthru: null,
+    downthru: null,
+    repeat: null,
+    whileOrUntil: null,
+    to: null,
+    by: null,
+  };
+}
 export interface DoStatement extends AstNode {
   kind: SyntaxKind.DoStatement;
   statements: Statement[];
