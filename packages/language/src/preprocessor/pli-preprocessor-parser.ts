@@ -635,13 +635,7 @@ export class PliPreprocessorParser {
         PreprocessorTokens.Semicolon,
       );
       return statement;
-    } else if (
-      state.tryConsume(
-        statement,
-        CstNodeKind.ReferenceItem_Ref,
-        PreprocessorTokens.Id,
-      )
-    ) {
+    } else if (state.canConsume(PreprocessorTokens.Id)) {
       // type-3-do
       const doType3 = this.doType3(state);
       state.consume(
@@ -767,12 +761,14 @@ export class PliPreprocessorParser {
   private doType3(state: PreprocessorParserState): ast.DoType3 {
     const doType3 = ast.createDoType3();
 
-    // The ID token has already been consumed, so we need to create the ReferenceItem from the last token
-    const lastToken = state.last!;
+    // Consume the ID token to create the ReferenceItem
     const referenceItem = ast.createReferenceItem();
-    referenceItem.ref = ast.createReference(referenceItem, lastToken, true);
-    lastToken.kind = CstNodeKind.ReferenceItem_Ref;
-    lastToken.element = referenceItem;
+    const idToken = state.consume(
+      referenceItem,
+      CstNodeKind.ReferenceItem_Ref,
+      PreprocessorTokens.Id,
+    );
+    referenceItem.ref = ast.createReference(referenceItem, idToken, true);
     doType3.variable = referenceItem;
 
     // Consume the "=" token
