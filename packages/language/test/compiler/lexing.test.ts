@@ -13,9 +13,9 @@ import { describe, test } from "vitest";
 import { assertNoParseErrors, parse, parseStmts } from "../utils";
 
 describe("CompilerOptions parser", () => {
-  test("Should lex correct NOT without compiler option", () => {
+  test("Should lex correct NOT without compiler option", async () => {
     // Allow both ^ and ¬ as NOT operators by default
-    const doc = parseStmts(`
+    const doc = await parseStmts(`
   DECLARE VAR FIXED;
   VAR = ^VAR;
   VAR = ¬VAR;
@@ -27,8 +27,8 @@ describe("CompilerOptions parser", () => {
     assertNoParseErrors(doc);
   });
 
-  test("Should lex correct NOT compiler option", () => {
-    const doc = parse(`*PROCESS NOT("~");
+  test("Should lex correct NOT compiler option", async () => {
+    const doc = await parse(`*PROCESS NOT("~");
  MAIN: PROC;
    DECLARE VAR FIXED;
    VAR = ~VAR;
@@ -40,8 +40,8 @@ describe("CompilerOptions parser", () => {
     assertNoParseErrors(doc);
   });
 
-  test("Should lex correct OR without compiler option", () => {
-    const doc = parseStmts(`
+  test("Should lex correct OR without compiler option", async () => {
+    const doc = await parseStmts(`
   DECLARE VAR FIXED;
   VAR = 1 | 2;
   VAR |= 2;
@@ -51,8 +51,8 @@ describe("CompilerOptions parser", () => {
     assertNoParseErrors(doc);
   });
 
-  test("Should lex correct OR compiler option", () => {
-    const doc = parse(`*PROCESS OR('!');
+  test("Should lex correct OR compiler option", async () => {
+    const doc = await parse(`*PROCESS OR('!');
  MAIN: PROC;
    DECLARE VAR FIXED;
    VAR = 1 ! 2;
