@@ -774,19 +774,16 @@ export class PliPreprocessorParser {
     // Consume the "=" token
     state.consume(doType3, CstNodeKind.DoType3_Equals, PreprocessorTokens.Eq);
 
-    // Parse the first DoSpecification
-    doType3.specifications.push(this.doSpecification(state));
-
-    // Parse additional DoSpecifications separated by commas
-    while (
+    // Parse one or more DoSpecifications separated by commas using a do-while loop
+    do {
+      doType3.specifications.push(this.doSpecification(state));
+    } while (
       state.tryConsume(
         doType3,
         CstNodeKind.DoType3_Comma,
         PreprocessorTokens.Comma,
       )
-    ) {
-      doType3.specifications.push(this.doSpecification(state));
-    }
+    );
 
     return doType3;
   }
