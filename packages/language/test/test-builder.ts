@@ -16,7 +16,7 @@ import {
 } from "../src/workspace/compilation-unit";
 import { URI } from "vscode-uri";
 import { Diagnostic, Range, Severity } from "../src/language-server/types";
-import { parse, parseAndLink, replaceNamedIndices } from "./utils";
+import { parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
 import { completionRequest } from "../src/language-server/completion/completion-request";
@@ -38,6 +38,7 @@ import {
 } from "../src/workspace/plugin-configuration-provider";
 import { InternalCodes } from "../src/validation/messages";
 import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
+import { tokenize } from "../src/parser/tokenizer";
 
 export type Label = string | number | string[] | number[];
 
@@ -294,8 +295,9 @@ export class TestBuilder {
     if (Array.isArray(textOrTokens)) {
       expectedTokens = textOrTokens;
     } else {
-      const expectedUnit = parse(textOrTokens);
-      expectedTokens = expectedUnit.tokens.all.map((e) => e.image);
+      expectedTokens = tokenize(textOrTokens, undefined).tokens.map(
+        (e) => e.image,
+      );
     }
     expect(actualTokens).toEqual(expectedTokens);
   }

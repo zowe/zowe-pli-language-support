@@ -17,11 +17,12 @@ import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import * as lifecycle from "../../src/workspace/lifecycle";
 import { workspaceSymbolRequest } from "../../src/language-server/workspace-symbol-request";
 import { EditorDocuments } from "../../src/language-server/text-documents";
+import { CancellationToken } from "vscode-languageserver";
 
 const formatTestPLI = (code: string): string =>
   code.startsWith("\n") ? code.slice(1) : code;
 
-function expectWorkspaceSymbols(annotatedCode: string[]): void {
+async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
   const outputs: string[] = [];
   const allRanges: {
     fileIndex: number;
@@ -45,19 +46,21 @@ function expectWorkspaceSymbols(annotatedCode: string[]): void {
 
   const handler = new CompilationUnitHandler();
   textDocuments.forEach((doc) => EditorDocuments.set(doc));
-  outputs.map((output, i) => {
-    const unit = handler.createAndStoreCompilationUnit(
-      URI.file(`/test${i}.pli`),
-    );
+  await Promise.all(
+    outputs.map(async (output, i) => {
+      const unit = handler.createAndStoreCompilationUnit(
+        URI.file(`/test${i}.pli`),
+      );
 
-    if (!unit) {
-      // standalone library files do not synthesize new compilation units
+      if (!unit) {
+        // standalone library files do not synthesize new compilation units
+        return unit;
+      }
+
+      await lifecycle.lifecycle(unit, output, CancellationToken.None);
       return unit;
-    }
-
-    lifecycle.lifecycle(unit, output);
-    return unit;
-  });
+    }),
+  );
 
   const rangesWithSameName: Record<
     string,
@@ -106,7 +109,7 @@ function expectWorkspaceSymbols(annotatedCode: string[]): void {
 }
 
 describe("Workspace Symbol Request", () => {
-  test("should retrieve symbols for basic function and variable declarations", () => {
+  test("should retrieve symbols for basic function and variable declarations", async () => {
     const code0 = `
  <|IG:IGNO|>: PROCEDURE OPTIONS (MAIN);
    dcl <|A:A|> fixed bin(31);
@@ -120,6 +123,6 @@ describe("Workspace Symbol Request", () => {
    dcl PI constant(3.14159);
  END;`;
 
-    expectWorkspaceSymbols([code0, code1]);
+    await expectWorkspaceSymbols([code0, code1]);
   });
 });

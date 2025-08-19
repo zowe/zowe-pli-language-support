@@ -24,6 +24,7 @@ import { IntermediateBinaryExpression } from "../src/parser/abstract-parser";
 import { escapeRegExp, Token } from "../src/parser/tokens";
 import { referencesRequest } from "../src/language-server/references-request";
 import { completionRequest } from "../src/language-server/completion/completion-request";
+import { CancellationToken } from "vscode-languageserver";
 
 interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
@@ -109,10 +110,10 @@ export function assertDiagnostic(
  * @param text PL/I text to parse
  * @param options Options for parsing, chiefly to enable additional validation
  */
-export function parse(
+export async function parse(
   text: string,
   options?: { validate?: boolean; uri?: URI },
-): CompilationUnit {
+): Promise<CompilationUnit> {
   const sourceFile = createCompilationUnit(
     options?.uri ?? URI.file("test.pli"),
   );
@@ -120,7 +121,7 @@ export function parse(
     lifecycle.tokenize(sourceFile, text);
     lifecycle.parse(sourceFile);
   } else {
-    lifecycle.lifecycle(sourceFile, text);
+    await lifecycle.lifecycle(sourceFile, text, CancellationToken.None);
   }
   return sourceFile;
 }
@@ -132,7 +133,7 @@ export function parse(
 export function parseStmts(
   text: string,
   options?: { validate: boolean },
-): CompilationUnit {
+): Promise<CompilationUnit> {
   // TODO ssmifi: Currently, process directives must start at the beginning of the file.
   let prefix = "";
   while (text.startsWith("*PROCESS") || text.startsWith("%PROCESS")) {
