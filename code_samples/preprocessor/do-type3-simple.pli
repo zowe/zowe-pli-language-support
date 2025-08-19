@@ -1,12 +1,12 @@
-/* Simple DO Type 3 Examples */
-
-/* Generate a series of declarations */
-%DCL COUNT FIXED;
-%DO COUNT = 1 TO 3;
-  DCL VAR%;COUNT FIXED;
-%END;
-
-/* Use the generated declarations */
-VAR1 = 10;
-VAR2 = 20;
-VAR3 = 30;
+ /* Simple DO Type 3 Examples */
+ 
+ /* Generate a series of declarations */
+ %DCL COUNT FIXED;
+ %DO COUNT = 1 TO 3;
+   DCL VAR%;COUNT FIXED;
+ %END;
+ 
+ /* Use the generated declarations */
+ VAR1 = 10;
+ VAR2 = 20;
+ VAR3 = 30;

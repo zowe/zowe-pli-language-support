@@ -1,80 +1,80 @@
-/* DO Type 3 - Loop Control Variable Examples */
-
-/* Basic DO i = 1 TO 10 */
-%DCL I FIXED;
-%DO I = 1 TO 10;
-  PUT LIST('Iteration: ' || I);
-%END;
-
-/* DO with BY clause */
-%DCL J FIXED;
-%DO J = 2 TO 20 BY 2;
-  PUT LIST('Even number: ' || J);
-%END;
-
-/* DO with BY before TO */
-%DCL T FIXED;
-%DO T = 5 BY 5 TO 25;
-  PUT LIST('BY before TO: ' || T);
-%END;
-
-/* DO with multiple specifications */
-%DCL K FIXED;
-%DCL L FIXED;
-%DO K = 1 TO 5, L = 10 TO 50 BY 10;
-  PUT LIST('K=' || K || ', L=' || L);
-%END;
-
-/* DO with UPTHRU */
-%DCL M FIXED;
-%DO M = 1 UPTHRU 5;
-  PUT LIST('UPTHRU: ' || M);
-%END;
-
-/* DO with DOWNTHRU */
-%DCL N FIXED;
-%DO N = 10 DOWNTHRU 1;
-  PUT LIST('DOWNTHRU: ' || N);
-%END;
-
-/* DO with REPEAT */
-%DCL P FIXED;
-%DO P = 1 REPEAT 3;
-  PUT LIST('REPEAT: ' || P);
-%END;
-
-/* DO with WHILE condition */
-%DCL Q FIXED;
-%DO Q = 1 TO 10 WHILE(Q < 5);
-  PUT LIST('WHILE condition: ' || Q);
-%END;
-
-/* DO with UNTIL condition */
-%DCL R FIXED;
-%DO R = 1 TO 10 UNTIL(R >= 3);
-  PUT LIST('UNTIL condition: ' || R);
-%END;
-
-/* Complex DO with BY and WHILE */
-%DCL S FIXED;
-%DO S = 10 TO 100 BY 10 WHILE(S <= 50);
-  PUT LIST('Complex: ' || S);
-%END;
-
-/* DO with WHILE condition followed by UNTIL condition */
-%DCL COUNT FIXED;
-%DCL SUM FIXED;
-%SUM = 0;
-%DO COUNT = 1 TO 20 WHILE(COUNT <= 10) UNTIL(SUM > 25);
-  %SUM = SUM + COUNT;
-  PUT LIST('WHILE then UNTIL: COUNT=' || COUNT || ', SUM=' || SUM);
-%END;
-
-/* DO with UNTIL condition followed by WHILE condition */
-%DCL NUM FIXED;
-%DCL PRODUCT FIXED;
-%PRODUCT = 1;
-%DO NUM = 1 TO 15 UNTIL(PRODUCT > 50) WHILE(NUM <= 8);
-  %PRODUCT = PRODUCT * NUM;
-  PUT LIST('UNTIL then WHILE: NUM=' || NUM || ', PRODUCT=' || PRODUCT);
-%END;
+ /* DO Type 3 - Loop Control Variable Examples */
+ 
+ /* Basic DO i = 1 TO 10 */
+ %DCL I FIXED;
+ %DO I = 1 TO 10;
+   PUT LIST('Iteration: ' || I);
+ %END;
+ 
+ /* DO with BY clause */
+ %DCL J FIXED;
+ %DO J = 2 TO 20 BY 2;
+   PUT LIST('Even number: ' || J);
+ %END;
+ 
+ /* DO with BY before TO */
+ %DCL T FIXED;
+ %DO T = 5 BY 5 TO 25;
+   PUT LIST('BY before TO: ' || T);
+ %END;
+ 
+ /* DO with multiple specifications */
+ %DCL K FIXED;
+ %DCL L FIXED;
+ %DO K = 1 TO 5, L = 10 TO 50 BY 10;
+   PUT LIST('K=' || K || ', L=' || L);
+ %END;
+ 
+ /* DO with UPTHRU */
+ %DCL M FIXED;
+ %DO M = 1 UPTHRU 5;
+   PUT LIST('UPTHRU: ' || M);
+ %END;
+ 
+ /* DO with DOWNTHRU */
+ %DCL N FIXED;
+ %DO N = 10 DOWNTHRU 1;
+   PUT LIST('DOWNTHRU: ' || N);
+ %END;
+ 
+ /* DO with REPEAT */
+ %DCL P FIXED;
+ %DO P = 1 REPEAT 3;
+   PUT LIST('REPEAT: ' || P);
+ %END;
+ 
+ /* DO with WHILE condition */
+ %DCL Q FIXED;
+ %DO Q = 1 TO 10 WHILE(Q < 5);
+   PUT LIST('WHILE condition: ' || Q);
+ %END;
+ 
+ /* DO with UNTIL condition */
+ %DCL R FIXED;
+ %DO R = 1 TO 10 UNTIL(R >= 3);
+   PUT LIST('UNTIL condition: ' || R);
+ %END;
+ 
+ /* Complex DO with BY and WHILE */
+ %DCL S FIXED;
+ %DO S = 10 TO 100 BY 10 WHILE(S <= 50);
+   PUT LIST('Complex: ' || S);
+ %END;
+ 
+ /* DO with WHILE condition followed by UNTIL condition */
+ %DCL COUNT FIXED;
+ %DCL SUM FIXED;
+ %SUM = 0;
+ %DO COUNT = 1 TO 20 WHILE(COUNT <= 10) UNTIL(SUM > 25);
+   %SUM = SUM + COUNT;
+   PUT LIST('WHILE then UNTIL: COUNT=' || COUNT || ', SUM=' || SUM);
+ %END;
+ 
+ /* DO with UNTIL condition followed by WHILE condition */
+ %DCL NUM FIXED;
+ %DCL PRODUCT FIXED;
+ %PRODUCT = 1;
+ %DO NUM = 1 TO 15 UNTIL(PRODUCT > 50) WHILE(NUM <= 8);
+   %PRODUCT = PRODUCT * NUM;
+   PUT LIST('UNTIL then WHILE: NUM=' || NUM || ', PRODUCT=' || PRODUCT);
+ %END;
