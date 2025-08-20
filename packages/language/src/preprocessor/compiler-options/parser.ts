@@ -29,6 +29,7 @@ import {
 import { Token } from "../../parser/tokens";
 
 const commaToken = createToken({ name: "comma", pattern: "," });
+const semicolonToken = createToken({ name: "semicolon", pattern: ";" });
 const stringToken = createToken({
   name: "string",
   pattern: /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')/,
@@ -40,6 +41,7 @@ const ws = createToken({ name: "ws", pattern: /\s+/, group: Lexer.SKIPPED });
 const tokenTypes = [
   ws,
   commaToken,
+  semicolonToken,
   stringToken,
   parenOpen,
   parenClose,
@@ -261,10 +263,16 @@ export function parseAbstractCompilerOptions(
   input: string,
   offset?: number,
 ): AbstractCompilerOptions {
-  const lexerResult = lexer.tokenize(
-    " ".repeat(offset ?? 0) + input.replace(/;$/, ""),
+  // Remove everything after the first ;.
+  // *PROCESS MARGINS(2, 72) ; MARGINS(1, 72); is valid, but everything after the first ; is ignored.
+  const lexerResult = lexer.tokenize(" ".repeat(offset ?? 0) + input);
+  const semicolonTokenPosition = lexerResult.tokens.findIndex(
+    (token) => token.tokenTypeIdx === semicolonToken.tokenTypeIdx,
   );
-  const tokens = lexerResult.tokens as Token[];
+  const tokens = lexerResult.tokens.slice(
+    0,
+    semicolonTokenPosition === -1 ? undefined : semicolonTokenPosition,
+  ) as Token[];
   parser.input = tokens;
   const compilerOptions = parser.compilerOptions();
   const issues: CompilerOptionIssue[] = [];
