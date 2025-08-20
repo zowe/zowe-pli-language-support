@@ -16,7 +16,10 @@ importers:
         version: 18.19.113
       '@vitest/coverage-v8':
         specifier: ~3.2.4
-        version: 3.2.4(vitest@3.2.4(@types/node@18.19.113)(@vitest/ui@3.2.4)(tsx@4.20.4))
+        version: 3.2.4(vitest@3.2.4)
+      chevrotain:
+        specifier: ^11.0.3
+        version: 11.0.3
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -4104,7 +4107,7 @@ snapshots:
 
   '@types/vscode@1.67.0': {}
 
-  '@vitest/coverage-v8@3.2.4(vitest@3.2.4(@types/node@18.19.113)(@vitest/ui@3.2.4)(tsx@4.20.4))':
+  '@vitest/coverage-v8@3.2.4(vitest@3.2.4)':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 1.0.2
