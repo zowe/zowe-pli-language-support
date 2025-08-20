@@ -20,11 +20,9 @@
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.MutexOptionIssue.message("NOGRAPHIC"),
 });
-
 verify.expectDiagnosticsAt(2, {
   message: code.CompilerOptions.MutexOptionIssue.message("NGR"),
 });
-
 verify.expectDiagnosticsAt(3, {
   message: code.CompilerOptions.DupeOptionIssue.message("GR"),
 });
@@ -35,7 +33,6 @@ verify.noDiagnosticsExcept([
     code.CompilerOptions.MutexOptionIssue.message("").substring(0, 20),
   ),
 ]);
-
 verify.expectCompilerOptions({
   graphic: true,
 });
