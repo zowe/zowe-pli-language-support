@@ -70,7 +70,7 @@ export interface HarnessTesterInterface {
      * verify.noDiagnostics('i');
      * ```
      */
-    noDiagnostics(label?: string | number): void;
+    noDiagnostics(label?: Label): void;
 
     /**
      * Expect that the compilation unit has no diagnostics apart from the given regexes.

@@ -22,31 +22,26 @@
 ////*PROCESS <|7:GN|>(SEPARATE);
 
 verify.expectDiagnosticsAt(1, {
-  message: code.CompilerOptions.gonumber.WrongParameter.message("Nxx"),
+  message: code.CompilerOptions.GoNumber.InvalidParameter.message("Nxx"),
 });
 verify.expectDiagnosticsAt(2, {
-  message: code.CompilerOptions.WrongParameterCount.message("1", "0", "0"),
+  message: code.CompilerOptions.InvalidParameterCount.message(1, 0, 0),
 });
 verify.expectDiagnosticsAt(3, {
   message: code.CompilerOptions.DupeOptionIssue.message("GONUMBER"),
 });
-
 verify.expectDiagnosticsAt(4, {
   message: code.CompilerOptions.MutexOptionIssue.message("NOGONUMBER"),
 });
-
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.DupeOptionIssue.message("GN"),
 });
-
 verify.expectDiagnosticsAt(6, {
   message: code.CompilerOptions.MutexOptionIssue.message("NGN"),
 });
-
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.DupeOptionIssue.message("GN"),
 });
-
 verify.expectCompilerOptions({
   goNumber: {
     separate: true,
