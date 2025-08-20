@@ -635,6 +635,24 @@ export class PliPreprocessorParser {
         PreprocessorTokens.Semicolon,
       );
       return statement;
+    } else if (state.canConsume(PreprocessorTokens.Id)) {
+      // type-3-do
+      const doType3 = this.doType3(state);
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon0,
+        PreprocessorTokens.Semicolon,
+      );
+      const body = this.statements(state);
+      statement.doType3 = doType3;
+      statement.statements = body;
+      statement.end = this.endStatement(state);
+      state.consume(
+        statement,
+        CstNodeKind.DoStatement_Semicolon1,
+        PreprocessorTokens.Semicolon,
+      );
+      return statement;
     } else if (
       state.tryConsume(
         statement,
@@ -653,7 +671,6 @@ export class PliPreprocessorParser {
       );
       return statement;
     }
-    //TODO type-3-do
     throw new PreprocessorError(
       "Unexpected token '" + state.current?.image + "'.",
       state.current || state.last!,
@@ -739,6 +756,115 @@ export class PliPreprocessorParser {
       );
     }
     return statement;
+  }
+
+  private doType3(state: PreprocessorParserState): ast.DoType3 {
+    const doType3 = ast.createDoType3();
+
+    // Consume the ID token to create the ReferenceItem
+    const referenceItem = ast.createReferenceItem();
+    const idToken = state.consume(
+      referenceItem,
+      CstNodeKind.ReferenceItem_Ref,
+      PreprocessorTokens.Id,
+    );
+    referenceItem.ref = ast.createReference(referenceItem, idToken, true);
+    doType3.variable = referenceItem;
+
+    // Consume the "=" token
+    state.consume(doType3, CstNodeKind.DoType3_Equals, PreprocessorTokens.Eq);
+
+    // Parse one or more DoSpecifications separated by commas using a do-while loop
+    do {
+      doType3.specifications.push(this.doSpecification(state));
+    } while (
+      state.tryConsume(
+        doType3,
+        CstNodeKind.DoType3_Comma,
+        PreprocessorTokens.Comma,
+      )
+    );
+
+    return doType3;
+  }
+
+  private doSpecification(state: PreprocessorParserState): ast.DoSpecification {
+    const specification = ast.createDoSpecification();
+
+    // Parse the initial expression
+    specification.expression = this.expression(state);
+
+    // Check for optional clauses
+    if (
+      state.tryConsume(
+        specification,
+        CstNodeKind.DoSpecification_TO0,
+        PreprocessorTokens.To,
+      )
+    ) {
+      specification.to = this.expression(state);
+      // Optional BY clause after TO
+      if (
+        state.tryConsume(
+          specification,
+          CstNodeKind.DoSpecification_BY0,
+          PreprocessorTokens.By,
+        )
+      ) {
+        specification.by = this.expression(state);
+      }
+    } else if (
+      state.tryConsume(
+        specification,
+        CstNodeKind.DoSpecification_BY1,
+        PreprocessorTokens.By,
+      )
+    ) {
+      specification.by = this.expression(state);
+      // Optional TO clause after BY
+      if (
+        state.tryConsume(
+          specification,
+          CstNodeKind.DoSpecification_TO1,
+          PreprocessorTokens.To,
+        )
+      ) {
+        specification.to = this.expression(state);
+      }
+    } else if (
+      state.tryConsume(
+        specification,
+        CstNodeKind.DoSpecification_UPTHRU,
+        PreprocessorTokens.Upthru,
+      )
+    ) {
+      specification.upthru = this.expression(state);
+    } else if (
+      state.tryConsume(
+        specification,
+        CstNodeKind.DoSpecification_DOWNTHRU,
+        PreprocessorTokens.Downthru,
+      )
+    ) {
+      specification.downthru = this.expression(state);
+    } else if (
+      state.tryConsume(
+        specification,
+        CstNodeKind.DoSpecification_REPEAT,
+        PreprocessorTokens.Repeat,
+      )
+    ) {
+      specification.repeat = this.expression(state);
+    }
+
+    // Check for optional WHILE or UNTIL clause
+    if (state.canConsume(PreprocessorTokens.While)) {
+      specification.whileOrUntil = this.doWhile(state);
+    } else if (state.canConsume(PreprocessorTokens.Until)) {
+      specification.whileOrUntil = this.doUntil(state);
+    }
+
+    return specification;
   }
 
   private statements(state: PreprocessorParserState): ast.Statement[] {
