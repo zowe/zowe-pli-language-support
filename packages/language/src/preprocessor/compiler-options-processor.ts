@@ -44,7 +44,8 @@ export class CompilerOptionsProcessor {
     let sourceCompilerOptions: string[] = [];
     let newText = text;
     for (const range of ranges) {
-      // newText should recognize the line break for the margins in the first line after the process directive.
+      // newText should recognize the line break for the margins in the first line after the process directive,
+      // because removing the linebreaks could position the first line of the program outside the margins.
       const offset =
         range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH;
       sourceCompilerOptions.push(text.substring(offset, range.end));
@@ -144,7 +145,11 @@ export class CompilerOptionsProcessor {
     uri: URI,
   ): (Range & { token: Token })[] {
     const ranges: (Range & { token: Token })[] = [];
-    const processRegex = /([%*]PROCESS[^;\n]*[;\n])/iy;
+    // The PROCESS directive actually allows for further characters after the ;.
+    // *PROCESS MARGINS(2, 72) ; MARGINS(1, 72); is valid, but everything after the first ; is ignored.
+    // Just extract the complete line and let the parser decide what is valid.
+    // We still need the whole line to preserve original positions for diagnostics.
+    const processRegex = /([%*]PROCESS[^\n]*(?:(?:\r?\n)|$))/iy;
     let match: RegExpExecArray | null;
     let currentPosition = 0;
 
