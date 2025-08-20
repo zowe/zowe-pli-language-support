@@ -10,7 +10,7 @@
  */
 
 import { PliParserInstance } from '../packages/language/src/parser/parser';
-import { createSyntaxDiagramsCode } from '../packages/language/node_modules/chevrotain/lib/src/api.js';
+import { createSyntaxDiagramsCode } from 'chevrotain';
 import { writeFileSync } from 'fs';
 
 const gast = PliParserInstance.getSerializedGastProductions();
