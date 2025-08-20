@@ -29,6 +29,11 @@ const HARNESS_TAG_PREFIX = "//";
 export const HARNESS_FILE_PREFIX = "////";
 const REFERENCE_PATH_PREFIX = "/// <reference path=";
 const HARNESS_TAG_PATTERN = /^\/\/\s*@(?<name>\w+)\s*(?<value>:.*)?$/;
+const HARNESS_ESCAPE_CHARACTERS = [
+  ["\\n", "\n"],
+  ["\\r", "\r"],
+  ["\\t", "\t"],
+];
 
 type Context = {
   wrappers: Record<string, Wrapper>;
@@ -140,8 +145,11 @@ class HarnessTestParser {
 
       this.next();
 
-      // Remove the prefix
-      const content = line.substring(HARNESS_FILE_PREFIX.length);
+      // Remove the prefix and escape characters.
+      let content = line.substring(HARNESS_FILE_PREFIX.length);
+      for (const [escapeChar, replacement] of HARNESS_ESCAPE_CHARACTERS) {
+        content = content.replaceAll(escapeChar, replacement);
+      }
       lines.push(content);
     }
 
