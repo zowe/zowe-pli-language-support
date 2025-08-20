@@ -1209,6 +1209,7 @@ export interface DoStatement extends AstNode {
   doType3: DoType3 | null;
   doType4: boolean;
   skip: boolean;
+  doToken: Token | null;
 }
 export function createDoStatement(): DoStatement {
   return {
@@ -1220,6 +1221,7 @@ export function createDoStatement(): DoStatement {
     doType3: null,
     doType4: false,
     skip: false,
+    doToken: null,
   };
 }
 export interface DoType3 extends AstNode {

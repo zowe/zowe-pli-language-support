@@ -2751,11 +2751,11 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.DO, (token) => {
       this.tokenPayload(token, element, CstNodeKind.DoStatement_DO);
+      element.doToken = token;
     });
     this.OPTION1(() => {
       this.OR1([
         {
-          GATE: () => this.LA(2).tokenTypeIdx !== tokens.Equals.tokenTypeIdx,
           ALT: () => {
             this.SUBRULE_ASSIGN1(this.DoType2, {
               assign: (result) => {
@@ -2765,7 +2765,6 @@ export class PliParser extends AbstractParser {
           },
         },
         {
-          GATE: () => this.LA(2).tokenTypeIdx === tokens.Equals.tokenTypeIdx,
           ALT: () => {
             this.SUBRULE_ASSIGN1(this.DoType3, {
               assign: (result) => {
