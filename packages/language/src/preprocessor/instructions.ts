@@ -211,7 +211,8 @@ export interface DoType3SpecificationItem {
   upthru: ExpressionInstruction | null;
   downthru: ExpressionInstruction | null;
   repeat: ExpressionInstruction | null;
-  whileOrUntil: ExpressionInstruction | null;
+  while: ExpressionInstruction | null;
+  until: ExpressionInstruction | null;
   to: ExpressionInstruction | null;
   by: ExpressionInstruction | null;
 }

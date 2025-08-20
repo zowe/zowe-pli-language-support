@@ -278,7 +278,7 @@ function runInstructionNode(
   const instruction = node.instruction;
   let result = node.next;
   try {
-    const instructionResult = runInstruction(instruction, context);
+    const instructionResult = runInstruction(instruction, context, node);
     if (instructionResult) {
       result = instructionResult;
     }
@@ -302,6 +302,7 @@ function handleInstructionError(err: any, context: InterpreterContext): void {
 function runInstruction(
   instruction: inst.Instruction,
   context: InterpreterContext,
+  node?: inst.InstructionNode,
 ): inst.InstructionNode | undefined {
   switch (instruction.kind) {
     case inst.InstructionKind.Assignment:
@@ -318,7 +319,7 @@ function runInstruction(
     case inst.InstructionKind.If:
       return runIfInstruction(instruction, context);
     case inst.InstructionKind.Do:
-      return runDoInstruction(instruction, context);
+      return runDoInstruction(instruction, context, node);
     case inst.InstructionKind.Include:
       runIncludeInstruction(instruction, context);
       break;
@@ -356,38 +357,200 @@ function runHaltInstruction(
 function runDoInstruction(
   instruction: inst.DoInstruction,
   context: InterpreterContext,
+  node?: inst.InstructionNode,
 ): inst.InstructionNode | undefined {
   let condition = true;
   if (instruction.doType2) {
-    const type2 = instruction.doType2;
-    if (type2.until) {
-      const untilConditionValue = evaluateExpression(type2.until, context);
-      if (!isScalarValue(untilConditionValue)) {
-        // Condition cannot be evaluated, don't run the instruction
-        condition = false;
-      } else {
-        // If UNTIL is specified, we don't run the instruction if it evaluates to true
-        condition &&= !valueToBool(untilConditionValue);
-      }
+    condition = runDoType2Instruction(instruction.doType2, context);
+  } else if (instruction.doType3) {
+    if (!node) {
+      throw new Error(
+        "DoType3 instruction requires a node for iteration tracking",
+      );
     }
-    if (type2.while) {
-      const whileConditionValue = evaluateExpression(type2.while, context);
-      if (!isScalarValue(whileConditionValue)) {
-        // Condition cannot be evaluated, don't run the instruction
-        condition = false;
-      } else {
-        // If WHILE is specified, we only run the instruction if it evaluates to true
-        condition &&= valueToBool(whileConditionValue);
-      }
-    }
-  }
-  if (instruction.doType3) {
-    throw new Error("DoType3 instructions are not implemented yet!");
+    condition = runDoType3Instruction(instruction.doType3, context, node);
   }
   if (condition) {
     return instruction.content;
   }
   return undefined;
+}
+
+function runDoType2Instruction(
+  doType2: inst.DoType2Instruction,
+  context: InterpreterContext,
+): boolean {
+  let condition = true;
+  if (doType2.until) {
+    const untilConditionValue = evaluateExpression(doType2.until, context);
+    if (!isScalarValue(untilConditionValue)) {
+      // Condition cannot be evaluated, don't run the instruction
+      condition = false;
+    } else {
+      // If UNTIL is specified, we don't run the instruction if it evaluates to true
+      condition &&= !valueToBool(untilConditionValue);
+    }
+  }
+  if (doType2.while) {
+    const whileConditionValue = evaluateExpression(doType2.while, context);
+    if (!isScalarValue(whileConditionValue)) {
+      // Condition cannot be evaluated, don't run the instruction
+      condition = false;
+    } else {
+      // If WHILE is specified, we only run the instruction if it evaluates to true
+      condition &&= valueToBool(whileConditionValue);
+    }
+  }
+  return condition;
+}
+
+function runDoType3Instruction(
+  doType3: inst.DoType3Instruction,
+  context: InterpreterContext,
+  node: inst.InstructionNode,
+): boolean {
+  let condition = true;
+  const { specificationItems, variable } = doType3;
+
+  if (specificationItems.length === 0) {
+    throw new Error("DoType3 requires at least one specification item!");
+  }
+
+  // TODO(@@dd) --> handle more than one do-type3 spec
+  if (specificationItems.length > 1) {
+    throw new Error("Multiple DoType3 specifications not implemented yet!");
+  }
+  const spec = doType3.specificationItems[0];
+  // <- TODO(@@dd)
+
+  if (!spec.expression) {
+    throw new Error("DoType3 requires initial value!");
+  }
+
+  const iterationCount = context.counter.get(node);
+  if (iterationCount === undefined || iterationCount < 1) {
+    throw new Error("Interpreter can't determine AST node iteration count");
+  }
+  const isFirstIteration = iterationCount === 1;
+
+  const varName = variable.variable;
+  let loopVar = context.variables.get(varName);
+
+  if (isFirstIteration) {
+    // First iteration - create the loop variable and initialize it
+    const start = evaluateExpression(spec.expression, context);
+    if (!isScalarValue(start)) {
+      throw new Error("DoType3 initial value must be scalar!");
+    }
+
+    if (!loopVar) {
+      loopVar = {
+        name: varName,
+        declarationNode: variable.reference?.owner,
+        value: {
+          value: start.value,
+          type: inst.DeclaredType.Fixed,
+        },
+        active: true,
+        mode: inst.ScanMode.Scan,
+      };
+      context.variables.set(varName, loopVar);
+    } else {
+      // Variable exists, just set the initial value
+      loopVar.value = {
+        value: start.value,
+        type: inst.DeclaredType.Fixed,
+      };
+    }
+  } else {
+    // Subsequent iterations - update the loop variable
+    if (!loopVar) {
+      throw new Error(
+        "DoType3 loop variable not found on subsequent iteration!",
+      );
+    }
+
+    // Until is evaluated after each repetition of the loop body
+    if (spec.until) {
+      const untilCondition = evaluateExpression(spec.until, context);
+      if (!isScalarValue(untilCondition)) {
+        throw new Error("DoType3 condition must be scalar!");
+      }
+      condition &&= !valueToBool(untilCondition);
+    }
+
+    // Update the variable based on the loop type
+    if (spec.repeat) {
+      // The REPEAT expression is assigned to the loop variable on each loop iteration
+      const repeatValue = evaluateExpression(spec.repeat, context);
+      if (!isScalarValue(repeatValue)) {
+        throw new Error("DoType3 repeat value must be scalar!");
+      }
+      loopVar.value = {
+        value: repeatValue.value,
+        type: inst.DeclaredType.Fixed,
+      };
+    } else {
+      // TO, UPTHRU, or DOWNTHRU clause
+      let endValue;
+      let stepValue;
+
+      if (spec.to) {
+        endValue = evaluateExpression(spec.to, context);
+        if (spec.by) {
+          stepValue = evaluateExpression(spec.by, context);
+        } else {
+          stepValue = valueToNumber("1");
+        }
+      } else if (spec.upthru) {
+        endValue = evaluateExpression(spec.upthru, context);
+        stepValue = valueToNumber("1");
+      } else if (spec.downthru) {
+        endValue = evaluateExpression(spec.downthru, context);
+        stepValue = valueToNumber("-1");
+      } else {
+        throw new Error(
+          "DoType3 requires a TO, UPTHRU, DOWNTHRU or REPEAT clause!",
+        );
+      }
+
+      if (!isScalarValue(endValue)) {
+        throw new Error("DoType3 end value must be scalar!");
+      }
+      if (!isScalarValue(stepValue)) {
+        throw new Error("DoType3 step value must be scalar!");
+      }
+
+      const end = parseInt(endValue.value);
+      const step = parseInt(stepValue.value);
+
+      if (!isScalarValue(loopVar.value)) {
+        throw new Error("DoType3 loop variable must be scalar!");
+      }
+
+      let currentValue = parseInt(loopVar.value.value);
+      currentValue = currentValue + step;
+      loopVar.value = {
+        value: currentValue.toString(),
+        type: inst.DeclaredType.Fixed,
+      };
+
+      // Check if we should continue the loop
+      condition &&=
+        (step > 0 && currentValue <= end) || (step < 0 && currentValue >= end);
+    }
+  }
+
+  // While is evaluated before each repetition of the loop body
+  if (spec.while) {
+    const whileCondition = evaluateExpression(spec.while, context);
+    if (!isScalarValue(whileCondition)) {
+      throw new Error("DoType3 condition must be scalar!");
+    }
+    condition &&= valueToBool(whileCondition);
+  }
+
+  return condition;
 }
 
 function runAssignmentInstruction(

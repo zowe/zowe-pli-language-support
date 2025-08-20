@@ -391,6 +391,31 @@ function generateDoInstruction(
       while: whileCond,
     };
   }
+  if (node.doType3) {
+    const variable = generateReferenceItemInstruction(node.doType3.variable!);
+    const specificationItems: inst.DoType3SpecificationItem[] = [];
+    for (const spec of node.doType3.specifications) {
+      const specItem: inst.DoType3SpecificationItem = {
+        expression: generateExpressionInstruction(spec.expression) ?? null,
+        upthru: generateExpressionInstruction(spec.upthru) ?? null,
+        downthru: generateExpressionInstruction(spec.downthru) ?? null,
+        repeat: generateExpressionInstruction(spec.repeat) ?? null,
+        while: spec.whileOrUntil?.while
+          ? (generateExpressionInstruction(spec.whileOrUntil.while) ?? null)
+          : null,
+        until: spec.whileOrUntil?.until
+          ? (generateExpressionInstruction(spec.whileOrUntil.until) ?? null)
+          : null,
+        to: generateExpressionInstruction(spec.to) ?? null,
+        by: generateExpressionInstruction(spec.by) ?? null,
+      };
+      specificationItems.push(specItem);
+    }
+    doInstruction.doType3 = {
+      variable,
+      specificationItems,
+    };
+  }
   if (node.doType2 || node.doType3 || node.doType4) {
     doType1 = false;
   }
