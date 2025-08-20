@@ -23,19 +23,15 @@
 verify.expectDiagnosticsAt([1, 2, 3], {
   message: code.CompilerOptions.DupeOptionIssue.message("HEADER"),
 });
-
 verify.expectDiagnosticsAt(4, {
-  message: code.CompilerOptions.header.WrongParameter.message("INVALID"),
+  message: code.CompilerOptions.Header.InvalidParameter.message("INVALID"),
 });
-
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.header.WrongParameter.message(""),
+  message: code.CompilerOptions.Header.InvalidParameter.message(""),
 });
-
 verify.expectDiagnosticsAt(6, {
-  message: code.CompilerOptions.WrongParameterCount.message("0", "1", "1"),
+  message: code.CompilerOptions.InvalidParameterCount.message(0, 1, 1),
 });
-
 verify.expectCompilerOptions({
   header: "SOURCE",
 });
