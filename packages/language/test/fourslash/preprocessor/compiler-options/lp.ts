@@ -12,23 +12,23 @@
 /// <reference path="../../framework.ts" />
 
 // @wrap: process
-////*PROCESS NOIGNORE;
-////*PROCESS IGNORE();
-////*PROCESS IGNORE(<|1:INVALID|>);
-////*PROCESS IGNORE(ASSERT, DISPLAY, <|2:INVALID|>);
-////*PROCESS <|3:IGNORE|>(ASSERT, PUT);
+////*PROCESS <|1:LP|>;
+////*PROCESS <|2:LP|>(<|3:)|>;
+////*PROCESS <|4:LP|>(<|5:INVALID|>);
+////*PROCESS <|6:LP|>(<32);
 
 verify.expectDiagnosticsAt(1, {
-  message: code.CompilerOptions.Ignore.InvalidParameter.message("INVALID"),
-});
-verify.expectDiagnosticsAt(2, {
-  message: code.CompilerOptions.Ignore.InvalidParameter.message("INVALID"),
+  message: code.CompilerOptions.InvalidParameterCount.message(0, 1, 1),
 });
 verify.expectDiagnosticsAt(3, {
-  message: code.CompilerOptions.MutexOptionIssue.message("IGNORE"),
+  message: code.CompilerOptions.Lp.InvalidParameter.message(""),
+});
+verify.expectDiagnosticsAt(5, {
+  message: code.CompilerOptions.Lp.InvalidParameter.message("INVALID"),
+});
+verify.expectDiagnosticsAt([2, 4, 6], {
+  message: code.CompilerOptions.DupeOptionIssue.message("LP"),
 });
 verify.expectCompilerOptions({
-  ignore: {
-    items: ["ASSERT", "PUT"],
-  },
+  LP: "32",
 });
