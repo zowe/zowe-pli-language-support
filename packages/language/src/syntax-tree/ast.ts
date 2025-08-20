@@ -1505,6 +1505,7 @@ export interface IncludeItem extends AstNode {
   ddname: string | null;
   filePath: string | null;
   token: Token | null;
+  sourceText: string | null;
 }
 export function createIncludeItem(): IncludeItem {
   return {
@@ -1515,6 +1516,7 @@ export function createIncludeItem(): IncludeItem {
     ddname: null,
     filePath: null,
     token: null,
+    sourceText: null,
   };
 }
 export interface InscanDirective extends AstNode {

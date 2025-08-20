@@ -10,12 +10,13 @@
  */
 
 import { MarkupKind } from "vscode-languageserver";
+import { SemanticTokenTypes } from "vscode-languageserver-types";
+import { URI } from "vscode-uri";
+import { formatPliCodeBlock } from "../../../src/utils/code-block";
 import { TestBuilder } from "../../test-builder";
 import { HarnessTesterInterface } from "../harness-interface";
 import { HarnessCodes } from "./codes";
 import { HarnessConstants } from "./constants";
-import { formatPliCodeBlock } from "../../../src/utils/code-block";
-import { SemanticTokenTypes } from "vscode-languageserver-types";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -59,6 +60,12 @@ export function createTestBuilderHarnessImplementation(
         testBuilder.expectCompletions(label.toString(), content),
     },
     hover: {
+      expectIncludeAt(label, filePath, markdown) {
+        testBuilder.expectHover(label.toString(), {
+          kind: MarkupKind.Markdown,
+          value: `%INCLUDE "${URI.parse(filePath).fsPath}"\n\n---\n${markdown}`,
+        });
+      },
       expectMarkdownAt: (label, markdown) =>
         testBuilder.expectHover(label.toString(), {
           kind: MarkupKind.Markdown,

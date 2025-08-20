@@ -11,6 +11,7 @@
 
 import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
+import { getAttributes } from "./util";
 
 interface GenerateInstructionContext {
   labels: Map<string, inst.InstructionNode>;
@@ -232,21 +233,6 @@ function getAllDeclarations(
     }
   }
   return declarations;
-}
-
-function getAttributes(item: ast.DeclaredVariable): string[] {
-  const attributes: string[] = [];
-  let container = item.container;
-  while (container?.kind === ast.SyntaxKind.DeclaredItem) {
-    const itemAttributes = container.attributes;
-    for (const attr of itemAttributes) {
-      if (attr.kind === ast.SyntaxKind.ComputationDataAttribute && attr.type) {
-        attributes.push(attr.type.toUpperCase());
-      }
-    }
-    container = container.container;
-  }
-  return attributes;
 }
 
 function getDimensions(
