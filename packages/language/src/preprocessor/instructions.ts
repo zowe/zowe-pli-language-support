@@ -104,8 +104,16 @@ export type Instruction =
   | DeactivateInstruction
   | DeclareInstruction;
 
+export interface ProcedureInstructionContainer {
+  names: string[];
+  parameters: string[];
+  localProcedures: Map<string, ProcedureInstructionContainer>;
+  node: InstructionNode;
+}
+
 export interface HaltInstruction {
   kind: InstructionKind.Halt;
+  value?: ExpressionInstruction;
 }
 
 export const Halt: HaltInstruction = {

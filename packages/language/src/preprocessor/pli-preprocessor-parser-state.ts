@@ -18,7 +18,10 @@ import { URI } from "../utils/uri";
 import { Token } from "../parser/tokens";
 import { tokenize } from "../parser/tokenizer";
 
-type ParserLocation = "in-statement" | "in-procedure";
+export enum ParserLocation {
+  Statement,
+  Procedure,
+}
 
 export interface PreprocessorParserState {
   index: number;
@@ -58,8 +61,6 @@ export interface PreprocessorParserState {
   isOnlyInStatement(): boolean;
   isInProcedure(): boolean;
   lookahead(la: number): Token | undefined;
-  addInclude(uri: URI): void;
-  hasInclude(uri: URI): boolean;
 }
 
 const nl = "\n".charCodeAt(0);
@@ -70,7 +71,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   public uri: URI;
   private text: string;
   private location: ParserLocation[] = [];
-  private includes: Set<string> = new Set();
+  private inProcedure: boolean = false;
 
   constructor(text: string, uri: URI) {
     this.text = text;
@@ -120,6 +121,9 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   }
   push(location: ParserLocation): void {
     this.location.push(location);
+    if (location === ParserLocation.Procedure) {
+      this.inProcedure = true;
+    }
   }
   top(): ParserLocation | undefined {
     if (this.location.length > 0) {
@@ -129,6 +133,9 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   }
   pop(): void {
     this.location.pop();
+    this.inProcedure = this.location.some(
+      (l) => l === ParserLocation.Procedure,
+    );
   }
 
   get current() {
@@ -164,14 +171,11 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   }
 
   isOnlyInStatement() {
-    return (
-      this.location.length === 0 ||
-      this.location.every((l) => l === "in-statement")
-    );
+    return !this.inProcedure;
   }
 
   isInProcedure() {
-    return this.location.some((l) => l === "in-procedure");
+    return this.inProcedure;
   }
 
   tryConsume(
@@ -211,7 +215,11 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   }
 
   canConsumeKeyword(...tokenTypes: TokenType[]): boolean {
-    if (!this.isInProcedure()) {
+    // Always add percentage sign for the end keyword, even if in a procedure
+    if (
+      !this.isInProcedure() ||
+      tokenTypes[0].tokenTypeIdx === PreprocessorTokens.End.tokenTypeIdx
+    ) {
       tokenTypes = [PreprocessorTokens.Percentage, ...tokenTypes];
     }
     return this.canConsume(...tokenTypes);
@@ -228,6 +236,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       if (!this.canConsume(PreprocessorTokens.Percentage)) {
         return false;
       }
+      // Increment, so the next canConsume operates on the actual requested token type
       this.index++;
     }
     if (!this.canConsume(tokenType)) {
@@ -259,13 +268,5 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       );
     }
     return this.consume(element, kind, tokenType);
-  }
-
-  addInclude(uri: URI): void {
-    this.includes.add(uri.toString());
-  }
-
-  hasInclude(uri: URI): boolean {
-    return this.includes.has(uri.toString());
   }
 }

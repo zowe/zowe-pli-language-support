@@ -19,7 +19,10 @@ import {
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { CompilerOptionResult } from "./compiler-options/options";
-import { generateInstructions } from "./instruction-generator";
+import {
+  generateInstructions,
+  InstructionGeneratorResult,
+} from "./instruction-generator";
 import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
 import { LexingIssue } from "./pli-lexer";
@@ -165,16 +168,26 @@ interface InterpreterContext {
   unit: CompilationUnit;
   currentUri?: URI;
   entryUri?: URI;
+  /**
+   * These are global variables that are defined on the root level of the preprocessor
+   */
   variables: Map<string, Variable>;
+  /**
+   * Local variables only exist within the scope of a procedure. Set to `undefined` when not in a procedure.
+   */
+  localVariables?: Map<string, Variable>;
   statements: ast.Statement[];
   result: CompilationUnitTokens;
   errors: LexingIssue[];
+  procedures: Map<string, inst.ProcedureInstructionContainer>;
+  activeProcedures: Set<string>;
   counter: Map<inst.InstructionNode, number>;
   references: ast.Reference[];
   evaluations: EvaluationResults;
   xIncludes: Set<string>;
   uris: string[];
   options: InterpreterOptions;
+  returnValue: Value;
 }
 
 export type InstructionInterpreterResult = CompilationUnitTokens & {
@@ -195,7 +208,7 @@ export interface InterpreterOptions {
 export function runInstructions(
   unit: CompilationUnit,
   uri: URI,
-  start: inst.InstructionNode,
+  instruction: InstructionGeneratorResult,
   options: InterpreterOptions,
 ): InstructionInterpreterResult {
   const context: InterpreterContext = {
@@ -207,6 +220,8 @@ export function runInstructions(
     statements: [],
     xIncludes: new Set(),
     variables: new Map(),
+    procedures: new Map(),
+    activeProcedures: new Set(),
     references: [],
     evaluations: {
       ifStatements: new Map(),
@@ -217,9 +232,13 @@ export function runInstructions(
     },
     options,
     counter: new Map(),
+    returnValue: defaultEmptyValue,
   };
+  for (const [key, value] of instruction.procedures.entries()) {
+    context.procedures.set(key, value);
+  }
 
-  const tokenResult = doRunInstructions(context, start);
+  const tokenResult = doRunInstructions(context, instruction.entryNode);
   return {
     ...tokenResult,
     evaluationResults: context.evaluations,
@@ -256,15 +275,15 @@ function runInstructionNode(
   const instruction = node.instruction;
   let result = node.next;
   try {
-    if (node.instruction.kind === inst.InstructionKind.Halt) {
-      return undefined; // Stop execution
-    }
     const instructionResult = runInstruction(instruction, context);
     if (instructionResult) {
       result = instructionResult;
     }
   } catch (err) {
     handleInstructionError(err, context);
+  }
+  if (node.instruction.kind === inst.InstructionKind.Halt) {
+    return undefined; // Stop execution
   }
   return result;
 }
@@ -312,8 +331,23 @@ function runInstruction(
     case inst.InstructionKind.Deactivate:
       runDeactivateInstruction(instruction, context);
       break;
+    case inst.InstructionKind.Halt:
+      runHaltInstruction(instruction, context);
+      break;
   }
   return undefined;
+}
+
+function runHaltInstruction(
+  instruction: inst.HaltInstruction,
+  context: InterpreterContext,
+): void {
+  // Every return statement in a procedure generates a halt statement with a `value`
+  // Simply evaluate it and set it as the return value of the current context
+  if (instruction.value) {
+    const value = evaluateExpression(instruction.value, context);
+    context.returnValue = value;
+  }
 }
 
 function runDoInstruction(
@@ -359,7 +393,9 @@ function runAssignmentInstruction(
 ): void {
   const value = evaluateExpression(instruction.value, context);
   for (const ref of instruction.refs) {
-    let variable = context.variables.get(ref.variable);
+    let variable =
+      context.localVariables?.get(ref.variable) ??
+      context.variables.get(ref.variable);
     if (!variable) {
       if (ref.args.length > 0) {
         // This seems to write into an undeclared array variable
@@ -374,7 +410,7 @@ function runAssignmentInstruction(
         active: false, // Implicitly declared variables are inactive by default
         mode: inst.ScanMode.Scan,
       };
-      context.variables.set(ref.variable, variable);
+      (context.localVariables ?? context.variables).set(ref.variable, variable);
     } else {
       evaluateValueAccess(variable, ref.args, context).setter(value);
     }
@@ -548,9 +584,15 @@ function evaluateReferenceExpression(
   expression: inst.ReferenceItemInstruction,
   context: InterpreterContext,
 ): Value {
-  const variable = context.variables.get(expression.variable);
+  const variable =
+    context.localVariables?.get(expression.variable) ||
+    context.variables.get(expression.variable);
   if (!variable) {
-    return defaultEmptyValue;
+    const procedure = context.procedures.get(expression.variable);
+    if (!procedure) {
+      return defaultEmptyValue;
+    }
+    return evaluateProcedure(procedure, expression.args, context);
   }
   return evaluateValueAccess(variable, expression.args, context).getter();
 }
@@ -631,6 +673,53 @@ function evaluateValueAccess(
   }
 }
 
+function evaluateProcedure(
+  procedure: inst.ProcedureInstructionContainer,
+  args: inst.ExpressionInstruction[],
+  context: InterpreterContext,
+): Value {
+  const procArgs = args.map((e) => evaluateExpression(e, context));
+  const localContext = createLocalContext(context);
+  return runProcedure(procedure, procArgs, localContext);
+}
+
+function createLocalContext(context: InterpreterContext): InterpreterContext {
+  return {
+    ...context,
+    localVariables: new Map(),
+  };
+}
+
+function runProcedure(
+  procedure: inst.ProcedureInstructionContainer,
+  args: Value[],
+  context: InterpreterContext,
+): Value {
+  if (!context.localVariables) {
+    throw new Error("Local variables map is not initialized!");
+  }
+  if (args.length !== procedure.parameters.length) {
+    // The type system should report this error
+    return defaultEmptyValue;
+  }
+  for (let i = 0; i < procedure.parameters.length; i++) {
+    const param = procedure.parameters[i];
+    const arg = args[i];
+    const variable: Variable = {
+      name: param,
+      value: arg,
+      active: false,
+      mode: inst.ScanMode.NoScan,
+      declarationNode: null,
+    };
+    context.localVariables.set(param, variable);
+  }
+  doRunInstructions(context, procedure.node);
+  const returnValue = context.returnValue;
+  context.returnValue = defaultEmptyValue;
+  return returnValue;
+}
+
 function evaluateLiteralExpression(
   expression: inst.NumberInstruction | inst.StringInstruction,
   context: InterpreterContext,
@@ -682,21 +771,34 @@ function runDeclareInstruction(
   instruction: inst.DeclareInstruction,
   context: InterpreterContext,
 ): void {
-  const variable = generateVariable(instruction, context);
-  context.variables.set(variable.name, variable);
+  // If a declaration like `DCL PROC_NAME ENTRY` appears, simply activate the procedure
+  if (context.procedures.has(instruction.name)) {
+    context.activeProcedures.add(instruction.name);
+    return;
+  }
+  // If the local variables are defined, that means we are in a procedure
+  const variables = context.localVariables ?? context.variables;
+  // Don't override existing variables
+  if (!variables.has(instruction.name)) {
+    const variable = generateVariable(instruction, context);
+    variables.set(variable.name, variable);
+  }
 }
 
 function runActivateInstruction(
   instruction: inst.ActivateInstruction,
   context: InterpreterContext,
 ): void {
-  const variable = context.variables.get(instruction.variable.variable);
+  const name = instruction.variable.variable;
+  const variable = context.variables.get(name);
   if (variable) {
     if (instruction.scanMode !== undefined) {
       variable.mode = instruction.scanMode;
     }
     // TODO: Report IBM3530I if the variable is an array
     variable.active = true;
+  } else if (context.procedures.has(name)) {
+    context.activeProcedures.add(name);
   }
 }
 
@@ -704,7 +806,9 @@ function runDeactivateInstruction(
   instruction: inst.DeactivateInstruction,
   context: InterpreterContext,
 ): void {
-  const variable = context.variables.get(instruction.variable.variable);
+  const name = instruction.variable.variable;
+  const variable = context.variables.get(name);
+  context.activeProcedures.delete(name);
   if (variable) {
     variable.active = false;
   }
@@ -931,23 +1035,26 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
         uri,
       );
       const subProgram = context.options.parser.parse(subState);
-      const instruction = generateInstructions(subProgram.statements);
+      const result = generateInstructions(subProgram.statements);
       return {
         tokens: subProgram.tokens,
         issues: subProgram.errors,
         statements: subProgram.statements,
-        node: instruction,
+        result,
       };
     });
     context.statements.push(...cachedResult.statements);
     context.result.fileTokens.set(uri.toString(), cachedResult.tokens);
     context.errors.push(...cachedResult.issues);
+    for (const [key, value] of Object.entries(cachedResult.result.procedures)) {
+      context.procedures.set(key, value);
+    }
     const newContext: InterpreterContext = {
       ...context,
       currentUri: uri,
       uris: [uri.toString(), ...context.uris],
     };
-    doRunInstructions(newContext, cachedResult.node);
+    doRunInstructions(newContext, cachedResult.result.entryNode);
   } catch (err) {
     failToResolve(err);
   }
