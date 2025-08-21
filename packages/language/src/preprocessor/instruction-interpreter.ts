@@ -219,6 +219,7 @@ interface InterpreterContext {
   uris: string[];
   options: InterpreterOptions;
   returnValue: Value;
+  counterValue: number;
 }
 
 interface DoType3Context {
@@ -269,6 +270,7 @@ export function runInstructions(
     counter: new Map(),
     doType3: new Map(),
     returnValue: defaultEmptyValue,
+    counterValue: 1,
   };
   for (const [key, value] of instruction.procedures.entries()) {
     context.procedures.set(key, value);
@@ -814,13 +816,28 @@ function evaluateReferenceExpression(
 ): Value {
   const variable = getVariable(context, expression.variable);
   if (!variable) {
+    // Get user declared procedures
     const procedure = context.procedures.get(expression.variable);
     if (!procedure) {
+      // It might still be a builtin procedure
+      const builtin = builtinImplementations.get(expression.variable);
+      if (builtin) {
+        return evaluateBuiltin(builtin, expression.args, context);
+      }
       return defaultEmptyValue;
     }
     return evaluateProcedure(procedure, expression.args, context);
   }
   return evaluateValueAccess(variable, expression.args, context).getter();
+}
+
+function evaluateBuiltin(
+  builtin: PreprocessorBuiltin,
+  args: inst.ExpressionInstruction[],
+  context: InterpreterContext,
+): Value {
+  const evaluatedArgs = args.map((e) => evaluateExpression(e, context));
+  return builtin(context, evaluatedArgs);
 }
 
 interface ValueAccess {
@@ -1384,3 +1401,95 @@ function resolveIncludeFileUri(
     return undefined;
   }
 }
+
+type PreprocessorBuiltin = (
+  context: InterpreterContext,
+  args: Value[],
+) => Value;
+const emptyBuiltin: PreprocessorBuiltin = () => defaultEmptyValue;
+
+const builtinImplementations = new Map<string, PreprocessorBuiltin>();
+
+let collate = "";
+for (let i = 0; i < 256; i++) {
+  collate += String.fromCharCode(i);
+}
+
+builtinImplementations.set("COLLATE", () => valueToString(collate));
+const commentRegex = /\/\*|\*\//g;
+builtinImplementations.set("COMMENT", (context, args) => {
+  const text = args[0];
+  if (!text || !isScalarValue(text)) {
+    return defaultEmptyValue;
+  }
+  // /* inside of comments should be replaced with />
+  // */ inside of comments should be replaced with </
+  const replacedText = text.value.replace(commentRegex, (match) =>
+    match.charAt(0) === "/" ? "/>" : "</",
+  );
+  // The final comment should be surrounded by comment markers
+  return valueToString(`/*${replacedText}*/`);
+});
+// Simply use UNIX epoch time
+// PLI expects no delimiters between the values
+const compiledDate = ["1970", "01", "01", "00", "00", "00", "000"].join("");
+builtinImplementations.set("COMPILEDDATE", () => valueToString(compiledDate));
+// From the reference: A leading zero in the day of the month field is replaced by a blank; no other leading zeros are suppressed.
+const compileTime = " 1.JAN.70 00.00.00";
+builtinImplementations.set("COMPILETIME", () => valueToString(compileTime));
+builtinImplementations.set("COPY", (_, args) => {
+  if (args.length < 2) {
+    return defaultEmptyValue;
+  }
+  const [value, repetitions] = args;
+  if (!isScalarValue(value) || !isScalarValue(repetitions)) {
+    return defaultEmptyValue;
+  }
+  const repeatCount = parseInt(repetitions.value, 10);
+  if (repeatCount === 0) {
+    return defaultEmptyValue;
+  }
+  const repeatedText = value.value.repeat(repeatCount);
+  return valueToString(repeatedText);
+});
+const maxCountVariable = 99999;
+builtinImplementations.set("COUNTER", (context) => {
+  const counterValue = context.counterValue++;
+  if (counterValue >= maxCountVariable) {
+    // Reset the counter
+    context.counterValue = 1;
+  }
+  // Pad with leading zeroes
+  // The counter value should be a 5-digit string
+  const stringValue = counterValue.toString().padStart(5, "0");
+  return valueToString(stringValue);
+});
+builtinImplementations.set("DIMENSION", emptyBuiltin);
+builtinImplementations.set("HBOUND", emptyBuiltin);
+builtinImplementations.set("INDEX", emptyBuiltin);
+builtinImplementations.set("LBOUND", emptyBuiltin);
+builtinImplementations.set("LENGTH", emptyBuiltin);
+builtinImplementations.set("LOWERCASE", emptyBuiltin);
+builtinImplementations.set("MACCOL", emptyBuiltin);
+builtinImplementations.set("MACLMAR", emptyBuiltin);
+builtinImplementations.set("MACNAME", emptyBuiltin);
+builtinImplementations.set("MACRMAR", emptyBuiltin);
+builtinImplementations.set("MAX", emptyBuiltin);
+builtinImplementations.set("MIN", emptyBuiltin);
+builtinImplementations.set("PARMSET", emptyBuiltin);
+builtinImplementations.set("QUOTE", emptyBuiltin);
+builtinImplementations.set("REPEAT", emptyBuiltin);
+builtinImplementations.set("SUBSTR", emptyBuiltin);
+builtinImplementations.set("SYSDIMSIZE", emptyBuiltin);
+builtinImplementations.set("SYSOFFSETSIZE", emptyBuiltin);
+builtinImplementations.set("SYSPARM", emptyBuiltin);
+builtinImplementations.set("SYSPOINTERSIZE", emptyBuiltin);
+builtinImplementations.set("SYSTEM", (context) => {
+  const systemInfo = context.unit.compilerOptions.system;
+  return valueToString(systemInfo);
+});
+builtinImplementations.set("SYSVERSION", emptyBuiltin);
+builtinImplementations.set("TRANSLATE", emptyBuiltin);
+builtinImplementations.set("TRIM", emptyBuiltin);
+builtinImplementations.set("UPPERCASE", emptyBuiltin);
+builtinImplementations.set("VERIFY", emptyBuiltin);
