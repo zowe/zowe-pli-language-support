@@ -416,7 +416,7 @@ function runDoType3Instruction(
   const { specificationItems, variable } = doType3;
 
   if (specificationItems.length === 0) {
-    throw new Error("DoType3 requires at least one specification item!");
+    return false;
   }
 
   // Get current spec index, starting at 0 for first iteration
@@ -430,8 +430,9 @@ function runDoType3Instruction(
   }
 
   const spec = specificationItems[currentSpecIndex];
+  // TODO(@@dd): change this, according to the spec, the initial value is not required
   if (!spec.expression) {
-    throw new Error("DoType3 requires initial value!");
+    return false;
   }
 
   const varName = variable.variable;
@@ -441,7 +442,7 @@ function runDoType3Instruction(
   if (needsReinit) {
     const start = evaluateExpression(spec.expression, context);
     if (!isScalarValue(start)) {
-      throw new Error("DoType3 initial value must be scalar!");
+      return false;
     }
 
     if (!loopVar) {
@@ -470,14 +471,14 @@ function runDoType3Instruction(
     if (spec.to) {
       const endValue = evaluateExpression(spec.to, context);
       if (!isScalarValue(endValue)) {
-        throw new Error("DoType3 end value must be scalar!");
+        return false;
       }
       savedToValue = endValue;
 
       if (spec.by) {
         const stepValue = evaluateExpression(spec.by, context);
         if (!isScalarValue(stepValue)) {
-          throw new Error("DoType3 step value must be scalar!");
+          return false;
         }
         savedByValue = stepValue;
       } else {
@@ -486,14 +487,14 @@ function runDoType3Instruction(
     } else if (spec.upthru) {
       const endValue = evaluateExpression(spec.upthru, context);
       if (!isScalarValue(endValue)) {
-        throw new Error("DoType3 end value must be scalar!");
+        return false;
       }
       savedToValue = endValue;
       savedByValue = valueToNumber("1");
     } else if (spec.downthru) {
       const endValue = evaluateExpression(spec.downthru, context);
       if (!isScalarValue(endValue)) {
-        throw new Error("DoType3 end value must be scalar!");
+        return false;
       }
       savedToValue = endValue;
       savedByValue = valueToNumber("-1");
@@ -509,9 +510,9 @@ function runDoType3Instruction(
     return true; // Always continue after initialization
   }
 
-  // Normal iteration within current spec - update the loop variable
+  // Sanity check (normal iteration within current spec)
   if (!loopVar) {
-    throw new Error("DoType3 loop variable not found on subsequent iteration!");
+    return false;
   }
 
   let condition = true;
@@ -520,7 +521,7 @@ function runDoType3Instruction(
   if (spec.until) {
     const untilCondition = evaluateExpression(spec.until, context);
     if (!isScalarValue(untilCondition)) {
-      throw new Error("DoType3 condition must be scalar!");
+      return false;
     }
     condition &&= !valueToBool(untilCondition);
   }
@@ -529,7 +530,7 @@ function runDoType3Instruction(
   if (spec.repeat) {
     const repeatValue = evaluateExpression(spec.repeat, context);
     if (!isScalarValue(repeatValue)) {
-      throw new Error("DoType3 repeat value must be scalar!");
+      return false;
     }
     loopVar.value = {
       value: repeatValue.value,
@@ -540,17 +541,17 @@ function runDoType3Instruction(
     const endValue = doType3Store.savedToValue;
     const stepValue = doType3Store.savedByValue;
 
+    // TODO(@@dd): change this, according to the spec, the initial value is not required
+    // Sanity check (TO, UPTHRU, or DOWNTHRU clause)
     if (!endValue || !stepValue) {
-      throw new Error(
-        "DoType3 requires a TO, UPTHRU, DOWNTHRU or REPEAT clause!",
-      );
+      return false;
     }
 
     const end = parseInt(endValue.value);
     const step = parseInt(stepValue.value);
 
     if (!isScalarValue(loopVar.value)) {
-      throw new Error("DoType3 loop variable must be scalar!");
+      return false;
     }
 
     let currentValue = parseInt(loopVar.value.value);
@@ -572,7 +573,7 @@ function runDoType3Instruction(
   if (spec.while) {
     const whileCondition = evaluateExpression(spec.while, context);
     if (!isScalarValue(whileCondition)) {
-      throw new Error("DoType3 condition must be scalar!");
+      return false;
     }
     condition &&= valueToBool(whileCondition);
   }
@@ -583,13 +584,14 @@ function runDoType3Instruction(
     const nextSpecIndex = currentSpecIndex + 1;
     const nextSpec = specificationItems[nextSpecIndex];
 
+    // TODO(@@dd): change this, according to the spec, the initial value is not required
     if (!nextSpec.expression) {
-      throw new Error("DoType3 requires initial value!");
+      return false;
     }
 
     const start = evaluateExpression(nextSpec.expression, context);
     if (!isScalarValue(start)) {
-      throw new Error("DoType3 initial value must be scalar!");
+      return false;
     }
 
     // Reinitialize with the next spec's initial value
@@ -605,14 +607,14 @@ function runDoType3Instruction(
     if (nextSpec.to) {
       const endValue = evaluateExpression(nextSpec.to, context);
       if (!isScalarValue(endValue)) {
-        throw new Error("DoType3 end value must be scalar!");
+        return false;
       }
       savedToValue = endValue;
 
       if (nextSpec.by) {
         const stepValue = evaluateExpression(nextSpec.by, context);
         if (!isScalarValue(stepValue)) {
-          throw new Error("DoType3 step value must be scalar!");
+          return false;
         }
         savedByValue = stepValue;
       } else {
@@ -621,14 +623,14 @@ function runDoType3Instruction(
     } else if (nextSpec.upthru) {
       const endValue = evaluateExpression(nextSpec.upthru, context);
       if (!isScalarValue(endValue)) {
-        throw new Error("DoType3 end value must be scalar!");
+        return false;
       }
       savedToValue = endValue;
       savedByValue = valueToNumber("1");
     } else if (nextSpec.downthru) {
       const endValue = evaluateExpression(nextSpec.downthru, context);
       if (!isScalarValue(endValue)) {
-        throw new Error("DoType3 end value must be scalar!");
+        return false;
       }
       savedToValue = endValue;
       savedByValue = valueToNumber("-1");
