@@ -185,6 +185,8 @@ interface InterpreterContext {
   procedures: Map<string, inst.ProcedureInstructionContainer>;
   activeProcedures: Set<string>;
   counter: Map<inst.InstructionNode, number>;
+  doType3SpecIndex: Map<inst.InstructionNode, number>;
+  doType3NeedsReinit: Map<inst.InstructionNode, boolean>;
   references: ast.Reference[];
   evaluations: EvaluationResults;
   xIncludes: Set<string>;
@@ -235,6 +237,8 @@ export function runInstructions(
     },
     options,
     counter: new Map(),
+    doType3SpecIndex: new Map(),
+    doType3NeedsReinit: new Map(),
     returnValue: defaultEmptyValue,
   };
   for (const [key, value] of instruction.procedures.entries()) {
@@ -409,22 +413,10 @@ function runDoType3Instruction(
   context: InterpreterContext,
   node: inst.InstructionNode,
 ): boolean {
-  let condition = true;
   const { specificationItems, variable } = doType3;
 
   if (specificationItems.length === 0) {
     throw new Error("DoType3 requires at least one specification item!");
-  }
-
-  // TODO(@@dd) --> handle more than one do-type3 spec
-  if (specificationItems.length > 1) {
-    throw new Error("Multiple DoType3 specifications not implemented yet!");
-  }
-  const spec = doType3.specificationItems[0];
-  // <- TODO(@@dd)
-
-  if (!spec.expression) {
-    throw new Error("DoType3 requires initial value!");
   }
 
   const iterationCount = context.counter.get(node);
@@ -433,11 +425,25 @@ function runDoType3Instruction(
   }
   const isFirstIteration = iterationCount === 1;
 
+  // Get current spec index, starting at 0 for first iteration
+  let currentSpecIndex = context.doType3SpecIndex.get(node) ?? 0;
+  const needsReinit = context.doType3NeedsReinit.get(node) ?? false;
+
+  // If we've exhausted all specifications, return false to stop the loop
+  if (currentSpecIndex >= specificationItems.length) {
+    return false;
+  }
+
+  const spec = specificationItems[currentSpecIndex];
+  if (!spec.expression) {
+    throw new Error("DoType3 requires initial value!");
+  }
+
   const varName = variable.variable;
   let loopVar = context.variables.get(varName);
 
-  if (isFirstIteration) {
-    // First iteration - create the loop variable and initialize it
+  // Initialize for first iteration OR when we need to reinitialize for a new spec
+  if (isFirstIteration || needsReinit) {
     const start = evaluateExpression(spec.expression, context);
     if (!isScalarValue(start)) {
       throw new Error("DoType3 initial value must be scalar!");
@@ -456,88 +462,94 @@ function runDoType3Instruction(
       };
       context.variables.set(varName, loopVar);
     } else {
-      // Variable exists, just set the initial value
       loopVar.value = {
         value: start.value,
         type: inst.DeclaredType.Fixed,
       };
     }
+
+    // Clear the reinit flag and update spec index
+    context.doType3NeedsReinit.set(node, false);
+    context.doType3SpecIndex.set(node, currentSpecIndex);
+    return true; // Always continue after initialization
+  }
+
+  // Normal iteration within current spec - update the loop variable
+  if (!loopVar) {
+    throw new Error("DoType3 loop variable not found on subsequent iteration!");
+  }
+
+  let condition = true;
+
+  // Until is evaluated after each repetition of the loop body
+  if (spec.until) {
+    const untilCondition = evaluateExpression(spec.until, context);
+    if (!isScalarValue(untilCondition)) {
+      throw new Error("DoType3 condition must be scalar!");
+    }
+    condition &&= !valueToBool(untilCondition);
+  }
+
+  // Update the variable based on the loop type
+  if (spec.repeat) {
+    const repeatValue = evaluateExpression(spec.repeat, context);
+    if (!isScalarValue(repeatValue)) {
+      throw new Error("DoType3 repeat value must be scalar!");
+    }
+    loopVar.value = {
+      value: repeatValue.value,
+      type: inst.DeclaredType.Fixed,
+    };
   } else {
-    // Subsequent iterations - update the loop variable
-    if (!loopVar) {
+    // TO, UPTHRU, or DOWNTHRU clause
+    let endValue;
+    let stepValue;
+
+    if (spec.to) {
+      endValue = evaluateExpression(spec.to, context);
+      if (spec.by) {
+        stepValue = evaluateExpression(spec.by, context);
+      } else {
+        stepValue = valueToNumber("1");
+      }
+    } else if (spec.upthru) {
+      endValue = evaluateExpression(spec.upthru, context);
+      stepValue = valueToNumber("1");
+    } else if (spec.downthru) {
+      endValue = evaluateExpression(spec.downthru, context);
+      stepValue = valueToNumber("-1");
+    } else {
       throw new Error(
-        "DoType3 loop variable not found on subsequent iteration!",
+        "DoType3 requires a TO, UPTHRU, DOWNTHRU or REPEAT clause!",
       );
     }
 
-    // Until is evaluated after each repetition of the loop body
-    if (spec.until) {
-      const untilCondition = evaluateExpression(spec.until, context);
-      if (!isScalarValue(untilCondition)) {
-        throw new Error("DoType3 condition must be scalar!");
-      }
-      condition &&= !valueToBool(untilCondition);
+    if (!isScalarValue(endValue)) {
+      throw new Error("DoType3 end value must be scalar!");
+    }
+    if (!isScalarValue(stepValue)) {
+      throw new Error("DoType3 step value must be scalar!");
     }
 
-    // Update the variable based on the loop type
-    if (spec.repeat) {
-      // The REPEAT expression is assigned to the loop variable on each loop iteration
-      const repeatValue = evaluateExpression(spec.repeat, context);
-      if (!isScalarValue(repeatValue)) {
-        throw new Error("DoType3 repeat value must be scalar!");
-      }
+    const end = parseInt(endValue.value);
+    const step = parseInt(stepValue.value);
+
+    if (!isScalarValue(loopVar.value)) {
+      throw new Error("DoType3 loop variable must be scalar!");
+    }
+
+    let currentValue = parseInt(loopVar.value.value);
+    // Check if the next value would be within bounds BEFORE updating
+    const nextValue = currentValue + step;
+    condition &&=
+      (step > 0 && nextValue <= end) || (step < 0 && nextValue >= end);
+
+    // Only update the variable if the condition is still true
+    if (condition) {
       loopVar.value = {
-        value: repeatValue.value,
+        value: nextValue.toString(),
         type: inst.DeclaredType.Fixed,
       };
-    } else {
-      // TO, UPTHRU, or DOWNTHRU clause
-      let endValue;
-      let stepValue;
-
-      if (spec.to) {
-        endValue = evaluateExpression(spec.to, context);
-        if (spec.by) {
-          stepValue = evaluateExpression(spec.by, context);
-        } else {
-          stepValue = valueToNumber("1");
-        }
-      } else if (spec.upthru) {
-        endValue = evaluateExpression(spec.upthru, context);
-        stepValue = valueToNumber("1");
-      } else if (spec.downthru) {
-        endValue = evaluateExpression(spec.downthru, context);
-        stepValue = valueToNumber("-1");
-      } else {
-        throw new Error(
-          "DoType3 requires a TO, UPTHRU, DOWNTHRU or REPEAT clause!",
-        );
-      }
-
-      if (!isScalarValue(endValue)) {
-        throw new Error("DoType3 end value must be scalar!");
-      }
-      if (!isScalarValue(stepValue)) {
-        throw new Error("DoType3 step value must be scalar!");
-      }
-
-      const end = parseInt(endValue.value);
-      const step = parseInt(stepValue.value);
-
-      if (!isScalarValue(loopVar.value)) {
-        throw new Error("DoType3 loop variable must be scalar!");
-      }
-
-      let currentValue = parseInt(loopVar.value.value);
-      currentValue = currentValue + step;
-      loopVar.value = {
-        value: currentValue.toString(),
-        type: inst.DeclaredType.Fixed,
-      };
-
-      // Check if we should continue the loop
-      condition &&=
-        (step > 0 && currentValue <= end) || (step < 0 && currentValue >= end);
     }
   }
 
@@ -548,6 +560,33 @@ function runDoType3Instruction(
       throw new Error("DoType3 condition must be scalar!");
     }
     condition &&= valueToBool(whileCondition);
+  }
+
+  // If current spec is done, try to advance to next spec
+  if (!condition && currentSpecIndex < specificationItems.length - 1) {
+    // Advance to next spec immediately and reinitialize
+    const nextSpecIndex = currentSpecIndex + 1;
+    const nextSpec = specificationItems[nextSpecIndex];
+
+    if (!nextSpec.expression) {
+      throw new Error("DoType3 requires initial value!");
+    }
+
+    const start = evaluateExpression(nextSpec.expression, context);
+    if (!isScalarValue(start)) {
+      throw new Error("DoType3 initial value must be scalar!");
+    }
+
+    // Reinitialize with the next spec's initial value
+    loopVar.value = {
+      value: start.value,
+      type: inst.DeclaredType.Fixed,
+    };
+
+    // Update state to reflect the new spec
+    context.doType3SpecIndex.set(node, nextSpecIndex);
+    context.doType3NeedsReinit.set(node, false);
+    return true;
   }
 
   return condition;
