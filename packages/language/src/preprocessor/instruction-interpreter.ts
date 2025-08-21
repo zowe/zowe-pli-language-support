@@ -185,14 +185,18 @@ interface InterpreterContext {
   procedures: Map<string, inst.ProcedureInstructionContainer>;
   activeProcedures: Set<string>;
   counter: Map<inst.InstructionNode, number>;
-  doType3SpecIndex: Map<inst.InstructionNode, number>;
-  doType3NeedsReinit: Map<inst.InstructionNode, boolean>;
+  doType3: Map<inst.InstructionNode, DoType3Store>;
   references: ast.Reference[];
   evaluations: EvaluationResults;
   xIncludes: Set<string>;
   uris: string[];
   options: InterpreterOptions;
   returnValue: Value;
+}
+
+interface DoType3Store {
+  specIndex: number;
+  needsReinit: boolean;
 }
 
 export type InstructionInterpreterResult = CompilationUnitTokens & {
@@ -237,8 +241,7 @@ export function runInstructions(
     },
     options,
     counter: new Map(),
-    doType3SpecIndex: new Map(),
-    doType3NeedsReinit: new Map(),
+    doType3: new Map(),
     returnValue: defaultEmptyValue,
   };
   for (const [key, value] of instruction.procedures.entries()) {
@@ -426,8 +429,9 @@ function runDoType3Instruction(
   const isFirstIteration = iterationCount === 1;
 
   // Get current spec index, starting at 0 for first iteration
-  let currentSpecIndex = context.doType3SpecIndex.get(node) ?? 0;
-  const needsReinit = context.doType3NeedsReinit.get(node) ?? false;
+  const doType3Store = context.doType3.get(node) ?? { specIndex: 0, needsReinit: false };
+  let currentSpecIndex = doType3Store.specIndex;
+  const needsReinit = doType3Store.needsReinit;
 
   // If we've exhausted all specifications, return false to stop the loop
   if (currentSpecIndex >= specificationItems.length) {
@@ -469,8 +473,7 @@ function runDoType3Instruction(
     }
 
     // Clear the reinit flag and update spec index
-    context.doType3NeedsReinit.set(node, false);
-    context.doType3SpecIndex.set(node, currentSpecIndex);
+    context.doType3.set(node, { specIndex: currentSpecIndex, needsReinit: false });
     return true; // Always continue after initialization
   }
 
@@ -584,8 +587,7 @@ function runDoType3Instruction(
     };
 
     // Update state to reflect the new spec
-    context.doType3SpecIndex.set(node, nextSpecIndex);
-    context.doType3NeedsReinit.set(node, false);
+    context.doType3.set(node, { specIndex: nextSpecIndex, needsReinit: false });
     return true;
   }
 
