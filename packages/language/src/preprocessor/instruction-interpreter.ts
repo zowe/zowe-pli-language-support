@@ -424,14 +424,8 @@ function runDoType3Instruction(
     throw new Error("DoType3 requires at least one specification item!");
   }
 
-  const iterationCount = context.counter.get(node);
-  if (iterationCount === undefined || iterationCount < 1) {
-    throw new Error("Interpreter can't determine AST node iteration count");
-  }
-  const isFirstIteration = iterationCount === 1;
-
   // Get current spec index, starting at 0 for first iteration
-  const doType3Store = context.doType3.get(node) ?? { specIndex: 0, needsReinit: false };
+  const doType3Store = context.doType3.get(node) ?? { specIndex: 0, needsReinit: true };
   let currentSpecIndex = doType3Store.specIndex;
   const needsReinit = doType3Store.needsReinit;
 
@@ -448,8 +442,8 @@ function runDoType3Instruction(
   const varName = variable.variable;
   let loopVar = context.variables.get(varName);
 
-  // Initialize for first iteration OR when we need to reinitialize for a new spec
-  if (isFirstIteration || needsReinit) {
+  // Initialize when we need to reinitialize for a new spec (including first time)
+  if (needsReinit) {
     const start = evaluateExpression(spec.expression, context);
     if (!isScalarValue(start)) {
       throw new Error("DoType3 initial value must be scalar!");
