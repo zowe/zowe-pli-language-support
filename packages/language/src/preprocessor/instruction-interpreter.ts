@@ -696,15 +696,15 @@ function runProcedure(
   context: InterpreterContext,
 ): Value {
   if (!context.localVariables) {
-    throw new Error("Local variables map is not initialized!");
+    throw new Error(
+      "Local variables map is not initialized! Use the createLocalContext function before calling runProcedure!",
+    );
   }
-  if (args.length !== procedure.parameters.length) {
-    // The type system should report this error
-    return defaultEmptyValue;
-  }
+  // Note that in case a procedure has received too many arguments, the excess ones are ignored
   for (let i = 0; i < procedure.parameters.length; i++) {
     const param = procedure.parameters[i];
-    const arg = args[i];
+    // In case a variable hasn't been supplied, the default value is used
+    const arg = args[i] ?? defaultEmptyValue;
     const variable: Variable = {
       name: param,
       value: arg,

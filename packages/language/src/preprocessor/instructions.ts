@@ -107,7 +107,6 @@ export type Instruction =
 export interface ProcedureInstructionContainer {
   names: string[];
   parameters: string[];
-  localProcedures: Map<string, ProcedureInstructionContainer>;
   node: InstructionNode;
 }
 

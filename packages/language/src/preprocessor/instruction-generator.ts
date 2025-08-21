@@ -99,7 +99,6 @@ function generateProcedureInstructionContainer(
     names,
     parameters: args,
     node: instructionList.entryNode,
-    localProcedures: instructionList.procedures,
   };
 }
 

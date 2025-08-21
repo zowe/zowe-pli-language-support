@@ -14,7 +14,6 @@ import {
   PreprocessorTokens,
 } from "./pli-preprocessor-tokens";
 import {
-  ParserLocation,
   PliPreprocessorParserState,
   PreprocessorParserState,
 } from "./pli-preprocessor-parser-state";
@@ -105,7 +104,7 @@ export class PliPreprocessorParser {
   }
 
   statement(state: PreprocessorParserState): ast.Statement {
-    if (state.isOnlyInStatement()) {
+    if (!state.isInProcedure()) {
       if (
         state.tryConsume(
           undefined,
@@ -113,12 +112,7 @@ export class PliPreprocessorParser {
           PreprocessorTokens.Percentage,
         )
       ) {
-        state.push(ParserLocation.Statement);
-        try {
-          return this.commonStatement(state);
-        } finally {
-          state.pop();
-        }
+        return this.commonStatement(state);
       } else {
         return this.consumeTokenStatement(state);
       }
@@ -149,7 +143,36 @@ export class PliPreprocessorParser {
     let unit: ast.Unit | undefined = undefined;
     if (performAssignmentLookahead((la) => state.lookahead(la))) {
       unit = this.assignmentStatement(state);
+    } else if (state.isInProcedure()) {
+      // TODO: Handle missing preprocessor procedure statements: ANSWER, CALL, NOTE, SELECT
+      switch (state.current?.tokenTypeIdx) {
+        case PreprocessorTokens.Declare.tokenTypeIdx:
+          unit = this.declareStatement(state);
+          break;
+        case PreprocessorTokens.Do.tokenTypeIdx:
+          unit = this.doStatement(state);
+          break;
+        case PreprocessorTokens.Go.tokenTypeIdx:
+        case PreprocessorTokens.Goto.tokenTypeIdx:
+          unit = this.goToStatement(state);
+          break;
+        case PreprocessorTokens.If.tokenTypeIdx:
+          unit = this.ifStatement(state);
+          break;
+        case PreprocessorTokens.Leave.tokenTypeIdx:
+          unit = this.leaveStatement(state);
+          break;
+        case PreprocessorTokens.Iterate.tokenTypeIdx:
+          unit = this.iterateStatement(state);
+          break;
+        case PreprocessorTokens.Return.tokenTypeIdx:
+          unit = this.returnStatement(state);
+          break;
+        case PreprocessorTokens.Semicolon.tokenTypeIdx:
+          unit = this.nullStatement(state);
+      }
     } else {
+      // TODO: Handle missing preprocessor statements: NOTE, REPLACE, SELECT
       switch (state.current?.tokenTypeIdx) {
         case PreprocessorTokens.Semicolon.tokenTypeIdx:
           unit = this.nullStatement(state);
@@ -205,10 +228,10 @@ export class PliPreprocessorParser {
           break;
         case PreprocessorTokens.Procedure.tokenTypeIdx:
           try {
-            state.push(ParserLocation.Procedure);
+            state.pushProcedure();
             unit = this.procedureStatement(state);
           } finally {
-            state.pop();
+            state.popProcedure();
           }
           break;
         case PreprocessorTokens.Return.tokenTypeIdx:
@@ -345,7 +368,6 @@ export class PliPreprocessorParser {
       CstNodeKind.ProcedureStatement_Semicolon1,
       PreprocessorTokens.Semicolon,
     );
-    state.pop();
     return statement;
   }
 
@@ -881,6 +903,14 @@ export class PliPreprocessorParser {
   private statements(state: PreprocessorParserState): ast.Statement[] {
     const statements: ast.Statement[] = [];
     while (!state.eof && !state.canConsumeKeyword(PreprocessorTokens.End)) {
+      if (
+        state.isInProcedure() &&
+        state.canConsume(PreprocessorTokens.Percentage, PreprocessorTokens.End)
+      ) {
+        // Even though the %END; statement is technically part of the procedure, it still has a % prefix.
+        // We need special handling for it here. End statements list if we encounter it.
+        break;
+      }
       const statement = this.statement(state);
       statements.push(statement);
     }

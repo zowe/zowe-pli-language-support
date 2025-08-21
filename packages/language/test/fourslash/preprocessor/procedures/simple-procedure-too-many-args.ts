@@ -11,13 +11,11 @@
 
 /// <reference path="../../framework.ts" />
 
-//// %TEST: PROC (VAR) RETURNS (CHAR);
-////   RETURN (VAR);
+//// %TEST: PROC (A, B) RETURNS (CHAR);
+////   RETURN (A || B);
 //// %END;
 //// %DCL Y CHAR;
-//// // No arguments received, should simply yield no tokens
-//// %Y = TEST();
+//// %Y = TEST("HELLO", " WORLD", "HOW", "ARE", "YOU?");
 //// Y
 
-/* Actually expect no tokens here, all the text is preprocessor code */
-preprocessor.expectTokens([]);
+preprocessor.expectTokens(`HELLO WORLD`);
