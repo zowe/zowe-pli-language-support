@@ -16,7 +16,10 @@
  */
 
 //// %DCL I FIXED;
-//// %DO I = 1 TO 2;
+//// %DCL X FIXED;
+//// %X = 2;
+//// %DO I = 1 TO X;
+////   %X = X + 1;
 ////   DCL Var%;I FIXED;
 //// %END;
 

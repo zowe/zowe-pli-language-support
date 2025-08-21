@@ -16,7 +16,12 @@
  */
 
 //// %DCL I FIXED;
-//// %DO I = 2 TO 4 BY 2;
+//// %DCL X FIXED;
+//// %X = 4;
+//// %Y = 2;
+//// %DO I = 2 TO X BY Y;
+////   %X = X + 1;
+////   %Y = Y + 1;
 ////   DCL Var%;I FIXED;
 //// %END;
 

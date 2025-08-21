@@ -197,6 +197,8 @@ interface InterpreterContext {
 interface DoType3Store {
   specIndex: number;
   needsReinit: boolean;
+  savedToValue?: ScalarValue;
+  savedByValue?: ScalarValue;
 }
 
 export type InstructionInterpreterResult = CompilationUnitTokens & {
@@ -472,8 +474,49 @@ function runDoType3Instruction(
       };
     }
 
-    // Clear the reinit flag and update spec index
-    context.doType3.set(node, { specIndex: currentSpecIndex, needsReinit: false });
+    // Evaluate and save TO and BY expressions at entry to the specification
+    let savedToValue: ScalarValue | undefined;
+    let savedByValue: ScalarValue | undefined;
+
+    if (spec.to) {
+      const endValue = evaluateExpression(spec.to, context);
+      if (!isScalarValue(endValue)) {
+        throw new Error("DoType3 end value must be scalar!");
+      }
+      savedToValue = endValue;
+
+      if (spec.by) {
+        const stepValue = evaluateExpression(spec.by, context);
+        if (!isScalarValue(stepValue)) {
+          throw new Error("DoType3 step value must be scalar!");
+        }
+        savedByValue = stepValue;
+      } else {
+        savedByValue = valueToNumber("1");
+      }
+    } else if (spec.upthru) {
+      const endValue = evaluateExpression(spec.upthru, context);
+      if (!isScalarValue(endValue)) {
+        throw new Error("DoType3 end value must be scalar!");
+      }
+      savedToValue = endValue;
+      savedByValue = valueToNumber("1");
+    } else if (spec.downthru) {
+      const endValue = evaluateExpression(spec.downthru, context);
+      if (!isScalarValue(endValue)) {
+        throw new Error("DoType3 end value must be scalar!");
+      }
+      savedToValue = endValue;
+      savedByValue = valueToNumber("-1");
+    }
+
+    // Clear the reinit flag and update spec index with saved values
+    context.doType3.set(node, { 
+      specIndex: currentSpecIndex, 
+      needsReinit: false,
+      savedToValue,
+      savedByValue
+    });
     return true; // Always continue after initialization
   }
 
@@ -504,34 +547,14 @@ function runDoType3Instruction(
       type: inst.DeclaredType.Fixed,
     };
   } else {
-    // TO, UPTHRU, or DOWNTHRU clause
-    let endValue;
-    let stepValue;
+    // TO, UPTHRU, or DOWNTHRU clause - use saved values from entry evaluation
+    const endValue = doType3Store.savedToValue;
+    const stepValue = doType3Store.savedByValue;
 
-    if (spec.to) {
-      endValue = evaluateExpression(spec.to, context);
-      if (spec.by) {
-        stepValue = evaluateExpression(spec.by, context);
-      } else {
-        stepValue = valueToNumber("1");
-      }
-    } else if (spec.upthru) {
-      endValue = evaluateExpression(spec.upthru, context);
-      stepValue = valueToNumber("1");
-    } else if (spec.downthru) {
-      endValue = evaluateExpression(spec.downthru, context);
-      stepValue = valueToNumber("-1");
-    } else {
+    if (!endValue || !stepValue) {
       throw new Error(
         "DoType3 requires a TO, UPTHRU, DOWNTHRU or REPEAT clause!",
       );
-    }
-
-    if (!isScalarValue(endValue)) {
-      throw new Error("DoType3 end value must be scalar!");
-    }
-    if (!isScalarValue(stepValue)) {
-      throw new Error("DoType3 step value must be scalar!");
     }
 
     const end = parseInt(endValue.value);
@@ -586,8 +609,49 @@ function runDoType3Instruction(
       type: inst.DeclaredType.Fixed,
     };
 
-    // Update state to reflect the new spec
-    context.doType3.set(node, { specIndex: nextSpecIndex, needsReinit: false });
+    // Evaluate and save TO and BY expressions for the new specification
+    let savedToValue: ScalarValue | undefined;
+    let savedByValue: ScalarValue | undefined;
+
+    if (nextSpec.to) {
+      const endValue = evaluateExpression(nextSpec.to, context);
+      if (!isScalarValue(endValue)) {
+        throw new Error("DoType3 end value must be scalar!");
+      }
+      savedToValue = endValue;
+
+      if (nextSpec.by) {
+        const stepValue = evaluateExpression(nextSpec.by, context);
+        if (!isScalarValue(stepValue)) {
+          throw new Error("DoType3 step value must be scalar!");
+        }
+        savedByValue = stepValue;
+      } else {
+        savedByValue = valueToNumber("1");
+      }
+    } else if (nextSpec.upthru) {
+      const endValue = evaluateExpression(nextSpec.upthru, context);
+      if (!isScalarValue(endValue)) {
+        throw new Error("DoType3 end value must be scalar!");
+      }
+      savedToValue = endValue;
+      savedByValue = valueToNumber("1");
+    } else if (nextSpec.downthru) {
+      const endValue = evaluateExpression(nextSpec.downthru, context);
+      if (!isScalarValue(endValue)) {
+        throw new Error("DoType3 end value must be scalar!");
+      }
+      savedToValue = endValue;
+      savedByValue = valueToNumber("-1");
+    }
+
+    // Update state to reflect the new spec with saved values
+    context.doType3.set(node, { 
+      specIndex: nextSpecIndex, 
+      needsReinit: false,
+      savedToValue,
+      savedByValue
+    });
     return true;
   }
 
