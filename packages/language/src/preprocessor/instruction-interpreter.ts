@@ -311,7 +311,7 @@ function handleInstructionError(err: any, context: InterpreterContext): void {
 function runInstruction(
   instruction: inst.Instruction,
   context: InterpreterContext,
-  node?: inst.InstructionNode,
+  node: inst.InstructionNode,
 ): inst.InstructionNode | undefined {
   switch (instruction.kind) {
     case inst.InstructionKind.Assignment:
@@ -321,7 +321,7 @@ function runInstruction(
       runTokenInstruction(instruction, context);
       break;
     case inst.InstructionKind.Compound:
-      runCompoundInstruction(instruction, context);
+      runCompoundInstruction(instruction, context, node);
       break;
     case inst.InstructionKind.Goto:
       return instruction.node;
@@ -366,17 +366,12 @@ function runHaltInstruction(
 function runDoInstruction(
   instruction: inst.DoInstruction,
   context: InterpreterContext,
-  node?: inst.InstructionNode,
+  node: inst.InstructionNode,
 ): inst.InstructionNode | undefined {
   let condition = true;
   if (instruction.doType2) {
     condition = runDoType2Instruction(instruction.doType2, context);
   } else if (instruction.doType3) {
-    if (!node) {
-      throw new Error(
-        "DoType3 instruction requires a node for iteration tracking",
-      );
-    }
     condition = runDoType3Instruction(instruction.doType3, context, node);
   }
   if (condition) {
@@ -1082,10 +1077,11 @@ function runDeactivateInstruction(
 function runCompoundInstruction(
   instruction: inst.CompoundInstruction,
   context: InterpreterContext,
+  node: inst.InstructionNode,
 ): void {
   for (const subInstruction of instruction.instructions) {
     try {
-      const result = runInstruction(subInstruction, context);
+      const result = runInstruction(subInstruction, context, node);
       if (result) {
         throw new Error(
           `Only non-jump instructions are allowed in a compound instruction. Found: ${subInstruction.kind}`,
