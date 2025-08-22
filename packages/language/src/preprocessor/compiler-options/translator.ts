@@ -2574,26 +2574,299 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.precType} */
+translator.rule(["PRECTYPE"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  const name = value.value.toUpperCase();
+  if (["AND", "DECDIGIT", "DECRESULT"].includes(name)) {
+    options.precType = name as CompilerOptions.PrecType;
+  } else {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.PrecType.InvalidParameter,
+      name,
+    );
+  }
+});
+
 /** {@link CompilerOptions.prefix} */
 /** {@link CompilerOptions.proceed} */
+translator.rule(
+  ["PROCEED", "PRO"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.proceed = { noProceed: "S" };
+  },
+  ["NOPROCEED", "NPRO"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      options.proceed = { noProceed: "I" };
+      return;
+    }
+    const value = option.values[0];
+    ensureType(value, "plainNotEmpty");
+    const name = value.value.toUpperCase();
+    if (["S", "E", "W"].includes(name)) {
+      options.proceed = { noProceed: name as CompilerOptions.Flag };
+    } else {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.Proceed.InvalidParameter,
+        name,
+      );
+    }
+  },
+);
+
 /** {@link CompilerOptions.process} */
+translator.rule(
+  ["PROCESS"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      options.process = "DELETE";
+      return;
+    }
+    const value = option.values[0];
+    ensureType(value, "plainNotEmpty");
+    const name = value.value.toUpperCase();
+    if (["DELETE", "KEEP"].includes(name)) {
+      options.process = name as CompilerOptions.Process;
+    } else {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.Process.InvalidParameter,
+        name,
+      );
+    }
+  },
+  ["NOPROCESS"],
+  (option, options) => {
+    options.process = false;
+    ensureArguments(option, 0, 0);
+  },
+);
+
 /** {@link CompilerOptions.quote} */
+translator.rule(["QUOTE"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  // TODO ssmifi: The directive does not allow to use " as string delimiter. It must be set via '.
+  ensureType(value, "string");
+  if (value.value.length !== 1) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.Quote.InvalidParameterLength,
+      value.value,
+    );
+  }
+  if (PLI_CHARACTER_REGEX.test(value.value)) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.Quote.InvalidParameterCharacter,
+      value.value,
+    );
+  }
+  options.quote = value.value;
+});
+
 /** {@link CompilerOptions.reduce} */
+translator.flag("reduce", ["REDUCE"], ["NOREDUCE"]);
+
 /** {@link CompilerOptions.rent} */
+translator.flag("rent", ["RENT"], ["NORENT"]);
+
 /** {@link CompilerOptions.resExp} */
+translator.flag("resExp", ["RESEXP"], ["NORESEXP"]);
+
 /** {@link CompilerOptions.respect} */
+translator.rule(["RESPECT"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plain");
+  if (value.value.length === 0) {
+    options.respect = { date: false };
+    return;
+  }
+  if (value.value.toUpperCase() === "DATE") {
+    options.respect = { date: true };
+  } else {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.Respect.InvalidParameter,
+      value.value,
+    );
+  }
+});
+
 /** {@link CompilerOptions.rtCheck} */
+translator.rule(["RTCHECK"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plain");
+  if (value.value.length === 0) {
+    options.rtCheck = getDefaultCompilerOptions().rtCheck;
+    return;
+  }
+  const name = value.value.toUpperCase();
+  if (["NONULLPTR", "NULLPTR", "NULL370"].includes(name)) {
+    options.rtCheck = name as CompilerOptions.RtCheck;
+  } else {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.RtCheck.InvalidParameter,
+      value.value,
+    );
+  }
+});
+
 /** {@link CompilerOptions.rules} */
 /** {@link CompilerOptions.semantic} */
+translator.rule(
+  ["SEMANTIC", "SEM"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.semantic = { noSemantic: "S" };
+  },
+  ["NOSEMANTIC", "NSEM"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      options.semantic = { noSemantic: "I" };
+      return;
+    }
+    const value = option.values[0];
+    ensureType(value, "plainNotEmpty");
+    const name = value.value.toUpperCase();
+    if (["S", "E", "W"].includes(name)) {
+      options.semantic = { noSemantic: name as CompilerOptions.Flag };
+    } else {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.Semantic.InvalidParameter,
+        name,
+      );
+    }
+  },
+);
+
 /** {@link CompilerOptions.service} */
+translator.rule(
+  ["SERVICE"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "plainOrString");
+    if (
+      value.kind === SyntaxKind.CompilerOptionText &&
+      value.value.length === 0
+    ) {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.Service.InvalidEmptyPlainParameter,
+        value.value,
+      );
+    }
+    if (value.value.length > 64) {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.Service.InvalidParameterLength,
+        value.value.length,
+      );
+    }
+    options.service = value.value;
+  },
+  ["NOSERVICE"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.service = false;
+  },
+);
+
 /** {@link CompilerOptions.source} */
+translator.flag("source", ["SOURCE", "S"], ["NOSOURCE", "NS"]);
+
 /** {@link CompilerOptions.spill} */
+translator.rule(["SPILL", "SP"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  ensureType(option.values[0], "plainNotEmpty");
+  options.spill = ensureNumberValue(option.values[0], 0, 3900);
+});
+
 /** {@link CompilerOptions.static} */
+translator.rule(["STATIC"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  const name = value.value.toUpperCase();
+  if (["SHORT", "FULL"].includes(name)) {
+    options.static = name as CompilerOptions.Length;
+  } else {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.Static.InvalidParameter,
+      name,
+    );
+  }
+});
+
 /** {@link CompilerOptions.stdsys} */
+translator.flag("stdsys", ["STDSYS"], ["NOSTDSYS"]);
+
 /** {@link CompilerOptions.stmt} */
+translator.flag("stmt", ["STMT"], ["NOSTMT"]);
+
 /** {@link CompilerOptions.storage} */
+translator.flag("storage", ["STORAGE", "STG"], ["NOSTORAGE", "NSTG"]);
+
 /** {@link CompilerOptions.stringOfGraphic} */
+translator.rule(["STRINGOFGRAPHIC", "CHAR", "G"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  const name = value.value.toUpperCase();
+  if (["CHARACTER", "GRAPHIC"].includes(name)) {
+    options.stringOfGraphic = name as CompilerOptions.StringOfGraphic;
+  } else {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.StringOfGraphic.InvalidParameter,
+      name,
+    );
+  }
+});
+
 /** {@link CompilerOptions.syntax} */
+translator.rule(
+  ["SYNTAX", "SYN"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.syntax = { noSyntax: "S" };
+  },
+  ["NOSYNTAX", "NSYN"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      options.syntax = { noSyntax: "I" };
+      return;
+    }
+    const value = option.values[0];
+    ensureType(value, "plainNotEmpty");
+    const name = value.value.toUpperCase();
+    if (["S", "E", "W"].includes(name)) {
+      options.syntax = { noSyntax: name as CompilerOptions.Flag };
+    } else {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.Syntax.InvalidParameter,
+        name,
+      );
+    }
+  },
+);
+
 /** {@link CompilerOptions.sysParm} */
 translator.rule(
   ["SYSPARM"],

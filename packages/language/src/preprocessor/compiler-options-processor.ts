@@ -149,7 +149,7 @@ export class CompilerOptionsProcessor {
     // *PROCESS MARGINS(2, 72) ; MARGINS(1, 72); is valid, but everything after the first ; is ignored.
     // Just extract the complete line and let the parser decide what is valid.
     // We still need the whole line to preserve original positions for diagnostics.
-    const processRegex = /([%*]PROCESS[^\n]*(?:(?:\r?\n)|$))/iy;
+    const processRegex = /([%*]PROCESS[^\n\r]*)(?:\r?\n|$)/iy;
     let match: RegExpExecArray | null;
     let currentPosition = 0;
 
