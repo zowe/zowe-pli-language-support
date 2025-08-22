@@ -9,19 +9,19 @@
  *
  */
 
+import TelemetryReporter from "@vscode/extension-telemetry";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
+import * as vscode from "vscode";
 import type {
   LanguageClientOptions,
   ServerOptions,
 } from "vscode-languageclient/node.js";
-import * as vscode from "vscode";
-import * as path from "node:path";
-import * as fs from "node:fs";
 import { LanguageClient, TransportKind } from "vscode-languageclient/node.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
-import { Settings } from "./settings";
 import { registerCustomDecorators } from "./decorators";
-import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
-import TelemetryReporter from "@vscode/extension-telemetry";
+import { Settings } from "./settings";
 
 let client: LanguageClient;
 let settings: Settings;
