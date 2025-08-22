@@ -4549,6 +4549,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.LeaveStatement,
       container: null,
       label: null,
+      leaveToken: null,
     };
   }
 
@@ -4557,6 +4558,7 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.LEAVE, (token) => {
       this.tokenPayload(token, element, CstNodeKind.LeaveStatement_LEAVE);
+      element.leaveToken = token;
     });
     this.OPTION1(() => {
       this.SUBRULE_ASSIGN1(this.LabelReference, {
