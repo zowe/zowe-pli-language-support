@@ -12,17 +12,14 @@
 /// <reference path="../../framework.ts" />
 
 /**
- * DO Type 3 - DO with multiple specifications
+ * DO Type 3 - DO without explicit loop variable declaration
  */
 
-//// %DCL I FIXED;
-//// %DO I = 1 TO 2, 4 TO 6 BY 2;
-////   DCL VarI%;I FIXED;
+//// %DO I = 1 TO 2;
+////   DCL Var%;I FIXED;
 //// %END;
 
 preprocessor.expectTokens(`
-  DCL VarI1 FIXED;
-  DCL VarI2 FIXED;
-  DCL VarI4 FIXED;
-  DCL VarI6 FIXED;
+  DCL Var1 FIXED;
+  DCL Var2 FIXED;
 `);

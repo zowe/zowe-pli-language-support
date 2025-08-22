@@ -420,7 +420,10 @@ function runDoType3Instruction(
   }
 
   // Get current spec index, starting at 0 for first iteration
-  const doType3Store = context.doType3.get(node) ?? { specIndex: 0, needsReinit: true };
+  const doType3Store = context.doType3.get(node) ?? {
+    specIndex: 0,
+    needsReinit: true,
+  };
   let currentSpecIndex = doType3Store.specIndex;
   const needsReinit = doType3Store.needsReinit;
 
@@ -439,13 +442,15 @@ function runDoType3Instruction(
   let loopVar = context.variables.get(varName);
 
   // Initialize when we need to reinitialize for a new spec (including first time)
-  if (needsReinit) {
+  // or when the loop variable doesn't exist (implicit declaration)
+  if (!loopVar || needsReinit) {
     const start = evaluateExpression(spec.expression, context);
     if (!isScalarValue(start)) {
       return false;
     }
 
     if (!loopVar) {
+      // Implicitly declare the loop variable if it doesn't exist
       loopVar = {
         name: varName,
         declarationNode: variable.reference?.owner,
@@ -458,6 +463,7 @@ function runDoType3Instruction(
       };
       context.variables.set(varName, loopVar);
     } else {
+      // Next doSequence, update the loop variable if it already exists
       loopVar.value = {
         value: start.value,
         type: inst.DeclaredType.Fixed,
@@ -501,18 +507,13 @@ function runDoType3Instruction(
     }
 
     // Clear the reinit flag and update spec index with saved values
-    context.doType3.set(node, { 
-      specIndex: currentSpecIndex, 
+    context.doType3.set(node, {
+      specIndex: currentSpecIndex,
       needsReinit: false,
       savedToValue,
-      savedByValue
+      savedByValue,
     });
     return true; // Always continue after initialization
-  }
-
-  // Sanity check (normal iteration within current spec)
-  if (!loopVar) {
-    return false;
   }
 
   let condition = true;
@@ -637,11 +638,11 @@ function runDoType3Instruction(
     }
 
     // Update state to reflect the new spec with saved values
-    context.doType3.set(node, { 
-      specIndex: nextSpecIndex, 
+    context.doType3.set(node, {
+      specIndex: nextSpecIndex,
       needsReinit: false,
       savedToValue,
-      savedByValue
+      savedByValue,
     });
     return true;
   }
