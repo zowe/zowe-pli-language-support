@@ -402,6 +402,22 @@ export class PluginConfigurationProvider {
   }
 
   /**
+   * Returns the process group config for the given URI. This is used to find the
+   * process group associated with a library file. It is rather fuzzy and might not be 100% accurate.
+   * @param libUri URI of the including file (likely a library file)
+   * @returns Associated process group config, or undefined if not found
+   */
+  public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
+    const dirname = UriUtils.basename(UriUtils.dirname(libUri));
+    for (const config of this.processGroupConfigs.values()) {
+      if (config.libs?.includes(dirname)) {
+        return config;
+      }
+    }
+    return undefined;
+  }
+
+  /**
    * Extracts & converts the merged pli-options for a given program config & associated process group to a compiler option string
    * Program config pli-options override process group pli-options.
    * @param programConfig Program config entry to retrieve options for, factoring in process group options too
