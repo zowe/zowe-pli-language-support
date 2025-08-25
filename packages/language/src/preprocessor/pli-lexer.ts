@@ -86,12 +86,12 @@ export class PliLexer {
         errors,
         tokens: fileTokens,
       } = this.preprocessorParser.parse(state);
-      const instructionNode = generateInstructions(statements);
+      const result = generateInstructions(statements);
       return {
         tokens: fileTokens,
-        node: instructionNode,
         issues: errors,
         statements: statements,
+        result,
       };
     });
     allErrors.push(...instruction.issues);
@@ -99,12 +99,15 @@ export class PliLexer {
 
     const incAfter = compilerOptionsResult.result?.options.incAfter;
     if (incAfter?.process) {
-      instruction.node = generateIncAfterInstruction(
-        instruction.node,
-        incAfter,
-      );
+      instruction.result = {
+        entryNode: generateIncAfterInstruction(
+          instruction.result.entryNode,
+          incAfter,
+        ),
+        procedures: instruction.result.procedures,
+      };
     }
-    const output = runInstructions(unit, uri, instruction.node, {
+    const output = runInstructions(unit, uri, instruction.result, {
       compilerOptions: compilerOptionsResult.result,
       marginsProcessor: this.marginsProcessor,
       parser: this.preprocessorParser,
