@@ -16,7 +16,7 @@ import {
   CompilerOptions,
   getDefaultCompilerOptions,
 } from "./compiler-options/options";
-import * as inst from "./instructions";
+import { InstructionGeneratorResult } from "./instruction-generator";
 import { LexingIssue } from "./pli-lexer";
 
 interface CachedInstructions {
@@ -28,7 +28,7 @@ export interface FileInstructionResult {
   tokens: Token[];
   issues: LexingIssue[];
   statements: Statement[];
-  node: inst.InstructionNode;
+  result: InstructionGeneratorResult;
 }
 
 export class InstructionCache {

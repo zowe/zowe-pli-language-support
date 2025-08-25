@@ -18,8 +18,6 @@ import { URI } from "../utils/uri";
 import { Token } from "../parser/tokens";
 import { tokenize } from "../parser/tokenizer";
 
-type ParserLocation = "in-statement" | "in-procedure";
-
 export interface PreprocessorParserState {
   index: number;
   uri: URI;
@@ -53,13 +51,10 @@ export interface PreprocessorParserState {
   ): Token;
 
   advanceLines(lineCount: number): void;
-  push(location: ParserLocation): void;
-  pop(): void;
-  isOnlyInStatement(): boolean;
+  pushProcedure(): void;
+  popProcedure(): void;
   isInProcedure(): boolean;
   lookahead(la: number): Token | undefined;
-  addInclude(uri: URI): void;
-  hasInclude(uri: URI): boolean;
 }
 
 const nl = "\n".charCodeAt(0);
@@ -69,14 +64,20 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   public index: number;
   public uri: URI;
   private text: string;
-  private location: ParserLocation[] = [];
-  private includes: Set<string> = new Set();
+  private inProcedure: boolean = false;
 
   constructor(text: string, uri: URI) {
     this.text = text;
     this.tokens = tokenize(this.text, uri).tokens;
     this.index = 0;
     this.uri = uri;
+  }
+
+  pushProcedure(): void {
+    this.inProcedure = true;
+  }
+  popProcedure(): void {
+    this.inProcedure = false;
   }
 
   lookahead(la: number): Token | undefined {
@@ -118,18 +119,6 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       offset++;
     }
   }
-  push(location: ParserLocation): void {
-    this.location.push(location);
-  }
-  top(): ParserLocation | undefined {
-    if (this.location.length > 0) {
-      return this.location[this.location.length - 1];
-    }
-    return undefined;
-  }
-  pop(): void {
-    this.location.pop();
-  }
 
   get current() {
     return this.tokens[this.index];
@@ -163,15 +152,8 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     return true;
   }
 
-  isOnlyInStatement() {
-    return (
-      this.location.length === 0 ||
-      this.location.every((l) => l === "in-statement")
-    );
-  }
-
   isInProcedure() {
-    return this.location.some((l) => l === "in-procedure");
+    return this.inProcedure;
   }
 
   tryConsume(
@@ -228,6 +210,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       if (!this.canConsume(PreprocessorTokens.Percentage)) {
         return false;
       }
+      // Increment, so the next canConsume operates on the actual requested token type
       this.index++;
     }
     if (!this.canConsume(tokenType)) {
@@ -259,13 +242,5 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       );
     }
     return this.consume(element, kind, tokenType);
-  }
-
-  addInclude(uri: URI): void {
-    this.includes.add(uri.toString());
-  }
-
-  hasInclude(uri: URI): boolean {
-    return this.includes.has(uri.toString());
   }
 }

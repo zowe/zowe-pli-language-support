@@ -104,7 +104,7 @@ export class PliPreprocessorParser {
   }
 
   statement(state: PreprocessorParserState): ast.Statement {
-    if (state.isOnlyInStatement()) {
+    if (!state.isInProcedure()) {
       if (
         state.tryConsume(
           undefined,
@@ -112,12 +112,7 @@ export class PliPreprocessorParser {
           PreprocessorTokens.Percentage,
         )
       ) {
-        state.push("in-statement");
-        try {
-          return this.commonStatement(state);
-        } finally {
-          state.pop();
-        }
+        return this.commonStatement(state);
       } else {
         return this.consumeTokenStatement(state);
       }
@@ -148,7 +143,36 @@ export class PliPreprocessorParser {
     let unit: ast.Unit | undefined = undefined;
     if (performAssignmentLookahead((la) => state.lookahead(la))) {
       unit = this.assignmentStatement(state);
+    } else if (state.isInProcedure()) {
+      // TODO: Handle missing preprocessor procedure statements: ANSWER, CALL, NOTE, SELECT
+      switch (state.current?.tokenTypeIdx) {
+        case PreprocessorTokens.Declare.tokenTypeIdx:
+          unit = this.declareStatement(state);
+          break;
+        case PreprocessorTokens.Do.tokenTypeIdx:
+          unit = this.doStatement(state);
+          break;
+        case PreprocessorTokens.Go.tokenTypeIdx:
+        case PreprocessorTokens.Goto.tokenTypeIdx:
+          unit = this.goToStatement(state);
+          break;
+        case PreprocessorTokens.If.tokenTypeIdx:
+          unit = this.ifStatement(state);
+          break;
+        case PreprocessorTokens.Leave.tokenTypeIdx:
+          unit = this.leaveStatement(state);
+          break;
+        case PreprocessorTokens.Iterate.tokenTypeIdx:
+          unit = this.iterateStatement(state);
+          break;
+        case PreprocessorTokens.Return.tokenTypeIdx:
+          unit = this.returnStatement(state);
+          break;
+        case PreprocessorTokens.Semicolon.tokenTypeIdx:
+          unit = this.nullStatement(state);
+      }
     } else {
+      // TODO: Handle missing preprocessor statements: NOTE, REPLACE, SELECT
       switch (state.current?.tokenTypeIdx) {
         case PreprocessorTokens.Semicolon.tokenTypeIdx:
           unit = this.nullStatement(state);
@@ -202,40 +226,17 @@ export class PliPreprocessorParser {
         case PreprocessorTokens.Iterate.tokenTypeIdx:
           unit = this.iterateStatement(state);
           break;
-        default:
-          if (state.isOnlyInStatement()) {
-            if (state.current?.tokenType === PreprocessorTokens.Procedure) {
-              unit = this.procedureStatement(state);
-            }
-          } else {
-            //state.isInProcedure()
-            const returnStatement = ast.createReturnStatement();
-            if (
-              state.tryConsume(
-                returnStatement,
-                CstNodeKind.ReturnStatement_RETURN,
-                PreprocessorTokens.Return,
-              )
-            ) {
-              state.consume(
-                returnStatement,
-                CstNodeKind.ReturnStatement_OpenParen,
-                PreprocessorTokens.LParen,
-              );
-              returnStatement.expression = this.expression(state);
-              unit = returnStatement;
-              state.consume(
-                returnStatement,
-                CstNodeKind.ReturnStatement_CloseParen,
-                PreprocessorTokens.RParen,
-              );
-              state.consume(
-                returnStatement,
-                CstNodeKind.ReturnStatement_Semicolon,
-                PreprocessorTokens.Semicolon,
-              );
-            }
+        case PreprocessorTokens.Procedure.tokenTypeIdx:
+          try {
+            state.pushProcedure();
+            unit = this.procedureStatement(state);
+          } finally {
+            state.popProcedure();
           }
+          break;
+        case PreprocessorTokens.Return.tokenTypeIdx:
+          unit = this.returnStatement(state);
+          break;
       }
     }
 
@@ -260,7 +261,6 @@ export class PliPreprocessorParser {
 
   procedureStatement(state: PreprocessorParserState): ast.ProcedureStatement {
     const statement = ast.createProcedureStatement();
-    state.push("in-procedure");
     state.consume(
       statement,
       CstNodeKind.ProcedureStatement_PROCEDURE,
@@ -273,22 +273,24 @@ export class PliPreprocessorParser {
         PreprocessorTokens.LParen,
       )
     ) {
-      do {
-        const parameter = ast.createProcedureParameter();
-        const nameToken = state.consume(
-          parameter,
-          CstNodeKind.ProcedureParameter_Id,
-          PreprocessorTokens.Id,
+      if (state.canConsume(PreprocessorTokens.Id)) {
+        do {
+          const parameter = ast.createProcedureParameter();
+          const nameToken = state.consume(
+            parameter,
+            CstNodeKind.ProcedureParameter_Id,
+            PreprocessorTokens.Id,
+          );
+          parameter.ref = ast.createReference(parameter, nameToken);
+          statement.parameters.push(parameter);
+        } while (
+          state.tryConsume(
+            statement,
+            CstNodeKind.ProcedureStatement_Comma,
+            PreprocessorTokens.Comma,
+          )
         );
-        parameter.ref = ast.createReference(parameter, nameToken);
-        statement.parameters.push(parameter);
-      } while (
-        state.tryConsume(
-          statement,
-          CstNodeKind.ProcedureStatement_Comma,
-          PreprocessorTokens.Comma,
-        )
-      );
+      }
       state.consume(
         statement,
         CstNodeKind.ProcedureStatement_CloseParenParams,
@@ -322,7 +324,7 @@ export class PliPreprocessorParser {
           PreprocessorTokens.Character,
         )
       ) {
-        returnType = "character";
+        returnType = "CHARACTER";
       } else if (
         state.tryConsume(
           dataAttribute,
@@ -330,7 +332,7 @@ export class PliPreprocessorParser {
           PreprocessorTokens.Fixed,
         )
       ) {
-        returnType = "fixed";
+        returnType = "FIXED";
       }
       if (returnType) {
         dataAttribute.type = returnType as ast.DefaultAttribute;
@@ -350,6 +352,12 @@ export class PliPreprocessorParser {
     );
     const body = this.statements(state);
     statement.statements = body;
+    // Manually consume the percentage sign before the end
+    state.consume(
+      statement,
+      CstNodeKind.Percentage,
+      PreprocessorTokens.Percentage,
+    );
     state.consume(
       statement,
       CstNodeKind.ProcedureStatement_PROCEDURE_END,
@@ -360,7 +368,32 @@ export class PliPreprocessorParser {
       CstNodeKind.ProcedureStatement_Semicolon1,
       PreprocessorTokens.Semicolon,
     );
-    state.pop();
+    return statement;
+  }
+
+  returnStatement(state: PreprocessorParserState): ast.ReturnStatement {
+    const statement = ast.createReturnStatement();
+    state.consume(
+      statement,
+      CstNodeKind.ReturnStatement_RETURN,
+      PreprocessorTokens.Return,
+    );
+    state.consume(
+      statement,
+      CstNodeKind.ReturnStatement_OpenParen,
+      PreprocessorTokens.LParen,
+    );
+    statement.expression = this.expression(state);
+    state.consume(
+      statement,
+      CstNodeKind.ReturnStatement_CloseParen,
+      PreprocessorTokens.RParen,
+    );
+    state.consume(
+      statement,
+      CstNodeKind.ReturnStatement_Semicolon,
+      PreprocessorTokens.Semicolon,
+    );
     return statement;
   }
 
@@ -861,6 +894,14 @@ export class PliPreprocessorParser {
   private statements(state: PreprocessorParserState): ast.Statement[] {
     const statements: ast.Statement[] = [];
     while (!state.eof && !state.canConsumeKeyword(PreprocessorTokens.End)) {
+      if (
+        state.isInProcedure() &&
+        state.canConsume(PreprocessorTokens.Percentage, PreprocessorTokens.End)
+      ) {
+        // Even though the %END; statement is technically part of the procedure, it still has a % prefix.
+        // We need special handling for it here. End statements list if we encounter it.
+        break;
+      }
       const statement = this.statement(state);
       statements.push(statement);
     }
@@ -1228,6 +1269,16 @@ export class PliPreprocessorParser {
       CstNodeKind.Dimensions_OpenParen,
       PreprocessorTokens.LParen,
     );
+    if (
+      state.tryConsume(
+        dimensions,
+        CstNodeKind.Dimensions_CloseParen,
+        PreprocessorTokens.RParen,
+      )
+    ) {
+      // Return early if we found a close parenthesis immediately after open
+      return dimensions;
+    }
     dimensions.dimensions.push(this.parseBound(state));
     while (
       state.tryConsume(
