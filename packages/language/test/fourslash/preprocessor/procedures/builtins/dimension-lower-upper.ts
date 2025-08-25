@@ -1,0 +1,21 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
+/// <reference path="../../../framework.ts" />
+
+//// %DCL A(2:3, 3:5, 10:15) CHAR;
+//// %DCL (X, Y, Z) CHAR;
+//// %X = DIMENSION(A, 1);
+//// %Y = DIMENSION(A, 2);
+//// %Z = DIMENSION(A, 3);
+//// X Y Z
+
+preprocessor.expectTokens("2 3 6");

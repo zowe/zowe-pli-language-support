@@ -9,13 +9,11 @@
  *
  */
 
-/// <reference path="../../framework.ts" />
+/// <reference path="../../../framework.ts" />
 
-//// %DCL Y CHAR;
-//// %Y = SYSTEM();
-//// Y
+//// %DCL X CHAR;
+//// %X = INDEX("HELLO WORLD", "O", 7);
+//// X
 
-// MVS is the default SYSTEM compiler option
-preprocessor.expectTokens(`
-  MVS
-`);
+// Index of the second "O"
+preprocessor.expectTokens("8");

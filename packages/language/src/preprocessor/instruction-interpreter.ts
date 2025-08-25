@@ -49,8 +49,8 @@ type Value = ScalarValue | ArrayValue;
 interface ScalarValue {
   // Scalar preprocessor variables are always strings or numbers.
   // We store them as strings for simplicity and convert them as needed based on the type.
-  value: string;
-  type: inst.DeclaredType;
+  readonly value: string;
+  readonly type: inst.DeclaredType;
 }
 
 function isScalarValue(value: Value): value is ScalarValue {
@@ -65,9 +65,9 @@ function copyScalarValue(value: ScalarValue): ScalarValue {
 }
 
 interface ArrayValue {
-  array: Value[];
-  lower: number;
-  upper: number;
+  readonly array: Value[];
+  readonly lower: number;
+  readonly upper: number;
 }
 
 function isArrayValue(value: Value): value is ArrayValue {
@@ -88,6 +88,62 @@ function copyValue(value: Value): Value {
   } else {
     return copyScalarValue(value);
   }
+}
+
+function boolToString(value: boolean): string {
+  return value ? "1" : "0";
+}
+
+function boolToValue(value: boolean): ScalarValue {
+  return {
+    type: inst.DeclaredType.Fixed,
+    value: boolToString(value),
+  };
+}
+
+function valueToBool(value: ScalarValue): boolean {
+  if (value.type === inst.DeclaredType.Fixed) {
+    return parseInt(value.value) !== 0;
+  } else if (value.type === inst.DeclaredType.Character) {
+    return value.value.trim() !== "";
+  }
+  return false;
+}
+
+function numberToValue(value: string | number): ScalarValue {
+  return {
+    type: inst.DeclaredType.Fixed,
+    value: value.toString(),
+  };
+}
+
+function stringToValue(value: string): ScalarValue {
+  return {
+    type: inst.DeclaredType.Character,
+    value,
+  };
+}
+
+function valueToNumber(value?: Value): number | undefined;
+function valueToNumber(value: Value | undefined, defaultNum: number): number;
+function valueToNumber(value?: Value, defaultNum?: number): number | undefined {
+  if (!value || !isScalarValue(value)) {
+    return defaultNum;
+  }
+  const num = parseInt(value.value, 10);
+  if (isNaN(num)) {
+    return defaultNum;
+  }
+  return num;
+}
+
+function valueToString(value?: Value): string | undefined;
+function valueToString(value: Value | undefined, defaultStr: string): string;
+function valueToString(value?: Value, defaultStr?: string): string | undefined {
+  if (!value || !isScalarValue(value)) {
+    return defaultStr;
+  }
+  return value.value;
 }
 
 function getVariable(
@@ -153,20 +209,12 @@ function generateVariableValue(
       let lower = 1;
       if (lowerBound) {
         const evaluatedLower = evaluateExpression(lowerBound, context);
-        if (isScalarValue(evaluatedLower)) {
-          // Only numeric values can be used as lower bounds
-          const parsedLower = parseInt(evaluatedLower.value);
-          lower = parsedLower;
-        }
+        lower = valueToNumber(evaluatedLower, 1);
       }
       let upper = 1;
       if (upperBound) {
         const evaluatedUpper = evaluateExpression(upperBound, context);
-        if (isScalarValue(evaluatedUpper)) {
-          // Only numeric values can be used as upper bounds
-          const parsedUpper = parseInt(evaluatedUpper.value);
-          upper = parsedUpper;
-        }
+        upper = valueToNumber(evaluatedUpper, 1);
       }
       const length = upper - lower + 1;
       const array: Value[] = [];
@@ -220,6 +268,11 @@ interface InterpreterContext {
   options: InterpreterOptions;
   returnValue: Value;
   counterValue: number;
+  /**
+   * MACNAME returns the name of the preprocessor procedure within which it is invoked.
+   * It is invalid to invoke MACNAME outside of a preprocessor procedure.
+   */
+  macname: string;
 }
 
 interface DoType3Context {
@@ -271,6 +324,7 @@ export function runInstructions(
     doType3: new Map(),
     returnValue: defaultEmptyValue,
     counterValue: 1,
+    macname: "",
   };
   for (const [key, value] of instruction.procedures.entries()) {
     context.procedures.set(key, value);
@@ -695,8 +749,8 @@ function intOperation(
   callback: (left: number, right: number) => number,
 ): ValueOperation {
   return (left: ScalarValue, right: ScalarValue) => {
-    return valueToNumber(
-      callback(parseInt(left.value), parseInt(right.value)).toString(),
+    return numberToValue(
+      callback(parseInt(left.value, 10), parseInt(right.value, 10)).toString(),
     );
   };
 }
@@ -705,7 +759,9 @@ function intBoolOperation(
   callback: (left: number, right: number) => boolean,
 ): ValueOperation {
   return (left: ScalarValue, right: ScalarValue) => {
-    return boolToValue(callback(parseInt(left.value), parseInt(right.value)));
+    return boolToValue(
+      callback(parseInt(left.value, 10), parseInt(right.value, 10)),
+    );
   };
 }
 
@@ -713,7 +769,7 @@ function stringOperation(
   callback: (left: string, right: string) => string,
 ): ValueOperation {
   return (left: ScalarValue, right: ScalarValue) => {
-    return valueToString(callback(left.value, right.value));
+    return stringToValue(callback(left.value, right.value));
   };
 }
 
@@ -781,7 +837,7 @@ function evaluateBinaryExpression(
     case "^>":
       return notGreaterThan(left, right);
   }
-  return valueToNumber("0");
+  return numberToValue("0");
 }
 
 function evaluateUnaryExpression(
@@ -798,17 +854,22 @@ function evaluateUnaryExpression(
     case "+":
       return operand;
     case "-":
-      return valueToNumber((-parseInt(operand.value)).toString());
+      return numberToValue(-valueToNumber(operand, 0));
     case "^":
       return boolToValue(!valueToBool(operand));
   }
-  return valueToNumber("0");
+  return numberToValue("0");
 }
 
 const defaultEmptyValue: ScalarValue = {
   type: inst.DeclaredType.Character,
   value: "",
 };
+const unsetVariable: ScalarValue = {
+  type: inst.DeclaredType.Character,
+  value: "",
+};
+const zero = numberToValue(0);
 
 function evaluateReferenceExpression(
   expression: inst.ReferenceItemInstruction,
@@ -873,13 +934,8 @@ function evaluateValueAccess(
     let variableValue = variable.value;
     for (let i = 0; i < args.length; i++) {
       const arg = evaluateExpression(args[i], context);
-      if (isArrayValue(arg)) {
-        // Array values cannot be used as array indices
-        // TODO: The type system validation should report this, the interpreter can safely ignore it
-        return empty;
-      }
-      const numValue = parseInt(arg.value);
-      if (isNaN(numValue)) {
+      const numValue = valueToNumber(arg);
+      if (numValue === undefined) {
         // If the argument is not a number, we cannot index into the array
         // It seems like the compiler reports IBM3948I in that case
         return empty;
@@ -922,14 +978,18 @@ function evaluateProcedure(
   context: InterpreterContext,
 ): Value {
   const procArgs = args.map((e) => evaluateExpression(e, context));
-  const localContext = createLocalContext(context);
+  const localContext = createLocalContext(context, procedure);
   return runProcedure(procedure, procArgs, localContext);
 }
 
-function createLocalContext(context: InterpreterContext): InterpreterContext {
+function createLocalContext(
+  context: InterpreterContext,
+  procedure: inst.ProcedureInstructionContainer,
+): InterpreterContext {
   return {
     ...context,
     localVariables: new Map(),
+    macname: procedure.names[0] || "",
   };
 }
 
@@ -946,8 +1006,8 @@ function runProcedure(
   // Note that in case a procedure has received too many arguments, the excess ones are ignored
   for (let i = 0; i < procedure.parameters.length; i++) {
     const param = procedure.parameters[i];
-    // In case a variable hasn't been supplied, the default value is used
-    const arg = args[i] ?? defaultEmptyValue;
+    // In case a variable hasn't been supplied, use the special "unsetVariable"
+    const arg = args[i] ?? unsetVariable;
     const variable: Variable = {
       name: param,
       value: arg,
@@ -973,40 +1033,6 @@ function evaluateLiteralExpression(
         ? inst.DeclaredType.Character
         : inst.DeclaredType.Fixed,
     value: expression.value,
-  };
-}
-
-function boolToString(value: boolean): string {
-  return value ? "1" : "0";
-}
-
-function boolToValue(value: boolean): ScalarValue {
-  return {
-    type: inst.DeclaredType.Fixed,
-    value: boolToString(value),
-  };
-}
-
-function valueToBool(value: ScalarValue): boolean {
-  if (value.type === inst.DeclaredType.Fixed) {
-    return parseInt(value.value) !== 0;
-  } else if (value.type === inst.DeclaredType.Character) {
-    return value.value.trim() !== "";
-  }
-  return false;
-}
-
-function valueToNumber(value: string): ScalarValue {
-  return {
-    type: inst.DeclaredType.Fixed,
-    value,
-  };
-}
-
-function valueToString(value: string): ScalarValue {
-  return {
-    type: inst.DeclaredType.Character,
-    value,
   };
 }
 
@@ -1404,9 +1430,9 @@ function resolveIncludeFileUri(
 
 type PreprocessorBuiltin = (
   context: InterpreterContext,
-  args: Value[],
+  // Use the correct typing to ensure that we always handle the case in which an argument is not provided
+  args: (Value | undefined)[],
 ) => Value;
-const emptyBuiltin: PreprocessorBuiltin = () => defaultEmptyValue;
 
 const builtinImplementations = new Map<string, PreprocessorBuiltin>();
 
@@ -1414,10 +1440,10 @@ let collate = "";
 for (let i = 0; i < 256; i++) {
   collate += String.fromCharCode(i);
 }
-
-builtinImplementations.set("COLLATE", () => valueToString(collate));
+const collateValue = stringToValue(collate);
+builtinImplementations.set("COLLATE", () => collateValue);
 const commentRegex = /\/\*|\*\//g;
-builtinImplementations.set("COMMENT", (context, args) => {
+builtinImplementations.set("COMMENT", (_, args) => {
   const text = args[0];
   if (!text || !isScalarValue(text)) {
     return defaultEmptyValue;
@@ -1428,29 +1454,32 @@ builtinImplementations.set("COMMENT", (context, args) => {
     match.charAt(0) === "/" ? "/>" : "</",
   );
   // The final comment should be surrounded by comment markers
-  return valueToString(`/*${replacedText}*/`);
+  return stringToValue(`/*${replacedText}*/`);
 });
 // Simply use UNIX epoch time
 // PLI expects no delimiters between the values
 const compiledDate = ["1970", "01", "01", "00", "00", "00", "000"].join("");
-builtinImplementations.set("COMPILEDDATE", () => valueToString(compiledDate));
+builtinImplementations.set("COMPILEDDATE", () => stringToValue(compiledDate));
 // From the reference: A leading zero in the day of the month field is replaced by a blank; no other leading zeros are suppressed.
 const compileTime = " 1.JAN.70 00.00.00";
-builtinImplementations.set("COMPILETIME", () => valueToString(compileTime));
-builtinImplementations.set("COPY", (_, args) => {
-  if (args.length < 2) {
+builtinImplementations.set("COMPILETIME", () => stringToValue(compileTime));
+function copy(
+  value: Value | undefined,
+  repetitions: Value | undefined,
+  plus: number,
+): Value {
+  if (!value || !isScalarValue(value) || !repetitions) {
     return defaultEmptyValue;
   }
-  const [value, repetitions] = args;
-  if (!isScalarValue(value) || !isScalarValue(repetitions)) {
-    return defaultEmptyValue;
-  }
-  const repeatCount = parseInt(repetitions.value, 10);
+  const repeatCount = valueToNumber(repetitions, 0) + plus;
   if (repeatCount === 0) {
     return defaultEmptyValue;
   }
   const repeatedText = value.value.repeat(repeatCount);
-  return valueToString(repeatedText);
+  return stringToValue(repeatedText);
+}
+builtinImplementations.set("COPY", (_, args) => {
+  return copy(args[0], args[1], 0);
 });
 const maxCountVariable = 99999;
 builtinImplementations.set("COUNTER", (context) => {
@@ -1462,34 +1491,277 @@ builtinImplementations.set("COUNTER", (context) => {
   // Pad with leading zeroes
   // The counter value should be a 5-digit string
   const stringValue = counterValue.toString().padStart(5, "0");
-  return valueToString(stringValue);
+  return stringToValue(stringValue);
 });
-builtinImplementations.set("DIMENSION", emptyBuiltin);
-builtinImplementations.set("HBOUND", emptyBuiltin);
-builtinImplementations.set("INDEX", emptyBuiltin);
-builtinImplementations.set("LBOUND", emptyBuiltin);
-builtinImplementations.set("LENGTH", emptyBuiltin);
-builtinImplementations.set("LOWERCASE", emptyBuiltin);
-builtinImplementations.set("MACCOL", emptyBuiltin);
-builtinImplementations.set("MACLMAR", emptyBuiltin);
-builtinImplementations.set("MACNAME", emptyBuiltin);
-builtinImplementations.set("MACRMAR", emptyBuiltin);
-builtinImplementations.set("MAX", emptyBuiltin);
-builtinImplementations.set("MIN", emptyBuiltin);
-builtinImplementations.set("PARMSET", emptyBuiltin);
-builtinImplementations.set("QUOTE", emptyBuiltin);
-builtinImplementations.set("REPEAT", emptyBuiltin);
-builtinImplementations.set("SUBSTR", emptyBuiltin);
-builtinImplementations.set("SYSDIMSIZE", emptyBuiltin);
-builtinImplementations.set("SYSOFFSETSIZE", emptyBuiltin);
-builtinImplementations.set("SYSPARM", emptyBuiltin);
-builtinImplementations.set("SYSPOINTERSIZE", emptyBuiltin);
+function getArrayAtDim(
+  value: Value,
+  dimension: number,
+): ArrayValue | undefined {
+  while (dimension > 1) {
+    if (isArrayValue(value)) {
+      value = value.array[0];
+      dimension--;
+    } else {
+      return undefined;
+    }
+  }
+  if (isArrayValue(value)) {
+    return value;
+  }
+  return undefined;
+}
+function getDim(value?: Value): number {
+  let dimension = 1;
+  if (value) {
+    dimension = valueToNumber(value, 1);
+    if (dimension < 1) {
+      dimension = 1;
+    }
+  }
+  return dimension;
+}
+builtinImplementations.set("DIMENSION", (_, args) => {
+  const [arrayRef, dimension] = args;
+  if (!arrayRef) {
+    return zero;
+  }
+  const arrayValue = getArrayAtDim(arrayRef, getDim(dimension));
+  if (arrayValue) {
+    return numberToValue(arrayValue.array.length);
+  } else {
+    return zero;
+  }
+});
+builtinImplementations.set("HBOUND", (_, args) => {
+  const [arrayRef, dimension] = args;
+  if (!arrayRef) {
+    return zero;
+  }
+  const arrayValue = getArrayAtDim(arrayRef, getDim(dimension));
+  if (arrayValue) {
+    return numberToValue(arrayValue.upper);
+  } else {
+    return zero;
+  }
+});
+builtinImplementations.set("INDEX", (_, args) => {
+  const [target, search, start] = args;
+  if (!target || !search) {
+    return zero;
+  }
+  let startIndex = 0;
+  if (start) {
+    startIndex = valueToNumber(start, 1) - 1;
+  }
+  const targetValue = valueToString(target, "");
+  const searchValue = valueToString(search, "");
+  // The spec says: If y does not occur in x, or if either x or y have zero length, the value zero is returned.
+  if (targetValue.length === 0 || searchValue.length === 0) {
+    return zero;
+  }
+  // The index is 1-based in PLI
+  const indexOfValue = targetValue.indexOf(searchValue, startIndex) + 1;
+  return numberToValue(indexOfValue);
+});
+builtinImplementations.set("LBOUND", (_, args) => {
+  const [arrayRef, dimension] = args;
+  if (!arrayRef) {
+    return zero;
+  }
+  const arrayValue = getArrayAtDim(arrayRef, getDim(dimension));
+  if (arrayValue) {
+    return numberToValue(arrayValue.lower);
+  } else {
+    return zero;
+  }
+});
+builtinImplementations.set("LENGTH", (_, args) => {
+  const arg = args[0];
+  const stringValue = valueToString(arg, "");
+  return numberToValue(stringValue.length);
+});
+builtinImplementations.set("LOWERCASE", (_, args) => {
+  const arg = args[0];
+  const stringValue = valueToString(arg, "");
+  return stringToValue(stringValue.toLowerCase());
+});
+builtinImplementations.set("MACCOL", () => {
+  // TODO: MACCOL returns a FIXED value that represents the column where the outermost macro invocation starts in the source text that contains the macro invocation.
+  return zero;
+});
+builtinImplementations.set("MACLMAR", (context) => {
+  const margins = context.unit.compilerOptions.margins;
+  if (margins) {
+    return numberToValue(margins.m);
+  }
+  return numberToValue(2);
+});
+builtinImplementations.set("MACNAME", (context) => {
+  return stringToValue(context.macname);
+});
+builtinImplementations.set("MACRMAR", (context) => {
+  const margins = context.unit.compilerOptions.margins;
+  if (margins) {
+    return numberToValue(margins.n);
+  }
+  return numberToValue(72);
+});
+builtinImplementations.set("MAX", (_, args) => {
+  const numbers: number[] = [];
+  for (const arg of args) {
+    if (arg) {
+      const num = valueToNumber(arg);
+      if (num !== undefined) {
+        numbers.push(num);
+      }
+    }
+  }
+  if (numbers.length === 0) {
+    return zero;
+  }
+  return numberToValue(Math.max(...numbers));
+});
+builtinImplementations.set("MIN", (_, args) => {
+  const numbers: number[] = [];
+  for (const arg of args) {
+    if (arg) {
+      const num = valueToNumber(arg);
+      if (num !== undefined) {
+        numbers.push(num);
+      }
+    }
+  }
+  if (numbers.length === 0) {
+    return zero;
+  }
+  return numberToValue(Math.min(...numbers));
+});
+builtinImplementations.set("PARMSET", (_, args) => {
+  // PARMSET returns a BIT value indicating if a specified parameter was set on invocation of the procedure.
+  const paramName = args[0];
+  if (!paramName || paramName === unsetVariable) {
+    return zero;
+  } else {
+    return boolToValue(true);
+  }
+});
+builtinImplementations.set("QUOTE", (_, args) => {
+  const value = args[0];
+  if (!value) {
+    return stringToValue('""');
+  }
+  const textValue = valueToString(value, "").replace(/"/g, '""');
+  return stringToValue(`"${textValue}"`);
+});
+builtinImplementations.set("REPEAT", (_, args) => {
+  // Same as copy, but with an additional repetition
+  return copy(args[0], args[1], 1);
+});
+builtinImplementations.set("SUBSTR", (_, args) => {
+  const [value, start, length] = args;
+  if (!value || !isScalarValue(value)) {
+    return defaultEmptyValue;
+  }
+  // SUBSTR is 1-based
+  const startIndex = valueToNumber(start, 1) - 1;
+  const lengthValue = length ? valueToNumber(length) : undefined;
+  const end = lengthValue !== undefined ? startIndex + lengthValue : undefined;
+  const stringValue = valueToString(value, "");
+  const substring = stringValue.substring(startIndex, end);
+  return stringToValue(substring);
+});
+builtinImplementations.set("SYSDIMSIZE", (context) => {
+  // SYSDIMSIZE returns a FIXED value that indicates the maximum number of bytes that is needed to hold an index for an array permitted under the compiler CMPAT option.
+  // The possible return values are as follows:
+  // * 4 under CMPAT(V2) and CMPAT(LE)
+  // * 8 under CMPAT(V3)
+  const cmpat = context.unit.compilerOptions.cmpat;
+  return numberToValue(cmpat === "V3" ? 8 : 4);
+});
+builtinImplementations.set("SYSOFFSETSIZE", () => {
+  // SYSOFFSETSIZE returns a FIXED value that indicates the number of bytes needed to hold an OFFSET.
+  // ALWAYS returns 4.
+  return numberToValue(4);
+});
+builtinImplementations.set("SYSPARM", (context) => {
+  const symparm = context.unit.compilerOptions.sysParm;
+  return stringToValue(symparm);
+});
+builtinImplementations.set("SYSPOINTERSIZE", (context) => {
+  const lp = context.unit.compilerOptions.LP;
+  return numberToValue(lp === "64" ? 8 : 4);
+});
 builtinImplementations.set("SYSTEM", (context) => {
   const systemInfo = context.unit.compilerOptions.system;
-  return valueToString(systemInfo);
+  return stringToValue(systemInfo);
 });
-builtinImplementations.set("SYSVERSION", emptyBuiltin);
-builtinImplementations.set("TRANSLATE", emptyBuiltin);
-builtinImplementations.set("TRIM", emptyBuiltin);
-builtinImplementations.set("UPPERCASE", emptyBuiltin);
-builtinImplementations.set("VERIFY", emptyBuiltin);
+builtinImplementations.set("SYSVERSION", () => {
+  // SYSVERSION returns a CHARACTER string containing the product name as well as the version, release, and modification level.
+  return stringToValue("PL/I for z/OS V6.R1.M0");
+});
+builtinImplementations.set("TRANSLATE", (_, args) => {
+  const [toTranslate, toCharset, fromCharset] = args;
+  const toTranslateValue = valueToString(toTranslate);
+  if (!toTranslateValue) {
+    return defaultEmptyValue;
+  }
+  const toCharsetValue = valueToString(toCharset, "");
+  const fromCharsetValue = valueToString(fromCharset, "") || collate;
+  const translationMap = new Map<string, string>();
+  for (let i = 0; i < fromCharsetValue.length; i++) {
+    const from = fromCharsetValue[i];
+    if (!translationMap.has(from)) {
+      const to = toCharsetValue[i] || " ";
+      translationMap.set(from, to);
+    }
+  }
+  let result = "";
+  for (let i = 0; i < toTranslateValue.length; i++) {
+    const char = toTranslateValue[i];
+    const translatedChar = translationMap.get(char) || char;
+    result += translatedChar;
+  }
+  return stringToValue(result);
+});
+builtinImplementations.set("TRIM", (_, args) => {
+  const [value, start, end] = args;
+  if (!value || !isScalarValue(value)) {
+    return defaultEmptyValue;
+  }
+  const startTrimChars = valueToString(start, " ");
+  const endTrimChars = valueToString(end, " ");
+  const startSet = new Set(startTrimChars.split(""));
+  const endSet = new Set(endTrimChars.split(""));
+  const stringValue = valueToString(value, "");
+  let startIndex = 0;
+  let endIndex = stringValue.length;
+  while (startIndex < endIndex && startSet.has(stringValue[startIndex])) {
+    startIndex++;
+  }
+  while (endIndex > startIndex && endSet.has(stringValue[endIndex - 1])) {
+    endIndex--;
+  }
+  const trimmed = stringValue.substring(startIndex, endIndex);
+  return stringToValue(trimmed);
+});
+builtinImplementations.set("UPPERCASE", (_, args) => {
+  const arg = args[0];
+  const stringValue = valueToString(arg, "");
+  return stringToValue(stringValue.toUpperCase());
+});
+builtinImplementations.set("VERIFY", (_, args) => {
+  // VERIFY returns a FIXED value indicating the position in x of the leftmost character that is not in y.
+  // It also allows you to specify the location within x at which to begin processing.
+  const [x, y, n] = args;
+  const xValue = valueToString(x, "");
+  const yValue = valueToString(y, "");
+  const nValue = valueToNumber(n, 1) - 1;
+  const ySet = new Set(yValue.split(""));
+  for (let i = nValue; i < xValue.length; i++) {
+    if (!ySet.has(xValue[i])) {
+      // String indices are 1-based in PLI
+      return numberToValue(i + 1);
+    }
+  }
+  return zero;
+});

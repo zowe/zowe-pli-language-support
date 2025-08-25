@@ -24,7 +24,6 @@ import {
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { URI } from "../utils/uri";
 import { assignDebugKinds } from "../utils/debug-kinds";
-import { getDefaultCompilerOptions } from "../preprocessor/compiler-options/options";
 import { CancellationToken } from "vscode-languageserver";
 import { interruptAndCheck } from "../utils/promises";
 
@@ -64,8 +63,6 @@ export function tokenize(
   compilationUnit.preprocessorAst.statements = result.statements;
   compilationUnit.preprocessorEvaluationResults = result.evaluationResults;
   compilationUnit.referencesCache.addAll(result.tokenReferences);
-  compilationUnit.compilerOptions =
-    result.compilerOptions.result?.options ?? getDefaultCompilerOptions();
   const uri = compilationUnit.uri.toString();
   compilationUnit.diagnostics.lexer = lexerIssuesToDiagnostics(result.errors);
   compilationUnit.diagnostics.compilerOptions =
