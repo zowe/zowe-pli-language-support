@@ -185,7 +185,7 @@ interface InterpreterContext {
   procedures: Map<string, inst.ProcedureInstructionContainer>;
   activeProcedures: Set<string>;
   counter: Map<inst.InstructionNode, number>;
-  doType3: Map<inst.InstructionNode, DoType3Store>;
+  doType3: Map<inst.InstructionNode, DoType3Context>;
   references: ast.Reference[];
   evaluations: EvaluationResults;
   xIncludes: Set<string>;
@@ -194,9 +194,9 @@ interface InterpreterContext {
   returnValue: Value;
 }
 
-interface DoType3Store {
-  savedToValue?: ScalarValue;
-  savedByValue?: ScalarValue;
+interface DoType3Context {
+  toValue?: ScalarValue;
+  byValue?: ScalarValue;
 }
 
 export type InstructionInterpreterResult = CompilationUnitTokens & {
@@ -411,34 +411,28 @@ function runDoType3Instruction(
   context: InterpreterContext,
   node: inst.InstructionNode,
 ): boolean {
-  const { specificationItems, variable } = doType3;
+  const { variable } = doType3;
+  const varName = variable.variable;
+  const spec = doType3.specification;
 
-  // Do specification required, multiple specifications are not supported
-  if (specificationItems.length !== 1) {
+  // Initial expression is required
+  if (!spec.expression) {
+    return false;
+  }
+  const start = evaluateExpression(spec.expression, context);
+  if (!isScalarValue(start)) {
     return false;
   }
 
-  // Get the single specification
-  const spec = specificationItems[0];
-  
   // Get current do-type3 state
-  const doType3Store = context.doType3.get(node);
+  let doType3Context = context.doType3.get(node);
 
-  const varName = variable.variable;
   let loopVar = context.variables.get(varName);
 
-  // Initialize when called the first time)
-  if (!loopVar || !doType3Store) {
-    if (!spec.expression) {
-      return false;
-    }
-    const start = evaluateExpression(spec.expression, context);
-    if (!isScalarValue(start)) {
-      return false;
-    }
-
+  // Initialize the do-type3 context on first iteration
+  if (!doType3Context) {
+    // Implicitly declare the loop variable if it doesn't exist, or update existing variable
     if (!loopVar) {
-      // Implicitly declare the loop variable if it doesn't exist
       loopVar = {
         name: varName,
         declarationNode: variable.reference?.owner,
@@ -451,7 +445,7 @@ function runDoType3Instruction(
       };
       context.variables.set(varName, loopVar);
     } else {
-      // Next doSequence, update the loop variable if it already exists
+      // Update existing variable to the start value
       loopVar.value = {
         value: start.value,
         type: inst.DeclaredType.Fixed,
@@ -459,52 +453,46 @@ function runDoType3Instruction(
     }
 
     // Evaluate and save TO and BY expressions at entry to the specification
-    let savedToValue: ScalarValue | undefined;
-    let savedByValue: ScalarValue | undefined;
+    let toValue: ScalarValue | undefined;
+    let byValue: ScalarValue | undefined;
 
     if (spec.to) {
-      const endValue = evaluateExpression(spec.to, context);
-      if (!isScalarValue(endValue)) {
+      const value = evaluateExpression(spec.to, context);
+      if (!isScalarValue(value)) {
         return false;
       }
-      savedToValue = endValue;
-
-      if (spec.by) {
-        const stepValue = evaluateExpression(spec.by, context);
-        if (!isScalarValue(stepValue)) {
-          return false;
-        }
-        savedByValue = stepValue;
-      } else {
-        savedByValue = valueToNumber("1");
-      }
-    } else if (spec.upthru) {
-      const endValue = evaluateExpression(spec.upthru, context);
-      if (!isScalarValue(endValue)) {
-        return false;
-      }
-      savedToValue = endValue;
-      savedByValue = valueToNumber("1");
-    } else if (spec.downthru) {
-      const endValue = evaluateExpression(spec.downthru, context);
-      if (!isScalarValue(endValue)) {
-        return false;
-      }
-      savedToValue = endValue;
-      savedByValue = valueToNumber("-1");
+      toValue = value;
     }
 
-    // Save values that must be evaluated only once
-    context.doType3.set(node, {
-      savedToValue,
-      savedByValue,
-    });
-    return true; // Always continue after initialization
+    if (spec.by) {
+      const value = evaluateExpression(spec.by, context);
+      if (!isScalarValue(value)) {
+        return false;
+      }
+      byValue = value;
+    } else {
+      byValue = valueToNumber("1");
+    }
+      
+    doType3Context = {
+      toValue,
+      byValue,
+    };
+
+    context.doType3.set(node, doType3Context);
+
+    // Always continue after initialization
+    return true;
+  }
+
+  // Ensure loop variable exists for subsequent iterations
+  if (!loopVar) {
+    return false; // Variable should exist by now
   }
 
   let condition = true;
 
-  // Until is evaluated after each repetition of the loop body
+  // Until is evaluated after each repetition of the do-group
   if (spec.until) {
     const untilCondition = evaluateExpression(spec.until, context);
     if (!isScalarValue(untilCondition)) {
@@ -523,20 +511,19 @@ function runDoType3Instruction(
       value: repeatValue.value,
       type: inst.DeclaredType.Fixed,
     };
-  } else {
-    // TO, UPTHRU, or DOWNTHRU clause - use saved values from entry evaluation
-    const endValue = doType3Store.savedToValue;
-    const stepValue = doType3Store.savedByValue;
+  } else if (spec.to) {
 
-    // TODO(@@dd): change this, according to the spec, the initial value is not required
-    // Sanity check (TO, UPTHRU, or DOWNTHRU clause)
-    if (!endValue || !stepValue) {
+    const { toValue, byValue } = doType3Context;
+
+    // Sanity check for TypeScript, values must be set
+    if (!toValue || !byValue) {
       return false;
     }
 
-    const end = parseInt(endValue.value);
-    const step = parseInt(stepValue.value);
+    const end = parseInt(toValue.value);
+    const step = parseInt(byValue.value);
 
+    // Sanity check for TypeScript, the loop variable must be a number
     if (!isScalarValue(loopVar.value)) {
       return false;
     }
@@ -554,9 +541,12 @@ function runDoType3Instruction(
         type: inst.DeclaredType.Fixed,
       };
     }
+  } else {
+    // unsupported do specification clause
+    return false;
   }
 
-  // While is evaluated before each repetition of the loop body
+  // While is evaluated with the updated value (after increment)
   if (spec.while) {
     const whileCondition = evaluateExpression(spec.while, context);
     if (!isScalarValue(whileCondition)) {

@@ -20,8 +20,5 @@
 ////   DCL Var%;I FIXED;
 //// %END;
 
-preprocessor.expectTokens(`
-  DCL Var1 FIXED;
-  DCL Var2 FIXED;
-  DCL Var3 FIXED;
-`);
+// upthru not supported
+preprocessor.expectTokens('');

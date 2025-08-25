@@ -203,13 +203,11 @@ export interface DoType2Instruction {
 
 export interface DoType3Instruction {
   variable: ReferenceItemInstruction;
-  specificationItems: DoType3SpecificationItem[];
+  specification: DoType3Specification;
 }
 
-export interface DoType3SpecificationItem {
+export interface DoType3Specification {
   expression: ExpressionInstruction | null;
-  upthru: ExpressionInstruction | null;
-  downthru: ExpressionInstruction | null;
   repeat: ExpressionInstruction | null;
   while: ExpressionInstruction | null;
   until: ExpressionInstruction | null;
