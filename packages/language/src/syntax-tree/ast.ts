@@ -1237,7 +1237,7 @@ export function createDoStatement(): DoStatement {
 }
 export interface DoType3 extends AstNode {
   kind: SyntaxKind.DoType3;
-  variable: ReferenceItem | null;
+  variable: MemberCall | null;
   specifications: DoSpecification[];
 }
 export function createDoType3(): DoType3 {
