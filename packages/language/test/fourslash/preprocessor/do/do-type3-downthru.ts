@@ -21,4 +21,4 @@
 //// %END;
 
 // downthru not supported
-preprocessor.expectTokens('');
+preprocessor.expectTokens("");

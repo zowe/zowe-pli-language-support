@@ -12,13 +12,16 @@
 /// <reference path="../../framework.ts" />
 
 /**
- * DO Type 3 - DO with UPTHRU
+ * DO Type 3 - WHILE condition starts true then becomes false
+ * Tests case where WHILE condition controls loop termination
  */
 
 //// %DCL I FIXED;
-//// %DO I = 1 UPTHRU 3;
+//// %DO I = 1 TO 10 WHILE(I <= 2);
 ////   DCL Var%;I FIXED;
 //// %END;
 
-// upthru not supported
-preprocessor.expectTokens("");
+preprocessor.expectTokens(`
+  DCL Var1 FIXED;
+  DCL Var2 FIXED;
+`);

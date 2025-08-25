@@ -12,13 +12,15 @@
 /// <reference path="../../framework.ts" />
 
 /**
- * DO Type 3 - DO with UPTHRU
+ * DO Type 3 - UNTIL condition false (single iteration)
+ * Tests corner case where UNTIL condition is false but range limits to one iteration
  */
 
 //// %DCL I FIXED;
-//// %DO I = 1 UPTHRU 3;
+//// %DO I = 1 TO 1 UNTIL(I < 1);
 ////   DCL Var%;I FIXED;
 //// %END;
 
-// upthru not supported
-preprocessor.expectTokens("");
+preprocessor.expectTokens(`
+  DCL Var1 FIXED;
+`);

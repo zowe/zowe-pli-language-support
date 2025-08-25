@@ -21,4 +21,4 @@
 //// %END;
 
 // multiple specifications not supported
-preprocessor.expectTokens('');
+preprocessor.expectTokens("");

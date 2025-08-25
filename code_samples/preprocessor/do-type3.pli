@@ -30,40 +30,6 @@
    DCL ByToVar10 FIXED;
  */
  
- /* DO with multiple specifications */
- %DCL I4 FIXED;
- %DO I4 = 1 TO 2, 2 TO 4 BY 2;
-   DCL MultiVar%;I4 FIXED;
- %END;
- /* Evaluates to:
-   DCL MultiVar1 FIXED;
-   DCL MultiVar2 FIXED;
-   DCL MultiVar2 FIXED;
-   DCL MultiVar4 FIXED;
- */
- 
- /* DO with UPTHRU */
- %DCL I5 FIXED;
- %DO I5 = 1 UPTHRU 3;
-   DCL UpthruVar%;I5 FIXED;
- %END;
- /* Evaluates to:
-   DCL UpthruVar1 FIXED;
-   DCL UpthruVar2 FIXED;
-   DCL UpthruVar3 FIXED;
- */
- 
- /* DO with DOWNTHRU */
- %DCL I6 FIXED;
- %DO I6 = 3 DOWNTHRU 1;
-   DCL DownthruVar%;I6 FIXED;
- %END;
- /* Evaluates to:
-   DCL DownthruVar3 FIXED;
-   DCL DownthruVar2 FIXED;
-   DCL DownthruVar1 FIXED;
- */
- 
  /* DO with REPEAT */
  %DCL I7 FIXED;
  %DO I7 = 1 REPEAT 2*I7 UNTIL(I7 > 6);
