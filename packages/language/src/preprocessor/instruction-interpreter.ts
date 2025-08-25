@@ -195,8 +195,6 @@ interface InterpreterContext {
 }
 
 interface DoType3Store {
-  specIndex: number;
-  needsReinit: boolean;
   savedToValue?: ScalarValue;
   savedByValue?: ScalarValue;
 }
@@ -415,35 +413,25 @@ function runDoType3Instruction(
 ): boolean {
   const { specificationItems, variable } = doType3;
 
-  if (specificationItems.length === 0) {
+  // Do specification required, multiple specifications are not supported
+  if (specificationItems.length !== 1) {
     return false;
   }
 
-  // Get current spec index, starting at 0 for first iteration
-  const doType3Store = context.doType3.get(node) ?? {
-    specIndex: 0,
-    needsReinit: true,
-  };
-  let currentSpecIndex = doType3Store.specIndex;
-  const needsReinit = doType3Store.needsReinit;
-
-  // If we've exhausted all specifications, return false to stop the loop
-  if (currentSpecIndex >= specificationItems.length) {
-    return false;
-  }
-
-  const spec = specificationItems[currentSpecIndex];
-  // TODO(@@dd): change this, according to the spec, the initial value is not required
-  if (!spec.expression) {
-    return false;
-  }
+  // Get the single specification
+  const spec = specificationItems[0];
+  
+  // Get current do-type3 state
+  const doType3Store = context.doType3.get(node);
 
   const varName = variable.variable;
   let loopVar = context.variables.get(varName);
 
-  // Initialize when we need to reinitialize for a new spec (including first time)
-  // or when the loop variable doesn't exist (implicit declaration)
-  if (!loopVar || needsReinit) {
+  // Initialize when called the first time)
+  if (!loopVar || !doType3Store) {
+    if (!spec.expression) {
+      return false;
+    }
     const start = evaluateExpression(spec.expression, context);
     if (!isScalarValue(start)) {
       return false;
@@ -506,10 +494,8 @@ function runDoType3Instruction(
       savedByValue = valueToNumber("-1");
     }
 
-    // Clear the reinit flag and update spec index with saved values
+    // Save values that must be evaluated only once
     context.doType3.set(node, {
-      specIndex: currentSpecIndex,
-      needsReinit: false,
       savedToValue,
       savedByValue,
     });
@@ -577,74 +563,6 @@ function runDoType3Instruction(
       return false;
     }
     condition &&= valueToBool(whileCondition);
-  }
-
-  // If current spec is done, try to advance to next spec
-  if (!condition && currentSpecIndex < specificationItems.length - 1) {
-    // Advance to next spec immediately and reinitialize
-    const nextSpecIndex = currentSpecIndex + 1;
-    const nextSpec = specificationItems[nextSpecIndex];
-
-    // TODO(@@dd): change this, according to the spec, the initial value is not required
-    if (!nextSpec.expression) {
-      return false;
-    }
-
-    const start = evaluateExpression(nextSpec.expression, context);
-    if (!isScalarValue(start)) {
-      return false;
-    }
-
-    // Reinitialize with the next spec's initial value
-    loopVar.value = {
-      value: start.value,
-      type: inst.DeclaredType.Fixed,
-    };
-
-    // Evaluate and save TO and BY expressions for the new specification
-    let savedToValue: ScalarValue | undefined;
-    let savedByValue: ScalarValue | undefined;
-
-    if (nextSpec.to) {
-      const endValue = evaluateExpression(nextSpec.to, context);
-      if (!isScalarValue(endValue)) {
-        return false;
-      }
-      savedToValue = endValue;
-
-      if (nextSpec.by) {
-        const stepValue = evaluateExpression(nextSpec.by, context);
-        if (!isScalarValue(stepValue)) {
-          return false;
-        }
-        savedByValue = stepValue;
-      } else {
-        savedByValue = valueToNumber("1");
-      }
-    } else if (nextSpec.upthru) {
-      const endValue = evaluateExpression(nextSpec.upthru, context);
-      if (!isScalarValue(endValue)) {
-        return false;
-      }
-      savedToValue = endValue;
-      savedByValue = valueToNumber("1");
-    } else if (nextSpec.downthru) {
-      const endValue = evaluateExpression(nextSpec.downthru, context);
-      if (!isScalarValue(endValue)) {
-        return false;
-      }
-      savedToValue = endValue;
-      savedByValue = valueToNumber("-1");
-    }
-
-    // Update state to reflect the new spec with saved values
-    context.doType3.set(node, {
-      specIndex: nextSpecIndex,
-      needsReinit: false,
-      savedToValue,
-      savedByValue,
-    });
-    return true;
   }
 
   return condition;

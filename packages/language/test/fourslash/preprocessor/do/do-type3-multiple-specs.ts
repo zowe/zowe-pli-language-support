@@ -20,9 +20,5 @@
 ////   DCL VarI%;I FIXED;
 //// %END;
 
-preprocessor.expectTokens(`
-  DCL VarI1 FIXED;
-  DCL VarI2 FIXED;
-  DCL VarI4 FIXED;
-  DCL VarI6 FIXED;
-`);
+// multiple specifications not supported
+preprocessor.expectTokens('');
