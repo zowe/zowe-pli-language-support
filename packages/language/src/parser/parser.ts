@@ -2755,7 +2755,6 @@ export class PliParser extends AbstractParser {
     this.OPTION1(() => {
       this.OR1([
         {
-          GATE: () => this.LA(2).tokenTypeIdx !== tokens.Equals.tokenTypeIdx,
           ALT: () => {
             this.SUBRULE_ASSIGN1(this.DoType2, {
               assign: (result) => {
@@ -2765,7 +2764,6 @@ export class PliParser extends AbstractParser {
           },
         },
         {
-          GATE: () => this.LA(2).tokenTypeIdx === tokens.Equals.tokenTypeIdx,
           ALT: () => {
             this.SUBRULE_ASSIGN1(this.DoType3, {
               assign: (result) => {
@@ -2888,7 +2886,7 @@ export class PliParser extends AbstractParser {
   DoType3 = this.RULE("DoType3", () => {
     let element = this.push(ast.createDoType3());
 
-    this.SUBRULE_ASSIGN1(this.ReferenceItem, {
+    this.SUBRULE_ASSIGN1(this.MemberCall, {
       assign: (result) => {
         element.variable = result;
       },

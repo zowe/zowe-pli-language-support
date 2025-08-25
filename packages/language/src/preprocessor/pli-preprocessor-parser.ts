@@ -760,16 +760,7 @@ export class PliPreprocessorParser {
 
   private doType3(state: PreprocessorParserState): ast.DoType3 {
     const doType3 = ast.createDoType3();
-
-    // Consume the ID token to create the ReferenceItem
-    const referenceItem = ast.createReferenceItem();
-    const idToken = state.consume(
-      referenceItem,
-      CstNodeKind.ReferenceItem_Ref,
-      PreprocessorTokens.Id,
-    );
-    referenceItem.ref = ast.createReference(referenceItem, idToken, true);
-    doType3.variable = referenceItem;
+    doType3.variable = this.memberCall(state, true);
 
     // Consume the "=" token
     state.consume(doType3, CstNodeKind.DoType3_Equals, PreprocessorTokens.Eq);

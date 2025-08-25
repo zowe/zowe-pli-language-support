@@ -949,4 +949,15 @@ describe("PL/I Parsing tests", () => {
     assertNoParseErrors(doc);
     generateAndAssertValidSymbolTable(doc);
   });
+
+  test("Supports Member Call syntax on DoType3", async () => {
+    const doc = await parseStmts(`
+      DCL 1 A, 2 B FIXED;
+      DO A.B = 1 TO 10;
+        PUT(A.B);
+      END;
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
 });
