@@ -10,7 +10,7 @@
  */
 
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
-import { PliPreprocessorParser } from "./pli-preprocessor-parser";
+import { preprocessorParse } from "./preprocessor-parser";
 import * as ast from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
 import {
@@ -30,6 +30,7 @@ import {
 } from "./compiler-options/options";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { initLexer } from "../parser/tokenizer";
+import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
 
 export interface LexingIssue {
   readonly message: string;
@@ -55,12 +56,10 @@ export interface LexerResult {
 export class PliLexer {
   readonly compilerOptionsPreprocessor: CompilerOptionsProcessor;
   readonly marginsProcessor: MarginsProcessor;
-  readonly preprocessorParser: PliPreprocessorParser;
 
   constructor() {
     this.compilerOptionsPreprocessor = new CompilerOptionsProcessor();
     this.marginsProcessor = new PliMarginsProcessor();
-    this.preprocessorParser = new PliPreprocessorParser();
   }
 
   tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
@@ -76,16 +75,13 @@ export class PliLexer {
         compilerOptionsResult,
         uri,
       );
-      const state = this.preprocessorParser.initializeState(
-        textWithoutMargins,
-        uri,
-      );
+      const state = preprocessorParserStateFromText(textWithoutMargins, uri);
       // Do a full parsing of the input text to extract all *local* statements
       const {
         statements,
         errors,
         tokens: fileTokens,
-      } = this.preprocessorParser.parse(state);
+      } = preprocessorParse(state);
       const result = generateInstructions(statements);
       return {
         tokens: fileTokens,
@@ -110,7 +106,6 @@ export class PliLexer {
     const output = runInstructions(unit, uri, instruction.result, {
       compilerOptions: compilerOptionsResult.result,
       marginsProcessor: this.marginsProcessor,
-      parser: this.preprocessorParser,
     });
     output.fileTokens.set(uri.toString(), instruction.tokens);
     if (compilerOptionsResult.result) {

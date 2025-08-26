@@ -31,9 +31,10 @@ import * as ast from "../syntax-tree/ast";
 import { LexingIssue } from "./pli-lexer";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PreprocessorError } from "./pli-preprocessor-error";
-import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { tokenize } from "../parser/tokenizer";
+import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
+import { preprocessorParse } from "./preprocessor-parser";
 
 interface Variable {
   name: string;
@@ -205,7 +206,6 @@ export type InstructionInterpreterResult = CompilationUnitTokens & {
 export interface InterpreterOptions {
   compilerOptions: CompilerOptionResult | undefined;
   marginsProcessor: MarginsProcessor;
-  parser: PliPreprocessorParser;
 }
 
 export function runInstructions(
@@ -1033,11 +1033,8 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
         },
         uri,
       );
-      const subState = context.options.parser.initializeState(
-        processedContent,
-        uri,
-      );
-      const subProgram = context.options.parser.parse(subState);
+      const subState = preprocessorParserStateFromText(processedContent, uri);
+      const subProgram = preprocessorParse(subState);
       const result = generateInstructions(subProgram.statements);
       return {
         tokens: subProgram.tokens,
