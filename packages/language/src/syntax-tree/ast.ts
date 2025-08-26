@@ -1650,12 +1650,14 @@ export function createLabelReference(): LabelReference {
 export interface LeaveStatement extends AstNode {
   kind: SyntaxKind.LeaveStatement;
   label: LabelReference | null;
+  leaveToken: Token | null;
 }
 export function createLeaveStatement(): LeaveStatement {
   return {
     kind: SyntaxKind.LeaveStatement,
     container: null,
     label: null,
+    leaveToken: null,
   };
 }
 export interface LFormatItem extends AstNode {
