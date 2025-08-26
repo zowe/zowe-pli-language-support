@@ -392,7 +392,10 @@ function generateDoInstruction(
     };
   }
   if (node.doType3) {
-    const variable = generateReferenceItemInstruction(node.doType3.variable!);
+    if (!node.doType3.variable) {
+      return undefined;
+    }
+    const variable = generateReferenceItemInstruction(node.doType3.variable);
     if (node.doType3.specifications.length !== 1) {
       return undefined; // Preprocessor %DO does require exactly one specification
     }
