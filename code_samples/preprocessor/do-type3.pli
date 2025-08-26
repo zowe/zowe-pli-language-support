@@ -1,74 +1,104 @@
- /* DO Type 3 - Loop Control Variable Examples */
+ /* DO Type 3 Examples */
  
- /* Basic DO i = 1 TO 10 */
- %DCL I FIXED;
- %DO I = 1 TO 10;
-   PUT LIST('Iteration: ' || I);
+ /* Basic DO i = 1 TO 2 */
+ %DCL I1 FIXED;
+ %DO I1 = 1 TO 2;
+   DCL BasicVar%;I1 FIXED;
  %END;
+ /* Evaluates to:
+   DCL BasicVar1 FIXED;
+   DCL BasicVar2 FIXED;
+ */
  
  /* DO with BY clause */
- %DCL J FIXED;
- %DO J = 2 TO 20 BY 2;
-   PUT LIST('Even number: ' || J);
+ %DCL I2 FIXED;
+ %DO I2 = 2 TO 4 BY 2;
+   DCL ByVar%;I2 FIXED;
  %END;
+ /* Evaluates to:
+   DCL ByVar2 FIXED;
+   DCL ByVar4 FIXED;
+ */
  
  /* DO with BY before TO */
- %DCL T FIXED;
- %DO T = 5 BY 5 TO 25;
-   PUT LIST('BY before TO: ' || T);
+ %DCL I3 FIXED;
+ %DO I3 = 5 BY 5 TO 10;
+   DCL ByToVar%;I3 FIXED;
  %END;
- 
- /* DO with multiple specifications */
- %DCL K FIXED;
- %DCL L FIXED;
- %DO K = 1 TO 5, L = 10 TO 50 BY 10;
-   PUT LIST('K=' || K || ', L=' || L);
- %END;
- 
- /* DO with UPTHRU */
- %DCL M FIXED;
- %DO M = 1 UPTHRU 5;
-   PUT LIST('UPTHRU: ' || M);
- %END;
- 
- /* DO with DOWNTHRU */
- %DCL N FIXED;
- %DO N = 10 DOWNTHRU 1;
-   PUT LIST('DOWNTHRU: ' || N);
- %END;
+ /* Evaluates to:
+   DCL ByToVar5 FIXED;
+   DCL ByToVar10 FIXED;
+ */
  
  /* DO with REPEAT */
- %DCL P FIXED;
- %DO P = 1 REPEAT 3;
-   PUT LIST('REPEAT: ' || P);
+ %DCL I7 FIXED;
+ %DO I7 = 1 REPEAT 2*I7 UNTIL(I7 > 6);
+   DCL RepeatVar%;I7 FIXED;
  %END;
+ /* Evaluates to:
+   DCL RepeatVar1 FIXED;
+   DCL RepeatVar2 FIXED;
+   DCL RepeatVar4 FIXED;
+   DCL RepeatVar8 FIXED;
+ */
  
  /* DO with WHILE condition */
- %DCL Q FIXED;
- %DO Q = 1 TO 10 WHILE(Q < 5);
-   PUT LIST('WHILE condition: ' || Q);
+ %DCL I8 FIXED;
+ %DO I8 = 1 TO 10 WHILE(I8 < 4);
+   DCL WhileVar%;I8 FIXED;
  %END;
+ /* Evaluates to:
+   DCL WhileVar1 FIXED;
+   DCL WhileVar2 FIXED;
+   DCL WhileVar3 FIXED;
+ */
  
  /* DO with UNTIL condition */
- %DCL R FIXED;
- %DO R = 1 TO 10 UNTIL(R >= 3);
-   PUT LIST('UNTIL condition: ' || R);
+ %DCL I9 FIXED;
+ %DO I9 = 1 TO 10 UNTIL(I9 >= 3);
+   DCL UntilVar%;I9 FIXED;
  %END;
+ /* Evaluates to:
+   DCL UntilVar1 FIXED;
+   DCL UntilVar2 FIXED;
+   DCL UntilVar3 FIXED;
+ */
  
  /* Complex DO with BY and WHILE */
- %DCL S FIXED;
- %DO S = 10 TO 100 BY 10 WHILE(S <= 50);
-   PUT LIST('Complex: ' || S);
+ %DCL I10 FIXED;
+ %DO I10 = 10 TO 30 BY 10 WHILE(I10 < 25);
+   DCL ComplexVar%;I10 FIXED;
  %END;
+ /* Evaluates to:
+   DCL ComplexVar10 FIXED;
+   DCL ComplexVar20 FIXED;
+ */
  
  /* DO with WHILE condition followed by UNTIL condition */
  %DCL COUNT FIXED;
  %DCL SUM FIXED;
  %SUM = 0;
- %DO COUNT = 1 TO 20 WHILE(COUNT <= 10) UNTIL(SUM > 25);
+ %DO COUNT = 1 TO 20 WHILE(COUNT <= 10) UNTIL(SUM > 13);
    %SUM = SUM + COUNT;
-   PUT LIST('WHILE then UNTIL: COUNT=' || COUNT || ', SUM=' || SUM);
+   DCL WhileUntilVar%;COUNT FIXED;
+   DCL SumVar%;SUM FIXED;
  %END;
+ /* Evaluates to:
+   DCL WhileUntilVar1 FIXED;
+   DCL SumVar1 FIXED;
+   
+   DCL WhileUntilVar2 FIXED;
+   DCL SumVar3 FIXED;
+   
+   DCL WhileUntilVar3 FIXED;
+   DCL SumVar6 FIXED;
+   
+   DCL WhileUntilVar4 FIXED;
+   DCL SumVar10 FIXED;
+   
+   DCL WhileUntilVar5 FIXED;
+   DCL SumVar15 FIXED;
+ */
  
  /* DO with UNTIL condition followed by WHILE condition */
  %DCL NUM FIXED;
@@ -76,5 +106,22 @@
  %PRODUCT = 1;
  %DO NUM = 1 TO 15 UNTIL(PRODUCT > 50) WHILE(NUM <= 8);
    %PRODUCT = PRODUCT * NUM;
-   PUT LIST('UNTIL then WHILE: NUM=' || NUM || ', PRODUCT=' || PRODUCT);
+   DCL UntilWhileVar%;NUM FIXED;
+   DCL ProductVar%;PRODUCT FIXED;
  %END;
+ /* Evaluates to:
+   DCL UntilWhileVar1 FIXED;
+   DCL ProductVar1 FIXED;
+   
+   DCL UntilWhileVar2 FIXED;
+   DCL ProductVar2 FIXED;
+   
+   DCL UntilWhileVar3 FIXED;
+   DCL ProductVar6 FIXED;
+   
+   DCL UntilWhileVar4 FIXED;
+   DCL ProductVar24 FIXED;
+   
+   DCL UntilWhileVar5 FIXED;
+   DCL ProductVar120 FIXED;
+ */
