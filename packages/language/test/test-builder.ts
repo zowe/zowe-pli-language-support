@@ -484,8 +484,11 @@ export class TestBuilder {
     return this;
   }
 
-  noDiagnosticsExcept(regex: RegExp[]): TestBuilder {
-    const remainingDiagnostics = this.diagnostics.filter((diagnostic) => {
+  noDiagnosticsExcept(regex: RegExp[], label?: Label): TestBuilder {
+    const diagnostics = label
+      ? this.getMatchingDiagnostics(label.toString()).exactMatches
+      : this.diagnostics;
+    const remainingDiagnostics = diagnostics.filter((diagnostic) => {
       const message = this.createDiagnosticMessage(diagnostic);
       return !regex.some((r) => r.test(message));
     });

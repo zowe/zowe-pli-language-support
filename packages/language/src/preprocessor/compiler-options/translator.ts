@@ -48,7 +48,12 @@ enum RuleAlignment {
   NEGATIVE = -1,
 }
 
-const PLI_CHARACTER_SET = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/;
+const PLI_CHARACTER_REGEX = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/;
+const PLI_CHARACTER_SET = new Set(
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 =+-*/().,'\"%;:&|<>_¬".split(
+    "",
+  ),
+);
 
 class Translator {
   options: CompilerOptions = getDefaultCompilerOptions();
@@ -311,7 +316,7 @@ function ensureNumberValue(
 }
 
 function stringToNumber(text: string): number {
-  const numRegex = /^\s*(\-?\d+)([kmg])?\s*$/i;
+  const numRegex = /^\s*(\-?\d+)([km])?\s*$/i;
   const match = numRegex.exec(text);
   if (!match) {
     return NaN;
@@ -319,9 +324,6 @@ function stringToNumber(text: string): number {
   let num = Number(match[1]);
   if (match[2]) {
     switch (match[2]) {
-      case "G":
-      case "g":
-        num *= 1024;
       case "M":
       case "m":
         num *= 1024;
@@ -516,7 +518,7 @@ translator.rule(["BLANK"], (option, options) => {
     );
   }
 
-  if (PLI_CHARACTER_SET.test(value.value)) {
+  if (PLI_CHARACTER_REGEX.test(value.value)) {
     throw new TranslationError(
       value.token,
       "BLANK option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
@@ -545,7 +547,7 @@ translator.rule(
     const start = value.value.charAt(0);
     const end = value.value.charAt(1);
 
-    if (PLI_CHARACTER_SET.test(start) || PLI_CHARACTER_SET.test(end)) {
+    if (PLI_CHARACTER_REGEX.test(start) || PLI_CHARACTER_REGEX.test(end)) {
       throw new TranslationError(
         value.token,
         "BRACKETS option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
@@ -2050,16 +2052,231 @@ translator.rule(["MAXMSG"], (option, options) => {
 });
 
 /** {@link CompilerOptions.maxnest} */
+translator.rule(["MAXNEST"], (option, options) => {
+  ensureArguments(option, 1);
+  if (!options.maxnest) {
+    options.maxnest = getDefaultCompilerOptions().maxnest;
+  }
+  // Suboptions may override previously set values.
+  for (const suboption of option.values) {
+    ensureType(suboption, "option");
+    const name = suboption.name.toLowerCase();
+    if (["block", "do", "if"].includes(name)) {
+      ensureArguments(suboption, 1, 1);
+      const value = suboption.values[0];
+      ensureType(value, "plainNotEmpty");
+      options.maxnest![name as keyof CompilerOptions.MaxNest] =
+        ensureNumberValue(value, 1, 50);
+    } else {
+      throw TranslationError.fromCode(
+        suboption.token,
+        CompilerOptionsCodes.MaxNest.InvalidParameter,
+        suboption.name,
+      );
+    }
+  }
+});
+
 /** {@link CompilerOptions.maxRunOnIf} */
+translator.rule(["MAXRUNONIF"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  // The spec does not specify the minimum and maximum values.
+  // The mainframe testing suggests 2 - 1000.
+  options.maxRunOnIf = ensureNumberValue(value, 2, 1000);
+});
+
 /** {@link CompilerOptions.maxStatic} */
+translator.rule(["MAXSTATIC"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  options.maxStatic = ensureNumberValue(value, 1);
+});
+
 /** {@link CompilerOptions.maxStmt} */
+translator.rule(["MAXSTMT"], (option, options) => {
+  ensureArguments(option, 1, 2);
+  const mValue = option.values[0];
+  ensureType(mValue, "plainNotEmpty");
+  const nValue = option.values.length > 1 ? option.values[1] : mValue;
+  ensureType(nValue, "plainNotEmpty");
+  const m = ensureNumberValue(mValue, 1);
+  const n = ensureNumberValue(nValue, 1);
+  if (m > n) {
+    throw TranslationError.fromCode(
+      mValue.token,
+      CompilerOptionsCodes.MaxStmt.InvalidRange,
+    );
+  }
+  options.maxStmt = {
+    m,
+    n,
+  };
+});
+
 /** {@link CompilerOptions.maxTemp} */
+translator.rule(["MAXTEMP"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  options.maxTemp = ensureNumberValue(value, 1);
+});
+
 /** {@link CompilerOptions.mDeck} */
+translator.rule(
+  ["MDECK", "MD"],
+  (option, options) => {
+    ensureArguments(option, 1);
+    // Only the last value takes effect.
+    for (const value of option.values) {
+      ensureType(value, "plain");
+      const valueName = value.value.toUpperCase();
+      if (["AFTERALL", "AFTERMACRO"].includes(valueName)) {
+        options.mDeck = valueName as CompilerOptions.MDeck;
+      } else {
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.MDeck.InvalidParameter,
+          value.value,
+        );
+      }
+    }
+  },
+  ["NOMDECK", "NMD"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.mDeck = false;
+  },
+);
+
 /** {@link CompilerOptions.msgSummary} */
+translator.rule(
+  ["MSGSUMMARY"],
+  (option, options) => {
+    // Actually does not accept multiple or empty values.
+    // *PROCESS MSGSUMMARY; is valid, but *PROCESS MSGSUMMARY(); is not.
+    ensureArguments(option, 0, 1);
+    let valueName = "NOXREF";
+    if (option.values.length === 1) {
+      const value = option.values[0];
+      ensureType(value, "plainNotEmpty");
+      valueName = value.value.toUpperCase();
+    }
+    if (["XREF", "NOXREF"].includes(valueName)) {
+      options.msgSummary = valueName as CompilerOptions.MsgSummary;
+    } else {
+      // Can only be reached if the value is plain.
+      throw TranslationError.fromCode(
+        option.values[0].token,
+        CompilerOptionsCodes.MsgSummary.InvalidParameter,
+        (option.values[0] as CompilerOptionText).value,
+      );
+    }
+  },
+  ["NOMSGSUMMARY"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.msgSummary = false;
+  },
+);
+
 /** {@link CompilerOptions.name} */
+translator.rule(
+  ["NAME", "N"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 1) {
+      const value = option.values[0];
+      ensureType(value, "plainOrString");
+      if (
+        value.kind === SyntaxKind.CompilerOptionText &&
+        value.value.length === 0
+      ) {
+        // If it is just plain text, no text is not recognized.
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.ExpectedPlainNotEmpty,
+          value.value,
+        );
+      }
+      options.name = value.value;
+    } else {
+      options.name = true;
+    }
+  },
+  ["NONAME"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.name = false;
+  },
+);
+
 /** {@link CompilerOptions.names} */
+translator.rule(["NAMES"], (option, options) => {
+  const ensureSafeCharacters = (
+    value: CompilerOptionText | CompilerOptionString,
+  ) => {
+    const seen = new Set<string>();
+    for (const char of value.value) {
+      // The character must not be from the character or set nor occur more than once.
+      if (PLI_CHARACTER_SET.has(char) || seen.has(char)) {
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.Names.CharacterAlreadyDefined,
+          char,
+          "NAMES",
+        );
+      }
+      seen.add(char);
+    }
+  };
+
+  ensureArguments(option, 1, 2);
+  const firstValue = option.values[0];
+  // TODO ssmifi: The mainframe accepts plain and string tokens.
+  // However, the options parser does not support special characters in plain tokens currently.
+  ensureType(firstValue, "plainOrString");
+  ensureSafeCharacters(firstValue);
+  options.names = {
+    extralingChar: firstValue.value,
+    uppExtralingChar: firstValue.value,
+  };
+  if (option.values.length > 1) {
+    const secondValue = option.values[1];
+    ensureType(secondValue, "plainOrString");
+    ensureSafeCharacters(secondValue);
+    if (firstValue.value.length !== secondValue.value.length) {
+      throw TranslationError.fromCode(
+        secondValue.token,
+        CompilerOptionsCodes.Names.InvalidParameterLengths,
+        "NAMES",
+      );
+    }
+    options.names!.uppExtralingChar = secondValue.value;
+  }
+});
+
 /** {@link CompilerOptions.natlang} */
+translator.rule(["NATLANG"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  const lang = value.value.toUpperCase();
+  if (["ENU", "UEN"].includes(lang)) {
+    options.natlang = lang as CompilerOptions.NatLang;
+  } else {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.NatLang.InvalidParameter,
+      value.value,
+    );
+  }
+});
+
 /** {@link CompilerOptions.nest} */
+translator.flag("nest", ["NEST"], ["NONEST"]);
 
 /** {@link CompilerOptions.not} */
 translator.rule(
@@ -2070,12 +2287,136 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.nullDate} */
+translator.flag("nullDate", ["NULLDATE"], ["NONULLDATE"]);
+
 /** {@link CompilerOptions.object} */
+translator.flag("object", ["OBJECT", "OBJ"], ["NOOBJECT", "NOBJ"]);
+
 /** {@link CompilerOptions.offset} */
+translator.flag("offset", ["OFFSET"], ["NOOFFSET"]);
+
 /** {@link CompilerOptions.offsetSize} */
+translator.rule(["OFFSETSIZE"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  const offsetSize = ensureNumberValue(value);
+  if (offsetSize !== 4 && offsetSize !== 8) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.OffsetSize.InvalidParameter,
+      value.value,
+    );
+  }
+  options.offsetSize = offsetSize;
+});
+
 /** {@link CompilerOptions.onSnap} */
+translator.rule(
+  ["ONSNAP"],
+  (option, options) => {
+    ensureArguments(option, 1);
+    if (!options.onSnap) {
+      options.onSnap = {
+        stringRange: false,
+        stringSize: false,
+      };
+    }
+    for (const value of option.values) {
+      ensureType(value, "plain");
+      if (value.value.length === 0) {
+        continue;
+      }
+      const onSnapValue = value.value.toUpperCase();
+      if (onSnapValue === "STRINGRANGE") {
+        options.onSnap.stringRange = true;
+      } else if (onSnapValue === "STRINGSIZE") {
+        options.onSnap.stringSize = true;
+      } else {
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.OnSnap.InvalidParameter,
+          value.value,
+        );
+      }
+    }
+    if (!options.onSnap.stringRange && !options.onSnap.stringSize) {
+      // Special case: If both stringRange and stringSize are false, the onSnap option is disabled.
+      options.onSnap = false;
+    }
+  },
+  ["NOONSNAP"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.onSnap = false;
+  },
+);
+
 /** {@link CompilerOptions.optimize} */
+translator.rule(
+  ["OPTIMIZE", "OPT"],
+  (option, options) => {
+    // Verified 0 and more than 1 argument. The last one takes effect.
+    ensureArguments(option, 0);
+    if (option.values.length === 0) {
+      // *PROCESS OPTIMIZE; enables level 3, whereas *PROCESS OPTIMIZE(); toggles level 0.
+      options.optimize = 3;
+      return;
+    }
+    for (const value of option.values) {
+      ensureType(value, "plain");
+      const valueName = value.value.toUpperCase();
+      if (valueName.length === 0 || valueName === "0") {
+        options.optimize = 0;
+      } else if (
+        valueName === "2" ||
+        valueName === "3" ||
+        valueName === "TIME"
+      ) {
+        options.optimize = 3;
+      } else {
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.Optimize.InvalidParameter,
+          value.value,
+        );
+      }
+    }
+  },
+  ["NOOPTIMIZE", "NOPT"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.optimize = 0;
+  },
+);
+
 /** {@link CompilerOptions.options} */
+translator.rule(
+  ["OPTIONS", "OP"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      options.options = "DOC";
+      return;
+    }
+    ensureType(option.values[0], "plainNotEmpty");
+    const valueName = option.values[0].value.toUpperCase();
+    if (["DOC", "ALL"].includes(valueName)) {
+      options.options = valueName as CompilerOptions.Options;
+    } else {
+      throw TranslationError.fromCode(
+        option.values[0].token,
+        CompilerOptionsCodes.Options.InvalidParameter,
+        valueName,
+      );
+    }
+  },
+  ["NOOPTIONS", "NOP"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.options = false;
+  },
+);
 
 /** {@link CompilerOptions.or} */
 translator.rule(
