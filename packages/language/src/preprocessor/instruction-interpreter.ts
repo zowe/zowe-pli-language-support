@@ -428,7 +428,7 @@ function runDoType3Instruction(
   } else {
     // Subsequent iterations
     condition &&= runDoType3UntilCheck(doType3, context);
-    condition &&= runDoType3VariableUpdate(doType3, context, node);
+    condition &&= runDoType3VariableUpdate(doType3, context, doType3Context);
   }
 
   // Check WHILE condition before do-group execution
@@ -546,7 +546,7 @@ function runDoType3UntilCheck(
 function runDoType3VariableUpdate(
   doType3: inst.DoType3Instruction,
   context: InterpreterContext,
-  node: inst.InstructionNode,
+  doType3Context: DoType3Context,
 ): boolean {
   const { variable } = doType3;
   const varName = variable.variable;
@@ -569,7 +569,6 @@ function runDoType3VariableUpdate(
     // No range check needed for REPEAT-only loops
     return true;
   } else if (spec.to) {
-    const doType3Context = context.doType3.get(node);
     if (!doType3Context?.toValue || !doType3Context?.byValue) {
       return false;
     }
