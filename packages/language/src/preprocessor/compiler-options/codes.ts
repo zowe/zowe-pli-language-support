@@ -10,6 +10,7 @@
  */
 
 import { Severity } from "../../language-server/types";
+import { PLICodes } from "../../validation/messages";
 import { ParametricPLICode } from "../../validation/messages/pli-codes";
 
 export const CompilerOptionsCodes = {
@@ -305,11 +306,107 @@ export const CompilerOptionsCodes = {
 
   MaxInit: {
     InvalidParameter: {
-      code: "COMN01",
+      code: "COMT01",
       severity: Severity.W,
       message: (value: string) =>
         `Expected a number followed by "K", "M" or "G", but received '${value}'.`,
+      fullCode: "COMT01W",
+    } as ParametricPLICode,
+  },
+
+  MaxNest: {
+    InvalidParameter: {
+      code: "COMN01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "BLOCK", "DO" or "IF", but received '${value}'.`,
       fullCode: "COMN01W",
+    } as ParametricPLICode,
+  },
+
+  MaxStmt: {
+    InvalidRange: {
+      code: "COMS01",
+      severity: Severity.W,
+      message: () =>
+        `The m statement count must be less or equal to the n statement count.`,
+      fullCode: "COMS01W",
+    } as ParametricPLICode,
+  },
+
+  MDeck: {
+    InvalidParameter: {
+      code: "COMD01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "AFTERALL" or "AFTERMACRO", but received '${value}'.`,
+      fullCode: "COMD01W",
+    } as ParametricPLICode,
+  },
+
+  MsgSummary: {
+    InvalidParameter: {
+      code: "COMS02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "XREF" or "NOXREF", but received '${value}'.`,
+      fullCode: "COMS02W",
+    } as ParametricPLICode,
+  },
+
+  NatLang: {
+    InvalidParameter: {
+      code: "COLN01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "ENU" or "UEN", but received '${value}'.`,
+      fullCode: "COLN01W",
+    } as ParametricPLICode,
+  },
+
+  Names: {
+    CharacterAlreadyDefined: PLICodes.Warning.IBM1108I,
+    InvalidParameterLengths: PLICodes.Warning.IBM1205I,
+  },
+
+  OffsetSize: {
+    // [Warning] IBM1161I: The suboption 3 is not valid for the OFFSETSIZE compiler option.
+    InvalidParameter: {
+      code: "COOS01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "4" or "8", but received '${value}'.`,
+      fullCode: "COOS01W",
+    } as ParametricPLICode,
+  },
+
+  OnSnap: {
+    InvalidParameter: {
+      code: "COOS02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "STRINGRANGE" or "STRINGSIZE", but received '${value}'.`,
+      fullCode: "COOS02W",
+    } as ParametricPLICode,
+  },
+
+  Optimize: {
+    InvalidParameter: {
+      code: "COOP01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "0", "2", "3" or "TIME", but received '${value}'.`,
+      fullCode: "COOP01W",
+    } as ParametricPLICode,
+  },
+
+  Options: {
+    InvalidParameter: {
+      code: "COOP02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "DOC" or "ALL", but received '${value}'.`,
+      fullCode: "COOP02W",
     } as ParametricPLICode,
   },
 };
