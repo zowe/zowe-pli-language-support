@@ -13,6 +13,9 @@
 
 /**
  * DO Type 3 - DO without explicit loop variable declaration
+ *
+ * This will implicitly declare an incactive loop variable I (and set it to 1).
+ * In this test, we don't activate the loop variable such it is not substituted by its value.
  */
 
 //// %DO I = 1 TO 2;
@@ -20,6 +23,6 @@
 //// %END;
 
 preprocessor.expectTokens(`
-  1
-  2
+  I
+  I
 `);

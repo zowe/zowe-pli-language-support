@@ -466,7 +466,7 @@ function runDoType3Initialization(
         value: start.value,
         type: inst.DeclaredType.Fixed,
       },
-      active: true,
+      active: false,
       mode: inst.ScanMode.Scan,
     };
     variables(context).set(varName, loopVar);
