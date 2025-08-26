@@ -13,6 +13,10 @@
 
 /**
  * DO Type 3 - DO with BY clause
+ *
+ * This test verifies that the preprocessor correctly implements the DO Type 3
+ * specification by ensuring that the TO and BY expressions are evaluated only
+ * once at loop entry, not re-evaluated on each iteration.
  */
 
 //// %DCL I FIXED;
