@@ -418,20 +418,20 @@ function runDoType3Instruction(
 
   if (!doType3Context) {
     // Store all expressions that must be evaluated at the start of the loop
-    condition &&= _runDoType3Initialization(doType3, context, node);
+    condition &&= runDoType3Initialization(doType3, context, node);
   } else {
     // Subsequent iterations
-    condition &&= _runDoType3UntilCheck(doType3, context);
-    condition &&= _runDoType3VariableUpdate(doType3, context, node);
+    condition &&= runDoType3UntilCheck(doType3, context);
+    condition &&= runDoType3VariableUpdate(doType3, context, node);
   }
 
   // Check WHILE condition before do-group execution
-  condition &&= _runDoType3WhileCheck(doType3, context);
+  condition &&= runDoType3WhileCheck(doType3, context);
 
   return condition;
 }
 
-function _runDoType3Initialization(
+function runDoType3Initialization(
   doType3: inst.DoType3Instruction,
   context: InterpreterContext,
   node: inst.InstructionNode,
@@ -503,7 +503,7 @@ function _runDoType3Initialization(
   return true;
 }
 
-function _runDoType3WhileCheck(
+function runDoType3WhileCheck(
   doType3: inst.DoType3Instruction,
   context: InterpreterContext,
 ): boolean {
@@ -520,7 +520,7 @@ function _runDoType3WhileCheck(
   return true;
 }
 
-function _runDoType3UntilCheck(
+function runDoType3UntilCheck(
   doType3: inst.DoType3Instruction,
   context: InterpreterContext,
 ): boolean {
@@ -537,7 +537,7 @@ function _runDoType3UntilCheck(
   return true;
 }
 
-function _runDoType3VariableUpdate(
+function runDoType3VariableUpdate(
   doType3: inst.DoType3Instruction,
   context: InterpreterContext,
   node: inst.InstructionNode,
