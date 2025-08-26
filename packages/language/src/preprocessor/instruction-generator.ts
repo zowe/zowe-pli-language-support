@@ -391,6 +391,33 @@ function generateDoInstruction(
       while: whileCond,
     };
   }
+  if (node.doType3) {
+    if (!node.doType3.variable?.element) {
+      return undefined;
+    }
+    const variable = generateReferenceItemInstruction(
+      node.doType3.variable.element,
+    );
+    if (node.doType3.specifications.length !== 1) {
+      return undefined; // Preprocessor %DO does require exactly one specification
+    }
+    const spec = node.doType3.specifications[0];
+    if (spec.upthru || spec.downthru) {
+      return undefined; // upthru and downthru are not supported
+    }
+    const specification: inst.DoType3Specification = {
+      expression: generateExpressionInstruction(spec.expression) ?? null,
+      repeat: generateExpressionInstruction(spec.repeat) ?? null,
+      while: generateExpressionInstruction(spec.whileOrUntil?.while) ?? null,
+      until: generateExpressionInstruction(spec.whileOrUntil?.until) ?? null,
+      to: generateExpressionInstruction(spec.to) ?? null,
+      by: generateExpressionInstruction(spec.by) ?? null,
+    };
+    doInstruction.doType3 = {
+      variable,
+      specification,
+    };
+  }
   if (node.doType2 || node.doType3 || node.doType4) {
     doType1 = false;
   }
