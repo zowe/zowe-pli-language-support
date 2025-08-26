@@ -17,7 +17,7 @@
 
 //// %DCL I FIXED;
 //// %DO I = 1 UPTHRU 3;
-////   DCL Var%;I FIXED;
+////   I
 //// %END;
 
 // upthru not supported

@@ -20,23 +20,23 @@
 //// %SUM = 0;
 //// %DO COUNT = 1 TO 20 WHILE(COUNT <= 10) UNTIL(SUM > 13);
 ////   %SUM = SUM + COUNT;
-////   DCL WhileUntilVar%;COUNT FIXED;
-////   DCL SumVar%;SUM FIXED;
+////   COUNT
+////   SUM
 //// %END;
 
 preprocessor.expectTokens(`
-  DCL WhileUntilVar1 FIXED;
-  DCL SumVar1 FIXED;
+  1
+  1
   
-  DCL WhileUntilVar2 FIXED;
-  DCL SumVar3 FIXED;
+  2
+  3
   
-  DCL WhileUntilVar3 FIXED;
-  DCL SumVar6 FIXED;
+  3
+  6
   
-  DCL WhileUntilVar4 FIXED;
-  DCL SumVar10 FIXED;
+  4
+  10
   
-  DCL WhileUntilVar5 FIXED;
-  DCL SumVar15 FIXED;
+  5
+  15
 `);

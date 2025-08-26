@@ -17,10 +17,10 @@
 
 //// %DCL I FIXED;
 //// %DO I = 5 BY 5 TO 10;
-////   DCL Var%;I FIXED;
+////   I
 //// %END;
 
 preprocessor.expectTokens(`
-  DCL Var5 FIXED;
-  DCL Var10 FIXED;
+  5
+  10
 `);

@@ -17,12 +17,12 @@
 
 //// %DCL I FIXED;
 //// %DO I = 1 REPEAT 2*I UNTIL(I > 6);
-////   DCL Var%;I FIXED;
+////   I
 //// %END;
 
 preprocessor.expectTokens(`
-  DCL Var1 FIXED;
-  DCL Var2 FIXED;
-  DCL Var4 FIXED;
-  DCL Var8 FIXED;
+  1
+  2
+  4
+  8
 `);

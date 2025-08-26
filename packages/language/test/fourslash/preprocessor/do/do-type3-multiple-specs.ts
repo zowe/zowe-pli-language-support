@@ -17,7 +17,7 @@
 
 //// %DCL I FIXED;
 //// %DO I = 1 TO 2, 4 TO 6 BY 2;
-////   DCL VarI%;I FIXED;
+////   I
 //// %END;
 
 // multiple specifications not supported

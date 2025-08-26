@@ -20,10 +20,10 @@
 //// %X = 2;
 //// %DO I = 1 TO X;
 ////   %X = X + 1;
-////   DCL Var%;I FIXED;
+////   I
 //// %END;
 
 preprocessor.expectTokens(`
-  DCL Var1 FIXED;
-  DCL Var2 FIXED;
+  1
+  2
 `);

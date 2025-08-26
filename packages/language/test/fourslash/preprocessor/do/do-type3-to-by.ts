@@ -22,10 +22,10 @@
 //// %DO I = 2 TO X BY Y;
 ////   %X = X + 1;
 ////   %Y = Y + 1;
-////   DCL Var%;I FIXED;
+////   I
 //// %END;
 
 preprocessor.expectTokens(`
-  DCL Var2 FIXED;
-  DCL Var4 FIXED;
+  2
+  4
 `);

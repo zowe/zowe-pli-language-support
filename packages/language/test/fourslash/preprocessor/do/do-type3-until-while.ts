@@ -20,23 +20,23 @@
 //// %PRODUCT = 1;
 //// %DO NUM = 1 TO 15 UNTIL(PRODUCT > 50) WHILE(NUM <= 8);
 ////   %PRODUCT = PRODUCT * NUM;
-////   DCL UntilWhileVar%;NUM FIXED;
-////   DCL ProductVar%;PRODUCT FIXED;
+////   NUM
+////   PRODUCT
 //// %END;
 
 preprocessor.expectTokens(`
-  DCL UntilWhileVar1 FIXED;
-  DCL ProductVar1 FIXED;
+  1
+  1
   
-  DCL UntilWhileVar2 FIXED;
-  DCL ProductVar2 FIXED;
+  2
+  2
   
-  DCL UntilWhileVar3 FIXED;
-  DCL ProductVar6 FIXED;
+  3
+  6
   
-  DCL UntilWhileVar4 FIXED;
-  DCL ProductVar24 FIXED;
+  4
+  24
   
-  DCL UntilWhileVar5 FIXED;
-  DCL ProductVar120 FIXED;
+  5
+  120
 `);

@@ -18,9 +18,9 @@
 
 //// %DCL I FIXED;
 //// %DO I = 1 TO 1 UNTIL(I < 1);
-////   DCL Var%;I FIXED;
+////   I
 //// %END;
 
 preprocessor.expectTokens(`
-  DCL Var1 FIXED;
+  1
 `);
