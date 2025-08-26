@@ -89,6 +89,12 @@ function copyValue(value: Value): Value {
   }
 }
 
+function variables(context: InterpreterContext): Map<string, Variable> {
+  // Returns the correct variable map for the current scope:
+  // local (in a procedure call), otherwise global
+  return context.localVariables ?? context.variables;
+}
+
 function generateVariable(
   instruction: inst.DeclareInstruction,
   context: InterpreterContext,
@@ -185,12 +191,18 @@ interface InterpreterContext {
   procedures: Map<string, inst.ProcedureInstructionContainer>;
   activeProcedures: Set<string>;
   counter: Map<inst.InstructionNode, number>;
+  doType3: Map<inst.InstructionNode, DoType3Context>;
   references: ast.Reference[];
   evaluations: EvaluationResults;
   xIncludes: Set<string>;
   uris: string[];
   options: InterpreterOptions;
   returnValue: Value;
+}
+
+interface DoType3Context {
+  toValue?: ScalarValue;
+  byValue?: ScalarValue;
 }
 
 export type InstructionInterpreterResult = CompilationUnitTokens & {
@@ -235,6 +247,7 @@ export function runInstructions(
     },
     options,
     counter: new Map(),
+    doType3: new Map(),
     returnValue: defaultEmptyValue,
   };
   for (const [key, value] of instruction.procedures.entries()) {
@@ -278,7 +291,7 @@ function runInstructionNode(
   const instruction = node.instruction;
   let result = node.next;
   try {
-    const instructionResult = runInstruction(instruction, context);
+    const instructionResult = runInstruction(instruction, context, node);
     if (instructionResult) {
       result = instructionResult;
     }
@@ -302,6 +315,7 @@ function handleInstructionError(err: any, context: InterpreterContext): void {
 function runInstruction(
   instruction: inst.Instruction,
   context: InterpreterContext,
+  node: inst.InstructionNode,
 ): inst.InstructionNode | undefined {
   switch (instruction.kind) {
     case inst.InstructionKind.Assignment:
@@ -311,14 +325,14 @@ function runInstruction(
       runTokenInstruction(instruction, context);
       break;
     case inst.InstructionKind.Compound:
-      runCompoundInstruction(instruction, context);
+      runCompoundInstruction(instruction, context, node);
       break;
     case inst.InstructionKind.Goto:
       return instruction.node;
     case inst.InstructionKind.If:
       return runIfInstruction(instruction, context);
     case inst.InstructionKind.Do:
-      return runDoInstruction(instruction, context);
+      return runDoInstruction(instruction, context, node);
     case inst.InstructionKind.Include:
       runIncludeInstruction(instruction, context);
       break;
@@ -356,38 +370,231 @@ function runHaltInstruction(
 function runDoInstruction(
   instruction: inst.DoInstruction,
   context: InterpreterContext,
+  node: inst.InstructionNode,
 ): inst.InstructionNode | undefined {
   let condition = true;
   if (instruction.doType2) {
-    const type2 = instruction.doType2;
-    if (type2.until) {
-      const untilConditionValue = evaluateExpression(type2.until, context);
-      if (!isScalarValue(untilConditionValue)) {
-        // Condition cannot be evaluated, don't run the instruction
-        condition = false;
-      } else {
-        // If UNTIL is specified, we don't run the instruction if it evaluates to true
-        condition &&= !valueToBool(untilConditionValue);
-      }
-    }
-    if (type2.while) {
-      const whileConditionValue = evaluateExpression(type2.while, context);
-      if (!isScalarValue(whileConditionValue)) {
-        // Condition cannot be evaluated, don't run the instruction
-        condition = false;
-      } else {
-        // If WHILE is specified, we only run the instruction if it evaluates to true
-        condition &&= valueToBool(whileConditionValue);
-      }
-    }
-  }
-  if (instruction.doType3) {
-    throw new Error("DoType3 instructions are not implemented yet!");
+    condition = runDoType2Instruction(instruction.doType2, context);
+  } else if (instruction.doType3) {
+    condition = runDoType3Instruction(instruction.doType3, context, node);
   }
   if (condition) {
     return instruction.content;
   }
   return undefined;
+}
+
+function runDoType2Instruction(
+  doType2: inst.DoType2Instruction,
+  context: InterpreterContext,
+): boolean {
+  let condition = true;
+  if (doType2.until) {
+    const untilConditionValue = evaluateExpression(doType2.until, context);
+    if (!isScalarValue(untilConditionValue)) {
+      // Condition cannot be evaluated, don't run the instruction
+      condition = false;
+    } else {
+      // If UNTIL is specified, we don't run the instruction if it evaluates to true
+      condition &&= !valueToBool(untilConditionValue);
+    }
+  }
+  if (doType2.while) {
+    const whileConditionValue = evaluateExpression(doType2.while, context);
+    if (!isScalarValue(whileConditionValue)) {
+      // Condition cannot be evaluated, don't run the instruction
+      condition = false;
+    } else {
+      // If WHILE is specified, we only run the instruction if it evaluates to true
+      condition &&= valueToBool(whileConditionValue);
+    }
+  }
+  return condition;
+}
+
+function runDoType3Instruction(
+  doType3: inst.DoType3Instruction,
+  context: InterpreterContext,
+  node: inst.InstructionNode,
+): boolean {
+  let condition = true;
+
+  // Get current do-type3 state
+  const doType3Context = context.doType3.get(node);
+
+  if (!doType3Context) {
+    // Store all expressions that must be evaluated at the start of the loop
+    condition &&= runDoType3Initialization(doType3, context, node);
+  } else {
+    // Subsequent iterations
+    condition &&= runDoType3UntilCheck(doType3, context);
+    condition &&= runDoType3VariableUpdate(doType3, context, doType3Context);
+  }
+
+  // Check WHILE condition before do-group execution
+  condition &&= runDoType3WhileCheck(doType3, context);
+
+  return condition;
+}
+
+function runDoType3Initialization(
+  doType3: inst.DoType3Instruction,
+  context: InterpreterContext,
+  node: inst.InstructionNode,
+): boolean {
+  const { variable } = doType3;
+  const varName = variable.variable;
+  const spec = doType3.specification;
+
+  // Initial expression is required
+  if (!spec.expression) {
+    return false;
+  }
+  const start = evaluateExpression(spec.expression, context);
+  if (!isScalarValue(start)) {
+    return false;
+  }
+
+  let loopVar = variables(context).get(varName);
+
+  // Implicitly declare the loop variable if it doesn't exist, or update existing variable
+  if (!loopVar) {
+    loopVar = {
+      name: varName,
+      declarationNode: variable.reference?.owner,
+      value: {
+        value: start.value,
+        type: inst.DeclaredType.Fixed,
+      },
+      active: false,
+      mode: inst.ScanMode.Scan,
+    };
+    variables(context).set(varName, loopVar);
+  } else {
+    // Update existing variable to the start value
+    loopVar.value = {
+      value: start.value,
+      type: inst.DeclaredType.Fixed,
+    };
+  }
+
+  // Evaluate and save TO and BY expressions at entry to the specification
+  let toValue: ScalarValue | undefined;
+  let byValue: ScalarValue | undefined;
+
+  if (spec.to) {
+    const value = evaluateExpression(spec.to, context);
+    if (!isScalarValue(value)) {
+      return false;
+    }
+    toValue = value;
+  }
+
+  if (spec.by) {
+    const value = evaluateExpression(spec.by, context);
+    if (!isScalarValue(value)) {
+      return false;
+    }
+    byValue = value;
+  } else if (spec.to) {
+    byValue = valueToNumber("1");
+  }
+
+  const doType3Context = {
+    toValue,
+    byValue,
+  };
+
+  context.doType3.set(node, doType3Context);
+  return true;
+}
+
+function runDoType3WhileCheck(
+  doType3: inst.DoType3Instruction,
+  context: InterpreterContext,
+): boolean {
+  const spec = doType3.specification;
+
+  if (spec.while) {
+    const whileCondition = evaluateExpression(spec.while, context);
+    if (!isScalarValue(whileCondition)) {
+      return false;
+    }
+    return valueToBool(whileCondition);
+  }
+
+  return true;
+}
+
+function runDoType3UntilCheck(
+  doType3: inst.DoType3Instruction,
+  context: InterpreterContext,
+): boolean {
+  const spec = doType3.specification;
+
+  if (spec.until) {
+    const untilCondition = evaluateExpression(spec.until, context);
+    if (!isScalarValue(untilCondition)) {
+      return false;
+    }
+    return !valueToBool(untilCondition);
+  }
+
+  return true;
+}
+
+function runDoType3VariableUpdate(
+  doType3: inst.DoType3Instruction,
+  context: InterpreterContext,
+  doType3Context: DoType3Context,
+): boolean {
+  const { variable } = doType3;
+  const varName = variable.variable;
+  const spec = doType3.specification;
+
+  const loopVar = variables(context).get(varName);
+  if (!loopVar) {
+    return false;
+  }
+
+  if (spec.repeat) {
+    const repeatValue = evaluateExpression(spec.repeat, context);
+    if (!isScalarValue(repeatValue)) {
+      return false;
+    }
+    loopVar.value = {
+      value: repeatValue.value,
+      type: inst.DeclaredType.Fixed,
+    };
+    // No range check needed for REPEAT-only loops
+    return true;
+  } else if (spec.to) {
+    if (!doType3Context?.toValue || !doType3Context?.byValue) {
+      return false;
+    }
+
+    const end = parseInt(doType3Context.toValue.value);
+    const step = parseInt(doType3Context.byValue.value);
+
+    if (!isScalarValue(loopVar.value)) {
+      return false;
+    }
+
+    const currentValue = parseInt(loopVar.value.value);
+    const nextValue = currentValue + step;
+
+    // Update the variable
+    loopVar.value = {
+      value: nextValue.toString(),
+      type: inst.DeclaredType.Fixed,
+    };
+
+    // Check if the updated value is still within range
+    return (step > 0 && nextValue <= end) || (step < 0 && nextValue >= end);
+  } else {
+    // unsupported DO type3 clause
+    return false;
+  }
 }
 
 function runAssignmentInstruction(
@@ -396,9 +603,7 @@ function runAssignmentInstruction(
 ): void {
   const value = evaluateExpression(instruction.value, context);
   for (const ref of instruction.refs) {
-    let variable =
-      context.localVariables?.get(ref.variable) ??
-      context.variables.get(ref.variable);
+    let variable = variables(context).get(ref.variable);
     if (!variable) {
       if (ref.args.length > 0) {
         // This seems to write into an undeclared array variable
@@ -413,7 +618,7 @@ function runAssignmentInstruction(
         active: false, // Implicitly declared variables are inactive by default
         mode: inst.ScanMode.Scan,
       };
-      (context.localVariables ?? context.variables).set(ref.variable, variable);
+      variables(context).set(ref.variable, variable);
     } else {
       evaluateValueAccess(variable, ref.args, context).setter(value);
     }
@@ -587,9 +792,7 @@ function evaluateReferenceExpression(
   expression: inst.ReferenceItemInstruction,
   context: InterpreterContext,
 ): Value {
-  const variable =
-    context.localVariables?.get(expression.variable) ||
-    context.variables.get(expression.variable);
+  const variable = variables(context).get(expression.variable);
   if (!variable) {
     const procedure = context.procedures.get(expression.variable);
     if (!procedure) {
@@ -779,12 +982,11 @@ function runDeclareInstruction(
     context.activeProcedures.add(instruction.name);
     return;
   }
-  // If the local variables are defined, that means we are in a procedure
-  const variables = context.localVariables ?? context.variables;
-  // Don't override existing variables
-  if (!variables.has(instruction.name)) {
+  // Consider variables declared in a procedure call
+  // and don't override existing variables
+  if (!variables(context).has(instruction.name)) {
     const variable = generateVariable(instruction, context);
-    variables.set(variable.name, variable);
+    variables(context).set(variable.name, variable);
   }
 }
 
@@ -793,7 +995,7 @@ function runActivateInstruction(
   context: InterpreterContext,
 ): void {
   const name = instruction.variable.variable;
-  const variable = context.variables.get(name);
+  const variable = variables(context).get(name);
   if (variable) {
     if (instruction.scanMode !== undefined) {
       variable.mode = instruction.scanMode;
@@ -810,7 +1012,7 @@ function runDeactivateInstruction(
   context: InterpreterContext,
 ): void {
   const name = instruction.variable.variable;
-  const variable = context.variables.get(name);
+  const variable = variables(context).get(name);
   context.activeProcedures.delete(name);
   if (variable) {
     variable.active = false;
@@ -820,10 +1022,11 @@ function runDeactivateInstruction(
 function runCompoundInstruction(
   instruction: inst.CompoundInstruction,
   context: InterpreterContext,
+  node: inst.InstructionNode,
 ): void {
   for (const subInstruction of instruction.instructions) {
     try {
-      const result = runInstruction(subInstruction, context);
+      const result = runInstruction(subInstruction, context, node);
       if (result) {
         throw new Error(
           `Only non-jump instructions are allowed in a compound instruction. Found: ${subInstruction.kind}`,
@@ -897,7 +1100,7 @@ function performTokenScan(
   context: InterpreterContext,
 ): Token[] | undefined {
   const image = token.image;
-  const variable = context.variables.get(image);
+  const variable = variables(context).get(image);
   // If there is no active variable with that name, return undefined
   // The caller side will simply push the token to the output
   if (!variable?.active) {
