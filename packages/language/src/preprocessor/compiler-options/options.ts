@@ -341,7 +341,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxstatic
    */
-  maxStatic?: string;
+  maxStatic?: number;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxstmt
    */
@@ -353,15 +353,15 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-mdeck
    */
-  mDeck?: CompilerOptions.MDeck;
+  mDeck?: CompilerOptions.MDeck | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-msgsummary
    */
-  msgSummary?: CompilerOptions.MsgSummary;
+  msgSummary?: CompilerOptions.MsgSummary | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-name
    */
-  name?: string | false;
+  name?: string | boolean;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-names
    */
@@ -799,16 +799,8 @@ export declare namespace CompilerOptions {
      */
     n?: number;
   }
-  export type MDeck =
-    | {
-        type?: "AFTERALL" | "AFTERMACRO";
-      }
-    | false;
-  export type MsgSummary =
-    | {
-        xref?: boolean;
-      }
-    | false;
+  export type MDeck = "AFTERALL" | "AFTERMACRO";
+  export type MsgSummary = "XREF" | "NOXREF";
   export type Names = {
     extralingChar?: string;
     uppExtralingChar?: string;
@@ -825,18 +817,8 @@ export declare namespace CompilerOptions {
         stringSize?: boolean;
       }
     | false;
-  export type Optimize =
-    | {
-        level?: 0 | 2 | 3 | "TIME";
-      }
-    | false;
-  export type Options =
-    | {
-        all?: boolean;
-        doc?: boolean;
-      }
-    | false;
-
+  export type Optimize = 0 | 3;
+  export type Options = "DOC" | "ALL" | false;
   export type PPOption = PP | false;
 
   export type PP = {
@@ -1128,6 +1110,33 @@ const defaultCompilerOptions: CompilerOptions = {
     severity: "W",
     n: 250,
   },
+  maxnest: {
+    block: 17,
+    do: 17,
+    if: 17,
+  },
+  maxRunOnIf: 10,
+  maxStmt: {
+    m: 4 * $1K,
+    n: 8 * $1K,
+  },
+  maxTemp: 50000,
+  mDeck: false,
+  msgSummary: false,
+  name: false,
+  names: {
+    extralingChar: "@#$",
+    uppExtralingChar: "@#$",
+  },
+  natlang: "ENU",
+  nest: false,
+  nullDate: false,
+  object: true,
+  offset: false,
+  offsetSize: 4,
+  onSnap: false,
+  optimize: 0,
+  options: "DOC",
   system: "MVS",
   sysParm: "",
 };
