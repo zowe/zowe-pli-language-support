@@ -17,7 +17,10 @@ import {
   CompilationUnitTokens,
 } from "../workspace/compilation-unit";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
-import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import {
+  PluginConfigurationProviderInstance,
+  ProcessGroup,
+} from "../workspace/plugin-configuration-provider";
 import { CompilerOptionResult } from "./compiler-options/options";
 import {
   generateInstructions,
@@ -1083,15 +1086,19 @@ function resolveIncludeFileUri(
   const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
     context.entryUri,
   );
-  const pgroup = programConfig
-    ? PluginConfigurationProviderInstance.getProcessGroupConfig(
-        programConfig.pgroup,
-      )
-    : undefined;
+  let pgroup: ProcessGroup | undefined = undefined;
+  if (programConfig) {
+    pgroup = PluginConfigurationProviderInstance.getProcessGroupConfig(
+      programConfig.pgroup,
+    );
+  } else if (context.currentUri) {
+    pgroup = PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(
+      context.currentUri,
+    );
+  }
   const ext = UriUtils.extname(URI.parse(item.fileName));
   if (
     ext !== "" &&
-    programConfig &&
     pgroup &&
     (!pgroup["include-extensions"]?.includes(ext) ||
       !pgroup["include-extensions"])
@@ -1119,7 +1126,7 @@ function resolveIncludeFileUri(
   } else ....
   */
 
-  if (programConfig && pgroup) {
+  if (pgroup) {
     // lib file as either a string or a member from a known process group
     for (const lib of pgroup.libs ?? []) {
       const libFileUri = UriUtils.joinPath(
