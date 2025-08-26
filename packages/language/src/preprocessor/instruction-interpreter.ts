@@ -89,6 +89,12 @@ function copyValue(value: Value): Value {
   }
 }
 
+function variables(context: InterpreterContext): Map<string, Variable> {
+  // Returns the correct variable map for the current scope:
+  // local (in a procedure call), otherwise global
+  return context.localVariables ?? context.variables;
+}
+
 function generateVariable(
   instruction: inst.DeclareInstruction,
   context: InterpreterContext,
@@ -449,7 +455,7 @@ function runDoType3Initialization(
     return false;
   }
 
-  let loopVar = context.variables.get(varName);
+  let loopVar = variables(context).get(varName);
 
   // Implicitly declare the loop variable if it doesn't exist, or update existing variable
   if (!loopVar) {
@@ -463,7 +469,7 @@ function runDoType3Initialization(
       active: true,
       mode: inst.ScanMode.Scan,
     };
-    context.variables.set(varName, loopVar);
+    variables(context).set(varName, loopVar);
   } else {
     // Update existing variable to the start value
     loopVar.value = {
@@ -546,7 +552,7 @@ function runDoType3VariableUpdate(
   const varName = variable.variable;
   const spec = doType3.specification;
 
-  const loopVar = context.variables.get(varName);
+  const loopVar = variables(context).get(varName);
   if (!loopVar) {
     return false;
   }
@@ -598,9 +604,7 @@ function runAssignmentInstruction(
 ): void {
   const value = evaluateExpression(instruction.value, context);
   for (const ref of instruction.refs) {
-    let variable =
-      context.localVariables?.get(ref.variable) ??
-      context.variables.get(ref.variable);
+    let variable = variables(context).get(ref.variable);
     if (!variable) {
       if (ref.args.length > 0) {
         // This seems to write into an undeclared array variable
@@ -615,7 +619,7 @@ function runAssignmentInstruction(
         active: false, // Implicitly declared variables are inactive by default
         mode: inst.ScanMode.Scan,
       };
-      (context.localVariables ?? context.variables).set(ref.variable, variable);
+      variables(context).set(ref.variable, variable);
     } else {
       evaluateValueAccess(variable, ref.args, context).setter(value);
     }
@@ -789,9 +793,7 @@ function evaluateReferenceExpression(
   expression: inst.ReferenceItemInstruction,
   context: InterpreterContext,
 ): Value {
-  const variable =
-    context.localVariables?.get(expression.variable) ||
-    context.variables.get(expression.variable);
+  const variable = variables(context).get(expression.variable);
   if (!variable) {
     const procedure = context.procedures.get(expression.variable);
     if (!procedure) {
@@ -981,12 +983,11 @@ function runDeclareInstruction(
     context.activeProcedures.add(instruction.name);
     return;
   }
-  // If the local variables are defined, that means we are in a procedure
-  const variables = context.localVariables ?? context.variables;
-  // Don't override existing variables
-  if (!variables.has(instruction.name)) {
+  // Consider variables declared in a procedure call
+  // and don't override existing variables
+  if (!variables(context).has(instruction.name)) {
     const variable = generateVariable(instruction, context);
-    variables.set(variable.name, variable);
+    variables(context).set(variable.name, variable);
   }
 }
 
@@ -995,7 +996,7 @@ function runActivateInstruction(
   context: InterpreterContext,
 ): void {
   const name = instruction.variable.variable;
-  const variable = context.variables.get(name);
+  const variable = variables(context).get(name);
   if (variable) {
     if (instruction.scanMode !== undefined) {
       variable.mode = instruction.scanMode;
@@ -1012,7 +1013,7 @@ function runDeactivateInstruction(
   context: InterpreterContext,
 ): void {
   const name = instruction.variable.variable;
-  const variable = context.variables.get(name);
+  const variable = variables(context).get(name);
   context.activeProcedures.delete(name);
   if (variable) {
     variable.active = false;
@@ -1100,7 +1101,7 @@ function performTokenScan(
   context: InterpreterContext,
 ): Token[] | undefined {
   const image = token.image;
-  const variable = context.variables.get(image);
+  const variable = variables(context).get(image);
   // If there is no active variable with that name, return undefined
   // The caller side will simply push the token to the output
   if (!variable?.active) {
