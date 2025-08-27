@@ -50,7 +50,7 @@ export function registerPliValidationChecks(unit: CompilationUnit): Validator {
     // MemberCall: [IBM1747IS_Function_cannot_be_used_before_the_functions_descriptor_list_has_been_scanned],
     ProcedureStatement: [
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
-      IBM1068I_proc_with_return_hasnt_returns_att
+      IBM1068I_proc_with_return_hasnt_returns_att,
     ],
     LabelReference: [validator.checkLabelReference],
     CallStatement: [validator.checkCallStatement],
