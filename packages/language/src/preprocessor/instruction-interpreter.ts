@@ -89,10 +89,30 @@ function copyValue(value: Value): Value {
   }
 }
 
-function variables(context: InterpreterContext): Map<string, Variable> {
-  // Returns the correct variable map for the current scope:
-  // local (in a procedure call), otherwise global
-  return context.localVariables ?? context.variables;
+function getVariable(
+  context: InterpreterContext,
+  name: string,
+): Variable | undefined {
+  return context.localVariables?.get(name) ?? context.variables.get(name);
+}
+
+function setVariable(context: InterpreterContext, variable: Variable): void {
+  if (context.localVariables) {
+    if (context.localVariables.has(variable.name)) {
+      // Local variables might be shadowing a global variable
+      // Check and update first
+      context.localVariables.set(variable.name, variable);
+    } else if (context.variables.has(variable.name)) {
+      // Variable is actually a global variable that we need to update
+      context.variables.set(variable.name, variable);
+    } else {
+      // Variable doesn't exist yet, so we create it as a local variable
+      context.localVariables.set(variable.name, variable);
+    }
+  } else {
+    // Not in a procedure, so we only have global variables
+    context.variables.set(variable.name, variable);
+  }
 }
 
 function generateVariable(
@@ -455,7 +475,7 @@ function runDoType3Initialization(
     return false;
   }
 
-  let loopVar = variables(context).get(varName);
+  let loopVar = getVariable(context, varName);
 
   // Implicitly declare the loop variable if it doesn't exist, or update existing variable
   if (!loopVar) {
@@ -469,7 +489,7 @@ function runDoType3Initialization(
       active: false,
       mode: inst.ScanMode.Scan,
     };
-    variables(context).set(varName, loopVar);
+    setVariable(context, loopVar);
   } else {
     // Update existing variable to the start value
     loopVar.value = {
@@ -552,7 +572,7 @@ function runDoType3VariableUpdate(
   const varName = variable.variable;
   const spec = doType3.specification;
 
-  const loopVar = variables(context).get(varName);
+  const loopVar = getVariable(context, varName);
   if (!loopVar) {
     return false;
   }
@@ -603,7 +623,7 @@ function runAssignmentInstruction(
 ): void {
   const value = evaluateExpression(instruction.value, context);
   for (const ref of instruction.refs) {
-    let variable = variables(context).get(ref.variable);
+    let variable = getVariable(context, ref.variable);
     if (!variable) {
       if (ref.args.length > 0) {
         // This seems to write into an undeclared array variable
@@ -618,7 +638,7 @@ function runAssignmentInstruction(
         active: false, // Implicitly declared variables are inactive by default
         mode: inst.ScanMode.Scan,
       };
-      variables(context).set(ref.variable, variable);
+      setVariable(context, variable);
     } else {
       evaluateValueAccess(variable, ref.args, context).setter(value);
     }
@@ -792,7 +812,7 @@ function evaluateReferenceExpression(
   expression: inst.ReferenceItemInstruction,
   context: InterpreterContext,
 ): Value {
-  const variable = variables(context).get(expression.variable);
+  const variable = getVariable(context, expression.variable);
   if (!variable) {
     const procedure = context.procedures.get(expression.variable);
     if (!procedure) {
@@ -984,9 +1004,10 @@ function runDeclareInstruction(
   }
   // Consider variables declared in a procedure call
   // and don't override existing variables
-  if (!variables(context).has(instruction.name)) {
+  const variables = context.localVariables ?? context.variables;
+  if (!variables.has(instruction.name)) {
     const variable = generateVariable(instruction, context);
-    variables(context).set(variable.name, variable);
+    variables.set(variable.name, variable);
   }
 }
 
@@ -995,7 +1016,8 @@ function runActivateInstruction(
   context: InterpreterContext,
 ): void {
   const name = instruction.variable.variable;
-  const variable = variables(context).get(name);
+  // ACTIVATE only works on global variables
+  const variable = context.variables.get(name);
   if (variable) {
     if (instruction.scanMode !== undefined) {
       variable.mode = instruction.scanMode;
@@ -1012,7 +1034,8 @@ function runDeactivateInstruction(
   context: InterpreterContext,
 ): void {
   const name = instruction.variable.variable;
-  const variable = variables(context).get(name);
+  // DEACTIVATE only works on global variables
+  const variable = context.variables.get(name);
   context.activeProcedures.delete(name);
   if (variable) {
     variable.active = false;
@@ -1100,7 +1123,8 @@ function performTokenScan(
   context: InterpreterContext,
 ): Token[] | undefined {
   const image = token.image;
-  const variable = variables(context).get(image);
+  // Token scan can only take global variables into account (because it cannot run inside of a procedure)
+  const variable = context.variables.get(image);
   // If there is no active variable with that name, return undefined
   // The caller side will simply push the token to the output
   if (!variable?.active) {
