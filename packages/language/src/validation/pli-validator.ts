@@ -28,6 +28,7 @@ import { IBM1219I_leave_exits_noniterative_do } from "./messages/IBM1219I-leave-
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./messages/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
 import { IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute } from "./messages/IBM1388IE-NODESCRIPTOR-attribute-is-invalid-when-any-parameter-has-NONCONNECTED-attribute.js";
 import { IBM2615I_do_loops_execute_once } from "./messages/warning-severity/IBM2615I-do-loops-execute-once";
+import { IBM1068I_proc_with_return_hasnt_returns_att } from "./messages/Infos/IBM1068I-proc-with-return-hasnt-returns-att";
 import * as PLICodes from "./messages/pli-codes";
 import { ValidationAcceptor, ValidationChecks, Validator } from "./validator";
 
@@ -49,6 +50,7 @@ export function registerPliValidationChecks(unit: CompilationUnit): Validator {
     // MemberCall: [IBM1747IS_Function_cannot_be_used_before_the_functions_descriptor_list_has_been_scanned],
     ProcedureStatement: [
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
+      IBM1068I_proc_with_return_hasnt_returns_att
     ],
     LabelReference: [validator.checkLabelReference],
     CallStatement: [validator.checkCallStatement],
