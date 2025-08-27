@@ -36,6 +36,7 @@ interface TranslatorRule {
   negative?: string[];
   positiveTranslate?: Translate;
   negativeTranslate?: Translate;
+  multipleAllowed?: boolean;
 }
 
 type Translate = (option: CompilerOption, options: CompilerOptions) => void;
@@ -67,17 +68,27 @@ class Translator {
 
   private rules: TranslatorRule[] = [];
 
+  /**
+   * Adds a rule to the translator.
+   * @param positive Positive option names that trigger this rule.
+   * @param positiveTranslate Translation function for positive option.
+   * @param negative Negative option names that trigger this rule.
+   * @param negativeTranslate Negative translation function for negative option.
+   * @param multipleAllowed Whether this rule supports multiple occurrences. Duplicate validations are skipped in this case.
+   */
   rule(
     positive: string[],
     positiveTranslate: Translate,
     negative?: string[],
     negativeTranslate?: Translate,
+    multipleAllowed?: boolean,
   ) {
     this.rules.push({
       positive,
       negative,
       positiveTranslate,
       negativeTranslate,
+      multipleAllowed: multipleAllowed,
     });
   }
 
@@ -145,7 +156,9 @@ class Translator {
       if (!this.isRuleApplied(rule)) {
         this.appliedRules.set(rule, alignment);
       } else if (this.isRuleAlignedWith(rule, alignment)) {
-        this.reportDupeOptIssue(option, name);
+        if (!rule.multipleAllowed) {
+          this.reportDupeOptIssue(option, name);
+        }
       } else {
         this.reportMutexOptIssue(option, name);
       }
@@ -1368,23 +1381,29 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.flag} */
-translator.rule(["FLAG", "F"], (option, options) => {
-  ensureArguments(option, 0, 1);
-  const value = option.values[0];
-  if (value) {
-    ensureType(value, "plain");
-    const flag = value.value.toUpperCase();
-    if (flag === "S" || flag === "E" || flag === "I" || flag === "W") {
-      options.flag = flag;
-    } else {
-      throw new TranslationError(
-        value.token,
-        `Invalid flag value. Expected S, E, I or W, but received '${flag}'.`,
-        1,
-      );
+translator.rule(
+  ["FLAG", "F"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    const value = option.values[0];
+    if (value) {
+      ensureType(value, "plain");
+      const flag = value.value.toUpperCase();
+      if (flag === "S" || flag === "E" || flag === "I" || flag === "W") {
+        options.flag = flag;
+      } else {
+        throw new TranslationError(
+          value.token,
+          `Invalid flag value. Expected S, E, I or W, but received '${flag}'.`,
+          1,
+        );
+      }
     }
-  }
-});
+  },
+  undefined,
+  undefined,
+  true,
+);
 
 /** {@link CompilerOptions.float} */
 translator.rule(
@@ -1519,29 +1538,40 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.incAfter} */
-translator.rule(["INCAFTER"], (option, options) => {
-  ensureArguments(option, 1, 1);
-  const value = option.values[0];
-  if (value.kind === SyntaxKind.CompilerOption) {
-    if (value.name.toUpperCase() !== "PROCESS") {
-      throw new TranslationError(
-        value.token,
-        `Expected "PROCESS", but received '${value.name}'.`,
-        1,
-      );
+translator.rule(
+  ["INCAFTER"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    if (value.kind === SyntaxKind.CompilerOption) {
+      if (value.name.toUpperCase() !== "PROCESS") {
+        throw new TranslationError(
+          value.token,
+          `Expected "PROCESS", but received '${value.name}'.`,
+          1,
+        );
+      }
+      ensureArguments(value, 1, 1);
+      const processValue = value.values[0];
+      ensureType(processValue, "plain");
+
+      if (!options.incAfter) {
+        options.incAfter = { includes: [] };
+      }
+
+      options.incAfter.includes.push({
+        process: processValue.value,
+        token: processValue.token,
+      });
+    } else {
+      ensureType(value, "plain");
+      options.incAfter = undefined;
     }
-    ensureArguments(value, 1, 1);
-    const processValue = value.values[0];
-    ensureType(processValue, "plain");
-    options.incAfter = {
-      process: processValue.value,
-      token: processValue.token,
-    };
-  } else {
-    ensureType(value, "plain");
-    options.incAfter = undefined;
-  }
-});
+  },
+  undefined,
+  undefined,
+  true,
+);
 
 /** {@link CompilerOptions.incDir} */
 translator.rule(

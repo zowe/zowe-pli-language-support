@@ -700,8 +700,7 @@ export declare namespace CompilerOptions {
     items?: ("ASSERT" | "DISPLAY" | "PUT")[];
   }
   export interface IncAfter {
-    process?: string;
-    token?: Token;
+    includes: Array<{ process: string; token?: Token }>;
   }
   export interface IncDir {
     directories: string[];

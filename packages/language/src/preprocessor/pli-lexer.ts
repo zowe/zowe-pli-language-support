@@ -98,7 +98,7 @@ export class PliLexer {
     allErrors.push(...this.marginsProcessor.issues);
 
     const incAfter = compilerOptionsResult.result?.options.incAfter;
-    if (incAfter?.process) {
+    if (incAfter?.includes && incAfter.includes.length > 0) {
       instruction.result = {
         entryNode: generateIncAfterInstruction(
           instruction.result.entryNode,
@@ -135,30 +135,41 @@ function generateIncAfterInstruction(
   existingNode: InstructionNode,
   incAfter: CompilerOptions.IncAfter | undefined,
 ): InstructionNode {
-  if (!incAfter || !incAfter.process) {
+  if (!incAfter || !incAfter.includes || incAfter.includes.length === 0) {
     return existingNode;
   }
-  // Generate a synthetic include item here
-  // This allows us to perform LSP operations to jump to the included file
-  const includeItem = ast.createIncludeItem();
-  includeItem.fileName = incAfter.process;
-  includeItem.token = incAfter.token || null;
-  if (incAfter.token) {
-    includeItem.token = incAfter.token;
-    incAfter.token.element = includeItem;
-    incAfter.token.kind = CstNodeKind.IncludeItem_FileID;
+
+  // generate chained include instructions for each entry
+  let currentNode = existingNode;
+
+  // process in reverse order so the first INCAFTER appears first
+  for (let i = incAfter.includes.length - 1; i >= 0; i--) {
+    const include = incAfter.includes[i];
+
+    // Generate a synthetic include item here
+    // This allows us to perform LSP operations to jump to the included file
+    const includeItem = ast.createIncludeItem();
+    includeItem.fileName = include.process;
+    includeItem.token = include.token || null;
+    if (include.token) {
+      includeItem.token = include.token;
+      include.token.element = includeItem;
+      include.token.kind = CstNodeKind.IncludeItem_FileID;
+    }
+
+    // Create instruction for this include
+    const instruction: InstructionNode = {
+      labels: [],
+      instruction: createIncludeInstruction(
+        includeItem,
+        include.process,
+        false,
+        include.token,
+      ),
+      next: currentNode,
+    };
+    currentNode = instruction;
   }
-  // IncAfter runs as the very first instruction in the preprocessor.
-  // It allows to include ONE SINGLE file. Afterwards the preprocessor runs as normal.
-  const instruction: InstructionNode = {
-    labels: [],
-    instruction: createIncludeInstruction(
-      includeItem,
-      incAfter.process,
-      false,
-      incAfter.token,
-    ),
-    next: existingNode,
-  };
-  return instruction;
+
+  return currentNode;
 }
