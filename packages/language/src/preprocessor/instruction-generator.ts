@@ -80,24 +80,29 @@ function generateProcedureInstructionContainer(
   statement: ast.Statement,
 ): inst.ProcedureInstructionContainer {
   const names: string[] = [];
-  const args: string[] = [];
+  const labels: ast.LabelPrefix[] = [];
+  const params: string[] = [];
   for (const label of statement.labels) {
     if (label.name) {
       names.push(label.name);
+      labels.push(label);
     }
   }
   const procedure = statement.value as ast.ProcedureStatement;
-  for (const arg of procedure.parameters) {
-    const name = arg.ref?.text;
+  for (const param of procedure.parameters) {
+    const name = param.ref?.text;
     if (name) {
-      args.push(name);
+      params.push(name);
     }
   }
   const statements = procedure.statements;
+  const statementType = procedure.statement;
   const instructionList = generateInstructions(statements);
   return {
     names,
-    parameters: args,
+    labels,
+    statement: statementType,
+    parameters: params,
     node: instructionList.entryNode,
   };
 }
