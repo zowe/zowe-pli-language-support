@@ -542,6 +542,7 @@ export class PliParser extends AbstractParser {
         element,
         CstNodeKind.ProcedureStatement_PROCEDURE,
       );
+      element.procToken = token;
     });
     this.OPTION2(() => {
       this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
