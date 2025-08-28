@@ -45,8 +45,8 @@ export function registerButtons() {
   const shareWorkspaceButton = document.getElementById(
     "share-workspace-button",
   );
-  shareWorkspaceButton?.addEventListener("click", () => {
-    const workspaceFiles = createWorkspaceFiles(getWorkspaceDocuments());
+  shareWorkspaceButton?.addEventListener("click", async () => {
+    const workspaceFiles = await createWorkspaceFilesFromFileSystem();
     share(workspaceFiles);
   });
 }
@@ -127,23 +127,45 @@ export async function handleSharedWorkspace(
   return defaultUri;
 }
 
-function getWorkspaceDocuments() {
-  const workspaceDocuments: vscode.TextDocument[] = [];
-  for (const doc of vscode.workspace.textDocuments) {
-    if (doc.uri.path.startsWith("/workspace/")) {
-      workspaceDocuments.push(doc);
-    }
-  }
-  return workspaceDocuments;
-}
-
-function createWorkspaceFiles(workspaceDocuments: vscode.TextDocument[]) {
+/**
+ * Create workspace files by reading them from the file system.
+ * Traverses all directories contained in the workspace to add files.
+ */
+async function createWorkspaceFilesFromFileSystem(): Promise<WorkspaceFile[]> {
   const workspaceFiles: WorkspaceFile[] = [];
-  for (const doc of workspaceDocuments) {
-    console.debug("Saving document", doc.uri.path);
-    const text = doc.getText();
-    workspaceFiles.push({ uri: doc.uri.path, content: text });
+  const workspaceUri = vscode.Uri.file("/workspace");
+
+  try {
+    const files = await vscode.workspace.fs.readDirectory(workspaceUri);
+
+    while (files.length) {
+      const [name, type] = files.pop()!;
+      if (type === vscode.FileType.File) {
+        const fileUri = vscode.Uri.joinPath(workspaceUri, name);
+        console.debug("Saving document", fileUri.path);
+
+        try {
+          const content = await vscode.workspace.fs.readFile(fileUri);
+          const text = new TextDecoder().decode(content);
+          workspaceFiles.push({ uri: fileUri.path, content: text });
+        } catch (error) {
+          console.warn("Failed to read file", fileUri.path, error);
+        }
+      } else if (type === vscode.FileType.Directory) {
+        // read & add files to this directory as well
+        const moreFiles = await vscode.workspace.fs.readDirectory(
+          vscode.Uri.joinPath(workspaceUri, name),
+        );
+        for (const [childName, childType] of moreFiles) {
+          files.push([`${name}/${childName}`, childType]);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to read workspace directory", error);
+    return [];
   }
+
   return workspaceFiles;
 }
 
