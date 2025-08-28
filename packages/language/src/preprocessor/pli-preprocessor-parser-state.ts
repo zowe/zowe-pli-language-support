@@ -14,13 +14,12 @@ import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PreprocessorError } from "./pli-preprocessor-error";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { URI } from "../utils/uri";
 import { Token } from "../parser/tokens";
+import { URI } from "../utils/uri";
 import { tokenize } from "../parser/tokenizer";
 
 export interface PreprocessorParserState {
   index: number;
-  uri: URI;
   get tokens(): Token[];
   get current(): Token | undefined;
   get last(): Token | undefined;
@@ -59,18 +58,24 @@ export interface PreprocessorParserState {
 
 const nl = "\n".charCodeAt(0);
 
+export function preprocessorParserStateFromText(
+  text: string,
+  uri: URI | undefined,
+) {
+  const tokens = tokenize(text, uri);
+  return new PliPreprocessorParserState(tokens.tokens, text, 0);
+}
+
 export class PliPreprocessorParserState implements PreprocessorParserState {
   readonly tokens: Token[];
   public index: number;
-  public uri: URI;
-  private text: string;
+  private text: string | undefined;
   private inProcedure: boolean = false;
 
-  constructor(text: string, uri: URI) {
+  constructor(tokens: Token[], text: string | undefined, index = 0) {
     this.text = text;
-    this.tokens = tokenize(this.text, uri).tokens;
-    this.index = 0;
-    this.uri = uri;
+    this.tokens = tokens;
+    this.index = index;
   }
 
   pushProcedure(): void {
@@ -86,7 +91,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   }
 
   advanceLines(lineCount: number): void {
-    if (!this.current) {
+    if (!this.current || !this.text) {
       return;
     }
     const newPosition = this.advanceLinePosition(
@@ -164,7 +169,6 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     if (!this.canConsume(tokenType)) {
       return false;
     }
-    this.current!.uri = this.uri;
     this.current!.kind = kind;
     this.current!.element = element;
     this.index++;
@@ -178,14 +182,14 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   ) {
     const token = this.current!;
     if (!this.canConsume(tokenType)) {
+      const lastToken = token || this.last;
       const actualTokenTypes = this.tokens
         .slice(this.index, this.index + 1)
         .map((t) => t.tokenType.name ?? "???")
         .join(", ");
       const message = `Expected token type '${tokenType.name}', got '${actualTokenTypes}' instead.`;
-      throw new PreprocessorError(message, token || this.last, this.uri);
+      throw new PreprocessorError(message, token || this.last, lastToken?.uri);
     }
-    token.uri = this.uri;
     token.kind = kind;
     token.element = element;
     this.index++;

@@ -11,14 +11,15 @@
 
 import { describe, expect, test } from "vitest";
 import { PreprocessorTokens } from "../../src/preprocessor/pli-preprocessor-tokens";
-import { PliPreprocessorParserState } from "../../src/preprocessor/pli-preprocessor-parser-state";
+import { preprocessorParserStateFromText } from "../../src/preprocessor/pli-preprocessor-parser-state";
 import { URI } from "../../src/utils/uri";
 
 namespace Fixtures {
   const uri = URI.file("file:///test.pli");
-  export const Empty = () => new PliPreprocessorParserState("", uri);
-  export const OneToken = () => new PliPreprocessorParserState("ABC", uri);
-  export const TwoTokens = () => new PliPreprocessorParserState("ABC 123", uri);
+  export const Empty = () => preprocessorParserStateFromText("", uri);
+  export const OneToken = () => preprocessorParserStateFromText("ABC", uri);
+  export const TwoTokens = () =>
+    preprocessorParserStateFromText("ABC 123", uri);
 }
 
 describe("Preprocessor parser state", () => {
