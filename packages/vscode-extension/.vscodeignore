@@ -11,4 +11,5 @@
 !language-configuration.json
 !c4z.pli.code-snippets
 !syntaxes/pli.merged.json
+!schemas/*
 !LICENSE
