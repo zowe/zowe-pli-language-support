@@ -80,12 +80,12 @@ function generateProcedureInstructionContainer(
   statement: ast.Statement,
 ): inst.ProcedureInstructionContainer {
   const names: string[] = [];
-  const labels: ast.LabelPrefix[] = [];
+  const labels = new Map<string, ast.LabelPrefix>();
   const params: string[] = [];
   for (const label of statement.labels) {
     if (label.name) {
       names.push(label.name);
-      labels.push(label);
+      labels.set(label.name, label);
     }
   }
   const procedure = statement.value as ast.ProcedureStatement;

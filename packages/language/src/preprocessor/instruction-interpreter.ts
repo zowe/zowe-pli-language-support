@@ -1182,7 +1182,7 @@ function performTokenScan(
   let advance: number = 1;
   let immediateFollow = token.immediateFollow;
   if (procedure && context.activeProcedures.has(image)) {
-    const label = procedure.labels.find((label) => label.name === image);
+    const label = procedure.labels.get(image);
     refNode = label;
     const procedureParseResult = parseAndEvaluateProcedure(
       tokens,
@@ -1190,11 +1190,9 @@ function performTokenScan(
       procedure,
       context,
     );
-    if (procedureParseResult) {
-      value = procedureParseResult.value;
-      advance = procedureParseResult.advance;
-      immediateFollow = procedureParseResult.immediateFollow;
-    }
+    value = procedureParseResult.value;
+    advance = procedureParseResult.advance;
+    immediateFollow = procedureParseResult.immediateFollow;
   } else if (variable?.active) {
     refNode = variable.declarationNode ?? undefined;
     value = variable.value;
@@ -1230,10 +1228,11 @@ function parseAndEvaluateProcedure(
   index: number,
   procedure: inst.ProcedureInstructionContainer,
   context: InterpreterContext,
-): InlineProcedureEvaluationResult | undefined {
+): InlineProcedureEvaluationResult {
   const evaluatedArgs: Value[] = [];
   let advance = 1;
   let immediateFollow = tokens[index].immediateFollow;
+  let suffix: string = "";
   if (!procedure.statement) {
     const parseResult = parseInlineProcedureInvocation(tokens, index);
     advance = parseResult.advance;
@@ -1250,11 +1249,12 @@ function parseAndEvaluateProcedure(
     const parseResult = parseInlineStatementProcedureInvocation(tokens, index);
     advance = parseResult.advance;
     immediateFollow = parseResult.immediateFollow;
+    suffix = parseResult.suffix;
     // Positional arguments
     for (const argTokens of parseResult.positionalArgs) {
       const replacedTokens = replaceTokensInText(argTokens, context);
       const text = stringifyTokens(replacedTokens);
-      evaluatedArgs.push(valueToString(text));
+      evaluatedArgs.push(stringToValue(text));
     }
     const usedParams = new Set<string>();
     // Named arguments
@@ -1265,7 +1265,7 @@ function parseAndEvaluateProcedure(
       if (argTokens) {
         const replacedTokens = replaceTokensInText(argTokens.tokens, context);
         const text = stringifyTokens(replacedTokens);
-        evaluatedArgs[i] = valueToString(text);
+        evaluatedArgs[i] = stringToValue(text);
       } else if (i >= evaluatedArgs.length) {
         // No argument specified for this parameter, use the default empty value
         // TODO: Replace with unset value!
@@ -1287,8 +1287,11 @@ function parseAndEvaluateProcedure(
     }
   }
 
-  const localContext = createLocalContext(context);
-  const value = runProcedure(procedure, evaluatedArgs, localContext);
+  const localContext = createLocalContext(context, procedure);
+  let value = runProcedure(procedure, evaluatedArgs, localContext);
+  if (isScalarValue(value) && suffix) {
+    value = stringToValue(value.value + suffix);
+  }
   return {
     value,
     advance,
@@ -1377,6 +1380,11 @@ interface InlineStatementProcedureParseResult {
   namedArgs: Map<string, InlineProcedureNamedArgument>;
   advance: number;
   immediateFollow: boolean;
+  /**
+   * If the procedure invocation is immediately followed by another token
+   * This token acts as a suffix to the procedure call and needs to be attached to the return value
+   */
+  suffix: string;
 }
 
 function parseInlineStatementProcedureInvocation(
@@ -1444,11 +1452,19 @@ function parseInlineStatementProcedureInvocation(
       tokens: argTokens,
     });
   }
+  let suffix = "";
+  if (immediateFollow && i < length) {
+    const suffixToken = tokens[i];
+    suffix = suffixToken.image;
+    immediateFollow = suffixToken.immediateFollow;
+    advance++;
+  }
   return {
     positionalArgs: positionalParseResult.args,
     namedArgs,
     advance,
     immediateFollow,
+    suffix,
   };
 }
 
