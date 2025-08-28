@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">98.19% </span>
+                <span class="strong">98.11% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>109/111</span>
+                <span class='fraction'>104/106</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">98.19% </span>
+                <span class="strong">98.11% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>109/111</span>
+                <span class='fraction'>104/106</span>
             </div>
         
             
@@ -222,12 +222,7 @@
 <a name='L157'></a><a href='#L157'>157</a>
 <a name='L158'></a><a href='#L158'>158</a>
 <a name='L159'></a><a href='#L159'>159</a>
-<a name='L160'></a><a href='#L160'>160</a>
-<a name='L161'></a><a href='#L161'>161</a>
-<a name='L162'></a><a href='#L162'>162</a>
-<a name='L163'></a><a href='#L163'>163</a>
-<a name='L164'></a><a href='#L164'>164</a>
-<a name='L165'></a><a href='#L165'>165</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L160'></a><a href='#L160'>160</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -257,6 +252,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -284,18 +280,13 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-yes">20x</span>
-<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-yes">20x</span>
-<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">20x</span>
-<span class="cline-any cline-yes">570x</span>
-<span class="cline-any cline-yes">570x</span>
-<span class="cline-any cline-yes">570x</span>
 <span class="cline-any cline-yes">570x</span>
 <span class="cline-any cline-yes">570x</span>
 <span class="cline-any cline-yes">570x</span>
@@ -336,7 +327,6 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">570x</span>
 <span class="cline-any cline-yes">570x</span>
 <span class="cline-any cline-yes">570x</span>
 <span class="cline-any cline-yes">570x</span>
@@ -403,7 +393,7 @@
  */
 &nbsp;
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
-import { PliPreprocessorParser } from "./pli-preprocessor-parser";
+import { preprocessorParse } from "./preprocessor-parser";
 import * as ast from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
 import {
@@ -423,6 +413,7 @@ import {
 } from "./compiler-options/options";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { initLexer } from "../parser/tokenizer";
+import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
 &nbsp;
 export interface LexingIssue {
   readonly message: string;
@@ -448,12 +439,10 @@ export interface LexerResult {
 export class PliLexer {
   readonly compilerOptionsPreprocessor: CompilerOptionsProcessor;
   readonly marginsProcessor: MarginsProcessor;
-  readonly preprocessorParser: PliPreprocessorParser;
 &nbsp;
   constructor() {
     this.compilerOptionsPreprocessor = new CompilerOptionsProcessor();
     this.marginsProcessor = new PliMarginsProcessor();
-    this.preprocessorParser = new PliPreprocessorParser();
   }
 &nbsp;
   tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
@@ -469,16 +458,13 @@ export class PliLexer {
         compilerOptionsResult,
         uri,
       );
-      const state = this.preprocessorParser.initializeState(
-        textWithoutMargins,
-        uri,
-      );
+      const state = preprocessorParserStateFromText(textWithoutMargins, uri);
       // Do a full parsing of the input text to extract all *local* statements
       const {
         statements,
         errors,
         tokens: fileTokens,
-      } = this.preprocessorParser.parse(state);
+      } = preprocessorParse(state);
       const result = generateInstructions(statements);
       return {
         tokens: fileTokens,
@@ -503,7 +489,6 @@ export class PliLexer {
     const output = runInstructions(unit, uri, instruction.result, {
       compilerOptions: compilerOptionsResult.result,
       marginsProcessor: this.marginsProcessor,
-      parser: this.preprocessorParser,
     });
     output.fileTokens.set(uri.toString(), instruction.tokens);
     if (compilerOptionsResult.result) {
@@ -562,7 +547,7 @@ function generateIncAfterInstruction(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-27T14:36:29.626Z
+                at 2025-08-28T08:58:17.198Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
