@@ -16,12 +16,19 @@
     ".": {
       "types": "./out/index.d.ts",
       "default": "./out/index.js"
+    },
+    "./builtins": {
+      "types": "./out/workspace/builtins.d.ts",
+      "default": "./out/workspace/builtins.js"
     }
   },
   "typesVersions": {
     "*": {
       ".": [
         "out/index"
+      ],
+      "./builtins": [
+        "out/workspace/builtins"
       ]
     }
   },

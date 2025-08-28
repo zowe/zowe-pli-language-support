@@ -67,6 +67,7 @@ export class PliLexer {
       this.compilerOptionsPreprocessor.extractCompilerOptions(inputText, uri);
     const opts =
       compilerOptionsResult.result?.options ?? getDefaultCompilerOptions();
+    unit.compilerOptions = opts;
     initLexer(opts);
     unit.instructionCache.update(opts);
     const allErrors: LexingIssue[] = [];

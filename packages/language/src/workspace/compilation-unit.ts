@@ -33,7 +33,13 @@ import {
   EditorDocuments,
   TextDocuments,
 } from "../language-server/text-documents.js";
-import { Builtins, BuiltinsUri, BuiltinsUriSchema } from "./builtins.js";
+import {
+  Builtins,
+  BuiltinsMacro,
+  BuiltinsMacroUri,
+  BuiltinsUri,
+  BuiltinsUriSchema,
+} from "./builtins.js";
 import { PluginConfigurationProviderInstance } from "./plugin-configuration-provider.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
 import { Mutex } from "./mutex.js";
@@ -105,7 +111,7 @@ const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
  * Caches the scope for reuse.
  */
 function createBuiltinScopeGetter() {
-  let builtinSymbolTable: Scope | undefined = undefined;
+  let builtinScope: Scope | undefined = undefined;
 
   return (uri: URI, unit: CompilationUnit): Scope => {
     // Don't load the builtin symbol table for builtin files
@@ -113,24 +119,53 @@ function createBuiltinScopeGetter() {
       return Scope.createRoot(unit);
     }
 
-    if (builtinSymbolTable === undefined) {
+    if (builtinScope === undefined) {
       const unit = createCompilationUnit(URI.parse(BuiltinsUri));
       tokenize(unit, Builtins);
       parse(unit);
       generateSymbolTable(unit);
 
-      builtinSymbolTable =
+      builtinScope =
         unit.scopeCaches.regular.get(unit.ast) ?? Scope.createRoot(unit);
     }
 
-    return builtinSymbolTable;
+    return builtinScope;
   };
 }
 
 const getBuiltinScope = createBuiltinScopeGetter();
 
-// TODO: Add preprocessor scope for builtins?
-const getRootPreprocessorScope = Scope.createRoot;
+/**
+ * Creates a function that returns the root scope, with builtins.
+ *
+ * Caches the scope for reuse.
+ */
+function createBuiltinMacroScopeGetter() {
+  let builtinScope: Scope | undefined = undefined;
+
+  return (uri: URI, unit: CompilationUnit): Scope => {
+    // Don't load the builtin symbol table for builtin files
+    if (isBuiltinFile(uri)) {
+      return Scope.createRoot(unit);
+    }
+
+    if (builtinScope === undefined) {
+      const unit = createCompilationUnit(URI.parse(BuiltinsMacroUri));
+      tokenize(unit, BuiltinsMacro);
+      parse(unit);
+      generateSymbolTable(unit);
+
+      // Use the regular AST for easier handling
+      // Note that these are procedures that are used in preprocessor code!
+      builtinScope =
+        unit.scopeCaches.regular.get(unit.ast) ?? Scope.createRoot(unit);
+    }
+
+    return builtinScope;
+  };
+}
+
+const getRootPreprocessorScope = createBuiltinMacroScopeGetter();
 
 export function createCompilationUnit(uri: URI): CompilationUnit {
   const unit: CompilationUnit = {
@@ -178,7 +213,7 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
   };
 
   unit.rootScope = getBuiltinScope(uri, unit);
-  unit.rootPreprocessorScope = getRootPreprocessorScope(unit);
+  unit.rootPreprocessorScope = getRootPreprocessorScope(uri, unit);
 
   return unit;
 }
