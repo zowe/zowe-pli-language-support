@@ -193,15 +193,9 @@ function generateVariableValue(
   let value: Value;
   // Initial value is empty or 0 (for numbers)
   if (instruction.type === inst.DeclaredType.Character) {
-    value = {
-      value: "",
-      type: inst.DeclaredType.Character,
-    };
+    value = defaultEmptyValue;
   } else {
-    value = {
-      value: "0",
-      type: inst.DeclaredType.Fixed,
-    };
+    value = zero;
   }
   if (instruction.dimensions && instruction.dimensions.length > 0) {
     // Evaluate the dimensions in reverse order to construct the nested array correctly
@@ -573,7 +567,7 @@ function runDoType3Initialization(
     }
     byValue = value;
   } else if (spec.to) {
-    byValue = valueToNumber("1");
+    byValue = numberToValue("1");
   }
 
   const doType3Context = {
@@ -837,7 +831,7 @@ function evaluateBinaryExpression(
     case "^>":
       return notGreaterThan(left, right);
   }
-  return numberToValue("0");
+  return zero;
 }
 
 function evaluateUnaryExpression(
@@ -858,7 +852,7 @@ function evaluateUnaryExpression(
     case "^":
       return boolToValue(!valueToBool(operand));
   }
-  return numberToValue("0");
+  return zero;
 }
 
 const defaultEmptyValue: ScalarValue = {
@@ -1442,6 +1436,7 @@ for (let i = 0; i < 256; i++) {
 }
 const collateValue = stringToValue(collate);
 builtinImplementations.set("COLLATE", () => collateValue);
+
 const commentRegex = /\/\*|\*\//g;
 builtinImplementations.set("COMMENT", (_, args) => {
   const text = args[0];
@@ -1456,13 +1451,16 @@ builtinImplementations.set("COMMENT", (_, args) => {
   // The final comment should be surrounded by comment markers
   return stringToValue(`/*${replacedText}*/`);
 });
+
 // Simply use UNIX epoch time
 // PLI expects no delimiters between the values
 const compiledDate = ["1970", "01", "01", "00", "00", "00", "000"].join("");
 builtinImplementations.set("COMPILEDDATE", () => stringToValue(compiledDate));
+
 // From the reference: A leading zero in the day of the month field is replaced by a blank; no other leading zeros are suppressed.
 const compileTime = " 1.JAN.70 00.00.00";
 builtinImplementations.set("COMPILETIME", () => stringToValue(compileTime));
+
 function copy(
   value: Value | undefined,
   repetitions: Value | undefined,
@@ -1478,9 +1476,11 @@ function copy(
   const repeatedText = value.value.repeat(repeatCount);
   return stringToValue(repeatedText);
 }
+
 builtinImplementations.set("COPY", (_, args) => {
   return copy(args[0], args[1], 0);
 });
+
 const maxCountVariable = 99999;
 builtinImplementations.set("COUNTER", (context) => {
   const counterValue = context.counterValue++;
@@ -1493,6 +1493,7 @@ builtinImplementations.set("COUNTER", (context) => {
   const stringValue = counterValue.toString().padStart(5, "0");
   return stringToValue(stringValue);
 });
+
 function getArrayAtDim(
   value: Value,
   dimension: number,
@@ -1510,6 +1511,7 @@ function getArrayAtDim(
   }
   return undefined;
 }
+
 function getDim(value?: Value): number {
   let dimension = 1;
   if (value) {
@@ -1520,6 +1522,7 @@ function getDim(value?: Value): number {
   }
   return dimension;
 }
+
 builtinImplementations.set("DIMENSION", (_, args) => {
   const [arrayRef, dimension] = args;
   if (!arrayRef) {
@@ -1532,6 +1535,7 @@ builtinImplementations.set("DIMENSION", (_, args) => {
     return zero;
   }
 });
+
 builtinImplementations.set("HBOUND", (_, args) => {
   const [arrayRef, dimension] = args;
   if (!arrayRef) {
@@ -1544,6 +1548,7 @@ builtinImplementations.set("HBOUND", (_, args) => {
     return zero;
   }
 });
+
 builtinImplementations.set("INDEX", (_, args) => {
   const [target, search, start] = args;
   if (!target || !search) {
@@ -1563,6 +1568,7 @@ builtinImplementations.set("INDEX", (_, args) => {
   const indexOfValue = targetValue.indexOf(searchValue, startIndex) + 1;
   return numberToValue(indexOfValue);
 });
+
 builtinImplementations.set("LBOUND", (_, args) => {
   const [arrayRef, dimension] = args;
   if (!arrayRef) {
@@ -1575,20 +1581,24 @@ builtinImplementations.set("LBOUND", (_, args) => {
     return zero;
   }
 });
+
 builtinImplementations.set("LENGTH", (_, args) => {
   const arg = args[0];
   const stringValue = valueToString(arg, "");
   return numberToValue(stringValue.length);
 });
+
 builtinImplementations.set("LOWERCASE", (_, args) => {
   const arg = args[0];
   const stringValue = valueToString(arg, "");
   return stringToValue(stringValue.toLowerCase());
 });
+
 builtinImplementations.set("MACCOL", () => {
   // TODO: MACCOL returns a FIXED value that represents the column where the outermost macro invocation starts in the source text that contains the macro invocation.
   return zero;
 });
+
 builtinImplementations.set("MACLMAR", (context) => {
   const margins = context.unit.compilerOptions.margins;
   if (margins) {
@@ -1596,9 +1606,11 @@ builtinImplementations.set("MACLMAR", (context) => {
   }
   return numberToValue(2);
 });
+
 builtinImplementations.set("MACNAME", (context) => {
   return stringToValue(context.macname);
 });
+
 builtinImplementations.set("MACRMAR", (context) => {
   const margins = context.unit.compilerOptions.margins;
   if (margins) {
@@ -1606,6 +1618,7 @@ builtinImplementations.set("MACRMAR", (context) => {
   }
   return numberToValue(72);
 });
+
 builtinImplementations.set("MAX", (_, args) => {
   const numbers: number[] = [];
   for (const arg of args) {
@@ -1621,6 +1634,7 @@ builtinImplementations.set("MAX", (_, args) => {
   }
   return numberToValue(Math.max(...numbers));
 });
+
 builtinImplementations.set("MIN", (_, args) => {
   const numbers: number[] = [];
   for (const arg of args) {
@@ -1636,6 +1650,7 @@ builtinImplementations.set("MIN", (_, args) => {
   }
   return numberToValue(Math.min(...numbers));
 });
+
 builtinImplementations.set("PARMSET", (_, args) => {
   // PARMSET returns a BIT value indicating if a specified parameter was set on invocation of the procedure.
   const paramName = args[0];
@@ -1645,6 +1660,7 @@ builtinImplementations.set("PARMSET", (_, args) => {
     return boolToValue(true);
   }
 });
+
 builtinImplementations.set("QUOTE", (_, args) => {
   const value = args[0];
   if (!value) {
@@ -1653,10 +1669,12 @@ builtinImplementations.set("QUOTE", (_, args) => {
   const textValue = valueToString(value, "").replace(/"/g, '""');
   return stringToValue(`"${textValue}"`);
 });
+
 builtinImplementations.set("REPEAT", (_, args) => {
   // Same as copy, but with an additional repetition
   return copy(args[0], args[1], 1);
 });
+
 builtinImplementations.set("SUBSTR", (_, args) => {
   const [value, start, length] = args;
   if (!value || !isScalarValue(value)) {
@@ -1670,6 +1688,7 @@ builtinImplementations.set("SUBSTR", (_, args) => {
   const substring = stringValue.substring(startIndex, end);
   return stringToValue(substring);
 });
+
 builtinImplementations.set("SYSDIMSIZE", (context) => {
   // SYSDIMSIZE returns a FIXED value that indicates the maximum number of bytes that is needed to hold an index for an array permitted under the compiler CMPAT option.
   // The possible return values are as follows:
@@ -1678,27 +1697,33 @@ builtinImplementations.set("SYSDIMSIZE", (context) => {
   const cmpat = context.unit.compilerOptions.cmpat;
   return numberToValue(cmpat === "V3" ? 8 : 4);
 });
+
 builtinImplementations.set("SYSOFFSETSIZE", () => {
   // SYSOFFSETSIZE returns a FIXED value that indicates the number of bytes needed to hold an OFFSET.
   // ALWAYS returns 4.
   return numberToValue(4);
 });
+
 builtinImplementations.set("SYSPARM", (context) => {
   const symparm = context.unit.compilerOptions.sysParm;
   return stringToValue(symparm);
 });
+
 builtinImplementations.set("SYSPOINTERSIZE", (context) => {
   const lp = context.unit.compilerOptions.LP;
   return numberToValue(lp === "64" ? 8 : 4);
 });
+
 builtinImplementations.set("SYSTEM", (context) => {
   const systemInfo = context.unit.compilerOptions.system;
   return stringToValue(systemInfo);
 });
+
 builtinImplementations.set("SYSVERSION", () => {
   // SYSVERSION returns a CHARACTER string containing the product name as well as the version, release, and modification level.
   return stringToValue("PL/I for z/OS V6.R1.M0");
 });
+
 builtinImplementations.set("TRANSLATE", (_, args) => {
   const [toTranslate, toCharset, fromCharset] = args;
   const toTranslateValue = valueToString(toTranslate);
@@ -1723,6 +1748,7 @@ builtinImplementations.set("TRANSLATE", (_, args) => {
   }
   return stringToValue(result);
 });
+
 builtinImplementations.set("TRIM", (_, args) => {
   const [value, start, end] = args;
   if (!value || !isScalarValue(value)) {
@@ -1744,11 +1770,13 @@ builtinImplementations.set("TRIM", (_, args) => {
   const trimmed = stringValue.substring(startIndex, endIndex);
   return stringToValue(trimmed);
 });
+
 builtinImplementations.set("UPPERCASE", (_, args) => {
   const arg = args[0];
   const stringValue = valueToString(arg, "");
   return stringToValue(stringValue.toUpperCase());
 });
+
 builtinImplementations.set("VERIFY", (_, args) => {
   // VERIFY returns a FIXED value indicating the position in x of the leftmost character that is not in y.
   // It also allows you to specify the location within x at which to begin processing.
