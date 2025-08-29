@@ -26,7 +26,7 @@ import {
   CompilerOptionValue,
   SyntaxKind,
 } from "../../syntax-tree/ast";
-import { Token } from "../../parser/tokens";
+import { ML_COMMENT, SL_COMMENT, Token } from "../../parser/tokens";
 
 const commaToken = createToken({ name: "comma", pattern: "," });
 const semicolonToken = createToken({ name: "semicolon", pattern: ";" });
@@ -38,6 +38,11 @@ const wordToken = createToken({ name: "value", pattern: /[\w\d\-+_]+/ });
 const parenOpen = createToken({ name: "parenOpen", pattern: "(" });
 const parenClose = createToken({ name: "parenClose", pattern: ")" });
 const ws = createToken({ name: "ws", pattern: /\s+/, group: Lexer.SKIPPED });
+const HALF_ML_COMMENT = createToken({
+  name: "HALF_ML_COMMENT",
+  pattern: /\/\*[\s\S]/y,
+  group: Lexer.SKIPPED,
+});
 const tokenTypes = [
   ws,
   commaToken,
@@ -46,6 +51,9 @@ const tokenTypes = [
   parenOpen,
   parenClose,
   wordToken,
+  ML_COMMENT,
+  HALF_ML_COMMENT,
+  SL_COMMENT,
 ];
 const lexer = new Lexer(tokenTypes, {
   positionTracking: "full",
