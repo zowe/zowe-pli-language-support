@@ -2751,6 +2751,7 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.DO, (token) => {
       this.tokenPayload(token, element, CstNodeKind.DoStatement_DO);
+      element.doToken = token;
     });
     this.OPTION1(() => {
       this.OR1([
