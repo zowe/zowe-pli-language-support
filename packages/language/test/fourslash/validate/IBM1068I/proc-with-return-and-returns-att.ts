@@ -16,8 +16,8 @@
  */
 
 // @wrap: main
-//// b: proc returns(fixed bin(31));
-////   <|1:return|>(0);
+//// b: <|1:proc|> returns(fixed bin(31));
+////   return(0);
 //// end;
 
 verify.noDiagnostics(1);

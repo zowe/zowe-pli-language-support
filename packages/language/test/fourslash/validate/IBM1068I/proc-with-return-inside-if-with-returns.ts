@@ -17,10 +17,10 @@
 
 // @wrap: main
 //// b: proc returns(fixed);
-////    if x > 5 then
-////        return 1;
+////    if 4 > 5 then
+////        return (1);
 ////    else
-////        return 0;
+////        return (0);
 //// end;
 
 verify.noDiagnostics();

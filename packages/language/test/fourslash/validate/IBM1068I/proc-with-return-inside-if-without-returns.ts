@@ -17,10 +17,10 @@
 
 // @wrap: main
 //// b: <|1:proc|>;
-////    if x > 5 then
-////        return 1;
+////    if 6 > 5 then
+////        return (1);
 ////    else
-////        return 0;
+////        return (0);
 //// end;
 
 verify.expectExclusiveErrorCodesAt(1, code.Information.IBM1068I.fullCode);

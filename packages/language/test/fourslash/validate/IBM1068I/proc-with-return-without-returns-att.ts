@@ -16,8 +16,8 @@
  */
 
 // @wrap: main
-//// a: proc;
-////   <|1:return|>(0);
+//// a: <|1:proc|>;
+////   return(0);
 //// end;
 
 verify.expectExclusiveErrorCodesAt(1, code.Information.IBM1068I.fullCode);

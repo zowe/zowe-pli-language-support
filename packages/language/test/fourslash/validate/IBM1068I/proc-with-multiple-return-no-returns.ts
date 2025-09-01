@@ -16,8 +16,8 @@
  */
 
 // @wrap: main
-//// e: proc;
-////   <|1:return|>(0);
+//// e: <|1:proc|>;
+////   return(0);
 ////   return(1);
 //// end;
 
