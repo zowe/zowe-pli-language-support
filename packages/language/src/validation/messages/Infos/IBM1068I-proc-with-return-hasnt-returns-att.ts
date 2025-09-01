@@ -37,6 +37,49 @@ function visitAll(node: AST.SyntaxNode, action: (n: AST.SyntaxNode) => void) {
   });
 }
 
+function collectReturnStatements(
+  stmts: AST.Statement[] | undefined,
+  visited = new Set<object>(),
+): AST.ReturnStatement[] {
+  if (!stmts) return [];
+
+  const found: AST.ReturnStatement[] = [];
+
+  for (const stmt of stmts) {
+    if (!stmt.value) continue;
+
+    // Avoid infinite recursion (cyclical references)
+    if (visited.has(stmt.value)) continue;
+    visited.add(stmt.value);
+
+    // If this is directly a RETURN
+    if (stmt.value.kind === AST.SyntaxKind.ReturnStatement) {
+      found.push(stmt.value as AST.ReturnStatement);
+    }
+
+    // Traverse *all* properties of this node dynamically
+    for (const key of Object.keys(stmt.value)) {
+      const prop = (stmt.value as any)[key];
+      if (!prop) continue;
+
+      // Case 1: a single nested Statement
+      if (prop._debugKind === "Statement") {
+        found.push(...collectReturnStatements([prop], visited));
+      }
+
+      // Case 2: an array of nested Statements
+      if (
+        Array.isArray(prop) &&
+        prop.every((p) => p?._debugKind === "Statement")
+      ) {
+        found.push(...collectReturnStatements(prop, visited));
+      }
+    }
+  }
+
+  return found;
+}
+
 export function IBM1068I_proc_with_return_hasnt_returns_att(
   node: AST.ProcedureStatement,
   acceptor: ValidationAcceptor,
@@ -50,15 +93,8 @@ export function IBM1068I_proc_with_return_hasnt_returns_att(
   );
   if (hasReturnsAtt) return;
 
-  let hasReturnStmt = false;
-  visitAll(node, (n) => {
-    if (n.kind === AST.SyntaxKind.ReturnStatement) {
-      hasReturnStmt = true;
-      console.log('N KIND: ', n.kind);
-    }
-  })
-
-  if (!hasReturnStmt) return;
+  const returnStmts = collectReturnStatements(node.statements);
+  console.log('HAS RETURN STATEMENTS: ', returnStmts.length);
 
   // Build diagnostic
   const infoRange = tokenToRange(token);
