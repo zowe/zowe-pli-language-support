@@ -12,11 +12,15 @@
 /// <reference path="../../framework.ts" />
 
 /**
- * Procedure that declares RETURNS but contains no RETURN must NOT trigger IBM1068I
+ * Procedure with RETURNS attribute and RETURN statement must NOT trigger IBM1068I
  */
 
 // @wrap: main
-//// d: proc returns(fixed bin(31));
+//// b: proc returns(fixed);
+////    if x > 5 then
+////        return 1;
+////    else
+////        return 0;
 //// end;
 
 verify.noDiagnostics();
