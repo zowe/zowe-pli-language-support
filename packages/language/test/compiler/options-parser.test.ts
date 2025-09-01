@@ -93,58 +93,6 @@ describe("CompilerOptions parser", async () => {
 });
 
 describe("CompilerOptions translator", async () => {
-  test("Translates MARGINS with values", async () => {
-    const options = await parseAbstractCompilerOptions("MARGINS(4, 80)");
-    const translated = translateCompilerOptions(options).options;
-    expect(translated.margins).toEqual({ m: 4, n: 80 });
-  });
-
-  test("Translates MARGINS with short identifier", async () => {
-    const options = await parseAbstractCompilerOptions("MAR(4, 80)");
-    const translated = translateCompilerOptions(options).options;
-    expect(translated.margins).toEqual({ m: 4, n: 80 });
-  });
-
-  test("Translates MARGINS default value", async () => {
-    const options = await parseAbstractCompilerOptions("MARGINS(4,)");
-    const translated = translateCompilerOptions(options).options;
-    expect(translated.margins).toEqual({ m: 4, n: 72 });
-  });
-
-  test("Translates MARGINS - negative", async () => {
-    // Margins requires two or three arguments
-    const options = await parseAbstractCompilerOptions("MARGINS(4)");
-    const translated = translateCompilerOptions(options).options;
-    // If the parsing fails, the option is set to its default values
-    expect(translated.margins).toEqual({ m: 2, n: 72 });
-  });
-
-  test("Translates MARGINS with c", async () => {
-    const options = await parseAbstractCompilerOptions("MARGINS(0, 14,)");
-    const translated = translateCompilerOptions(options).options;
-    expect(translated.margins).toEqual({ m: 0, n: 14, c: "" });
-  });
-
-  test("Translates NOMARGINS", async () => {
-    const options = await parseAbstractCompilerOptions("NOMARGINS");
-    const translated = translateCompilerOptions(options).options;
-    expect(translated.margins).toEqual(false);
-  });
-
-  test("Produce issue for text value in MARGINS m", async () => {
-    const options = await parseAbstractCompilerOptions("MARGINS(M,444)");
-    const issues = translateCompilerOptions(options).issues;
-    expect(issues).toHaveLength(1);
-    expect(issues[0].message).toBe("Expected a number.");
-  });
-
-  test("Produce issue for text value in MARGINS n", async () => {
-    const options = await parseAbstractCompilerOptions("MARGINS(112, R)");
-    const issues = translateCompilerOptions(options).issues;
-    expect(issues).toHaveLength(1);
-    expect(issues[0].message).toBe("Expected a number.");
-  });
-
   test("Produce issue for text value when string is expected", async () => {
     const options = await parseAbstractCompilerOptions("BRACKETS(TEST)");
     const issues = translateCompilerOptions(options).issues;

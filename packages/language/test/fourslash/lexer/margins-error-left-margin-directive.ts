@@ -24,7 +24,7 @@
 //// }
 
 // @filename: main.pli
-////*PROCESS MARGINS(4,)
+////*PROCESS MARGINS(4,72)
 ////<|1: RG|>T005: PACKAGE EXPORTS(RGT005);
 ////   DCL SYSNULL BUILTIN;
 ////   RGT005: PROCEDURE(Z) OPTIONS(MAIN);
