@@ -19,7 +19,7 @@
 ////*PROCESS <|4:NOGONUMBER|>;
 ////*PROCESS <|5:GN|>(NOSEPARATE);
 ////*PROCESS <|6:NGN|>;
-////*PROCESS <|7:GN|>(SEPARATE);
+////*PROCESS <|7:GN|>(<|8:separate|>);
 
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.GoNumber.InvalidParameter.message("Nxx"),
@@ -42,6 +42,7 @@ verify.expectDiagnosticsAt(6, {
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.DupeOptionIssue.message("GN"),
 });
+verify.noDiagnostics(8);
 verify.expectCompilerOptions({
   goNumber: {
     separate: true,

@@ -548,7 +548,14 @@ export class TestBuilder {
   ): TestBuilder {
     const actualOptions = this.unit.compilerOptions;
     for (const [key, value] of Object.entries(expectedOptions)) {
-      expect(actualOptions[key as keyof CompilerOptions]).toEqual(value);
+      // If the value is an object, only check for the options that are expected.
+      if (typeof value === "object" && value !== null) {
+        expect(actualOptions[key as keyof CompilerOptions]).toEqual(
+          expect.objectContaining(value),
+        );
+      } else {
+        expect(actualOptions[key as keyof CompilerOptions]).toEqual(value);
+      }
     }
     return this;
   }

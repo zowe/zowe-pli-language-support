@@ -84,13 +84,19 @@ export const CompilerOptionsCodes = {
   ExpectedNumberRange: {
     code: "COOP09",
     severity: Severity.W,
-    message: (number: number, min: number, max: number) => {
+    message: (
+      number: number,
+      min: number | undefined,
+      max: number | undefined,
+    ) => {
       if (min !== undefined && max !== undefined) {
         return `Expected a number between ${min} and ${max}, but received ${number}.`;
-      } else if (min) {
+      } else if (min !== undefined) {
         return `Expected a number greater than or equal to ${min}, but received ${number}.`;
-      } else {
+      } else if (max !== undefined) {
         return `Expected a number less than or equal to ${max}, but received ${number}.`;
+      } else {
+        throw new Error("At least one of min or max must be defined");
       }
     },
     fullCode: "COOP09W",
@@ -140,6 +146,16 @@ export const CompilerOptionsCodes = {
       message: (value: string) =>
         `Expected "ASSERT", "DISPLAY" or "PUT", but received '${value}'.`,
       fullCode: "COIG01W",
+    } as ParametricPLICode,
+  },
+
+  IncAfter: {
+    InvalidParameter: {
+      code: "COIA01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "PROCESS" option with a process name, but received '${value}'.`,
+      fullCode: "COIA01W",
     } as ParametricPLICode,
   },
 
@@ -505,6 +521,72 @@ export const CompilerOptionsCodes = {
       message: (value: string) =>
         `Expected "NONULLPTR", "NULLPTR" or "NULL370", but received '${value}'.`,
       fullCode: "CORT01W",
+    } as ParametricPLICode,
+  },
+
+  Rules: {
+    InvalidParameter: {
+      code: "CORU01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Received unknown RULES parameter: '${value}'.`,
+      fullCode: "CORU01W",
+    } as ParametricPLICode,
+    ExpectAllSourceParameter: {
+      code: "CORU02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "ALL" or "SOURCE", but received '${value}'.`,
+      fullCode: "CORU02W",
+    } as ParametricPLICode,
+    InvalidGotoParameter: {
+      code: "CORU03",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "STRICT", "LOOSE" or "LOOSEFORWARD", but received '${value}'.`,
+      fullCode: "CORU03W",
+    } as ParametricPLICode,
+    InvalidLaxEntryParameter: {
+      code: "CORU04",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "STRICT" or "LOOSE", but received '${value}'.`,
+      fullCode: "CORU04W",
+    } as ParametricPLICode,
+    InvalidLaxInOutParameter: {
+      code: "CORU05",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,
+      fullCode: "CORU05W",
+    } as ParametricPLICode,
+    InvalidLaxMarginsParameter: {
+      code: "CORU06",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "STRICT" or "XNUMERIC", but received '${value}'.`,
+      fullCode: "CORU06W",
+    } as ParametricPLICode,
+    InvalidLaxQualParameter: {
+      code: "CORU07",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "ALL", "FORCE", "STRICT", "LOOSE" or "FULL", but received '${value}'.`,
+      fullCode: "CORU07W",
+    } as ParametricPLICode,
+    InvalidLaxScaleParameter: {
+      code: "CORU08",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,
+      fullCode: "CORU08W",
+    } as ParametricPLICode,
+    InvalidPaddingParameter: {
+      code: "CORU08",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,
+      fullCode: "CORU08W",
     } as ParametricPLICode,
   },
 

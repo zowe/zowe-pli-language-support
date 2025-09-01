@@ -305,7 +305,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-margini
    */
-  margini?: CompilerOptions.Margini | false;
+  margini?: string;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-margins
    */
@@ -853,171 +853,79 @@ export declare namespace CompilerOptions {
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-rules
    */
   export type Rules = {
-    ibm?: boolean;
-    ans?: boolean;
-    yy?: boolean;
-    byname?: boolean;
-    complex?:
-      | true
-      | {
-          value?: "ALL" | "SOURCE";
-        };
+    ibm?: "IBM" | "ANS";
+    byName?: boolean;
+    complex?: "ALL" | "SOURCE" | true;
     controlled?: boolean;
-    decsize?: boolean;
-    elseif?: boolean;
-    evendec?: boolean;
-    global?:
-      | true
-      | {
-          value?: "ALL" | "SOURCE";
-        };
+    decSize?: boolean;
+    elseIf?: boolean;
+    evenDec?: boolean;
+    global?: "ALL" | "SOURCE" | true;
     globalDo?: boolean;
-    goto?:
-      | true
-      | {
-          value?: "STRICT" | "LOOSE" | "LOOSEFORWARD";
-        };
-    laxbif?: boolean;
-    laxconv?:
-      | true
-      | {
-          value?: "ALL" | "SOURCE";
-        };
-    laxctl?: boolean;
-    laxdef?: boolean;
+    goto?: "STRICT" | "LOOSE" | "LOOSEFORWARD" | true;
+    laxBIf?: boolean;
+    laxConv?: "ALL" | "SOURCE" | true;
+    laxCtl?: boolean;
+    laxDcl?: boolean;
+    laxDef?: boolean;
+    laxEntry?: "STRICT" | "LOOSE" | true;
     laxExports?: boolean;
     laxFields?: boolean;
-    laxInterface?: boolean;
-    laxEntry?:
-      | true
-      | {
-          value?: "STRICT" | "LOOSE";
-        };
     laxIf?: boolean;
     laxInOut?:
-      | true
       | {
           source?: "ALL" | "SOURCE";
           strict?: "STRICT" | "LOOSE";
-        };
+        }
+      | true;
+    laxInterface?: boolean;
     laxLink?: boolean;
-    laxMargins?:
-      | true
-      | {
-          strict?: "STRICT" | "XNUMERIC";
-        };
-    laxNested?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    laxOptional?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
+    laxMargins?: "STRICT" | "XNUMERIC" | true;
+    laxNested?: "ALL" | "SOURCE" | true;
+    laxOptional?: "ALL" | "SOURCE" | true;
     laxPackage?: boolean;
-    laxParams?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
+    laxParms?: "ALL" | "SOURCE" | true;
     laxPunc?: boolean;
     laxQual?:
-      | true
       | {
-          strict?: "LOOSE" | "STRICT" | "FULL";
-          force?: "ALL" | "FORCE";
-        };
+          source?: "ALL" | "FORCE";
+          strict?: "STRICT" | "LOOSE" | "FULL";
+        }
+      | true;
     laxReturn?: boolean;
     laxScale?:
-      | true
-      | {
-          strict?: "LOOSE" | "STRICT";
-          source?: "ALL" | "SOURCE";
-        };
-    laxSemi?: boolean;
-    laxStg?: boolean;
-    laxStmt?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    laxStrz?: boolean;
-    multiClose?: boolean;
-    multiEntry?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    multiExit?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    multiSemi?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    padding?:
-      | true
       | {
           source?: "ALL" | "SOURCE";
           strict?: "STRICT" | "LOOSE";
-        };
-    procEndOnly?:
-      | true
+        }
+      | true;
+    laxSemi?: boolean;
+    laxStg?: boolean;
+    laxStmt?: "ALL" | "SOURCE" | true;
+    laxStrz?: boolean;
+    multiClose?: boolean;
+    multiEntry?: "ALL" | "SOURCE" | true;
+    multiExit?: "ALL" | "SOURCE" | true;
+    multiSemi?: "ALL" | "SOURCE" | true;
+    padding?:
       | {
           source?: "ALL" | "SOURCE";
-        };
+          strict?: "STRICT" | "LOOSE";
+        }
+      | true;
+    procEndOnly?: "ALL" | "SOURCE" | true;
     recursive?: boolean;
     selfAssign?: boolean;
-    unref?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    unrefBased?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    unrefCtl?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    unrefDefined?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    unrefEntry?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    unrefDefFile?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    unrefStatic?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    unrefValue?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
-    unset?:
-      | true
-      | {
-          source?: "ALL" | "SOURCE";
-        };
+    unref?: "ALL" | "SOURCE" | true;
+    unrefBased?: "ALL" | "SOURCE" | true;
+    unrefCtl?: "ALL" | "SOURCE" | true;
+    unrefDefined?: "ALL" | "SOURCE" | true;
+    unrefEntry?: "ALL" | "SOURCE" | true;
+    unrefFile?: "ALL" | "SOURCE" | true;
+    unrefStatic?: "ALL" | "SOURCE" | true;
+    unrefValue?: "ALL" | "SOURCE" | true;
+    unset?: boolean;
+    yy?: boolean;
   };
   export type Semantic = {
     // *PROCESS NOSEMANTIC; actually results in NOSEMANTIC( I );
@@ -1127,6 +1035,7 @@ const $1K = 1024;
 const $1M = 1024 * 1024;
 
 const defaultCompilerOptions: CompilerOptions = {
+  goNumber: false,
   json: {
     case: "UPPER",
     get: "HEEDCASE",
@@ -1148,6 +1057,7 @@ const defaultCompilerOptions: CompilerOptions = {
   },
   lineCount: 31415,
   initAuto: "FULL",
+  margini: " ",
   margins: {
     m: 2,
     n: 72,
@@ -1209,6 +1119,61 @@ const defaultCompilerOptions: CompilerOptions = {
   resExp: true,
   respect: { date: false },
   rtCheck: "NONULLPTR",
+  rules: {
+    ibm: "IBM",
+    byName: true,
+    complex: true,
+    controlled: true,
+    decSize: false,
+    elseIf: true,
+    evenDec: true,
+    global: true,
+    globalDo: true,
+    goto: true,
+    laxBIf: false,
+    laxConv: true,
+    laxCtl: false,
+    laxDcl: false,
+    laxDef: false,
+    laxEntry: true,
+    laxExports: true,
+    laxFields: true,
+    laxIf: false,
+    laxInOut: true,
+    laxInterface: true,
+    laxLink: true,
+    laxMargins: true,
+    laxNested: true,
+    laxOptional: true,
+    laxPackage: true,
+    laxParms: true,
+    laxPunc: true,
+    laxQual: true,
+    laxReturn: true,
+    laxScale: { source: "ALL", strict: "LOOSE" },
+    laxSemi: true,
+    laxStg: true,
+    laxStmt: true,
+    laxStrz: false,
+    multiClose: false,
+    multiEntry: true,
+    multiExit: true,
+    multiSemi: true,
+    padding: true,
+    procEndOnly: true,
+    recursive: true,
+    selfAssign: true,
+    unref: true,
+    unrefBased: true,
+    unrefCtl: true,
+    unrefDefined: true,
+    unrefEntry: true,
+    unrefFile: true,
+    unrefStatic: true,
+    unrefValue: true,
+    unset: true,
+    yy: true,
+  },
   service: "",
   source: true,
   spill: 512,
