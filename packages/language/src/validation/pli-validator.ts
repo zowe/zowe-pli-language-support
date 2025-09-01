@@ -27,6 +27,7 @@ import {
 import { IBM1219I_leave_exits_noniterative_do } from "./messages/IBM1219I-leave-exits-noniterative-do";
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./messages/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
 import { IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute } from "./messages/IBM1388IE-NODESCRIPTOR-attribute-is-invalid-when-any-parameter-has-NONCONNECTED-attribute.js";
+import { IBM2615I_do_loops_execute_once } from "./messages/warning-severity/IBM2615I-do-loops-execute-once";
 import * as PLICodes from "./messages/pli-codes";
 import { ValidationAcceptor, ValidationChecks, Validator } from "./validator";
 
@@ -54,6 +55,7 @@ export function registerPliValidationChecks(unit: CompilationUnit): Validator {
     DefineOrdinalStatement: [validator.checkDefineOrdinalStatement],
     DeclareStatement: [validator.checkDeclareStatement],
     ReferenceItem: [validator.checkImplicitBuiltins.bind(validator)],
+    DoStatement: [IBM2615I_do_loops_execute_once],
     LeaveStatement: [IBM1219I_leave_exits_noniterative_do],
   });
 
