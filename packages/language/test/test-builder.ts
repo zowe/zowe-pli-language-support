@@ -16,7 +16,7 @@ import {
 } from "../src/workspace/compilation-unit";
 import { URI } from "vscode-uri";
 import { Diagnostic, Range, Severity } from "../src/language-server/types";
-import { parse, parseAndLink, replaceNamedIndices } from "./utils";
+import { parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
 import { completionRequest } from "../src/language-server/completion/completion-request";
@@ -38,6 +38,7 @@ import {
 } from "../src/workspace/plugin-configuration-provider";
 import { InternalCodes } from "../src/validation/messages";
 import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
+import { tokenize } from "../src/parser/tokenizer";
 
 export type Label = string | number | string[] | number[];
 
@@ -294,8 +295,9 @@ export class TestBuilder {
     if (Array.isArray(textOrTokens)) {
       expectedTokens = textOrTokens;
     } else {
-      const expectedUnit = parse(textOrTokens);
-      expectedTokens = expectedUnit.tokens.all.map((e) => e.image);
+      expectedTokens = tokenize(textOrTokens, undefined).tokens.map(
+        (e) => e.image,
+      );
     }
     expect(actualTokens).toEqual(expectedTokens);
   }
@@ -449,15 +451,22 @@ export class TestBuilder {
     return this;
   }
 
-  expectNoDiagnosticsAt(label: string): TestBuilder {
-    const { exactMatches } = this.getMatchingDiagnostics(label);
+  expectNoDiagnosticsAt(label: Label): TestBuilder {
+    if (Array.isArray(label)) {
+      for (const l of label) {
+        this.expectNoDiagnosticsAt(l);
+      }
+      return this;
+    }
+
+    const { exactMatches } = this.getMatchingDiagnostics(label.toString());
 
     if (exactMatches.length > 0) {
       const message = exactMatches
         .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
         .join("\n- ");
       fail(
-        `Expected no diagnostics at label "${label}" (${this.createLabelRangeMessage(label)}) but received:\n- ${message}`,
+        `Expected no diagnostics at label "${label}" (${this.createLabelRangeMessage(label.toString())}) but received:\n- ${message}`,
       );
     }
 
@@ -475,8 +484,11 @@ export class TestBuilder {
     return this;
   }
 
-  noDiagnosticsExcept(regex: RegExp[]): TestBuilder {
-    const remainingDiagnostics = this.diagnostics.filter((diagnostic) => {
+  noDiagnosticsExcept(regex: RegExp[], label?: Label): TestBuilder {
+    const diagnostics = label
+      ? this.getMatchingDiagnostics(label.toString()).exactMatches
+      : this.diagnostics;
+    const remainingDiagnostics = diagnostics.filter((diagnostic) => {
       const message = this.createDiagnosticMessage(diagnostic);
       return !regex.some((r) => r.test(message));
     });
@@ -762,7 +774,7 @@ export class TestBuilder {
 
   private createDiagnosticMessage(diagnostic: Diagnostic): string {
     const position = this.createPositionMessage(
-      diagnostic.range.start,
+      diagnostic.range?.start,
       diagnostic.uri,
     );
     const severity = Severity[diagnostic.severity];

@@ -70,13 +70,14 @@ export interface HarnessTesterInterface {
      * verify.noDiagnostics('i');
      * ```
      */
-    noDiagnostics(label?: string | number): void;
+    noDiagnostics(label?: Label): void;
 
     /**
      * Expect that the compilation unit has no diagnostics apart from the given regexes.
      * @param regexes The regexes to expect no diagnostics apart from.
      */
     noDiagnosticsExcept(regexes: RegExp[]): void;
+    noDiagnosticsExceptAt(label: Label, regexes: RegExp[]): void;
 
     /**
      * Expect that the given function throws an error.
@@ -110,6 +111,14 @@ export interface HarnessTesterInterface {
   };
 
   hover: {
+    /**
+     * Expect that the hover at the given label is an include directive.
+     *
+     * @param label The label to expect the hover at.
+     * @param filePath File path to resolve in an OS-dependent fashion
+     * @param content The expected hover content of the included file
+     */
+    expectIncludeAt(label: Label, filePath: string, content: string): void;
     /**
      * Expect that the hover at the given label is the given markdown.
      *

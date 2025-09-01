@@ -35,7 +35,7 @@ function parseWithValidations(text: string) {
 
 describe("Validating", () => {
   test("check simple program", async () => {
-    const doc = parseWithValidations(`
+    const doc = await parseWithValidations(`
         H: PROC OPTIONS (MAIN);
         DCL ABC BIT(1) INIT(1);
         END H;
@@ -44,7 +44,7 @@ describe("Validating", () => {
   });
 
   test("check empty program", async () => {
-    const doc = parseWithValidations(`;`);
+    const doc = await parseWithValidations(`;`);
     assertDiagnostic(doc, {
       code: PLICodes.Severe.IBM1917I.fullCode,
       severity: Severity.S,
@@ -52,7 +52,7 @@ describe("Validating", () => {
   });
 
   test("check IBM2462I, unaligned & aligned conflict", async () => {
-    const doc = parseWithValidations(`
+    const doc = await parseWithValidations(`
         H: PROC OPTIONS (MAIN);
         xyz: proc returns ( optional aligned unaligned bit(4) ); // <-- conflicting attributes, second one should be ignored
         return(0);
@@ -67,7 +67,7 @@ describe("Validating", () => {
   });
 
   test("check mismatched end label", async () => {
-    const doc = parseWithValidations(`
+    const doc = await parseWithValidations(`
         MYPROC: PROCEDURE OPTIONS (MAIN);
         DCL TRUE BIT(1) INIT(1);
         DCL FALSE BIT(1) INIT(0);
@@ -96,7 +96,7 @@ describe("Validating", () => {
   });
 
   test("package end label validates", async () => {
-    const doc = parseWithValidations(`
+    const doc = await parseWithValidations(`
         baseline: package;
         end baseline;`);
     assertNoDiagnostics(doc, {
@@ -106,7 +106,7 @@ describe("Validating", () => {
 
   // TODO @montymxb Mar. 28th, 2025: Pending a fix to linking + scoping
   test.fails("validates ordinal reference", async () => {
-    const doc = parseWithValidations(`
+    const doc = await parseWithValidations(`
         define ordinal day (
             Monday,
             Tuesday,
@@ -128,7 +128,7 @@ describe("Validating", () => {
   test.fails.skip(
     "Reference to alias types __SIGNED_INT & __UNSIGNED_INT",
     async () => {
-      const doc = parseWithValidations(`
+      const doc = await parseWithValidations(`
         mypackage: package;
         DCL x type __SIGNED_INT;
         DCL y type __UNSIGNED_INT;
@@ -140,7 +140,7 @@ describe("Validating", () => {
 
   describe("Call validations", () => {
     test("can call function declared by procedure", async () => {
-      const doc = parseWithValidations(
+      const doc = await parseWithValidations(
         `
            MAINPR: procedure options( main );
            b: proc() returns( OPTIONAL byvalue fixed bin(31) );
@@ -154,7 +154,7 @@ describe("Validating", () => {
     });
 
     test("can call function declared by entry statement", async () => {
-      const doc = parseWithValidations(
+      const doc = await parseWithValidations(
         `
             MAINPR: procedure options( main );
             // calling 'a'
@@ -168,7 +168,7 @@ describe("Validating", () => {
     });
 
     test("cannot invoke function from declaration w/out entry (no args)", async () => {
-      const doc = parseWithValidations(
+      const doc = await parseWithValidations(
         `
             MAINPR: procedure options( main );
             dcl a fixed bin(31); // not callable
@@ -185,7 +185,7 @@ describe("Validating", () => {
     });
 
     test("cannot invoke function from declaration w/out entry (w/ args)", async () => {
-      const doc = parseWithValidations(
+      const doc = await parseWithValidations(
         `
               MAINPR: procedure options( main );
               // calling 'a'
@@ -211,7 +211,7 @@ describe("Validating", () => {
   describe("Ordinal validations", async () => {
     test("Signed & unsigned are mutually exclusive", async () => {
       // ensure that only one set of signed/unsigned & precision is specified
-      const doc = parseWithValidations(`
+      const doc = await parseWithValidations(`
       define ordinal day (
         Monday
       ) prec(15) signed unsigned;`);
@@ -221,7 +221,7 @@ describe("Validating", () => {
 
     test("Valid to have signed before precision", async () => {
       // ensure that only one set of signed/unsigned & precision is specified
-      const doc = parseWithValidations(`
+      const doc = await parseWithValidations(`
       define ordinal day (
         Monday
       ) signed prec(15);`);
@@ -231,7 +231,7 @@ describe("Validating", () => {
 
     test("Don't allow multiple precisions", async () => {
       // ensure that only one set of signed/unsigned & precision is specified
-      const doc = parseWithValidations(`
+      const doc = await parseWithValidations(`
       define ordinal day (
         Monday
       ) precision(15) prec(15);`);
@@ -241,7 +241,7 @@ describe("Validating", () => {
 
     test("Double signed/unsigned is ok (redundant)", async () => {
       // ensure that only one set of signed/unsigned & precision is specified
-      const doc = parseWithValidations(`
+      const doc = await parseWithValidations(`
       define ordinal D1 (
         Day1
       ) unsigned unsigned;
@@ -268,7 +268,7 @@ describe("Validating", () => {
 
   describe("*PROCESS Validations", () => {
     test("No options valid", async () => {
-      const doc = parseWithValidations(`*PROCESS;
+      const doc = await parseWithValidations(`*PROCESS;
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
@@ -276,7 +276,7 @@ describe("Validating", () => {
     });
 
     test("Single option is valid", async () => {
-      const doc = parseWithValidations(`*PROCESS NOEXIT;
+      const doc = await parseWithValidations(`*PROCESS NOEXIT;
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
@@ -284,7 +284,7 @@ describe("Validating", () => {
     });
 
     test("Warn on mutex opts", async () => {
-      const doc = parseWithValidations(`*PROCESS NOAGGREGATE, AGGREGATE;
+      const doc = await parseWithValidations(`*PROCESS NOAGGREGATE, AGGREGATE;
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
@@ -296,7 +296,7 @@ describe("Validating", () => {
     });
 
     test("Warn on duplicate opts", async () => {
-      const doc = parseWithValidations(`*PROCESS AGGREGATE, AGGREGATE;
+      const doc = await parseWithValidations(`*PROCESS AGGREGATE, AGGREGATE;
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
@@ -307,7 +307,7 @@ describe("Validating", () => {
     });
 
     test("Warn on unrecognized compiler option", async () => {
-      const doc = parseWithValidations(`*PROCESS TYPEFOXOPT;
+      const doc = await parseWithValidations(`*PROCESS TYPEFOXOPT;
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
@@ -319,7 +319,7 @@ describe("Validating", () => {
 
     test("Warn on complex case w/ mutex opt", async () => {
       const doc =
-        parseWithValidations(`*PROCESS NODBRMLIB, COMPILE, AGGREGATE, NOCOMPILE;
+        await parseWithValidations(`*PROCESS NODBRMLIB, COMPILE, AGGREGATE, NOCOMPILE;
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
@@ -331,7 +331,7 @@ describe("Validating", () => {
     });
 
     test("Warn on duplicate w/ aliased form", async () => {
-      const doc = parseWithValidations(`*PROCESS AG, AGGREGATE;
+      const doc = await parseWithValidations(`*PROCESS AG, AGGREGATE;
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
@@ -342,7 +342,7 @@ describe("Validating", () => {
     });
 
     test("Warn on mutex case w/ aliased form", async () => {
-      const doc = parseWithValidations(`*PROCESS NAG, AGGREGATE;
+      const doc = await parseWithValidations(`*PROCESS NAG, AGGREGATE;
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
@@ -355,7 +355,7 @@ describe("Validating", () => {
 
     test("Valid on complex case w/ no issues", async () => {
       const doc =
-        parseWithValidations(`*PROCESS COMPILE, NODBRMLIB, AGGREGATE, MARGINS(2,72);
+        await parseWithValidations(`*PROCESS COMPILE, NODBRMLIB, AGGREGATE, MARGINS(2,72);
         EP: PROC OPTIONS (MAIN);
         END EP;
         `);
@@ -363,7 +363,7 @@ describe("Validating", () => {
     });
 
     test("Error on invalid %INCLUDE directive", async () => {
-      const doc = parseWithValidations(` %INCLUDE 'nonexistent.pli';
+      const doc = await parseWithValidations(` %INCLUDE 'nonexistent.pli';
         EP: PROC OPTIONS (MAIN);
         END EP;
       `);
@@ -373,48 +373,4 @@ describe("Validating", () => {
       });
     });
   });
-
-  //
-  //     test('check no errors', async () => {
-  //         document = await parseWithValidations(`
-  //             person Langium
-  //         `);
-  //
-  //         expect(
-  //             // here we first check for validity of the parsed document object by means of the reusable function
-  //             //  'checkDocumentValid()' to sort out (critical) typos first,
-  //             // and then evaluate the diagnostics by converting them into human readable strings;
-  //             // note that 'toHaveLength()' works for arrays and strings alike ;-)
-  //             checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n')
-  //         ).toHaveLength(0);
-  //     });
-  //
-  //     test('check capital letter validation', async () => {
-  //         document = await parseWithValidations(`
-  //             person langium
-  //         `);
-  //
-  //         expect(
-  //             checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n')
-  //         ).toEqual(
-  //             // 'expect.stringContaining()' makes our test robust against future additions of further validation rules
-  //             expect.stringContaining(s`
-  //                 [1:19..1:26]: Person name should start with a capital.
-  //             `)
-  //         );
-  //     });
 });
-
-// function checkDocumentValid(document: LangiumDocument): string | undefined {
-//     return document.parseResult.parserErrors.length && s`
-//         Parser errors:
-//           ${document.parseResult.parserErrors.map(e => e.message).join('\n  ')}
-//     `
-//         || document.parseResult.value === undefined && `ParseResult is 'undefined'.`
-//         || !isPliProgram(document.parseResult.value) && `Root AST object is a ${document.parseResult.value.$type}, expected a 'Model'.`
-//         || undefined;
-// }
-
-// function diagnosticToString(d: Diagnostic) {
-//     return `[${d.range.start.line}:${d.range.start.character}..${d.range.end.line}:${d.range.end.character}]: ${d.message}`;
-// }

@@ -56,6 +56,7 @@ function createTestingHarnessImplementation(
       expectDiagnosticsAt: listen("verify.expectDiagnosticsAt"),
       noDiagnostics: listen("verify.noDiagnostics"),
       noDiagnosticsExcept: listen("verify.noDiagnosticsExcept"),
+      noDiagnosticsExceptAt: listen("verify.noDiagnosticsExceptAt"),
       expectToThrow: listen("verify.expectToThrow"),
       expectCompilerOptions: listen("verify.expectCompilerOptions"),
     },
@@ -64,6 +65,7 @@ function createTestingHarnessImplementation(
     },
     hover: {
       codeBlock: (text) => text,
+      expectIncludeAt: listen("hover.expectIncludeAt"),
       expectMarkdownAt: listen("hover.expectMarkdownAt"),
       expectTextAt: listen("hover.expectTextAt"),
     },

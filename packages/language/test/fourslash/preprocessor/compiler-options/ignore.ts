@@ -19,17 +19,14 @@
 ////*PROCESS <|3:IGNORE|>(ASSERT, PUT);
 
 verify.expectDiagnosticsAt(1, {
-  message: code.CompilerOptions.ignore.WrongParameter.message("INVALID"),
+  message: code.CompilerOptions.Ignore.InvalidParameter.message("INVALID"),
 });
-
 verify.expectDiagnosticsAt(2, {
-  message: code.CompilerOptions.ignore.WrongParameter.message("INVALID"),
+  message: code.CompilerOptions.Ignore.InvalidParameter.message("INVALID"),
 });
-
 verify.expectDiagnosticsAt(3, {
   message: code.CompilerOptions.MutexOptionIssue.message("IGNORE"),
 });
-
 verify.expectCompilerOptions({
   ignore: {
     items: ["ASSERT", "PUT"],

@@ -11,20 +11,28 @@
 
 import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
+import { getAttributes } from "./util";
 
 interface GenerateInstructionContext {
   labels: Map<string, inst.InstructionNode>;
   nodes: Map<ast.SyntaxNode | null, inst.InstructionNode>;
+  procedures: Map<string, inst.ProcedureInstructionContainer>;
   onFinish: (callback: () => void) => void;
+}
+
+export interface InstructionGeneratorResult {
+  entryNode: inst.InstructionNode;
+  procedures: Map<string, inst.ProcedureInstructionContainer>;
 }
 
 export function generateInstructions(
   statements: ast.Statement[],
-): inst.InstructionNode {
+): InstructionGeneratorResult {
   const callbacks: (() => void)[] = [];
   const context: GenerateInstructionContext = {
     labels: new Map(),
     nodes: new Map(),
+    procedures: new Map(),
     onFinish: (callback) => {
       callbacks.push(callback);
     },
@@ -41,7 +49,10 @@ export function generateInstructions(
   for (let i = callbacks.length - 1; i >= 0; i--) {
     callbacks[i]();
   }
-  return list.head ?? inst.createHaltNode();
+  return {
+    entryNode: list.head ?? inst.createHaltNode(),
+    procedures: context.procedures,
+  };
 }
 
 function generateInstructionList(
@@ -50,12 +61,45 @@ function generateInstructionList(
 ): inst.LinkedInstructionList {
   const list = new inst.LinkedInstructionList();
   for (const statement of statements) {
-    const node = generateInstructionForStatement(statement, context);
-    if (node) {
-      list.append(node);
+    if (statement.value?.kind === ast.SyntaxKind.ProcedureStatement) {
+      const procedure = generateProcedureInstructionContainer(statement);
+      for (const name of procedure.names) {
+        context.procedures.set(name, procedure);
+      }
+    } else {
+      const node = generateInstructionForStatement(statement, context);
+      if (node) {
+        list.append(node);
+      }
     }
   }
   return list;
+}
+
+function generateProcedureInstructionContainer(
+  statement: ast.Statement,
+): inst.ProcedureInstructionContainer {
+  const names: string[] = [];
+  const args: string[] = [];
+  for (const label of statement.labels) {
+    if (label.name) {
+      names.push(label.name);
+    }
+  }
+  const procedure = statement.value as ast.ProcedureStatement;
+  for (const arg of procedure.parameters) {
+    const name = arg.ref?.text;
+    if (name) {
+      args.push(name);
+    }
+  }
+  const statements = procedure.statements;
+  const instructionList = generateInstructions(statements);
+  return {
+    names,
+    parameters: args,
+    node: instructionList.entryNode,
+  };
 }
 
 function generateInstructionForStatement(
@@ -79,6 +123,9 @@ function generateInstructionForStatement(
   switch (value.kind) {
     case ast.SyntaxKind.DeclareStatement:
       instruction = generateDeclareInstruction(value);
+      break;
+    case ast.SyntaxKind.ReturnStatement:
+      instruction = generateReturnInstruction(value);
       break;
     case ast.SyntaxKind.IfStatement:
       instruction = generateIfInstruction(value, context);
@@ -131,7 +178,16 @@ function generateInstructionForStatement(
   return node;
 }
 
-export function generateTokenInstruction(
+function generateReturnInstruction(
+  node: ast.ReturnStatement,
+): inst.HaltInstruction {
+  return {
+    kind: inst.InstructionKind.Halt,
+    value: generateExpressionInstruction(node.expression),
+  };
+}
+
+function generateTokenInstruction(
   node: ast.TokenStatement,
 ): inst.TokensInstruction {
   return {
@@ -234,21 +290,6 @@ function getAllDeclarations(
   return declarations;
 }
 
-function getAttributes(item: ast.DeclaredVariable): string[] {
-  const attributes: string[] = [];
-  let container = item.container;
-  while (container?.kind === ast.SyntaxKind.DeclaredItem) {
-    const itemAttributes = container.attributes;
-    for (const attr of itemAttributes) {
-      if (attr.kind === ast.SyntaxKind.ComputationDataAttribute && attr.type) {
-        attributes.push(attr.type.toUpperCase());
-      }
-    }
-    container = container.container;
-  }
-  return attributes;
-}
-
 function getDimensions(
   item: ast.DeclaredVariable,
 ): inst.DimensionBoundsInstruction[] | undefined {
@@ -348,6 +389,33 @@ function generateDoInstruction(
     doInstruction.doType2 = {
       until,
       while: whileCond,
+    };
+  }
+  if (node.doType3) {
+    if (!node.doType3.variable?.element) {
+      return undefined;
+    }
+    const variable = generateReferenceItemInstruction(
+      node.doType3.variable.element,
+    );
+    if (node.doType3.specifications.length !== 1) {
+      return undefined; // Preprocessor %DO does require exactly one specification
+    }
+    const spec = node.doType3.specifications[0];
+    if (spec.upthru || spec.downthru) {
+      return undefined; // upthru and downthru are not supported
+    }
+    const specification: inst.DoType3Specification = {
+      expression: generateExpressionInstruction(spec.expression) ?? null,
+      repeat: generateExpressionInstruction(spec.repeat) ?? null,
+      while: generateExpressionInstruction(spec.whileOrUntil?.while) ?? null,
+      until: generateExpressionInstruction(spec.whileOrUntil?.until) ?? null,
+      to: generateExpressionInstruction(spec.to) ?? null,
+      by: generateExpressionInstruction(spec.by) ?? null,
+    };
+    doInstruction.doType3 = {
+      variable,
+      specification,
     };
   }
   if (node.doType2 || node.doType3 || node.doType4) {

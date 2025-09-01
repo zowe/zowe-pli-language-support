@@ -10,13 +10,24 @@
  */
 
 import * as vscode from "vscode";
-import { Builtins, BuiltinsUriSchema } from "pli-language";
+import * as builtins from "pli-language/builtins";
+
+const files = new Map<string, string>([
+  [builtins.BuiltinsFile, builtins.Builtins],
+  [builtins.BuiltinsMacroFile, builtins.BuiltinsMacro],
+]);
+
+function getFile(uri: vscode.Uri): string | undefined {
+  const path = uri.path;
+  const index = path.lastIndexOf("/") + 1;
+  return files.get(path.substring(index));
+}
 
 export class BuiltinFileSystemProvider implements vscode.FileSystemProvider {
   static register(context: vscode.ExtensionContext) {
     context.subscriptions.push(
       vscode.workspace.registerFileSystemProvider(
-        BuiltinsUriSchema,
+        builtins.BuiltinsUriSchema,
         new BuiltinFileSystemProvider(),
         {
           isReadonly: true,
@@ -26,20 +37,25 @@ export class BuiltinFileSystemProvider implements vscode.FileSystemProvider {
     );
   }
 
-  stat(_uri: vscode.Uri): vscode.FileStat {
-    const date = Date.now();
+  stat(uri: vscode.Uri): vscode.FileStat {
+    const file = getFile(uri);
+    if (!file) {
+      throw new Error("File not found!");
+    }
     return {
-      ctime: date,
-      mtime: date,
-      size: Buffer.from(Builtins).length,
+      ctime: 0,
+      mtime: 0,
+      size: Buffer.from(file).length,
       type: vscode.FileType.File,
     };
   }
 
-  readFile(_uri: vscode.Uri): Uint8Array {
-    // We could return different libraries based on the URI
-    // We have only one, so we always return the same
-    return new Uint8Array(Buffer.from(Builtins));
+  readFile(uri: vscode.Uri): Uint8Array {
+    const file = getFile(uri);
+    if (!file) {
+      throw new Error("File not found!");
+    }
+    return new Uint8Array(Buffer.from(file));
   }
 
   // The following class members only serve to satisfy the interface

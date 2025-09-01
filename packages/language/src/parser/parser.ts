@@ -2887,7 +2887,7 @@ export class PliParser extends AbstractParser {
   DoType3 = this.RULE("DoType3", () => {
     let element = this.push(ast.createDoType3());
 
-    this.SUBRULE_ASSIGN1(this.ReferenceItem, {
+    this.SUBRULE_ASSIGN1(this.MemberCall, {
       assign: (result) => {
         element.variable = result;
       },
@@ -4548,6 +4548,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.LeaveStatement,
       container: null,
       label: null,
+      leaveToken: null,
     };
   }
 
@@ -4556,6 +4557,7 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.LEAVE, (token) => {
       this.tokenPayload(token, element, CstNodeKind.LeaveStatement_LEAVE);
+      element.leaveToken = token;
     });
     this.OPTION1(() => {
       this.SUBRULE_ASSIGN1(this.LabelReference, {

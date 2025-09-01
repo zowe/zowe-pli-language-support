@@ -31,7 +31,7 @@ const documentSymbolKindString = (symbolKind: SymbolKind): string =>
     (key) => SymbolKind[key as keyof typeof SymbolKind] === symbolKind,
   ) ?? "";
 
-function expectDocumentSymbols(annotatedCode: string): void {
+async function expectDocumentSymbols(annotatedCode: string): Promise<void> {
   const { output, ranges } = replaceNamedIndices(formatTestPLI(annotatedCode));
   const textDocument = TextDocument.create(
     URI.file("/test.pli").toString(),
@@ -41,7 +41,7 @@ function expectDocumentSymbols(annotatedCode: string): void {
   );
 
   EditorDocuments.set(textDocument);
-  const unit = parse(output, { validate: true });
+  const unit = await parse(output, { validate: true });
   const documentSymbols = documentSymbolRequest(URI.file("/test.pli"), unit);
 
   const totalRanges = Object.values(ranges).reduce(
@@ -84,7 +84,7 @@ function expectDocumentSymbols(annotatedCode: string): void {
 }
 
 describe("Document Symbol Request", () => {
-  test("should retrieve symbols for basic function and variable declarations", () => {
+  test("should retrieve symbols for basic function and variable declarations", async () => {
     const code = `
  <|Function_0:IGNO|>: PROCEDURE OPTIONS (MAIN);
    dcl <|Variable_1:A|> fixed bin(31);
@@ -92,20 +92,20 @@ describe("Document Symbol Request", () => {
    WHAT = 123;
  END;`;
 
-    expectDocumentSymbols(code);
+    await await expectDocumentSymbols(code);
   });
 
-  test("should retrieve symbols for function, variable, and constant declarations", () => {
+  test("should retrieve symbols for function, variable, and constant declarations", async () => {
     const code = `
  <|Function_0:IGNO|>: PROCEDURE OPTIONS (MAIN);
    dcl <|Variable_1:A|> fixed bin(31);
    dcl <|Constant_1:PI|> constant(3.14159);
  END;`;
 
-    expectDocumentSymbols(code);
+    await expectDocumentSymbols(code);
   });
 
-  test("should retrieve symbols for basic struct declarations", () => {
+  test("should retrieve symbols for basic struct declarations", async () => {
     const code = `
  <|Function_0:IGNO|>: PROCEDURE OPTIONS (MAIN);
    dcl 1 <|Struct_1:myStruct|>,
@@ -113,10 +113,10 @@ describe("Document Symbol Request", () => {
            3 <|Variable_3:myField2|> char(10);
  END;`;
 
-    expectDocumentSymbols(code);
+    await expectDocumentSymbols(code);
   });
 
-  test("should retrieve symbols for complex nested struct declarations with multiple levels", () => {
+  test("should retrieve symbols for complex nested struct declarations with multiple levels", async () => {
     const code = `
  <|Function_0:IGNO|>: PROCEDURE OPTIONS (MAIN);
    dcl <|Variable_1:A|> fixed bin(31);
@@ -131,17 +131,17 @@ describe("Document Symbol Request", () => {
          2 <|Variable_2:myField5|> char(10);
  END;`;
 
-    expectDocumentSymbols(code);
+    await expectDocumentSymbols(code);
   });
 
-  test("should retrieve symbols for procedure, labels, variables, and constants", () => {
+  test("should retrieve symbols for procedure, labels, variables, and constants", async () => {
     const code = `
  <|Function_0:IGNO|>: PROCEDURE OPTIONS (MAIN);
    <|Key_1:L1004|>: dcl <|Variable_1:A|> fixed bin(31);
    <|Key_1:L1005|>: dcl <|Constant_1:PI|> constant(3.14159);
  END;`;
 
-    expectDocumentSymbols(code);
+    await expectDocumentSymbols(code);
   });
 });
 

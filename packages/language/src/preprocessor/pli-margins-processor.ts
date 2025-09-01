@@ -18,7 +18,7 @@ import { PluginConfigurationProviderInstance } from "../workspace/plugin-configu
 
 const NEWLINE = "\n".charCodeAt(0);
 const SPACE = " ".charCodeAt(0);
-const PREFIX_PATTERN = /^[0-9\+\- ]+$/;
+const PREFIX_PATTERN = /^[0-9\+\- \r\t]+$/;
 const SEQUENCE_PATTERN = /^\s*[A-Z0-9]*\r?\n?$/;
 
 export interface MarginsProcessor {

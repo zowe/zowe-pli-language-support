@@ -9,4 +9,21 @@
  *
  */
 
+import { DeclaredVariable, SyntaxKind } from "../syntax-tree/ast";
+
 export function assertType<T>(value: unknown): asserts value is T {}
+
+export function getAttributes(item: DeclaredVariable): string[] {
+  const attributes: string[] = [];
+  let container = item.container;
+  while (container?.kind === SyntaxKind.DeclaredItem) {
+    const itemAttributes = container.attributes;
+    for (const attr of itemAttributes) {
+      if (attr.kind === SyntaxKind.ComputationDataAttribute && attr.type) {
+        attributes.push(attr.type.toUpperCase());
+      }
+    }
+    container = container.container;
+  }
+  return attributes;
+}

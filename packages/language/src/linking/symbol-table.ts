@@ -400,9 +400,11 @@ const iterateSymbolTable = (
       break;
     // E.g. `DO I = 1 TO 300 BY 100; END DO;`
     case SyntaxKind.DoType3:
-      if (node.variable?.ref) {
+      // Only add the implicit declaration in case it points to a non-nested variable
+      const ref = node.variable?.element?.ref;
+      if (!node.variable?.previous && ref) {
         parentScope.symbolTable.addImplicitDeclarationByReference(
-          node.variable.ref,
+          ref,
           context.reporter,
         );
       }

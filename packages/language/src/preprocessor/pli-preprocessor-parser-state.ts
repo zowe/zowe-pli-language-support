@@ -14,15 +14,12 @@ import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { PreprocessorError } from "./pli-preprocessor-error";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { URI } from "../utils/uri";
 import { Token } from "../parser/tokens";
+import { URI } from "../utils/uri";
 import { tokenize } from "../parser/tokenizer";
-
-type ParserLocation = "in-statement" | "in-procedure";
 
 export interface PreprocessorParserState {
   index: number;
-  uri: URI;
   get tokens(): Token[];
   get current(): Token | undefined;
   get last(): Token | undefined;
@@ -53,30 +50,39 @@ export interface PreprocessorParserState {
   ): Token;
 
   advanceLines(lineCount: number): void;
-  push(location: ParserLocation): void;
-  pop(): void;
-  isOnlyInStatement(): boolean;
+  pushProcedure(): void;
+  popProcedure(): void;
   isInProcedure(): boolean;
   lookahead(la: number): Token | undefined;
-  addInclude(uri: URI): void;
-  hasInclude(uri: URI): boolean;
 }
 
 const nl = "\n".charCodeAt(0);
 
+export function preprocessorParserStateFromText(
+  text: string,
+  uri: URI | undefined,
+) {
+  const tokens = tokenize(text, uri);
+  return new PliPreprocessorParserState(tokens.tokens, text, 0);
+}
+
 export class PliPreprocessorParserState implements PreprocessorParserState {
   readonly tokens: Token[];
   public index: number;
-  public uri: URI;
-  private text: string;
-  private location: ParserLocation[] = [];
-  private includes: Set<string> = new Set();
+  private text: string | undefined;
+  private inProcedure: boolean = false;
 
-  constructor(text: string, uri: URI) {
+  constructor(tokens: Token[], text: string | undefined, index = 0) {
     this.text = text;
-    this.tokens = tokenize(this.text, uri).tokens;
-    this.index = 0;
-    this.uri = uri;
+    this.tokens = tokens;
+    this.index = index;
+  }
+
+  pushProcedure(): void {
+    this.inProcedure = true;
+  }
+  popProcedure(): void {
+    this.inProcedure = false;
   }
 
   lookahead(la: number): Token | undefined {
@@ -85,7 +91,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   }
 
   advanceLines(lineCount: number): void {
-    if (!this.current) {
+    if (!this.current || !this.text) {
       return;
     }
     const newPosition = this.advanceLinePosition(
@@ -117,18 +123,6 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       }
       offset++;
     }
-  }
-  push(location: ParserLocation): void {
-    this.location.push(location);
-  }
-  top(): ParserLocation | undefined {
-    if (this.location.length > 0) {
-      return this.location[this.location.length - 1];
-    }
-    return undefined;
-  }
-  pop(): void {
-    this.location.pop();
   }
 
   get current() {
@@ -163,15 +157,8 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     return true;
   }
 
-  isOnlyInStatement() {
-    return (
-      this.location.length === 0 ||
-      this.location.every((l) => l === "in-statement")
-    );
-  }
-
   isInProcedure() {
-    return this.location.some((l) => l === "in-procedure");
+    return this.inProcedure;
   }
 
   tryConsume(
@@ -182,7 +169,6 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
     if (!this.canConsume(tokenType)) {
       return false;
     }
-    this.current!.uri = this.uri;
     this.current!.kind = kind;
     this.current!.element = element;
     this.index++;
@@ -196,14 +182,14 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
   ) {
     const token = this.current!;
     if (!this.canConsume(tokenType)) {
+      const lastToken = token || this.last;
       const actualTokenTypes = this.tokens
         .slice(this.index, this.index + 1)
         .map((t) => t.tokenType.name ?? "???")
         .join(", ");
       const message = `Expected token type '${tokenType.name}', got '${actualTokenTypes}' instead.`;
-      throw new PreprocessorError(message, token || this.last, this.uri);
+      throw new PreprocessorError(message, token || this.last, lastToken?.uri);
     }
-    token.uri = this.uri;
     token.kind = kind;
     token.element = element;
     this.index++;
@@ -228,6 +214,7 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       if (!this.canConsume(PreprocessorTokens.Percentage)) {
         return false;
       }
+      // Increment, so the next canConsume operates on the actual requested token type
       this.index++;
     }
     if (!this.canConsume(tokenType)) {
@@ -259,13 +246,5 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
       );
     }
     return this.consume(element, kind, tokenType);
-  }
-
-  addInclude(uri: URI): void {
-    this.includes.add(uri.toString());
-  }
-
-  hasInclude(uri: URI): boolean {
-    return this.includes.has(uri.toString());
   }
 }

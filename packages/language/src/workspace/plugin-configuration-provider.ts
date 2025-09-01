@@ -144,14 +144,14 @@ export class PluginConfigurationProvider {
    * @param filePath The file path to check for library membership
    * @returns true if the file path matches any library file pattern, false otherwise
    */
-  public isLibFileCandidate(filePath: string): boolean {
+  public isLibFileCandidate(uri: URI): boolean {
     if (!this.libFileGlobPatterns) {
       this.buildLibFileGlobPatterns();
     }
+    // normalize a bit
+    const filePath = uri.toString(true).replace(/[\\/]+$/, "");
     const patterns = this.libFileGlobPatterns || [];
     for (const pattern of patterns) {
-      // normalize a bit
-      filePath = filePath.replace(/[\\/]+$/, "");
       if (minimatch(filePath, pattern, { nocase: true })) {
         return true;
       }
@@ -399,6 +399,22 @@ export class PluginConfigurationProvider {
    */
   public getProcessGroupConfig(pgroup: string): ProcessGroup | undefined {
     return this.processGroupConfigs.get(pgroup);
+  }
+
+  /**
+   * Returns the process group config for the given URI. This is used to find the
+   * process group associated with a library file. It is rather fuzzy and might not be 100% accurate.
+   * @param libUri URI of the including file (likely a library file)
+   * @returns Associated process group config, or undefined if not found
+   */
+  public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
+    const dirname = UriUtils.basename(UriUtils.dirname(libUri));
+    for (const config of this.processGroupConfigs.values()) {
+      if (config.libs?.includes(dirname)) {
+        return config;
+      }
+    }
+    return undefined;
   }
 
   /**

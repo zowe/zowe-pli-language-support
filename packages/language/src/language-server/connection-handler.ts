@@ -11,6 +11,7 @@
 
 import { CompilationUnitHandler } from "../workspace/compilation-unit";
 import {
+  CancellationToken,
   Connection,
   DocumentHighlight,
   TextDocumentSyncKind,
@@ -33,9 +34,13 @@ import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { completionRequest } from "./completion/completion-request";
-import { BuiltinsTextDocument } from "../workspace/builtins";
+import {
+  BuiltinsMacroTextDocument,
+  BuiltinsTextDocument,
+} from "../workspace/builtins";
 import { BuiltinDocuments, TextDocuments } from "./text-documents";
 import { hoverRequest } from "./hover-request";
+import { Mutex } from "../workspace/mutex";
 
 /**
  * Notification sent to the LS when the workspace's plugin configuration changes.
@@ -54,6 +59,7 @@ export function startLanguageServer(connection: Connection): void {
     }
 
     BuiltinDocuments.set(BuiltinsTextDocument);
+    BuiltinDocuments.set(BuiltinsMacroTextDocument);
 
     return {
       capabilities: {
@@ -88,7 +94,8 @@ export function startLanguageServer(connection: Connection): void {
       },
     };
   });
-  connection.onHover((params) => {
+  connection.onHover(async (params) => {
+    await Mutex.ready();
     const uri = params.textDocument.uri;
     const position = params.position;
     const textDocument = TextDocuments.get(uri);
@@ -108,7 +115,8 @@ export function startLanguageServer(connection: Connection): void {
 
     return hoverResponseToLSP(textDocument, response);
   });
-  connection.onCompletion((params) => {
+  connection.onCompletion(async (params) => {
+    await Mutex.ready();
     const uri = params.textDocument.uri;
     const position = params.position;
     const textDocument = TextDocuments.get(uri);
@@ -125,7 +133,8 @@ export function startLanguageServer(connection: Connection): void {
     }
     return [];
   });
-  connection.onDefinition((params) => {
+  connection.onDefinition(async (params) => {
+    await Mutex.ready();
     const position = params.position;
     const textDocument = TextDocuments.get(params.textDocument.uri);
     const uri = URI.parse(params.textDocument.uri);
@@ -148,7 +157,8 @@ export function startLanguageServer(connection: Connection): void {
     }
     return [];
   });
-  connection.onReferences((params) => {
+  connection.onReferences(async (params) => {
+    await Mutex.ready();
     const uri = params.textDocument.uri;
     const position = params.position;
     const textDocument = TextDocuments.get(uri);
@@ -173,7 +183,8 @@ export function startLanguageServer(connection: Connection): void {
     }
     return [];
   });
-  connection.languages.semanticTokens.on((params) => {
+  connection.languages.semanticTokens.on(async (params) => {
+    await Mutex.ready();
     const uri = params.textDocument.uri;
     const textDocument = TextDocuments.get(uri);
     const compilationUnit = compilationUnitHandler.getCompilationUnit(
@@ -188,7 +199,8 @@ export function startLanguageServer(connection: Connection): void {
       data: [],
     };
   });
-  connection.onDocumentHighlight((params) => {
+  connection.onDocumentHighlight(async (params) => {
+    await Mutex.ready();
     const uri = UriUtils.normalize(params.textDocument.uri);
     const position = params.position;
     const textDocument = TextDocuments.get(uri);
@@ -205,7 +217,8 @@ export function startLanguageServer(connection: Connection): void {
     }
     return [];
   });
-  connection.onRenameRequest((params) => {
+  connection.onRenameRequest(async (params) => {
+    await Mutex.ready();
     const uri = params.textDocument.uri;
     const position = params.position;
     const textDocument = TextDocuments.get(uri);
@@ -236,7 +249,8 @@ export function startLanguageServer(connection: Connection): void {
 
     return null;
   });
-  connection.onDocumentSymbol((params) => {
+  connection.onDocumentSymbol(async (params) => {
+    await Mutex.ready();
     const uri = params.textDocument.uri;
     const textDocument = TextDocuments.get(uri);
     const parsedUri = URI.parse(uri);
@@ -249,7 +263,8 @@ export function startLanguageServer(connection: Connection): void {
     }
     return [];
   });
-  connection.onWorkspaceSymbol((params) => {
+  connection.onWorkspaceSymbol(async (params) => {
+    await Mutex.ready();
     return workspaceSymbolRequest(
       params.query,
       compilationUnitHandler.getAllCompilationUnits(),
@@ -261,7 +276,7 @@ export function startLanguageServer(connection: Connection): void {
       // handle changes to the .pliplugin config folder's contents
       PluginConfigurationProviderInstance.reloadConfigurations();
       // reindex reachable compilation units
-      compilationUnitHandler.reindex(connection);
+      compilationUnitHandler.reindex(connection, CancellationToken.None);
     },
   );
   connection.listen();

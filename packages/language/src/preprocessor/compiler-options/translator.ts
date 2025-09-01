@@ -43,12 +43,17 @@ type Translate = (option: CompilerOption, options: CompilerOptions) => void;
 /**
  * Tracks how a rule is applied, either positively or negatively
  */
-enum Applied {
+enum RuleAlignment {
   POSITIVE = 1,
   NEGATIVE = -1,
 }
 
-const PLI_CHARACTER_SET = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/;
+const PLI_CHARACTER_REGEX = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/;
+const PLI_CHARACTER_SET = new Set(
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 =+-*/().,'\"%;:&|<>_¬".split(
+    "",
+  ),
+);
 
 class Translator {
   options: CompilerOptions = getDefaultCompilerOptions();
@@ -58,7 +63,7 @@ class Translator {
    * Translator rules that have been applied to the current options,
    * along w/ info on whether they were applied positively or negatively
    */
-  appliedRules = new Map<TranslatorRule, Applied>();
+  appliedRules = new Map<TranslatorRule, RuleAlignment>();
 
   private rules: TranslatorRule[] = [];
 
@@ -101,53 +106,14 @@ class Translator {
   /**
    * Assumes a rule has been applied, checks if it was applied positively
    */
-  isRuleAppliedPositively(rule: TranslatorRule): boolean {
-    return this.appliedRules.get(rule) === Applied.POSITIVE;
+  isRuleAlignedWith(rule: TranslatorRule, alignment: RuleAlignment): boolean {
+    return this.appliedRules.get(rule) === alignment;
   }
 
   translate(option: CompilerOption) {
     const name = option.name.toUpperCase();
-    let found = false;
 
-    try {
-      for (const rule of this.rules) {
-        if (rule.positive && rule.positive.includes(name)) {
-          found = true;
-          rule.positiveTranslate?.(option, this.options);
-
-          if (!this.isRuleApplied(rule)) {
-            // new application
-            this.appliedRules.set(rule, Applied.POSITIVE);
-          } else if (this.isRuleAppliedPositively(rule)) {
-            // duplicate application (pos)
-            this.reportDupeOptIssue(option, name);
-          } else {
-            // mutex application
-            this.reportMutexOptIssue(option, name);
-          }
-          return;
-        }
-
-        if (rule.negative && rule.negative.includes(name)) {
-          found = true;
-          rule.negativeTranslate?.(option, this.options);
-
-          if (!this.isRuleApplied(rule)) {
-            // new application
-            this.appliedRules.set(rule, Applied.NEGATIVE);
-          } else if (!this.isRuleAppliedPositively(rule)) {
-            // duplicate application (neg)
-            this.reportDupeOptIssue(option, name);
-          } else {
-            // mutex application
-            this.reportMutexOptIssue(option, name);
-          }
-
-          return;
-        }
-      }
-    } catch (err) {
-      // We create a new diagnostic for the error
+    const reportError = (err: unknown) => {
       if (err instanceof TranslationError) {
         this.issues.push({
           range: tokenToRange(err.token),
@@ -160,9 +126,36 @@ class Translator {
           String(err),
         );
       }
-    }
+    };
 
-    if (!found) {
+    const rule = this.rules.find(
+      (r) => r.positive?.includes(name) || r.negative?.includes(name),
+    );
+
+    if (rule) {
+      const alignment =
+        rule.positive && rule.positive.includes(name)
+          ? RuleAlignment.POSITIVE
+          : RuleAlignment.NEGATIVE;
+      const translate =
+        alignment === RuleAlignment.POSITIVE
+          ? rule.positiveTranslate
+          : rule.negativeTranslate;
+
+      if (!this.isRuleApplied(rule)) {
+        this.appliedRules.set(rule, alignment);
+      } else if (this.isRuleAlignedWith(rule, alignment)) {
+        this.reportDupeOptIssue(option, name);
+      } else {
+        this.reportMutexOptIssue(option, name);
+      }
+
+      try {
+        translate?.(option, this.options);
+      } catch (err) {
+        reportError(err);
+      }
+    } else {
       this.issues.push({
         range: tokenToRange(option.token),
         message: PLIWarning.IBM1159I.message(option.name),
@@ -205,7 +198,11 @@ class TranslationError {
     this.severity = severity;
   }
 
-  static fromCode(token: Token, code: ParametricPLICode, ...args: string[]) {
+  static fromCode(
+    token: Token,
+    code: ParametricPLICode,
+    ...args: (string | number | undefined)[]
+  ) {
     return new TranslationError(token, code.message(...args), code.severity);
   }
 }
@@ -217,10 +214,10 @@ function ensureArguments(option: CompilerOption, min: number, max?: number) {
   ) {
     throw TranslationError.fromCode(
       option.token,
-      CompilerOptionsCodes.WrongParameterCount,
-      option.values.length.toString(),
-      min.toString(),
-      max?.toString() ?? "",
+      CompilerOptionsCodes.InvalidParameterCount,
+      option.values.length,
+      min,
+      max,
     );
   }
 }
@@ -228,6 +225,10 @@ function ensureArguments(option: CompilerOption, min: number, max?: number) {
 function ensureType(
   value: CompilerOptionValue,
   type: "plain",
+): asserts value is CompilerOptionText;
+function ensureType(
+  value: CompilerOptionValue,
+  type: "plainNotEmpty",
 ): asserts value is CompilerOptionText;
 function ensureType(
   value: CompilerOptionValue,
@@ -243,27 +244,38 @@ function ensureType(
 ): asserts value is CompilerOption;
 function ensureType(
   value: CompilerOptionValue,
-  type: "option" | "plainOrString" | "string" | "plain",
+  type: "option" | "plainOrString" | "string" | "plain" | "plainNotEmpty",
 ): void {
   if (type === "option") {
     if (value.kind !== SyntaxKind.CompilerOption) {
       throw new TranslationError(
         value.token,
-        `Expected a compiler option with arguments.`,
-        1,
+        CompilerOptionsCodes.ExpectedOption.message(),
+        CompilerOptionsCodes.ExpectedOption.severity,
       );
     }
-  } else if (type === "plain") {
+  } else if (type === "plain" || type === "plainNotEmpty") {
     if (value.kind !== SyntaxKind.CompilerOptionText) {
       throw new TranslationError(
         value.token,
-        `Expected a plain text value.`,
-        1,
+        CompilerOptionsCodes.ExpectedPlain.message(),
+        CompilerOptionsCodes.ExpectedPlain.severity,
+      );
+    }
+    if (type === "plainNotEmpty" && value.value.length === 0) {
+      throw new TranslationError(
+        value.token,
+        CompilerOptionsCodes.ExpectedPlainNotEmpty.message(),
+        CompilerOptionsCodes.ExpectedPlainNotEmpty.severity,
       );
     }
   } else if (type === "string") {
     if (value.kind !== SyntaxKind.CompilerOptionString) {
-      throw new TranslationError(value.token, `Expected a string value.`, 1);
+      throw new TranslationError(
+        value.token,
+        CompilerOptionsCodes.ExpectedString.message(),
+        CompilerOptionsCodes.ExpectedString.severity,
+      );
     }
   } else if (type === "plainOrString") {
     if (
@@ -272,12 +284,59 @@ function ensureType(
     ) {
       throw new TranslationError(
         value.token,
-        `Expected a plain text or string value.`,
-        1,
+        CompilerOptionsCodes.ExpectedPlainOrString.message(),
+        CompilerOptionsCodes.ExpectedPlainOrString.severity,
       );
     }
   }
 }
+
+function ensureNumberValue(
+  value: CompilerOptionText,
+  min?: number,
+  max?: number,
+): number {
+  const num = stringToNumber(value.value);
+  if (isNaN(num)) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.ExpectedNumber,
+    );
+  }
+  if ((min !== undefined && num < min) || (max !== undefined && num > max)) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.ExpectedNumberRange,
+      num,
+      min,
+      max,
+    );
+  }
+  return num;
+}
+
+function stringToNumber(text: string): number {
+  const numRegex = /^\s*(\-?\d+)([km])?\s*$/i;
+  const match = numRegex.exec(text);
+  if (!match) {
+    return NaN;
+  }
+  let num = Number(match[1]);
+  if (match[2]) {
+    switch (match[2]) {
+      case "M":
+      case "m":
+        num *= 1024;
+      case "K":
+      case "k":
+        num *= 1024;
+    }
+  }
+  return num;
+}
+
+const $1K = 1024;
+const $1M = 1024 * 1024;
 
 const translator = new Translator();
 
@@ -290,6 +349,15 @@ function stringTranslate(
     ensureType(value, "string");
     callback(options, value);
   };
+}
+
+function isEmptyParameterList(option: CompilerOption): boolean {
+  // Is only true if there are parentheses without any text inside.
+  return (
+    option.values.length == 1 &&
+    option.values[0].kind == SyntaxKind.CompilerOptionText &&
+    option.values[0].value.length == 0
+  );
 }
 
 function plainTranslate(
@@ -450,7 +518,7 @@ translator.rule(["BLANK"], (option, options) => {
     );
   }
 
-  if (PLI_CHARACTER_SET.test(value.value)) {
+  if (PLI_CHARACTER_REGEX.test(value.value)) {
     throw new TranslationError(
       value.token,
       "BLANK option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
@@ -479,7 +547,7 @@ translator.rule(
     const start = value.value.charAt(0);
     const end = value.value.charAt(1);
 
-    if (PLI_CHARACTER_SET.test(start) || PLI_CHARACTER_SET.test(end)) {
+    if (PLI_CHARACTER_REGEX.test(start) || PLI_CHARACTER_REGEX.test(end)) {
       throw new TranslationError(
         value.token,
         "BRACKETS option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
@@ -1368,7 +1436,7 @@ translator.rule(
     } else {
       throw TranslationError.fromCode(
         value.token,
-        CompilerOptionsCodes.gonumber.WrongParameter,
+        CompilerOptionsCodes.GoNumber.InvalidParameter,
         value.value,
       );
     }
@@ -1394,7 +1462,7 @@ translator.rule(["HEADER"], (option, options) => {
   } else {
     throw TranslationError.fromCode(
       value.token,
-      CompilerOptionsCodes.header.WrongParameter,
+      CompilerOptionsCodes.Header.InvalidParameter,
       value.value,
     );
   }
@@ -1413,7 +1481,7 @@ translator.rule(["HGPR"], (option, options) => {
   } else {
     throw TranslationError.fromCode(
       value.token,
-      CompilerOptionsCodes.hgpr.WrongParameter,
+      CompilerOptionsCodes.Hgpr.InvalidParameter,
       value.value,
     );
   }
@@ -1437,7 +1505,7 @@ translator.rule(
       } else {
         throw TranslationError.fromCode(
           opt.token,
-          CompilerOptionsCodes.ignore.WrongParameter,
+          CompilerOptionsCodes.Ignore.InvalidParameter,
           opt.value,
         );
       }
@@ -1476,26 +1544,415 @@ translator.rule(["INCAFTER"], (option, options) => {
 });
 
 /** {@link CompilerOptions.incDir} */
+translator.rule(
+  ["INCDIR"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    if (!options.incDir) {
+      options.incDir = {
+        directories: [],
+      };
+    }
+    options.incDir.directories.push(value.value);
+  },
+  ["NOINCDIR"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.incDir = false;
+  },
+);
+
 /** {@link CompilerOptions.include} */
+translator.flag("include", ["INCLUDE"], ["NOINCLUDE"]);
+
 /** {@link CompilerOptions.incPds} */
+translator.rule(
+  ["INCPDS"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    if (!options.incPds) {
+      options.incPds = {
+        pds: [],
+      };
+    }
+    options.incPds.pds.push(value.value);
+  },
+  ["NOINCPDS"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.incPds = false;
+  },
+);
+
 /** {@link CompilerOptions.initAuto} */
+translator.rule(
+  ["INITAUTO"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      options.initAuto = getDefaultCompilerOptions().initAuto;
+    } else {
+      ensureType(option.values[0], "plain");
+      const value = option.values[0].value.toUpperCase();
+      if (["SHORT", "FULL"].includes(value)) {
+        options.initAuto = value as CompilerOptions.InitAuto;
+      } else {
+        throw TranslationError.fromCode(
+          option.values[0].token,
+          CompilerOptionsCodes.InitAuto.InvalidParameter,
+          option.values[0].value,
+        );
+      }
+    }
+  },
+  ["NOINITAUTO"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.initAuto = false;
+  },
+);
+
 /** {@link CompilerOptions.initBased} */
+translator.flag("initBased", ["INITBASED"], ["NOINITBASED"]);
+
 /** {@link CompilerOptions.initCtl} */
+translator.flag("initCtl", ["INITCTL"], ["NOINITCTL"]);
+
 /** {@link CompilerOptions.initStatic} */
+translator.flag("initStatic", ["INITSTATIC"], ["NOINITSTATIC"]);
+
 /** {@link CompilerOptions.inSource} */
+translator.rule(
+  ["INSOURCE"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    options.inSource = {};
+    if (option.values.length > 0) {
+      ensureType(option.values[0], "plain");
+      const value = option.values[0].value.toUpperCase();
+      if (["FULL", "SHORT", "ALL", "FIRST"].includes(value)) {
+        options.inSource!.type = value as CompilerOptions.InSource["type"];
+      } else {
+        throw TranslationError.fromCode(
+          option.values[0].token,
+          CompilerOptionsCodes.InSource.InvalidParameter,
+          option.values[0].value,
+        );
+      }
+    }
+  },
+  ["NOINSOURCE"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.inSource = false;
+  },
+);
+
 /** {@link CompilerOptions.interrupt} */
+translator.flag("interrupt", ["INTERRUPT", "INT"], ["NOINTERRUPT", "NINT"]);
+
 /** {@link CompilerOptions.json} */
+translator.rule(["JSON"], (option, options) => {
+  ensureArguments(option, 1);
+  if (!options.json) {
+    options.json = getDefaultCompilerOptions().json;
+  }
+  for (const opt of option.values) {
+    const name =
+      opt.kind === SyntaxKind.CompilerOption
+        ? opt.name.toUpperCase()
+        : opt.value.toUpperCase();
+    if (/^(NO)?TRIMR$/.test(name)) {
+      ensureType(opt, "plain");
+      options.json!.trimr = !name.startsWith("NO");
+    } else if (["CASE", "ENCODING", "GET", "PARSE"].includes(name)) {
+      ensureType(opt, "option");
+      ensureArguments(opt, 1, 1);
+      const value = opt.values[0];
+      ensureType(value, "plain");
+      const valueName = value.value.toUpperCase();
+      switch (name) {
+        case "CASE":
+          if (!["UPPER", "LOWER", "ASIS"].includes(valueName)) {
+            throw TranslationError.fromCode(
+              value.token,
+              CompilerOptionsCodes.Json.InvalidCaseParameter,
+              value.value,
+            );
+          }
+          options.json!.case = valueName as CompilerOptions.Json["case"];
+          break;
+        case "ENCODING":
+          if (!["UTF8", "EBCDIC", "37", "1047"].includes(valueName)) {
+            throw TranslationError.fromCode(
+              value.token,
+              CompilerOptionsCodes.Json.InvalidEncodingParameter,
+              value.value,
+            );
+          }
+          options.json!.encoding =
+            valueName as CompilerOptions.Json["encoding"];
+          break;
+        case "GET":
+          if (!["HEEDCASE", "IGNORECASE"].includes(valueName)) {
+            throw TranslationError.fromCode(
+              value.token,
+              CompilerOptionsCodes.Json.InvalidGetParameter,
+              value.value,
+            );
+          }
+          options.json!.get = valueName as CompilerOptions.Json["get"];
+          break;
+        case "PARSE":
+          if (!["V1", "V2"].includes(valueName)) {
+            throw TranslationError.fromCode(
+              value.token,
+              CompilerOptionsCodes.Json.InvalidParseParameter,
+              value.value,
+            );
+          }
+          options.json!.parse = valueName as CompilerOptions.Json["parse"];
+          break;
+      }
+    } else {
+      throw TranslationError.fromCode(
+        opt.token,
+        CompilerOptionsCodes.Json.InvalidParameter,
+        name,
+      );
+    }
+  }
+});
+
 /** {@link CompilerOptions.langlvl} */
+translator.rule(["LANGLVL"], (option, options) => {
+  ensureArguments(option, 1);
+  for (const value of option.values) {
+    ensureType(value, "plain");
+    const valueName = value.value.toUpperCase();
+    if (["OS", "NOEXT"].includes(valueName)) {
+      options.langlvl = valueName as CompilerOptions.LangLvl;
+    } else {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.LangLvl.InvalidParameter,
+        value.value,
+      );
+    }
+  }
+});
+
 /** {@link CompilerOptions.limits} */
+translator.rule(["LIMITS"], (option, options) => {
+  const optionNumberValue = (
+    option: CompilerOption,
+    index: number,
+    min?: number,
+    max?: number,
+  ) => {
+    const value = option.values[index];
+    ensureType(value, "plainNotEmpty");
+    return ensureNumberValue(value, min, max);
+  };
+
+  ensureArguments(option, 1);
+  if (!options.limits) {
+    options.limits = getDefaultCompilerOptions().limits;
+  }
+  for (const value of option.values) {
+    ensureType(value, "option");
+    const name = value.name.toUpperCase();
+    if (["EXTNAME", "FIXEDBIN", "FIXEDDEC", "NAME", "STRING"].includes(name)) {
+      switch (name) {
+        case "EXTNAME":
+          ensureArguments(value, 1, 1);
+          options.limits!.extname = optionNumberValue(value, 0, 7, 100);
+          break;
+        case "FIXEDBIN":
+          ensureArguments(value, 1, 2);
+          const minBin = optionNumberValue(value, 0);
+          const maxBin =
+            value.values.length > 1 ? optionNumberValue(value, 1) : 63;
+          if (minBin !== 31 && minBin !== 63) {
+            throw TranslationError.fromCode(
+              value.values[0].token,
+              CompilerOptionsCodes.Limits.InvalidFixedBinMinParameter,
+              minBin.toString(),
+            );
+          }
+          if (maxBin !== 63) {
+            throw TranslationError.fromCode(
+              value.values[1].token,
+              CompilerOptionsCodes.Limits.InvalidFixedBinMaxParameter,
+              maxBin.toString(),
+            );
+          }
+          options.limits!.fixedBin = {
+            min: minBin,
+            max: maxBin,
+          };
+          break;
+        case "FIXEDDEC":
+          ensureArguments(value, 1, 2);
+          const minDec = optionNumberValue(value, 0);
+          const maxDec =
+            value.values.length > 1 ? optionNumberValue(value, 1) : minDec;
+          if (minDec !== 15 && minDec !== 31) {
+            throw TranslationError.fromCode(
+              value.values[0].token,
+              CompilerOptionsCodes.Limits.InvalidFixedDecMinParameter,
+              minDec.toString(),
+            );
+          }
+          if (maxDec !== 15 && maxDec !== 31) {
+            throw TranslationError.fromCode(
+              value.values[1].token,
+              CompilerOptionsCodes.Limits.InvalidFixedDecMaxParameter,
+              maxDec.toString(),
+            );
+          }
+          if (minDec > maxDec) {
+            throw TranslationError.fromCode(
+              value.values[0].token,
+              CompilerOptionsCodes.Limits.InvalidFixedDecRange,
+            );
+          }
+          options.limits!.fixedDec = {
+            min: minDec,
+            max: maxDec,
+          };
+          break;
+        case "NAME":
+          ensureArguments(value, 1, 1);
+          options.limits!.name = optionNumberValue(value, 0, 31, 100);
+          break;
+        case "STRING":
+          ensureArguments(value, 1, 1);
+          ensureType(value.values[0], "plainNotEmpty");
+          const stringValue = ensureNumberValue(
+            value.values[0],
+            32 * $1K,
+            128 * $1M,
+          );
+          if (
+            [32 * $1K, 64 * $1K, 512 * $1K, 8 * $1M, 128 * $1M].includes(
+              stringValue,
+            )
+          ) {
+            options.limits!.string = stringValue;
+          } else {
+            throw TranslationError.fromCode(
+              value.values[0].token,
+              CompilerOptionsCodes.Limits.InvalidStringParameter,
+              stringValue,
+            );
+          }
+          break;
+      }
+    } else {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.Limits.InvalidParameter,
+        name,
+      );
+    }
+  }
+});
+
 /** {@link CompilerOptions.lineCount} */
+translator.rule(["LINECOUNT", "LC"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  const lineCount = ensureNumberValue(value, 0, 65535);
+  if (lineCount > 0 && lineCount < 10) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.LineCount.InvalidRange,
+      value.value,
+    );
+  }
+  options.lineCount = lineCount;
+});
+
 /** {@link CompilerOptions.lineDir} */
+translator.flag("lineDir", ["LINEDIR"], ["NOLINEDIR"]);
+
 /** {@link CompilerOptions.list} */
 translator.flag("list", ["LIST"], ["NOLIST"]);
+
 /** {@link CompilerOptions.listView} */
+translator.rule(["LISTVIEW"], (option, options) => {
+  ensureArguments(option, 1);
+  for (const value of option.values) {
+    ensureType(value, "plain");
+    const valueName = value.value.toUpperCase();
+    if (
+      ["SOURCE", "AFTERALL", "AFTERCICS", "AFTERMACRO", "AFTERSQL"].includes(
+        valueName,
+      )
+    ) {
+      options.listView = valueName as CompilerOptions.ListView;
+    } else {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.ListView.InvalidParameter,
+        value.value,
+      );
+    }
+  }
+});
+
 /** {@link CompilerOptions.LP} */
+translator.rule(["LP"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  ensureType(option.values[0], "plain");
+  const value = option.values[0].value.toUpperCase();
+  if (["32", "64"].includes(value)) {
+    options.LP = value as "32" | "64";
+  } else {
+    throw TranslationError.fromCode(
+      option.values[0].token,
+      CompilerOptionsCodes.Lp.InvalidParameter,
+      option.values[0].value,
+    );
+  }
+});
+
 /** {@link CompilerOptions.macro} */
+translator.flag("macro", ["MACRO"], ["NOMACRO"]);
+
 /** {@link CompilerOptions.map} */
+translator.flag("map", ["MAP"], ["NOMAP"]);
+
 /** {@link CompilerOptions.margini} */
+translator.rule(
+  ["MARGINI", "MI"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    if (value.value.length !== 1) {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.Margini.InvalidParameter,
+        value.value,
+      );
+    }
+    options.margini = {
+      character: value.value,
+    };
+  },
+  ["NOMARGINI", "NMI"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.margini = false;
+  },
+);
 
 /** {@link CompilerOptions.margins} */
 translator.rule(
@@ -1541,21 +1998,285 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.maxbranch} */
+translator.rule(["MAXBRANCH"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  options.maxbranch = ensureNumberValue(value, 0);
+});
+
 /** {@link CompilerOptions.maxinit} */
+translator.rule(["MAXINIT"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  options.maxinit = ensureNumberValue(value, 0);
+});
+
 /** {@link CompilerOptions.maxgen} */
+translator.rule(["MAXGEN"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  options.maxgen = ensureNumberValue(value, 0);
+});
+
 /** {@link CompilerOptions.maxmem} */
+translator.rule(["MAXMEM", "MAXM"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  options.maxmem = ensureNumberValue(value, 1, 2097152);
+});
+
 /** {@link CompilerOptions.maxmsg} */
+translator.rule(["MAXMSG"], (option, options) => {
+  ensureArguments(option, 1);
+  // MAXMSG only recognizes the last letter or number, respectively.
+  // The letter/number order does not matter.
+  if (!options.maxmsg) {
+    options.maxmsg = getDefaultCompilerOptions().maxmsg;
+  }
+  if (isEmptyParameterList(option)) {
+    return;
+  }
+  for (const value of option.values) {
+    ensureType(value, "plain");
+    const valueName = value.value.toUpperCase();
+    if (["I", "W", "E", "S"].includes(valueName)) {
+      options.maxmsg!.severity = valueName as CompilerOptions.Flag;
+    } else {
+      options.maxmsg!.n = ensureNumberValue(value, 0, 32767);
+    }
+  }
+});
+
 /** {@link CompilerOptions.maxnest} */
+translator.rule(["MAXNEST"], (option, options) => {
+  ensureArguments(option, 1);
+  if (!options.maxnest) {
+    options.maxnest = getDefaultCompilerOptions().maxnest;
+  }
+  // Suboptions may override previously set values.
+  for (const suboption of option.values) {
+    ensureType(suboption, "option");
+    const name = suboption.name.toLowerCase();
+    if (["block", "do", "if"].includes(name)) {
+      ensureArguments(suboption, 1, 1);
+      const value = suboption.values[0];
+      ensureType(value, "plainNotEmpty");
+      options.maxnest![name as keyof CompilerOptions.MaxNest] =
+        ensureNumberValue(value, 1, 50);
+    } else {
+      throw TranslationError.fromCode(
+        suboption.token,
+        CompilerOptionsCodes.MaxNest.InvalidParameter,
+        suboption.name,
+      );
+    }
+  }
+});
+
 /** {@link CompilerOptions.maxRunOnIf} */
+translator.rule(["MAXRUNONIF"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  // The spec does not specify the minimum and maximum values.
+  // The mainframe testing suggests 2 - 1000.
+  options.maxRunOnIf = ensureNumberValue(value, 2, 1000);
+});
+
 /** {@link CompilerOptions.maxStatic} */
+translator.rule(["MAXSTATIC"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  options.maxStatic = ensureNumberValue(value, 1);
+});
+
 /** {@link CompilerOptions.maxStmt} */
+translator.rule(["MAXSTMT"], (option, options) => {
+  ensureArguments(option, 1, 2);
+  const mValue = option.values[0];
+  ensureType(mValue, "plainNotEmpty");
+  const nValue = option.values.length > 1 ? option.values[1] : mValue;
+  ensureType(nValue, "plainNotEmpty");
+  const m = ensureNumberValue(mValue, 1);
+  const n = ensureNumberValue(nValue, 1);
+  if (m > n) {
+    throw TranslationError.fromCode(
+      mValue.token,
+      CompilerOptionsCodes.MaxStmt.InvalidRange,
+    );
+  }
+  options.maxStmt = {
+    m,
+    n,
+  };
+});
+
 /** {@link CompilerOptions.maxTemp} */
+translator.rule(["MAXTEMP"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  options.maxTemp = ensureNumberValue(value, 1);
+});
+
 /** {@link CompilerOptions.mDeck} */
+translator.rule(
+  ["MDECK", "MD"],
+  (option, options) => {
+    ensureArguments(option, 1);
+    // Only the last value takes effect.
+    for (const value of option.values) {
+      ensureType(value, "plain");
+      const valueName = value.value.toUpperCase();
+      if (["AFTERALL", "AFTERMACRO"].includes(valueName)) {
+        options.mDeck = valueName as CompilerOptions.MDeck;
+      } else {
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.MDeck.InvalidParameter,
+          value.value,
+        );
+      }
+    }
+  },
+  ["NOMDECK", "NMD"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.mDeck = false;
+  },
+);
+
 /** {@link CompilerOptions.msgSummary} */
+translator.rule(
+  ["MSGSUMMARY"],
+  (option, options) => {
+    // Actually does not accept multiple or empty values.
+    // *PROCESS MSGSUMMARY; is valid, but *PROCESS MSGSUMMARY(); is not.
+    ensureArguments(option, 0, 1);
+    let valueName = "NOXREF";
+    if (option.values.length === 1) {
+      const value = option.values[0];
+      ensureType(value, "plainNotEmpty");
+      valueName = value.value.toUpperCase();
+    }
+    if (["XREF", "NOXREF"].includes(valueName)) {
+      options.msgSummary = valueName as CompilerOptions.MsgSummary;
+    } else {
+      // Can only be reached if the value is plain.
+      throw TranslationError.fromCode(
+        option.values[0].token,
+        CompilerOptionsCodes.MsgSummary.InvalidParameter,
+        (option.values[0] as CompilerOptionText).value,
+      );
+    }
+  },
+  ["NOMSGSUMMARY"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.msgSummary = false;
+  },
+);
+
 /** {@link CompilerOptions.name} */
+translator.rule(
+  ["NAME", "N"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 1) {
+      const value = option.values[0];
+      ensureType(value, "plainOrString");
+      if (
+        value.kind === SyntaxKind.CompilerOptionText &&
+        value.value.length === 0
+      ) {
+        // If it is just plain text, no text is not recognized.
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.ExpectedPlainNotEmpty,
+          value.value,
+        );
+      }
+      options.name = value.value;
+    } else {
+      options.name = true;
+    }
+  },
+  ["NONAME"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.name = false;
+  },
+);
+
 /** {@link CompilerOptions.names} */
+translator.rule(["NAMES"], (option, options) => {
+  const ensureSafeCharacters = (
+    value: CompilerOptionText | CompilerOptionString,
+  ) => {
+    const seen = new Set<string>();
+    for (const char of value.value) {
+      // The character must not be from the character or set nor occur more than once.
+      if (PLI_CHARACTER_SET.has(char) || seen.has(char)) {
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.Names.CharacterAlreadyDefined,
+          char,
+          "NAMES",
+        );
+      }
+      seen.add(char);
+    }
+  };
+
+  ensureArguments(option, 1, 2);
+  const firstValue = option.values[0];
+  // TODO ssmifi: The mainframe accepts plain and string tokens.
+  // However, the options parser does not support special characters in plain tokens currently.
+  ensureType(firstValue, "plainOrString");
+  ensureSafeCharacters(firstValue);
+  options.names = {
+    extralingChar: firstValue.value,
+    uppExtralingChar: firstValue.value,
+  };
+  if (option.values.length > 1) {
+    const secondValue = option.values[1];
+    ensureType(secondValue, "plainOrString");
+    ensureSafeCharacters(secondValue);
+    if (firstValue.value.length !== secondValue.value.length) {
+      throw TranslationError.fromCode(
+        secondValue.token,
+        CompilerOptionsCodes.Names.InvalidParameterLengths,
+        "NAMES",
+      );
+    }
+    options.names!.uppExtralingChar = secondValue.value;
+  }
+});
+
 /** {@link CompilerOptions.natlang} */
+translator.rule(["NATLANG"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  const lang = value.value.toUpperCase();
+  if (["ENU", "UEN"].includes(lang)) {
+    options.natlang = lang as CompilerOptions.NatLang;
+  } else {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.NatLang.InvalidParameter,
+      value.value,
+    );
+  }
+});
+
 /** {@link CompilerOptions.nest} */
+translator.flag("nest", ["NEST"], ["NONEST"]);
 
 /** {@link CompilerOptions.not} */
 translator.rule(
@@ -1566,12 +2287,136 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.nullDate} */
+translator.flag("nullDate", ["NULLDATE"], ["NONULLDATE"]);
+
 /** {@link CompilerOptions.object} */
+translator.flag("object", ["OBJECT", "OBJ"], ["NOOBJECT", "NOBJ"]);
+
 /** {@link CompilerOptions.offset} */
+translator.flag("offset", ["OFFSET"], ["NOOFFSET"]);
+
 /** {@link CompilerOptions.offsetSize} */
+translator.rule(["OFFSETSIZE"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  const offsetSize = ensureNumberValue(value);
+  if (offsetSize !== 4 && offsetSize !== 8) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.OffsetSize.InvalidParameter,
+      value.value,
+    );
+  }
+  options.offsetSize = offsetSize;
+});
+
 /** {@link CompilerOptions.onSnap} */
+translator.rule(
+  ["ONSNAP"],
+  (option, options) => {
+    ensureArguments(option, 1);
+    if (!options.onSnap) {
+      options.onSnap = {
+        stringRange: false,
+        stringSize: false,
+      };
+    }
+    for (const value of option.values) {
+      ensureType(value, "plain");
+      if (value.value.length === 0) {
+        continue;
+      }
+      const onSnapValue = value.value.toUpperCase();
+      if (onSnapValue === "STRINGRANGE") {
+        options.onSnap.stringRange = true;
+      } else if (onSnapValue === "STRINGSIZE") {
+        options.onSnap.stringSize = true;
+      } else {
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.OnSnap.InvalidParameter,
+          value.value,
+        );
+      }
+    }
+    if (!options.onSnap.stringRange && !options.onSnap.stringSize) {
+      // Special case: If both stringRange and stringSize are false, the onSnap option is disabled.
+      options.onSnap = false;
+    }
+  },
+  ["NOONSNAP"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.onSnap = false;
+  },
+);
+
 /** {@link CompilerOptions.optimize} */
+translator.rule(
+  ["OPTIMIZE", "OPT"],
+  (option, options) => {
+    // Verified 0 and more than 1 argument. The last one takes effect.
+    ensureArguments(option, 0);
+    if (option.values.length === 0) {
+      // *PROCESS OPTIMIZE; enables level 3, whereas *PROCESS OPTIMIZE(); toggles level 0.
+      options.optimize = 3;
+      return;
+    }
+    for (const value of option.values) {
+      ensureType(value, "plain");
+      const valueName = value.value.toUpperCase();
+      if (valueName.length === 0 || valueName === "0") {
+        options.optimize = 0;
+      } else if (
+        valueName === "2" ||
+        valueName === "3" ||
+        valueName === "TIME"
+      ) {
+        options.optimize = 3;
+      } else {
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.Optimize.InvalidParameter,
+          value.value,
+        );
+      }
+    }
+  },
+  ["NOOPTIMIZE", "NOPT"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.optimize = 0;
+  },
+);
+
 /** {@link CompilerOptions.options} */
+translator.rule(
+  ["OPTIONS", "OP"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      options.options = "DOC";
+      return;
+    }
+    ensureType(option.values[0], "plainNotEmpty");
+    const valueName = option.values[0].value.toUpperCase();
+    if (["DOC", "ALL"].includes(valueName)) {
+      options.options = valueName as CompilerOptions.Options;
+    } else {
+      throw TranslationError.fromCode(
+        option.values[0].token,
+        CompilerOptionsCodes.Options.InvalidParameter,
+        valueName,
+      );
+    }
+  },
+  ["NOOPTIONS", "NOP"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.options = false;
+  },
+);
 
 /** {@link CompilerOptions.or} */
 translator.rule(

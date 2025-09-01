@@ -104,8 +104,15 @@ export type Instruction =
   | DeactivateInstruction
   | DeclareInstruction;
 
+export interface ProcedureInstructionContainer {
+  names: string[];
+  parameters: string[];
+  node: InstructionNode;
+}
+
 export interface HaltInstruction {
   kind: InstructionKind.Halt;
+  value?: ExpressionInstruction;
 }
 
 export const Halt: HaltInstruction = {
@@ -196,15 +203,14 @@ export interface DoType2Instruction {
 
 export interface DoType3Instruction {
   variable: ReferenceItemInstruction;
-  specificationItems: DoType3SpecificationItem[];
+  specification: DoType3Specification;
 }
 
-export interface DoType3SpecificationItem {
+export interface DoType3Specification {
   expression: ExpressionInstruction | null;
-  upthru: ExpressionInstruction | null;
-  downthru: ExpressionInstruction | null;
   repeat: ExpressionInstruction | null;
-  whileOrUntil: ExpressionInstruction | null;
+  while: ExpressionInstruction | null;
+  until: ExpressionInstruction | null;
   to: ExpressionInstruction | null;
   by: ExpressionInstruction | null;
 }

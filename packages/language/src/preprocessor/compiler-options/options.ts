@@ -237,7 +237,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-incpds
    */
-  incPds?: string | false;
+  incPds?: CompilerOptions.IncPds | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-initauto
    */
@@ -257,7 +257,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-insource
    */
-  inSource?: CompilerOptions.InSource;
+  inSource?: CompilerOptions.InSource | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-interrupt
    */
@@ -305,7 +305,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-margini
    */
-  margini?: CompilerOptions.Margini;
+  margini?: CompilerOptions.Margini | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-margins
    */
@@ -317,7 +317,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxinit
    */
-  maxinit?: string;
+  maxinit?: number;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxgen
    */
@@ -329,7 +329,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxmsg
    */
-  maxmsg?: (CompilerOptions.Flag | number)[];
+  maxmsg?: CompilerOptions.MaxMsg;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxnest
    */
@@ -341,7 +341,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxstatic
    */
-  maxStatic?: string;
+  maxStatic?: number;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-maxstmt
    */
@@ -353,15 +353,15 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-mdeck
    */
-  mDeck?: CompilerOptions.MDeck;
+  mDeck?: CompilerOptions.MDeck | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-msgsummary
    */
-  msgSummary?: CompilerOptions.MsgSummary;
+  msgSummary?: CompilerOptions.MsgSummary | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-name
    */
-  name?: string | false;
+  name?: string | boolean;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-names
    */
@@ -572,18 +572,6 @@ export interface CompilerOptions {
   xRef?: CompilerOptions.XRef;
 }
 
-const defaultCompilerOptions: CompilerOptions = {
-  system: "MVS",
-  sysParm: "",
-};
-
-/**
- * Returns a fresh copy of the default compiler options.
- */
-export function getDefaultCompilerOptions(): CompilerOptions {
-  return { ...defaultCompilerOptions };
-}
-
 export declare namespace CompilerOptions {
   export type Length = "SHORT" | "FULL";
   export interface Attributes {
@@ -716,13 +704,16 @@ export declare namespace CompilerOptions {
     token?: Token;
   }
   export interface IncDir {
-    directory: string;
+    directories: string[];
   }
-  export interface InitAuto {
-    length?: Length;
+
+  export interface IncPds {
+    pds: string[];
   }
+
+  export type InitAuto = "SHORT" | "FULL" | false;
   export interface InSource {
-    type: "FULL" | "SHORT" | "ALL" | "FIRST";
+    type?: "FULL" | "SHORT" | "ALL" | "FIRST";
   }
   export interface Json {
     case?: "UPPER" | "LOWER" | "ASIS";
@@ -731,18 +722,19 @@ export declare namespace CompilerOptions {
     trimr?: boolean;
     parse?: "V1" | "V2";
   }
-  export interface LangLvl {
-    os?: boolean;
-    noext?: boolean;
-  }
+  export type LangLvl = "OS" | "NOEXT";
   export interface Limits {
     extname?: number;
-    fixedDec?: {
-      max?: number;
+    fixedBin?: {
       min?: number;
+      max?: number;
+    };
+    fixedDec?: {
+      min?: number;
+      max?: number;
     };
     name?: number;
-    string?: string;
+    string?: number;
   }
   export type ListView =
     | "SOURCE"
@@ -751,7 +743,6 @@ export declare namespace CompilerOptions {
     | "AFTERMACRO"
     | "AFTERSQL";
   export interface Margini {
-    active: boolean;
     character: string;
   }
   export interface Margins {
@@ -779,6 +770,10 @@ export declare namespace CompilerOptions {
      */
     c?: string;
   }
+  export interface MaxMsg {
+    severity: Flag;
+    n: number;
+  }
   export interface MaxNest {
     /**
      * Default: 17
@@ -804,16 +799,8 @@ export declare namespace CompilerOptions {
      */
     n?: number;
   }
-  export type MDeck =
-    | {
-        type?: "AFTERALL" | "AFTERMACRO";
-      }
-    | false;
-  export type MsgSummary =
-    | {
-        xref?: boolean;
-      }
-    | false;
+  export type MDeck = "AFTERALL" | "AFTERMACRO";
+  export type MsgSummary = "XREF" | "NOXREF";
   export type Names = {
     extralingChar?: string;
     uppExtralingChar?: string;
@@ -830,18 +817,8 @@ export declare namespace CompilerOptions {
         stringSize?: boolean;
       }
     | false;
-  export type Optimize =
-    | {
-        level?: 0 | 2 | 3 | "TIME";
-      }
-    | false;
-  export type Options =
-    | {
-        all?: boolean;
-        doc?: boolean;
-      }
-    | false;
-
+  export type Optimize = 0 | 3;
+  export type Options = "DOC" | "ALL" | false;
   export type PPOption = PP | false;
 
   export type PP = {
@@ -1094,4 +1071,79 @@ export declare namespace CompilerOptions {
     length?: Length;
     structure?: "EXPLICIT" | "IMPLICIT";
   };
+}
+
+const $1K = 1024;
+const $1M = 1024 * 1024;
+
+const defaultCompilerOptions: CompilerOptions = {
+  json: {
+    case: "UPPER",
+    get: "HEEDCASE",
+    parse: "V1",
+    trimr: true,
+  },
+  limits: {
+    extname: 7,
+    fixedBin: {
+      min: 31,
+      max: 63,
+    },
+    fixedDec: {
+      min: 15,
+      max: 31,
+    },
+    name: 100,
+    string: 32 * $1K,
+  },
+  lineCount: 31415,
+  initAuto: "FULL",
+  margins: {
+    m: 2,
+    n: 72,
+  },
+  maxbranch: 2000,
+  maxinit: 64 * $1K,
+  maxgen: 100000,
+  maxmem: $1M,
+  maxmsg: {
+    severity: "W",
+    n: 250,
+  },
+  maxnest: {
+    block: 17,
+    do: 17,
+    if: 17,
+  },
+  maxRunOnIf: 10,
+  maxStmt: {
+    m: 4 * $1K,
+    n: 8 * $1K,
+  },
+  maxTemp: 50000,
+  mDeck: false,
+  msgSummary: false,
+  name: false,
+  names: {
+    extralingChar: "@#$",
+    uppExtralingChar: "@#$",
+  },
+  natlang: "ENU",
+  nest: false,
+  nullDate: false,
+  object: true,
+  offset: false,
+  offsetSize: 4,
+  onSnap: false,
+  optimize: 0,
+  options: "DOC",
+  system: "MVS",
+  sysParm: "",
+};
+
+/**
+ * Returns a fresh copy of the default compiler options.
+ */
+export function getDefaultCompilerOptions(): CompilerOptions {
+  return { ...defaultCompilerOptions };
 }

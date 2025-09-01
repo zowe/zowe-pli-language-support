@@ -17,40 +17,47 @@ import {
   CompilationUnitTokens,
 } from "../workspace/compilation-unit";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
-import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import {
+  PluginConfigurationProviderInstance,
+  ProcessGroup,
+} from "../workspace/plugin-configuration-provider";
 import { CompilerOptionResult } from "./compiler-options/options";
-import { generateInstructions } from "./instruction-generator";
+import {
+  generateInstructions,
+  InstructionGeneratorResult,
+} from "./instruction-generator";
 import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
 import { LexingIssue } from "./pli-lexer";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PreprocessorError } from "./pli-preprocessor-error";
-import { PliPreprocessorParser } from "./pli-preprocessor-parser";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { tokenize } from "../parser/tokenizer";
+import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
+import { preprocessorParse } from "./preprocessor-parser";
 
 interface Variable {
   name: string;
-  value: VariableValue;
+  value: Value;
   declarationNode?: ast.SyntaxNode | null;
   mode: inst.ScanMode;
   active: boolean;
 }
 
-type VariableValue = Value | ArrayValue;
+type Value = ScalarValue | ArrayValue;
 
-interface Value {
-  // Preprocessor variables are always strings or numbers.
+interface ScalarValue {
+  // Scalar preprocessor variables are always strings or numbers.
   // We store them as strings for simplicity and convert them as needed based on the type.
-  value: string;
-  type: inst.DeclaredType;
+  readonly value: string;
+  readonly type: inst.DeclaredType;
 }
 
-function isValue(value: VariableValue): value is Value {
+function isScalarValue(value: Value): value is ScalarValue {
   return "value" in value && "type" in value;
 }
 
-function copyValue(value: Value): Value {
+function copyScalarValue(value: ScalarValue): ScalarValue {
   return {
     value: value.value,
     type: value.type,
@@ -58,28 +65,110 @@ function copyValue(value: Value): Value {
 }
 
 interface ArrayValue {
-  array: VariableValue[];
-  lower: number;
-  upper: number;
+  readonly array: Value[];
+  readonly lower: number;
+  readonly upper: number;
 }
 
-function isArrayValue(value: VariableValue): value is ArrayValue {
+function isArrayValue(value: Value): value is ArrayValue {
   return "array" in value && "lower" in value && "upper" in value;
 }
 
 function copyArrayValue(value: ArrayValue): ArrayValue {
   return {
-    array: value.array.map(copyVariableValue),
+    array: value.array.map(copyValue),
     lower: value.lower,
     upper: value.upper,
   };
 }
 
-function copyVariableValue(value: VariableValue): VariableValue {
+function copyValue(value: Value): Value {
   if (isArrayValue(value)) {
     return copyArrayValue(value);
   } else {
-    return copyValue(value);
+    return copyScalarValue(value);
+  }
+}
+
+function boolToString(value: boolean): string {
+  return value ? "1" : "0";
+}
+
+function boolToValue(value: boolean): ScalarValue {
+  return {
+    type: inst.DeclaredType.Fixed,
+    value: boolToString(value),
+  };
+}
+
+function valueToBool(value: ScalarValue): boolean {
+  if (value.type === inst.DeclaredType.Fixed) {
+    return parseInt(value.value) !== 0;
+  } else if (value.type === inst.DeclaredType.Character) {
+    return value.value.trim() !== "";
+  }
+  return false;
+}
+
+function numberToValue(value: string | number): ScalarValue {
+  return {
+    type: inst.DeclaredType.Fixed,
+    value: value.toString(),
+  };
+}
+
+function stringToValue(value: string): ScalarValue {
+  return {
+    type: inst.DeclaredType.Character,
+    value,
+  };
+}
+
+function valueToNumber(value?: Value): number | undefined;
+function valueToNumber(value: Value | undefined, defaultNum: number): number;
+function valueToNumber(value?: Value, defaultNum?: number): number | undefined {
+  if (!value || !isScalarValue(value)) {
+    return defaultNum;
+  }
+  const num = parseInt(value.value, 10);
+  if (isNaN(num)) {
+    return defaultNum;
+  }
+  return num;
+}
+
+function valueToString(value?: Value): string | undefined;
+function valueToString(value: Value | undefined, defaultStr: string): string;
+function valueToString(value?: Value, defaultStr?: string): string | undefined {
+  if (!value || !isScalarValue(value)) {
+    return defaultStr;
+  }
+  return value.value;
+}
+
+function getVariable(
+  context: InterpreterContext,
+  name: string,
+): Variable | undefined {
+  return context.localVariables?.get(name) ?? context.variables.get(name);
+}
+
+function setVariable(context: InterpreterContext, variable: Variable): void {
+  if (context.localVariables) {
+    if (context.localVariables.has(variable.name)) {
+      // Local variables might be shadowing a global variable
+      // Check and update first
+      context.localVariables.set(variable.name, variable);
+    } else if (context.variables.has(variable.name)) {
+      // Variable is actually a global variable that we need to update
+      context.variables.set(variable.name, variable);
+    } else {
+      // Variable doesn't exist yet, so we create it as a local variable
+      context.localVariables.set(variable.name, variable);
+    }
+  } else {
+    // Not in a procedure, so we only have global variables
+    context.variables.set(variable.name, variable);
   }
 }
 
@@ -100,19 +189,13 @@ function generateVariable(
 function generateVariableValue(
   instruction: inst.DeclareInstruction,
   context: InterpreterContext,
-): VariableValue {
-  let value: VariableValue;
+): Value {
+  let value: Value;
   // Initial value is empty or 0 (for numbers)
   if (instruction.type === inst.DeclaredType.Character) {
-    value = {
-      value: "",
-      type: inst.DeclaredType.Character,
-    };
+    value = defaultEmptyValue;
   } else {
-    value = {
-      value: "0",
-      type: inst.DeclaredType.Fixed,
-    };
+    value = zero;
   }
   if (instruction.dimensions && instruction.dimensions.length > 0) {
     // Evaluate the dimensions in reverse order to construct the nested array correctly
@@ -120,20 +203,18 @@ function generateVariableValue(
       let lower = 1;
       if (lowerBound) {
         const evaluatedLower = evaluateExpression(lowerBound, context);
-        const parsedLower = parseInt(evaluatedLower.value);
-        lower = parsedLower;
+        lower = valueToNumber(evaluatedLower, 1);
       }
       let upper = 1;
       if (upperBound) {
         const evaluatedUpper = evaluateExpression(upperBound, context);
-        const parsedUpper = parseInt(evaluatedUpper.value);
-        upper = parsedUpper;
+        upper = valueToNumber(evaluatedUpper, 1);
       }
       const length = upper - lower + 1;
-      const array: VariableValue[] = [];
+      const array: Value[] = [];
       for (let i = 0; i < length; i++) {
         // Initialize the array with the copied value
-        array.push(copyVariableValue(value));
+        array.push(copyValue(value));
       }
       value = {
         array,
@@ -159,16 +240,38 @@ interface InterpreterContext {
   unit: CompilationUnit;
   currentUri?: URI;
   entryUri?: URI;
+  /**
+   * These are global variables that are defined on the root level of the preprocessor
+   */
   variables: Map<string, Variable>;
+  /**
+   * Local variables only exist within the scope of a procedure. Set to `undefined` when not in a procedure.
+   */
+  localVariables?: Map<string, Variable>;
   statements: ast.Statement[];
   result: CompilationUnitTokens;
   errors: LexingIssue[];
+  procedures: Map<string, inst.ProcedureInstructionContainer>;
+  activeProcedures: Set<string>;
   counter: Map<inst.InstructionNode, number>;
+  doType3: Map<inst.InstructionNode, DoType3Context>;
   references: ast.Reference[];
   evaluations: EvaluationResults;
   xIncludes: Set<string>;
   uris: string[];
   options: InterpreterOptions;
+  returnValue: Value;
+  counterValue: number;
+  /**
+   * MACNAME returns the name of the preprocessor procedure within which it is invoked.
+   * It is invalid to invoke MACNAME outside of a preprocessor procedure.
+   */
+  macname: string;
+}
+
+interface DoType3Context {
+  toValue?: ScalarValue;
+  byValue?: ScalarValue;
 }
 
 export type InstructionInterpreterResult = CompilationUnitTokens & {
@@ -183,13 +286,12 @@ export type InstructionInterpreterResult = CompilationUnitTokens & {
 export interface InterpreterOptions {
   compilerOptions: CompilerOptionResult | undefined;
   marginsProcessor: MarginsProcessor;
-  parser: PliPreprocessorParser;
 }
 
 export function runInstructions(
   unit: CompilationUnit,
   uri: URI,
-  start: inst.InstructionNode,
+  instruction: InstructionGeneratorResult,
   options: InterpreterOptions,
 ): InstructionInterpreterResult {
   const context: InterpreterContext = {
@@ -201,6 +303,8 @@ export function runInstructions(
     statements: [],
     xIncludes: new Set(),
     variables: new Map(),
+    procedures: new Map(),
+    activeProcedures: new Set(),
     references: [],
     evaluations: {
       ifStatements: new Map(),
@@ -211,9 +315,16 @@ export function runInstructions(
     },
     options,
     counter: new Map(),
+    doType3: new Map(),
+    returnValue: defaultEmptyValue,
+    counterValue: 1,
+    macname: "",
   };
+  for (const [key, value] of instruction.procedures.entries()) {
+    context.procedures.set(key, value);
+  }
 
-  const tokenResult = doRunInstructions(context, start);
+  const tokenResult = doRunInstructions(context, instruction.entryNode);
   return {
     ...tokenResult,
     evaluationResults: context.evaluations,
@@ -250,15 +361,15 @@ function runInstructionNode(
   const instruction = node.instruction;
   let result = node.next;
   try {
-    if (node.instruction.kind === inst.InstructionKind.Halt) {
-      return undefined; // Stop execution
-    }
-    const instructionResult = runInstruction(instruction, context);
+    const instructionResult = runInstruction(instruction, context, node);
     if (instructionResult) {
       result = instructionResult;
     }
   } catch (err) {
     handleInstructionError(err, context);
+  }
+  if (node.instruction.kind === inst.InstructionKind.Halt) {
+    return undefined; // Stop execution
   }
   return result;
 }
@@ -274,6 +385,7 @@ function handleInstructionError(err: any, context: InterpreterContext): void {
 function runInstruction(
   instruction: inst.Instruction,
   context: InterpreterContext,
+  node: inst.InstructionNode,
 ): inst.InstructionNode | undefined {
   switch (instruction.kind) {
     case inst.InstructionKind.Assignment:
@@ -283,14 +395,14 @@ function runInstruction(
       runTokenInstruction(instruction, context);
       break;
     case inst.InstructionKind.Compound:
-      runCompoundInstruction(instruction, context);
+      runCompoundInstruction(instruction, context, node);
       break;
     case inst.InstructionKind.Goto:
       return instruction.node;
     case inst.InstructionKind.If:
       return runIfInstruction(instruction, context);
     case inst.InstructionKind.Do:
-      return runDoInstruction(instruction, context);
+      return runDoInstruction(instruction, context, node);
     case inst.InstructionKind.Include:
       runIncludeInstruction(instruction, context);
       break;
@@ -306,33 +418,253 @@ function runInstruction(
     case inst.InstructionKind.Deactivate:
       runDeactivateInstruction(instruction, context);
       break;
+    case inst.InstructionKind.Halt:
+      runHaltInstruction(instruction, context);
+      break;
   }
   return undefined;
+}
+
+function runHaltInstruction(
+  instruction: inst.HaltInstruction,
+  context: InterpreterContext,
+): void {
+  // Every return statement in a procedure generates a halt statement with a `value`
+  // Simply evaluate it and set it as the return value of the current context
+  if (instruction.value) {
+    const value = evaluateExpression(instruction.value, context);
+    context.returnValue = value;
+  }
 }
 
 function runDoInstruction(
   instruction: inst.DoInstruction,
   context: InterpreterContext,
+  node: inst.InstructionNode,
 ): inst.InstructionNode | undefined {
   let condition = true;
   if (instruction.doType2) {
-    const type2 = instruction.doType2;
-    if (type2.until) {
-      // If UNTIL is specified, we don't run the instruction if it evaluates to true
-      condition &&= !valueToBool(evaluateExpression(type2.until, context));
-    }
-    if (type2.while) {
-      // If WHILE is specified, we only run the instruction if it evaluates to true
-      condition &&= valueToBool(evaluateExpression(type2.while, context));
-    }
-  }
-  if (instruction.doType3) {
-    throw new Error("DoType3 instructions are not implemented yet!");
+    condition = runDoType2Instruction(instruction.doType2, context);
+  } else if (instruction.doType3) {
+    condition = runDoType3Instruction(instruction.doType3, context, node);
   }
   if (condition) {
     return instruction.content;
   }
   return undefined;
+}
+
+function runDoType2Instruction(
+  doType2: inst.DoType2Instruction,
+  context: InterpreterContext,
+): boolean {
+  let condition = true;
+  if (doType2.until) {
+    const untilConditionValue = evaluateExpression(doType2.until, context);
+    if (!isScalarValue(untilConditionValue)) {
+      // Condition cannot be evaluated, don't run the instruction
+      condition = false;
+    } else {
+      // If UNTIL is specified, we don't run the instruction if it evaluates to true
+      condition &&= !valueToBool(untilConditionValue);
+    }
+  }
+  if (doType2.while) {
+    const whileConditionValue = evaluateExpression(doType2.while, context);
+    if (!isScalarValue(whileConditionValue)) {
+      // Condition cannot be evaluated, don't run the instruction
+      condition = false;
+    } else {
+      // If WHILE is specified, we only run the instruction if it evaluates to true
+      condition &&= valueToBool(whileConditionValue);
+    }
+  }
+  return condition;
+}
+
+function runDoType3Instruction(
+  doType3: inst.DoType3Instruction,
+  context: InterpreterContext,
+  node: inst.InstructionNode,
+): boolean {
+  let condition = true;
+
+  // Get current do-type3 state
+  const doType3Context = context.doType3.get(node);
+
+  if (!doType3Context) {
+    // Store all expressions that must be evaluated at the start of the loop
+    condition &&= runDoType3Initialization(doType3, context, node);
+  } else {
+    // Subsequent iterations
+    condition &&= runDoType3UntilCheck(doType3, context);
+    condition &&= runDoType3VariableUpdate(doType3, context, doType3Context);
+  }
+
+  // Check WHILE condition before do-group execution
+  condition &&= runDoType3WhileCheck(doType3, context);
+
+  return condition;
+}
+
+function runDoType3Initialization(
+  doType3: inst.DoType3Instruction,
+  context: InterpreterContext,
+  node: inst.InstructionNode,
+): boolean {
+  const { variable } = doType3;
+  const varName = variable.variable;
+  const spec = doType3.specification;
+
+  // Initial expression is required
+  if (!spec.expression) {
+    return false;
+  }
+  const start = evaluateExpression(spec.expression, context);
+  if (!isScalarValue(start)) {
+    return false;
+  }
+
+  let loopVar = getVariable(context, varName);
+
+  // Implicitly declare the loop variable if it doesn't exist, or update existing variable
+  if (!loopVar) {
+    loopVar = {
+      name: varName,
+      declarationNode: variable.reference?.owner,
+      value: {
+        value: start.value,
+        type: inst.DeclaredType.Fixed,
+      },
+      active: false,
+      mode: inst.ScanMode.Scan,
+    };
+    setVariable(context, loopVar);
+  } else {
+    // Update existing variable to the start value
+    loopVar.value = {
+      value: start.value,
+      type: inst.DeclaredType.Fixed,
+    };
+  }
+
+  // Evaluate and save TO and BY expressions at entry to the specification
+  let toValue: ScalarValue | undefined;
+  let byValue: ScalarValue | undefined;
+
+  if (spec.to) {
+    const value = evaluateExpression(spec.to, context);
+    if (!isScalarValue(value)) {
+      return false;
+    }
+    toValue = value;
+  }
+
+  if (spec.by) {
+    const value = evaluateExpression(spec.by, context);
+    if (!isScalarValue(value)) {
+      return false;
+    }
+    byValue = value;
+  } else if (spec.to) {
+    byValue = numberToValue("1");
+  }
+
+  const doType3Context = {
+    toValue,
+    byValue,
+  };
+
+  context.doType3.set(node, doType3Context);
+  return true;
+}
+
+function runDoType3WhileCheck(
+  doType3: inst.DoType3Instruction,
+  context: InterpreterContext,
+): boolean {
+  const spec = doType3.specification;
+
+  if (spec.while) {
+    const whileCondition = evaluateExpression(spec.while, context);
+    if (!isScalarValue(whileCondition)) {
+      return false;
+    }
+    return valueToBool(whileCondition);
+  }
+
+  return true;
+}
+
+function runDoType3UntilCheck(
+  doType3: inst.DoType3Instruction,
+  context: InterpreterContext,
+): boolean {
+  const spec = doType3.specification;
+
+  if (spec.until) {
+    const untilCondition = evaluateExpression(spec.until, context);
+    if (!isScalarValue(untilCondition)) {
+      return false;
+    }
+    return !valueToBool(untilCondition);
+  }
+
+  return true;
+}
+
+function runDoType3VariableUpdate(
+  doType3: inst.DoType3Instruction,
+  context: InterpreterContext,
+  doType3Context: DoType3Context,
+): boolean {
+  const { variable } = doType3;
+  const varName = variable.variable;
+  const spec = doType3.specification;
+
+  const loopVar = getVariable(context, varName);
+  if (!loopVar) {
+    return false;
+  }
+
+  if (spec.repeat) {
+    const repeatValue = evaluateExpression(spec.repeat, context);
+    if (!isScalarValue(repeatValue)) {
+      return false;
+    }
+    loopVar.value = {
+      value: repeatValue.value,
+      type: inst.DeclaredType.Fixed,
+    };
+    // No range check needed for REPEAT-only loops
+    return true;
+  } else if (spec.to) {
+    if (!doType3Context?.toValue || !doType3Context?.byValue) {
+      return false;
+    }
+
+    const end = parseInt(doType3Context.toValue.value);
+    const step = parseInt(doType3Context.byValue.value);
+
+    if (!isScalarValue(loopVar.value)) {
+      return false;
+    }
+
+    const currentValue = parseInt(loopVar.value.value);
+    const nextValue = currentValue + step;
+
+    // Update the variable
+    loopVar.value = {
+      value: nextValue.toString(),
+      type: inst.DeclaredType.Fixed,
+    };
+
+    // Check if the updated value is still within range
+    return (step > 0 && nextValue <= end) || (step < 0 && nextValue >= end);
+  } else {
+    // unsupported DO type3 clause
+    return false;
+  }
 }
 
 function runAssignmentInstruction(
@@ -341,7 +673,7 @@ function runAssignmentInstruction(
 ): void {
   const value = evaluateExpression(instruction.value, context);
   for (const ref of instruction.refs) {
-    let variable = context.variables.get(ref.variable);
+    let variable = getVariable(context, ref.variable);
     if (!variable) {
       if (ref.args.length > 0) {
         // This seems to write into an undeclared array variable
@@ -356,38 +688,9 @@ function runAssignmentInstruction(
         active: false, // Implicitly declared variables are inactive by default
         mode: inst.ScanMode.Scan,
       };
-      context.variables.set(ref.variable, variable);
+      setVariable(context, variable);
     } else {
-      let setter: ((val: VariableValue) => void) | undefined = (val) => {
-        variable!.value = val;
-      };
-      if (ref.args.length > 0) {
-        let variableValue = variable.value;
-        // If we access an array variable, we need to evaluate the args
-        for (const arg of ref.args) {
-          const argValue = evaluateExpression(arg, context);
-          const numValue = parseInt(argValue.value);
-          const currentValue = variableValue;
-          let arrayValue: VariableValue | undefined;
-          if (isArrayValue(variableValue)) {
-            const index = numValue - variableValue.lower;
-            // Manipulate the array in place
-            setter = (val) => {
-              (currentValue as ArrayValue).array[index] = val;
-            };
-            arrayValue = variableValue.array[index];
-          } else {
-            // The variable that we want to access is not an array
-            // TODO: We should report an error here
-            setter = undefined;
-            break;
-          }
-          variableValue = arrayValue;
-        }
-      }
-      // Currently, we simply assume that a user has used `=` as the assignment operator
-      // TODO: Add more assignment operators in a separate PR.
-      setter?.(value);
+      evaluateValueAccess(variable, ref.args, context).setter(value);
     }
   }
 }
@@ -397,6 +700,10 @@ function runIfInstruction(
   context: InterpreterContext,
 ): inst.InstructionNode | undefined {
   const condition = evaluateExpression(instruction.condition, context);
+  if (!isScalarValue(condition)) {
+    // Condition cannot be evaluated, simply skip the whole if instruction
+    return undefined;
+  }
   const existing = context.evaluations.ifStatements.get(instruction.element);
   if (valueToBool(condition)) {
     context.evaluations.ifStatements.set(
@@ -413,7 +720,6 @@ function runIfInstruction(
   }
 }
 
-// TODO: We should be able to return an `ArrayValue` here as well
 function evaluateExpression(
   expression: inst.ExpressionInstruction,
   context: InterpreterContext,
@@ -431,14 +737,14 @@ function evaluateExpression(
   }
 }
 
-type ValueOperation = (left: Value, right: Value) => Value;
+type ValueOperation = (left: ScalarValue, right: ScalarValue) => ScalarValue;
 
 function intOperation(
   callback: (left: number, right: number) => number,
 ): ValueOperation {
-  return (left: Value, right: Value) => {
-    return valueToNumber(
-      callback(parseInt(left.value), parseInt(right.value)).toString(),
+  return (left: ScalarValue, right: ScalarValue) => {
+    return numberToValue(
+      callback(parseInt(left.value, 10), parseInt(right.value, 10)).toString(),
     );
   };
 }
@@ -446,16 +752,18 @@ function intOperation(
 function intBoolOperation(
   callback: (left: number, right: number) => boolean,
 ): ValueOperation {
-  return (left: Value, right: Value) => {
-    return boolToValue(callback(parseInt(left.value), parseInt(right.value)));
+  return (left: ScalarValue, right: ScalarValue) => {
+    return boolToValue(
+      callback(parseInt(left.value, 10), parseInt(right.value, 10)),
+    );
   };
 }
 
 function stringOperation(
   callback: (left: string, right: string) => string,
 ): ValueOperation {
-  return (left: Value, right: Value) => {
-    return valueToString(callback(left.value, right.value));
+  return (left: ScalarValue, right: ScalarValue) => {
+    return stringToValue(callback(left.value, right.value));
   };
 }
 
@@ -480,9 +788,12 @@ const notLessThan = greaterThanEquals;
 function evaluateBinaryExpression(
   expression: inst.BinaryExpressionInstruction,
   context: InterpreterContext,
-): Value {
+): ScalarValue {
   const left = evaluateExpression(expression.left, context);
   const right = evaluateExpression(expression.right, context);
+  if (!isScalarValue(left) || !isScalarValue(right)) {
+    return defaultEmptyValue;
+  }
   switch (expression.operator) {
     case "+":
       return plus(left, right);
@@ -520,63 +831,196 @@ function evaluateBinaryExpression(
     case "^>":
       return notGreaterThan(left, right);
   }
-  return valueToNumber("0");
+  return zero;
 }
 
 function evaluateUnaryExpression(
   expression: inst.UnaryExpressionInstruction,
   context: InterpreterContext,
-): Value {
+): ScalarValue {
   const operand = evaluateExpression(expression.operand, context);
+  if (!isScalarValue(operand)) {
+    // TODO: report error for array operand in unary expression
+    // Thought: Maybe as part of the type system instead?
+    return defaultEmptyValue;
+  }
   switch (expression.operator) {
     case "+":
       return operand;
     case "-":
-      return valueToNumber((-parseInt(operand.value)).toString());
+      return numberToValue(-valueToNumber(operand, 0));
     case "^":
       return boolToValue(!valueToBool(operand));
   }
-  return valueToNumber("0");
+  return zero;
 }
 
-const defaultEmptyValue: Value = {
+const defaultEmptyValue: ScalarValue = {
   type: inst.DeclaredType.Character,
   value: "",
 };
+const unsetVariable: ScalarValue = {
+  type: inst.DeclaredType.Character,
+  value: "",
+};
+const zero = numberToValue(0);
 
 function evaluateReferenceExpression(
   expression: inst.ReferenceItemInstruction,
   context: InterpreterContext,
 ): Value {
-  const variable = context.variables.get(expression.variable);
-  const value = variable?.value;
-  if (!value) {
-    return defaultEmptyValue;
-  } else if (isValue(value)) {
-    return value;
-  } else if (isArrayValue(value)) {
-    let arrayValue = value;
-    const args = expression.args.map((arg) => evaluateExpression(arg, context));
-    for (const arg of args) {
-      const numValue = parseInt(arg.value);
-      const argValue = arrayValue.array[numValue - arrayValue.lower];
-      if (!argValue) {
-        return defaultEmptyValue;
-      } else if (isValue(argValue)) {
-        return argValue;
+  const variable = getVariable(context, expression.variable);
+  if (!variable) {
+    // Get user declared procedures
+    const procedure = context.procedures.get(expression.variable);
+    if (!procedure) {
+      // It might still be a builtin procedure
+      const builtin = builtinImplementations.get(expression.variable);
+      if (builtin) {
+        return evaluateBuiltin(builtin, expression.args, context);
+      }
+      return defaultEmptyValue;
+    }
+    return evaluateProcedure(procedure, expression.args, context);
+  }
+  return evaluateValueAccess(variable, expression.args, context).getter();
+}
+
+function evaluateBuiltin(
+  builtin: PreprocessorBuiltin,
+  args: inst.ExpressionInstruction[],
+  context: InterpreterContext,
+): Value {
+  const evaluatedArgs = args.map((e) => evaluateExpression(e, context));
+  return builtin(context, evaluatedArgs);
+}
+
+interface ValueAccess {
+  getter: () => Value;
+  setter: (value: Value) => void;
+}
+
+function evaluateValueAccess(
+  variable: Variable,
+  args: inst.ExpressionInstruction[],
+  context: InterpreterContext,
+): ValueAccess {
+  const empty: ValueAccess = {
+    getter: () => defaultEmptyValue,
+    setter: () => {}, // Do nothing
+  };
+  if (args.length === 0) {
+    // If there are no args, we simply return the variable value
+    return {
+      getter: () => variable.value,
+      setter: (val) => {
+        variable.value = val;
+      },
+    };
+  } else {
+    // Note: If any arguments are specified for the variable, we need to go through all of them
+    // In case the variable is a "shorter" or "longer" array (i.e. the arguments don't fit), simply return *empty*
+    // The type system should report the error on the type level
+    if (!isArrayValue(variable.value)) {
+      // If the variable is not an array, we cannot index into it
+      return empty;
+    }
+    let variableValue = variable.value;
+    for (let i = 0; i < args.length; i++) {
+      const arg = evaluateExpression(args[i], context);
+      const numValue = valueToNumber(arg);
+      if (numValue === undefined) {
+        // If the argument is not a number, we cannot index into the array
+        // It seems like the compiler reports IBM3948I in that case
+        return empty;
+      }
+      if (numValue < variableValue.lower) {
+        // TODO: Report IBM3789I
+        return empty;
+      } else if (numValue > variableValue.upper) {
+        // TODO: Report IBM3790I
+        return empty;
+      }
+      const indexedValue = variableValue.array[numValue - variableValue.lower];
+      // If we have evaluated all arguments
+      if (i === args.length - 1) {
+        if (isArrayValue(indexedValue)) {
+          // TODO: Report IBM3793I (in the type system?)
+          return empty;
+        } else {
+          return {
+            getter: () => indexedValue,
+            setter: (val) => {
+              variableValue.array[numValue - variableValue.lower] = val;
+            },
+          };
+        }
+      } else if (isScalarValue(indexedValue)) {
+        // TODO: Report IBM3794I (in the type system?)
+        return empty;
       } else {
-        arrayValue = argValue;
+        variableValue = indexedValue;
       }
     }
+    return empty;
   }
-  // If we exhaust all args without finding a value, return default
-  return defaultEmptyValue;
+}
+
+function evaluateProcedure(
+  procedure: inst.ProcedureInstructionContainer,
+  args: inst.ExpressionInstruction[],
+  context: InterpreterContext,
+): Value {
+  const procArgs = args.map((e) => evaluateExpression(e, context));
+  const localContext = createLocalContext(context, procedure);
+  return runProcedure(procedure, procArgs, localContext);
+}
+
+function createLocalContext(
+  context: InterpreterContext,
+  procedure: inst.ProcedureInstructionContainer,
+): InterpreterContext {
+  return {
+    ...context,
+    localVariables: new Map(),
+    macname: procedure.names[0] || "",
+  };
+}
+
+function runProcedure(
+  procedure: inst.ProcedureInstructionContainer,
+  args: Value[],
+  context: InterpreterContext,
+): Value {
+  if (!context.localVariables) {
+    throw new Error(
+      "Local variables map is not initialized! Use the createLocalContext function before calling runProcedure!",
+    );
+  }
+  // Note that in case a procedure has received too many arguments, the excess ones are ignored
+  for (let i = 0; i < procedure.parameters.length; i++) {
+    const param = procedure.parameters[i];
+    // In case a variable hasn't been supplied, use the special "unsetVariable"
+    const arg = args[i] ?? unsetVariable;
+    const variable: Variable = {
+      name: param,
+      value: arg,
+      active: false,
+      mode: inst.ScanMode.NoScan,
+      declarationNode: null,
+    };
+    context.localVariables.set(param, variable);
+  }
+  doRunInstructions(context, procedure.node);
+  const returnValue = context.returnValue;
+  context.returnValue = defaultEmptyValue;
+  return returnValue;
 }
 
 function evaluateLiteralExpression(
   expression: inst.NumberInstruction | inst.StringInstruction,
   context: InterpreterContext,
-): Value {
+): ScalarValue {
   return {
     type:
       expression.kind === inst.InstructionKind.String
@@ -586,58 +1030,39 @@ function evaluateLiteralExpression(
   };
 }
 
-function boolToString(value: boolean): string {
-  return value ? "1" : "0";
-}
-
-function boolToValue(value: boolean): Value {
-  return {
-    type: inst.DeclaredType.Fixed,
-    value: boolToString(value),
-  };
-}
-
-function valueToBool(value: Value): boolean {
-  if (value.type === inst.DeclaredType.Fixed) {
-    return parseInt(value.value) !== 0;
-  } else if (value.type === inst.DeclaredType.Character) {
-    return value.value.trim() !== "";
-  }
-  return false;
-}
-
-function valueToNumber(value: string): Value {
-  return {
-    type: inst.DeclaredType.Fixed,
-    value,
-  };
-}
-
-function valueToString(value: string): Value {
-  return {
-    type: inst.DeclaredType.Character,
-    value,
-  };
-}
-
 function runDeclareInstruction(
   instruction: inst.DeclareInstruction,
   context: InterpreterContext,
 ): void {
-  const variable = generateVariable(instruction, context);
-  context.variables.set(variable.name, variable);
+  // If a declaration like `DCL PROC_NAME ENTRY` appears, simply activate the procedure
+  if (context.procedures.has(instruction.name)) {
+    context.activeProcedures.add(instruction.name);
+    return;
+  }
+  // Consider variables declared in a procedure call
+  // and don't override existing variables
+  const variables = context.localVariables ?? context.variables;
+  if (!variables.has(instruction.name)) {
+    const variable = generateVariable(instruction, context);
+    variables.set(variable.name, variable);
+  }
 }
 
 function runActivateInstruction(
   instruction: inst.ActivateInstruction,
   context: InterpreterContext,
 ): void {
-  const variable = context.variables.get(instruction.variable.variable);
+  const name = instruction.variable.variable;
+  // ACTIVATE only works on global variables
+  const variable = context.variables.get(name);
   if (variable) {
     if (instruction.scanMode !== undefined) {
       variable.mode = instruction.scanMode;
     }
+    // TODO: Report IBM3530I if the variable is an array
     variable.active = true;
+  } else if (context.procedures.has(name)) {
+    context.activeProcedures.add(name);
   }
 }
 
@@ -645,7 +1070,10 @@ function runDeactivateInstruction(
   instruction: inst.DeactivateInstruction,
   context: InterpreterContext,
 ): void {
-  const variable = context.variables.get(instruction.variable.variable);
+  const name = instruction.variable.variable;
+  // DEACTIVATE only works on global variables
+  const variable = context.variables.get(name);
+  context.activeProcedures.delete(name);
   if (variable) {
     variable.active = false;
   }
@@ -654,10 +1082,11 @@ function runDeactivateInstruction(
 function runCompoundInstruction(
   instruction: inst.CompoundInstruction,
   context: InterpreterContext,
+  node: inst.InstructionNode,
 ): void {
   for (const subInstruction of instruction.instructions) {
     try {
-      const result = runInstruction(subInstruction, context);
+      const result = runInstruction(subInstruction, context, node);
       if (result) {
         throw new Error(
           `Only non-jump instructions are allowed in a compound instruction. Found: ${subInstruction.kind}`,
@@ -717,7 +1146,7 @@ function replaceTokensInText(
     if (result) {
       // Replace the token with the scan result
       // i.e. the variable content, recursively replaced
-      tokenList.push(...result);
+      largePush(tokenList, result);
     } else {
       // If the scan found no active variable, push the original token
       tokenList.push(token);
@@ -731,6 +1160,7 @@ function performTokenScan(
   context: InterpreterContext,
 ): Token[] | undefined {
   const image = token.image;
+  // Token scan can only take global variables into account (because it cannot run inside of a procedure)
   const variable = context.variables.get(image);
   // If there is no active variable with that name, return undefined
   // The caller side will simply push the token to the output
@@ -747,7 +1177,7 @@ function performTokenScan(
     token.kind = CstNodeKind.ReferenceItem_Ref;
   }
   const variableValue = variable.value;
-  if (!isValue(variableValue)) {
+  if (!isScalarValue(variableValue)) {
     // Cannot replace tokens for array variables
     // TODO: There is a warning/error for this, that should be reported
     return undefined;
@@ -789,6 +1219,10 @@ function runInscanInstruction(
   context: InterpreterContext,
 ): void {
   const value = evaluateReferenceExpression(instruction.variable, context);
+  if (!isScalarValue(value)) {
+    // Inscan cannot be used with array variables
+    return;
+  }
   runInclude(
     {
       // No item is provided here, which is only availble in the IncludeInstruction
@@ -863,28 +1297,28 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
         },
         uri,
       );
-      const subState = context.options.parser.initializeState(
-        processedContent,
-        uri,
-      );
-      const subProgram = context.options.parser.parse(subState);
-      const instruction = generateInstructions(subProgram.statements);
+      const subState = preprocessorParserStateFromText(processedContent, uri);
+      const subProgram = preprocessorParse(subState);
+      const result = generateInstructions(subProgram.statements);
       return {
         tokens: subProgram.tokens,
         issues: subProgram.errors,
         statements: subProgram.statements,
-        node: instruction,
+        result,
       };
     });
     context.statements.push(...cachedResult.statements);
     context.result.fileTokens.set(uri.toString(), cachedResult.tokens);
     context.errors.push(...cachedResult.issues);
+    for (const [key, value] of Object.entries(cachedResult.result.procedures)) {
+      context.procedures.set(key, value);
+    }
     const newContext: InterpreterContext = {
       ...context,
       currentUri: uri,
       uris: [uri.toString(), ...context.uris],
     };
-    doRunInstructions(newContext, cachedResult.node);
+    doRunInstructions(newContext, cachedResult.result.entryNode);
   } catch (err) {
     failToResolve(err);
   }
@@ -913,15 +1347,19 @@ function resolveIncludeFileUri(
   const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
     context.entryUri,
   );
-  const pgroup = programConfig
-    ? PluginConfigurationProviderInstance.getProcessGroupConfig(
-        programConfig.pgroup,
-      )
-    : undefined;
+  let pgroup: ProcessGroup | undefined = undefined;
+  if (programConfig) {
+    pgroup = PluginConfigurationProviderInstance.getProcessGroupConfig(
+      programConfig.pgroup,
+    );
+  } else if (context.currentUri) {
+    pgroup = PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(
+      context.currentUri,
+    );
+  }
   const ext = UriUtils.extname(URI.parse(item.fileName));
   if (
     ext !== "" &&
-    programConfig &&
     pgroup &&
     (!pgroup["include-extensions"]?.includes(ext) ||
       !pgroup["include-extensions"])
@@ -949,7 +1387,7 @@ function resolveIncludeFileUri(
   } else ....
   */
 
-  if (programConfig && pgroup) {
+  if (pgroup) {
     // lib file as either a string or a member from a known process group
     for (const lib of pgroup.libs ?? []) {
       const libFileUri = UriUtils.joinPath(
@@ -983,3 +1421,375 @@ function resolveIncludeFileUri(
     return undefined;
   }
 }
+
+type PreprocessorBuiltin = (
+  context: InterpreterContext,
+  // Use the correct typing to ensure that we always handle the case in which an argument is not provided
+  args: (Value | undefined)[],
+) => Value;
+
+const builtinImplementations = new Map<string, PreprocessorBuiltin>();
+
+let collate = "";
+for (let i = 0; i < 256; i++) {
+  collate += String.fromCharCode(i);
+}
+const collateValue = stringToValue(collate);
+builtinImplementations.set("COLLATE", () => collateValue);
+
+const commentRegex = /\/\*|\*\//g;
+builtinImplementations.set("COMMENT", (_, args) => {
+  const text = args[0];
+  if (!text || !isScalarValue(text)) {
+    return defaultEmptyValue;
+  }
+  // /* inside of comments should be replaced with />
+  // */ inside of comments should be replaced with </
+  const replacedText = text.value.replace(commentRegex, (match) =>
+    match.charAt(0) === "/" ? "/>" : "</",
+  );
+  // The final comment should be surrounded by comment markers
+  return stringToValue(`/*${replacedText}*/`);
+});
+
+// Simply use UNIX epoch time
+// PLI expects no delimiters between the values
+const compiledDate = ["1970", "01", "01", "00", "00", "00", "000"].join("");
+builtinImplementations.set("COMPILEDDATE", () => stringToValue(compiledDate));
+
+// From the reference: A leading zero in the day of the month field is replaced by a blank; no other leading zeros are suppressed.
+const compileTime = " 1.JAN.70 00.00.00";
+builtinImplementations.set("COMPILETIME", () => stringToValue(compileTime));
+
+function copy(
+  value: Value | undefined,
+  repetitions: Value | undefined,
+  plus: number,
+): Value {
+  if (!value || !isScalarValue(value) || !repetitions) {
+    return defaultEmptyValue;
+  }
+  const repeatCount = valueToNumber(repetitions, 0) + plus;
+  if (repeatCount === 0) {
+    return defaultEmptyValue;
+  }
+  const repeatedText = value.value.repeat(repeatCount);
+  return stringToValue(repeatedText);
+}
+
+builtinImplementations.set("COPY", (_, args) => {
+  return copy(args[0], args[1], 0);
+});
+
+const maxCountVariable = 99999;
+builtinImplementations.set("COUNTER", (context) => {
+  const counterValue = context.counterValue++;
+  if (counterValue >= maxCountVariable) {
+    // Reset the counter
+    context.counterValue = 1;
+  }
+  // Pad with leading zeroes
+  // The counter value should be a 5-digit string
+  const stringValue = counterValue.toString().padStart(5, "0");
+  return stringToValue(stringValue);
+});
+
+function getArrayAtDim(
+  value: Value,
+  dimension: number,
+): ArrayValue | undefined {
+  while (dimension > 1) {
+    if (isArrayValue(value)) {
+      value = value.array[0];
+      dimension--;
+    } else {
+      return undefined;
+    }
+  }
+  if (isArrayValue(value)) {
+    return value;
+  }
+  return undefined;
+}
+
+function getDim(value?: Value): number {
+  let dimension = 1;
+  if (value) {
+    dimension = valueToNumber(value, 1);
+    if (dimension < 1) {
+      dimension = 1;
+    }
+  }
+  return dimension;
+}
+
+builtinImplementations.set("DIMENSION", (_, args) => {
+  const [arrayRef, dimension] = args;
+  if (!arrayRef) {
+    return zero;
+  }
+  const arrayValue = getArrayAtDim(arrayRef, getDim(dimension));
+  if (arrayValue) {
+    return numberToValue(arrayValue.array.length);
+  } else {
+    return zero;
+  }
+});
+
+builtinImplementations.set("HBOUND", (_, args) => {
+  const [arrayRef, dimension] = args;
+  if (!arrayRef) {
+    return zero;
+  }
+  const arrayValue = getArrayAtDim(arrayRef, getDim(dimension));
+  if (arrayValue) {
+    return numberToValue(arrayValue.upper);
+  } else {
+    return zero;
+  }
+});
+
+builtinImplementations.set("INDEX", (_, args) => {
+  const [target, search, start] = args;
+  if (!target || !search) {
+    return zero;
+  }
+  let startIndex = 0;
+  if (start) {
+    startIndex = valueToNumber(start, 1) - 1;
+  }
+  const targetValue = valueToString(target, "");
+  const searchValue = valueToString(search, "");
+  // The spec says: If y does not occur in x, or if either x or y have zero length, the value zero is returned.
+  if (targetValue.length === 0 || searchValue.length === 0) {
+    return zero;
+  }
+  // The index is 1-based in PLI
+  const indexOfValue = targetValue.indexOf(searchValue, startIndex) + 1;
+  return numberToValue(indexOfValue);
+});
+
+builtinImplementations.set("LBOUND", (_, args) => {
+  const [arrayRef, dimension] = args;
+  if (!arrayRef) {
+    return zero;
+  }
+  const arrayValue = getArrayAtDim(arrayRef, getDim(dimension));
+  if (arrayValue) {
+    return numberToValue(arrayValue.lower);
+  } else {
+    return zero;
+  }
+});
+
+builtinImplementations.set("LENGTH", (_, args) => {
+  const arg = args[0];
+  const stringValue = valueToString(arg, "");
+  return numberToValue(stringValue.length);
+});
+
+builtinImplementations.set("LOWERCASE", (_, args) => {
+  const arg = args[0];
+  const stringValue = valueToString(arg, "");
+  return stringToValue(stringValue.toLowerCase());
+});
+
+builtinImplementations.set("MACCOL", () => {
+  // TODO: MACCOL returns a FIXED value that represents the column where the outermost macro invocation starts in the source text that contains the macro invocation.
+  return zero;
+});
+
+builtinImplementations.set("MACLMAR", (context) => {
+  const margins = context.unit.compilerOptions.margins;
+  if (margins) {
+    return numberToValue(margins.m);
+  }
+  return numberToValue(2);
+});
+
+builtinImplementations.set("MACNAME", (context) => {
+  return stringToValue(context.macname);
+});
+
+builtinImplementations.set("MACRMAR", (context) => {
+  const margins = context.unit.compilerOptions.margins;
+  if (margins) {
+    return numberToValue(margins.n);
+  }
+  return numberToValue(72);
+});
+
+builtinImplementations.set("MAX", (_, args) => {
+  const numbers: number[] = [];
+  for (const arg of args) {
+    if (arg) {
+      const num = valueToNumber(arg);
+      if (num !== undefined) {
+        numbers.push(num);
+      }
+    }
+  }
+  if (numbers.length === 0) {
+    return zero;
+  }
+  return numberToValue(Math.max(...numbers));
+});
+
+builtinImplementations.set("MIN", (_, args) => {
+  const numbers: number[] = [];
+  for (const arg of args) {
+    if (arg) {
+      const num = valueToNumber(arg);
+      if (num !== undefined) {
+        numbers.push(num);
+      }
+    }
+  }
+  if (numbers.length === 0) {
+    return zero;
+  }
+  return numberToValue(Math.min(...numbers));
+});
+
+builtinImplementations.set("PARMSET", (_, args) => {
+  // PARMSET returns a BIT value indicating if a specified parameter was set on invocation of the procedure.
+  const paramName = args[0];
+  if (!paramName || paramName === unsetVariable) {
+    return zero;
+  } else {
+    return boolToValue(true);
+  }
+});
+
+builtinImplementations.set("QUOTE", (_, args) => {
+  const value = args[0];
+  if (!value) {
+    return stringToValue('""');
+  }
+  const textValue = valueToString(value, "").replace(/"/g, '""');
+  return stringToValue(`"${textValue}"`);
+});
+
+builtinImplementations.set("REPEAT", (_, args) => {
+  // Same as copy, but with an additional repetition
+  return copy(args[0], args[1], 1);
+});
+
+builtinImplementations.set("SUBSTR", (_, args) => {
+  const [value, start, length] = args;
+  if (!value || !isScalarValue(value)) {
+    return defaultEmptyValue;
+  }
+  // SUBSTR is 1-based
+  const startIndex = valueToNumber(start, 1) - 1;
+  const lengthValue = length ? valueToNumber(length) : undefined;
+  const end = lengthValue !== undefined ? startIndex + lengthValue : undefined;
+  const stringValue = valueToString(value, "");
+  const substring = stringValue.substring(startIndex, end);
+  return stringToValue(substring);
+});
+
+builtinImplementations.set("SYSDIMSIZE", (context) => {
+  // SYSDIMSIZE returns a FIXED value that indicates the maximum number of bytes that is needed to hold an index for an array permitted under the compiler CMPAT option.
+  // The possible return values are as follows:
+  // * 4 under CMPAT(V2) and CMPAT(LE)
+  // * 8 under CMPAT(V3)
+  const cmpat = context.unit.compilerOptions.cmpat;
+  return numberToValue(cmpat === "V3" ? 8 : 4);
+});
+
+builtinImplementations.set("SYSOFFSETSIZE", () => {
+  // SYSOFFSETSIZE returns a FIXED value that indicates the number of bytes needed to hold an OFFSET.
+  // ALWAYS returns 4.
+  return numberToValue(4);
+});
+
+builtinImplementations.set("SYSPARM", (context) => {
+  const symparm = context.unit.compilerOptions.sysParm;
+  return stringToValue(symparm);
+});
+
+builtinImplementations.set("SYSPOINTERSIZE", (context) => {
+  const lp = context.unit.compilerOptions.LP;
+  return numberToValue(lp === "64" ? 8 : 4);
+});
+
+builtinImplementations.set("SYSTEM", (context) => {
+  const systemInfo = context.unit.compilerOptions.system;
+  return stringToValue(systemInfo);
+});
+
+builtinImplementations.set("SYSVERSION", () => {
+  // SYSVERSION returns a CHARACTER string containing the product name as well as the version, release, and modification level.
+  return stringToValue("PL/I for z/OS V6.R1.M0");
+});
+
+builtinImplementations.set("TRANSLATE", (_, args) => {
+  const [toTranslate, toCharset, fromCharset] = args;
+  const toTranslateValue = valueToString(toTranslate);
+  if (!toTranslateValue) {
+    return defaultEmptyValue;
+  }
+  const toCharsetValue = valueToString(toCharset, "");
+  const fromCharsetValue = valueToString(fromCharset, "") || collate;
+  const translationMap = new Map<string, string>();
+  for (let i = 0; i < fromCharsetValue.length; i++) {
+    const from = fromCharsetValue[i];
+    if (!translationMap.has(from)) {
+      const to = toCharsetValue[i] || " ";
+      translationMap.set(from, to);
+    }
+  }
+  let result = "";
+  for (let i = 0; i < toTranslateValue.length; i++) {
+    const char = toTranslateValue[i];
+    const translatedChar = translationMap.get(char) || char;
+    result += translatedChar;
+  }
+  return stringToValue(result);
+});
+
+builtinImplementations.set("TRIM", (_, args) => {
+  const [value, start, end] = args;
+  if (!value || !isScalarValue(value)) {
+    return defaultEmptyValue;
+  }
+  const startTrimChars = valueToString(start, " ");
+  const endTrimChars = valueToString(end, " ");
+  const startSet = new Set(startTrimChars.split(""));
+  const endSet = new Set(endTrimChars.split(""));
+  const stringValue = valueToString(value, "");
+  let startIndex = 0;
+  let endIndex = stringValue.length;
+  while (startIndex < endIndex && startSet.has(stringValue[startIndex])) {
+    startIndex++;
+  }
+  while (endIndex > startIndex && endSet.has(stringValue[endIndex - 1])) {
+    endIndex--;
+  }
+  const trimmed = stringValue.substring(startIndex, endIndex);
+  return stringToValue(trimmed);
+});
+
+builtinImplementations.set("UPPERCASE", (_, args) => {
+  const arg = args[0];
+  const stringValue = valueToString(arg, "");
+  return stringToValue(stringValue.toUpperCase());
+});
+
+builtinImplementations.set("VERIFY", (_, args) => {
+  // VERIFY returns a FIXED value indicating the position in x of the leftmost character that is not in y.
+  // It also allows you to specify the location within x at which to begin processing.
+  const [x, y, n] = args;
+  const xValue = valueToString(x, "");
+  const yValue = valueToString(y, "");
+  const nValue = valueToNumber(n, 1) - 1;
+  const ySet = new Set(yValue.split(""));
+  for (let i = nValue; i < xValue.length; i++) {
+    if (!ySet.has(xValue[i])) {
+      // String indices are 1-based in PLI
+      return numberToValue(i + 1);
+    }
+  }
+  return zero;
+});

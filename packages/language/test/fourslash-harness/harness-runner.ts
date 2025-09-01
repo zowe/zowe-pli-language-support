@@ -11,8 +11,7 @@
 
 import { HarnessTesterInterface } from "./harness-interface";
 import { HarnessTest } from "./types";
-
-const vm = require("vm");
+import vm from "vm";
 
 /**
  * Run a harness test.

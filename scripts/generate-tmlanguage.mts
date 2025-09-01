@@ -1,3 +1,4 @@
+#!/usr/bin/env npx tsx
 /**
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -12,7 +13,7 @@
 import * as fs from 'fs/promises';
 import * as tokens from '../packages/language/src/parser/tokens.js';
 
-const keywords = Array.from(tokens.keywordMap, ([key]) => key.toLowerCase()).toSorted();
+const keywords = Array.from(tokens.keywordMap, ([key]) => key.toLowerCase()).sort();
 const manual = JSON.parse(await fs.readFile('./packages/vscode-extension/syntaxes/pli.manual.json', 'utf8'));
 
 const controlKeywords = [

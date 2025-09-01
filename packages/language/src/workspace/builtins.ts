@@ -17,7 +17,8 @@ import { URI } from "../utils/uri";
  */
 
 export const BuiltinsUriSchema = "pli-builtin";
-export const BuiltinsUri = `${BuiltinsUriSchema}:///builtins.pli`;
+export const BuiltinsFile = "builtins.pli";
+export const BuiltinsUri = `${BuiltinsUriSchema}:/${BuiltinsFile}`;
 export const Builtins = ` /* Arithmetic built-in functions */
  ABS: PROC (value) RETURNS ();
  END;
@@ -754,4 +755,48 @@ export const BuiltinsTextDocument = TextDocument.create(
   "pli",
   0,
   Builtins,
+);
+
+export const BuiltinsMacroFile = "builtins-macro.pli";
+export const BuiltinsMacroUri = `${BuiltinsUriSchema}:/${BuiltinsMacroFile}.pli`;
+export const BuiltinsMacro = ` /* Preprocessor built-ins */
+ COLLATE: PROC RETURNS(); END;
+ COMMENT: PROC RETURNS(); END;
+ COMPILEDATE: PROC RETURNS(); END;
+ COMPILETIME: PROC RETURNS(); END;
+ COPY: PROC RETURNS(); END;
+ COUNTER: PROC RETURNS(); END;
+ DIMENSION: PROC RETURNS(); END;
+ HBOUND: PROC RETURNS(); END;
+ INDEX: PROC RETURNS(); END;
+ LBOUND: PROC RETURNS(); END;
+ LENGTH: PROC RETURNS(); END;
+ LOWERCASE: PROC RETURNS(); END;
+ MACCOL: PROC RETURNS(); END;
+ MACLMAR: PROC RETURNS(); END;
+ MACNAME: PROC RETURNS(); END;
+ MACRMAR: PROC RETURNS(); END;
+ MAX: PROC RETURNS(); END;
+ MIN: PROC RETURNS(); END;
+ PARMSET: PROC RETURNS(); END;
+ QUOTE: PROC RETURNS(); END;
+ REPEAT: PROC RETURNS(); END;
+ SUBSTR: PROC RETURNS(); END;
+ SYSDIMSIZE: PROC RETURNS(); END;
+ SYSOFFSETSIZE: PROC RETURNS(); END;
+ SYSPARM: PROC RETURNS(); END;
+ SYSPOINTERSIZE: PROC RETURNS(); END;
+ SYSTEM: PROC RETURNS(); END;
+ SYSVERSION: PROC RETURNS(); END;
+ TRANSLATE: PROC RETURNS(); END;
+ TRIM: PROC RETURNS(); END;
+ UPPERCASE: PROC RETURNS(); END;
+ VERIFY: PROC RETURNS(); END;
+`;
+
+export const BuiltinsMacroTextDocument = TextDocument.create(
+  URI.parse(BuiltinsMacroUri).toString(),
+  "pli",
+  0,
+  BuiltinsMacro,
 );

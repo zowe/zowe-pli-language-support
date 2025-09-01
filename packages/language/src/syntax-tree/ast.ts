@@ -1201,6 +1201,19 @@ export interface DoSpecification extends AstNode {
   to: Expression | null;
   by: Expression | null;
 }
+export function createDoSpecification(): DoSpecification {
+  return {
+    kind: SyntaxKind.DoSpecification,
+    container: null,
+    expression: null,
+    upthru: null,
+    downthru: null,
+    repeat: null,
+    whileOrUntil: null,
+    to: null,
+    by: null,
+  };
+}
 export interface DoStatement extends AstNode {
   kind: SyntaxKind.DoStatement;
   statements: Statement[];
@@ -1226,7 +1239,7 @@ export function createDoStatement(): DoStatement {
 }
 export interface DoType3 extends AstNode {
   kind: SyntaxKind.DoType3;
-  variable: ReferenceItem | null;
+  variable: MemberCall | null;
   specifications: DoSpecification[];
 }
 export function createDoType3(): DoType3 {
@@ -1507,6 +1520,7 @@ export interface IncludeItem extends AstNode {
   ddname: string | null;
   filePath: string | null;
   token: Token | null;
+  sourceText: string | null;
 }
 export function createIncludeItem(): IncludeItem {
   return {
@@ -1517,6 +1531,7 @@ export function createIncludeItem(): IncludeItem {
     ddname: null,
     filePath: null,
     token: null,
+    sourceText: null,
   };
 }
 export interface InscanDirective extends AstNode {
@@ -1637,12 +1652,14 @@ export function createLabelReference(): LabelReference {
 export interface LeaveStatement extends AstNode {
   kind: SyntaxKind.LeaveStatement;
   label: LabelReference | null;
+  leaveToken: Token | null;
 }
 export function createLeaveStatement(): LeaveStatement {
   return {
     kind: SyntaxKind.LeaveStatement,
     container: null,
     label: null,
+    leaveToken: null,
   };
 }
 export interface LFormatItem extends AstNode {

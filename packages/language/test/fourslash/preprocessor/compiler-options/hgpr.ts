@@ -21,19 +21,15 @@
 verify.expectDiagnosticsAt(3, {
   message: code.CompilerOptions.DupeOptionIssue.message("HGPR"),
 });
-
 verify.expectDiagnosticsAt(2, {
-  message: code.CompilerOptions.hgpr.WrongParameter.message("INVALID"),
+  message: code.CompilerOptions.Hgpr.InvalidParameter.message("INVALID"),
 });
-
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.hgpr.WrongParameter.message(""),
+  message: code.CompilerOptions.Hgpr.InvalidParameter.message(""),
 });
-
 verify.expectDiagnosticsAt(6, {
-  message: code.CompilerOptions.WrongParameterCount.message("0", "1", "1"),
+  message: code.CompilerOptions.InvalidParameterCount.message(0, 1, 1),
 });
-
 verify.expectCompilerOptions({
   hgpr: {
     preserve: true,

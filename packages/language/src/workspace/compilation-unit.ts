@@ -11,7 +11,7 @@
 
 import { PliProgram, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
-import { Connection } from "vscode-languageserver";
+import { CancellationToken, Connection } from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
 import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
 import {
@@ -33,9 +33,17 @@ import {
   EditorDocuments,
   TextDocuments,
 } from "../language-server/text-documents.js";
-import { Builtins, BuiltinsUri, BuiltinsUriSchema } from "./builtins.js";
+import {
+  Builtins,
+  BuiltinsMacro,
+  BuiltinsMacroUri,
+  BuiltinsUri,
+  BuiltinsUriSchema,
+} from "./builtins.js";
 import { PluginConfigurationProviderInstance } from "./plugin-configuration-provider.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
+import { Mutex } from "./mutex.js";
+import { isOperationCancelled } from "../utils/promises.js";
 import { InstructionCache } from "../preprocessor/instruction-cache.js";
 
 /**
@@ -103,7 +111,7 @@ const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
  * Caches the scope for reuse.
  */
 function createBuiltinScopeGetter() {
-  let builtinSymbolTable: Scope | undefined = undefined;
+  let builtinScope: Scope | undefined = undefined;
 
   return (uri: URI, unit: CompilationUnit): Scope => {
     // Don't load the builtin symbol table for builtin files
@@ -111,24 +119,53 @@ function createBuiltinScopeGetter() {
       return Scope.createRoot(unit);
     }
 
-    if (builtinSymbolTable === undefined) {
+    if (builtinScope === undefined) {
       const unit = createCompilationUnit(URI.parse(BuiltinsUri));
       tokenize(unit, Builtins);
       parse(unit);
       generateSymbolTable(unit);
 
-      builtinSymbolTable =
+      builtinScope =
         unit.scopeCaches.regular.get(unit.ast) ?? Scope.createRoot(unit);
     }
 
-    return builtinSymbolTable;
+    return builtinScope;
   };
 }
 
 const getBuiltinScope = createBuiltinScopeGetter();
 
-// TODO: Add preprocessor scope for builtins?
-const getRootPreprocessorScope = Scope.createRoot;
+/**
+ * Creates a function that returns the root scope, with builtins.
+ *
+ * Caches the scope for reuse.
+ */
+function createBuiltinMacroScopeGetter() {
+  let builtinScope: Scope | undefined = undefined;
+
+  return (uri: URI, unit: CompilationUnit): Scope => {
+    // Don't load the builtin symbol table for builtin files
+    if (isBuiltinFile(uri)) {
+      return Scope.createRoot(unit);
+    }
+
+    if (builtinScope === undefined) {
+      const unit = createCompilationUnit(URI.parse(BuiltinsMacroUri));
+      tokenize(unit, BuiltinsMacro);
+      parse(unit);
+      generateSymbolTable(unit);
+
+      // Use the regular AST for easier handling
+      // Note that these are procedures that are used in preprocessor code!
+      builtinScope =
+        unit.scopeCaches.regular.get(unit.ast) ?? Scope.createRoot(unit);
+    }
+
+    return builtinScope;
+  };
+}
+
+const getRootPreprocessorScope = createBuiltinMacroScopeGetter();
 
 export function createCompilationUnit(uri: URI): CompilationUnit {
   const unit: CompilationUnit = {
@@ -176,13 +213,14 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
   };
 
   unit.rootScope = getBuiltinScope(uri, unit);
-  unit.rootPreprocessorScope = getRootPreprocessorScope(unit);
+  unit.rootPreprocessorScope = getRootPreprocessorScope(uri, unit);
 
   return unit;
 }
 
 export class CompilationUnitHandler {
   private compilationUnits: Map<string, CompilationUnit> = new Map();
+  private connection!: Connection;
 
   getCompilationUnit(uri: URI): CompilationUnit | undefined {
     return this.compilationUnits.get(uri.toString());
@@ -197,11 +235,7 @@ export class CompilationUnitHandler {
     if (this.compilationUnits.has(uri.toString())) {
       // existing compilation unit
       return this.compilationUnits.get(uri.toString());
-    } else if (
-      !PluginConfigurationProviderInstance.isLibFileCandidate(
-        uri.toString(true),
-      )
-    ) {
+    } else if (!PluginConfigurationProviderInstance.isLibFileCandidate(uri)) {
       // non-library files should always generate a compilation unit
       return this.createAndStoreCompilationUnit(uri);
     } else {
@@ -235,19 +269,13 @@ export class CompilationUnitHandler {
   }
 
   listen(connection: Connection): void {
+    this.connection = connection;
     const textDocuments = EditorDocuments;
     textDocuments.listen(connection);
     textDocuments.onDidChangeContent((event) => {
-      const unit = this.getOrCreateCompilationUnit(
-        URI.parse(event.document.uri),
-      );
-      if (!unit) {
-        // standalone library files do not synthesize new compilation units
-        return;
-      }
-      const document = textDocuments.get(unit.uri) ?? event.document;
-      this.process(unit, document.getText(), connection);
-      unit.requestCaches.revalidateAll({ connection, unit });
+      Mutex.cancel();
+      const uri = URI.parse(event.document.uri);
+      Mutex.run((token) => this.updateUri(uri, token));
     });
     textDocuments.onDidClose((event) => {
       connection.sendDiagnostics({
@@ -257,28 +285,58 @@ export class CompilationUnitHandler {
     });
   }
 
+  async updateUri(
+    uri: URI,
+    cancellationToken: CancellationToken,
+  ): Promise<void> {
+    const unit = this.getOrCreateCompilationUnit(uri);
+    if (!unit) {
+      // standalone library files do not synthesize new compilation units
+      return;
+    }
+    const document = EditorDocuments.get(unit.uri);
+    if (!document) {
+      return;
+    }
+    await this.process(
+      unit,
+      document.getText(),
+      this.connection,
+      cancellationToken,
+    );
+    unit.requestCaches.revalidateAll({ connection: this.connection, unit });
+  }
+
   /**
    * Process a unit by running it through the lifecycle and generating diagnostics to report back.
    * @param unit The compilation unit
    * @param text Program content to use for the lifecycle
    * @param connection The connection to send diagnostics to
    */
-  private process(
+  private async process(
     unit: CompilationUnit,
     text: string,
     connection: Connection,
-  ): void {
-    lifecycle(unit, text);
-    for (const file of unit.files) {
-      this.compilationUnits.set(file.toString(), unit);
-    }
-    const allDiagnostics = diagnosticsToLSP(collectDiagnostics(unit));
-    for (const file of unit.files) {
-      const fileDiagnostics = allDiagnostics.get(file.toString());
-      connection.sendDiagnostics({
-        uri: file.toString(),
-        diagnostics: fileDiagnostics ?? [],
-      });
+    cancellationToken: CancellationToken,
+  ): Promise<void> {
+    try {
+      await lifecycle(unit, text, cancellationToken);
+      for (const file of unit.files) {
+        this.compilationUnits.set(file.toString(), unit);
+      }
+      const allDiagnostics = diagnosticsToLSP(collectDiagnostics(unit));
+      for (const file of unit.files) {
+        const fileDiagnostics = allDiagnostics.get(file.toString());
+        connection.sendDiagnostics({
+          uri: file.toString(),
+          diagnostics: fileDiagnostics ?? [],
+        });
+      }
+    } catch (err) {
+      if (isOperationCancelled(err)) {
+        return;
+      }
+      throw err;
     }
   }
 
@@ -287,11 +345,19 @@ export class CompilationUnitHandler {
    * Reachable as in the units w/ associated docs that are currently open in the editor.
    * @param connection The connection to send diagnostics to
    */
-  reindex(connection: Connection): void {
+  reindex(connection: Connection, cancellationToken: CancellationToken): void {
     for (const unit of this.getAllCompilationUnits()) {
+      if (cancellationToken.isCancellationRequested) {
+        return;
+      }
       const textDocument = TextDocuments.get(unit.uri.toString());
       if (textDocument) {
-        this.process(unit, textDocument.getText(), connection);
+        this.process(
+          unit,
+          textDocument.getText(),
+          connection,
+          cancellationToken,
+        );
       }
     }
   }
