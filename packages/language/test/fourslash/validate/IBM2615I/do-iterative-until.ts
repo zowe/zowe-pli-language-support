@@ -15,7 +15,7 @@
  * DO UNTIL – doType2 iteration – no warning
  */
 // @wrap: main
-//// <|1:DO UNTIL|> (X > 10);
+//// <|1:DO|> UNTIL (X > 10);
 ////   CALL F;
 //// END;
 

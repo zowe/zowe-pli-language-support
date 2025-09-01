@@ -15,7 +15,7 @@
  * DO WHILE – doType2 iteration – no warning
  */
 // @wrap: main
-//// <|1:DO WHILE|> (X < 10);
+//// <|1:DO|> WHILE (X < 10);
 ////   CALL F;
 //// END;
 

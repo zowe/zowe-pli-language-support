@@ -15,7 +15,7 @@
  * DO FOREVER – doType4 – no warning
  */
 // @wrap: main
-//// <|1:DO FOREVER|>;
+//// <|1:DO|> FOREVER;
 ////   CALL F;
 //// END;
 
