@@ -1229,7 +1229,7 @@ function parseAndEvaluateProcedure(
   procedure: inst.ProcedureInstructionContainer,
   context: InterpreterContext,
 ): InlineProcedureEvaluationResult {
-  const evaluatedArgs: Value[] = [];
+  let evaluatedArgs: Value[];
   let advance = 1;
   let immediateFollow = tokens[index].immediateFollow;
   let suffix: string = "";
@@ -1237,59 +1237,29 @@ function parseAndEvaluateProcedure(
     const parseResult = parseInlineProcedureInvocation(tokens, index);
     advance = parseResult.advance;
     immediateFollow = parseResult.immediateFollow;
-    for (const argTokens of parseResult.args) {
-      const replacedTokens = replaceTokensInText(argTokens, context);
-      const text = stringifyTokens(replacedTokens);
-      evaluatedArgs.push({
-        type: inst.DeclaredType.Character,
-        value: text,
-      });
-    }
+    evaluatedArgs = evaluatePositionalArguments(parseResult.args, context);
   } else {
     const parseResult = parseInlineStatementProcedureInvocation(tokens, index);
     advance = parseResult.advance;
     immediateFollow = parseResult.immediateFollow;
     suffix = parseResult.suffix;
-    // Positional arguments
-    for (const argTokens of parseResult.positionalArgs) {
-      const replacedTokens = replaceTokensInText(argTokens, context);
-      const text = stringifyTokens(replacedTokens);
-      evaluatedArgs.push(stringToValue(text));
-    }
-    const usedParams = new Set<string>();
-    // Named arguments
-    for (let i = 0; i < procedure.parameters.length; i++) {
-      const param = procedure.parameters[i];
-      usedParams.add(param);
-      const argTokens = parseResult.namedArgs.get(param);
-      if (argTokens) {
-        const replacedTokens = replaceTokensInText(argTokens.tokens, context);
-        const text = stringifyTokens(replacedTokens);
-        evaluatedArgs[i] = stringToValue(text);
-      } else if (i >= evaluatedArgs.length) {
-        // No argument specified for this parameter, use the default empty value
-        // TODO: Replace with unset value!
-        evaluatedArgs[i] = defaultEmptyValue;
-      }
-    }
-    for (const [name, argTokens] of parseResult.namedArgs) {
-      // If the named argument doesn't match any parameter, report an error
-      if (!usedParams.has(name)) {
-        context.errors.push(
-          new PreprocessorError(
-            PLICodes.Error.IBM3581I.message(argTokens.nameToken.image),
-            argTokens.nameToken,
-            undefined,
-            PLICodes.Error.IBM3581I.fullCode,
-          ),
-        );
-      }
-    }
+    evaluatedArgs = evaluatePositionalArguments(
+      parseResult.positionalArgs,
+      context,
+    );
+    evaluateNamedArguments(
+      evaluatedArgs,
+      parseResult.namedArgs,
+      procedure.parameters,
+      context,
+    );
   }
 
   const localContext = createLocalContext(context, procedure);
   let value = runProcedure(procedure, evaluatedArgs, localContext);
   if (isScalarValue(value) && suffix) {
+    // Add the suffix to the value, as it was immediately following the procedure call
+    // Otherwise, the suffix will generate a separate token, which is not the intended behavior
     value = stringToValue(value.value + suffix);
   }
   return {
@@ -1297,6 +1267,54 @@ function parseAndEvaluateProcedure(
     advance,
     immediateFollow,
   };
+}
+
+function evaluatePositionalArguments(
+  args: InlineProcedureArgument[],
+  context: InterpreterContext,
+): Value[] {
+  const evaluatedArgs: Value[] = [];
+  for (const argTokens of args) {
+    const replacedTokens = replaceTokensInText(argTokens, context);
+    const text = stringifyTokens(replacedTokens);
+    evaluatedArgs.push(stringToValue(text));
+  }
+  return evaluatedArgs;
+}
+
+function evaluateNamedArguments(
+  args: Value[],
+  namedArgs: Map<string, InlineProcedureNamedArgument>,
+  procParams: string[],
+  context: InterpreterContext,
+): void {
+  const usedParams = new Set<string>();
+  for (let i = 0; i < procParams.length; i++) {
+    const param = procParams[i];
+    usedParams.add(param);
+    const argTokens = namedArgs.get(param);
+    if (argTokens) {
+      const replacedTokens = replaceTokensInText(argTokens.tokens, context);
+      const text = stringifyTokens(replacedTokens);
+      args[i] = stringToValue(text);
+    } else if (i >= args.length) {
+      // No argument specified for this parameter, use the unset variable
+      args[i] = unsetVariable;
+    }
+  }
+  for (const [name, argTokens] of namedArgs) {
+    // If the named argument doesn't match any parameter, report an error
+    if (!usedParams.has(name)) {
+      context.errors.push(
+        new PreprocessorError(
+          PLICodes.Error.IBM3581I.message(argTokens.nameToken.image),
+          argTokens.nameToken,
+          undefined,
+          PLICodes.Error.IBM3581I.fullCode,
+        ),
+      );
+    }
+  }
 }
 
 function stringifyTokens(tokens: Token[]): string {
@@ -1392,8 +1410,9 @@ function parseInlineStatementProcedureInvocation(
   index: number,
 ): InlineStatementProcedureParseResult {
   const positionalParseResult = parseInlineProcedureInvocation(tokens, index);
+  // Advance by the amount of tokens consumed by the positional argument parser
   index += positionalParseResult.advance;
-  // Positional arguments have been parsed, now we can start parsing named arguments
+  // We can now start parsing named arguments
   const namedArgs: Map<string, InlineProcedureNamedArgument> = new Map();
   let advance = positionalParseResult.advance;
   let immediateFollow = positionalParseResult.immediateFollow;
