@@ -9,7 +9,7 @@
  *
  */
 
-/// <reference path="../../framework.ts" />
+/// <reference path="../../../framework.ts" />
 
 // @filename: .pliplugin/proc_grps.json
 //// {
@@ -24,13 +24,16 @@
 //// }
 
 // @filename: main.pli
-// @wrap: process
-////*PROCESS MARGINS(1, 72); xxx
+////*PROCESS GRAPHIC;
+////*PROCESS NOGRAPHIC;
+////*PROCESS NGR;
+////*PROCESS GR;
+//// STARTPR: PROCEDURE OPTIONS (MAIN);
+//// END STARTPR;`;
 
-verify.noDiagnostics();
-verify.expectCompilerOptions({
-  margins: {
-    m: 1,
-    n: 72,
-  },
-});
+verify.noDiagnosticsExcept([
+  new RegExp(code.CompilerOptions.DupeOptionIssue.message("").substring(0, 20)),
+  new RegExp(
+    code.CompilerOptions.MutexOptionIssue.message("").substring(0, 20),
+  ),
+]);

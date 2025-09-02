@@ -9,7 +9,7 @@
  *
  */
 
-/// <reference path="../../framework.ts" />
+/// <reference path="../../../framework.ts" />
 
 // @filename: .pliplugin/proc_grps.json
 //// {
@@ -28,12 +28,13 @@
 ////*PROCESS NOGRAPHIC;
 ////*PROCESS NGR;
 ////*PROCESS GR;
-//// STARTPR: PROCEDURE OPTIONS (MAIN);
-//// END STARTPR;`;
 
 verify.noDiagnosticsExcept([
   new RegExp(code.CompilerOptions.DupeOptionIssue.message("").substring(0, 20)),
   new RegExp(
     code.CompilerOptions.MutexOptionIssue.message("").substring(0, 20),
+  ),
+  new RegExp(
+    code.Severe.IBM1917I.message, // no program, but the options parser should work nonetheless
   ),
 ]);
