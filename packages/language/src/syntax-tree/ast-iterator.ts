@@ -11,6 +11,20 @@
 
 import { SyntaxKind, SyntaxNode } from "./ast";
 
+export enum TraversalState {
+  Continue,
+  Stop,
+}
+
+/**
+ * Applies the given `action` to relevant child nodes of the provided `SyntaxNode`,
+ * based on its `SyntaxKind`.
+ *
+ * Used for one-level traversal of meaningful AST children.
+ *
+ * @param node - The parent `SyntaxNode`.
+ * @param action - Function to apply to each relevant child node.
+ */
 export function forEachNode(
   node: SyntaxNode,
   action: (node: SyntaxNode) => void,
@@ -930,4 +944,67 @@ export function forEachNode(
       }
       break;
   }
+}
+
+/**
+ * Recursively traverses the AST starting from `node`, invoking `traverse` on each node.
+ *
+ * Traversal is depth-first and controlled by `TraversalState`. Returning `Stop` skips child nodes.
+ *
+ * @param node - The starting `SyntaxNode`.
+ * @param traverse - Callback applied to each node; can return `TraversalState.Stop` to halt descent.
+ */
+export function traverseAllNodes(
+  node: SyntaxNode,
+  traverse: (n: SyntaxNode) => TraversalState | undefined | void,
+) {
+  const state = traverse(node);
+
+  if (state !== TraversalState.Stop) {
+    forEachNode(node, (child) => {
+      traverseAllNodes(child as SyntaxNode, traverse);
+    });
+  }
+}
+
+/**
+ * Checks whether the given syntax tree contains at least one node of the specified kind.
+ *
+ * @param root - The root node to start searching from.
+ * @param kind - The syntax kind to search for.
+ * @returns True if a matching node is found, false otherwise.
+ */
+export function findFirstNodeOfKind<T extends SyntaxNode>(
+  root: SyntaxNode,
+  kind: SyntaxKind,
+): T | undefined {
+  let match: T | undefined;
+  traverseAllNodes(root, (n) => {
+    if (n.kind === kind) {
+      match = n as T;
+      return TraversalState.Stop;
+    }
+    return TraversalState.Continue;
+  });
+  return match;
+}
+
+/**
+ * Collects all nodes of a specified kind from the given syntax tree.
+ *
+ * @param root - The root node to traverse.
+ * @param kind - The syntax kind to collect.
+ * @returns An array of matching nodes.
+ */
+export function collectNodesOfKind<T extends SyntaxNode>(
+  root: SyntaxNode,
+  kind: SyntaxKind,
+): T[] {
+  const matches: T[] = [];
+  traverseAllNodes(root, (n) => {
+    if (n.kind === kind) {
+      matches.push(n as T);
+    }
+  });
+  return matches;
 }
