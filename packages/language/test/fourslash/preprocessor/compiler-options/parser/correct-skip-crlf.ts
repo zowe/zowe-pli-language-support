@@ -9,7 +9,7 @@
  *
  */
 
-/// <reference path="../../framework.ts" />
+/// <reference path="../../../framework.ts" />
 
 // @filename: .pliplugin/proc_grps.json
 //// {
