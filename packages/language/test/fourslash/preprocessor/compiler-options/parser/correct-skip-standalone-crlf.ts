@@ -9,7 +9,7 @@
  *
  */
 
-/// <reference path="../../framework.ts" />
+/// <reference path="../../../framework.ts" />
 
 // @filename: .pliplugin/proc_grps.json
 //// {
@@ -27,7 +27,7 @@
 ////*PROCESS GRAPHIC;
 ////*PROCESS NOGRAPHIC;
 ////*PROCESS NGR;
-////*PROCESS GR;
+////*PROCESS GR;\r\n
 
 verify.noDiagnosticsExcept([
   new RegExp(code.CompilerOptions.DupeOptionIssue.message("").substring(0, 20)),
