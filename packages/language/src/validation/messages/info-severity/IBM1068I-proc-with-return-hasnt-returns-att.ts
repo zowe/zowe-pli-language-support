@@ -32,7 +32,7 @@ export function IBM1068I_proc_with_return_hasnt_returns_att(
 ) {
   const token = node.procToken;
   if (!token) return;
-  
+
   // Check if procedure has RETURNS attribute - return if present
   const hasReturnsAtt = node.options?.some(
     (att) => att.kind === AST.SyntaxKind.ReturnsOption,
