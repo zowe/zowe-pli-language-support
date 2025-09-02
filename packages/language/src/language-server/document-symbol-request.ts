@@ -15,7 +15,6 @@ import { URI } from "../utils/uri";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { DOCUMENT_SYMBOL_BUILDERS } from "./document-symbol-builder";
 import { Token } from "../parser/tokens";
-import { TextDocuments } from "./text-documents";
 import { isValidToken } from "../linking/tokens";
 import { DocumentSymbol, Range } from "./types";
 
@@ -23,16 +22,11 @@ export function documentSymbolRequest(
   uri: URI,
   compilationUnit: CompilationUnit,
 ): DocumentSymbol[] {
-  const textDocument = TextDocuments.get(uri.toString());
-  if (!textDocument) {
-    return [];
-  }
-
   // Find all tokens that carry payload and while we are at it,
   // collect all related elements.
   const documentSymbols: DocumentSymbol[] = [];
   const tokensByElement = new Map<SyntaxNode, Token[]>();
-  const fileTokens = compilationUnit.tokens.fileTokens.get(textDocument.uri);
+  const fileTokens = compilationUnit.files.getTokens(uri);
   if (!fileTokens) {
     // No tokens found for ${textDocument.uri} in the current compilation unit.
     return [];

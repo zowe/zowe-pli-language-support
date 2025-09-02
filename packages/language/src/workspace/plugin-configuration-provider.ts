@@ -109,9 +109,9 @@ export class PluginConfigurationProvider {
   /**
    * Initializes the plugin configuration provider with a workspace path, using any plugin configs present in the workspace.
    */
-  public async init(workspacePath: string) {
+  public async init(workspacePath: string): Promise<void> {
     this.workspacePath = workspacePath;
-    this.loadConfigurations();
+    await this.loadConfigurations();
   }
 
   /**
@@ -162,23 +162,23 @@ export class PluginConfigurationProvider {
   /**
    * Reloads plugin configurations from the existing workspace path.
    */
-  public reloadConfigurations(): void {
+  public async reloadConfigurations(): Promise<void> {
     console.log("Reloading .pliplugin configurations...");
-    this.loadConfigurations();
+    await this.loadConfigurations();
   }
 
   /**
    * Loads the plugin configurations from the workspace path, overwriting any existing configs.
    */
-  private loadConfigurations(): void {
+  private async loadConfigurations(): Promise<void> {
     const workspaceUri = URI.parse(this.workspacePath);
 
     // load configs
-    this.loadProgramConfig(
+    await this.loadProgramConfig(
       UriUtils.joinPath(workspaceUri, ".pliplugin", "pgm_conf.json"),
     );
 
-    this.loadProcessGroupConfig(
+    await this.loadProcessGroupConfig(
       UriUtils.joinPath(workspaceUri, ".pliplugin", "proc_grps.json"),
     );
   }
@@ -187,11 +187,11 @@ export class PluginConfigurationProvider {
    * Loads the program config from the given path, and sets it in this provider.
    * @param programConfigUri URI to the program config file
    */
-  private loadProgramConfig(programConfigUri: URI): void {
+  private async loadProgramConfig(programConfigUri: URI): Promise<void> {
     // attempt to read configs
-    if (FileSystemProviderInstance.fileExistsSync(programConfigUri)) {
+    if (await FileSystemProviderInstance.fileExists(programConfigUri)) {
       const progConfig =
-        FileSystemProviderInstance.readFileSync(programConfigUri);
+        await FileSystemProviderInstance.readFile(programConfigUri);
 
       // add configs to our provider if they exist
       if (progConfig !== undefined) {
@@ -226,9 +226,11 @@ export class PluginConfigurationProvider {
    * Loads the process group config from the given path, and sets it in this provider.
    * @param processGroupConfigUri URI to the process group config file
    */
-  private loadProcessGroupConfig(processGroupConfigUri: URI): void {
-    if (FileSystemProviderInstance.fileExistsSync(processGroupConfigUri)) {
-      const processGrpConfig = FileSystemProviderInstance.readFileSync(
+  private async loadProcessGroupConfig(
+    processGroupConfigUri: URI,
+  ): Promise<void> {
+    if (await FileSystemProviderInstance.fileExists(processGroupConfigUri)) {
+      const processGrpConfig = await FileSystemProviderInstance.readFile(
         processGroupConfigUri,
       );
 

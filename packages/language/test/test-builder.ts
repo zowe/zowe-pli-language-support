@@ -109,12 +109,12 @@ function replaceNamedIndicesWithDocument(file: PliTestFile): TestFile {
 }
 
 export class TestBuilder {
-  private unit: CompilationUnit;
+  private unit!: CompilationUnit;
   private files: Map<string, TestFile> = new Map();
-  private output: string;
-  private indices: Record<string, number[]>;
-  private ranges: Record<string, Array<[number, number]>>;
-  private diagnostics: Diagnostic[];
+  private output!: string;
+  private indices!: Record<string, number[]>;
+  private ranges!: Record<string, Array<[number, number]>>;
+  private diagnostics!: Diagnostic[];
   private options: TestBuilderOptions;
 
   getDiagnostics(): Diagnostic[] {
@@ -165,10 +165,12 @@ export class TestBuilder {
         replaceNamedIndicesWithDocument(file),
       ]),
     );
+  }
 
-    if (options?.fs) {
+  private async init() {
+    if (this.options.fs) {
       for (const [uri, file] of this.files) {
-        options.fs.writeFileSync(URI.parse(uri), file.output);
+        await this.options.fs.writeFile(URI.parse(uri), file.output);
       }
     }
 
@@ -179,8 +181,8 @@ export class TestBuilder {
     this.indices = firstFile.indices;
     this.ranges = firstFile.ranges;
 
-    this.unit = parseAndLink(this.output, {
-      validate: options?.validate,
+    this.unit = await parseAndLink(this.output, {
+      validate: this.options.validate,
       uri: URI.parse(firstFileUri),
     });
     this.diagnostics = collectDiagnostics(this.unit);
@@ -191,7 +193,7 @@ export class TestBuilder {
     // by a potential test-builder's plugin configuration.
     // If some test functions in the future need to access the actual test plugin configuration
     // in the future, we can add a dedicated tag to the harness implementation.
-    if (!options.preservePluginConfiguration) {
+    if (!this.options.preservePluginConfiguration) {
       setPluginConfigurationProvider(undefined);
     }
   }
@@ -202,11 +204,13 @@ export class TestBuilder {
    * @param text PL/I text to parse and link, with range and index markers (as specified in `replaceNamedIndices`)
    * @returns A test builder that can be used to chain assertions
    */
-  static create(
+  static async create(
     textOrFiles: string | PliTestFile[],
     options?: TestBuilderOptions,
   ) {
-    return new TestBuilder(textOrFiles, options);
+    const testBuilder = new TestBuilder(textOrFiles, options);
+    await testBuilder.init();
+    return testBuilder;
   }
 
   /**
@@ -215,14 +219,16 @@ export class TestBuilder {
    * @param text PL/I text to parse and link, with range and index markers (as specified in `replaceNamedIndices`)
    * @returns A test builder that can be used to chain assertions
    */
-  static createValidating(
+  static async createValidating(
     textOrFiles: string | PliTestFile[],
     options?: TestBuilderOptions,
   ) {
-    return new TestBuilder(textOrFiles, {
+    const testBuilder = new TestBuilder(textOrFiles, {
       ...options,
       validate: true,
     });
+    await testBuilder.init();
+    return testBuilder;
   }
 
   private configurePluginConfigurationProvider() {
@@ -283,7 +289,7 @@ export class TestBuilder {
   }
 
   expectPreprocessorTokens(textOrTokens: string | string[]): void {
-    const actualTokens = this.unit.tokens.all.map((e) => e.image);
+    const actualTokens = this.unit.tokens.map((e) => e.image);
     let expectedTokens: string[] = [];
     // TODO: Instead of calling the lifecycle, we should simply call the lexer
     // Currently, everything related to the lexer lives in rather complicated services
@@ -733,11 +739,11 @@ export class TestBuilder {
     return this.createPositionMessage(start, this.unit.uri.toString());
   }
 
-  expectHover(label: string, content: MarkupContent) {
+  async expectHover(label: string, content: MarkupContent) {
     const indices = this.getLabelPositions(label);
 
     for (const index of indices) {
-      const hoverResult = hoverRequest(this.unit, this.unit.uri, index);
+      const hoverResult = await hoverRequest(this.unit, this.unit.uri, index);
 
       const message = `Expected hover for label "${label}" (${this.createLabelPositionMessage(label)})`;
       expect(hoverResult, message).toBeDefined();
@@ -810,23 +816,4 @@ function offsetAt(text: string, start: number): Position {
     line,
     character,
   };
-}
-
-/**
- * Extract named range and index information and verify that linking works as expected.
- *
- * @param text PL/I text to parse and link, with range and index markers (as specified in `replaceNamedIndices`)
- * @returns A test builder that can be used to chain assertions
- *
- * @example
- * ```ts
- * expectLinks(`
- *  DCL <|1:A|>, <|2:B|>;
- *  PUT(<|1>A);
- *  PUT(<|2>B);
- * `)
- * ```
- */
-export function expectLinks(textOrFiles: string | PliTestFile[]): TestBuilder {
-  return TestBuilder.create(textOrFiles).expectLinks();
 }

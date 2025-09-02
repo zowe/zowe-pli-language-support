@@ -12,10 +12,7 @@
 import { TextDocuments } from "../language-server/text-documents";
 import { Token } from "../parser/tokens";
 import { URI, UriUtils } from "../utils/uri";
-import {
-  CompilationUnit,
-  CompilationUnitTokens,
-} from "../workspace/compilation-unit";
+import { CompilationUnit } from "../workspace/compilation-unit";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import {
   PluginConfigurationProviderInstance,
@@ -38,6 +35,7 @@ import { preprocessorParse } from "./preprocessor-parser";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { tokenMatcher } from "chevrotain";
 import { PLICodes } from "../validation/messages";
+import { FileStore } from "../workspace/file-store";
 
 interface Variable {
   name: string;
@@ -252,7 +250,8 @@ interface InterpreterContext {
    */
   localVariables?: Map<string, Variable>;
   statements: ast.Statement[];
-  result: CompilationUnitTokens;
+  tokens: Token[];
+  files: FileStore;
   errors: LexingIssue[];
   procedures: Map<string, inst.ProcedureInstructionContainer>;
   activeProcedures: Set<string>;
@@ -277,7 +276,9 @@ interface DoType3Context {
   byValue?: ScalarValue;
 }
 
-export type InstructionInterpreterResult = CompilationUnitTokens & {
+export type InstructionInterpreterResult = {
+  all: Token[];
+  files: FileStore;
   evaluationResults: EvaluationResults;
   errors: LexingIssue[];
   statements: ast.Statement[];
@@ -291,12 +292,12 @@ export interface InterpreterOptions {
   marginsProcessor: MarginsProcessor;
 }
 
-export function runInstructions(
+export async function runInstructions(
   unit: CompilationUnit,
   uri: URI,
   instruction: InstructionGeneratorResult,
   options: InterpreterOptions,
-): InstructionInterpreterResult {
+): Promise<InstructionInterpreterResult> {
   const context: InterpreterContext = {
     unit,
     currentUri: uri,
@@ -312,10 +313,8 @@ export function runInstructions(
     evaluations: {
       ifStatements: new Map(),
     },
-    result: {
-      all: [],
-      fileTokens: new Map(),
-    },
+    tokens: [],
+    files: new FileStore(),
     options,
     counter: new Map(),
     doType3: new Map(),
@@ -327,9 +326,10 @@ export function runInstructions(
     context.procedures.set(key, value);
   }
 
-  const tokenResult = doRunInstructions(context, instruction.entryNode);
+  await doRunInstructions(context, instruction.entryNode);
   return {
-    ...tokenResult,
+    all: context.tokens,
+    files: context.files,
     evaluationResults: context.evaluations,
     errors: context.errors,
     references: context.references,
@@ -339,32 +339,68 @@ export function runInstructions(
 
 const MAX_INSTRUCTION_COUNTER = 5000;
 
-export function doRunInstructions(
+async function doRunInstructions(
   context: InterpreterContext,
   start: inst.InstructionNode,
-): CompilationUnitTokens {
+): Promise<void> {
   let currentNode: inst.InstructionNode | undefined = start;
   while (currentNode) {
     const value = context.counter.get(currentNode) || 0;
     // Prevent infinite loops by limiting the number of iterations
     if (value > MAX_INSTRUCTION_COUNTER) {
       console.log("Long running preprocessor code detected. Stopping.");
-      return context.result;
+      return;
     }
     context.counter.set(currentNode, value + 1);
-    currentNode = runInstructionNode(currentNode, context);
+    currentNode = await runInstructionNode(currentNode, context);
   }
-  return context.result;
 }
 
-function runInstructionNode(
+async function runInstructionNode(
+  node: inst.InstructionNode,
+  context: InterpreterContext,
+): Promise<inst.InstructionNode | undefined> {
+  const instruction = node.instruction;
+  let result = node.next;
+  try {
+    const instructionResult = await runInstruction(instruction, context, node);
+    if (instructionResult) {
+      result = instructionResult;
+    }
+  } catch (err) {
+    handleInstructionError(err, context);
+  }
+  if (node.instruction.kind === inst.InstructionKind.Halt) {
+    return undefined; // Stop execution
+  }
+  return result;
+}
+
+function doRunInstructionsSync(
+  context: InterpreterContext,
+  start: inst.InstructionNode,
+): void {
+  let currentNode: inst.InstructionNode | undefined = start;
+  while (currentNode) {
+    const value = context.counter.get(currentNode) || 0;
+    // Prevent infinite loops by limiting the number of iterations
+    if (value > MAX_INSTRUCTION_COUNTER) {
+      console.log("Long running preprocessor code detected. Stopping.");
+      return;
+    }
+    context.counter.set(currentNode, value + 1);
+    currentNode = runInstructionNodeSync(currentNode, context);
+  }
+}
+
+function runInstructionNodeSync(
   node: inst.InstructionNode,
   context: InterpreterContext,
 ): inst.InstructionNode | undefined {
   const instruction = node.instruction;
   let result = node.next;
   try {
-    const instructionResult = runInstruction(instruction, context, node);
+    const instructionResult = runInstructionSync(instruction, context, node);
     if (instructionResult) {
       result = instructionResult;
     }
@@ -385,7 +421,30 @@ function handleInstructionError(err: any, context: InterpreterContext): void {
   }
 }
 
-function runInstruction(
+async function runInstruction(
+  instruction: inst.Instruction,
+  context: InterpreterContext,
+  node: inst.InstructionNode,
+): Promise<inst.InstructionNode | undefined> {
+  switch (instruction.kind) {
+    case inst.InstructionKind.Include:
+      await runIncludeInstruction(instruction, context);
+      break;
+    case inst.InstructionKind.Inscan:
+      await runInscanInstruction(instruction, context);
+      break;
+    default:
+      return runInstructionSync(instruction, context, node);
+  }
+  return undefined;
+}
+
+/**
+ * Cannot run the `INCLUDE` and `INSCAN` instructions in synchronous mode
+ * because they require asynchronous file system access.
+ * However, top level instructions should be evaluated using runInstrution (async) anyway
+ */
+function runInstructionSync(
   instruction: inst.Instruction,
   context: InterpreterContext,
   node: inst.InstructionNode,
@@ -407,11 +466,9 @@ function runInstruction(
     case inst.InstructionKind.Do:
       return runDoInstruction(instruction, context, node);
     case inst.InstructionKind.Include:
-      runIncludeInstruction(instruction, context);
-      break;
+      throw new Error("INCLUDE instruction cannot be run in synchronous mode.");
     case inst.InstructionKind.Inscan:
-      runInscanInstruction(instruction, context);
-      break;
+      throw new Error("INSCAN instruction cannot be run in synchronous mode.");
     case inst.InstructionKind.Declare:
       runDeclareInstruction(instruction, context);
       break;
@@ -1014,7 +1071,7 @@ function runProcedure(
     };
     context.localVariables.set(param, variable);
   }
-  doRunInstructions(context, procedure.node);
+  doRunInstructionsSync(context, procedure.node);
   const returnValue = context.returnValue;
   context.returnValue = defaultEmptyValue;
   return returnValue;
@@ -1091,7 +1148,7 @@ function runCompoundInstruction(
 ): void {
   for (const subInstruction of instruction.instructions) {
     try {
-      const result = runInstruction(subInstruction, context, node);
+      const result = runInstructionSync(subInstruction, context, node);
       if (result) {
         throw new Error(
           `Only non-jump instructions are allowed in a compound instruction. Found: ${subInstruction.kind}`,
@@ -1108,20 +1165,20 @@ function runTokenInstruction(
   context: InterpreterContext,
 ): void {
   const replacedTokens = replaceTokensInText(instruction.tokens, context);
-  const prefix = context.result.all[context.result.all.length - 1];
+  const prefix = context.tokens[context.tokens.length - 1];
   if (prefix && prefix.immediateFollow) {
     // Remove the last token if it was immediately followed by the new tokens
-    context.result.all.pop();
+    context.tokens.pop();
     // In the next step, we need to merge them again
     const firstToken = replacedTokens.shift();
     const mergedTokens = lex(prefix.image + (firstToken?.image ?? ""));
     setImmediateFollowProperty(firstToken?.immediateFollow, mergedTokens);
     // Push merged and new tokens to the stack
-    largePush(context.result.all, mergedTokens);
-    largePush(context.result.all, replacedTokens);
+    largePush(context.tokens, mergedTokens);
+    largePush(context.tokens, replacedTokens);
   } else {
     // If there is no need to merge the tokens, simply push them to the output
-    largePush(context.result.all, replacedTokens);
+    largePush(context.tokens, replacedTokens);
   }
 }
 
@@ -1527,13 +1584,13 @@ function setImmediateFollowProperty(
 function runInscanInstruction(
   instruction: inst.InscanInstruction,
   context: InterpreterContext,
-): void {
+): Promise<void> {
   const value = evaluateReferenceExpression(instruction.variable, context);
   if (!isScalarValue(value)) {
     // Inscan cannot be used with array variables
-    return;
+    return Promise.resolve();
   }
-  runInclude(
+  return runInclude(
     {
       // No item is provided here, which is only availble in the IncludeInstruction
       item: null,
@@ -1545,11 +1602,23 @@ function runInscanInstruction(
   );
 }
 
-function runIncludeInstruction(
+async function runIncludeInstruction(
   instruction: inst.IncludeInstruction,
   context: InterpreterContext,
-): void {
-  runInclude(instruction, context);
+): Promise<void> {
+  for (const item of instruction.items) {
+    if (item.fileName) {
+      await runInclude(
+        {
+          fileName: item.fileName,
+          item: item,
+          idempotent: instruction.idempotent,
+          token: item.token,
+        },
+        context,
+      );
+    }
+  }
 }
 
 interface IncludeItem {
@@ -1559,8 +1628,11 @@ interface IncludeItem {
   idempotent: boolean;
 }
 
-function runInclude(item: IncludeItem, context: InterpreterContext): void {
-  const uri = resolveIncludeFileUri(item, context);
+async function runInclude(
+  item: IncludeItem,
+  context: InterpreterContext,
+): Promise<void> {
+  const uri = await resolveIncludeFileUri(item, context);
 
   function failToResolve(error?: any): never {
     if (error) {
@@ -1598,7 +1670,11 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
   }
 
   try {
-    const content = TextDocuments.get(uri)?.getText() ?? "";
+    const document = await TextDocuments.get(uri);
+    if (!document) {
+      throw new Error("Document not found after URI resolution.");
+    }
+    const content = document.getText();
     const cachedResult = context.unit.instructionCache.get(uri, content, () => {
       const processedContent = context.options.marginsProcessor.processMargins(
         {
@@ -1618,7 +1694,11 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
       };
     });
     context.statements.push(...cachedResult.statements);
-    context.result.fileTokens.set(uri.toString(), cachedResult.tokens);
+    context.files.set({
+      textDocument: document,
+      tokens: cachedResult.tokens,
+      uri,
+    });
     context.errors.push(...cachedResult.issues);
     for (const [key, value] of Object.entries(cachedResult.result.procedures)) {
       context.procedures.set(key, value);
@@ -1628,7 +1708,7 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
       currentUri: uri,
       uris: [uri.toString(), ...context.uris],
     };
-    doRunInstructions(newContext, cachedResult.result.entryNode);
+    await doRunInstructions(newContext, cachedResult.result.entryNode);
   } catch (err) {
     failToResolve(err);
   }
@@ -1641,10 +1721,10 @@ function runInclude(item: IncludeItem, context: InterpreterContext): void {
  * @param state Current PP state, used to resolve relative paths, program configs, and report errors
  * @returns URI of the included file if found, otherwise undefined
  */
-function resolveIncludeFileUri(
+async function resolveIncludeFileUri(
   item: IncludeItem,
   context: InterpreterContext,
-): URI | undefined {
+): Promise<URI | undefined> {
   if (!item.fileName) {
     throw new Error("Include item does not have a file specified.");
   }
@@ -1718,7 +1798,7 @@ function resolveIncludeFileUri(
       // whereas Unix file systems are case sensitive
       for (const filePath of files) {
         const matches =
-          FileSystemProviderInstance.findFilesByGlobSync(filePath);
+          await FileSystemProviderInstance.findFilesByGlob(filePath);
         if (matches.length > 0) {
           return URI.file(matches[0]);
         }

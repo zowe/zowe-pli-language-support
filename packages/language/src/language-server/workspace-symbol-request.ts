@@ -14,7 +14,6 @@ import { URI } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { DocumentSymbol, rangeToLSP, WorkspaceSymbol } from "./types";
-import { TextDocuments } from "./text-documents";
 
 export function workspaceSymbolRequest(
   query: string,
@@ -38,8 +37,8 @@ export function workspaceSymbolRequestForCompilationUnit(
   unit: CompilationUnit,
 ): SymbolInformation[] {
   // Get symbols for all files in the compilation unit.
-  const unitSymbols = unit.files.flatMap((file) =>
-    collectSymbolsForDocument(file, unit),
+  const unitSymbols = Array.from(unit.files.values()).flatMap((file) =>
+    collectSymbolsForDocument(file.uri, unit),
   );
 
   return unitSymbols.map((symbol) => {
@@ -58,7 +57,7 @@ function collectSymbolsForDocument(
 ): WorkspaceSymbol[] {
   const uriString = uri.toString();
   const documentSymbols = documentSymbolRequest(uri, unit);
-  const textDocument = TextDocuments.get(uriString);
+  const textDocument = unit.files.getDocument(uriString);
   if (!textDocument) {
     return [];
   }
