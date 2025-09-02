@@ -166,6 +166,9 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.TokenStatement:
       instruction = generateTokenInstruction(value);
       break;
+    case ast.SyntaxKind.NoteDirective:
+      instruction = generateNoteInstruction(value);
+      break;
     default:
       return undefined;
   }
@@ -199,6 +202,15 @@ function generateTokenInstruction(
     kind: inst.InstructionKind.Tokens,
     tokens: node.tokens,
   };
+}
+
+function generateNoteInstruction(node: ast.NoteDirective): inst.NoteInstruction {
+  return {
+    kind: inst.InstructionKind.Note,
+    noteToken: node.noteToken!,
+    message: generateExpressionInstruction(node.message) || { kind: inst.InstructionKind.String, value: "" },
+    code: generateExpressionInstruction(node.code) || { kind: inst.InstructionKind.Number, value: "0" },
+  }
 }
 
 function generateActivateInstruction(
