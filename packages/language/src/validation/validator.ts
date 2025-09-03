@@ -143,7 +143,7 @@ export function lexerIssuesToDiagnostics(
         severity: error.severity,
         range: error.range,
         message: error.message,
-        source: "lexer",
+        code: error.code,
       });
     }
   }

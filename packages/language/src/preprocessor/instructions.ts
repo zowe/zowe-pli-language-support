@@ -106,7 +106,9 @@ export type Instruction =
 
 export interface ProcedureInstructionContainer {
   names: string[];
+  labels: Map<string, ast.LabelPrefix>;
   parameters: string[];
+  statement: boolean;
   node: InstructionNode;
 }
 
