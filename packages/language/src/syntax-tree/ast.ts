@@ -2112,6 +2112,7 @@ export interface SelectStatement extends AstNode {
   on: Expression | null;
   statements: (WhenStatement | OtherwiseStatement)[];
   end: EndStatement | null;
+  selectToken: Token | null;
 }
 export interface SignalStatement extends AstNode {
   kind: SyntaxKind.SignalStatement;
