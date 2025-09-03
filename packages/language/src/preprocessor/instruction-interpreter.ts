@@ -35,6 +35,9 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { tokenize } from "../parser/tokenizer";
 import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
 import { preprocessorParse } from "./preprocessor-parser";
+import { PreprocessorTokens } from "./pli-preprocessor-tokens";
+import { tokenMatcher } from "chevrotain";
+import { PLICodes } from "../validation/messages";
 
 interface Variable {
   name: string;
@@ -1062,6 +1065,8 @@ function runActivateInstruction(
     // TODO: Report IBM3530I if the variable is an array
     variable.active = true;
   } else if (context.procedures.has(name)) {
+    // Only activate the specified procedure name, even if the procedure has multiple names
+    // The compiler will not activate the other names of the procedure
     context.activeProcedures.add(name);
   }
 }
@@ -1110,7 +1115,7 @@ function runTokenInstruction(
     // In the next step, we need to merge them again
     const firstToken = replacedTokens.shift();
     const mergedTokens = lex(prefix.image + (firstToken?.image ?? ""));
-    setImmediateFollowProperty(firstToken, mergedTokens);
+    setImmediateFollowProperty(firstToken?.immediateFollow, mergedTokens);
     // Push merged and new tokens to the stack
     largePush(context.result.all, mergedTokens);
     largePush(context.result.all, replacedTokens);
@@ -1139,51 +1144,356 @@ function replaceTokensInText(
   tokens: Token[],
   context: InterpreterContext,
 ): Token[] {
+  let i = 0;
+  const length = tokens.length;
   const tokenList: Token[] = [];
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i];
-    const result = performTokenScan(token, context);
+  while (i < length) {
+    const result = performTokenScan(tokens, i, context);
     if (result) {
       // Replace the token with the scan result
       // i.e. the variable content, recursively replaced
-      largePush(tokenList, result);
+      largePush(tokenList, result.tokens);
+      i += result.advance;
     } else {
       // If the scan found no active variable, push the original token
-      tokenList.push(token);
+      tokenList.push(tokens[i++]);
     }
   }
   return tokenList;
 }
 
+interface TokenScanResult {
+  tokens: Token[];
+  advance: number;
+}
+
 function performTokenScan(
-  token: Token,
+  tokens: Token[],
+  index: number,
   context: InterpreterContext,
-): Token[] | undefined {
+): TokenScanResult | undefined {
+  const token = tokens[index];
   const image = token.image;
+  const procedure = context.procedures.get(image);
   // Token scan can only take global variables into account (because it cannot run inside of a procedure)
   const variable = context.variables.get(image);
-  // If there is no active variable with that name, return undefined
-  // The caller side will simply push the token to the output
-  if (!variable?.active) {
-    return undefined;
-  } else if (token.uri && variable.declarationNode) {
-    // If the token has a URI, we assume it actually exists in the source code
-    // We can now create a synthetic reference to the variable for it
-    token.element = generateSyntheticRefItem(
-      token,
-      variable.declarationNode,
+  let refNode: ast.SyntaxNode | undefined = undefined;
+  let value: Value | undefined = undefined;
+  let advance: number = 1;
+  let immediateFollow = token.immediateFollow;
+  if (procedure && context.activeProcedures.has(image)) {
+    const label = procedure.labels.get(image);
+    refNode = label;
+    const procedureParseResult = parseAndEvaluateProcedure(
+      tokens,
+      index,
+      procedure,
       context,
     );
+    value = procedureParseResult.value;
+    advance = procedureParseResult.advance;
+    immediateFollow = procedureParseResult.immediateFollow;
+  } else if (variable?.active) {
+    refNode = variable.declarationNode ?? undefined;
+    value = variable.value;
+  }
+  if (token.uri && refNode) {
+    // If the token has a URI, we assume it actually exists in the source code
+    // We can now create a synthetic reference to the variable/procedure for it
+    token.element = generateSyntheticRefItem(token, refNode, context);
     token.kind = CstNodeKind.ReferenceItem_Ref;
   }
-  const variableValue = variable.value;
-  if (!isScalarValue(variableValue)) {
+  if (!value || !isScalarValue(value)) {
     // Cannot replace tokens for array variables
     // TODO: There is a warning/error for this, that should be reported
     return undefined;
   }
-  const tokens = lex(variableValue.value);
-  setImmediateFollowProperty(token, tokens);
+  if (advance < 1) {
+    throw new Error("Advance must be at least 1");
+  }
+  return {
+    tokens: replaceTokenWithValue(value.value, immediateFollow, context),
+    advance,
+  };
+}
+
+interface InlineProcedureEvaluationResult {
+  value: Value | undefined;
+  advance: number;
+  immediateFollow: boolean;
+}
+
+function parseAndEvaluateProcedure(
+  tokens: Token[],
+  index: number,
+  procedure: inst.ProcedureInstructionContainer,
+  context: InterpreterContext,
+): InlineProcedureEvaluationResult {
+  let evaluatedArgs: Value[];
+  let advance = 1;
+  let immediateFollow = tokens[index].immediateFollow;
+  let suffix: string = "";
+  if (!procedure.statement) {
+    const parseResult = parseInlineProcedureInvocation(tokens, index);
+    advance = parseResult.advance;
+    immediateFollow = parseResult.immediateFollow;
+    evaluatedArgs = evaluatePositionalArguments(parseResult.args, context);
+  } else {
+    const parseResult = parseInlineStatementProcedureInvocation(tokens, index);
+    advance = parseResult.advance;
+    immediateFollow = parseResult.immediateFollow;
+    suffix = parseResult.suffix;
+    evaluatedArgs = evaluatePositionalArguments(
+      parseResult.positionalArgs,
+      context,
+    );
+    evaluateNamedArguments(
+      evaluatedArgs,
+      parseResult.namedArgs,
+      procedure.parameters,
+      context,
+    );
+  }
+
+  const localContext = createLocalContext(context, procedure);
+  let value = runProcedure(procedure, evaluatedArgs, localContext);
+  if (isScalarValue(value) && suffix) {
+    // Add the suffix to the value, as it was immediately following the procedure call
+    // Otherwise, the suffix will generate a separate token, which is not the intended behavior
+    value = stringToValue(value.value + suffix);
+  }
+  return {
+    value,
+    advance,
+    immediateFollow,
+  };
+}
+
+function evaluatePositionalArguments(
+  args: InlineProcedureArgument[],
+  context: InterpreterContext,
+): Value[] {
+  const evaluatedArgs: Value[] = [];
+  for (const argTokens of args) {
+    const replacedTokens = replaceTokensInText(argTokens, context);
+    const text = stringifyTokens(replacedTokens);
+    evaluatedArgs.push(stringToValue(text));
+  }
+  return evaluatedArgs;
+}
+
+function evaluateNamedArguments(
+  args: Value[],
+  namedArgs: Map<string, InlineProcedureNamedArgument>,
+  procParams: string[],
+  context: InterpreterContext,
+): void {
+  const usedParams = new Set<string>();
+  for (let i = 0; i < procParams.length; i++) {
+    const param = procParams[i];
+    usedParams.add(param);
+    const argTokens = namedArgs.get(param);
+    if (argTokens) {
+      const replacedTokens = replaceTokensInText(argTokens.tokens, context);
+      const text = stringifyTokens(replacedTokens);
+      args[i] = stringToValue(text);
+    } else if (i >= args.length) {
+      // No argument specified for this parameter, use the unset variable
+      args[i] = unsetVariable;
+    }
+  }
+  for (const [name, argTokens] of namedArgs) {
+    // If the named argument doesn't match any parameter, report an error
+    if (!usedParams.has(name)) {
+      context.errors.push(
+        new PreprocessorError(
+          PLICodes.Error.IBM3581I.message(argTokens.nameToken.image),
+          argTokens.nameToken,
+          undefined,
+          PLICodes.Error.IBM3581I.fullCode,
+        ),
+      );
+    }
+  }
+}
+
+function stringifyTokens(tokens: Token[]): string {
+  let text = "";
+  for (const token of tokens) {
+    text += token.image;
+    if (!token.immediateFollow) {
+      text += " ";
+    }
+  }
+  return text.trimEnd();
+}
+
+type InlineProcedureArgument = Token[];
+
+interface InlineProcedureParseResult {
+  args: InlineProcedureArgument[];
+  advance: number;
+  immediateFollow: boolean;
+}
+
+function parseInlineProcedureInvocation(
+  tokens: Token[],
+  index: number,
+): InlineProcedureParseResult {
+  const args: InlineProcedureArgument[] = [];
+  let currentArg: Token[] = [];
+  let advance = 1;
+  let immediateFollow = false;
+  let parenDepth = 1;
+  let i = index + 1; // Start after the procedure name
+  const nextToken = tokens[i++];
+  if (!nextToken || !tokenMatcher(nextToken, PreprocessorTokens.LParen)) {
+    // No opening parenthesis, so no arguments
+    return {
+      args: [],
+      advance,
+      immediateFollow: tokens[index].immediateFollow,
+    };
+  }
+  // Opening parenthesis found, start parsing arguments
+  advance++;
+  const length = tokens.length;
+  while (i < length) {
+    const token = tokens[i];
+    advance++;
+    if (tokenMatcher(token, PreprocessorTokens.LParen)) {
+      parenDepth++;
+    } else if (tokenMatcher(token, PreprocessorTokens.RParen)) {
+      if (--parenDepth === 0) {
+        // Closing parenthesis at the top level, end of argument list
+        args.push(currentArg);
+        immediateFollow = token.immediateFollow;
+        i++;
+        break;
+      }
+    }
+    if (tokenMatcher(token, PreprocessorTokens.Comma) && parenDepth === 1) {
+      // Argument separator at the top level
+      args.push(currentArg);
+      currentArg = [];
+    } else {
+      currentArg.push(token);
+    }
+    i++;
+  }
+  return {
+    args,
+    advance,
+    immediateFollow,
+  };
+}
+
+interface InlineProcedureNamedArgument {
+  nameToken: Token;
+  tokens: Token[];
+}
+
+interface InlineStatementProcedureParseResult {
+  positionalArgs: InlineProcedureArgument[];
+  namedArgs: Map<string, InlineProcedureNamedArgument>;
+  advance: number;
+  immediateFollow: boolean;
+  /**
+   * If the procedure invocation is immediately followed by another token
+   * This token acts as a suffix to the procedure call and needs to be attached to the return value
+   */
+  suffix: string;
+}
+
+function parseInlineStatementProcedureInvocation(
+  tokens: Token[],
+  index: number,
+): InlineStatementProcedureParseResult {
+  const positionalParseResult = parseInlineProcedureInvocation(tokens, index);
+  // Advance by the amount of tokens consumed by the positional argument parser
+  index += positionalParseResult.advance;
+  // We can now start parsing named arguments
+  const namedArgs: Map<string, InlineProcedureNamedArgument> = new Map();
+  let advance = positionalParseResult.advance;
+  let immediateFollow = positionalParseResult.immediateFollow;
+  let i = index;
+  const length = tokens.length;
+  while (i < length) {
+    const nextToken = tokens[i++];
+    if (nextToken && tokenMatcher(nextToken, PreprocessorTokens.Semicolon)) {
+      // End of procedure invocation
+      immediateFollow = nextToken.immediateFollow;
+      advance++;
+      break;
+    }
+    if (!nextToken || !tokenMatcher(nextToken, PreprocessorTokens.Id)) {
+      // Named argument must start with an identifier
+      break;
+    }
+    advance++;
+    immediateFollow = nextToken.immediateFollow;
+    const openParenToken = tokens[i++];
+    if (
+      !openParenToken ||
+      !tokenMatcher(openParenToken, PreprocessorTokens.LParen)
+    ) {
+      // Named argument must have an opening parenthesis after the name
+      // If there is no opening parenthesis, we assume the argument has an empty value
+      namedArgs.set(nextToken.image, {
+        nameToken: nextToken,
+        tokens: [],
+      });
+      break;
+    }
+    advance++;
+    // Begin parsing the argument tokens until the closing parenthesis
+    let parenDepth = 1;
+    const argTokens: Token[] = [];
+    while (i < length) {
+      const token = tokens[i];
+      if (tokenMatcher(token, PreprocessorTokens.LParen)) {
+        parenDepth++;
+      } else if (tokenMatcher(token, PreprocessorTokens.RParen)) {
+        if (--parenDepth === 0) {
+          // End of argument
+          immediateFollow = token.immediateFollow;
+          i++;
+          advance++;
+          break;
+        }
+      }
+      argTokens.push(token);
+      i++;
+      advance++;
+    }
+    namedArgs.set(nextToken.image, {
+      nameToken: nextToken,
+      tokens: argTokens,
+    });
+  }
+  let suffix = "";
+  if (immediateFollow && i < length) {
+    const suffixToken = tokens[i];
+    suffix = suffixToken.image;
+    immediateFollow = suffixToken.immediateFollow;
+    advance++;
+  }
+  return {
+    positionalArgs: positionalParseResult.args,
+    namedArgs,
+    advance,
+    immediateFollow,
+    suffix,
+  };
+}
+
+function replaceTokenWithValue(
+  value: string,
+  immediateFollow: boolean,
+  context: InterpreterContext,
+): Token[] {
+  const tokens = lex(value);
+  setImmediateFollowProperty(immediateFollow, tokens);
   return replaceTokensInText(tokens, context);
 }
 
@@ -1205,10 +1515,10 @@ function lex(text: string): Token[] {
 }
 
 function setImmediateFollowProperty(
-  token: Token | undefined,
+  immediateFollow: boolean | undefined,
   tokens: Token[],
 ): void {
-  if (token?.immediateFollow && tokens.length > 0) {
+  if (immediateFollow && tokens.length > 0) {
     // The last token inherits the immediateFollow property of the original token
     tokens[tokens.length - 1].immediateFollow = true;
   }
