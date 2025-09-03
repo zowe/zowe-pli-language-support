@@ -15,7 +15,7 @@ import {
   tokenToUri,
 } from "../../../language-server/types";
 import * as AST from "../../../syntax-tree/ast";
-import { containsNodeOfKind } from "../../../syntax-tree/ast-iterator";
+import { findFirstNodeOfKind } from "../../../syntax-tree/ast-iterator";
 import { ValidationAcceptor } from "../../validator";
 import * as PLICodes from "../pli-codes";
 
@@ -40,8 +40,8 @@ export function IBM1068I_proc_with_return_hasnt_returns_att(
   if (hasReturnsAtt) return;
   // Still has to pass proc-with-return-inside-if-with-returns -> option is being read first as 135
 
-  const hasReturnStmts = containsNodeOfKind(node, AST.SyntaxKind.ReturnStatement);
-  if(!hasReturnStmts) return;
+  const returnStmt = findFirstNodeOfKind(node, AST.SyntaxKind.ReturnStatement);
+  if (!returnStmt) return;
 
   // Build diagnostic
   const infoRange = tokenToRange(token);
