@@ -14,7 +14,6 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { isEqual } from "lodash-es";
 import { SyntaxKind } from "../syntax-tree/ast";
-import { TextDocuments } from "./text-documents";
 import { IfEvaluationResult } from "../preprocessor/instruction-interpreter";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
@@ -34,7 +33,7 @@ export function skippedCode(
   connection: Connection,
   compilationUnit: CompilationUnit,
 ) {
-  const textDocument = TextDocuments.get(compilationUnit.uri.toString());
+  const textDocument = compilationUnit.files.getDocument(compilationUnit.uri);
   const ranges = textDocument
     ? skippedCodeRanges(compilationUnit, textDocument)
     : [];
@@ -61,7 +60,7 @@ export function skippedCodeRanges(
   compilationUnit: CompilationUnit,
   textDocument: TextDocument,
 ): Range[] {
-  const tokens = compilationUnit.tokens.fileTokens.get(textDocument.uri);
+  const tokens = compilationUnit.files.getTokens(textDocument.uri);
   if (!tokens) {
     return [];
   }

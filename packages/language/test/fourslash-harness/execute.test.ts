@@ -202,9 +202,9 @@ function runSingleHarnessTest(filePath: string) {
     ? path.basename(relativePath)
     : relativePath;
 
-  test(`${testName}`, () => {
+  test(`${testName}`, async () => {
     const wrappers = getWrappers();
-    const testFile = parseHarnessTestFile(relativePath, filePath, {
+    const testFile = await parseHarnessTestFile(relativePath, filePath, {
       wrappers,
     });
 
@@ -215,14 +215,14 @@ function runSingleHarnessTest(filePath: string) {
 
     // We want to load the files in reverse order, so that the included files are inserted in the correct order.
     const files = getFiles(testFile).toReversed();
-    const testBuilder = TestBuilder.create(files, {
+    const testBuilder = await TestBuilder.create(files, {
       fs,
       validate: true,
       locationOverrides,
     });
     const implementation = createTestBuilderHarnessImplementation(testBuilder);
 
-    runHarnessTest(testFile, implementation);
+    await runHarnessTest(testFile, implementation);
   });
 }
 

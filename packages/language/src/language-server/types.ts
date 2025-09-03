@@ -14,8 +14,8 @@ import * as lsp from "vscode-languageserver-types";
 import { getNameToken } from "../linking/tokens";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { Token } from "../parser/tokens";
-import { TextDocuments } from "./text-documents";
 import { InsertTextFormat, MarkupContent } from "vscode-languageserver-types";
+import { CompilationUnit } from "../workspace/compilation-unit";
 
 export type Offset = number;
 
@@ -124,12 +124,13 @@ export interface Diagnostic {
 export type DiagnosticInfo = Omit<Diagnostic, "severity" | "message">;
 
 export function diagnosticsToLSP(
+  unit: CompilationUnit,
   diagnostics: Diagnostic[],
 ): Map<string, lsp.Diagnostic[]> {
   const map = new Map<string, lsp.Diagnostic[]>();
   for (const diagnostic of diagnostics) {
     const uri = diagnostic.uri;
-    const lspDiagnostic = diagnosticToLSP(diagnostic);
+    const lspDiagnostic = diagnosticToLSP(unit, diagnostic);
     if (!map.has(uri)) {
       map.set(uri, []);
     }
@@ -138,8 +139,11 @@ export function diagnosticsToLSP(
   return map;
 }
 
-export function diagnosticToLSP(diagnostic: Diagnostic): lsp.Diagnostic {
-  const doc = TextDocuments.get(diagnostic.uri);
+export function diagnosticToLSP(
+  unit: CompilationUnit,
+  diagnostic: Diagnostic,
+): lsp.Diagnostic {
+  const doc = unit.files.getDocument(diagnostic.uri);
   return {
     severity: severityToLsp(diagnostic.severity),
     range: {

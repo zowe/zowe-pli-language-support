@@ -45,7 +45,7 @@ export function semanticTokens(
   compilationUnit: CompilationUnit,
   range?: Range,
 ): number[] {
-  const tokens = compilationUnit.tokens.fileTokens.get(textDocument.uri);
+  const tokens = compilationUnit.files.getTokens(textDocument.uri);
   if (!tokens) {
     return [];
   }

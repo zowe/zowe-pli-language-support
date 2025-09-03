@@ -31,7 +31,7 @@ export function completionRequest(
   uri: URI,
   offset: number,
 ): CompletionItem[] {
-  const tokens = unit.tokens.fileTokens.get(uri.toString());
+  const tokens = unit.files.getTokens(uri);
   if (!tokens) {
     return [];
   }

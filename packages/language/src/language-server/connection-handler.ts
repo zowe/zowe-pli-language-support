@@ -28,7 +28,6 @@ import {
   rangeToLSP,
 } from "./types";
 import { renameRequest } from "./rename-request";
-import { mapValues } from "../utils/common";
 import { getReferenceLocations } from "../linking/resolver";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
@@ -38,7 +37,7 @@ import {
   BuiltinsMacroTextDocument,
   BuiltinsTextDocument,
 } from "../workspace/builtins";
-import { BuiltinDocuments, TextDocuments } from "./text-documents";
+import { BuiltinDocuments } from "./text-documents";
 import { hoverRequest } from "./hover-request";
 import { Mutex } from "../workspace/mutex";
 
@@ -51,11 +50,11 @@ export const WorkspaceDidChangePlipluginConfigNotification =
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
   compilationUnitHandler.listen(connection);
-  connection.onInitialize((params) => {
+  connection.onInitialize(async (params) => {
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
     // TODO @montymxb Apr 23rd, 2025: Consider addressing multiple workspaces w/ multiple plugin configs
     for (const folder of params.workspaceFolders?.reverse() ?? []) {
-      PluginConfigurationProviderInstance.init(folder.uri);
+      await PluginConfigurationProviderInstance.init(folder.uri);
     }
 
     BuiltinDocuments.set(BuiltinsTextDocument);
@@ -95,188 +94,209 @@ export function startLanguageServer(connection: Connection): void {
     };
   });
   connection.onHover(async (params) => {
-    await Mutex.ready();
-    const uri = params.textDocument.uri;
-    const position = params.position;
-    const textDocument = TextDocuments.get(uri);
-    const parsedUri = URI.parse(uri);
-    const compilationUnit =
-      compilationUnitHandler.getCompilationUnit(parsedUri);
+    return Mutex.read(async () => {
+      const uri = params.textDocument.uri;
+      const position = params.position;
+      const parsedUri = URI.parse(uri);
+      const compilationUnit =
+        compilationUnitHandler.getCompilationUnit(parsedUri);
+      const textDocument = compilationUnit?.files.getDocument(uri);
 
-    if (!textDocument || !compilationUnit) {
-      return null;
-    }
+      if (!textDocument || !compilationUnit) {
+        return null;
+      }
 
-    const offset = textDocument.offsetAt(position);
-    const response = hoverRequest(compilationUnit, parsedUri, offset);
-    if (!response) {
-      return null;
-    }
+      const offset = textDocument.offsetAt(position);
+      const response = hoverRequest(compilationUnit, parsedUri, offset);
+      if (!response) {
+        return null;
+      }
 
-    return hoverResponseToLSP(textDocument, response);
+      return hoverResponseToLSP(textDocument, response);
+    });
   });
   connection.onCompletion(async (params) => {
-    await Mutex.ready();
-    const uri = params.textDocument.uri;
-    const position = params.position;
-    const textDocument = TextDocuments.get(uri);
-    const parsedUri = URI.parse(uri);
-    const compilationUnit =
-      compilationUnitHandler.getCompilationUnit(parsedUri);
-    if (textDocument && compilationUnit) {
-      const offset = textDocument.offsetAt(position);
-      const result = completionRequest(compilationUnit, parsedUri, offset).map(
-        (completionItem) => completionItemToLSP(textDocument, completionItem),
-      );
+    return Mutex.read(async () => {
+      const uri = params.textDocument.uri;
+      const position = params.position;
+      const parsedUri = URI.parse(uri);
+      const compilationUnit =
+        compilationUnitHandler.getCompilationUnit(parsedUri);
+      const textDocument = compilationUnit?.files.getDocument(uri);
+      if (textDocument && compilationUnit) {
+        const offset = textDocument.offsetAt(position);
+        const result = completionRequest(
+          compilationUnit,
+          parsedUri,
+          offset,
+        ).map((completionItem) =>
+          completionItemToLSP(textDocument, completionItem),
+        );
 
-      return result;
-    }
-    return [];
+        return result;
+      }
+      return [];
+    });
   });
   connection.onDefinition(async (params) => {
-    await Mutex.ready();
-    const position = params.position;
-    const textDocument = TextDocuments.get(params.textDocument.uri);
-    const uri = URI.parse(params.textDocument.uri);
-    const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
-    if (textDocument && compilationUnit) {
-      const offset = textDocument.offsetAt(position);
-      const definition = definitionRequest(compilationUnit, uri, offset);
-      const lspDefinitions: Location[] = [];
-      for (const def of definition) {
-        const doc = TextDocuments.get(def.uri);
-        if (doc) {
-          const range = rangeToLSP(doc, def.range);
-          lspDefinitions.push({
-            uri: def.uri,
-            range,
-          });
+    return Mutex.read(async () => {
+      const position = params.position;
+      const uri = URI.parse(params.textDocument.uri);
+      const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
+      const textDocument = compilationUnit?.files.getDocument(uri);
+      if (textDocument && compilationUnit) {
+        const offset = textDocument.offsetAt(position);
+        const definition = definitionRequest(compilationUnit, uri, offset);
+        const lspDefinitions: Location[] = [];
+        for (const def of definition) {
+          const doc = compilationUnit?.files.getDocument(def.uri);
+          if (doc) {
+            const range = rangeToLSP(doc, def.range);
+            lspDefinitions.push({
+              uri: def.uri,
+              range,
+            });
+          }
         }
+        return lspDefinitions;
       }
-      return lspDefinitions;
-    }
-    return [];
+      return [];
+    });
   });
   connection.onReferences(async (params) => {
-    await Mutex.ready();
-    const uri = params.textDocument.uri;
-    const position = params.position;
-    const textDocument = TextDocuments.get(uri);
-    const parsedUri = URI.parse(uri);
-    const compilationUnit =
-      compilationUnitHandler.getCompilationUnit(parsedUri);
-    if (textDocument && compilationUnit) {
-      const offset = textDocument.offsetAt(position);
-      const definition = referencesRequest(compilationUnit, parsedUri, offset);
-      const lspDefinitions: Location[] = [];
-      for (const def of definition) {
-        const doc = TextDocuments.get(def.uri);
-        if (doc) {
-          const range = rangeToLSP(doc, def.range);
-          lspDefinitions.push({
-            uri: def.uri,
-            range,
-          });
+    return Mutex.read(async () => {
+      const uri = params.textDocument.uri;
+      const position = params.position;
+      const parsedUri = URI.parse(uri);
+      const compilationUnit =
+        compilationUnitHandler.getCompilationUnit(parsedUri);
+      const textDocument = compilationUnit?.files.getDocument(uri);
+      if (textDocument && compilationUnit) {
+        const offset = textDocument.offsetAt(position);
+        const definition = referencesRequest(
+          compilationUnit,
+          parsedUri,
+          offset,
+        );
+        const lspDefinitions: Location[] = [];
+        for (const def of definition) {
+          const doc = compilationUnit.files.getDocument(def.uri);
+          if (doc) {
+            const range = rangeToLSP(doc, def.range);
+            lspDefinitions.push({
+              uri: def.uri,
+              range,
+            });
+          }
         }
+        return lspDefinitions;
       }
-      return lspDefinitions;
-    }
-    return [];
+      return [];
+    });
   });
   connection.languages.semanticTokens.on(async (params) => {
-    await Mutex.ready();
-    const uri = params.textDocument.uri;
-    const textDocument = TextDocuments.get(uri);
-    const compilationUnit = compilationUnitHandler.getCompilationUnit(
-      URI.parse(uri),
-    );
-    if (textDocument && compilationUnit) {
+    return Mutex.read(async () => {
+      const uri = params.textDocument.uri;
+      const compilationUnit = compilationUnitHandler.getCompilationUnit(
+        URI.parse(uri),
+      );
+      const textDocument = compilationUnit?.files.getDocument(uri);
+      if (textDocument && compilationUnit) {
+        return {
+          data: semanticTokens(textDocument, compilationUnit),
+        };
+      }
       return {
-        data: semanticTokens(textDocument, compilationUnit),
+        data: [],
       };
-    }
-    return {
-      data: [],
-    };
+    });
   });
   connection.onDocumentHighlight(async (params) => {
-    await Mutex.ready();
-    const uri = UriUtils.normalize(params.textDocument.uri);
-    const position = params.position;
-    const textDocument = TextDocuments.get(uri);
-    const parsedUri = URI.parse(uri);
-    const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-    if (textDocument && unit) {
-      const offset = textDocument.offsetAt(position);
-      const definitions = getReferenceLocations(unit, parsedUri, offset);
-      return definitions
-        .filter((e) => e.uri === uri)
-        .map((def) =>
-          DocumentHighlight.create(rangeToLSP(textDocument, def.range)),
-        );
-    }
-    return [];
+    return Mutex.read(async () => {
+      const uri = UriUtils.normalize(params.textDocument.uri);
+      const position = params.position;
+      const parsedUri = URI.parse(uri);
+      const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
+      const textDocument = unit?.files.getDocument(uri);
+      if (textDocument && unit) {
+        const offset = textDocument.offsetAt(position);
+        const definitions = getReferenceLocations(unit, parsedUri, offset);
+        return definitions
+          .filter((e) => e.uri === uri)
+          .map((def) =>
+            DocumentHighlight.create(rangeToLSP(textDocument, def.range)),
+          );
+      }
+      return [];
+    });
   });
   connection.onRenameRequest(async (params) => {
-    await Mutex.ready();
-    const uri = params.textDocument.uri;
-    const position = params.position;
-    const textDocument = TextDocuments.get(uri);
-    const parsedUri = URI.parse(uri);
-    const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-    if (textDocument && unit) {
-      const offset = textDocument.offsetAt(position);
-      const renameLocations = renameRequest(unit, parsedUri, offset);
-      const changes = mapValues(renameLocations, (locations, key) => {
-        const textDocument = TextDocuments.get(key);
-        if (!textDocument) {
-          return [];
-        } else {
-          return locations.map(
-            (location) =>
-              ({
-                range: rangeToLSP(textDocument, location.range),
-                newText: params.newName,
-              }) satisfies TextEdit,
-          );
+    return Mutex.read(async () => {
+      const uri = params.textDocument.uri;
+      const position = params.position;
+      const parsedUri = URI.parse(uri);
+      const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
+      const textDocument = unit?.files.getDocument(uri);
+      if (textDocument && unit) {
+        const offset = textDocument.offsetAt(position);
+        const renameLocations = renameRequest(unit, parsedUri, offset);
+        const changes: Record<string, TextEdit[]> = {};
+        for (const [key, locations] of Object.entries(renameLocations)) {
+          const textDocument = unit.files.getDocument(key);
+          if (textDocument) {
+            changes[key] = locations.map(
+              (location) =>
+                ({
+                  range: rangeToLSP(textDocument, location.range),
+                  newText: params.newName,
+                }) satisfies TextEdit,
+            );
+          }
         }
-      });
 
-      return {
-        changes,
-      };
-    }
+        return {
+          changes,
+        };
+      }
 
-    return null;
+      return null;
+    });
   });
   connection.onDocumentSymbol(async (params) => {
-    await Mutex.ready();
-    const uri = params.textDocument.uri;
-    const textDocument = TextDocuments.get(uri);
-    const parsedUri = URI.parse(uri);
-    const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-
-    if (textDocument && unit) {
-      return documentSymbolRequest(parsedUri, unit).map((symbol) =>
-        documentSymbolToLSP(textDocument, symbol),
-      );
-    }
-    return [];
+    return Mutex.read(async () => {
+      const uri = params.textDocument.uri;
+      const parsedUri = URI.parse(uri);
+      const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
+      const textDocument = unit?.files.getDocument(uri);
+      if (textDocument && unit) {
+        const requestResult = documentSymbolRequest(parsedUri, unit);
+        return requestResult.map((symbol) =>
+          documentSymbolToLSP(textDocument, symbol),
+        );
+      }
+      return [];
+    });
   });
   connection.onWorkspaceSymbol(async (params) => {
-    await Mutex.ready();
-    return workspaceSymbolRequest(
-      params.query,
-      compilationUnitHandler.getAllCompilationUnits(),
-    );
+    return Mutex.read(async () => {
+      return workspaceSymbolRequest(
+        params.query,
+        compilationUnitHandler.getAllCompilationUnits(),
+      );
+    });
   });
   connection.onNotification(
     WorkspaceDidChangePlipluginConfigNotification,
     () => {
-      // handle changes to the .pliplugin config folder's contents
-      PluginConfigurationProviderInstance.reloadConfigurations();
-      // reindex reachable compilation units
-      compilationUnitHandler.reindex(connection, CancellationToken.None);
+      Mutex.run(async () => {
+        // handle changes to the .pliplugin config folder's contents
+        await PluginConfigurationProviderInstance.reloadConfigurations();
+        // reindex reachable compilation units
+        await compilationUnitHandler.reindex(
+          connection,
+          CancellationToken.None,
+        );
+      });
     },
   );
   connection.listen();

@@ -15,10 +15,12 @@ import {
 } from "vscode-languageserver";
 import { Deferred } from "../utils/promises";
 
-export type MutexFunc = (cancellation: CancellationToken) => Promise<void>;
+export type MutexFunc<T = void> = (
+  cancellation: CancellationToken,
+) => Promise<T>;
 
 class MutexImpl {
-  private current: Promise<void> = Promise.resolve();
+  private current: Promise<unknown> = Promise.resolve();
   private source = new CancellationTokenSource();
 
   cancel() {
@@ -29,8 +31,8 @@ class MutexImpl {
     }
   }
 
-  run(func: MutexFunc, cancel = true): Promise<void> {
-    const deferred = new Deferred<void>();
+  run<T = void>(func: MutexFunc<T>, cancel = true): Promise<T> {
+    const deferred = new Deferred<T>();
     if (cancel) {
       this.cancel();
     }
@@ -41,8 +43,8 @@ class MutexImpl {
         return;
       }
       try {
-        await func(newSource.token);
-        deferred.resolve();
+        const result = await func(newSource.token);
+        deferred.resolve(result);
       } catch (err) {
         deferred.reject(err);
       }
@@ -51,12 +53,21 @@ class MutexImpl {
   }
 
   /**
+   * Runs the given function when the mutex is available. The mutex will not be cancelled when this function is running.
+   *
+   * Note that this will prevent cancellation of the current operation!
+   */
+  read<T = void>(func: MutexFunc<T>): Promise<T> {
+    return this.run(func, false);
+  }
+
+  /**
    * Returns a promise that indicates when the mutex is done and ready for the next operation.
    *
    * Note that this will prevent cancellation of the current operation!
    */
   ready(): Promise<void> {
-    return this.run(() => Promise.resolve(), false);
+    return this.read(() => Promise.resolve());
   }
 }
 

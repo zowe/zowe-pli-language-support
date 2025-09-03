@@ -39,21 +39,21 @@ export interface FileSystemMessage {
 class LSFileSystemProvider extends VirtualFileSystemProvider {
   constructor() {
     super();
-    self.addEventListener("message", (event) => {
+    self.addEventListener("message", async (event) => {
       if (event.data?.namespace === FILE_SYSTEM_NAMESPACE) {
         const message = event.data as FileSystemMessage;
         console.log("Received file system message: ", message);
         switch (message.type) {
           case LSFileAction.Add:
-            this.writeFileSync(URI.parse(message.uri), message.content || "");
+            await this.writeFile(URI.parse(message.uri), message.content || "");
             break;
           case LSFileAction.Delete:
-            this.deleteFileSync(URI.parse(event.data.uri));
+            await this.deleteFile(URI.parse(event.data.uri));
             break;
           case LSFileAction.Rename:
-            const content = this.readFileSync(URI.parse(event.data.uri));
-            this.deleteFileSync(URI.parse(event.data.uri));
-            this.writeFileSync(URI.parse(event.data.content), content || "");
+            const content = await this.readFile(URI.parse(event.data.uri));
+            await this.deleteFile(URI.parse(event.data.uri));
+            await this.writeFile(URI.parse(event.data.content), content || "");
             break;
           default:
             console.log("Unsupported file action: ", event.data.type);

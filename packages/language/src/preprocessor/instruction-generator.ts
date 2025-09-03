@@ -521,27 +521,11 @@ function generateAssignmentInstruction(
 
 function generateIncludeInstruction(
   node: ast.IncludeDirective | ast.IncludeAltDirective,
-): inst.CompoundInstruction | undefined {
-  const instructions: inst.IncludeInstruction[] = [];
-  for (const item of node.items) {
-    if (item.fileName) {
-      const instruction: inst.IncludeInstruction =
-        inst.createIncludeInstruction(
-          item,
-          item.fileName,
-          node.idempotent,
-          item.token || node.token,
-        );
-      instructions.push(instruction);
-    }
-  }
-  if (instructions.length === 0) {
+): inst.IncludeInstruction | undefined {
+  if (node.items.length === 0) {
     return undefined; // No files to include
   }
-  return {
-    kind: inst.InstructionKind.Compound,
-    instructions,
-  };
+  return inst.createIncludeInstruction(node.items, node.idempotent);
 }
 
 function generateInscanInstruction(
