@@ -9,7 +9,6 @@
  *
  */
 
-import { Range } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 
