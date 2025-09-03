@@ -5660,6 +5660,7 @@ export class PliParser extends AbstractParser {
       on: null,
       statements: [],
       end: null,
+      selectToken: null,
     };
   }
 
@@ -5668,6 +5669,7 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.SELECT, (token) => {
       this.tokenPayload(token, element, CstNodeKind.SelectStatement_SELECT);
+      element.selectToken = token;
     });
     this.OPTION1(() => {
       this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {

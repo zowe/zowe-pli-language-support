@@ -24,6 +24,7 @@ import {
   ProcessGroup,
   ProgramConfig,
 } from "../workspace/plugin-configuration-provider";
+import { IBM1059I_select_without_otherwise } from "./messages/info-severity/IBM1059I-select-without-otherwise";
 import { IBM1219I_leave_exits_noniterative_do } from "./messages/IBM1219I-leave-exits-noniterative-do";
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./messages/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
 import { IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute } from "./messages/IBM1388IE-NODESCRIPTOR-attribute-is-invalid-when-any-parameter-has-NONCONNECTED-attribute.js";
@@ -57,6 +58,7 @@ export function registerPliValidationChecks(unit: CompilationUnit): Validator {
     ReferenceItem: [validator.checkImplicitBuiltins.bind(validator)],
     DoStatement: [IBM2615I_do_loops_execute_once],
     LeaveStatement: [IBM1219I_leave_exits_noniterative_do],
+    SelectStatement: [IBM1059I_select_without_otherwise],
   });
 
   return validator;
