@@ -370,8 +370,8 @@ describe("Validating", () => {
         END EP;
       `);
       assertDiagnostic(doc, {
-        message: "Cannot resolve include file 'nonexistent.pli'",
-        severity: Severity.E,
+        message: "The INCLUDE file nonexistent.pli could not be opened.",
+        severity: Severity.S,
       });
     });
   });

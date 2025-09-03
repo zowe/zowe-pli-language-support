@@ -16,6 +16,8 @@ import {
   CompilerOptions,
   getDefaultCompilerOptions,
 } from "../preprocessor/compiler-options/options";
+import { diagnostic, Diagnostic } from "../language-server/types";
+import { PLICodes } from "../validation/messages";
 
 interface TwoCharToken {
   char: string;
@@ -514,13 +516,7 @@ export function initLexer(compilerOptions: CompilerOptions): void {
 
 export interface TokenizationResult {
   tokens: tokens.Token[];
-  errors: TokenizationError[];
-}
-
-export interface TokenizationError {
-  message: string;
-  start: number;
-  end: number;
+  diagnostics: Diagnostic[];
 }
 
 export function tokenize(
@@ -528,7 +524,7 @@ export function tokenize(
   uri: URI | undefined,
 ): TokenizationResult {
   const context = new TokenizerContext(input, uri);
-  const errors: TokenizationError[] = [];
+  const diagnostics: Diagnostic[] = [];
   let previous: tokens.Token | undefined = undefined;
 
   while (context.index < context.length) {
@@ -554,18 +550,26 @@ export function tokenize(
         previous = token;
       }
     } else {
-      errors.push({
-        message: `Unrecognized character: ${char}`,
-        start: context.index,
-        end: context.index + 1,
-      });
+      if (uri) {
+        const issue = diagnostic(
+          PLICodes.Error.IBM3550I.severity,
+          PLICodes.Error.IBM3550I.message(char),
+          {
+            start: context.index,
+            end: context.index + 1,
+          },
+          uri.toString(),
+        );
+        issue.code = PLICodes.Error.IBM3550I.fullCode;
+        diagnostics.push(issue);
+      }
       context.index++;
     }
   }
 
   return {
     tokens: context.tokens,
-    errors,
+    diagnostics: diagnostics,
   };
 }
 

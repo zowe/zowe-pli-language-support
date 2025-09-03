@@ -10999,7 +10999,7 @@ export const Error = {
     code: "IBM3550I",
     severity: Severity.E,
     message: (n: string) =>
-      `Character with decimal value ${n} does not belong to the PL/I character set. It will be ignored.`,
+      `Character '${n}' with decimal value ${n.charCodeAt(0)} does not belong to the PL/I character set. It will be ignored.`,
     fullCode: "IBM3550IE",
   } as ParametricPLICode,
 

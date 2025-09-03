@@ -14,22 +14,22 @@ import {
   PreprocessorTokens,
 } from "./pli-preprocessor-tokens";
 import { PreprocessorParserState } from "./pli-preprocessor-parser-state";
-import { PreprocessorError } from "./pli-preprocessor-error";
+import { PreprocessorDiagnostic } from "./preprocessor-diagnostic";
 import * as ast from "../syntax-tree/ast";
 import {
   constructBinaryExpression,
   IntermediateBinaryExpression,
 } from "../parser/abstract-parser";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { LexingIssue } from "./pli-lexer";
 import { Token } from "../parser/tokens";
 import { performAssignmentLookahead } from "../parser/parser";
 import { tokenMatcher } from "chevrotain";
 import { recursivelySetContainer } from "../linking/symbol-table";
+import { diagnostic, Diagnostic, Severity } from "../language-server/types";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
-  errors: LexingIssue[];
+  diagnostics: Diagnostic[];
   tokens: Token[];
 };
 
@@ -37,7 +37,7 @@ export function preprocessorParse(
   state: PreprocessorParserState,
 ): PreprocessorParserResult {
   const statements: ast.Statement[] = [];
-  const errors: LexingIssue[] = [];
+  const diagnostics: Diagnostic[] = [];
   while (!state.eof) {
     try {
       if (state.canConsume(PreprocessorTokens.Percentage)) {
@@ -56,8 +56,10 @@ export function preprocessorParse(
         statements.push(consumeTokenStatement(state));
       }
     } catch (error) {
-      if (error instanceof PreprocessorError) {
-        errors.push(error);
+      if (error instanceof PreprocessorDiagnostic) {
+        diagnostics.push(
+          diagnostic(error.severity, error.message, error.token),
+        );
       } else {
         throw error;
       }
@@ -68,7 +70,7 @@ export function preprocessorParse(
   }
   return {
     statements,
-    errors,
+    diagnostics,
     tokens: state.tokens,
   };
 }
@@ -234,10 +236,12 @@ function commonStatement(state: PreprocessorParserState): ast.Statement {
   }
 
   if (unit === undefined) {
-    throw new PreprocessorError(
-      "Unexpected token '" + state.current?.image + "'.",
-      state.current || state.last,
-    );
+    const currentToken = state.current || state.last;
+    throw new PreprocessorDiagnostic({
+      message: "Unexpected token '" + currentToken?.image + "'.",
+      token: currentToken,
+      severity: Severity.S,
+    });
   }
   // TODO: We can move this into validation!
   // if (labels.length === 0 && unit?.kind === ast.SyntaxKind.ProcedureStatement) {
@@ -704,10 +708,12 @@ function doStatement(state: PreprocessorParserState): ast.DoStatement {
     );
     return statement;
   }
-  throw new PreprocessorError(
-    "Unexpected token '" + state.current?.image + "'.",
-    state.current || state.last,
-  );
+  const currentToken = state.current || state.last;
+  throw new PreprocessorDiagnostic({
+    message: "Unexpected token '" + currentToken?.image + "'.",
+    token: currentToken,
+    severity: Severity.S,
+  });
 }
 
 function doWhile(state: PreprocessorParserState): ast.DoWhile {
@@ -1422,10 +1428,11 @@ function primary(state: PreprocessorParserState): ast.Expression {
     return expr;
   }
   const token = state.current || state.last;
-  throw new PreprocessorError(
-    "Cannot handle this type of preprocessor expression yet!",
-    token,
-  );
+  throw new PreprocessorDiagnostic({
+    message: "Cannot handle this type of preprocessor expression yet!",
+    token: token,
+    severity: Severity.S,
+  });
 }
 
 function numberLiteral(state: PreprocessorParserState): ast.Literal {

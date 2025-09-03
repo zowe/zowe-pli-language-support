@@ -273,7 +273,7 @@ export class TestBuilder {
       }
 
       for (const diagnostic of exactMatches) {
-        if (diagnostic.uri.endsWith(labelFile)) {
+        if (diagnostic.uri && diagnostic.uri.endsWith(labelFile)) {
           continue;
         }
 
@@ -783,7 +783,7 @@ export class TestBuilder {
 
   private createDiagnosticMessage(diagnostic: Diagnostic): string {
     const position = this.createPositionMessage(
-      diagnostic.range?.start,
+      diagnostic.range?.start ?? 0,
       diagnostic.uri,
     );
     const severity = Severity[diagnostic.severity];
