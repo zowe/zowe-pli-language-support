@@ -445,7 +445,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-prefix
    */
-  prefix?: string[];
+  prefix?: CompilerConditions.ConditionOptions;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-proceed
    */
@@ -541,7 +541,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-unroll
    */
-  unroll?: "AUTO" | "NO";
+  unroll?: CompilerOptions.Unroll;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-usage
    */
@@ -1029,16 +1029,18 @@ export declare namespace CompilerOptions {
     noSyntax: Flag;
   };
   export type System = "MVS" | "CICS" | "IMS" | "OS" | "TSO";
+  export type TestLevel = "ALL" | "BLOCK" | "NONE" | "PATH" | "STMT";
   export type Test =
-    | false
     | {
-        level?: "ALL" | "BLOCK" | "NONE" | "PATH" | "STMT";
+        level?: TestLevel;
         hook?: boolean;
         separate?: boolean;
         sepName?: boolean;
         source?: boolean;
         sym?: boolean;
-      };
+      }
+    | false;
+  export type Unroll = "AUTO" | "NO";
   export type Usage = {
     hex?: "SIZE" | "CURRENTSIZE";
     regex?: {
@@ -1053,12 +1055,13 @@ export declare namespace CompilerOptions {
   export type Writable =
     | true
     | {
-        value?: "FWS" | "PRV";
+        noWritable?: "FWS" | "PRV";
       };
   export type XInfo = {
     def?: boolean;
     msg?: boolean;
     sym?: boolean;
+    syn?: boolean;
     xml?:
       | false
       | {
@@ -1069,9 +1072,54 @@ export declare namespace CompilerOptions {
     case?: "UPPER" | "ASIS";
     xmlAttr?: "APOSTROPHE" | "QUOTE";
   };
-  export type XRef = {
-    length?: Length;
-    structure?: "EXPLICIT" | "IMPLICIT";
+  export type XRef =
+    | {
+        length?: Length;
+        structure?: "EXPLICIT" | "IMPLICIT";
+      }
+    | false;
+}
+
+export namespace CompilerConditions {
+  export type Condition = {
+    condition: string[];
+    alwaysEnabled?: boolean;
+  };
+
+  export const PLI_CONDITIONS = [
+    { condition: ["ANYCONDITION", "ANYCOND"], alwaysEnabled: true },
+    { condition: ["AREA"], alwaysEnabled: true },
+    { condition: ["ASSERTION"], alwaysEnabled: true },
+    { condition: ["ATTENTION", "ATTN"], alwaysEnabled: true },
+    { condition: ["CONDITION"], alwaysEnabled: true },
+    { condition: ["CONFORMANCE"] },
+    { condition: ["CONVERSION", "CONV"] },
+    { condition: ["ENDFILE"], alwaysEnabled: true },
+    { condition: ["ENDPAGE"], alwaysEnabled: true },
+    { condition: ["ERROR"], alwaysEnabled: true },
+    { condition: ["FINISH"], alwaysEnabled: true },
+    { condition: ["FIXEDOVERFLOW", "FOFL"] },
+    { condition: ["INVALIDOP"] },
+    { condition: ["KEY"], alwaysEnabled: true },
+    { condition: ["NAME"], alwaysEnabled: true },
+    { condition: ["OVERFLOW", "OFL"] },
+    { condition: ["RECORD"], alwaysEnabled: true },
+    { condition: ["SIZE"] },
+    { condition: ["STORAGE"], alwaysEnabled: true },
+    { condition: ["STRINGRANGE", "STRNG"] },
+    { condition: ["STRINGSIZE", "STRSZ"] },
+    { condition: ["SUBSCRIPTRANGE", "SUBRG"] },
+    { condition: ["TRANSMIT"], alwaysEnabled: true },
+    { condition: ["UNDEFINEDFILE", "UNDF"], alwaysEnabled: true },
+    { condition: ["UNDERFLOW", "UFL"] },
+    { condition: ["ZERODIVIDE", "ZDIV"] },
+  ] as const;
+
+  export type All = (typeof PLI_CONDITIONS)[number];
+  export type NotAlwaysEnabled = Exclude<All, { alwaysEnabled: true }>;
+  export type AssignableConditions = NotAlwaysEnabled["condition"][0];
+  export type ConditionOptions = {
+    [K in Lowercase<AssignableConditions>]?: boolean;
   };
 }
 
@@ -1140,6 +1188,19 @@ const defaultCompilerOptions: CompilerOptions = {
   optimize: 0,
   options: "DOC",
   precType: "ANS",
+  prefix: {
+    conformance: false,
+    conversion: true,
+    fixedoverflow: true,
+    invalidop: true,
+    overflow: true,
+    size: false,
+    stringrange: false,
+    stringsize: false,
+    subscriptrange: false,
+    underflow: true,
+    zerodivide: true,
+  },
   proceed: { noProceed: "S" },
   process: "DELETE",
   quote: '"',
@@ -1159,6 +1220,40 @@ const defaultCompilerOptions: CompilerOptions = {
   syntax: { noSyntax: "S" },
   system: "MVS",
   sysParm: "",
+  terminal: true,
+  test: false,
+  unroll: "AUTO",
+  usage: {
+    hex: "SIZE",
+    regex: {
+      reset: true,
+    },
+    round: "IBM",
+    substr: "STRICT",
+    unspec: "IBM",
+    uuid: "UPPER",
+    validDate: "LOOSE",
+  },
+  widechar: "BIGENDIAN",
+  window: 1950,
+  writable: true,
+  xInfo: {
+    def: false,
+    msg: false,
+    sym: false,
+    syn: false,
+    xml: {
+      hash: false,
+    },
+  },
+  xml: {
+    case: "UPPER",
+    xmlAttr: "APOSTROPHE",
+  },
+  xRef: {
+    length: "FULL",
+    structure: "IMPLICIT",
+  },
 };
 
 /**

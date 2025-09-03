@@ -481,6 +481,13 @@ export class TestBuilder {
   }
 
   noDiagnosticsExcept(regex: RegExp[], label?: Label): TestBuilder {
+    if (Array.isArray(label)) {
+      for (const l of label) {
+        this.noDiagnosticsExcept(regex, l);
+      }
+      return this;
+    }
+
     const diagnostics = label
       ? this.getMatchingDiagnostics(label.toString()).exactMatches
       : this.diagnostics;
