@@ -1209,14 +1209,36 @@ function memberCall(
 
 function noteStatement(state: PreprocessorParserState): ast.NoteDirective {
   const note = ast.createNoteDirective();
-  note.noteToken = state.consume(note, CstNodeKind.NoteDirective_PercentNOTE, PreprocessorTokens.Note);
-  state.consume(note, CstNodeKind.NoteDirective_OpenParen, PreprocessorTokens.LParen);
+  note.noteToken = state.consume(
+    note,
+    CstNodeKind.NoteDirective_PercentNOTE,
+    PreprocessorTokens.Note,
+  );
+  state.consume(
+    note,
+    CstNodeKind.NoteDirective_OpenParen,
+    PreprocessorTokens.LParen,
+  );
   note.message = expression(state);
-  if(state.tryConsume(note, CstNodeKind.NoteDirective_Comma, PreprocessorTokens.Comma)) {
+  if (
+    state.tryConsume(
+      note,
+      CstNodeKind.NoteDirective_Comma,
+      PreprocessorTokens.Comma,
+    )
+  ) {
     note.code = expression(state);
   }
-  state.consume(note, CstNodeKind.NoteDirective_CloseParen, PreprocessorTokens.RParen);
-  state.consume(note, CstNodeKind.NoteDirective_Semicolon, PreprocessorTokens.Semicolon);
+  state.consume(
+    note,
+    CstNodeKind.NoteDirective_CloseParen,
+    PreprocessorTokens.RParen,
+  );
+  state.consume(
+    note,
+    CstNodeKind.NoteDirective_Semicolon,
+    PreprocessorTokens.Semicolon,
+  );
   return note;
 }
 

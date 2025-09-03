@@ -485,7 +485,7 @@ function runInstructionSync(
   return undefined;
 }
 
-function codeToSeverity(code: number|undefined): Severity|undefined {
+function codeToSeverity(code: number | undefined): Severity | undefined {
   switch (code) {
     case undefined:
     case 0:
@@ -504,11 +504,24 @@ function codeToSeverity(code: number|undefined): Severity|undefined {
   }
 }
 
-function runNoteInstruction(instruction: inst.NoteInstruction, context: InterpreterContext): void {
-  const message = valueToString(evaluateExpression(instruction.message, context));
+function runNoteInstruction(
+  instruction: inst.NoteInstruction,
+  context: InterpreterContext,
+): void {
+  const message = valueToString(
+    evaluateExpression(instruction.message, context),
+  );
   const code = valueToNumber(evaluateExpression(instruction.code, context));
   const severity = codeToSeverity(code);
-  context.errors.push(new PreprocessorError(message ?? "", instruction.noteToken, undefined, code?.toString(), severity));
+  context.errors.push(
+    new PreprocessorError(
+      message ?? "",
+      instruction.noteToken,
+      undefined,
+      code?.toString(),
+      severity,
+    ),
+  );
 }
 
 function runHaltInstruction(

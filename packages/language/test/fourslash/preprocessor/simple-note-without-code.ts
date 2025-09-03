@@ -14,9 +14,10 @@
 //// %<|1:NOTE|>("This is an information!");
 
 preprocessor.expectTokens("");
-verify.expectDiagnosticsAt(1, [{
-    code: '0',
+verify.expectDiagnosticsAt(1, [
+  {
+    code: "0",
     severity: 0,
-    message: 'This is an information!'
-}]);
-
+    message: "This is an information!",
+  },
+]);

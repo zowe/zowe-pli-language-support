@@ -104,8 +104,7 @@ export type Instruction =
   | ActivateInstruction
   | DeactivateInstruction
   | DeclareInstruction
-  | NoteInstruction
-  ;
+  | NoteInstruction;
 
 export interface ProcedureInstructionContainer {
   names: string[];

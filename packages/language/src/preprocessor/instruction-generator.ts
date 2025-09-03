@@ -204,13 +204,21 @@ function generateTokenInstruction(
   };
 }
 
-function generateNoteInstruction(node: ast.NoteDirective): inst.NoteInstruction {
+function generateNoteInstruction(
+  node: ast.NoteDirective,
+): inst.NoteInstruction {
   return {
     kind: inst.InstructionKind.Note,
     noteToken: node.noteToken!,
-    message: generateExpressionInstruction(node.message) || { kind: inst.InstructionKind.String, value: "" },
-    code: generateExpressionInstruction(node.code) || { kind: inst.InstructionKind.Number, value: "0" },
-  }
+    message: generateExpressionInstruction(node.message) || {
+      kind: inst.InstructionKind.String,
+      value: "",
+    },
+    code: generateExpressionInstruction(node.code) || {
+      kind: inst.InstructionKind.Number,
+      value: "0",
+    },
+  };
 }
 
 function generateActivateInstruction(

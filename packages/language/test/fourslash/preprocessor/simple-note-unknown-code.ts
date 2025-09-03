@@ -14,9 +14,10 @@
 //// %<|1:NOTE|>("This is unknown!", 100);
 
 preprocessor.expectTokens("");
-verify.expectDiagnosticsAt(1, [{
-    code: '100',
+verify.expectDiagnosticsAt(1, [
+  {
+    code: "100",
     severity: 2,
-    message: 'This is unknown!',
-}]);
-
+    message: "This is unknown!",
+  },
+]);

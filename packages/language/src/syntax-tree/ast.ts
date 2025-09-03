@@ -1766,7 +1766,7 @@ export function createNoteDirective(): NoteDirective {
     noteToken: null,
     container: null,
     code: null,
-    message: null
+    message: null,
   };
 }
 
