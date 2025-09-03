@@ -19,6 +19,11 @@ export class PreprocessorError implements LexingIssue {
   private _range: Range | undefined;
   private _message: string;
   private _severity: Severity;
+  private _code: string | undefined;
+
+  get code(): string | undefined {
+    return this._code;
+  }
 
   get uri(): URI | undefined {
     return this._uri;
@@ -40,6 +45,7 @@ export class PreprocessorError implements LexingIssue {
     message: string,
     range: Range | Token | null | undefined,
     uri?: URI,
+    code?: string,
   ) {
     this._message = message;
     this._severity = Severity.E;
@@ -55,5 +61,6 @@ export class PreprocessorError implements LexingIssue {
       }
     }
     this._uri ??= uri;
+    this._code = code;
   }
 }
