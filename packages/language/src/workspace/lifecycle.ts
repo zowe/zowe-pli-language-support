@@ -22,21 +22,21 @@ import {
   parserErrorsToDiagnostics,
 } from "../validation/validator";
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
-import { URI } from "../utils/uri";
 import { assignDebugKinds } from "../utils/debug-kinds";
 import { CancellationToken } from "vscode-languageserver";
 import { interruptAndCheck } from "../utils/promises";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 export async function lifecycle(
   compilationUnit: CompilationUnit,
-  text: string,
+  document: TextDocument,
   cancellation: CancellationToken,
 ): Promise<void> {
   compilationUnit.statementOrderCache.clear();
   compilationUnit.referencesCache.clear();
   compilationUnit.scopeCaches.clear();
   await interruptAndCheck(cancellation);
-  tokenize(compilationUnit, text);
+  await tokenize(compilationUnit, document);
   await interruptAndCheck(cancellation);
   parse(compilationUnit);
   await interruptAndCheck(cancellation);
@@ -50,16 +50,17 @@ export async function lifecycle(
 
 const lexer = new PliLexer();
 
-export function tokenize(
+export async function tokenize(
   compilationUnit: CompilationUnit,
-  text: string,
-): LexerResult {
-  const result = lexer.tokenize(compilationUnit, text, compilationUnit.uri);
-  compilationUnit.files = [...result.fileTokens.keys()].map((e) =>
-    URI.parse(e),
+  document: TextDocument,
+): Promise<LexerResult> {
+  const result = await lexer.tokenize(
+    compilationUnit,
+    document,
+    compilationUnit.uri,
   );
-  compilationUnit.tokens.all = result.all;
-  compilationUnit.tokens.fileTokens = result.fileTokens;
+  compilationUnit.tokens = result.all;
+  compilationUnit.files = result.files;
   compilationUnit.preprocessorAst.statements = result.statements;
   compilationUnit.preprocessorEvaluationResults = result.evaluationResults;
   compilationUnit.referencesCache.addAll(result.tokenReferences);
@@ -74,7 +75,7 @@ export function tokenize(
 }
 
 export function parse(compilationUnit: CompilationUnit): PliProgram {
-  PliParserInstance.input = compilationUnit.tokens.all;
+  PliParserInstance.input = compilationUnit.tokens;
   const ast = PliParserInstance.parse();
   compilationUnit.ast = ast;
   compilationUnit.diagnostics.parser = parserErrorsToDiagnostics(

@@ -27,7 +27,7 @@ export function definitionRequest(
   uri: URI,
   offset: number,
 ): Location[] {
-  const tokens = compilationUnit.tokens.fileTokens.get(uri.toString());
+  const tokens = compilationUnit.files.getTokens(uri);
   if (!tokens) {
     return [];
   }

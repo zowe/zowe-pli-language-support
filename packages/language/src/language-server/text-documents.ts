@@ -105,7 +105,7 @@ export interface TextDocuments<T extends { uri: string }> {
    * @param uri The text document's URI to retrieve.
    * @return the text document or `undefined`.
    */
-  get(uri: string | URI): T | undefined;
+  get(uri: string | URI): Promise<T | undefined>;
   /**
    * Sets the text document managed by this instance.
    * @param document The text document to add.
@@ -215,12 +215,12 @@ export class NormalizedTextDocuments<T extends { uri: string }>
     return this._onDidClose.event;
   }
 
-  public get(uri: string | URI): T | undefined {
+  public async get(uri: string | URI): Promise<T | undefined> {
     let syncedDocument = this._syncedDocuments.get(UriUtils.normalize(uri));
     if (syncedDocument === undefined && this._loadFromURI) {
       try {
         const uriName = UriUtils.normalize(uri);
-        const content = FileSystemProviderInstance.readFileSync(
+        const content = await FileSystemProviderInstance.readFile(
           URI.parse(uriName),
         );
         if (content === undefined) {
@@ -396,12 +396,20 @@ export class DocumentConsolidator<T extends { uri: string }> {
     private readonly builtInDocuments: BuiltinTextDocuments<T>,
   ) {}
 
-  public get(uri: string | URI): T | undefined {
-    return (
-      this.builtInDocuments.get(uri) ??
-      this.editorDocuments.get(uri) ??
-      this.fileDocuments.get(uri)
-    );
+  public async get(uri: string | URI): Promise<T | undefined> {
+    const builtin = this.builtInDocuments.get(uri);
+    if (builtin) {
+      return builtin;
+    }
+    const editor = await this.editorDocuments.get(uri);
+    if (editor) {
+      return editor;
+    }
+    const file = await this.fileDocuments.get(uri);
+    if (file) {
+      return file;
+    }
+    return undefined;
   }
 }
 

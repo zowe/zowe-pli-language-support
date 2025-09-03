@@ -47,8 +47,8 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
   const handler = new CompilationUnitHandler();
   textDocuments.forEach((doc) => EditorDocuments.set(doc));
   await Promise.all(
-    outputs.map(async (output, i) => {
-      const unit = handler.createAndStoreCompilationUnit(
+    textDocuments.map(async (doc, i) => {
+      const unit = await handler.createAndStoreCompilationUnit(
         URI.file(`/test${i}.pli`),
       );
 
@@ -57,7 +57,7 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
         return unit;
       }
 
-      await lifecycle.lifecycle(unit, output, CancellationToken.None);
+      await lifecycle.lifecycle(unit, doc, CancellationToken.None);
       return unit;
     }),
   );
@@ -77,7 +77,7 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
   }
 
   for (const name of Object.keys(rangesWithSameName)) {
-    const workspaceSymbols = workspaceSymbolRequest(
+    const workspaceSymbols = await workspaceSymbolRequest(
       name,
       handler.getAllCompilationUnits(),
     );

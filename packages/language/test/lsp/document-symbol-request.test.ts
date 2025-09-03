@@ -42,7 +42,10 @@ async function expectDocumentSymbols(annotatedCode: string): Promise<void> {
 
   EditorDocuments.set(textDocument);
   const unit = await parse(output, { validate: true });
-  const documentSymbols = documentSymbolRequest(URI.file("/test.pli"), unit);
+  const documentSymbols = await documentSymbolRequest(
+    URI.file("/test.pli"),
+    unit,
+  );
 
   const totalRanges = Object.values(ranges).reduce(
     (acc, curr) => acc + curr.length,

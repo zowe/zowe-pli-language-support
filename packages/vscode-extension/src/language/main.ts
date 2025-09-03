@@ -23,20 +23,25 @@ import * as fs from "fs";
 import * as glob from "glob";
 
 class NodeFileSystemProvider implements FileSystemProvider {
-  readFileSync(uri: URI): string {
-    return fs.readFileSync(uri.fsPath, "utf8");
+  readFile(uri: URI): Promise<string> {
+    return fs.promises.readFile(uri.fsPath, "utf8");
   }
-  fileExistsSync(uri: URI): boolean {
-    return fs.existsSync(uri.fsPath);
+  async fileExists(uri: URI): Promise<boolean> {
+    try {
+      await fs.promises.access(uri.fsPath);
+      return true;
+    } catch {
+      return false;
+    }
   }
-  writeFileSync(uri: URI, value: string): void {
+  async writeFile(uri: URI, value: string): Promise<void> {
     throw new Error("Not supported.");
   }
-  deleteFileSync(uri: URI): void {
+  async deleteFile(uri: URI): Promise<void> {
     throw new Error("Not supported.");
   }
-  findFilesByGlobSync(pattern: string): string[] {
-    return glob.sync(pattern, {
+  findFilesByGlob(pattern: string): Promise<string[]> {
+    return glob.glob(pattern, {
       nodir: true,
       absolute: true,
       nocase: true,

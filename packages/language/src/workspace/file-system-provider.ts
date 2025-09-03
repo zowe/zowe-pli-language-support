@@ -12,10 +12,10 @@
 import { URI } from "../utils/uri";
 
 export interface FileSystemProvider {
-  readFileSync(uri: URI): string | undefined;
-  fileExistsSync(uri: URI): boolean;
-  writeFileSync(uri: URI, value: string): void;
-  deleteFileSync(uri: URI): void;
+  readFile(uri: URI): Promise<string | undefined>;
+  fileExists(uri: URI): Promise<boolean>;
+  writeFile(uri: URI, value: string): Promise<void>;
+  deleteFile(uri: URI): Promise<void>;
 
   /**
    * Synchronously find files matching a glob pattern
@@ -24,31 +24,31 @@ export interface FileSystemProvider {
    * @param pattern - The glob pattern to search for.
    * @returns Array of file paths that match, if any
    */
-  findFilesByGlobSync(pattern: string): string[];
+  findFilesByGlob(pattern: string): Promise<string[]>;
 }
 
 /**
  * Empty file system, the default file system provider, which just returns empty strings for all URIs
  */
 class _EmptyFileSystemProvider implements FileSystemProvider {
-  readFileSync(_uri: URI): string {
-    return "";
+  readFile(_uri: URI): Promise<string | undefined> {
+    return Promise.resolve("");
   }
 
-  fileExistsSync(_uri: URI): boolean {
-    return false;
+  fileExists(_uri: URI): Promise<boolean> {
+    return Promise.resolve(false);
   }
 
-  writeFileSync(_uri: URI, _value: string): void {
-    return;
+  writeFile(_uri: URI, _value: string): Promise<void> {
+    return Promise.resolve();
   }
 
-  deleteFileSync(_uri: URI): void {
-    return;
+  deleteFile(_uri: URI): Promise<void> {
+    return Promise.resolve();
   }
 
-  findFilesByGlobSync(_pattern: string): string[] {
-    return [];
+  findFilesByGlob(_pattern: string): Promise<string[]> {
+    return Promise.resolve([]);
   }
 }
 
@@ -69,7 +69,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
   /**
    * Write a file to the virtualized file system
    */
-  writeFileSync(uri: URI, value: string): void {
+  async writeFile(uri: URI, value: string): Promise<void> {
     this.files.set(uri.path.toLowerCase(), value);
   }
 
@@ -77,28 +77,28 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * Attempts to read a file synchronously from the virtualized file system.
    * If the file does not exist, undefined is returned.
    */
-  readFileSync(uri: URI): string | undefined {
+  async readFile(uri: URI): Promise<string | undefined> {
     return this.files.get(uri.path.toLowerCase());
   }
 
   /**
    * Checks if a file exists in the virtualized file system
    */
-  fileExistsSync(uri: URI): boolean {
+  async fileExists(uri: URI): Promise<boolean> {
     return this.files.has(uri.path.toLowerCase());
   }
 
   /**
    * Deletes a file from the virtualized file system
    */
-  deleteFileSync(uri: URI): void {
+  async deleteFile(uri: URI): Promise<void> {
     this.files.delete(uri.path.toLowerCase());
   }
 
   /**
    * Simulates a glob lookup in the virtual file system
    */
-  findFilesByGlobSync(pattern: string): string[] {
+  async findFilesByGlob(pattern: string): Promise<string[]> {
     const regex = new RegExp(pattern.replace(/\*/g, ".*") + "$", "i");
     return Array.from(this.files.keys()).filter((fp) => regex.test(fp));
   }
