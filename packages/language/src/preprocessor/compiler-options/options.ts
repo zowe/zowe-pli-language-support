@@ -441,7 +441,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-prectype
    */
-  precType?: "ANS" | "DECDIGIT" | "DECRESULT";
+  precType?: CompilerOptions.PrecType;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-prefix
    */
@@ -453,7 +453,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-process
    */
-  process?: "DELETE" | "KEEP" | false;
+  process?: CompilerOptions.Process | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-quote
    */
@@ -477,7 +477,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-rtcheck
    */
-  rtCheck?: "NONULLPTR" | "NULLPTR" | "NULL370";
+  rtCheck?: CompilerOptions.RtCheck;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-rules
    */
@@ -497,7 +497,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-spill
    */
-  spill?: string;
+  spill?: number;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-static
    */
@@ -517,7 +517,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-stringofgraphic
    */
-  stringOfGraphic?: "GRAPHIC" | "CHARACTER";
+  stringOfGraphic?: CompilerOptions.StringOfGraphic;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-syntax
    */
@@ -838,14 +838,17 @@ export declare namespace CompilerOptions {
     name: string;
     value?: string;
   }
-  export type Proceed =
-    | {
-        flag?: Flag;
-      }
-    | true;
+  export type PrecType = "ANS" | "DECDIGIT" | "DECRESULT";
+  export type Proceed = {
+    // *PROCESS NOPROCEED; actually results in NOPROCEED( I ); which stops
+    // compilation after the preprocessors.
+    noProceed: Flag;
+  };
+  export type Process = "DELETE" | "KEEP";
   export type Respect = {
     date?: boolean;
   };
+  export type RtCheck = "NONULLPTR" | "NULLPTR" | "NULL370";
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-rules
    */
@@ -1016,16 +1019,15 @@ export declare namespace CompilerOptions {
           source?: "ALL" | "SOURCE";
         };
   };
-  export type Semantic =
-    | true
-    | {
-        flag?: CompilerOptions.Flag;
-      };
-  export type Syntax =
-    | true
-    | {
-        flag?: CompilerOptions.Flag;
-      };
+  export type Semantic = {
+    // *PROCESS NOSEMANTIC; actually results in NOSEMANTIC( I );
+    noSemantic: Flag;
+  };
+  export type StringOfGraphic = "GRAPHIC" | "CHARACTER";
+  export type Syntax = {
+    // *PROCESS NOSYNTAX; actually results in NOSYNTAX( I );
+    noSyntax: Flag;
+  };
   export type System = "MVS" | "CICS" | "IMS" | "OS" | "TSO";
   export type Test =
     | false
@@ -1137,6 +1139,24 @@ const defaultCompilerOptions: CompilerOptions = {
   onSnap: false,
   optimize: 0,
   options: "DOC",
+  precType: "ANS",
+  proceed: { noProceed: "S" },
+  process: "DELETE",
+  quote: '"',
+  reduce: true,
+  rent: false,
+  resExp: true,
+  respect: { date: false },
+  rtCheck: "NONULLPTR",
+  service: "",
+  source: true,
+  spill: 512,
+  static: "SHORT",
+  stdsys: false,
+  stmt: false,
+  storage: false,
+  stringOfGraphic: "GRAPHIC",
+  syntax: { noSyntax: "S" },
   system: "MVS",
   sysParm: "",
 };
