@@ -30,6 +30,7 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { tokenize } from "../parser/tokenizer";
 import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
 import { preprocessorParse } from "./preprocessor-parser";
+import { Severity } from "../language-server/types";
 import { getSyntaxNodeRange } from "../language-server/types";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
@@ -484,10 +485,30 @@ function runInstructionSync(
   return undefined;
 }
 
+function codeToSeverity(code: number|undefined): Severity|undefined {
+  switch (code) {
+    case undefined:
+    case 0:
+      return Severity.I; // Informational
+    case 4:
+      return Severity.W; // Warning
+    case 8:
+      return Severity.E; // Error
+    case 12:
+      return Severity.S; // Severe
+    case 16:
+      return Severity.U; // User-defined
+    default:
+      //TODO If code has a value other than those in the preceding list, a diagnostic message is produced; the resulting system action is undefined.
+      return undefined;
+  }
+}
+
 function runNoteInstruction(instruction: inst.NoteInstruction, context: InterpreterContext): void {
   const message = valueToString(evaluateExpression(instruction.message, context));
-  //TODO const code = valueToString(evaluateExpression(instruction.code, context));
-  context.errors.push(new PreprocessorError(message ?? "", instruction.noteToken));
+  const code = valueToNumber(evaluateExpression(instruction.code, context));
+  const severity = codeToSeverity(code);
+  context.errors.push(new PreprocessorError(message ?? "", instruction.noteToken, undefined, code?.toString(), severity));
 }
 
 function runHaltInstruction(
