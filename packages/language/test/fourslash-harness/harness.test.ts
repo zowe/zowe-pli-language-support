@@ -34,9 +34,9 @@ function createListenerCreator(listener: HarnessImplementationListener) {
   };
 }
 
-function createTestingHarnessImplementation(
+async function createTestingHarnessImplementation(
   listener: HarnessImplementationListener,
-): HarnessTesterInterface {
+): Promise<HarnessTesterInterface> {
   const listen = createListenerCreator(listener);
 
   return {
@@ -45,7 +45,7 @@ function createTestingHarnessImplementation(
       expectNoLinksAt: listen("linker.expectNoLinksAt"),
     },
     testAPI: {
-      testBuilder: TestBuilder.create("", {}),
+      testBuilder: await TestBuilder.create("", {}),
     },
     verify: {
       expectExclusiveErrorCodesAt: listen("verify.expectExclusiveErrorCodesAt"),
@@ -82,9 +82,10 @@ function createTestingHarnessImplementation(
 }
 
 describe("Harness test framework tests", () => {
-  test("should run expectNoLinksAt command", () => {
+  test("should run expectNoLinksAt command", async () => {
     const mockFunction = vitest.fn().mockImplementation(() => {});
-    const implementation = createTestingHarnessImplementation(mockFunction);
+    const implementation =
+      await createTestingHarnessImplementation(mockFunction);
     const commands = `linker.expectNoLinksAt("label");`;
 
     const file: HarnessTest = {
@@ -102,9 +103,10 @@ describe("Harness test framework tests", () => {
     );
   });
 
-  test("should run all commands", () => {
+  test("should run all commands", async () => {
     const mockFunction = vitest.fn().mockImplementation(() => {});
-    const implementation = createTestingHarnessImplementation(mockFunction);
+    const implementation =
+      await createTestingHarnessImplementation(mockFunction);
 
     const functionCalls = Object.values(implementation).flatMap(
       (group, groupId) =>

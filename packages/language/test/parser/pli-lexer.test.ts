@@ -14,8 +14,9 @@ import { PliLexer } from "../../src/preprocessor/pli-lexer";
 import { URI } from "../../src/utils/uri";
 import { createCompilationUnit } from "../../src/workspace/compilation-unit";
 import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
-type TokenizeFunction = (text: string) => string[];
+type TokenizeFunction = (text: string) => Promise<string[]>;
 
 describe("PL/1 Lexer", () => {
   let tokenize: TokenizeFunction;
@@ -23,11 +24,12 @@ describe("PL/1 Lexer", () => {
 
   beforeAll(async () => {
     const lexer = new PliLexer();
-    tokenize = (text: string) => {
+    tokenize = async (text: string) => {
       const uri = URI.file("/test/test.pli");
-      const { all: allTokens, errors } = lexer.tokenize(
-        createCompilationUnit(uri),
-        text,
+      const document = TextDocument.create(uri.toString(), "pli", 0, text);
+      const { all: allTokens, errors } = await lexer.tokenize(
+        await createCompilationUnit(uri),
+        document,
         uri,
       );
       if (errors.length > 0) {
@@ -41,28 +43,33 @@ describe("PL/1 Lexer", () => {
         (t) => t.image + ":" + t.tokenType.name.toUpperCase(),
       );
     };
-    tokenizeWithErrors = (text: string) => {
+    tokenizeWithErrors = async (text: string) => {
       const uri = URI.file("/test/test.pli");
-      const { errors } = lexer.tokenize(createCompilationUnit(uri), text, uri);
+      const document = TextDocument.create(uri.toString(), "pli", 0, text);
+      const { errors } = await lexer.tokenize(
+        await createCompilationUnit(uri),
+        document,
+        uri,
+      );
       return errors.map((e) => e.message);
     };
   });
 
-  test("Preprocessor garbage", () => {
-    expect(tokenizeWithErrors(" %garbage")).toStrictEqual([
+  test("Preprocessor garbage", async () => {
+    expect(await tokenizeWithErrors(" %garbage")).toStrictEqual([
       `Unexpected token 'GARBAGE'.`,
     ]);
   });
 
-  test("PL/I garbage", () => {
+  test("PL/I garbage", async () => {
     //This is not an error, since it is a valid PL/I token.
     //The error will pop up in the PL/I parser due to syntax rules!
-    expect(tokenizeWithErrors(" garbage")).toStrictEqual([]);
+    expect(await tokenizeWithErrors(" garbage")).toStrictEqual([]);
   });
 
-  test("Tokenize simple declaration with preprocessor", () => {
+  test("Tokenize simple declaration with preprocessor", async () => {
     expect(
-      tokenize(`
+      await tokenize(`
             %dcl A char;
             %A = 'B';
             dcl A%;C fixed bin(31);
@@ -79,9 +86,9 @@ describe("PL/1 Lexer", () => {
     ]);
   });
 
-  test("Tokenize simple error in declaration with preprocessor", () => {
+  test("Tokenize simple error in declaration with preprocessor", async () => {
     expect(
-      tokenizeWithErrors(`
+      await tokenizeWithErrors(`
             %decl A char;
             %A = 'B';
             dcl A%;C fixed bin(31);
@@ -89,18 +96,18 @@ describe("PL/1 Lexer", () => {
     ).toStrictEqual(["Unexpected token 'DECL'."]);
   });
 
-  test("Tokenize multiple errors in declaration with preprocessor", () => {
+  test("Tokenize multiple errors in declaration with preprocessor", async () => {
     expect(
-      tokenizeWithErrors(`
+      await tokenizeWithErrors(`
             %decl A char;
             %%A = 'B';
         `),
     ).toStrictEqual(["Unexpected token 'DECL'.", "Unexpected token '%'."]);
   });
 
-  test("Skip directive without parentheses should not lex correctly", () => {
+  test("Skip directive without parentheses should not lex correctly", async () => {
     expect(
-      tokenizeWithErrors(`
+      await tokenizeWithErrors(`
             %SKIP 2;
             dcl A fixed bin(31);
             dcl B fixed bin(31);
@@ -108,9 +115,9 @@ describe("PL/1 Lexer", () => {
     ).not.toStrictEqual([]);
   });
 
-  test("Skip directive with incorrect parentheses should not lex correctly", () => {
+  test("Skip directive with incorrect parentheses should not lex correctly", async () => {
     expect(
-      tokenizeWithErrors(`
+      await tokenizeWithErrors(`
             %SKIP (2;
             dcl A fixed bin(31);
             dcl B fixed bin(31);
@@ -118,9 +125,9 @@ describe("PL/1 Lexer", () => {
     ).not.toStrictEqual([]);
   });
 
-  test("Hello World", () => {
+  test("Hello World", async () => {
     expect(
-      tokenize(`
+      await tokenize(`
             AVERAGE: PROCEDURE OPTIONS (MAIN);
                 /* Test characters: ^[] € */
                 /* AVERAGE_GRADE = SUM / 5; */
@@ -148,9 +155,9 @@ describe("PL/1 Lexer", () => {
     ]);
   });
 
-  test("NodeDescriptor", () => {
+  test("NodeDescriptor", async () => {
     expect(
-      tokenize(`
+      await tokenize(`
             a: proc( x ) options(nodescriptor);
               dcl x(20) fixed bin nonconnected;
             end a;
@@ -179,63 +186,6 @@ describe("PL/1 Lexer", () => {
       "END:END",
       "A:A",
       ";:;",
-    ]);
-  });
-
-  test.skip("XYZ", () => {
-    expect(
-      tokenize(`
-            %DCL GEN ENTRY;
-            DCL A GEN(FIXED);
-            %GEN: PROCEDURE(STRING) RETURNS (CHAR);
-                DCL STRING CHAR;
-                RETURN (STRING);
-            END;
-        `),
-    ).toStrictEqual([
-      // DCL A GENERIC(A2 WHEN (FIXED,FIXED),
-      // A3 WHEN (FIXED, FIXED, FIXED),
-      // A4 WHEN (FIXED, FIXED, FIXED, FIXED),
-      // A5 WHEN (FIXED, FIXED, FIXED, FIXED, FIXED));
-    ]);
-  });
-
-  test.skip("Preprocessor example", () => {
-    //TODO the final procedure test
-    expect(
-      tokenize(`
-            %DCL GEN ENTRY;
-            DCL A GEN (A,2,5,FIXED);
-            %GEN: PROC(NAME,LOW,HIGH,ATTR) RETURNS (CHAR);
-                DCL (NAME, SUFFIX, ATTR, STRING) CHAR, (LOW, HIGH, I, J) FIXED;
-                STRING='GENERIC(';
-                DO I=LOW TO HIGH;                      /* ENTRY NAME LOOP*/
-                    IF I>9 THEN
-                    SUFFIX=SUBSTR(I, 7, 2);
-                                                        /* 2 DIGIT SUFFIX*/
-                    ELSE SUFFIX=SUBSTR(I, 8, 1);
-                                                        /* 1 DIGIT SUFFIX*/
-                    STRING=STRING||NAME||SUFFIX||' WHEN (';
-                    DO J=1 TO I;                        /* DESCRIPTOR LIST*/
-                    STRING=STRING||ATTR;
-                    IF J<I                           /* ATTRIBUTE SEPARATOR*/
-                        THEN STRING=STRING||',';
-                        ELSE STRING=STRING||')';
-                                                        /* LIST SEPARATOR */
-                    END;
-                    IF I<HIGH THEN                      /* ENTRY NAME SEPARATOR*/
-                    STRING=STRING||',';
-                    ELSE STRING=STRING||')';
-                                                    /* END OF LIST /*
-                END;
-                RETURN (STRING);
-            % END;
-        `),
-    ).toStrictEqual([
-      // DCL A GENERIC(A2 WHEN (FIXED,FIXED),
-      // A3 WHEN (FIXED, FIXED, FIXED),
-      // A4 WHEN (FIXED, FIXED, FIXED, FIXED),
-      // A5 WHEN (FIXED, FIXED, FIXED, FIXED, FIXED));
     ]);
   });
 
@@ -269,9 +219,9 @@ describe("PL/1 Lexer", () => {
         processGroupConfig,
       ]);
 
-      const { compilerOptions } = lexer.tokenize(
-        createCompilationUnit(uri),
-        inputText,
+      const { compilerOptions } = await lexer.tokenize(
+        await createCompilationUnit(uri),
+        TextDocument.create(uri.toString(), "pli", 0, inputText),
         uri,
       );
 
@@ -296,9 +246,9 @@ describe("PL/1 Lexer", () => {
         programConfig,
       ]);
 
-      const { compilerOptions } = lexer.tokenize(
-        createCompilationUnit(uri),
-        inputText,
+      const { compilerOptions } = await lexer.tokenize(
+        await createCompilationUnit(uri),
+        TextDocument.create(uri.toString(), "pli", 0, inputText),
         uri,
       );
 
@@ -327,9 +277,9 @@ describe("PL/1 Lexer", () => {
         processGroupConfig,
       ]);
 
-      const { compilerOptions } = lexer.tokenize(
-        createCompilationUnit(uri),
-        inputText,
+      const { compilerOptions } = await lexer.tokenize(
+        await createCompilationUnit(uri),
+        TextDocument.create(uri.toString(), "pli", 0, inputText),
         uri,
       );
 

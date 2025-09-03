@@ -37,7 +37,6 @@ import { binaryTokenSearch } from "../utils/search";
 import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { TextDocuments } from "./text-documents";
 import { HoverResponse, tokenToRange } from "./types";
 
 type MarkupResponse = string | null;
@@ -233,9 +232,12 @@ function decodeBound(bound: Bound | null): string | null {
 
 /**
  * Converts an IncludeItem node to a string representation.
- * Ex. %INCLUDE "file:///path/to/file.pli"
+ * Ex. %INCLUDE "/path/to/file.pli"
  */
-function getIncludeItemRepresentation(node: IncludeItem): string | null {
+function getIncludeItemRepresentation(
+  unit: CompilationUnit,
+  node: IncludeItem,
+): string | null {
   if (!node.filePath) {
     return null;
   }
@@ -246,7 +248,7 @@ function getIncludeItemRepresentation(node: IncludeItem): string | null {
   if (!partialContent) {
     // load up the first 20 lines of content from the file (semi-arbitrary cutoff)
     const lineCutoff = 20;
-    const doc = TextDocuments.get(fileUri);
+    const doc = unit.files.getDocument(fileUri);
     if (!doc) {
       return null;
     }
@@ -278,7 +280,7 @@ function getNodeRepresentation(
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
     case SyntaxKind.IncludeItem:
-      return getIncludeItemRepresentation(node);
+      return getIncludeItemRepresentation(unit, node);
     default:
       return null;
   }
@@ -349,7 +351,7 @@ export function hoverRequest(
   uri: URI,
   offset: number,
 ): HoverResponse | null {
-  const tokens = unit.tokens.fileTokens.get(uri.toString());
+  const tokens = unit.files.getTokens(uri);
   if (!tokens) {
     return null;
   }

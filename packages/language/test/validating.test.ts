@@ -253,13 +253,15 @@ describe("Validating", () => {
       expect(diagnostics.length).toBe(0);
     });
 
-    test("Factoring of level numbers into declaration lists containing level numbers is invalid", () =>
-      TestBuilder.createValidating(
-        `
+    test("Factoring of level numbers into declaration lists containing level numbers is invalid", async () =>
+      (
+        await TestBuilder.createValidating(
+          `
  DCL 1 A,
        2 (B, <|a:3|> C),
        2 (<|b:3|> D),
        2 (3 E, (<|c:4|> F));`,
+        )
       )
         .expectExclusiveErrorCodesAt("a", PLICodes.Error.IBM1376I.fullCode)
         .expectExclusiveErrorCodesAt("b", PLICodes.Error.IBM1376I.fullCode)

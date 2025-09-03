@@ -9,11 +9,11 @@
  *
  */
 
-import { readFileSync } from "fs";
 import { HarnessFile, HarnessTest, UnnamedFile } from "./types";
 import { getFileName } from "./utils";
 import { Wrapper } from "./wrapper";
 import path from "path";
+import fs from "fs";
 
 const HarnessFileTag = {
   // The name of the file
@@ -257,7 +257,7 @@ function normalize(text: string): string {
   return text.replace(/\r\n/g, "\n");
 }
 
-const ownFile = readFileSync(__filename, "utf-8");
+const ownFile = fs.readFileSync(__filename, "utf-8");
 const header = normalize(ownFile.substring(0, ownFile.indexOf("*/") + 2));
 
 /**
@@ -269,12 +269,12 @@ const header = normalize(ownFile.substring(0, ownFile.indexOf("*/") + 2));
  * @param context - The context of the harness test file.
  * @returns The `HarnessTest` object.
  */
-export function parseHarnessTestFile(
+export async function parseHarnessTestFile(
   relativePath: string,
   fileName: string,
   context: Context,
-): HarnessTest {
-  const text = readFileSync(fileName, "utf-8");
+): Promise<HarnessTest> {
+  const text = await fs.promises.readFile(fileName, "utf-8");
 
   if (!normalize(text).startsWith(header)) {
     throw new Error(

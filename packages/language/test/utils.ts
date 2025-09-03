@@ -23,8 +23,8 @@ import { forEachNode } from "../src/syntax-tree/ast-iterator";
 import { IntermediateBinaryExpression } from "../src/parser/abstract-parser";
 import { escapeRegExp, Token } from "../src/parser/tokens";
 import { referencesRequest } from "../src/language-server/references-request";
-import { completionRequest } from "../src/language-server/completion/completion-request";
 import { CancellationToken } from "vscode-languageserver";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
@@ -114,14 +114,14 @@ export async function parse(
   text: string,
   options?: { validate?: boolean; uri?: URI },
 ): Promise<CompilationUnit> {
-  const sourceFile = createCompilationUnit(
-    options?.uri ?? URI.file("test.pli"),
-  );
+  const uri = options?.uri ?? URI.file("test.pli");
+  const sourceFile = await createCompilationUnit(uri);
+  const document = TextDocument.create(uri.toString(), "pli", 0, text);
   if (!options?.validate) {
-    lifecycle.tokenize(sourceFile, text);
+    await lifecycle.tokenize(sourceFile, document);
     lifecycle.parse(sourceFile);
   } else {
-    await lifecycle.lifecycle(sourceFile, text, CancellationToken.None);
+    await lifecycle.lifecycle(sourceFile, document, CancellationToken.None);
   }
   return sourceFile;
 }
@@ -165,7 +165,7 @@ export function generateAndAssertValidSymbolTable(
   compilationUnit: CompilationUnit,
 ) {
   // Retrieve a list of valid tokens with validated payloads.
-  const tokens = compilationUnit.tokens.all.filter((token) => {
+  const tokens = compilationUnit.tokens.filter((token) => {
     // FQN rule (token payload === undefined) does not reset the token kind.
     // Todo: Remove this exception once the FQN rule is updated.
     // Intermediate binary expressions are not AST nodes.
@@ -256,13 +256,15 @@ export function generateAndAssertValidSymbolTable(
  * ---------- Linking utilities ----------
  */
 
-export function parseAndLink(
+export async function parseAndLink(
   text: string,
   options?: { validate?: boolean; uri?: URI },
-): CompilationUnit {
-  const unit = createCompilationUnit(options?.uri ?? URI.file("test.pli"));
+): Promise<CompilationUnit> {
+  const uri = options?.uri ?? URI.file("test.pli");
+  const document = TextDocument.create(uri.toString(), "pli", 0, text);
+  const unit = await createCompilationUnit(uri);
 
-  lifecycle.tokenize(unit, text);
+  await lifecycle.tokenize(unit, document);
   lifecycle.parse(unit);
   lifecycle.generateSymbolTable(unit);
   lifecycle.link(unit);
@@ -427,7 +429,7 @@ export function replaceIndices(base: ExpectedBase): {
  * `)
  * ```
  */
-export function expectReferences(text: string) {
+export async function expectReferences(text: string) {
   const { output, indices, ranges } = replaceNamedIndices(text);
 
   const requests = Object.entries(indices).flatMap(([index, offsets]) =>
@@ -438,7 +440,7 @@ export function expectReferences(text: string) {
     })),
   );
 
-  const unit = parseAndLink(output);
+  const unit = await parseAndLink(output);
 
   for (const { label, offset, rangeIndex } of requests) {
     const result = referencesRequest(unit, unit.uri, offset);
@@ -471,35 +473,3 @@ export function expectReferences(text: string) {
 /**
  * ---------- End of Linking utilities ----------
  */
-
-interface ExpectedCompletion {
-  includes: string[];
-  excludes?: string[];
-}
-
-export function expectCompletions(
-  text: string,
-  completions: ExpectedCompletion[],
-) {
-  const { output, indices } = replaceIndices({ text });
-
-  const unit = parseAndLink(output);
-
-  for (let i = 0; i < indices.length; i++) {
-    const index = indices[i];
-    const completionItems = completions[i];
-    const completionResult = completionRequest(unit, unit.uri, index)
-      .sort((a, b) => {
-        const aLabel = a.sortText ?? a.label;
-        const bLabel = b.sortText ?? b.label;
-        return aLabel.localeCompare(bLabel);
-      })
-      .map((e) => e.label);
-
-    expect(completionResult).containSubset(completionItems.includes);
-
-    if (completionItems.excludes && completionItems.excludes.length > 0) {
-      expect(completionResult).not.containSubset(completionItems.excludes);
-    }
-  }
-}
