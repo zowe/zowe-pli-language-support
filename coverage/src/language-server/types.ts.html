@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">32.51% </span>
+                <span class="strong">31.32% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>53/163</span>
+                <span class='fraction'>52/166</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">32.51% </span>
+                <span class="strong">31.32% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>53/163</span>
+                <span class='fraction'>52/166</span>
             </div>
         
             
@@ -332,7 +332,11 @@
 <a name='L267'></a><a href='#L267'>267</a>
 <a name='L268'></a><a href='#L268'>268</a>
 <a name='L269'></a><a href='#L269'>269</a>
-<a name='L270'></a><a href='#L270'>270</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -349,7 +353,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -471,8 +475,12 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -617,8 +625,8 @@ import * as lsp from "vscode-languageserver-types";
 import { getNameToken } from "../linking/tokens";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { Token } from "../parser/tokens";
-import { TextDocuments } from "./text-documents";
 import { InsertTextFormat, MarkupContent } from "vscode-languageserver-types";
+import { CompilationUnit } from "../workspace/compilation-unit";
 &nbsp;
 export type Offset = number;
 &nbsp;
@@ -727,12 +735,13 @@ export interface Diagnostic {
 export type DiagnosticInfo = Omit&lt;Diagnostic, "severity" | "message"&gt;;
 &nbsp;
 export <span class="fstat-no" title="function not covered" >function diagnosticsToLSP(</span>
+<span class="cstat-no" title="statement not covered" >  unit: CompilationUnit,</span>
 <span class="cstat-no" title="statement not covered" >  diagnostics: Diagnostic[],</span>
 <span class="cstat-no" title="statement not covered" >): Map&lt;string, lsp.Diagnostic[]&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const map = new Map&lt;string, lsp.Diagnostic[]&gt;();</span>
 <span class="cstat-no" title="statement not covered" >  for (const diagnostic of diagnostics) {</span>
 <span class="cstat-no" title="statement not covered" >    const uri = diagnostic.uri;</span>
-<span class="cstat-no" title="statement not covered" >    const lspDiagnostic = diagnosticToLSP(diagnostic);</span>
+<span class="cstat-no" title="statement not covered" >    const lspDiagnostic = diagnosticToLSP(unit, diagnostic);</span>
 <span class="cstat-no" title="statement not covered" >    if (!map.has(uri)) {</span>
 <span class="cstat-no" title="statement not covered" >      map.set(uri, []);</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
@@ -741,8 +750,11 @@ export <span class="fstat-no" title="function not covered" >function diagnostics
 <span class="cstat-no" title="statement not covered" >  return map;</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
-export <span class="fstat-no" title="function not covered" >function diagnosticToLSP(diagnostic: Diagnostic): lsp.Diagnostic {</span>
-<span class="cstat-no" title="statement not covered" >  const doc = TextDocuments.get(diagnostic.uri);</span>
+export <span class="fstat-no" title="function not covered" >function diagnosticToLSP(</span>
+<span class="cstat-no" title="statement not covered" >  unit: CompilationUnit,</span>
+<span class="cstat-no" title="statement not covered" >  diagnostic: Diagnostic,</span>
+<span class="cstat-no" title="statement not covered" >): lsp.Diagnostic {</span>
+<span class="cstat-no" title="statement not covered" >  const doc = unit.files.getDocument(diagnostic.uri);</span>
 <span class="cstat-no" title="statement not covered" >  return {</span>
 <span class="cstat-no" title="statement not covered" >    severity: severityToLsp(diagnostic.severity),</span>
 <span class="cstat-no" title="statement not covered" >    range: {</span>
@@ -877,7 +889,7 @@ export interface WorkspaceSymbol {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-03T12:40:40.591Z
+                at 2025-09-03T13:17:58.941Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
