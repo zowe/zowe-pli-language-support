@@ -175,18 +175,14 @@ export class TestBuilder {
     this.configurePluginConfigurationProvider();
 
     const [[firstFileUri, firstFile]] = this.files.entries();
-    const output = firstFile.output;
-    const indices = firstFile.indices;
-    const ranges = firstFile.ranges;
+    this.output = firstFile.output;
+    this.indices = firstFile.indices;
+    this.ranges = firstFile.ranges;
 
-    this.unit = parseAndLink(output, {
+    this.unit = parseAndLink(this.output, {
       validate: options?.validate,
       uri: URI.parse(firstFileUri),
     });
-
-    this.output = output;
-    this.indices = indices;
-    this.ranges = ranges;
     this.diagnostics = collectDiagnostics(this.unit);
     this.checkDiagnosticsURIs();
 
