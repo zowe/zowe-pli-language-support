@@ -10,6 +10,7 @@
  */
 
 import {
+  CompilerConditions,
   CompilerOptionIssue,
   CompilerOptionResult,
   CompilerOptions,
@@ -313,6 +314,38 @@ function ensureNumberValue(
     );
   }
   return num;
+}
+
+function ensureArgument<T>(
+  optionValue: CompilerOptionValue,
+  code: ParametricPLICode,
+  args: T[],
+): (typeof args)[number] {
+  let value;
+  if (optionValue.kind === SyntaxKind.CompilerOptionText) {
+    value = optionValue.value;
+  } else if (optionValue.kind === SyntaxKind.CompilerOptionString) {
+    value = optionValue.value;
+  } else if (optionValue.kind === SyntaxKind.CompilerOption) {
+    value = optionValue.name;
+  } else {
+    throw new Error("Compiler option value is not supported.");
+  }
+  const valueUpperCase = value.toUpperCase();
+  for (const arg of args) {
+    if (valueUpperCase === arg) {
+      return arg;
+    }
+  }
+  throw TranslationError.fromCode(optionValue.token, code, value);
+}
+
+function ensureFlag(
+  optionValue: CompilerOptionValue,
+  code: ParametricPLICode,
+  args: string[],
+): boolean {
+  return ensureArgument(optionValue, code, args) === args[0];
 }
 
 function stringToNumber(text: string): number {
@@ -2591,6 +2624,44 @@ translator.rule(["PRECTYPE"], (option, options) => {
 });
 
 /** {@link CompilerOptions.prefix} */
+translator.rule(["PREFIX"], (option, options) => {
+  ensureArguments(option, 1);
+  if (!options.prefix) {
+    // TODO: Prefix does not override prev settings. (no dupe?)
+    options.prefix = getDefaultCompilerOptions().prefix;
+  }
+  for (const value of option.values) {
+    ensureType(value, "plain");
+    if (value.value.length === 0) {
+      // Will only happen, if the arguments list is empty.
+      return;
+    }
+    const valueName = value.value.toUpperCase();
+    const setCondition = !valueName.startsWith("NO");
+    const name = setCondition ? valueName : valueName.slice(2);
+    const condition = CompilerConditions.PLI_CONDITIONS.find((c) =>
+      (c.condition as readonly string[]).includes(name),
+    ) as CompilerConditions.Condition | undefined;
+    if (!condition) {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.Prefix.InvalidParameter,
+        value.value,
+      );
+    }
+    if (condition.alwaysEnabled) {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.Prefix.ConditionIsAlwaysEnabled,
+        value.value,
+      );
+    }
+    options.prefix![
+      condition.condition[0].toLowerCase() as keyof CompilerConditions.ConditionOptions
+    ] = setCondition;
+  }
+});
+
 /** {@link CompilerOptions.proceed} */
 translator.rule(
   ["PROCEED", "PRO"],
@@ -2896,16 +2967,375 @@ translator.rule(
     "TSO",
   ),
 );
+
 /** {@link CompilerOptions.terminal} */
+translator.flag("terminal", ["TERMINAL", "TERM"], ["NOTERMINAL", "NTERM"]);
+
 /** {@link CompilerOptions.test} */
+translator.rule(
+  ["TEST"],
+  (option, options) => {
+    // If there are multiple *PROCESS TEST directives,
+    // the last one takes precedence and all suboptions that are not specified
+    // are set to default.
+    options.test = {
+      level: "ALL",
+      hook: true,
+      separate: false,
+      sepName: true,
+      source: false,
+      sym: true,
+    };
+    for (const value of option.values) {
+      ensureType(value, "plain");
+      const name = value.value.toUpperCase();
+      switch (name) {
+        // TODO ssmifi: We could also report contradicting suboptions here,
+        // but that would abort the option evaluation. We can add a way to
+        // report multiple diagnostics per rule in the future.
+        // In case of a contradiction, the last suboption takes effect.
+        case "ALL":
+        case "BLOCK":
+        case "NONE":
+        case "PATH":
+        case "STMT":
+          options.test.level = name as CompilerOptions.TestLevel;
+          break;
+        case "HOOK":
+          options.test.hook = true;
+          break;
+        case "NOHOOK":
+          options.test.hook = false;
+          break;
+        case "SEPARATE":
+          options.test.separate = true;
+          break;
+        case "NOSEPARATE":
+          options.test.separate = false;
+          break;
+        case "SEPNAME":
+          options.test.sepName = true;
+          break;
+        case "NOSEPNAME":
+          options.test.sepName = false;
+          break;
+        case "SOURCE":
+          options.test.source = true;
+          break;
+        case "NOSOURCE":
+          options.test.source = false;
+          break;
+        case "SYM":
+          options.test.sym = true;
+          break;
+        case "NOSYM":
+          options.test.sym = false;
+          break;
+        default:
+          throw TranslationError.fromCode(
+            value.token,
+            CompilerOptionsCodes.Test.InvalidParameter,
+            name,
+          );
+      }
+    }
+  },
+  ["NOTEST"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.test = false;
+  },
+);
+
 /** {@link CompilerOptions.unroll} */
+translator.rule(["UNROLL"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  const name = value.value.toUpperCase();
+  if (["AUTO", "NO"].includes(name)) {
+    options.unroll = name as CompilerOptions.Unroll;
+  } else {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.Unroll.InvalidParameter,
+      name,
+    );
+  }
+});
+
 /** {@link CompilerOptions.usage} */
+translator.rule(["USAGE"], (option, options) => {
+  ensureArguments(option, 1);
+  if (!options.usage) {
+    options.usage = getDefaultCompilerOptions().usage;
+  }
+  for (const value of option.values) {
+    ensureType(value, "option");
+    const name = value.name.toUpperCase();
+    ensureArguments(value, 1, 1);
+    const argument = value.values[0];
+    ensureType(argument, "plain");
+    switch (name) {
+      case "HEX":
+        options.usage!.hex = ensureArgument(
+          argument,
+          CompilerOptionsCodes.Usage.InvalidHexParameter,
+          ["SIZE", "CURRENTSIZE"],
+        );
+        break;
+      case "REGEX":
+        options.usage!.regex!.reset = ensureFlag(
+          argument,
+          CompilerOptionsCodes.Usage.InvalidRegexParameter,
+          ["RESET", "NORESET"],
+        );
+        break;
+      case "ROUND":
+        options.usage!.round = ensureArgument(
+          argument,
+          CompilerOptionsCodes.Usage.InvalidRoundParameter,
+          ["IBM", "ANS"],
+        );
+        break;
+      case "SUBSTR":
+        options.usage!.substr = ensureArgument(
+          argument,
+          CompilerOptionsCodes.Usage.InvalidSubstrParameter,
+          ["STRICT", "LOOSE"],
+        );
+        break;
+      case "UNSPEC":
+        options.usage!.unspec = ensureArgument(
+          argument,
+          CompilerOptionsCodes.Usage.InvalidUnspecParameter,
+          ["IBM", "ANS"],
+        );
+        break;
+      case "UUID":
+        options.usage!.uuid = ensureArgument(
+          argument,
+          CompilerOptionsCodes.Usage.InvalidUuidParameter,
+          ["UPPER", "LOWER"],
+        );
+        break;
+      case "VALIDDATE":
+        options.usage!.validDate = ensureArgument(
+          argument,
+          CompilerOptionsCodes.Usage.InvalidValidDateParameter,
+          ["LOOSE", "STRICT"],
+        );
+        break;
+      default:
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.Usage.InvalidParameter,
+          name,
+        );
+    }
+  }
+});
+
 /** {@link CompilerOptions.widechar} */
+translator.rule(["WIDECHAR"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  options.widechar = ensureArgument(
+    value,
+    CompilerOptionsCodes.WideChar.InvalidParameter,
+    ["BIGENDIAN", "LITTLEENDIAN"],
+  );
+});
+
 /** {@link CompilerOptions.window} */
+translator.rule(["WINDOW"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainNotEmpty");
+  // The spec does not define any boundaries.
+  options.window = ensureNumberValue(value);
+});
+
 /** {@link CompilerOptions.writable} */
+translator.rule(
+  ["WRITABLE"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.writable = true;
+  },
+  ["NOWRITABLE"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      options.writable = { noWritable: "FWS" };
+      return;
+    }
+    const value = option.values[0];
+    ensureType(value, "plainNotEmpty");
+    options.writable = {
+      noWritable: ensureArgument(
+        value,
+        CompilerOptionsCodes.Writable.InvalidParameter,
+        ["FWS", "PRV"],
+      ),
+    };
+  },
+);
+
 /** {@link CompilerOptions.xInfo} */
+translator.rule(["XINFO"], (option, options) => {
+  ensureArguments(option, 1);
+  if (!options.xInfo) {
+    options.xInfo = getDefaultCompilerOptions().xInfo;
+  }
+  for (const value of option.values) {
+    if (value.kind === SyntaxKind.CompilerOption) {
+      ensureArguments(value, 1, 1);
+      const optionName = value.name.toUpperCase();
+      if (optionName === "XML") {
+        options.xInfo!.xml = {
+          hash: ensureFlag(
+            value.values[0],
+            CompilerOptionsCodes.XInfo.InvalidXmlParameter,
+            ["HASH", "NOHASH"],
+          ),
+        };
+        continue;
+      }
+    }
+    ensureType(value, "plainNotEmpty");
+    const name = value.value.toUpperCase();
+    switch (name) {
+      case "DEF":
+      case "NODEF":
+        options.xInfo!.def = ensureFlag(
+          value,
+          CompilerOptionsCodes.XInfo.InvalidDefParameter,
+          ["DEF", "NODEF"],
+        );
+        break;
+      case "MSG":
+      case "NOMSG":
+        options.xInfo!.msg = ensureFlag(
+          value,
+          CompilerOptionsCodes.XInfo.InvalidMsgParameter,
+          ["MSG", "NOMSG"],
+        );
+        break;
+      case "SYM":
+      case "NOSYM":
+        options.xInfo!.sym = ensureFlag(
+          value,
+          CompilerOptionsCodes.XInfo.InvalidSymParameter,
+          ["SYM", "NOSYM"],
+        );
+        break;
+      case "SYN":
+      case "NOSYN":
+        options.xInfo!.syn = ensureFlag(
+          value,
+          CompilerOptionsCodes.XInfo.InvalidSynParameter,
+          ["SYN", "NOSYN"],
+        );
+        break;
+      case "NOXML":
+        ensureType(value, "plain");
+        options.xInfo!.xml = false;
+        break;
+      default:
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.XInfo.InvalidParameter,
+          value.value,
+        );
+    }
+  }
+});
+
 /** {@link CompilerOptions.xml} */
+translator.rule(["XML"], (option, options) => {
+  ensureArguments(option, 1);
+  if (!options.xml) {
+    options.xml = getDefaultCompilerOptions().xml;
+  }
+  for (const value of option.values) {
+    ensureType(value, "option");
+    ensureArguments(value, 1, 1);
+    switch (value.name.toUpperCase()) {
+      case "CASE":
+        options.xml!.case = ensureArgument(
+          value.values[0],
+          CompilerOptionsCodes.Xml.InvalidCaseParameter,
+          ["UPPER", "ASIS"],
+        );
+        break;
+      case "XMLATTR":
+        options.xml!.xmlAttr = ensureArgument(
+          value.values[0],
+          CompilerOptionsCodes.Xml.InvalidXmlAttrParameter,
+          ["APOSTROPHE", "QUOTE"],
+        );
+        break;
+      default:
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.Xml.InvalidParameter,
+          value.name,
+        );
+    }
+  }
+});
+
 /** {@link CompilerOptions.xRef} */
+translator.rule(
+  ["XREF", "X"],
+  (option, options) => {
+    // No arguments is ok.
+    ensureArguments(option, 0);
+    if (!options.xRef) {
+      options.xRef = getDefaultCompilerOptions().xRef;
+    }
+    for (const value of option.values) {
+      ensureType(value, "plainNotEmpty");
+      switch (value.value.toUpperCase()) {
+        case "FULL":
+        case "SHORT":
+          options.xRef! = {
+            ...options.xRef!,
+            length: ensureArgument(
+              value,
+              CompilerOptionsCodes.XRef.InvalidLengthParameter,
+              ["FULL", "SHORT"],
+            ),
+          };
+          break;
+        case "IMPLICIT":
+        case "EXPLICIT":
+          options.xRef! = {
+            ...options.xRef!,
+            structure: ensureArgument(
+              value,
+              CompilerOptionsCodes.XRef.InvalidStructureParameter,
+              ["IMPLICIT", "EXPLICIT"],
+            ),
+          };
+          break;
+        default:
+          throw TranslationError.fromCode(
+            value.token,
+            CompilerOptionsCodes.XRef.InvalidParameter,
+            value.value,
+          );
+      }
+    }
+  },
+  ["NOXREF", "NX"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.xRef = false;
+  },
+);
 
 export function translateCompilerOptions(
   input: AbstractCompilerOptions,
