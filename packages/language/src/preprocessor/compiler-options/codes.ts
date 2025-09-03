@@ -420,6 +420,22 @@ export const CompilerOptionsCodes = {
     } as ParametricPLICode,
   },
 
+  Prefix: {
+    InvalidParameter: {
+      code: "COPX01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected one of the compiler condition "CONFORMANCE", "CONVERSION", "FIXEDOVERFLOW", "INVALIDOP", "OVERFLOW", "SIZE", "STRINGRANGE", "STRINGSIZE", "SUBSCRIPTRANGE", "UNDERFLOW" or "ZERODIVIDE", but received '${value}'.`,
+      fullCode: "COPX01W",
+    } as ParametricPLICode,
+    ConditionIsAlwaysEnabled: {
+      code: "COPX02",
+      severity: Severity.W,
+      message: (value: string) => `Condition '${value}' is always enabled.`,
+      fullCode: "COPX02W",
+    } as ParametricPLICode,
+  },
+
   Proceed: {
     InvalidParameter: {
       code: "COPR01",
@@ -531,6 +547,198 @@ export const CompilerOptionsCodes = {
       message: (value: string) =>
         `Expected "S", "E" or "W", but received '${value}'.`,
       fullCode: "COSY01W",
+    } as ParametricPLICode,
+  },
+
+  Test: {
+    InvalidParameter: {
+      code: "COTS01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "ALL", "BLOCK", "NONE", "PATH", "STMT", "HOOK", "NOHOOK", "SEPARATE", "NOSEPARATE", "SEPNAME", "NOSEPNAME", "SOURCE", "NOSOURCE", "SYM" or "NOSYM", but received '${value}'.`,
+      fullCode: "COTS01W",
+    } as ParametricPLICode,
+  },
+
+  Unroll: {
+    InvalidParameter: {
+      code: "COUN01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "AUTO" or "NO", but received '${value}'.`,
+      fullCode: "COUN01W",
+    } as ParametricPLICode,
+  },
+
+  Usage: {
+    InvalidParameter: {
+      code: "COUS01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "HEX", "REGEX", "ROUND", "SUBSTR", "UNSPEC", "UUID" or "VALIDDATE", but received '${value}'.`,
+      fullCode: "COUS01W",
+    } as ParametricPLICode,
+    InvalidHexParameter: {
+      code: "COUS02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "SIZE" or "CURRENTSIZE", but received '${value}'.`,
+      fullCode: "COUS02W",
+    } as ParametricPLICode,
+    InvalidRegexParameter: {
+      code: "COUS03",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "RESET" or "NORESET", but received '${value}'.`,
+      fullCode: "COUS03W",
+    } as ParametricPLICode,
+    InvalidRoundParameter: {
+      code: "COUS04",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "IBM" or "ANS", but received '${value}'.`,
+      fullCode: "COUS04W",
+    } as ParametricPLICode,
+    InvalidSubstrParameter: {
+      code: "COUS05",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "STRICT" or "LOOSE", but received '${value}'.`,
+      fullCode: "COUS05W",
+    } as ParametricPLICode,
+    InvalidUnspecParameter: {
+      code: "COUS06",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "IBM" or "ANS", but received '${value}'.`,
+      fullCode: "COUS06W",
+    } as ParametricPLICode,
+    InvalidUuidParameter: {
+      code: "COUS07",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "UPPER" or "LOWER", but received '${value}'.`,
+      fullCode: "COUS07W",
+    } as ParametricPLICode,
+    InvalidValidDateParameter: {
+      code: "COUS08",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "LOOSE" or "STRICT", but received '${value}'.`,
+      fullCode: "COUS08W",
+    } as ParametricPLICode,
+  },
+
+  WideChar: {
+    InvalidParameter: {
+      code: "COWC01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "BIGENDIAN" or "LITTLEENDIAN", but received '${value}'.`,
+      fullCode: "COWC01W",
+    } as ParametricPLICode,
+  },
+
+  Writable: {
+    InvalidParameter: {
+      code: "COWR01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "FWS" or "PRV", but received '${value}'.`,
+      fullCode: "COWR01W",
+    } as ParametricPLICode,
+  },
+
+  XInfo: {
+    InvalidParameter: {
+      code: "COXI01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "DEF", "NODEF", "MSG", "NOMSG", "SYM", "NOSYM", "SYN", "NOSYN", "XML", or "NOXML", but received '${value}'.`,
+      fullCode: "COXI01W",
+    } as ParametricPLICode,
+    InvalidDefParameter: {
+      code: "COXI02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "DEF" or "NODEF", but received '${value}'.`,
+      fullCode: "COXI02W",
+    } as ParametricPLICode,
+    InvalidMsgParameter: {
+      code: "COXI03",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "MSG" or "NOMSG", but received '${value}'.`,
+      fullCode: "COXI03W",
+    } as ParametricPLICode,
+    InvalidSymParameter: {
+      code: "COXI04",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "SYM" or "NOSYM", but received '${value}'.`,
+      fullCode: "COXI04W",
+    } as ParametricPLICode,
+    InvalidSynParameter: {
+      code: "COXI05",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "SYN" or "NOSYN", but received '${value}'.`,
+      fullCode: "COXI05W",
+    } as ParametricPLICode,
+    InvalidXmlParameter: {
+      code: "COXI06",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "XML" or "NOXML", but received '${value}'.`,
+      fullCode: "COXI06W",
+    } as ParametricPLICode,
+  },
+
+  Xml: {
+    InvalidParameter: {
+      code: "COXM01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "UPPER", "CASE" or "XMLATTR", but received '${value}'.`,
+      fullCode: "COXM01W",
+    } as ParametricPLICode,
+    InvalidCaseParameter: {
+      code: "COXM02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "UPPER" or "ASIS", but received '${value}'.`,
+      fullCode: "COXM02W",
+    } as ParametricPLICode,
+    InvalidXmlAttrParameter: {
+      code: "COXM03",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "APOSTROPHE" or "QUOTE", but received '${value}'.`,
+      fullCode: "COXM03W",
+    } as ParametricPLICode,
+  },
+
+  XRef: {
+    InvalidParameter: {
+      code: "COXR01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "FULL", "SHORT", "IMPLICIT", or "EXPLICIT", but received '${value}'.`,
+      fullCode: "COXR01W",
+    } as ParametricPLICode,
+    InvalidLengthParameter: {
+      code: "COXR02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "FULL" or "SHORT", but received '${value}'.`,
+      fullCode: "COXR02W",
+    } as ParametricPLICode,
+    InvalidStructureParameter: {
+      code: "COXR03",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "FULL", "SHORT", "IMPLICIT", or "EXPLICIT", but received '${value}'.`,
+      fullCode: "COXR03W",
     } as ParametricPLICode,
   },
 };
