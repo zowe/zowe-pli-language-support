@@ -11,12 +11,12 @@
 
 /// <reference path="../framework.ts" />
 
-//// %<|1:NOTE|>("This is an information!", 0);
+//// %<|1:NOTE|>("This is critical!", 12);
 
 preprocessor.expectTokens("");
 verify.expectDiagnosticsAt(1, [{
-    code: '0',
-    severity: 0,
-    message: 'This is an information!'
+    code: '12',
+    severity: 3,
+    message: 'This is critical!',
 }]);
 
