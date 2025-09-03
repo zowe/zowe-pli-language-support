@@ -37,6 +37,7 @@ export interface LexingIssue {
   readonly severity: Severity;
   readonly range: Range | undefined;
   readonly uri: URI | undefined;
+  readonly code?: string;
 }
 
 export interface LexerResult {
