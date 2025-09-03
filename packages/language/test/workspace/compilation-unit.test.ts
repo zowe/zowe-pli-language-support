@@ -15,25 +15,25 @@ import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
 
 describe("Compilation Unit Tests", () => {
-  test("Create", () => {
+  test("Create", async () => {
     const uri = URI.parse("memory:///test/test.pli");
     const ch = new CompilationUnitHandler();
 
     const unit0 = ch.getCompilationUnit(uri);
     expect(unit0).toBeUndefined();
 
-    const unit1 = ch.getOrCreateCompilationUnit(uri);
+    const unit1 = await ch.getOrCreateCompilationUnit(uri);
     expect(unit1).toBeDefined();
 
     const unit2 = ch.getCompilationUnit(uri);
     expect(unit2).toEqual(unit1);
   });
 
-  test("Delete", () => {
+  test("Delete", async () => {
     const uri = URI.parse("memory:///test/test.pli");
     const ch = new CompilationUnitHandler();
 
-    const unit1 = ch.getOrCreateCompilationUnit(uri);
+    const unit1 = await ch.getOrCreateCompilationUnit(uri);
     expect(unit1).toBeDefined();
 
     const deleted1 = ch.deleteCompilationUnit(uri);
@@ -46,7 +46,7 @@ describe("Compilation Unit Tests", () => {
     expect(unit2).toBeUndefined();
   });
 
-  test("Create with config", () => {
+  test("Create with config", async () => {
     const uriEntry = URI.parse("file:///test/entry.pli");
     const uriLib = URI.parse("file:///test/lib.pli");
     const ch = new CompilationUnitHandler();
@@ -70,15 +70,15 @@ describe("Compilation Unit Tests", () => {
     expect(config).toBeDefined();
 
     // lib is not an entry point, but still valid for generating a compilation unit
-    const unit1 = ch.getOrCreateCompilationUnit(uriLib);
+    const unit1 = await ch.getOrCreateCompilationUnit(uriLib);
     expect(unit1).toBeDefined();
 
     // entry point should also setup a compilation unit as expected
-    const unit2 = ch.getOrCreateCompilationUnit(uriEntry);
+    const unit2 = await ch.getOrCreateCompilationUnit(uriEntry);
     expect(unit2).toBeDefined();
   });
 
-  test("Create with wildcard config", () => {
+  test("Create with wildcard config", async () => {
     const uriEntry1 = URI.parse("file:///test/entry1.pli");
     const uriEntry2 = URI.parse("file:///test/entry2.pli");
     const uriOther = URI.parse("file:///other/entry3.pli");
@@ -108,16 +108,16 @@ describe("Compilation Unit Tests", () => {
     expect(configOther).toBeUndefined();
 
     // compilation units should be created for matching uris
-    const unit1 = ch.getOrCreateCompilationUnit(uriEntry1);
+    const unit1 = await ch.getOrCreateCompilationUnit(uriEntry1);
     expect(unit1).toBeDefined();
-    const unit2 = ch.getOrCreateCompilationUnit(uriEntry2);
+    const unit2 = await ch.getOrCreateCompilationUnit(uriEntry2);
     expect(unit2).toBeDefined();
     // compilation unit for non-matching uri should still be created
-    const unitOther = ch.getOrCreateCompilationUnit(uriOther);
+    const unitOther = await ch.getOrCreateCompilationUnit(uriOther);
     expect(unitOther).toBeDefined();
   });
 
-  test("Cannot create compile unit from copybook directly", () => {
+  test("Cannot create compile unit from copybook directly", async () => {
     const ch = new CompilationUnitHandler();
 
     PluginConfigurationProviderInstance.init("file:///");
@@ -145,11 +145,11 @@ describe("Compilation Unit Tests", () => {
     const mainUri = URI.parse("file:///src/a.pli");
 
     // Should not create a compilation unit for a file in the cpy folder
-    const libUnit = ch.getOrCreateCompilationUnit(libUri);
+    const libUnit = await ch.getOrCreateCompilationUnit(libUri);
     expect(libUnit).toBeUndefined();
 
     // Should create a compilation unit for a file in the src folder
-    const mainUnit = ch.getOrCreateCompilationUnit(mainUri);
+    const mainUnit = await ch.getOrCreateCompilationUnit(mainUri);
     expect(mainUnit).toBeDefined();
   });
 });

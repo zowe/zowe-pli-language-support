@@ -45,6 +45,8 @@ import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
 import { Mutex } from "./mutex.js";
 import { isOperationCancelled } from "../utils/promises.js";
 import { InstructionCache } from "../preprocessor/instruction-cache.js";
+import { TextDocument } from "vscode-languageserver-textdocument";
+import { FileStore } from "./file-store.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -61,12 +63,12 @@ export interface CompilationUnit {
    * This might not be the same as the URI of the currently open file.
    */
   uri: URI;
-  files: URI[];
+  files: FileStore;
   compilerOptions: CompilerOptions;
   ast: PliProgram;
   preprocessorAst: PliProgram;
   preprocessorEvaluationResults: EvaluationResults;
-  tokens: CompilationUnitTokens;
+  tokens: Token[];
   referencesCache: ReferencesCache;
   statementOrderCache: StatementOrderCache;
   diagnostics: CompilationUnitDiagnostics;
@@ -75,11 +77,6 @@ export interface CompilationUnit {
   instructionCache: InstructionCache;
   rootScope: Scope;
   rootPreprocessorScope: Scope;
-}
-
-export interface CompilationUnitTokens {
-  all: Token[];
-  fileTokens: Map<string, Token[]>;
 }
 
 export interface CompilationUnitDiagnostics {
@@ -113,15 +110,17 @@ const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
 function createBuiltinScopeGetter() {
   let builtinScope: Scope | undefined = undefined;
 
-  return (uri: URI, unit: CompilationUnit): Scope => {
+  return async (uri: URI, unit: CompilationUnit): Promise<Scope> => {
     // Don't load the builtin symbol table for builtin files
     if (isBuiltinFile(uri)) {
       return Scope.createRoot(unit);
     }
 
     if (builtinScope === undefined) {
-      const unit = createCompilationUnit(URI.parse(BuiltinsUri));
-      tokenize(unit, Builtins);
+      const uri = URI.parse(BuiltinsUri);
+      const unit = await createCompilationUnit(uri);
+      const document = TextDocument.create(BuiltinsUri, "pli", 0, Builtins);
+      await tokenize(unit, document);
       parse(unit);
       generateSymbolTable(unit);
 
@@ -143,15 +142,22 @@ const getBuiltinScope = createBuiltinScopeGetter();
 function createBuiltinMacroScopeGetter() {
   let builtinScope: Scope | undefined = undefined;
 
-  return (uri: URI, unit: CompilationUnit): Scope => {
+  return async (uri: URI, unit: CompilationUnit): Promise<Scope> => {
     // Don't load the builtin symbol table for builtin files
     if (isBuiltinFile(uri)) {
       return Scope.createRoot(unit);
     }
 
     if (builtinScope === undefined) {
-      const unit = createCompilationUnit(URI.parse(BuiltinsMacroUri));
-      tokenize(unit, BuiltinsMacro);
+      const uri = URI.parse(BuiltinsMacroUri);
+      const unit = await createCompilationUnit(uri);
+      const document = TextDocument.create(
+        BuiltinsMacroUri,
+        "pli",
+        0,
+        BuiltinsMacro,
+      );
+      await tokenize(unit, document);
       parse(unit);
       generateSymbolTable(unit);
 
@@ -167,10 +173,12 @@ function createBuiltinMacroScopeGetter() {
 
 const getRootPreprocessorScope = createBuiltinMacroScopeGetter();
 
-export function createCompilationUnit(uri: URI): CompilationUnit {
+export async function createCompilationUnit(
+  uri: URI,
+): Promise<CompilationUnit> {
   const unit: CompilationUnit = {
     uri,
-    files: [],
+    files: new FileStore(),
     compilerOptions: getDefaultCompilerOptions(),
     ast: {
       kind: SyntaxKind.PliProgram,
@@ -185,10 +193,7 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
     preprocessorEvaluationResults: {
       ifStatements: new Map(),
     },
-    tokens: {
-      fileTokens: new Map(),
-      all: [],
-    },
+    tokens: [],
     referencesCache: new ReferencesCache(),
     statementOrderCache: new StatementOrderCache(),
     scopeCaches: new ScopeCacheGroups(),
@@ -212,8 +217,8 @@ export function createCompilationUnit(uri: URI): CompilationUnit {
     rootPreprocessorScope: undefined!, // Assigned later
   };
 
-  unit.rootScope = getBuiltinScope(uri, unit);
-  unit.rootPreprocessorScope = getRootPreprocessorScope(uri, unit);
+  unit.rootScope = await getBuiltinScope(uri, unit);
+  unit.rootPreprocessorScope = await getRootPreprocessorScope(uri, unit);
 
   return unit;
 }
@@ -231,21 +236,23 @@ export class CompilationUnitHandler {
    *
    * @returns Pre-existing or new compilation unit, or undefined if it's a standalone library file
    */
-  getOrCreateCompilationUnit(uri: URI): CompilationUnit | undefined {
+  async getOrCreateCompilationUnit(
+    uri: URI,
+  ): Promise<CompilationUnit | undefined> {
     if (this.compilationUnits.has(uri.toString())) {
       // existing compilation unit
       return this.compilationUnits.get(uri.toString());
     } else if (!PluginConfigurationProviderInstance.isLibFileCandidate(uri)) {
       // non-library files should always generate a compilation unit
-      return this.createAndStoreCompilationUnit(uri);
+      return await this.createAndStoreCompilationUnit(uri);
     } else {
       // do not generate compilation units for standalone library files
       return undefined;
     }
   }
 
-  createAndStoreCompilationUnit(uri: URI): CompilationUnit {
-    const unit = createCompilationUnit(uri);
+  async createAndStoreCompilationUnit(uri: URI): Promise<CompilationUnit> {
+    const unit = await createCompilationUnit(uri);
     this.compilationUnits.set(uri.toString(), unit);
     return unit;
   }
@@ -256,8 +263,8 @@ export class CompilationUnitHandler {
       return false;
     }
 
-    for (const file of unit.files ?? []) {
-      this.compilationUnits.delete(file.toString());
+    for (const file of unit.files.keys()) {
+      this.compilationUnits.delete(file);
     }
     this.compilationUnits.delete(uri.toString());
 
@@ -289,21 +296,16 @@ export class CompilationUnitHandler {
     uri: URI,
     cancellationToken: CancellationToken,
   ): Promise<void> {
-    const unit = this.getOrCreateCompilationUnit(uri);
+    const unit = await this.getOrCreateCompilationUnit(uri);
     if (!unit) {
       // standalone library files do not synthesize new compilation units
       return;
     }
-    const document = EditorDocuments.get(unit.uri);
+    const document = await EditorDocuments.get(unit.uri);
     if (!document) {
       return;
     }
-    await this.process(
-      unit,
-      document.getText(),
-      this.connection,
-      cancellationToken,
-    );
+    await this.process(unit, document, this.connection, cancellationToken);
     unit.requestCaches.revalidateAll({ connection: this.connection, unit });
   }
 
@@ -315,20 +317,20 @@ export class CompilationUnitHandler {
    */
   private async process(
     unit: CompilationUnit,
-    text: string,
+    document: TextDocument,
     connection: Connection,
     cancellationToken: CancellationToken,
   ): Promise<void> {
     try {
-      await lifecycle(unit, text, cancellationToken);
-      for (const file of unit.files) {
-        this.compilationUnits.set(file.toString(), unit);
+      await lifecycle(unit, document, cancellationToken);
+      for (const file of unit.files.keys()) {
+        this.compilationUnits.set(file, unit);
       }
-      const allDiagnostics = diagnosticsToLSP(collectDiagnostics(unit));
-      for (const file of unit.files) {
-        const fileDiagnostics = allDiagnostics.get(file.toString());
+      const allDiagnostics = diagnosticsToLSP(unit, collectDiagnostics(unit));
+      for (const file of unit.files.keys()) {
+        const fileDiagnostics = allDiagnostics.get(file);
         connection.sendDiagnostics({
-          uri: file.toString(),
+          uri: file,
           diagnostics: fileDiagnostics ?? [],
         });
       }
@@ -345,19 +347,17 @@ export class CompilationUnitHandler {
    * Reachable as in the units w/ associated docs that are currently open in the editor.
    * @param connection The connection to send diagnostics to
    */
-  reindex(connection: Connection, cancellationToken: CancellationToken): void {
+  async reindex(
+    connection: Connection,
+    cancellationToken: CancellationToken,
+  ): Promise<void> {
     for (const unit of this.getAllCompilationUnits()) {
       if (cancellationToken.isCancellationRequested) {
         return;
       }
-      const textDocument = TextDocuments.get(unit.uri.toString());
+      const textDocument = await TextDocuments.get(unit.uri.toString());
       if (textDocument) {
-        this.process(
-          unit,
-          textDocument.getText(),
-          connection,
-          cancellationToken,
-        );
+        this.process(unit, textDocument, connection, cancellationToken);
       }
     }
   }

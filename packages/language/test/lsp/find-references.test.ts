@@ -13,31 +13,31 @@ import { describe, test } from "vitest";
 import { expectReferences } from "../utils";
 
 describe("Find references", () => {
-  test("Can find references of qualified name variables on declaration", () =>
-    expectReferences(`
+  test("Can find references of qualified name variables on declaration", async () =>
+    await expectReferences(`
  DCL 1 <|1><|1:A|>,
      2 <|2><|2:B|> CHAR(8) VALUE("B");
  PUT(<|2:B|>);
  PUT(<|1:A|>.<|2:B|>);`));
 
-  test("Can find references of qualified name variables on reference #1", () =>
-    expectReferences(`
+  test("Can find references of qualified name variables on reference #1", async () =>
+    await expectReferences(`
  DCL 1 <|1:A|>,
      2 <|2><|2:B|> CHAR(8) VALUE("B");
  PUT(<|2:B|>);
  PUT(<|1><|1:A|>.<|2:B|>);`));
 
-  test("Can find references of qualified name variables on reference #2", () =>
+  test("Can find references of qualified name variables on reference #2", async () =>
     // Note that the marker is placed after the variable name
     // However, it should still be able to perform the request
-    expectReferences(`
+    await expectReferences(`
  DCL 1 <|1:A|>,
      2 <|2><|2:B|> CHAR(8) VALUE("B");
  PUT(<|2:B|>);
  PUT(<|1:A|><|1>.<|2:B|>);`));
 
-  test("Can find references of processor variables", () =>
-    expectReferences(`
+  test("Can find references of processor variables", async () =>
+    await expectReferences(`
  %DECLARE <|1><|1:ABC|> CHARACTER;
  %<|1:ABC|> = 'PAY_ROLL';
  PUT(<|1:ABC|>);`));

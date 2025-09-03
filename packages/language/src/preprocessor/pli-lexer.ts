@@ -31,6 +31,8 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import { initLexer } from "../parser/tokenizer";
 import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
+import { TextDocument } from "vscode-languageserver-textdocument";
+import { FileStore } from "../workspace/file-store";
 
 export interface LexingIssue {
   readonly message: string;
@@ -45,7 +47,7 @@ export interface LexerResult {
   errors: LexingIssue[];
   compilerOptions: CompilerOptionsProcessorResult;
   statements: Statement[];
-  fileTokens: Map<string, Token[]>;
+  files: FileStore;
   evaluationResults: EvaluationResults;
   tokenReferences: Reference[];
 }
@@ -63,7 +65,12 @@ export class PliLexer {
     this.marginsProcessor = new PliMarginsProcessor();
   }
 
-  tokenize(unit: CompilationUnit, inputText: string, uri: URI): LexerResult {
+  async tokenize(
+    unit: CompilationUnit,
+    document: TextDocument,
+    uri: URI,
+  ): Promise<LexerResult> {
+    const inputText = document.getText();
     const compilerOptionsResult =
       this.compilerOptionsPreprocessor.extractCompilerOptions(inputText, uri);
     const opts =
@@ -105,15 +112,17 @@ export class PliLexer {
         procedures: instruction.result.procedures,
       };
     }
-    const output = runInstructions(unit, uri, instruction.result, {
+    const output = await runInstructions(unit, uri, instruction.result, {
       compilerOptions: compilerOptionsResult.result,
       marginsProcessor: this.marginsProcessor,
     });
-    output.fileTokens.set(uri.toString(), instruction.tokens);
+    output.files.set({
+      textDocument: document,
+      tokens: instruction.tokens,
+      uri,
+    });
     if (compilerOptionsResult.result) {
-      output.fileTokens
-        .get(uri.toString())
-        ?.unshift(...compilerOptionsResult.result.tokens);
+      instruction.tokens.unshift(...compilerOptionsResult.result.tokens);
     }
     allErrors.push(...output.errors);
     return {
@@ -121,7 +130,7 @@ export class PliLexer {
       compilerOptions: compilerOptionsResult,
       errors: allErrors,
       statements: [...instruction.statements, ...output.statements],
-      fileTokens: output.fileTokens,
+      files: output.files,
       evaluationResults: output.evaluationResults,
       tokenReferences: output.references,
     };
@@ -149,12 +158,7 @@ function generateIncAfterInstruction(
   // It allows to include ONE SINGLE file. Afterwards the preprocessor runs as normal.
   const instruction: InstructionNode = {
     labels: [],
-    instruction: createIncludeInstruction(
-      includeItem,
-      incAfter.process,
-      false,
-      incAfter.token,
-    ),
+    instruction: createIncludeInstruction([includeItem], false),
     next: existingNode,
   };
   return instruction;
