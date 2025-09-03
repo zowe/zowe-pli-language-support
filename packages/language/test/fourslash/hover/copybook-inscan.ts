@@ -18,9 +18,11 @@
 // @filename: cpy/lib.pli
 //// DECLARE LIB_VAR FIXED;
 
-//// %include <|1>"lib.pli";
+//// %DCL X CHAR;
+//// %X = "lib";
+//// %<|1>INSCAN X;
 
-hover.expectIncludeAt(
+hover.expectInscanAt(
   1,
   "./cpy/lib.pli",
   hover.codeBlock(" DECLARE LIB_VAR FIXED;"),

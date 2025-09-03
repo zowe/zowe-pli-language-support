@@ -66,6 +66,7 @@ async function createTestingHarnessImplementation(
     hover: {
       codeBlock: (text) => text,
       expectIncludeAt: listen("hover.expectIncludeAt"),
+      expectInscanAt: listen("hover.expectInscanAt"),
       expectMarkdownAt: listen("hover.expectMarkdownAt"),
       expectTextAt: listen("hover.expectTextAt"),
     },

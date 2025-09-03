@@ -11,17 +11,13 @@
 
 /// <reference path="../framework.ts" />
 
-/**
- * Failing test for hover on copybook (include) directive
- */
+// @filename: cpy/LIB.pli
+////<|1:|> DECLARE LIB_VAR FIXED;
 
-// @filename: cpy/lib.pli
-//// DECLARE LIB_VAR FIXED;
+// @wrap: main
+// @filename: main.pli
+//// %DECLARE X CHARACTER;
+//// %X = 'LIB';
+//// %<|1>INSCAN X;
 
-//// %include <|1>"lib.pli";
-
-hover.expectIncludeAt(
-  1,
-  "./cpy/lib.pli",
-  hover.codeBlock(" DECLARE LIB_VAR FIXED;"),
-);
+linker.expectLinks();

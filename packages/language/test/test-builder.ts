@@ -746,11 +746,11 @@ export class TestBuilder {
     return this.createPositionMessage(start, this.unit.uri.toString());
   }
 
-  async expectHover(label: string, content: MarkupContent) {
+  expectHover(label: string, content: MarkupContent) {
     const indices = this.getLabelPositions(label);
 
     for (const index of indices) {
-      const hoverResult = await hoverRequest(this.unit, this.unit.uri, index);
+      const hoverResult = hoverRequest(this.unit, this.unit.uri, index);
 
       const message = `Expected hover for label "${label}" (${this.createLabelPositionMessage(label)})`;
       expect(hoverResult, message).toBeDefined();

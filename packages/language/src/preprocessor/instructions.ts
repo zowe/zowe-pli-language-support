@@ -299,6 +299,7 @@ export function createIncludeInstruction(
 export interface InscanInstruction {
   kind: InstructionKind.Inscan;
   variable: ReferenceItemInstruction;
+  node: ast.InscanDirective;
   idempotent: boolean;
 }
 

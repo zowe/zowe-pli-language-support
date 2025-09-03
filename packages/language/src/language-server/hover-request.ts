@@ -25,7 +25,6 @@ import {
   DimensionBound,
   Dimensions,
   Expression,
-  IncludeItem,
   LabelPrefix,
   ProcedureStatement,
   SyntaxKind,
@@ -230,15 +229,22 @@ function decodeBound(bound: Bound | null): string | null {
   }
 }
 
+interface IncludeItemNode {
+  sourceText: string | null;
+  filePath: string | null;
+  relativeFilePath: string | null;
+}
+
 /**
- * Converts an IncludeItem node to a string representation.
+ * Converts an IncludeItem or InscanDirective to a string representation.
  * Ex. %INCLUDE "/path/to/file.pli"
  */
 function getIncludeItemRepresentation(
   unit: CompilationUnit,
-  node: IncludeItem,
+  node: IncludeItemNode,
+  include: boolean,
 ): string | null {
-  if (!node.filePath) {
+  if (!node.filePath || !node.relativeFilePath) {
     return null;
   }
 
@@ -264,7 +270,7 @@ function getIncludeItemRepresentation(
     // cache for later requests
     node.sourceText = partialContent;
   }
-  return `%INCLUDE "${fileUri.fsPath}"\n\n---\n${formatPliCodeBlock(partialContent)}`;
+  return `${formatPliCodeBlock(`%${include ? "INCLUDE" : "INSCAN"} "${node.relativeFilePath}"`)}\n\n---\n${formatPliCodeBlock(partialContent)}`;
 }
 
 /**
@@ -280,7 +286,9 @@ function getNodeRepresentation(
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
     case SyntaxKind.IncludeItem:
-      return getIncludeItemRepresentation(unit, node);
+      return getIncludeItemRepresentation(unit, node, true);
+    case SyntaxKind.InscanDirective:
+      return getIncludeItemRepresentation(unit, node, false);
     default:
       return null;
   }

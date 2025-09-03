@@ -11,7 +11,6 @@
 
 import { MarkupKind } from "vscode-languageserver";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
-import { URI } from "vscode-uri";
 import { formatPliCodeBlock } from "../../../src/utils/code-block";
 import { TestBuilder } from "../../test-builder";
 import { HarnessTesterInterface } from "../harness-interface";
@@ -65,7 +64,13 @@ export function createTestBuilderHarnessImplementation(
       expectIncludeAt(label, filePath, markdown) {
         testBuilder.expectHover(label.toString(), {
           kind: MarkupKind.Markdown,
-          value: `%INCLUDE "${URI.parse(filePath).fsPath}"\n\n---\n${markdown}`,
+          value: `${formatPliCodeBlock(`%INCLUDE "${filePath}"`)}\n\n---\n${markdown}`,
+        });
+      },
+      expectInscanAt(label, filePath, markdown) {
+        testBuilder.expectHover(label.toString(), {
+          kind: MarkupKind.Markdown,
+          value: `${formatPliCodeBlock(`%INSCAN "${filePath}"`)}\n\n---\n${markdown}`,
         });
       },
       expectMarkdownAt: (label, markdown) =>

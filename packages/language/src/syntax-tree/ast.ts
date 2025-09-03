@@ -1518,8 +1518,10 @@ export interface IncludeItem extends AstNode {
   fileName: string | null;
   string: boolean;
   ddname: string | null;
-  filePath: string | null;
   token: Token | null;
+  // Properties filled by the preprocessor
+  filePath: string | null;
+  relativeFilePath: string | null;
   sourceText: string | null;
 }
 export function createIncludeItem(): IncludeItem {
@@ -1530,6 +1532,7 @@ export function createIncludeItem(): IncludeItem {
     string: false,
     ddname: null,
     filePath: null,
+    relativeFilePath: null,
     token: null,
     sourceText: null,
   };
@@ -1539,6 +1542,10 @@ export interface InscanDirective extends AstNode {
   token: Token | null;
   item: ReferenceItem | null;
   idempotent: boolean;
+  // Properties filled by the preprocessor
+  filePath: string | null;
+  relativeFilePath: string | null;
+  sourceText: string | null;
 }
 export function createInscanDirective(): InscanDirective {
   return {
@@ -1546,7 +1553,10 @@ export function createInscanDirective(): InscanDirective {
     container: null,
     token: null,
     item: null,
+    filePath: null,
+    relativeFilePath: null,
     idempotent: false,
+    sourceText: null,
   };
 }
 export interface IndForAttribute extends AstNode {
