@@ -167,6 +167,7 @@ class HarnessTestParser {
       fileName,
       wrap,
       content,
+      tags: Object.keys(tags),
       lineOffset,
       characterOffset,
     };
@@ -223,10 +224,15 @@ class HarnessTestParser {
       this.next();
     }
 
+    // Get tags from the last parsed file, if any
+    const lastFile = Array.from(files.values()).at(-1);
+    const tags = lastFile ? lastFile.tags : [];
+
     return {
       fileName: this.fileName,
       files,
       commands: this.text,
+      tags,
     };
   }
 }

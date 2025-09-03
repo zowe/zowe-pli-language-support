@@ -38,7 +38,7 @@ export function parseWrapperFile(content: string): Wrapper {
     .map((v) => v.substring(HARNESS_FILE_PREFIX.length));
   const wrapperContent = wrapperLines.join("\n");
   const wrapperFunction = (content: string) =>
-    wrapperContent.replace(WRAPPER_CONTENT_TAG, content);
+    wrapperContent.replace(WRAPPER_CONTENT_TAG, () => content);
 
   const headerLength = wrapperLines.findIndex((v) =>
     v.includes(WRAPPER_CONTENT_TAG),

@@ -409,4 +409,128 @@ export const CompilerOptionsCodes = {
       fullCode: "COOP02W",
     } as ParametricPLICode,
   },
+
+  PrecType: {
+    InvalidParameter: {
+      code: "COPT01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "ANS", "DECDIGIT" or "DECRESULT", but received '${value}'.`,
+      fullCode: "COPT01W",
+    } as ParametricPLICode,
+  },
+
+  Proceed: {
+    InvalidParameter: {
+      code: "COPR01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "S", "E" or "W", but received '${value}'.`,
+      fullCode: "COPR01W",
+    } as ParametricPLICode,
+  },
+
+  Process: {
+    InvalidParameter: {
+      code: "COPR02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "DELETE" or "KEEP", but received '${value}'.`,
+      fullCode: "COPR02W",
+    } as ParametricPLICode,
+  },
+
+  Quote: {
+    InvalidParameterLength: {
+      code: "COQT01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected a single character, but received '${value}'.`,
+      fullCode: "COQT01W",
+    } as ParametricPLICode,
+    InvalidParameterCharacter: {
+      code: "COQT02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected a valid quote character, but received '${value}'.`,
+      fullCode: "COQT02W",
+    } as ParametricPLICode,
+  },
+
+  Respect: {
+    InvalidParameter: {
+      code: "CORE01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "DATE" or an empty value, but received '${value}'.`,
+      fullCode: "CORE01W",
+    } as ParametricPLICode,
+  },
+
+  RtCheck: {
+    InvalidParameter: {
+      code: "CORT01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "NONULLPTR", "NULLPTR" or "NULL370", but received '${value}'.`,
+      fullCode: "CORT01W",
+    } as ParametricPLICode,
+  },
+
+  Semantic: {
+    InvalidParameter: {
+      code: "COSE01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "S", "E" or "W", but received '${value}'.`,
+      fullCode: "COSE01W",
+    } as ParametricPLICode,
+  },
+
+  Service: {
+    InvalidParameterLength: {
+      code: "COSR01",
+      severity: Severity.W,
+      message: (length: string) =>
+        `Expected a maximum length of 64 characters, but received '${length}'.`,
+      fullCode: "COSR01W",
+    } as ParametricPLICode,
+    InvalidEmptyPlainParameter: {
+      code: "COSR02",
+      severity: Severity.W,
+      message: () =>
+        `Expected a non-empty plain value. Use a string for empty text.`,
+      fullCode: "COSR02W",
+    } as ParametricPLICode,
+  },
+
+  Static: {
+    InvalidParameter: {
+      code: "COST01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "SHORT" or "FULL", but received '${value}'.`,
+      fullCode: "COST01W",
+    } as ParametricPLICode,
+  },
+
+  StringOfGraphic: {
+    InvalidParameter: {
+      code: "COSG01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "GRAPHIC" or "CHARACTER", but received '${value}'.`,
+      fullCode: "COSG01W",
+    } as ParametricPLICode,
+  },
+
+  Syntax: {
+    InvalidParameter: {
+      code: "COSY01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "S", "E" or "W", but received '${value}'.`,
+      fullCode: "COSY01W",
+    } as ParametricPLICode,
+  },
 };

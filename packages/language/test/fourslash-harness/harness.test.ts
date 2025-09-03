@@ -91,6 +91,7 @@ describe("Harness test framework tests", () => {
       commands,
       fileName: "test.pli",
       files: new Map(),
+      tags: [],
     };
 
     runHarnessTest(file, implementation);
@@ -129,6 +130,7 @@ describe("Harness test framework tests", () => {
       commands,
       fileName: "test.pli",
       files: new Map(),
+      tags: [],
     };
 
     runHarnessTest(file, implementation);
