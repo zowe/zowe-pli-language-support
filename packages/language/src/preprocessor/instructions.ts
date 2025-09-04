@@ -132,7 +132,7 @@ export function createHaltNode(): InstructionNode {
 
 export interface NoteInstruction {
   kind: InstructionKind.Note;
-  noteToken: Token;
+  noteToken?: Token;
   message: ExpressionInstruction;
   code: ExpressionInstruction;
 }

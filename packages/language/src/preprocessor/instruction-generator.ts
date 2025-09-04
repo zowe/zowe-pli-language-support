@@ -209,7 +209,7 @@ function generateNoteInstruction(
 ): inst.NoteInstruction {
   return {
     kind: inst.InstructionKind.Note,
-    noteToken: node.noteToken,
+    noteToken: node.noteToken || undefined,
     message: generateExpressionInstruction(node.message) || {
       kind: inst.InstructionKind.String,
       value: "",

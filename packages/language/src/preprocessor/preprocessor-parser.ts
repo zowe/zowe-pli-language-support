@@ -1209,11 +1209,12 @@ function memberCall(
 
 function noteStatement(state: PreprocessorParserState): ast.NoteDirective {
   const note = ast.createNoteDirective();
-  note.noteToken = state.consume(
+  const noteToken = state.consume(
     note,
     CstNodeKind.NoteDirective_PercentNOTE,
-    PreprocessorTokens.Note,
+    PreprocessorTokens.Note
   );
+  note.noteToken = noteToken || null; // noteToken could be synthetic
   state.consume(
     note,
     CstNodeKind.NoteDirective_OpenParen,
