@@ -27,14 +27,14 @@ describe("PL/1 Lexer", () => {
     tokenize = async (text: string) => {
       const uri = URI.file("/test/test.pli");
       const document = TextDocument.create(uri.toString(), "pli", 0, text);
-      const { all: allTokens, errors } = await lexer.tokenize(
+      const { all: allTokens, diagnostics } = await lexer.tokenize(
         await createCompilationUnit(uri),
         document,
         uri,
       );
-      if (errors.length > 0) {
+      if (diagnostics.length > 0) {
         throw new Error(
-          errors
+          diagnostics
             .map((e) => `${e.range?.start}:${e.range?.end}: ${e.message}`)
             .join("\n"),
         );
@@ -46,12 +46,12 @@ describe("PL/1 Lexer", () => {
     tokenizeWithErrors = async (text: string) => {
       const uri = URI.file("/test/test.pli");
       const document = TextDocument.create(uri.toString(), "pli", 0, text);
-      const { errors } = await lexer.tokenize(
+      const { diagnostics } = await lexer.tokenize(
         await createCompilationUnit(uri),
         document,
         uri,
       );
-      return errors.map((e) => e.message);
+      return diagnostics.map((e) => e.message);
     };
   });
 
