@@ -9,9 +9,10 @@
  *
  */
 
-import { getSyntaxNodeRange, Severity } from "../../language-server/types";
+import { diagnosticFromCode } from "../../language-server/types";
 import { Exports } from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
+import { Error } from "./pli-codes";
 
 export function IBM1324IE_name_occurs_more_than_once_within_exports_clause(
   exports: Exports,
@@ -22,18 +23,7 @@ export function IBM1324IE_name_occurs_more_than_once_within_exports_clause(
     if (!set.has(procedure.reference?.text ?? "")) {
       set.add(procedure.reference?.text ?? "");
     } else {
-      accept(
-        Severity.E,
-        `The name '${procedure}' occurs more than once in the EXPORTS clause.`,
-        {
-          code: "IBM1324IE",
-          range: getSyntaxNodeRange(exports)!,
-          uri: "", // TODO: Add URI
-          //   node: exports,
-          //   property: "procedures",
-          //   index,
-        },
-      );
+      accept(diagnosticFromCode(Error.IBM1324I, procedure.reference?.token, procedure.reference?.text ?? ""));
     }
   });
 }

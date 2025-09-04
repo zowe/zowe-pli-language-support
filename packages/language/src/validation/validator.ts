@@ -13,7 +13,6 @@ import { IRecognitionException, MismatchedTokenException } from "chevrotain";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import {
   Diagnostic,
-  DiagnosticInfo,
   Range,
   Severity,
 } from "../language-server/types";
@@ -35,11 +34,7 @@ import { Token } from "../parser/tokens";
 /**
  * A function that accepts a diagnostic for PL/I validation
  */
-export type ValidationAcceptor = (
-  severity: Severity,
-  message: string,
-  info: DiagnosticInfo,
-) => void;
+export type ValidationAcceptor = (diagnostic: Diagnostic) => void;
 
 export type ValidationFunction = (
   node: any,
@@ -60,12 +55,8 @@ export class ValidationBuffer {
   private diagnostics: Diagnostic[] = [];
 
   getAcceptor(): ValidationAcceptor {
-    return (severity: Severity, message: string, d: DiagnosticInfo) => {
-      this.diagnostics.push({
-        severity,
-        message,
-        ...d,
-      });
+    return (diagnostic: Diagnostic) => {
+      this.diagnostics.push(diagnostic);
     };
   }
 

@@ -197,12 +197,6 @@ export function diagnostic(
   };
 }
 
-/**
- * DiagnosticInfo is a Diagnostic without the severity and message fields.
- * For convenience w/ prior-langium diagnostic reporting in our validations
- */
-export type DiagnosticInfo = Omit<Diagnostic, "severity" | "message">;
-
 export function diagnosticsToLSP(
   unit: CompilationUnit,
   diagnostics: Diagnostic[],
@@ -211,7 +205,7 @@ export function diagnosticsToLSP(
   for (const diagnostic of diagnostics) {
     const uri = diagnostic.uri;
     const lspDiagnostic = diagnosticToLSP(unit, diagnostic);
-    if (!lspDiagnostic) {
+    if (!lspDiagnostic || !uri) {
       continue;
     }
     if (!map.has(uri)) {

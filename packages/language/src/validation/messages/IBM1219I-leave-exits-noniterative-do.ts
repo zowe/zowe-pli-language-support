@@ -10,9 +10,7 @@
  */
 
 import {
-  Severity,
-  tokenToRange,
-  tokenToUri,
+  diagnosticFromCode,
 } from "../../language-server/types";
 import * as AST from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
@@ -47,14 +45,5 @@ export function IBM1219I_leave_exits_noniterative_do(
   // Nearest DO must be a non-iterative DO-group
   if (nearestDo.doType2 || nearestDo.doType3 || nearestDo.doType4) return;
 
-  // Generate range and uri based on token
-  const warningRange = tokenToRange(leaveToken);
-  const warningUri = tokenToUri(leaveToken);
-  if (!warningRange || !warningUri) return;
-
-  acceptor(Severity.W, PLICodes.Warning.IBM1219I.message, {
-    code: PLICodes.Warning.IBM1219I.fullCode,
-    range: warningRange,
-    uri: warningUri,
-  });
+  acceptor(diagnosticFromCode(PLICodes.Warning.IBM1219I, leaveToken));
 }

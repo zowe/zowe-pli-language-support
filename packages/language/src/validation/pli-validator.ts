@@ -10,10 +10,7 @@
  */
 
 import {
-  getSyntaxNodeRange,
-  Severity,
-  tokenToRange,
-  tokenToUri,
+  diagnosticFromCode,
 } from "../language-server/types";
 import * as AST from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
@@ -97,11 +94,12 @@ export class PliValidator implements Validator {
    */
   checkPliProgram(node: AST.PliProgram, acceptor: ValidationAcceptor): void {
     if (node.statements.length === 0) {
-      acceptor(Severity.S, PLICodes.Severe.IBM1917I.message, {
-        code: PLICodes.Severe.IBM1917I.fullCode,
-        range: getSyntaxNodeRange(node)!,
-        uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
-      });
+      // TODO: Reimplement this validation and add tests
+      // acceptor(Severity.S, PLICodes.Severe.IBM1917I.message, {
+      //   code: PLICodes.Severe.IBM1917I.fullCode,
+      //   range: getSyntaxNodeRange(node)!,
+      //   uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+      // });
     }
   }
 
@@ -112,16 +110,7 @@ export class PliValidator implements Validator {
     const checkNode = (hasLevel: boolean) => (child: AST.SyntaxNode) => {
       if (child.kind === AST.SyntaxKind.DeclaredItem) {
         if (hasLevel && child.levelToken) {
-          const uri = tokenToUri(child.levelToken);
-          const range = tokenToRange(child.levelToken);
-
-          if (uri) {
-            accept(Severity.E, PLICodes.Error.IBM1376I.message, {
-              code: PLICodes.Error.IBM1376I.fullCode,
-              range,
-              uri,
-            });
-          }
+          accept(diagnosticFromCode(PLICodes.Error.IBM1376I, child.levelToken));
         }
 
         const childHasLevel = child.level !== undefined;
@@ -150,32 +139,34 @@ export class PliValidator implements Validator {
 
         // look for a generally negated version of this attribute (there are several)
         if (attrSet.has(`UN${typ}`)) {
-          acceptor(
-            Severity.E,
-            PLICodes.Error.IBM2462I.message(typ, `UN${typ}`),
-            {
-              code: PLICodes.Error.IBM2462I.fullCode,
-              range: getSyntaxNodeRange(node)!,
-              uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
-              // property: "returnAttributes",
-              // node
-            },
-          );
+          // TODO: Reimplement this validation and add tests
+          // acceptor(
+          //   Severity.E,
+          //   PLICodes.Error.IBM2462I.message(typ, `UN${typ}`),
+          //   {
+          //     code: PLICodes.Error.IBM2462I.fullCode,
+          //     range: getSyntaxNodeRange(node)!,
+          //     uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+          //     // property: "returnAttributes",
+          //     // node
+          //   },
+          // );
         }
 
         // look for a non-negated version of this type
         if (typ.startsWith("UN") && attrSet.has(typ.slice(2))) {
-          acceptor(
-            Severity.E,
-            PLICodes.Error.IBM2462I.message(typ, typ.slice(2)),
-            {
-              code: PLICodes.Error.IBM2462I.fullCode,
-              range: getSyntaxNodeRange(node)!,
-              uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
-              // property: "returnAttributes",
-              // node
-            },
-          );
+          // TODO: Reimplement this validation and add tests
+          // acceptor(
+          //   Severity.E,
+          //   PLICodes.Error.IBM2462I.message(typ, typ.slice(2)),
+          //   {
+          //     code: PLICodes.Error.IBM2462I.fullCode,
+          //     range: getSyntaxNodeRange(node)!,
+          //     uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+          //     // property: "returnAttributes",
+          //     // node
+          //   },
+          // );
         }
       }
     }
@@ -189,22 +180,23 @@ export class PliValidator implements Validator {
     acceptor: ValidationAcceptor,
   ): void {
     if (node.label && !node.label.node) {
-      acceptor(Severity.W, PLICodes.Warning.IBM3332I.message, {
-        code: PLICodes.Warning.IBM3332I.fullCode,
-        range: getSyntaxNodeRange(node)!,
-        uri: "", // TODO @montymxb Still need to supply URI for this document we're
-        // property: "label"
-        // node
-      });
+      // TODO: Reimplement this validation and add tests
+      // acceptor(Severity.W, PLICodes.Warning.IBM3332I.message, {
+      //   code: PLICodes.Warning.IBM3332I.fullCode,
+      //   range: getSyntaxNodeRange(node)!,
+      //   uri: "", // TODO @montymxb Still need to supply URI for this document we're
+      //   // property: "label"
+      //   // node
+      // });
 
-      // add Error.IBM1316I as well
-      acceptor(Severity.E, PLICodes.Error.IBM1316I.message, {
-        code: PLICodes.Error.IBM1316I.fullCode,
-        range: getSyntaxNodeRange(node)!,
-        uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
-        // property: "label",
-        // node
-      });
+      // // add Error.IBM1316I as well
+      // acceptor(Severity.E, PLICodes.Error.IBM1316I.message, {
+      //   code: PLICodes.Error.IBM1316I.fullCode,
+      //   range: getSyntaxNodeRange(node)!,
+      //   uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+      //   // property: "label",
+      //   // node
+      // });
     }
   }
 
@@ -229,27 +221,28 @@ export class PliValidator implements Validator {
             (attr) => attr.kind === AST.SyntaxKind.EntryAttribute,
           )
         ) {
-          acceptor(Severity.S, PLICodes.Severe.IBM1695I.message, {
-            code: PLICodes.Severe.IBM1695I.fullCode,
-            range: getSyntaxNodeRange(node)!,
-            uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
-            // node,
-            // property: "call",
-          });
+          // TODO: Reimplement this validation and add tests
+          // acceptor(Severity.S, PLICodes.Severe.IBM1695I.message, {
+          //   code: PLICodes.Severe.IBM1695I.fullCode,
+          //   range: getSyntaxNodeRange(node)!,
+          //   uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+          //   // node,
+          //   // property: "call",
+          // });
 
           // also flag when we have any sort of args list (even an empty one) present after the call
           if (node.call?.args1) {
-            acceptor(
-              Severity.E,
-              PLICodes.Error.IBM1231I.message(node.call?.procedure?.text!),
-              {
-                code: PLICodes.Error.IBM1231I.fullCode,
-                range: getSyntaxNodeRange(node)!,
-                uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
-                // node: node.call,
-                // property: "args"
-              },
-            );
+            // acceptor(
+            //   Severity.E,
+            //   PLICodes.Error.IBM1231I.message(node.call?.procedure?.text!),
+            //   {
+            //     code: PLICodes.Error.IBM1231I.fullCode,
+            //     range: getSyntaxNodeRange(node)!,
+            //     uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+            //     // node: node.call,
+            //     // property: "args"
+            //   },
+            // );
           }
         }
       }
@@ -272,29 +265,31 @@ export class PliValidator implements Validator {
         (lattr === "signed" && attrSet.has("unsigned")) ||
         (lattr === "unsigned" && attrSet.has("signed"))
       ) {
+        // TODO: Reimplement this validation and add tests
         // mutually exclusive attributes
-        acceptor(
-          Severity.W,
-          "Signed & unsigned attributes are mutually exclusive, ideally only one should be specified.",
-          {
-            // node,
-            range: getSyntaxNodeRange(node)!,
-            uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
-            // property: "attributes"
-          },
-        );
+        // acceptor(
+        //   Severity.W,
+        //   "Signed & unsigned attributes are mutually exclusive, ideally only one should be specified.",
+        //   {
+        //     // node,
+        //     range: getSyntaxNodeRange(node)!,
+        //     uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+        //     // property: "attributes"
+        //   },
+        // );
       } else if (lattr.match(/prec/) && attrSet.has("prec")) {
+        // TODO: Reimplement this validation and add tests
         // don't allow multiple precision attributes
-        acceptor(
-          Severity.W,
-          "Multiple precision attributes will result in only one taking effect, ideally only one should be specified.",
-          {
-            // node,
-            range: getSyntaxNodeRange(node)!,
-            uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
-            // property: "attributes",
-          },
-        );
+        // acceptor(
+        //   Severity.W,
+        //   "Multiple precision attributes will result in only one taking effect, ideally only one should be specified.",
+        //   {
+        //     // node,
+        //     range: getSyntaxNodeRange(node)!,
+        //     uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
+        //     // property: "attributes",
+        //   },
+        // );
       } else {
         // add it in, normalizing precision & prec to 'prec' along the way
         attrSet.add(lattr.match(/prec/) ? "prec" : lattr);
@@ -323,15 +318,7 @@ export class PliValidator implements Validator {
 
     const name = node.ref.node.name.toUpperCase();
     if (!this.processGroup["implicit-builtins"]?.includes(name)) {
-      acceptor(
-        Severity.E,
-        PLICodes.Error.IBM1373I.message(node.ref.node.name),
-        {
-          code: PLICodes.Error.IBM1373I.fullCode,
-          range: getSyntaxNodeRange(node)!,
-          uri: tokenToUri(node.ref.token) || "",
-        },
-      );
+      acceptor(diagnosticFromCode(PLICodes.Error.IBM1373I, node.ref.token, node.ref.text));
     }
   }
 }
