@@ -1755,7 +1755,7 @@ export function createNoPrintDirective(): NoPrintDirective {
 }
 export interface NoteDirective extends AstNode {
   kind: SyntaxKind.NoteDirective;
-  noteToken: Token | null;
+  noteToken: Token;
   message: Expression | null;
   code: Expression | null;
 }
@@ -1763,7 +1763,7 @@ export interface NoteDirective extends AstNode {
 export function createNoteDirective(): NoteDirective {
   return {
     kind: SyntaxKind.NoteDirective,
-    noteToken: null,
+    noteToken: undefined!,
     container: null,
     code: null,
     message: null,
