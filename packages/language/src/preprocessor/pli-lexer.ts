@@ -37,7 +37,6 @@ import { FileStore } from "../workspace/file-store";
 export interface LexingIssue {
   readonly message: string;
   readonly severity: Severity;
-  readonly code: string | undefined;
   readonly range: Range | undefined;
   readonly uri: URI | undefined;
 }
