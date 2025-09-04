@@ -10,11 +10,7 @@
  */
 
 import { PLICodes } from "../../../validation/messages";
-import {
-  Severity,
-  tokenToRange,
-  tokenToUri,
-} from "../../../language-server/types";
+import { diagnosticFromCode } from "../../../language-server/types";
 import * as AST from "../../../syntax-tree/ast";
 import { ValidationAcceptor } from "../../validator";
 
@@ -25,21 +21,13 @@ export function IBM1059I_select_without_otherwise(
   node: AST.SelectStatement,
   acceptor: ValidationAcceptor,
 ) {
+  const token = node.selectToken;
+  if (!token) return;
+
   const otherwiseStatement = node.statements?.some(
     (stmt) => stmt.kind === AST.SyntaxKind.OtherwiseStatement,
   );
   if (otherwiseStatement) return;
 
-  const token = node.selectToken;
-  if (!token) return;
-
-  const infoRange = tokenToRange(token);
-  const infoUri = tokenToUri(token);
-  if (!infoRange || !infoUri) return;
-
-  acceptor(Severity.I, PLICodes.Info.IBM1059I.message, {
-    code: PLICodes.Info.IBM1059I.fullCode,
-    range: infoRange,
-    uri: infoUri,
-  });
+  acceptor(diagnosticFromCode(PLICodes.Info.IBM1059I, token));
 }

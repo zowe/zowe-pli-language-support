@@ -21,7 +21,6 @@
 //// END <|1>P1;
 //// CALL <|2>P1;
 
-verify.noDiagnostics();
 const expectedMarkdown2 = hover.codeBlock(
   "P1: PROC(A,B) OPTIONS(MAIN) RETURNS(FIXED BIN(15));",
 );

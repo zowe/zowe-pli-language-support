@@ -25,13 +25,12 @@ import {
 } from "./instruction-generator";
 import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
-import { LexingIssue } from "./pli-lexer";
 import { MarginsProcessor } from "./pli-margins-processor";
-import { PreprocessorError } from "./pli-preprocessor-error";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { tokenize } from "../parser/tokenizer";
 import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
 import { preprocessorParse } from "./preprocessor-parser";
+import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { tokenMatcher } from "chevrotain";
 import { PLICodes } from "../validation/messages";
@@ -252,7 +251,7 @@ interface InterpreterContext {
   statements: ast.Statement[];
   tokens: Token[];
   files: FileStore;
-  errors: LexingIssue[];
+  diagnostics: Diagnostic[];
   procedures: Map<string, inst.ProcedureInstructionContainer>;
   activeProcedures: Set<string>;
   counter: Map<inst.InstructionNode, number>;
@@ -280,7 +279,7 @@ export type InstructionInterpreterResult = {
   all: Token[];
   files: FileStore;
   evaluationResults: EvaluationResults;
-  errors: LexingIssue[];
+  errors: Diagnostic[];
   statements: ast.Statement[];
   references: ast.Reference[];
 };
@@ -303,7 +302,7 @@ export async function runInstructions(
     currentUri: uri,
     entryUri: uri,
     uris: [uri.toString()],
-    errors: [],
+    diagnostics: [],
     statements: [],
     xIncludes: new Set(),
     variables: new Map(),
@@ -331,7 +330,7 @@ export async function runInstructions(
     all: context.tokens,
     files: context.files,
     evaluationResults: context.evaluations,
-    errors: context.errors,
+    errors: context.diagnostics,
     references: context.references,
     statements: context.statements,
   };
@@ -414,11 +413,7 @@ function runInstructionNodeSync(
 }
 
 function handleInstructionError(err: any, context: InterpreterContext): void {
-  if (err instanceof PreprocessorError) {
-    context.errors.push(err);
-  } else {
-    console.error("Unhandled error in instruction interpreter:", err);
-  }
+  console.error("Unhandled error in instruction interpreter:", err);
 }
 
 async function runInstruction(
@@ -1362,12 +1357,11 @@ function evaluateNamedArguments(
   for (const [name, argTokens] of namedArgs) {
     // If the named argument doesn't match any parameter, report an error
     if (!usedParams.has(name)) {
-      context.errors.push(
-        new PreprocessorError(
-          PLICodes.Error.IBM3581I.message(argTokens.nameToken.image),
+      context.diagnostics.push(
+        diagnosticFromCode(
+          PLICodes.Error.IBM3581I,
           argTokens.nameToken,
-          undefined,
-          PLICodes.Error.IBM3581I.fullCode,
+          argTokens.nameToken.image,
         ),
       );
     }
@@ -1634,18 +1628,18 @@ async function runInclude(
 ): Promise<void> {
   const uri = await resolveIncludeFileUri(item, context);
 
-  function failToResolve(error?: any): never {
+  function failToResolve(error?: any): void {
     if (error) {
       console.log("Failed to resolve include file:", error);
     }
-    throw new PreprocessorError(
-      `Cannot resolve include file '${item.fileName}'`,
-      item.token,
+    context.diagnostics.push(
+      diagnosticFromCode(PLICodes.Severe.IBM3841I, item.token, item.fileName),
     );
   }
 
   if (!uri) {
     failToResolve();
+    return;
   }
 
   if (item.item) {
@@ -1663,10 +1657,8 @@ async function runInclude(
   context.xIncludes.add(uri.toString());
 
   if (context.uris.includes(uri.toString())) {
-    throw new PreprocessorError(
-      `Circular include detected: ${uri.toString(true)}`,
-      item.token,
-    );
+    failToResolve();
+    return;
   }
 
   try {
@@ -1685,10 +1677,11 @@ async function runInclude(
       );
       const subState = preprocessorParserStateFromText(processedContent, uri);
       const subProgram = preprocessorParse(subState);
+      subProgram.diagnostics.push(...subState.diagnostics);
       const result = generateInstructions(subProgram.statements);
       return {
         tokens: subProgram.tokens,
-        issues: subProgram.errors,
+        diagnostics: subProgram.diagnostics,
         statements: subProgram.statements,
         result,
       };
@@ -1699,7 +1692,7 @@ async function runInclude(
       tokens: cachedResult.tokens,
       uri,
     });
-    context.errors.push(...cachedResult.issues);
+    context.diagnostics.push(...cachedResult.diagnostics);
     for (const [key, value] of Object.entries(cachedResult.result.procedures)) {
       context.procedures.set(key, value);
     }
@@ -1725,11 +1718,7 @@ async function resolveIncludeFileUri(
   item: IncludeItem,
   context: InterpreterContext,
 ): Promise<URI | undefined> {
-  if (!item.fileName) {
-    throw new Error("Include item does not have a file specified.");
-  }
-
-  if (!context.entryUri) {
+  if (!context.entryUri || !item.fileName) {
     return undefined;
   }
 
@@ -1745,21 +1734,6 @@ async function resolveIncludeFileUri(
   } else if (context.currentUri) {
     pgroup = PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(
       context.currentUri,
-    );
-  }
-  const ext = UriUtils.extname(URI.parse(item.fileName));
-  if (
-    ext !== "" &&
-    pgroup &&
-    (!pgroup["include-extensions"]?.includes(ext) ||
-      !pgroup["include-extensions"])
-  ) {
-    const msg = pgroup["include-extensions"]?.length
-      ? `expected one of: ${pgroup["include-extensions"]?.join(", ")}`
-      : `expected no extension`;
-    throw new PreprocessorError(
-      `Unsupported include extension for included file, '${item.fileName}', ${msg}`,
-      item.token,
     );
   }
 
