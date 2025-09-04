@@ -513,15 +513,17 @@ function runNoteInstruction(
   );
   const code = valueToNumber(evaluateExpression(instruction.code, context));
   const severity = codeToSeverity(code);
-  context.errors.push(
-    new PreprocessorError(
-      message ?? "",
-      instruction.noteToken,
-      undefined,
-      code?.toString(),
-      severity,
-    ),
-  );
+  if (message) {
+    context.errors.push(
+      new PreprocessorError(
+        message,
+        instruction.noteToken,
+        undefined,
+        code?.toString(),
+        severity,
+      ),
+    );
+  }
 }
 
 function runHaltInstruction(

@@ -204,21 +204,27 @@ function generateTokenInstruction(
   };
 }
 
+const DefaultCode: inst.ExpressionInstruction = {
+  kind: inst.InstructionKind.Number,
+  value: "0",
+};
+
 function generateNoteInstruction(
   node: ast.NoteDirective,
-): inst.NoteInstruction {
-  return {
-    kind: inst.InstructionKind.Note,
-    noteToken: node.noteToken || undefined,
-    message: generateExpressionInstruction(node.message) || {
-      kind: inst.InstructionKind.String,
-      value: "",
-    },
-    code: generateExpressionInstruction(node.code) || {
-      kind: inst.InstructionKind.Number,
-      value: "0",
-    },
-  };
+): inst.NoteInstruction | undefined {
+  const message = generateExpressionInstruction(node.message);
+  const code = generateExpressionInstruction(node.code) || DefaultCode;
+  return message
+    ? {
+        kind: inst.InstructionKind.Note,
+        noteToken: node.noteToken || undefined,
+        message: message || {
+          kind: inst.InstructionKind.String,
+          value: "",
+        },
+        code,
+      }
+    : undefined;
 }
 
 function generateActivateInstruction(
