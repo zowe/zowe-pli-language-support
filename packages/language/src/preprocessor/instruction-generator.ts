@@ -214,10 +214,10 @@ function generateNoteInstruction(
 ): inst.NoteInstruction | undefined {
   const message = generateExpressionInstruction(node.message);
   const code = generateExpressionInstruction(node.code) || DefaultCode;
-  return message
+  return message && node.noteToken
     ? {
         kind: inst.InstructionKind.Note,
-        noteToken: node.noteToken || undefined,
+        noteToken: node.noteToken,
         message: message || {
           kind: inst.InstructionKind.String,
           value: "",
