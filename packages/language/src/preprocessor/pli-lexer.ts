@@ -19,7 +19,7 @@ import {
 } from "./compiler-options-processor";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { Reference, Statement } from "../syntax-tree/ast";
-import { Range, Severity } from "../language-server/types";
+import { Diagnostic } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { generateInstructions } from "./instruction-generator";
 import { EvaluationResults, runInstructions } from "./instruction-interpreter";
@@ -34,17 +34,9 @@ import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { FileStore } from "../workspace/file-store";
 
-export interface LexingIssue {
-  readonly message: string;
-  readonly severity: Severity;
-  readonly range: Range | undefined;
-  readonly uri: URI | undefined;
-  readonly code?: string;
-}
-
 export interface LexerResult {
   all: Token[];
-  errors: LexingIssue[];
+  diagnostics: Diagnostic[];
   compilerOptions: CompilerOptionsProcessorResult;
   statements: Statement[];
   files: FileStore;
@@ -78,7 +70,7 @@ export class PliLexer {
     unit.compilerOptions = opts;
     initLexer(opts);
     unit.instructionCache.update(opts);
-    const allErrors: LexingIssue[] = [];
+    const allDiagnostics: Diagnostic[] = [];
     const instruction = unit.instructionCache.get(uri, inputText, () => {
       const textWithoutMargins = this.marginsProcessor.processMargins(
         compilerOptionsResult,
@@ -88,19 +80,20 @@ export class PliLexer {
       // Do a full parsing of the input text to extract all *local* statements
       const {
         statements,
-        errors,
+        diagnostics,
         tokens: fileTokens,
       } = preprocessorParse(state);
       const result = generateInstructions(statements);
+      diagnostics.push(...state.diagnostics);
       return {
         tokens: fileTokens,
-        issues: errors,
+        diagnostics: diagnostics,
         statements: statements,
         result,
       };
     });
-    allErrors.push(...instruction.issues);
-    allErrors.push(...this.marginsProcessor.issues);
+    allDiagnostics.push(...instruction.diagnostics);
+    allDiagnostics.push(...this.marginsProcessor.issues);
 
     const incAfter = compilerOptionsResult.result?.options.incAfter;
     if (incAfter?.process) {
@@ -124,11 +117,11 @@ export class PliLexer {
     if (compilerOptionsResult.result) {
       instruction.tokens.unshift(...compilerOptionsResult.result.tokens);
     }
-    allErrors.push(...output.errors);
+    allDiagnostics.push(...output.errors);
     return {
       all: output.all,
       compilerOptions: compilerOptionsResult,
-      errors: allErrors,
+      diagnostics: allDiagnostics,
       statements: [...instruction.statements, ...output.statements],
       files: output.files,
       evaluationResults: output.evaluationResults,

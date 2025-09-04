@@ -66,8 +66,7 @@ export interface ParametricPLICode {
   /**
    * Message for the code, with placeholders for parameters
    */
-  // Todo: add a generic type for the arguments to the interface
-  message: (...args: (string | number | undefined)[]) => string;
+  message: (...args: any[]) => string;
 }
 
 export const Info = {
@@ -81,7 +80,7 @@ export const Info = {
     message: (optionname: string) =>
       `${optionname} should be specified within OPTIONS, but is accepted as is.`,
     fullCode: "IBM1018II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The statement following the statement for which this message was issued were merged
@@ -93,7 +92,7 @@ export const Info = {
     severity: Severity.I,
     message: "The next statement was merged with this statement.",
     fullCode: "IBM1035II",
-  } as SimplePLICode,
+  },
 
   /**
    * The specified number of statements following the statement for which this message
@@ -106,7 +105,7 @@ export const Info = {
     message: (statementcount: string) =>
       `The next ${statementcount} statements were merged with this statement.`,
     fullCode: "IBM1036II",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used to report back end informational messages.
@@ -117,7 +116,7 @@ export const Info = {
     severity: Severity.I,
     message: (note: string) => `${note}`,
     fullCode: "IBM1038II",
-  } as ParametricPLICode,
+  },
 
   /**
    * All variables should be declared except for contextual declarations of built-in functions,
@@ -130,7 +129,7 @@ export const Info = {
     message: (variablename: string) =>
       `Variable ${variablename} is implicitly declared.`,
     fullCode: "IBM1039II",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used by %NOTE statements with a return code of 0.
@@ -141,7 +140,7 @@ export const Info = {
     severity: Severity.I,
     message: (note: string) => `${note}`,
     fullCode: "IBM1040II",
-  } as ParametricPLICode,
+  },
 
   /**
    * A comment ends on a different line than it begins. This may indicate that an end-of-comment
@@ -153,7 +152,7 @@ export const Info = {
     severity: Severity.I,
     message: (linecount: string) => `Comment spans ${linecount} lines.`,
     fullCode: "IBM1041II",
-  } as ParametricPLICode,
+  },
 
   /**
    * A string ends on a different line than it begins. This may indicate that a closing
@@ -165,7 +164,7 @@ export const Info = {
     severity: Severity.I,
     message: (linecount: string) => `String spans ${linecount} lines.`,
     fullCode: "IBM1042II",
-  } as ParametricPLICode,
+  },
 
   /**
    * There is no declare statement for the named variable, but it has been given the indicated
@@ -179,7 +178,7 @@ export const Info = {
     message: (variablename: string, attribute: string) =>
       `${variablename} is contextually declared as ${attribute} .`,
     fullCode: "IBM1043II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The OS\/370 PL\/I and PL\/I for MVS compilers would have mapped this to 2 bytes.
@@ -190,7 +189,7 @@ export const Info = {
     severity: Severity.I,
     message: "FIXED BINARY with precision 7 or less is mapped to 1 byte.",
     fullCode: "IBM1044II",
-  } as SimplePLICode,
+  },
 
   /**
    * The OS\/370 PL\/I and PL\/I for MVS compilers would have handled UNSPEC applied to
@@ -202,7 +201,7 @@ export const Info = {
     severity: Severity.I,
     message: "UNSPEC applied to an array is handled as a scalar reference.",
     fullCode: "IBM1046II",
-  } as SimplePLICode,
+  },
 
   /**
    * If the ORDER option applies to a block, optimization is likely to be inhibited, especially
@@ -215,7 +214,7 @@ export const Info = {
     severity: Severity.I,
     message: "ORDER option may inhibit optimization.",
     fullCode: "IBM1047II",
-  } as SimplePLICode,
+  },
 
   /**
    * A GET DATA statement can alter almost any variable, and a PUT DATA statement requires
@@ -228,7 +227,7 @@ export const Info = {
     severity: Severity.I,
     message: "GET/PUT DATA without a data-list inhibits optimization.",
     fullCode: "IBM1048II",
-  } as SimplePLICode,
+  },
 
   /**
    * The INITIAL attribute has been specified for a variable with the attributes RESERVED
@@ -241,7 +240,7 @@ export const Info = {
     severity: Severity.I,
     message: "INITIAL attribute for RESERVED STATIC is ignored.",
     fullCode: "IBM1050II",
-  } as SimplePLICode,
+  },
 
   /**
    * This message applies to the ADDR, CURRENTSTORAGE\/SIZE and STORAGE\/SIZE built-in
@@ -255,7 +254,7 @@ export const Info = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built-in function may not be byte aligned.`,
     fullCode: "IBM1051II",
-  } as ParametricPLICode,
+  },
 
   /**
    * When a string with * extent or an array with * extents is passed, PL\/I normally
@@ -274,7 +273,7 @@ export const Info = {
     message:
       "The NODESCRIPTOR attribute is accepted even though some arguments have * extents.",
     fullCode: "IBM1052II",
-  } as SimplePLICode,
+  },
 
   /**
    * If one of the built-in functions ADD, DIVIDE, MULTIPLY or SUBTRACT is invoked with
@@ -287,7 +286,7 @@ export const Info = {
     severity: Severity.I,
     message: "Scaled FIXED operation evaluated as FIXED DECIMAL.",
     fullCode: "IBM1053II",
-  } as SimplePLICode,
+  },
 
   /**
    * This message can be used to help find code that may be very expensive if executed
@@ -300,7 +299,7 @@ export const Info = {
     message: (sourcetype: string, targettype: string) =>
       `Conversion from ${sourcetype} to ${targettype} will be done by library call.`,
     fullCode: "IBM1058II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The ERROR condition will be raised if no WHEN clause is satisfied.
@@ -311,7 +310,7 @@ export const Info = {
     severity: Severity.I,
     message: "SELECT statement contains no OTHERWISE clause.",
     fullCode: "IBM1059II",
-  } as SimplePLICode,
+  },
 
   /**
    * The PL\/I language rules require this, but it might be a little surprising. In the
@@ -338,7 +337,7 @@ export const Info = {
     message: (identifier: string) =>
       `Name resolution for ${identifier} selected its declaration in a structure, rather than its non- member declaration in a parent block.`,
     fullCode: "IBM1060II",
-  } as ParametricPLICode,
+  },
 
   /**
    * Use of any of the constants 365, 1900 or '19' may indicate a date calculation. If
@@ -352,7 +351,7 @@ export const Info = {
     message:
       "Probable DATE calculation should be examined for validity after the year 1999.",
     fullCode: "IBM1061II",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated was inferred to contain a two-digit year because, for example, it was
@@ -365,7 +364,7 @@ export const Info = {
     message: (variable: string) =>
       `${variable} inferred to contain a two- digit year.`,
     fullCode: "IBM1062II",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under OPT(2), any specification of TEST hooks stronger than TEST(BLOCK) is not supported
@@ -377,7 +376,7 @@ export const Info = {
     severity: Severity.I,
     message: "Use of OPT(2) forces TEST(BLOCK).",
     fullCode: "IBM1064II",
-  } as SimplePLICode,
+  },
 
   /**
    * The named short floating-point constant cannot be exactly represented. It could be
@@ -392,7 +391,7 @@ export const Info = {
     message: (constant: string) =>
       `FLOAT constant ${constant} would be more precise if specified as a long FLOAT.`,
     fullCode: "IBM1065II",
-  } as ParametricPLICode,
+  },
 
   /**
    * If a DO specification has no clause such as TO, BY or REPEAT that could cause the
@@ -410,7 +409,7 @@ export const Info = {
     severity: Severity.I,
     message: "UNTIL clause ignored.",
     fullCode: "IBM1067II",
-  } as SimplePLICode,
+  },
 
   /**
    * If a procedure contains a RETURN statement, it should have the RETURNS attribute
@@ -428,7 +427,7 @@ export const Info = {
     message:
       "PROCEDURE has no RETURNS attribute, but contains a RETURN statement. A RETURNS attribute will be assumed.",
     fullCode: "IBM1068II",
-  } as SimplePLICode,
+  },
 
   /**
    * The AUTOMATIC variables in a block may be used in the declare statements and the
@@ -446,7 +445,7 @@ export const Info = {
     message:
       "The AUTOMATIC variables in a block should not be used in the prologue of that block.",
     fullCode: "IBM1069II",
-  } as SimplePLICode,
+  },
 
   /**
    * The named procedure is not external and is never referenced in the compilation unit.
@@ -460,7 +459,7 @@ export const Info = {
     message: (procname: string) =>
       `The PROCEDURE ${procname} is not referenced.`,
     fullCode: "IBM2800II",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(IBM), when an arithmetic operation has an operand that is FIXED BIN and
@@ -481,7 +480,7 @@ export const Info = {
     ) =>
       `FIXED DEC( ${sourceprecision} , ${sourcescale} ) operand will be converted to FIXED BIN( ${targetprecision} , ${targetscale} ). This introduces a non-zero scale factor into an integer operation and will produce a result with the attributes FIXED BIN( ${resultprecision} , ${resultscale} ).`,
     fullCode: "IBM2801II",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message can be used to help find code that may be very expensive if executed
@@ -496,7 +495,7 @@ export const Info = {
     severity: Severity.I,
     message: "Aggregate mapping will be done by library call.",
     fullCode: "IBM2802II",
-  } as SimplePLICode,
+  },
 
   /**
    * This message is issued when a PUT or GET STRING EDIT statement has been optimized
@@ -508,7 +507,7 @@ export const Info = {
     severity: Severity.I,
     message: (keyword: string) => `${keyword} STRING EDIT statement optimized.`,
     fullCode: "IBM2803II",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message can be used to help find code that may be very expensive if executed
@@ -521,7 +520,7 @@ export const Info = {
     message: (variablename: string, sourcetype: string, targettype: string) =>
       `For assignment to ${variablename} , conversion from ${sourcetype} to ${targettype} will be done by library call.`,
     fullCode: "IBM2805II",
-  } as ParametricPLICode,
+  },
 
   /**
    * It is generally very unwise to pass a label to another routine. It would be good
@@ -534,7 +533,7 @@ export const Info = {
     message:
       "Passing a LABEL to another routine is poor coding practice and will cause the compiler to generate less than optimal code.",
     fullCode: "IBM2806II",
-  } as SimplePLICode,
+  },
 
   /**
    * If the LIMITS option specifies a maximum FIXED precision greater than 31, then an
@@ -556,7 +555,7 @@ export const Info = {
     ) =>
       `FIXED DEC( ${sourceprecision} , ${sourcescale} ) operand will be converted to FIXED BIN( ${targetprecision} , ${targetscale} ). This introduces 8-byte integer arithmetic into an operation that might be faster if computed in decimal.`,
     fullCode: "IBM2809II",
-  } as ParametricPLICode,
+  },
 
   /**
    * In certain conversions of FIXED BIN(p,q) to FIXED DEC, the old compiler slightly
@@ -574,7 +573,7 @@ export const Info = {
     ) =>
       `Conversion of FIXED BIN( ${sourceprecision} , ${sourcescale} ) to FIXED DEC( ${targetprecision} , ${targetscale} ) may produce a more accurate result than under the old compiler.`,
     fullCode: "IBM2810II",
-  } as ParametricPLICode,
+  },
 
   /**
    * For functions such as VERIFY(x,y), if y is a constant, it is much better for performance
@@ -587,7 +586,7 @@ export const Info = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function would lead to much better code if declared with the VALUE attribute.`,
     fullCode: "IBM2812II",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message can be used to help find code that may be expensive if invoked many
@@ -602,7 +601,7 @@ export const Info = {
     message:
       "Aggregate mapping for storage allocation will be done by library call.",
     fullCode: "IBM2814II",
-  } as SimplePLICode,
+  },
 
   /**
    * A BYVALUE argument should be one that could reasonably be passed in a register. Hence
@@ -617,7 +616,7 @@ export const Info = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is not recommended to be passed BYVALUE.`,
     fullCode: "IBM2815II",
-  } as ParametricPLICode,
+  },
 
   /**
    * A BYVALUE parameter should be one that could reasonably be passed in a register.
@@ -632,7 +631,7 @@ export const Info = {
     message:
       "BYVALUE parameters should ideally be ones that can reasonably be passed in registers.",
     fullCode: "IBM2816II",
-  } as SimplePLICode,
+  },
 
   /**
    * Using BYVALUE in RETURNS is recommended only if the value to be returned has a type
@@ -647,7 +646,7 @@ export const Info = {
     message:
       "BYVALUE in RETURNS is recommended only for types that can reasonably be returned in registers.",
     fullCode: "IBM2817II",
-  } as SimplePLICode,
+  },
 
   /**
    * The precision required to hold the result as defined by PL\/I of this add (or subtract)
@@ -666,7 +665,7 @@ export const Info = {
     ) =>
       `Addition or subtraction of FIXED DEC( ${precision} , ${scalefactor} ) and FIXED DEC( ${precision2} , ${scalefactor2} ) may raise FIXEDOVERFLOW.`,
     fullCode: "IBM2818II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The precision required to hold the result as defined by PL\/I of this multiply is
@@ -685,7 +684,7 @@ export const Info = {
     ) =>
       `Multiplication of FIXED DEC( ${precision} , ${scalefactor} ) and FIXED DEC( ${precision2} , ${scalefactor2} ) may raise FIXEDOVERFLOW.`,
     fullCode: "IBM2819II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named compiler option is not supported on this platform. For example, the BLKOFF
@@ -699,7 +698,7 @@ export const Info = {
     message: (optionname: string) =>
       `The ${optionname} option is not supported on this platform.`,
     fullCode: "IBM2820II",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message can be used to help find code that may be very expensive if executed
@@ -712,7 +711,7 @@ export const Info = {
     message: (sourcetype: string, targettype: string) =>
       `Conversion from ${sourcetype} to ${targettype} will be done by library call.`,
     fullCode: "IBM2825II",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message can be used to help find code that may be very expensive if executed
@@ -725,7 +724,7 @@ export const Info = {
     message: (variablename: string, sourcetype: string, targettype: string) =>
       `For assignment to ${variablename} , conversion from ${sourcetype} to ${targettype} will be done by library call.`,
     fullCode: "IBM2826II",
-  } as ParametricPLICode,
+  },
 
   /**
    * For example, the conversion of the FLOAT DEC(15) value 321.1234 to FIXED DEC(15,15)
@@ -741,7 +740,7 @@ export const Info = {
     message: (sourcetype: string, targettype: string) =>
       `Conversion from ${sourcetype} to ${targettype} can produce an inexact or incorrect result.`,
     fullCode: "IBM2827II",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the VALUE type function is applied to a structure type which has an initial attribute
@@ -772,7 +771,7 @@ export const Info = {
     message: (typename: string) =>
       `VALUE(: ${typename} :) will return an instance of the structure type that is only partially initialized.`,
     fullCode: "IBM2830II",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message warns that the compiler has detected an ASSERT UNREACHABLE statement
@@ -784,7 +783,7 @@ export const Info = {
     severity: Severity.I,
     message: "ASSERT statement may never be executed.",
     fullCode: "IBM2831II",
-  } as SimplePLICode,
+  },
 
   /**
    * The compiler will perform no inling if the TEST option is on.
@@ -796,7 +795,7 @@ export const Info = {
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} and all other PROCEDUREs since the TEST option is on.`,
     fullCode: "IBM2832II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler will not inline a PROCEDURE that has ENTRY statements.
@@ -808,7 +807,7 @@ export const Info = {
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it contains ENTRY statements.`,
     fullCode: "IBM2833II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler will not inline a PROCEDURE or BEGIN block that contains other PROCEDUREs
@@ -821,7 +820,7 @@ export const Info = {
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it contains nested PROCEDUREs and/or BEGIN blocks.`,
     fullCode: "IBM2834II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler will not inline a PROCEDURE that requires has the NODESCRIPTOR option
@@ -834,7 +833,7 @@ export const Info = {
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it has OPTIONS(NODESCRIPTOR), but has some parameters with nonconstant extents.`,
     fullCode: "IBM2835II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler will not inline a PROCEDURE that which has any labels that are possibly
@@ -847,7 +846,7 @@ export const Info = {
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it contains labels that may be targets of out-of-block GOTOs.`,
     fullCode: "IBM2836II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler will not inline a PROCEDURE that has any PUT DATA or GET DATA statements
@@ -860,7 +859,7 @@ export const Info = {
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it contains some DATA-directed I/O statements.`,
     fullCode: "IBM2837II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler will not inline a PROCEDURE that has any condition enablement that differs
@@ -873,7 +872,7 @@ export const Info = {
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it has non-default condition enablement.`,
     fullCode: "IBM2838II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler will not inline a PROCEDURE that has any ON statements.
@@ -885,7 +884,7 @@ export const Info = {
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it contains ON-units.`,
     fullCode: "IBM2839II",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the first and third arguments to the TRANSLATE built-in function are both constant,
@@ -921,7 +920,7 @@ export const Info = {
     message:
       "If TRANSLATE is being used to reformat a date-time value, it would be better to use the REPATTERN or DATETIME built-in function instead.",
     fullCode: "IBM2840II",
-  } as SimplePLICode,
+  },
 
   /**
    * MEMCU12 will perform much better than MEMCONVERT.
@@ -933,7 +932,7 @@ export const Info = {
     message:
       "Changing MEMCONVERT(p,n,1200,q,m,1208 ) to MEMCU12(p,n,q,m) would be better for performance.",
     fullCode: "IBM2841II",
-  } as SimplePLICode,
+  },
 
   /**
    * MEMCU21 will perform much better than MEMCONVERT.
@@ -945,7 +944,7 @@ export const Info = {
     message:
       "Changing MEMCONVERT(p,n,1208,q,m,1200 ) to MEMCU21(p,n,q,m) would be better for performance.",
     fullCode: "IBM2842II",
-  } as SimplePLICode,
+  },
 
   /**
    * This may represent a problem especially if this occurs in an assignment statement
@@ -958,7 +957,7 @@ export const Info = {
     message: (characters: string) =>
       `The characters ${characters} will be accepted as two separate characters. It would be better to separate these characters with a blank.`,
     fullCode: "IBM2844II",
-  } as ParametricPLICode,
+  },
 
   /**
    * This may represent a problem especially if this occurs in an assignment statement
@@ -971,7 +970,7 @@ export const Info = {
     message: (characters: string) =>
       `The characters ${characters} will be accepted as two separate characters. It would be better to separate these characters with a blank.`,
     fullCode: "IBM2845II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler issues this message if a compilation unit contains a PACKAGE statement
@@ -984,7 +983,7 @@ export const Info = {
     message:
       "It would be better to convert nested PROCEDUREs in a PACKAGE into sister nonnested PROCEDUREs.",
     fullCode: "IBM2846II",
-  } as SimplePLICode,
+  },
 
   /**
    * If a RETURNS statement specifies a VARYING or VARYINGZ variable with a MAXLENGTH
@@ -1006,7 +1005,7 @@ export const Info = {
     message: (returnlength: string, returnslength: string) =>
       `Source in RETURN statement has a MAXLENGTH of ${returnlength} which is greater than the length of ${returnslength} in the corresponding RETURNS attribute.`,
     fullCode: "IBM2847II",
-  } as ParametricPLICode,
+  },
 
   /**
    * In ADD(x,y,p,q), if the precisions of x and y are large enough compared to p (and
@@ -1026,7 +1025,7 @@ export const Info = {
     ) =>
       `ADD of FIXED DEC( ${xprecision} , ${xscale} ) and FIXED DEC( ${yprecision} , ${yscale} ) with a result precision and scale of ( ${resultprecision} , ${resultscale} ) might overflow.`,
     fullCode: "IBM2848II",
-  } as ParametricPLICode,
+  },
 
   /**
    * Note that this will occur even if the quotient would have the attributes FIXED BIN(p,0)
@@ -1043,7 +1042,7 @@ export const Info = {
     message:
       "CEIL will be evaluated by computing the integral quotient and if the quotient is nonnegative, rounding it up by one if the remainder is non-zero.",
     fullCode: "IBM2851II",
-  } as SimplePLICode,
+  },
 
   /**
    * Note that this will occur even if the quotient would have the attributes FIXED BIN(p,0)
@@ -1060,7 +1059,7 @@ export const Info = {
     message:
       "FLOOR will be evaluated by computing the integral quotient and if the quotient is not positive, rounding it down by one if the remainder is non-zero.",
     fullCode: "IBM2852II",
-  } as SimplePLICode,
+  },
 
   /**
    * This message is used to report DB2 or CICS backend messages with a return code of
@@ -1072,7 +1071,7 @@ export const Info = {
     severity: Severity.I,
     message: (note: string) => `${note}`,
     fullCode: "IBM3000II",
-  } as ParametricPLICode,
+  },
 
   /**
    * The SQL suboption has been specified for the PP option, but the program contains
@@ -1085,7 +1084,7 @@ export const Info = {
     severity: Severity.I,
     message: "Program contains no EXEC SQL statements requiring translation.",
     fullCode: "IBM3019II",
-  } as SimplePLICode,
+  },
 
   /**
    * A comment ends on a different line than it begins. This may indicate that an end-of-comment
@@ -1097,7 +1096,7 @@ export const Info = {
     severity: Severity.I,
     message: (linecount: string) => `Comment spans ${linecount} lines.`,
     fullCode: "IBM3020II",
-  } as ParametricPLICode,
+  },
 
   /**
    * A string ends on a different line than it begins. This may indicate that a closing
@@ -1109,7 +1108,7 @@ export const Info = {
     severity: Severity.I,
     message: (linecount: string) => `String spans ${linecount} lines.`,
     fullCode: "IBM3021II",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used by %NOTE statements with a return code of 0.
@@ -1120,7 +1119,7 @@ export const Info = {
     severity: Severity.I,
     message: (note: string) => `${note}`,
     fullCode: "IBM3024II",
-  } as ParametricPLICode,
+  },
 };
 
 export const Warning = {
@@ -1134,7 +1133,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Statement may never be executed.",
     fullCode: "IBM1078IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The number of arguments should match the number of parameters in the ENTRY declaration
@@ -1147,7 +1146,7 @@ export const Warning = {
     message: (ENTRYname: string) =>
       `Too few arguments have been specified for the ENTRY ${ENTRYname} .`,
     fullCode: "IBM1079IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A PL\/I keyword which could form a complete statement has been used as statement
@@ -1168,7 +1167,7 @@ export const Warning = {
     message: (labelname: string) =>
       `The keyword ${labelname} , which could form a complete statement, is accepted as a label name, but a colon may have been used where a semicolon was meant.`,
     fullCode: "IBM1080IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The expression in the named keyword clause should be a scalar, but an array reference
@@ -1187,7 +1186,7 @@ export const Warning = {
     message: (keyword: string) =>
       `${keyword} expression should be scalar. Lower bounds assumed for any missing subscripts.`,
     fullCode: "IBM1081IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A scalar may be passed as the argument when a structure is expected, but this require
@@ -1207,7 +1206,7 @@ export const Warning = {
     message: (argumentnumber: string, entryname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${entryname} is a scalar, but its declare specifies a structure.`,
     fullCode: "IBM1082IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * GOTO statements may not jump into DO loops, and the compiler will flag any GOTO whose
@@ -1222,7 +1221,7 @@ export const Warning = {
     message:
       "Source in label assignment is inside a DO-loop, and an illegal jump into the loop may be attempted. Optimization will also be very inhibited.",
     fullCode: "IBM1083IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOLAXMARGINS), there should be nothing but blanks after the right margin
@@ -1235,7 +1234,7 @@ export const Warning = {
     message:
       "Nonblanks after right margin are not allowed under RULES(NOLAXMARGINS).",
     fullCode: "IBM1084IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated variable may not have been assigned or initialized a value before it
@@ -1247,7 +1246,7 @@ export const Warning = {
     severity: Severity.W,
     message: (variable: string) => `${variable} may be unset when used.`,
     fullCode: "IBM1085IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated built-in function has an extended float argument, but since the corresponding
@@ -1261,7 +1260,7 @@ export const Warning = {
     message: (builtinfunction: string) =>
       `${builtinfunction} will be evaluated using long rather than extended routines.`,
     fullCode: "IBM1086IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A value larger than HUGE(1s0) cannot be assigned to a short float. Under hexadecimal
@@ -1275,7 +1274,7 @@ export const Warning = {
     message: (assumedvalue: string) =>
       `FLOAT source is too big for its target. An appropriate HUGE value of ${assumedvalue} is assumed.`,
     fullCode: "IBM1087IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The precision for a float literal is implied by the number of digits in its mantissa.
@@ -1289,7 +1288,7 @@ export const Warning = {
     message:
       "FLOAT literal is too big for its implicit precision. The E in the exponent will be replaced by a D.",
     fullCode: "IBM1088IW",
-  } as SimplePLICode,
+  },
 
   /**
    * If the TO value is equal to the maximum value that a FIXED or PICTURE variable can
@@ -1315,7 +1314,7 @@ export const Warning = {
     message:
       "Control variable in DO loop cannot exceed TO value, and loop may be infinite.",
     fullCode: "IBM1089IW",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression contains a reference to a based variable with a constant value for
@@ -1333,7 +1332,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Constant used as locator qualifier.",
     fullCode: "IBM1090IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Except in unusual circumstances, the precision in a FIXED BIN declaration should
@@ -1347,7 +1346,7 @@ export const Warning = {
     severity: Severity.W,
     message: "FIXED BIN precision less than storage allows.",
     fullCode: "IBM1091IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Try to change the code so that it sets and tests a switch instead, or limit GOTOs
@@ -1360,7 +1359,7 @@ export const Warning = {
     message:
       "GOTO whose target is or may be in another block severely limits optimization.",
     fullCode: "IBM1092IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The PLIXOPT string could not be parsed. See the cited LE message for more detail
@@ -1373,7 +1372,7 @@ export const Warning = {
     message: (messagenumber: string) =>
       `PLIXOPT string is invalid. See related runtime message ${messagenumber} .`,
     fullCode: "IBM1093IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The PLIXOPT string contains an invalid item. See the cited LE message for more detail
@@ -1386,7 +1385,7 @@ export const Warning = {
     message: (option: string, messagenumber: string) =>
       `Element ${option} in PLIXOPT is invalid. See related runtime message ${messagenumber} .`,
     fullCode: "IBM1094IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The PLIXOPT string contains a run-time option which is not supported by LE. See the
@@ -1399,7 +1398,7 @@ export const Warning = {
     message: (option: string, option2: string, messagenumber: string) =>
       `Element ${option} in PLIXOPT has been remapped to ${option2} . See related runtime message ${messagenumber} .`,
     fullCode: "IBM1095IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The SPIE and STAE options have been replaced by the TRAP option. TRAP(ON) is equivalent
@@ -1414,7 +1413,7 @@ export const Warning = {
     message: (messagenumber: string) =>
       `STAE and SPIE in PLIXOPT is not supported. See related runtime message ${messagenumber} .`,
     fullCode: "IBM1096IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Generally, scalars should not be passed where arrays are expected, but in some situations,
@@ -1432,7 +1431,7 @@ export const Warning = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Scalar accepted as argument number ${argumentnumber} in ENTRY reference ${ENTRYname} although parameter description specifies an array.`,
     fullCode: "IBM1097IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A comma was followed by a semicolon rather than by a valid syntactical element (such
@@ -1448,7 +1447,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Extraneous comma at end of statement ignored.",
     fullCode: "IBM1098IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(IBM), when a comparison or arithmetic operation has an operand that is
@@ -1483,7 +1482,7 @@ export const Warning = {
     ) =>
       `FIXED DEC( ${sourceprecision} , ${sourcescale} ) operand will be converted to FIXED BIN( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
     fullCode: "IBM1099IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * An attribute (REDUCIBLE in the example below) has been specified in the OPTIONS clause
@@ -1499,7 +1498,7 @@ export const Warning = {
     message: (attributeoption: string) =>
       `The attribute ${attributeoption} is not valid on BEGIN blocks and is ignored.`,
     fullCode: "IBM1100IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * An attribute (DATAONLY in the example below) has been specified in the OPTIONS clause
@@ -1515,7 +1514,7 @@ export const Warning = {
     message: (optionname: string) =>
       `${optionname} is not a known PROCEDURE attribute and is ignored.`,
     fullCode: "IBM1101IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated attribute is valid on PROCEDURE statements, but not on BEGIN statements
@@ -1531,7 +1530,7 @@ export const Warning = {
     message: (optionname: string) =>
       `${optionname} is not a known BEGIN attribute and is ignored.`,
     fullCode: "IBM1102IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler option is not supported on this platform.
@@ -1546,7 +1545,7 @@ export const Warning = {
     message: (optionname: string) =>
       `${optionname} is not a supported compiler option and is ignored.`,
     fullCode: "IBM1103IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Suboptions of the compiler option are not supported on this platform.
@@ -1561,7 +1560,7 @@ export const Warning = {
     message: (optionname: string) =>
       `Suboptions of the compiler option ${optionname} are not supported and are ignored.`,
     fullCode: "IBM1104IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Various compiler options have limits on the size of subfields. Refer to the Programming
@@ -1577,7 +1576,7 @@ export const Warning = {
     message: (optionname: string, numberofletters: string) =>
       `A suboption of the compiler option ${optionname} is too long. It is shortened to length ${numberofletters} .`,
     fullCode: "IBM1105IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Condition prefixes are not allowed on DECLARE, DEFAULT, IF, ELSE, DO, END, SELECT,
@@ -1593,7 +1592,7 @@ export const Warning = {
     message: (keyword: string) =>
       `Condition prefixes on ${keyword} statements are ignored.`,
     fullCode: "IBM1106IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * An attribute (DATAONLY in the example below) has been specified in the OPTIONS clause
@@ -1609,7 +1608,7 @@ export const Warning = {
     message: (optionname: string) =>
       `${optionname} is not a known ENTRY statement attribute and is ignored.`,
     fullCode: "IBM1107IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A character specified in the OR, NOT, QUOTE or NAMES compiler option is already defined
@@ -1626,7 +1625,7 @@ export const Warning = {
     message: (char: string, option: string) =>
       `The character ${char} specified in the ${option} option is already defined and may not be redefined. The redefinition will be ignored.`,
     fullCode: "IBM1108IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * If you wish to display the real and imaginary parts of a complex number using different
@@ -1641,7 +1640,7 @@ export const Warning = {
     severity: Severity.W,
     message: "The second argument in the C- format item will be ignored.",
     fullCode: "IBM1109IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Split the text into 2 lines.
@@ -1656,7 +1655,7 @@ export const Warning = {
     message:
       "The INCLUDE statement should be on a line by itself. The source on the line after the INCLUDE statement is ignored.",
     fullCode: "IBM1110IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The CHECK prefix is not part of the SAA PL\/I language.
@@ -1670,7 +1669,7 @@ export const Warning = {
     severity: Severity.W,
     message: "CHECK prefix is not supported and is ignored.",
     fullCode: "IBM1111IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The CHECK and PENDING conditions are not part of the SAA PL\/I language.
@@ -1685,7 +1684,7 @@ export const Warning = {
     message: (conditionname: string) =>
       `${conditionname} condition is not supported and is ignored.`,
     fullCode: "IBM1112IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named statement, for example the CHECK statement, is not part of the SAA PL\/I
@@ -1698,7 +1697,7 @@ export const Warning = {
     message: (verbname: string) =>
       `${verbname} statement is not supported and is ignored.`,
     fullCode: "IBM1113IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Both operands in a comparison are constant, and consequently, the result of the comparison
@@ -1711,7 +1710,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Comparands are both constant.",
     fullCode: "IBM1114IW",
-  } as SimplePLICode,
+  },
 
   /**
    * For an array, an INITIAL list should not contain more values than the array has elements
@@ -1727,7 +1726,7 @@ export const Warning = {
     message: (count: string, variablename: string, arraysize: string) =>
       `INITIAL list contains ${count} items, but the array ${variablename} contains only ${arraysize} . Excess is ignored.`,
     fullCode: "IBM1115IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A comment ends in a different file than it begins. This may indicate that an end-of-comment
@@ -1739,7 +1738,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Comment spans more than one file.",
     fullCode: "IBM1116IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A string ends in a different file than it begins. This may indicate that a closing
@@ -1751,7 +1750,7 @@ export const Warning = {
     severity: Severity.W,
     message: "String spans more than one file.",
     fullCode: "IBM1117IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A delimiter (for example, a blank or a comma) is required between all identifiers
@@ -1767,7 +1766,7 @@ export const Warning = {
     message: (nondelimiter: string, nondelimiter2: string) =>
       `Delimiter missing between ${nondelimiter} and ${nondelimiter2} . A blank is assumed.`,
     fullCode: "IBM1118IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The control variable in the DO loop is a member of an array, a structure or a union,
@@ -1780,7 +1779,7 @@ export const Warning = {
     message: (name: string) =>
       `Code generated for DO group would be more efficient if control variable ${name} were not an aggregate member.`,
     fullCode: "IBM1119IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Using one END statement to close more than one group of statements is permitted,
@@ -1793,7 +1792,7 @@ export const Warning = {
     message:
       "Multiple closure of groups. END statements will be inserted to close intervening groups.",
     fullCode: "IBM1120IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated character is missing, and there are no more characters in the source.
@@ -1806,7 +1805,7 @@ export const Warning = {
     severity: Severity.W,
     message: (character: string) => `Missing ${character} assumed.`,
     fullCode: "IBM1121IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated character is missing and has been inserted by the parser in order to
@@ -1822,7 +1821,7 @@ export const Warning = {
     message: (character: string, character2: string) =>
       `Missing ${character} assumed before ${character2} .`,
     fullCode: "IBM1122IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Certain ENVIRONMENT options, such as RECSIZE, require suboptions.
@@ -1837,7 +1836,7 @@ export const Warning = {
     message: (optionname: string, optionname2: string) =>
       `The ENVIRONMENT option ${optionname} has been specified without a suboption. The option ${optionname2} is ignored.`,
     fullCode: "IBM1123IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Certain ENVIRONMENT options, such as CONSECUTIVE, should be specified without any
@@ -1853,7 +1852,7 @@ export const Warning = {
     message: (optionname: string) =>
       `A suboption has been specified for the ENVIRONMENT option ${optionname} . The suboption will be ignored.`,
     fullCode: "IBM1124IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * ENVIRONMENT options should not be repeated.
@@ -1868,7 +1867,7 @@ export const Warning = {
     message: (optionname: string) =>
       `The ENVIRONMENT option ${optionname} has been specified more than once.`,
     fullCode: "IBM1125IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The suboption type is incorrect.
@@ -1883,7 +1882,7 @@ export const Warning = {
     message: (optionname: string) =>
       `The ENVIRONMENT option ${optionname} has an invalid suboption. The option will be ignored.`,
     fullCode: "IBM1126IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * There is no such supported ENVIRONMENT option.
@@ -1898,7 +1897,7 @@ export const Warning = {
     message: (optionname: string) =>
       `${optionname} is not a known ENVIRONMENT option. It will be ignored.`,
     fullCode: "IBM1127IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated option is valid only with LANGLVL(OS).
@@ -1913,7 +1912,7 @@ export const Warning = {
     message: (optionname: string) =>
       `The ENVIRONMENT option ${optionname} conflicts with the LANGLVL compiler option. The option will be ignored.`,
     fullCode: "IBM1128IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * An EXEC SQL or EXEC CICS statement has been found in the source program. The compiler
@@ -1929,7 +1928,7 @@ export const Warning = {
     message: (verbname: string, processorname: string) =>
       `${verbname} ${processorname} statement ignored up to closing semicolon.`,
     fullCode: "IBM1129IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum length of external names is set by the EXTNAME suboption of the LIMITS
@@ -1946,7 +1945,7 @@ export const Warning = {
     message: (identifier: string, identifier2: string) =>
       `The external name ${identifier} is too long. It will be shortened to ${identifier2} .`,
     fullCode: "IBM1130IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The name specified in the EXTERNAL attribute in the EXPORTS clause overrides the
@@ -1963,7 +1962,7 @@ export const Warning = {
     message: (name: string) =>
       `An EXTERNAL name specification for ${name} has been specified on its PROCEDURE statement and in the EXPORTS clause of the PACKAGE statement. The EXPORTS specification will be used.`,
     fullCode: "IBM1131IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The name specified in the EXTERNAL attribute in the RESERVES clause overrides the
@@ -1980,7 +1979,7 @@ export const Warning = {
     message: (name: string) =>
       `An EXTERNAL name specification for ${name} has been specified in its declaration and in the RESERVES clause of the PACKAGE statement. The RESERVES specification will be used.`,
     fullCode: "IBM1132IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * An element of a FORMAT CONSTANT array has not been defined, for example, f(2) in
@@ -1997,7 +1996,7 @@ export const Warning = {
     message: (labelname: string) =>
       `The FORMAT CONSTANT array ${labelname} is not fully initialized.`,
     fullCode: "IBM1133IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named variable defines a statement label array, but not all the elements in that
@@ -2014,7 +2013,7 @@ export const Warning = {
     message: (labelreference: string) =>
       `The LABEL CONSTANT array ${labelreference} is not fully initialized.`,
     fullCode: "IBM1134IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * An argument to one of the logical operators (or, and or not) is a constant. The result
@@ -2031,7 +2030,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Logical operand is constant.",
     fullCode: "IBM1135IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A function, for example, a PROCEDURE or ENTRY statement with the RETURNS attribute,
@@ -2045,7 +2044,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Function invoked as a subroutine.",
     fullCode: "IBM1136IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The named attribute is invalid in GENERIC description lists.
@@ -2061,7 +2060,7 @@ export const Warning = {
     message: (attribute: string) =>
       `The attribute ${attribute} is invalid in GENERIC descriptions and will be ignored.`,
     fullCode: "IBM1137IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The array will be incompletely initialized. If the named variable is part of a structure,
@@ -2079,7 +2078,7 @@ export const Warning = {
     message: (count: string, variablename: string, arraysize: string) =>
       `Number of items in INITIAL list is ${count} for the array ${variablename} which contains ${arraysize} elements.`,
     fullCode: "IBM1138IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The %CONTROL statement must be followed by FORMAT or NOFORMAT option enclosed in
@@ -2091,7 +2090,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the CONTROL statement is incorrect.",
     fullCode: "IBM1139IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The LANGLVL option in the %OPTION statement must be specified as either LANGLVL(SAA)
@@ -2104,7 +2103,7 @@ export const Warning = {
     message:
       "Syntax of the LANGLVL option in the OPTION statement is incorrect.",
     fullCode: "IBM1140IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The %NOPRINT statement must be followed, with optional intervening blanks, by a semicolon
@@ -2116,7 +2115,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the NOPRINT statement is incorrect.",
     fullCode: "IBM1141IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The %PAGE statement must be followed, with optional intervening blanks, by a semicolon
@@ -2128,7 +2127,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the PAGE statement is incorrect.",
     fullCode: "IBM1142IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The %PRINT statement must be followed, with optional intervening blanks, by a semicolon
@@ -2140,7 +2139,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the PRINT statement is incorrect.",
     fullCode: "IBM1143IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Skip amounts greater than 999 are not supported.
@@ -2155,7 +2154,7 @@ export const Warning = {
     message:
       "Number of lines specified with SKIP must be between 0 and 999 inclusive.",
     fullCode: "IBM1144IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The %SKIP statement must be followed by a semicolon with optional intervening blanks
@@ -2167,7 +2166,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the SKIP statement is incorrect.",
     fullCode: "IBM1145IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The TEST option in the %OPTION statement must be specified without any suboptions
@@ -2179,7 +2178,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the TEST option in the OPTION statement is incorrect.",
     fullCode: "IBM1146IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The NOTEST option in the %OPTION statement must be specified without any suboptions
@@ -2192,7 +2191,7 @@ export const Warning = {
     message:
       "Syntax of the NOTEST option in the OPTION statement is incorrect.",
     fullCode: "IBM1147IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The %PUSH statement must be followed, with optional intervening blanks, by a semicolon
@@ -2204,7 +2203,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the PUSH statement is incorrect.",
     fullCode: "IBM1148IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The %POP statement must be followed, with optional intervening blanks, by a semicolon
@@ -2216,7 +2215,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the POP statement is incorrect.",
     fullCode: "IBM1149IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The %NOTE statement must be followed by, in parentheses, a note and an optional return
@@ -2228,7 +2227,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the NOTE statement is incorrect.",
     fullCode: "IBM1150IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum FIXED BIN precision depends on the LIMITS option.
@@ -2240,7 +2239,7 @@ export const Warning = {
     message: (maximumvalue: string) =>
       `FIXED BINARY precision is reduced to ${maximumvalue} .`,
     fullCode: "IBM1151IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum FIXED DEC precision depends on the LIMITS option.
@@ -2252,7 +2251,7 @@ export const Warning = {
     message: (maximumvalue: string) =>
       `FIXED DECIMAL precision is reduced to ${maximumvalue} .`,
     fullCode: "IBM1152IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum FLOAT BIN precision is 64 on Intel, 106 on AIX and 109 on z\/OS.
@@ -2264,7 +2263,7 @@ export const Warning = {
     message: (maximumvalue: string) =>
       `FLOAT BINARY precision is reduced to ${maximumvalue} .`,
     fullCode: "IBM1153IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum FLOAT DEC precision is 18 on Intel, 32 on AIX and 33 on z\/OS except
@@ -2277,7 +2276,7 @@ export const Warning = {
     message: (maximumvalue: string) =>
       `FLOAT DECIMAL precision is reduced to ${maximumvalue} .`,
     fullCode: "IBM1154IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Some members of an aggregate referenced in an I\/O statement are noncomputational.
@@ -2297,7 +2296,7 @@ export const Warning = {
     message: (aggregatename: string) =>
       `The aggregate ${aggregatename} contains noncomputational values. Those values will be ignored.`,
     fullCode: "IBM1155IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under SYSTEM(CICS), SYSTEM(TSO) and SYSTEM(IMS), the arguments to the MAIN procedure
@@ -2309,7 +2308,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Arguments to MAIN PROCEDURE are not all POINTER.",
     fullCode: "IBM1156IW",
-  } as SimplePLICode,
+  },
 
   /**
    * This message is used by %NOTE statements with a return code of 4.
@@ -2320,7 +2319,7 @@ export const Warning = {
     severity: Severity.W,
     message: (note: string) => `${note}`,
     fullCode: "IBM1157IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A closing quote or parenthesis is missing in the specification of a compiler option.
@@ -2333,7 +2332,7 @@ export const Warning = {
     message: (option: string, option2: string) =>
       `A ${option} is missing in the specification of the ${option2} option. One is assumed.`,
     fullCode: "IBM1158IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * An invalid compiler option has been specified.
@@ -2345,7 +2344,7 @@ export const Warning = {
     message: (option: string) =>
       `The string ${option} is not recognized as a valid option keyword and is ignored.`,
     fullCode: "IBM1159IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Printer control characters are not supported on input source records.
@@ -2356,7 +2355,7 @@ export const Warning = {
     severity: Severity.W,
     message: "The third argument to the MARGINS option is not supported.",
     fullCode: "IBM1160IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A suboption of a compiler option is incorrect. The suboption may be unknown or outside
@@ -2372,7 +2371,7 @@ export const Warning = {
     message: (suboption: string, option: string) =>
       `The suboption ${suboption} is not valid for the ${option} compiler option.`,
     fullCode: "IBM1161IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A required suboption of a compiler option is missing.
@@ -2387,7 +2386,7 @@ export const Warning = {
     message: (suboption: string) =>
       `A required suboption is missing for the ${suboption} option.`,
     fullCode: "IBM1162IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Required suboptions of a compiler option are missing.  17
@@ -2402,7 +2401,7 @@ export const Warning = {
     message: (option: string) =>
       `Required sub-fields are missing for the ${option} option. Default values are assumed.`,
     fullCode: "IBM1163IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The option, for example REORDER, is accepted outside of the OPTIONS attribute, but
@@ -2416,7 +2415,7 @@ export const Warning = {
     message: (optionname: string) =>
       `${optionname} should be specified within OPTIONS, but is accepted as is.`,
     fullCode: "IBM1164IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The only supported LINKAGE options are OPTLINK and SYSTEM.
@@ -2428,7 +2427,7 @@ export const Warning = {
     message: (optionname: string) =>
       `The OPTIONS option ${optionname} has been specified more than once.`,
     fullCode: "IBM1165IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The only supported LINKAGE suboptions are OPTLINK and SYSTEM, and the only supported
@@ -2441,7 +2440,7 @@ export const Warning = {
     message: (suboptionname: string, optionname: string, optionname2: string) =>
       `${suboptionname} is not a known ${optionname} suboption. The ${optionname2} option will be ignored.`,
     fullCode: "IBM1166IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum number of pending %PUSH statements is 63.
@@ -2453,7 +2452,7 @@ export const Warning = {
     message:
       "Maximum number of PUSH statements exceeded. The control statement is ignored.",
     fullCode: "IBM1167IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A %POP has been issued when no %PUSH statement are pending.
@@ -2465,7 +2464,7 @@ export const Warning = {
     message:
       "No PUSH statements are in effect. The POP control statement is ignored.",
     fullCode: "IBM1168IW",
-  } as SimplePLICode,
+  },
 
   /**
    * This message applies to the FIXED and FLOAT built- in functions when only one argument
@@ -2480,7 +2479,7 @@ export const Warning = {
     message: (builtinname: string) =>
       `No precision was specified for the result of the ${builtinname} built- in function. The precision will be determined from the argument.`,
     fullCode: "IBM1169IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the OPTIONS list is not supported.
@@ -2495,7 +2494,7 @@ export const Warning = {
     message: (optionattribute: string) =>
       `The OPTIONS attribute ${optionattribute} is not supported and is ignored.`,
     fullCode: "IBM1170IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * WHEN or OTHERWISE clauses are not required on SELECT statements, but their absence
@@ -2507,7 +2506,7 @@ export const Warning = {
     severity: Severity.W,
     message: "SELECT statement contains no WHEN or OTHERWISE clauses.",
     fullCode: "IBM1171IW",
-  } as SimplePLICode,
+  },
 
   /**
    * User-specified string has zero length. This can occur when OR('') has been specified
@@ -2522,7 +2521,7 @@ export const Warning = {
     message: (optionname: string) =>
       `A zero length string has been entered for the ${optionname} option. The option is ignored.`,
     fullCode: "IBM1172IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * SELECT statements do not require WHEN clauses, but their absence may indicate a coding
@@ -2534,7 +2533,7 @@ export const Warning = {
     severity: Severity.W,
     message: "SELECT statement contains no WHEN clauses.",
     fullCode: "IBM1173IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The reference specified in the FROM or INTO clause may not be byte-aligned. If the
@@ -2547,7 +2546,7 @@ export const Warning = {
     message: (fromintoclause: string) =>
       `The reference in the ${fromintoclause} clause may not be byte- aligned.`,
     fullCode: "IBM1174IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum precision for FIXED BINARY constants is specified by the FIXEDBIN suboption
@@ -2560,7 +2559,7 @@ export const Warning = {
     message:
       "FIXED BINARY constant contains too many digits. Excess nonsignificant digits will be ignored.",
     fullCode: "IBM1175IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum precision for FIXED DECIMAL constants is specified by the FIXEDDEC suboption
@@ -2573,7 +2572,7 @@ export const Warning = {
     message:
       "FIXED DECIMAL constant contains too many digits. Excess nonsignificant digits will be ignored.",
     fullCode: "IBM1176IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Float binary constants are limited to 64 digits on Intel, 32 on AIX and 33 on z\/OS
@@ -2586,7 +2585,7 @@ export const Warning = {
     message:
       "Mantissa in FLOAT BINARY constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
     fullCode: "IBM1177IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Float decimal constants are limited to 18 digits on Intel, 106 on AIX and 109 on
@@ -2599,7 +2598,7 @@ export const Warning = {
     message:
       "Mantissa in FLOAT DECIMAL constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
     fullCode: "IBM1178IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The precision for a float literal is implied by the number of digits in its mantissa.
@@ -2613,7 +2612,7 @@ export const Warning = {
     message:
       "FLOAT literal is too big for its implicit precision. An appropriate HUGE value is assumed.",
     fullCode: "IBM1179IW",
-  } as SimplePLICode,
+  },
 
   /**
    * This message applies to the ADDR, CURRENTSTORAGE\/SIZE and STORAGE\/SIZE built-in
@@ -2627,7 +2626,7 @@ export const Warning = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} is not byte aligned.`,
     fullCode: "IBM1180IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * In the following code snippet, the WHILE clause applies only to the last DO specification,
@@ -2643,7 +2642,7 @@ export const Warning = {
     message:
       "A WHILE or UNTIL option at the end of a series of DO specifications applies only to the last specification.",
     fullCode: "IBM1181IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A procedure contains code that will cause it to be recursively invoked, but the procedure
@@ -2661,7 +2660,7 @@ export const Warning = {
     message:
       "Invocation of a NONRECURSIVE PROCEDURE from within that PROCEDURE is invalid. RECURSIVE attribute is assumed.",
     fullCode: "IBM1182IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The SIGNAL statement is ignored if the condition it would raise is disabled. Some
@@ -2677,7 +2676,7 @@ export const Warning = {
     message: (conditionname: string) =>
       `${conditionname} condition is disabled. Statement is ignored.`,
     fullCode: "IBM1183IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The string in the INITIAL clause ('TooBig' in the example below) will be trimmed
@@ -2697,7 +2696,7 @@ export const Warning = {
     ) =>
       `Source with length ${stringlength} in INITIAL clause for ${variablename} has length greater than the length ${stringlength2} of that INITIAL variable.`,
     fullCode: "IBM1184IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The string in the RETURNS clause ('TooBig' in the example below) will be trimmed
@@ -2715,7 +2714,7 @@ export const Warning = {
     message: (stringlength: string) =>
       `Source with length ${stringlength} in RETURN statement has length greater than that in the corresponding RETURNS attribute.`,
     fullCode: "IBM1185IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The source in the assignment ('TooBig' in the example below) will be trimmed to fit
@@ -2732,7 +2731,7 @@ export const Warning = {
     message: (stringlength: string, stringlength2: string) =>
       `Source with length ${stringlength} in string assignment has length greater than the length ${stringlength2} of the target.`,
     fullCode: "IBM1186IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The source in the entry invocation ('TooBig' in the example below) will be trimmed
@@ -2753,7 +2752,7 @@ export const Warning = {
     ) =>
       `Argument number ${argumentnumber} in ENTRY reference ${entryname} has length ${stringlength} which is greater than that of the corresponding parameter.`,
     fullCode: "IBM1187IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The length of the string produced by concatenating two strings must not be greater
@@ -2765,7 +2764,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Result of concatenating two strings is too long.",
     fullCode: "IBM1188IW",
-  } as SimplePLICode,
+  },
 
   /**
    * If NODESCRIPTOR is specified (or implied) for a procedure, aggregate parameters should
@@ -2779,7 +2778,7 @@ export const Warning = {
     message: (parametername: string) =>
       `NODESCRIPTOR attribute conflicts with the NONCONNECTED attribute for the parameter ${parametername} . CONNECTED is assumed.`,
     fullCode: "IBM1189IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named option is not part of the PL\/I language definition as specified in the
@@ -2792,7 +2791,7 @@ export const Warning = {
     message: (optionname: string) =>
       `The OPTIONS option ${optionname} conflicts with the LANGLVL compiler option. The option will be applied.`,
     fullCode: "IBM1190IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * When dividing a FIXED BIN(p1,0) value by a FIXED BIN(p2,0) value where 31 > p1, the
@@ -2805,7 +2804,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Result of FIXED BIN divide will not be scaled.",
     fullCode: "IBM1191IW",
-  } as SimplePLICode,
+  },
 
   /**
    * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
@@ -2819,7 +2818,7 @@ export const Warning = {
     severity: Severity.W,
     message: "WHEN clauses contain duplicate values.",
     fullCode: "IBM1192IW",
-  } as SimplePLICode,
+  },
 
   /**
    * This message is produced if a block contains more statements than allowed by the
@@ -2832,7 +2831,7 @@ export const Warning = {
     message: (statementcount: string, blockname: string) =>
       `${statementcount} statements in block ${blockname} .`,
     fullCode: "IBM1193IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A MAIN procedure should have at most one argument, except under SYSTEM(CICS) and
@@ -2844,7 +2843,7 @@ export const Warning = {
     severity: Severity.W,
     message: "More than one argument to MAIN PROCEDURE.",
     fullCode: "IBM1194IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The argument to the MAIN procedure should be CHARACTER VARYING, except under SYSTEM(CICS),
@@ -2856,7 +2855,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Argument to MAIN PROCEDURE is not CHARACTER VARYING.",
     fullCode: "IBM1195IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Any INITIAL attribute specified for an AREA variable is ignored. The variable will,
@@ -2868,7 +2867,7 @@ export const Warning = {
     severity: Severity.W,
     message: "AREA initialized with EMPTY - INITIAL attribute is ignored.",
     fullCode: "IBM1196IW",
-  } as SimplePLICode,
+  },
 
   /**
    * All file conditions should be qualified with a file reference, but ENDFILE and ENDPAGE
@@ -2882,7 +2881,7 @@ export const Warning = {
     message: (filename: string) =>
       `${filename} assumed as file condition reference.`,
     fullCode: "IBM1197IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * An ENTRY reference is used where the result of invoking that entry is probably meant
@@ -2902,7 +2901,7 @@ export const Warning = {
     message: (variablename: string) =>
       `A null argument list is assumed for ${variablename} .`,
     fullCode: "IBM1198IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The %LINE directive must be followed, with optional intervening blanks, by a parenthesis,
@@ -2917,7 +2916,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the LINE directive is incorrect.",
     fullCode: "IBM1199IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The DATE built-in returns a two-digit year. It might be better to use the DATETIME
@@ -2929,7 +2928,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Use of DATE built-in function may cause problems.",
     fullCode: "IBM1200IW",
-  } as SimplePLICode,
+  },
 
   /**
    * There is a conflict of suboptions for the LANGLVL compiler option. The SAA2 and OS
@@ -2945,7 +2944,7 @@ export const Warning = {
     message: (suboption: string, option: string) =>
       `${suboption} conflicts with a previously specified suboption for the ${option} compiler option.`,
     fullCode: "IBM1201IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The only option supported in the %OPTION statement is the LANGLVL option.
@@ -2956,7 +2955,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the OPTION statement is incorrect.",
     fullCode: "IBM1202IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Change the invocation of PLITEST so that no argument is passed.
@@ -2967,7 +2966,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Argument to PLITEST is ignored.",
     fullCode: "IBM1203IW",
-  } as SimplePLICode,
+  },
 
   /**
    * LABEL variables require block activation information, and hence they cannot be initialized
@@ -2983,7 +2982,7 @@ export const Warning = {
     severity: Severity.W,
     message: "INTERNAL CONSTANT assumed for initialized STATIC LABEL.",
     fullCode: "IBM1204IW",
-  } as SimplePLICode,
+  },
 
   /**
    * If two arguments of the NAMES option are specified, they must be the same length.
@@ -3001,7 +3000,7 @@ export const Warning = {
     message: (option: string) =>
       `Arguments of the ${option} compiler option must be the same length.`,
     fullCode: "IBM1205IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * In an expression of the form x & y, x | y, or x ^ y, x and y should both have BIT
@@ -3013,7 +3012,7 @@ export const Warning = {
     severity: Severity.W,
     message: "BIT operators should be applied only to BIT operands.",
     fullCode: "IBM1206IW",
-  } as SimplePLICode,
+  },
 
   /**
    * If the operand has a numeric type, the result is the length that value would have
@@ -3026,7 +3025,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Operand to LENGTH built-in function should have string type.",
     fullCode: "IBM1207IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The array will be incompletely initialized. If the named variable is part of a structure,
@@ -3047,7 +3046,7 @@ export const Warning = {
     message: (variablename: string) =>
       `INITIAL list for the array ${variablename} contains only one item.`,
     fullCode: "IBM1208IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Since ISAM is not being simulated on the OS\/2 platform, the file will be treated
@@ -3066,7 +3065,7 @@ export const Warning = {
     message: (filename: string) =>
       `INDEXED environment option for file ${filename} will be treated as ORGANIZATION(INDEXED).`,
     fullCode: "IBM1209IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The format width will be too small for output if the number is negative. It might
@@ -3079,7 +3078,7 @@ export const Warning = {
     message: (keyword: string) =>
       `The field width specified in the ${keyword} -format item may be too small for complete output of the data item.`,
     fullCode: "IBM1210IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The source in the assignment ('TooBig' in the example below) will be trimmed to fit
@@ -3096,7 +3095,7 @@ export const Warning = {
     message: (stringlength: string, stringlength2: string, variable: string) =>
       `Source with length ${stringlength} in string assignment has length greater than the length ${stringlength2} of the target ${variable} .`,
     fullCode: "IBM1211IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A width must be specified on A format items when specified on a GET statement.
@@ -3111,7 +3110,7 @@ export const Warning = {
     message:
       "The A format item requires an argument when used in GET statement. An L format item is assumed in its place.",
     fullCode: "IBM1212IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The named procedure is not external and is never referenced in any live code in the
@@ -3125,7 +3124,7 @@ export const Warning = {
     message: (procname: string) =>
       `The PROCEDURE ${procname} is not referenced.`,
     fullCode: "IBM1213IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * An argument passed BYADDR to an entry does not match the corresponding parameter
@@ -3147,7 +3146,7 @@ export const Warning = {
     message: (argumentnumber: string, entryname: string) =>
       `A dummy argument will be created for argument number ${argumentnumber} in ENTRY reference ${entryname} .`,
     fullCode: "IBM1214IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * It will be given the default attributes, but this may be because of an error in the
@@ -3163,7 +3162,7 @@ export const Warning = {
     message: (variablename: string) =>
       `The variable ${variablename} is declared without any data attributes.`,
     fullCode: "IBM1215IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * It will be given the default attributes, but this may be because of an error in the
@@ -3184,7 +3183,7 @@ export const Warning = {
     message: (variablename: string) =>
       `The structure member ${variablename} is declared without any data attributes. A level number may be incorrect.`,
     fullCode: "IBM1216IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * It will be given the default attributes, but this may be because of an error in the
@@ -3205,7 +3204,7 @@ export const Warning = {
     message:
       "An unnamed structure member is declared without any data attributes. A level number may be incorrect.",
     fullCode: "IBM1217IW",
-  } as SimplePLICode,
+  },
 
   /**
    * To eliminate this message, apply the CHAR or BIT built-in function to the first argument
@@ -3222,7 +3221,7 @@ export const Warning = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function should have string type.`,
     fullCode: "IBM1218IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is not produced if the LEAVE statement specifies a label. In the following
@@ -3245,7 +3244,7 @@ export const Warning = {
     severity: Severity.W,
     message: "LEAVE will exit noniterative DO- group.",
     fullCode: "IBM1219IW",
-  } as SimplePLICode,
+  },
 
   /**
    * This message is produced when a variable is compared to a constant equal to the largest
@@ -3264,7 +3263,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Result of comparison is always constant.",
     fullCode: "IBM1220IW",
-  } as SimplePLICode,
+  },
 
   /**
    * This message is produced if a statement uses more bytes for temporaries than allowed
@@ -3277,7 +3276,7 @@ export const Warning = {
     message: (count: string) =>
       `Statement uses ${count} bytes for temporaries.`,
     fullCode: "IBM1221IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Comparisons involving data containing 2-digit year fields may cause problems if exactly
@@ -3289,7 +3288,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Comparison involving 2-digit year is problematic.",
     fullCode: "IBM1222IW",
-  } as SimplePLICode,
+  },
 
   /**
    * In a comparison, if one comparand has the DATE attribute, the other should also.
@@ -3308,7 +3307,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Literal in comparison interpreted with DATE attribute.",
     fullCode: "IBM1223IW",
-  } as SimplePLICode,
+  },
 
   /**
    * In a comparison, if one comparand has the DATE attribute, the other should also.
@@ -3326,7 +3325,7 @@ export const Warning = {
     severity: Severity.W,
     message: "DATE attribute ignored in comparison with non-date literal.",
     fullCode: "IBM1224IW",
-  } as SimplePLICode,
+  },
 
   /**
    * If the target in an explicit or implicit assignment has the DATE attribute, the source
@@ -3343,7 +3342,7 @@ export const Warning = {
     severity: Severity.W,
     message: "DATE attribute ignored in conversion from literal.",
     fullCode: "IBM1225IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Look in STDOUT to see the message issued by the compiler backend.
@@ -3354,7 +3353,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Compiler backend issued warning messages to STDOUT.",
     fullCode: "IBM2600IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated character is missing and has been inserted by the parser in order to
@@ -3370,7 +3369,7 @@ export const Warning = {
     message: (character: string, character2: string) =>
       `Missing ${character} assumed before ${character2} . DECLARE and other nonexecutable statements should not have labels.`,
     fullCode: "IBM2601IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The array will be incompletely initialized. If the named variable is part of a structure,
@@ -3391,7 +3390,7 @@ export const Warning = {
     message: (count: string, variablename: string, arraysize: string) =>
       `Number of items in INITIAL list is ${count} for the array ${variablename} which contains ${arraysize} elements.`,
     fullCode: "IBM2602IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The array will be incompletely initialized. If the named variable is part of a structure,
@@ -3415,7 +3414,7 @@ export const Warning = {
     message: (variablename: string) =>
       `INITIAL list for the array ${variablename} contains only one item.`,
     fullCode: "IBM2603IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the source in a conversion to FIXED DECIMAL is a FIXED DECIMAL or PICTURE variable
@@ -3441,7 +3440,7 @@ export const Warning = {
     ) =>
       `FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
     fullCode: "IBM2604IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The specified line contains an invalid ANS print control character. The valid characters
@@ -3453,7 +3452,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Invalid carriage control character. Blank assumed.",
     fullCode: "IBM2605IW",
-  } as SimplePLICode,
+  },
 
   /**
    * If the REFER object has any other attributes, it will be converted to and from REAL
@@ -3466,7 +3465,7 @@ export const Warning = {
     message: (referencename: string) =>
       `Code generated for the REFER object ${referencename} would be more efficient if the REFER object had the attributes REAL FIXED BIN(p,0).`,
     fullCode: "IBM2606IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the source in a conversion to FIXED DECIMAL is a PICTURE variable with a different
@@ -3492,7 +3491,7 @@ export const Warning = {
     ) =>
       `PICTURE representing FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
     fullCode: "IBM2607IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the source in a conversion to a PICTURE is a PICTURE variable with a different
@@ -3520,7 +3519,7 @@ export const Warning = {
     ) =>
       `PICTURE representing FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to PICTURE representing FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
     fullCode: "IBM2608IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * If a comment contains a semicolon, it may indicate that there is an earlier unintentionally
@@ -3539,7 +3538,7 @@ export const Warning = {
     message: (linenumber: string, filenumber: string) =>
       `Comment contains a semicolon on line ${linenumber} . ${filenumber} .`,
     fullCode: "IBM2609IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the MULTIPLY, DIVIDE, ADD, and SUBTRACT built-in functions:
@@ -3561,7 +3560,7 @@ export const Warning = {
     message: (BUILTINname: string) =>
       `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FIXED BIN. Compiler will not interpret precision as FIXED DEC.`,
     fullCode: "IBM2610IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
@@ -3576,7 +3575,7 @@ export const Warning = {
     message: (binaryvalue: string) =>
       `The binary value ${binaryvalue} appears in more than one WHEN clause.`,
     fullCode: "IBM2611IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
@@ -3591,7 +3590,7 @@ export const Warning = {
     message: (characterstring: string) =>
       `The character string ${characterstring} appears in more than one WHEN clause.`,
     fullCode: "IBM2612IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated variable may not have been assigned or initialized a value before it
@@ -3605,7 +3604,7 @@ export const Warning = {
     message: (variable: string) =>
       `RULES(NOLAXINOUT) violation: ${variable} is being passed as an INOUT parameter, but may be unset.`,
     fullCode: "IBM2613IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message will flag statements such as the following, where the \"equals\" is
@@ -3620,7 +3619,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Both comparands are Booleans.",
     fullCode: "IBM2614IW",
-  } as SimplePLICode,
+  },
 
   /**
    * DO-loops should normally be iterative, but if the DO- loop specification consists
@@ -3640,7 +3639,7 @@ export const Warning = {
     message:
       "DO-loop will always execute exactly once. A semicolon after the DO may be missing.",
     fullCode: "IBM2615IW",
-  } as SimplePLICode,
+  },
 
   /**
    * If the SIZE or STG built-in function is applied to a CHAR(*) VARYING (or VARYINGZ)
@@ -3655,7 +3654,7 @@ export const Warning = {
     message: (variable: string) =>
       `Size of parameter ${variable} will return the currentsize value since no descriptor is available.`,
     fullCode: "IBM2616IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * It is generally very unwise to pass a label to another routine. It would be good
@@ -3671,7 +3670,7 @@ export const Warning = {
     message:
       "Passing a LABEL to a non-PL/I routine is very poor coding practice and will cause the compiler to generate less than optimal code.",
     fullCode: "IBM2617IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A suboption of a suboption of a compiler option is incorrect. The suboption may be
@@ -3687,7 +3686,7 @@ export const Warning = {
     message: (suboption: string, option: string, option2: string) =>
       `The suboption ${suboption} is not valid for the suboption ${option} of the ${option2} compiler option.`,
     fullCode: "IBM2618IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Changing REFER objects may not produce the expected results. For example, in the
@@ -3711,7 +3710,7 @@ export const Warning = {
     message:
       "Target structure contains REFER objects. Results are undefined if the assignment changes any REFER object.",
     fullCode: "IBM2620IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The first statement in an ON ERROR block should usually be an ON ERROR SYSTEM statement.
@@ -3725,7 +3724,7 @@ export const Warning = {
     message:
       "ON ERROR block does not start with ON ERROR SYSTEM. An error inside the block may lead to an infinite loop.",
     fullCode: "IBM2621IW",
-  } as SimplePLICode,
+  },
 
   /**
    * If the initial value in a DO loop is set via an ENTRY, then you may get unexpected
@@ -3747,7 +3746,7 @@ export const Warning = {
     message:
       "ENTRY used to set the initial value in a DO loop will be invoked after any TO or BY values are set.",
     fullCode: "IBM2622IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Under DFP, the conversion of FLOAT DEC to FLOAT BIN requires an expensive library
@@ -3768,7 +3767,7 @@ export const Warning = {
     message:
       "Mixing FIXED BIN and FLOAT DEC produces a FLOAT BIN result. Under DFP, this will lead to poor performance.",
     fullCode: "IBM2623IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Under DFP, the conversion of FLOAT DEC to FLOAT BIN requires an expensive library
@@ -3789,7 +3788,7 @@ export const Warning = {
     message:
       "Mixing BIT and FLOAT DEC produces a FLOAT BIN result. 27 Under DFP, this will lead to poor performance.",
     fullCode: "IBM2624IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Under DFP, the conversion of FLOAT DEC to FLOAT BIN requires an expensive library
@@ -3802,7 +3801,7 @@ export const Warning = {
     message:
       "Mixing FLOAT BIN and FLOAT DEC produces a FLOAT BIN result. Under DFP, this will lead to poor performance.",
     fullCode: "IBM2625IW",
-  } as SimplePLICode,
+  },
 
   /**
    * While technically valid, a SUBSTR reference with a third argument that is a constant
@@ -3815,7 +3814,7 @@ export const Warning = {
     message:
       "Use of SUBSTR with a third argument equal to 0 is somewhat pointless since the result will always be a null string.",
     fullCode: "IBM2626IW",
-  } as SimplePLICode,
+  },
 
   /**
    * XMI metadata is generated for BASED structures using REFER only if their use of REFER
@@ -3828,7 +3827,7 @@ export const Warning = {
     message: (identifier: string) =>
       `No metadata will be generated for the structure ${identifier} since its use of REFER is too complex.`,
     fullCode: "IBM2627IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * BYVALUE parameters larger than 32 bytes require too much overhead and are bad for
@@ -3840,7 +3839,7 @@ export const Warning = {
     severity: Severity.W,
     message: "BYVALUE parameters should ideally be no larger than 32 bytes.",
     fullCode: "IBM2628IW",
-  } as SimplePLICode,
+  },
 
   /**
    * No debug symbol information will be generated for the named variable, and hence it
@@ -3853,7 +3852,7 @@ export const Warning = {
     message: (identifier: string) =>
       `No debug symbol information will be generated for ${identifier} .`,
     fullCode: "IBM2629IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the scale factor for the result of an operation exceeds the precision of the result,
@@ -3875,7 +3874,7 @@ export const Warning = {
     ) =>
       `The operands in an arithmetic operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is greater than its precision! That may lead to an overflow and unexpected results.`,
     fullCode: "IBM2630IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the MULTIPLY, DIVIDE, ADD, and SUBTRACT built-in functions:
@@ -3897,7 +3896,7 @@ export const Warning = {
     message: (BUILTINname: string) =>
       `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FLOAT BIN. Compiler will not interpret precision as FIXED DEC.`,
     fullCode: "IBM2631IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the MULTIPLY, DIVIDE, ADD, and SUBTRACT built-in functions:
@@ -3919,7 +3918,7 @@ export const Warning = {
     message: (BUILTINname: string) =>
       `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FLOAT DEC. Compiler will not interpret precision as FIXED DEC.`,
     fullCode: "IBM2632IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Code using such variables will work only as long as the size of the POINTER or OFFSET
@@ -3932,7 +3931,7 @@ export const Warning = {
     message:
       "Given the support for addressing arithmetic, basing a POINTER or OFFSET on a FIXED BIN is unnecessary, and it will also fail to work properly if the size of a POINTER changes.",
     fullCode: "IBM2633IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Code using such variables will work only as long as the size of the POINTER or OFFSET
@@ -3945,7 +3944,7 @@ export const Warning = {
     message:
       "Given the support for addressing arithmetic, basing a FIXED BIN on a POINTER or OFFSET is unnecessary, and it will also fail to work properly if the size of a POINTER changes.",
     fullCode: "IBM2634IW",
-  } as SimplePLICode,
+  },
 
   /**
    * If the scale factor for the result of an operation is negative, then the ones digits
@@ -3967,7 +3966,7 @@ export const Warning = {
     ) =>
       `The operands in an arithmetic operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is negative! That may lead to the loss of significant digits and unexpected results.`,
     fullCode: "IBM2635IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a dominated SELECT statement, if a WHEN clause has the same value as an earlier
@@ -3982,7 +3981,7 @@ export const Warning = {
     message: (ordinalname: string) =>
       `The ordinal ${ordinalname} appears in more than one WHEN clause.`,
     fullCode: "IBM2636IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * If an ENTRY is used as a function, it should be declared with the RETURNS attribute.
@@ -4003,7 +4002,7 @@ export const Warning = {
     message:
       "An ENTRY invoked as a function should have the RETURNS attribute.",
     fullCode: "IBM2637IW",
-  } as SimplePLICode,
+  },
 
   /**
    * This message is produced if a statement uses more intermediate language instructions.
@@ -4017,7 +4016,7 @@ export const Warning = {
     message: (count: string) =>
       `Statement used ${count} intermediate language instructions.`,
     fullCode: "IBM2638IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is produced if a statement uses more intermediate language instructions.
@@ -4033,7 +4032,7 @@ export const Warning = {
     message: (count: string) =>
       `Previous statement used ${count} intermediate language instructions.`,
     fullCode: "IBM2639IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Changing REFER objects might cause subsequent code to fail. For example, in the following
@@ -4058,7 +4057,7 @@ export const Warning = {
     message:
       "Target is a REFER object. Results are undefined if an assignment changes a REFER object.",
     fullCode: "IBM2640IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A suboption of a compiler option has been incorrectly specified. It must be followed
@@ -4075,7 +4074,7 @@ export const Warning = {
     message: (option: string, option2: string) =>
       `The suboption ${option} of the ${option2} compiler option must be followed by a (possibly empty) parenthesized list.`,
     fullCode: "IBM2641IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Specifying OPTIONS(REENTRANT) on a PROCEDURE or BEGIN block has no effect on the
@@ -4089,7 +4088,7 @@ export const Warning = {
     severity: Severity.W,
     message: "OPTIONS(REENTRANT) is ignored.",
     fullCode: "IBM2642IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The named built-in function was specified in the BUILTIN suboption of the DEPRECATENEXT
@@ -4102,7 +4101,7 @@ export const Warning = {
     message: (builtin: string) =>
       `The built-in function ${builtin} will be deprecated.`,
     fullCode: "IBM2643IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named INCLUDE file was specified in the INCLUDE suboption of the DEPRECATENEXT
@@ -4115,7 +4114,7 @@ export const Warning = {
     message: (filename: string) =>
       `The INCLUDE file ${filename} will be deprecated.`,
     fullCode: "IBM2644IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named ENTRY was specified in the ENTRY suboption of the DEPRECATENEXT option,
@@ -4128,7 +4127,7 @@ export const Warning = {
     message: (entryname: string) =>
       `The ENTRY named ${entryname} will be deprecated.`,
     fullCode: "IBM2645IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named VARIABLE was specified in the VARIABLE suboption of the DEPRECATENEXT option,
@@ -4141,7 +4140,7 @@ export const Warning = {
     message: (variable: string) =>
       `The VARIABLE named ${variable} will be deprecated.`,
     fullCode: "IBM2646IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named statement was specified in the STMT suboption of the DEPRECATENEXT option,
@@ -4154,7 +4153,7 @@ export const Warning = {
     message: (statementname: string) =>
       `The ${statementname} statement will be deprecated.`,
     fullCode: "IBM2647IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Change the declaration to STATIC, or remove the INITIAL items and copy the INITIAL
@@ -4166,7 +4165,7 @@ export const Warning = {
     severity: Severity.W,
     message: (count: string) => `Declaration contains ${count} INITIAL items.`,
     fullCode: "IBM2648IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
@@ -4180,7 +4179,7 @@ export const Warning = {
     message: (binaryvalue: string) =>
       `The binary value ${binaryvalue} appears more than once in the INLIST argument set.`,
     fullCode: "IBM2649IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
@@ -4194,7 +4193,7 @@ export const Warning = {
     message: (ordinalname: string) =>
       `The ordinal ${ordinalname} appears more than once in the INLIST argument set.`,
     fullCode: "IBM2650IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is produced if a block contains more branches than allowed by the MAXBRANCH
@@ -4207,7 +4206,7 @@ export const Warning = {
     message: (blockname: string, count: string) =>
       `Block ${blockname} contains ${count} branches.`,
     fullCode: "IBM2651IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * In the statement REINIT x, x should contain some element with an INITIAL attribute.
@@ -4219,7 +4218,7 @@ export const Warning = {
     severity: Severity.W,
     message: "REINIT reference contains no element with an INITIAL attribute.",
     fullCode: "IBM2652IW",
-  } as SimplePLICode,
+  },
 
   /**
    * For example, rather than specifying PP(SQL(VERSION(AUTO))), specify PP(SQL('VERSION(AUTO)'))
@@ -4232,7 +4231,7 @@ export const Warning = {
     message:
       "The list of preprocessor options must be enclosed in quotation marks.",
     fullCode: "IBM2653IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The INITIAL attribute for BASED has an effect only if the BASED variable is used
@@ -4250,7 +4249,7 @@ export const Warning = {
     message:
       "INITIAL attribute for BASED on ADDR has no effect on the base variable.",
     fullCode: "IBM2654IW",
-  } as SimplePLICode,
+  },
 
   /**
    * If the 2 strings in the IBMZIOP module are equal, then different values for the options
@@ -4264,7 +4263,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Some options conflict with the non-overridable options.",
     fullCode: "IBM2655IW",
-  } as SimplePLICode,
+  },
 
   /**
    * In the following example, DEFBUF does not overlay the first 10 bytes of BUFFER. Instead,
@@ -4282,7 +4281,7 @@ export const Warning = {
     message: (variablename: string) =>
       `Simple defining applies to ${variablename}. If string-overlay defining is intended, then add POS(1) to its declaration.`,
     fullCode: "IBM2656IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This is probably a coding error.
@@ -4293,7 +4292,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Both logical AND operands are identical.",
     fullCode: "IBM2657IW",
-  } as SimplePLICode,
+  },
 
   /**
    * This is probably a coding error.
@@ -4304,7 +4303,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Both logical OR operands are identical.",
     fullCode: "IBM2658IW",
-  } as SimplePLICode,
+  },
 
   /**
    * If an AUTOMATIC or STATIC structure consists entirely of scalar fields all of which
@@ -4320,7 +4319,7 @@ export const Warning = {
     message: (variablename: string) =>
       `Generated code would be better if all the INITIAL attributes in the declare for ${variablename} were changed to VALUE.`,
     fullCode: "IBM2659IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message warns that the compiler has detected code that could lead to an error
@@ -4345,7 +4344,7 @@ export const Warning = {
     message: (procedurename: string, procedurename2: string) =>
       `Program logic may lead to the END statement for ${procedurename} even though ${procedurename2} is a function that should return a value.`,
     fullCode: "IBM2660IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
@@ -4359,7 +4358,7 @@ export const Warning = {
     message: (stringvalue: string) =>
       `The string ${stringvalue} appears more than once in the INLIST argument set.`,
     fullCode: "IBM2661IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * In INLIST( x, y1, y2, ... ), no y value should appear twice. This message will be
@@ -4372,7 +4371,7 @@ export const Warning = {
     severity: Severity.W,
     message: "INLIST argument set contains duplicate values.",
     fullCode: "IBM2662IW",
-  } as SimplePLICode,
+  },
 
   /**
    * In a SELECT statement, if a WHEN clause has the same expression as the previousr
@@ -4387,7 +4386,7 @@ export const Warning = {
     message:
       "WHEN clause contains an expression that matches the previous expression in the containing SELECT statement.",
     fullCode: "IBM2663IW",
-  } as SimplePLICode,
+  },
 
   /**
    * In a SELECT statement, if a WHEN clause has the same expression as one of the earlier
@@ -4402,7 +4401,7 @@ export const Warning = {
     message: (count: string) =>
       `WHEN clause contains an expression that matches the expression ${count} previous in the containing SELECT statement.`,
     fullCode: "IBM2664IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * If an EXTERNAL variable is intended to define LE runtime options, then it must be
@@ -4415,7 +4414,7 @@ export const Warning = {
     message:
       "EXTERNAL PLIXOPT declare specifies run-time options only if the variable has the attribute CHARACTER VARYING INITIAL and is not an array.",
     fullCode: "IBM2665IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Returning the address of a variable in AUTOMATIC storage is likely to produce code
@@ -4428,7 +4427,7 @@ export const Warning = {
     message:
       "RETURN expression holds the address of a variable in AUTOMATIC storage.",
     fullCode: "IBM2666IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The extents in one declare should not depend on the size of a later declare. The
@@ -4442,7 +4441,7 @@ export const Warning = {
     message: (first: string, second: string) =>
       `The string lengths in the declare for ${first} depend on the size of ${second} whose declare comes later in the block. Consider moving the first declare after the second.`,
     fullCode: "IBM2667IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is produced if a typed structure with some VALUE attributes needs more
@@ -4457,7 +4456,7 @@ export const Warning = {
     message: (type: string, count: string) =>
       `Using the VALUE function with the structure type ${type} adds ${count} bytes to the generated object.`,
     fullCode: "IBM2668IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Attributes such as ALIGNED and UNALIGNED may be specified in a DEFINE ALIAS statement,
@@ -4470,7 +4469,7 @@ export const Warning = {
     message: (attributekeyword: string) =>
       `The ${attributekeyword} attribute is ignored in an ALIAS definition.`,
     fullCode: "IBM2669IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The parameter to MAIN has a maximum length that depends on the system and should
@@ -4482,7 +4481,7 @@ export const Warning = {
     severity: Severity.W,
     message: "The parameter to MAIN should be declared as CHAR(*) VARYING.",
     fullCode: "IBM2670IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Code like this could lead to a protection exception. In the following example, snce
@@ -4506,7 +4505,7 @@ export const Warning = {
     message: (X: string, n: string, E: string, A: string, D: string) =>
       `The variable ${X} is passed as argument number ${n} to entry ${E} . The corresponding parameter has the ${A} attribute, and hence the variable could be modified despite having the ${D} attribute.`,
     fullCode: "IBM2671IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Named constants should be declared with the VALUE attribute rather than the attributes
@@ -4526,7 +4525,7 @@ export const Warning = {
     message: (extentvariable: string) =>
       `If ${extentvariable} is constant, then removing its STATIC attribute and changing its INITIAL attribute to the VALUE attribute would improve the performance of the generated code.`,
     fullCode: "IBM2672IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message will flag statements such as the following. In the first IF statement,
@@ -4547,7 +4546,7 @@ export const Warning = {
     message:
       "Boolean is compared with something other than a BIT(1) restricted expression.",
     fullCode: "IBM2673IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Defined structures must occupy a number of bytes that is a multiple of the structure
@@ -4571,7 +4570,7 @@ export const Warning = {
     message: (structname: string, alignment: string, storagesize: string) =>
       `The defined structure ${structname} is ${alignment} byte aligned, but occupies only ${storagesize} bytes of storage. This may lead to addressing problems and data corruption.`,
     fullCode: "IBM2674IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the control variable in a DO loop is a PICTURE variable, then more code will be
@@ -4584,7 +4583,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Use of PICTURE as DO control variable is not recommended.",
     fullCode: "IBM2675IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The control variable in the DO loop has one of the types: scaled fixed binary, nonnative
@@ -4598,7 +4597,7 @@ export const Warning = {
     message:
       "Code generated for DO group would be more efficient if control variable had type FIXED BIN with zero scale factor.",
     fullCode: "IBM2676IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The named variable is an array that is initialized but appears never to be changed.
@@ -4613,7 +4612,7 @@ export const Warning = {
     message: (variablename: string) =>
       `Generated code would be better if the declare for ${variablename} were changed from AUTOMATIC to STATIC NONASSIGNABLE.`,
     fullCode: "IBM2677IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The DO statement has the form DO x = A to B; where A > B. or the form DO x = A to
@@ -4631,7 +4630,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Loop will never be run. TO value may be incorrect.",
     fullCode: "IBM2678IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The GONUMBER can be placed in the SEPRATE sidefile only if the TEST options specifies
@@ -4644,7 +4643,7 @@ export const Warning = {
     message:
       "GONUMBER(SEPARATE) changed to GONUMBER(NOSEPARATE) since the SEPARATE suboption for the GONUMBER option should be specified only when the TEST option and its SEPARATE suboption are also specified.",
     fullCode: "IBM2679IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The control variable in the DO loop should have storage class STATIC or AUTOMATIC
@@ -4657,7 +4656,7 @@ export const Warning = {
     message:
       "Code generated for DO group would perform better if control variable was STATIC or AUTOMATIC.",
     fullCode: "IBM2680IW",
-  } as SimplePLICode,
+  },
 
   /**
    * In REPATTERN( d, p, q ), if LENGTH( d ) is larger than LENGTH( q ), the code is valid
@@ -4670,7 +4669,7 @@ export const Warning = {
     message: (sourcelength: string, sourcepattern: string) =>
       `Source has length ${sourcelength} which is greater than the length of the source pattern ${sourcepattern} . Unless the source has enough leading blanks, invoking this REPATTERN will cause the ERROR condition to be raised. The required checking will also cause this REPATTERN not to be inlined.`,
     fullCode: "IBM2681IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is produced if a STATIC variable requires more space than allowed by
@@ -4683,7 +4682,7 @@ export const Warning = {
     message: (name: string, count: string) =>
       `The variable ${name} needs ${count} storage bytes which exceeds the MAXSTATIC limit.`,
     fullCode: "IBM2682IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used to report DB2 or CICS backend messages with a return code of
@@ -4695,7 +4694,7 @@ export const Warning = {
     severity: Severity.W,
     message: (note: string) => `${note}`,
     fullCode: "IBM3250IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Attributes and declares must be consistent.
@@ -4712,7 +4711,7 @@ export const Warning = {
     message: (identifier: string) =>
       `${identifier} is multiply defined, but with different attributes. The declaration is ignored.`,
     fullCode: "IBM3251IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Attributes must be consistent.
@@ -4727,7 +4726,7 @@ export const Warning = {
     message: (attribute: string) =>
       `The attribute ${attribute} conflicts with previous attributes and is ignored.`,
     fullCode: "IBM3252IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A comment ends in a different file than it begins. This may indicate that an end-of-comment
@@ -4739,7 +4738,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Comment spans more than one file.",
     fullCode: "IBM3253IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A string ends in a different file than it begins. This may indicate that a closing
@@ -4751,7 +4750,7 @@ export const Warning = {
     severity: Severity.W,
     message: "String spans more than one file.",
     fullCode: "IBM3254IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A delimiter (for example, a blank or a comma) is required between all identifiers
@@ -4767,7 +4766,7 @@ export const Warning = {
     message: (nondelimiter: string, nondelimiter2: string) =>
       `Delimiter missing between ${nondelimiter} and ${nondelimiter2} . A blank is assumed.`,
     fullCode: "IBM3255IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Using one END statement to close more than one group of statements is permitted,
@@ -4780,7 +4779,7 @@ export const Warning = {
     message:
       "Multiple closure of groups. END statements will be inserted to close intervening groups.",
     fullCode: "IBM3256IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated character is missing, and there are no more characters in the source.
@@ -4793,7 +4792,7 @@ export const Warning = {
     severity: Severity.W,
     message: (character: string) => `Missing ${character} assumed.`,
     fullCode: "IBM3257IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated character is missing and has been inserted by the parser in order to
@@ -4811,7 +4810,7 @@ export const Warning = {
     message: (character: string, character2: string) =>
       `Missing ${character} assumed before ${character2} .`,
     fullCode: "IBM3258IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used by %NOTE statements with a return code of 4.
@@ -4822,7 +4821,7 @@ export const Warning = {
     severity: Severity.W,
     message: (note: string) => `${note}`,
     fullCode: "IBM3259IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The %CONTROL statement must be followed by FORMAT or NOFORMAT option enclosed in
@@ -4834,7 +4833,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the %CONTROL statement is incorrect.",
     fullCode: "IBM3260IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A suboption of a suboption of an option is incorrect. The suboption may be unknown
@@ -4850,7 +4849,7 @@ export const Warning = {
     message: (suboption: string, option: string, option2: string) =>
       `The suboption ${suboption} is not valid for the suboption ${option} of the ${option2} option.`,
     fullCode: "IBM3261IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A suboption of an option has been incorrectly specified. It must be followed by a
@@ -4867,7 +4866,7 @@ export const Warning = {
     message: (option: string, option2: string) =>
       `The suboption ${option} of the ${option2} option must be followed by a (possibly empty) parenthesized list.`,
     fullCode: "IBM3262IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Skip amounts greater than 999 are not supported.
@@ -4882,7 +4881,7 @@ export const Warning = {
     message:
       "Number of lines specified with %SKIP must be between 0 and 999 inclusive.",
     fullCode: "IBM3265IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The CICS option must be in effect if the source contains EXEC CICS statements.
@@ -4894,7 +4893,7 @@ export const Warning = {
     message:
       "'EXEC CICS' encountered, but the CICS option is not in effect. Command ignored.",
     fullCode: "IBM3270IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The CSPM option must be in effect if the source contains EXEC CSPM statements.
@@ -4906,7 +4905,7 @@ export const Warning = {
     message:
       "'EXEC CSPM' encountered, but the CSPM option is not in effect. Command ignored.",
     fullCode: "IBM3271IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The DLI option must be in effect if the source contains EXEC DLI statements.
@@ -4918,7 +4917,7 @@ export const Warning = {
     message:
       "'EXEC DLI' encountered, but the DLI option is not in effect. Command ignored.",
     fullCode: "IBM3272IW",
-  } as SimplePLICode,
+  },
 
   /**
    * WHEN or OTHERWISE clauses are not required on SELECT statements, but their absence
@@ -4930,7 +4929,7 @@ export const Warning = {
     severity: Severity.W,
     message: "SELECT statement contains no WHEN or OTHERWISE clauses.",
     fullCode: "IBM3281IW",
-  } as SimplePLICode,
+  },
 
   /**
    * SELECT statements do not require WHEN clauses, but their absence may indicate a coding
@@ -4942,7 +4941,7 @@ export const Warning = {
     severity: Severity.W,
     message: "SELECT statement contains no WHEN clauses.",
     fullCode: "IBM3283IW",
-  } as SimplePLICode,
+  },
 
   /**
    * A FIXED BINARY constant must contain 31 or fewer digits.
@@ -4954,7 +4953,7 @@ export const Warning = {
     message:
       "FIXED BINARY constant contains too many digits. Excess nonsignificant digits will be ignored.",
     fullCode: "IBM3285IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum precision for FIXED DECIMAL constants is specified by the FIXEDDEC suboption
@@ -4967,7 +4966,7 @@ export const Warning = {
     message:
       "FIXED DECIMAL constant contains too many digits. Excess nonsignificant digits will be ignored.",
     fullCode: "IBM3286IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Float binary constants are limited to 64 digits.
@@ -4979,7 +4978,7 @@ export const Warning = {
     message:
       "Mantissa in FLOAT BINARY constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
     fullCode: "IBM3287IW",
-  } as SimplePLICode,
+  },
 
   /**
    * Float decimal constants are limited to 18 digits.
@@ -4991,7 +4990,7 @@ export const Warning = {
     message:
       "Mantissa in FLOAT DECIMAL constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
     fullCode: "IBM3288IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The precision for a float literal is implied by the number of digits in its mantissa.
@@ -5005,7 +5004,7 @@ export const Warning = {
     message:
       "FLOAT literal is too big for its implicit precision. An appropriate HUGE value is assumed.",
     fullCode: "IBM3289IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The named option is not part of the PL\/I language definition as specified in the
@@ -5018,7 +5017,7 @@ export const Warning = {
     message: (optionname: string) =>
       `The OPTIONS option ${optionname} conflicts with the LANGLVL compiler option. The option will be applied.`,
     fullCode: "IBM3291IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The specified suboption is not one of the supported suboptions of the named option
@@ -5034,7 +5033,7 @@ export const Warning = {
     message: (suboption: string, option: string) =>
       `${suboption} is not a valid suboption for ${option} .`,
     fullCode: "IBM3292IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named option requires a suboption.
@@ -5049,7 +5048,7 @@ export const Warning = {
     message: (suboption: string) =>
       `A required suboption is missing for the ${suboption} option.`,
     fullCode: "IBM3293IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * A closing parenthesis is missing in the specification of the named option.
@@ -5064,7 +5063,7 @@ export const Warning = {
     message: (option: string) =>
       `A closing parenthesis is missing in the specification of the ${option} option. One is assumed.`,
     fullCode: "IBM3294IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named option is not, in fact, an option.
@@ -5078,7 +5077,7 @@ export const Warning = {
     severity: Severity.W,
     message: (option: string) => `${option} is not a supported option.`,
     fullCode: "IBM3295IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The %LINE directive must be followed, with optional intervening blanks, by a parenthesis,
@@ -5093,7 +5092,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Syntax of the %LINE directive is incorrect.",
     fullCode: "IBM3299IW",
-  } as SimplePLICode,
+  },
 
   /**
    * All variables should be declared.
@@ -5105,7 +5104,7 @@ export const Warning = {
     message: (identifier: string) =>
       `${identifier} has not been declared. CHARACTER attribute assumed.`,
     fullCode: "IBM3300IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message points to a likely programming error. For example, comparing SYSPOINTERSIZE
@@ -5119,7 +5118,7 @@ export const Warning = {
     message: (BUILTINname: string) =>
       `Comparison of ${BUILTINname} to a value it could not return is odd.`,
     fullCode: "IBM3309IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * To eliminate this message, apply the CHAR or BIT built-in function to the first argument
@@ -5136,7 +5135,7 @@ export const Warning = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in should have string type.`,
     fullCode: "IBM3310IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * An argument to the function reference is missing. A null string or zero will be passed,
@@ -5153,7 +5152,7 @@ export const Warning = {
     message: (number: string, BUILTINname: string) =>
       `Argument ${number} to the ${BUILTINname} built-in function is missing. A null value will be passed for the missing argument.`,
     fullCode: "IBM3311IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is not produced if the LEAVE statement specifies a label. In the following
@@ -5176,7 +5175,7 @@ export const Warning = {
     severity: Severity.W,
     message: "LEAVE will exit noniterative DO- group.",
     fullCode: "IBM3312IW",
-  } as SimplePLICode,
+  },
 
   /**
    * This message is produced when a variable is compared to a constant equal to the largest
@@ -5195,7 +5194,7 @@ export const Warning = {
     severity: Severity.W,
     message: "Result of comparison is always constant.",
     fullCode: "IBM3313IW",
-  } as SimplePLICode,
+  },
 
   /**
    * For a structure named X with first child named X, a reference to X would by PL\/I
@@ -5210,7 +5209,7 @@ export const Warning = {
     message: (reference: string) =>
       `The reference ${reference} could refer to a parent or its child, but the child is assumed.`,
     fullCode: "IBM3314IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * If a dimensioned structure named A consists of just one child B, a reference to A
@@ -5223,7 +5222,7 @@ export const Warning = {
     message: (reference: string) =>
       `The reference ${reference} is an array of structures. Arrays of structures are not valid in SQL statements, but because this structure consists of only one element, the reference is treated as if it were a reference to its lone child.`,
     fullCode: "IBM3315IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * If a structure named A consists of just one child B and B is an array, a reference
@@ -5236,7 +5235,7 @@ export const Warning = {
     message: (reference: string) =>
       `The reference ${reference} is a structure containing an array. 152 Structures containing arrays are not valid in SQL statements, but because this structure consists of only one element, the reference is treated as if it were a reference to its lone child.`,
     fullCode: "IBM3316IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used to report DB2 message DSNH030I.
@@ -5247,7 +5246,7 @@ export const Warning = {
     severity: Severity.W,
     message: (note: string) => `${note}`,
     fullCode: "IBM3317IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * ENTRY declares should not specify a RETURNS attribute. In the example below, the
@@ -5262,7 +5261,7 @@ export const Warning = {
     severity: Severity.W,
     message: "RETURNS attribute in ENTRY declare ignored.",
     fullCode: "IBM3320IW",
-  } as SimplePLICode,
+  },
 
   /**
    * In a PROCEDURE statement, any RETURNS attribute should be enclosed in parentheses
@@ -5281,7 +5280,7 @@ export const Warning = {
     message:
       "RETURNS option assumed to enclose attribute in PROCEDURE statement.",
     fullCode: "IBM3321IW",
-  } as SimplePLICode,
+  },
 
   /**
    * References in open code to PROCEDUREs that have parameters should always include
@@ -5303,7 +5302,7 @@ export const Warning = {
     message: (identifier: string) =>
       `Argument list for PROCEDURE ${identifier} is missing. It will be invoked without any arguments.`,
     fullCode: "IBM3322IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * There are too few arguments for the specified procedure. Null strings or zeros will
@@ -5324,7 +5323,7 @@ export const Warning = {
     message: (identifier: string) =>
       `Too few arguments for PROCEDURE ${identifier} . Null values will be passed for the missing arguments.`,
     fullCode: "IBM3323IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * There are too many arguments for the specified procedure. The excess arguments will
@@ -5345,7 +5344,7 @@ export const Warning = {
     message: (identifier: string) =>
       `Too many arguments for PROCEDURE ${identifier} . Excess ignored.`,
     fullCode: "IBM3324IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * Preprocessor variables should be declared with an attribute such as CHAR or FIXED.
@@ -5362,7 +5361,7 @@ export const Warning = {
     message: (identifier: string) =>
       `No data attributes specified in declare for ${identifier} .`,
     fullCode: "IBM3325IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * The LIKE reference cannot be a scalar or an array of scalars.
@@ -5378,7 +5377,7 @@ export const Warning = {
     severity: Severity.W,
     message: "The LIKE reference is neither a structure nor a union.",
     fullCode: "IBM3326IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The LIKE reference needs enough qualification to be unique.
@@ -5404,7 +5403,7 @@ export const Warning = {
     severity: Severity.W,
     message: "The LIKE reference is ambiguous.",
     fullCode: "IBM3327IW",
-  } as SimplePLICode,
+  },
 
   /**
    * LIKE from LIKE is not supported.
@@ -5427,7 +5426,7 @@ export const Warning = {
     message:
       "Neither the LIKE reference nor any of its substructures can be declared with the LIKE attribute.",
     fullCode: "IBM3328IW",
-  } as SimplePLICode,
+  },
 
   /**
    * LIKE from LIKE is not supported.
@@ -5450,7 +5449,7 @@ export const Warning = {
     message:
       "The LIKE reference must not be a member of a structure or union declared with the LIKE attribute.",
     fullCode: "IBM3329IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The LIKE reference must be known in the block containing the LIKE attribute specification
@@ -5462,7 +5461,7 @@ export const Warning = {
     severity: Severity.W,
     message: "The LIKE reference is unknown.",
     fullCode: "IBM3330IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The named INCLUDE file was specified in the INCLUDE suboption of the DEPRECATENEXT
@@ -5475,7 +5474,7 @@ export const Warning = {
     message: (filename: string) =>
       `The INCLUDE file ${filename} will be deprecated.`,
     fullCode: "IBM3331IW",
-  } as ParametricPLICode,
+  },
 
   /**
    * An END statement has been found that matches no previous statement. This may indicate
@@ -5489,7 +5488,7 @@ export const Warning = {
     message:
       "The END statement has no matching BEGIN, DO, PACKAGE, PROC, or SELECT. This may indicate a problem with the syntax of a previous statement.",
     fullCode: "IBM3332IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The source ended without closing END statements for all the open statement groups.
@@ -5503,7 +5502,7 @@ export const Warning = {
     message:
       "One or more END statements are missing. This may indicate a problem with the syntax of a previous statement.",
     fullCode: "IBM3333IW",
-  } as SimplePLICode,
+  },
 
   /**
    * The named ENTRY was specified in the ENTRY suboption of the DEPRECATENEXT option,
@@ -5516,7 +5515,7 @@ export const Warning = {
     message: (variable: string) =>
       `The ENTRY named ${variable} will be deprecated.`,
     fullCode: "IBM3334IW",
-  } as ParametricPLICode,
+  },
 };
 
 export const Error = {
@@ -5530,7 +5529,7 @@ export const Error = {
     message: (maximumvalue: string) =>
       `Area extent is reduced to ${maximumvalue} .`,
     fullCode: "IBM1226IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * In certain contexts, for example after an IF-THEN clause, only executable statements
@@ -5545,7 +5544,7 @@ export const Error = {
     message: (keyword: string, keyword2: string) =>
       `${keyword} statement is not allowed where an executable statement is required. A null statement will be inserted before the ${keyword2} statement.`,
     fullCode: "IBM1227IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * In certain contexts, for example after an IF-THEN clause, only executable statements
@@ -5560,7 +5559,7 @@ export const Error = {
     message:
       "DEFAULT statement is not allowed where an executable statement is required. The DEFAULT statement will be enrolled in the current block, and a null statement will be inserted in its place.",
     fullCode: "IBM1228IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In certain contexts, for example after an IF-THEN clause, only executable statements
@@ -5575,7 +5574,7 @@ export const Error = {
     message:
       "FORMAT statement is not allowed where an executable statement is required. The FORMAT statement will be enrolled in the current block, and a null statement will be inserted in its place.",
     fullCode: "IBM1229IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Argument lists are valid only for ENTRY references.
@@ -5591,7 +5590,7 @@ export const Error = {
     message: (variablename: string) =>
       `Arguments have been specified for the variable ${variablename}, but it is not an entry variable.`,
     fullCode: "IBM1230IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Argument\/subscript lists are valid only for ENTRY and array references.
@@ -5607,7 +5606,7 @@ export const Error = {
     message: (variablename: string) =>
       `Arguments/subscripts have been specified for the variable ${variablename} , but it is neither an entry nor an array variable.`,
     fullCode: "IBM1231IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * A comma was followed by a semicolon rather than by a valid syntactical element (such
@@ -5625,7 +5624,7 @@ export const Error = {
     message:
       "RULES(NOLAXPUNC) violation: extraneous comma at end of statement ignored.",
     fullCode: "IBM1232IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated character is missing, and there are no more characters in the source.
@@ -5640,7 +5639,7 @@ export const Error = {
     message: (character: string) =>
       `RULES(NOLAXPUNC) violation: missing ${character} assumed.`,
     fullCode: "IBM1233IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated character is missing and has been inserted by the parser in order to
@@ -5657,7 +5656,7 @@ export const Error = {
     message: (character: string, character2: string) =>
       `RULES(NOLAXPUNC) violation: missing ${character} assumed before ${character2} .`,
     fullCode: "IBM1234IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Data items cannot be transmitted unless a data format item is given in the format
@@ -5672,7 +5671,7 @@ export const Error = {
     severity: Severity.E,
     message: "No data format item in format list.",
     fullCode: "IBM1235IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A label specified on a PROCEDURE, PACKAGE or ENTRY statement should have no subscripts
@@ -5685,7 +5684,7 @@ export const Error = {
     message: (keyword: string) =>
       `Subscripts on ${keyword} labels are ignored.`,
     fullCode: "IBM1236IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * An undeclared variable is used with an arguments list. This should give it a contextual
@@ -5698,7 +5697,7 @@ export const Error = {
     message: (variablename: string) =>
       `EXTERNAL ENTRY attribute is assumed for ${variablename} .`,
     fullCode: "IBM1237IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The sift amount in ISLL is should not be greater than the precision of the result
@@ -5714,7 +5713,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `The second argument to the ${BUILTINname} built-in function is greater than the precision of the result.`,
     fullCode: "IBM1238IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named attribute is either not part of the PL\/I language or is not supported
@@ -5730,7 +5729,7 @@ export const Error = {
     message: (attribute: string) =>
       `The ${attribute} attribute is not supported and is ignored.`,
     fullCode: "IBM1239IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The RETURNS descriptor may not specify an array.
@@ -5745,7 +5744,7 @@ export const Error = {
     message: (attribute: string) =>
       `The ${attribute} attribute is invalid in a RETURNS descriptor.`,
     fullCode: "IBM1240IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Equal and not equal are defined for complex variables, but you have attempted to
@@ -5758,7 +5757,7 @@ export const Error = {
     message:
       "Equality and inequality are the only valid comparisons of COMPLEX numbers.",
     fullCode: "IBM1241IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Other relationships between program control data are not defined. Perhaps a variable
@@ -5771,7 +5770,7 @@ export const Error = {
     message:
       "Equality and inequality are the only valid comparisons of program control data.",
     fullCode: "IBM1242IE",
-  } as SimplePLICode,
+  },
 
   /**
    * REGIONAL(2) and REGIONAL(3) ENVIRONMENT options are syntax-checked during compile-time
@@ -5784,7 +5783,7 @@ export const Error = {
     message: (integerSpec2or3: string) =>
       `REGIONAL(${integerSpec2or3}) ENVIRONMENT option is not supported.`,
     fullCode: "IBM1243IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the KEYLENGTH, KEYLOC and RECSIZE suboptions.
@@ -5796,7 +5795,7 @@ export const Error = {
     message: (option: string) =>
       `The variable specified as the ${option} value in an ENVIRONMENT option must be a STATIC scalar 36 with the attributes REAL FIXED BIN(31,0).`,
     fullCode: "IBM1244IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the PASSWORD suboption.
@@ -5808,7 +5807,7 @@ export const Error = {
     message: (option: string) =>
       `The variable specified as the ${option} value in an ENVIRONMENT option must be a STATIC scalar with the attribute CHARACTER.`,
     fullCode: "IBM1245IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies, for example, to the ADDR built- in function. The value returned
@@ -5824,7 +5823,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built-in function should be CONNECTED.`,
     fullCode: "IBM1246IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The required implicit conversions will be performed, but this may indicate a programming
@@ -5841,7 +5840,7 @@ export const Error = {
     message:
       "RULES(NOLAXCONV) violation: arithmetic operands should both be numeric.",
     fullCode: "IBM1247IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The argument to the named built-in function should have arithmetic type. The required
@@ -5855,7 +5854,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `RULES(NOLAXCONV) violation: argument to ${BUILTINname} built- in function should have arithmetic type.`,
     fullCode: "IBM1248IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument to the named built-in function should have CHARACTER type. The required
@@ -5869,7 +5868,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built-in function should have CHARACTER type.`,
     fullCode: "IBM1249IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The required implicit conversion will be performed, but this may indicate a programming
@@ -5886,7 +5885,7 @@ export const Error = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `RULES(NOLAXCONV) violation: argument number ${argumentnumber} to ${BUILTINname} built-in function should have arithmetic type.`,
     fullCode: "IBM1252IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The required implicit conversion will be performed, but this may indicate a programming
@@ -5903,7 +5902,7 @@ export const Error = {
     message:
       "RULES(NOLAXCONV) violation: arithmetic prefix operand should be numeric.",
     fullCode: "IBM1254IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The second argument to built-in functions such as COPY and REPEAT must be nonnegative
@@ -5919,7 +5918,7 @@ export const Error = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function is negative. It will be changed to 0.`,
     fullCode: "IBM1272IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The third argument to built-in functions such as COMPARE, PLIFILL, and PLIMOVE must
@@ -5935,7 +5934,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Third argument to ${BUILTINname} built-in function is negative. It will be changed to 0.`,
     fullCode: "IBM1273IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Expressions in IF, WHILE, UNTIL and undominated WHEN clauses should have the attributes
@@ -5954,7 +5953,7 @@ export const Error = {
     message:
       "RULES(NOLAXIF) violation: conditional expression does not have the attributes BIT(1).",
     fullCode: "IBM1274IE",
-  } as SimplePLICode,
+  },
 
   /**
    * OPTIONS(RETCODE) is not supported on ATTACH references.
@@ -5966,7 +5965,7 @@ export const Error = {
     message:
       "OPTIONS(RETCODE) on ATTACH reference is invalid and will be ignored.",
     fullCode: "IBM1281IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In an expression of the form x**y, x and y should not have string type. This message
@@ -5979,7 +5978,7 @@ export const Error = {
     message:
       "RULES(NOLAXCONV) violation: exponentiation operands should have numeric type.",
     fullCode: "IBM1287IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum length allowed for a WIDECHAR variable is set by the STRING suboption
@@ -5992,7 +5991,7 @@ export const Error = {
     message: (maximumvalue: string) =>
       `WIDECHAR extent is reduced to ${maximumvalue} .`,
     fullCode: "IBM1293IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum length allowed for a BIT variable is set by the STRING suboption of the
@@ -6005,7 +6004,7 @@ export const Error = {
     message: (maximumvalue: string) =>
       `BIT extent is reduced to ${maximumvalue} .`,
     fullCode: "IBM1294IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The default lower bound is 1, but the upper bound must be greater than the lower
@@ -6021,7 +6020,7 @@ export const Error = {
     message:
       "Sole bound specified is less than 1. An upper bound of 1 is assumed.",
     fullCode: "IBM1295IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The arguments passed to the MAIN procedure when SYSTEM(IMS) or SYSTEM(CICS) is in
@@ -6038,7 +6037,7 @@ export const Error = {
     severity: Severity.E,
     message: "The BYADDR option conflicts with the SYSTEM option.",
     fullCode: "IBM1296IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In a BY NAME, the source and target structures should have at least one matching
@@ -6056,7 +6055,7 @@ export const Error = {
     message:
       "Source and target in BY NAME assignment have no matching assignable base identifiers.",
     fullCode: "IBM1297IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In a B3 literal, each character must be either 0-7.
@@ -6067,7 +6066,7 @@ export const Error = {
     severity: Severity.E,
     message: "Characters in B3 literals must be 0-7.",
     fullCode: "IBM1298IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum length allowed for a CHARACTER variable is set by the STRING suboption
@@ -6080,7 +6079,7 @@ export const Error = {
     message: (maximumvalue: string) =>
       `CHARACTER extent is reduced to ${maximumvalue} .`,
     fullCode: "IBM1299IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * This is an E-level message because RULES(NOLAXDCL) has been specified.
@@ -6092,7 +6091,7 @@ export const Error = {
     message: (variablename: string, attribute: string) =>
       `RULES(NOLAXDCL) violation: ${variablename} is contextually declared as ${attribute} .`,
     fullCode: "IBM1300IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * An E in a FLOAT constant must be followed by at least one decimal digit (optionally
@@ -6104,7 +6103,7 @@ export const Error = {
     severity: Severity.E,
     message: "A DECIMAL exponent is required.",
     fullCode: "IBM1301IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Each block should contain no more than 31 DEFAULT predicates.
@@ -6116,7 +6115,7 @@ export const Error = {
     message:
       "The limit on the number of DEFAULT predicates in a block has already been reached. This and subsequent DEFAULT predicates in this block will be ignored.",
     fullCode: "IBM1302IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The LBOUND, HBOUND, and DIMENSION built-in functions require two arguments when applied
@@ -6133,7 +6132,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `A second argument to the ${BUILTINname} built-in function must be supplied for arrays with more than one dimension. A value of 1 is assumed.`,
     fullCode: "IBM1303IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The DIMENSION, HBOUND and LBOUND built-in functions require that the second argument
@@ -6146,7 +6145,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function is not positive. A value of 1 is assumed.`,
     fullCode: "IBM1304IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The second argument to the LBOUND, HBOUND, and DIMENSION built-in functions must
@@ -6163,7 +6162,7 @@ export const Error = {
     message: (BUILTINname: string, dimensioncount: string) =>
       `Second argument to ${BUILTINname} built-in function is greater than the number of dimensions for the first argument. A value of ${dimensioncount} is assumed.`,
     fullCode: "IBM1305IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Level 1 variable names must not be repeated in the same block.
@@ -6178,7 +6177,7 @@ export const Error = {
     message: (identifier: string) =>
       `Repeated declaration of ${identifier} is invalid and will be ignored.`,
     fullCode: "IBM1306IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The precision attribute must be specified only once in a declare.
@@ -6193,7 +6192,7 @@ export const Error = {
     message:
       "Duplicate specification of arithmetic precision. Subsequent specification ignored.",
     fullCode: "IBM1307IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The variable names at any given sublevel within a structure or union must be unique
@@ -6211,7 +6210,7 @@ export const Error = {
     message: (identifier: string) =>
       `Repeated declaration of ${identifier} is invalid. The name will be replaced by an asterisk.`,
     fullCode: "IBM1308IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Attributes like INITIAL must not be repeated for an element of a DECLARE statement
@@ -6227,7 +6226,7 @@ export const Error = {
     message: (attribute: string) =>
       `Duplicate specification of ${attribute} . Subsequent specification ignored.`,
     fullCode: "IBM1309IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Attributes must be consistent.
@@ -6242,7 +6241,7 @@ export const Error = {
     message: (character: string) =>
       `The attribute ${character} conflicts with previous attributes and is ignored.`,
     fullCode: "IBM1310IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The external name should contain some nonblank characters.
@@ -6256,7 +6255,7 @@ export const Error = {
     severity: Severity.E,
     message: "EXTERNAL name contains no non- blank characters and is ignored.",
     fullCode: "IBM1311IE",
-  } as SimplePLICode,
+  },
 
   /**
    * WX literals must represent unicode strings and hence must contain a multiple of 4
@@ -6271,7 +6270,7 @@ export const Error = {
     severity: Severity.E,
     message: "WX literals should contain a multiple of 4 hex digits.",
     fullCode: "IBM1312IE",
-  } as SimplePLICode,
+  },
 
   /**
    * ELSE clauses are valid immediately after an IF-THEN statement.
@@ -6285,7 +6284,7 @@ export const Error = {
     severity: Severity.E,
     message: "ELSE clause outside of an open IF- THEN statement is ignored.",
     fullCode: "IBM1314IE",
-  } as SimplePLICode,
+  },
 
   /**
    * END statements for groups with a subscripted label must have labels that are also
@@ -6303,7 +6302,7 @@ export const Error = {
     message:
       "END label matches a label on an open group, but that group label is subscripted.",
     fullCode: "IBM1315IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A Label on END statement must match a LABEL on an open BEGIN, DO, PACKAGE, PROCEDURE,
@@ -6320,7 +6319,7 @@ export const Error = {
     severity: Severity.E,
     message: "END label is not a label on any open group.",
     fullCode: "IBM1316IE",
-  } as SimplePLICode,
+  },
 
   /**
    * After an OTHERWISE unit in a SELECT statement, only an END statement is valid.
@@ -6342,7 +6341,7 @@ export const Error = {
     message:
       "An END statement may be missing after an OTHERWISE unit. One will be inserted.",
     fullCode: "IBM1317IE",
-  } as SimplePLICode,
+  },
 
   /**
    * There was a conflict detected in the ENVIRONMENT options specification. In the example
@@ -6356,7 +6355,7 @@ export const Error = {
     message: (optionname: string) =>
       `The ENVIRONMENT option ${optionname} conflicts with preceding ENVIRONMENT options. This option will be ignored.`,
     fullCode: "IBM1318IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * During the conversion of a user expression during the compilation, the target string
@@ -6370,7 +6369,7 @@ export const Error = {
     message:
       "STRINGSIZE condition raised while evaluating expression. Result is truncated.",
     fullCode: "IBM1319IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If all the arguments in a SUBSTR reference are constants or restricted expressions,
@@ -6388,7 +6387,7 @@ export const Error = {
     message:
       "STRINGRANGE condition raised while evaluating expression. Arguments are adjusted to fit.",
     fullCode: "IBM1320IE",
-  } as SimplePLICode,
+  },
 
   /**
    * LEAVE\/ITERATE statements for groups with a subscripted label must have labels that
@@ -6406,7 +6405,7 @@ export const Error = {
     message:
       "LEAVE/ITERATE label matches a label on an open DO group, but that DO group label is subscripted.",
     fullCode: "IBM1321IE",
-  } as SimplePLICode,
+  },
 
   /**
    * LEAVE\/ITERATE must specify a label on an open DO loop in the same block as the LEAVE\/ITERATE
@@ -6424,7 +6423,7 @@ export const Error = {
     message:
       "LEAVE/ITERATE label is not a label on any open DO group in its containing block.",
     fullCode: "IBM1322IE",
-  } as SimplePLICode,
+  },
 
   /**
    * ITERATE\/LEAVE statements are valid only inside DO groups.
@@ -6443,7 +6442,7 @@ export const Error = {
     message:
       "ITERATE/LEAVE statement is invalid outside an open DO statement. The statement will be ignored.",
     fullCode: "IBM1323IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Names in the EXPORTS clause of a package statement must be unique.
@@ -6458,7 +6457,7 @@ export const Error = {
     message: (name: string) =>
       `The name ${name} occurs more than once in the EXPORTS clause.`,
     fullCode: "IBM1324IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Each name in the EXPORTS clause of a package statement must be the name of some level-1
@@ -6474,7 +6473,7 @@ export const Error = {
     message: (name: string) =>
       `The name ${name} occurs in the EXPORTS clause, but is not the name of any nonnested PROCEDURE.`,
     fullCode: "IBM1325IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * An asterisk may be used only for structure or union names, or for members of structures
@@ -6492,7 +6491,7 @@ export const Error = {
     message:
       "Variables declared without a name must be structure members or followed by a substructure list.",
     fullCode: "IBM1326IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If the parameter is EBCDIC or has the attribute NONNATIVE, unpredictable results
@@ -6505,7 +6504,7 @@ export const Error = {
     message:
       "The CHARACTER VARYING parameter to MAIN should be ASCII with the attribute NATIVE.",
     fullCode: "IBM1327IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If the parameter is ASCII or has the attribute LITTLEENDIAN, unpredictable results
@@ -6518,7 +6517,7 @@ export const Error = {
     message:
       "The CHARACTER VARYING parameter to MAIN should be EBCDIC with the attribute BIGENDIAN.",
     fullCode: "IBM1328IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOMULTIENTRY), there should be no ENTRY statements in your source program
@@ -6530,7 +6529,7 @@ export const Error = {
     severity: Severity.E,
     message: "ENTRY statements are not allowed under RULES(NOMULTIENTRY).",
     fullCode: "IBM1329IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The I in an iSUB token must represent a valid dimension number.
@@ -6545,7 +6544,7 @@ export const Error = {
     message:
       "The I in an iSUB token must be bigger than zero. A value of 1 is assumed.",
     fullCode: "IBM1330IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The I in an iSUB token must have only 1 or 2 digits.
@@ -6560,7 +6559,7 @@ export const Error = {
     message:
       "The I in an iSUB token must have no more than 2 digits. A value of 1 is assumed.",
     fullCode: "IBM1331IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A width must be specified on A, B, and G format items when specified on a GET statement
@@ -6576,7 +6575,7 @@ export const Error = {
     message: (formatitem: string) =>
       `The ${formatitem} format item requires an argument when used in GET statement. A value of 1 is assumed.`,
     fullCode: "IBM1332IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * All array bounds in generic descriptions must be asterisks.
@@ -6591,7 +6590,7 @@ export const Error = {
     message:
       "Non-asterisk array bounds are not permitted in GENERIC descriptions.",
     fullCode: "IBM1333IE",
-  } as SimplePLICode,
+  },
 
   /**
    * All string lengths and area sizes in generic descriptions must be asterisks.
@@ -6606,7 +6605,7 @@ export const Error = {
     message:
       "String lengths and area sizes are not permitted in GENERIC descriptions.",
     fullCode: "IBM1334IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Any ENTRY attribute in a generic description list must not be qualified with an entry
@@ -6622,7 +6621,7 @@ export const Error = {
     message:
       "Entry description lists are not permitted in GENERIC descriptions.",
     fullCode: "IBM1335IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum length allowed for a GRAPHIC variable is set by the STRING suboption
@@ -6635,7 +6634,7 @@ export const Error = {
     message: (maximumvalue: string) =>
       `GRAPHIC extent is reduced to ${maximumvalue} .`,
     fullCode: "IBM1336IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * GX literals must represent graphic strings and hence must contain a multiple of 4
@@ -6650,7 +6649,7 @@ export const Error = {
     severity: Severity.E,
     message: "GX literals should contain a multiple of 4 hex digits.",
     fullCode: "IBM1337IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A variable has been declared with an upper bound that is less than its lower bound.
@@ -6663,7 +6662,7 @@ export const Error = {
     severity: Severity.E,
     message: "Upper bound is less than lower bound. Bounds will be reversed.",
     fullCode: "IBM1338IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum length of an identifier is set by the NAME suboption of the LIMITS compiler
@@ -6676,7 +6675,7 @@ export const Error = {
     message: (identifier: string) =>
       `Identifier is too long. It will be collapsed to ${identifier} .`,
     fullCode: "IBM1339IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * An argument containing BIT data has been found in a call to a COBOL routine. Mapping
@@ -6694,7 +6693,7 @@ export const Error = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} contains BIT data. NOMAP is assumed.`,
     fullCode: "IBM1340IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * An argument containing UNION data has been found in a call to a COBOL routine. Mapping
@@ -6713,7 +6712,7 @@ export const Error = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is or contains a UNION. NOMAP is assumed.`,
     fullCode: "IBM1341IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * An argument containing non-constant extents has been found in a call to a COBOL routine.
@@ -6732,7 +6731,7 @@ export const Error = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} contains non-constant extents. NOMAP is assumed.`,
     fullCode: "IBM1342IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The suboption should be specified as ARGn where \"n\" is an integer greater than
@@ -6749,7 +6748,7 @@ export const Error = {
     message: (nomapsuboption: string, option: string) =>
       `${nomapsuboption} is invalid as a suboption of ${option} .`,
     fullCode: "IBM1343IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * NOMAP, NOMAPIN and NOMAPOUT are valid only for COBOL, FORTRAN and ASM Procedures
@@ -6761,7 +6760,7 @@ export const Error = {
     severity: Severity.E,
     message: "NOMAP specifications are valid only for ILC routines.",
     fullCode: "IBM1344IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The level-1 DECLARE statement may be missing.
@@ -6780,7 +6779,7 @@ export const Error = {
     severity: Severity.E,
     message: "Initial level number in a structure is not 1.",
     fullCode: "IBM1345IE",
-  } as SimplePLICode,
+  },
 
   /**
    * This is required to avoid ambiguities. For example, it is unclear whether all of
@@ -6796,7 +6795,7 @@ export const Error = {
     severity: Severity.E,
     message: "INIT expression should be enclosed in parentheses.",
     fullCode: "IBM1346IE",
-  } as SimplePLICode,
+  },
 
   /**
    * There is no language element of the form 1su.
@@ -6810,7 +6809,7 @@ export const Error = {
     severity: Severity.E,
     message: "B assumed to complete iSUB.",
     fullCode: "IBM1347IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In a BINARY constant, each digit must be a zero or one.
@@ -6821,7 +6820,7 @@ export const Error = {
     severity: Severity.E,
     message: "Digit in BINARY constant is not zero or one.",
     fullCode: "IBM1348IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In a BIT literal, each character must be either zero or one.
@@ -6832,7 +6831,7 @@ export const Error = {
     severity: Severity.E,
     message: "Characters in BIT literals must be 0 or 1.",
     fullCode: "IBM1349IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated character is not part of the PL\/I character set. This can occur if
@@ -6847,7 +6846,7 @@ export const Error = {
     message: (n: string) =>
       `Character with decimal value ${n} does not belong to the PL/I character set. It will be ignored.`,
     fullCode: "IBM1350IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a hex literal, each character must be either 0-9 or A-F.
@@ -6858,7 +6857,7 @@ export const Error = {
     severity: Severity.E,
     message: "Characters in hex literals must be 0-9 or A-F.",
     fullCode: "IBM1351IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The statement entered could not be parsed because the specified element is invalid
@@ -6871,7 +6870,7 @@ export const Error = {
     message: (character: string) =>
       `The statement element ${character} is invalid. The statement will be ignored.`,
     fullCode: "IBM1352IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under LANGLVL(SAA), identifiers must start with an alphabetic character or with one
@@ -6886,7 +6885,7 @@ export const Error = {
     message:
       "Use of underscore as initial character in an identifier accepted although invalid under LANGLVL(SAA).",
     fullCode: "IBM1353IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A reference of the form x(1)(2).y.z is invalid.
@@ -6898,7 +6897,7 @@ export const Error = {
     message:
       "Multiple argument lists are valid only with the last identifier in a reference.",
     fullCode: "IBM1354IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A reference of the form x().y.z is invalid.
@@ -6910,7 +6909,7 @@ export const Error = {
     message:
       "Empty argument lists are valid only with the last identifier in a reference.",
     fullCode: "IBM1355IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated character is not part of the PL\/I character set, but was immediately
@@ -6926,7 +6925,7 @@ export const Error = {
     message: (n: string) =>
       `Character with decimal value ${n} does not belong to the PL/I character set. It is assumed to be an OR symbol.`,
     fullCode: "IBM1356IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated character is not part of the PL\/I character set, but was immediately
@@ -6942,7 +6941,7 @@ export const Error = {
     message: (n: string) =>
       `Character with decimal value ${n} does not belong to the PL/I 44 character set. It is assumed to be a NOT symbol.`,
     fullCode: "IBM1357IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the ROUND built-in function. The non- positive value will be changed
@@ -6959,7 +6958,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `The scale factor specified in ${BUILTINname} built-in function with a floating-point argument must be positive. It will be changed to 1.`,
     fullCode: "IBM1358IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The names must be in ascending order.
@@ -6974,7 +6973,7 @@ export const Error = {
     message: (identifier: string, identifier2: string) =>
       `Names in RANGE( ${identifier} : ${identifier2} ) are not in ascending order. Order is reversed.`,
     fullCode: "IBM1359IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The name of a FORMAT constant cannot be used as the name of a LABEL constant as well
@@ -6991,7 +6990,7 @@ export const Error = {
     message: (identifier: string) =>
       `The name ${identifier} has already been defined as a FORMAT constant.`,
     fullCode: "IBM1360IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The name of a LABEL constant cannot be also used as the name of a FORMAT constant
@@ -7008,7 +7007,7 @@ export const Error = {
     message: (identifier: string) =>
       `The name ${identifier} has already been defined as a LABEL constant.`,
     fullCode: "IBM1361IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Declarations for label constant arrays are not permitted.
@@ -7025,7 +7024,7 @@ export const Error = {
     message: (labelname: string) =>
       `The label ${labelname} has already been declared. The explicit declaration of the label will not be accepted.`,
     fullCode: "IBM1362IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum structure level supported is 255.
@@ -7043,7 +7042,7 @@ export const Error = {
     message:
       "Structure level greater than 255 specified. It will be replaced by 255.",
     fullCode: "IBM1363IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A structure level is probably missing.
@@ -7061,7 +7060,7 @@ export const Error = {
     message:
       "Elements with level numbers greater than 1 follow an element without a level number. A level number of 1 is assumed.",
     fullCode: "IBM1364IE",
-  } as SimplePLICode,
+  },
 
   /**
    * To determine if a statement is an assignment or another PL\/I statement, many elements
@@ -7079,7 +7078,7 @@ export const Error = {
     message:
       "Statement type resolution requires too many lexical units to 45 be examined. The statement will be ignored.",
     fullCode: "IBM1365IE",
-  } as SimplePLICode,
+  },
 
   /**
    * LIKE cannot be specified on a parent structure or union.
@@ -7097,7 +7096,7 @@ export const Error = {
     message:
       "Level number following LIKE specification is greater than than the level number for the LIKE specification. LIKE attribute will be ignored.",
     fullCode: "IBM1366IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A WHEN or OTHERWISE may be missing.
@@ -7115,7 +7114,7 @@ export const Error = {
     message:
       "Statements inside a SELECT must be preceded by a WHEN or an OTHERWISE clause. Statement is ignored.",
     fullCode: "IBM1367IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The named attribute is valid only on parent structures.
@@ -7135,7 +7134,7 @@ export const Error = {
     message: (character: string) =>
       `The attribute ${character} is invalid if it is not followed by an element with a greater logical level.`,
     fullCode: "IBM1368IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * OPTIONS(MAIN) may be specified for only one PROCEDURE in a PACKAGE. All but the first
@@ -7147,7 +7146,7 @@ export const Error = {
     severity: Severity.E,
     message: "MAIN has already been specified in the PACKAGE.",
     fullCode: "IBM1369IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Extents must be positive.
@@ -7162,7 +7161,7 @@ export const Error = {
     message:
       "Extent expression is negative. It will be replaced by the constant 1.",
     fullCode: "IBM1370IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under the option RULES(NOLAXQUAL), all structure elements should be qualified with
@@ -7175,7 +7174,7 @@ export const Error = {
     message: (identifier: string) =>
       `RULES(NOLAXQUAL) violation: structure element ${identifier} is not dot qualified.`,
     fullCode: "IBM1371IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The EXTERNAL attribute is valid only on external procedures and entrys: for example,
@@ -7193,7 +7192,7 @@ export const Error = {
     severity: Severity.E,
     message: "EXTERNAL specified on internal entry point.",
     fullCode: "IBM1372IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under the RULES(NOLAXDCL) option, all variables must be declared except for contextual
@@ -7206,7 +7205,7 @@ export const Error = {
     message: (variablename: string) =>
       `RULES(NOLAXDCL) violation: variable ${variablename} is implicitly declared.`,
     fullCode: "IBM1373IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only those contextual attributes that can be applied to a parameter will be applied.
@@ -7224,7 +7223,7 @@ export const Error = {
     message: (variablename: string) =>
       `Contextual attributes conflicting with PARAMETER will not be applied to ${variablename} .`,
     fullCode: "IBM1374IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The number of bits, characters or graphics needed for a DEFINED variable must be
@@ -7241,7 +7240,7 @@ export const Error = {
     message: (variablename: string) =>
       `The DEFINED variable ${variablename} does not fit into its base variable.`,
     fullCode: "IBM1375IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only attributes can be factored into declaration lists.
@@ -7256,7 +7255,7 @@ export const Error = {
     message:
       "Factoring of level numbers into declaration lists containing level numbers is invalid. The level numbers in the declaration list will be ignored.",
     fullCode: "IBM1376IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Scale factors are valid only for FIXED values.
@@ -7271,7 +7270,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `A scale factor has been specified as an argument to the ${BUILTINname} built-in function, but the result of that function has type FLOAT. The scale factor will be ignored.`,
     fullCode: "IBM1377IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * GENERIC entry references are not allowed to contain an arguments or subscripts list
@@ -7288,7 +7287,7 @@ export const Error = {
     message:
       "An arguments list or subscripts list has been provided for a GENERIC ENTRY reference. It will be ignored.",
     fullCode: "IBM1378IE",
-  } as SimplePLICode,
+  },
 
   /**
    * GENERIC references cannot be locator-qualified.
@@ -7303,7 +7302,7 @@ export const Error = {
     severity: Severity.E,
     message: "Locator qualifier for GENERIC reference is ignored.",
     fullCode: "IBM1379IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In an assignment to a structure, some element of the structure must have the assignable
@@ -7323,7 +7322,7 @@ export const Error = {
     message:
       "Target structure in assignment contains no elements with the ASSIGNABLE attribute. No assignments will be generated.",
     fullCode: "IBM1380IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If a BIT structure (or union) is defined on a variable that is not aligned on a byte
@@ -7336,7 +7335,7 @@ export const Error = {
     severity: Severity.E,
     message: "DEFINED base for a BIT structure should be aligned.",
     fullCode: "IBM1381IE",
-  } as SimplePLICode,
+  },
 
   /**
    * FORMAT variables require block activation information; they cannot be initialized
@@ -7351,7 +7350,7 @@ export const Error = {
     message:
       "INITIAL attribute is invalid for STATIC FORMAT variables. Storage class is changed to AUTOMATIC.",
     fullCode: "IBM1382IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Labels are not permitted on DECLARE, DEFAULT, and DEFINE statements or on WHEN and
@@ -7364,7 +7363,7 @@ export const Error = {
     message: (keyword: string) =>
       `Labels on ${keyword} statements are invalid and ignored.`,
     fullCode: "IBM1383IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used to report back end error messages.
@@ -7375,7 +7374,7 @@ export const Error = {
     severity: Severity.E,
     message: (message: string) => `${message}`,
     fullCode: "IBM1384IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The base variable in the DEFINED attribute must consist of UNALIGNED, NONVARYING
@@ -7387,7 +7386,7 @@ export const Error = {
     severity: Severity.E,
     message: "Invalid DEFINED - string overlay defining attempted.",
     fullCode: "IBM1385IE",
-  } as SimplePLICode,
+  },
 
   /**
    * When one bit variable is defined on a second (the base), the base may be an array,
@@ -7403,7 +7402,7 @@ export const Error = {
     severity: Severity.E,
     message: "DEFINED base for a BIT variable should not be subscripted.",
     fullCode: "IBM1386IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A parameter can have * extents only if a descriptor is also passed. The NODESCRIPTOR
@@ -7421,7 +7420,7 @@ export const Error = {
     message:
       "The NODESCRIPTOR attribute is invalid when any parameters have * extents. The NODESCRIPTOR attribute will be ignored.",
     fullCode: "IBM1387IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A parameter can have the NONCONNECTED attribute only if a descriptor is also passed
@@ -7438,7 +7437,7 @@ export const Error = {
     message:
       "The NODESCRIPTOR attribute is invalid when any parameters have the NONCONNECTED attribute.",
     fullCode: "IBM1388IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The BUILTIN attribute can be applied only to identifiers that are the names of built-in
@@ -7451,7 +7450,7 @@ export const Error = {
     message: (identifier: string) =>
       `The identifier ${identifier} is not the name of a built-in function. The BUILTIN attribute will be ignored.`,
     fullCode: "IBM1389IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used by %NOTE statements with a return code of 8.
@@ -7462,7 +7461,7 @@ export const Error = {
     severity: Severity.E,
     message: (note: string) => `${note}`,
     fullCode: "IBM1390IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * An end-of-comment marker is probably missing.
@@ -7474,7 +7473,7 @@ export const Error = {
     message:
       "End-of-source has been encountered after an unmatched comment marker.",
     fullCode: "IBM1391IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A closing quote is probably missing.
@@ -7485,7 +7484,7 @@ export const Error = {
     severity: Severity.E,
     message: "End-of-source has been encountered after an unmatched quote.",
     fullCode: "IBM1392IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated element of the options list is invalid.
@@ -7500,7 +7499,7 @@ export const Error = {
     message: (optionname: string) =>
       `Item in OPTIONS list conflicts with other attributes in the declaration. ${optionname} is ignored.`,
     fullCode: "IBM1393IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the options list is invalid for BEGIN blocks (although it
@@ -7516,7 +7515,7 @@ export const Error = {
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for BEGIN blocks. ${optionname} is ignored.`,
     fullCode: "IBM1394IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the options list is invalid for PACKAGEs (although it may
@@ -7532,7 +7531,7 @@ export const Error = {
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for PACKAGEs. ${optionname} is ignored.`,
     fullCode: "IBM1395IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the options list is invalid for PROCEDUREs (although it
@@ -7548,7 +7547,7 @@ export const Error = {
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for PROCEDUREs. ${optionname} is ignored.`,
     fullCode: "IBM1396IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the options list is invalid for nested PROCEDUREs (although
@@ -7565,7 +7564,7 @@ export const Error = {
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for nested PROCEDUREs. ${optionname} is ignored.`,
     fullCode: "IBM1397IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the options list is not a supported option in any statement
@@ -7581,7 +7580,7 @@ export const Error = {
     message: (optionname: string) =>
       `Invalid item in OPTIONS list. ${optionname} is ignored.`,
     fullCode: "IBM1398IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the options list is invalid for ENTRY statements (although
@@ -7597,7 +7596,7 @@ export const Error = {
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for ENTRY statements. ${optionname} is ignored.`,
     fullCode: "IBM1399IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The elements of the options list must be consistent, unlike in the example where
@@ -7613,7 +7612,7 @@ export const Error = {
     message: (optionname: string) =>
       `Item in OPTIONS list conflicts with preceding items. ${optionname} is ignored.`,
     fullCode: "IBM1400IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Parameter attributes, such as BYVALUE or CONNECTED, may be specified only for parameters
@@ -7630,7 +7629,7 @@ export const Error = {
     message:
       "Parameter attributes have been specified for a variable that is not a parameter. The parameter attributes are ignored.",
     fullCode: "IBM1401IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The POSITION attribute must specify a positive value.
@@ -7644,7 +7643,7 @@ export const Error = {
     severity: Severity.E,
     message: "Constant in POSITION attribute is less than 1.",
     fullCode: "IBM1402IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The source should contain END statements for all PACKAGEs, PROCEDUREs, BEGIN blocks,
@@ -7658,7 +7657,7 @@ export const Error = {
     message:
       "The end of the source was reached before the logical end of the program. Null statements and END statements will be inserted as necessary to complete the program.",
     fullCode: "IBM1403IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Declarations for internal procedures are not permitted.
@@ -7675,7 +7674,7 @@ export const Error = {
     message: (procname: string) =>
       `The PROCEDURE name ${procname} has already been declared. The explicit declaration of the PROCEDURE name will not be accepted.`,
     fullCode: "IBM1404IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * A function can return only one value.
@@ -7689,7 +7688,7 @@ export const Error = {
     severity: Severity.E,
     message: "Only one description is allowed in a returns descriptor.",
     fullCode: "IBM1405IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The string represented by a repetition factor applied to another string must conform
@@ -7705,7 +7704,7 @@ export const Error = {
     message: (repetitionfactor: string, string: string) =>
       `The product of the repetition factor ${repetitionfactor} and the length of the constant ${string} to which it is applied is greater than the maximum length allowed for a constant. The repetition factor will be ignored.`,
     fullCode: "IBM1406IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Scale factors must lie between -128 and 127 inclusive.
@@ -7716,7 +7715,7 @@ export const Error = {
     severity: Severity.E,
     message: "Scale factor is bigger than 127. It will be replaced by 127.",
     fullCode: "IBM1407IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Scale factors must lie between -128 and 127 inclusive.
@@ -7727,7 +7726,7 @@ export const Error = {
     severity: Severity.E,
     message: "Scale factor is less than -128. It will be replaced by -128.",
     fullCode: "IBM1408IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A WHEN or OTHERWISE clause has been found outside of a SELECT statement.
@@ -7739,7 +7738,7 @@ export const Error = {
     message:
       "A SELECT statement may be missing. A SELECT statement, without an expression, will be inserted.",
     fullCode: "IBM1409IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An END statement enclosing a statement such as DO or SELECT has been found before
@@ -7758,7 +7757,7 @@ export const Error = {
     severity: Severity.E,
     message: "Semicolon inserted after ELSE keyword.",
     fullCode: "IBM1410IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An END statement enclosing a statement such as DO or SELECT has been found before
@@ -7776,7 +7775,7 @@ export const Error = {
     severity: Severity.E,
     message: "Semicolon inserted after ON clause.",
     fullCode: "IBM1411IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An END statement may be misplaced or a semicolon may be missing.
@@ -7787,7 +7786,7 @@ export const Error = {
     severity: Severity.E,
     message: "Semicolon inserted after OTHERWISE keyword.",
     fullCode: "IBM1412IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An END statement may be misplaced or a semicolon may be missing.
@@ -7798,7 +7797,7 @@ export const Error = {
     severity: Severity.E,
     message: "Semicolon inserted after THEN keyword.",
     fullCode: "IBM1413IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An END statement may be misplaced or a semicolon may be missing.
@@ -7809,7 +7808,7 @@ export const Error = {
     severity: Severity.E,
     message: "Semicolon inserted after WHEN clause.",
     fullCode: "IBM1414IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The source file contains statements after the END statement that closed the first
@@ -7822,7 +7821,7 @@ export const Error = {
     severity: Severity.E,
     message: "Source file does not end with the logical end of the program.",
     fullCode: "IBM1415IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Subscripts can be specified only for elements of an array.
@@ -7834,7 +7833,7 @@ export const Error = {
     message: (variablename: string) =>
       `Subscripts have been specified for the variable ${variablename} , but it is not an array variable.`,
     fullCode: "IBM1416IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Otherwise the STRINGRANGE condition would be raised.
@@ -7846,7 +7845,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Second argument in ${BUILTINname} reference is less than 1. It will be replaced by 1.`,
     fullCode: "IBM1417IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Otherwise the STRINGRANGE condition would be raised.
@@ -7858,7 +7857,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Second argument in ${BUILTINname} reference is too big. It will be trimmed to fit.`,
     fullCode: "IBM1418IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Otherwise the STRINGRANGE condition would be raised.
@@ -7870,7 +7869,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Third argument in ${BUILTINname} reference is less than 0. It will be replaced by 0.`,
     fullCode: "IBM1419IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum K constant is 2097151K, and the maximum M constant is 2047M.
@@ -7882,7 +7881,7 @@ export const Error = {
     message: (kmConstant: string, maximumfactor: string) =>
       `The factor in ${kmConstant} is too large and is replaced by ${maximumfactor} .`,
     fullCode: "IBM1420IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum number of dimensions allowed for a variable, including all inherited
@@ -7895,7 +7894,7 @@ export const Error = {
     message:
       "More than 15 dimensions have been specified. Excess will be ignored.",
     fullCode: "IBM1421IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A block should contain no more than 500 LIKE references. Under LANGLVL(SAA2), there
@@ -7907,7 +7906,7 @@ export const Error = {
     severity: Severity.E,
     message: "Maximum of 500 LIKE attributes per block exceeded.",
     fullCode: "IBM1422IE",
-  } as SimplePLICode,
+  },
 
   /**
    * All AREA variables must be ALIGNED.
@@ -7918,7 +7917,7 @@ export const Error = {
     severity: Severity.E,
     message: "UNALIGNED attribute conflicts with AREA attribute.",
     fullCode: "IBM1423IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An *\/ was found when there was no open comment.
@@ -7930,7 +7929,7 @@ export const Error = {
     message:
       "End of comment marker found when there are no open comments. Marker will be ignored.",
     fullCode: "IBM1424IE",
-  } as SimplePLICode,
+  },
 
   /**
    * See the Language Reference Manual for the list of supported compiler directives.
@@ -7942,7 +7941,7 @@ export const Error = {
     message: (directive: string) =>
       `There is no compiler directive ${directive} . Input up to the next semicolon will be ignored.`,
     fullCode: "IBM1425IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Structure level numbers must be positive.
@@ -7953,7 +7952,7 @@ export const Error = {
     severity: Severity.E,
     message: "Structure level of 0 replaced by 1.",
     fullCode: "IBM1426IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Numeric precisions must be positive.
@@ -7964,7 +7963,7 @@ export const Error = {
     severity: Severity.E,
     message: "Numeric precision of 0 replaced by 1.",
     fullCode: "IBM1427IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An X literal may not contain an odd number of digits.
@@ -7975,7 +7974,7 @@ export const Error = {
     severity: Severity.E,
     message: "X literals should contain a multiple of 2 hex digits.",
     fullCode: "IBM1428IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In DCL 1 a BASED, 2 b FIXED BIN INIT(3), 2 c( n REFER(b)), the initial clause for
@@ -7988,7 +7987,7 @@ export const Error = {
     message: (variablename: string) =>
       `INITIAL attribute for REFER object ${variablename} is invalid.`,
     fullCode: "IBM1429IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * If an ORDINAL type is declared with the UNSIGNED attribute, any INITIAL values specified
@@ -8001,7 +8000,7 @@ export const Error = {
     message: (typetype: string, typename: string) =>
       `UNSIGNED attribute for ${typetype} type ${typename} conflicts with negative INITIAL values and is ignored.`,
     fullCode: "IBM1430IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * An ORDINAL type must have a precision larger enough to cover the range of values
@@ -8021,7 +8020,7 @@ export const Error = {
     message: (typetype: string, typename: string) =>
       `PRECISION specified for ${typetype} type ${typename} is too small to cover its INITIAL values and is adjusted to fit.`,
     fullCode: "IBM1431IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * A named type may be defined only once in any block.
@@ -8033,7 +8032,7 @@ export const Error = {
     message: (typename: string) =>
       `The type ${typename} is already defined. The redefinition is ignored.`,
     fullCode: "IBM1432IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Names in the RESERVES clause of a package statement must be unique.
@@ -8048,7 +8047,7 @@ export const Error = {
     message: (name: string) =>
       `The name ${name} occurs more than once in the RESERVES clause.`,
     fullCode: "IBM1433IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Each name in the RESERVES clause of a package statement must be the name of some
@@ -8064,7 +8063,7 @@ export const Error = {
     message: (name: string) =>
       `The name ${name} occurs in the RESERVES clause, but is not the name of any level 1 STATIC EXTERNAL variable.`,
     fullCode: "IBM1434IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Precision values must be positive.
@@ -8079,7 +8078,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `A precision value less than 1 has been specified as an argument to the ${BUILTINname} built-in function. It will be replaced by 15.`,
     fullCode: "IBM1435IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Scale factors must be between -128 and 127 inclusive.
@@ -8094,7 +8093,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `The scale factor specified as an argument to the ${BUILTINname} built-in function is out of the valid range. It will be replaced by the nearest valid value.`,
     fullCode: "IBM1436IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum FIXED BINARY precision supported allowed depends on the FIXEDBIN suboption
@@ -8110,7 +8109,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `The second argument to the ${BUILTINname} built-in function is greater than the maximum FIXED BINARY precision. It will be replaced by the maximum value.`,
     fullCode: "IBM1437IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * More arguments were specified in an ENTRY reference than were defined as parameters
@@ -8127,7 +8126,7 @@ export const Error = {
     message: (ENTRYname: string) =>
       `Excess arguments for ENTRY ${ENTRYname} ignored.`,
     fullCode: "IBM1438IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * More arguments were specified for the indicated built- in function than are supported
@@ -8143,7 +8142,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Excess arguments for ${BUILTINname} built-in function ignored.`,
     fullCode: "IBM1439IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a comparison of two ENTRY variables or constants, the ENTRY and RETURNS description
@@ -8159,7 +8158,7 @@ export const Error = {
     severity: Severity.E,
     message: "ENTRY/RETURNS description lists for comparands do not match.",
     fullCode: "IBM1441IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In an assignment of an ENTRY variable or constant, the ENTRY and RETURNS description
@@ -8178,7 +8177,7 @@ export const Error = {
     message: (targetvariable: string) =>
       `The ENTRY/RETURNS description lists in the ENTRY to be assigned to ${targetvariable} do not match those of the target variable.`,
     fullCode: "IBM1442IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * When initializing an ENTRY variable or constant, the ENTRY and RETURNS description
@@ -8196,7 +8195,7 @@ export const Error = {
     message: (targetvariable: string) =>
       `An ENTRY/RETURNS description list in an ENTRY in the INITIAL list for ${targetvariable} do not match those of the target variable.`,
     fullCode: "IBM1443IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * When a function returns an ENTRY variable or constant, the ENTRY and RETURNS description
@@ -8215,7 +8214,7 @@ export const Error = {
     message:
       "The ENTRY/RETURNS description lists in the RETURN statement do not match those in the corresponding RETURNS attribute",
     fullCode: "IBM1444IE",
-  } as SimplePLICode,
+  },
 
   /**
    * This message also occurs if the linkages do not match.
@@ -8232,7 +8231,7 @@ export const Error = {
     message: (argumentnumber: string, entryname: string) =>
       `The ENTRY/RETURNS description lists for argument number ${argumentnumber} in ENTRY reference ${entryname} do not match those in the corresponding parameter.`,
     fullCode: "IBM1445IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Otherwise the STRINGRANGE condition would be raised.
@@ -8244,7 +8243,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Third argument in ${BUILTINname} reference is too big. It will be trimmed to fit.`,
     fullCode: "IBM1446IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * In PL\/I statements, hex literals should be specified with an X suffix.
@@ -8255,7 +8254,7 @@ export const Error = {
     severity: Severity.E,
     message: "Literals with an X prefix are valid only in EXEC SQL statements.",
     fullCode: "IBM1447IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In the SAA level-1 language definition, extents in BASED variables must all be constant
@@ -8271,7 +8270,7 @@ export const Error = {
     message:
       "Use of nonconstant extents in BASED variables without REFER accepted although invalid under LANGLVL(SAA).",
     fullCode: "IBM1448IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Type functions are not part of the SAA level-1 language.
@@ -8283,7 +8282,7 @@ export const Error = {
     message: (typefunction: string) =>
       `Use of ${typefunction} accepted although invalid under LANGLVL(SAA).`,
     fullCode: "IBM1449IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated keyword (UNSIGNED in the example below) is not defined in the SAA level-1
@@ -8299,7 +8298,7 @@ export const Error = {
     message: (keyword: string) =>
       `${keyword} keyword accepted although invalid under LANGLVL(SAA).`,
     fullCode: "IBM1450IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The definition of the SAA level-1 language does not include S, D, and Q floating-point
@@ -8312,7 +8311,7 @@ export const Error = {
     message:
       "Use of S, D and Q constants accepted although invalid under LANGLVL(SAA).",
     fullCode: "IBM1451IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The definition of the SAA level-1 language does not permit using underscores in numeric
@@ -8325,7 +8324,7 @@ export const Error = {
     message:
       "Use of underscores in constants accepted although invalid under LANGLVL(SAA).",
     fullCode: "IBM1452IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The definition of the SAA level-1 language does not permit using asterisks for structure
@@ -8338,7 +8337,7 @@ export const Error = {
     message:
       "Use of asterisks for names in declares accepted although invalid under LANGLVL(SAA).",
     fullCode: "IBM1453IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The definition of the SAA level-1 language does not include XN and XU constants.
@@ -8350,7 +8349,7 @@ export const Error = {
     message:
       "Use of XN and XU constants accepted although invalid under LANGLVL(SAA).",
     fullCode: "IBM1454IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under LANGLVL(SAA), the DATETIME built-in function cannot have any arguments.
@@ -8365,7 +8364,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Use of arguments with ${BUILTINname} built-in function accepted although invalid under LANGLVL(SAA).`,
     fullCode: "IBM1455IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under LANGLVL(SAA), the VERIFY and INDEX built-in functions are supposed to have
@@ -8381,7 +8380,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Use of 3 arguments with ${BUILTINname} built-in function accepted although invalid under LANGLVL(SAA).`,
     fullCode: "IBM1456IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under LANGLVL(SAA), the DIM, LBOUND and HBOUND built-in functions are supposed to
@@ -8397,7 +8396,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Use of 1 argument with ${BUILTINname} built-in function accepted although invalid under LANGLVL(SAA).`,
     fullCode: "IBM1457IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOGOTO(STRICT)), there should be no GOTO statements in your source program
@@ -8409,7 +8408,7 @@ export const Error = {
     severity: Severity.E,
     message: "GOTO is not allowed under RULES(NOGOTO).",
     fullCode: "IBM1458IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The AUTOMATIC variables in a block may be used in the declare statements and the
@@ -8427,7 +8426,7 @@ export const Error = {
     message:
       "Uninitialized AUTOMATIC variables in a block should not be used in the prologue of that block.",
     fullCode: "IBM1459IE",
-  } as SimplePLICode,
+  },
 
   /**
    * RULES(IBM) allows scaled FIXED BIN, but RULES(ANS) supports it only for FIXED DECIMAL.
@@ -8444,7 +8443,7 @@ export const Error = {
     message:
       "Under RULES(ANS), nonzero scale factors are not permitted in declarations of FIXED BIN. Declared scale factor will be ignored.",
     fullCode: "IBM1460IE",
-  } as SimplePLICode,
+  },
 
   /**
    * You must recode such statements to avoid this restriction. The compiler will ignore
@@ -8462,7 +8461,7 @@ export const Error = {
     message: (BUILTINname: string, precision: string, scalefactor: string) =>
       `Tne result of the ${BUILTINname} built-in would have the attributes FIXED BIN( ${precision} , ${scalefactor} ), but under RULES(ANS), FIXED BIN scale factors must be zero. The scale factor will be set to zero.`,
     fullCode: "IBM1461IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a comparison, if one comparand has the DATE attribute, the other should also.
@@ -8476,7 +8475,7 @@ export const Error = {
     severity: Severity.E,
     message: "Expression in comparison interpreted with DATE attribute.",
     fullCode: "IBM1462IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Comparisons are the only infix operations where operands with the DATE attribute
@@ -8495,7 +8494,7 @@ export const Error = {
     message:
       "Operand with DATE attribute is invalid except in compare or 55 assign. DATE attribute will be ignored.",
     fullCode: "IBM1463IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In a comparison, if one comparand has the DATE attribute, the other should also.
@@ -8508,7 +8507,7 @@ export const Error = {
     severity: Severity.E,
     message: "DATE attribute ignored in comparison with non-date expression.",
     fullCode: "IBM1464IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If the target in an assignment has the DATE attribute, the source should also. If
@@ -8525,7 +8524,7 @@ export const Error = {
     message: (variable: string) =>
       `Source in assignment has the DATE attribute, but target ${variable} does not. The DATE attribute will be ignored.`,
     fullCode: "IBM1465IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the source in an assignment has the DATE attribute, the target should also.
@@ -8537,7 +8536,7 @@ export const Error = {
     message:
       "Source in assignment has the DATE attribute, but target does not. The DATE attribute will be ignored.",
     fullCode: "IBM1466IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If an INITIAL expression has the DATE attribute, the target should also.
@@ -8549,7 +8548,7 @@ export const Error = {
     message: (variablename: string) =>
       `Source in INITIAL clause for ${variablename} has the DATE attribute but the target does not. The DATE attribute will be ignored.`,
     fullCode: "IBM1467IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument and parameter should match, unlike in the example below
@@ -8565,7 +8564,7 @@ export const Error = {
     message: (argumentnumber: string, entryname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${entryname} has the DATE attribute but the corresponding parameter does not. The DATE attribute will be ignored.`,
     fullCode: "IBM1468IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The attributes of the RETURNed expression and in the RETURNS option should match,
@@ -8583,7 +8582,7 @@ export const Error = {
     message:
       "Source in RETURN statement has the DATE attribute, but the corresponding RETURNS option does not. The DATE attribute will be ignored.",
     fullCode: "IBM1469IE",
-  } as SimplePLICode,
+  },
 
   /**
    * No other options are valid for the INCLUDE preprocessor.
@@ -8594,7 +8593,7 @@ export const Error = {
     severity: Severity.E,
     message: "An ID option must be specified for the INCLUDE preprocessor.",
     fullCode: "IBM1470IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The INCLUDE preprocessor ID option must have one suboption consisting of a string
@@ -8606,7 +8605,7 @@ export const Error = {
     severity: Severity.E,
     message: "The ID option specified for the INCLUDE preprocessor is invalid.",
     fullCode: "IBM1471IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The suboption specified for the INCLUDE preprocessor ID option must be closed with
@@ -8619,7 +8618,7 @@ export const Error = {
     message:
       "A closing right parenthesis is missing from the ID option specified for the INCLUDE preprocessor.",
     fullCode: "IBM1472IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A statement that starts with the preprocessor INCLUDE directive specified in that
@@ -8632,7 +8631,7 @@ export const Error = {
     severity: Severity.E,
     message: "The syntax of the preprocessor INCLUDE directive is incorrect.",
     fullCode: "IBM1473IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If the target in an assignment has the DATE attribute, the source should also. If
@@ -8649,7 +8648,7 @@ export const Error = {
     message: (variable: string) =>
       `Source in assignment does not have the DATE attribute, but target ${variable} does. The DATE attribute will be ignored.`,
     fullCode: "IBM1474IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the target in an assignment has the DATE attribute, the source should also.
@@ -8661,7 +8660,7 @@ export const Error = {
     message:
       "Target in assignment has the DATE attribute, but source does not. The DATE attribute will be ignored.",
     fullCode: "IBM1475IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If a variable has the DATE attribute, then any INITIAL value for it should also.
@@ -8673,7 +8672,7 @@ export const Error = {
     message: (variablename: string) =>
       `Source in INITIAL clause for ${variablename} does not have the DATE attribute but the target does. The DATE attribute will be ignored.`,
     fullCode: "IBM1476IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument and parameter should match, unlike in the example below
@@ -8689,7 +8688,7 @@ export const Error = {
     message: (argumentnumber: string, entryname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${entryname} does not have the DATE attribute but the corresponding parameter does. The DATE attribute will be ignored.`,
     fullCode: "IBM1477IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The attributes of the RETURNed expression and in the RETURNS option should match,
@@ -8707,7 +8706,7 @@ export const Error = {
     message:
       "Source in RETURN statement does not have the DATE attribute, but the corresponding RETURNS option does. The DATE attribute will be ignored.",
     fullCode: "IBM1478IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOMULTIEEXIT), there should be at most one RETURN statement in each PROCEDURE
@@ -8720,7 +8719,7 @@ export const Error = {
     message:
       "Multiple RETURN statements are not allowed under RULES(NOMULTIEXIT).",
     fullCode: "IBM1479IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOMULTICLOSE), there should be no multiple closure of groups in your
@@ -8733,7 +8732,7 @@ export const Error = {
     message:
       "Multiple closure of groups is not allowed under RULES(NOMULTICLOSE).",
     fullCode: "IBM1480IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOBYNAME), there should be no BYNAME assignment statements in your source
@@ -8746,7 +8745,7 @@ export const Error = {
     message:
       "BYNAME assignment statements are not allowed under RULES(NOBYNAME).",
     fullCode: "IBM1481IE",
-  } as SimplePLICode,
+  },
 
   /**
    * It will be given the default attributes, but this may be because of an error in the
@@ -8763,7 +8762,7 @@ export const Error = {
     message: (variablename: string) =>
       `RULES(NOLAXDCL) violation: the variable ${variablename} is declared without any data attributes.`,
     fullCode: "IBM1482IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * It will be given the default attributes, but this may be because of an error in the
@@ -8784,7 +8783,7 @@ export const Error = {
     message: (variablename: string) =>
       `RULES(NOLAXDCL) violation: the structure member ${variablename} is declared without any data attributes. A level number may be incorrect.`,
     fullCode: "IBM1483IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * It will be given the default attributes, but this may be because of an error in the
@@ -8805,7 +8804,7 @@ export const Error = {
     message:
       "RULES(NOLAXDCL) violation: an unnamed structure member is declared without any data attributes. A level number may be incorrect.",
     fullCode: "IBM1484IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The compiler assumes that an END statement to close the open DO group is missing,
@@ -8819,7 +8818,7 @@ export const Error = {
     message:
       "A WHEN or OTHERWISE clause has been found inside of an open DO group contained in an open SELECT group. An END statement may be missing and will be inserted in an attempt to fix the problem.",
     fullCode: "IBM1485IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Every ( should have a matching ).
@@ -8830,7 +8829,7 @@ export const Error = {
     severity: Severity.E,
     message: "Statement contains a mismatching number of ( and ).",
     fullCode: "IBM1486IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Every (: should have a matching :).
@@ -8841,7 +8840,7 @@ export const Error = {
     severity: Severity.E,
     message: "Statement contains a mismatching number of (: and :).",
     fullCode: "IBM1487IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Do not specify an alternate DD for SYSIN in a *PROCESS statement.
@@ -8853,7 +8852,7 @@ export const Error = {
     message:
       "Specification of an alternate DD for SYSIN after the source has been opened will be ignored.",
     fullCode: "IBM1488IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Look in STDOUT to see the message issued by the compiler backend.
@@ -8864,7 +8863,7 @@ export const Error = {
     severity: Severity.E,
     message: "Compiler backend issued error messages to STDOUT.",
     fullCode: "IBM2400IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated character is missing and has been inserted by the parser in order to
@@ -8881,7 +8880,7 @@ export const Error = {
     message: (character: string, character2: string) =>
       `RULES(NOLAXPUNC) violation: missing ${character} assumed before ${character2} . DECLARE and other nonexecutable statements should not have labels.`,
     fullCode: "IBM2401IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The amount of storage needed for a BASED variable must be no more than provided by
@@ -8903,7 +8902,7 @@ export const Error = {
     ) =>
       `${variablename} is declared as BASED on the ADDR of ${variablename2} , but ${variablename3} requires more storage than ${variablename4} .`,
     fullCode: "IBM2402IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * When the NOPROCESS option is in effect, the source should contain no PROCESS statements
@@ -8915,7 +8914,7 @@ export const Error = {
     severity: Severity.E,
     message: "PROCESS statements are not permitted under the NOPROCESS option.",
     fullCode: "IBM2403IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The amount of storage needed for a BASED variable must be no more than provided by
@@ -8938,7 +8937,7 @@ export const Error = {
     ) =>
       `${variablename} is declared as BASED on the ADDR of ${variablename2} , but ${variablename3} requires more storage than remains in the enclosing level 1 structure ${variablename4} after the location of ${variablename5} .`,
     fullCode: "IBM2404IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOEVENDEC), there should be no FIXED DECIMAL data declared with an even
@@ -8953,7 +8952,7 @@ export const Error = {
     severity: Severity.E,
     message: "Even decimal precisions are not allowed under RULES(NOEVENDEC).",
     fullCode: "IBM2405IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In DEFAULT statements, numeric precisions should be specified only inside VALUE clauses
@@ -8968,7 +8967,7 @@ export const Error = {
     severity: Severity.E,
     message: "Precision outside VALUE clause will be ignored.",
     fullCode: "IBM2406IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In DEFAULT statements, lengths of strings should be specified only inside VALUE clauses
@@ -8983,7 +8982,7 @@ export const Error = {
     severity: Severity.E,
     message: "Length outside VALUE clause will be ignored.",
     fullCode: "IBM2407IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In DEFAULT statements, sizes of AREAs should be specified only inside VALUE clauses
@@ -8998,7 +8997,7 @@ export const Error = {
     severity: Severity.E,
     message: "AREA size outside VALUE clause will be ignored.",
     fullCode: "IBM2408IE",
-  } as SimplePLICode,
+  },
 
   /**
    * All RETURN statements inside functions must specify a value to be returned.
@@ -9014,7 +9013,7 @@ export const Error = {
     message:
       "RETURN statement without an expression is invalid inside a nested PROCEDURE that specified the RETURNS attribute.",
     fullCode: "IBM2409IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Functions must contain at least one RETURN statement.
@@ -9026,7 +9025,7 @@ export const Error = {
     message: (functionname: string) =>
       `Function ${functionname} contains no valid RETURN statement.`,
     fullCode: "IBM2410IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The STRINGOFGRAPHIC( CHARACTER ) option will be ignored if the argument contains
@@ -9040,7 +9039,7 @@ export const Error = {
     message:
       "STRINGOFGRAPHIC( CHARACTER ) option is ignored because argument to STRING built-in 59 function is possibly not contiguous.",
     fullCode: "IBM2411IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If a procedure contains a RETURN statement, it should have the RETURNS attribute
@@ -9058,7 +9057,7 @@ export const Error = {
     message:
       "PROCEDURE has no RETURNS attribute, but contains a RETURN statement. A RETURNS attribute will be assumed.",
     fullCode: "IBM2412IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Attributes must be consistent.
@@ -9073,7 +9072,7 @@ export const Error = {
     message: (attribute: string) =>
       `The attribute ${attribute} should be specified only on parameters and descriptors.`,
     fullCode: "IBM2413IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The specified options conflict and cannot be used together. The compiler will produce
@@ -9089,7 +9088,7 @@ export const Error = {
     message: (option: string, option2: string, option3: string) =>
       `The ${option} option conflicts with the ${option2} option. The ${option3} option will be used instead.`,
     fullCode: "IBM2414IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated APAR will fix a compiler problem with this statement.
@@ -9101,7 +9100,7 @@ export const Error = {
     message: (number: string) =>
       `Without APAR ${number} , compiler would generate incorrect code for this statement.`,
     fullCode: "IBM2415IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * When the LINEDIR option is in effect, only the NOSEPARATE suboption of the TEST option
@@ -9114,7 +9113,7 @@ export const Error = {
     message:
       "The SEPARATE suboption of TEST is not supported when the LINEDIR option is in effect.",
     fullCode: "IBM2416IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In FETCHABLE code, all CONTROLLED variables should be parameters.
@@ -9126,7 +9125,7 @@ export const Error = {
     message:
       "In FETCHABLE code compiled with NORENT NOWRITABLE(PRV), it is invalid to ALLOCATE or FREE a CONTROLLED variable unless it is a PARAMETER.",
     fullCode: "IBM2417IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The compiler will issue this message for any level-1 variable that is not referenced
@@ -9139,7 +9138,7 @@ export const Error = {
     severity: Severity.E,
     message: (variable: string) => `Variable ${variable} is unreferenced.`,
     fullCode: "IBM2418IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The RTCHECK option will be ignored unless the ARCH option is 8 or greater since the
@@ -9152,7 +9151,7 @@ export const Error = {
     message: (option: string, level: string) =>
       `${option} is invalid and ignored unless the ARCH option is ${level} or greater.`,
     fullCode: "IBM2419IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The FLOAT(DFP) option will be ignored unless the ARCH option is 7 or greater since
@@ -9165,7 +9164,7 @@ export const Error = {
     message:
       "DFP is invalid and ignored unless the ARCH option is 7 or greater.",
     fullCode: "IBM2420IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In an ENDFILE block for a file, it is invalid to close that file in the ENDFILE block
@@ -9177,7 +9176,7 @@ export const Error = {
     severity: Severity.E,
     message: "A file should not be closed in its ENDFILE block.",
     fullCode: "IBM2421IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under the FLOAT(DFP) option, all FLOAT DECIMAL will be treated as DFP and may not
@@ -9190,7 +9189,7 @@ export const Error = {
     message:
       "Under the DFP option, the HEXADEC attribute is not supported for FLOAT DEC.",
     fullCode: "IBM2422IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under the FLOAT(DFP) option, all FLOAT DECIMAL will be treated as DFP and may not
@@ -9203,7 +9202,7 @@ export const Error = {
     message:
       "Under the DFP option, the IEEE attribute is not supported for FLOAT DEC.",
     fullCode: "IBM2423IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Scale factors are valid only in declares of FIXED BIN or FiXED DEC. The first declaration
@@ -9220,7 +9219,7 @@ export const Error = {
     severity: Severity.E,
     message: "Scale factors are not allowed in FLOAT declarations.",
     fullCode: "IBM2424IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOELSEIF), the compiler will issue this message for statement where an
@@ -9232,7 +9231,7 @@ export const Error = {
     severity: Severity.E,
     message: "Statement with ELSE IF should be rewritten using SELECT.",
     fullCode: "IBM2425IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The nesting of DO statements has exceeded the value specified in the DO suboption
@@ -9244,7 +9243,7 @@ export const Error = {
     severity: Severity.E,
     message: "Maximum nesting of DO statements has been exceeded.",
     fullCode: "IBM2426IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The nesting of IF statements has exceeded the value specified in the IF suboption
@@ -9256,7 +9255,7 @@ export const Error = {
     severity: Severity.E,
     message: "Maximum nesting of IF statements has been exceeded.",
     fullCode: "IBM2427IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The nesting of PROC and BEGIN statements has exceeded the value specified in the
@@ -9268,7 +9267,7 @@ export const Error = {
     severity: Severity.E,
     message: "Maximum nesting of PROC and BEGIN statements has been exceeded.",
     fullCode: "IBM2428IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The use of the CMPAT(V3) option with LIMITS(FIXEDBIN(31,31)) is not supported. Since
@@ -9284,7 +9283,7 @@ export const Error = {
     message:
       "CMPAT(V3) requires that 8-byte integers be allowed. The second value in the FIXEDBIN suboption of the LIMITS option will be set to 63.",
     fullCode: "IBM2429IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If the file has F format and is not a PRINT file, then the LINESIZE must be no greater
@@ -9300,7 +9299,7 @@ export const Error = {
     message: (filename: string) =>
       `The LINESIZE value specified in the OPEN of file ${filename} is not compatible with the RECSIZE specified in its declare.`,
     fullCode: "IBM2430IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The specified option is not permitted with the GOFF option, and the GOFF option will
@@ -9314,7 +9313,7 @@ export const Error = {
     message: (option: string) =>
       `The ${option} option conflicts with the GOFF option. NOGOFF will be used instead.`,
     fullCode: "IBM2431IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The INITIAL attribute, for example, is invalid with parameters (since their storage
@@ -9330,7 +9329,7 @@ export const Error = {
     message: (character: string) =>
       `The attribute ${character} is invalid with parameters and is ignored.`,
     fullCode: "IBM2432IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The INITIAL attribute, for example, is invalid with DEFINED variables (since their
@@ -9346,7 +9345,7 @@ export const Error = {
     message: (attribute: string) =>
       `The attribute ${attribute} is invalid with DEFINED and is ignored.`,
     fullCode: "IBM2433IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOLAXENTRY), all ENTRY declares must be prototyped. If the ENTRY should
@@ -9360,7 +9359,7 @@ export const Error = {
     message: (name: string) =>
       `RULES(NOLAXENTRY) violation: ${name} does not specify a parameter list.`,
     fullCode: "IBM2434IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOLAXSCALE), scale factors must be nonnegative, and the compiler flags
@@ -9375,7 +9374,7 @@ export const Error = {
     severity: Severity.E,
     message: "RULES(NOLAXSCALE) violation: scale factor is less than 0.",
     fullCode: "IBM2435IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOLAXSCALE), scale factors must be no larger than the precision,
@@ -9390,7 +9389,7 @@ export const Error = {
     message:
       "RULES(NOLAXSCALE) violation: scale factor is larger than the precision.",
     fullCode: "IBM2436IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If the SQL preprocessor is invoked more than once without INCONLY as its suboption,
@@ -9404,7 +9403,7 @@ export const Error = {
     severity: Severity.E,
     message: "SQL preprocessor invoked more than once without INCONLY.",
     fullCode: "IBM2437IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOSTOP), there should be no STOP and no EXIT statements in your source
@@ -9416,7 +9415,7 @@ export const Error = {
     severity: Severity.E,
     message: "STOP and EXIT statements are not allowed.",
     fullCode: "IBM2438IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOPROCENDONLY), the END statement for a PROCEDURE must not consist of
@@ -9430,7 +9429,7 @@ export const Error = {
     message:
       "RULES(NOPROCENDONLY) violation: END statement for a PROCEDURE must include the name of the PROCEDURE.",
     fullCode: "IBM2439IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under the option RULES(NOLAXQUAL), all structure elements should be qualified with
@@ -9443,7 +9442,7 @@ export const Error = {
     message: (identifier: string) =>
       `RULES(NOLAXQUAL) violation: structure element ${identifier} is not qualified with the name of its containing level 1 structure.`,
     fullCode: "IBM2440IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOGOTO(LOOSE)) and RULES(NOGOTO(LOOSEFORWARD)), there should be no GOTO
@@ -9456,7 +9455,7 @@ export const Error = {
     severity: Severity.E,
     message: "RULES(NOGOTO) violation: GOTO exits the current block.",
     fullCode: "IBM2441IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOPADDING), structures should contain no padding.
@@ -9468,7 +9467,7 @@ export const Error = {
     message: (identifier: string) =>
       `RULES(NOPADDING) violation: structure ${identifier} contains padding.`,
     fullCode: "IBM2442IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOGLOBALDO), in a DO loop of the form DO x = .., x must be declared in
@@ -9481,7 +9480,7 @@ export const Error = {
     message:
       "RULES(NOGLOBALDO) violation: control variable in DO statement belongs to a parent block.",
     fullCode: "IBM2443IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The named built-in function was specified in the BUILTIN suboption of the DEPRECATE
@@ -9494,7 +9493,7 @@ export const Error = {
     message: (builtin: string) =>
       `The built-in function ${builtin} has been deprecated.`,
     fullCode: "IBM2444IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named INCLUDE file was specified in the INCLUDE suboption of the DEPRECATE option,
@@ -9507,7 +9506,7 @@ export const Error = {
     message: (filename: string) =>
       `The INCLUDE file ${filename} has been deprecated.`,
     fullCode: "IBM2445IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named ENTRY was specified in the ENTRY suboption of the DEPRECATE option, and
@@ -9520,7 +9519,7 @@ export const Error = {
     message: (variable: string) =>
       `The ENTRY named ${variable} has been deprecated.`,
     fullCode: "IBM2446IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named VARIABLE was specified in the VARIABLE suboption of the DEPRECATE option,
@@ -9533,7 +9532,7 @@ export const Error = {
     message: (variable: string) =>
       `The VARIABLE named ${variable} has been deprecated.`,
     fullCode: "IBM2447IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the CICS preprocessor were invoked more than once, then the second invocation
@@ -9547,7 +9546,7 @@ export const Error = {
     severity: Severity.E,
     message: "CICS preprocessor invoked more than once.",
     fullCode: "IBM2448IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOSELFASSIGN), the source and target in an assignment must be different
@@ -9560,7 +9559,7 @@ export const Error = {
     message:
       "RULES(NOSELFASSIGN) violation: source and target in assignment are identical.",
     fullCode: "IBM2449IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The argument to the named built-in function is too short. For example, the argument
@@ -9575,7 +9574,7 @@ export const Error = {
     message: (BUILTINname: string, length: string) =>
       `First argument to ${BUILTINname} built-in function should have length greater than or equal to ${length} .`,
     fullCode: "IBM2450IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOLAXIF), if the target in an assignment is not BIT(1), the assignment
@@ -9595,7 +9594,7 @@ export const Error = {
     message:
       "RULES(NOLAXIF) violation: source in the assignment is a Boolean, but the target is not BIT(1).",
     fullCode: "IBM2451IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOLAXSCALE), scale factors must be nonnegative. The compiler flags the
@@ -9612,7 +9611,7 @@ export const Error = {
     severity: Severity.E,
     message: "RULES(NOLAXSCALE) violation: scale factor is less than 0.",
     fullCode: "IBM2452IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOLAXNESTED), all executable code in a procedure must come in one group
@@ -9626,7 +9625,7 @@ export const Error = {
     message:
       "RULES(NOLAXNESTED) violation: code should come in one group of statements with no intervening procedures or BEGIN blocks.",
     fullCode: "IBM2453IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The named statement was specified in the STMT suboption of the DEPRECATE option,
@@ -9639,7 +9638,7 @@ export const Error = {
     message: (builtin: string) =>
       `The ${builtin} statement has been deprecated.`,
     fullCode: "IBM2454IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named keyword does not follow the case rules specified in the KEYWORD suboption
@@ -9652,7 +9651,7 @@ export const Error = {
     message: (builtin: string) =>
       `The ${builtin} keyword does not conform to the CASERULES option.`,
     fullCode: "IBM2455IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NORECURSIVE), the RECURSIVE attribute should not be used and procedures
@@ -9665,7 +9664,7 @@ export const Error = {
     message:
       "RULES(NORECURSIVE) violation: RECURSIVE PROCEDUREs are not allowed under RULES(NORECURSIVE).",
     fullCode: "IBM2456IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If you want to use DFT(RECURSIVE), then RULES(RECURSIVE) should also be used. If
@@ -9678,7 +9677,7 @@ export const Error = {
     message:
       "RULES(NORECURSIVE) conflicts with DFT(RECURSIVE). The compiler will apply RULES(RECURSIVE) instead.",
     fullCode: "IBM2457IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOCONTROLLED), the CONTROLLED attribute must not be used.
@@ -9690,7 +9689,7 @@ export const Error = {
     message:
       "The CONTROLLED attribute is not allowed under RULES(NOCONTROLLED).",
     fullCode: "IBM2458IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under the ENCODING(UTF8) option, the characters specified in the OR, NOT, QUOTE,
@@ -9703,7 +9702,7 @@ export const Error = {
     message: (option: string) =>
       `The characters specified in the ${option} option must all have hexadecimal values less than 80.`,
     fullCode: "IBM2459IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The specified options conflict and cannot be used together. The ENCODING(UTF8) option
@@ -9716,7 +9715,7 @@ export const Error = {
     message: (option: string) =>
       `The ${option} option conflicts with the ENCODING(UTF8) option. ENCODING(ASCII) will be assumed.`,
     fullCode: "IBM2460IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under the ENCODING(UTF8) option, the MARGINI option must be a one-character UTF-8
@@ -9729,7 +9728,7 @@ export const Error = {
     message:
       "The MARGINI option must specify a valid UTF-8 string consisting of one UTF-8 character.",
     fullCode: "IBM2461IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Attributes must be consistent.
@@ -9744,7 +9743,7 @@ export const Error = {
     message: (character: string, character2: string) =>
       `The attribute ${character} conflicts with the attribute ${character2} and is ignored.`,
     fullCode: "IBM2462IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under 64-bit, only the OPTLINK linkage is supported for PL\/I procedures
@@ -9756,7 +9755,7 @@ export const Error = {
     message:
       "LINKAGE(SYSTEM) is not supported for PL/I PROCEDUREs, and LINKAGE(OPTLINK) will be assumed instead.",
     fullCode: "IBM2463IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOLAXSTMT), there should be only one statement per line.
@@ -9768,7 +9767,7 @@ export const Error = {
     message:
       "RULES(NOLAXSTMT) violation: line contains more than one statement.",
     fullCode: "IBM2464IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under DEFAULT(NULLSTRPTR(STRICT)), such assignments are invalid.
@@ -9779,7 +9778,7 @@ export const Error = {
     severity: Severity.E,
     message: "Assignment of a null string to a pointer is invalid.",
     fullCode: "IBM2465IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under DEFAULT(NULLSTRPTR(STRICT)), such comparisons are invalid.
@@ -9790,7 +9789,7 @@ export const Error = {
     severity: Severity.E,
     message: "Comparison of a null string to a pointer is invalid.",
     fullCode: "IBM2466IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOYY), the use of date patterns with a 2-digit year is invalid.
@@ -9802,7 +9801,7 @@ export const Error = {
     message:
       "RULES(NOYY) conflicts with use of a date pattern with a 2-digit year.",
     fullCode: "IBM2467IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOYY), the use of date patterns with a ZY is invalid.
@@ -9813,7 +9812,7 @@ export const Error = {
     severity: Severity.E,
     message: "RULES(NOYY) conflicts with use of a date pattern with a ZY.",
     fullCode: "IBM2468IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOYY), the use of the DATE attribute without a pattern is invalid since
@@ -9826,7 +9825,7 @@ export const Error = {
     message:
       "RULES(NOYY) conflicts with use of the DATE attribute without a pattern.",
     fullCode: "IBM2469IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOYY), the use of any of the Y4 date built-in functions is invalid.
@@ -9838,7 +9837,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `RULES(NOYY) conflicts with use of the ${BUILTINname} built-in function.`,
     fullCode: "IBM2470IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOYY), the use of any date built-in function with a window argument is
@@ -9851,7 +9850,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `RULES(NOYY) conflicts with use of the ${BUILTINname} built-in function with a window argument.`,
     fullCode: "IBM2471IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOYY), the use of the DATE built-in functions is invalid since it will
@@ -9863,7 +9862,7 @@ export const Error = {
     severity: Severity.E,
     message: "RULES(NOYY) conflicts with use of the DATE built-in function.",
     fullCode: "IBM2472IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOLAXINTERFACE), if there is a PACKAGE statement, then every external
@@ -9876,7 +9875,7 @@ export const Error = {
     message: (procname: string) =>
       `RULES(NOLAXINTERFACE) violation: ${procname} has not been explicitly declared.`,
     fullCode: "IBM2473IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOGOTO(LOOSEFORWARD)), there should be no GOTO statements in your source
@@ -9890,7 +9889,7 @@ export const Error = {
     message:
       "RULES(NOGOTO) violation: GOTO jumps to a previous line in the current block.",
     fullCode: "IBM2474IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOMULTISEMI), there should be only one semicolon on a line.
@@ -9901,7 +9900,7 @@ export const Error = {
     severity: Severity.E,
     message: "RULES(NOMULTISEMI) violation: line contains too many semicolons.",
     fullCode: "IBM2475IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated element of the options list is invalid for ON-unit BEGIN blocks (although
@@ -9917,7 +9916,7 @@ export const Error = {
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for ON-unit BEGIN blocks. ${optionname} is ignored.`,
     fullCode: "IBM2476IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOCOMPLEX), the COMPLEX attributes, the COMPLEX built-in function, and
@@ -9930,7 +9929,7 @@ export const Error = {
     message:
       "Under RULES(NOCOMPLEX), the COMPLEX attribute, the COMPLEX built-in function, and constants ending with the I suffix are not allowed.",
     fullCode: "IBM2478IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOLAXPACKAGE), every compilation unti must contain a PACKAGE statement
@@ -9943,7 +9942,7 @@ export const Error = {
     message:
       "RULES(NOLAXPACKAGE) violation: compilation unit does not contain a PACKAGE statement.",
     fullCode: "IBM2479IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOLAXEXPORTS), every PACKAGE that contains procedures must have an EXPORTS
@@ -9956,7 +9955,7 @@ export const Error = {
     message:
       "RULES(NOLAXEXPORTS) violation: package contains PROCEDUREs but no EXPORTS clause naming specifically which PROCEDUREs are exported.",
     fullCode: "IBM2480IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOLAXSCALE(STRICT)), scale factors for FIXED BIN must be zero. The compiler
@@ -9973,7 +9972,7 @@ export const Error = {
     severity: Severity.E,
     message: "RULES(NOLAXSCALE) violation: scale factor is greater than 0.",
     fullCode: "IBM2481IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If the RULES(NOLAXPARMS) option is in effect, The compiler will issue this message
@@ -9987,7 +9986,7 @@ export const Error = {
     message: (variable: string) =>
       `RULES(NOLAXPARMS) violation: Parameter ${variable} is declared without INONLY, OUTONLY, or INOUT.`,
     fullCode: "IBM2482IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOPADDING(STRICT)), structures should contain no hang.
@@ -9999,7 +9998,7 @@ export const Error = {
     message: (identifier: string, count: string, count2: string) =>
       `RULES(NOPADDING) violation: the structure ${identifier} is ${count} -byte aligned, but does not have a multiple of ${count2} bytes before its first element with that alignment.`,
     fullCode: "IBM2483IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOPADDING(STRICT)), structures should contain no hang.
@@ -10011,7 +10010,7 @@ export const Error = {
     message: (identifier: string) =>
       `RULES(NOPADDING) violation: the structure ${identifier} does not have a multiple of 8 bits before its first element with byte (or greater) alignment.`,
     fullCode: "IBM2484IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOPADDING(STRICT)), structures should contain no padding.
@@ -10023,7 +10022,7 @@ export const Error = {
     message: (identifier: string) =>
       `RULES(NOPADDING) violation: the size of the structure ${identifier} is not a multiple of its alignment.`,
     fullCode: "IBM2485IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOPADDING(STRICT)), structures should contain no hang.
@@ -10035,7 +10034,7 @@ export const Error = {
     message: (identifier: string) =>
       `RULES(NOPADDING) violation: the structure ${identifier} does not have a multiple of 8 bits after its last element with byte (or greater) alignment.`,
     fullCode: "IBM2486IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOPADDING(STRICT)), structures should contain no hang.
@@ -10047,7 +10046,7 @@ export const Error = {
     message: (identifier: string) =>
       `RULES(NOPADDING) violation: the structure ${identifier} does not contain a multiple of 8 bits.`,
     fullCode: "IBM2487IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(IBM), when an arithmetic operation has an operand that is FIXED BIN and
@@ -10069,7 +10068,7 @@ export const Error = {
     ) =>
       `RULES(NOLAXSCALE) violation: FIXED DEC( ${sourceprecision} , ${sourcescale} ) operand 66 will be converted to FIXED BIN( ${targetprecision} , ${targetscale} ). This introduces a non-zero scale factor into an integer operation and will produce a result with the attributes FIXED BIN( ${resultprecision} , ${resultscale} ).`,
     fullCode: "IBM2489IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * When assigning to a target with the VALUERANGE attribute, the source must have a
@@ -10082,7 +10081,7 @@ export const Error = {
     message:
       "Source in assignment does not fit in the the VALUERANGE of the target.",
     fullCode: "IBM2490IE",
-  } as SimplePLICode,
+  },
 
   /**
    * When assigning to a target with the VALUELIST attribute, the source must have a value
@@ -10095,7 +10094,7 @@ export const Error = {
     message:
       "Source in assignment does not occur in the the VALUELIST of the target.",
     fullCode: "IBM2491IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If the RULES(NOGLOBAL) option is in effect, the compiler will issue this message
@@ -10109,7 +10108,7 @@ export const Error = {
     message: (variable: string) =>
       `RULES(NOGLOBAL) violation: Variable ${variable} is used inside a nested PROCEDURE.`,
     fullCode: "IBM2492IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the RULES(NOLAXOPTIONAL) option is in effect, the compiler will enforce the rule
@@ -10123,7 +10122,7 @@ export const Error = {
     message: (variable: string, BUILTINname: string) =>
       `RULES(NOLAXOPTIONAL) violation: Variable ${variable} is used as an argument to the ${BUILTINname} function, but does not have the OPTIONAL attribute.`,
     fullCode: "IBM2493IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under the option RULES(NOLAXQUAL(FULL)), all structure elements should be qualified
@@ -10136,7 +10135,7 @@ export const Error = {
     message: (identifier: string) =>
       `RULES(NOLAXQUAL) violation: Structure element ${identifier} is not fully qualified.`,
     fullCode: "IBM2494IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Given SUBTO(x,i,j), then j >= (i-1) must be true. Otherwise the STRINGRANGE condition
@@ -10149,7 +10148,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Third argument in ${BUILTINname} reference is too small. It will be replaced by the value of the second argument minus 1.`,
     fullCode: "IBM2495IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * It would be better to replace an IF expression of the form ( a = y1 | a = y2 | ...
@@ -10163,7 +10162,7 @@ export const Error = {
     message: (count: string) =>
       `MAXRUNONIF limit exceeded: IF statement tests an expression that consists of ${count} comparisons of the same reference against a series of constant values. The expression could be replaced by one INLIST reference.`,
     fullCode: "IBM2499IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * It would be better to replace an IF expression of the form ( a = y1 | a = y2 | ...
@@ -10177,7 +10176,7 @@ export const Error = {
     message: (count: string) =>
       `MAXRUNONIF limit exceeded: IF statement tests an expression that consists of ${count} comparisons of the same reference against a series of constant values. The statement could be replaced by a SELECT statement containing one large WHEN statement.`,
     fullCode: "IBM2500IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The only supported ALIGNED values are 1, 2, 4, and 8.  67
@@ -10191,7 +10190,7 @@ export const Error = {
     severity: Severity.E,
     message: "Alignment value is invalid and will be ignored.",
     fullCode: "IBM2501IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If the CMPAT compiler option specifies, for example, V2, then the CMPAT suboption
@@ -10204,7 +10203,7 @@ export const Error = {
     message: (optionvalue: string, suboptionvalue: string) =>
       `The compiler option CMPAT specifies V ${optionvalue} but the CMPAT suboption in the OPTIONS attribute specifies V ${suboptionvalue} . These values should match.`,
     fullCode: "IBM2502IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under RULES(NOLAXENTRY), all ENTRY declares must be prototyped. If the ENTRY should
@@ -10218,7 +10217,7 @@ export const Error = {
     message: (name: string) =>
       `RULES(NOLAXENTRY) violation: ${name} has a parameter with the ENTRY attribute but which does not specify a parameter list.`,
     fullCode: "IBM2503IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * %PROCINC statements must have a file name and a semicolon on the same line as the
@@ -10230,7 +10229,7 @@ export const Error = {
     severity: Severity.E,
     message: "PROCINC syntax is invalid.",
     fullCode: "IBM2504IE",
-  } as SimplePLICode,
+  },
 
   /**
    * %PROCINC files must not contain any blank lines or any code.
@@ -10241,7 +10240,7 @@ export const Error = {
     severity: Severity.E,
     message: "PROCINC files must include only PROCESS and PROCINC statements.",
     fullCode: "IBM2505IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Unless an ENTRY has the LIMITED attribute, it must be passed BYADDR.
@@ -10253,7 +10252,7 @@ export const Error = {
     message:
       "Only LIMITED ENTRY may be passed BYVALUE. All other ENTRY must be passed BYADDR.",
     fullCode: "IBM2506IE",
-  } as SimplePLICode,
+  },
 
   /**
    * You should recode such statements to avoid this restriction. The compiler will not
@@ -10271,7 +10270,7 @@ export const Error = {
     message: (BUILTINname: string, precision: string, scalefactor: string) =>
       `Tne result of the ${BUILTINname} built-in would have the attributes FIXED BIN( ${precision} , ${scalefactor} ), but FIXED BIN scale factors must be between zero and the specified precision. The scale factor will be adjusted to fit.`,
     fullCode: "IBM2507IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * FIXED BIN declares with a negative scale factor or with a scale factor greater than
@@ -10284,7 +10283,7 @@ export const Error = {
     message:
       "In FIXED BIN(p,q) declares q must be between 0 and p (inclusive).",
     fullCode: "IBM2508IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The ROUND and similar built-in functions must not be applied to FIXED BIN (or BIT)
@@ -10297,7 +10296,7 @@ export const Error = {
     message:
       "Support for ROUND of fixed binary expressions is deprecated and will be withdrawn in the next release.",
     fullCode: "IBM2509IE",
-  } as SimplePLICode,
+  },
 
   /**
    * CEIL, FLOOR, and TRUNC of an expression x that has the attributes FIXED BIN is somewhat
@@ -10311,7 +10310,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `In ${BUILTINname} of FIXED BIN(p,q), q should be greater than 0.`,
     fullCode: "IBM2510IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message can occur in a multiply of x by y if the sum of the scale factors of
@@ -10331,7 +10330,7 @@ export const Error = {
     ) =>
       `The operands in a multiplication operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is greater than its precision! That may lead to the loss of significant digits and unexpected results. You may be able to avoid this problem by reducing the the scale factor of 68 one of the operands or by using the MULTIPLY built-in function.`,
     fullCode: "IBM2511IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message can occur in a divide of x by y if the scale factor of y is greater
@@ -10352,7 +10351,7 @@ export const Error = {
     ) =>
       `The operands in a division operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is negative! That may lead to the loss of significant digits and unexpected results. You may be able to avoid this problem by changing the the scale factor of the divisor (for example, if the divisor is the constant 100.0, by changing it to 100) or by using the DIVIDE built-in function.`,
     fullCode: "IBM2512IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used to report DB2 or CICS backend messages with a return code of
@@ -10364,7 +10363,7 @@ export const Error = {
     severity: Severity.E,
     message: (note: string) => `${note}`,
     fullCode: "IBM3500IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used by %NOTE statements with a return code of 8.
@@ -10375,7 +10374,7 @@ export const Error = {
     severity: Severity.E,
     message: (note: string) => `${note}`,
     fullCode: "IBM3501IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * An integer of the form dddK must have no more than 7 digits. The specified value
@@ -10387,7 +10386,7 @@ export const Error = {
     severity: Severity.E,
     message: "An integer with a K suffix must have no more than 7 digits.",
     fullCode: "IBM3502IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The largest accepted value for an integer with a K suffix is 2097152K. The specified
@@ -10400,7 +10399,7 @@ export const Error = {
     message:
       "In an integer with a K suffix the digits must specify a value less than or equal to 2097152.",
     fullCode: "IBM3503IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An integer of the form dddM must have no more than 4 digits. The specified value
@@ -10412,7 +10411,7 @@ export const Error = {
     severity: Severity.E,
     message: "An integer with an M suffix must have no more than 4 digits.",
     fullCode: "IBM3504IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The largest accepted value for an integer with an M suffix is 2048M. The specified
@@ -10425,7 +10424,7 @@ export const Error = {
     message:
       "In an integer with an M suffix the digits must specify a value less than or equal to 2048.",
     fullCode: "IBM3505IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An integer of the form dddG must have no more than 1 digit. The specified value is
@@ -10437,7 +10436,7 @@ export const Error = {
     severity: Severity.E,
     message: "An integer with a G suffix must have only 1 digit.",
     fullCode: "IBM3506IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The largest accepted value for an integer with an G suffix is 2G. The specified value
@@ -10450,7 +10449,7 @@ export const Error = {
     message:
       "In an integer with an G suffix the digits must specify a value less than or equal to 2.",
     fullCode: "IBM3507IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Numeric precisions must be positive.
@@ -10461,7 +10460,7 @@ export const Error = {
     severity: Severity.E,
     message: "Numeric precision of 0 replaced by 1.",
     fullCode: "IBM3508IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Fix the DECLARE statement so that it is syntactically correct.
@@ -10473,7 +10472,7 @@ export const Error = {
     message:
       "DECLARE statement has invalid syntax. No variables in it may be used in EXEC SQL statements.",
     fullCode: "IBM3509IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In certain contexts, for example after an IF-THEN clause, only executable statements
@@ -10488,7 +10487,7 @@ export const Error = {
     message: (keyword: string, keyword2: string) =>
       `${keyword} statement is not allowed where an executable statement is required. A null statement will be inserted before the ${keyword2} statement.`,
     fullCode: "IBM3510IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The COUNTER built-in function should not be invoked more than 99999 times.
@@ -10499,7 +10498,7 @@ export const Error = {
     severity: Severity.E,
     message: "COUNTER value would exceed 99999. It will be reset to 0.",
     fullCode: "IBM3511IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOMULTICLOSE), there should be no multiple closure of groups in your
@@ -10512,7 +10511,7 @@ export const Error = {
     message:
       "Multiple closure of groups is not allowed under RULES(NOMULTICLOSE).",
     fullCode: "IBM3512IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The second argument to built-in functions such as COPY and REPEAT must be nonnegative
@@ -10528,7 +10527,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in is negative. It will be changed to 0.`,
     fullCode: "IBM3514IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Scale factors must be between -128 and 127 inclusive.
@@ -10539,7 +10538,7 @@ export const Error = {
     severity: Severity.E,
     message: "Scale factor is bigger than 127. It is replaced by 127.",
     fullCode: "IBM3515IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Scale factors must be between -128 and 127 inclusive.
@@ -10550,7 +10549,7 @@ export const Error = {
     severity: Severity.E,
     message: "Scale factor is less than -128. It is replaced by -128.",
     fullCode: "IBM3516IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The default lower bound is 1, but the upper bound must be greater than the lower
@@ -10566,7 +10565,7 @@ export const Error = {
     message: (dimensionnumber: string, variablename: string) =>
       `Sole bound specified for dimension ${dimensionnumber} of array ${variablename} is less than 1. An upper bound of 1 is assumed.`,
     fullCode: "IBM3517IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the NAMEPREFIX option is specified, the names of all macro variables and procedures
@@ -10579,7 +10578,7 @@ export const Error = {
     message: (identifier: string) =>
       `${identifier} does not conform to the NAMEPREFIX option.`,
     fullCode: "IBM3518IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a B3 literal, each character must be either 0-7.
@@ -10590,7 +10589,7 @@ export const Error = {
     severity: Severity.E,
     message: "Characters in B3 literals must be 0-7.",
     fullCode: "IBM3519IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Structure level numbers must be positive.
@@ -10601,7 +10600,7 @@ export const Error = {
     severity: Severity.E,
     message: "Structure level of 0 replaced by 1.",
     fullCode: "IBM3520IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum structure level supported is 255.
@@ -10619,7 +10618,7 @@ export const Error = {
     message:
       "Structure level greater than 255 specified. It is replaced by 255.",
     fullCode: "IBM3521IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An E in a FLOAT constant must be followed by at least one decimal digit (optionally
@@ -10631,7 +10630,7 @@ export const Error = {
     severity: Severity.E,
     message: "A DECIMAL exponent is required.",
     fullCode: "IBM3522IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The LBOUND, HBOUND, and DIMENSION built-in functions require two arguments when applied
@@ -10648,7 +10647,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `A second argument to the ${BUILTINname} built-in must be supplied for arrays with more than one dimension. A value of 1 is assumed.`,
     fullCode: "IBM3523IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The DIMENSION, HBOUND and LBOUND built-in functions require that the second argument
@@ -10661,7 +10660,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in is not positive. A value of 1 is assumed.`,
     fullCode: "IBM3524IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The second argument to the LBOUND, HBOUND, and DIMENSION built-in functions must
@@ -10678,7 +10677,7 @@ export const Error = {
     message: (BUILTINname: string, dimensioncount: string) =>
       `Second argument to ${BUILTINname} built-in is greater than the number of dimensions for the first argument. A value of ${dimensioncount} is assumed.`,
     fullCode: "IBM3525IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Level 1 variable names must not be repeated in the same block.
@@ -10693,7 +10692,7 @@ export const Error = {
     message: (identifier: string) =>
       `Repeated declaration of ${identifier} is invalid and will be ignored.`,
     fullCode: "IBM3526IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * THEN keyword must be part of any IF statement.
@@ -10704,7 +10703,7 @@ export const Error = {
     severity: Severity.E,
     message: "Missing THEN assumed.",
     fullCode: "IBM3527IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The precision attribute must be specified only once in a DECLARE statement.
@@ -10719,7 +10718,7 @@ export const Error = {
     message:
       "Duplicate specification of arithmetic precision. Subsequent specification ignored.",
     fullCode: "IBM3528IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Scale factors are valid only in declarations of FIXED BIN or FIXED DEC. The first
@@ -10737,7 +10736,7 @@ export const Error = {
     severity: Severity.E,
     message: "Scale factors are not allowed in FLOAT declarations.",
     fullCode: "IBM3529IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Only scalars may be activated.
@@ -10749,7 +10748,7 @@ export const Error = {
     message: (identifier: string) =>
       `${identifier} is an array. ACTIVATE and DEACTIVATE are invalid for arrays.`,
     fullCode: "IBM3530IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Labels may not be activated.
@@ -10761,7 +10760,7 @@ export const Error = {
     message: (identifier: string) =>
       `${identifier} is a statement label. ACTIVATE and DEACTIVATE are invalid for labels.`,
     fullCode: "IBM3531IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * THEN clauses are valid only immediately after an IF <expression>.
@@ -10775,7 +10774,7 @@ export const Error = {
     severity: Severity.E,
     message: "THEN clause outside of an open IF statement is ignored.",
     fullCode: "IBM3533IE",
-  } as SimplePLICode,
+  },
 
   /**
    * ELSE clauses are valid only immediately after an IF- THEN statement.
@@ -10789,7 +10788,7 @@ export const Error = {
     severity: Severity.E,
     message: "ELSE clause outside of an open IF- THEN statement is ignored.",
     fullCode: "IBM3534IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A Label on END statement must match a LABEL on an open DO, PROCEDURE, or SELECT statement
@@ -10806,7 +10805,7 @@ export const Error = {
     severity: Severity.E,
     message: "END label is not a label on any open group.",
     fullCode: "IBM3536IE",
-  } as SimplePLICode,
+  },
 
   /**
    * After an OTHERWISE unit in a SELECT statement, only an END statement is valid.
@@ -10830,7 +10829,7 @@ export const Error = {
     message:
       "An END statement may be missing after an OTHERWISE unit. One will be inserted.",
     fullCode: "IBM3537IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Any %END statement should be part of a %PROCEDURE-%END, %DO-%END or %SELECT- %END
@@ -10843,7 +10842,7 @@ export const Error = {
     message:
       "%END statement found without any open %PROCEDURE, %DO or %SELECT statements. It will be ignored.",
     fullCode: "IBM3538IE",
-  } as SimplePLICode,
+  },
 
   /**
    * During the conversion of a user expression during the compilation, the target string
@@ -10857,7 +10856,7 @@ export const Error = {
     message:
       "STRINGSIZE condition raised while evaluating expression. Result is truncated.",
     fullCode: "IBM3539IE",
-  } as SimplePLICode,
+  },
 
   /**
    * If all the arguments in a SUBSTR reference are constants or restricted expressions,
@@ -10875,7 +10874,7 @@ export const Error = {
     message:
       "STRINGRANGE condition raised while evaluating expression. Arguments are adjusted to fit.",
     fullCode: "IBM3540IE",
-  } as SimplePLICode,
+  },
 
   /**
    * LEAVE\/ITERATE must specify a label on an open DO loop.
@@ -10891,7 +10890,7 @@ export const Error = {
     severity: Severity.E,
     message: "LEAVE/ITERATE label is not a label on any open DO group.",
     fullCode: "IBM3542IE",
-  } as SimplePLICode,
+  },
 
   /**
    * ITERATE\/LEAVE statements are valid only inside DO groups.
@@ -10908,7 +10907,7 @@ export const Error = {
     message:
       "ITERATE/LEAVE statement is invalid outside an open DO statement. The statement will be ignored.",
     fullCode: "IBM3543IE",
-  } as SimplePLICode,
+  },
 
   /**
    * GX literals must represent graphic strings and hence must contain a multiple of 4
@@ -10923,7 +10922,7 @@ export const Error = {
     severity: Severity.E,
     message: "GX literals should contain a multiple of 4 hex digits.",
     fullCode: "IBM3544IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A variable has been declared with an upper bound that is less than its lower bound.
@@ -10937,7 +10936,7 @@ export const Error = {
     message: (dimensionnumber: string, variablename: string) =>
       `Upper bound for dimension ${dimensionnumber} of array ${variablename} is less than lower bound. Bounds will be reversed.`,
     fullCode: "IBM3545IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * All identifiers must be contained in 31 bytes or less. PL\/I DBCS identifiers must
@@ -10950,7 +10949,7 @@ export const Error = {
     message: (identifier: string) =>
       `Identifier is too long. It will be collapsed to ${identifier} .`,
     fullCode: "IBM3546IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * There is no language element of the form 1su.
@@ -10964,7 +10963,7 @@ export const Error = {
     severity: Severity.E,
     message: "B assumed to complete iSUB.",
     fullCode: "IBM3547IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In a BINARY constant, each digit must be a zero or one.
@@ -10975,7 +10974,7 @@ export const Error = {
     severity: Severity.E,
     message: "Digit in BINARY constant is not zero or one.",
     fullCode: "IBM3548IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In a BIT literal, each character must be either zero or one.
@@ -10986,7 +10985,7 @@ export const Error = {
     severity: Severity.E,
     message: "Characters in BIT literals must be 0 or 1.",
     fullCode: "IBM3549IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated character is not part of the PL\/I character set. This can occur if
@@ -10999,9 +10998,9 @@ export const Error = {
     code: "IBM3550I",
     severity: Severity.E,
     message: (n: string) =>
-      `Character with decimal value ${n} does not belong to the PL/I character set. It will be ignored.`,
+      `Character '${n}' with decimal value ${n.charCodeAt(0)} does not belong to the PL/I character set. It will be ignored.`,
     fullCode: "IBM3550IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a hex literal, each character must be either 0-9 or A-F.
@@ -11012,7 +11011,7 @@ export const Error = {
     severity: Severity.E,
     message: "Characters in hex literals must be 0-9 or A-F.",
     fullCode: "IBM3551IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The statement entered could not be parsed because the specified element is invalid
@@ -11025,7 +11024,7 @@ export const Error = {
     message: (character: string) =>
       `The statement element ${character} is invalid. The statement will be ignored.`,
     fullCode: "IBM3552IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under LANGLVL(SAA), identifiers must start with an alphabetic character or with one
@@ -11040,7 +11039,7 @@ export const Error = {
     message:
       "Use of underscore as initial character in an identifier accepted although invalid under LANGLVL(SAA).",
     fullCode: "IBM3553IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated character is not part of the PL\/I character set, but was immediately
@@ -11056,7 +11055,7 @@ export const Error = {
     message: (n: string) =>
       `Character with decimal value ${n} does not belong to the PL/I character set. It is assumed to be an OR symbol.`,
     fullCode: "IBM3556IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated character is not part of the PL\/I character set, but was immediately
@@ -11072,7 +11071,7 @@ export const Error = {
     message: (n: string) =>
       `Character with decimal value ${n} does not belong to the PL/I character set. It is assumed to be a NOT symbol.`,
     fullCode: "IBM3557IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * WX literals must represent unicode strings and hence must contain a multiple of 4
@@ -11087,7 +11086,7 @@ export const Error = {
     severity: Severity.E,
     message: "WX literals should contain a multiple of 4 hex digits.",
     fullCode: "IBM3558IE",
-  } as SimplePLICode,
+  },
 
   /**
    * EXEC SQL WHENEVER statements will lead to the generation of GOTO statements and hence
@@ -11100,7 +11099,7 @@ export const Error = {
     message:
       "RULES(NOGOTO) violation: the use of EXEC SQL WHENEVER statements violates RULES(NOGOTO).",
     fullCode: "IBM3559IE",
-  } as SimplePLICode,
+  },
 
   /**
    * EXEC CICS HANDLE CONDITION statements create a form of GOTO and hence violate RULES(NOGOTO)
@@ -11113,7 +11112,7 @@ export const Error = {
     message:
       "RULES(NOGOTO) violation: the use of EXEC CICS HANDLE CONDITION statements violates RULES(NOGOTO).",
     fullCode: "IBM3560IE",
-  } as SimplePLICode,
+  },
 
   /**
    * To determine if a statement is an assignment or another PL\/I statement, many elements
@@ -11131,7 +11130,7 @@ export const Error = {
     message:
       "Statement type resolution requires too many lexical units to 159 be examined. The statement will be ignored.",
     fullCode: "IBM3565IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A WHEN or OTHERWISE might be missing.
@@ -11149,7 +11148,7 @@ export const Error = {
     message:
       "Statements inside a SELECT must be preceded by a WHEN or an OTHERWISE clause.",
     fullCode: "IBM3567IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOLAXFIELDS), EXEC SQL SELECT must be followed by one or more field names,
@@ -11162,7 +11161,7 @@ export const Error = {
     message:
       "Under RULES(NOLAXFIELDS), EXEC SQL SELECT statements must specify a list of field names.",
     fullCode: "IBM3568IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under RULES(NOLAXFIELDS), EXEC SQL INSERT INTO <table-name> must be followed by one
@@ -11175,7 +11174,7 @@ export const Error = {
     message:
       "Under RULES(NOLAXFIELDS), EXEC SQL INSERT INTO statements must specify a list of field names.",
     fullCode: "IBM3569IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Extents must be positive.
@@ -11190,7 +11189,7 @@ export const Error = {
     message:
       "Extent expression is negative. It will be replaced by the constant 1.",
     fullCode: "IBM3570IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The compiler option DEFAULT(IEEE|HEXADEC) does not match the SQL preprocessor option
@@ -11202,7 +11201,7 @@ export const Error = {
     severity: Severity.E,
     message: "The SQL and PL/I float options are inconsistent.",
     fullCode: "IBM3571IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The level-1 DECLARE statement might be missing.
@@ -11219,7 +11218,7 @@ export const Error = {
     severity: Severity.E,
     message: "Initial level number in a structure is not 1.",
     fullCode: "IBM3572IE",
-  } as SimplePLICode,
+  },
 
   /**
    * A structure level is probably missing.
@@ -11237,7 +11236,7 @@ export const Error = {
     message:
       "Elements with level numbers greater than 1 follow an element without a level number. A level number of 1 is assumed.",
     fullCode: "IBM3573IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The use of an asterisk in place of a name is permitted only for structure or union
@@ -11255,7 +11254,7 @@ export const Error = {
     message:
       "Variables declared without a name must be structure members or followed by a substructure list.",
     fullCode: "IBM3574IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Attributes such as CHAR must not be repeated for an element of a DECLARE statement
@@ -11271,7 +11270,7 @@ export const Error = {
     message: (attribute: string) =>
       `Duplicate specification of ${attribute} . Subsequent specification ignored.`,
     fullCode: "IBM3575IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXEC SQL statements must consist of more than merely EXEC SQL.
@@ -11282,7 +11281,7 @@ export const Error = {
     severity: Severity.E,
     message: "The SQL statement is empty and is ignored.",
     fullCode: "IBM3576IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The INCONLY option must be specified without any other options.
@@ -11293,7 +11292,7 @@ export const Error = {
     severity: Severity.E,
     message: "INCONLY option is ignored because preceded by other options.",
     fullCode: "IBM3577IE",
-  } as SimplePLICode,
+  },
 
   /**
    * In a statement-form procedure invocation, each parameter must be specified only once.
@@ -11316,7 +11315,7 @@ export const Error = {
     message: (keyword: string) =>
       `Parameter ${keyword} may not be set more than once. First setting is assumed.`,
     fullCode: "IBM3580IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a statement-form procedure invocation, any keyword specified must be the name
@@ -11337,7 +11336,7 @@ export const Error = {
     message: (keyword: string) =>
       `Unknown keyword in statement- form procedure invocation. ${keyword} and any argument are ignored.`,
     fullCode: "IBM3581IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Each parameter in a procedure should be declared.
@@ -11353,7 +11352,7 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) => `Parameter ${identifier} is not declared.`,
     fullCode: "IBM3582IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Labels are not permitted on DECLARE statements or on WHEN and OTHERWISE clauses.
@@ -11365,7 +11364,7 @@ export const Error = {
     message: (keyword: string) =>
       `Labels on ${keyword} statements are invalid and ignored.`,
     fullCode: "IBM3583IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The BUILTIN attribute can be applied only to identifiers that are the names of built-in
@@ -11378,7 +11377,7 @@ export const Error = {
     message: (identifier: string) =>
       `The identifier ${identifier} is not the name of a built-in function. The BUILTIN attribute will be ignored.`,
     fullCode: "IBM3589IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named attribute is not supported by the macro facility.
@@ -11393,7 +11392,7 @@ export const Error = {
     message: (keyword: string) =>
       `The attribute ${keyword} is not supported and will be ignored.`,
     fullCode: "IBM3590IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * A right parenthesis is probably missing. If this occurs in the source, all the characters
@@ -11408,7 +11407,7 @@ export const Error = {
     severity: Severity.E,
     message: "Right parenthesis will be assumed at end of argument list.",
     fullCode: "IBM3591IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The source should contain END statements for all PROCEDUREs, DO groups, and SELECT
@@ -11421,7 +11420,7 @@ export const Error = {
     message:
       "The end of the source was reached before the logical end of the program. Null statements and END statements will be inserted as necessary to complete the program.",
     fullCode: "IBM3603IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Declarations for internal procedures are not permitted.
@@ -11438,7 +11437,7 @@ export const Error = {
     message: (procname: string) =>
       `The procedure name ${procname} has already been declared. The explicit declaration of the procedure name will not be accepted.`,
     fullCode: "IBM3604IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * An ORDINAL type may be defined only once in any block.
@@ -11450,7 +11449,7 @@ export const Error = {
     message: (typetype: string, typename: string) =>
       `The ${typetype} type ${typename} is already defined. The redefinition is ignored.`,
     fullCode: "IBM3605IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The variable names at any given sublevel within a structure or union must be unique
@@ -11466,7 +11465,7 @@ export const Error = {
     message: (identifier: string) =>
       `Repeated declaration of ${identifier} is invalid. The name will be replaced by an asterisk.`,
     fullCode: "IBM3606IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * If an ORDINAL type is declared with the UNSIGNED attribute, any INITIAL values specified
@@ -11479,7 +11478,7 @@ export const Error = {
     message: (typetype: string, typename: string) =>
       `UNSIGNED attribute for ${typetype} type ${typename} conflicts with negative INITIAL values and is ignored.`,
     fullCode: "IBM3607IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * An ORDINAL type must have a precision larger enough to cover the range of values
@@ -11499,7 +11498,7 @@ export const Error = {
     message: (typetype: string, typename: string) =>
       `PRECISION specified for ${typetype} type ${typename} is too small to cover its INITIAL values and is adjusted to fit.`,
     fullCode: "IBM3608IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * A WHEN or OTHERWISE clause has been found outside of a SELECT statement.
@@ -11511,7 +11510,7 @@ export const Error = {
     message:
       "A SELECT statement may be missing. A SELECT statement, without an expression, will be inserted.",
     fullCode: "IBM3609IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An END statement enclosing a statement such as DO or SELECT has been found before
@@ -11530,7 +11529,7 @@ export const Error = {
     severity: Severity.E,
     message: "Semicolon inserted after ELSE keyword.",
     fullCode: "IBM3610IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An END statement might be misplaced or a semicolon might be missing.
@@ -11541,7 +11540,7 @@ export const Error = {
     severity: Severity.E,
     message: "Semicolon inserted after OTHERWISE keyword.",
     fullCode: "IBM3612IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An END statement might be misplaced or a semicolon might be missing.
@@ -11552,7 +11551,7 @@ export const Error = {
     severity: Severity.E,
     message: "Semicolon inserted after THEN keyword.",
     fullCode: "IBM3613IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An END statement might be misplaced or a semicolon might be missing.
@@ -11563,7 +11562,7 @@ export const Error = {
     severity: Severity.E,
     message: "Semicolon inserted after WHEN clause.",
     fullCode: "IBM3614IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The source file contains statements after the END statement that closed the first
@@ -11576,7 +11575,7 @@ export const Error = {
     severity: Severity.E,
     message: "Source file does not end with the logical end of the program.",
     fullCode: "IBM3615IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Subscripts can be specified only for elements of an array.
@@ -11588,7 +11587,7 @@ export const Error = {
     message: (variablename: string) =>
       `Subscripts have been specified for the variable ${variablename} , but it is not an array variable.`,
     fullCode: "IBM3616IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Otherwise the STRINGRANGE condition would be raised.
@@ -11600,7 +11599,7 @@ export const Error = {
     message:
       "Second argument in SUBSTR reference is less than 1. It will be replaced by 1.",
     fullCode: "IBM3617IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Otherwise the STRINGRANGE condition would be raised.
@@ -11612,7 +11611,7 @@ export const Error = {
     message:
       "Second argument in SUBSTR reference is too big. It will be trimmed to fit.",
     fullCode: "IBM3618IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Otherwise the STRINGRANGE condition would be raised.
@@ -11624,7 +11623,7 @@ export const Error = {
     message:
       "Third argument in SUBSTR reference is less than 0. It will be replaced by 0.",
     fullCode: "IBM3619IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Otherwise the STRINGRANGE condition would be raised.
@@ -11636,7 +11635,7 @@ export const Error = {
     message:
       "Third argument in SUBSTR reference is too big. It will be trimmed to fit.",
     fullCode: "IBM3620IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum number of dimensions allowed for a variable, including all inherited
@@ -11649,7 +11648,7 @@ export const Error = {
     message:
       "More than 15 dimensions have been specified. Excess will be ignored.",
     fullCode: "IBM3621IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An *\/ was found when there was no open comment.
@@ -11661,7 +11660,7 @@ export const Error = {
     message:
       "End-of-comment marker found when there are no open comments. Marker will be ignored.",
     fullCode: "IBM3624IE",
-  } as SimplePLICode,
+  },
 
   /**
    * See the Language Reference Manual for the list of supported compiler directives.
@@ -11673,7 +11672,7 @@ export const Error = {
     message: (directive: string) =>
       `There is no compiler directive ${directive} . Input up to the next semicolon will be ignored.`,
     fullCode: "IBM3625IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * A listing control statement, even when in a preprocessor procedure, must be preceded
@@ -11690,7 +11689,7 @@ export const Error = {
     severity: Severity.E,
     message: "Listing control statement must start with a percent symbol.",
     fullCode: "IBM3626IE",
-  } as SimplePLICode,
+  },
 
   /**
    * An X literal may not contain an odd number of digits.
@@ -11701,7 +11700,7 @@ export const Error = {
     severity: Severity.E,
     message: "X literals should contain a multiple of 2 hex digits.",
     fullCode: "IBM3628IE",
-  } as SimplePLICode,
+  },
 
   /**
    * More arguments were specified in an ENTRY reference than were defined as parameters
@@ -11718,7 +11717,7 @@ export const Error = {
     message: (ENTRYname: string) =>
       `Excess arguments for ENTRY ${ENTRYname} ignored.`,
     fullCode: "IBM3638IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * More arguments were specified for the indicated built- in function than are supported
@@ -11734,7 +11733,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Excess arguments for ${BUILTINname} built-in ignored.`,
     fullCode: "IBM3639IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named attribute is valid only on parent structures.
@@ -11754,7 +11753,7 @@ export const Error = {
     message: (attribute: string) =>
       `The attribute ${attribute} is invalid if it is not followed by an element with a greater logical level.`,
     fullCode: "IBM3640IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * LIKE cannot be specified on a parent structure or union.
@@ -11772,7 +11771,7 @@ export const Error = {
     message:
       "Level number following LIKE specification is greater than the level number for the LIKE specification. LIKE attribute is ignored.",
     fullCode: "IBM3641IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated keyword (UNSIGNED in the example below) is not defined in the SAA level-1
@@ -11788,7 +11787,7 @@ export const Error = {
     message: (keyword: string) =>
       `${keyword} keyword accepted although invalid under LANGLVL(SAA).`,
     fullCode: "IBM3650IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The definition of the SAA level-1 language does not include S, D, and Q floating-point
@@ -11801,7 +11800,7 @@ export const Error = {
     message:
       "Use of S, D and Q constants accepted although invalid under LANGLVL(SAA).",
     fullCode: "IBM3651IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The definition of the SAA level-1 language does not permit using underscores in numeric
@@ -11814,7 +11813,7 @@ export const Error = {
     message:
       "Use of underscores in constants accepted although invalid under LANGLVL(SAA).",
     fullCode: "IBM3652IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The definition of the SAA level-1 language does not permit using asterisks for structure
@@ -11827,7 +11826,7 @@ export const Error = {
     message:
       "Use of asterisks for names in declares accepted although invalid under LANGLVL(SAA).",
     fullCode: "IBM3653IE",
-  } as SimplePLICode,
+  },
 
   /**
    * The definition of the SAA level-1 language does not include XN constants.
@@ -11839,7 +11838,7 @@ export const Error = {
     message:
       "Use of XN constants accepted although invalid under LANGLVL(SAA).",
     fullCode: "IBM3654IE",
-  } as SimplePLICode,
+  },
 
   /**
    * Under LANGLVL(SAA), the VERIFY and INDEX built-in functions are supposed to have
@@ -11855,7 +11854,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Use of 3 arguments with ${BUILTINname} built-in accepted although invalid under LANGLVL(SAA).`,
     fullCode: "IBM3656IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under LANGLVL(SAA), the DIM, LBOUND and HBOUND built-in functions are supposed to
@@ -11871,7 +11870,7 @@ export const Error = {
     message: (BUILTINname: string) =>
       `Use of 1 argument with ${BUILTINname} built-in accepted although invalid under LANGLVL(SAA).`,
     fullCode: "IBM3657IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named INCLUDE file was specified in the INCLUDE suboption of the DEPRECATE option,
@@ -11884,7 +11883,7 @@ export const Error = {
     message: (filename: string) =>
       `The INCLUDE file ${filename} has been deprecated.`,
     fullCode: "IBM3658IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named statement was specified in the STMT suboption of the DEPRECATE option,
@@ -11897,7 +11896,7 @@ export const Error = {
     message: (statement: string) =>
       `The EXEC SQL ${statement} statement has been deprecated.`,
     fullCode: "IBM3659IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named ENTRY was specified in the ENTRY suboption of the DEPRECATE option, and
@@ -11910,7 +11909,7 @@ export const Error = {
     message: (variable: string) =>
       `The ENTRY named ${variable} has been deprecated.`,
     fullCode: "IBM3660IE",
-  } as ParametricPLICode,
+  },
 
   /**
    * Question marks are valid in the source only if part of one of the trigraphs ??( or
@@ -11922,7 +11921,7 @@ export const Error = {
     severity: Severity.E,
     message: "Invalid use of question mark.",
     fullCode: "IBM3661IE",
-  } as SimplePLICode,
+  },
 };
 
 export const Severe = {
@@ -11942,7 +11941,7 @@ export const Severe = {
     ) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has type ${sourcetype} , which is invalid for a parameter with type ${targettype} .`,
     fullCode: "IBM1500IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If a parameter is strongly typed, any argument passed to it must have the same type
@@ -11955,7 +11954,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has a different strong type than the corresponding parameter.`,
     fullCode: "IBM1501IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An argument must have a type that can be converted to the corresponding parameter's
@@ -11973,7 +11972,7 @@ export const Severe = {
     ) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has type ${sourcetype} , which is invalid for a parameter with type ${targettype} . If the ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1502IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only an EXTERNAL ENTRY CONSTANT, an ENTRY CONSTANT representing a non-nested PROCEDURE,
@@ -11987,7 +11986,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string, sourcetype: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has type ${sourcetype} , which is invalid for a parameter with type LIMITED ENTRY.`,
     fullCode: "IBM1503IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * POINTER expressions can be converted to OFFSET only if the OFFSET is declared with
@@ -12000,7 +11999,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has type POINTER, which is invalid for an OFFSET parameter without an AREA qualifier.`,
     fullCode: "IBM1504IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * OFFSET variables can be converted to POINTER only if the OFFSET is declared with
@@ -12013,7 +12012,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has type POINTER, which is invalid for a POINTER parameter since the OFFSET argument is not an OFFSET variable declared with an AREA qualifier.`,
     fullCode: "IBM1505IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * ORDINALs cannot be passed to other ORDINALs having different ORDINAL types.
@@ -12025,7 +12024,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has a different ORDINAL type than the corresponding parameter.`,
     fullCode: "IBM1506IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The array can be assigned to an array of LABEL variables, and that array can be passed
@@ -12042,7 +12041,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Arrays of label constants may not be passed as arguments.",
     fullCode: "IBM1507IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The number of arguments must match the number of parameters in the ENTRY declaration
@@ -12055,7 +12054,7 @@ export const Severe = {
     message: (ENTRYname: string) =>
       `Too few arguments have been specified for the ENTRY ${ENTRYname} .`,
     fullCode: "IBM1508IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The target in an assignment through a pseudovariable must not have the NONASSIGNABLE
@@ -12073,7 +12072,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Argument to ${variablename} pseudovariable must be ASSIGNABLE.`,
     fullCode: "IBM1509IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The target in an assignment through a pseudovariable must not have the NONASSIGNABLE
@@ -12091,7 +12090,7 @@ export const Severe = {
     message: (variablename: string) =>
       `First argument to ${variablename} pseudovariable must be ASSIGNABLE.`,
     fullCode: "IBM1510IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Scalars cannot be converted to aggregates.
@@ -12107,7 +12106,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an aggregate, but the parameter description specifies a scalar.`,
     fullCode: "IBM1511IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Dummy aggregate arguments are not supported except when passing a non-AREA scalar
@@ -12126,7 +12125,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is a scalar, but the parameter description specifies an aggregate to which it cannot be passed.`,
     fullCode: "IBM1512IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Dummy aggregate arguments are not supported. If an entry description describes an
@@ -12140,7 +12139,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an aggregate that does not exactly match the corresponding parameter description.`,
     fullCode: "IBM1513IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Dummy aggregate arguments are not supported. If an entry description describes an
@@ -12154,7 +12153,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an aggregate with more members than its corresponding parameter description.`,
     fullCode: "IBM1514IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Dummy aggregate arguments are not supported. If an entry description describes an
@@ -12168,7 +12167,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an aggregate with fewer members than its corresponding parameter description.`,
     fullCode: "IBM1515IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Dummy aggregate arguments are not supported. If an entry description describes an
@@ -12182,7 +12181,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `The number of dimensions in the subelements of argument number ${argumentnumber} in ENTRY reference ${ENTRYname} and in its corresponding parameter description do not match.`,
     fullCode: "IBM1516IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Dummy aggregate arguments are not supported. If an entry description describes an
@@ -12196,7 +12195,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `The upper and lower bounds in the subelements of argument number ${argumentnumber} in 72 ENTRY reference ${ENTRYname} and in its corresponding parameter description do not match.`,
     fullCode: "IBM1517IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Array arguments and parameters must have the same number of dimensions.
@@ -12213,7 +12212,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `The number of dimensions for argument number ${argumentnumber} in ENTRY reference ${ENTRYname} and in its corresponding parameter description do not match.`,
     fullCode: "IBM1518IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Array arguments and parameters must have the same lower and upper bounds.
@@ -12230,7 +12229,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `The upper and lower bounds for argument number ${argumentnumber} in ENTRY reference ${ENTRYname} and in its corresponding parameter description do not match.`,
     fullCode: "IBM1519IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Charset 48 is no longer supported. The source code must be converted to charset 60
@@ -12242,7 +12241,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Charset 48 is not supported.",
     fullCode: "IBM1520IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The compilation requires more virtual memory than is available. It may help to specify
@@ -12256,7 +12255,7 @@ export const Severe = {
     message:
       "Not enough virtual memory is available to continue the compilation.",
     fullCode: "IBM1521IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If an offset variable is declared without an AREA reference, it cannot be set in
@@ -12269,7 +12268,7 @@ export const Severe = {
     message: (variable: string) =>
       `${variable} cannot be SET unless an IN clause is specified.`,
     fullCode: "IBM1522IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The built-in function AVAILABLEAREA is defined only for AREAs.
@@ -12281,7 +12280,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function must be an AREA reference.`,
     fullCode: "IBM1523IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the built-in function ASIN or ACOS applied to a restricted
@@ -12294,7 +12293,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} (x) is undefined if ABS(x) > 1.`,
     fullCode: "IBM1524IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the built-in function ATANH applied to a restricted expression
@@ -12306,7 +12305,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ATANH(x) is undefined if x is REAL and ABS(x) >= 1.",
     fullCode: "IBM1525IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression contains the named built-in function with an argument having mode COMPLEX
@@ -12319,7 +12318,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} must have derived mode REAL.`,
     fullCode: "IBM1526IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with its first argument having
@@ -12332,7 +12331,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have locator type.`,
     fullCode: "IBM1527IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with its first argument having
@@ -12346,7 +12345,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have derived mode REAL.`,
     fullCode: "IBM1528IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function, with its second argument having
@@ -12360,7 +12359,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have derived mode REAL.`,
     fullCode: "IBM1530IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the reference BINARYVALUE(x) where x has a type other than
@@ -12373,7 +12372,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument has invalid type.`,
     fullCode: "IBM1531IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Any other linkage is invalid.
@@ -12384,7 +12383,7 @@ export const Severe = {
     severity: Severity.S,
     message: "E35 sort exit routines must use a 32-bit linkage.",
     fullCode: "IBM1532IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression contains the named built-in function with an argument that has neither
@@ -12397,7 +12396,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have computational type.`,
     fullCode: "IBM1533IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The result of the REPEAT or COPY built-in function must not be longer than the maximum
@@ -12410,7 +12409,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} result would be too long.`,
     fullCode: "IBM1534IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with an argument having type other
@@ -12425,7 +12424,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have type REAL FLOAT.`,
     fullCode: "IBM1535IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with an argument that is not a
@@ -12438,7 +12437,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a reference.`,
     fullCode: "IBM1536IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with an argument that is not an
@@ -12452,7 +12451,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be an array expression.`,
     fullCode: "IBM1537IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with an argument that is not a
@@ -12466,7 +12465,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a FILE reference.`,
     fullCode: "IBM1538IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A value must be specified as an argument to a BUILTIN function unless the argument
@@ -12482,7 +12481,7 @@ export const Severe = {
     severity: Severity.S,
     message: "* is invalid as a built-in function argument.",
     fullCode: "IBM1539IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression contains the named built-in function with the specified argument having
@@ -12495,7 +12494,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have derived mode REAL.`,
     fullCode: "IBM1540IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with the specified argument having
@@ -12509,7 +12508,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have computational type.`,
     fullCode: "IBM1541IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with a first argument that has
@@ -12522,7 +12521,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have computational type.`,
     fullCode: "IBM1542IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the RANK built-in function.
@@ -12534,7 +12533,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function must have type CHARACTER(1) NONVARYING.`,
     fullCode: "IBM1543IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with a first argument that is
@@ -12548,7 +12547,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must be an array.`,
     fullCode: "IBM1545IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the PLIFILL built-in subroutine.
@@ -12560,7 +12559,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have type CHARACTER(1) NONVARYING.`,
     fullCode: "IBM1546IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with a second argument that has
@@ -12573,7 +12572,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have computational type.`,
     fullCode: "IBM1547IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The PLISTSIZE built-in functions may be used only in procedures.
@@ -12585,7 +12584,7 @@ export const Severe = {
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} may not be used inside a BEGIN block.`,
     fullCode: "IBM1548IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The PLISTSIZE built-in function may not be used in procedures with any of the linkages
@@ -12598,7 +12597,7 @@ export const Severe = {
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} may be used only in PROCEDUREs with LINKAGE(SYSTEM).`,
     fullCode: "IBM1549IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the COMPLETION and STATUS pseudovariables.
@@ -12610,7 +12609,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to the ${BUILTINname} pseudovariable must be an EVENT variable.`,
     fullCode: "IBM1550IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the PRIORITY pseudovariable.
@@ -12622,7 +12621,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to the ${BUILTINname} pseudovariable must be a TASK variable.`,
     fullCode: "IBM1551IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with a third argument that has
@@ -12636,7 +12635,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Third argument to ${BUILTINname} built-in function must have computational type.`,
     fullCode: "IBM1552IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The ALL and ANY built-in functions are restricted to two types of array expressions:
@@ -12662,7 +12661,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function must be either a NONVARYING BIT array reference or else an array expression with known length.`,
     fullCode: "IBM1554IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with a second argument that has
@@ -12675,7 +12674,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have computational type.`,
     fullCode: "IBM1555IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If a third argument is given for one of the built-in functions INDEX, SEARCH, VERIFYR,
@@ -12690,7 +12689,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function would force STRINGRANGE.`,
     fullCode: "IBM1556IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The second argument for the built-in functions CENTER, LEFT and RIGHT must not be
@@ -12703,7 +12702,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must be positive.`,
     fullCode: "IBM1557IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument to the VALID built-in function must have exactly the indicated attributes.
@@ -12716,7 +12715,7 @@ export const Severe = {
     message:
       "Argument to VALID built-in function must have the attributes FIXED DECIMAL or PICTURE.",
     fullCode: "IBM1558IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression contains the BUILTIN function SQRT applied to a restricted expression
@@ -12728,7 +12727,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SQRT(x) is undefined if x is REAL and negative.",
     fullCode: "IBM1559IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression contains the named built-in function applied to a restricted expression
@@ -12742,7 +12741,7 @@ export const Severe = {
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} (x) is undefined if x is REAL and not positive.`,
     fullCode: "IBM1560IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument to the HANDLE built-in must be a structure type, and conversely the
@@ -12755,7 +12754,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built-in function has invalid type.`,
     fullCode: "IBM1562IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The second argument for the built-in functions CHARACTER, BIT, and GRAPHIC must be
@@ -12768,7 +12767,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must be nonnegative.`,
     fullCode: "IBM1563IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Supply the minimum number of arguments required.
@@ -12780,7 +12779,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Too few arguments have been specified for the ${BUILTINname} built-in function.`,
     fullCode: "IBM1564IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function applied to a restricted expression
@@ -12793,7 +12792,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} (x) is undefined for x outside the supported domain.`,
     fullCode: "IBM1566IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the built-in function ATAN or ATAND applied to a restricted
@@ -12806,7 +12805,7 @@ export const Severe = {
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} (x,y) is undefined if x and y are both zero.`,
     fullCode: "IBM1568IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument to the named built-in function must be a reference (for example, not
@@ -12819,7 +12818,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a CONNECTED reference.`,
     fullCode: "IBM1569IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The ALLOCATION built-in function cannot be used with structure members or with non-CONTROLLED
@@ -12832,7 +12831,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a reference to a level 1 CONTROLLED variable.`,
     fullCode: "IBM1570IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The OMITTED built-in function cannot be used with BYVALUE parameters, structure members,
@@ -12845,7 +12844,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a reference to a level 1 BYADDR parameter.`,
     fullCode: "IBM1571IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Add the OPTIONAL attribute to the entry declaration or replace the * by an actual
@@ -12858,7 +12857,7 @@ export const Severe = {
     message:
       "The use of * as an argument is permitted only for parameters declared with the OPTIONAL attribute.",
     fullCode: "IBM1573IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated argument to built-in functions such as PLIMOVE and COMPARE must be
@@ -12871,7 +12870,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have type POINTER or OFFSET.`,
     fullCode: "IBM1575IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to HEXIMAGE, CENTER, LEFT, RIGHT, MEMSQUEEZE, etc.
@@ -12883,7 +12882,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function must have type CHARACTER(1) NONVARYING.`,
     fullCode: "IBM1576IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the OFFSET built-in function.
@@ -12895,7 +12894,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type POINTER.`,
     fullCode: "IBM1577IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the POINTER built-in function.
@@ -12907,7 +12906,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type OFFSET.`,
     fullCode: "IBM1578IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the OFFSET and POINTER built-in functions.
@@ -12919,7 +12918,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have type AREA.`,
     fullCode: "IBM1579IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the first argument to built-in functions such as PLIMOVE and COMPARE has the attribute
@@ -12932,7 +12931,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function is an OFFSET value.`,
     fullCode: "IBM1580IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the first argument to built-in functions such as PLIMOVE and COMPARE is an OFFSET
@@ -12946,7 +12945,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function is an OFFSET variable declared without an AREA qualifier.`,
     fullCode: "IBM1581IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the indicated argument to built-in functions such as PLIMOVE and COMPARE has the
@@ -12959,7 +12958,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function is an OFFSET value.`,
     fullCode: "IBM1582IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the indicated argument to built-in functions such as PLIMOVE and COMPARE is an
@@ -12973,7 +12972,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function is an OFFSET variable declared without an AREA qualifier.`,
     fullCode: "IBM1583IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the OFFSETDIFF built-in function.
@@ -12985,7 +12984,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have type OFFSET.`,
     fullCode: "IBM1584IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the POINTERDIFF built-in function.
@@ -12997,7 +12996,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have type POINTER.`,
     fullCode: "IBM1585IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The STRING built-in function and pseudovariable cannot be applied to discontiguous
@@ -13010,7 +13009,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Argument to the STRING built-in function must be CONNECTED.",
     fullCode: "IBM1586IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Any other argument type is invalid. This message applies to the PLISRTx built-in
@@ -13023,7 +13022,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have the ENTRY attribute.`,
     fullCode: "IBM1587IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the CHARGRAPHIC built-in function. For instance, in the following
@@ -13041,7 +13040,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type GRAPHIC.`,
     fullCode: "IBM1588IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The LOCATION and BITLOCATION built-in functions cannot be applied to subscripted
@@ -13054,7 +13053,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must not have any subscripts.`,
     fullCode: "IBM1589IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The STRING built-in function and pseudovariable cannot be applied to UNIONs or to
@@ -13067,7 +13066,7 @@ export const Severe = {
     message:
       "Argument to the STRING built-in function must not be a UNION and must not contain a UNION.",
     fullCode: "IBM1590IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The STRING built-in function and pseudovariable cannot be applied to structures or
@@ -13080,7 +13079,7 @@ export const Severe = {
     message:
       "All members of an argument to the STRING built-in function must have the UNALIGNED attribute.",
     fullCode: "IBM1591IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The STRING built-in function and pseudovariable cannot be applied to structures or
@@ -13093,7 +13092,7 @@ export const Severe = {
     message:
       "All members of an argument to the STRING built-in function must have the NONVARYING attribute.",
     fullCode: "IBM1592IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The STRING built-in function and pseudovariable cannot be applied to structures or
@@ -13107,7 +13106,7 @@ export const Severe = {
     message:
       "All members of an argument to the STRING built-in function must have string type.",
     fullCode: "IBM1593IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The STRING built-in function and pseudovariable cannot be applied to structures or
@@ -13121,7 +13120,7 @@ export const Severe = {
     message:
       "All members of an argument to the STRING built-in function must have the same string type.",
     fullCode: "IBM1594IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This applies to the floating-point inquiry and manipulation built-in functions such
@@ -13134,7 +13133,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type REAL FLOAT.`,
     fullCode: "IBM1595IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the EDIT built-in function.
@@ -13146,7 +13145,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have type CHARACTER.`,
     fullCode: "IBM1596IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the PRIORITY built-in function.
@@ -13158,7 +13157,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have type TASK.`,
     fullCode: "IBM1597IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the COMPLETION and STATUS built-in functions.
@@ -13170,7 +13169,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have type EVENT.`,
     fullCode: "IBM1598IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named built-in function is not a pseudovariable and may not be used as one.
@@ -13182,7 +13181,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The built-in function ${variablename} may not be used as a pseudovariable.`,
     fullCode: "IBM1599IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * It is invalid to assign an array, structure, or union to one of the built-in functions
@@ -13195,7 +13194,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Source to ${BUILTINname} pseudovariable must be scalar.`,
     fullCode: "IBM1600IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The BUILTIN attribute can be applied only to identifiers that are the names of built-in
@@ -13208,7 +13207,7 @@ export const Severe = {
     message: (identifier: string) =>
       `The identifier ${identifier} is not the name of a built-in function. Any use of it is unsupported.`,
     fullCode: "IBM1601IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the PLISRTx built-in functions. For instance, in the following example,
@@ -13228,7 +13227,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Fourth argument to ${BUILTINname} built-in function must have the attributes REAL FIXED BIN(31,0).`,
     fullCode: "IBM1602IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the ADDR and similar built-in functions. It is invalid, for instance,
@@ -13241,7 +13240,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must not have the CONSTANT attribute.`,
     fullCode: "IBM1603IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument for the built-in functions LOW and HIGH must be zero or greater.
@@ -13253,7 +13252,7 @@ export const Severe = {
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} argument must be nonnegative.`,
     fullCode: "IBM1604IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The ENTRYADDR built-in function cannot be applied to non-ENTRYs or to INTERNAL ENTRY
@@ -13266,7 +13265,7 @@ export const Severe = {
     message:
       "Argument to ENTRYADDR built- in function must be an ENTRY variable or an EXTERNAL ENTRY constant.",
     fullCode: "IBM1605IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Pseudovariables cannot be applied to expressions.
@@ -13281,7 +13280,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Argument to ${variablename} pseudovariable must be a reference.`,
     fullCode: "IBM1606IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The SUBSTR pseudovariable cannot be applied to expressions.
@@ -13296,7 +13295,7 @@ export const Severe = {
     message: (variablename: string) =>
       `First argument to ${variablename} pseudovariable must be a reference.`,
     fullCode: "IBM1607IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler does not support the named pseudovariable applied to arrays, structures,
@@ -13309,7 +13308,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Argument to ${variablename} pseudovariable must be a scalar.`,
     fullCode: "IBM1608IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler does not support the named pseudovariable applied to arrays, structures,
@@ -13322,7 +13321,7 @@ export const Severe = {
     message: (variablename: string) =>
       `First argument to ${variablename} pseudovariable must be a scalar.`,
     fullCode: "IBM1609IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The REAL and IMAG pseudovariable can be applied only to COMPLEX arithmetic variables
@@ -13335,7 +13334,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Argument to ${variablename} pseudovariable must be COMPLEX.`,
     fullCode: "IBM1610IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The SUBSTR pseudovariable cannot be applied to numeric variables or to noncomputational
@@ -13348,7 +13347,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} pseudovariable must have string type.`,
     fullCode: "IBM1611IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The ENTRYADDR pseudovariable can be applied only to ENTRY variables.
@@ -13360,7 +13359,7 @@ export const Severe = {
     message:
       "Argument to the ENTRYADDR pseudovariable must be an ENTRY variable.",
     fullCode: "IBM1612IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated built-in function cannot be applied to file constants with attributes
@@ -13373,7 +13372,7 @@ export const Severe = {
     message: (BUILTINname: string, fileattribute: string) =>
       `Argument to ${BUILTINname} built- in function has attributes that conflict with ${fileattribute} .`,
     fullCode: "IBM1613IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated built-in function cannot be applied to non-STREAM files.
@@ -13385,7 +13384,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function has attributes that conflict with STREAM.`,
     fullCode: "IBM1614IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated built-in function cannot be applied to non-PRINT files.
@@ -13397,7 +13396,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function has attributes that conflict with PRINT.`,
     fullCode: "IBM1615IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Specified file attributes and ENVIRONMENT options on a declaration statement are
@@ -13414,7 +13413,7 @@ export const Severe = {
     message: (filename: string) =>
       `Attributes and ENVIRONMENT options for file ${filename} conflict.`,
     fullCode: "IBM1616IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Use of the DIRECT file attribute needs an ENVIRONMENT option specification of INDEXED,
@@ -13430,7 +13429,7 @@ export const Severe = {
     message: (filename: string) =>
       `DIRECT attribute for file ${filename} needs ENVIRONMENT option specification of INDEXED, REGIONAL, RELATIVE, or VSAM.`,
     fullCode: "IBM1617IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * %INCLUDE must be followed by a name and either a semicolon or else a second name
@@ -13442,7 +13441,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Syntax of the INCLUDE statement is incorrect.",
     fullCode: "IBM1618IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum length of the file specification is 8 characters.
@@ -13453,7 +13452,7 @@ export const Severe = {
     severity: Severity.S,
     message: "File specification after INCLUDE is too long.",
     fullCode: "IBM1619IS",
-  } as SimplePLICode,
+  },
 
   /**
    * %INCLUDE must be followed by a file name, not just a semicolon.
@@ -13464,7 +13463,7 @@ export const Severe = {
     severity: Severity.S,
     message: "File specification missing after INCLUDE.",
     fullCode: "IBM1620IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If a parameter is an unaligned bit string or an array or structure consisting entirely
@@ -13478,7 +13477,7 @@ export const Severe = {
     message:
       "NODESCRIPTOR attribute is invalid if any parameters have bit alignment.",
     fullCode: "IBM1621IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Aggregates with more than 131071 elements and dimension specifications would require
@@ -13491,7 +13490,7 @@ export const Severe = {
     message:
       "The number of elements and dimension specifications in an aggregate must not exceed 131071.",
     fullCode: "IBM1622IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The named reference is not a member of any structure or union declared in the block
@@ -13504,7 +13503,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The dot-qualified reference ${referencename} is unknown.`,
     fullCode: "IBM1623IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression specifying an array bound, a string length or an AREA size must not
@@ -13516,7 +13515,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Extent must be a scalar.",
     fullCode: "IBM1625IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression specifying an array bound, a string length, or an AREA size must have
@@ -13528,7 +13527,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Extent must have computational type.",
     fullCode: "IBM1626IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression used as a subscript must not be an array, structure, or union reference
@@ -13540,7 +13539,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Subscript expressions must be scalars.",
     fullCode: "IBM1627IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Only expressions having numeric or string type may be used as subscripts.
@@ -13552,7 +13551,7 @@ export const Severe = {
     message: (indexnumber: string, variablename: string) =>
       `Index number ${indexnumber} into the array ${variablename} must have computational type.`,
     fullCode: "IBM1628IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Array bounds, string lengths, and AREA sizes in STATIC variables must evaluate at
@@ -13564,7 +13563,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Extents for STATIC variable are not constant.",
     fullCode: "IBM1629IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In the assignment of one array to another, the two arrays must have the same number
@@ -13576,7 +13575,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Number of dimensions in arrays do not match.",
     fullCode: "IBM1630IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In the assignment of one array to another, the two arrays must have the same lower
@@ -13588,7 +13587,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Upper and lower bounds in arrays do not match.",
     fullCode: "IBM1631IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Executing such a program would most likely cause a protection exception.
@@ -13604,7 +13603,7 @@ export const Severe = {
     message: (indexnumber: string, variablename: string) =>
       `Index number ${indexnumber} into the variable ${variablename} is less than the lower bound for that dimension.`,
     fullCode: "IBM1632IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Executing such a program would most likely cause a protection exception.
@@ -13620,7 +13619,7 @@ export const Severe = {
     message: (indexnumber: string, variablename: string) =>
       `Index number ${indexnumber} into the variable ${variablename} is greater than the upper bound for that dimension.`,
     fullCode: "IBM1633IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In structure assignments and structure expressions, all subelements that are arrays
@@ -13643,7 +13642,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Number of dimensions in subelements of structures do not match.",
     fullCode: "IBM1634IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In structure assignments and structure expressions, all subelements that are arrays
@@ -13667,7 +13666,7 @@ export const Severe = {
     message:
       "Upper and lower bounds in subelements of structures do not match.",
     fullCode: "IBM1635IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In structure assignments and structure expressions, if any element of one structure
@@ -13680,7 +13679,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Substructuring in subelements of structures do not match.",
     fullCode: "IBM1636IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In structure assignments and structure expressions, all structures must have the
@@ -13692,7 +13691,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Number of subelements in structures do not match.",
     fullCode: "IBM1637IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Only scalars and arrays of scalars are permitted in GENERIC descriptions.
@@ -13703,7 +13702,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Structures and unions are not permitted in GENERIC descriptions.",
     fullCode: "IBM1638IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Aggregates containing no strings or arithmetic variables cannot be used in PUT or
@@ -13716,7 +13715,7 @@ export const Severe = {
     message: (aggregatename: string) =>
       `The aggregate ${aggregatename} contains only noncomputational values. The aggregate will be ignored.`,
     fullCode: "IBM1639IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Aggregates containing one or more UNION statements cannot be used in PUT or GET statements
@@ -13729,7 +13728,7 @@ export const Severe = {
     message: (aggregatename: string) =>
       `The aggregate ${aggregatename} contains one or more unions and cannot be used in stream I/O.`,
     fullCode: "IBM1640IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An array of structures must be referenced in its entirety or element by element.
@@ -13748,7 +13747,7 @@ export const Severe = {
     message: (structurename: string) =>
       `References to slices of the array of structures ${structurename} are not permitted.`,
     fullCode: "IBM1641IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An array of unions must be referenced in its entirety or element by element.
@@ -13767,7 +13766,7 @@ export const Severe = {
     message: (unionname: string) =>
       `References to slices of the array of unions ${unionname} are not permitted.`,
     fullCode: "IBM1642IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * It must be possible to compute the value of the DIMENSION built-in function for an
@@ -13780,7 +13779,7 @@ export const Severe = {
     message:
       "Each dimension of an array must contain no more than 2147483647 elements.",
     fullCode: "IBM1643IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum physical level allowed is 255, but the maximum logical level is 15.
@@ -13791,7 +13790,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Aggregate contains more than 15 logical levels.",
     fullCode: "IBM1644IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Aggregates containing unaligned bits must be less than 2**28 bytes in size while
@@ -13803,7 +13802,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Data aggregate exceeds the maximum length.",
     fullCode: "IBM1645IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If the TO value is bigger than the maximum value that a FIXED or PICTURE variable
@@ -13828,7 +13827,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SIZE would be raised in assigning TO value to control variable.",
     fullCode: "IBM1646IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The number of subscripts given for a variable must match that variable's number of
@@ -13841,7 +13840,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Too few subscripts specified for the variable ${variablename} .`,
     fullCode: "IBM1647IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The number of subscripts given for a variable must match that variable's number of
@@ -13854,7 +13853,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Too many subscripts specified for the variable ${variablename} .`,
     fullCode: "IBM1648IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Arrays with more than 15 dimensions are not supported.
@@ -13876,7 +13875,7 @@ export const Severe = {
     message:
       "The number of inherited dimensions plus the number of member dimensions exceeds 15.",
     fullCode: "IBM1649IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The LIKE reference cannot be a scalar or an array of scalars.
@@ -13892,7 +13891,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The LIKE reference is neither a structure nor a union.",
     fullCode: "IBM1650IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The LIKE reference needs enough qualification to be unique. This message also applies
@@ -13920,7 +13919,7 @@ export const Severe = {
     message: (keywordname: string) =>
       `The ${keywordname} reference is ambiguous.`,
     fullCode: "IBM1651IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * LIKE from LIKE is not supported.
@@ -13943,7 +13942,7 @@ export const Severe = {
     message:
       "Neither the LIKE reference nor any of its substructures can be declared with the LIKE attribute.",
     fullCode: "IBM1652IS",
-  } as SimplePLICode,
+  },
 
   /**
    * LIKE definitions must not be recursive.
@@ -13963,7 +13962,7 @@ export const Severe = {
     message:
       "A LIKE reference in an ENTRY declaration must not be a member of a structure or union containing that ENTRY declaration.",
     fullCode: "IBM1653IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The LIKE reference must be known in the block containing the LIKE attribute specification.
@@ -13976,7 +13975,7 @@ export const Severe = {
     message: (keywordname: string) =>
       `The ${keywordname} reference is unknown.`,
     fullCode: "IBM1654IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If a parameter is declared as controlled, non- controlled variables and expressions
@@ -13995,7 +13994,7 @@ export const Severe = {
     message:
       "Only CONTROLLED variables can be passed to CONTROLLED parameters.",
     fullCode: "IBM1655IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Differences in any arithmetic attributes are not permitted. The following example
@@ -14016,7 +14015,7 @@ export const Severe = {
     message:
       "A CONTROLLED variable passed to a CONTROLLED parameter must have the same attributes as that parameter.",
     fullCode: "IBM1656IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Subscripts are permitted only in array element references.
@@ -14028,7 +14027,7 @@ export const Severe = {
     message: (variablename: string) =>
       `A subscript has been specified for the non-array variable ${variablename} .`,
     fullCode: "IBM1657IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Temporary arrays of strings are supported only if the string length is known.
@@ -14044,7 +14043,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an array expression requiring a temporary array with strings of unknown length.`,
     fullCode: "IBM1658IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The total number of logical levels after LIKE expansion must not exceed 15.
@@ -14056,7 +14055,7 @@ export const Severe = {
     message:
       "After LIKE expansion, aggregate would contain more than 15 logical levels.",
     fullCode: "IBM1659IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Execution of the statement would raise the RECORD condition.
@@ -14075,7 +14074,7 @@ export const Severe = {
     message: (recordsize: string, recsize: string) =>
       `The size ( ${recordsize} ) of the record conflicts with the RECSIZE ( ${recsize} ) specified in the ENVIRONMENT attribute.`,
     fullCode: "IBM1660IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only scalars can be assigned to scalars.
@@ -14086,7 +14085,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Aggregates cannot be assigned to scalars.",
     fullCode: "IBM1661IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Unions and structures containing unions may not be used in expressions except when
@@ -14098,7 +14097,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Unsupported use of union or structure containing a union.",
     fullCode: "IBM1662IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Structure expressions may not, for instance, be assigned to arrays of scalars.
@@ -14109,7 +14108,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Unsupported or invalid use of structure expression.",
     fullCode: "IBM1663IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Array expressions may not, for instance, be assigned to structures or scalars.
@@ -14120,7 +14119,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Array expressions cannot be assigned to non-arrays.",
     fullCode: "IBM1664IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An E15 sort exit have the RETURNS attribute since it will be invoked as a function
@@ -14132,7 +14131,7 @@ export const Severe = {
     severity: Severity.S,
     message: "E15 sort exit routines must have the RETURNS attribute.",
     fullCode: "IBM1665IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An E15 sort exit may return a NONVARYING, VARYING or VARYINGZ CHARACTER string, but
@@ -14144,7 +14143,7 @@ export const Severe = {
     severity: Severity.S,
     message: "E15 sort exit routines must return a CHARACTER string.",
     fullCode: "IBM1666IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The target in an assignment statement must not have the NONASSIGNABLE attribute.
@@ -14155,7 +14154,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Target in assignment is NONASSIGNABLE.",
     fullCode: "IBM1667IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The target of an assignment statement must be an array, structure, union or scalar
@@ -14167,7 +14166,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Target in assignment is a function reference.",
     fullCode: "IBM1668IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Assignments to UNIONs or structures containing UNIONs are restricted. Compound assignment
@@ -14181,7 +14180,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Unsupported assignment to a target containing a UNION.",
     fullCode: "IBM1669IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In a PROCEDURE containing ENTRY statements, if the PROCEDURE and ENTRY statements
@@ -14205,7 +14204,7 @@ export const Severe = {
     message:
       "A PROCEDURE containing ENTRY statements with differing RETURNS attributes must return values BYADDR.",
     fullCode: "IBM1670IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The source in a structure assignment cannot be an array of scalars or a structure
@@ -14218,7 +14217,7 @@ export const Severe = {
     message:
       "The source in a structure assignment must be a scalar expression or a matching structure.",
     fullCode: "IBM1671IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A BY NAME assignment may have not have a mixture of array and non-array targets.
@@ -14236,7 +14235,7 @@ export const Severe = {
     message:
       "In multiple BY NAME assignments, if one target is an array of structures, then all must be.",
     fullCode: "IBM1672IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Only the simple assignment operator can be used to assign to a NONVARYING string
@@ -14249,7 +14248,7 @@ export const Severe = {
     message:
       "The target in a compound concatenate and assign must be a VARYING or VARYINGZ string.",
     fullCode: "IBM1673IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The target in an assignment must not contain any UNIONs.
@@ -14260,7 +14259,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Target in assignment contains UNIONs.",
     fullCode: "IBM1674IS",
-  } as SimplePLICode,
+  },
 
   /**
    * These two options are mutually exclusive.
@@ -14271,7 +14270,7 @@ export const Severe = {
     severity: Severity.S,
     message: "FROMALIEN option cannot be used with MAIN.",
     fullCode: "IBM1675IS",
-  } as SimplePLICode,
+  },
 
   /**
    * ENTRY constants representing nested procedures and ENTRY variables not declared with
@@ -14285,7 +14284,7 @@ export const Severe = {
     message:
       "Source in assignment to LIMITED ENTRY must be either a non- nested ENTRY constant or another LIMITED ENTRY.",
     fullCode: "IBM1676IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An ENTRY constant or variable without an argument list will not be invoked and hence
@@ -14298,7 +14297,7 @@ export const Severe = {
     message: (targettype: string) =>
       `Assignment of ENTRY to ${targettype} is invalid. If the ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1677IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The target attributes conflict with the source attributes.
@@ -14310,7 +14309,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `Assignment of ${sourcetype} to ${targettype} is invalid.`,
     fullCode: "IBM1678IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * POINTER expressions can be converted to OFFSET only if the OFFSET is declared with
@@ -14323,7 +14322,7 @@ export const Severe = {
     message:
       "Assignment of POINTER to OFFSET is invalid unless the OFFSET is declared with an AREA qualifier.",
     fullCode: "IBM1679IS",
-  } as SimplePLICode,
+  },
 
   /**
    * OFFSET variables can be converted to POINTER only if the OFFSET is declared with
@@ -14336,7 +14335,7 @@ export const Severe = {
     message:
       "Assignment of OFFSET to POINTER is invalid unless the OFFSET is declared with an AREA qualifier.",
     fullCode: "IBM1680IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A maximum of 25 preprocessor invocations can be specified in the PP option or in
@@ -14349,7 +14348,7 @@ export const Severe = {
     message:
       "The number of preprocessor invocations specified exceeds the maximum number (25) allowed.",
     fullCode: "IBM1681IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The target in a BY NAME assignment cannot be an array or a scalar.
@@ -14360,7 +14359,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The target in a BY NAME assignment must be a structure.",
     fullCode: "IBM1682IS",
-  } as SimplePLICode,
+  },
 
   /**
    * For instance, in the assignment, x = y, by name, if both x and y immediately contain
@@ -14374,7 +14373,7 @@ export const Severe = {
     message:
       "Set of matching names in the expansion of BY NAME assignment must contain either all structures or no structures.",
     fullCode: "IBM1683IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In a BY NAME assignment, arrays with matching names must have the same number of
@@ -14398,7 +14397,7 @@ export const Severe = {
     message: (variablename: string, variablename2: string) =>
       `Number of dimensions in the BY NAME corresponding elements ${variablename} and ${variablename2} do not match.`,
     fullCode: "IBM1684IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a BY NAME assignment, arrays with matching names must have the same lower and
@@ -14422,7 +14421,7 @@ export const Severe = {
     message: (variablename: string, variablename2: string) =>
       `Upper and lower bounds in BY NAME corresponding elements ${variablename} and ${variablename2} do not match.`,
     fullCode: "IBM1685IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The target structure in a BY NAME assignment must not contain any UNIONs even if
@@ -14435,7 +14434,7 @@ export const Severe = {
     severity: Severity.S,
     message: "BY NAME assignment contains UNIONs.",
     fullCode: "IBM1686IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If the DLI compiler option is specified, PLITDLI cannot be declared with any OPTIONS
@@ -14448,7 +14447,7 @@ export const Severe = {
     message: (reservedname: string) =>
       `${reservedname} cannot be declared with OPTIONS other than ASM.`,
     fullCode: "IBM1687IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the DLI compiler option is specified, PLITDLI cannot be declared with an entry
@@ -14461,7 +14460,7 @@ export const Severe = {
     message: (reservedname: string) =>
       `${reservedname} cannot be declared with an entry description list.`,
     fullCode: "IBM1688IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the DLI compiler option is specified, PLITDLI cannot be declared as a function
@@ -14474,7 +14473,7 @@ export const Severe = {
     message: (reservedname: string) =>
       `${reservedname} cannot be declared as a function.`,
     fullCode: "IBM1689IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Functions, i.e. entrys declared with the RETURNS attribute, cannot be declared with
@@ -14487,7 +14486,7 @@ export const Severe = {
     message: (languagename: string) =>
       `OPTIONS( ${languagename} ) is not supported for functions.`,
     fullCode: "IBM1690IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In ENTRY descriptors, each array bound, string length and AREA size must be specified
@@ -14501,7 +14500,7 @@ export const Severe = {
     message:
       "Extents in ENTRY descriptors must be asterisks or restricted expressions with computational type.",
     fullCode: "IBM1691IS",
-  } as SimplePLICode,
+  },
 
   /**
    * There is no default RETURNS attribute.
@@ -14516,7 +14515,7 @@ export const Severe = {
     severity: Severity.S,
     message: "An ENTRY invoked as a function must have the RETURNS attribute.",
     fullCode: "IBM1692IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The TASK, EVENT and PRIORITY options may be specified only once in any CALL statement
@@ -14529,7 +14528,7 @@ export const Severe = {
     message: (calloption: string) =>
       `${calloption} option repeated in CALL statement.`,
     fullCode: "IBM1693IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * CALL x is invalid unless x is a built-in subroutine, an ENTRY constant, or an ENTRY
@@ -14542,7 +14541,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Reference in CALL statement must not be a built-in function.",
     fullCode: "IBM1694IS",
-  } as SimplePLICode,
+  },
 
   /**
    * CALL x is invalid unless x is a built-in subroutine, an ENTRY constant, or an ENTRY
@@ -14555,7 +14554,7 @@ export const Severe = {
     message:
       "Reference in CALL statement must either be a built-in subroutine or have type ENTRY.",
     fullCode: "IBM1695IS",
-  } as SimplePLICode,
+  },
 
   /**
    * All RETURN statements inside functions must specify a value to be returned.
@@ -14571,7 +14570,7 @@ export const Severe = {
     message:
       "RETURN statement without an expression is invalid inside a nested PROCEDURE that specified the RETURNS attribute.",
     fullCode: "IBM1696IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A statement of the form RETURN(x) is valid inside only PROCEDUREs that are defined
@@ -14584,7 +14583,7 @@ export const Severe = {
     message:
       "RETURN statement is invalid inside a PROCEDURE that did not specify the RETURNS attribute.",
     fullCode: "IBM1697IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A statement of the form RETURN(x) is valid inside a BEGIN block only if the PROCEDURE
@@ -14598,7 +14597,7 @@ export const Severe = {
     message:
       "RETURN statement with an expression is invalid inside a BEGIN in a PROCEDURE that does not have the RETURNS(BYADDR) attribute.",
     fullCode: "IBM1698IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Arrays, structures, and unions cannot be passed BYVALUE.
@@ -14610,7 +14609,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an aggregate. This conflicts with the BYVALUE option.`,
     fullCode: "IBM1699IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Even AREA variables with constant size must be passed BYADDR.
@@ -14621,7 +14620,7 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string) => `${attribute} must be passed BYADDR.`,
     fullCode: "IBM1700IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only strings with constant size can be passed BYVALUE.
@@ -14633,7 +14632,7 @@ export const Severe = {
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is a string with unknown size. This conflicts with the BYVALUE option.`,
     fullCode: "IBM1701IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Structures and union may not be returned. The following code example is invalid:
@@ -14648,7 +14647,7 @@ export const Severe = {
     message: (attributekeyword: string) =>
       `The ${attributekeyword} attribute is invalid as a RETURNS subattribute.`,
     fullCode: "IBM1702IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * CALL references must be scalars.
@@ -14663,7 +14662,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Reference in CALL statement must not be an aggregate reference.",
     fullCode: "IBM1703IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A function can have only one argument list unless it returns an ENTRY, in which case
@@ -14677,7 +14676,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Too many argument lists have been specified for the variable ${variablename} .`,
     fullCode: "IBM1704IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The RETURN expression must have a type that can be converted to the type indicated
@@ -14695,7 +14694,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `RETURN expression with attribute ${sourcetype} is invalid for RETURNS options specifying the attribute ${targettype} .`,
     fullCode: "IBM1705IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The RETURN expression must have a type that can be converted to the type indicated
@@ -14714,7 +14713,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `RETURN expression with attribute ${sourcetype} is invalid for RETURNS options specifying the attribute ${targettype} . If the ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1706IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only an EXTERNAL ENTRY CONSTANT, an ENTRY CONSTANT representing a non-nested PROCEDURE,
@@ -14728,7 +14727,7 @@ export const Severe = {
     message: (sourcetype: string) =>
       `RETURN expression with attribute ${sourcetype} is invalid for RETURNS options specifying the attribute LIMITED ENTRY.`,
     fullCode: "IBM1707IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * POINTER expressions can be converted to OFFSET only if the offset is declared with
@@ -14741,7 +14740,7 @@ export const Severe = {
     message:
       "RETURN expression with attribute POINTER is invalid for RETURNS options specifying the attribute OFFSET since the OFFSET attribute is not declared with an AREA qualifier.",
     fullCode: "IBM1708IS",
-  } as SimplePLICode,
+  },
 
   /**
    * OFFSET variables can be converted to POINTER only if the OFFSET is declared with
@@ -14754,7 +14753,7 @@ export const Severe = {
     message:
       "RETURN expression with attribute OFFSET is invalid for RETURNS options specifying the attribute POINTER since the OFFSET expression is not an OFFSET variable declared with an AREA qualifier.",
     fullCode: "IBM1709IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In a function that returns an ordinal, the ORDINAL type in any RETURN expression
@@ -14772,7 +14771,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ORDINAL type in RETURN expression and RETURNS option must match.",
     fullCode: "IBM1710IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The expression in a RETURN statement must not be an array, a structure, or a union
@@ -14784,7 +14783,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Expression in RETURN statement must be scalar.",
     fullCode: "IBM1711IS",
-  } as SimplePLICode,
+  },
 
   /**
    * EXTERNAL('') is invalid.
@@ -14795,7 +14794,7 @@ export const Severe = {
     severity: Severity.S,
     message: "External name specification must be a non-null string.",
     fullCode: "IBM1712IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Functions must contain at least one RETURN statement.
@@ -14807,7 +14806,7 @@ export const Severe = {
     message: (functionname: string) =>
       `Function ${functionname} contains no RETURN statement.`,
     fullCode: "IBM1713IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In RETURNS descriptors, each array bound, string length, and AREA size must be specified
@@ -14820,7 +14819,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Extents in RETURNS descriptors must be constants.",
     fullCode: "IBM1714IS",
-  } as SimplePLICode,
+  },
 
   /**
    * RETURN statements are not permitted in an ON-unit or any of its contained BEGIN blocks
@@ -14833,7 +14832,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Exit from an ON-unit via RETURN is invalid.",
     fullCode: "IBM1715IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Expressions in FORMAT lists, including SKIP clauses, must represent scalar values
@@ -14845,7 +14844,7 @@ export const Severe = {
     severity: Severity.S,
     message: "FORMAT expression must be a scalar value.",
     fullCode: "IBM1716IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Expressions in FORMAT lists, including SKIP clauses, must have computational type
@@ -14857,7 +14856,7 @@ export const Severe = {
     severity: Severity.S,
     message: "FORMAT expression must have computational type.",
     fullCode: "IBM1717IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The expression in an IF, WHILE, UNTIL, SELECT, or WHEN clause must have computational
@@ -14870,7 +14869,7 @@ export const Severe = {
     message: (sourcetype: string) =>
       `${sourcetype} is invalid as a Boolean expression.`,
     fullCode: "IBM1718IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The expression in an IF, WHILE, UNTIL, SELECT, or WHEN clause must have computational
@@ -14885,7 +14884,7 @@ export const Severe = {
     message:
       "ENTRY is invalid as a Boolean expression. If an ENTRY should be invoked, an argument list must be provided.",
     fullCode: "IBM1719IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression used in calculating the size of a variable must not depend on any values
@@ -14899,7 +14898,7 @@ export const Severe = {
     message:
       "Expression for calculating size of variable with adjustable extents is 90 too complicated. Variable may be defined in terms of itself.",
     fullCode: "IBM1720IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The compiler's space for evaluating expressions has been exhausted. Rewrite the expression
@@ -14911,7 +14910,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Expression contains too many nested subexpressions.",
     fullCode: "IBM1721IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Compilation will terminate when the number of messages has exceeded the limit set
@@ -14924,7 +14923,7 @@ export const Severe = {
     message:
       "The number of error messages allowed by the MAXMSG option has been exceeded.",
     fullCode: "IBM1722IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The length of the string literal produced by concatenating two string literals must
@@ -14937,7 +14936,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Result of concatenating two literals is too long.",
     fullCode: "IBM1723IS",
-  } as SimplePLICode,
+  },
 
   /**
    * One of the operands in an addition must be computational and the other must be either
@@ -14950,7 +14949,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `Addition of ${sourcetype} and ${targettype} is invalid.`,
     fullCode: "IBM1724IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An ENTRY cannot be used as an arithmetic operand. If the ENTRY is a function which
@@ -14964,7 +14963,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `Addition of ${sourcetype} and ${targettype} is invalid. If an ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1725IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The first operand in a subtraction must be computational or a locator. The second
@@ -14978,7 +14977,7 @@ export const Severe = {
     message: (targettype: string, sourcetype: string) =>
       `Subtraction of ${targettype} from ${sourcetype} is invalid.`,
     fullCode: "IBM1726IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An ENTRY cannot be used as an arithmetic operand. If the ENTRY is a function which
@@ -14992,7 +14991,7 @@ export const Severe = {
     message: (targettype: string, sourcetype: string) =>
       `Subtraction of ${targettype} from ${sourcetype} is invalid. If an ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1727IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Both operands in a multiplication must be computational.
@@ -15004,7 +15003,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `Multiplication of ${sourcetype} by ${targettype} is invalid.`,
     fullCode: "IBM1728IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An ENTRY cannot be used as an arithmetic operand. If the ENTRY is a function which
@@ -15018,7 +15017,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `Multiplication of ${sourcetype} by ${targettype} is invalid. If an ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1729IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Both operands in a division must be computational.
@@ -15030,7 +15029,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `Division of ${sourcetype} by ${targettype} is invalid.`,
     fullCode: "IBM1730IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An ENTRY cannot be used as an arithmetic operand. If the ENTRY is a function which
@@ -15044,7 +15043,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `Division of ${sourcetype} by ${targettype} is invalid. If an ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1731IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Aggregate expressions are supported only as the source in an assignment statement
@@ -15057,7 +15056,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Unsupported use of aggregate expression.",
     fullCode: "IBM1732IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Only expressions having string or numeric type may be concatenated.
@@ -15068,7 +15067,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Concatenate operands must have computational type.",
     fullCode: "IBM1733IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The prefix operators (plus, minus, and logical not) may be applied only to expressions
@@ -15080,7 +15079,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Operand in a prefix expression is not computational.",
     fullCode: "IBM1734IS",
-  } as SimplePLICode,
+  },
 
   /**
    * No relational operations are defined for AREA variables.
@@ -15091,7 +15090,7 @@ export const Severe = {
     severity: Severity.S,
     message: "AREA variables may not be compared.",
     fullCode: "IBM1735IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Computational types can be compared only with other computational types, and non-computational
@@ -15104,7 +15103,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `Comparison of ${sourcetype} to ${targettype} is invalid.`,
     fullCode: "IBM1736IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * ENTRYs can be compared only with other ENTRYs. If the ENTRY is a function which should
@@ -15118,7 +15117,7 @@ export const Severe = {
     message: (targettype: string) =>
       `Comparison of ENTRY to ${targettype} is invalid. If the ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1737IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * ENTRYs can be compared only with other ENTRYs. If the ENTRY is a function which should
@@ -15132,7 +15131,7 @@ export const Severe = {
     message: (sourcetype: string) =>
       `Comparison of ${sourcetype} to ENTRY is invalid. If the ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1738IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * No relational operations are defined for TASK variables.
@@ -15143,7 +15142,7 @@ export const Severe = {
     severity: Severity.S,
     message: "TASK variables may not be compared.",
     fullCode: "IBM1739IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An OFFSET can be compared with a POINTER as long as the OFFSET can be converted to
@@ -15156,7 +15155,7 @@ export const Severe = {
     message:
       "Comparison of an OFFSET to a POINTER is invalid since the OFFSET comparand is not an OFFSET variable declared with an AREA qualifier.",
     fullCode: "IBM1740IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Comparisons of strongly-typed variables are invalid unless both have the same type
@@ -15174,7 +15173,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Operands in comparison have differing strong types.",
     fullCode: "IBM1741IS",
-  } as SimplePLICode,
+  },
 
   /**
    * ORDINALs cannot be compared with other ORDINALs having a different ORDINAL type.
@@ -15185,7 +15184,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Compared ORDINALs must have the same ORDINAL type.",
     fullCode: "IBM1742IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Assignments of strongly-typed variables are invalid unless both have the same type
@@ -15197,7 +15196,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Source and target in assignment have differing strong types.",
     fullCode: "IBM1743IS",
-  } as SimplePLICode,
+  },
 
   /**
    * ORDINALs cannot be assigned to other ORDINALs having different ORDINAL type.
@@ -15209,7 +15208,7 @@ export const Severe = {
     message:
       "Conversion of ORDINALs is invalid unless both have the same ORDINAL type.",
     fullCode: "IBM1744IS",
-  } as SimplePLICode,
+  },
 
   /**
    * For instance, in a function that returns a typed structure, any RETURN expression
@@ -15222,7 +15221,7 @@ export const Severe = {
     message:
       "In a function that returns a strong type, the type in any RETURN expression must be the same as that returned by the function.",
     fullCode: "IBM1745IS",
-  } as SimplePLICode,
+  },
 
   /**
    * These expressions must be reducible to a constant at compile-time.
@@ -15240,7 +15239,7 @@ export const Severe = {
     message:
       "VALUE, VALUELIST, VALUERANGE, and STATIC INITIAL expressions must be constant.",
     fullCode: "IBM1746IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This is a compiler restriction. Reorder the declarations and blocks in your program.
@@ -15258,7 +15257,7 @@ export const Severe = {
     message:
       "Function cannot be used before the function's descriptor list has been scanned.",
     fullCode: "IBM1747IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Reorder the declarations in your program. For example, the following declarations
@@ -15275,7 +15274,7 @@ export const Severe = {
     message:
       "Extents of automatic variables must not depend on the extents of automatic variables declared later in the same block.",
     fullCode: "IBM1748IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Aggregate expressions are not valid as INITIAL and VALUE expressions.
@@ -15286,7 +15285,7 @@ export const Severe = {
     severity: Severity.S,
     message: "VALUE and INITIAL expressions must be scalars.",
     fullCode: "IBM1749IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The INITIAL attribute is supported for a STATIC LABEL variable only if the variable
@@ -15299,7 +15298,7 @@ export const Severe = {
     message: (variablename: string) =>
       `INITIAL attribute is invalid for the STATIC LABEL variable ${variablename} since it has the MEMBER attribute.`,
     fullCode: "IBM1750IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * ENTRY variables that don't have the LIMITED attribute require block activation information,
@@ -15312,7 +15311,7 @@ export const Severe = {
     message: (variablename: string) =>
       `INITIAL attribute is valid for the STATIC ENTRY variable ${variablename} only if it has the LIMITED attribute.`,
     fullCode: "IBM1751IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * FORMAT variables require block activation information, and hence they cannot be initialized
@@ -15326,7 +15325,7 @@ export const Severe = {
     message: (variablename: string) =>
       `INITIAL attribute is invalid for the STATIC FORMAT variable ${variablename} .`,
     fullCode: "IBM1753IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Since an asterisk iteration factor completes the initialization of a variable, it
@@ -15343,7 +15342,7 @@ export const Severe = {
     message: (variablename: string) =>
       `An asterisk iteration factor can be applied only to the last expression in the INITIAL item list for ${variablename} .`,
     fullCode: "IBM1754IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An asterisk iteration can be used only in a non-nested INITIAL item list. The following
@@ -15360,7 +15359,7 @@ export const Severe = {
     message: (variablename: string) =>
       `An asterisk iteration factor cannot be used in the nested INITIAL item list for ${variablename} .`,
     fullCode: "IBM1755IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only arrays can have an INITIAL list with more than one element.
@@ -15375,7 +15374,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The scalar variable ${variablename} has an INITIAL list with more than one item.`,
     fullCode: "IBM1756IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Change the storage class to AUTOMATIC.
@@ -15393,7 +15392,7 @@ export const Severe = {
     message: (variablename: string) =>
       `LABEL constant in STATIC INITIAL for the variable ${variablename} must be in the same block as the LABEL being initialized.`,
     fullCode: "IBM1757IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If more than one element in a STATIC UNION had an INITIAL value, it would not be
@@ -15412,7 +15411,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Only one element in the STATIC UNION ${variablename} may have the INITIAL attribute.`,
     fullCode: "IBM1758IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The only supported INITIAL values for a STATIC UNALIGNED BIT variable with inherited
@@ -15431,7 +15430,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Non-null INITIAL values are not supported for the STATIC NONCONNECTED array ${variablename} since it has the attributes UNALIGNED BIT.`,
     fullCode: "IBM1759IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Replace the subscripted LABEL with an unsubscripted one or change the storage class
@@ -15450,7 +15449,7 @@ export const Severe = {
     message: (variablename: string) =>
       `LABEL constant in the STATIC INITIAL list for ${variablename} must not be an element of a LABEL CONSTANT array.`,
     fullCode: "IBM1760IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The variable y in DCL x ENTRY LIMITED INIT(y) must not be FETCHABLE; y must not be
@@ -15464,7 +15463,7 @@ export const Severe = {
     message: (variablename: string) =>
       `ENTRY reference in INITIAL clause for the STATIC ENTRY variable ${variablename} must not be FETCHABLE.`,
     fullCode: "IBM1761IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Iteration factors in INITIAL lists must have numeric or string types.
@@ -15475,7 +15474,7 @@ export const Severe = {
     severity: Severity.S,
     message: "INITIAL iteration factor must have computational type.",
     fullCode: "IBM1762IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An iteration factor in an INITIAL list must not be an array, structure, or union
@@ -15487,7 +15486,7 @@ export const Severe = {
     severity: Severity.S,
     message: "INITIAL iteration factor must be a scalar.",
     fullCode: "IBM1763IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Strings with nonconstant length must be passed and received by address.
@@ -15503,7 +15502,7 @@ export const Severe = {
     message:
       "The BYVALUE attribute is invalid for strings of nonconstant length.",
     fullCode: "IBM1764IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Named strings must have a constant length or a length determined from their VALUE
@@ -15520,7 +15519,7 @@ export const Severe = {
     message:
       "Length of string with the VALUE attribute must be a constant or an asterisk.",
     fullCode: "IBM1765IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Named constants must be evaluated before they are used. Reorder the declarations
@@ -15537,7 +15536,7 @@ export const Severe = {
     message: (variablename: string) =>
       `VALUE for ${variablename} must be evaluated before its first use.`,
     fullCode: "IBM1766IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Named constants may not be used as control variables in DO loops.
@@ -15552,7 +15551,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Control variable in DO statement must not be a named constant.",
     fullCode: "IBM1767IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Constants may not be used as control variables in DO loops.
@@ -15567,7 +15566,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Control variable in DO statement must have VARIABLE attribute.",
     fullCode: "IBM1768IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If the control variable in a DO loop has POINTER type, the TO expression must have
@@ -15580,7 +15579,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Control variable has type POINTER, but TO expression does not.",
     fullCode: "IBM1769IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In a DO loop with a TO clause, the control variable must have a type that allows
@@ -15594,7 +15593,7 @@ export const Severe = {
     message:
       "Control variable in loop with TO clause must have computational or locator type.",
     fullCode: "IBM1770IS",
-  } as SimplePLICode,
+  },
 
   /**
    * SUBSTR and UNSPEC may be used as pseudovariables in DO-loops only if their derived
@@ -15607,7 +15606,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The ${variablename} built-in function may be used as a pseudovariable in a DO-loop only if the length of the pseudovariable reference is known at compile time.`,
     fullCode: "IBM1771IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a DO loop of the form DO a = b TO c, b must be a scalar.
@@ -15618,7 +15617,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Source in DO loop initialization must be scalar.",
     fullCode: "IBM1772IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In a DO loop of the form DO x = .., x must be a scalar.
@@ -15629,7 +15628,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Control variable in DO statement must be a scalar.",
     fullCode: "IBM1773IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In a DO loop of the form DO x = .., if x is a string or an area, then it must have
@@ -15642,7 +15641,7 @@ export const Severe = {
     message:
       "Compiler restriction: control variable in DO statement must not be a BASED or CONTROLLED string or area that has non-constant extent.",
     fullCode: "IBM1774IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The expression in the BY clause of a DO loop must have a string or numeric type.
@@ -15654,7 +15653,7 @@ export const Severe = {
     severity: Severity.S,
     message: "BY expression must have computational type.",
     fullCode: "IBM1775IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The expression in the BY clause of a DO loop must be REAL.
@@ -15669,7 +15668,7 @@ export const Severe = {
     severity: Severity.S,
     message: "BY expression must not be COMPLEX.",
     fullCode: "IBM1776IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The expression in the TO clause of a DO loop must be REAL
@@ -15684,7 +15683,7 @@ export const Severe = {
     severity: Severity.S,
     message: "TO expression must not be COMPLEX.",
     fullCode: "IBM1777IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In a DO loop with a TO clause, the control variable must have a type that allows
@@ -15697,7 +15696,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Control variable in loop with TO clause must not be COMPLEX.",
     fullCode: "IBM1778IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The expression in the TO clause of a DO loop must have a string or numeric type.
@@ -15708,7 +15707,7 @@ export const Severe = {
     severity: Severity.S,
     message: "TO expression must have computational type.",
     fullCode: "IBM1779IS",
-  } as SimplePLICode,
+  },
 
   /**
    * ON ANYCONDITION may be used to trap conditions not otherwise trapped, but ANYCONDITION
@@ -15720,7 +15719,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SIGNAL ANYCONDITION is invalid.",
     fullCode: "IBM1780IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Bitwise operands must have a computational type.
@@ -15732,7 +15731,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `And, or and exclusive-or of ${sourcetype} and ${targettype} is invalid.`,
     fullCode: "IBM1781IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An ENTRY cannot be used as a bitwise operand. If the ENTRY is a function which should
@@ -15746,7 +15745,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `And, or and exclusive-or of ${sourcetype} and ${targettype} is invalid. If an ENTRY should be invoked, an argument list must be provided.`,
     fullCode: "IBM1782IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A variable declared as BASED instead of as BASED( reference ) must always be explicitly
@@ -15760,7 +15759,7 @@ export const Severe = {
     message:
       "BASED variable without an implicit qualifier must be explicitly qualified.",
     fullCode: "IBM1783IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Functions, but not subprocedures, can be used as locator qualifiers (and then only
@@ -15773,7 +15772,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a locator qualifier since it does not have the RETURNS attribute.`,
     fullCode: "IBM1784IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only scalars can be used as locator qualifiers.
@@ -15785,7 +15784,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The variable ${variablename} is used as a locator qualifier, but it is not a scalar.`,
     fullCode: "IBM1785IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named built-in function cannot be used as a locator qualifier since it does not
@@ -15798,7 +15797,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} built-in function may not be used as a locator qualifier.`,
     fullCode: "IBM1786IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * x(...)->y is invalid unless x returns a POINTER or an OFFSET declared with a qualifying
@@ -15811,7 +15810,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a locator qualifier.`,
     fullCode: "IBM1787IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only POINTERs and OFFSETs declared with a qualifying AREA can be used as locator
@@ -15824,7 +15823,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The qualifier ${variablename} does not have locator type.`,
     fullCode: "IBM1789IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Locator qualification is valid only for BASED variables.
@@ -15836,7 +15835,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Locator qualification is invalid for ${variablename} .`,
     fullCode: "IBM1790IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * All references must be unambiguous.
@@ -15848,7 +15847,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The locator qualified reference ${referencename} is ambiguous.`,
     fullCode: "IBM1791IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Locator qualified references must be explicitly declared. BASED variables may not
@@ -15861,7 +15860,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The locator qualified reference ${referencename} is unknown.`,
     fullCode: "IBM1792IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only IMAG, REAL, SUBSTR and UNSPEC may be used as pseudovariables in DO loops.
@@ -15873,7 +15872,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The ${variablename} built-in function may not be used as a pseudovariable in a DO-loop.`,
     fullCode: "IBM1793IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An implicitly qualified variable must require no more than 15 qualifiers to be completely
@@ -15892,7 +15891,7 @@ export const Severe = {
     message:
       "Too many implicit locators are needed to resolve the qualification for a variable. Variable may be based on itself.",
     fullCode: "IBM1794IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An OFFSET variable can be used as a locator qualifier only if it can be converted
@@ -15906,7 +15905,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The OFFSET variable ${variablename} may not be used as a locator qualifier since it was not declared with an AREA specification.`,
     fullCode: "IBM1795IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Arrays, structures, and unions may not be used as locator qualifiers.
@@ -15917,7 +15916,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Qualifier must be a scalar.",
     fullCode: "IBM1796IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The REFER option cannot be used in a BASED variable which also has an extent that
@@ -15930,7 +15929,7 @@ export const Severe = {
     message:
       "BASED variables may not contain extents with nonconstant values if other extents use the REFER option.",
     fullCode: "IBM1797IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The picture character F specifies a picture scaling factor for fixed-point decimal
@@ -15943,7 +15942,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Invalid scale factor in PICTURE specification.",
     fullCode: "IBM1798IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The picture specification can contain only A X 9 for the Character Data, and only
@@ -15956,7 +15955,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Invalid characters in PICTURE specification.",
     fullCode: "IBM1799IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The picture character F specifies a picture scaling factor for fixed-point decimal
@@ -15969,7 +15968,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Invalid characters in the F scaling factor.",
     fullCode: "IBM1800IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The picture specification can contain only A, X, or 9 for the character data. Other
@@ -15981,7 +15980,7 @@ export const Severe = {
     severity: Severity.S,
     message: "A character PICTURE string may have only A, X, or 9.",
     fullCode: "IBM1801IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The number of digits for the precision field within a numeric data picture specification
@@ -15993,7 +15992,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Invalid precision in PICTURE fixed decimal precision.",
     fullCode: "IBM1802IS",
-  } as SimplePLICode,
+  },
 
   /**
    * T, I, or R are the overpunched characters in the picture specification. Only one
@@ -16007,7 +16006,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Too many T, I, or R appear in the PICTURE specification.",
     fullCode: "IBM1803IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Character PICTURE specifications are not permitted in C-format items.
@@ -16018,7 +16017,7 @@ export const Severe = {
     severity: Severity.S,
     message: "PICTURE specifications in C- format items must be arithmetic.",
     fullCode: "IBM1804IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The precision field within a numeric data picture specification must contain at least
@@ -16030,7 +16029,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Precision in numeric PICTURE must NOT be less than 1.",
     fullCode: "IBM1805IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The precision in the fixed decimal picture specification must not exceed that specified
@@ -16042,7 +16041,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The precision in FIXED DECIMAL PICTURE is too big.",
     fullCode: "IBM1806IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The precision in the float decimal picture specification is limited by the hardware
@@ -16054,7 +16053,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Precision in FLOAT DECIMAL PICTURE is too big.",
     fullCode: "IBM1807IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Null picture strings (''P) are invalid.
@@ -16065,7 +16064,7 @@ export const Severe = {
     severity: Severity.S,
     message: "PICTURE string is empty.",
     fullCode: "IBM1808IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The number of digits in the exponent of the float decimal picture specification is
@@ -16078,7 +16077,7 @@ export const Severe = {
     message:
       "Exponent in FLOAT PICTURE is too long. Exponent will be truncated to fit.",
     fullCode: "IBM1809IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The exponent in the float decimal picture specification is missing. It must be entered
@@ -16090,7 +16089,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Exponent in FLOAT PICTURE has no digits.",
     fullCode: "IBM1810IS",
-  } as SimplePLICode,
+  },
 
   /**
    * V specifies an implicit decimal point. Therefore, it is not permitted in the exponent
@@ -16102,7 +16101,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Exponent in PICTURE specification cannot contain V.",
     fullCode: "IBM1811IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Credit (CR), debit (DB), and scale factor (F) are only allowed in the FIXED picture
@@ -16114,7 +16113,7 @@ export const Severe = {
     severity: Severity.S,
     message: "FLOAT PICTURE cannot contain CR, DB or F.",
     fullCode: "IBM1812IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The compiler restrictions on the length of the picture specification are:
@@ -16131,7 +16130,7 @@ export const Severe = {
     message:
       "PICTURE specification is too long. Excess characters are truncated on the right.",
     fullCode: "IBM1813IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The floating insertion string is delimited by < >. Floating is done by the > character.
@@ -16148,7 +16147,7 @@ export const Severe = {
     message:
       "PICTURE string has an invalid floating insertion character string.",
     fullCode: "IBM1814IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Built-in subroutines cannot be used as functions - they can only be called. For instance,
@@ -16165,7 +16164,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} is a built-in subroutine. It should be used only in CALL statements and not as a function.`,
     fullCode: "IBM1815IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The expression must be arithmetic or string.
@@ -16181,7 +16180,7 @@ export const Severe = {
     message: (keyword: string, variablename: string) =>
       `${keyword} item ${variablename} is not computational.`,
     fullCode: "IBM1816IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The KEYTO reference should have the data type character or graphic. The reference
@@ -16193,7 +16192,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The KEYTO reference must be of type CHARACTER or GRAPHIC.",
     fullCode: "IBM1817IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An option on the I\/O statement conflicts with prior options.
@@ -16209,7 +16208,7 @@ export const Severe = {
     message: (ioOption: string, ioStmt: string) =>
       `${ioOption} conflicts with previous options on the ${ioStmt} statement.`,
     fullCode: "IBM1818IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Each option may be specified only once.
@@ -16224,7 +16223,7 @@ export const Severe = {
     message: (ioOption: string, ioStmt: string) =>
       `The ${ioOption} option is multiply specified on the ${ioStmt} statement.`,
     fullCode: "IBM1819IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A required statement element has not been specified.
@@ -16240,7 +16239,7 @@ export const Severe = {
     message: (ioOption: string, ioStmt: string) =>
       `Mandatory ${ioOption} option not specified on the ${ioStmt} statement.`,
     fullCode: "IBM1820IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An invalid scalar or aggregate reference has been specified for the FROM or INTO
@@ -16258,7 +16257,7 @@ export const Severe = {
     message: (fromintooption: string) =>
       `Reference for ${fromintooption} is an invalid element or aggregate type.`,
     fullCode: "IBM1821IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The expression in a KEY or KEYFROM record I\/O statement option must be computational
@@ -16271,7 +16270,7 @@ export const Severe = {
     message: (keywordtype: string) =>
       `The ${keywordtype} expression must be computational.`,
     fullCode: "IBM1822IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In the SET clause of an ALLOCATE or LOCATE statement, the reference must have the
@@ -16283,7 +16282,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SET reference must have locator type.",
     fullCode: "IBM1823IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The expression in the named keyword clause must be scalar. This keyword clause could
@@ -16301,7 +16300,7 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) => `${keyword} expression must be scalar.`,
     fullCode: "IBM1824IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The references for the KEYTO, FROM, INTO, and SET record I\/O options cannot be built-in
@@ -16319,7 +16318,7 @@ export const Severe = {
     message: (keyword: string) =>
       `The reference in the ${keyword} clause cannot be a built-in function reference.`,
     fullCode: "IBM1825IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The references for the KEYTO, FROM, INTO, and SET record I\/O options cannot be entry
@@ -16332,7 +16331,7 @@ export const Severe = {
     message: (keyword: string) =>
       `The reference in the ${keyword} clause cannot be a function invocation.`,
     fullCode: "IBM1826IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The specified reference is invalid. It must be of type character. The example below
@@ -16349,7 +16348,7 @@ export const Severe = {
     message: (keyword: string) =>
       `The reference in the ${keyword} clause must have CHARACTER type.`,
     fullCode: "IBM1827IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The specified reference is invalid. It must be a scalar. The example below will cause
@@ -16366,7 +16365,7 @@ export const Severe = {
     message: (keyword: string) =>
       `The reference in the ${keyword} clause must be a scalar variable.`,
     fullCode: "IBM1828IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The declared attributes conflict with their use in the statement.
@@ -16382,7 +16381,7 @@ export const Severe = {
     message: (clause: string) =>
       `The attributes of the argument in the ${clause} clause conflict with its usage.`,
     fullCode: "IBM1829IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The expression must be arithmetic or string.
@@ -16397,7 +16396,7 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) => `${keyword} expression is not computational.`,
     fullCode: "IBM1830IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Provide a SET clause in the LOCATE statement.
@@ -16416,7 +16415,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The LOCATE reference ${variablename} is not implicitly qualified and is invalid without a SET clause.`,
     fullCode: "IBM1831IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The reference in the SET clause of a FETCH statement must have the POINTER type.
@@ -16428,7 +16427,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SET reference must have POINTER type.",
     fullCode: "IBM1832IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The specified reference in the FROM or INTO record I\/O option is invalid. The reference
@@ -16448,7 +16447,7 @@ export const Severe = {
     message: (fromintoclause: string) =>
       `The aggregate reference in the ${fromintoclause} clause must be CONNECTED.`,
     fullCode: "IBM1833IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The specified expression in the IGNORE option of the READ statement must be computational.
@@ -16464,7 +16463,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The expression in IGNORE must be computational.",
     fullCode: "IBM1834IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The LOCATE reference may not be a structure member and must have the storage attribute
@@ -16477,7 +16476,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The LOCATE reference ${variablename} is not a level 1 BASED variable.`,
     fullCode: "IBM1835IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The INITIAL attribute is valid only for scalars and arrays of scalars.
@@ -16488,7 +16487,7 @@ export const Severe = {
     severity: Severity.S,
     message: "INITIAL attribute is invalid for structures.",
     fullCode: "IBM1836IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The specified reference is invalid. It cannot be a named constant. The example below
@@ -16507,7 +16506,7 @@ export const Severe = {
     message: (keyword: string) =>
       `The reference in the ${keyword} clause cannot be a named constant.`,
     fullCode: "IBM1837IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only AUTOMATIC, CONTROLLED, PARAMETER, STATIC and and implicitly qualified BASED
@@ -16524,7 +16523,7 @@ export const Severe = {
     message: (argumentnumber: string) =>
       `The attributes of ${argumentnumber} conflict with its usage in data directed I/O.`,
     fullCode: "IBM1838IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Use a temporary or use LIST- or EDIT directed I\/O.
@@ -16535,7 +16534,7 @@ export const Severe = {
     severity: Severity.S,
     message: "DATA-directed I/O does not support references with locators.",
     fullCode: "IBM1839IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Use a temporary or use GET LIST or GET EDIT.
@@ -16546,7 +16545,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Subscripted references are not allowed in GET DATA.",
     fullCode: "IBM1840IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The format argument is outside the valid range.
@@ -16561,7 +16560,7 @@ export const Severe = {
     message: (keyword: string) =>
       `The first argument in the ${keyword} - format item is invalid.`,
     fullCode: "IBM1841IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The width specified is too small for complete processing.
@@ -16576,7 +16575,7 @@ export const Severe = {
     message: (keyword: string) =>
       `The field width specified in the ${keyword} -format item is too small for complete input or output of the data item.`,
     fullCode: "IBM1842IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The fractional number of digits must be less than or equal to the field width and
@@ -16589,7 +16588,7 @@ export const Severe = {
     message: (keyword: string) =>
       `The fractional digits specified in the ${keyword} -format item is invalid.`,
     fullCode: "IBM1843IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument to the R-format item must be either a format constant or a format variable
@@ -16602,7 +16601,7 @@ export const Severe = {
     message:
       "The argument in the R-format item is not a format constant or format variable.",
     fullCode: "IBM1844IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The number of significant digits must be greater than or equal to the number of fractional
@@ -16614,7 +16613,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The significant digits specified in E-format item is invalid.",
     fullCode: "IBM1845IS",
-  } as SimplePLICode,
+  },
 
   /**
    * G, L, PAGE, LINE, SKIP, and COLUMN format items may not be used in GET\/PUT EDIT
@@ -16627,7 +16626,7 @@ export const Severe = {
     message: (formatitem: string) =>
       `The ${formatitem} format item is invalid with GET/PUT STRING.`,
     fullCode: "IBM1846IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The target of a GOTO cannot be inside a DO loop unless the GOTO itself is in the
@@ -16639,7 +16638,7 @@ export const Severe = {
     severity: Severity.S,
     message: "GOTO target is inside a (different) DO loop.",
     fullCode: "IBM1847IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The INCLUDE file could not be found or opened.
@@ -16651,7 +16650,7 @@ export const Severe = {
     message: (includestmtarg: string) =>
       `The INCLUDE file for ${includestmtarg} could not be found.`,
     fullCode: "IBM1848IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under CMPAT(V1), bounds must be between -32768 and 32767 inclusive. To use bounds
@@ -16663,7 +16662,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Under CMPAT(V1), bounds must not be greater than 32767.",
     fullCode: "IBM1849IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Under CMPAT(V1), bounds must be between -32768 and 32767 inclusive. To use bounds
@@ -16675,7 +16674,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Under CMPAT(V1), bounds must not be less than -32768.",
     fullCode: "IBM1850IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An unexpected error occurred while trying to open an include source file.
@@ -16687,7 +16686,7 @@ export const Severe = {
     message: (includefilename: string) =>
       `The INCLUDE file ${includefilename} could not be opened.`,
     fullCode: "IBM1851IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A preprocessor specified in the PP compiler option is unknown.
@@ -16699,7 +16698,7 @@ export const Severe = {
     message: (preprocessor: string) =>
       `The preprocessor ${preprocessor} is not known to the compiler.`,
     fullCode: "IBM1852IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument in the FETCH and RELEASE statements must be a FETCHABLE entry constant
@@ -16712,7 +16711,7 @@ export const Severe = {
     message: (statement: string) =>
       `Variable in ${statement} statement must be a FETCHABLE entry constant.`,
     fullCode: "IBM1853IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler's attempt to load the named preprocessor failed.
@@ -16724,7 +16723,7 @@ export const Severe = {
     message: (PPname: string, oncode: string) =>
       `Fetch of the ${PPname} preprocessor failed with ONCODE= ${oncode} .`,
     fullCode: "IBM1854IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A terminating error was detected in a preprocessor invoked by the compiler.
@@ -16736,7 +16735,7 @@ export const Severe = {
     message: (PPname: string, oncodevalue: string) =>
       `Preprocessor ${PPname} terminated abnormally with ONCODE= ${oncodevalue} .`,
     fullCode: "IBM1855IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler was unable to load the user exit.
@@ -16748,7 +16747,7 @@ export const Severe = {
     message: (oncode: string) =>
       `Fetch of the user exit initialization routine failed with ONCODE= ${oncode} .`,
     fullCode: "IBM1856IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler detected a terminating error in the user exit.
@@ -16760,7 +16759,7 @@ export const Severe = {
     message: (oncodevalue: string) =>
       `User exit routine terminated abnormally with ONCODE= ${oncodevalue} .`,
     fullCode: "IBM1857IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The user exit aborted the compilation by setting the return code to 16.
@@ -16771,7 +16770,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Compilation aborted by user exit.",
     fullCode: "IBM1858IS",
-  } as SimplePLICode,
+  },
 
   /**
    * All other statements must be enclosed in a PACKAGE or PROCEDURE statement.
@@ -16782,7 +16781,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The first statement must be a PROCEDURE or PACKAGE statement.",
     fullCode: "IBM1859IS",
-  } as SimplePLICode,
+  },
 
   /**
    * PACKAGE statements cannot follow any other statements in the program.
@@ -16793,7 +16792,7 @@ export const Severe = {
     severity: Severity.S,
     message: "PACKAGE statement must be the first statement in the program.",
     fullCode: "IBM1860IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This message can occur, for instance, if the first PROCEDURE statement is invalid
@@ -16806,7 +16805,7 @@ export const Severe = {
     message:
       "All statements other than DECLARE, DEFAULT and PROCEDURE statements must be contained inside a PROCEDURE.",
     fullCode: "IBM1861IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The nesting of PROCEDURE, DO, SELECT and similar statements is greater than that
@@ -16818,7 +16817,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Statements are nested too deep.",
     fullCode: "IBM1862IS",
-  } as SimplePLICode,
+  },
 
   /**
    * AUTOMATIC variables must be declared inside a PROCEDURE, and DEFINED variables declared
@@ -16831,7 +16830,7 @@ export const Severe = {
     message:
       "Variables declared in a PACKAGE outside of any PROCEDURE must have the storage class STATIC, BASED or CONTROLLED or must be DEFINED on STATIC.",
     fullCode: "IBM1863IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Support for the indicated built-in function has been discontinued.
@@ -16843,7 +16842,7 @@ export const Severe = {
     message: (functionname: string) =>
       `The ${functionname} built-in function is not supported.`,
     fullCode: "IBM1864IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The variable implicitly qualifying the BASED variable must be a scalar that is not
@@ -16857,7 +16856,7 @@ export const Severe = {
     message:
       "The only BASED variables supported in data-directed i/o are those that have constant extents and that are implicitly qualified by simple variables.",
     fullCode: "IBM1865IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Support for the indicated statement has been discontinued.
@@ -16868,7 +16867,7 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) => `The ${keyword} statement is not supported.`,
     fullCode: "IBM1866IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Support for the indicated pseudovariable has been discontinued.
@@ -16880,7 +16879,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The pseudovariable ${variablename} is not supported.`,
     fullCode: "IBM1867IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * iSUB references are permitted only in DEFINED clauses.
@@ -16891,7 +16890,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Invalid use of iSUB.",
     fullCode: "IBM1868IS",
-  } as SimplePLICode,
+  },
 
   /**
    * For example, neither of the following are supported.  103
@@ -16906,7 +16905,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ALLOCATE with attribute lists is not supported.",
     fullCode: "IBM1869IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If the SYSTEM action is specified in an ON statement, an ON-unit may not be specified
@@ -16921,7 +16920,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ON statement cannot specify both SYSTEM and an ON-unit.",
     fullCode: "IBM1870IS",
-  } as SimplePLICode,
+  },
 
   /**
    * x in CONDITION(x) refers to a variable that does not have the type CONDITION.
@@ -16933,7 +16932,7 @@ export const Severe = {
     message:
       "The reference in the CONDITION condition must have type CONDITION.",
     fullCode: "IBM1871IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The reference in the named FILE condition does not have the type FILE.
@@ -16945,7 +16944,7 @@ export const Severe = {
     message: (conditionname: string) =>
       `The reference in the ${conditionname} condition must have type FILE.`,
     fullCode: "IBM1872IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * DO statements can be nested only 50 deep. Simplify the program.
@@ -16956,7 +16955,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Nesting of DO statements exceeds the maximum.",
     fullCode: "IBM1873IS",
-  } as SimplePLICode,
+  },
 
   /**
    * IF statements can be nested only 50 deep. Simplify the program.
@@ -16967,7 +16966,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Nesting of IF statements exceeds the maximum.",
     fullCode: "IBM1874IS",
-  } as SimplePLICode,
+  },
 
   /**
    * SELECT statements can be nested only 50 deep. Simplify the program.
@@ -16978,7 +16977,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Nesting of SELECT statements exceeds the maximum.",
     fullCode: "IBM1875IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Blocks may be nested only 30 deep.
@@ -16989,7 +16988,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Nesting of blocks exceeds the maximum.",
     fullCode: "IBM1876IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A reference of any other type is invalid and is invalid.
@@ -17000,7 +16999,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The reference in the EVENT clause must have type EVENT.",
     fullCode: "IBM1878IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A reference of any other type is invalid and is invalid.
@@ -17011,7 +17010,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The reference in the TASK clause must have type TASK.",
     fullCode: "IBM1879IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A file variable or constant is required.
@@ -17026,7 +17025,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Reference must have FILE type.",
     fullCode: "IBM1880IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Enough qualification must be provided to make any reference unique.
@@ -17038,7 +17037,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The reference ${referencename} is ambiguous.`,
     fullCode: "IBM1881IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * References in ALLOCATE statements must be level-1 variable names, and those variables
@@ -17051,7 +17050,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The ALLOCATE reference ${variablename} is not a level 1 BASED or CONTROLLED variable.`,
     fullCode: "IBM1882IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Provide a SET clause in the ALLOCATE statement.
@@ -17067,7 +17066,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The ALLOCATE reference ${variablename} is not implicitly qualified and is invalid without a SET clause.`,
     fullCode: "IBM1883IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A reference of any other type is invalid.
@@ -17079,7 +17078,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The reference ${variablename} in the GENERIC attribute list is not a scalar ENTRY reference.`,
     fullCode: "IBM1884IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A reference of any other type is invalid.
@@ -17090,7 +17089,7 @@ export const Severe = {
     severity: Severity.S,
     message: "IN option reference must have AREA type.",
     fullCode: "IBM1885IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Provide enough qualification to make the name unique.
@@ -17113,7 +17112,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The REFER object name ${referencename} is ambiguous.`,
     fullCode: "IBM1886IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named REFER object cannot be declared in another structure or in the same structure,
@@ -17126,7 +17125,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The REFER object ${referencename} must be an element of the same structure where it is used, and must precede its first usage in that structure.`,
     fullCode: "IBM1887IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * It must be possible to convert the REFER object safely to and from REAL FIXED BIN(31,0)
@@ -17147,7 +17146,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The REFER object ${referencename} must have computational type.`,
     fullCode: "IBM1888IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The REFER object may not have any dimensions in its declaration and neither may any
@@ -17168,7 +17167,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The REFER object ${referencename} must be a scalar.`,
     fullCode: "IBM1889IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Reorder the elements in the declaration so that all REFER objects precede the first
@@ -17189,7 +17188,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The REFER object ${referencename} must precede the first level-2 element containing a REFER.`,
     fullCode: "IBM1890IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * REFER can be used only in declarations of BASED variables.
@@ -17200,7 +17199,7 @@ export const Severe = {
     severity: Severity.S,
     message: "REFER is not allowed on non- BASED variables.",
     fullCode: "IBM1891IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If a REFER object is a string, it must have constant length.
@@ -17212,7 +17211,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The REFER object ${referencename} must have constant length.`,
     fullCode: "IBM1892IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * REFER cannot be used only in declarations of scalars or arrays of scalars.
@@ -17223,7 +17222,7 @@ export const Severe = {
     severity: Severity.S,
     message: "REFER is allowed only on members of structures and unions.",
     fullCode: "IBM1893IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In the statement REINIT x, x must not have any subscripts or arguments.
@@ -17234,7 +17233,7 @@ export const Severe = {
     severity: Severity.S,
     message: "REINIT references must not be subscripted.",
     fullCode: "IBM1894IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If the DIRECTED(ASM) option is used, comparisons and assignments are not supported
@@ -17249,7 +17248,7 @@ export const Severe = {
     message: (languagename: string) =>
       `Operations involving OPTIONS( ${languagename} ) routines are not supported if the DIRECTED option applies.`,
     fullCode: "IBM1895IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the DIRECTED(ASM) option is used, ENTRY VARIABLES may not be declared with OPTIONS(ASM).
@@ -17263,7 +17262,7 @@ export const Severe = {
     message: (languagename: string) =>
       `OPTIONS( ${languagename} ) is not supported for ENTRY VARIABLEs if the DIRECTED option applies.`,
     fullCode: "IBM1896IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If simple defining is not intended, specify POSITION(1) to force string defining
@@ -17276,7 +17275,7 @@ export const Severe = {
     message:
       "Simple defining is supported only for scalars, for structures with constant extents matching those in the base variable, and for arrays of such scalars and structures as long as the array is not based on a controlled variable.",
     fullCode: "IBM1897IS",
-  } as SimplePLICode,
+  },
 
   /**
    * You can define a variable only another user variable.
@@ -17288,7 +17287,7 @@ export const Severe = {
     message:
       "The base reference in the DEFINED attribute cannot be a built-in or type function.",
     fullCode: "IBM1898IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Convert the DEFINED and base variables into a UNION.
@@ -17300,7 +17299,7 @@ export const Severe = {
     message:
       "The base variable in the DEFINED attribute cannot be BASED, DEFINED or CONSTANT.",
     fullCode: "IBM1899IS",
-  } as SimplePLICode,
+  },
 
   /**
    * All bounds and string lengths for DEFINED structures and unions consisting of bit
@@ -17312,7 +17311,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Extents for DEFINED bit structures must be constant.",
     fullCode: "IBM1900IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The POSITION attribute has no meaning without DEFINED attribute.
@@ -17323,7 +17322,7 @@ export const Severe = {
     severity: Severity.S,
     message: "POSITION attribute is invalid without the DEFINED attribute.",
     fullCode: "IBM1901IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The POSITION expression must have a numeric or string type.
@@ -17335,7 +17334,7 @@ export const Severe = {
     message:
       "The expression in the POSITION attribute must have computational type.",
     fullCode: "IBM1902IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The compiler must be able to evaluate the expression to an integer constant when
@@ -17348,7 +17347,7 @@ export const Severe = {
     message:
       "The expression in the POSITION attribute for bit string-overlay defining must be an integer constant.",
     fullCode: "IBM1903IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A variable that is either based or controlled should immediately follow the FREE
@@ -17361,7 +17360,7 @@ export const Severe = {
     message: (freeclause: string) =>
       `Variable following the ${freeclause} clause must be level 1 and either BASED or CONTROLLED.`,
     fullCode: "IBM1904IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An invalid option immediately follows a controlled variable in an ALLOCATE or FREE
@@ -17374,7 +17373,7 @@ export const Severe = {
     message: (INorSEToption: string, ALLOCATEorFREEclause: string) =>
       `${INorSEToption} option invalid after the CONTROLLED variable in the ${ALLOCATEorFREEclause} clause.`,
     fullCode: "IBM1905IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Using the specified AREA reference to qualify an OFFSET variable is invalid. The
@@ -17391,7 +17390,7 @@ export const Severe = {
     message:
       "The reference qualifying an OFFSET attribute must be a scalar AREA reference.",
     fullCode: "IBM1906IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The extent specified for the controlled variable is invalid. The following example
@@ -17407,7 +17406,7 @@ export const Severe = {
     message:
       "Extents for CONTROLLED variables cannot be specified using asterisks or REFER.",
     fullCode: "IBM1907IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Extents for AUTOMATIC and DEFINED variables must be specified by expressions.
@@ -17419,7 +17418,7 @@ export const Severe = {
     message: (attribute: string) =>
       `Extents for ${attribute} variables cannot be specified using asterisks or REFER.`,
     fullCode: "IBM1908IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named attributes, for example PARAMETER and INITIAL, are mutually exclusive.
@@ -17431,7 +17430,7 @@ export const Severe = {
     message: (attribute: string, attribute2: string) =>
       `The ${attribute} attribute conflicts with the ${attribute2} attribute.`,
     fullCode: "IBM1909IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Parameters can have no storage attributes other than CONTROLLED. Parameters also
@@ -17445,7 +17444,7 @@ export const Severe = {
     message: (identifier: string) =>
       `The attributes given in the declaration for ${identifier} conflict with its use as a parameter.`,
     fullCode: "IBM1910IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * All statement labels in any block must be unique.
@@ -17457,7 +17456,7 @@ export const Severe = {
     message: (character: string) =>
       `Repeated specifications of the unsubscripted statement label ${character} are in error.`,
     fullCode: "IBM1911IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * All statement labels in any block must be unique.
@@ -17469,7 +17468,7 @@ export const Severe = {
     message: (character: string) =>
       `Indices specified for the LABEL ${character} have already been specified.`,
     fullCode: "IBM1912IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A BEGIN block or a statement associated with an ON clause may not have a label.
@@ -17480,7 +17479,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ON-units may not be labeled. All such labels will be ignored.",
     fullCode: "IBM1913IS",
-  } as SimplePLICode,
+  },
 
   /**
    * x in GOTO x must have type LABEL. x must not have type FORMAT.
@@ -17491,7 +17490,7 @@ export const Severe = {
     severity: Severity.S,
     message: "GOTO target must be a LABEL reference.",
     fullCode: "IBM1914IS",
-  } as SimplePLICode,
+  },
 
   /**
    * x in GOTO x must not be an array.
@@ -17502,7 +17501,7 @@ export const Severe = {
     severity: Severity.S,
     message: "GOTO target must be a scalar.",
     fullCode: "IBM1915IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Sister procedures must have different names.
@@ -17522,7 +17521,7 @@ export const Severe = {
     message: (procname: string) =>
       `The PROCEDURE/ENTRY ${procname} has already been defined.`,
     fullCode: "IBM1916IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The source contains either no statements or all statements that it contains are invalid
@@ -17534,7 +17533,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Program contains no valid source lines.",
     fullCode: "IBM1917IS",
-  } as SimplePLICode,
+  },
 
   /**
    * None of the names in an ORDINAL should have been declared elsewhere. If they are,
@@ -17547,7 +17546,7 @@ export const Severe = {
     message: (ordinalname: string) =>
       `All the names in the ORDINAL ${ordinalname} have been previously declared.`,
     fullCode: "IBM1918IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Each EXTERNAL name must be used only once. So, for example, the following declares
@@ -17565,7 +17564,7 @@ export const Severe = {
     message: (string: string, name: string, name2: string) =>
       `The EXTERNAL name ${string} is specified for the differing names ${name} and ${name2} .`,
     fullCode: "IBM1919IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum precision of FIXED BINARY constants is set by the FIXEDBIN suboption
@@ -17577,7 +17576,7 @@ export const Severe = {
     severity: Severity.S,
     message: "FIXED BINARY constant contains too many digits.",
     fullCode: "IBM1920IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum precision of FIXED DECIMAL constants is set by the FIXEDDEC suboption
@@ -17589,7 +17588,7 @@ export const Severe = {
     severity: Severity.S,
     message: "FIXED DECIMAL constant contains too many significant digits.",
     fullCode: "IBM1921IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The exponent in a FLOAT BINARY constant may contain no more than 5 digits.
@@ -17601,7 +17600,7 @@ export const Severe = {
     message:
       "Exponent in FLOAT BINARY constant contains more digits than the implementation maximum.",
     fullCode: "IBM1922IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The mantissa in a FLOAT BINARY constant may contain no more than 64 digits.
@@ -17613,7 +17612,7 @@ export const Severe = {
     message:
       "Mantissa in FLOAT BINARY constant contains more significant digits than the implementation maximum.",
     fullCode: "IBM1923IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The exponent in a FLOAT BINARY constant may contain no more than 4 digits.
@@ -17625,7 +17624,7 @@ export const Severe = {
     message:
       "Exponent in FLOAT DECIMAL constant contains more digits than the implementation maximum.",
     fullCode: "IBM1924IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The mantissa in a FLOAT DECIMAL constant may contain no more than maximum number
@@ -17638,7 +17637,7 @@ export const Severe = {
     message:
       "Mantissa in FLOAT DECIMAL constant contains more significant digits than the implementation maximum.",
     fullCode: "IBM1925IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The number of bytes used to represent a constant in your program must not exceed
@@ -17652,7 +17651,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Constants must not exceed 8192 bytes.",
     fullCode: "IBM1926IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The source value is not in the domain of the target.
@@ -17668,7 +17667,7 @@ export const Severe = {
     message: (sourcevalue: string, targetattributes: string) =>
       `SIZE condition raised by attempt to convert ${sourcevalue} to ${targetattributes}`,
     fullCode: "IBM1927IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The ERROR condition was while the compiler was trying to build CEEUOPT from PLIXOPT.
@@ -17680,7 +17679,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ERROR raised while building CEEUOPT from PLIXOPT.",
     fullCode: "IBM1928IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The compiler was unable to open the named temporary file used to communicate with
@@ -17693,7 +17692,7 @@ export const Severe = {
     message: (filename: string, procname: string, linenumber: string) =>
       `Unable to open file ${filename} in routine ${procname} ( ${linenumber} ).`,
     fullCode: "IBM1929IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler was unable to write to a temporary file used to communicate with the
@@ -17707,7 +17706,7 @@ export const Severe = {
     message: (filename: string) =>
       `Unable to write to file ${filename} . Disk may be full.`,
     fullCode: "IBM1930IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler was unable to close the named temporary file used to communicate with
@@ -17720,7 +17719,7 @@ export const Severe = {
     message: (filename: string, procname: string, linenumber: string) =>
       `Unable to close file ${filename} in routine ${procname} ( ${linenumber} ).`,
     fullCode: "IBM1932IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Shorten the name of the source file or the directory specified by the TMP variable
@@ -17733,7 +17732,7 @@ export const Severe = {
     message:
       "Unable to open temporary files because the path and filename are too long.",
     fullCode: "IBM1933IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Assign the structure to a temporary and pass the temporary, or omit the parameter
@@ -17746,7 +17745,7 @@ export const Severe = {
     message:
       "If a parameter is a structure with nonconstant extents, only matching structures are supported as arguments.",
     fullCode: "IBM1934IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Assign the structure to a temporary and pass the temporary, or describe the parameter
@@ -17759,7 +17758,7 @@ export const Severe = {
     message:
       "Structure expressions as arguments are not supported for undescribed parameters.",
     fullCode: "IBM1935IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The back end of the compiler either could not be found or else it detected an error
@@ -17773,7 +17772,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Invocation of compiler backend ended abnormally.",
     fullCode: "IBM1936IS",
-  } as SimplePLICode,
+  },
 
   /**
    * For parameters, each array bound, string length and AREA size must be specified either
@@ -17786,7 +17785,7 @@ export const Severe = {
     message:
       "Extents for parameters must be asterisks or restricted expressions with computational type.",
     fullCode: "IBM1937IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The message must be in the current directory or in one of the directories specified
@@ -17798,7 +17797,7 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) => `Message file ${filename} not found.`,
     fullCode: "IBM1938IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The operands in an exponentiation must have numeric or string type.
@@ -17809,7 +17808,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Exponentiation operands must have computational type.",
     fullCode: "IBM1939IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This message is used by %NOTE statements with a return code of 12.
@@ -17820,7 +17819,7 @@ export const Severe = {
     severity: Severity.S,
     message: (note: string) => `${note}`,
     fullCode: "IBM1940IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used by %NOTE statements with a return code of 16.
@@ -17831,7 +17830,7 @@ export const Severe = {
     severity: Severity.U,
     message: (note: string) => `${note}`,
     fullCode: "IBM1941IU",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to all the precision-handling built-in functions.
@@ -17843,7 +17842,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The scale factor specified in ${BUILTINname} built-in function must be a restricted expression with integer type.`,
     fullCode: "IBM1942IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Compilation will terminate when the number of messages has exceeded the limit set
@@ -17856,7 +17855,7 @@ export const Severe = {
     message:
       "The number of error messages allowed by the FLAG option has been exceeded.",
     fullCode: "IBM1943IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This applies to all the precision-handling built-in functions.
@@ -17868,7 +17867,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The precision specified in ${BUILTINname} built-in function must be a restricted expression with integer type.`,
     fullCode: "IBM1944IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Extents in BASED variables must be either constants or specified with the REFER option
@@ -17880,7 +17879,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Extents for BASED variable may not contain asterisks.",
     fullCode: "IBM1945IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The specified reference is invalid. An AREA variable is needed.
@@ -17891,7 +17890,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Reference must be an AREA variable.",
     fullCode: "IBM1946IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The argument list in a GENERIC reference must match one of the generic descriptors
@@ -17906,7 +17905,7 @@ export const Severe = {
     message: (GENERICvariablename: string) =>
       `The reference to the GENERIC variable ${GENERICvariablename} cannot be resolved.`,
     fullCode: "IBM1947IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Compile-time evaluation of a restricted expression raised a condition.
@@ -17921,7 +17920,7 @@ export const Severe = {
     message: (conditionname: string, oncodevalue: string) =>
       `${conditionname} condition with ONCODE= ${oncodevalue} raised while evaluating restricted expression.`,
     fullCode: "IBM1948IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Each identifier in a parameter list must be unique.
@@ -17936,7 +17935,7 @@ export const Severe = {
     message: (identifier: string) =>
       `Parameter name ${identifier} appears more than once in parameter list.`,
     fullCode: "IBM1949IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Variables with the CONTROLLED attribute must be named, and a variable with the EXTERNAL
@@ -17950,7 +17949,7 @@ export const Severe = {
     message: (storageclass: string) =>
       `${storageclass} variables must be named.`,
     fullCode: "IBM1951IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An INITIAL CALL must be evaluated at run-time; it can be used to initialize only
@@ -17962,7 +17961,7 @@ export const Severe = {
     severity: Severity.S,
     message: "INITIAL CALL cannot be used to initialize STATIC data.",
     fullCode: "IBM1952IS",
-  } as SimplePLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -17975,7 +17974,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration.`,
     fullCode: "IBM1953IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Variables cannot be DEFINED on NONCONNECTED references.
@@ -17986,7 +17985,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The base reference in the DEFINED attribute must be CONNECTED.",
     fullCode: "IBM1954IS",
-  } as SimplePLICode,
+  },
 
   /**
    * EXTERNAL FILE constants and CONDITIONs may be declared only once in a compilation
@@ -17999,7 +17998,7 @@ export const Severe = {
     message: (attribute: string, variablename: string) =>
       `Repeated declarations of the EXTERNAL ${attribute} ${variablename} are not supported.`,
     fullCode: "IBM1955IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * ITERATE is not valid inside type-I do groups.
@@ -18010,7 +18009,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ITERATE is valid only for iterative DO-groups.",
     fullCode: "IBM1956IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The expression representing the number of items to wait for in a WAIT statement is
@@ -18028,7 +18027,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The WAIT event number specification must be computational.",
     fullCode: "IBM1957IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The event reference in the WAIT statement is invalid. It must be of type EVENT. The
@@ -18044,7 +18043,7 @@ export const Severe = {
     severity: Severity.S,
     message: "References in the WAIT statement must be of type EVENT.",
     fullCode: "IBM1958IS",
-  } as SimplePLICode,
+  },
 
   /**
    * References in WAIT statements can be scalars. The only valid aggregate reference
@@ -18057,7 +18056,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Invalid aggregate expression specified in WAIT statement.",
     fullCode: "IBM1959IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In a declare statement that specifies TYPE x, ORDINAL x, or HANDLE x, x must be a
@@ -18069,7 +18068,7 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) => `${typename} is not a type name.`,
     fullCode: "IBM1960IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Any values specified in INITIAL clauses in an ORDINAL definition must be in strictly
@@ -18082,7 +18081,7 @@ export const Severe = {
     message: (typetype: string, typename: string) =>
       `INITIAL values for ${typetype} type ${typename} must be in increasing order.`,
     fullCode: "IBM1961IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * ORDINAL values must fit in the range of a FIXED BIN(31) variable.
@@ -18094,7 +18093,7 @@ export const Severe = {
     message: (typetype: string, typename: string) =>
       `INITIAL values for ${typetype} type ${typename} must be less than 2G.`,
     fullCode: "IBM1962IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with an argument that is not an
@@ -18108,7 +18107,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have ORDINAL type.`,
     fullCode: "IBM1963IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -18122,7 +18121,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration.`,
     fullCode: "IBM1964IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * All references must be unambiguous.
@@ -18134,7 +18133,7 @@ export const Severe = {
     message: (referencename: string, structurename: string) =>
       `There is more than one element named ${referencename} in the class ${structurename} .`,
     fullCode: "IBM1965IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * HANDLE qualified references must be explicitly declared.
@@ -18146,7 +18145,7 @@ export const Severe = {
     message: (referencename: string, structurename: string) =>
       `There is no element named ${referencename} in the class ${structurename} .`,
     fullCode: "IBM1966IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Functions, but not subprocedures, can be used as handles (and then only if they return
@@ -18159,7 +18158,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a handle since it does not have the RETURNS attribute.`,
     fullCode: "IBM1967IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * x(...)=>y is invalid unless x returns a HANDLE.
@@ -18171,7 +18170,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a handle.`,
     fullCode: "IBM1968IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Only scalars can be used as handles.
@@ -18183,7 +18182,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The variable ${variablename} is used as a handle, but it is not a scalar.`,
     fullCode: "IBM1969IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named built-in function cannot be used as a handle.
@@ -18195,7 +18194,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} built-in function may not be used as a handle.`,
     fullCode: "IBM1970IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * GENERIC references may not be used as handles.
@@ -18207,7 +18206,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The GENERIC variable ${variablename} may not be used as a handle.`,
     fullCode: "IBM1971IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * x=>y is invalid unless x has the HANDLE attribute
@@ -18219,7 +18218,7 @@ export const Severe = {
     message: (variablename: string) =>
       `${variablename} may not be used as a handle.`,
     fullCode: "IBM1972IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Hex strings (strings ending in one of the suffixes X, BX, B4, GX or XN), bit strings
@@ -18232,7 +18231,7 @@ export const Severe = {
     severity: Severity.S,
     message: "DBCS characters are allowed only in G and M constants.",
     fullCode: "IBM1976IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Mixed SBCS and DBCS is allowed only in M constants.
@@ -18243,7 +18242,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SBCS characters are not allowed in G constants.",
     fullCode: "IBM1977IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Outside of comments, SBCS can be encoded as DBCS only as part of an identifier.
@@ -18254,7 +18253,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Invalid use of SBCS encoded as DBCS.",
     fullCode: "IBM1978IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The named built-in function may be used only inside procedures.
@@ -18266,7 +18265,7 @@ export const Severe = {
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} may not be used outside a PROCEDURE.`,
     fullCode: "IBM1981IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named file could not be opened. Make sure that the file is named correctly, that
@@ -18279,7 +18278,7 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) => `File ${filename} could not be opened.`,
     fullCode: "IBM1984IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named file could not be opened. Make sure that the file is named correctly, that
@@ -18293,7 +18292,7 @@ export const Severe = {
     message: (filename: string, Clibrarymessage: string) =>
       `File ${filename} could not be opened. ${Clibrarymessage}`,
     fullCode: "IBM1985IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This error can occur, for example. when writing the MDECK to a SYSPUNCH dataset that
@@ -18306,7 +18305,7 @@ export const Severe = {
     severity: Severity.S,
     message: "A system or user abend has occurred.",
     fullCode: "IBM1986IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum number of open files has been reached. On some platforms, there is a
@@ -18320,7 +18319,7 @@ export const Severe = {
     message: (filename: string) =>
       `File ${filename} could not be opened because too many files have been opened.`,
     fullCode: "IBM1987IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Either the file is in use or you tried to open a file for which you do not have sufficient
@@ -18333,7 +18332,7 @@ export const Severe = {
     message: (filename: string) =>
       `File ${filename} could not be opened due to an access violation.`,
     fullCode: "IBM1988IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The length of the file name or extension is greater than the maximum allowed.
@@ -18345,7 +18344,7 @@ export const Severe = {
     message: (filename: string) =>
       `File name or extension for ${filename} is too long.`,
     fullCode: "IBM1989IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Apart from z\/OS UNIX, file names should not contain quotes. Under z\/OS UNIX, if
@@ -18357,7 +18356,7 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) => `File name ${filename} has invalid format.`,
     fullCode: "IBM1990IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The command syntax is:
@@ -18371,7 +18370,7 @@ export const Severe = {
     severity: Severity.S,
     message: "A file name must be specified.",
     fullCode: "IBM1992IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If you hit CTL-BRK during the compilation, the compilation will stop.
@@ -18382,7 +18381,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Compilation terminated by ATTENTION condition.",
     fullCode: "IBM1993IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This message indicates that there is an error in the front end of the compiler. Please
@@ -18394,7 +18393,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Internal compiler error: storage header has been overwritten",
     fullCode: "IBM1994IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This message indicates that there is an error in the front end of the compiler. Please
@@ -18406,7 +18405,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Internal compiler error: storage tail has been overwritten.",
     fullCode: "IBM1995IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This message indicates that there is an error in the front end of the compiler. Please
@@ -18419,7 +18418,7 @@ export const Severe = {
     message: (freerequestsize: string, allocatedsize: string) =>
       `Internal compiler error: free amount ${freerequestsize} does not match allocated size ${allocatedsize} .`,
     fullCode: "IBM1996IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message indicates that there is an error in the front end of the compiler. Please
@@ -18432,7 +18431,7 @@ export const Severe = {
     message: (modulename: string) =>
       `Internal compiler error: no WHEN clause satisfied within ${modulename}`,
     fullCode: "IBM1997IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message indicates that there is an error in the front end of the compiler. Please
@@ -18445,7 +18444,7 @@ export const Severe = {
     message: (modulename: string) =>
       `Internal compiler error: protection exception in ${modulename}`,
     fullCode: "IBM1998IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message indicates that there is an error in the back end of the compiler. Please
@@ -18457,7 +18456,7 @@ export const Severe = {
     severity: Severity.S,
     message: (note: string) => `${note}`,
     fullCode: "IBM1999IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message indicates that there is an error in the front end of the compiler. Report
@@ -18475,7 +18474,7 @@ export const Severe = {
     ) =>
       `Internal compiler error: assertion failed on line ${sourceline} in ${procedurename} in ${packagename} >> ${extratext}`,
     fullCode: "IBM2000IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * IBM License Manager is installed on your system, but the request to verify that you
@@ -18488,7 +18487,7 @@ export const Severe = {
     message: (STATUSCODE: string, RETURNCODE: string) =>
       `A LICENSE REQUEST WAS DENIED FOR PL/I, PID 5655- B22. THE REQUEST ENDED WITH STATUS CODE ${STATUSCODE} AND RETURN CODE ${RETURNCODE} . THE COMPILATION WILL BE TERMINATED.`,
     fullCode: "IBM2001IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An error has occurred while attempting to close a file.
@@ -18500,7 +18499,7 @@ export const Severe = {
     message: (filename: string) =>
       `Close of file ${filename} failed. There may be a space problem.`,
     fullCode: "IBM2002IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An error has occurred while attempting to write to a file.
@@ -18512,7 +18511,7 @@ export const Severe = {
     message: (filename: string) =>
       `Write to file ${filename} failed. There may be a space problem.`,
     fullCode: "IBM2003IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the ATTACH reference is declared without an argument list, change the declare
@@ -18525,7 +18524,7 @@ export const Severe = {
     message:
       "ATTACH reference must be declared with either a null argument list or with an argument list specifying only one argument.",
     fullCode: "IBM2004IS",
-  } as SimplePLICode,
+  },
 
   /**
    * GENERIC references and built-in subroutines may not be attached.
@@ -18536,7 +18535,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ATTACH reference must be an ENTRY reference.",
     fullCode: "IBM2005IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An ATTACH reference must not have the RETURNS attribute, even if the value returned
@@ -18548,7 +18547,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ATTACH reference cannot be a function reference.",
     fullCode: "IBM2006IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Unless the default linkage is overridden, OPTIONS(LINKAGE(SYSTEM)) must be specified
@@ -18560,7 +18559,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ATTACH reference must use LINKAGE(SYSTEM).",
     fullCode: "IBM2007IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An ATTACH reference may not be used in a FETCH or RELEASE statement.
@@ -18571,7 +18570,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ATTACH reference cannot be FETCHABLE.",
     fullCode: "IBM2008IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An ATTACH reference must be a level-1 procedure, although it does need to be external
@@ -18583,7 +18582,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ATTACH reference cannot be a nested PROCEDURE.",
     fullCode: "IBM2009IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Specify the LIMITED attribute in the declare for the ENTRY VARIABLE.
@@ -18594,7 +18593,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ATTACH reference, if an ENTRY variable, must be a LIMITED ENTRY.",
     fullCode: "IBM2010IS",
-  } as SimplePLICode,
+  },
 
   /**
    * No other argument types are support in ATTACH statements.
@@ -18606,7 +18605,7 @@ export const Severe = {
     message:
       "ATTACH reference, if it has an argument, must declare that argument as POINTER BYVALUE.",
     fullCode: "IBM2011IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The specified attribute must not be used in a DEFINE ALIAS statement. This includes
@@ -18626,7 +18625,7 @@ export const Severe = {
     message: (attributekeyword: string) =>
       `The ${attributekeyword} attribute is invalid in an ALIAS definition.`,
     fullCode: "IBM2012IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The syntax allows the name in an alias definition to be followed by a description
@@ -18642,7 +18641,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Only one description is allowed in an ALIAS definition.",
     fullCode: "IBM2013IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In ALIAS and STRUCTURE definitions, each string length and AREA size must be specified
@@ -18655,7 +18654,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Extents in type descriptors must be constant.",
     fullCode: "IBM2014IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The VALUE attribute is allowed only with computational data types as well as pointer,
@@ -18667,7 +18666,7 @@ export const Severe = {
     severity: Severity.S,
     message: "VALUE attribute conflicts with data type.",
     fullCode: "IBM2015IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The VALUE attribute is not allowed with typed structures.
@@ -18678,7 +18677,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The VALUE attribute is not allowed with typed structures.",
     fullCode: "IBM2016IS",
-  } as SimplePLICode,
+  },
 
   /**
    * INITIAL TO is not valid for NONNATIVE POINTERs. It is also invalid for non-POINTERs
@@ -18690,7 +18689,7 @@ export const Severe = {
     severity: Severity.S,
     message: "INITIAL TO is valid only for NATIVE POINTER.",
     fullCode: "IBM2017IS",
-  } as SimplePLICode,
+  },
 
   /**
    * INITIAL TO is not supported for variables belonging to any storage class other than
@@ -18702,7 +18701,7 @@ export const Severe = {
     severity: Severity.S,
     message: "INITIAL TO is supported only for STATIC variables.",
     fullCode: "IBM2018IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Specify OPTIONS(LINKAGE(OPTLINK)) or, on WINDOWS, OPTIONS(LINKAGE(CDECL)) on the
@@ -18715,7 +18714,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Unsupported LINKAGE used with the LIST attribute.",
     fullCode: "IBM2019IS",
-  } as SimplePLICode,
+  },
 
   /**
    * All references must be unambiguous.
@@ -18727,7 +18726,7 @@ export const Severe = {
     message: (referencename: string, structurename: string) =>
       `There is more than one element named ${referencename} in the typed structure ${structurename} .`,
     fullCode: "IBM2020IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * All structure references must be explicitly declared.
@@ -18739,7 +18738,7 @@ export const Severe = {
     message: (referencename: string, structurename: string) =>
       `There is no element named ${referencename} in the structure ${structurename} .`,
     fullCode: "IBM2021IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Functions, but not subprocedures, can be used as typed structure qualifiers (and
@@ -18752,7 +18751,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a typed structure qualifier since it does not have the RETURNS attribute.`,
     fullCode: "IBM2022IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * x(...)=>y is invalid unless x returns a typed structure.
@@ -18764,7 +18763,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a typed structure qualifier.`,
     fullCode: "IBM2023IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * For instance, if x is an array of structure t with member m, x.m(2) is invalid. However,
@@ -18777,7 +18776,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The array variable ${variablename} may be used as a typed structure qualifier only if it is completely subscripted before its dot qualification.`,
     fullCode: "IBM2024IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named built-in function cannot be used as a typed structure qualifier.
@@ -18789,7 +18788,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} built-in function may not be used as a typed structure qualifier.`,
     fullCode: "IBM2025IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * GENERIC references may not be used as typed structure qualifiers.
@@ -18801,7 +18800,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The GENERIC variable ${variablename} may not be used as a typed structure qualifier.`,
     fullCode: "IBM2026IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * x.y is invalid unless x is a structure, a union or a function returning a typed structure
@@ -18814,7 +18813,7 @@ export const Severe = {
     message: (variablename: string) =>
       `${variablename} may not be used as a structure qualifier.`,
     fullCode: "IBM2027IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The DEFINE STRUCTURE or DEFINE ALIAS statement for a type x must precede any of use
@@ -18834,7 +18833,7 @@ export const Severe = {
     severity: Severity.S,
     message: "TYPEs must be defined before their use.",
     fullCode: "IBM2028IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A DEFINE STRUCTURE statement can specify just a level 1 name only if there no other
@@ -18851,7 +18850,7 @@ export const Severe = {
     message:
       "A DEFINE STRUCTURE statement must consist of a level one structure name optionally followed by its substructures. Use DEFINE ALIAS to set a name as a synonym for a data type.",
     fullCode: "IBM2029IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Defined structure types must be initialized via assignments.
@@ -18862,7 +18861,7 @@ export const Severe = {
     severity: Severity.S,
     message: "INITIAL attribute is invalid in structure definitions.",
     fullCode: "IBM2030IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Storage attributes, such as AUTOMATIC and BYADDR, must be specified with variables
@@ -18874,7 +18873,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Storage attributes are invalid in structure definition.",
     fullCode: "IBM2031IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The level 1 name in a structure definition may not have the DIMENSION attribute.
@@ -18885,7 +18884,7 @@ export const Severe = {
     severity: Severity.S,
     message: "DEFINE STRUCTURE may not specify an array of structures.",
     fullCode: "IBM2032IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The syntax allows the name in a structure definition to be followed by a description
@@ -18907,7 +18906,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Only one description is allowed in a structure definition.",
     fullCode: "IBM2033IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The argument to the type functions FIRST and LAST must be an unambiguous type name,
@@ -18920,7 +18919,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `The argument to the type function ${typefunction} must be an ordinal type name.`,
     fullCode: "IBM2034IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument to the type function NEW must be an unambiguous type name, and that
@@ -18933,7 +18932,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `The argument to the type function ${typefunction} must be a structure type name.`,
     fullCode: "IBM2035IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The second argument to the BIND type function must be a pointer or offset value that
@@ -18947,7 +18946,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `The second argument to the type function ${typefunction} must have locator type.`,
     fullCode: "IBM2036IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The first argument to the type functions BIND must be an unambiguous type name, and
@@ -18960,7 +18959,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `The first argument to the type function ${typefunction} must be a structure type name.`,
     fullCode: "IBM2037IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with an argument that is not a
@@ -18973,7 +18972,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have HANDLE type.`,
     fullCode: "IBM2038IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The TYPE pseudovariable can be applied only to HANDLEs.
@@ -18985,7 +18984,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Argument to ${variablename} pseudovariable must be a HANDLE.`,
     fullCode: "IBM2039IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The first argument to the type function SIZE must be the unambiguous name of a defined
@@ -18998,7 +18997,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `The argument to the type function ${typefunction} must be a defined type.`,
     fullCode: "IBM2040IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The first argument to the type function CAST must be the unambiguous name of a defined
@@ -19011,7 +19010,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `The first argument to the type function ${typefunction} must be a defined type.`,
     fullCode: "IBM2041IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The second argument to the type function CAST must be a scalar.
@@ -19023,7 +19022,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `The second argument to the type function ${typefunction} must be a scalar.`,
     fullCode: "IBM2042IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The second argument to the type function CAST must have the same size as the size
@@ -19036,7 +19035,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `The second argument to the type function ${typefunction} must have the same size as the first argument.`,
     fullCode: "IBM2043IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The function should be declared as
@@ -19054,7 +19053,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The get storage function to ${BUILTINname} must be a LIMITED ENTRY with LINKAGE(OPTLINK) and an appropriate entry description list.`,
     fullCode: "IBM2044IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The function should be declared as
@@ -19071,7 +19070,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The free storage function to ${BUILTINname} must be a LIMITED ENTRY with LINKAGE(OPTLINK) and an appropriate entry description list.`,
     fullCode: "IBM2045IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If an entry or procedure has a variable number of arguments in imitation of C, i.e.
@@ -19085,7 +19084,7 @@ export const Severe = {
     message:
       "OPTIONS(NODESCRIPTOR) is required if the last parameter to an ENTRY or PROC has the LIST attribute.",
     fullCode: "IBM2046IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The VARGLIST built-in function obtains the address of the variable argument list
@@ -19100,7 +19099,7 @@ export const Severe = {
     message:
       "The VARGLIST built-in function may be used only inside PROCEDUREs whose last parameter had the LIST attribute.",
     fullCode: "IBM2047IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The LIST attribute causes a variable argument list to be built, and such argument
@@ -19114,7 +19113,7 @@ export const Severe = {
     message:
       "The LIST attribute may be specified only on non-nested PROCEDUREs, external entry constants, and limited entry variables.",
     fullCode: "IBM2048IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The LIST attribute indicates that zero or more parameters may be specified after
@@ -19127,7 +19126,7 @@ export const Severe = {
     message:
       "The LIST attribute may be specified only on the last element of an entry description list.",
     fullCode: "IBM2049IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If OPTIONS( FORTRAN DESCRIPTOR ) applies, all parameters other than character strings
@@ -19140,7 +19139,7 @@ export const Severe = {
     message:
       "Descriptors are supported for Fortran only for scalar character strings.",
     fullCode: "IBM2050IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If OPTIONS( FORTRAN DESCRIPTOR ) applies to an ENTRY statement or to a procedure
@@ -19153,7 +19152,7 @@ export const Severe = {
     message:
       "Descriptors are not supported for Fortran for routines defined by or containing ENTRY statements.",
     fullCode: "IBM2051IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Either BYADDR must be specified in the RETURNS option of the PROCEDURE statement,
@@ -19166,7 +19165,7 @@ export const Severe = {
     message:
       "A function defined by a PROCEDURE containing ENTRY statements must return aggregate values BYADDR.",
     fullCode: "IBM2052IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Either BYADDR must be specified in the RETURNS option of the ENTRY statement, or
@@ -19179,7 +19178,7 @@ export const Severe = {
     message:
       "A function defined by an ENTRY statement must return aggregate values BYADDR.",
     fullCode: "IBM2053IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Either BYADDR must be specified in the declares for the parameters, or the BYADDR
@@ -19192,7 +19191,7 @@ export const Severe = {
     message:
       "A PROCEDURE containing ENTRY statements must receive all non- pointer parameters BYADDR.",
     fullCode: "IBM2054IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Either BYADDR must be specified in the declares for the parameters, or the BYADDR
@@ -19204,7 +19203,7 @@ export const Severe = {
     severity: Severity.S,
     message: "An ENTRY statement must receive all parameters BYADDR.",
     fullCode: "IBM2055IS",
-  } as SimplePLICode,
+  },
 
   /**
    * ENTRY statements are allowed in non-iterative DO groups, but not in iterative DO
@@ -19216,7 +19215,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ENTRY statement is not allowed in DO loops.",
     fullCode: "IBM2056IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A RETURN statement is valid inside a BEGIN block only if the PROCEDURE enclosing
@@ -19229,7 +19228,7 @@ export const Severe = {
     message:
       "RETURN statement is invalid inside a BEGIN in a PROCEDURE that contains ENTRY statements.",
     fullCode: "IBM2057IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Either BYADDR must be specified in the RETURNS option of the ENTRY statement, or
@@ -19242,7 +19241,7 @@ export const Severe = {
     message:
       "In a PROCEDURE without the RETURNS option, any ENTRY statement must use BYADDR for its RETURNS value.",
     fullCode: "IBM2058IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Only ALIGNED BIT strings with constant length are valid with OPTIONS(FORTRAN).
@@ -19253,7 +19252,7 @@ export const Severe = {
     severity: Severity.S,
     message: "OPTIONS(FORTRAN) is invalid if any parameters are UNALIGNED BIT.",
     fullCode: "IBM2059IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Attributes may be specified only in ALLOCATEs of CONTROLLED variables.
@@ -19264,7 +19263,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Attributes may not be specified in ALLOCATEs of BASED variables.",
     fullCode: "IBM2060IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An attribute, such as CHARACTER, may be specified in an ALLOCATE statement only if
@@ -19277,7 +19276,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Attributes specified for ${variablename} in ALLOCATE statement do not match those in its declaration.`,
     fullCode: "IBM2061IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In an ALLOCATE statement for a structure, all the levels specified in its declaration
@@ -19290,7 +19289,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Structuring specified in ALLOCATE of ${variablename} does not match that in its declaration.`,
     fullCode: "IBM2062IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An attribute, such as CHARACTER, may be specified in an ALLOCATE statement only if
@@ -19304,7 +19303,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Specification of extent for ${variablename} in ALLOCATE statement is invalid since it was declared with a constant extent.`,
     fullCode: "IBM2063IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If a bound for a CONTROLLED variable is declared as a constant, then it must be specified
@@ -19317,7 +19316,7 @@ export const Severe = {
     message: (dimensionvalue: string, variablename: string) =>
       `The extent specified for the lower bound for dimension ${dimensionvalue} of ${variablename} in ALLOCATE statement is invalid since that variable was declared with a different constant extent.`,
     fullCode: "IBM2064IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If a bound for a CONTROLLED variable is declared as a constant, then it must be specified
@@ -19330,7 +19329,7 @@ export const Severe = {
     message: (dimensionvalue: string, variablename: string) =>
       `The extent specified for the upper bound for dimension ${dimensionvalue} of ${variablename} in ALLOCATE statement is invalid since that variable was declared with a different constant extent.`,
     fullCode: "IBM2065IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A ENTRY type or argument used with the type function CAST must have the attribute
@@ -19343,7 +19342,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `ENTRY types and arguments in ${typefunction} must be LIMITED.`,
     fullCode: "IBM2075IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A FLOAT type or argument used with the type function CAST must have the attributes
@@ -19356,7 +19355,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `FLOAT types and arguments in ${typefunction} must be NATIVE REAL.`,
     fullCode: "IBM2076IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A FIXED BIN type or argument used with the type function CAST must have the attributes
@@ -19369,7 +19368,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `FIXED BIN types and arguments in ${typefunction} must be REAL with scale factor zero.`,
     fullCode: "IBM2077IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The first argument to the type function CAST must be a type with one of the following
@@ -19382,7 +19381,7 @@ export const Severe = {
     message: (attributes: string, typefunction: string) =>
       `Types with the attributes ${attributes} are not supported as the target of the ${typefunction} function.`,
     fullCode: "IBM2078IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The second argument to the type function CAST must have one of the following sets
@@ -19395,7 +19394,7 @@ export const Severe = {
     message: (attributes: string, typefunction: string) =>
       `Arguments with the attributes ${attributes} are not supported as the source in the ${typefunction} function.`,
     fullCode: "IBM2079IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * See the Language Reference Manual for a list of the supported DATE patterns.
@@ -19406,7 +19405,7 @@ export const Severe = {
     severity: Severity.S,
     message: "DATE pattern is invalid.",
     fullCode: "IBM2080IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The DATE attribute cannot be used on any other than the named types.
@@ -19418,7 +19417,7 @@ export const Severe = {
     message:
       "DATE attribute is valid only with NONVARYING CHARACTER, FIXED DECIMAL and arithmetic PICTURE.",
     fullCode: "IBM2081IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The DATE attribute can be used on a numeric only if it has a scale factor of zero
@@ -19430,7 +19429,7 @@ export const Severe = {
     severity: Severity.S,
     message: "DATE attribute conflicts with non- zero scale factor.",
     fullCode: "IBM2082IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The DATE attribute can be used on a numeric only if it is REAL.
@@ -19441,7 +19440,7 @@ export const Severe = {
     severity: Severity.S,
     message: "DATE attribute conflicts with COMPLEX attribute.",
     fullCode: "IBM2083IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The DATE attribute can be used on a PICTURE only if the PICTURE consists entirely
@@ -19454,7 +19453,7 @@ export const Severe = {
     message:
       "DATE attribute conflicts with PICTURE string containing characters other than 9.",
     fullCode: "IBM2084IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The DATE attribute can be used on a numeric only if its precision equals the length
@@ -19466,7 +19465,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Length of DATE pattern and base precision do not match.",
     fullCode: "IBM2085IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The DATE attribute can be used on a string only if its length equals the length of
@@ -19478,7 +19477,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Length of DATE pattern and base length do not match.",
     fullCode: "IBM2086IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The DATE attribute can be used on a string only if the string is declared with a
@@ -19490,7 +19489,7 @@ export const Severe = {
     severity: Severity.S,
     message: "DATE attribute conflicts with adjustable length.",
     fullCode: "IBM2087IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The options string built from the response file must be less than 32767 characters
@@ -19502,7 +19501,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Response file is too large. Excess will be ignored.",
     fullCode: "IBM2088IS",
-  } as SimplePLICode,
+  },
 
   /**
    * All lines in any response file must contain no more than 100 characters.
@@ -19514,7 +19513,7 @@ export const Severe = {
     message:
       "Line in response file is longer than 100 characters. That line and rest of file will be ignored.",
     fullCode: "IBM2089IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The named statement cannot be used under CICS.
@@ -19526,7 +19525,7 @@ export const Severe = {
     message: (keyword: string) =>
       `The ${keyword} statement cannot be used under SYSTEM(CICS).`,
     fullCode: "IBM2090IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * DISPLAY with REPLY cannot be used under CICS.
@@ -19537,7 +19536,7 @@ export const Severe = {
     severity: Severity.S,
     message: "DISPLAY with REPLY cannot be used under SYSTEM(CICS).",
     fullCode: "IBM2091IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The named built-in function cannot be used under CICS.
@@ -19549,7 +19548,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function cannot be used under SYSTEM(CICS).`,
     fullCode: "IBM2092IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named I\/O statement cannot be used under CICS unless the file used in the statement
@@ -19562,7 +19561,7 @@ export const Severe = {
     message: (keyword: string) =>
       `The ${keyword} statement cannot be used under SYSTEM(CICS) except with SYSPRINT.`,
     fullCode: "IBM2093IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The source in a CAST to a FLOAT must be FLOAT, FIXED or ORDINAL.
@@ -19573,7 +19572,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Source in CAST to FLOAT must be FLOAT, FIXED or ORDINAL.",
     fullCode: "IBM2094IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The target in a CAST from a FLOAT must be FLOAT, FIXED BIN or ORDINAL.
@@ -19584,7 +19583,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Target in CAST from FLOAT must be FLOAT, FIXED BIN or ORDINAL.",
     fullCode: "IBM2095IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The target in a CAST from a FIXED DEC must be FLOAT, FIXED BIN or ORDINAL.
@@ -19596,7 +19595,7 @@ export const Severe = {
     message:
       "Target in CAST from FIXED DEC must be FLOAT, FIXED BIN or ORDINAL.",
     fullCode: "IBM2096IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A FIXED DEC type or argument used with the type function CAST must have the attributes
@@ -19609,7 +19608,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `FIXED DEC types and arguments in ${typefunction} must be REAL with non-negative scale factor.`,
     fullCode: "IBM2097IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The source in a CAST to a FIXED DEC must be FLOAT, FIXED or ORDINAL.
@@ -19620,7 +19619,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Source in CAST to FIXED DEC must be FLOAT, FIXED or ORDINAL.",
     fullCode: "IBM2098IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The two strings in the CASEX option must have the same length. The second argument
@@ -19633,7 +19632,7 @@ export const Severe = {
     severity: Severity.S,
     message: "CASEX strings must have the same length.",
     fullCode: "IBM2099IS",
-  } as SimplePLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19646,7 +19645,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. The ORDINAL types do not match.`,
     fullCode: "IBM2100IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19659,7 +19658,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. The HANDLE types do not match.`,
     fullCode: "IBM2101IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19672,7 +19671,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. The STRUCTURE types do not match.`,
     fullCode: "IBM2102IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19685,7 +19684,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Alignment does not match.`,
     fullCode: "IBM2103IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19698,7 +19697,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Number and attributes of structure members do not match.`,
     fullCode: "IBM2104IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19711,7 +19710,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. The number of dimensions do not match.`,
     fullCode: "IBM2105IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19724,7 +19723,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Lower bounds do not match.`,
     fullCode: "IBM2106IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19737,7 +19736,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Upper bounds do not match.`,
     fullCode: "IBM2107IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19750,7 +19749,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. RETURNS attributes do not match.`,
     fullCode: "IBM2108IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19763,7 +19762,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. BYVALUE and BYADDR attributes in RETURNS do not match.`,
     fullCode: "IBM2109IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19776,7 +19775,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. LINKAGE values do not match.`,
     fullCode: "IBM2110IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19789,7 +19788,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. OPTIONS values do not match.`,
     fullCode: "IBM2111IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19802,7 +19801,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Parameter counts do not match.`,
     fullCode: "IBM2112IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19815,7 +19814,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. BYVALUE and BYADDR attributes in parameter ${parameternumber} do not match.`,
     fullCode: "IBM2113IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19828,7 +19827,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. The number of dimensions for parameter ${parameternumber} do not match.`,
     fullCode: "IBM2114IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19841,7 +19840,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Lower bounds for parameter ${parameternumber} do not match.`,
     fullCode: "IBM2115IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19854,7 +19853,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Upper bounds for parameter ${parameternumber} do not match.`,
     fullCode: "IBM2116IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19867,7 +19866,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do 122 not match those in its previous declaration. Alignment of parameter ${parameternumber} does not match.`,
     fullCode: "IBM2117IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19880,7 +19879,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Number and attributes of structure members in parameter ${parameternumber} do not match.`,
     fullCode: "IBM2118IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * EXTERNAL variables can be declared in more than one procedure in a compilation unit,
@@ -19893,7 +19892,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Attributes of parameter ${parameternumber} do not match.`,
     fullCode: "IBM2119IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * But an AREA may be output parameter.
@@ -19904,7 +19903,7 @@ export const Severe = {
     severity: Severity.S,
     message: "AREAs are not supported in RETURNS.",
     fullCode: "IBM2120IS",
-  } as SimplePLICode,
+  },
 
   /**
    * For a AREA parameter declared with constant size, any corresponding argument must
@@ -19923,7 +19922,7 @@ export const Severe = {
     message: (argumentnumber: string, entryname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${entryname} must have the same size as the corresponding parameter.`,
     fullCode: "IBM2121IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The IBMUEXIT routine should have a PACKAGE statement that specifies EXPORTS( IBMUEXIT
@@ -19936,7 +19935,7 @@ export const Severe = {
     message:
       "User exit routine addresses are invalid. Check that the user exit routine is a PACKAGE that exports only IBMUEXIT.",
     fullCode: "IBM2122IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The total number of dimensions allowed in a DEFINED STRUCTURE type used in XMLCHAR
@@ -19949,7 +19948,7 @@ export const Severe = {
     message:
       "When expanded, DEFINE STRUCTURE type would have an array with more than 15 total dimensions.",
     fullCode: "IBM2123IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The total number of logical levels allowed in a DEFINED STRUCTURE type used in XMLCHAR
@@ -19962,7 +19961,7 @@ export const Severe = {
     message:
       "When expanded, DEFINE STRUCTURE type would contain more than 15 logical levels.",
     fullCode: "IBM2124IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The use of DEFINE STRUCTURE types is not supported in GET DATA statements.
@@ -19982,7 +19981,7 @@ export const Severe = {
     message: (variablename: string) =>
       `${variablename} is a typed structure and hence cannot be used in GET DATA.`,
     fullCode: "IBM2125IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The use of members of DEFINE STRUCTURE types is not supported in data directed I\/O
@@ -20005,7 +20004,7 @@ export const Severe = {
     message: (variablename: string) =>
       `${variablename} is a member of a typed structure and hence cannot be used in data directed I/O.`,
     fullCode: "IBM2126IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A match for the GENERIC reference has been found, but the match is not suitable because
@@ -20029,7 +20028,7 @@ export const Severe = {
     message: (ENTRYvariablename: string, GENERICvariablename: string) =>
       `The ENTRY named ${ENTRYvariablename} matches the reference to the GENERIC variable ${GENERICvariablename} , but while the GENERIC reference is used as a function, the matching ENTRY does not have the RETURNS attribute.`,
     fullCode: "IBM2127IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A match for the GENERIC reference has been found, but the match is not suitable because
@@ -20055,7 +20054,7 @@ export const Severe = {
     message: (ENTRYvariablename: string, GENERICvariablename: string) =>
       `The ENTRY named ${ENTRYvariablename} matches the reference to the GENERIC variable ${GENERICvariablename} , but while the GENERIC reference is used as a function acting as a locator qualifier, the matching ENTRY does not return a POINTER.`,
     fullCode: "IBM2128IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A match for the GENERIC reference has been found, but the match is not suitable because
@@ -20082,7 +20081,7 @@ export const Severe = {
     message: (ENTRYvariablename: string, GENERICvariablename: string) =>
       `The ENTRY named ${ENTRYvariablename} matches the reference to the GENERIC variable ${GENERICvariablename} , but while the GENERIC reference is used as a repeating function reference, the matching ENTRY cannot be so used.`,
     fullCode: "IBM2129IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The POSITION attribute can be used only with string overlay defining.
@@ -20096,7 +20095,7 @@ export const Severe = {
     severity: Severity.S,
     message: "iSUB defining is not valid with the POSITION attribute.",
     fullCode: "IBM2130IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The defined and base arrays in iSUB defining must have identical attributes apart
@@ -20112,7 +20111,7 @@ export const Severe = {
     severity: Severity.S,
     message: "In iSUB defining, the base and DEFINED variables must match.",
     fullCode: "IBM2131IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The i in an iSUB reference must refer to a subscript of the DEFINED variable and
@@ -20129,7 +20128,7 @@ export const Severe = {
     message:
       "The i in an iSUB reference must not exceed the dimensionality of the DEFINED variable.",
     fullCode: "IBM2132IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In an iSUB variable, no asterisks may appear in the specification of the base array
@@ -20146,7 +20145,7 @@ export const Severe = {
     message:
       "An iSUB variable cannot be defined on a cross-section of its base.",
     fullCode: "IBM2133IS",
-  } as SimplePLICode,
+  },
 
   /**
    * iSUB defining is not supported for structures and unions.
@@ -20157,7 +20156,7 @@ export const Severe = {
     severity: Severity.S,
     message: "iSUB defining is supported only for arrays of scalars.",
     fullCode: "IBM2134IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If CMPAT(V1) or CMPAT(V2) is specified, then DFT(DESCLOCATOR) must be in effect (as
@@ -20170,7 +20169,7 @@ export const Severe = {
     message: (cmpatsuboption: string) =>
       `DFT(DESCLIST) conflicts with CMPAT( ${cmpatsuboption} ).`,
     fullCode: "IBM2135IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The number of indices given for an element of a label constant array must not vary
@@ -20188,7 +20187,7 @@ export const Severe = {
     message: (identifier: string) =>
       `The number of indices specified for the LABEL ${identifier} does not match the number previously specified.`,
     fullCode: "IBM2136IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label constant cannot be subscripted if its first use contains no subscripts.
@@ -20204,7 +20203,7 @@ export const Severe = {
     message: (identifier: string) =>
       `Indices have been specified for the LABEL ${identifier} when it was previously specified without indices.`,
     fullCode: "IBM2137IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label constant must be subscripted if its first use contains subscripts.
@@ -20220,7 +20219,7 @@ export const Severe = {
     message: (identifier: string) =>
       `Indices have not been specified for the LABEL ${identifier} when it was previously specified with indices.`,
     fullCode: "IBM2138IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler requires that you use z\/OS Language Environment V2 R1 or later.
@@ -20231,7 +20230,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The Language Enviroment run- time is not current enough.",
     fullCode: "IBM2139IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The second argument to the REPLACEBY2 built-in function provides the set of pairs
@@ -20245,7 +20244,7 @@ export const Severe = {
     message:
       "Length of second argument to the REPLACEBY2 built-in function must be twice that of the third.",
     fullCode: "IBM2140IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The first argument to the named built-in subroutine must be a structure.
@@ -20257,7 +20256,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to the ${BUILTINname} built-in function must be a structure.`,
     fullCode: "IBM2141IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The first argument to the named built-in subroutine must be a structure supplying
@@ -20271,7 +20270,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Event structure argument to the ${BUILTINname} built-in function has too few elements.`,
     fullCode: "IBM2142IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The first argument to the named built-in subroutine must be a structure supplying
@@ -20285,7 +20284,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Event structure argument to the ${BUILTINname} built-in function has too many elements.`,
     fullCode: "IBM2143IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The first argument to the named built-in subroutine must be a structure supplying
@@ -20299,7 +20298,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function is not a scalar.`,
     fullCode: "IBM2144IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20312,7 +20311,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must be a LIMITED ENTRY.`,
     fullCode: "IBM2145IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20326,7 +20325,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must return BYVALUE a NATIVE FIXED BIN(31).`,
     fullCode: "IBM2146IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20340,7 +20339,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a non-empty entry description list.`,
     fullCode: "IBM2147IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20359,7 +20358,7 @@ export const Severe = {
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function has a parameter count of ${specifiedparmcount} when the correct parameter count is ${requiredparmcount} .`,
     fullCode: "IBM2148IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20373,7 +20372,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE POINTER as its first parameter.`,
     fullCode: "IBM2149IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20387,7 +20386,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE POINTER as its second parameter.`,
     fullCode: "IBM2150IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20401,7 +20400,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE NATIVE FIXED BIN(31) as its third parameter.`,
     fullCode: "IBM2151IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20415,7 +20414,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE POINTER as its fourth parameter.`,
     fullCode: "IBM2152IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20429,7 +20428,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE NATIVE FIXED BIN(31) as its fifth parameter.`,
     fullCode: "IBM2153IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20443,7 +20442,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE POINTER as its second parameter.`,
     fullCode: "IBM2154IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20457,7 +20456,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE NATIVE FIXED BIN(31) as its fourth parameter.`,
     fullCode: "IBM2155IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20471,7 +20470,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE NATIVE FIXED BIN(31) as its second parameter.`,
     fullCode: "IBM2156IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20485,7 +20484,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE CHAR(1) or BYVALUE WCHAR(1) as its second parameter.`,
     fullCode: "IBM2157IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20499,7 +20498,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function has the wrong linkage.`,
     fullCode: "IBM2158IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20512,7 +20511,7 @@ export const Severe = {
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have the NODESCRIPTOR option.`,
     fullCode: "IBM2159IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The XMLCHAR built-in function cannot be applied to structures containing noncomputational
@@ -20525,7 +20524,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `All members of the input structure to the ${BUILTINname} built-in function must have computational type.`,
     fullCode: "IBM2160IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The XMLCHAR built-in function cannot be applied to unions or to structures containing
@@ -20538,7 +20537,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The input structure to the ${BUILTINname} built-in function must not be a UNION or contain any UNIONs.`,
     fullCode: "IBM2161IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The XMLCHAR built-in function cannot be applied to structures containing any GRAPHIC
@@ -20551,7 +20550,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The input structure to the ${BUILTINname} built-in function must not contain any GRAPHIC elements.`,
     fullCode: "IBM2162IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The XMLCHAR built-in function cannot be applied to structures containing any WIDECHAR
@@ -20564,7 +20563,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The input structure to the ${BUILTINname} built-in function must not contain any UTF-16 elements.`,
     fullCode: "IBM2163IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The XMLCHAR built-in function cannot be applied to structures containing substructures
@@ -20577,7 +20576,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The input structure to the ${BUILTINname} built-in function must not contain any unnamed substructures.`,
     fullCode: "IBM2164IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Support for long external names is incompatible with support for using the PRV to
@@ -20590,7 +20589,7 @@ export const Severe = {
     message:
       "PRV support is provided only if the LIMITS(EXTNAME(7)) option is in effect.",
     fullCode: "IBM2165IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Support for the RENT option is incompatible with support for using the PRV to address
@@ -20602,7 +20601,7 @@ export const Severe = {
     severity: Severity.S,
     message: "PRV support is provided only if the NORENT option is in effect.",
     fullCode: "IBM2166IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Support for the CMPAT(LE) option is incompatible with support for using the PRV to
@@ -20615,7 +20614,7 @@ export const Severe = {
     message:
       "PRV support is provided only if the CMPAT(V2) or CMPAT(V3) option is in effect.",
     fullCode: "IBM2167IS",
-  } as SimplePLICode,
+  },
 
   /**
    * When using the PRV to address CONTROLLED variables, there may be no more than 568
@@ -20627,7 +20626,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Too many INTERNAL CONTROLLED variables.",
     fullCode: "IBM2170IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Under the NOWRITABLE option, every FETCHABLE ENTRY constant must be declared inside
@@ -20640,7 +20639,7 @@ export const Severe = {
     message:
       "Under the NOWRITABLE option, no FETCHABLE ENTRY may be declared at the PACKAGE level.",
     fullCode: "IBM2171IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Under the NOWRITABLE option, every FILE CONSTANT must be declared inside a PROCEDURE
@@ -20653,7 +20652,7 @@ export const Severe = {
     message:
       "Under the NOWRITABLE option, no FILE CONSTANT may be declared at the PACKAGE level.",
     fullCode: "IBM2172IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Under the NOWRITABLE option, every CONTROLLED variable must be declared inside a
@@ -20666,7 +20665,7 @@ export const Severe = {
     message:
       "Under the NOWRITABLE option, no CONTROLLED may be declared at the PACKAGE level.",
     fullCode: "IBM2173IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The length of the string literal produced by applying the REPLACEBY2 built-in function
@@ -20679,7 +20678,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Result of REPLACEBY2 is too long.",
     fullCode: "IBM2174IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The REPLACEBY2 built-in function currently supports only second and third arguments
@@ -20692,7 +20691,7 @@ export const Severe = {
     message:
       "The second and third arguments to REPLACEBY2 must be restricted expressions.",
     fullCode: "IBM2175IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The HEX and HEXIMAGE built-in functions cannot be applied to strings using more than
@@ -20705,7 +20704,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The result of the ${BUILTINname} built-in function would require more than 32767 bytes.`,
     fullCode: "IBM2176IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named file is the file intended to be used as the SYSADATA file, but such a file
@@ -20718,7 +20717,7 @@ export const Severe = {
     message: (filename: string) =>
       `The file ${filename} is a PDS member and hence cannot be used for SYSADATA.`,
     fullCode: "IBM2177IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * When the LINEDIR option is in effect, your source must contain no INCLUDE statements
@@ -20731,7 +20730,7 @@ export const Severe = {
     message:
       "INCLUDE statements are not supported when the LINEDIR option is in effect.",
     fullCode: "IBM2178IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The %LINE directive generated by the PPTRACE must fit on one line. You must either
@@ -20745,7 +20744,7 @@ export const Severe = {
     message:
       "There is too little room between the margins for the LINE directive. The PPTRACE option will be turned off.",
     fullCode: "IBM2179IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Any input\/output operation using a KEYED DIRECT file must include the key of the
@@ -20758,7 +20757,7 @@ export const Severe = {
     message: (filename: string, keyword: string) =>
       `Use of the KEYED DIRECT file ${filename} in a ${keyword} statement without a KEY/KEYFROM clause is invalid.`,
     fullCode: "IBM2180IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the PICSPEC built-in function, for example.
@@ -20770,7 +20769,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type CHARACTER.`,
     fullCode: "IBM2181IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The specified argument to the named built-in function must be a restricted expression.
@@ -20783,7 +20782,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must be a constant.`,
     fullCode: "IBM2182IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the PICSPEC built-in function, for example.
@@ -20795,7 +20794,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The first argument to ${BUILTINname} built-in function must have constant length equal to that of the second argument.`,
     fullCode: "IBM2183IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Break up the source files into smaller files.
@@ -20806,7 +20805,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Compiler input files must have less then 1000000 lines.",
     fullCode: "IBM2184IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This applies to the ISFINITE and similar built-in functions.
@@ -20818,7 +20817,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function must have type REAL DECIMAL FLOAT, and the DFP option must be in effect.`,
     fullCode: "IBM2185IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named built-in function is not supported for float using DFP. This message applies,
@@ -20831,7 +20830,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} is not supported for DFP.`,
     fullCode: "IBM2186IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A DFP literal value when adjusted to have no decimal point (e.g. 3.14E0 would be
@@ -20846,7 +20845,7 @@ export const Severe = {
     message: (value: string, precision: string) =>
       `The exponent in the literal ${value} is too large for DECIMAL FLOAT with precision ${precision} .`,
     fullCode: "IBM2187IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A DFP literal value when adjusted to have no decimal point (e.g. 3.14E0 would be
@@ -20861,7 +20860,7 @@ export const Severe = {
     message: (value: string, precision: string) =>
       `The exponent in the literal ${value} is too small for DECIMAL FLOAT with precision ${precision} .`,
     fullCode: "IBM2188IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under CMPAT(V2) and CMPAT(LE), bounds must be between -2147483648 and +2147483647
@@ -20874,7 +20873,7 @@ export const Severe = {
     message:
       "Under CMPAT(V2) and CMPAT(LE), bounds must not be greater than +2147483647.",
     fullCode: "IBM2189IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Under CMPAT(V2) and CMPAT(LE), bounds must be between -2147483648 and +2147483647
@@ -20887,7 +20886,7 @@ export const Severe = {
     message:
       "Under CMPAT(V2) and CMPAT(LE), bounds must not be less than -2147483648.",
     fullCode: "IBM2190IS",
-  } as SimplePLICode,
+  },
 
   /**
    * You must specify at least one valid character in each of the OR, NOT and QUOTE or
@@ -20900,7 +20899,7 @@ export const Severe = {
     message: (option: string) =>
       `No valid character specified in the ${option} option.`,
     fullCode: "IBM2191IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20918,7 +20917,7 @@ export const Severe = {
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE POINTER as parameter number ${parameternumber} .`,
     fullCode: "IBM2192IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20936,7 +20935,7 @@ export const Severe = {
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE NATIVE FIXED BIN(31) as parameter number ${parameternumber} .`,
     fullCode: "IBM2193IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20954,7 +20953,7 @@ export const Severe = {
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYADDR POINTER as parameter number ${parameternumber} .`,
     fullCode: "IBM2194IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20972,7 +20971,7 @@ export const Severe = {
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYADDR NATIVE 130 FIXED BIN(31) as parameter number ${parameternumber} .`,
     fullCode: "IBM2195IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -20990,7 +20989,7 @@ export const Severe = {
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE ALIGNED BIT(8) as parameter number ${parameternumber} .`,
     fullCode: "IBM2196IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the ULENGTH built-in function, for example.
@@ -21002,7 +21001,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built-in function must have type CHAR or WIDECHAR.`,
     fullCode: "IBM2197IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the UPOS and UWIDTH built-in functions, for example.
@@ -21014,7 +21013,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type CHAR or WIDECHAR.`,
     fullCode: "IBM2198IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler backend requires the XPLINK(ON) option to be in effect.
@@ -21026,7 +21025,7 @@ export const Severe = {
     message:
       "The run-time option XPLINK(ON) must be in effect if object code is to be generated.",
     fullCode: "IBM2199IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The indicated conversion had a DFP source, target, or both but failed at compile
@@ -21040,7 +21039,7 @@ export const Severe = {
     message: (sourcetype: string, targettype: string) =>
       `DFP conversion from ${sourcetype} to ${targettype} failed with an operation exception. The most likely cause for this is lack of DFP hardware.`,
     fullCode: "IBM2200IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the ROUNDDEC and similar built-in functions.
@@ -21052,7 +21051,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type REAL DECIMAL FIXED, or REAL DECIMAL FLOAT, and in the latter case, the DFP option must be in effect.`,
     fullCode: "IBM2201IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to various built-in functions on some platforms. For example, on z\/OS,
@@ -21065,7 +21064,7 @@ export const Severe = {
     message: (BUILTINname: string, level: string) =>
       `Use of the ${BUILTINname} built-in function requires ARCH( ${level} ) or greater.`,
     fullCode: "IBM2202IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If any leaf structure member has the VALUE attribute, then all must have the VALUE
@@ -21078,7 +21077,7 @@ export const Severe = {
     message:
       "The VALUE attribute may be used on a structure member only if it is used on all base members of that structure.",
     fullCode: "IBM2203IS",
-  } as SimplePLICode,
+  },
 
   /**
    * It is invalid to specify the VALUE attribute for a member of a structure if the structure
@@ -21091,7 +21090,7 @@ export const Severe = {
     message:
       "The VALUE attribute may be used on a structure member only if no storage attribute is specified for the structure.",
     fullCode: "IBM2204IS",
-  } as SimplePLICode,
+  },
 
   /**
    * It is invalid to specify the VALUE attribute for a member of a structure that has
@@ -21104,7 +21103,7 @@ export const Severe = {
     message:
       "The VALUE attribute may be used on a structure member only if no dimension attributes are specified for its parents.",
     fullCode: "IBM2205IS",
-  } as SimplePLICode,
+  },
 
   /**
    * It is invalid to specify the VALUE attribute for an array.
@@ -21115,7 +21114,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The VALUE attribute conflicts with the DIMENSION attribute.",
     fullCode: "IBM2206IS",
-  } as SimplePLICode,
+  },
 
   /**
    * It is invalid to specify the VALUE attribute for a member of a union.
@@ -21127,7 +21126,7 @@ export const Severe = {
     message:
       "The VALUE attribute may be used on a structure member only if no parent has the UNION attribute.",
     fullCode: "IBM2207IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Only the leaf elements of a structure containing elements with the VALUE attribute
@@ -21141,7 +21140,7 @@ export const Severe = {
     message:
       "Structure references that contain the VALUE attribute are invalid.",
     fullCode: "IBM2208IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Extents in BASED variables must all be constant except where the REFER option is
@@ -21159,7 +21158,7 @@ export const Severe = {
     message:
       "Use of nonconstant extents in BASED variables without REFER is invalid except on scalars.",
     fullCode: "IBM2209IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The VALUE type function can be applied only to those structure types that have at
@@ -21172,7 +21171,7 @@ export const Severe = {
     message: (typename: string) =>
       `The VALUE type function cannot be applied to ${typename} since that structure has no members with an INITIAL attribute.`,
     fullCode: "IBM2210IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Every DBCS shift-out code between the margins must have a matching DBCS shift-in
@@ -21185,7 +21184,7 @@ export const Severe = {
     message:
       "Shift-out code has no closing shift- in code before the right margin.",
     fullCode: "IBM2211IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The argument to the named built-in subroutine must be a structure.
@@ -21197,7 +21196,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to the ${BUILTINname} built-in function must be a structure.`,
     fullCode: "IBM2212IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Procedures and begin blocks must contain fewer than 2048 label arrays.
@@ -21208,7 +21207,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Block contains too many label arrays.",
     fullCode: "IBM2213IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The XMLATTR and XMLOMIT attributes may be used only on base structure elements.
@@ -21220,7 +21219,7 @@ export const Severe = {
     message: (Attribute: string) =>
       `${Attribute} is invalid on structure parents.`,
     fullCode: "IBM2214IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The XMLATTR and XMLOMIT attributes may be used only on named structure elements.
@@ -21232,7 +21231,7 @@ export const Severe = {
     message: (Attribute: string) =>
       `${Attribute} is invalid on unnamed structure elements.`,
     fullCode: "IBM2215IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The XMLATTR and XMLOMIT attributes may be used only on scalar structure elements
@@ -21244,7 +21243,7 @@ export const Severe = {
     severity: Severity.S,
     message: (Attribute: string) => `${Attribute} is invalid on arrays.`,
     fullCode: "IBM2216IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The XMLATTR attribute may be used on a structure element only if all its previous
@@ -21257,7 +21256,7 @@ export const Severe = {
     message:
       "XMLATTR is invalid if the previous element at that logical level does not also have the XMLATTR attribute.",
     fullCode: "IBM2217IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The XMLOMIT attribute may not be used on FLOAT elements using a data representation
@@ -21270,7 +21269,7 @@ export const Severe = {
     message: (Attribute: string) =>
       `${Attribute} is invalid on non-native FLOAT elements.`,
     fullCode: "IBM2218IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If a parameter is declared as INONLY, then the ASSIGNABLE attribute is invalid on
@@ -21283,7 +21282,7 @@ export const Severe = {
     message:
       "Parameters declared as INONLY must not contain any elements declared with the ASSIGNABLE attribute.",
     fullCode: "IBM2219IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If a parameter is declared as OUTONLY, then the NONASSIGNABLE attribute must not
@@ -21296,7 +21295,7 @@ export const Severe = {
     message:
       "Parameters declared as OUTONLY must contain at least one element declared with the ASSIGNABLE attribute.",
     fullCode: "IBM2220IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The use of a non-constant extent in BASED variable without using REFER is limited.
@@ -21309,7 +21308,7 @@ export const Severe = {
     message:
       "A non-constant array extent in a BASED variable is invalid if the array has more than one dimension.",
     fullCode: "IBM2221IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The use of non-constant extents in BASED variables without using REFER is limited.
@@ -21322,7 +21321,7 @@ export const Severe = {
     message:
       "A non-constant array extent in a BASED variable is invalid if the array has a non-constant lower bound.",
     fullCode: "IBM2222IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The use of non-constant extents in BASED variables without using REFER is limited.
@@ -21336,7 +21335,7 @@ export const Severe = {
     message:
       "A non-constant array extent in a BASED structure is invalid if any other fields in the structure have non-constant extents.",
     fullCode: "IBM2223IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The use of non-constant extents in BASED variables without using REFER is limited.
@@ -21350,7 +21349,7 @@ export const Severe = {
     message:
       "A non-constant AREA, BIT, GRAPHIC, or WIDECHAR extent in a BASED variable is invalid if the variable is an array element or part of a structure.",
     fullCode: "IBM2224IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The use of non-constant extents in BASED variables without using REFER is limited.
@@ -21364,7 +21363,7 @@ export const Severe = {
     message:
       "A non-constant CHARACTER extent in a BASED variable is invalid if the string is ALIGNED and either VARYING or VARYING4.",
     fullCode: "IBM2225IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The use of non-constant extents in BASED variables without using REFER is limited.
@@ -21378,7 +21377,7 @@ export const Severe = {
     message:
       "A non-constant array extent in a BASED variable is invalid if there are any sibling fields after the array or any of the array's parents.",
     fullCode: "IBM2226IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The use of non-constant extents in BASED variables without using REFER is limited.
@@ -21392,7 +21391,7 @@ export const Severe = {
     message:
       "A non-constant CHARACTER extent in a BASED structure is invalid if the string is a member of an array of structures.",
     fullCode: "IBM2227IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The use of non-constant extents in BASED variables without using REFER is limited.
@@ -21406,7 +21405,7 @@ export const Severe = {
     message:
       "A non-constant CHARACTER extent in a BASED structure is invalid unless the string is the last field in the structure and not part of a union.",
     fullCode: "IBM2228IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This applies, for example, to the POPCNT built-in function.
@@ -21418,7 +21417,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must have the attributes REAL FIXED BIN and scale factor zero.`,
     fullCode: "IBM2230IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The XMLCHAR built-in function cannot be used with DFT(EBCDIC) on Windows or AIX nor
@@ -21431,7 +21430,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function is supported only with the native character set.`,
     fullCode: "IBM2231IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Multiple targets are not permitted in BY DIMACROSS assignments. For example, the
@@ -21449,7 +21448,7 @@ export const Severe = {
     severity: Severity.S,
     message: "There must be only one target in a BY DIMACROSS assignment.",
     fullCode: "IBM2232IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The target in a BY DIMACROSS assignment must not be an array of structures or a scalar.
@@ -21469,7 +21468,7 @@ export const Severe = {
     message:
       "The target in a BY DIMACROSS assignment must be a structure reference.",
     fullCode: "IBM2233IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The source in a BY DIMACROSS assignment must not include any array references.
@@ -21481,7 +21480,7 @@ export const Severe = {
     message:
       "No arrays are permitted in the source in a BY DIMACROSS assignment.",
     fullCode: "IBM2234IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The immediate children of a structure used in a BY DIMACROSS assignment must be scalars
@@ -21502,7 +21501,7 @@ export const Severe = {
     message:
       "In a BY DIMACROSS assignment, the immediate children of any structure not declared with DIMACROSS must not be arrays.",
     fullCode: "IBM2235IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The named built-in function is valid only when applied to a reference to a variable
@@ -21515,7 +21514,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have the DIMACROSS attribute.`,
     fullCode: "IBM2236IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The third argument to the ALLCOMPARE built-in function must be a restricted expression
@@ -21528,7 +21527,7 @@ export const Severe = {
     message:
       "The third argument to the ALLCOMPARE built-in function must be a CHAR(2) constant.",
     fullCode: "IBM2237IS",
-  } as SimplePLICode,
+  },
 
   /**
    * When uppercased, the third argument to the ALLCOMPARE built-in function must be one
@@ -21541,7 +21540,7 @@ export const Severe = {
     message:
       "The third argument to the ALLCOMPARE built-in function must specify the name of a comparison operator.",
     fullCode: "IBM2238IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If a DEFINE STRUCT statement specifies no member names, then any attempt to dereference
@@ -21554,7 +21553,7 @@ export const Severe = {
     message: (typename: string) =>
       `Invalid use of unspecified STRUCT type ${typename} .`,
     fullCode: "IBM2239IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The size of an unspecified structure is unknown, and hence all arithmetic operations
@@ -21567,7 +21566,7 @@ export const Severe = {
     message:
       "Arithmetic operations are not allowed on handles for unspecified structure definitions.",
     fullCode: "IBM2240IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The argument to the named type function must be the name of a structure type that
@@ -21580,7 +21579,7 @@ export const Severe = {
     message: (typefunction: string) =>
       `The argument to the type function ${typefunction} must be a specified structure type name.`,
     fullCode: "IBM2241IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If h1 is a handle for structure type t1 and h2 is a handle for structure type t2,
@@ -21593,7 +21592,7 @@ export const Severe = {
     message:
       "Subtraction of HANDLE from HANDLE is invalid unless both point to the same type.",
     fullCode: "IBM2242IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21607,7 +21606,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. RETURNS attributes do not match.`,
     fullCode: "IBM2243IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21621,7 +21620,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. BYVALUE/BYADDR attributes in RETURNS do not match.`,
     fullCode: "IBM2244IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21635,7 +21634,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. LINKAGE values do not match.`,
     fullCode: "IBM2245IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21649,7 +21648,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. OPTIONS values do not match.`,
     fullCode: "IBM2246IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21663,7 +21662,7 @@ export const Severe = {
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Parameter counts do not match.`,
     fullCode: "IBM2247IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21677,7 +21676,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. BYVALUE/BYADDR attributes in parameter ${parameternumber} do not match.`,
     fullCode: "IBM2248IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21691,7 +21690,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Number of dimensions for parameter ${parameternumber} do not match.`,
     fullCode: "IBM2249IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21705,7 +21704,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Lower bounds for parameter ${parameternumber} do not match.`,
     fullCode: "IBM2250IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21719,7 +21718,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Upper bounds for parameter ${parameternumber} do not match.`,
     fullCode: "IBM2251IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21733,7 +21732,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Alignment of parameter ${parameternumber} does not match.`,
     fullCode: "IBM2252IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21747,7 +21746,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Number and attributes of structure members in parameter ${parameternumber} do not match.`,
     fullCode: "IBM2253IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -21761,7 +21760,7 @@ export const Severe = {
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Attributes of parameter ${parameternumber} do not match.`,
     fullCode: "IBM2254IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the UTF8 built-in function. GRAPHIC and non-computational
@@ -21774,7 +21773,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must be numeric, BIT, or CHARACTER.`,
     fullCode: "IBM2255IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Conversion of CHAR or WCHAR to UTF-8 can produce a result string that is longer than
@@ -21790,7 +21789,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The result of the ${BUILTINname} built-in function would have a length greater than the the maximum allowed for a CHARACTER string.`,
     fullCode: "IBM2256IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the UTF8 built-in function.
@@ -21802,7 +21801,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must hold valid UTF-16.`,
     fullCode: "IBM2257IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the UTF8TOCHAR and UTF8TOWCHAR built-in functions.
@@ -21814,7 +21813,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must have type CHARACTER.`,
     fullCode: "IBM2258IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the UTF8TOCHAR and UTF8TOWCHAR built-in functions.
@@ -21826,7 +21825,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must contain valid UTF-8.`,
     fullCode: "IBM2259IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * These expressions must be simple restricted expressions. For example, ENTRY, FILE
@@ -21839,7 +21838,7 @@ export const Severe = {
     message:
       "INITIAL expressions in DEFINE STRUCT must not depend on any address values.",
     fullCode: "IBM2260IS",
-  } as SimplePLICode,
+  },
 
   /**
    * These characters are allowed in PICTURE specifications, but not in WIDEPIC.
@@ -21851,7 +21850,7 @@ export const Severe = {
     message:
       "Overpunch and currency characters are not allowed in WIDEPIC specifications.",
     fullCode: "IBM2261IS",
-  } as SimplePLICode,
+  },
 
   /**
    * These characters are allowed in PICTURE specifications, but not in WIDEPIC.
@@ -21862,7 +21861,7 @@ export const Severe = {
     severity: Severity.S,
     message: "A and X characters are not allowed in WIDEPIC specifications.",
     fullCode: "IBM2262IS",
-  } as SimplePLICode,
+  },
 
   /**
    * REFER objects should have the REAL attribute.
@@ -21873,7 +21872,7 @@ export const Severe = {
     severity: Severity.S,
     message: "REFER objects must not be COMPLEX WIDEPIC.",
     fullCode: "IBM2263IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The LOCATES descriptor may not specify a structure, union or array. The following
@@ -21890,7 +21889,7 @@ export const Severe = {
     message: (attribute: string) =>
       `The ${attribute} attribute is invalid in a LOCATES descriptor.`,
     fullCode: "IBM2264IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In LOCATES descriptors, any string length and AREA size must be specified with a
@@ -21902,7 +21901,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Extents in LOCATES descriptors must be constants.",
     fullCode: "IBM2265IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This rule applies to the LOCVAL and similar built-in functions.
@@ -21914,7 +21913,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The argument to ${BUILTINname} built-in function must have the LOCATES attribute.`,
     fullCode: "IBM2266IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This rule applies to the LOCNEWSPACE and similar built-in functions.
@@ -21926,7 +21925,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The first argument to ${BUILTINname} built-in function must have the LOCATES attribute.`,
     fullCode: "IBM2267IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The LOCVAL pseudovariable can be applied only to variables with the LOCATES attribute
@@ -21939,7 +21938,7 @@ export const Severe = {
     message:
       "Argument to the LOCVAL pseudovariable must have the LOCATES attribute.",
     fullCode: "IBM2268IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The LOCATES attribute cannot be used on any other types.
@@ -21950,7 +21949,7 @@ export const Severe = {
     severity: Severity.S,
     message: "LOCATES attribute is valid only with OFFSET.",
     fullCode: "IBM2269IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A located type can specify only one value. The following declaration is not correct
@@ -21965,7 +21964,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Only one description is allowed in a LOCATES descriptor.",
     fullCode: "IBM2270IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This rule applies to the LOCNEWSPACE and similar built-in functions.
@@ -21977,7 +21976,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The first argument to ${BUILTINname} built-in function must be a scalar reference.`,
     fullCode: "IBM2271IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This rule applies to the LOCNEWVALUE and similar built-in functions.
@@ -21989,7 +21988,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The second argument to ${BUILTINname} built-in function must be a scalar reference.`,
     fullCode: "IBM2272IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This rule applies to the LOCVAL and similar built-in functions.
@@ -22001,7 +22000,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The OFFSET argument to ${BUILTINname} built-in function must have an AREA qualification.`,
     fullCode: "IBM2273IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This rule applies to the LOCNEWVALUE and similar built-in functions.
@@ -22013,7 +22012,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The second argument to ${BUILTINname} built-in function must have the LOCATES attribute.`,
     fullCode: "IBM2274IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This rule applies to the LOCNEWVALUE built-in functions.
@@ -22025,7 +22024,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Third argument to ${BUILTINname} built-in function must have type AREA.`,
     fullCode: "IBM2275IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This rule applies to the LOCSTG and similar built-in functions.
@@ -22037,7 +22036,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The argument to ${BUILTINname} built-in function must have the LOCATES attribute or contain subelements with the LOCATES attribute.`,
     fullCode: "IBM2276IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Under the NOINCLUDE compiler option, %INCLUDE statements are valid only if the MACRO
@@ -22049,7 +22048,7 @@ export const Severe = {
     severity: Severity.S,
     message: "INCLUDE statements are not allowed under NOINCLUDE.",
     fullCode: "IBM2277IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The source file contains lines that would be rejected by the UVALID built-in function
@@ -22061,7 +22060,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Source is not valid UTF-8.",
     fullCode: "IBM2278IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The specified option contains values that would be rejected by the UVALID built-in
@@ -22073,7 +22072,7 @@ export const Severe = {
     severity: Severity.S,
     message: (option: string) => `${option} option contains invalid UTF-8.`,
     fullCode: "IBM2279IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In the NAMES( 'abc', 'xyz' ) option, each of the UTF-8 characters in the first string
@@ -22087,7 +22086,7 @@ export const Severe = {
     message:
       "The corresponding characters in the two NAMES strings must have the same length.",
     fullCode: "IBM2280IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression contains the named built-in function with the specified argument having
@@ -22101,7 +22100,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The first argument to ${BUILTINname} built-in function must have computational type or ordinal type.`,
     fullCode: "IBM2281IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In the statement REINIT x, x must not be a structure or union member.
@@ -22112,7 +22111,7 @@ export const Severe = {
     severity: Severity.S,
     message: "REINIT reference must be a level 1 item.",
     fullCode: "IBM2282IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In the statement REINIT x, x must not be DEFINED, constant, or a parameter.
@@ -22123,7 +22122,7 @@ export const Severe = {
     severity: Severity.S,
     message: "REINIT references must be BASED, AUTO, CTL or STATIC.",
     fullCode: "IBM2283IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This message applies to the LOCNEWVALUE built- in functions. In LOCNEWVALUE( x, y
@@ -22137,7 +22136,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The first and second arguments to the ${BUILTINname} built-in function must have matching types.`,
     fullCode: "IBM2284IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies, for example, to the PLISTCK and PLISTCKF built-in subroutines.
@@ -22149,7 +22148,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must have the attributes UNSIGNED REAL FIXED BIN(64,0).`,
     fullCode: "IBM2285IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies, for example, to the PLISTCKE built-in subroutine where the argument
@@ -22162,7 +22161,7 @@ export const Severe = {
     message: (BUILTINname: string, length: string) =>
       `The argument to the ${BUILTINname} built-in function must have the attributes CHAR NONVARYING and length ${length} .`,
     fullCode: "IBM2286IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The JsonGetValue and similar built-in functions cannot be applied to aggregates or
@@ -22177,7 +22176,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to the ${BUILTINname} built- in function must contain only standard computational types.`,
     fullCode: "IBM2287IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The JsonGetValue and similar built-in functions cannot be applied to unions or to
@@ -22190,7 +22189,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to the ${BUILTINname} built- in function must not be a UNION or contain any UNIONs.`,
     fullCode: "IBM2288IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The JsonGetValue and similar built-in functions cannot be applied to aggregates or
@@ -22203,7 +22202,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to the ${BUILTINname} built- in function must not contain any GRAPHIC elements.`,
     fullCode: "IBM2289IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated element of the structure supplying the event handlers for the SAX parser
@@ -22221,7 +22220,7 @@ export const Severe = {
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYADDR NATIVE FIXED BIN(63) as parameter number ${parameternumber} .`,
     fullCode: "IBM2290IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In 64-bit mode, the only valid values for the POINTER precision are 32 and 64. Otherwise
@@ -22233,7 +22232,7 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string) => `${attribute} precision is invalid.`,
     fullCode: "IBM2291IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The target in a FETCH or RELEASE statement must be outside the current compilation
@@ -22246,7 +22245,7 @@ export const Severe = {
     message: (statement: string) =>
       `Target in ${statement} statement must not be the name of a PROC or ENTRY statement.`,
     fullCode: "IBM2292IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * CMPAT(V2), CMPAT(V3) or CMPAT(LE) must be used when compiling any code using this
@@ -22259,7 +22258,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function is not supported under CMPAT(V1).`,
     fullCode: "IBM2293IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Strings longer than 65535 are not supported under CMPAT(V1) or CMPAT(V2).
@@ -22271,7 +22270,7 @@ export const Severe = {
     message:
       "A value greater than 64K for the STRING suboption of the 139 LIMITS option is valid only under CMPAT(V3) and CMPAT(LE).",
     fullCode: "IBM2294IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Strings longer than 32767 are not supported under BIFPREC(15).
@@ -22283,7 +22282,7 @@ export const Severe = {
     message:
       "A value greater than 32K for the STRING suboption of the LIMITS option is valid only under BIFPREC(31).",
     fullCode: "IBM2295IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression contains the named built-in function with the specified argument having
@@ -22298,7 +22297,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function must have the same ordinal type as the first argument.`,
     fullCode: "IBM2296IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Built-in functions such as ALLOC31 are supported only under z\/OS and only under
@@ -22311,7 +22310,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function is supported only under LP(64).`,
     fullCode: "IBM2297IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Built-in functions such as ALLOCSIZE are supported only under the CHECK(STORAGE)
@@ -22324,7 +22323,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function is supported only when the compiler option CHECK(STORAGE) is used.`,
     fullCode: "IBM2298IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The values a and b in BETWEEN(x,a,b) must satisfy a <= b. The values a and b in BETWEENEXCLUSIVE(x,a,b)
@@ -22338,7 +22337,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `No value can fall in the interval defined by the second and third arguments to the ${BUILTINname} built-in function.`,
     fullCode: "IBM2299IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The SMF registration of the compiler failed because it has been disabled in the IFAPRDxx
@@ -22351,7 +22350,7 @@ export const Severe = {
     message:
       "The compiler was disabled in the IFAPRDxx parmlib member. The compilation will terminate without further processing.",
     fullCode: "IBM2300IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The SMF registration of the compiler failed with the indicated return code.
@@ -22363,7 +22362,7 @@ export const Severe = {
     message: (returncode: string) =>
       `The IFAEDREG registration of the compiler failed with return code ${returncode} . The compilation will terminate without further processing.`,
     fullCode: "IBM2301IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The specified option is not supported under LP(64). This is true, for example, of
@@ -22376,7 +22375,7 @@ export const Severe = {
     message: (option: string) =>
       `The option ${option} is not supported under LP(64).`,
     fullCode: "IBM2302IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The specified value is not a supported codepage. See the Programming Guide for a
@@ -22388,7 +22387,7 @@ export const Severe = {
     severity: Severity.S,
     message: (codepage: string) => `${codepage} is not a supported codepage.`,
     fullCode: "IBM2303IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * CMPAT(V2), CMPAT(V3) or CMPAT(LE) must be used when compiling any code using this
@@ -22401,7 +22400,7 @@ export const Severe = {
     message: (attribute: string) =>
       `The ${attribute} attribute is not supported under CMPAT(V1).`,
     fullCode: "IBM2304IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If an operator is specified in an ASSERT COMPARE statement, it must be a restricted
@@ -22413,7 +22412,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The ASSERT COMPARE operator must be a CHAR(2) constant.",
     fullCode: "IBM2305IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If an operator is specified in an ASSERT COMPARE statement, it must be one of 'EQ',
@@ -22426,7 +22425,7 @@ export const Severe = {
     message:
       "The ASSERT COMPARE operator must specify the name of a comparison operator.",
     fullCode: "IBM2306IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The array argument to the named built-in function must have exactly one dimension.
@@ -22440,7 +22439,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The first argument to the ${BUILTINname} built-in function must be a suitable one-dimensional array.`,
     fullCode: "IBM2307IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If the first argument to the named built-in function is NONVARYING BIT, then it must
@@ -22454,7 +22453,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The first argument to the ${BUILTINname} built-in function must be ALIGNED if NONVARYING BIT.`,
     fullCode: "IBM2308IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the BINSEARCH built-in function and similar functions. The
@@ -22469,7 +22468,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Comparison in ${BUILTINname} built-in function is unsupported.`,
     fullCode: "IBM2309IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the third argument to the BINSEARCHX built-in function and
@@ -22485,7 +22484,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The compare function passed to the ${BUILTINname} built-in function must be a LIMITED ENTRY, must return BYVALUE a NATIVE FIXED BIN(31), must have exactly two BYVALUE POINTER arguments, and must have the OPTLINK linkage.`,
     fullCode: "IBM2310IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Labels must not be applied to the END statement for a PACKAGE.
@@ -22496,7 +22495,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Labels are not allowed on the END statement for a PACKAGE.",
     fullCode: "IBM2311IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression contains the named built-in function when the specified argument is
@@ -22509,7 +22508,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function must be a scalar expression.`,
     fullCode: "IBM2312IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function when the specified argument is
@@ -22522,7 +22521,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function must be an array expression.`,
     fullCode: "IBM2313IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The QUICKSORT built-in supports only a limited set of array types. For example, FIXED
@@ -22535,7 +22534,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} built-in function does not support arrays of this type.`,
     fullCode: "IBM2314IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the REGEX and other built- in functions when some arguments
@@ -22549,7 +22548,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have type size_t.`,
     fullCode: "IBM2315IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message applies to the REGEX and other built- in functions where some arguments
@@ -22562,7 +22561,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have CHARACTER type.`,
     fullCode: "IBM2316IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The indicated argument to the named built-in function must be an ASSIGNABLE reference
@@ -22576,7 +22575,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must be an ASSIGNABLE reference.`,
     fullCode: "IBM2317IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The VALUELIST and VALUERANGE attributes cannot be used on non-computational tyeps
@@ -22589,7 +22588,7 @@ export const Severe = {
     message: (attribute: string) =>
       `${attribute} attribute is valid only with computational types.`,
     fullCode: "IBM2318IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The VALUERANGE attribute cannot be used on COMPLEX numeric types.
@@ -22601,7 +22600,7 @@ export const Severe = {
     message: (attribute: string) =>
       `${attribute} attribute is not valid with COMPLEX types.`,
     fullCode: "IBM2319IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument to the VALIDVALUE built-in function must have one of the above attributes
@@ -22614,7 +22613,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must be a reference to a variable with the VALIDLIST or VALIDRANGE attribute.`,
     fullCode: "IBM2320IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The items in VALUELIST and VALUERANGE lists should be unique.
@@ -22625,7 +22624,7 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string) => `${attribute} contains duplicate values.`,
     fullCode: "IBM2321IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The items in the VALUERANGE attribute should be in strictly ascending order. Both
@@ -22642,7 +22641,7 @@ export const Severe = {
     message:
       "The second value in the VALUERANGE attribute must be larger than the first.",
     fullCode: "IBM2322IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The arguments to the VALIDVALUE built-in function must be comparable. Similarly,
@@ -22658,7 +22657,7 @@ export const Severe = {
     message: (number: string, number2: string, BUILTINname: string) =>
       `Arguments ${number} and ${number2} to the ${BUILTINname} built-in function must have comparable types.`,
     fullCode: "IBM2323IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A label on a PROCEDURE statement constitutes a declaration for an ENTRY constant
@@ -22676,7 +22675,7 @@ export const Severe = {
     ) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. The EXTERNAL names do not match: one name is ${externalname} , and the other is ${externalname2} .`,
     fullCode: "IBM2324IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * These values specify which bits are set in the ROUTCDE and DESC fields when a WTO
@@ -22690,7 +22689,7 @@ export const Severe = {
     message:
       "The values specified for the ROUTCDE and DESC in a WTO must be between 1 and 16.",
     fullCode: "IBM2325IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This message applies to the LowerLatin1, UpperLatin1 and related built-in functions
@@ -22703,7 +22702,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must have UCHAR type.`,
     fullCode: "IBM2326IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * TRANSLATE of a CHARACTER string will accept 2 arguments in which case COLLATE() will
@@ -22716,7 +22715,7 @@ export const Severe = {
     severity: Severity.S,
     message: "TRANSLATE of a UCHAR string requires 3 arguments.",
     fullCode: "IBM2327IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Not all hex strings represent valid UTF-8 strings. For more details on valid UTF-8
@@ -22728,7 +22727,7 @@ export const Severe = {
     severity: Severity.S,
     message: "UX literal specifies an invalid UTF-8 string.",
     fullCode: "IBM2328IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This applies to the UVALID built-in function, for example.
@@ -22740,7 +22739,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function must have type CHAR, UCHAR or WCHAR.`,
     fullCode: "IBM2329IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies to the CENTER, LEFT, and RIGHT built-in functions, for example.
@@ -22752,7 +22751,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function does not support UCHAR arguments.`,
     fullCode: "IBM2330IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The XMLCHAR built-in function cannot be applied to structures containing any UCHAR
@@ -22765,7 +22764,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The input structure to the ${BUILTINname} built-in function must not contain any UTF-8 elements.`,
     fullCode: "IBM2331IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * DEFINED is not supported with UCHAR.
@@ -22777,7 +22776,7 @@ export const Severe = {
     message:
       "The base reference in the DEFINED attribute cannot have a UTF-8 type.",
     fullCode: "IBM2332IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression contains the named built-in function with the specified argument having
@@ -22791,7 +22790,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function must have a computational, ordinal or pointer type.`,
     fullCode: "IBM2333IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with the specified argument be
@@ -22805,7 +22804,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must be nonvarying with a known length.`,
     fullCode: "IBM2334IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In VALUELISTFROM X, X must not contain any substructures and every element of X must
@@ -22818,7 +22817,7 @@ export const Severe = {
     message:
       "VALUELISTFROM reference must name a structure consisting only of elements with the VALUE attribute.",
     fullCode: "IBM2335IS",
-  } as SimplePLICode,
+  },
 
   /**
    * When uppercased, the argument to the named built-in function must be one of 'ASIS',
@@ -22831,7 +22830,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The fourth argument to the ${BUILTINname} built-in function must be a constant specifying the name of a casing rule.`,
     fullCode: "IBM2336IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with an argument that is not FIXED,
@@ -22844,7 +22843,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have numeric type.`,
     fullCode: "IBM2337IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * DEFAULT statements, for example, are not allowed in QUALIFY blocks.
@@ -22856,7 +22855,7 @@ export const Severe = {
     message:
       "A QUALIFY block may contain only DEFINE statements, DECLARE statements, and nested QUALIFY blocks.",
     fullCode: "IBM2338IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Specify only one label on a QUALIFY statement.
@@ -22867,7 +22866,7 @@ export const Severe = {
     severity: Severity.S,
     message: "A QUALIFY block must have a name, but only one.",
     fullCode: "IBM2339IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A DECLARE statement in a QUALIFY block cannot specify a structure, union or array
@@ -22879,7 +22878,7 @@ export const Severe = {
     severity: Severity.S,
     message: "A name declared in a QUALIFY block must be a scalar.",
     fullCode: "IBM2340IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A DECLARE statement in a QUALIFY block cannot specify a variable or a constant unless
@@ -22892,7 +22891,7 @@ export const Severe = {
     message:
       "A name declared in a QUALIFY block must have the VALUE attribute.",
     fullCode: "IBM2341IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The source value cannot be converted to SBCS.
@@ -22904,7 +22903,7 @@ export const Severe = {
     message: (sourcevalue: string) =>
       `CONVERSION condition raised by attempt to convert the GRAPHIC character with hex value ${sourcevalue} to CHARACTER.`,
     fullCode: "IBM2342IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Enough qualification must be provided to make any type reference unique.
@@ -22915,7 +22914,7 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) => `The type name ${typename} is ambiguous.`,
     fullCode: "IBM2343IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a declare statement that specifies HANDLE x, x must be the name of a STRUCTURE
@@ -22928,7 +22927,7 @@ export const Severe = {
     message: (typename: string) =>
       `${typename} is a type name, but not the name of a STRUCTURE type.`,
     fullCode: "IBM2344IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a declare statement that specifies ORDINAL x, x must be the name of an ORDINAL
@@ -22941,7 +22940,7 @@ export const Severe = {
     message: (typename: string) =>
       `${typename} is a type name, but not the name of an ORDINAL type.`,
     fullCode: "IBM2345IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies, for example, to the REGEX built-in function.
@@ -22953,7 +22952,7 @@ export const Severe = {
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function built-in function must be either a scalar or a one- dimensional array of scalars.`,
     fullCode: "IBM2346IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies, for example, to the REGEX built-in function. In REGEX( x, y, ... ),
@@ -22966,7 +22965,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `The second argument to the ${BUILTINname} built-in function must have the same number of dimensions as the first argument.`,
     fullCode: "IBM2347IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies, for example, to the REGEX built-in function.
@@ -22978,7 +22977,7 @@ export const Severe = {
     message: (BUILTINname: string, lbound: string, lbound2: string) =>
       `The second argument to the ${BUILTINname} built-in function must have the same lower bound as the first argument. But its lower bound is ${lbound} while the first argument's lower bound is ${lbound2} .`,
     fullCode: "IBM2348IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This applies, for example, to the REGEX built-in function.
@@ -22990,7 +22989,7 @@ export const Severe = {
     message: (BUILTINname: string, hbound: string, hbound2: string) =>
       `The second argument to the ${BUILTINname} built-in function must have the same upper bound as the first argument. But its upper bound is ${hbound} while the first argument's upper bound is ${hbound2} .`,
     fullCode: "IBM2349IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * BYADDR must be used in RETURNS of PICTURE and VARYING.
@@ -23001,7 +23000,7 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string) => `${attribute} must be returned BYADDR.`,
     fullCode: "IBM2350IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The scale factors in the named built-in functions must be nonnegative. The compiler
@@ -23019,7 +23018,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Scale factor in ${BUILTINname} is less than 0.`,
     fullCode: "IBM2351IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The scale factor in the named built-in function must be less than or equal to the
@@ -23036,7 +23035,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Scale factor in ${BUILTINname} must not be greater than the precision.`,
     fullCode: "IBM2352IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The scale factor of the result of a multiply is the sum of the two scale factors.
@@ -23054,7 +23053,7 @@ export const Severe = {
     ) =>
       `Multiplication of FIXED( ${precision} , ${scalefactor} ) and FIXED( ${precision2} , ${scalefactor2} ) would produce a result with a scale factor that is not between -128 and 127.`,
     fullCode: "IBM2353IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The scale factor of the result of a division is the difference of the two scale factors
@@ -23073,7 +23072,7 @@ export const Severe = {
     ) =>
       `Divison of FIXED( ${precision} , ${scalefactor} ) and FIXED( ${precision2} , ${scalefactor2} ) would produce a result with a scale factor that is not between -128 and 127.`,
     fullCode: "IBM2354IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * For an add or subtract of BIN(p1,q1) and BIN(p2,q2), the value abs(q1-q2) must be
@@ -23092,7 +23091,7 @@ export const Severe = {
     ) =>
       `Add and subtract of FIXED( ${precision} , ${scalefactor} ) and FIXED( ${precision2} , ${scalefactor2} ) is not allowed because the difference in scale factors is greater than the maximum precision allowed.`,
     fullCode: "IBM2355IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The number of expressions in each commalist in the INITACROSS attribute must match.
@@ -23121,7 +23120,7 @@ export const Severe = {
     message:
       "In commalist number ${commalist_count} , the number of expressions is ${element_count} , but the number of expressions in the first commalist is ${element_count} . The number of expressions in each commalist must match.",
     fullCode: "IBM2356IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The explicit member count for an INITACROSSS structure must match the implicit member
@@ -23151,7 +23150,7 @@ export const Severe = {
     message:
       "INITACROSS structure member count of ${member_count} does not match the implied member count of ${element_count} from the INITACROSS attribute.",
     fullCode: "IBM2357IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The INITACROSS attribute must be applied only to one-dimensional arrays with no inherited
@@ -23163,7 +23162,7 @@ export const Severe = {
     severity: Severity.S,
     message: "INITACROSS structures must be one-dimensional arrays.",
     fullCode: "IBM2358IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The members of a structure with the INITACROSS attribute must not be structures or
@@ -23176,7 +23175,7 @@ export const Severe = {
     severity: Severity.S,
     message: "INITACROSS structure members must all be scalars.",
     fullCode: "IBM2359IS",
-  } as SimplePLICode,
+  },
 
   /**
    * OPTIONS( AMODE31 ) and OPTIONS( AMODE64 ) require FETCHABLE, NODESCRIPTOR, and LINKAGE
@@ -23189,7 +23188,7 @@ export const Severe = {
     message: (amodeoption: string, optionname: string) =>
       `ENTRY declared with OPTIONS( ${amodeoption} ) must also specify OPTIONS( ${optionname} ).`,
     fullCode: "IBM2364IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An ENTRY with OPTIONS( AMODE31 ) or OPTIONS( AMODE64 ) cannot return other types.
@@ -23203,7 +23202,7 @@ export const Severe = {
     message: (amodeoption: string) =>
       `ENTRY declared with OPTIONS( ${amodeoption} ) must specify either RETURNS BYVALUE of a small integer type, or RETURNS BYADDR, or no RETURNS.`,
     fullCode: "IBM2365IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * OPTIONS( AMODE31 ) and OPTIONS( AMODE64 ) do not support passing arguments BYVALUE
@@ -23216,7 +23215,7 @@ export const Severe = {
     message: (amodeoption: string) =>
       `With the exception of addresses and integers, all arguments passed to an ENTRY declared with OPTIONS( ${amodeoption} ) must be passed BYADDR.`,
     fullCode: "IBM2366IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An ENTRY with OPTIONS( AMODE31 ) or OPTIONS( AMODE64 ) cannot be used as the source
@@ -23229,7 +23228,7 @@ export const Severe = {
     message:
       "An ENTRY declared with OPTIONS( AMODE31 ) or OPTIONS( AMODE64 ) cannot be implicitly or explicitly assigned to another ENTRY.",
     fullCode: "IBM2367IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An ENTRY with OPTIONS( AMODE31 ) or OPTIONS( AMODE64 ) cannot be declared as just
@@ -23244,7 +23243,7 @@ export const Severe = {
     message: (amodeoption: string) =>
       `ENTRY declared with OPTIONS( ${amodeoption} ) must specify a (possibly empty) parenthesized list of no more than 64 parameters.`,
     fullCode: "IBM2368IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An argument passed to an ENTRY with OPTIONS( AMODE31 ) must not be a structure or
@@ -23257,7 +23256,7 @@ export const Severe = {
     message:
       "All aggregate arguments passed to an ENTRY declared with OPTIONS( AMODE31 ) must be connected variable references.",
     fullCode: "IBM2369IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The attributes in XDECLARE must exactly match those in its original DECLARE.
@@ -23269,7 +23268,7 @@ export const Severe = {
     message: (keyword: string, name: string) =>
       `The attributes specified in the ${keyword} of ${name} do not match those in its original definition.`,
     fullCode: "IBM2370IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In REPATTERN( d, p, q ), if LENGTH( d ) is smaller than LENGTH( q ), the code is
@@ -23282,7 +23281,7 @@ export const Severe = {
     message: (sourcelength: string, sourcepattern: string) =>
       `Source has length ${sourcelength} which is less than the length of the source pattern ${sourcepattern} . Since the pattern has no zero suppression, invoking this REPATTERN will cause the ERROR condition to be raised.`,
     fullCode: "IBM2371IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Statements that start with XDECLARE * and XDECLARE 1 * are invalid.  147 148   Messages
@@ -23294,7 +23293,7 @@ export const Severe = {
     severity: Severity.S,
     message: "XDECLARE statement must specify a name.",
     fullCode: "IBM2372IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This message is used to report DB2 or CICS backend messages with a return code of
@@ -23306,7 +23305,7 @@ export const Severe = {
     severity: Severity.S,
     message: (note: string) => `${note}`,
     fullCode: "IBM3750IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A colon in an EXEC SQL statement must be followed by a host variable reference, and
@@ -23319,7 +23318,7 @@ export const Severe = {
     message:
       "A colon in an EXEC SQL statement must be followed by an identifier that starts a host variable reference.",
     fullCode: "IBM3751IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Structures are limited to at most 15 logical levels, and so any dot-qualified reference
@@ -23332,7 +23331,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Dot-qualified reference implies too many structure levels.",
     fullCode: "IBM3752IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum length for BIN is 255 and for VARBINARY 32704. See the Programming Guide
@@ -23345,7 +23344,7 @@ export const Severe = {
     message: (typename: string) =>
       `Length in SQL TYPE IS ${typename} is too large.`,
     fullCode: "IBM3753IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS type( length ).
@@ -23357,7 +23356,7 @@ export const Severe = {
     message: (typename: string) =>
       `SQL TYPE IS ${typename} must be followed by an opening left parenthesis.`,
     fullCode: "IBM3754IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS type( length ).
@@ -23369,7 +23368,7 @@ export const Severe = {
     message: (typename: string) =>
       `SQL TYPE IS ${typename} must have an integer specifying its length after the opening left parenthesis.`,
     fullCode: "IBM3755IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS type( length ).
@@ -23381,7 +23380,7 @@ export const Severe = {
     message: (typename: string) =>
       `SQL TYPE IS ${typename} must have a closing right parenthesis after the integer specifying its length.`,
     fullCode: "IBM3756IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS XML AS type( length ).
@@ -23393,7 +23392,7 @@ export const Severe = {
     message: (typename: string) =>
       `SQL TYPE IS XML AS ${typename} must be followed by an opening left parenthesis.`,
     fullCode: "IBM3757IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS XML AS type( length ).
@@ -23405,7 +23404,7 @@ export const Severe = {
     message: (typename: string) =>
       `SQL TYPE IS XML AS ${typename} must have an integer specifying its length after the opening left parenthesis.`,
     fullCode: "IBM3758IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS XML AS type( length ).
@@ -23417,7 +23416,7 @@ export const Severe = {
     message: (typename: string) =>
       `SQL TYPE IS XML AS ${typename} must have a closing right parenthesis after the integer specifying its length.`,
     fullCode: "IBM3759IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The number of arguments must match the number of parameters in the ENTRY declaration
@@ -23430,7 +23429,7 @@ export const Severe = {
     message: (ENTRYname: string) =>
       `Too few arguments have been specified for the ENTRY ${ENTRYname} .`,
     fullCode: "IBM3760IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Macro procedures may not be nested.
@@ -23441,7 +23440,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Procedures may not be nested.",
     fullCode: "IBM3761IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Inside a procedure, statements should not begin with a percent. The %DCL in the example
@@ -23459,7 +23458,7 @@ export const Severe = {
     severity: Severity.S,
     message: "No percent statements are allowed inside procedures.",
     fullCode: "IBM3762IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The compilation requires more virtual memory than is available. It may help to specify
@@ -23472,7 +23471,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Not enough virtual memory is available to continue the compile.",
     fullCode: "IBM3763IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An expression contains the named built-in function with an argument that is not a
@@ -23485,7 +23484,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a parameter.`,
     fullCode: "IBM3764IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with an argument that is not a
@@ -23498,7 +23497,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a reference.`,
     fullCode: "IBM3765IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The maximum physical level allowed is 255, but the maximum logical level is 15.
@@ -23509,7 +23508,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Aggregate contains more than 15 logical levels.",
     fullCode: "IBM3766IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The length in BIN, VARBIN, BLOB, CLOB, and DBCLOB types must be positive.
@@ -23521,7 +23520,7 @@ export const Severe = {
     message: (typename: string) =>
       `Length in SQL TYPE IS ${typename} must be greater than zero.`,
     fullCode: "IBM3767IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In the macro facility, all subscripts must be scalar expressions.
@@ -23533,7 +23532,7 @@ export const Severe = {
     message:
       "The use of asterisks as subscripts is not permitted in the macro facility.",
     fullCode: "IBM3768IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This applies to the RANK built-in function.
@@ -23545,7 +23544,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in must have type CHARACTER(1) NONVARYING.`,
     fullCode: "IBM3769IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An expression contains the named built-in function with a first argument that is
@@ -23559,7 +23558,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in must be an array.`,
     fullCode: "IBM3770IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used by %NOTE statements with a return code of 12.
@@ -23570,7 +23569,7 @@ export const Severe = {
     severity: Severity.S,
     message: (note: string) => `${note}`,
     fullCode: "IBM3771IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If a third argument is given for one of the built-in functions INDEX or VERIFY, it
@@ -23583,7 +23582,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Third argument to ${BUILTINname} built-in would force STRINGRANGE.`,
     fullCode: "IBM3772IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The second argument for the built-in functions CHARACTER, BIT, and GRAPHIC must be
@@ -23596,7 +23595,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in must be nonnegative.`,
     fullCode: "IBM3773IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Supply the minimum number of arguments required.
@@ -23608,7 +23607,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Too few arguments have been specified for the ${BUILTINname} built-in.`,
     fullCode: "IBM3774IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The use of the DFT(ASCII) option with either the CICS or SQL preprocessor is not
@@ -23621,7 +23620,7 @@ export const Severe = {
     message: (preprocessorname: string) =>
       `The ${preprocessorname} preprocessor requires the DFT(EBCDIC) option.`,
     fullCode: "IBM3775IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * %INCLUDE must be followed by a name and either a semicolon or else a second name
@@ -23633,7 +23632,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Syntax of the %INCLUDE statement is incorrect.",
     fullCode: "IBM3778IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum length of the file specification is 8 characters.
@@ -23644,7 +23643,7 @@ export const Severe = {
     severity: Severity.S,
     message: "File specification after %INCLUDE is too long.",
     fullCode: "IBM3779IS",
-  } as SimplePLICode,
+  },
 
   /**
    * %INCLUDE must be followed by a file name, not just a semicolon.
@@ -23655,7 +23654,7 @@ export const Severe = {
     severity: Severity.S,
     message: "File specification missing after %INCLUDE.",
     fullCode: "IBM3780IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The excess parameters will be removed from the proc statement.
@@ -23666,7 +23665,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Procedures may have no more than 63 parameters.",
     fullCode: "IBM3781IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS XML AS type( length ).
@@ -23677,7 +23676,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SQL TYPE IS XML must be followed by the keyword AS.",
     fullCode: "IBM3782IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS XML AS type( length ).
@@ -23688,7 +23687,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SQL TYPE IS XML AS must be followed by a valid type name.",
     fullCode: "IBM3783IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS TABLE LIKE table- name AS LOCATOR.
@@ -23699,7 +23698,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SQL TYPE IS TABLE must be followed by the keyword LIKE.",
     fullCode: "IBM3784IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS TABLE LIKE table- name AS LOCATOR.
@@ -23710,7 +23709,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SQL TYPE IS TABLE LIKE must be followed by a table name.",
     fullCode: "IBM3785IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS TABLE LIKE table- name AS LOCATOR.
@@ -23722,7 +23721,7 @@ export const Severe = {
     message:
       "SQL TYPE IS TABLE LIKE must be followed by the keyword AS after the table name.",
     fullCode: "IBM3786IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS TABLE LIKE table- name AS LOCATOR.
@@ -23734,7 +23733,7 @@ export const Severe = {
     message:
       "SQL TYPE IS TABLE must be followed by the keyword LOCATOR after the table name and the AS keyword.",
     fullCode: "IBM3787IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The keywords SQL TYPE IS must be followed by a type name such as XML.
@@ -23745,7 +23744,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SQL TYPE IS must be followed by a valid type name.",
     fullCode: "IBM3788IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Executing such a statement would most likely cause a protection exception.
@@ -23761,7 +23760,7 @@ export const Severe = {
     message: (indexnumber: string, variablename: string) =>
       `Index number ${indexnumber} into the variable ${variablename} is less than the lower bound for that dimension.`,
     fullCode: "IBM3789IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Executing such a statement would most likely cause a protection exception.
@@ -23777,7 +23776,7 @@ export const Severe = {
     message: (indexnumber: string, variablename: string) =>
       `Index number ${indexnumber} into the variable ${variablename} is greater than the upper bound for that dimension.`,
     fullCode: "IBM3790IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * It must be possible to compute the value of the DIMENSION built-in function for an
@@ -23790,7 +23789,7 @@ export const Severe = {
     message:
       "Each dimension of an array must contain no more than 2147483647 elements.",
     fullCode: "IBM3791IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Arrays are limited to 2**20 elements.
@@ -23802,7 +23801,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Array ${variablename} has too many elements. Bounds set to 1.`,
     fullCode: "IBM3792IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The number of subscripts given for a variable must match that variable's number of
@@ -23815,7 +23814,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Too few subscripts specified for the variable ${variablename} .`,
     fullCode: "IBM3793IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The number of subscripts given for a variable must match that variable's number of
@@ -23828,7 +23827,7 @@ export const Severe = {
     message: (variablename: string) =>
       `Too many subscripts specified for the variable ${variablename} .`,
     fullCode: "IBM3794IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Every DBCS shift-out code between the margins must have a matching DBCS shift-in
@@ -23841,7 +23840,7 @@ export const Severe = {
     message:
       "Shift-out code has no closing shift- in code before the right margin.",
     fullCode: "IBM3795IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Array expressions may not, for instance, be assigned to structures or scalars.
@@ -23853,7 +23852,7 @@ export const Severe = {
     message:
       "Array expressions cannot be assigned to non-arrays, and if any target in a multiple assignment is an array, then all the targets must be arrays.",
     fullCode: "IBM3796IS",
-  } as SimplePLICode,
+  },
 
   /**
    * All RETURN statements inside functions must specify a value to be returned.
@@ -23870,7 +23869,7 @@ export const Severe = {
     message:
       "RETURN statement without an expression is invalid inside a PROCEDURE that specified the RETURNS attribute.",
     fullCode: "IBM3797IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A statement of the form RETURN(x) is valid inside only PROCEDUREs that are defined
@@ -23888,7 +23887,7 @@ export const Severe = {
     message:
       "RETURN statement with an expression is invalid inside a 168 PROCEDURE that did not specify the RETURNS attribute.",
     fullCode: "IBM3798IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Under the SQL option STDSQL(YES), all host variables must be declared between SQL
@@ -23901,7 +23900,7 @@ export const Severe = {
     message: (reference: string) =>
       `The DECLARE statement for the host variable ${reference} is not inside an SQL DECLARE SECTION.`,
     fullCode: "IBM3799IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Functions must contain at least one RETURN statement.
@@ -23913,7 +23912,7 @@ export const Severe = {
     message: (functionname: string) =>
       `Function ${functionname} contains no RETURN statement.`,
     fullCode: "IBM3800IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The target in an assignment must be character or fixed element reference. Pseudovariables
@@ -23925,7 +23924,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Target in assignment is invalid.",
     fullCode: "IBM3801IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Statement labels must be used only in GOTO, LEAVE and ITERATE statements.
@@ -23936,7 +23935,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Statement labels may not be used in expressions.",
     fullCode: "IBM3802IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Compound concatenate assignments with fixed targets are not supported.
@@ -23952,7 +23951,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Target in concatenate-equals assignment must have type char.",
     fullCode: "IBM3803IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Compound arithmetic assignments with character targets are not supported.
@@ -23968,7 +23967,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Target in arithmetic-equals assignment must have type fixed.",
     fullCode: "IBM3804IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS XML AS type LARGE OBJECT( length ).
@@ -23980,7 +23979,7 @@ export const Severe = {
     message: (type: string) =>
       `SQL TYPE IS XML ${type} must be followed by the keyword LARGE.`,
     fullCode: "IBM3805IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS XML AS type LARGE OBJECT( length ).
@@ -23992,7 +23991,7 @@ export const Severe = {
     message: (type: string) =>
       `SQL TYPE IS XML ${type} LARGE must be followed by the keyword OBJECT.`,
     fullCode: "IBM3806IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS CHARACTER LARGE OBJECT( length ).
@@ -24003,7 +24002,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SQL TYPE IS CHARACTER must be followed by the keyword LARGE.",
     fullCode: "IBM3807IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS BINARY LARGE OBJECT( length ) or SQL TYPE IS BINARY(
@@ -24016,7 +24015,7 @@ export const Severe = {
     message:
       "SQL TYPE IS BINARY must be followed by the keyword LARGE or by a length enclosed in parentheses.",
     fullCode: "IBM3808IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The correct syntax is SQL TYPE IS type LARGE OBJECT( length ).
@@ -24028,7 +24027,7 @@ export const Severe = {
     message: (type: string) =>
       `SQL TYPE IS ${type} LARGE must be followed by the keyword OBJECT.`,
     fullCode: "IBM3809IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The compiler's limit on the number of labels on a statement has been exceeded. Reduce
@@ -24040,7 +24039,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Statement has too many labels.",
     fullCode: "IBM3810IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The compiler's space for evaluating expressions has been exhausted. Rewrite the expression
@@ -24052,7 +24051,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Expression contains too many nested subexpressions.",
     fullCode: "IBM3811IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The result of a concatenation must not have a length greater than the maximum allowed
@@ -24065,7 +24064,7 @@ export const Severe = {
     message: (stringlength: string, stringlength2: string) =>
       `Result of concatenating a string of length ${stringlength} to a string of length ${stringlength2} would produce a string that is too long.`,
     fullCode: "IBM3812IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The result of COPY and REPEAT must not have a length greater than the maximum allowed
@@ -24082,7 +24081,7 @@ export const Severe = {
     ) =>
       `Result of ${BUILTINname} applied ${repetitionvalue} times to a string of length ${stringlength} would produce a string that is too long.`,
     fullCode: "IBM3813IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The only valid aggregate expression is the use of an array name as the first argument
@@ -24094,7 +24093,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Unsupported use of aggregate expression.",
     fullCode: "IBM3814IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Bit operations are limited to strings of length 32767 or less.
@@ -24105,7 +24104,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Operand in bit operation must have length less than 32768.",
     fullCode: "IBM3815IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The TRANSLATE built-in function is not supported if the second or third argument
@@ -24118,7 +24117,7 @@ export const Severe = {
     message:
       "Second and third arguments to the TRANSLATE built-in function must have length less than 32768.",
     fullCode: "IBM3816IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The result of a COMMENT or QUOTE built-in function must not be a string that would
@@ -24131,7 +24130,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Result of ${BUILTINname} would exceed maximum string length.`,
     fullCode: "IBM3817IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * If you must use INCLUDE or XINCLUDE as a macro name, put the colon on the same line
@@ -24144,7 +24143,7 @@ export const Severe = {
     message:
       "Under the INCONLY option, the use of INCLUDE or XINCLUDE as a macro procedure name is invalid unless the colon follows immediately after the name.",
     fullCode: "IBM3820IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If you must use INCLUDE or XINCLUDE as a macro statement label, put the colon on
@@ -24157,7 +24156,7 @@ export const Severe = {
     message:
       "Under the INCONLY option, the use of INCLUDE or XINCLUDE as a macro statement label is invalid unless the colon follows immediately after the name.",
     fullCode: "IBM3821IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If you must use INCLUDE or XINCLUDE as a macro variable name, put the equals sign
@@ -24176,7 +24175,7 @@ export const Severe = {
     message:
       "Under the INCONLY option, the use of INCLUDE or XINCLUDE as a macro variable that is the target of an assignment is invalid unless the equals sign follows immediately after the name.",
     fullCode: "IBM3822IS",
-  } as SimplePLICode,
+  },
 
   /**
    * DEFAULT statements, for example, are not allowed in QUALIFY blocks.
@@ -24188,7 +24187,7 @@ export const Severe = {
     message:
       "A QUALIFY block may contain only DEFINE statements, DECLARE 170 statements, and nested QUALIFY blocks.",
     fullCode: "IBM3823IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A DECLARE statement in a QUALIFY block cannot specify a structure, union or array
@@ -24200,7 +24199,7 @@ export const Severe = {
     severity: Severity.S,
     message: "A name declared in a QUALIFY block must be a scalar.",
     fullCode: "IBM3824IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A DECLARE statement in a QUALIFY block cannot specify a variable or a constant unless
@@ -24213,7 +24212,7 @@ export const Severe = {
     message:
       "A name declared in a QUALIFY block must have the VALUE attribute.",
     fullCode: "IBM3825IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Enough qualification must be provided to make any type reference unique.
@@ -24224,7 +24223,7 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) => `The type name ${typename} is ambiguous.`,
     fullCode: "IBM3826IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In a declare statement that specifies ORDINAL x, x must be the name of an ORDINAL
@@ -24237,7 +24236,7 @@ export const Severe = {
     message: (typename: string) =>
       `${typename} is a type name, but not the name of an ORDINAL type.`,
     fullCode: "IBM3827IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The target of a GOTO cannot be inside a DO loop unless the GOTO itself is in the
@@ -24249,7 +24248,7 @@ export const Severe = {
     severity: Severity.S,
     message: "GOTO target is inside a (different) DO loop.",
     fullCode: "IBM3837IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The INCLUDE file could not be found, or if found, it could not be opened.
@@ -24261,7 +24260,7 @@ export const Severe = {
     message: (includefilename: string) =>
       `The INCLUDE file ${includefilename} could not be opened.`,
     fullCode: "IBM3841IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The nesting of PROCEDURE, DO, SELECT and similar statements is greater than that
@@ -24273,7 +24272,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Statements are nested too deep.",
     fullCode: "IBM3842IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Support for the indicated built-in function has been discontinued.
@@ -24285,7 +24284,7 @@ export const Severe = {
     message: (functionname: string) =>
       `The ${functionname} built-in is not supported.`,
     fullCode: "IBM3844IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Support for the indicated statement has been discontinued.
@@ -24296,7 +24295,7 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) => `The ${keyword} statement is not supported.`,
     fullCode: "IBM3846IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * iSUB is only supported in syntax checking.
@@ -24307,7 +24306,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Use of iSUB is not supported.",
     fullCode: "IBM3848IS",
-  } as SimplePLICode,
+  },
 
   /**
    * If TYPE x is used in a declaration, x must be a defined type.
@@ -24318,7 +24317,7 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) => `${typename} is not a type name.`,
     fullCode: "IBM3849IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The DEFINE STRUCTURE or DEFINE ALIAS statement for a type x must precede any of use
@@ -24338,7 +24337,7 @@ export const Severe = {
     severity: Severity.S,
     message: "TYPEs must be defined before their use.",
     fullCode: "IBM3850IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Any values specified in INITIAL clauses in an ORDINAL definition must be in strictly
@@ -24351,7 +24350,7 @@ export const Severe = {
     message: (typetype: string, typename: string) =>
       `INITIAL values for ${typetype} type ${typename} must be in increasing order.`,
     fullCode: "IBM3851IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * ORDINAL values must fit in the range of a FIXED BIN(31) variable.
@@ -24363,7 +24362,7 @@ export const Severe = {
     message: (typetype: string, typename: string) =>
       `INITIAL values for ${typetype} type ${typename} must be less than 2G.`,
     fullCode: "IBM3852IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * DO statements can be nested only 100 deep. Simplify the program.
@@ -24374,7 +24373,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Nesting of DO statements exceeds the maximum.",
     fullCode: "IBM3853IS",
-  } as SimplePLICode,
+  },
 
   /**
    * IF statements can be nested only 100 deep. Simplify the program.
@@ -24385,7 +24384,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Nesting of IF statements exceeds the maximum.",
     fullCode: "IBM3854IS",
-  } as SimplePLICode,
+  },
 
   /**
    * SELECT statements can be nested only 50 deep. Simplify the program.
@@ -24396,7 +24395,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Nesting of SELECT statements exceeds the maximum.",
     fullCode: "IBM3855IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Blocks must be nested only 30 deep.
@@ -24407,7 +24406,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Nesting of blocks exceeds the maximum.",
     fullCode: "IBM3856IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The syntax allows the name in a structure definition to be followed by a description
@@ -24429,7 +24428,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Only one description is allowed in a structure definition.",
     fullCode: "IBM3857IS",
-  } as SimplePLICode,
+  },
 
   /**
    * None of the names in an ORDINAL should have been declared elsewhere. If they are,
@@ -24442,7 +24441,7 @@ export const Severe = {
     message: (ordinalname: string) =>
       `All the names in the ORDINAL ${ordinalname} have been previously declared.`,
     fullCode: "IBM3858IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Storage attributes, such as AUTOMATIC and BYADDR, must be specified with variables
@@ -24454,7 +24453,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Storage attributes are invalid in structure definition.",
     fullCode: "IBM3859IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The level 1 name in a structure definition may not have the DIMENSION attribute.
@@ -24465,7 +24464,7 @@ export const Severe = {
     severity: Severity.S,
     message: "DEFINE STRUCTURE may not specify an array of structures.",
     fullCode: "IBM3860IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The open of the .dbrm dataset to be used by the SQL preprocessor failed. A possible
@@ -24477,7 +24476,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Open of dbrm dataset failed.",
     fullCode: "IBM3861IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The dynamic allocation of the DBRMLIB failed with the indicated SVC 99 info and error
@@ -24490,7 +24489,7 @@ export const Severe = {
     message: (infocode: string, errorcode: string) =>
       `Dynamic allocation of DBRMLIB failed with the SVC 99 info code ${infocode} and the SVC 99 error code ${errorcode} .`,
     fullCode: "IBM3862IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In order to perform a compile using the SQL preprocessor without the INCONLY option,
@@ -24502,7 +24501,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The DBRMLIB compiler option must be specified.",
     fullCode: "IBM3863IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Check that the CICS modules are accessible, otherwise report this error to IBM.
@@ -24513,7 +24512,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The FETCH of the CICS backend failed.",
     fullCode: "IBM3870IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Report this error to IBM.
@@ -24525,7 +24524,7 @@ export const Severe = {
     message:
       "The CICS backend reported an internal error while attempting to perform its initialization.",
     fullCode: "IBM3871IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Report this error to IBM.
@@ -24537,7 +24536,7 @@ export const Severe = {
     message:
       "The CICS backend reported an internal error while attempting to parse its options.",
     fullCode: "IBM3872IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Report this error to IBM.
@@ -24549,7 +24548,7 @@ export const Severe = {
     message:
       "The CICS backend reported an internal error while attempting to build and emit the local declares.",
     fullCode: "IBM3873IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Report this error to IBM.
@@ -24561,7 +24560,7 @@ export const Severe = {
     message:
       "The CICS backend reported an internal error while attempting to translate an EXEC statement.",
     fullCode: "IBM3874IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Report this error to IBM.
@@ -24573,7 +24572,7 @@ export const Severe = {
     message:
       "The CICS backend reported an internal error while attempting to translate a CICS macro (such as DFHVALUE).",
     fullCode: "IBM3875IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Report this error to IBM.
@@ -24585,7 +24584,7 @@ export const Severe = {
     message:
       "The CICS backend reported an internal error while attempting to perform its termination.",
     fullCode: "IBM3876IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Report this error to IBM.
@@ -24597,7 +24596,7 @@ export const Severe = {
     message:
       "The SQL backend reported an internal error while attempting to perform its initialization.",
     fullCode: "IBM3877IS",
-  } as SimplePLICode,
+  },
 
   /**
    * See the additional messages produced by the SQL backend.
@@ -24608,7 +24607,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SQL initialization did not complete successfully.",
     fullCode: "IBM3878IS",
-  } as SimplePLICode,
+  },
 
   /**
    * All SQL host variables must be declared within the current block scope.
@@ -24620,7 +24619,7 @@ export const Severe = {
     message: (reference: string) =>
       `The reference ${reference} could not be resolved.`,
     fullCode: "IBM3880IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * All SQL host variables must be unambiguous. This can be fixed by supplying enough
@@ -24632,7 +24631,7 @@ export const Severe = {
     severity: Severity.S,
     message: (reference: string) => `The reference ${reference} is ambiguous.`,
     fullCode: "IBM3881IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An indicator array in an EXEC SQL statement must not be multi-dimensional.
@@ -24644,7 +24643,7 @@ export const Severe = {
     message: (reference: string) =>
       `The indicator array ${reference} must have only one dimension.`,
     fullCode: "IBM3882IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An indicator array in an EXEC SQL statement must have bounds that are specified simply
@@ -24657,7 +24656,7 @@ export const Severe = {
     message: (reference: string) =>
       `The indicator array ${reference} must have constant bounds.`,
     fullCode: "IBM3883IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An indicator variable for a structure in an EXEC SQL statement must be an array or
@@ -24670,7 +24669,7 @@ export const Severe = {
     message: (reference: string) =>
       `The indicator variable ${reference} is used with a structure and hence must be an array or a structure.`,
     fullCode: "IBM3884IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A host variable in an EXEC SQL statement must not be multi-dimensional.
@@ -24682,7 +24681,7 @@ export const Severe = {
     message: (hostvariable: string) =>
       `The host variable ${hostvariable} must have only one dimension.`,
     fullCode: "IBM3885IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A host variable in an EXEC SQL statement must have bounds that are specified simply
@@ -24695,7 +24694,7 @@ export const Severe = {
     message: (hostvariable: string) =>
       `The host variable ${hostvariable} must have constant bounds.`,
     fullCode: "IBM3886IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A host variable in an EXEC SQL statement must be one-dimensional and that dimension
@@ -24709,7 +24708,7 @@ export const Severe = {
     message: (hostvariable: string) =>
       `The host variable ${hostvariable} must be CONNECTED.`,
     fullCode: "IBM3887IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * All SQL host variables must have a corresponding DB2 type. For example, while FIXED
@@ -24723,7 +24722,7 @@ export const Severe = {
     message: (hostreference: string) =>
       `The reference ${hostreference} has no corresponding DB2 type.`,
     fullCode: "IBM3888IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * All SQL host variables must have a corresponding DB2 type. There is no type matching
@@ -24736,7 +24735,7 @@ export const Severe = {
     message: (hostreference: string) =>
       `The reference ${hostreference} is a union and thus must not be used as a host variable.`,
     fullCode: "IBM3889IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A structure may be used as a host variable only if it is not an array.
@@ -24748,7 +24747,7 @@ export const Severe = {
     message: (hostreference: string) =>
       `The reference ${hostreference} is an array of structures and thus must not be used as a host variable.`,
     fullCode: "IBM3890IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A structure containing an array may be used as a host variable with an indicator
@@ -24761,7 +24760,7 @@ export const Severe = {
     message: (hostreference: string) =>
       `Since the structure reference ${hostreference} contains an array, it must not have an indicator that is a scalar or an array of scalars.`,
     fullCode: "IBM3891IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A structure may be used as a host variable only if none of its members are structures
@@ -24774,7 +24773,7 @@ export const Severe = {
     message: (hostreference: string) =>
       `The reference ${hostreference} contains a substructure and thus must not be used as a host variable.`,
     fullCode: "IBM3892IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A structure may be used as a host variable only if all of its members are named.
@@ -24786,7 +24785,7 @@ export const Severe = {
     message: (hostreference: string) =>
       `The reference ${hostreference} contains unnamed elements and thus must not be used as a host variable.`,
     fullCode: "IBM3893IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An indicator variable must be a native, real halfword integer.
@@ -24798,7 +24797,7 @@ export const Severe = {
     message: (reference: string) =>
       `The indicator variable ${reference} must be FIXED BIN(15).`,
     fullCode: "IBM3894IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An indicator variable in an EXEC SQL statement must be an array if it is used with
@@ -24811,7 +24810,7 @@ export const Severe = {
     message: (reference: string) =>
       `The indicator variable ${reference} is used with an array and hence must be an array as well.`,
     fullCode: "IBM3895IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A reference with the VALUE attribute may be used as a host variable with the SQL
@@ -24825,7 +24824,7 @@ export const Severe = {
     message: (hostreference: string) =>
       `The VALUE reference ${hostreference} could not be reduced to a character literal and thus must not be used as a host variable.`,
     fullCode: "IBM3896IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A reference with the VALUE attribute may be used as a host variable with the SQL
@@ -24839,7 +24838,7 @@ export const Severe = {
     message: (hostreference: string) =>
       `The VALUE reference ${hostreference} could not be reduced to a numeric literal and thus must not be used as a host variable.`,
     fullCode: "IBM3897IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A reference with the VALUE attribute may be used as a host variable only if it has
@@ -24852,7 +24851,7 @@ export const Severe = {
     message: (hostreference: string) =>
       `The VALUE reference ${hostreference} does not have character, integer or decimal type and thus must not be used as a host variable.`,
     fullCode: "IBM3898IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Enough qualification must be provided to make any reference unique.
@@ -24864,7 +24863,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The reference ${referencename} is ambiguous.`,
     fullCode: "IBM3899IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named reference is not a member of any structure or union declared in the block
@@ -24877,7 +24876,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The dot-qualified reference ${referencename} is unknown.`,
     fullCode: "IBM3900IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In :x:y, if x and y are both structures, then for any element of y that is an array,
@@ -24891,7 +24890,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The element ${referencename} in the indicator structure must have the same array bounds as the corresponding element in the host structure.`,
     fullCode: "IBM3901IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The argument to the named built-in subroutine must be a structure.
@@ -24903,7 +24902,7 @@ export const Severe = {
     message: (BUILTINname: string) =>
       `Argument to the ${BUILTINname} built-in must be a structure.`,
     fullCode: "IBM3902IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * In :x:y, y must not be a union.
@@ -24915,7 +24914,7 @@ export const Severe = {
     message: (referencename: string) =>
       `The indicator ${referencename} must not be a uinon.`,
     fullCode: "IBM3903IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The named attributes, for example PARAMETER and INITIAL, are mutually exclusive.
@@ -24927,7 +24926,7 @@ export const Severe = {
     message: (attribute: string, attribute2: string) =>
       `The ${attribute} attribute conflicts with the ${attribute2} attribute.`,
     fullCode: "IBM3909IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * All statement labels in any block must be unique.
@@ -24939,7 +24938,7 @@ export const Severe = {
     message: (identifier: string) =>
       `The statement label ${identifier} has already been declared.`,
     fullCode: "IBM3911IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * x in GOTO x must have type LABEL. x must not have type FORMAT.
@@ -24950,7 +24949,7 @@ export const Severe = {
     severity: Severity.S,
     message: "GOTO target must be a LABEL reference.",
     fullCode: "IBM3914IS",
-  } as SimplePLICode,
+  },
 
   /**
    * x in GOTO x must not be an array.
@@ -24961,7 +24960,7 @@ export const Severe = {
     severity: Severity.S,
     message: "GOTO target must be a scalar.",
     fullCode: "IBM3915IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Sister procedures must have different names.
@@ -24979,7 +24978,7 @@ export const Severe = {
     message: (procname: string) =>
       `The procedure ${procname} has already been defined.`,
     fullCode: "IBM3916IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The source contains either no statements or all statements that it contains are invalid
@@ -24991,7 +24990,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Program contains no valid source lines.",
     fullCode: "IBM3917IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A FIXED BINARY constant must contain 31 or fewer digits.
@@ -25002,7 +25001,7 @@ export const Severe = {
     severity: Severity.S,
     message: "FIXED BINARY constant contains too many digits.",
     fullCode: "IBM3920IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The maximum precision of FIXED DECIMAL constants is set by the FIXEDDEC suboption
@@ -25014,7 +25013,7 @@ export const Severe = {
     severity: Severity.S,
     message: "FIXED DECIMAL constant contains too many significant digits.",
     fullCode: "IBM3921IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The exponent in a FLOAT BINARY constant may contain no more than 5 digits.
@@ -25026,7 +25025,7 @@ export const Severe = {
     message:
       "Exponent in FLOAT BINARY constant contains more digits than the implementation maximum.",
     fullCode: "IBM3922IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The mantissa in a FLOAT BINARY constant may contain no more than 64 digits.
@@ -25038,7 +25037,7 @@ export const Severe = {
     message:
       "Mantissa in FLOAT BINARY constant contains more significant digits than the implementation maximum.",
     fullCode: "IBM3923IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The exponent in a FLOAT BINARY constant may contain no more than 4 digits.
@@ -25050,7 +25049,7 @@ export const Severe = {
     message:
       "Exponent in FLOAT DECIMAL constant contains more digits than the implementation maximum.",
     fullCode: "IBM3924IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The mantissa in a FLOAT BINARY constant may contain no more than 18 digits.
@@ -25062,7 +25061,7 @@ export const Severe = {
     message:
       "Mantissa in FLOAT DECIMAL constant contains more significant digits than the implementation maximum.",
     fullCode: "IBM3925IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The number of bytes used to represent a constant in your program must not exceed
@@ -25076,7 +25075,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Constants must not exceed 30720 bytes.",
     fullCode: "IBM3926IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Any complex, scaled or floating point constant will be converted to an integer value
@@ -25091,7 +25090,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Numeric constants must be real, unscaled and fixed.",
     fullCode: "IBM3927IS",
-  } as SimplePLICode,
+  },
 
   /**
    * G, GX, M, A and E string suffixes are not supported.
@@ -25105,7 +25104,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Only B, BX and X string suffixes are supported.",
     fullCode: "IBM3928IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The only EXEC SQL statements allowed at the PACKAGE level are EXEC SQL BEGIN DECLARE
@@ -25118,7 +25117,7 @@ export const Severe = {
     severity: Severity.S,
     message: "EXEC SQL statement must be in a PROCEDURE.",
     fullCode: "IBM3929IS",
-  } as SimplePLICode,
+  },
 
   /**
    * In the invocation of a statement-form procedure, all characters that are not part
@@ -25141,7 +25140,7 @@ export const Severe = {
     message:
       "Invalid syntax in statement-form of procedure invocation. Text up to next semicolon will be ignored.",
     fullCode: "IBM3930IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Under the FIXED(BIN), decimal constants that represent any valid FIXED BIN(31) number
@@ -25154,7 +25153,7 @@ export const Severe = {
     message:
       "Under the FIXED(DEC) option, decimal constants must have no more than 5 digits.",
     fullCode: "IBM3931IS",
-  } as SimplePLICode,
+  },
 
   /**
    * EXEC SQL INCLUDE must be followed by one identifier and then by a semicolon.
@@ -25165,7 +25164,7 @@ export const Severe = {
     severity: Severity.S,
     message: "EXEC SQL INCLUDE statement has incorrect syntax.",
     fullCode: "IBM3934IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Check that the SQL modules are accessible, otherwise report this error to IBM.
@@ -25176,7 +25175,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The FETCH of the SQL backend failed.",
     fullCode: "IBM3935IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Switch to a more current level of DB2.
@@ -25187,7 +25186,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The SQL backend must be from DB2 V9 or later.",
     fullCode: "IBM3936IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Each EXEC SQL statement must be less than 500K bytes long.
@@ -25198,7 +25197,7 @@ export const Severe = {
     severity: Severity.S,
     message: "EXEC SQL statement is too long.",
     fullCode: "IBM3937IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Each EXEC SQL statement must require no more than 10,000 tokens. Each host variable
@@ -25211,7 +25210,7 @@ export const Severe = {
     severity: Severity.S,
     message: "EXEC SQL statement has too many host variable references.",
     fullCode: "IBM3938IS",
-  } as SimplePLICode,
+  },
 
   /**
    * When invoking the SQL preprocessor on Windows or AIX, the DBNAME option must be specified,
@@ -25223,7 +25222,7 @@ export const Severe = {
     severity: Severity.S,
     message: "The DBNAME option must specify a valid database name.",
     fullCode: "IBM3939IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Compilation will terminate when the number of messages has exceeded the limit set
@@ -25236,7 +25235,7 @@ export const Severe = {
     message:
       "The number of error messages allowed by the FLAG option has been exceeded.",
     fullCode: "IBM3943IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Evaluation of an expression raised the named condition.
@@ -25251,7 +25250,7 @@ export const Severe = {
     message: (conditionname: string, oncodevalue: string) =>
       `${conditionname} condition with ONCODE= ${oncodevalue} raised while evaluating expression.`,
     fullCode: "IBM3948IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Each identifier in a parameter list must be unique.
@@ -25266,7 +25265,7 @@ export const Severe = {
     message: (identifier: string) =>
       `Parameter name ${identifier} appears more than once in parameter list.`,
     fullCode: "IBM3949IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * Since an asterisk iteration factor completes the initialization of a variable, it
@@ -25282,7 +25281,7 @@ export const Severe = {
     message: (variablename: string) =>
       `An asterisk iteration factor can be applied only to the last expression in the INITIAL item list for ${variablename} .`,
     fullCode: "IBM3950IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * An asterisk iteration can be used only in a non-nested INITIAL item list. The following
@@ -25298,7 +25297,7 @@ export const Severe = {
     message: (variablename: string) =>
       `An asterisk iteration factor cannot be used in the nested INITIAL item list for ${variablename} .`,
     fullCode: "IBM3951IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A parameter cannot have an INITIAL attribute.
@@ -25310,7 +25309,7 @@ export const Severe = {
     message: (variablename: string) =>
       `INITIAL attribute on the parameter ${variablename} is invalid.`,
     fullCode: "IBM3952IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * For an array, an INITIAL list should not contain more values than the array has elements
@@ -25326,7 +25325,7 @@ export const Severe = {
     message: (count: string, variablename: string, arraysize: string) =>
       `INITIAL list contains ${count} items, but the array ${variablename} contains only ${arraysize} . Excess is ignored.`,
     fullCode: "IBM3953IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * ITERATE is not valid inside type-I do groups.
@@ -25337,7 +25336,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ITERATE is valid only for iterative DO-groups.",
     fullCode: "IBM3956IS",
-  } as SimplePLICode,
+  },
 
   /**
    * RETURN statements are valid only inside procedures.
@@ -25348,7 +25347,7 @@ export const Severe = {
     severity: Severity.S,
     message: "RETURN statement outside of a PROCEDURE is invalid.",
     fullCode: "IBM3957IS",
-  } as SimplePLICode,
+  },
 
   /**
    * INCLUDE statements are permitted only outside any preprocessor procedures.
@@ -25364,7 +25363,7 @@ export const Severe = {
     severity: Severity.S,
     message: "INCLUDE statement inside of a PROCEDURE is invalid.",
     fullCode: "IBM3958IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Parameters to macro procedures must be no longer than 32767 bytes.
@@ -25375,7 +25374,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Length of parameter exceeds 32767 bytes.",
     fullCode: "IBM3959IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An end-of-comment marker is probably missing.
@@ -25387,7 +25386,7 @@ export const Severe = {
     message:
       "End-of-source has been encountered after an unmatched comment marker.",
     fullCode: "IBM3960IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A closing quote is probably missing.
@@ -25398,7 +25397,7 @@ export const Severe = {
     severity: Severity.S,
     message: "End-of-source has been encountered after an unmatched quote.",
     fullCode: "IBM3961IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An end-of-comment marker is probably missing.
@@ -25410,7 +25409,7 @@ export const Severe = {
     message:
       "Replacement value contains no end-of-comment delimiter. A comment delimiter will be assumed at the end of the replacement value.",
     fullCode: "IBM3962IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A closing quote is probably missing.
@@ -25422,7 +25421,7 @@ export const Severe = {
     message:
       "Replacement value contains no end-of-string delimiter. A string delimiter will be assumed at the end of the replacement value.",
     fullCode: "IBM3963IS",
-  } as SimplePLICode,
+  },
 
   /**
    * ANSWER statements are valid only inside procedures.
@@ -25433,7 +25432,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ANSWER statement outside of a PROCEDURE is invalid.",
     fullCode: "IBM3964IS",
-  } as SimplePLICode,
+  },
 
   /**
    * ANSWER statements are not valid inside functions.
@@ -25453,7 +25452,7 @@ export const Severe = {
     severity: Severity.S,
     message: "ANSWER statement inside of a PROCEDURE with RETURNS is invalid.",
     fullCode: "IBM3965IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A rescan of a replacement string or a rescan of a string returned by a preprocessor
@@ -25479,7 +25478,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Source has caused too many rescans.",
     fullCode: "IBM3966IS",
-  } as SimplePLICode,
+  },
 
   /**
    * CALL statements are valid only when they are inside macro procedures.
@@ -25490,7 +25489,7 @@ export const Severe = {
     severity: Severity.S,
     message: "CALL statement outside of a PROCEDURE is invalid.",
     fullCode: "IBM3967IS",
-  } as SimplePLICode,
+  },
 
   /**
    * CALL reference must be a declared macro procedure.
@@ -25501,7 +25500,7 @@ export const Severe = {
     severity: Severity.S,
     message: "CALL reference is undefined.",
     fullCode: "IBM3968IS",
-  } as SimplePLICode,
+  },
 
   /**
    * CALL reference must be a declared macro procedure.
@@ -25512,7 +25511,7 @@ export const Severe = {
     severity: Severity.S,
     message: "CALL reference is not a macro entry.",
     fullCode: "IBM3969IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A CALL reference must not have the RETURNS attribute.
@@ -25523,7 +25522,7 @@ export const Severe = {
     severity: Severity.S,
     message: "CALL reference must not be a function.",
     fullCode: "IBM3970IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A CALL reference must not have the STATEMENT option.
@@ -25534,7 +25533,7 @@ export const Severe = {
     severity: Severity.S,
     message: "CALL reference must not have the STATEMENT option.",
     fullCode: "IBM3971IS",
-  } as SimplePLICode,
+  },
 
   /**
    * An end-of-comment marker is probably missing.
@@ -25546,7 +25545,7 @@ export const Severe = {
     message:
       "End-of-file has been encountered after an unmatched comment marker.",
     fullCode: "IBM3972IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A closing quote is probably missing.
@@ -25557,7 +25556,7 @@ export const Severe = {
     severity: Severity.S,
     message: "End-of-file has been encountered after an unmatched quote.",
     fullCode: "IBM3973IS",
-  } as SimplePLICode,
+  },
 
   /**
    * DBCS shift codes must be paired.
@@ -25569,7 +25568,7 @@ export const Severe = {
     message:
       "Every shift-in character after the left margin of a source line must have a matching shift-out character before the right margin of the same line.",
     fullCode: "IBM3974IS",
-  } as SimplePLICode,
+  },
 
   /**
    * DBCS shift codes must be paired.
@@ -25581,7 +25580,7 @@ export const Severe = {
     message:
       "Every shift-in character within a string generated for rescan must have a matching shift-out character within that same string.",
     fullCode: "IBM3975IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Hex strings (strings ending in one of the suffixes X, BX, B4, GX or XN), bit strings,
@@ -25594,7 +25593,7 @@ export const Severe = {
     severity: Severity.S,
     message: "DBCS characters are allowed only in G and M constants.",
     fullCode: "IBM3976IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Mixed SBCS and DBCS is allowed only in M constants.
@@ -25605,7 +25604,7 @@ export const Severe = {
     severity: Severity.S,
     message: "SBCS characters are not allowed in G constants.",
     fullCode: "IBM3977IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Outside of comments, SBCS can be encoded as DBCS only as part of an identifier.
@@ -25616,7 +25615,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Invalid use of SBCS encoded as DBCS.",
     fullCode: "IBM3978IS",
-  } as SimplePLICode,
+  },
 
   /**
    * Not all hex strings represent valid UTF-8 strings. For more details on valid UTF-8
@@ -25628,7 +25627,7 @@ export const Severe = {
     severity: Severity.S,
     message: "UX literal specifies an invalid UTF-8 string.",
     fullCode: "IBM3979IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A procedure must not invoke itself directly or indirectly.
@@ -25639,7 +25638,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Recursion of procedures is not allowed.",
     fullCode: "IBM3980IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The named built-in function may be used only inside procedures.
@@ -25651,7 +25650,7 @@ export const Severe = {
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} may not be used outside a procedure.`,
     fullCode: "IBM3981IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A procedure must be defined (correctly) before it can be invoked.
@@ -25663,7 +25662,7 @@ export const Severe = {
     message: (procedurename: string) =>
       `Procedure ${procedurename} is undefined and cannot be invoked.`,
     fullCode: "IBM3982IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The source ended during a scan when a right parenthesis or semicolon was required
@@ -25682,7 +25681,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Premature end-of-source in scan.",
     fullCode: "IBM3983IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The named source file could not be opened. Make sure that the file is named correctly,
@@ -25694,7 +25693,7 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) => `File ${filename} could not be opened.`,
     fullCode: "IBM3984IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * A statement contained a semicolon before a right parenthesis which is needed to match
@@ -25709,7 +25708,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Semicolon found before required closing right parenthesis.",
     fullCode: "IBM3985IS",
-  } as SimplePLICode,
+  },
 
   /**
    * A statement that appears to be an IF statement has invalid syntax.
@@ -25723,7 +25722,7 @@ export const Severe = {
     severity: Severity.S,
     message: "IF statement syntax is invalid.",
     fullCode: "IBM3986IS",
-  } as SimplePLICode,
+  },
 
   /**
    * After any condition prefixes and labels, statements must start with either a keyword
@@ -25741,7 +25740,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Statement must start with a keyword or assignment target.",
     fullCode: "IBM3987IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The flagged statement is not valid PL\/I. This may indicate that a semicolon that
@@ -25757,7 +25756,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Statement has invalid syntax.",
     fullCode: "IBM3988IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This message indicates that there is an error in the preprocessor. Report the problem
@@ -25770,7 +25769,7 @@ export const Severe = {
     message: (sourceline: string, procedurename: string, packagename: string) =>
       `Internal preprocessor error: assertion failed on line ${sourceline} in ${procedurename} in ${packagename}`,
     fullCode: "IBM3993IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * The source file contains lines that would be rejected by the UVALID built-in function
@@ -25782,7 +25781,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Source is not valid UTF-8.",
     fullCode: "IBM3994IS",
-  } as SimplePLICode,
+  },
 
   /**
    * The text produced by an ANSWER or RETURNS statement would be rejected by the UVALID
@@ -25794,7 +25793,7 @@ export const Severe = {
     severity: Severity.S,
     message: "Generated text contains invalid UTF-8.",
     fullCode: "IBM3995IS",
-  } as SimplePLICode,
+  },
 
   /**
    * This message indicates that there is an error in the preprocessor. Report the problem
@@ -25807,7 +25806,7 @@ export const Severe = {
     message: (modulename: string) =>
       `Internal preprocessor error: protection exception in ${modulename} .`,
     fullCode: "IBM3996IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message indicates that there is an error in the preprocessor. Report the problem
@@ -25820,7 +25819,7 @@ export const Severe = {
     message: (modulename: string) =>
       `Internal preprocessor error: no WHEN clause satisfied within ${modulename} .`,
     fullCode: "IBM3997IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used to report DB2 or CICS backend messages with a return code of
@@ -25832,7 +25831,7 @@ export const Severe = {
     severity: Severity.S,
     message: (note: string) => `${note}`,
     fullCode: "IBM3998IS",
-  } as ParametricPLICode,
+  },
 
   /**
    * This message is used by %NOTE statements with a return code of 16.
@@ -25843,5 +25842,5 @@ export const Severe = {
     severity: Severity.U,
     message: (note: string) => "${note}",
     fullCode: "IBM3999IU",
-  } as ParametricPLICode,
+  },
 };

@@ -11,12 +11,13 @@
 
 import { tokenMatcher, TokenType } from "chevrotain";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import { PreprocessorError } from "./pli-preprocessor-error";
+import { PreprocessorDiagnostic } from "./preprocessor-diagnostic";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { Token } from "../parser/tokens";
 import { URI } from "../utils/uri";
 import { tokenize } from "../parser/tokenizer";
+import { Diagnostic, Severity } from "../language-server/types";
 
 export interface PreprocessorParserState {
   index: number;
@@ -63,19 +64,31 @@ export function preprocessorParserStateFromText(
   uri: URI | undefined,
 ) {
   const tokens = tokenize(text, uri);
-  return new PliPreprocessorParserState(tokens.tokens, text, 0);
+  return new PliPreprocessorParserState(
+    tokens.tokens,
+    tokens.diagnostics,
+    text,
+    0,
+  );
 }
 
 export class PliPreprocessorParserState implements PreprocessorParserState {
   readonly tokens: Token[];
+  readonly diagnostics: Diagnostic[] = [];
   public index: number;
   private text: string | undefined;
   private inProcedure: boolean = false;
 
-  constructor(tokens: Token[], text: string | undefined, index = 0) {
+  constructor(
+    tokens: Token[],
+    diagnostics: Diagnostic[],
+    text: string | undefined,
+    index = 0,
+  ) {
     this.text = text;
     this.tokens = tokens;
     this.index = index;
+    this.diagnostics = diagnostics;
   }
 
   pushProcedure(): void {
@@ -188,7 +201,11 @@ export class PliPreprocessorParserState implements PreprocessorParserState {
         .map((t) => t.tokenType.name ?? "???")
         .join(", ");
       const message = `Expected token type '${tokenType.name}', got '${actualTokenTypes}' instead.`;
-      throw new PreprocessorError(message, token || this.last, lastToken?.uri);
+      throw new PreprocessorDiagnostic({
+        message,
+        token: lastToken,
+        severity: Severity.S,
+      });
     }
     token.kind = kind;
     token.element = element;

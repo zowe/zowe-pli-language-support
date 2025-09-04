@@ -29,7 +29,7 @@
 ////*PROCESS NGR;
 ////*PROCESS GR;
 //// STARTPR: PROCEDURE OPTIONS (MAIN);
-//// END STARTPR;`;
+//// END STARTPR;
 
 verify.noDiagnosticsExcept([
   new RegExp(code.CompilerOptions.DupeOptionIssue.message("").substring(0, 20)),

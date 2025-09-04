@@ -16,6 +16,10 @@ import { SyntaxNode } from "../syntax-tree/ast";
 import { Token } from "../parser/tokens";
 import { InsertTextFormat, MarkupContent } from "vscode-languageserver-types";
 import { CompilationUnit } from "../workspace/compilation-unit";
+import {
+  ParametricPLICode,
+  SimplePLICode,
+} from "../validation/messages/pli-codes";
 
 export type Offset = number;
 
@@ -109,19 +113,89 @@ export function severityToLsp(severity: Severity): lsp.DiagnosticSeverity {
 
 export interface Diagnostic {
   severity: Severity;
-  uri: string;
-  range: Range;
+  uri?: string;
+  range?: Range;
   message: string;
   code?: string;
   data?: any;
   source?: string;
 }
 
-/**
- * DiagnosticInfo is a Diagnostic without the severity and message fields.
- * For convenience w/ prior-langium diagnostic reporting in our validations
- */
-export type DiagnosticInfo = Omit<Diagnostic, "severity" | "message">;
+export function diagnosticFromCode(
+  code: SimplePLICode,
+  token: Token | null | undefined,
+): Diagnostic;
+export function diagnosticFromCode<Code extends ParametricPLICode>(
+  code: Code,
+  token: Token | null | undefined,
+  ...args: Parameters<Code["message"]>
+): Diagnostic;
+export function diagnosticFromCode(
+  code: SimplePLICode | ParametricPLICode,
+  token: Token | null | undefined,
+  ...args: unknown[]
+): Diagnostic {
+  let uri: string | undefined = undefined;
+  let range: Range | undefined = undefined;
+  if (token) {
+    uri = tokenToUri(token);
+    range = tokenToRange(token);
+  }
+  let message = code.message;
+  if (typeof message === "string") {
+    // Simple message, no parameters
+    return {
+      severity: code.severity,
+      uri,
+      range,
+      message,
+      code: code.fullCode,
+    };
+  } else {
+    // Parametric message, format with args
+    return {
+      severity: code.severity,
+      uri,
+      range,
+      message: message(...args),
+      code: code.fullCode,
+    };
+  }
+}
+
+export function diagnostic(
+  severity: Severity,
+  message: string,
+  token: Token | null | undefined,
+): Diagnostic;
+export function diagnostic(
+  severity: Severity,
+  message: string,
+  range: Range | null | undefined,
+  uri: string | null | undefined,
+): Diagnostic;
+export function diagnostic(
+  severity: Severity,
+  message: string,
+  token: Token | null | Range | undefined,
+  uri?: string | null,
+): Diagnostic {
+  let range: Range | undefined = undefined;
+  if (token) {
+    if ("image" in token) {
+      uri = tokenToUri(token);
+      range = tokenToRange(token);
+    } else {
+      range = token;
+    }
+  }
+  return {
+    severity,
+    uri: uri ?? undefined,
+    range,
+    message,
+  };
+}
 
 export function diagnosticsToLSP(
   unit: CompilationUnit,
@@ -131,6 +205,9 @@ export function diagnosticsToLSP(
   for (const diagnostic of diagnostics) {
     const uri = diagnostic.uri;
     const lspDiagnostic = diagnosticToLSP(unit, diagnostic);
+    if (!lspDiagnostic || !uri) {
+      continue;
+    }
     if (!map.has(uri)) {
       map.set(uri, []);
     }
@@ -142,28 +219,29 @@ export function diagnosticsToLSP(
 export function diagnosticToLSP(
   unit: CompilationUnit,
   diagnostic: Diagnostic,
-): lsp.Diagnostic {
+): lsp.Diagnostic | undefined {
+  if (
+    !diagnostic.uri ||
+    !diagnostic.range ||
+    isNaN(diagnostic.range.start) ||
+    isNaN(diagnostic.range.end)
+  ) {
+    return undefined;
+  }
   const doc = unit.files.getDocument(diagnostic.uri);
+  if (!doc) {
+    return undefined;
+  }
   return {
     severity: severityToLsp(diagnostic.severity),
     range: {
-      start: doc
-        ? offsetToPosition(doc, diagnostic.range.start)
-        : {
-            character: 0,
-            line: 0,
-          },
-      end: doc
-        ? offsetToPosition(doc, diagnostic.range.end)
-        : {
-            character: 0,
-            line: 0,
-          },
+      start: offsetToPosition(doc, diagnostic.range.start),
+      end: offsetToPosition(doc, diagnostic.range.end),
     },
     message: diagnostic.message,
     code: diagnostic.code,
     data: diagnostic.data,
-    source: diagnostic.source ?? "pli",
+    source: diagnostic.source ?? "PL/I",
   };
 }
 

@@ -10,7 +10,8 @@
  */
 
 import {
-  DiagnosticInfo,
+  diagnostic,
+  diagnosticFromCode,
   Range,
   Severity,
   tokenToRange,
@@ -69,26 +70,6 @@ function getQualifiedReferenceRange(
   }
 }
 
-function getLocation(token: Token) {
-  const uri = tokenToUri(token);
-  const range = tokenToRange(token);
-
-  if (!uri) {
-    return null;
-  }
-
-  return { uri, range };
-}
-
-function withLocation(token: Token, then: (location: DiagnosticInfo) => void) {
-  const location = getLocation(token);
-  if (!location) {
-    return;
-  }
-
-  then(location);
-}
-
 export class LinkerErrorReporter {
   /**
    * Set of nodes that have been implicitly declared.
@@ -106,25 +87,15 @@ export class LinkerErrorReporter {
    * E IBM1363I
    */
   reportLevelError(levelToken: Token) {
-    withLocation(levelToken, ({ range, uri }) =>
-      this.accept(Severity.E, PLICodes.Error.IBM1363I.message, {
-        code: PLICodes.Error.IBM1363I.fullCode,
-        range,
-        uri,
-      }),
-    );
+    this.accept(diagnosticFromCode(PLICodes.Error.IBM1363I, levelToken));
   }
 
   /**
    * E IBM1308I
    */
   reportRedeclaration(token: Token) {
-    withLocation(token, ({ range, uri }) =>
-      this.accept(Severity.E, PLICodes.Error.IBM1308I.message(token.image), {
-        code: PLICodes.Error.IBM1308I.fullCode,
-        range,
-        uri,
-      }),
+    this.accept(
+      diagnosticFromCode(PLICodes.Error.IBM1308I, token, token.image),
     );
   }
 
@@ -132,50 +103,29 @@ export class LinkerErrorReporter {
    * S IBM1916I
    */
   reportAlreadyDeclared(token: Token, name: string) {
-    withLocation(token, ({ range, uri }) =>
-      this.accept(Severity.S, PLICodes.Severe.IBM1916I.message(name), {
-        uri,
-        range,
-        code: PLICodes.Severe.IBM1916I.fullCode,
-      }),
-    );
+    this.accept(diagnosticFromCode(PLICodes.Severe.IBM1916I, token, name));
   }
 
   /**
    * E IBM1306I
    */
   reportRepeatedDeclaration(token: Token, name: string) {
-    withLocation(token, ({ range, uri }) =>
-      this.accept(Severity.E, PLICodes.Error.IBM1306I.message(name), {
-        uri,
-        range,
-        code: PLICodes.Error.IBM1306I.fullCode,
-      }),
-    );
+    this.accept(diagnosticFromCode(PLICodes.Error.IBM1306I, token, name));
   }
 
   /**
    * Synthetic error for when we cannot find a symbol.
    */
   reportCannotFindSymbol(token: Token, name: string) {
-    withLocation(token, ({ range, uri }) =>
-      this.accept(Severity.E, `Unknown identifier '${name}'`, {
-        uri,
-        range,
-      }),
-    );
+    this.accept(diagnostic(Severity.E, `Unknown identifier '${name}'`, token));
   }
 
   /**
    * W IBM1213I
    */
   reportUnreferencedSymbol(token: Token) {
-    withLocation(token, ({ range, uri }) =>
-      this.accept(Severity.W, PLICodes.Warning.IBM1213I.message(token.image), {
-        uri,
-        range,
-        code: PLICodes.Warning.IBM1213I.fullCode,
-      }),
+    this.accept(
+      diagnosticFromCode(PLICodes.Warning.IBM1213I, token, token.image),
     );
   }
 
@@ -183,21 +133,18 @@ export class LinkerErrorReporter {
    * S IBM1881I
    */
   reportAmbiguousReference(reference: Reference, name: string) {
-    const report = ({ range, uri }: DiagnosticInfo) =>
-      this.accept(Severity.S, PLICodes.Severe.IBM1881I.message(name), {
-        range,
-        uri,
-        code: PLICodes.Severe.IBM1881I.fullCode,
-      });
-
-    const range = getQualifiedReferenceRange(reference.owner);
+    const range =
+      getQualifiedReferenceRange(reference.owner) ??
+      tokenToRange(reference.token);
     const uri = tokenToUri(reference.token);
 
-    if (range && uri !== undefined) {
-      report({ range, uri });
-    } else {
-      withLocation(reference.token, report);
-    }
+    this.accept({
+      message: PLICodes.Severe.IBM1881I.message(name),
+      severity: Severity.S,
+      range,
+      uri,
+      code: PLICodes.Severe.IBM1881I.fullCode,
+    });
   }
 
   /**
@@ -217,13 +164,8 @@ export class LinkerErrorReporter {
     }
 
     this.implicitlyDeclaredNodes.add(node);
-
-    withLocation(node.token, ({ range, uri }) =>
-      this.accept(Severity.W, PLICodes.Error.IBM1373I.message(node.name), {
-        uri,
-        range,
-        code: PLICodes.Error.IBM1373I.fullCode,
-      }),
+    this.accept(
+      diagnosticFromCode(PLICodes.Error.IBM1373I, node.token, node.name),
     );
   }
 
@@ -231,12 +173,6 @@ export class LinkerErrorReporter {
    * W IBM1085I
    */
   reportPotentialUnsetVariable(token: Token, name: string) {
-    withLocation(token, ({ range, uri }) =>
-      this.accept(Severity.W, PLICodes.Warning.IBM1085I.message(name), {
-        uri,
-        range,
-        code: PLICodes.Warning.IBM1085I.fullCode,
-      }),
-    );
+    this.accept(diagnosticFromCode(PLICodes.Warning.IBM1085I, token, name));
   }
 }

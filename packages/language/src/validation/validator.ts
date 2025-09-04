@@ -11,18 +11,12 @@
 
 import { IRecognitionException, MismatchedTokenException } from "chevrotain";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import {
-  Diagnostic,
-  DiagnosticInfo,
-  Range,
-  Severity,
-} from "../language-server/types";
+import { Diagnostic, Range, Severity } from "../language-server/types";
 import { ReferencesCache } from "../linking/resolver";
 import { isValidToken } from "../linking/tokens";
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { registerPliValidationChecks } from "./pli-validator";
-import { LexingIssue } from "../preprocessor/pli-lexer";
 import { isMainProcedure, labelPrefixPointsToPackage } from "./utils";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
 import { LinkerErrorReporter } from "../linking/error";
@@ -36,11 +30,7 @@ import { Token } from "../parser/tokens";
 /**
  * A function that accepts a diagnostic for PL/I validation
  */
-export type ValidationAcceptor = (
-  severity: Severity,
-  message: string,
-  info: DiagnosticInfo,
-) => void;
+export type ValidationAcceptor = (diagnostic: Diagnostic) => void;
 
 export type ValidationFunction = (
   node: any,
@@ -61,12 +51,8 @@ export class ValidationBuffer {
   private diagnostics: Diagnostic[] = [];
 
   getAcceptor(): ValidationAcceptor {
-    return (severity: Severity, message: string, d: DiagnosticInfo) => {
-      this.diagnostics.push({
-        severity,
-        message,
-        ...d,
-      });
+    return (diagnostic: Diagnostic) => {
+      this.diagnostics.push(diagnostic);
     };
   }
 
@@ -127,24 +113,6 @@ export function compilerOptionIssuesToDiagnostics(
   for (const issue of compilerOptionIssues) {
     if (!isNaN(issue.range.start)) {
       diagnostics.push(compilerOptionIssueToDiagnostics(issue, uri));
-    }
-  }
-  return diagnostics;
-}
-
-export function lexerIssuesToDiagnostics(
-  lexerErrors: LexingIssue[],
-): Diagnostic[] {
-  const diagnostics: Diagnostic[] = [];
-  for (const error of lexerErrors) {
-    if (error.uri && error.range && !isNaN(error.range.start)) {
-      diagnostics.push({
-        uri: error.uri.toString(),
-        severity: error.severity,
-        range: error.range,
-        message: error.message,
-        code: error.code,
-      });
     }
   }
   return diagnostics;

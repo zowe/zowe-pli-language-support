@@ -9,9 +9,13 @@
  *
  */
 
-import { Range, Severity } from "../language-server/types";
+import {
+  diagnostic,
+  Diagnostic,
+  Range,
+  Severity,
+} from "../language-server/types";
 import { CompilerOptionsProcessorResult } from "./compiler-options-processor";
-import { LexingIssue } from "./pli-lexer";
 import { URI } from "../utils/uri";
 import { Warning } from "../validation/messages/pli-codes";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
@@ -22,7 +26,7 @@ const PREFIX_PATTERN = /^[0-9\+\- \r\t]+$/;
 const SEQUENCE_PATTERN = /^\s*[A-Z0-9]*\r?\n?$/;
 
 export interface MarginsProcessor {
-  issues: LexingIssue[];
+  issues: Diagnostic[];
   processMargins(input: CompilerOptionsProcessorResult, uri: URI): string;
 }
 
@@ -34,7 +38,7 @@ export class PliMarginsProcessor implements MarginsProcessor {
     "PL/I statements must start from column 2 or as defined in MARGINS(M,N).";
   static readonly MARGIN_ERROR_MESSAGE_RIGHT = Warning.IBM1084I.message;
 
-  issues: LexingIssue[] = [];
+  issues: Diagnostic[] = [];
 
   protected checkMargins: boolean = false;
 
@@ -83,15 +87,16 @@ export class PliMarginsProcessor implements MarginsProcessor {
       start: number,
       end: number,
     ) => {
-      this.issues.push({
-        message:
+      this.issues.push(
+        diagnostic(
+          Severity.W,
           side === "left"
             ? PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT
             : PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT,
-        severity: Severity.W,
-        range: { start, end },
-        uri,
-      });
+          { start, end },
+          uri.toString(),
+        ),
+      );
     };
 
     let possibleViolationLeft = false;
