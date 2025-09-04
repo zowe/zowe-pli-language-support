@@ -9,6 +9,7 @@
  *
  */
 
+import { Diagnostic } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { Statement } from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
@@ -17,7 +18,6 @@ import {
   getDefaultCompilerOptions,
 } from "./compiler-options/options";
 import { InstructionGeneratorResult } from "./instruction-generator";
-import { LexingIssue } from "./pli-lexer";
 
 interface CachedInstructions {
   text: string;
@@ -26,7 +26,7 @@ interface CachedInstructions {
 
 export interface FileInstructionResult {
   tokens: Token[];
-  issues: LexingIssue[];
+  diagnostics: Diagnostic[];
   statements: Statement[];
   result: InstructionGeneratorResult;
 }

@@ -24,11 +24,11 @@ export function IBM1295IE_sole_bound_specified(
   const upper = bound.upper;
   if (isBoundNegative(upper) || isBoundZero(upper)) {
     const code = Error.IBM1295I;
-    accept(Severity.E, code.message, {
-      //   node: bound
-      range: getSyntaxNodeRange(bound)!,
+    accept({
+      severity: Severity.E,
+      message: code.message,
+      range: getSyntaxNodeRange(bound),
       uri: "", // TODO: Add URI
-      //   property: "upper",
       code: code.fullCode,
     });
   }

@@ -9,11 +9,7 @@
  *
  */
 
-import {
-  Severity,
-  tokenToRange,
-  tokenToUri,
-} from "../../../language-server/types";
+import { diagnosticFromCode } from "../../../language-server/types";
 import * as AST from "../../../syntax-tree/ast";
 import { ValidationAcceptor } from "../../validator";
 import * as PLICodes from "../pli-codes";
@@ -45,14 +41,5 @@ export function IBM2615I_do_loops_execute_once(
     return; // Valid iteration spec found
   }
 
-  // Build diagnostic
-  const range = tokenToRange(doToken);
-  const uri = tokenToUri(doToken);
-  if (!range || !uri) return;
-
-  acceptor(Severity.W, PLICodes.Warning.IBM2615I.message, {
-    code: PLICodes.Warning.IBM2615I.fullCode,
-    range,
-    uri,
-  });
+  acceptor(diagnosticFromCode(PLICodes.Warning.IBM2615I, doToken));
 }

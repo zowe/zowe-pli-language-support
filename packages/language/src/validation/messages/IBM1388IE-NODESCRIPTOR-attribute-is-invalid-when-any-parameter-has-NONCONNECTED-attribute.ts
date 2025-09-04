@@ -9,7 +9,6 @@
  *
  */
 
-import { getSyntaxNodeRange, Severity } from "../../language-server/types";
 import {
   DeclareStatement,
   ProcedureStatement,
@@ -65,17 +64,18 @@ export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_h
         ),
       );
     if (nonConnectedParameters.length > 0) {
-      accept(
-        Severity.E,
-        "The NODESCRIPTOR attribute is invalid when any parameters have the NONCONNECTED attribute.",
-        {
-          code: "IBM1388IE",
-          range: getSyntaxNodeRange(item)!,
-          uri: "", // TODO: Add URI
-          //   node: item,
-          //   property: "value",
-        },
-      );
+      // TODO: Implement proper reporting
+      // accept(
+      //   Severity.E,
+      //   "The NODESCRIPTOR attribute is invalid when any parameters have the NONCONNECTED attribute.",
+      //   {
+      //     code: "IBM1388IE",
+      //     range: getSyntaxNodeRange(item)!,
+      //     uri: "", // TODO: Add URI
+      //     //   node: item,
+      //     //   property: "value",
+      //   },
+      // );
     }
   }
 }
