@@ -9,9 +9,7 @@
  *
  */
 
-import {
-  diagnosticFromCode,
-} from "../../language-server/types";
+import { diagnosticFromCode } from "../../language-server/types";
 import * as AST from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
 import * as PLICodes from "./pli-codes";

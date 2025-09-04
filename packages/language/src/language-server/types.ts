@@ -125,15 +125,15 @@ export function diagnosticFromCode(
   code: SimplePLICode,
   token: Token | null | undefined,
 ): Diagnostic;
-export function diagnosticFromCode(
-  code: ParametricPLICode,
+export function diagnosticFromCode<Code extends ParametricPLICode>(
+  code: Code,
   token: Token | null | undefined,
-  ...args: (string | number | undefined)[]
+  ...args: Parameters<Code["message"]>
 ): Diagnostic;
 export function diagnosticFromCode(
   code: SimplePLICode | ParametricPLICode,
   token: Token | null | undefined,
-  ...args: (string | number | undefined)[]
+  ...args: unknown[]
 ): Diagnostic {
   let uri: string | undefined = undefined;
   let range: Range | undefined = undefined;

@@ -94,7 +94,9 @@ export class LinkerErrorReporter {
    * E IBM1308I
    */
   reportRedeclaration(token: Token) {
-    this.accept(diagnosticFromCode(PLICodes.Error.IBM1308I, token));
+    this.accept(
+      diagnosticFromCode(PLICodes.Error.IBM1308I, token, token.image),
+    );
   }
 
   /**
@@ -122,14 +124,18 @@ export class LinkerErrorReporter {
    * W IBM1213I
    */
   reportUnreferencedSymbol(token: Token) {
-    this.accept(diagnosticFromCode(PLICodes.Warning.IBM1213I, token, token.image));
+    this.accept(
+      diagnosticFromCode(PLICodes.Warning.IBM1213I, token, token.image),
+    );
   }
 
   /**
    * S IBM1881I
    */
   reportAmbiguousReference(reference: Reference, name: string) {
-    const range = getQualifiedReferenceRange(reference.owner) ?? tokenToRange(reference.token);
+    const range =
+      getQualifiedReferenceRange(reference.owner) ??
+      tokenToRange(reference.token);
     const uri = tokenToUri(reference.token);
 
     this.accept({
@@ -158,7 +164,9 @@ export class LinkerErrorReporter {
     }
 
     this.implicitlyDeclaredNodes.add(node);
-    this.accept(diagnosticFromCode(PLICodes.Error.IBM1373I, node.token, node.name));
+    this.accept(
+      diagnosticFromCode(PLICodes.Error.IBM1373I, node.token, node.name),
+    );
   }
 
   /**

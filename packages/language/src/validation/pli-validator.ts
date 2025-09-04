@@ -9,9 +9,7 @@
  *
  */
 
-import {
-  diagnosticFromCode,
-} from "../language-server/types";
+import { diagnosticFromCode } from "../language-server/types";
 import * as AST from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { BuiltinsUriSchema } from "../workspace/builtins";
@@ -188,7 +186,6 @@ export class PliValidator implements Validator {
       //   // property: "label"
       //   // node
       // });
-
       // // add Error.IBM1316I as well
       // acceptor(Severity.E, PLICodes.Error.IBM1316I.message, {
       //   code: PLICodes.Error.IBM1316I.fullCode,
@@ -318,7 +315,13 @@ export class PliValidator implements Validator {
 
     const name = node.ref.node.name.toUpperCase();
     if (!this.processGroup["implicit-builtins"]?.includes(name)) {
-      acceptor(diagnosticFromCode(PLICodes.Error.IBM1373I, node.ref.token, node.ref.text));
+      acceptor(
+        diagnosticFromCode(
+          PLICodes.Error.IBM1373I,
+          node.ref.token,
+          node.ref.text,
+        ),
+      );
     }
   }
 }

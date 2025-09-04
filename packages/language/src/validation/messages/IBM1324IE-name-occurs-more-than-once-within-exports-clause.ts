@@ -20,10 +20,18 @@ export function IBM1324IE_name_occurs_more_than_once_within_exports_clause(
 ): void {
   const set = new Set<string>();
   exports.procedures.forEach((procedure) => {
-    if (!set.has(procedure.reference?.text ?? "")) {
-      set.add(procedure.reference?.text ?? "");
-    } else {
-      accept(diagnosticFromCode(Error.IBM1324I, procedure.reference?.token, procedure.reference?.text ?? ""));
+    if (procedure.reference) {
+      if (!set.has(procedure.reference.text)) {
+        set.add(procedure.reference.text);
+      } else {
+        accept(
+          diagnosticFromCode(
+            Error.IBM1324I,
+            procedure.reference.token,
+            procedure.reference.text,
+          ),
+        );
+      }
     }
   });
 }

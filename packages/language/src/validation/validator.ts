@@ -11,11 +11,7 @@
 
 import { IRecognitionException, MismatchedTokenException } from "chevrotain";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import {
-  Diagnostic,
-  Range,
-  Severity,
-} from "../language-server/types";
+import { Diagnostic, Range, Severity } from "../language-server/types";
 import { ReferencesCache } from "../linking/resolver";
 import { isValidToken } from "../linking/tokens";
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
