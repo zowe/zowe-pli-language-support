@@ -81,6 +81,7 @@ export enum InstructionKind {
   Include,
   Inscan,
   Goto,
+  Note,
 
   // Expression types
   BinaryExpression,
@@ -102,7 +103,8 @@ export type Instruction =
   | InscanInstruction
   | ActivateInstruction
   | DeactivateInstruction
-  | DeclareInstruction;
+  | DeclareInstruction
+  | NoteInstruction;
 
 export interface ProcedureInstructionContainer {
   names: string[];
@@ -126,6 +128,13 @@ export function createHaltNode(): InstructionNode {
     labels: [],
     instruction: Halt,
   };
+}
+
+export interface NoteInstruction {
+  kind: InstructionKind.Note;
+  noteToken?: Token;
+  message: ExpressionInstruction;
+  code: ExpressionInstruction;
 }
 
 export interface IfInstruction {

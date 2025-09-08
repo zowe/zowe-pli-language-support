@@ -25840,7 +25840,7 @@ export const Severe = {
   IBM3999I: {
     code: "IBM3999I",
     severity: Severity.U,
-    message: (note: string) => "${note}",
+    message: (note: string) => `${note}`,
     fullCode: "IBM3999IU",
   },
 };

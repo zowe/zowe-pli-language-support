@@ -80,6 +80,7 @@ export const PreprocessorTokens = {
   String: tokens.STRING_TERM,
   Id: tokens.ID,
   Number: tokens.NUMBER,
+  Note: tokens.NOTE,
 };
 
 export const PreprocessorBinaryTokens = [
