@@ -218,10 +218,7 @@ function generateNoteInstruction(
     ? {
         kind: inst.InstructionKind.Note,
         noteToken: node.noteToken,
-        message: message || {
-          kind: inst.InstructionKind.String,
-          value: "",
-        },
+        message,
         code,
       }
     : undefined;
