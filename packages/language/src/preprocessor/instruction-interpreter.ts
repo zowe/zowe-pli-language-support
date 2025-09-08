@@ -499,11 +499,15 @@ function runNoteInstruction(
   );
   const codeValue = evaluateExpression(instruction.code, context);
   const code = valueToNumber(codeValue);
-  let error: Diagnostic | undefined = undefined;
+  let error: Diagnostic = undefined!;
   if (message) {
+    // Attention! This implementation follows the documentation of "%NOTE statement", not of "%NOTE directive"
     switch (code) {
       case undefined:
       case 0:
+      case 1:
+      case 2:
+      case 3:
         error = diagnosticFromCode(
           Info.IBM1040I,
           instruction.noteToken,
@@ -511,6 +515,9 @@ function runNoteInstruction(
         );
         break;
       case 4:
+      case 5:
+      case 6:
+      case 7:
         error = diagnosticFromCode(
           Warning.IBM1157I,
           instruction.noteToken,
@@ -518,6 +525,9 @@ function runNoteInstruction(
         );
         break;
       case 8:
+      case 9:
+      case 10:
+      case 11:
         error = diagnosticFromCode(
           PliError.IBM1390I,
           instruction.noteToken,
@@ -525,32 +535,25 @@ function runNoteInstruction(
         );
         break;
       case 12:
+      case 13:
+      case 14:
+      case 15:
         error = diagnosticFromCode(
           Severe.IBM1940I,
           instruction.noteToken,
           message,
         );
         break;
-      case 16:
+      default:
         error = diagnosticFromCode(
           Severe.IBM1941I,
           instruction.noteToken,
           message,
         );
         break;
-      default:
-        //If code has a value other than those in the preceding list, a diagnostic message is produced; the resulting system action is undefined.
-        error = diagnostic(
-          Severity.E,
-          "Invalid code in note directive",
-          instruction.noteToken,
-        );
-        break;
     }
   }
-  if (error) {
-    context.diagnostics.push(error);
-  }
+  context.diagnostics.push(error);
 }
 
 function runHaltInstruction(

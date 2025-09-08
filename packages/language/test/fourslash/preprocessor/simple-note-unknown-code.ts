@@ -16,7 +16,8 @@
 preprocessor.expectTokens("");
 verify.expectDiagnosticsAt(1, [
   {
-    severity: 2,
-    message: "Invalid code in note directive",
+    severity: 4,
+    code: "IBM1941IU",
+    message: "This is unknown!",
   },
 ]);
