@@ -16,8 +16,7 @@
 preprocessor.expectTokens("");
 verify.expectDiagnosticsAt(1, [
   {
-    code: "100",
     severity: 2,
-    message: "This is unknown!",
+    message: "Invalid code in note directive",
   },
 ]);

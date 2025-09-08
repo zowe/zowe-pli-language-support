@@ -16,7 +16,6 @@
 preprocessor.expectTokens("");
 verify.expectDiagnosticsAt(1, [
   {
-    code: "0",
     severity: 0,
     message: "This is an information!",
   },

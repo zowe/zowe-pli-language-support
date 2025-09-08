@@ -30,8 +30,7 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { tokenize } from "../parser/tokenizer";
 import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
 import { preprocessorParse } from "./preprocessor-parser";
-import { Severity } from "../language-server/types";
-import { getSyntaxNodeRange } from "../language-server/types";
+import { diagnostic, Severity } from "../language-server/types";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { tokenMatcher } from "chevrotain";
@@ -489,17 +488,16 @@ function codeToSeverity(code: number | undefined): Severity | undefined {
   switch (code) {
     case undefined:
     case 0:
-      return Severity.I; // Informational
+      return Severity.I;
     case 4:
-      return Severity.W; // Warning
+      return Severity.W;
     case 8:
-      return Severity.E; // Error
+      return Severity.E;
     case 12:
-      return Severity.S; // Severe
+      return Severity.S;
     case 16:
-      return Severity.U; // User-defined
+      return Severity.U;
     default:
-      //TODO If code has a value other than those in the preceding list, a diagnostic message is produced; the resulting system action is undefined.
       return undefined;
   }
 }
@@ -511,18 +509,24 @@ function runNoteInstruction(
   const message = valueToString(
     evaluateExpression(instruction.message, context),
   );
-  const code = valueToNumber(evaluateExpression(instruction.code, context));
+  const codeValue = evaluateExpression(instruction.code, context);
+  const code = valueToNumber(codeValue);
   const severity = codeToSeverity(code);
-  if (message) {
-    context.errors.push(
-      new PreprocessorError(
-        message,
-        instruction.noteToken,
-        undefined,
-        code?.toString(),
-        severity,
-      ),
+  let error: Diagnostic | undefined = undefined;
+  if (typeof severity === "number") {
+    if (message) {
+      error = diagnostic(severity, message, instruction.noteToken);
+    }
+  } else {
+    //If code has a value other than those in the preceding list, a diagnostic message is produced; the resulting system action is undefined.
+    error = diagnostic(
+      Severity.E,
+      "Invalid code in note directive",
+      instruction.noteToken,
     );
+  }
+  if (error) {
+    context.diagnostics.push(error);
   }
 }
 

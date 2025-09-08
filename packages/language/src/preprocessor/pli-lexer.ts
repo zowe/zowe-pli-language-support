@@ -34,13 +34,6 @@ import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { FileStore } from "../workspace/file-store";
 
-export interface LexingIssue {
-  readonly message: string;
-  readonly severity: Severity;
-  readonly range: Range | undefined;
-  readonly uri: URI | undefined;
-}
-
 export interface LexerResult {
   all: Token[];
   diagnostics: Diagnostic[];

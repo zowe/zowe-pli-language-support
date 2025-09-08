@@ -16,7 +16,6 @@
 preprocessor.expectTokens("");
 verify.expectDiagnosticsAt(1, [
   {
-    code: "12",
     severity: 3,
     message: "This is critical!",
   },
