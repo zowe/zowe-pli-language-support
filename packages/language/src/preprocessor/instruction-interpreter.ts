@@ -36,6 +36,12 @@ import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { tokenMatcher } from "chevrotain";
 import { PLICodes } from "../validation/messages";
 import { FileStore } from "../workspace/file-store";
+import {
+  Error as PliError,
+  Info,
+  Severe,
+  Warning,
+} from "../validation/messages/pli-codes";
 
 interface Variable {
   name: string;
@@ -484,24 +490,6 @@ function runInstructionSync(
   return undefined;
 }
 
-function codeToSeverity(code: number | undefined): Severity | undefined {
-  switch (code) {
-    case undefined:
-    case 0:
-      return Severity.I;
-    case 4:
-      return Severity.W;
-    case 8:
-      return Severity.E;
-    case 12:
-      return Severity.S;
-    case 16:
-      return Severity.U;
-    default:
-      return undefined;
-  }
-}
-
 function runNoteInstruction(
   instruction: inst.NoteInstruction,
   context: InterpreterContext,
@@ -511,19 +499,54 @@ function runNoteInstruction(
   );
   const codeValue = evaluateExpression(instruction.code, context);
   const code = valueToNumber(codeValue);
-  const severity = codeToSeverity(code);
   let error: Diagnostic | undefined = undefined;
-  if (typeof severity === "number") {
-    if (message) {
-      error = diagnostic(severity, message, instruction.noteToken);
+  if (message) {
+    switch (code) {
+      case undefined:
+      case 0:
+        error = diagnosticFromCode(
+          Info.IBM1040I,
+          instruction.noteToken,
+          message,
+        );
+        break;
+      case 4:
+        error = diagnosticFromCode(
+          Warning.IBM1157I,
+          instruction.noteToken,
+          message,
+        );
+        break;
+      case 8:
+        error = diagnosticFromCode(
+          PliError.IBM1390I,
+          instruction.noteToken,
+          message,
+        );
+        break;
+      case 12:
+        error = diagnosticFromCode(
+          Severe.IBM1940I,
+          instruction.noteToken,
+          message,
+        );
+        break;
+      case 16:
+        error = diagnosticFromCode(
+          Severe.IBM1941I,
+          instruction.noteToken,
+          message,
+        );
+        break;
+      default:
+        //If code has a value other than those in the preceding list, a diagnostic message is produced; the resulting system action is undefined.
+        error = diagnostic(
+          Severity.E,
+          "Invalid code in note directive",
+          instruction.noteToken,
+        );
+        break;
     }
-  } else {
-    //If code has a value other than those in the preceding list, a diagnostic message is produced; the resulting system action is undefined.
-    error = diagnostic(
-      Severity.E,
-      "Invalid code in note directive",
-      instruction.noteToken,
-    );
   }
   if (error) {
     context.diagnostics.push(error);
