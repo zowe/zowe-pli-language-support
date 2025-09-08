@@ -30,7 +30,6 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { tokenize } from "../parser/tokenizer";
 import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
 import { preprocessorParse } from "./preprocessor-parser";
-import { diagnostic, Severity } from "../language-server/types";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { tokenMatcher } from "chevrotain";
