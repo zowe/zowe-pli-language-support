@@ -17,6 +17,7 @@ preprocessor.expectTokens("");
 verify.expectDiagnosticsAt(1, [
   {
     severity: 0,
+    code: 'IBM1040II',
     message: "This is an information!",
   },
 ]);
