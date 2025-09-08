@@ -35,6 +35,12 @@ import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { tokenMatcher } from "chevrotain";
 import { PLICodes } from "../validation/messages";
 import { FileStore } from "../workspace/file-store";
+import {
+  Error as PliError,
+  Info,
+  Severe,
+  Warning,
+} from "../validation/messages/pli-codes";
 
 interface Variable {
   name: string;
@@ -473,11 +479,84 @@ function runInstructionSync(
     case inst.InstructionKind.Deactivate:
       runDeactivateInstruction(instruction, context);
       break;
+    case inst.InstructionKind.Note:
+      runNoteInstruction(instruction, context);
+      break;
     case inst.InstructionKind.Halt:
       runHaltInstruction(instruction, context);
       break;
   }
   return undefined;
+}
+
+function runNoteInstruction(
+  instruction: inst.NoteInstruction,
+  context: InterpreterContext,
+): void {
+  const message = valueToString(
+    evaluateExpression(instruction.message, context),
+  );
+  const codeValue = evaluateExpression(instruction.code, context);
+  const code = valueToNumber(codeValue);
+  if (message) {
+    /**
+     * Attention! This implementation follows the documentation of "%NOTE statement", not of "%NOTE directive"
+     * @see https://www.ibm.com/docs/en/epfz/6.2.0?topic=statements-note-statement
+     * @see https://www.ibm.com/docs/en/epfz/6.2.0?topic=directives-note-directive
+     */
+    let error: Diagnostic;
+    switch (code) {
+      case undefined:
+      case 0:
+      case 1:
+      case 2:
+      case 3:
+        error = diagnosticFromCode(
+          Info.IBM1040I,
+          instruction.noteToken,
+          message,
+        );
+        break;
+      case 4:
+      case 5:
+      case 6:
+      case 7:
+        error = diagnosticFromCode(
+          Warning.IBM1157I,
+          instruction.noteToken,
+          message,
+        );
+        break;
+      case 8:
+      case 9:
+      case 10:
+      case 11:
+        error = diagnosticFromCode(
+          PliError.IBM1390I,
+          instruction.noteToken,
+          message,
+        );
+        break;
+      case 12:
+      case 13:
+      case 14:
+      case 15:
+        error = diagnosticFromCode(
+          Severe.IBM1940I,
+          instruction.noteToken,
+          message,
+        );
+        break;
+      default:
+        error = diagnosticFromCode(
+          Severe.IBM1941I,
+          instruction.noteToken,
+          message,
+        );
+        break;
+    }
+    context.diagnostics.push(error);
+  }
 }
 
 function runHaltInstruction(
