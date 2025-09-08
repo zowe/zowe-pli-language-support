@@ -17,7 +17,7 @@ preprocessor.expectTokens("");
 verify.expectDiagnosticsAt(1, [
   {
     severity: 3,
-    code: 'IBM1940IS',
+    code: "IBM1940IS",
     message: "This is critical!",
   },
 ]);
