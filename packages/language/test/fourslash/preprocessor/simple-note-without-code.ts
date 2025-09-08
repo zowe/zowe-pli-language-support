@@ -14,10 +14,8 @@
 //// %<|1:NOTE|>("This is an information!");
 
 preprocessor.expectTokens("");
-verify.expectDiagnosticsAt(1, [
-  {
-    severity: 0,
-    code: "IBM1040II",
-    message: "This is an information!",
-  },
-]);
+verify.expectDiagnosticsAt(1, {
+  severity: 0,
+  code: "IBM1040II",
+  message: "This is an information!",
+});

@@ -14,10 +14,8 @@
 //// %<|1:NOTE|>("This is critical!", 12);
 
 preprocessor.expectTokens("");
-verify.expectDiagnosticsAt(1, [
-  {
-    severity: 3,
-    code: "IBM1940IS",
-    message: "This is critical!",
-  },
-]);
+verify.expectDiagnosticsAt(1, {
+  severity: 3,
+  code: "IBM1940IS",
+  message: "This is critical!",
+});

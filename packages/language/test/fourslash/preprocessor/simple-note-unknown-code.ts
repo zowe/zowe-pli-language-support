@@ -14,10 +14,8 @@
 //// %<|1:NOTE|>("This is unknown!", 100);
 
 preprocessor.expectTokens("");
-verify.expectDiagnosticsAt(1, [
-  {
-    severity: 4,
-    code: "IBM1941IU",
-    message: "This is unknown!",
-  },
-]);
+verify.expectDiagnosticsAt(1, {
+  severity: 4,
+  code: "IBM1941IU",
+  message: "This is unknown!",
+});

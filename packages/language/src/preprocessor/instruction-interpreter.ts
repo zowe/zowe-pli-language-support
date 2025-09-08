@@ -498,9 +498,13 @@ function runNoteInstruction(
   );
   const codeValue = evaluateExpression(instruction.code, context);
   const code = valueToNumber(codeValue);
-  let error: Diagnostic = undefined!;
   if (message) {
-    // Attention! This implementation follows the documentation of "%NOTE statement", not of "%NOTE directive"
+    /**
+     * Attention! This implementation follows the documentation of "%NOTE statement", not of "%NOTE directive"
+     * @see https://www.ibm.com/docs/en/epfz/6.2.0?topic=statements-note-statement
+     * @see https://www.ibm.com/docs/en/epfz/6.2.0?topic=directives-note-directive
+     */
+    let error: Diagnostic;
     switch (code) {
       case undefined:
       case 0:
@@ -551,8 +555,8 @@ function runNoteInstruction(
         );
         break;
     }
+    context.diagnostics.push(error);
   }
-  context.diagnostics.push(error);
 }
 
 function runHaltInstruction(
