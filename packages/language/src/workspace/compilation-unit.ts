@@ -34,10 +34,8 @@ import {
   TextDocuments,
 } from "../language-server/text-documents.js";
 import {
-  Builtins,
-  BuiltinsMacro,
-  BuiltinsMacroUri,
-  BuiltinsUri,
+  BuiltinsMacroTextDocument,
+  BuiltinsTextDocument,
   BuiltinsUriSchema,
 } from "./builtins.js";
 import { PluginConfigurationProviderInstance } from "./plugin-configuration-provider.js";
@@ -102,76 +100,31 @@ export function collectDiagnostics(sourceFile: CompilationUnit): Diagnostic[] {
 const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
 const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
 
-/**
- * Creates a function that returns the root scope, with builtins.
- *
- * Caches the scope for reuse.
- */
-function createBuiltinScopeGetter() {
-  let builtinScope: Scope | undefined = undefined;
-
+function createBuiltinScopeGetter(builtinDocument: TextDocument) {
+  let builtinFileScope: Scope | undefined;
   return async (uri: URI, unit: CompilationUnit): Promise<Scope> => {
-    // Don't load the builtin symbol table for builtin files
     if (isBuiltinFile(uri)) {
       return Scope.createRoot(unit);
     }
+    if (!builtinFileScope) {
+      const fileUri = URI.parse(builtinDocument.uri);
+      const builtinUnit = await createCompilationUnit(fileUri);
+      await tokenize(builtinUnit, builtinDocument);
+      parse(builtinUnit);
+      generateSymbolTable(builtinUnit);
 
-    if (builtinScope === undefined) {
-      const uri = URI.parse(BuiltinsUri);
-      const unit = await createCompilationUnit(uri);
-      const document = TextDocument.create(BuiltinsUri, "pli", 0, Builtins);
-      await tokenize(unit, document);
-      parse(unit);
-      generateSymbolTable(unit);
-
-      builtinScope =
-        unit.scopeCaches.regular.get(unit.ast) ?? Scope.createRoot(unit);
+      builtinFileScope =
+        builtinUnit.scopeCaches.regular.get(builtinUnit.ast) ??
+        Scope.createRoot(builtinUnit);
     }
-
-    return builtinScope;
+    return builtinFileScope;
   };
 }
 
-const getBuiltinScope = createBuiltinScopeGetter();
-
-/**
- * Creates a function that returns the root scope, with builtins.
- *
- * Caches the scope for reuse.
- */
-function createBuiltinMacroScopeGetter() {
-  let builtinScope: Scope | undefined = undefined;
-
-  return async (uri: URI, unit: CompilationUnit): Promise<Scope> => {
-    // Don't load the builtin symbol table for builtin files
-    if (isBuiltinFile(uri)) {
-      return Scope.createRoot(unit);
-    }
-
-    if (builtinScope === undefined) {
-      const uri = URI.parse(BuiltinsMacroUri);
-      const unit = await createCompilationUnit(uri);
-      const document = TextDocument.create(
-        BuiltinsMacroUri,
-        "pli",
-        0,
-        BuiltinsMacro,
-      );
-      await tokenize(unit, document);
-      parse(unit);
-      generateSymbolTable(unit);
-
-      // Use the regular AST for easier handling
-      // Note that these are procedures that are used in preprocessor code!
-      builtinScope =
-        unit.scopeCaches.regular.get(unit.ast) ?? Scope.createRoot(unit);
-    }
-
-    return builtinScope;
-  };
-}
-
-const getRootPreprocessorScope = createBuiltinMacroScopeGetter();
+const getBuiltinScope = createBuiltinScopeGetter(BuiltinsTextDocument);
+const getRootPreprocessorScope = createBuiltinScopeGetter(
+  BuiltinsMacroTextDocument,
+);
 
 export async function createCompilationUnit(
   uri: URI,
@@ -328,6 +281,10 @@ export class CompilationUnitHandler {
       }
       const allDiagnostics = diagnosticsToLSP(unit, collectDiagnostics(unit));
       for (const file of unit.files.keys()) {
+        if (file.startsWith(BuiltinsUriSchema)) {
+          // do not report diagnostics for built-in files
+          continue;
+        }
         const fileDiagnostics = allDiagnostics.get(file);
         connection.sendDiagnostics({
           uri: file,
