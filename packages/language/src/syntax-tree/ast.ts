@@ -787,9 +787,25 @@ export function createTokenStatement(): TokenStatement {
   };
 }
 
+export type SkipMode =
+  | {
+      type: "page";
+    }
+  | {
+      type: "skip";
+      count: Expression | null;
+    };
+
 export interface AnswerStatement extends AstNode {
   kind: SyntaxKind.AnswerStatement;
   expression: Expression | null;
+  scan: ScanMode | null;
+  skip: SkipMode | null;
+  column: Expression | null;
+  margins: {
+    left: Expression;
+    right: Expression | null;
+  } | null;
 }
 
 export function createAnswerStatement(): AnswerStatement {
@@ -797,6 +813,10 @@ export function createAnswerStatement(): AnswerStatement {
     kind: SyntaxKind.AnswerStatement,
     container: null,
     expression: null,
+    scan: null,
+    skip: null,
+    column: null,
+    margins: null,
   };
 }
 
@@ -2297,5 +2317,3 @@ export interface XFormatItem extends AstNode {
   kind: SyntaxKind.XFormatItem;
   width: Expression | null;
 }
-
-

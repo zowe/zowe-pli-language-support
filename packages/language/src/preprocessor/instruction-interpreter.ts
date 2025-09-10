@@ -174,7 +174,7 @@ function concatValues(returnValue: Value, expression: Value): ScalarValue {
   }
   return {
     type: inst.DeclaredType.Character,
-    value: values.map(v => v.value).join(''),
+    value: values.map((v) => v.value).join(""),
   };
 }
 
@@ -523,7 +523,7 @@ function runAnswerInstruction(
   context: InterpreterContext,
 ): void {
   const expression = evaluateExpression(instruction.expression, context);
-  context.returnValue = concatValues(context.returnValue,expression);
+  context.returnValue = concatValues(context.returnValue, expression);
 }
 
 function runNoteInstruction(
@@ -2278,4 +2278,3 @@ builtinImplementations.set("VERIFY", (_, args) => {
   }
   return zero;
 });
-

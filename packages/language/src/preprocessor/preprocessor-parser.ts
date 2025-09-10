@@ -23,7 +23,7 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import { Token } from "../parser/tokens";
 import { performAssignmentLookahead } from "../parser/parser";
-import { tokenMatcher } from "chevrotain";
+import { tokenMatcher, TokenType } from "chevrotain";
 import { recursivelySetContainer } from "../linking/symbol-table";
 import { diagnostic, Diagnostic, Severity } from "../language-server/types";
 
@@ -397,6 +397,102 @@ function answerStatement(state: PreprocessorParserState): ast.AnswerStatement {
     CstNodeKind.AnswerStatement_CloseParen,
     PreprocessorTokens.RParen,
   );
+  if (
+    state.tryConsume(
+      statement,
+      CstNodeKind.AnswerStatement_PAGE,
+      PreprocessorTokens.Page,
+    )
+  ) {
+    statement.skip = { type: "page" };
+  } else if (
+    state.tryConsume(
+      statement,
+      CstNodeKind.AnswerStatement_SKIP,
+      PreprocessorTokens.Skip,
+    )
+  ) {
+    if (
+      state.tryConsume(
+        statement,
+        CstNodeKind.AnswerStatement_SKIP_OpenParen,
+        PreprocessorTokens.LParen,
+      )
+    ) {
+      const count = expression(state);
+      statement.skip = { type: "skip", count };
+      state.consume(
+        statement,
+        CstNodeKind.AnswerStatement_SKIP_CloseParen,
+        PreprocessorTokens.RParen,
+      );
+    } else {
+      statement.skip = { type: "skip", count: null };
+    }
+  }
+  if (
+    state.tryConsume(
+      statement,
+      CstNodeKind.AnswerStatement_COLUMN,
+      PreprocessorTokens.Column,
+    )
+  ) {
+    state.consume(
+      statement,
+      CstNodeKind.AnswerStatement_COLUMN_OpenParen,
+      PreprocessorTokens.LParen,
+    );
+    statement.column = expression(state);
+    state.consume(
+      statement,
+      CstNodeKind.AnswerStatement_COLUMN_CloseParen,
+      PreprocessorTokens.RParen,
+    );
+  }
+  if (
+    state.tryConsume(
+      statement,
+      CstNodeKind.AnswerStatement_MARGINS,
+      PreprocessorTokens.Margins,
+    )
+  ) {
+    if (
+      state.tryConsume(
+        statement,
+        CstNodeKind.AnswerStatement_MARGINS_OpenParen,
+        PreprocessorTokens.LParen,
+      )
+    ) {
+      statement.margins = { left: expression(state), right: null };
+      if (
+        state.tryConsume(
+          statement,
+          CstNodeKind.AnswerStatement_MARGINS_Comma,
+          PreprocessorTokens.Comma,
+        )
+      ) {
+        statement.margins.right = expression(state);
+      }
+      state.consume(
+        statement,
+        CstNodeKind.AnswerStatement_MARGINS_CloseParen,
+        PreprocessorTokens.RParen,
+      );
+    } else {
+      statement.margins = null;
+    }
+  }
+  const scans: [CstNodeKind, TokenType, ast.ScanMode][] = [
+    [CstNodeKind.AnswerStatement_NOSCAN, PreprocessorTokens.Noscan, "NOSCAN"],
+    [CstNodeKind.AnswerStatement_SCAN, PreprocessorTokens.Scan, "SCAN"],
+    [CstNodeKind.AnswerStatement_RESCAN, PreprocessorTokens.Rescan, "RESCAN"],
+  ];
+  for (const [cstNodeKind, tokenType, scanType] of scans) {
+    if (state.tryConsume(statement, cstNodeKind, tokenType)) {
+      statement.scan = scanType;
+      break;
+    }
+  }
   state.consume(
     statement,
     CstNodeKind.AnswerStatement_Semicolon,
