@@ -32,9 +32,12 @@ export function activate(context: vscode.ExtensionContext): void {
   settings = Settings.getInstance();
   client = startLanguageClient(context);
 
-  const telemetryReporter: TelemetryReporter | undefined = getTelemetryReporter(context);
-  sendTelemetryEvent("pli.language.support.activated", telemetryReporter);  
-  context.subscriptions.push(registerOnDidOpenTextDocListener(telemetryReporter));
+  const telemetryReporter: TelemetryReporter | undefined =
+    getTelemetryReporter(context);
+  sendTelemetryEvent("pli.language.support.activated", telemetryReporter);
+  context.subscriptions.push(
+    registerOnDidOpenTextDocListener(telemetryReporter),
+  );
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (workspaceFolder) {
@@ -46,7 +49,9 @@ export function activate(context: vscode.ExtensionContext): void {
  * Listen for file open events, and prompt if we can create a .pliplugin folder
  * @returns Disposable listener
  */
-function registerOnDidOpenTextDocListener(telemetryReporter: TelemetryReporter | undefined) {
+function registerOnDidOpenTextDocListener(
+  telemetryReporter: TelemetryReporter | undefined,
+) {
   const listener = vscode.workspace.onDidOpenTextDocument(async (document) => {
     // settle on the 1st workspace folder available
     // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
@@ -62,8 +67,10 @@ function registerOnDidOpenTextDocListener(telemetryReporter: TelemetryReporter |
       // not a pli file or config already exists
       return;
     }
-    sendTelemetryEvent("pli.language.support.documentOpened", telemetryReporter);
-
+    sendTelemetryEvent(
+      "pli.language.support.documentOpened",
+      telemetryReporter,
+    );
 
     const userResponse = await vscode.window.showInformationMessage(
       "Create a '.pliplugin' folder in the project root using this file as the entry point in 'pgm_conf.json'?",
@@ -124,7 +131,11 @@ function registerOnDidOpenTextDocListener(telemetryReporter: TelemetryReporter |
 function getTelemetryReporter(
   context: vscode.ExtensionContext,
 ): TelemetryReporter | undefined {
-  const telemetryKeyPath = path.join(context.extension.extensionPath, "res", "telemetry-key.txt");
+  const telemetryKeyPath = path.join(
+    context.extension.extensionPath,
+    "res",
+    "telemetry-key.txt",
+  );
   if (fs.existsSync(telemetryKeyPath)) {
     const key = fs.readFileSync(telemetryKeyPath, "utf-8");
     return new TelemetryReporter(key);
@@ -205,7 +216,7 @@ function watchPlipluginFolder(
   client: LanguageClient,
   workspaceFolder: string,
   context: vscode.ExtensionContext,
-  telemetryReporter: TelemetryReporter | undefined
+  telemetryReporter: TelemetryReporter | undefined,
 ): void {
   const folderPattern = new vscode.RelativePattern(
     workspaceFolder,
