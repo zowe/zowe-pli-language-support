@@ -21,6 +21,7 @@ import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Settings } from "./settings";
 import { registerCustomDecorators } from "./decorators";
 import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
+import TelemetryReporter from "@vscode/extension-telemetry";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -30,11 +31,14 @@ export function activate(context: vscode.ExtensionContext): void {
   BuiltinFileSystemProvider.register(context);
   settings = Settings.getInstance();
   client = startLanguageClient(context);
-  context.subscriptions.push(registerOnDidOpenTextDocListener());
+
+  const telemetryReporter: TelemetryReporter | undefined = getTelemetryReporter(context);
+  sendTelemetryEvent("pli.language.support.activated", telemetryReporter);  
+  context.subscriptions.push(registerOnDidOpenTextDocListener(telemetryReporter));
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (workspaceFolder) {
-    watchPlipluginFolder(client, workspaceFolder, context);
+    watchPlipluginFolder(client, workspaceFolder, context, telemetryReporter);
   }
 }
 
@@ -42,7 +46,7 @@ export function activate(context: vscode.ExtensionContext): void {
  * Listen for file open events, and prompt if we can create a .pliplugin folder
  * @returns Disposable listener
  */
-function registerOnDidOpenTextDocListener() {
+function registerOnDidOpenTextDocListener(telemetryReporter: TelemetryReporter | undefined) {
   const listener = vscode.workspace.onDidOpenTextDocument(async (document) => {
     // settle on the 1st workspace folder available
     // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
@@ -58,6 +62,8 @@ function registerOnDidOpenTextDocListener() {
       // not a pli file or config already exists
       return;
     }
+    sendTelemetryEvent("pli.language.support.documentOpened", telemetryReporter);
+
 
     const userResponse = await vscode.window.showInformationMessage(
       "Create a '.pliplugin' folder in the project root using this file as the entry point in 'pgm_conf.json'?",
@@ -113,6 +119,25 @@ function registerOnDidOpenTextDocListener() {
     );
   });
   return listener;
+}
+
+function getTelemetryReporter(
+  context: vscode.ExtensionContext,
+): TelemetryReporter | undefined {
+  const telemetryKeyPath = path.join(context.extension.extensionPath, "res", "telemetry-key.txt");
+  if (fs.existsSync(telemetryKeyPath)) {
+    const key = fs.readFileSync(telemetryKeyPath, "utf-8");
+    return new TelemetryReporter(key);
+  } else {
+    return undefined;
+  }
+}
+
+function sendTelemetryEvent(
+  eventName: string,
+  telemetryReporter?: TelemetryReporter,
+): void {
+  telemetryReporter?.sendTelemetryEvent(eventName);
 }
 
 // This function is called when the extension is deactivated.
@@ -180,6 +205,7 @@ function watchPlipluginFolder(
   client: LanguageClient,
   workspaceFolder: string,
   context: vscode.ExtensionContext,
+  telemetryReporter: TelemetryReporter | undefined
 ): void {
   const folderPattern = new vscode.RelativePattern(
     workspaceFolder,
@@ -196,23 +222,43 @@ function watchPlipluginFolder(
   // watch for folder create/delete events
   folderWatcher.onDidCreate(() => {
     client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+    sendTelemetryEvent(
+      "pli.language.support.onDidCreate.folder",
+      telemetryReporter,
+    );
   });
 
   folderWatcher.onDidDelete(() => {
     client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+    sendTelemetryEvent(
+      "pli.language.support.onDidDelete.folder",
+      telemetryReporter,
+    );
   });
 
   // watch for file create/update/delete events
   fileWatcher.onDidChange(() => {
     client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+    sendTelemetryEvent(
+      "pli.language.support.onDidChange.file",
+      telemetryReporter,
+    );
   });
 
   fileWatcher.onDidCreate(() => {
     client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+    sendTelemetryEvent(
+      "pli.language.support.onDidCreate.file",
+      telemetryReporter,
+    );
   });
 
   fileWatcher.onDidDelete(() => {
     client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+    sendTelemetryEvent(
+      "pli.language.support.onDidDelete.file",
+      telemetryReporter,
+    );
   });
 
   context.subscriptions.push(folderWatcher, fileWatcher);
