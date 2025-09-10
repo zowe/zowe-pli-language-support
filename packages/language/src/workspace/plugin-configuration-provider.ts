@@ -18,6 +18,7 @@ import {
 import { translateCompilerOptions } from "../preprocessor/compiler-options/translator";
 import { minimatch } from "minimatch";
 import { CompilerOptionResult } from "../preprocessor/compiler-options/options";
+import { isBoolean, isRecordOf, isString, isStringArray } from "../utils/types";
 
 /**
  * Pli options are effectively macros to set w/ the given values
@@ -31,7 +32,7 @@ export type PliOptions = Record<string, string>;
 export interface ProgramConfig {
   program: string;
   pgroup: string;
-  "pli-options"?: PliOptions;
+  pliOptions: PliOptions;
 
   /**
    * Prebuilt abstract options for this program config.
@@ -47,11 +48,69 @@ export interface ProgramConfig {
   issueCount?: number;
 }
 
+interface SerializedProgramConfig {
+  program: string;
+  pgroup: string;
+  "pli-options"?: PliOptions;
+}
+
+function deserializeProgramConfig(obj: SerializedProgramConfig): ProgramConfig {
+  const pliOptions = obj["pli-options"] || {};
+  return {
+    program: obj.program,
+    pgroup: obj.pgroup,
+    pliOptions: isRecordOf(pliOptions, isString) ? pliOptions : {},
+  };
+}
+
 /**
  * Process group configuration. Corresponds to libraries, compiler options, and other
  * settings that are associated with a program config.
  */
 export interface ProcessGroup {
+  name: string;
+  compilerOptions: string[];
+  pliOptions: PliOptions;
+  libs: string[];
+  includeExtensions: string[];
+  implicitBuiltins: Set<string>;
+  lspOptions: {
+    checkMargins: boolean;
+  };
+
+  /**
+   * Number of issues found in the compiler options for this process group.
+   * Used to avoid duplicate issue reporting later on when running translation in a program context
+   */
+  issueCount?: number;
+}
+
+function deserializeProcessGroup(obj: SerializedProcessGroup): ProcessGroup {
+  const compilerOptions = obj["compiler-options"] || [];
+  const pliOptions = obj["pli-options"] || {};
+  const includeExtensions = obj["include-extensions"] || [];
+  const implicitBuiltins = obj["implicit-builtins"] || [];
+  const libs = obj.libs || [];
+  const lspOptions = obj["lsp-options"] || {};
+  const checkMargins = lspOptions["check-margins"] ?? false;
+  return {
+    name: obj.name,
+    compilerOptions: isStringArray(compilerOptions) ? compilerOptions : [],
+    pliOptions: isRecordOf(pliOptions, isString) ? pliOptions : {},
+    libs: isStringArray(libs) ? libs : [],
+    includeExtensions: isStringArray(includeExtensions)
+      ? includeExtensions
+      : [],
+    implicitBuiltins: isStringArray(implicitBuiltins)
+      ? new Set(implicitBuiltins.map((b) => b.toUpperCase()))
+      : new Set(),
+    lspOptions: {
+      checkMargins: isBoolean(checkMargins) ? checkMargins : false,
+    },
+  };
+}
+
+interface SerializedProcessGroup {
   name: string;
   "compiler-options"?: string[];
   "pli-options"?: PliOptions;
@@ -61,12 +120,6 @@ export interface ProcessGroup {
   "lsp-options"?: {
     "check-margins"?: boolean;
   };
-
-  /**
-   * Number of issues found in the compiler options for this process group.
-   * Used to avoid duplicate issue reporting later on when running translation in a program context
-   */
-  issueCount?: number;
 }
 
 /**
@@ -127,7 +180,7 @@ export class PluginConfigurationProvider {
     }
     for (const processGroup of this.processGroupConfigs.values()) {
       const libs = processGroup.libs || [];
-      const extensions = processGroup["include-extensions"] || [];
+      const extensions = processGroup.includeExtensions || [];
       for (let lib of libs) {
         lib = lib.replace(/[\\/]+$/, "");
         for (const ext of extensions) {
@@ -195,15 +248,12 @@ export class PluginConfigurationProvider {
 
       // add configs to our provider if they exist
       if (progConfig !== undefined) {
-        try {
-          const programConfigs: ProgramConfig[] = JSON.parse(
-            progConfig.toString(),
-          ).pgms;
-          // set w/ respect to the current workspace path
-          this.setProgramConfigs(this.workspacePath, programConfigs);
+        if (
+          !this.parseProgramConfigs(this.workspacePath, progConfig.toString())
+        ) {
+          console.error("Failed to load program config, skipping.");
+        } else {
           return;
-        } catch (e) {
-          console.error("Failed to load program config, skipping:", e);
         }
       } else {
         console.warn("No program config found.");
@@ -236,10 +286,7 @@ export class PluginConfigurationProvider {
 
       if (processGrpConfig !== undefined) {
         try {
-          const processGroupConfigs: ProcessGroup[] = JSON.parse(
-            processGrpConfig.toString(),
-          ).pgroups;
-          this.setProcessGroupConfigs(processGroupConfigs);
+          this.parseProcessGroupConfigs(processGrpConfig);
           this.postProcessProgramConfigs();
           return;
         } catch (e) {
@@ -271,7 +318,7 @@ export class PluginConfigurationProvider {
 
       // collect raw compiler options from the group
       const rawCompilerOptions = (
-        processGroupConfig?.["compiler-options"] || []
+        processGroupConfig?.compilerOptions || []
       ).join(" ");
       // collect raw pli-options from the group & program config
       const rawPliOptions =
@@ -310,6 +357,19 @@ export class PluginConfigurationProvider {
     return [abstractOptions, translatedOptions, collectedIssues];
   }
 
+  parseProgramConfigs(workspacePath: string, text: string): boolean {
+    try {
+      const programConfigs: SerializedProgramConfig[] = JSON.parse(text).pgms;
+      const programConfigsDeserialized = programConfigs.map(
+        deserializeProgramConfig,
+      );
+      this.setProgramConfigs(workspacePath, programConfigsDeserialized);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Sets the program configs of this plugin configuration provider, overwriting any existing configs.
    * The config key is set as the full path relative to the workspace.
@@ -325,6 +385,19 @@ export class PluginConfigurationProvider {
     for (const config of programConfigs) {
       const newPath = UriUtils.joinPath(workspaceUri, config.program);
       this.programConfigs.set(newPath.toString(), config);
+    }
+  }
+
+  parseProcessGroupConfigs(text: string): boolean {
+    try {
+      const processGroupConfigs: SerializedProcessGroup[] =
+        JSON.parse(text).pgroups;
+      const groupConfigs = processGroupConfigs.map(deserializeProcessGroup);
+      this.setProcessGroupConfigs(groupConfigs);
+      this.postProcessProgramConfigs();
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -429,8 +502,8 @@ export class PluginConfigurationProvider {
     programConfig: ProgramConfig,
   ): string {
     const group = this.getProcessGroupConfig(programConfig.pgroup);
-    const groupOpts = group && group["pli-options"] ? group["pli-options"] : {};
-    const progOpts = programConfig["pli-options"] || {};
+    const groupOpts = group?.pliOptions ?? {};
+    const progOpts = programConfig.pliOptions || {};
     // merge w/ program config entries taking precedence
     const merged = { ...groupOpts, ...progOpts };
     if (Object.keys(merged).length === 0) {

@@ -1840,7 +1840,7 @@ async function resolveIncludeFileUri(
       );
       const files: string[] = [libFileUri.path];
       // Generate a glob pattern for each include extension
-      for (const ext of pgroup["include-extensions"] ?? []) {
+      for (const ext of pgroup.includeExtensions) {
         const extFileUri = libFileUri.with({
           path: `${libFileUri.path}${ext}`,
         });

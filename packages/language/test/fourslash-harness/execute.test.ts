@@ -61,13 +61,18 @@ beforeEach(() => {
     {
       program: "*.pli",
       pgroup: "default",
+      pliOptions: {},
     },
   ]);
   PluginConfigurationProviderInstance.setProcessGroupConfigs([
     {
       name: "default",
       libs: ["cpy"],
-      "include-extensions": [".pli"],
+      includeExtensions: [".pli"],
+      compilerOptions: [],
+      implicitBuiltins: new Set(),
+      lspOptions: { checkMargins: false },
+      pliOptions: {},
     },
   ]);
 });
