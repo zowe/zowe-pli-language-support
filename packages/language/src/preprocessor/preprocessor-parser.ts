@@ -141,6 +141,9 @@ function commonStatement(state: PreprocessorParserState): ast.Statement {
   } else if (state.isInProcedure()) {
     // TODO: Handle missing preprocessor procedure statements: ANSWER, CALL, NOTE, SELECT
     switch (state.current?.tokenTypeIdx) {
+      case PreprocessorTokens.Answer.tokenTypeIdx:
+        unit = answerStatement(state);
+        break;
       case PreprocessorTokens.Declare.tokenTypeIdx:
         unit = declareStatement(state);
         break;
@@ -371,6 +374,32 @@ function procedureStatement(
   state.consume(
     statement,
     CstNodeKind.ProcedureStatement_Semicolon1,
+    PreprocessorTokens.Semicolon,
+  );
+  return statement;
+}
+
+function answerStatement(state: PreprocessorParserState): ast.AnswerStatement {
+  const statement = ast.createAnswerStatement();
+  state.consume(
+    statement,
+    CstNodeKind.AnswerStatement_ANSWER,
+    PreprocessorTokens.Answer,
+  );
+  state.consume(
+    statement,
+    CstNodeKind.AnswerStatement_OpenParen,
+    PreprocessorTokens.LParen,
+  );
+  statement.expression = expression(state);
+  state.consume(
+    statement,
+    CstNodeKind.AnswerStatement_CloseParen,
+    PreprocessorTokens.RParen,
+  );
+  state.consume(
+    statement,
+    CstNodeKind.AnswerStatement_Semicolon,
     PreprocessorTokens.Semicolon,
   );
   return statement;

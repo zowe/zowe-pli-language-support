@@ -152,6 +152,32 @@ function valueToString(value?: Value, defaultStr?: string): string | undefined {
   return value.value;
 }
 
+function concatValues(returnValue: Value, expression: Value): ScalarValue {
+  // TODO verify on mainframe if this is correct
+  const values: ScalarValue[] = [];
+  function pushValue(value: Value): void {
+    if (isScalarValue(value)) {
+      values.push(value);
+    } else if (isArrayValue(value)) {
+      unpackArrayValue(value);
+    }
+  }
+  function unpackArrayValue(val: ArrayValue): void {
+    for (const item of val.array) {
+      pushValue(item);
+    }
+  }
+  pushValue(returnValue);
+  pushValue(expression);
+  if (values.length === 0) {
+    return defaultEmptyValue;
+  }
+  return {
+    type: inst.DeclaredType.Character,
+    value: values.map(v => v.value).join(''),
+  };
+}
+
 function getVariable(
   context: InterpreterContext,
   name: string,
@@ -482,11 +508,22 @@ function runInstructionSync(
     case inst.InstructionKind.Note:
       runNoteInstruction(instruction, context);
       break;
+    case inst.InstructionKind.Answer:
+      runAnswerInstruction(instruction, context);
+      break;
     case inst.InstructionKind.Halt:
       runHaltInstruction(instruction, context);
       break;
   }
   return undefined;
+}
+
+function runAnswerInstruction(
+  instruction: inst.AnswerInstruction,
+  context: InterpreterContext,
+): void {
+  const expression = evaluateExpression(instruction.expression, context);
+  context.returnValue = concatValues(context.returnValue,expression);
 }
 
 function runNoteInstruction(
@@ -2241,3 +2278,4 @@ builtinImplementations.set("VERIFY", (_, args) => {
   }
   return zero;
 });
+

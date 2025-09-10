@@ -10,6 +10,10 @@
  */
 
 export enum CstNodeKind {
+  AnswerStatement_ANSWER,
+  AnswerStatement_OpenParen,
+  AnswerStatement_CloseParen,
+  AnswerStatement_Semicolon,
   Percentage,
   DeactivateStatement_DEACTIVATE,
   DeactivateStatement_Comma,

@@ -18,6 +18,7 @@ export enum SyntaxKind {
   ActivateItem,
   DeactivateStatement,
   TokenStatement,
+  AnswerStatement,
   // Normal AST
   AFormatItem,
   AllocateDimension,
@@ -252,6 +253,7 @@ export type SyntaxNode =
   | ActivateItem
   | DeactivateStatement
   | TokenStatement
+  | AnswerStatement
   // Normal nodes
   | AFormatItem
   | AllocateDimension
@@ -712,6 +714,7 @@ export type Unit =
   | WaitStatement
   | WriteStatement
   // Exclusive to preprocessor
+  | AnswerStatement
   | TokenStatement
   | IncludeDirective
   | IncludeAltDirective
@@ -781,6 +784,19 @@ export function createTokenStatement(): TokenStatement {
     kind: SyntaxKind.TokenStatement,
     container: null,
     tokens: [],
+  };
+}
+
+export interface AnswerStatement extends AstNode {
+  kind: SyntaxKind.AnswerStatement;
+  expression: Expression | null;
+}
+
+export function createAnswerStatement(): AnswerStatement {
+  return {
+    kind: SyntaxKind.AnswerStatement,
+    container: null,
+    expression: null,
   };
 }
 
@@ -2281,3 +2297,5 @@ export interface XFormatItem extends AstNode {
   kind: SyntaxKind.XFormatItem;
   width: Expression | null;
 }
+
+

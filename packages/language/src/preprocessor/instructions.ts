@@ -77,6 +77,7 @@ export enum InstructionKind {
   Declare,
   Assignment,
   Activate,
+  Answer,
   Deactivate,
   Include,
   Inscan,
@@ -97,6 +98,7 @@ export type Instruction =
   | IfInstruction
   | TokensInstruction
   | AssignmentInstruction
+  | AnswerInstruction
   | DoInstruction
   | GotoInstruction
   | IncludeInstruction
@@ -128,6 +130,11 @@ export function createHaltNode(): InstructionNode {
     labels: [],
     instruction: Halt,
   };
+}
+
+export interface AnswerInstruction {
+  kind: InstructionKind.Answer;
+  expression: ExpressionInstruction;
 }
 
 export interface NoteInstruction {

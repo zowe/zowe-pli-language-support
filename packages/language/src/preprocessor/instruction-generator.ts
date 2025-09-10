@@ -169,6 +169,9 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.NoteDirective:
       instruction = generateNoteInstruction(value);
       break;
+    case ast.SyntaxKind.AnswerStatement:
+      instruction = generateAnswerInstruction(value);
+      break;
     default:
       return undefined;
   }
@@ -208,6 +211,19 @@ const DefaultCode: inst.ExpressionInstruction = {
   kind: inst.InstructionKind.Number,
   value: "0",
 };
+
+function generateAnswerInstruction(
+  node: ast.AnswerStatement,
+): inst.AnswerInstruction | undefined {
+  const expression = generateExpressionInstruction(node.expression) || {
+    kind: inst.InstructionKind.String,
+    value: "",
+  };
+  return {
+    kind: inst.InstructionKind.Answer,
+    expression,
+  };
+}
 
 function generateNoteInstruction(
   node: ast.NoteDirective,
