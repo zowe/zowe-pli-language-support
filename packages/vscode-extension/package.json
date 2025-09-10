@@ -110,13 +110,13 @@
     "dependencies": false
   },
   "dependencies": {
+    "@vscode/extension-telemetry": "^0.9.8",
     "langium": "~3.4.0",
     "glob": "^11.0.2",
     "pli-language": "workspace:*",
     "util": "^0.12.5",
     "vscode-languageclient": "~9.0.1",
-    "vscode-languageserver": "~9.0.1",
-    "@vscode/extension-telemetry": "^0.9.8"
+    "vscode-languageserver": "~9.0.1"
   },
   "devDependencies": {
     "@types/vscode": "~1.67.0",

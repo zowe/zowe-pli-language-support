@@ -136,10 +136,10 @@ function getTelemetryReporter(
     "res",
     "telemetry-key.txt",
   );
-  if (fs.existsSync(telemetryKeyPath)) {
+  try {
     const key = fs.readFileSync(telemetryKeyPath, "utf-8");
     return new TelemetryReporter(key);
-  } else {
+  } catch {
     return undefined;
   }
 }
