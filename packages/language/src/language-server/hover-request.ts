@@ -242,12 +242,14 @@ interface IncludeItemNode {
 function getIncludeItemRepresentation(
   unit: CompilationUnit,
   node: IncludeItemNode,
-  include: boolean,
+  type: string,
 ): string | null {
   if (!node.filePath || !node.relativeFilePath) {
     return null;
   }
 
+  // TODO: Don't store the file content in the node itself
+  // Instead, implement a proper caching mechanism
   let partialContent = node.sourceText;
   const fileUri = URI.parse(node.filePath);
 
@@ -270,7 +272,15 @@ function getIncludeItemRepresentation(
     // cache for later requests
     node.sourceText = partialContent;
   }
-  return `${formatPliCodeBlock(`%${include ? "INCLUDE" : "INSCAN"} "${node.relativeFilePath}"`)}\n\n---\n${formatPliCodeBlock(partialContent)}`;
+  return generateIncludeItemMarkup(type, node.relativeFilePath, partialContent);
+}
+
+export function generateIncludeItemMarkup(
+  type: string,
+  relativePath: string,
+  sourceText: string,
+): string {
+  return `${formatPliCodeBlock(`${type} "${relativePath}"`)}\n\n---\n${formatPliCodeBlock(sourceText)}`;
 }
 
 /**
@@ -286,9 +296,17 @@ function getNodeRepresentation(
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
     case SyntaxKind.IncludeItem:
-      return getIncludeItemRepresentation(unit, node, true);
+      let type = "%INCLUDE";
+      const ppInclude = unit.compilerOptions?.pp?.ppInclude?.value;
+      if (
+        node.container?.kind === SyntaxKind.IncludeAltDirective &&
+        ppInclude
+      ) {
+        type = ppInclude;
+      }
+      return getIncludeItemRepresentation(unit, node, type);
     case SyntaxKind.InscanDirective:
-      return getIncludeItemRepresentation(unit, node, false);
+      return getIncludeItemRepresentation(unit, node, "%INSCAN");
     default:
       return null;
   }

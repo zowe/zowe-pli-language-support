@@ -755,6 +755,7 @@ export class TestBuilder {
       const message = `Expected hover for label "${label}" (${this.createLabelPositionMessage(label)})`;
       expect(hoverResult, message).toBeDefined();
       expect(hoverResult?.contents, message).toEqual(content);
+      // TODO: Also test the range
     }
   }
 

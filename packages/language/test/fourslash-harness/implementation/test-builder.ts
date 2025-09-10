@@ -16,6 +16,7 @@ import { TestBuilder } from "../../test-builder";
 import { HarnessTesterInterface } from "../harness-interface";
 import { HarnessCodes } from "./codes";
 import { HarnessConstants } from "./constants";
+import { generateIncludeItemMarkup } from "../../../src/language-server/hover-request";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -61,18 +62,6 @@ export function createTestBuilderHarnessImplementation(
         testBuilder.expectCompletions(label.toString(), content),
     },
     hover: {
-      expectIncludeAt(label, filePath, markdown) {
-        testBuilder.expectHover(label.toString(), {
-          kind: MarkupKind.Markdown,
-          value: `${formatPliCodeBlock(`%INCLUDE "${filePath}"`)}\n\n---\n${markdown}`,
-        });
-      },
-      expectInscanAt(label, filePath, markdown) {
-        testBuilder.expectHover(label.toString(), {
-          kind: MarkupKind.Markdown,
-          value: `${formatPliCodeBlock(`%INSCAN "${filePath}"`)}\n\n---\n${markdown}`,
-        });
-      },
       expectMarkdownAt: (label, markdown) =>
         testBuilder.expectHover(label.toString(), {
           kind: MarkupKind.Markdown,
@@ -84,6 +73,7 @@ export function createTestBuilderHarnessImplementation(
           value: text,
         }),
       codeBlock: formatPliCodeBlock,
+      include: generateIncludeItemMarkup,
     },
     semanticTokens: {
       expectAt: (label, tokenType = label.toString()) =>

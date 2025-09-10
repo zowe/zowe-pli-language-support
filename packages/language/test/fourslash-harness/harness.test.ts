@@ -18,6 +18,7 @@ import { parseHarnessTest } from "./harness-parser";
 import { parseWrapperFile } from "./wrapper";
 import { HarnessConstants } from "./implementation/constants";
 import { TestBuilder } from "../test-builder";
+import { generateIncludeItemMarkup } from "../../src/language-server/hover-request";
 
 type HarnessImplementationListener = (method: string, ...args: any[]) => void;
 
@@ -65,8 +66,7 @@ async function createTestingHarnessImplementation(
     },
     hover: {
       codeBlock: (text) => text,
-      expectIncludeAt: listen("hover.expectIncludeAt"),
-      expectInscanAt: listen("hover.expectInscanAt"),
+      include: generateIncludeItemMarkup,
       expectMarkdownAt: listen("hover.expectMarkdownAt"),
       expectTextAt: listen("hover.expectTextAt"),
     },
