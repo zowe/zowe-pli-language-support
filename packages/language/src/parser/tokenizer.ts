@@ -109,25 +109,22 @@ function tokenizeIdentifier(
   const start = context.index;
   let hash = FNV_OFFSET_BASIS;
   let i = context.index;
-  let char: string;
-  let image = "";
-  let originalImage = "";
+  let charCode: number;
   while (i < context.length) {
-    char = context.input[i];
-    if (!isIdChar(char)) {
+    charCode = context.input.charCodeAt(i);
+    if (!isIdChar(charCode)) {
       break;
     }
-    let charCode = char.charCodeAt(0);
     if (charCode >= 97 && charCode <= 122) {
       // Lowercase character, must be uppercased
       charCode &= ~0x20;
     }
-    image += String.fromCharCode(charCode);
-    originalImage += char;
     hash ^= BigInt(charCode);
     hash *= FNV_PRIME;
     i++;
   }
+  const originalImage = context.input.substring(start, i);
+  const image = originalImage.toUpperCase();
   const previousToken = context.tokens[context.tokens.length - 1];
   // Specific handling for ExecFragment (likely EXEC SQL or EXEC CICS)
   if (
@@ -137,12 +134,12 @@ function tokenizeIdentifier(
   ) {
     while (i < context.length && context.input[i] !== ";") {
       i++;
-      image += context.input[i];
     }
+    const execImage = context.input.substring(start, i);
     context.index = i; // Keep the semicolon token
     return tokens.createTokenInstance(
-      image,
-      originalImage,
+      execImage,
+      execImage,
       tokens.ExecFragment,
       start,
       i - 1,
@@ -401,7 +398,7 @@ function tokenizeWhitespace(
 ): tokens.Token | undefined {
   do {
     context.index++;
-  } while (isWhitespace(context.input[context.index]));
+  } while (isWhitespace(context.input.charCodeAt(context.index)));
   return undefined;
 }
 
@@ -434,12 +431,41 @@ function tokenizeIncludeAlt(
 }
 
 // Utility functions
-function isIdChar(char: string): boolean {
-  return /[0-9a-zA-Z_@#$]/.test(char);
+function isIdChar(char: number): boolean {
+  return (
+    // A-Z
+    (char >= 65 && char <= 90) ||
+    // a-z
+    (char >= 97 && char <= 122) ||
+    // 0-9
+    (char >= 48 && char <= 57) ||
+    // _
+    char === 95 ||
+    // @
+    char === 64 ||
+    // $
+    char === 36 ||
+    // #
+    char === 35
+  );
 }
 
-function isWhitespace(char: string): boolean {
-  return /\s/.test(char);
+const space = " ".charCodeAt(0);
+const tab = "\t".charCodeAt(0);
+const lineFeed = "\n".charCodeAt(0);
+const carriageReturn = "\r".charCodeAt(0);
+const formFeed = "\f".charCodeAt(0);
+const verticalTab = "\v".charCodeAt(0);
+
+function isWhitespace(char: number): boolean {
+  return (
+    char === space ||
+    char === tab ||
+    char === lineFeed ||
+    char === carriageReturn ||
+    char === formFeed ||
+    char === verticalTab
+  );
 }
 
 // Function map
