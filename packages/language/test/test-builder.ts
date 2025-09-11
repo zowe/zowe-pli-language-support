@@ -39,6 +39,7 @@ import {
 import { InternalCodes } from "../src/validation/messages";
 import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
 import { tokenize } from "../src/parser/tokenizer";
+import { escapeRegExp } from "../src/parser/tokens";
 
 export type Label = string | number | string[] | number[];
 
@@ -486,13 +487,25 @@ export class TestBuilder {
     return this;
   }
 
-  noDiagnosticsExcept(regex: RegExp[], label?: Label): TestBuilder {
+  noDiagnosticsExcept(
+    exceptions: RegExp[] | string[],
+    label?: Label,
+  ): TestBuilder {
+    if (exceptions.length === 0) {
+      return this;
+    }
+    if (typeof exceptions[0] === "string") {
+      exceptions = (exceptions as string[]).map(
+        (s) => new RegExp(escapeRegExp(s)),
+      );
+    }
     if (Array.isArray(label)) {
       for (const l of label) {
-        this.noDiagnosticsExcept(regex, l);
+        this.noDiagnosticsExcept(exceptions, l);
       }
       return this;
     }
+    const regex = exceptions as RegExp[];
 
     const diagnostics = label
       ? this.getMatchingDiagnostics(label.toString()).exactMatches
