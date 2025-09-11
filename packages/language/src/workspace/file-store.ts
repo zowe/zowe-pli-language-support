@@ -12,6 +12,7 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { Token } from "../parser/tokens";
 import { URI } from "../utils/uri";
+import { BuiltinDocuments } from "../language-server/text-documents";
 
 export interface CompilationUnitFile {
   readonly uri: URI;
@@ -31,7 +32,9 @@ export class FileStore {
   }
 
   getDocument(uri: URI | string): TextDocument | undefined {
-    return this.get(uri)?.textDocument;
+    // Builtin documents are not stored on the compilation unit
+    // To respond to LSP requests, we need to return them anyway
+    return this.get(uri)?.textDocument ?? BuiltinDocuments.get(uri);
   }
 
   set(file: CompilationUnitFile): void {
