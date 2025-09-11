@@ -219,29 +219,31 @@ function generateAnswerInstruction(
   if (node.expression) {
     expression = generateExpressionInstruction(node.expression);
   }
+  let skip: inst.ExpressionInstruction | undefined = undefined;
   if(node.skip) {
     if(node.skip.type === "skip" && node.skip.count) {
-      // calculate, but ignore result, SKIP/PAGE is not relevant for us
-      // in case we have an expression with side-effects
-      generateExpressionInstruction(node.skip.count);
+      skip = generateExpressionInstruction(node.skip.count);
     }
   }
+  let column: inst.ExpressionInstruction | undefined = undefined; 
   if(node.column) {
-    // calculate, but ignore result, COLUMN is not relevant for us
-    // in case we have an expression with side-effects
-    generateExpressionInstruction(node.column);
+    column = generateExpressionInstruction(node.column);
   }
+  let margins: inst.AnswerInstruction['margins'] = undefined;
   if(node.margins) {
-    // calculate, but ignore resulst, MARGINS is not relevant for us
-    // in case we have an expression with side-effects
-    generateExpressionInstruction(node.margins.left);
-    node.margins.right && generateExpressionInstruction(node.margins.right);
+    margins = {
+      left: generateExpressionInstruction(node.margins.left),
+      right: generateExpressionInstruction(node.margins.right),
+    };
   }
   const scanMode = node.scanMode ? inst.ScanModeAstToInstruction[node.scanMode] : undefined
   return {
     kind: inst.InstructionKind.Answer,
     expression,
     scanMode,
+    skip,
+    column,
+    margins,
   };
 }
 

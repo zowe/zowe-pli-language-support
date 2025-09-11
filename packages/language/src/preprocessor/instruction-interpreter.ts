@@ -522,8 +522,23 @@ function runAnswerInstruction(
   instruction: inst.AnswerInstruction,
   context: InterpreterContext,
 ): void {
-  const expression = evaluateExpression(instruction.expression, context);
-  context.returnValue = concatValues(context.returnValue, expression);
+  if (instruction.expression) {
+    const expression = evaluateExpression(instruction.expression, context);
+    context.returnValue = concatValues(context.returnValue, expression);
+  }
+  if(instruction.skip) {
+    //ignore the result, SKIP/PAGE is not relevant for us, just for side-effects
+    evaluateExpression(instruction.skip, context);
+  }
+  if(instruction.column) {
+    //ignore the result, COLUMN is not relevant for us, just for side-effects
+    evaluateExpression(instruction.column, context);
+  }
+  if(instruction.margins) {
+    //ignore the result, MARGINS is not relevant for us, just for side-effects
+    instruction.margins.left && evaluateExpression(instruction.margins.left, context);
+    instruction.margins.right && evaluateExpression(instruction.margins.right, context);
+  }
 }
 
 function runNoteInstruction(

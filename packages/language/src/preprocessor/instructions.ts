@@ -135,6 +135,12 @@ export function createHaltNode(): InstructionNode {
 export interface AnswerInstruction {
   kind: InstructionKind.Answer;
   expression: ExpressionInstruction|undefined;
+  skip: ExpressionInstruction|undefined;
+  column: ExpressionInstruction|undefined;
+  margins: {
+    left: ExpressionInstruction|undefined;
+    right: ExpressionInstruction|undefined;
+  }|undefined;
   scanMode: ScanMode|undefined;
 }
 
