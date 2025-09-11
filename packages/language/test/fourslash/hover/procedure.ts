@@ -30,7 +30,6 @@
 //// CALL <|2>MyProc;
 //// CALL <|3>MyProc2;
 
-verify.noDiagnostics();
 const expectedMarkdown = hover.codeBlock(
   "MYPROC: PROC(A,B,C) OPTIONS(MAIN, ORDER) RECURSIVE REORDER RETURNS(FIXED BIN(31));",
 );

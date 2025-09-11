@@ -1934,6 +1934,7 @@ export interface ProcedureStatement extends AstNode {
   statements: Statement[];
   options: ProcedureOption[];
   end: EndStatement | null;
+  procToken: Token | null;
 }
 export function createProcedureStatement(): ProcedureStatement {
   return {
@@ -1945,6 +1946,7 @@ export function createProcedureStatement(): ProcedureStatement {
     statements: [],
     options: [],
     end: null,
+    procToken: null,
   };
 }
 export type ProcedureOption =
@@ -2094,12 +2096,14 @@ export function createReturnsOption(): ReturnsOption {
 export interface ReturnStatement extends AstNode {
   kind: SyntaxKind.ReturnStatement;
   expression: Expression | null;
+  returnToken: Token | null;
 }
 export function createReturnStatement(): ReturnStatement {
   return {
     kind: SyntaxKind.ReturnStatement,
     container: null,
     expression: null,
+    returnToken: null,
   };
 }
 export interface RevertStatement extends AstNode {
