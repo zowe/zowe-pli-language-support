@@ -1994,38 +1994,36 @@ translator.rule(
     ensureArguments(option, 2, 3);
     const m = option.values[0];
     const n = option.values[1];
-    const c = option.values[2];
-    ensureType(m, "plain");
-    ensureType(n, "plain");
-    // Default values for the margins are 2, 72.
-    const mValue: number = m.value === "" ? 2 : Number(m.value);
-    const nValue: number = n.value === "" ? 72 : Number(n.value);
-    let cValue: string | undefined = undefined;
-    if (isNaN(mValue)) {
-      throw new TranslationError(m.token, "Expected a number.", 1);
-    }
-    if (isNaN(nValue)) {
-      throw new TranslationError(n.token, "Expected a number.", 1);
-    }
+    ensureType(m, "plainNotEmpty");
+    ensureType(n, "plainNotEmpty");
+    const mValue = ensureNumberValue(m, 1, 100);
+    const nValue = ensureNumberValue(n, 1, 200);
     if (mValue >= nValue) {
-      throw new TranslationError(
-        option.token,
-        "Left margin must be smaller than right margin.",
-        1,
+      throw TranslationError.fromCode(
+        m.token,
+        CompilerOptionsCodes.Margins.InvalidMarginPosition,
       );
-    }
-    if (c) {
-      ensureType(c, "plain");
-      cValue = c.value;
     }
     options.margins = {
       m: mValue,
       n: nValue,
-      c: cValue,
     };
+    if (option.values.length > 2) {
+      const c = option.values[2];
+      ensureType(c, "plainNotEmpty");
+      const cValue = ensureNumberValue(c, 0, 200);
+      if (cValue >= mValue && cValue <= nValue) {
+        throw TranslationError.fromCode(
+          c.token,
+          CompilerOptionsCodes.Margins.InvalidAnsPosition,
+        );
+      }
+      options.margins.c = cValue;
+    }
   },
   ["NOMARGINS"],
-  (_, options) => {
+  (option, options) => {
+    ensureArguments(option, 0, 0);
     options.margins = false;
   },
 );

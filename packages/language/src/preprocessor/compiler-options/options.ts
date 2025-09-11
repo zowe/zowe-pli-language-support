@@ -768,7 +768,7 @@ export declare namespace CompilerOptions {
      *
      * Specifying MARGINS(,,c) is an alternative to using %PAGE and %SKIP statements .
      */
-    c?: string;
+    c?: number;
   }
   export interface MaxMsg {
     severity: Flag;
