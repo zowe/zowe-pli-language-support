@@ -76,8 +76,8 @@ export interface HarnessTesterInterface {
      * Expect that the compilation unit has no diagnostics apart from the given regexes.
      * @param regexes The regexes to expect no diagnostics apart from.
      */
-    noDiagnosticsExcept(regexes: RegExp[]): void;
-    noDiagnosticsExceptAt(label: Label, regexes: RegExp[]): void;
+    noDiagnosticsExcept(regexes: RegExp[] | string[]): void;
+    noDiagnosticsExceptAt(label: Label, regexes: RegExp[] | string[]): void;
 
     /**
      * Expect that the given function throws an error.
