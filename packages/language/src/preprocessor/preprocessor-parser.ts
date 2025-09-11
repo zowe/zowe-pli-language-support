@@ -386,17 +386,14 @@ function answerStatement(state: PreprocessorParserState): ast.AnswerStatement {
     CstNodeKind.AnswerStatement_ANSWER,
     PreprocessorTokens.Answer,
   );
-  state.consume(
-    statement,
-    CstNodeKind.AnswerStatement_OpenParen,
-    PreprocessorTokens.LParen,
-  );
-  statement.expression = expression(state);
-  state.consume(
-    statement,
-    CstNodeKind.AnswerStatement_CloseParen,
-    PreprocessorTokens.RParen,
-  );
+  if (state.tryConsume(statement, CstNodeKind.AnswerStatement_OpenParen, PreprocessorTokens.LParen)) {
+    statement.expression = expression(state);
+    state.consume(
+      statement,
+      CstNodeKind.AnswerStatement_CloseParen,
+      PreprocessorTokens.RParen,
+    );
+  }
   if (
     state.tryConsume(
       statement,
@@ -489,7 +486,7 @@ function answerStatement(state: PreprocessorParserState): ast.AnswerStatement {
   ];
   for (const [cstNodeKind, tokenType, scanType] of scans) {
     if (state.tryConsume(statement, cstNodeKind, tokenType)) {
-      statement.scan = scanType;
+      statement.scanMode = scanType;
       break;
     }
   }

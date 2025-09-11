@@ -215,13 +215,33 @@ const DefaultCode: inst.ExpressionInstruction = {
 function generateAnswerInstruction(
   node: ast.AnswerStatement,
 ): inst.AnswerInstruction | undefined {
-  const expression = generateExpressionInstruction(node.expression) || {
-    kind: inst.InstructionKind.String,
-    value: "",
-  };
+  let expression: inst.ExpressionInstruction|undefined = undefined;
+  if (node.expression) {
+    expression = generateExpressionInstruction(node.expression);
+  }
+  if(node.skip) {
+    if(node.skip.type === "skip" && node.skip.count) {
+      // calculate, but ignore result, SKIP/PAGE is not relevant for us
+      // in case we have an expression with side-effects
+      generateExpressionInstruction(node.skip.count);
+    }
+  }
+  if(node.column) {
+    // calculate, but ignore result, COLUMN is not relevant for us
+    // in case we have an expression with side-effects
+    generateExpressionInstruction(node.column);
+  }
+  if(node.margins) {
+    // calculate, but ignore resulst, MARGINS is not relevant for us
+    // in case we have an expression with side-effects
+    generateExpressionInstruction(node.margins.left);
+    node.margins.right && generateExpressionInstruction(node.margins.right);
+  }
+  const scanMode = node.scanMode ? inst.ScanModeAstToInstruction[node.scanMode] : undefined
   return {
     kind: inst.InstructionKind.Answer,
     expression,
+    scanMode,
   };
 }
 

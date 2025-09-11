@@ -134,7 +134,8 @@ export function createHaltNode(): InstructionNode {
 
 export interface AnswerInstruction {
   kind: InstructionKind.Answer;
-  expression: ExpressionInstruction;
+  expression: ExpressionInstruction|undefined;
+  scanMode: ScanMode|undefined;
 }
 
 export interface NoteInstruction {
@@ -243,6 +244,12 @@ export enum ScanMode {
   NoScan,
   ReScan,
 }
+
+export const ScanModeAstToInstruction: Record<ast.ScanMode, ScanMode> = {
+  SCAN: ScanMode.Scan,
+  NOSCAN: ScanMode.NoScan,
+  RESCAN: ScanMode.ReScan,
+};
 
 export enum VariableVisibility {
   External,

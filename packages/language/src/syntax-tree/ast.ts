@@ -799,7 +799,7 @@ export type SkipMode =
 export interface AnswerStatement extends AstNode {
   kind: SyntaxKind.AnswerStatement;
   expression: Expression | null;
-  scan: ScanMode | null;
+  scanMode: ScanMode | null;
   skip: SkipMode | null;
   column: Expression | null;
   margins: {
@@ -813,7 +813,7 @@ export function createAnswerStatement(): AnswerStatement {
     kind: SyntaxKind.AnswerStatement,
     container: null,
     expression: null,
-    scan: null,
+    scanMode: null,
     skip: null,
     column: null,
     margins: null,
