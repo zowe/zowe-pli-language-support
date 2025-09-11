@@ -302,7 +302,22 @@ export const CompilerOptionsCodes = {
     } as ParametricPLICode,
   },
 
-  // TODO ssmifi: Add codes for margins.
+  Margins: {
+    InvalidMarginPosition: {
+      code: "COMR01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `The left margin must be less than the right margin.`,
+      fullCode: "COMR01W",
+    } as ParametricPLICode,
+    InvalidAnsPosition: {
+      code: "COMR02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `The ANS character should be located outside of the values specified by m and n.`,
+      fullCode: "COMR02W",
+    } as ParametricPLICode,
+  },
 
   MaxInit: {
     InvalidParameter: {

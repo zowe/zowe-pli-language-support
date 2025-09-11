@@ -48,10 +48,10 @@ export function createTestBuilderHarnessImplementation(
         label !== undefined
           ? testBuilder.expectNoDiagnosticsAt(label)
           : testBuilder.expectNoDiagnostics(),
-      noDiagnosticsExcept: (regex: RegExp[]) =>
+      noDiagnosticsExcept: (regex: RegExp[] | string[]) =>
         testBuilder.noDiagnosticsExcept(regex),
-      noDiagnosticsExceptAt: (label, regexes) =>
-        testBuilder.noDiagnosticsExcept(regexes, label),
+      noDiagnosticsExceptAt: (label, regex: RegExp[] | string[]) =>
+        testBuilder.noDiagnosticsExcept(regex, label),
       expectToThrow: (fn, messageToThrow) =>
         testBuilder.expectToThrow(fn, messageToThrow),
       expectCompilerOptions: (expectedOptions) =>
