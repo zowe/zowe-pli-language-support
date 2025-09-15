@@ -12,14 +12,19 @@
 /// <reference path="../../../framework.ts" />
 
 //// %Deactivated_macro: procedure returns( character );
-////   return( '** value of deactivated macro **' );
+////   return( 'DCL DEACTIVATED FIXED;' );
 //// %end;
-//// %deact Deactivated_macro;
 //// %MYMACRO: PROC;
 ////   ANSWER (Deactivated_macro);
 //// %END;
-//// %DCL X CHAR;
-//// %X = MYMACRO;
-//// X
+//// %DEACTIVATE Deactivated_macro;
+//// %ACTIVATE MYMACRO;
+//// ppp: PROC;
+////   MYMACRO
+//// END;
 
-preprocessor.expectTokens("** VALUE OF DEACTIVATED MACRO **");
+preprocessor.expectTokens(`
+    ppp: PROC; 
+        DCL DEACTIVATED FIXED;
+    END;
+`);

@@ -11,19 +11,29 @@
 
 /// <reference path="../../../framework.ts" />
 
-//// %MYMACRO: PROC;
-////   ANSWER (Counter);
+//// %DCL I FIXED;
+//// %I = 1;
+////
+//// %EFFECT: PROC RETURNS (FIXED);
+////   I = 2;
+////   RETURN (I);
 //// %END;
+////
+//// %MYMACRO: PROC;
+////   ANSWER ('VAR = I;') SKIP (EFFECT());
+//// %END;
+////
 //// %ACTIVATE MYMACRO;
+////
 //// ppp: PROC;
-////    DCL VAR FIXED;
-////    VAR = MYMACRO;
+////   DCL VAR FIXED;
+////   MYMACRO
 //// END;
 
 preprocessor.expectTokens(`
     ppp: PROC;
         DCL VAR FIXED;
-        VAR = 00001;
+        VAR = 2;
     END;
 `);
 verify.noDiagnostics();

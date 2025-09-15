@@ -12,10 +12,12 @@
 /// <reference path="../../../framework.ts" />
 
 //// %MYMACRO: PROC;
-////   ANSWER ('DCL VAR FIXED;');
+////   ANSWER PAGE;
 //// %END;
-//// %DCL X CHAR;
-//// %X = MYMACRO;
-//// X
+//// %ACTIVATE MYMACRO;
+//// ppp: PROC;
+////   MYMACRO
+//// END;
 
-preprocessor.expectTokens("DCL VAR FIXED;");
+preprocessor.expectTokens("ppp: PROC; END;");
+verify.noDiagnostics();
