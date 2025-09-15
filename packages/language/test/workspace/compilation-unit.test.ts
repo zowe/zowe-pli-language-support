@@ -59,6 +59,7 @@ describe("Compilation Unit Tests", () => {
       {
         program: "test/entry.pli",
         pgroup: "",
+        pliOptions: {},
       },
     ]);
     expect(
@@ -89,6 +90,7 @@ describe("Compilation Unit Tests", () => {
       {
         program: "test/*.pli",
         pgroup: "",
+        pliOptions: {},
       },
     ]);
 
@@ -127,15 +129,19 @@ describe("Compilation Unit Tests", () => {
       {
         program: "src/*.pli",
         pgroup: "default",
+        pliOptions: {},
       },
     ]);
     // Simulate the process group config (normally this would be loaded from a config file)
     PluginConfigurationProviderInstance.setProcessGroupConfigs([
       {
         name: "default",
-        "compiler-options": [],
+        compilerOptions: [],
         libs: ["cpy"],
-        "include-extensions": [".inc"],
+        includeExtensions: [".inc"],
+        lspOptions: { checkMargins: false },
+        pliOptions: {},
+        implicitBuiltins: new Set(),
       },
     ]);
 

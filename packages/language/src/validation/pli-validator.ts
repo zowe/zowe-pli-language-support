@@ -297,6 +297,17 @@ export class PliValidator implements Validator {
     }
   }
 
+  private knownBuiltins = new Set([
+    "SQLCA",
+    "SQLDA",
+    "SQLDA2",
+    "SQLSIZE",
+    "SQLDAPTR",
+    "SQLTRIPLED",
+    "SQLDOUBLED",
+    "SQLSINGLED",
+  ]);
+
   checkImplicitBuiltins(
     node: AST.ReferenceItem,
     acceptor: ValidationAcceptor,
@@ -316,8 +327,15 @@ export class PliValidator implements Validator {
       return;
     }
 
+    if (node.container?.kind === AST.SyntaxKind.ReferenceItem) {
+      return; // skip qualified names
+    }
+
     const name = node.ref.node.name.toUpperCase();
-    if (!this.processGroup["implicit-builtins"]?.includes(name)) {
+    if (
+      !this.knownBuiltins.has(name) &&
+      !this.processGroup.implicitBuiltins.has(name)
+    ) {
       acceptor(
         diagnosticFromCode(
           PLICodes.Error.IBM1373I,
