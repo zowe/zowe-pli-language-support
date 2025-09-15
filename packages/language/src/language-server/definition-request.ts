@@ -69,7 +69,8 @@ export function definitionRequest(
     ];
   } else if (
     isIncludeItemToken(token.kind) &&
-    token.element?.kind === SyntaxKind.IncludeItem
+    (token.element?.kind === SyntaxKind.IncludeItem ||
+      token.element?.kind === SyntaxKind.InscanDirective)
   ) {
     // allow jumping to the resolved file when present
     const filePath = token.element.filePath;
