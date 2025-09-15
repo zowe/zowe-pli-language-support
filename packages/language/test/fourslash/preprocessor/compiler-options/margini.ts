@@ -17,8 +17,9 @@
 ////*PROCESS <|2:MARGINI|>(<|3:)|>;
 ////*PROCESS <|4:MARGINI|>(<|5:INVALID|>);
 ////*PROCESS <|6:MARGINI|>(<|7:"INVALID"|>);
-////*PROCESS <|8:NMI|>;
-////*PROCESS <|9:MI|>('c');
+////*PROCESS <|8:MARGINI|>(<|9:''|>);
+////*PROCESS <|10:NMI|>;
+////*PROCESS <|12:MI|>('c');
 
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.DupeOptionIssue.message("NOMARGINI"),
@@ -26,7 +27,7 @@ verify.expectDiagnosticsAt(1, {
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.InvalidParameterCount.message(1, 0, 0),
 });
-verify.expectDiagnosticsAt([2, 4, 6], {
+verify.expectDiagnosticsAt([2, 4, 6, 8], {
   message: code.CompilerOptions.MutexOptionIssue.message("MARGINI"),
 });
 verify.expectDiagnosticsAt([3, 5], {
@@ -35,14 +36,13 @@ verify.expectDiagnosticsAt([3, 5], {
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.Margini.InvalidParameter.message("INVALID"),
 });
-verify.expectDiagnosticsAt(8, {
+verify.expectDiagnosticsAt(10, {
   message: code.CompilerOptions.DupeOptionIssue.message("NMI"),
 });
-verify.expectDiagnosticsAt(9, {
+verify.expectDiagnosticsAt(12, {
   message: code.CompilerOptions.MutexOptionIssue.message("MI"),
 });
+verify.noDiagnostics(9);
 verify.expectCompilerOptions({
-  margini: {
-    character: "c",
-  },
+  margini: "c",
 });

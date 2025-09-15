@@ -25,6 +25,5 @@ verify.expectCompilerOptions({
   margins: {
     m: 2,
     n: 82,
-    c: undefined,
   },
 });
