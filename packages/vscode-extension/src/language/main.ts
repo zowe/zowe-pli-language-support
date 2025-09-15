@@ -16,11 +16,13 @@ import {
 import {
   startLanguageServer,
   FileSystemProvider,
+  SearchOptions,
   URI,
   setFileSystemProvider,
 } from "pli-language";
 import * as fs from "fs";
-import * as glob from "glob";
+import * as nPath from "path";
+import { searchFiles } from "../common/search";
 
 class NodeFileSystemProvider implements FileSystemProvider {
   readFile(uri: URI): Promise<string> {
@@ -40,22 +42,20 @@ class NodeFileSystemProvider implements FileSystemProvider {
   async deleteFile(uri: URI): Promise<void> {
     throw new Error("Not supported.");
   }
-  findFilesByGlob(pattern: string): Promise<string[]> {
-    return glob.glob(pattern, {
-      nodir: true,
-      absolute: true,
-      nocase: true,
+  async search(options: SearchOptions): Promise<URI | undefined> {
+    const path = await searchFiles(options, async (path) => {
+      const result = await fs.promises.readdir(path);
+      return result.map((file) => nPath.basename(file));
     });
+    if (path) {
+      return options.path.with({ path });
+    } else {
+      return undefined;
+    }
   }
 }
 
 setFileSystemProvider(new NodeFileSystemProvider());
 
-// Create a connection to the client
 const connection = createConnection(ProposedFeatures.all);
-
-// // Inject the shared services and language-specific services
-// const { shared } = createPliServices({ connection, ...NodeFileSystem });
-
-// Start the language server with the shared services
 startLanguageServer(connection);
