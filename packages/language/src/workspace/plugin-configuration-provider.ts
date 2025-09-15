@@ -179,8 +179,8 @@ export class PluginConfigurationProvider {
       wsPrefix += "/";
     }
     for (const processGroup of this.processGroupConfigs.values()) {
-      const libs = processGroup.libs || [];
-      const extensions = processGroup.includeExtensions || [];
+      const libs = processGroup.libs;
+      const extensions = processGroup.includeExtensions;
       for (let lib of libs) {
         lib = lib.replace(/[\\/]+$/, "");
         for (const ext of extensions) {
@@ -359,11 +359,9 @@ export class PluginConfigurationProvider {
 
   parseProgramConfigs(workspacePath: string, text: string): boolean {
     try {
-      const programConfigs: SerializedProgramConfig[] = JSON.parse(text).pgms;
-      const programConfigsDeserialized = programConfigs.map(
-        deserializeProgramConfig,
-      );
-      this.setProgramConfigs(workspacePath, programConfigsDeserialized);
+      const serializedData: SerializedProgramConfig[] = JSON.parse(text).pgms;
+      const programConfigs = serializedData.map(deserializeProgramConfig);
+      this.setProgramConfigs(workspacePath, programConfigs);
       return true;
     } catch {
       return false;
@@ -390,9 +388,8 @@ export class PluginConfigurationProvider {
 
   parseProcessGroupConfigs(text: string): boolean {
     try {
-      const processGroupConfigs: SerializedProcessGroup[] =
-        JSON.parse(text).pgroups;
-      const groupConfigs = processGroupConfigs.map(deserializeProcessGroup);
+      const serializedData: SerializedProcessGroup[] = JSON.parse(text).pgroups;
+      const groupConfigs = serializedData.map(deserializeProcessGroup);
       this.setProcessGroupConfigs(groupConfigs);
       this.postProcessProgramConfigs();
       return true;
@@ -503,7 +500,7 @@ export class PluginConfigurationProvider {
   ): string {
     const group = this.getProcessGroupConfig(programConfig.pgroup);
     const groupOpts = group?.pliOptions ?? {};
-    const progOpts = programConfig.pliOptions || {};
+    const progOpts = programConfig.pliOptions;
     // merge w/ program config entries taking precedence
     const merged = { ...groupOpts, ...progOpts };
     if (Object.keys(merged).length === 0) {

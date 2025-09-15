@@ -294,7 +294,16 @@ export class PliValidator implements Validator {
     }
   }
 
-  private knownBuiltins = new Set(["SQLCA", "SQLDA"]);
+  private knownBuiltins = new Set([
+    "SQLCA",
+    "SQLDA",
+    "SQLDA2",
+    "SQLSIZE",
+    "SQLDAPTR",
+    "SQLTRIPLED",
+    "SQLDOUBLED",
+    "SQLSINGLED",
+  ]);
 
   checkImplicitBuiltins(
     node: AST.ReferenceItem,

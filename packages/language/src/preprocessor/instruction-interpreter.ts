@@ -1832,7 +1832,7 @@ async function resolveIncludeFileUri(
 
   if (pgroup) {
     // lib file as either a string or a member from a known process group
-    for (const lib of pgroup.libs ?? []) {
+    for (const lib of pgroup.libs) {
       const libFileUri = UriUtils.joinPath(
         URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
         lib,

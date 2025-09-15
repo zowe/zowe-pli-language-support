@@ -13,7 +13,9 @@
 
 // @wrap: main
 //// PUT(<|1:SQLCA|>.SQLCODE);
+//// PUT(<|2:SQLDA|>.SQLTYPE);
 
-// Should link to the SQLCA builtin copybook definition
+// Should link to the SQLCA/SQLDA builtin copybook definition
 // Therefore, no diagnostics expected
 verify.noDiagnostics(1);
+verify.noDiagnostics(2);
