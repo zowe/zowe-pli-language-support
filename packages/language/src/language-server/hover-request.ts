@@ -25,7 +25,6 @@ import {
   DimensionBound,
   Dimensions,
   Expression,
-  IncludeItem,
   LabelPrefix,
   ProcedureStatement,
   SyntaxKind,
@@ -230,18 +229,27 @@ function decodeBound(bound: Bound | null): string | null {
   }
 }
 
+interface IncludeItemNode {
+  sourceText: string | null;
+  filePath: string | null;
+  relativeFilePath: string | null;
+}
+
 /**
- * Converts an IncludeItem node to a string representation.
+ * Converts an IncludeItem or InscanDirective to a string representation.
  * Ex. %INCLUDE "/path/to/file.pli"
  */
 function getIncludeItemRepresentation(
   unit: CompilationUnit,
-  node: IncludeItem,
+  node: IncludeItemNode,
+  type: string,
 ): string | null {
-  if (!node.filePath) {
+  if (!node.filePath || !node.relativeFilePath) {
     return null;
   }
 
+  // TODO: Don't store the file content in the node itself
+  // Instead, implement a proper caching mechanism
   let partialContent = node.sourceText;
   const fileUri = URI.parse(node.filePath);
 
@@ -264,7 +272,15 @@ function getIncludeItemRepresentation(
     // cache for later requests
     node.sourceText = partialContent;
   }
-  return `%INCLUDE "${fileUri.fsPath}"\n\n---\n${formatPliCodeBlock(partialContent)}`;
+  return generateIncludeItemMarkup(type, node.relativeFilePath, partialContent);
+}
+
+export function generateIncludeItemMarkup(
+  type: string,
+  relativePath: string,
+  sourceText: string,
+): string {
+  return `${formatPliCodeBlock(`${type} "${relativePath}"`)}\n\n---\n${formatPliCodeBlock(sourceText)}`;
 }
 
 /**
@@ -280,7 +296,17 @@ function getNodeRepresentation(
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
     case SyntaxKind.IncludeItem:
-      return getIncludeItemRepresentation(unit, node);
+      let type = "%INCLUDE";
+      const ppInclude = unit.compilerOptions?.pp?.ppInclude?.value;
+      if (
+        node.container?.kind === SyntaxKind.IncludeAltDirective &&
+        ppInclude
+      ) {
+        type = ppInclude;
+      }
+      return getIncludeItemRepresentation(unit, node, type);
+    case SyntaxKind.InscanDirective:
+      return getIncludeItemRepresentation(unit, node, "%INSCAN");
     default:
       return null;
   }
