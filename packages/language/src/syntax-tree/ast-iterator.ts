@@ -541,6 +541,9 @@ export function forEachNode(
     case SyntaxKind.IncludeDirective:
       node.items.forEach(action);
       break;
+    case SyntaxKind.IncludeAltDirective:
+      node.items.forEach(action);
+      break;
     case SyntaxKind.IncludeItem:
       break;
     case SyntaxKind.InscanDirective:

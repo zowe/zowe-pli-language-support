@@ -1654,7 +1654,7 @@ function setImmediateFollowProperty(
   }
 }
 
-function runInscanInstruction(
+async function runInscanInstruction(
   instruction: inst.InscanInstruction,
   context: InterpreterContext,
 ): Promise<void> {
@@ -1663,16 +1663,15 @@ function runInscanInstruction(
     // Inscan cannot be used with array variables
     return Promise.resolve();
   }
-  return runInclude(
+  const filePath = await runInclude(
     {
-      // No item is provided here, which is only availble in the IncludeInstruction
-      item: null,
       fileName: value.value,
       token: instruction.variable.reference?.token,
       idempotent: instruction.idempotent,
     },
     context,
   );
+  setFilePath(instruction.node, filePath, context);
 }
 
 async function runIncludeInstruction(
@@ -1681,22 +1680,47 @@ async function runIncludeInstruction(
 ): Promise<void> {
   for (const item of instruction.items) {
     if (item.fileName) {
-      await runInclude(
+      const filePath = await runInclude(
         {
           fileName: item.fileName,
-          item: item,
           idempotent: instruction.idempotent,
           token: item.token,
         },
         context,
       );
+      setFilePath(item, filePath, context);
+    }
+  }
+}
+
+function setFilePath(
+  item: { filePath: string | null; relativeFilePath: string | null },
+  filePath: string | null,
+  context: InterpreterContext,
+): void {
+  if (filePath) {
+    item.filePath = filePath;
+    if (context.currentUri) {
+      const dirname = UriUtils.dirname(context.currentUri);
+      let relative = UriUtils.relative(dirname, filePath);
+      if (
+        // If the path isn't already relative
+        !relative.startsWith("../") &&
+        !relative.startsWith("./") &&
+        // If the path isn't absolute (Unix & Windows)
+        !relative.startsWith("/") &&
+        !(relative.charAt(1) === ":" && relative.charAt(2) === "/")
+      ) {
+        // Make sure the path is explicitly relative
+        relative = "./" + relative;
+      }
+      item.relativeFilePath = relative;
     }
   }
 }
 
 interface IncludeItem {
   fileName: string;
-  item: ast.IncludeItem | null;
   token?: Token | null;
   idempotent: boolean;
 }
@@ -1704,7 +1728,7 @@ interface IncludeItem {
 async function runInclude(
   item: IncludeItem,
   context: InterpreterContext,
-): Promise<void> {
+): Promise<string | null> {
   const uri = await resolveIncludeFileUri(item, context);
 
   function failToResolve(error?: any): void {
@@ -1718,26 +1742,20 @@ async function runInclude(
 
   if (!uri) {
     failToResolve();
-    return;
-  }
-
-  if (item.item) {
-    // Set the resolved file path on the item
-    // This will be used later in the LSP definition provider
-    item.item.filePath = uri.toString();
+    return null;
   }
 
   if (item.idempotent && context.xIncludes.has(uri.toString())) {
     // Do nothing
     // TODO: Display a warning?
-    return;
+    return uri.toString();
   }
 
   context.xIncludes.add(uri.toString());
 
   if (context.uris.includes(uri.toString())) {
     failToResolve();
-    return;
+    return null;
   }
 
   try {
@@ -1784,6 +1802,8 @@ async function runInclude(
   } catch (err) {
     failToResolve(err);
   }
+
+  return uri.toString();
 }
 
 /**
