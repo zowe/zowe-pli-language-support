@@ -112,14 +112,6 @@ export interface HarnessTesterInterface {
 
   hover: {
     /**
-     * Expect that the hover at the given label is an include directive.
-     *
-     * @param label The label to expect the hover at.
-     * @param filePath File path to resolve in an OS-dependent fashion
-     * @param content The expected hover content of the included file
-     */
-    expectIncludeAt(label: Label, filePath: string, content: string): void;
-    /**
      * Expect that the hover at the given label is the given markdown.
      *
      * @param label The label to expect the hover at.
@@ -142,6 +134,14 @@ export interface HarnessTesterInterface {
      * hover.codeBlock("DCL A;") === "```pli\nDCL A;\n```\n"
      */
     codeBlock(text: string): string;
+    /**
+     * Format the given include directive as a code block.
+     * @param type The type of the include directive.
+     * @param filePath The file path of the included file.
+     * @param content The content of the included file.
+     * @returns The formatted include directive.
+     */
+    include(type: string, filePath: string, content: string): string;
   };
 
   completion: {

@@ -561,6 +561,7 @@ function generateInscanInstruction(
     kind: inst.InstructionKind.Inscan,
     variable: generateReferenceItemInstruction(node.item),
     idempotent: node.idempotent,
+    node,
   };
   return instruction;
 }

@@ -18,9 +18,11 @@
 // @filename: cpy/lib.pli
 //// DECLARE LIB_VAR FIXED;
 
-//// %include <|1>"lib.pli";
+//// %DCL X CHAR;
+//// %X = "lib";
+//// %<|1>INSCAN X;
 
 hover.expectMarkdownAt(
   1,
-  hover.include("%INCLUDE", "./cpy/lib.pli", " DECLARE LIB_VAR FIXED;"),
+  hover.include("%INSCAN", "./cpy/lib.pli", " DECLARE LIB_VAR FIXED;"),
 );
