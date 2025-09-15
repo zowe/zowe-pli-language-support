@@ -36,6 +36,5 @@ verify.expectCompilerOptions({
     // Fallback to defaults.
     m: 2,
     n: 72,
-    c: undefined,
   },
 });
