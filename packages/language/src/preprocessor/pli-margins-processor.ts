@@ -53,8 +53,7 @@ export class PliMarginsProcessor implements MarginsProcessor {
           programConfig.pgroup,
         );
       if (processGroup) {
-        this.checkMargins =
-          processGroup["lsp-options"]?.["check-margins"] ?? false;
+        this.checkMargins = processGroup.lspOptions.checkMargins;
       }
     }
 

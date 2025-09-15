@@ -13,7 +13,11 @@ import { beforeAll, describe, expect, test, afterAll } from "vitest";
 import { PliLexer } from "../../src/preprocessor/pli-lexer";
 import { URI } from "../../src/utils/uri";
 import { createCompilationUnit } from "../../src/workspace/compilation-unit";
-import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
+import {
+  PluginConfigurationProviderInstance,
+  ProcessGroup,
+  ProgramConfig,
+} from "../../src/workspace/plugin-configuration-provider";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 type TokenizeFunction = (text: string) => Promise<string[]>;
@@ -202,13 +206,19 @@ describe("PL/1 Lexer", () => {
       const inputText = `*PROCESS ARCH(10);
       DCL A fixed bin(31);`;
 
-      const programConfig = {
+      const programConfig: ProgramConfig = {
         program: "test.pli",
         pgroup: "testGroup",
+        pliOptions: {},
       };
-      const processGroupConfig = {
+      const processGroupConfig: ProcessGroup = {
         name: "testGroup",
-        "compiler-options": ["ASSERT(ENTRY)"],
+        compilerOptions: ["ASSERT(ENTRY)"],
+        implicitBuiltins: new Set(),
+        includeExtensions: [],
+        libs: [],
+        lspOptions: { checkMargins: false },
+        pliOptions: {},
       };
 
       await PluginConfigurationProviderInstance.init("/test");
@@ -236,9 +246,10 @@ describe("PL/1 Lexer", () => {
       const inputText = `*PROCESS ARCH(10);
       DCL A fixed bin(31);`;
 
-      const programConfig = {
+      const programConfig: ProgramConfig = {
         program: "test.pli",
         pgroup: "missingGroup",
+        pliOptions: {},
       };
 
       await PluginConfigurationProviderInstance.init("/test");
@@ -260,13 +271,19 @@ describe("PL/1 Lexer", () => {
       const uri = URI.file("/test/test.pli");
       const inputText = " DCL A fixed bin(31);";
 
-      const programConfig = {
+      const programConfig: ProgramConfig = {
         program: "test.pli",
         pgroup: "testGroup",
+        pliOptions: {},
       };
-      const processGroupConfig = {
+      const processGroupConfig: ProcessGroup = {
         name: "testGroup",
-        "compiler-options": ["ASSERT(ENTRY)"],
+        compilerOptions: ["ASSERT(ENTRY)"],
+        implicitBuiltins: new Set(),
+        includeExtensions: [],
+        libs: [],
+        lspOptions: { checkMargins: false },
+        pliOptions: {},
       };
 
       await PluginConfigurationProviderInstance.init("/test");
