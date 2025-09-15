@@ -236,14 +236,14 @@ export class TestBuilder {
     // Check if the files contain a program config or process group.
     for (const [uri, file] of this.files) {
       if (uri.endsWith(PluginConfigurationProvider.PROGRAM_CONFIG_FILE)) {
-        PluginConfigurationProviderInstance.setProgramConfigs(
+        PluginConfigurationProviderInstance.parseProgramConfigs(
           "",
-          JSON.parse(file.output).pgms,
+          file.output,
         );
       }
       if (uri.endsWith(PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE)) {
-        PluginConfigurationProviderInstance.setProcessGroupConfigs(
-          JSON.parse(file.output).pgroups,
+        PluginConfigurationProviderInstance.parseProcessGroupConfigs(
+          file.output,
         );
       }
     }

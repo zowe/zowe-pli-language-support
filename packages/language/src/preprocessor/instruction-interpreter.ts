@@ -1852,7 +1852,7 @@ async function resolveIncludeFileUri(
 
   if (pgroup) {
     // lib file as either a string or a member from a known process group
-    for (const lib of pgroup.libs ?? []) {
+    for (const lib of pgroup.libs) {
       const libFileUri = UriUtils.joinPath(
         URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
         lib,
@@ -1860,7 +1860,7 @@ async function resolveIncludeFileUri(
       );
       const files: string[] = [libFileUri.path];
       // Generate a glob pattern for each include extension
-      for (const ext of pgroup["include-extensions"] ?? []) {
+      for (const ext of pgroup.includeExtensions) {
         const extFileUri = libFileUri.with({
           path: `${libFileUri.path}${ext}`,
         });

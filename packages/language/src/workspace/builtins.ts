@@ -17,9 +17,69 @@ import { URI } from "../utils/uri";
  */
 
 export const BuiltinsUriSchema = "pli-builtin";
+
+export const BuiltinsSQLCA = `
+ DECLARE 1 SQLCA,
+    2 SQLCAID CHAR(8),
+    2 SQLCABC FIXED(31) BINARY,
+    2 SQLCODE FIXED(31) BINARY,
+    2 SQLERRM CHAR(70) VAR,
+    2 SQLERRP CHAR(8),
+    2 SQLERRD(6) FIXED(31) BINARY,
+    2 SQLWARN,
+      3 SQLWARN0 CHAR(1),
+      3 SQLWARN1 CHAR(1),
+      3 SQLWARN2 CHAR(1),
+      3 SQLWARN3 CHAR(1),
+      3 SQLWARN4 CHAR(1),
+      3 SQLWARN5 CHAR(1),
+      3 SQLWARN6 CHAR(1),
+      3 SQLWARN7 CHAR(1),
+    2 SQLEXT,
+      3 SQLWARN8 CHAR(1),
+      3 SQLWARN9 CHAR(1),
+      3 SQLWARNA CHAR(1),
+      3 SQLSTATE CHAR(5);
+`;
+
+export const BuiltinsSQLDA = `
+ DECLARE
+  1 SQLDA BASED(SQLDAPTR),
+    2 SQLDAID CHAR(8),
+    2 SQLDABC FIXED(31) BINARY,
+    2 SQLN    FIXED(15) BINARY,
+    2 SQLD    FIXED(15) BINARY,
+    2 SQLVAR(SQLSIZE REFER(SQLN)),
+      3 SQLTYPE  FIXED(15) BINARY,
+      3 SQLLEN   FIXED(15) BINARY,
+      3 SQLDATA  POINTER,
+      3 SQLIND   POINTER,
+      3 SQLNAME  CHAR(30)  VAR;
+ /* */
+ DECLARE
+  1 SQLDA2 BASED(SQLDAPTR),
+    2 SQLDAID2 CHAR(8),
+    2 SQLDABC2 FIXED(31) BINARY,
+    2 SQLN2    FIXED(15) BINARY,
+    2 SQLD2    FIXED(15) BINARY,
+    2 SQLVAR2(SQLSIZE REFER(SQLN2)),
+      3 SQLBIGLEN,
+        4 SQLLONGL FIXED(31) BINARY,
+        4 SQLRSVDL FIXED(31) BINARY,
+      3 SQLDATAL POINTER,
+      3 SQLTNAME CHAR(30) VAR;
+ /* */
+ DECLARE SQLSIZE    FIXED(15) BINARY;
+ DECLARE SQLDAPTR   POINTER;
+ DECLARE SQLTRIPLED CHAR(1)   INITIAL('3');
+ DECLARE SQLDOUBLED CHAR(1)   INITIAL('2');
+ DECLARE SQLSINGLED CHAR(1)   INITIAL(' ');
+`;
+
 export const BuiltinsFile = "builtins.pli";
 export const BuiltinsUri = `${BuiltinsUriSchema}:/${BuiltinsFile}`;
-export const Builtins = ` /* Arithmetic built-in functions */
+export const Builtins =
+  ` /* Arithmetic built-in functions */
  ABS: PROC (value) RETURNS ();
  END;
 
@@ -748,7 +808,9 @@ export const Builtins = ` /* Arithmetic built-in functions */
 
  define alias __SIGNED_INT signed fixed bin(31,0);
  define alias __UNSIGNED_INT unsigned fixed bin(32,0);
- `;
+ ` +
+  BuiltinsSQLCA +
+  BuiltinsSQLDA;
 
 export const BuiltinsTextDocument = TextDocument.create(
   URI.parse(BuiltinsUri).toString(),
