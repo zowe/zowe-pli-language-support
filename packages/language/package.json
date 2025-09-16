@@ -49,7 +49,6 @@
     "minimatch": "^10.0.3"
   },
   "devDependencies": {
-    "langium-cli": "~3.4.0",
     "@types/lodash-es": "^4.17.12"
   }
 }
