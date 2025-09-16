@@ -12,7 +12,6 @@
 import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
 import { getAttributes } from "./util";
-import { Token } from "../parser/tokens";
 
 interface GenerateInstructionContext {
   labels: Map<string, inst.InstructionNode>;
@@ -216,31 +215,33 @@ const DefaultCode: inst.ExpressionInstruction = {
 function generateAnswerInstruction(
   node: ast.AnswerStatement,
 ): inst.AnswerInstruction | undefined {
-  let expression: inst.ExpressionInstruction|undefined = undefined;
+  let expression: inst.ExpressionInstruction | undefined = undefined;
   if (node.expression) {
     expression = generateExpressionInstruction(node.expression);
   }
   let skip: inst.ExpressionInstruction | undefined = undefined;
-  if(node.skip) {
-    if(node.skip.type === "skip" && node.skip.count) {
+  if (node.skip) {
+    if (node.skip.type === ast.SkipModeType.Skip && node.skip.count) {
       skip = generateExpressionInstruction(node.skip.count);
     } else {
       // at least insert one line for a page break
       skip = { kind: inst.InstructionKind.Number, value: "1" };
     }
   }
-  let column: inst.ExpressionInstruction | undefined = undefined; 
-  if(node.column) {
+  let column: inst.ExpressionInstruction | undefined = undefined;
+  if (node.column) {
     column = generateExpressionInstruction(node.column);
   }
-  let margins: inst.AnswerInstruction['margins'] = undefined;
-  if(node.margins) {
+  let margins: inst.AnswerInstruction["margins"] = undefined;
+  if (node.margins) {
     margins = {
       left: generateExpressionInstruction(node.margins.left),
       right: generateExpressionInstruction(node.margins.right),
     };
   }
-  const scanMode = node.scanMode ? inst.ScanModeAstToInstruction[node.scanMode] : undefined
+  const scanMode = node.scanMode
+    ? inst.ScanModeAstToInstruction[node.scanMode]
+    : undefined;
   return {
     kind: inst.InstructionKind.Answer,
     expression,

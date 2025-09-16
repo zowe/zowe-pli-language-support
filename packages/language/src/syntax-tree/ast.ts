@@ -787,12 +787,17 @@ export function createTokenStatement(): TokenStatement {
   };
 }
 
+export enum SkipModeType {
+  Page,
+  Skip,
+}
+
 export type SkipMode =
   | {
-      type: "page";
+      type: SkipModeType.Page;
     }
   | {
-      type: "skip";
+      type: SkipModeType.Skip;
       count: Expression | null;
     };
 

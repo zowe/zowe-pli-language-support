@@ -134,17 +134,19 @@ export function createHaltNode(): InstructionNode {
 
 export interface AnswerInstruction {
   kind: InstructionKind.Answer;
-  expression: ExpressionInstruction|undefined;
-  skip: ExpressionInstruction|undefined;
+  expression: ExpressionInstruction | undefined;
+  skip: ExpressionInstruction | undefined;
   skipToken?: Token;
-  column: ExpressionInstruction|undefined;
+  column: ExpressionInstruction | undefined;
   columnToken?: Token;
   marginsToken?: Token;
-  margins: {
-    left: ExpressionInstruction|undefined;
-    right: ExpressionInstruction|undefined;
-  }|undefined;
-  scanMode: ScanMode|undefined;
+  margins:
+    | {
+        left: ExpressionInstruction | undefined;
+        right: ExpressionInstruction | undefined;
+      }
+    | undefined;
+  scanMode: ScanMode | undefined;
 }
 
 export interface NoteInstruction {

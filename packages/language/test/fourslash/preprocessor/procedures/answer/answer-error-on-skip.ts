@@ -20,5 +20,5 @@
 //// END;
 
 verify.expectDiagnosticsAt(1, {
-    code: code.Severe.IBM3948I.fullCode
+  code: code.Severe.IBM3948I.fullCode,
 });

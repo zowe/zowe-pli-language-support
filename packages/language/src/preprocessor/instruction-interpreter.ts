@@ -523,46 +523,73 @@ function runAnswerInstruction(
   context: InterpreterContext,
 ): void {
   let breakCount = 0;
-  if(instruction.skip) {
+  if (instruction.skip) {
     const skip = evaluateExpression(instruction.skip, context);
     const skipCount = valueToNumber(skip);
-    if(typeof skipCount === 'number') {
+    if (typeof skipCount === "number") {
       breakCount = skipCount;
     } else {
-      context.diagnostics.push(diagnosticFromCode(Severe.IBM3948I, instruction.skipToken, "CONVERSION", "612"));
+      context.diagnostics.push(
+        diagnosticFromCode(
+          Severe.IBM3948I,
+          instruction.skipToken,
+          "CONVERSION",
+          "612",
+        ),
+      );
     }
   }
   if (instruction.expression) {
     const expression = evaluateExpression(instruction.expression, context);
-    if(breakCount > 0 ) {
-      const newLinesValue: Value = { type: inst.DeclaredType.Character, value: '\n'.repeat(breakCount) };
-      context.returnValue = concatValues(concatValues(context.returnValue, newLinesValue), expression);
+    if (breakCount > 0) {
+      const newLinesValue: Value = {
+        type: inst.DeclaredType.Character,
+        value: "\n".repeat(breakCount),
+      };
+      context.returnValue = concatValues(
+        concatValues(context.returnValue, newLinesValue),
+        expression,
+      );
     } else {
       context.returnValue = concatValues(context.returnValue, expression);
     }
   }
-  if(instruction.column) {
+  if (instruction.column) {
     const columnCount = evaluateExpression(instruction.column, context);
-    if(typeof valueToNumber(columnCount) !== 'number') {
-      context.diagnostics.push(diagnosticFromCode(Severe.IBM3948I, instruction.columnToken, "CONVERSION", "612"));
+    if (typeof valueToNumber(columnCount) !== "number") {
+      context.diagnostics.push(
+        diagnosticFromCode(
+          Severe.IBM3948I,
+          instruction.columnToken,
+          "CONVERSION",
+          "612",
+        ),
+      );
     }
   }
-  if(instruction.margins) {
+  if (instruction.margins) {
     let hasError = false;
-    if(instruction.margins.left) {
+    if (instruction.margins.left) {
       const leftCount = evaluateExpression(instruction.margins.left, context);
-      if(typeof valueToNumber(leftCount) !== 'number') {
+      if (typeof valueToNumber(leftCount) !== "number") {
         hasError = true;
       }
     }
-    if(instruction.margins.right) {
+    if (instruction.margins.right) {
       const rightCount = evaluateExpression(instruction.margins.right, context);
-      if(typeof valueToNumber(rightCount) !== 'number') {
+      if (typeof valueToNumber(rightCount) !== "number") {
         hasError = true;
       }
     }
-    if(hasError) {
-      context.diagnostics.push(diagnosticFromCode(Severe.IBM3948I, instruction.marginsToken, "CONVERSION", "612"));
+    if (hasError) {
+      context.diagnostics.push(
+        diagnosticFromCode(
+          Severe.IBM3948I,
+          instruction.marginsToken,
+          "CONVERSION",
+          "612",
+        ),
+      );
     }
   }
 }

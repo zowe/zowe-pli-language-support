@@ -386,7 +386,13 @@ function answerStatement(state: PreprocessorParserState): ast.AnswerStatement {
     CstNodeKind.AnswerStatement_ANSWER,
     PreprocessorTokens.Answer,
   );
-  if (state.tryConsume(statement, CstNodeKind.AnswerStatement_OpenParen, PreprocessorTokens.LParen)) {
+  if (
+    state.tryConsume(
+      statement,
+      CstNodeKind.AnswerStatement_OpenParen,
+      PreprocessorTokens.LParen,
+    )
+  ) {
     statement.expression = expression(state);
     state.consume(
       statement,
@@ -401,16 +407,12 @@ function answerStatement(state: PreprocessorParserState): ast.AnswerStatement {
       PreprocessorTokens.Page,
     )
   ) {
-    statement.skip = { type: "page" };
-  } else if (
-    state.canConsume(
-      PreprocessorTokens.Skip,
-    )
-  ) {
+    statement.skip = { type: ast.SkipModeType.Page };
+  } else if (state.canConsume(PreprocessorTokens.Skip)) {
     const skipToken = state.consume(
       statement,
       CstNodeKind.AnswerStatement_SKIP,
-      PreprocessorTokens.Skip
+      PreprocessorTokens.Skip,
     );
     statement.skipToken = skipToken;
     if (
@@ -421,21 +423,17 @@ function answerStatement(state: PreprocessorParserState): ast.AnswerStatement {
       )
     ) {
       const count = expression(state);
-      statement.skip = { type: "skip", count };
+      statement.skip = { type: ast.SkipModeType.Skip, count };
       state.consume(
         statement,
         CstNodeKind.AnswerStatement_SKIP_CloseParen,
         PreprocessorTokens.RParen,
       );
     } else {
-      statement.skip = { type: "skip", count: null };
+      statement.skip = { type: ast.SkipModeType.Skip, count: null };
     }
   }
-  if (
-    state.canConsume(
-      PreprocessorTokens.Column
-    )
-  ) {
+  if (state.canConsume(PreprocessorTokens.Column)) {
     const columnToken = state.consume(
       statement,
       CstNodeKind.AnswerStatement_COLUMN,
@@ -454,16 +452,12 @@ function answerStatement(state: PreprocessorParserState): ast.AnswerStatement {
       PreprocessorTokens.RParen,
     );
   }
-  if (
-    state.canConsume(
-      PreprocessorTokens.Margins
-    )
-  ) {
+  if (state.canConsume(PreprocessorTokens.Margins)) {
     statement.marginsToken = state.consume(
       statement,
       CstNodeKind.AnswerStatement_MARGINS,
       PreprocessorTokens.Margins,
-    )
+    );
     if (
       state.tryConsume(
         statement,
