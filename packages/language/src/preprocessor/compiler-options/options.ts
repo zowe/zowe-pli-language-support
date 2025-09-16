@@ -835,7 +835,7 @@ export declare namespace CompilerOptions {
   }
 
   export interface PPItem {
-    name: string;
+    name: "MACRO" | "SQL" | "CICS" | "INCLUDE";
     value?: string;
   }
   export type PrecType = "ANS" | "DECDIGIT" | "DECRESULT";
@@ -1097,6 +1097,9 @@ const defaultCompilerOptions: CompilerOptions = {
   onSnap: false,
   optimize: 0,
   options: "DOC",
+  pp: {
+    items: [{ name: "MACRO" }, { name: "SQL" }],
+  },
   precType: "ANS",
   prefix: {
     conformance: false,

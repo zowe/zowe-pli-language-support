@@ -337,7 +337,11 @@ function ensureArgument<T>(
       return arg;
     }
   }
-  throw TranslationError.fromCode(optionValue.token, code, value);
+  throw TranslationError.fromCode(
+    optionValue.token,
+    code,
+    optionValue.token.image,
+  );
 }
 
 function ensureFlag(
@@ -346,6 +350,12 @@ function ensureFlag(
   args: string[],
 ): boolean {
   return ensureArgument(optionValue, code, args) === args[0];
+}
+
+function ensureToBeDefined<T>(value: T | undefined): asserts value is T {
+  if (value === undefined) {
+    throw new Error(CompilerOptionsCodes.ExpectedInitializedValue.message());
+  }
 }
 
 function stringToNumber(text: string): number {
@@ -1526,11 +1536,10 @@ translator.rule(
     };
     for (const opt of option.values) {
       ensureType(opt, "plain");
+      ensureToBeDefined(options.ignore.items);
       const ignoreValue = opt.value.toUpperCase();
       if (["ASSERT", "DISPLAY", "PUT"].includes(ignoreValue)) {
-        options.ignore!.items!.push(
-          ignoreValue as "ASSERT" | "DISPLAY" | "PUT",
-        );
+        options.ignore.items.push(ignoreValue as "ASSERT" | "DISPLAY" | "PUT");
       } else {
         throw TranslationError.fromCode(
           opt.token,
@@ -1564,7 +1573,7 @@ translator.rule(["INCAFTER"], (option, options) => {
     throw TranslationError.fromCode(
       value.token,
       CompilerOptionsCodes.IncAfter.InvalidParameter,
-      value.value,
+      value.token.image,
     );
   }
 
@@ -1573,7 +1582,7 @@ translator.rule(["INCAFTER"], (option, options) => {
     throw TranslationError.fromCode(
       value.token,
       CompilerOptionsCodes.IncAfter.InvalidParameter,
-      value.name,
+      value.token.image,
     );
   }
   ensureType(value, "option");
@@ -1581,7 +1590,7 @@ translator.rule(["INCAFTER"], (option, options) => {
   const processValue = value.values[0];
   ensureType(processValue, "plainNotEmpty");
   options.incAfter = {
-    process: processValue.value,
+    process: processValue.token.image,
     token: processValue.token,
   };
 });
@@ -1678,7 +1687,7 @@ translator.rule(
       ensureType(option.values[0], "plain");
       const value = option.values[0].value.toUpperCase();
       if (["FULL", "SHORT", "ALL", "FIRST"].includes(value)) {
-        options.inSource!.type = value as CompilerOptions.InSource["type"];
+        options.inSource.type = value as CompilerOptions.InSource["type"];
       } else {
         throw TranslationError.fromCode(
           option.values[0].token,
@@ -1701,9 +1710,7 @@ translator.flag("interrupt", ["INTERRUPT", "INT"], ["NOINTERRUPT", "NINT"]);
 /** {@link CompilerOptions.json} */
 translator.rule(["JSON"], (option, options) => {
   ensureArguments(option, 1);
-  if (!options.json) {
-    options.json = getDefaultCompilerOptions().json;
-  }
+  ensureToBeDefined(options.json);
   for (const opt of option.values) {
     const name =
       opt.kind === SyntaxKind.CompilerOption
@@ -1711,7 +1718,7 @@ translator.rule(["JSON"], (option, options) => {
         : opt.value.toUpperCase();
     if (/^(NO)?TRIMR$/.test(name)) {
       ensureType(opt, "plain");
-      options.json!.trimr = !name.startsWith("NO");
+      options.json.trimr = !name.startsWith("NO");
     } else if (["CASE", "ENCODING", "GET", "PARSE"].includes(name)) {
       ensureType(opt, "option");
       ensureArguments(opt, 1, 1);
@@ -1727,7 +1734,7 @@ translator.rule(["JSON"], (option, options) => {
               value.value,
             );
           }
-          options.json!.case = valueName as CompilerOptions.Json["case"];
+          options.json.case = valueName as CompilerOptions.Json["case"];
           break;
         case "ENCODING":
           if (!["UTF8", "EBCDIC", "37", "1047"].includes(valueName)) {
@@ -1737,8 +1744,7 @@ translator.rule(["JSON"], (option, options) => {
               value.value,
             );
           }
-          options.json!.encoding =
-            valueName as CompilerOptions.Json["encoding"];
+          options.json.encoding = valueName as CompilerOptions.Json["encoding"];
           break;
         case "GET":
           if (!["HEEDCASE", "IGNORECASE"].includes(valueName)) {
@@ -1748,7 +1754,7 @@ translator.rule(["JSON"], (option, options) => {
               value.value,
             );
           }
-          options.json!.get = valueName as CompilerOptions.Json["get"];
+          options.json.get = valueName as CompilerOptions.Json["get"];
           break;
         case "PARSE":
           if (!["V1", "V2"].includes(valueName)) {
@@ -1758,7 +1764,7 @@ translator.rule(["JSON"], (option, options) => {
               value.value,
             );
           }
-          options.json!.parse = valueName as CompilerOptions.Json["parse"];
+          options.json.parse = valueName as CompilerOptions.Json["parse"];
           break;
       }
     } else {
@@ -1803,9 +1809,7 @@ translator.rule(["LIMITS"], (option, options) => {
   };
 
   ensureArguments(option, 1);
-  if (!options.limits) {
-    options.limits = getDefaultCompilerOptions().limits;
-  }
+  ensureToBeDefined(options.limits);
   for (const value of option.values) {
     ensureType(value, "option");
     const name = value.name.toUpperCase();
@@ -1813,7 +1817,7 @@ translator.rule(["LIMITS"], (option, options) => {
       switch (name) {
         case "EXTNAME":
           ensureArguments(value, 1, 1);
-          options.limits!.extname = optionNumberValue(value, 0, 7, 100);
+          options.limits.extname = optionNumberValue(value, 0, 7, 100);
           break;
         case "FIXEDBIN":
           ensureArguments(value, 1, 2);
@@ -1834,7 +1838,7 @@ translator.rule(["LIMITS"], (option, options) => {
               maxBin.toString(),
             );
           }
-          options.limits!.fixedBin = {
+          options.limits.fixedBin = {
             min: minBin,
             max: maxBin,
           };
@@ -1864,14 +1868,14 @@ translator.rule(["LIMITS"], (option, options) => {
               CompilerOptionsCodes.Limits.InvalidFixedDecRange,
             );
           }
-          options.limits!.fixedDec = {
+          options.limits.fixedDec = {
             min: minDec,
             max: maxDec,
           };
           break;
         case "NAME":
           ensureArguments(value, 1, 1);
-          options.limits!.name = optionNumberValue(value, 0, 31, 100);
+          options.limits.name = optionNumberValue(value, 0, 31, 100);
           break;
         case "STRING":
           ensureArguments(value, 1, 1);
@@ -1886,7 +1890,7 @@ translator.rule(["LIMITS"], (option, options) => {
               stringValue,
             )
           ) {
-            options.limits!.string = stringValue;
+            options.limits.string = stringValue;
           } else {
             throw TranslationError.fromCode(
               value.values[0].token,
@@ -2074,12 +2078,10 @@ translator.rule(["MAXMEM", "MAXM"], (option, options) => {
 
 /** {@link CompilerOptions.maxmsg} */
 translator.rule(["MAXMSG"], (option, options) => {
-  ensureArguments(option, 1);
   // MAXMSG only recognizes the last letter or number, respectively.
   // The letter/number order does not matter.
-  if (!options.maxmsg) {
-    options.maxmsg = getDefaultCompilerOptions().maxmsg;
-  }
+  ensureArguments(option, 1);
+  ensureToBeDefined(options.maxmsg);
   if (isEmptyParameterList(option)) {
     return;
   }
@@ -2087,9 +2089,9 @@ translator.rule(["MAXMSG"], (option, options) => {
     ensureType(value, "plain");
     const valueName = value.value.toUpperCase();
     if (["I", "W", "E", "S"].includes(valueName)) {
-      options.maxmsg!.severity = valueName as CompilerOptions.Flag;
+      options.maxmsg.severity = valueName as CompilerOptions.Flag;
     } else {
-      options.maxmsg!.n = ensureNumberValue(value, 0, 32767);
+      options.maxmsg.n = ensureNumberValue(value, 0, 32767);
     }
   }
 });
@@ -2097,9 +2099,7 @@ translator.rule(["MAXMSG"], (option, options) => {
 /** {@link CompilerOptions.maxnest} */
 translator.rule(["MAXNEST"], (option, options) => {
   ensureArguments(option, 1);
-  if (!options.maxnest) {
-    options.maxnest = getDefaultCompilerOptions().maxnest;
-  }
+  ensureToBeDefined(options.maxnest);
   // Suboptions may override previously set values.
   for (const suboption of option.values) {
     ensureType(suboption, "option");
@@ -2108,7 +2108,7 @@ translator.rule(["MAXNEST"], (option, options) => {
       ensureArguments(suboption, 1, 1);
       const value = suboption.values[0];
       ensureType(value, "plainNotEmpty");
-      options.maxnest![name as keyof CompilerOptions.MaxNest] =
+      options.maxnest[name as keyof CompilerOptions.MaxNest] =
         ensureNumberValue(value, 1, 50);
     } else {
       throw TranslationError.fromCode(
@@ -2297,7 +2297,7 @@ translator.rule(["NAMES"], (option, options) => {
         "NAMES",
       );
     }
-    options.names!.uppExtralingChar = secondValue.value;
+    options.names.uppExtralingChar = secondValue.value;
   }
 });
 
@@ -2473,57 +2473,47 @@ translator.rule(
 translator.rule(["PP"], (option, options) => {
   // 1 or more pre-processor options to collect
   ensureArguments(option, 1);
+  ensureToBeDefined(options.pp);
 
-  if (!options.pp) {
-    options.pp = {
-      items: [],
-    };
-  }
-
-  const ppOptions = option.values.map((ppEntry) => {
-    ensureType(ppEntry, "option");
-
-    if (ppEntry.values.length !== 1) {
-      throw new TranslationError(
-        ppEntry.token,
-        `Expected exactly one value for the ${ppEntry.name} option, but received ${ppEntry.values.length}.`,
-        1,
-      );
-    }
-
-    // whitelist for PP systems we can invoke
-    if (
-      !["CISC", "INCLUDE", "MACRO", "SQL"].includes(ppEntry.name.toUpperCase())
-    ) {
-      throw new TranslationError(
-        ppEntry.token,
-        `Expected CISC, INCLUDE, MACRO, or SQL, but received '${ppEntry.name}'.`,
-        1,
-      );
-    }
-
-    ensureType(ppEntry.values[0], "string");
-
-    const value = ppEntry.values[0].value;
-
-    if (ppEntry.name.toUpperCase() === "INCLUDE" && options.pp) {
-      // set this as the effective INCLUDE PP option value, overriding any previous INCLUDE options
-      const match = value.match(/ID\(([^\)]+)\)\s*$/);
-      if (match && match.length > 0) {
-        const ppInclude = match[0].slice(3, -1).toUpperCase();
-        options.pp.ppInclude = {
-          value: ppInclude,
-        };
-      }
-    }
-
-    return {
-      name: ppEntry.name,
+  for (const value of option.values) {
+    const name = ensureArgument<CompilerOptions.PPItem["name"]>(
       value,
-    };
-  });
+      CompilerOptionsCodes.PP.InvalidParameter,
+      ["MACRO", "SQL", "CICS", "INCLUDE"],
+    );
+    if (value.kind === SyntaxKind.CompilerOptionText) {
+      options.pp.items.push({ name });
+    } else if (value.kind === SyntaxKind.CompilerOption) {
+      if (value.values.length !== 1) {
+        throw TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.PP.InvalidOptionParameter,
+          value.token.image,
+          value.values.length,
+        );
+      }
+      ensureType(value.values[0], "string");
+      options.pp.items.push({
+        name,
+        value: value.values[0].value,
+      });
 
-  options.pp.items.push(...ppOptions);
+      if (name === "INCLUDE") {
+        // set this as the effective INCLUDE PP option value, overriding any previous INCLUDE options
+        const match = value.values[0].value.match(/ID\(([^\)]+)\)\s*$/);
+        if (match && match.length > 0) {
+          options.pp.ppInclude = {
+            value: match[0].slice(3, -1).toUpperCase(),
+          };
+        }
+      }
+    } else {
+      throw TranslationError.fromCode(
+        value.token,
+        CompilerOptionsCodes.PP.InvalidParameterType,
+      );
+    }
+  }
 });
 
 /** {@link CompilerOptions.ppCics} */
@@ -2636,10 +2626,7 @@ translator.rule(["PRECTYPE"], (option, options) => {
 /** {@link CompilerOptions.prefix} */
 translator.rule(["PREFIX"], (option, options) => {
   ensureArguments(option, 1);
-  if (!options.prefix) {
-    // TODO: Prefix does not override prev settings. (no dupe?)
-    options.prefix = getDefaultCompilerOptions().prefix;
-  }
+  ensureToBeDefined(options.prefix);
   for (const value of option.values) {
     ensureType(value, "plain");
     if (value.value.length === 0) {
@@ -2666,7 +2653,7 @@ translator.rule(["PREFIX"], (option, options) => {
         value.value,
       );
     }
-    options.prefix![
+    options.prefix[
       condition.condition[0].toLowerCase() as keyof CompilerConditions.ConditionOptions
     ] = setCondition;
   }
@@ -2806,10 +2793,8 @@ translator.rule(["RTCHECK"], (option, options) => {
 /** {@link CompilerOptions.rules} */
 translator.rule(["RULES"], (option, options) => {
   ensureArguments(option, 1);
+  ensureToBeDefined(options.rules);
   // Multiple RULES calls are accumulated.
-  if (!options.rules) {
-    options.rules = getDefaultCompilerOptions().rules;
-  }
   for (const value of option.values) {
     if (value.kind === SyntaxKind.CompilerOptionText) {
       if (value.value.length === 0) {
@@ -2822,322 +2807,322 @@ translator.rule(["RULES"], (option, options) => {
       // TODO ssmifi: Refactor non-null assertions after #388.
       switch (name) {
         case "IBM":
-          options.rules!.ibm = "IBM";
+          options.rules.ibm = "IBM";
           break;
         case "ANS":
-          options.rules!.ibm = "ANS";
+          options.rules.ibm = "ANS";
           break;
         case "BYNAME":
-          options.rules!.byName = true;
+          options.rules.byName = true;
           break;
         case "NOBYNAME":
-          options.rules!.byName = false;
+          options.rules.byName = false;
           break;
         case "COMPLEX":
-          options.rules!.complex = true;
+          options.rules.complex = true;
           break;
         case "NOCOMPLEX":
-          options.rules!.complex = "ALL";
+          options.rules.complex = "ALL";
           break;
         case "CONTROLLED":
-          options.rules!.controlled = true;
+          options.rules.controlled = true;
           break;
         case "NOCONTROLLED":
-          options.rules!.controlled = false;
+          options.rules.controlled = false;
           break;
         case "DECSIZE":
-          options.rules!.decSize = true;
+          options.rules.decSize = true;
           break;
         case "NODECSIZE":
-          options.rules!.decSize = false;
+          options.rules.decSize = false;
           break;
         case "ELSEIF":
-          options.rules!.elseIf = true;
+          options.rules.elseIf = true;
           break;
         case "NOELSEIF":
-          options.rules!.elseIf = false;
+          options.rules.elseIf = false;
           break;
         case "EVENDEC":
-          options.rules!.evenDec = true;
+          options.rules.evenDec = true;
           break;
         case "NOEVENDEC":
-          options.rules!.evenDec = false;
+          options.rules.evenDec = false;
           break;
         case "GLOBAL":
-          options.rules!.global = true;
+          options.rules.global = true;
           break;
         case "NOGLOBAL":
-          options.rules!.global = "ALL";
+          options.rules.global = "ALL";
           break;
         case "GLOBALDO":
-          options.rules!.globalDo = true;
+          options.rules.globalDo = true;
           break;
         case "NOGLOBALDO":
-          options.rules!.globalDo = false;
+          options.rules.globalDo = false;
           break;
         case "GOTO":
-          options.rules!.goto = true;
+          options.rules.goto = true;
           break;
         case "NOGOTO":
-          options.rules!.goto = "STRICT";
+          options.rules.goto = "STRICT";
           break;
         case "LAXBIF":
-          options.rules!.laxBIf = true;
+          options.rules.laxBIf = true;
           break;
         case "NOLAXBIF":
-          options.rules!.laxBIf = false;
+          options.rules.laxBIf = false;
           break;
         case "LAXCONV":
-          options.rules!.laxConv = true;
+          options.rules.laxConv = true;
           break;
         case "NOLAXCONV":
-          options.rules!.laxConv = "ALL";
+          options.rules.laxConv = "ALL";
           break;
         case "LAXCTL":
-          options.rules!.laxCtl = true;
+          options.rules.laxCtl = true;
           break;
         case "NOLAXCTL":
-          options.rules!.laxCtl = false;
+          options.rules.laxCtl = false;
           break;
         case "LAXDCL":
-          options.rules!.laxDcl = true;
+          options.rules.laxDcl = true;
           break;
         case "NOLAXDCL":
-          options.rules!.laxDcl = false;
+          options.rules.laxDcl = false;
           break;
         case "LAXDEF":
-          options.rules!.laxDef = true;
+          options.rules.laxDef = true;
           break;
         case "NOLAXDEF":
-          options.rules!.laxDef = false;
+          options.rules.laxDef = false;
           break;
         case "LAXENTRY":
-          options.rules!.laxEntry = true;
+          options.rules.laxEntry = true;
           break;
         case "NOLAXENTRY":
-          options.rules!.laxEntry = "STRICT";
+          options.rules.laxEntry = "STRICT";
           break;
         case "LAXEXPORTS":
-          options.rules!.laxExports = true;
+          options.rules.laxExports = true;
           break;
         case "NOLAXEXPORTS":
-          options.rules!.laxExports = false;
+          options.rules.laxExports = false;
           break;
         case "LAXFIELDS":
-          options.rules!.laxFields = true;
+          options.rules.laxFields = true;
           break;
         case "NOLAXFIELDS":
-          options.rules!.laxFields = false;
+          options.rules.laxFields = false;
           break;
         case "LAXIF":
-          options.rules!.laxIf = true;
+          options.rules.laxIf = true;
           break;
         case "NOLAXIF":
-          options.rules!.laxIf = false;
+          options.rules.laxIf = false;
           break;
         case "LAXINOUT":
-          options.rules!.laxInOut = true;
+          options.rules.laxInOut = true;
           break;
         case "NOLAXINOUT":
-          options.rules!.laxInOut = { source: "ALL", strict: "STRICT" };
+          options.rules.laxInOut = { source: "ALL", strict: "STRICT" };
           break;
         case "LAXINTERFACE":
-          options.rules!.laxInterface = true;
+          options.rules.laxInterface = true;
           break;
         case "NOLAXINTERFACE":
-          options.rules!.laxInterface = false;
+          options.rules.laxInterface = false;
           break;
         case "LAXLINK":
-          options.rules!.laxLink = true;
+          options.rules.laxLink = true;
           break;
         case "NOLAXLINK":
-          options.rules!.laxLink = false;
+          options.rules.laxLink = false;
           break;
         case "LAXMARGINS":
-          options.rules!.laxMargins = true;
+          options.rules.laxMargins = true;
           break;
         case "NOLAXMARGINS":
-          options.rules!.laxMargins = "STRICT";
+          options.rules.laxMargins = "STRICT";
           break;
         case "LAXNESTED":
-          options.rules!.laxNested = true;
+          options.rules.laxNested = true;
           break;
         case "NOLAXNESTED":
-          options.rules!.laxNested = "ALL";
+          options.rules.laxNested = "ALL";
           break;
         case "LAXOPTIONAL":
-          options.rules!.laxOptional = true;
+          options.rules.laxOptional = true;
           break;
         case "NOLAXOPTIONAL":
-          options.rules!.laxOptional = "ALL";
+          options.rules.laxOptional = "ALL";
           break;
         case "LAXPACKAGE":
-          options.rules!.laxPackage = true;
+          options.rules.laxPackage = true;
           break;
         case "NOLAXPACKAGE":
-          options.rules!.laxPackage = false;
+          options.rules.laxPackage = false;
           break;
         case "LAXPARMS":
-          options.rules!.laxParms = true;
+          options.rules.laxParms = true;
           break;
         case "NOLAXPARMS":
-          options.rules!.laxParms = "ALL";
+          options.rules.laxParms = "ALL";
           break;
         case "LAXPUNC":
-          options.rules!.laxPunc = true;
+          options.rules.laxPunc = true;
           break;
         case "NOLAXPUNC":
-          options.rules!.laxPunc = false;
+          options.rules.laxPunc = false;
           break;
         case "LAXQUAL":
-          options.rules!.laxQual = true;
+          options.rules.laxQual = true;
           break;
         case "NOLAXQUAL":
-          options.rules!.laxQual = { source: "ALL", strict: "LOOSE" };
+          options.rules.laxQual = { source: "ALL", strict: "LOOSE" };
           break;
         case "LAXRETURN":
-          options.rules!.laxReturn = true;
+          options.rules.laxReturn = true;
           break;
         case "NOLAXRETURN":
-          options.rules!.laxReturn = false;
+          options.rules.laxReturn = false;
           break;
         case "LAXSCALE":
-          options.rules!.laxScale = true;
+          options.rules.laxScale = true;
           break;
         case "NOLAXSCALE":
-          options.rules!.laxScale = { source: "ALL", strict: "LOOSE" };
+          options.rules.laxScale = { source: "ALL", strict: "LOOSE" };
           break;
         case "LAXSEMI":
-          options.rules!.laxSemi = true;
+          options.rules.laxSemi = true;
           break;
         case "NOLAXSEMI":
-          options.rules!.laxSemi = false;
+          options.rules.laxSemi = false;
           break;
         case "LAXSTG":
-          options.rules!.laxStg = true;
+          options.rules.laxStg = true;
           break;
         case "NOLAXSTG":
-          options.rules!.laxStg = false;
+          options.rules.laxStg = false;
           break;
         case "LAXSTMT":
-          options.rules!.laxStmt = true;
+          options.rules.laxStmt = true;
           break;
         case "NOLAXSTMT":
-          options.rules!.laxStmt = "ALL";
+          options.rules.laxStmt = "ALL";
           break;
         case "LAXSTRZ":
-          options.rules!.laxStrz = true;
+          options.rules.laxStrz = true;
           break;
         case "NOLAXSTRZ":
-          options.rules!.laxStrz = false;
+          options.rules.laxStrz = false;
           break;
         case "MULTICLOSE":
-          options.rules!.multiClose = true;
+          options.rules.multiClose = true;
           break;
         case "NOMULTICLOSE":
-          options.rules!.multiClose = false;
+          options.rules.multiClose = false;
           break;
         case "MULTIENTRY":
-          options.rules!.multiEntry = true;
+          options.rules.multiEntry = true;
           break;
         case "NOMULTIENTRY":
-          options.rules!.multiEntry = "ALL";
+          options.rules.multiEntry = "ALL";
           break;
         case "MULTIEXIT":
-          options.rules!.multiExit = true;
+          options.rules.multiExit = true;
           break;
         case "NOMULTIEXIT":
-          options.rules!.multiExit = "ALL";
+          options.rules.multiExit = "ALL";
           break;
         case "MULTISEMI":
-          options.rules!.multiSemi = true;
+          options.rules.multiSemi = true;
           break;
         case "NOMULTISEMI":
-          options.rules!.multiSemi = "ALL";
+          options.rules.multiSemi = "ALL";
           break;
         case "PADDING":
-          options.rules!.padding = true;
+          options.rules.padding = true;
           break;
         case "NOPADDING":
-          options.rules!.padding = { source: "ALL", strict: "LOOSE" };
+          options.rules.padding = { source: "ALL", strict: "LOOSE" };
           break;
         case "PROCENDONLY":
-          options.rules!.procEndOnly = true;
+          options.rules.procEndOnly = true;
           break;
         case "NOPROCENDONLY":
-          options.rules!.procEndOnly = "ALL";
+          options.rules.procEndOnly = "ALL";
           break;
         case "RECURSIVE":
-          options.rules!.recursive = true;
+          options.rules.recursive = true;
           break;
         case "NORECURSIVE":
-          options.rules!.recursive = false;
+          options.rules.recursive = false;
           break;
         case "SELFASSIGN":
-          options.rules!.selfAssign = true;
+          options.rules.selfAssign = true;
           break;
         case "NOSELFASSIGN":
-          options.rules!.selfAssign = false;
+          options.rules.selfAssign = false;
           break;
         case "UNREF":
-          options.rules!.unref = true;
+          options.rules.unref = true;
           break;
         case "NOUNREF":
-          options.rules!.unref = "ALL";
+          options.rules.unref = "ALL";
           break;
         case "UNREFBASED":
-          options.rules!.unrefBased = true;
+          options.rules.unrefBased = true;
           break;
         case "NOUNREFBASED":
-          options.rules!.unrefBased = "ALL";
+          options.rules.unrefBased = "ALL";
           break;
         case "UNREFCTL":
-          options.rules!.unrefCtl = true;
+          options.rules.unrefCtl = true;
           break;
         case "NOUNREFCTL":
-          options.rules!.unrefCtl = "ALL";
+          options.rules.unrefCtl = "ALL";
           break;
         case "UNREFDEFINED":
-          options.rules!.unrefDefined = true;
+          options.rules.unrefDefined = true;
           break;
         case "NOUNREFDEFINED":
-          options.rules!.unrefDefined = "ALL";
+          options.rules.unrefDefined = "ALL";
           break;
         case "UNREFENTRY":
-          options.rules!.unrefEntry = true;
+          options.rules.unrefEntry = true;
           break;
         case "NOUNREFENTRY":
-          options.rules!.unrefEntry = "ALL";
+          options.rules.unrefEntry = "ALL";
           break;
         case "UNREFFILE":
-          options.rules!.unrefFile = true;
+          options.rules.unrefFile = true;
           break;
         case "NOUNREFFILE":
-          options.rules!.unrefFile = "ALL";
+          options.rules.unrefFile = "ALL";
           break;
         case "UNREFSTATIC":
-          options.rules!.unrefStatic = true;
+          options.rules.unrefStatic = true;
           break;
         case "NOUNREFSTATIC":
-          options.rules!.unrefStatic = "ALL";
+          options.rules.unrefStatic = "ALL";
           break;
         case "UNREFVALUE":
-          options.rules!.unrefValue = true;
+          options.rules.unrefValue = true;
           break;
         case "NOUNREFVALUE":
-          options.rules!.unrefValue = "ALL";
+          options.rules.unrefValue = "ALL";
           break;
         case "UNSET":
-          options.rules!.unset = true;
+          options.rules.unset = true;
           break;
         case "NOUNSET":
-          options.rules!.unset = false;
+          options.rules.unset = false;
           break;
         case "YY":
-          options.rules!.yy = true;
+          options.rules.yy = true;
           break;
         case "NOYY":
-          options.rules!.yy = false;
+          options.rules.yy = false;
           break;
         default:
           throw TranslationError.fromCode(
@@ -3152,53 +3137,53 @@ translator.rule(["RULES"], (option, options) => {
       const name = value.name.toUpperCase();
       switch (name) {
         case "NOCOMPLEX":
-          options.rules!.complex = ensureArgument(
+          options.rules.complex = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOGLOBAL":
-          options.rules!.global = ensureArgument(
+          options.rules.global = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOGOTO":
-          options.rules!.goto = ensureArgument(
+          options.rules.goto = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.InvalidGotoParameter,
             ["STRICT", "LOOSE", "LOOSEFORWARD"],
           );
           break;
         case "NOLAXCONV":
-          options.rules!.laxConv = ensureArgument(
+          options.rules.laxConv = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOLAXENTRY":
-          options.rules!.laxEntry = ensureArgument(
+          options.rules.laxEntry = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.InvalidLaxEntryParameter,
             ["STRICT", "LOOSE"],
           );
           break;
         case "NOLAXINOUT":
-          options.rules!.laxInOut = { source: "ALL", strict: "STRICT" };
+          options.rules.laxInOut = { source: "ALL", strict: "STRICT" };
           for (const sub of value.values) {
             ensureType(sub, "plainNotEmpty");
             const subName = sub.value.toUpperCase();
             if (["ALL", "SOURCE"].includes(subName)) {
-              options.rules!.laxInOut.source = ensureArgument(
+              options.rules.laxInOut.source = ensureArgument(
                 sub,
                 CompilerOptionsCodes.Rules.InvalidLaxInOutParameter,
                 ["ALL", "SOURCE"],
               );
             } else {
-              options.rules!.laxInOut.strict = ensureArgument(
+              options.rules.laxInOut.strict = ensureArgument(
                 sub,
                 CompilerOptionsCodes.Rules.InvalidLaxInOutParameter,
                 ["STRICT", "LOOSE"],
@@ -3207,46 +3192,46 @@ translator.rule(["RULES"], (option, options) => {
           }
           break;
         case "NOLAXMARGINS":
-          options.rules!.laxMargins = ensureArgument(
+          options.rules.laxMargins = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.InvalidLaxMarginsParameter,
             ["STRICT", "XNUMERIC"],
           );
           break;
         case "NOLAXNESTED":
-          options.rules!.laxNested = ensureArgument(
+          options.rules.laxNested = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOLAXOPTIONAL":
-          options.rules!.laxOptional = ensureArgument(
+          options.rules.laxOptional = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOLAXPARMS":
-          options.rules!.laxParms = ensureArgument(
+          options.rules.laxParms = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOLAXQUAL":
-          options.rules!.laxQual = { source: "ALL", strict: "LOOSE" };
+          options.rules.laxQual = { source: "ALL", strict: "LOOSE" };
           for (const sub of value.values) {
             ensureType(sub, "plainNotEmpty");
             const subName = sub.value.toUpperCase();
             if (["ALL", "FORCE"].includes(subName)) {
-              options.rules!.laxQual.source = ensureArgument(
+              options.rules.laxQual.source = ensureArgument(
                 sub,
                 CompilerOptionsCodes.Rules.InvalidLaxQualParameter,
                 ["ALL", "FORCE"],
               );
             } else {
-              options.rules!.laxQual.strict = ensureArgument(
+              options.rules.laxQual.strict = ensureArgument(
                 sub,
                 CompilerOptionsCodes.Rules.InvalidLaxQualParameter,
                 ["STRICT", "LOOSE", "FULL"],
@@ -3255,18 +3240,18 @@ translator.rule(["RULES"], (option, options) => {
           }
           break;
         case "NOLAXSCALE":
-          options.rules!.laxScale = { source: "ALL", strict: "STRICT" };
+          options.rules.laxScale = { source: "ALL", strict: "STRICT" };
           for (const sub of value.values) {
             ensureType(sub, "plainNotEmpty");
             const subName = sub.value.toUpperCase();
             if (["ALL", "SOURCE"].includes(subName)) {
-              options.rules!.laxScale.source = ensureArgument(
+              options.rules.laxScale.source = ensureArgument(
                 sub,
                 CompilerOptionsCodes.Rules.InvalidLaxScaleParameter,
                 ["ALL", "SOURCE"],
               );
             } else {
-              options.rules!.laxScale.strict = ensureArgument(
+              options.rules.laxScale.strict = ensureArgument(
                 sub,
                 CompilerOptionsCodes.Rules.InvalidLaxScaleParameter,
                 ["STRICT", "LOOSE"],
@@ -3275,46 +3260,46 @@ translator.rule(["RULES"], (option, options) => {
           }
           break;
         case "NOLAXSTMT":
-          options.rules!.laxStmt = ensureArgument(
+          options.rules.laxStmt = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOMULTIENTRY":
-          options.rules!.multiEntry = ensureArgument(
+          options.rules.multiEntry = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOMULTIEXIT":
-          options.rules!.multiExit = ensureArgument(
+          options.rules.multiExit = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOMULTISEMI":
-          options.rules!.multiSemi = ensureArgument(
+          options.rules.multiSemi = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOPADDING":
-          options.rules!.padding = { source: "ALL", strict: "LOOSE" };
+          options.rules.padding = { source: "ALL", strict: "LOOSE" };
           for (const sub of value.values) {
             ensureType(sub, "plainNotEmpty");
             const subName = sub.value.toUpperCase();
             if (["ALL", "SOURCE"].includes(subName)) {
-              options.rules!.padding.source = ensureArgument(
+              options.rules.padding.source = ensureArgument(
                 sub,
                 CompilerOptionsCodes.Rules.InvalidPaddingParameter,
                 ["ALL", "SOURCE"],
               );
             } else {
-              options.rules!.padding.strict = ensureArgument(
+              options.rules.padding.strict = ensureArgument(
                 sub,
                 CompilerOptionsCodes.Rules.InvalidPaddingParameter,
                 ["STRICT", "LOOSE"],
@@ -3323,63 +3308,63 @@ translator.rule(["RULES"], (option, options) => {
           }
           break;
         case "NOPROCENDONLY":
-          options.rules!.procEndOnly = ensureArgument(
+          options.rules.procEndOnly = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOUNREF":
-          options.rules!.unref = ensureArgument(
+          options.rules.unref = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOUNREFBASED":
-          options.rules!.unrefBased = ensureArgument(
+          options.rules.unrefBased = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOUNREFCTL":
-          options.rules!.unrefCtl = ensureArgument(
+          options.rules.unrefCtl = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOUNREFDEFINED":
-          options.rules!.unrefDefined = ensureArgument(
+          options.rules.unrefDefined = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOUNREFENTRY":
-          options.rules!.unrefEntry = ensureArgument(
+          options.rules.unrefEntry = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOUNREFFILE":
-          options.rules!.unrefFile = ensureArgument(
+          options.rules.unrefFile = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOUNREFSTATIC":
-          options.rules!.unrefStatic = ensureArgument(
+          options.rules.unrefStatic = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
           );
           break;
         case "NOUNREFVALUE":
-          options.rules!.unrefValue = ensureArgument(
+          options.rules.unrefValue = ensureArgument(
             subOption,
             CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
             ["ALL", "SOURCE"],
@@ -3439,7 +3424,7 @@ translator.rule(
       throw TranslationError.fromCode(
         value.token,
         CompilerOptionsCodes.Service.InvalidEmptyPlainParameter,
-        value.value,
+        value.token.image,
       );
     }
     if (value.value.length > 64) {
@@ -3669,9 +3654,8 @@ translator.rule(["UNROLL"], (option, options) => {
 /** {@link CompilerOptions.usage} */
 translator.rule(["USAGE"], (option, options) => {
   ensureArguments(option, 1);
-  if (!options.usage) {
-    options.usage = getDefaultCompilerOptions().usage;
-  }
+  ensureToBeDefined(options.usage);
+  ensureToBeDefined(options.usage.regex);
   for (const value of option.values) {
     ensureType(value, "option");
     const name = value.name.toUpperCase();
@@ -3680,49 +3664,49 @@ translator.rule(["USAGE"], (option, options) => {
     ensureType(argument, "plain");
     switch (name) {
       case "HEX":
-        options.usage!.hex = ensureArgument(
+        options.usage.hex = ensureArgument(
           argument,
           CompilerOptionsCodes.Usage.InvalidHexParameter,
           ["SIZE", "CURRENTSIZE"],
         );
         break;
       case "REGEX":
-        options.usage!.regex!.reset = ensureFlag(
+        options.usage.regex.reset = ensureFlag(
           argument,
           CompilerOptionsCodes.Usage.InvalidRegexParameter,
           ["RESET", "NORESET"],
         );
         break;
       case "ROUND":
-        options.usage!.round = ensureArgument(
+        options.usage.round = ensureArgument(
           argument,
           CompilerOptionsCodes.Usage.InvalidRoundParameter,
           ["IBM", "ANS"],
         );
         break;
       case "SUBSTR":
-        options.usage!.substr = ensureArgument(
+        options.usage.substr = ensureArgument(
           argument,
           CompilerOptionsCodes.Usage.InvalidSubstrParameter,
           ["STRICT", "LOOSE"],
         );
         break;
       case "UNSPEC":
-        options.usage!.unspec = ensureArgument(
+        options.usage.unspec = ensureArgument(
           argument,
           CompilerOptionsCodes.Usage.InvalidUnspecParameter,
           ["IBM", "ANS"],
         );
         break;
       case "UUID":
-        options.usage!.uuid = ensureArgument(
+        options.usage.uuid = ensureArgument(
           argument,
           CompilerOptionsCodes.Usage.InvalidUuidParameter,
           ["UPPER", "LOWER"],
         );
         break;
       case "VALIDDATE":
-        options.usage!.validDate = ensureArgument(
+        options.usage.validDate = ensureArgument(
           argument,
           CompilerOptionsCodes.Usage.InvalidValidDateParameter,
           ["LOOSE", "STRICT"],
@@ -3788,15 +3772,13 @@ translator.rule(
 /** {@link CompilerOptions.xInfo} */
 translator.rule(["XINFO"], (option, options) => {
   ensureArguments(option, 1);
-  if (!options.xInfo) {
-    options.xInfo = getDefaultCompilerOptions().xInfo;
-  }
+  ensureToBeDefined(options.xInfo);
   for (const value of option.values) {
     if (value.kind === SyntaxKind.CompilerOption) {
       ensureArguments(value, 1, 1);
       const optionName = value.name.toUpperCase();
       if (optionName === "XML") {
-        options.xInfo!.xml = {
+        options.xInfo.xml = {
           hash: ensureFlag(
             value.values[0],
             CompilerOptionsCodes.XInfo.InvalidXmlParameter,
@@ -3811,7 +3793,7 @@ translator.rule(["XINFO"], (option, options) => {
     switch (name) {
       case "DEF":
       case "NODEF":
-        options.xInfo!.def = ensureFlag(
+        options.xInfo.def = ensureFlag(
           value,
           CompilerOptionsCodes.XInfo.InvalidDefParameter,
           ["DEF", "NODEF"],
@@ -3819,7 +3801,7 @@ translator.rule(["XINFO"], (option, options) => {
         break;
       case "MSG":
       case "NOMSG":
-        options.xInfo!.msg = ensureFlag(
+        options.xInfo.msg = ensureFlag(
           value,
           CompilerOptionsCodes.XInfo.InvalidMsgParameter,
           ["MSG", "NOMSG"],
@@ -3827,7 +3809,7 @@ translator.rule(["XINFO"], (option, options) => {
         break;
       case "SYM":
       case "NOSYM":
-        options.xInfo!.sym = ensureFlag(
+        options.xInfo.sym = ensureFlag(
           value,
           CompilerOptionsCodes.XInfo.InvalidSymParameter,
           ["SYM", "NOSYM"],
@@ -3835,7 +3817,7 @@ translator.rule(["XINFO"], (option, options) => {
         break;
       case "SYN":
       case "NOSYN":
-        options.xInfo!.syn = ensureFlag(
+        options.xInfo.syn = ensureFlag(
           value,
           CompilerOptionsCodes.XInfo.InvalidSynParameter,
           ["SYN", "NOSYN"],
@@ -3843,7 +3825,7 @@ translator.rule(["XINFO"], (option, options) => {
         break;
       case "NOXML":
         ensureType(value, "plain");
-        options.xInfo!.xml = false;
+        options.xInfo.xml = false;
         break;
       default:
         throw TranslationError.fromCode(
@@ -3858,22 +3840,20 @@ translator.rule(["XINFO"], (option, options) => {
 /** {@link CompilerOptions.xml} */
 translator.rule(["XML"], (option, options) => {
   ensureArguments(option, 1);
-  if (!options.xml) {
-    options.xml = getDefaultCompilerOptions().xml;
-  }
+  ensureToBeDefined(options.xml);
   for (const value of option.values) {
     ensureType(value, "option");
     ensureArguments(value, 1, 1);
     switch (value.name.toUpperCase()) {
       case "CASE":
-        options.xml!.case = ensureArgument(
+        options.xml.case = ensureArgument(
           value.values[0],
           CompilerOptionsCodes.Xml.InvalidCaseParameter,
           ["UPPER", "ASIS"],
         );
         break;
       case "XMLATTR":
-        options.xml!.xmlAttr = ensureArgument(
+        options.xml.xmlAttr = ensureArgument(
           value.values[0],
           CompilerOptionsCodes.Xml.InvalidXmlAttrParameter,
           ["APOSTROPHE", "QUOTE"],
@@ -3895,16 +3875,14 @@ translator.rule(
   (option, options) => {
     // No arguments is ok.
     ensureArguments(option, 0);
-    if (!options.xRef) {
-      options.xRef = getDefaultCompilerOptions().xRef;
-    }
+    ensureToBeDefined(options.xRef);
     for (const value of option.values) {
       ensureType(value, "plainNotEmpty");
       switch (value.value.toUpperCase()) {
         case "FULL":
         case "SHORT":
-          options.xRef! = {
-            ...options.xRef!,
+          options.xRef = {
+            ...options.xRef,
             length: ensureArgument(
               value,
               CompilerOptionsCodes.XRef.InvalidLengthParameter,
@@ -3914,8 +3892,8 @@ translator.rule(
           break;
         case "IMPLICIT":
         case "EXPLICIT":
-          options.xRef! = {
-            ...options.xRef!,
+          options.xRef = {
+            ...options.xRef,
             structure: ensureArgument(
               value,
               CompilerOptionsCodes.XRef.InvalidStructureParameter,
@@ -3942,10 +3920,16 @@ translator.rule(
 export function translateCompilerOptions(
   input: AbstractCompilerOptions,
 ): CompilerOptionResult {
+  // TODO ssmifi: Defaults are set here. They do not need to be set individually.
   translator.options = getDefaultCompilerOptions();
   translator.appliedRules.clear();
   translator.issues = [...input.issues];
-  for (const option of input.options) {
+  const options = optionsToUpperCase(input.options);
+  if (options.some((option) => option.name === "PP")) {
+    // If there are PP compiler options, ignore the defaults, because the settings in PP start empty and are accumulated.
+    translator.options.pp = { items: [] };
+  }
+  for (const option of options) {
     translator.translate(option);
   }
   return {
@@ -3953,4 +3937,24 @@ export function translateCompilerOptions(
     tokens: input.tokens,
     issues: translator.issues,
   };
+}
+
+// TODO ssmifi: remove the upper cases from the individual rules.
+function optionsToUpperCase(options: CompilerOption[]): CompilerOption[] {
+  const upperCasedOptions: CompilerOption[] = [...options];
+  const optionToUpperCase = (option: CompilerOption) => {
+    option.name = option.name.toUpperCase();
+    for (const value of option.values) {
+      switch (value.kind) {
+        case SyntaxKind.CompilerOptionText:
+          value.value = value.value.toUpperCase();
+          break;
+        case SyntaxKind.CompilerOption:
+          optionToUpperCase(value);
+      }
+    }
+  };
+
+  upperCasedOptions.forEach(optionToUpperCase);
+  return upperCasedOptions;
 }
