@@ -801,11 +801,14 @@ export interface AnswerStatement extends AstNode {
   expression: Expression | null;
   scanMode: ScanMode | null;
   skip: SkipMode | null;
+  skipToken?: Token;
   column: Expression | null;
+  columnToken?: Token;
   margins: {
     left: Expression;
     right: Expression | null;
   } | null;
+  marginsToken?: Token;
 }
 
 export function createAnswerStatement(): AnswerStatement {

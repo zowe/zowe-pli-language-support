@@ -12,6 +12,7 @@
 import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
 import { getAttributes } from "./util";
+import { Token } from "../parser/tokens";
 
 interface GenerateInstructionContext {
   labels: Map<string, inst.InstructionNode>;
@@ -223,6 +224,9 @@ function generateAnswerInstruction(
   if(node.skip) {
     if(node.skip.type === "skip" && node.skip.count) {
       skip = generateExpressionInstruction(node.skip.count);
+    } else {
+      // at least insert one line for a page break
+      skip = { kind: inst.InstructionKind.Number, value: "1" };
     }
   }
   let column: inst.ExpressionInstruction | undefined = undefined; 
@@ -242,8 +246,11 @@ function generateAnswerInstruction(
     expression,
     scanMode,
     skip,
+    skipToken: node.skipToken,
     column,
+    columnToken: node.columnToken,
     margins,
+    marginsToken: node.marginsToken,
   };
 }
 

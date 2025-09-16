@@ -522,22 +522,48 @@ function runAnswerInstruction(
   instruction: inst.AnswerInstruction,
   context: InterpreterContext,
 ): void {
+  let breakCount = 0;
+  if(instruction.skip) {
+    const skip = evaluateExpression(instruction.skip, context);
+    const skipCount = valueToNumber(skip);
+    if(typeof skipCount === 'number') {
+      breakCount = skipCount;
+    } else {
+      context.diagnostics.push(diagnosticFromCode(Severe.IBM3948I, instruction.skipToken, "CONVERSION", "612"));
+    }
+  }
   if (instruction.expression) {
     const expression = evaluateExpression(instruction.expression, context);
-    context.returnValue = concatValues(context.returnValue, expression);
-  }
-  if(instruction.skip) {
-    //ignore the result, SKIP/PAGE is not relevant for us, just for side-effects
-    evaluateExpression(instruction.skip, context);
+    if(breakCount > 0 ) {
+      const newLinesValue: Value = { type: inst.DeclaredType.Character, value: '\n'.repeat(breakCount) };
+      context.returnValue = concatValues(concatValues(context.returnValue, newLinesValue), expression);
+    } else {
+      context.returnValue = concatValues(context.returnValue, expression);
+    }
   }
   if(instruction.column) {
-    //ignore the result, COLUMN is not relevant for us, just for side-effects
-    evaluateExpression(instruction.column, context);
+    const columnCount = evaluateExpression(instruction.column, context);
+    if(typeof valueToNumber(columnCount) !== 'number') {
+      context.diagnostics.push(diagnosticFromCode(Severe.IBM3948I, instruction.columnToken, "CONVERSION", "612"));
+    }
   }
   if(instruction.margins) {
-    //ignore the result, MARGINS is not relevant for us, just for side-effects
-    instruction.margins.left && evaluateExpression(instruction.margins.left, context);
-    instruction.margins.right && evaluateExpression(instruction.margins.right, context);
+    let hasError = false;
+    if(instruction.margins.left) {
+      const leftCount = evaluateExpression(instruction.margins.left, context);
+      if(typeof valueToNumber(leftCount) !== 'number') {
+        hasError = true;
+      }
+    }
+    if(instruction.margins.right) {
+      const rightCount = evaluateExpression(instruction.margins.right, context);
+      if(typeof valueToNumber(rightCount) !== 'number') {
+        hasError = true;
+      }
+    }
+    if(hasError) {
+      context.diagnostics.push(diagnosticFromCode(Severe.IBM3948I, instruction.marginsToken, "CONVERSION", "612"));
+    }
   }
 }
 

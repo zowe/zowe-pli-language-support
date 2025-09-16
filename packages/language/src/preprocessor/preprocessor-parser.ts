@@ -403,12 +403,16 @@ function answerStatement(state: PreprocessorParserState): ast.AnswerStatement {
   ) {
     statement.skip = { type: "page" };
   } else if (
-    state.tryConsume(
-      statement,
-      CstNodeKind.AnswerStatement_SKIP,
+    state.canConsume(
       PreprocessorTokens.Skip,
     )
   ) {
+    const skipToken = state.consume(
+      statement,
+      CstNodeKind.AnswerStatement_SKIP,
+      PreprocessorTokens.Skip
+    );
+    statement.skipToken = skipToken;
     if (
       state.tryConsume(
         statement,
@@ -428,12 +432,16 @@ function answerStatement(state: PreprocessorParserState): ast.AnswerStatement {
     }
   }
   if (
-    state.tryConsume(
+    state.canConsume(
+      PreprocessorTokens.Column
+    )
+  ) {
+    const columnToken = state.consume(
       statement,
       CstNodeKind.AnswerStatement_COLUMN,
       PreprocessorTokens.Column,
-    )
-  ) {
+    );
+    statement.columnToken = columnToken;
     state.consume(
       statement,
       CstNodeKind.AnswerStatement_COLUMN_OpenParen,
@@ -447,12 +455,15 @@ function answerStatement(state: PreprocessorParserState): ast.AnswerStatement {
     );
   }
   if (
-    state.tryConsume(
+    state.canConsume(
+      PreprocessorTokens.Margins
+    )
+  ) {
+    statement.marginsToken = state.consume(
       statement,
       CstNodeKind.AnswerStatement_MARGINS,
       PreprocessorTokens.Margins,
     )
-  ) {
     if (
       state.tryConsume(
         statement,
