@@ -38,6 +38,7 @@ verify.expectDiagnosticsAt(11, {
 });
 verify.expectCompilerOptions({
   incAfter: {
+    // TODO ssmifi: Should this be converted to uppercase automatically?
     process: "lib",
   },
 });

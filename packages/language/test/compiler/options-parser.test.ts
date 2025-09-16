@@ -279,7 +279,7 @@ describe("CompilerOptions translator", async () => {
     const issues = translateCompilerOptions(options).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toBe(
-      "Invalid codepage value. Expected one of 01047, 01140, 01141, 01142, 01143, 01144, 01025, 01145, 01146, 01147, 01148, 01149, 00037, 01155, 00273, 00277, 00278, 00280, 00284, 00285, 00297, 00500, 00871, 00819, 00813, 00920, but received '0114dd0'.",
+      "Invalid codepage value. Expected one of 01047, 01140, 01141, 01142, 01143, 01144, 01025, 01145, 01146, 01147, 01148, 01149, 00037, 01155, 00273, 00277, 00278, 00280, 00284, 00285, 00297, 00500, 00871, 00819, 00813, 00920, but received '0114DD0'.",
     );
   });
 
@@ -383,7 +383,7 @@ describe("CompilerOptions translator", async () => {
     {
       input: "DEPRECATE(builtin(x))",
       toTest: (options) => options.deprecate?.items,
-      expected: [{ type: "BUILTIN", value: "x" }],
+      expected: [{ type: "BUILTIN", value: "X" }],
     },
     {
       input: "DISPLAY(wto(RoUTcDE(1)))",

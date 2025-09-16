@@ -34,5 +34,5 @@ verify.expectDiagnosticsAt(11, {
   message: code.CompilerOptions.Service.InvalidParameterLength.message("80"),
 });
 verify.expectCompilerOptions({
-  service: "xYz",
+  service: "XYZ", // Checked capitalization on the mainframe.
 });

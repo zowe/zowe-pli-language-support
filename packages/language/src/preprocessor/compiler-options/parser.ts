@@ -15,6 +15,7 @@ import {
   EmbeddedActionsParser,
   Lexer,
   TokenType,
+  EOF,
 } from "chevrotain";
 import { CompilerOptionIssue } from "./options";
 import { Severity, tokenToRange } from "../../language-server/types";
@@ -295,9 +296,13 @@ export function parseAbstractCompilerOptions(
     });
   }
   for (const parserError of parser.errors) {
+    const errorToken =
+      parserError.token.tokenType.tokenTypeIdx === EOF.tokenTypeIdx
+        ? tokens[tokens.length - 1]
+        : (parserError.token as Token);
     issues.push({
       message: parserError.message,
-      range: tokenToRange(parserError.token as Token),
+      range: tokenToRange(errorToken),
       severity: 1,
     });
   }
