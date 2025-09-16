@@ -26,7 +26,6 @@
     "@codingame/monaco-vscode-configuration-service-override": "~17.2.1",
     "@codingame/monaco-vscode-outline-service-override": "~17.2.1",
     "@codingame/monaco-vscode-api": "~17.2.1",
-    "langium": "~3.4.0",
     "lz-string": "~1.5.0",
     "pli-language": "workspace:*",
     "vscode-languageserver-protocol": "~3.17.5",
