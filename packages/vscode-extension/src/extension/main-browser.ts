@@ -14,7 +14,7 @@ import * as vscode from "vscode";
 import { LanguageClient } from "vscode-languageclient/browser.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Messages } from "../common/messages";
-import { searchFiles } from "../common/search";
+import { searchFiles } from "../common/file-search";
 import { SearchOptions } from "pli-language";
 
 let client: LanguageClient;

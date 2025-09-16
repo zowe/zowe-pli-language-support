@@ -22,7 +22,7 @@ import {
 } from "pli-language";
 import * as fs from "fs";
 import * as nPath from "path";
-import { searchFiles } from "../common/search";
+import { searchFiles } from "../common/file-search";
 
 class NodeFileSystemProvider implements FileSystemProvider {
   readFile(uri: URI): Promise<string> {
