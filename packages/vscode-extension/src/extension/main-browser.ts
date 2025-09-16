@@ -13,6 +13,9 @@ import type { LanguageClientOptions } from "vscode-languageclient/browser.js";
 import * as vscode from "vscode";
 import { LanguageClient } from "vscode-languageclient/browser.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
+import { Messages } from "../common/messages";
+import { searchFiles } from "../common/file-search";
+import { SearchOptions } from "pli-language";
 
 let client: LanguageClient;
 
@@ -44,8 +47,37 @@ function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
 
   // Create the language client and start the client.
   const client = new LanguageClient("pli", "PL/I", clientOptions, worker);
-
+  registerFileSystemProvider(client);
   // Start the client. This will also launch the server
   client.start();
   return client;
+}
+
+function registerFileSystemProvider(client: LanguageClient): void {
+  client.onRequest(Messages.ReadFile, async (uriString: string) => {
+    const uri = vscode.Uri.parse(uriString);
+    try {
+      const data = await vscode.workspace.fs.readFile(uri);
+      const textDecoder = new TextDecoder();
+      return textDecoder.decode(data);
+    } catch {
+      return undefined;
+    }
+  });
+  client.onRequest(Messages.FileExists, async (uriString: string) => {
+    const uri = vscode.Uri.parse(uriString);
+    try {
+      await vscode.workspace.fs.stat(uri);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+  client.onRequest(Messages.Search, (options: SearchOptions) => {
+    return searchFiles(options, async (path) => {
+      const uri = options.path.with({ path });
+      const result = await vscode.workspace.fs.readDirectory(uri);
+      return result.map((r) => r[0]);
+    });
+  });
 }

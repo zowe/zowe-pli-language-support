@@ -152,9 +152,9 @@ function sendTelemetryEvent(
 }
 
 // This function is called when the extension is deactivated.
-export function deactivate(): Thenable<void> | undefined {
+export async function deactivate(): Promise<void> {
   if (client) {
-    return client.stop();
+    await client.stop();
   }
   if (settings) {
     settings.dispose();
