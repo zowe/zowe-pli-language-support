@@ -1858,31 +1858,16 @@ async function resolveIncludeFileUri(
         lib,
         item.fileName,
       );
-      const files: string[] = [libFileUri.path];
-      // Generate a glob pattern for each include extension
-      for (const ext of pgroup.includeExtensions) {
-        const extFileUri = libFileUri.with({
-          path: `${libFileUri.path}${ext}`,
-        });
-        files.push(extFileUri.path);
-      }
-      // Check whether any of the glob patterns match a file in the file system
-      // We cannot check directly whether a file exists, as PL/I handles the file system as case insensitive
-      // whereas Unix file systems are case sensitive
-      for (const filePath of files) {
-        const matches =
-          await FileSystemProviderInstance.findFilesByGlob(filePath);
-        if (matches.length > 0) {
-          return URI.file(matches[0]);
-        }
+      const match = await FileSystemProviderInstance.search({
+        path: libFileUri,
+        extensions: pgroup.includeExtensions,
+      });
+      if (match) {
+        return match;
       }
     }
-    // no match
-    return undefined;
-  } else {
-    // no recognized process group or program config, nothing to lookup
-    return undefined;
   }
+  return undefined;
 }
 
 type PreprocessorBuiltin = (

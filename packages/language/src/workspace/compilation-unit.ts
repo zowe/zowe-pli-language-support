@@ -30,6 +30,7 @@ import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
 import { Scope, ScopeCacheGroups } from "../linking/scope.js";
 import { Token } from "../parser/tokens.js";
 import {
+  BuiltinDocuments,
   EditorDocuments,
   TextDocuments,
 } from "../language-server/text-documents.js";
@@ -281,8 +282,8 @@ export class CompilationUnitHandler {
       }
       const allDiagnostics = diagnosticsToLSP(unit, collectDiagnostics(unit));
       for (const file of unit.files.keys()) {
-        if (file.startsWith(BuiltinsUriSchema)) {
-          // do not report diagnostics for built-in files
+        if (BuiltinDocuments.get(file) || !EditorDocuments.get(file)) {
+          // do not report diagnostics for built-in files or files not currently open in the editor
           continue;
         }
         const fileDiagnostics = allDiagnostics.get(file);
