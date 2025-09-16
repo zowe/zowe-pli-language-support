@@ -11,20 +11,20 @@
 
 import { URI } from "../utils/uri";
 
+export interface SearchOptions {
+  path: URI;
+  extensions: string[];
+}
+
 export interface FileSystemProvider {
   readFile(uri: URI): Promise<string | undefined>;
   fileExists(uri: URI): Promise<boolean>;
   writeFile(uri: URI, value: string): Promise<void>;
   deleteFile(uri: URI): Promise<void>;
-
   /**
-   * Synchronously find files matching a glob pattern
-   * (used for lib lookups where `%INCLUDE ABC` could be `cpy/ABC` or `cpy/ABC.xyz`, among others)
-   *
-   * @param pattern - The glob pattern to search for.
-   * @returns Array of file paths that match, if any
+   * Performs a file search. Implementation depends on the provider.
    */
-  findFilesByGlob(pattern: string): Promise<string[]>;
+  search(options: SearchOptions): Promise<URI | undefined>;
 }
 
 /**
@@ -47,8 +47,8 @@ class _EmptyFileSystemProvider implements FileSystemProvider {
     return Promise.resolve();
   }
 
-  findFilesByGlob(_pattern: string): Promise<string[]> {
-    return Promise.resolve([]);
+  search(_options: SearchOptions): Promise<URI | undefined> {
+    return Promise.resolve(undefined);
   }
 }
 
@@ -70,7 +70,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * Write a file to the virtualized file system
    */
   async writeFile(uri: URI, value: string): Promise<void> {
-    this.files.set(uri.path.toLowerCase(), value);
+    this.files.set(uri.toString().toLowerCase(), value);
   }
 
   /**
@@ -78,29 +78,36 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * If the file does not exist, undefined is returned.
    */
   async readFile(uri: URI): Promise<string | undefined> {
-    return this.files.get(uri.path.toLowerCase());
+    return this.files.get(uri.toString().toLowerCase());
   }
 
   /**
    * Checks if a file exists in the virtualized file system
    */
   async fileExists(uri: URI): Promise<boolean> {
-    return this.files.has(uri.path.toLowerCase());
+    return this.files.has(uri.toString().toLowerCase());
   }
 
   /**
    * Deletes a file from the virtualized file system
    */
   async deleteFile(uri: URI): Promise<void> {
-    this.files.delete(uri.path.toLowerCase());
+    this.files.delete(uri.toString().toLowerCase());
   }
 
-  /**
-   * Simulates a glob lookup in the virtual file system
-   */
-  async findFilesByGlob(pattern: string): Promise<string[]> {
-    const regex = new RegExp(pattern.replace(/\*/g, ".*") + "$", "i");
-    return Array.from(this.files.keys()).filter((fp) => regex.test(fp));
+  async search(pattern: SearchOptions): Promise<URI | undefined> {
+    const uri = pattern.path.toString().toLowerCase();
+    if (this.files.has(uri)) {
+      return pattern.path;
+    }
+    const extensions = pattern.extensions ?? [];
+    for (const ext of extensions) {
+      const fullPath = uri + (ext.startsWith(".") ? ext : `.${ext}`);
+      if (this.files.has(fullPath)) {
+        return URI.parse(fullPath).with({ scheme: pattern.path.scheme });
+      }
+    }
+    return undefined;
   }
 }
 
