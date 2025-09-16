@@ -109,6 +109,13 @@ export const CompilerOptionsCodes = {
     fullCode: "COOP10W",
   } as ParametricPLICode,
 
+  ExpectedInitializedValue: {
+    code: "COOP11",
+    severity: Severity.W,
+    message: () => `Expected compiler option to be initialized before use.`,
+    fullCode: "COOP11W",
+  } as ParametricPLICode,
+
   GoNumber: {
     InvalidParameter: {
       code: "COGN01",
@@ -438,6 +445,29 @@ export const CompilerOptionsCodes = {
       message: (value: string) =>
         `Expected "DOC" or "ALL", but received '${value}'.`,
       fullCode: "COOP02W",
+    } as ParametricPLICode,
+  },
+
+  PP: {
+    InvalidParameterType: {
+      code: "COPP01",
+      severity: Severity.W,
+      message: () => `Expected plain or option value type.`,
+      fullCode: "COPP01W",
+    } as ParametricPLICode,
+    InvalidParameter: {
+      code: "COPP02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected "CICS", "INCLUDE", "MACRO" or "SQL", but received '${value}'.`,
+      fullCode: "COPP02W",
+    } as ParametricPLICode,
+    InvalidOptionParameter: {
+      code: "COPP03",
+      severity: Severity.W,
+      message: (pp: string, value: string) =>
+        `Expected exactly one value for the ${pp} option, but received ${value}.`,
+      fullCode: "COPP03W",
     } as ParametricPLICode,
   },
 
