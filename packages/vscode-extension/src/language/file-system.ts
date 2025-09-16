@@ -1,0 +1,58 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
+import { FileSystemProvider, SearchOptions, URI } from "pli-language";
+import { Connection } from "vscode-languageserver";
+import { Messages } from "../common/messages";
+
+export class VSCodeFileSystemProvider implements FileSystemProvider {
+  private _connection: Connection;
+
+  constructor(connection: Connection) {
+    this._connection = connection;
+  }
+
+  async readFile(uri: URI): Promise<string | undefined> {
+    const result = await this._connection.sendRequest(
+      Messages.ReadFile,
+      uri.toString(),
+    );
+    if (typeof result === "string") {
+      return result;
+    } else {
+      return undefined;
+    }
+  }
+  async fileExists(uri: URI): Promise<boolean> {
+    const result = await this._connection.sendRequest(
+      Messages.FileExists,
+      uri.toString(),
+    );
+    return Boolean(result);
+  }
+  async search(options: SearchOptions): Promise<URI | undefined> {
+    const result = (await this._connection.sendRequest(
+      Messages.Search,
+      options,
+    )) as string | undefined;
+    if (result) {
+      return options.path.with({ path: result });
+    } else {
+      return undefined;
+    }
+  }
+  writeFile(_uri: URI, _value: string): Promise<void> {
+    throw new Error("Not supported.");
+  }
+  deleteFile(_uri: URI): Promise<void> {
+    throw new Error("Not supported.");
+  }
+}
