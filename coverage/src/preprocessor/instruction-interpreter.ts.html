@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.65% </span>
+                <span class="strong">87.59% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1562/1782</span>
+                <span class='fraction'>1553/1773</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">78.21% </span>
+                <span class="strong">78.16% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>341/436</span>
+                <span class='fraction'>340/435</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.65% </span>
+                <span class="strong">87.59% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1562/1782</span>
+                <span class='fraction'>1553/1773</span>
             </div>
         
             
@@ -2306,22 +2306,7 @@
 <a name='L2241'></a><a href='#L2241'>2241</a>
 <a name='L2242'></a><a href='#L2242'>2242</a>
 <a name='L2243'></a><a href='#L2243'>2243</a>
-<a name='L2244'></a><a href='#L2244'>2244</a>
-<a name='L2245'></a><a href='#L2245'>2245</a>
-<a name='L2246'></a><a href='#L2246'>2246</a>
-<a name='L2247'></a><a href='#L2247'>2247</a>
-<a name='L2248'></a><a href='#L2248'>2248</a>
-<a name='L2249'></a><a href='#L2249'>2249</a>
-<a name='L2250'></a><a href='#L2250'>2250</a>
-<a name='L2251'></a><a href='#L2251'>2251</a>
-<a name='L2252'></a><a href='#L2252'>2252</a>
-<a name='L2253'></a><a href='#L2253'>2253</a>
-<a name='L2254'></a><a href='#L2254'>2254</a>
-<a name='L2255'></a><a href='#L2255'>2255</a>
-<a name='L2256'></a><a href='#L2256'>2256</a>
-<a name='L2257'></a><a href='#L2257'>2257</a>
-<a name='L2258'></a><a href='#L2258'>2258</a>
-<a name='L2259'></a><a href='#L2259'>2259</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L2244'></a><a href='#L2244'>2244</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -4182,31 +4167,16 @@
 <span class="cline-any cline-yes">44x</span>
 <span class="cline-any cline-yes">44x</span>
 <span class="cline-any cline-yes">44x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">44x</span>
 <span class="cline-any cline-yes">44x</span>
 <span class="cline-any cline-yes">44x</span>
 <span class="cline-any cline-yes">44x</span>
-<span class="cline-any cline-yes">44x</span>
-<span class="cline-any cline-yes">44x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">44x</span>
-<span class="cline-any cline-yes">66x</span>
-<span class="cline-any cline-yes">66x</span>
-<span class="cline-any cline-yes">66x</span>
 <span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-yes">38x</span>
-<span class="cline-any cline-yes">66x</span>
+<span class="cline-any cline-yes">44x</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">45x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">45x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -6439,31 +6409,16 @@ async function resolveIncludeFileUri(
         lib,
         item.fileName,
       );
-      const files: string[] = [libFileUri.path];
-      // Generate a glob pattern for each include extension
-      for (const ext of pgroup.includeExtensions) {
-        const extFileUri = libFileUri.with({
-          path: `${libFileUri.path}${ext}`,
-        });
-        files.push(extFileUri.path);
-      }
-      // Check whether any of the glob patterns match a file in the file system
-      // We cannot check directly whether a file exists, as PL/I handles the file system as case insensitive
-      // whereas Unix file systems are case sensitive
-      for (const filePath of files) {
-        const matches =
-          await FileSystemProviderInstance.findFilesByGlob(filePath);
-        if (matches.length &gt; 0) {
-          return URI.file(matches[0]);
-        }
+      const match = await FileSystemProviderInstance.search({
+        path: libFileUri,
+        extensions: pgroup.includeExtensions,
+      });
+      if (match) {
+        return match;
       }
     }
-    // no match
-    return undefined;
-  } else {
-    // no recognized process group or program config, nothing to lookup
-    return undefined;
   }
+  return undefined;
 }
 &nbsp;
 type PreprocessorBuiltin = (
@@ -6844,7 +6799,7 @@ builtinImplementations.set("VERIFY", (_, args) =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-16T08:34:57.841Z
+                at 2025-09-16T11:43:59.643Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
