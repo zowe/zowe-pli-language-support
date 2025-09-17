@@ -23,30 +23,10 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 type TokenizeFunction = (text: string) => Promise<string[]>;
 
 describe("PL/1 Lexer", () => {
-  let tokenize: TokenizeFunction;
   let tokenizeWithErrors: TokenizeFunction;
 
   beforeAll(async () => {
     const lexer = new PliLexer();
-    tokenize = async (text: string) => {
-      const uri = URI.file("/test/test.pli");
-      const document = TextDocument.create(uri.toString(), "pli", 0, text);
-      const { all: allTokens, diagnostics } = await lexer.tokenize(
-        await createCompilationUnit(uri),
-        document,
-        uri,
-      );
-      if (diagnostics.length > 0) {
-        throw new Error(
-          diagnostics
-            .map((e) => `${e.range?.start}:${e.range?.end}: ${e.message}`)
-            .join("\n"),
-        );
-      }
-      return allTokens.map(
-        (t) => t.image + ":" + t.tokenType.name.toUpperCase(),
-      );
-    };
     tokenizeWithErrors = async (text: string) => {
       const uri = URI.file("/test/test.pli");
       const document = TextDocument.create(uri.toString(), "pli", 0, text);

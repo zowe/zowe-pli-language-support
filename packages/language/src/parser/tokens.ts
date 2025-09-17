@@ -506,6 +506,12 @@ export const BIGENDIAN = registerKeyword({
   name: "BIGENDIAN",
   categories: [DefaultAttribute],
 });
+export const ANSWER = registerKeyword({
+  names: ["ANSWER", "ANS"],
+});
+export const MARGINS = registerKeyword({
+  names: ["MARGINS", "MAR"],
+});
 export const ASSERTION = registerKeyword({
   name: "ASSERTION",
   categories: [KeywordConditions],
@@ -1771,6 +1777,7 @@ export const keywords = [
   ROUTCDE,
   ITERATE,
   KEYFROM,
+  MARGINS,
   STORAGE,
   ENDFILE,
   ENDPAGE,
@@ -1783,6 +1790,7 @@ export const keywords = [
   PICTURE,
   WIDEPIC,
   RETURNS,
+  ANSWER,
   SYSTEM,
   INSCAN,
   INLINE,
