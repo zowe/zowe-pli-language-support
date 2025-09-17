@@ -12,6 +12,9 @@
 import * as tokens from "../parser/tokens";
 
 export const PreprocessorTokens = {
+  Answer: tokens.ANSWER,
+  Column: tokens.COLUMN,
+  Margins: tokens.MARGINS,
   DefaultAttribute: tokens.DefaultAttribute,
   Procedure: tokens.PROCEDURE,
   Statement: tokens.STATEMENT,

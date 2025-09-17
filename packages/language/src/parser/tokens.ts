@@ -628,6 +628,18 @@ export const BIGENDIAN = createToken({
   categories: [ID, DefaultAttribute],
   longer_alt: ID,
 });
+export const ANSWER = createToken({
+  name: "ANSWER",
+  pattern: /ANS(WER)?/iy,
+  categories: [ID, KeywordConditions],
+  longer_alt: ID,
+});
+export const MARGINS = createToken({
+  name: "MARGINS",
+  pattern: /MAR(GINS)?/iy,
+  categories: [ID, KeywordConditions],
+  longer_alt: ID,
+});
 export const ASSERTION = createToken({
   name: "ASSERTION",
   pattern: /ASSERTION/iy,
@@ -2331,6 +2343,8 @@ export const keywords = [
   UNALIGNED,
   BIGENDIAN,
   ASSERTION,
+  ANSWER,
+  MARGINS,
   ATTENTION,
   INVALIDOP,
   UNDERFLOW,
@@ -2664,6 +2678,8 @@ export const keywordMap = new Map<string, TokenType>();
   [TRANSIENT],
   [UNALIGNED, "UNAL"],
   [BIGENDIAN],
+  [ANSWER, "ANS"],
+  [MARGINS, "MAR"],
   [ASSERTION],
   [ATTENTION],
   [INVALIDOP],
