@@ -77,6 +77,7 @@ export enum InstructionKind {
   Declare,
   Assignment,
   Activate,
+  Answer,
   Deactivate,
   Include,
   Inscan,
@@ -97,6 +98,7 @@ export type Instruction =
   | IfInstruction
   | TokensInstruction
   | AssignmentInstruction
+  | AnswerInstruction
   | DoInstruction
   | GotoInstruction
   | IncludeInstruction
@@ -128,6 +130,23 @@ export function createHaltNode(): InstructionNode {
     labels: [],
     instruction: Halt,
   };
+}
+
+export interface AnswerInstruction {
+  kind: InstructionKind.Answer;
+  expression: ExpressionInstruction | undefined;
+  skip: ExpressionInstruction | undefined;
+  skipToken?: Token;
+  column: ExpressionInstruction | undefined;
+  columnToken?: Token;
+  marginsToken?: Token;
+  margins:
+    | {
+        left: ExpressionInstruction | undefined;
+        right: ExpressionInstruction | undefined;
+      }
+    | undefined;
+  scanMode: ScanMode | undefined;
 }
 
 export interface NoteInstruction {
@@ -236,6 +255,12 @@ export enum ScanMode {
   NoScan,
   ReScan,
 }
+
+export const ScanModeAstToInstruction: Record<ast.ScanMode, ScanMode> = {
+  SCAN: ScanMode.Scan,
+  NOSCAN: ScanMode.NoScan,
+  RESCAN: ScanMode.ReScan,
+};
 
 export enum VariableVisibility {
   External,

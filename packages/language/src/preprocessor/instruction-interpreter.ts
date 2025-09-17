@@ -482,10 +482,73 @@ function runInstructionSync(
     case inst.InstructionKind.Note:
       runNoteInstruction(instruction, context);
       break;
+    case inst.InstructionKind.Answer:
+      runAnswerInstruction(instruction, context);
+      break;
     case inst.InstructionKind.Halt:
       runHaltInstruction(instruction, context);
       break;
   }
+  return undefined;
+}
+
+function runAnswerInstruction(
+  instruction: inst.AnswerInstruction,
+  context: InterpreterContext,
+): void {
+  let breakCount = 0;
+  if (instruction.skip) {
+    const skipValue = evaluateExpression(instruction.skip, context);
+    breakCount =
+      tryValueToNumber(context, instruction.skipToken, skipValue) ?? 0;
+  }
+  if (instruction.expression) {
+    const expression = evaluateExpression(instruction.expression, context);
+    const text = valueToString(expression) ?? "";
+    let tokens = lex(text);
+    if (tokens.length > 0) {
+      const lastToken = tokens[tokens.length - 1];
+      lastToken.immediateFollow = lastToken.endOffset + 1 === text.length;
+    }
+    if (instruction.scanMode !== inst.ScanMode.NoScan) {
+      tokens = replaceTokensInText(tokens, context);
+    }
+    if (breakCount > 0) {
+      context.tokens.push(...tokens);
+    } else {
+      mergePush(context.tokens, tokens, true);
+    }
+  }
+  if (instruction.column) {
+    const columnValue = evaluateExpression(instruction.column, context);
+    tryValueToNumber(context, instruction.columnToken, columnValue);
+  }
+  if (instruction.margins) {
+    if (instruction.margins.left) {
+      const leftValue = evaluateExpression(instruction.margins.left, context);
+      tryValueToNumber(context, instruction.marginsToken, leftValue);
+    }
+    if (instruction.margins.right) {
+      const rightValue = evaluateExpression(instruction.margins.right, context);
+      tryValueToNumber(context, instruction.marginsToken, rightValue);
+    }
+  }
+}
+
+function tryValueToNumber(
+  context: InterpreterContext,
+  token: Token | undefined,
+  value: Value,
+) {
+  //TODO move this check to the future type system
+  const numericValue = valueToNumber(value);
+  if (typeof numericValue === "number") {
+    return numericValue;
+  }
+  token &&
+    context.diagnostics.push(
+      diagnosticFromCode(Severe.IBM3948I, token, "CONVERSION", "612"),
+    );
   return undefined;
 }
 
@@ -1238,22 +1301,38 @@ function runTokenInstruction(
   instruction: inst.TokensInstruction,
   context: InterpreterContext,
 ): void {
-  const replacedTokens = replaceTokensInText(instruction.tokens, context);
-  const prefix = context.tokens[context.tokens.length - 1];
-  if (prefix && prefix.immediateFollow) {
-    // Remove the last token if it was immediately followed by the new tokens
-    context.tokens.pop();
-    // In the next step, we need to merge them again
-    const firstToken = replacedTokens.shift();
-    const mergedTokens = lex(prefix.image + (firstToken?.image ?? ""));
-    setImmediateFollowProperty(firstToken?.immediateFollow, mergedTokens);
-    // Push merged and new tokens to the stack
-    largePush(context.tokens, mergedTokens);
-    largePush(context.tokens, replacedTokens);
-  } else {
-    // If there is no need to merge the tokens, simply push them to the output
-    largePush(context.tokens, replacedTokens);
+  const tokens = instruction.tokens;
+  let i = 0;
+  const length = tokens.length;
+  while (i < length) {
+    const result = performTokenScan(tokens, i, context);
+    if (result) {
+      // Replace the token with the scan result
+      // i.e. the variable content, recursively replaced
+      mergePush(context.tokens, result.tokens, i === 0);
+      i += result.advance;
+    } else {
+      // If the scan found no active variable, push the original token
+      mergePush(context.tokens, [tokens[i]], i === 0);
+      i++;
+    }
   }
+}
+
+function mergePush(target: Token[], source: Token[], firstSource: boolean) {
+  if (firstSource && source.length > 0) {
+    const prefix = target[target.length - 1];
+    if (prefix && prefix.immediateFollow) {
+      target.pop();
+      const firstToken = source.shift();
+      const mergedTokens = lex(prefix.image + (firstToken?.image ?? ""));
+      setImmediateFollowProperty(firstToken?.immediateFollow, mergedTokens);
+      largePush(target, mergedTokens);
+      largePush(target, source);
+      return;
+    }
+  }
+  largePush(target, source);
 }
 
 function largePush<T>(target: T[], source: T[]): void {
