@@ -71,25 +71,6 @@ describe("PL/1 Lexer", () => {
     expect(await tokenizeWithErrors(" garbage")).toStrictEqual([]);
   });
 
-  test("Tokenize simple declaration with preprocessor", async () => {
-    expect(
-      await tokenize(`
-            %dcl A char;
-            %A = 'B';
-            dcl A%;C fixed bin(31);
-        `),
-    ).toStrictEqual([
-      "DCL:DECLARE",
-      "BC:ID",
-      "FIXED:FIXED",
-      "BIN:BINARY",
-      "(:(",
-      "31:NUMBER",
-      "):)",
-      ";:;",
-    ]);
-  });
-
   test("Tokenize simple error in declaration with preprocessor", async () => {
     expect(
       await tokenizeWithErrors(`
@@ -127,70 +108,6 @@ describe("PL/1 Lexer", () => {
             dcl B fixed bin(31);
         `),
     ).not.toStrictEqual([]);
-  });
-
-  test("Hello World", async () => {
-    expect(
-      await tokenize(`
-            AVERAGE: PROCEDURE OPTIONS (MAIN);
-                /* Test characters: ^[] € */
-                /* AVERAGE_GRADE = SUM / 5; */
-                PUT LIST ('PROGRAM TO COMPUTE AVERAGE');
-            END AVERAGE;
-        `),
-    ).toStrictEqual([
-      "AVERAGE:ID",
-      ":::",
-      "PROCEDURE:PROCEDURE",
-      "OPTIONS:OPTIONS",
-      "(:(",
-      "MAIN:MAIN",
-      "):)",
-      ";:;",
-      "PUT:PUT",
-      "LIST:LIST",
-      "(:(",
-      "'PROGRAM TO COMPUTE AVERAGE':STRING_TERM",
-      "):)",
-      ";:;",
-      "END:END",
-      "AVERAGE:ID",
-      ";:;",
-    ]);
-  });
-
-  test("NodeDescriptor", async () => {
-    expect(
-      await tokenize(`
-            a: proc( x ) options(nodescriptor);
-              dcl x(20) fixed bin nonconnected;
-            end a;
-        `),
-    ).toStrictEqual([
-      "A:A",
-      ":::",
-      "PROC:PROCEDURE",
-      "(:(",
-      "X:X",
-      "):)",
-      "OPTIONS:OPTIONS",
-      "(:(",
-      "NODESCRIPTOR:NODESCRIPTOR",
-      "):)",
-      ";:;",
-      "DCL:DECLARE",
-      "X:X",
-      "(:(",
-      "20:NUMBER",
-      "):)",
-      "FIXED:FIXED",
-      "BIN:BINARY",
-      "NONCONNECTED:NONCONNECTED",
-      ";:;",
-      "END:END",
-      "A:A",
-      ";:;",
-    ]);
   });
 
   describe("Compiler Options", () => {

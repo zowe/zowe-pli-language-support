@@ -527,6 +527,17 @@ export function forEachNode(
       break;
     case SyntaxKind.HandleAttribute:
       break;
+    case SyntaxKind.HostVariableAttribute:
+      if (node.type) {
+        action(node.type);
+      }
+      break;
+    case SyntaxKind.HostVariableBinary:
+      break;
+    case SyntaxKind.HostVariableLOB:
+      break;
+    case SyntaxKind.HostVariableRowId:
+      break;
     case SyntaxKind.IfStatement:
       if (node.expression) {
         action(node.expression);

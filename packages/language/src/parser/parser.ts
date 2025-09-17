@@ -6589,6 +6589,7 @@ export class PliParser extends AbstractParser {
       this.InitialAttribute,
       this.DateAttribute,
       this.HandleAttribute,
+      this.HostVariableAttribute,
       this.DefinedAttribute,
       this.PictureAttribute,
       this.EnvironmentAttribute,
@@ -7375,6 +7376,228 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.HandleAttribute>();
   });
+
+  HostVariableAttribute = this.RULE("HostVariableAttribute", () => {
+    let element = this.push(ast.createHostVariableAttribute());
+    this.CONSUME_ASSIGN(tokens.SQL, (token) => {
+      this.tokenPayload(token, element, CstNodeKind.HostVariableAttribute_SQL);
+    });
+    this.CONSUME_ASSIGN(tokens.TYPE, (token) => {
+      this.tokenPayload(token, element, CstNodeKind.HostVariableAttribute_TYPE);
+    });
+    this.CONSUME_ASSIGN(tokens.IS, (token) => {
+      this.tokenPayload(token, element, CstNodeKind.HostVariableAttribute_IS);
+    });
+    this.OR([
+      {
+        ALT: () => {
+          this.SUBRULE_ASSIGN(this.HostVariableBinary, {
+            assign: (result) => {
+              element.type = result;
+            },
+          });
+        },
+      },
+      {
+        ALT: () => {
+          this.SUBRULE_ASSIGN(this.HostVariableRowId, {
+            assign: (result) => {
+              element.type = result;
+            },
+          });
+        },
+      },
+      {
+        ALT: () => {
+          this.SUBRULE_ASSIGN(this.HostVariableLOB, {
+            assign: (result) => {
+              element.type = result;
+            },
+          });
+        },
+      },
+    ]);
+    return this.pop<ast.HostVariableAttribute>();
+  });
+
+  HostVariableBinary = this.RULE("HostVariableBinary", () => {
+    let element = this.push(ast.createHostVariableBinary());
+    this.OR([
+      {
+        ALT: () => {
+          this.CONSUME_ASSIGN(tokens.BINARY, (token) => {
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.HostVariableBinary_BINARY,
+            );
+          });
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME_ASSIGN(tokens.VARBINARY, (token) => {
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.HostVariableBinary_BINARY,
+            );
+          });
+        },
+      },
+    ]);
+    return this.pop<ast.HostVariableBinary>();
+  });
+
+  HostVariableRowId = this.RULE("HostVariableRowId", () => {
+    let element = this.push(ast.createHostVariableRowId());
+    this.CONSUME_ASSIGN(tokens.ROWID, (token) => {
+      this.tokenPayload(token, element, CstNodeKind.HostVariableRowId_ROWID);
+    });
+    return this.pop<ast.HostVariableRowId>();
+  });
+
+  HostVariableLOB = this.RULE("HostVariableLOB", () => {
+    let element = this.push(ast.createHostVariableLOB());
+    this.OPTION1(() => {
+      this.CONSUME_ASSIGN(tokens.XML, (token) => {
+        this.tokenPayload(token, element, CstNodeKind.HostVariableLOB_XML);
+        element.xml = true;
+      });
+      this.CONSUME_ASSIGN(tokens.AS, (token) => {
+        this.tokenPayload(token, element, CstNodeKind.HostVariableLOB_AS);
+      });
+    });
+    this.OR1([
+      {
+        ALT: () => {
+          this.OR2([
+            {
+              ALT: () => {
+                this.CONSUME_ASSIGN(tokens.BinaryOrChar, (token) => {
+                  this.tokenPayload(
+                    token,
+                    element,
+                    CstNodeKind.HostVariableLOB_BINARY,
+                  );
+                  if (token.tokenTypeIdx === tokens.BINARY.tokenTypeIdx) {
+                    element.type = ast.HostVariableLOBType.BLOB;
+                  } else {
+                    element.type = ast.HostVariableLOBType.CLOB;
+                  }
+                });
+                this.CONSUME_ASSIGN(tokens.LARGE, (token) => {
+                  this.tokenPayload(
+                    token,
+                    element,
+                    CstNodeKind.HostVariableLOB_LARGE,
+                  );
+                });
+                this.CONSUME_ASSIGN(tokens.OBJECT, (token) => {
+                  this.tokenPayload(
+                    token,
+                    element,
+                    CstNodeKind.HostVariableLOB_OBJECT,
+                  );
+                });
+              },
+            },
+            {
+              ALT: () => {
+                this.CONSUME_ASSIGN(tokens.LOBType, (token) => {
+                  this.tokenPayload(
+                    token,
+                    element,
+                    CstNodeKind.HostVariableLOB_LOB,
+                  );
+                  if (token.tokenTypeIdx === tokens.BLOB.tokenTypeIdx) {
+                    element.type = ast.HostVariableLOBType.BLOB;
+                  } else {
+                    element.type = ast.HostVariableLOBType.CLOB;
+                  }
+                });
+              },
+            },
+          ]);
+          this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.HostVariableLOB_OpenParen,
+            );
+          });
+          this.CONSUME_ASSIGN(tokens.NUMBER, (token) => {
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.HostVariableLOB_Length,
+            );
+            element.length = token.image;
+          });
+          this.OPTION2(() => {
+            this.CONSUME_ASSIGN(tokens.DBSize, (token) => {
+              this.tokenPayload(
+                token,
+                element,
+                CstNodeKind.HostVariableLOB_SUFFIX,
+              );
+              element.lengthSuffix =
+                token.image as ast.HostVariableLOB["lengthSuffix"];
+            });
+          });
+          this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.HostVariableLOB_CloseParen,
+            );
+          });
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME_ASSIGN(tokens.LOBLocator, (token) => {
+            this.tokenPayload(
+              token,
+              element,
+              CstNodeKind.HostVariableLOB_CHARACTER,
+            );
+            switch (token.tokenTypeIdx) {
+              case tokens.BLOB_LOCATOR.tokenTypeIdx:
+                element.type = ast.HostVariableLOBType.BLOB_LOCATOR;
+                break;
+              case tokens.CLOB_LOCATOR.tokenTypeIdx:
+                element.type = ast.HostVariableLOBType.CLOB_LOCATOR;
+                break;
+              case tokens.DBCLOB_LOCATOR.tokenTypeIdx:
+                element.type = ast.HostVariableLOBType.DBCLOB_LOCATOR;
+                break;
+            }
+          });
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME_ASSIGN(tokens.LOBFile, (token) => {
+            this.tokenPayload(token, element, CstNodeKind.HostVariableLOB_LOB);
+            switch (token.tokenTypeIdx) {
+              case tokens.BLOB_FILE.tokenTypeIdx:
+                element.type = ast.HostVariableLOBType.BLOB_FILE;
+                break;
+              case tokens.CLOB_FILE.tokenTypeIdx:
+                element.type = ast.HostVariableLOBType.CLOB_FILE;
+                break;
+              case tokens.DBCLOB_FILE.tokenTypeIdx:
+                element.type = ast.HostVariableLOBType.DBCLOB_FILE;
+                break;
+            }
+          });
+        },
+      },
+    ]);
+    return this.pop<ast.HostVariableLOB>();
+  });
+
   private createDimensions(): ast.Dimensions {
     return {
       kind: ast.SyntaxKind.Dimensions,

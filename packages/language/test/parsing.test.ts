@@ -961,3 +961,141 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 });
+
+describe("PL/I SQL TYPE Parsing tests", () => {
+  test("BINARY sql type", async () => {
+    const doc = await parseStmts(`
+      DCL BINARY_VAR SQL TYPE IS BINARY;
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("VARBINARY sql type", async () => {
+    const doc = await parseStmts(`
+      DCL BINARY_VAR SQL TYPE IS VARBINARY;
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("BLOB sql type with M length", async () => {
+    const doc = await parseStmts(`
+      DCL BLOB_VAR SQL TYPE IS BLOB(1M);
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("BLOB sql type as XML", async () => {
+    const doc = await parseStmts(`
+      DCL BLOB_VAR SQL TYPE IS XML AS BLOB(1M);
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("BLOB sql type as long form", async () => {
+    const doc = await parseStmts(`
+      DCL BLOB_VAR SQL TYPE IS BINARY LARGE OBJECT(1M);
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("BLOB sql type with K length", async () => {
+    const doc = await parseStmts(`
+      DCL BLOB_VAR SQL TYPE IS BLOB(1K);
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("BLOB sql type with G length", async () => {
+    const doc = await parseStmts(`
+      DCL BLOB_VAR SQL TYPE IS BLOB(1G);
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("BLOB sql type with no length suffix", async () => {
+    const doc = await parseStmts(`
+      DCL BLOB_VAR SQL TYPE IS BLOB(1);
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("CLOB sql type short form", async () => {
+    const doc = await parseStmts(`
+      DCL CLOB_VAR SQL TYPE IS CLOB(1M);
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("CLOB sql type long form", async () => {
+    const doc = await parseStmts(`
+      DCL CLOB_VAR SQL TYPE IS CHAR LARGE OBJECT(1M);
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("BLOB_LOCATOR sql type", async () => {
+    const doc = await parseStmts(`
+      DCL BLOB_LOCATOR_VAR SQL TYPE IS BLOB_LOCATOR;
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("CLOB_LOCATOR sql type", async () => {
+    const doc = await parseStmts(`
+      DCL CLOB_LOCATOR_VAR SQL TYPE IS CLOB_LOCATOR;
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("DBCLOB_LOCATOR sql type", async () => {
+    const doc = await parseStmts(`
+      DCL DBCLOB_LOCATOR_VAR SQL TYPE IS DBCLOB_LOCATOR;
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("BLOB_FILE sql type", async () => {
+    const doc = await parseStmts(`
+      DCL BLOB_FILE_VAR SQL TYPE IS BLOB_FILE;
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("CLOB_FILE sql type", async () => {
+    const doc = await parseStmts(`
+      DCL CLOB_FILE_VAR SQL TYPE IS CLOB_FILE;
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("DBCLOB_FILE sql type", async () => {
+    const doc = await parseStmts(`
+      DCL DBCLOB_FILE_VAR SQL TYPE IS DBCLOB_FILE;
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("ROWID sql type", async () => {
+    const doc = await parseStmts(`
+      DCL ROWID_VAR SQL TYPE IS ROWID;
+    `);
+    assertNoParseErrors(doc);
+    generateAndAssertValidSymbolTable(doc);
+  });
+});

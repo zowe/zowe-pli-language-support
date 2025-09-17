@@ -9,16 +9,7 @@
  *
  */
 
-import {
-  createToken,
-  CustomPatternMatcherFunc,
-  Lexer,
-  TokenType,
-} from "chevrotain";
-import {
-  CompilerOptions,
-  getDefaultCompilerOptions,
-} from "../preprocessor/compiler-options/options";
+import { createToken, Lexer, TokenType } from "chevrotain";
 import { URI } from "../utils/uri";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { SyntaxNode } from "../syntax-tree/ast";
@@ -87,6 +78,36 @@ export function createTokenInstance(
     endOffset,
     uri,
   );
+}
+
+export const keywordMap = new Map<string, TokenType>();
+
+function registerKeyword(
+  config:
+    | {
+        name?: string;
+        names: string[];
+        categories?: TokenType[];
+      }
+    | {
+        name: string;
+        categories?: TokenType[];
+      },
+): TokenType {
+  const names = "names" in config ? config.names : [config.name];
+  const name = config.name ?? names[0];
+  if (!name) {
+    throw new Error("Keyword must have at least one name");
+  }
+  const tokenType = createToken({
+    name,
+    pattern: Lexer.NA,
+    categories: [ID, ...(config.categories ?? [])],
+  });
+  for (const alias of names) {
+    keywordMap.set(alias, tokenType);
+  }
+  return tokenType;
 }
 
 // Combination tokens (parser optimization)
@@ -174,6 +195,26 @@ export const OpenOptionType = createToken({
   name: "OpenOptionType",
   pattern: Lexer.NA,
 });
+export const DBSize = createToken({
+  name: "DBSize",
+  pattern: Lexer.NA,
+});
+export const LOBType = createToken({
+  name: "LOBType",
+  pattern: Lexer.NA,
+});
+export const LOBFile = createToken({
+  name: "LOBFile",
+  pattern: Lexer.NA,
+});
+export const LOBLocator = createToken({
+  name: "LOBLocator",
+  pattern: Lexer.NA,
+});
+export const BinaryOrChar = createToken({
+  name: "BinaryOrChar",
+  pattern: Lexer.NA,
+});
 
 export const combinations = [
   LinkageOption,
@@ -196,59 +237,17 @@ export const combinations = [
   Boolean,
   LocateType,
   OpenOptionType,
+  DBSize,
+  LOBType,
+  LOBFile,
+  LOBLocator,
+  BinaryOrChar,
 ];
 
 // Custom functions
 
 export function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\\-]/g, "\\$&");
-}
-
-export function setCompilerOptions(options: CompilerOptions): void {
-  const orChars = escapeRegExp(options.or || "|");
-  const notChars = escapeRegExp(options.not || "¬^");
-  let includeAlt: string | undefined = undefined;
-
-  if (options.pp && options.pp.ppInclude) {
-    includeAlt = options.pp.ppInclude.value;
-  }
-
-  if (includeAlt) {
-    includeAltRegex = new RegExp(escapeRegExp(includeAlt), "y");
-  } else {
-    includeAltRegex = undefined;
-  }
-  or = new RegExp(`[${orChars}]`, "y");
-  orEq = new RegExp(`[${orChars}]=`, "y");
-  orDouble = new RegExp(`[${orChars}]{2}`, "y");
-  orDoubleEq = new RegExp(`[${orChars}]{2}=`, "y");
-  not = new RegExp(`[${notChars}]`, "y");
-  notEq = new RegExp(`[${notChars}]=`, "y");
-  notGT = new RegExp(`[${notChars}]>`, "y");
-  notLT = new RegExp(`[${notChars}]<`, "y");
-}
-
-let or: RegExp;
-let orEq: RegExp;
-let orDouble: RegExp;
-let orDoubleEq: RegExp;
-
-let not: RegExp;
-let notEq: RegExp;
-let notGT: RegExp;
-let notLT: RegExp;
-let includeAltRegex: RegExp | undefined;
-
-setCompilerOptions(getDefaultCompilerOptions());
-
-function tokenizeWithCompilerOption(
-  getter: () => RegExp,
-): CustomPatternMatcherFunc {
-  return (text, offset) => {
-    const regexp = getter();
-    regexp.lastIndex = offset;
-    return regexp.exec(text);
-  };
 }
 
 // Lexer tokens
@@ -292,1424 +291,864 @@ export const SL_COMMENT = createToken({
   group: Lexer.SKIPPED,
 });
 // Start of keywords
-export const SUBSCRIPTRANGE = createToken({
+export const SUBSCRIPTRANGE = registerKeyword({
   name: "SUBSCRIPTRANGE",
-  pattern: /SUBSCRIPTRANGE/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+  categories: [KeywordConditions],
 });
-export const NOCHARGRAPHIC = createToken({
+export const NOCHARGRAPHIC = registerKeyword({
   name: "NOCHARGRAPHIC",
-  pattern: /NOCHARGRAPHIC/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const NONASSIGNABLE = createToken({
-  name: "NONASSIGNABLE",
-  pattern: /NONASSIGNABLE|NONASGN/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+export const NONASSIGNABLE = registerKeyword({
+  names: ["NONASSIGNABLE", "NONASGN"],
+  categories: [DefaultAttribute],
 });
-export const FIXEDOVERFLOW = createToken({
-  name: "FIXEDOVERFLOW",
-  pattern: /FIXEDOVERFLOW|FOFL/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+export const FIXEDOVERFLOW = registerKeyword({
+  names: ["FIXEDOVERFLOW", "FOFL"],
+  categories: [KeywordConditions],
 });
-export const UNDEFINEDFILE = createToken({
-  name: "UNDEFINEDFILE",
-  pattern: /UNDEFINEDFILE|UNDF/iy,
-  categories: [ID, FileReferenceConditions],
-  longer_alt: ID,
+export const UNDEFINEDFILE = registerKeyword({
+  names: ["UNDEFINEDFILE", "UNDF"],
+  categories: [FileReferenceConditions],
 });
-export const VALUELISTFROM = createToken({
+export const VALUELISTFROM = registerKeyword({
   name: "VALUELISTFROM",
-  pattern: /VALUELISTFROM/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const NODESCRIPTOR = createToken({
+export const NODESCRIPTOR = registerKeyword({
   name: "NODESCRIPTOR",
-  pattern: /NODESCRIPTOR/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const NONCONNECTED = createToken({
+export const NONCONNECTED = registerKeyword({
   name: "NONCONNECTED",
-  pattern: /NONCONNECTED/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const LITTLEENDIAN = createToken({
+export const LITTLEENDIAN = registerKeyword({
   name: "LITTLEENDIAN",
-  pattern: /LITTLEENDIAN/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const ANYCONDITION = createToken({
-  name: "ANYCONDITION",
-  pattern: /ANYCOND(ITION)?/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+export const ANYCONDITION = registerKeyword({
+  names: ["ANYCONDITION", "ANYCOND"],
+  categories: [KeywordConditions],
 });
-export const CHARGRAPHIC = createToken({
+export const CHARGRAPHIC = registerKeyword({
   name: "CHARGRAPHIC",
-  pattern: /CHARGRAPHIC/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const IRREDUCIBLE = createToken({
-  name: "IRREDUCIBLE",
-  pattern: /IRRED(UCIBLE)?/iy,
-  categories: [ID, SimpleOptions, DefaultAttribute],
-  longer_alt: ID,
+export const IRREDUCIBLE = registerKeyword({
+  names: ["IRREDUCIBLE", "IRRED"],
+  categories: [SimpleOptions, DefaultAttribute],
 });
-export const DLLINTERNAL = createToken({
+export const DLLINTERNAL = registerKeyword({
   name: "DLLINTERNAL",
-  pattern: /DLLINTERNAL/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const UNREACHABLE = createToken({
+export const UNREACHABLE = registerKeyword({
   name: "UNREACHABLE",
-  pattern: /UNREACHABLE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const ENVIRONMENT = createToken({
-  name: "ENVIRONMENT",
-  pattern: /ENV(IRONMENT)?/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const ENVIRONMENT = registerKeyword({
+  names: ["ENVIRONMENT", "ENV"],
 });
-export const DESCRIPTORS = createToken({
+export const DESCRIPTORS = registerKeyword({
   name: "DESCRIPTORS",
-  pattern: /DESCRIPTORS/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const CONFORMANCE = createToken({
+export const CONFORMANCE = registerKeyword({
   name: "CONFORMANCE",
-  pattern: /CONFORMANCE/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+  categories: [KeywordConditions],
 });
-export const STRINGRANGE = createToken({
+export const STRINGRANGE = registerKeyword({
   name: "STRINGRANGE",
-  pattern: /STRINGRANGE/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+  categories: [KeywordConditions],
 });
-export const DESCRIPTOR = createToken({
+export const DESCRIPTOR = registerKeyword({
   name: "DESCRIPTOR",
-  pattern: /DESCRIPTOR/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const XMLCONTENT = createToken({
+export const XMLCONTENT = registerKeyword({
   name: "XMLCONTENT",
-  pattern: /XMLCONTENT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const JSONIGNORE = createToken({
+export const JSONIGNORE = registerKeyword({
   name: "JSONIGNORE",
-  pattern: /JSONIGNORE/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const ASSIGNABLE = createToken({
+export const ASSIGNABLE = registerKeyword({
   name: "ASSIGNABLE",
-  pattern: /ASSIGNABLE/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const CONTROLLED = createToken({
-  name: "CONTROLLED",
-  pattern: /CONTROLLED|CTL/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+export const CONTROLLED = registerKeyword({
+  names: ["CONTROLLED", "CTL"],
+  categories: [DefaultAttribute],
 });
-export const NONVARYING = createToken({
-  name: "NONVARYING",
-  pattern: /NONVAR(YING)?/iy,
-  categories: [ID, DefaultAttribute, Varying],
-  longer_alt: ID,
+export const NONVARYING = registerKeyword({
+  names: ["NONVARYING", "NONVAR"],
+  categories: [DefaultAttribute, Varying],
 });
-export const SEQUENTIAL = createToken({
-  name: "SEQUENTIAL",
-  pattern: /SEQ(UENTIA)?L/iy,
-  categories: [ID, DefaultAttribute, OpenOptionType],
-  longer_alt: ID,
+export const SEQUENTIAL = registerKeyword({
+  names: ["SEQUENTIAL", "SEQ"],
+  categories: [DefaultAttribute, OpenOptionType],
 });
-export const CONVERSION = createToken({
-  name: "CONVERSION",
-  pattern: /CONVERSION/iy,
+export const CONVERSION = registerKeyword({
+  names: ["CONVERSION"],
   categories: [ID, KeywordConditions],
-  longer_alt: ID,
 });
-export const STRINGSIZE = createToken({
+export const STRINGSIZE = registerKeyword({
   name: "STRINGSIZE",
-  pattern: /STRINGSIZE/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+  categories: [KeywordConditions],
 });
-export const ZERODIVIDE = createToken({
-  name: "ZERODIVIDE",
-  pattern: /ZERODIVIDE|ZDIV/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+export const ZERODIVIDE = registerKeyword({
+  names: ["ZERODIVIDE", "ZDIV"],
+  categories: [KeywordConditions],
 });
-export const INITACROSS = createToken({
+export const INITACROSS = registerKeyword({
   name: "INITACROSS",
-  pattern: /INITACROSS/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const VALUERANGE = createToken({
+export const VALUERANGE = registerKeyword({
   name: "VALUERANGE",
-  pattern: /VALUERANGE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const XMLIGNORE = createToken({
+export const XMLIGNORE = registerKeyword({
   name: "XMLIGNORE",
-  pattern: /XMLIGNORE/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const JSONTRIMR = createToken({
+export const JSONTRIMR = registerKeyword({
   name: "JSONTRIMR",
-  pattern: /JSONTRIMR/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const NOEXECOPS = createToken({
+export const NOEXECOPS = registerKeyword({
   name: "NOEXECOPS",
-  pattern: /NOEXECOPS/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const DEACTIVATE = createToken({
-  name: "DEACTIVATE",
-  pattern: /DEACT(IVATE)?/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const DEACTIVATE = registerKeyword({
+  names: ["DEACTIVATE", "DEACT"],
 });
-export const REDUCIBLE = createToken({
-  name: "REDUCIBLE",
-  pattern: /RED(UCIBLE)?/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+export const REDUCIBLE = registerKeyword({
+  names: ["REDUCIBLE", "RED"],
+  categories: [SimpleOptions],
 });
-export const REENTRANT = createToken({
+export const REENTRANT = registerKeyword({
   name: "REENTRANT",
-  pattern: /REENTRANT/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const FETCHABLE = createToken({
+export const FETCHABLE = registerKeyword({
   name: "FETCHABLE",
-  pattern: /FETCHABLE/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const FROMALIEN = createToken({
+export const FROMALIEN = registerKeyword({
   name: "FROMALIEN",
-  pattern: /FROMALIEN/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const ASSEMBLER = createToken({
-  name: "ASSEMBLER",
-  pattern: /ASSEMBLER|ASM/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+export const ASSEMBLER = registerKeyword({
+  names: ["ASSEMBLER", "ASM"],
+  categories: [SimpleOptions],
 });
-export const RECURSIVE = createToken({
+export const RECURSIVE = registerKeyword({
   name: "RECURSIVE",
-  pattern: /RECURSIVE/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const PROCEDURE = createToken({
-  name: "PROCEDURE",
-  pattern: /X?PROC(EDURE)?/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const PROCEDURE = registerKeyword({
+  names: ["PROCEDURE", "PROC", "XPROCEDURE", "XPROC"],
 });
-export const STATEMENT = createToken({
+export const STATEMENT = registerKeyword({
   name: "STATEMENT",
-  pattern: /STATEMENT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const CHARACTER = createToken({
-  name: "CHARACTER",
-  pattern: /CHAR(ACTER)?/iy,
-  categories: [ID, DefaultAttribute, AllocateAttributeType],
-  longer_alt: ID,
+export const CHARACTER = registerKeyword({
+  names: ["CHARACTER", "CHAR"],
+  categories: [DefaultAttribute, AllocateAttributeType, BinaryOrChar],
 });
-export const DIMACROSS = createToken({
+export const DIMACROSS = registerKeyword({
   name: "DIMACROSS",
-  pattern: /DIMACROSS/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const AUTOMATIC = createToken({
-  name: "AUTOMATIC",
-  pattern: /AUTO(MATIC)?/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+export const AUTOMATIC = registerKeyword({
+  names: ["AUTOMATIC", "AUTO"],
+  categories: [DefaultAttribute],
 });
-export const BACKWARDS = createToken({
+export const BACKWARDS = registerKeyword({
   name: "BACKWARDS",
-  pattern: /BACKWARDS/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const CONDITION = createToken({
-  name: "CONDITION",
-  pattern: /COND(ITION)?/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+export const CONDITION = registerKeyword({
+  names: ["CONDITION", "COND"],
+  categories: [DefaultAttribute],
 });
-export const CONNECTED = createToken({
+export const CONNECTED = registerKeyword({
   name: "CONNECTED",
-  pattern: /CONNECTED/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const EXCLUSIVE = createToken({
+export const EXCLUSIVE = registerKeyword({
   name: "EXCLUSIVE",
-  pattern: /EXCLUSIVE/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const NONNATIVE = createToken({
+export const NONNATIVE = registerKeyword({
   name: "NONNATIVE",
-  pattern: /NONNATIVE/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const PARAMETER = createToken({
+export const PARAMETER = registerKeyword({
   name: "PARAMETER",
-  pattern: /PARAMETER/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const PRECISION = createToken({
-  name: "PRECISION",
-  pattern: /PREC(ISION)?/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+export const PRECISION = registerKeyword({
+  names: ["PRECISION", "PREC"],
+  categories: [DefaultAttribute],
 });
-export const STRUCTURE = createToken({
-  name: "STRUCTURE",
-  pattern: /STRUCT(URE)?/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+export const STRUCTURE = registerKeyword({
+  names: ["STRUCTURE", "STRUCT"],
+  categories: [DefaultAttribute],
 });
-export const TRANSIENT = createToken({
+export const TRANSIENT = registerKeyword({
   name: "TRANSIENT",
-  pattern: /TRANSIENT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const UNALIGNED = createToken({
-  name: "UNALIGNED",
-  pattern: /UNAL(IGNED)?/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+export const UNALIGNED = registerKeyword({
+  names: ["UNALIGNED", "UNAL"],
+  categories: [DefaultAttribute],
 });
-export const BIGENDIAN = createToken({
+export const BIGENDIAN = registerKeyword({
   name: "BIGENDIAN",
-  pattern: /BIGENDIAN/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const ANSWER = createToken({
-  name: "ANSWER",
-  pattern: /ANS(WER)?/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
-});
-export const MARGINS = createToken({
-  name: "MARGINS",
-  pattern: /MAR(GINS)?/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
-});
-export const ASSERTION = createToken({
+export const ASSERTION = registerKeyword({
   name: "ASSERTION",
-  pattern: /ASSERTION/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+  categories: [KeywordConditions],
 });
-export const ATTENTION = createToken({
+export const ATTENTION = registerKeyword({
   name: "ATTENTION",
-  pattern: /ATTENTION/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+  categories: [KeywordConditions],
 });
-export const INVALIDOP = createToken({
+export const INVALIDOP = registerKeyword({
   name: "INVALIDOP",
-  pattern: /INVALIDOP/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+  categories: [KeywordConditions],
 });
-export const UNDERFLOW = createToken({
-  name: "UNDERFLOW",
-  pattern: /UNDERFLOW|UFL/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+export const UNDERFLOW = registerKeyword({
+  names: ["UNDERFLOW", "UFL"],
+  categories: [KeywordConditions],
 });
-export const OTHERWISE = createToken({
-  name: "OTHERWISE",
-  pattern: /OTHER(WISE)?/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const OTHERWISE = registerKeyword({
+  names: ["OTHERWISE", "OTHER"],
 });
-export const DIMENSION = createToken({
-  name: "DIMENSION",
-  pattern: /DIM(ENSION)?/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const DIMENSION = registerKeyword({
+  names: ["DIMENSION", "DIM"],
 });
-export const VALUELIST = createToken({
+export const VALUELIST = registerKeyword({
   name: "VALUELIST",
-  pattern: /VALUELIST/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const RESERVES = createToken({
+export const RESERVES = registerKeyword({
   name: "RESERVES",
-  pattern: /RESERVES/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const JSONNAME = createToken({
+export const JSONNAME = registerKeyword({
   name: "JSONNAME",
-  pattern: /JSONNAME/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const JSONNULL = createToken({
+export const JSONNULL = registerKeyword({
   name: "JSONNULL",
-  pattern: /JSONNULL/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const JSONOMIT = createToken({
+export const JSONOMIT = registerKeyword({
   name: "JSONOMIT",
-  pattern: /JSONOMIT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const NOMAPOUT = createToken({
+export const NOMAPOUT = registerKeyword({
   name: "NOMAPOUT",
-  pattern: /NOMAPOUT/iy,
-  categories: [ID, NoMapOption],
-  longer_alt: ID,
+  categories: [NoMapOption],
 });
-export const NOINLINE = createToken({
+export const NOINLINE = registerKeyword({
   name: "NOINLINE",
-  pattern: /NOINLINE/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const NORETURN = createToken({
+export const NORETURN = registerKeyword({
   name: "NORETURN",
-  pattern: /NORETURN/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const EXTERNAL = createToken({
-  name: "EXTERNAL",
-  pattern: /EXT(ERNAL)?/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+export const EXTERNAL = registerKeyword({
+  names: ["EXTERNAL", "EXT"],
+  categories: [DefaultAttribute],
 });
-export const VARIABLE = createToken({
+export const VARIABLE = registerKeyword({
   name: "VARIABLE",
-  pattern: /VARIABLE/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const ALLOCATE = createToken({
-  name: "ALLOCATE",
-  pattern: /ALLOC(ATE)?/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const ALLOCATE = registerKeyword({
+  names: ["ALLOCATE", "ALLOC"],
 });
-export const WIDECHAR = createToken({
-  name: "WIDECHAR",
-  pattern: /W(IDE)?CHAR/iy,
-  categories: [ID, DefaultAttribute, AllocateAttributeType],
-  longer_alt: ID,
+export const WIDECHAR = registerKeyword({
+  names: ["WIDECHAR", "WCHAR"],
+  categories: [DefaultAttribute, AllocateAttributeType],
 });
-export const ABNORMAL = createToken({
+export const ABNORMAL = registerKeyword({
   name: "ABNORMAL",
-  pattern: /ABNORMAL/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const BUFFERED = createToken({
-  name: "BUFFERED",
-  pattern: /(UN)?BUF(FERED)?/iy,
-  categories: [ID, DefaultAttribute, OpenOptionType],
-  longer_alt: ID,
+export const BUFFERED = registerKeyword({
+  names: ["BUFFERED", "BUF", "UNBUFFERED", "UNBUF"],
+  categories: [DefaultAttribute, OpenOptionType],
 });
-export const CONSTANT = createToken({
+export const CONSTANT = registerKeyword({
   name: "CONSTANT",
-  pattern: /CONSTANT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const INTERNAL = createToken({
+export const INTERNAL = registerKeyword({
   name: "INTERNAL",
-  pattern: /INTERNAL/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const OPTIONAL = createToken({
+export const OPTIONAL = registerKeyword({
   name: "OPTIONAL",
-  pattern: /OPTIONAL/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const POSITION = createToken({
-  name: "POSITION",
-  pattern: /POS(ITION)?/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+export const POSITION = registerKeyword({
+  names: ["POSITION", "POS"],
+  categories: [DefaultAttribute],
 });
-export const RESERVED = createToken({
+export const RESERVED = registerKeyword({
   name: "RESERVED",
-  pattern: /RESERVED/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const UNSIGNED = createToken({
+export const UNSIGNED = registerKeyword({
   name: "UNSIGNED",
-  pattern: /UNSIGNED/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const VARYING4 = createToken({
+export const VARYING4 = registerKeyword({
   name: "VARYING4",
-  pattern: /VARYING4/iy,
-  categories: [ID, DefaultAttribute, Varying],
-  longer_alt: ID,
+  categories: [DefaultAttribute, Varying],
 });
-export const VARYINGZ = createToken({
-  name: "VARYINGZ",
-  pattern: /VAR(YING)?Z/iy,
-  categories: [ID, DefaultAttribute, Varying],
-  longer_alt: ID,
+export const VARYINGZ = registerKeyword({
+  names: ["VARYINGZ", "VARZ"],
+  categories: [DefaultAttribute, Varying],
 });
-export const DOWNTHRU = createToken({
+export const DOWNTHRU = registerKeyword({
   name: "DOWNTHRU",
-  pattern: /DOWNTHRU/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const INCLUDE = createToken({
-  name: "INCLUDE",
-  pattern: /X?INCLUDE/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const INCLUDE = registerKeyword({
+  names: ["INCLUDE", "XINCLUDE"],
 });
 export const INCLUDE_ALT = createToken({
   name: "INCLUDE_ALT",
-  pattern: (text, offset) => {
-    if (includeAltRegex) {
-      includeAltRegex.lastIndex = offset;
-      return includeAltRegex.exec(text);
-    }
-    return null;
-  },
-  line_breaks: false,
+  pattern: Lexer.NA,
 });
-export const INSCAN = createToken({
-  name: "INSCAN",
-  pattern: /X?INSCAN/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const INSCAN = registerKeyword({
+  names: ["INSCAN", "XINSCAN"],
 });
-export const NOPRINT = createToken({
+export const NOPRINT = registerKeyword({
   name: "NOPRINT",
-  pattern: /NOPRINT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const OVERFLOW = createToken({
-  name: "OVERFLOW",
-  pattern: /OVERFLOW|OFL/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+export const OVERFLOW = registerKeyword({
+  names: ["OVERFLOW", "OFL"],
+  categories: [KeywordConditions],
 });
-export const TRANSMIT = createToken({
+export const TRANSMIT = registerKeyword({
   name: "TRANSMIT",
-  pattern: /TRANSMIT/iy,
-  categories: [ID, FileReferenceConditions],
-  longer_alt: ID,
+  categories: [FileReferenceConditions],
 });
-export const LINESIZE = createToken({
+export const LINESIZE = registerKeyword({
   name: "LINESIZE",
-  pattern: /LINESIZE/iy,
-  categories: [ID, OpenOptionType],
-  longer_alt: ID,
+  categories: [OpenOptionType],
 });
-export const PAGESIZE = createToken({
+export const PAGESIZE = registerKeyword({
   name: "PAGESIZE",
-  pattern: /PAGESIZE/iy,
-  categories: [ID, OpenOptionType],
-  longer_alt: ID,
+  categories: [OpenOptionType],
 });
-export const NULLINIT = createToken({
+export const NULLINIT = registerKeyword({
   name: "NULLINIT",
-  pattern: /NULLINIT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const PROCESS = createToken({
+export const PROCESS = registerKeyword({
   name: "PROCESS",
-  pattern: /[*%]PROCESS/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const PROCINC = createToken({
+export const PROCINC = registerKeyword({
   name: "PROCINC",
-  pattern: /[*%]PROCINC/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const XMLNAME = createToken({
+export const XMLNAME = registerKeyword({
   name: "XMLNAME",
-  pattern: /XMLNAME/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const XMLATTR = createToken({
+export const XMLATTR = registerKeyword({
   name: "XMLATTR",
-  pattern: /XMLATTR/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const XMLOMIT = createToken({
+export const XMLOMIT = registerKeyword({
   name: "XMLOMIT",
-  pattern: /XMLOMIT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const RESIGNAL = createToken({
+export const RESIGNAL = registerKeyword({
   name: "RESIGNAL",
-  pattern: /RESIGNAL/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const PACKAGE = createToken({
+export const PACKAGE = registerKeyword({
   name: "PACKAGE",
-  pattern: /PACKAGE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const EXPORTS = createToken({
+export const EXPORTS = registerKeyword({
   name: "EXPORTS",
-  pattern: /EXPORTS/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const OPTIONS = createToken({
+export const OPTIONS = registerKeyword({
   name: "OPTIONS",
-  pattern: /OPTIONS/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const LINKAGE = createToken({
+export const LINKAGE = registerKeyword({
   name: "LINKAGE",
-  pattern: /LINKAGE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const OPTLINK = createToken({
+export const OPTLINK = registerKeyword({
   name: "OPTLINK",
-  pattern: /OPTLINK/iy,
-  categories: [ID, LinkageOption],
-  longer_alt: ID,
+  categories: [LinkageOption],
 });
-export const STDCALL = createToken({
+export const STDCALL = registerKeyword({
   name: "STDCALL",
-  pattern: /STDCALL/iy,
-  categories: [ID, LinkageOption],
-  longer_alt: ID,
+  categories: [LinkageOption],
 });
-export const NOMAPIN = createToken({
+export const NOMAPIN = registerKeyword({
   name: "NOMAPIN",
-  pattern: /NOMAPIN/iy,
-  categories: [ID, NoMapOption],
-  longer_alt: ID,
+  categories: [NoMapOption],
 });
-export const FORTRAN = createToken({
+export const FORTRAN = registerKeyword({
   name: "FORTRAN",
-  pattern: /FORTRAN/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const BYVALUE = createToken({
+export const BYVALUE = registerKeyword({
   name: "BYVALUE",
-  pattern: /BYVALUE/iy,
-  categories: [ID, SimpleOptions, DefaultAttribute],
-  longer_alt: ID,
+  categories: [SimpleOptions, DefaultAttribute],
 });
-export const AMODE31 = createToken({
+export const AMODE31 = registerKeyword({
   name: "AMODE31",
-  pattern: /AMODE31/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const AMODE64 = createToken({
+export const AMODE64 = registerKeyword({
   name: "AMODE64",
-  pattern: /AMODE64/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const RETCODE = createToken({
+export const RETCODE = registerKeyword({
   name: "RETCODE",
-  pattern: /RETCODE/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const WINMAIN = createToken({
+export const WINMAIN = registerKeyword({
   name: "WINMAIN",
-  pattern: /WINMAIN/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const DYNAMIC = createToken({
+export const DYNAMIC = registerKeyword({
   name: "DYNAMIC",
-  pattern: /DYNAMIC/iy,
-  categories: [ID, ScopeAttribute],
-  longer_alt: ID,
+  categories: [ScopeAttribute],
 });
-export const LIMITED = createToken({
+export const LIMITED = registerKeyword({
   name: "LIMITED",
-  pattern: /LIMITED/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const GRAPHIC = createToken({
+export const GRAPHIC = registerKeyword({
   name: "GRAPHIC",
-  pattern: /GRAPHIC/iy,
-  categories: [ID, DefaultAttribute, AllocateAttributeType],
-  longer_alt: ID,
+  categories: [DefaultAttribute, AllocateAttributeType],
 });
-export const COMPARE = createToken({
+export const COMPARE = registerKeyword({
   name: "COMPARE",
-  pattern: /COMPARE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const DEFAULT = createToken({
-  name: "DEFAULT",
-  pattern: /DEFAULT|DFT/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const DEFAULT = registerKeyword({
+  names: ["DEFAULT", "DFT"],
 });
-export const ALIGNED = createToken({
+export const ALIGNED = registerKeyword({
   name: "ALIGNED",
-  pattern: /ALIGNED/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const BUILTIN = createToken({
+export const BUILTIN = registerKeyword({
   name: "BUILTIN",
-  pattern: /BUILTIN/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const COMPLEX = createToken({
+export const COMPLEX = registerKeyword({
   name: "COMPLEX",
-  pattern: /COMPLEX/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const DECIMAL = createToken({
-  name: "DECIMAL",
-  pattern: /DEC(IMAL)?/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+export const DECIMAL = registerKeyword({
+  names: ["DECIMAL", "DEC"],
+  categories: [DefaultAttribute],
 });
-export const GENERIC = createToken({
+export const GENERIC = registerKeyword({
   name: "GENERIC",
-  pattern: /GENERIC/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const HEXADEC = createToken({
+export const HEXADEC = registerKeyword({
   name: "HEXADEC",
-  pattern: /HEXADEC/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const OUTONLY = createToken({
+export const OUTONLY = registerKeyword({
   name: "OUTONLY",
-  pattern: /OUTONLY/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const POINTER = createToken({
-  name: "POINTER",
-  pattern: /POINTER|PTR/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+export const POINTER = registerKeyword({
+  names: ["POINTER", "PTR"],
+  categories: [DefaultAttribute],
 });
-export const VARYING = createToken({
-  name: "VARYING",
-  pattern: /VAR(YING)?/iy,
-  categories: [ID, DefaultAttribute, Varying],
-  longer_alt: ID,
+export const VARYING = registerKeyword({
+  names: ["VARYING", "VAR"],
+  categories: [DefaultAttribute, Varying],
 });
-export const ORDINAL = createToken({
+export const ORDINAL = registerKeyword({
   name: "ORDINAL",
-  pattern: /ORDINAL/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const DISPLAY = createToken({
+export const DISPLAY = registerKeyword({
   name: "DISPLAY",
-  pattern: /DISPLAY/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const ROUTCDE = createToken({
+export const ROUTCDE = registerKeyword({
   name: "ROUTCDE",
-  pattern: /ROUTCDE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const ITERATE = createToken({
+export const ITERATE = registerKeyword({
   name: "ITERATE",
-  pattern: /ITERATE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const ACTIVATE = createToken({
-  name: "ACTIVATE",
-  pattern: /ACT(IVATE)?/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const ACTIVATE = registerKeyword({
+  names: ["ACTIVATE", "ACT"],
 });
-export const NORESCAN = createToken({
+export const NORESCAN = registerKeyword({
   name: "NORESCAN",
-  pattern: /NORESCAN/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const KEYFROM = createToken({
+export const KEYFROM = registerKeyword({
   name: "KEYFROM",
-  pattern: /KEYFROM/iy,
-  categories: [ID, WriteStatementType, LocateType],
-  longer_alt: ID,
+  categories: [WriteStatementType, LocateType],
 });
-export const STORAGE = createToken({
+export const STORAGE = registerKeyword({
   name: "STORAGE",
-  pattern: /STORAGE/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+  categories: [KeywordConditions],
 });
-export const ENDFILE = createToken({
+export const ENDFILE = registerKeyword({
   name: "ENDFILE",
-  pattern: /ENDFILE/iy,
-  categories: [ID, FileReferenceConditions],
-  longer_alt: ID,
+  categories: [FileReferenceConditions],
 });
-export const ENDPAGE = createToken({
+export const ENDPAGE = registerKeyword({
   name: "ENDPAGE",
-  pattern: /ENDPAGE/iy,
-  categories: [ID, FileReferenceConditions],
-  longer_alt: ID,
+  categories: [FileReferenceConditions],
 });
-export const QUALIFY = createToken({
+export const QUALIFY = registerKeyword({
   name: "QUALIFY",
-  pattern: /QUALIFY/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const RELEASE = createToken({
+export const RELEASE = registerKeyword({
   name: "RELEASE",
-  pattern: /RELEASE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const REWRITE = createToken({
+export const REWRITE = registerKeyword({
   name: "REWRITE",
-  pattern: /REWRITE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const INITIAL = createToken({
-  name: "INITIAL",
-  pattern: /INIT(IAL)?/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const INITIAL = registerKeyword({
+  names: ["INITIAL", "INIT"],
 });
-export const DECLARE = createToken({
-  name: "DECLARE",
-  pattern: /X?(DECLARE|DCL)/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const DECLARE = registerKeyword({
+  names: ["DECLARE", "DCL", "XDECLARE", "XDCL"],
 });
-export const PICTURE = createToken({
-  name: "PICTURE",
-  pattern: /PIC(TURE)?/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const PICTURE = registerKeyword({
+  names: ["PICTURE", "PIC"],
 });
-export const WIDEPIC = createToken({
+export const WIDEPIC = registerKeyword({
   name: "WIDEPIC",
-  pattern: /WIDEPIC/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const RETURNS = createToken({
+export const RETURNS = registerKeyword({
   name: "RETURNS",
-  pattern: /RETURNS/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const SYSTEM = createToken({
+export const SYSTEM = registerKeyword({
   name: "SYSTEM",
-  pattern: /SYSTEM/iy,
-  categories: [ID, LinkageOption],
-  longer_alt: ID,
+  categories: [LinkageOption],
 });
-export const INLINE = createToken({
+export const INLINE = registerKeyword({
   name: "INLINE",
-  pattern: /INLINE/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const BYADDR = createToken({
+export const BYADDR = registerKeyword({
   name: "BYADDR",
-  pattern: /BYADDR/iy,
-  categories: [ID, SimpleOptions, DefaultAttribute],
-  longer_alt: ID,
+  categories: [SimpleOptions, DefaultAttribute],
 });
-export const STATIC = createToken({
+export const STATIC = registerKeyword({
   name: "STATIC",
-  pattern: /STATIC/iy,
-  categories: [ID, DefaultAttribute, ScopeAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute, ScopeAttribute],
 });
-export const ASSERT = createToken({
+export const ASSERT = registerKeyword({
   name: "ASSERT",
-  pattern: /ASSERT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const ATTACH = createToken({
+export const ATTACH = registerKeyword({
   name: "ATTACH",
-  pattern: /ATTACH/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const THREAD = createToken({
+export const THREAD = registerKeyword({
   name: "THREAD",
-  pattern: /THREAD/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const TSTACK = createToken({
+export const TSTACK = registerKeyword({
   name: "TSTACK",
-  pattern: /TSTACK/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const CANCEL = createToken({
+export const CANCEL = registerKeyword({
   name: "CANCEL",
-  pattern: /CANCEL/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const BINARY = createToken({
+export const BINARY = registerKeyword({
   name: "BINARY",
-  pattern: /BIN(ARY)?/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute, BinaryOrChar],
 });
-export const FORMAT = createToken({
+export const BIN = registerKeyword({
+  name: "BIN",
+  categories: [DefaultAttribute],
+});
+export const FORMAT = registerKeyword({
   name: "FORMAT",
-  pattern: /FORMAT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const NOINIT = createToken({
+export const NOINIT = registerKeyword({
   name: "NOINIT",
-  pattern: /NOINIT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const INONLY = createToken({
+export const INONLY = registerKeyword({
   name: "INONLY",
-  pattern: /INONLY/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const INDFOR = createToken({
+export const INDFOR = registerKeyword({
   name: "INDFOR",
-  pattern: /INDFOR/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const MEMBER = createToken({
+export const MEMBER = registerKeyword({
   name: "MEMBER",
-  pattern: /MEMBER/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const NATIVE = createToken({
+export const NATIVE = registerKeyword({
   name: "NATIVE",
-  pattern: /NATIVE/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const NORMAL = createToken({
+export const NORMAL = registerKeyword({
   name: "NORMAL",
-  pattern: /NORMAL/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const OFFSET = createToken({
+export const OFFSET = registerKeyword({
   name: "OFFSET",
-  pattern: /OFFSET/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const OUTPUT = createToken({
+export const OUTPUT = registerKeyword({
   name: "OUTPUT",
-  pattern: /OUTPUT/iy,
-  categories: [ID, DefaultAttribute, OpenOptionType],
-  longer_alt: ID,
+  categories: [DefaultAttribute, OpenOptionType],
 });
-export const RECORD = createToken({
+export const RECORD = registerKeyword({
   name: "RECORD",
-  pattern: /RECORD/iy,
-  categories: [ID, DefaultAttribute, FileReferenceConditions, OpenOptionType],
-  longer_alt: ID,
+  categories: [DefaultAttribute, FileReferenceConditions, OpenOptionType],
 });
-export const SIGNED = createToken({
+export const SIGNED = registerKeyword({
   name: "SIGNED",
-  pattern: /SIGNED/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const STREAM = createToken({
+export const STREAM = registerKeyword({
   name: "STREAM",
-  pattern: /STREAM/iy,
-  categories: [ID, DefaultAttribute, OpenOptionType],
-  longer_alt: ID,
+  categories: [DefaultAttribute, OpenOptionType],
 });
-export const UPDATE = createToken({
+export const UPDATE = registerKeyword({
   name: "UPDATE",
-  pattern: /UPDATE/iy,
-  categories: [ID, DefaultAttribute, OpenOptionType],
-  longer_alt: ID,
+  categories: [DefaultAttribute, OpenOptionType],
 });
-export const DEFINE = createToken({
-  name: "DEFINE",
-  pattern: /X?DEFINE/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const DEFINE = registerKeyword({
+  names: ["DEFINE", "XDEFINE"],
 });
-export const DEFINED = createToken({
-  name: "DEFINED",
-  pattern: /DEF(INED)?/iy,
-  categories: [ID],
-  longer_alt: [ID, DEFINE],
+export const DEFINED = registerKeyword({
+  names: ["DEFINED", "DEF"],
 });
-export const DELETE = createToken({
+export const DELETE = registerKeyword({
   name: "DELETE",
-  pattern: /DELETE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const DETACH = createToken({
+export const DETACH = registerKeyword({
   name: "DETACH",
-  pattern: /DETACH/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const UPTHRU = createToken({
+export const UPTHRU = registerKeyword({
   name: "UPTHRU",
-  pattern: /UPTHRU/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const REPEAT = createToken({
+export const REPEAT = registerKeyword({
   name: "REPEAT",
-  pattern: /REPEAT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const COLUMN = createToken({
-  name: "COLUMN",
-  pattern: /COL(UMN)?/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const COLUMN = registerKeyword({
+  names: ["COLUMN", "COL"],
 });
-export const STRING = createToken({
+export const STRING = registerKeyword({
   name: "STRING",
-  pattern: /STRING/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const NOSCAN = createToken({
+export const NOSCAN = registerKeyword({
   name: "NOSCAN",
-  pattern: /NOSCAN/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const RESCAN = createToken({
+export const RESCAN = registerKeyword({
   name: "RESCAN",
-  pattern: /RESCAN/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const LOCATE = createToken({
+export const LOCATE = registerKeyword({
   name: "LOCATE",
-  pattern: /LOCATE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const FINISH = createToken({
+export const FINISH = registerKeyword({
   name: "FINISH",
-  pattern: /FINISH/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+  categories: [KeywordConditions],
 });
-export const DIRECT = createToken({
+export const DIRECT = registerKeyword({
   name: "DIRECT",
-  pattern: /DIRECT/iy,
-  categories: [ID, OpenOptionType],
-  longer_alt: ID,
+  categories: [OpenOptionType],
 });
-export const IGNORE = createToken({
+export const IGNORE = registerKeyword({
   name: "IGNORE",
-  pattern: /IGNORE/iy,
-  categories: [ID, ReadStatementType],
-  longer_alt: ID,
+  categories: [ReadStatementType],
 });
-export const REINIT = createToken({
+export const REINIT = registerKeyword({
   name: "REINIT",
-  pattern: /REINIT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const RETURN = createToken({
+export const RETURN = registerKeyword({
   name: "RETURN",
-  pattern: /RETURN/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const SELECT = createToken({
+export const SELECT = registerKeyword({
   name: "SELECT",
-  pattern: /SELECT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const SIGNAL = createToken({
+export const SIGNAL = registerKeyword({
   name: "SIGNAL",
-  pattern: /SIGNAL/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const HANDLE = createToken({
+export const HANDLE = registerKeyword({
   name: "HANDLE",
-  pattern: /HANDLE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const CDECL = createToken({
+export const CDECL = registerKeyword({
   name: "CDECL",
-  pattern: /CDECL/iy,
-  categories: [ID, LinkageOption],
-  longer_alt: ID,
+  categories: [LinkageOption],
 });
-export const CMPAT = createToken({
+export const CMPAT = registerKeyword({
   name: "CMPAT",
-  pattern: /CMPAT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const NOMAP = createToken({
+export const NOMAP = registerKeyword({
   name: "NOMAP",
-  pattern: /NOMAP/iy,
-  categories: [ID, NoMapOption],
-  longer_alt: ID,
+  categories: [NoMapOption],
 });
-export const ORDER = createToken({
-  name: "ORDER",
-  pattern: /(RE)?ORDER/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+export const ORDER = registerKeyword({
+  names: ["ORDER", "REORDER"],
+  categories: [SimpleOptions],
 });
-export const COBOL = createToken({
+export const COBOL = registerKeyword({
   name: "COBOL",
-  pattern: /COBOL/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const INTER = createToken({
+export const INTER = registerKeyword({
   name: "INTER",
-  pattern: /INTER/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const ENTRY = createToken({
+export const ENTRY = registerKeyword({
   name: "ENTRY",
-  pattern: /ENTRY/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const UCHAR = createToken({
+export const UCHAR = registerKeyword({
   name: "UCHAR",
-  pattern: /UCHAR/iy,
-  categories: [ID, DefaultAttribute, AllocateAttributeType, Char],
-  longer_alt: ID,
+  categories: [DefaultAttribute, AllocateAttributeType, Char],
 });
-export const FALSE = createToken({
+export const FALSE = registerKeyword({
   name: "FALSE",
-  pattern: /FALSE/iy,
-  categories: [ID, Boolean],
-  longer_alt: ID,
+  categories: [Boolean],
 });
-export const BEGIN = createToken({
+export const BEGIN = registerKeyword({
   name: "BEGIN",
-  pattern: /BEGIN/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const CLOSE = createToken({
+export const CLOSE = registerKeyword({
   name: "CLOSE",
-  pattern: /CLOSE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const RANGE = createToken({
+export const RANGE = registerKeyword({
   name: "RANGE",
-  pattern: /RANGE/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const BASED = createToken({
+export const BASED = registerKeyword({
   name: "BASED",
-  pattern: /BASED/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const EVENT = createToken({
+export const EVENT = registerKeyword({
   name: "EVENT",
-  pattern: /EVENT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const FIXED = createToken({
+export const FIXED = registerKeyword({
   name: "FIXED",
-  pattern: /FIXED/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const FLOAT = createToken({
+export const FLOAT = registerKeyword({
   name: "FLOAT",
-  pattern: /FLOAT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const INOUT = createToken({
+export const INOUT = registerKeyword({
   name: "INOUT",
-  pattern: /INOUT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const INPUT = createToken({
+export const INPUT = registerKeyword({
   name: "INPUT",
-  pattern: /INPUT/iy,
-  categories: [ID, DefaultAttribute, OpenOptionType],
-  longer_alt: ID,
+  categories: [DefaultAttribute, OpenOptionType],
 });
-export const KEYED = createToken({
+export const KEYED = registerKeyword({
   name: "KEYED",
-  pattern: /KEYED/iy,
-  categories: [ID, DefaultAttribute, OpenOptionType],
-  longer_alt: ID,
+  categories: [DefaultAttribute, OpenOptionType],
 });
-export const LABEL = createToken({
+export const LABEL = registerKeyword({
   name: "LABEL",
-  pattern: /LABEL/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const PRINT = createToken({
+export const PRINT = registerKeyword({
   name: "PRINT",
-  pattern: /PRINT/iy,
-  categories: [ID, DefaultAttribute, OpenOptionType],
-  longer_alt: ID,
+  categories: [DefaultAttribute, OpenOptionType],
 });
-export const UNION = createToken({
+export const UNION = registerKeyword({
   name: "UNION",
-  pattern: /UNION/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const ALIAS = createToken({
+export const ALIAS = registerKeyword({
   name: "ALIAS",
-  pattern: /ALIAS/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const VALUE = createToken({
+export const VALUE = registerKeyword({
   name: "VALUE",
-  pattern: /VALUE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const DELAY = createToken({
+export const DELAY = registerKeyword({
   name: "DELAY",
-  pattern: /DELAY/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const REPLY = createToken({
+export const REPLY = registerKeyword({
   name: "REPLY",
-  pattern: /REPLY/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const WHILE = createToken({
+export const WHILE = registerKeyword({
   name: "WHILE",
-  pattern: /WHILE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const UNTIL = createToken({
+export const UNTIL = registerKeyword({
   name: "UNTIL",
-  pattern: /UNTIL/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const FETCH = createToken({
+export const FETCH = registerKeyword({
   name: "FETCH",
-  pattern: /FETCH/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const TITLE = createToken({
+export const TITLE = registerKeyword({
   name: "TITLE",
-  pattern: /TITLE/iy,
-  categories: [ID, OpenOptionType],
-  longer_alt: ID,
+  categories: [OpenOptionType],
 });
-export const FLUSH = createToken({
+export const FLUSH = registerKeyword({
   name: "FLUSH",
-  pattern: /FLUSH/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const LEAVE = createToken({
+export const LEAVE = registerKeyword({
   name: "LEAVE",
-  pattern: /LEAVE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const ERROR = createToken({
+export const ERROR = registerKeyword({
   name: "ERROR",
-  pattern: /ERROR/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+  categories: [KeywordConditions],
 });
-export const PUSH = createToken({
+export const PUSH = registerKeyword({
   name: "PUSH",
-  pattern: /PUSH/iy,
-  categories: [ID],
 });
-export const KEYTO = createToken({
+export const KEYTO = registerKeyword({
   name: "KEYTO",
-  pattern: /KEYTO/iy,
-  categories: [ID, ReadStatementType, WriteStatementType],
-  longer_alt: ID,
+  categories: [ReadStatementType, WriteStatementType],
 });
-export const REVERT = createToken({
+export const REVERT = registerKeyword({
   name: "REVERT",
-  pattern: /REVERT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const WRITE = createToken({
+export const WRITE = registerKeyword({
   name: "WRITE",
-  pattern: /WRITE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const REFER = createToken({
+export const REFER = registerKeyword({
   name: "REFER",
-  pattern: /REFER/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const NOTE = createToken({
+export const NOTE = registerKeyword({
   name: "NOTE",
-  pattern: /NOTE/iy,
-  categories: [ID],
 });
-export const MAIN = createToken({
+export const MAIN = registerKeyword({
   name: "MAIN",
-  pattern: /MAIN/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const RENT = createToken({
+export const RENT = registerKeyword({
   name: "RENT",
-  pattern: /RENT/iy,
-  categories: [ID, SimpleOptions],
-  longer_alt: ID,
+  categories: [SimpleOptions],
 });
-export const AREA = createToken({
+export const AREA = registerKeyword({
   name: "AREA",
-  pattern: /AREA/iy,
-  categories: [ID, DefaultAttribute, AllocateAttributeType, KeywordConditions],
-  longer_alt: ID,
+  categories: [DefaultAttribute, AllocateAttributeType, KeywordConditions],
 });
-export const TRUE = createToken({
+export const TRUE = registerKeyword({
   name: "TRUE",
-  pattern: /TRUE/iy,
-  categories: [ID, Boolean],
-  longer_alt: ID,
+  categories: [Boolean],
 });
-export const TEXT = createToken({
+export const TEXT = registerKeyword({
   name: "TEXT",
-  pattern: /TEXT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const NAME = createToken({
+export const NAME = registerKeyword({
   name: "NAME",
-  pattern: /NAME/iy,
-  categories: [ID, FileReferenceConditions],
-  longer_alt: ID,
+  categories: [FileReferenceConditions],
 });
-export const CALL = createToken({
+export const CALL = registerKeyword({
   name: "CALL",
-  pattern: /CALL/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const FILE = createToken({
+export const FILE = registerKeyword({
   name: "FILE",
-  pattern: /FILE/iy,
   categories: [
-    ID,
     DefaultAttribute,
     PutAttribute,
     ReadStatementType,
@@ -1718,562 +1157,477 @@ export const FILE = createToken({
     LocateType,
     OpenOptionType,
   ],
-  longer_alt: ID,
 });
-export const IEEE = createToken({
+export const IEEE = registerKeyword({
   name: "IEEE",
-  pattern: /IEEE/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const LIST = createToken({
+export const LIST = registerKeyword({
   name: "LIST",
-  pattern: /LIST/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const REAL = createToken({
+export const REAL = registerKeyword({
   name: "REAL",
-  pattern: /REAL/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const TASK = createToken({
+export const TASK = registerKeyword({
   name: "TASK",
-  pattern: /TASK/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const DESC = createToken({
+export const DESC = registerKeyword({
   name: "DESC",
-  pattern: /DESC/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const EXEC = createToken({
+export const EXEC = registerKeyword({
   name: "EXEC",
-  pattern: /EXEC/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const EXIT = createToken({
+export const EXIT = registerKeyword({
   name: "EXIT",
-  pattern: /EXIT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const LINE = createToken({
+export const LINE = registerKeyword({
   name: "LINE",
-  pattern: /LINE/iy,
-  categories: [ID, PutAttribute],
-  longer_alt: ID,
+  categories: [PutAttribute],
 });
-export const PAGE = createToken({
+export const PAGE = registerKeyword({
   name: "PAGE",
-  pattern: /PAGE/iy,
-  categories: [ID, PutAttribute],
-  longer_alt: ID,
+  categories: [PutAttribute],
 });
-export const SKIP = createToken({
+export const SKIP = registerKeyword({
   name: "SKIP",
-  pattern: /SKIP/iy,
-  categories: [ID, PutAttribute],
-  longer_alt: ID,
+  categories: [PutAttribute],
 });
-export const SCAN = createToken({
+export const SCAN = registerKeyword({
   name: "SCAN",
-  pattern: /SCAN/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const FREE = createToken({
+export const FREE = registerKeyword({
   name: "FREE",
-  pattern: /FREE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const COPY = createToken({
+export const COPY = registerKeyword({
   name: "COPY",
-  pattern: /COPY/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const GOTO = createToken({
+export const GOTO = registerKeyword({
   name: "GOTO",
-  pattern: /GOTO/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const THEN = createToken({
+export const THEN = registerKeyword({
   name: "THEN",
-  pattern: /THEN/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const ELSE = createToken({
+export const ELSE = registerKeyword({
   name: "ELSE",
-  pattern: /ELSE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const SNAP = createToken({
+export const SNAP = registerKeyword({
   name: "SNAP",
-  pattern: /SNAP/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const SIZE = createToken({
+export const SIZE = registerKeyword({
   name: "SIZE",
-  pattern: /SIZE/iy,
-  categories: [ID, KeywordConditions],
-  longer_alt: ID,
+  categories: [KeywordConditions],
 });
-export const OPEN = createToken({
+export const OPEN = registerKeyword({
   name: "OPEN",
-  pattern: /OPEN/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const POP = createToken({
+export const POP = registerKeyword({
   name: "POP",
-  pattern: /POP/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const DATA = createToken({
+export const DATA = registerKeyword({
   name: "DATA",
-  pattern: /DATA/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const EDIT = createToken({
+export const EDIT = registerKeyword({
   name: "EDIT",
-  pattern: /EDIT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const READ = createToken({
+export const READ = registerKeyword({
   name: "READ",
-  pattern: /READ/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const INTO = createToken({
+export const INTO = registerKeyword({
   name: "INTO",
-  pattern: /INTO/iy,
-  categories: [ID, ReadStatementType],
-  longer_alt: ID,
+  categories: [ReadStatementType],
 });
-export const FROM = createToken({
+export const FROM = registerKeyword({
   name: "FROM",
-  pattern: /FROM/iy,
-  categories: [ID, WriteStatementType, RewriteStatementType],
-  longer_alt: ID,
+  categories: [WriteStatementType, RewriteStatementType],
 });
-export const LOOP = createToken({
-  name: "LOOP",
-  pattern: /LOOP|FOREVER/iy,
-  categories: [ID],
-  longer_alt: ID,
+export const LOOP = registerKeyword({
+  names: ["LOOP", "FOREVER"],
 });
-export const WHEN = createToken({
+export const WHEN = registerKeyword({
   name: "WHEN",
-  pattern: /WHEN/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const STOP = createToken({
+export const STOP = registerKeyword({
   name: "STOP",
-  pattern: /STOP/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const WAIT = createToken({
+export const WAIT = registerKeyword({
   name: "WAIT",
-  pattern: /WAIT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const DATE = createToken({
+export const DATE = registerKeyword({
   name: "DATE",
-  pattern: /DATE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const TYPE = createToken({
+export const TYPE = registerKeyword({
   name: "TYPE",
-  pattern: /TYPE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const LIKE = createToken({
+export const LIKE = registerKeyword({
   name: "LIKE",
-  pattern: /LIKE/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const SET = createToken({
+export const SET = registerKeyword({
   name: "SET",
-  pattern: /SET/iy,
-  categories: [ID, ReadStatementType, LocateType],
-  longer_alt: ID,
+  categories: [ReadStatementType, LocateType],
 });
-export const BIT = createToken({
+export const BIT = registerKeyword({
   name: "BIT",
-  pattern: /BIT/iy,
-  categories: [ID, DefaultAttribute, AllocateAttributeType],
-  longer_alt: ID,
+  categories: [DefaultAttribute, AllocateAttributeType],
 });
 export const PipePipeEquals = createToken({
   name: "||=",
-  pattern: tokenizeWithCompilerOption(() => orDoubleEq),
+  pattern: Lexer.NA,
   categories: [AssignmentOperator],
-  line_breaks: false,
 });
 export const StarStarEquals = createToken({
   name: "**=",
-  pattern: "**=",
+  pattern: Lexer.NA,
   categories: [AssignmentOperator],
 });
-export const END = createToken({
+export const END = registerKeyword({
   name: "END",
-  pattern: /END/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const AND = createToken({
+export const AND = registerKeyword({
   name: "AND",
-  pattern: /AND/iy,
-  categories: [ID, DefaultAttributeBinaryOperator],
-  longer_alt: ID,
+  categories: [DefaultAttributeBinaryOperator],
 });
-export const NOT = createToken({
+export const NOT = registerKeyword({
   name: "NOT",
-  pattern: /NOT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const HEX = createToken({
+export const HEX = registerKeyword({
   name: "HEX",
-  pattern: /HEX/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const INT = createToken({
+export const INT = registerKeyword({
   name: "INT",
-  pattern: /INT/iy,
-  categories: [ID, DefaultAttribute],
-  longer_alt: ID,
+  categories: [DefaultAttribute],
 });
-export const KEY = createToken({
+export const KEY = registerKeyword({
   name: "KEY",
-  pattern: /KEY/iy,
   categories: [
-    ID,
     FileReferenceConditions,
     ReadStatementType,
     RewriteStatementType,
   ],
-  longer_alt: ID,
 });
-export const GET = createToken({
+export const GET = registerKeyword({
   name: "GET",
-  pattern: /GET/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const PUT = createToken({
+export const PUT = registerKeyword({
   name: "PUT",
-  pattern: /PUT/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const VX = createToken({
+export const VX = registerKeyword({
   name: "VX",
-  pattern: /V(1|2|3)/iy,
-  categories: [ID],
-  longer_alt: ID,
+  names: ["V1", "V2", "V3"],
 });
-export const IN = createToken({
+export const IN = registerKeyword({
   name: "IN",
-  pattern: /IN/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const BY = createToken({
+export const BY = registerKeyword({
   name: "BY",
-  pattern: /BY/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
 export const PlusEquals = createToken({
   name: "+=",
-  pattern: "+=",
+  pattern: Lexer.NA,
   categories: [AssignmentOperator],
 });
 export const MinusEquals = createToken({
   name: "-=",
-  pattern: "-=",
+  pattern: Lexer.NA,
   categories: [AssignmentOperator],
 });
 export const StarEquals = createToken({
   name: "*=",
-  pattern: "*=",
+  pattern: Lexer.NA,
   categories: [AssignmentOperator],
 });
 export const SlashEquals = createToken({
   name: "/=",
-  pattern: "/=",
+  pattern: Lexer.NA,
   categories: [AssignmentOperator],
 });
 export const PipeEquals = createToken({
   name: "|=",
-  pattern: tokenizeWithCompilerOption(() => orEq),
+  pattern: Lexer.NA,
   categories: [AssignmentOperator],
-  line_breaks: false,
 });
 export const AmpersandEquals = createToken({
   name: "&=",
-  pattern: "&=",
+  pattern: Lexer.NA,
   categories: [AssignmentOperator],
 });
 export const NotEquals = createToken({
   name: "^=",
-  pattern: tokenizeWithCompilerOption(() => notEq),
+  pattern: Lexer.NA,
   categories: [AssignmentOperator, BinaryOperator],
-  line_breaks: false,
 });
 export const LessThanGreaterThan = createToken({
   name: "<>",
-  pattern: "<>",
+  pattern: Lexer.NA,
   categories: [AssignmentOperator, BinaryOperator],
 });
-export const OR = createToken({
+export const OR = registerKeyword({
   name: "OR",
-  pattern: /OR/iy,
-  categories: [ID, DefaultAttributeBinaryOperator],
-  longer_alt: ID,
+  categories: [DefaultAttributeBinaryOperator],
 });
-export const DO = createToken({
+export const DO = registerKeyword({
   name: "DO",
-  pattern: /DO/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const TO = createToken({
+export const TO = registerKeyword({
   name: "TO",
-  pattern: /TO/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const GO = createToken({
+export const GO = registerKeyword({
   name: "GO",
-  pattern: /GO/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const IF = createToken({
+export const IF = registerKeyword({
   name: "IF",
-  pattern: /IF/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const ON = createToken({
+export const ON = registerKeyword({
   name: "ON",
-  pattern: /ON/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
 export const NotLessThan = createToken({
   name: "^<",
-  pattern: tokenizeWithCompilerOption(() => notLT),
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
-  line_breaks: false,
 });
 export const LessThanEquals = createToken({
   name: "<=",
-  pattern: "<=",
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
 });
 export const GreaterThanEquals = createToken({
   name: ">=",
-  pattern: ">=",
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
 });
 export const NotGreaterThan = createToken({
   name: "^>",
-  pattern: tokenizeWithCompilerOption(() => notGT),
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
-  line_breaks: false,
 });
 export const PipePipe = createToken({
   name: "||",
-  pattern: tokenizeWithCompilerOption(() => orDouble),
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
-  line_breaks: false,
 });
 export const StarStar = createToken({
   name: "**",
-  pattern: "**",
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
 });
 export const MinusGreaterThan = createToken({
   name: "->",
-  pattern: "->",
+  pattern: Lexer.NA,
 });
 export const EqualsGreaterThan = createToken({
   name: "=>",
-  pattern: "=>",
+  pattern: Lexer.NA,
 });
 export const Semicolon = createToken({
   name: ";",
-  pattern: ";",
+  pattern: Lexer.NA,
 });
 export const OpenParen = createToken({
   name: "(",
-  pattern: "(",
+  pattern: Lexer.NA,
 });
 export const CloseParen = createToken({
   name: ")",
-  pattern: ")",
+  pattern: Lexer.NA,
 });
 export const Colon = createToken({
   name: ":",
-  pattern: ":",
+  pattern: Lexer.NA,
 });
 export const Comma = createToken({
   name: ",",
-  pattern: ",",
+  pattern: Lexer.NA,
 });
 export const Star = createToken({
   name: "*",
-  pattern: "*",
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
 });
 export const Equals = createToken({
   name: "=",
-  pattern: "=",
+  pattern: Lexer.NA,
   categories: [BinaryOperator, AssignmentOperator],
 });
-export const A = createToken({
+export const A = registerKeyword({
   name: "A",
-  pattern: /A/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const B = createToken({
+export const B = registerKeyword({
   name: "B",
-  pattern: /B/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const C = createToken({
+export const C = registerKeyword({
   name: "C",
-  pattern: /C/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const F = createToken({
+export const F = registerKeyword({
   name: "F",
-  pattern: /F/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const E = createToken({
+export const E = registerKeyword({
   name: "E",
-  pattern: /E/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const G = createToken({
+// G for Giga bytes. Used in DBSIZE and the G format option
+export const G = registerKeyword({
   name: "G",
-  pattern: /G/iy,
-  categories: [ID],
-  longer_alt: ID,
+  categories: [DBSize],
 });
-export const P = createToken({
+// K for Kilo bytes. Exclusively used for DBSIZE
+export const K = registerKeyword({
+  name: "K",
+  categories: [DBSize],
+});
+// M for Mega bytes. Exclusively used for DBSIZE
+export const M = registerKeyword({
+  name: "M",
+  categories: [DBSize],
+});
+export const P = registerKeyword({
   name: "P",
-  pattern: /P/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const L = createToken({
+export const L = registerKeyword({
   name: "L",
-  pattern: /L/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const R = createToken({
+export const R = registerKeyword({
   name: "R",
-  pattern: /R/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const V = createToken({
+export const V = registerKeyword({
   name: "V",
-  pattern: /V/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-export const X = createToken({
+export const X = registerKeyword({
   name: "X",
-  pattern: /X/iy,
-  categories: [ID],
-  longer_alt: ID,
 });
-// TODO: OR compiler option
 export const Pipe = createToken({
   name: "|",
-  pattern: tokenizeWithCompilerOption(() => or),
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
-  line_breaks: false,
 });
-// TODO: NOT compiler option
 export const Not = createToken({
   name: "^",
-  pattern: tokenizeWithCompilerOption(() => not),
+  pattern: Lexer.NA,
   categories: [BinaryOperator, UnaryOperator],
-  line_breaks: false,
 });
 export const Ampersand = createToken({
   name: "&",
-  pattern: "&",
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
 });
 export const LessThan = createToken({
   name: "<",
-  pattern: "<",
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
 });
 export const GreaterThan = createToken({
   name: ">",
-  pattern: ">",
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
 });
 export const Plus = createToken({
   name: "+",
-  pattern: "+",
+  pattern: Lexer.NA,
   categories: [BinaryOperator, UnaryOperator],
 });
 export const Minus = createToken({
   name: "-",
-  pattern: "-",
+  pattern: Lexer.NA,
   categories: [BinaryOperator, UnaryOperator],
 });
 export const Slash = createToken({
   name: "/",
-  pattern: "/",
+  pattern: Lexer.NA,
   categories: [BinaryOperator],
-  longer_alt: [ML_COMMENT, SL_COMMENT],
 });
 export const Dot = createToken({
   name: ".",
-  pattern: ".",
+  pattern: Lexer.NA,
 });
 export const Percent = createToken({
   name: "%",
-  pattern: "%",
+  pattern: Lexer.NA,
 });
+
+// SQL host variable tokens
+// Sourced from https://www.ibm.com/docs/en/db2-for-zos/12.0.0?topic=pli-host-variable-arrays-in
+export const SQL = registerKeyword({
+  name: "SQL",
+});
+export const IS = registerKeyword({
+  name: "IS",
+});
+export const LARGE = registerKeyword({
+  name: "LARGE",
+});
+export const VARBINARY = registerKeyword({
+  name: "VARBINARY",
+});
+export const OBJECT = registerKeyword({
+  name: "OBJECT",
+});
+export const XML = registerKeyword({
+  name: "XML",
+});
+export const AS = registerKeyword({
+  name: "AS",
+});
+export const BLOB = registerKeyword({
+  name: "BLOB",
+  categories: [LOBType],
+});
+export const CLOB = registerKeyword({
+  name: "CLOB",
+  categories: [LOBType],
+});
+export const DBCLOB = registerKeyword({
+  name: "DBCLOB",
+  categories: [LOBType],
+});
+export const BLOB_LOCATOR = registerKeyword({
+  name: "BLOB_LOCATOR",
+  categories: [LOBLocator],
+});
+export const CLOB_LOCATOR = registerKeyword({
+  name: "CLOB_LOCATOR",
+  categories: [LOBLocator],
+});
+export const DBCLOB_LOCATOR = registerKeyword({
+  name: "DBCLOB_LOCATOR",
+  categories: [LOBLocator],
+});
+export const BLOB_FILE = registerKeyword({
+  name: "BLOB_FILE",
+  categories: [LOBFile],
+});
+export const CLOB_FILE = registerKeyword({
+  name: "CLOB_FILE",
+  categories: [LOBFile],
+});
+export const DBCLOB_FILE = registerKeyword({
+  name: "DBCLOB_FILE",
+  categories: [LOBFile],
+});
+export const ROWID = registerKeyword({
+  name: "ROWID",
+});
+
+const dbkeywords = [
+  SQL,
+  IS,
+  LARGE,
+  VARBINARY,
+  OBJECT,
+  XML,
+  AS,
+  BLOB,
+  CLOB,
+  DBCLOB,
+  BLOB_LOCATOR,
+  CLOB_LOCATOR,
+  DBCLOB_LOCATOR,
+  BLOB_FILE,
+  CLOB_FILE,
+  DBCLOB_FILE,
+  ROWID,
+];
 
 export const terminals = [
   WS,
@@ -2343,8 +1697,6 @@ export const keywords = [
   UNALIGNED,
   BIGENDIAN,
   ASSERTION,
-  ANSWER,
-  MARGINS,
   ATTENTION,
   INVALIDOP,
   UNDERFLOW,
@@ -2557,6 +1909,7 @@ export const keywords = [
   PipePipeEquals,
   StarStarEquals,
   END,
+  SQL,
   AND,
   NOT,
   HEX,
@@ -2581,6 +1934,7 @@ export const keywords = [
   GO,
   IF,
   ON,
+  IS,
   NotLessThan,
   LessThanEquals,
   GreaterThanEquals,
@@ -2602,6 +1956,8 @@ export const keywords = [
   F,
   E,
   G,
+  K,
+  M,
   P,
   L,
   R,
@@ -2617,319 +1973,8 @@ export const keywords = [
   Slash,
   Dot,
   Percent,
+  ...dbkeywords,
 ];
-
-export const keywordMap = new Map<string, TokenType>();
-
-[
-  [SUBSCRIPTRANGE],
-  [NOCHARGRAPHIC],
-  [NONASSIGNABLE, "NONASGN"],
-  [FIXEDOVERFLOW, "FOFL"],
-  [UNDEFINEDFILE, "UNDF"],
-  [VALUELISTFROM],
-  [NODESCRIPTOR],
-  [NONCONNECTED],
-  [LITTLEENDIAN],
-  [ANYCONDITION, "ANYCOND"],
-  [CHARGRAPHIC],
-  [IRREDUCIBLE, "IRRED"],
-  [DLLINTERNAL],
-  [UNREACHABLE],
-  [ENVIRONMENT, "ENV"],
-  [DESCRIPTORS],
-  [CONFORMANCE],
-  [STRINGRANGE],
-  [DESCRIPTOR],
-  [XMLCONTENT],
-  [JSONIGNORE],
-  [ASSIGNABLE],
-  [CONTROLLED, "CTL"],
-  [NONVARYING, "NONVAR"],
-  [SEQUENTIAL, "SEQ"],
-  [CONVERSION],
-  [STRINGSIZE],
-  [ZERODIVIDE, "ZDIV"],
-  [INITACROSS],
-  [VALUERANGE],
-  [XMLIGNORE],
-  [JSONTRIMR],
-  [NOEXECOPS],
-  [DEACTIVATE, "DEACT"],
-  [REDUCIBLE, "RED"],
-  [REENTRANT],
-  [FETCHABLE],
-  [FROMALIEN],
-  [ASSEMBLER, "ASM"],
-  [RECURSIVE],
-  [PROCEDURE, "XPROCEDURE", "PROC", "XPROC"],
-  [STATEMENT, "STMT"],
-  [CHARACTER, "CHAR"],
-  [DIMACROSS],
-  [AUTOMATIC, "AUTO"],
-  [BACKWARDS],
-  [CONDITION, "COND"],
-  [CONNECTED],
-  [EXCLUSIVE],
-  [NONNATIVE],
-  [PARAMETER],
-  [PRECISION, "PREC"],
-  [STRUCTURE, "STRUCT"],
-  [TRANSIENT],
-  [UNALIGNED, "UNAL"],
-  [BIGENDIAN],
-  [ANSWER, "ANS"],
-  [MARGINS, "MAR"],
-  [ASSERTION],
-  [ATTENTION],
-  [INVALIDOP],
-  [UNDERFLOW, "UFL"],
-  [OTHERWISE, "OTHER"],
-  [DIMENSION, "DIM"],
-  [VALUELIST],
-  [RESERVES],
-  [JSONNAME],
-  [JSONNULL],
-  [JSONOMIT],
-  [NOMAPOUT],
-  [NOINLINE],
-  [NORETURN],
-  [EXTERNAL, "EXT"],
-  [VARIABLE],
-  [ALLOCATE, "ALLOC"],
-  [WIDECHAR, "WCHAR"],
-  [ABNORMAL],
-  [BUFFERED, "BUF", "UNBUF", "UNBUFFERED"],
-  [CONSTANT],
-  [INTERNAL],
-  [OPTIONAL],
-  [POSITION, "POS"],
-  [RESERVED],
-  [UNSIGNED],
-  [VARYING4],
-  [VARYINGZ, "VARZ"],
-  [DOWNTHRU],
-  [INCLUDE, "XINCLUDE"],
-  // NO INCLUDE_ALT: It has special handling!
-  [INSCAN, "XINSCAN"],
-  [NOPRINT],
-  [OVERFLOW, "OFL"],
-  [TRANSMIT],
-  [LINESIZE],
-  [PAGESIZE],
-  [NULLINIT],
-  [XMLNAME],
-  [XMLATTR],
-  [XMLOMIT],
-  [RESIGNAL],
-  [PACKAGE],
-  [EXPORTS],
-  [OPTIONS],
-  [LINKAGE],
-  [OPTLINK],
-  [STDCALL],
-  [NOMAPIN],
-  [FORTRAN],
-  [BYVALUE],
-  [AMODE31],
-  [AMODE64],
-  [RETCODE],
-  [WINMAIN],
-  [DYNAMIC],
-  [LIMITED],
-  [GRAPHIC],
-  [COMPARE],
-  [DEFAULT, "DFT"],
-  [ALIGNED],
-  [BUILTIN],
-  [COMPLEX],
-  [DECIMAL, "DEC"],
-  [GENERIC],
-  [HEXADEC],
-  [OUTONLY],
-  [POINTER, "PTR"],
-  [VARYING, "VAR"],
-  [ORDINAL],
-  [DISPLAY],
-  [ROUTCDE],
-  [ITERATE],
-  [ACTIVATE, "ACT"],
-  [NORESCAN],
-  [KEYFROM],
-  [STORAGE],
-  [ENDFILE],
-  [ENDPAGE],
-  [QUALIFY],
-  [RELEASE],
-  [REWRITE],
-  [INITIAL, "INIT"],
-  [DECLARE, "DCL", "XDCL", "XDECLARE"],
-  [PICTURE, "PIC"],
-  [WIDEPIC],
-  [RETURNS],
-  [SYSTEM],
-  [INLINE],
-  [BYADDR],
-  [STATIC],
-  [ASSERT],
-  [ATTACH],
-  [THREAD],
-  [TSTACK],
-  [CANCEL],
-  [BINARY, "BIN"],
-  [FORMAT],
-  [NOINIT],
-  [INONLY],
-  [INDFOR],
-  [MEMBER],
-  [NATIVE],
-  [NORMAL],
-  [OFFSET],
-  [OUTPUT],
-  [RECORD],
-  [SIGNED],
-  [STREAM],
-  [UPDATE],
-  [DEFINE, "XDEFINE"],
-  [DEFINED, "DEF"],
-  [DELETE],
-  [DETACH],
-  [UPTHRU],
-  [REPEAT],
-  [COLUMN, "COL"],
-  [STRING],
-  [NOSCAN],
-  [RESCAN],
-  [LOCATE],
-  [FINISH],
-  [DIRECT],
-  [IGNORE],
-  [REINIT],
-  [RETURN],
-  [SELECT],
-  [SIGNAL],
-  [HANDLE],
-  [CDECL],
-  [CMPAT],
-  [NOMAP],
-  [ORDER, "REORDER"],
-  [COBOL],
-  [INTER],
-  [ENTRY],
-  [UCHAR],
-  [FALSE],
-  [BEGIN],
-  [CLOSE],
-  [RANGE],
-  [BASED],
-  [EVENT],
-  [FIXED],
-  [FLOAT],
-  [INOUT],
-  [INPUT],
-  [KEYED],
-  [LABEL],
-  [PRINT],
-  [UNION],
-  [ALIAS],
-  [VALUE],
-  [DELAY],
-  [REPLY],
-  [WHILE],
-  [UNTIL],
-  [FETCH],
-  [TITLE],
-  [FLUSH],
-  [LEAVE],
-  [ERROR],
-  [PUSH],
-  [KEYTO],
-  [REVERT],
-  [WRITE],
-  [REFER],
-  [NOTE],
-  [MAIN],
-  [RENT],
-  [AREA],
-  [TRUE],
-  [TEXT],
-  [NAME],
-  [CALL],
-  [FILE],
-  [IEEE],
-  [LIST],
-  [REAL],
-  [TASK],
-  [DESC],
-  [EXEC],
-  [EXIT],
-  [LINE],
-  [PAGE],
-  [SKIP],
-  [SCAN],
-  [FREE],
-  [COPY],
-  [GOTO],
-  [THEN],
-  [ELSE],
-  [SNAP],
-  [SIZE],
-  [OPEN],
-  [POP],
-  [DATA],
-  [EDIT],
-  [READ],
-  [INTO],
-  [FROM],
-  [LOOP, "FOREVER"],
-  [WHEN],
-  [STOP],
-  [WAIT],
-  [DATE],
-  [TYPE],
-  [LIKE],
-  [SET],
-  [BIT],
-  [END],
-  [AND],
-  [NOT],
-  [HEX],
-  [INT],
-  [KEY],
-  [GET],
-  [PUT],
-  [IN],
-  [BY],
-  [OR],
-  [DO],
-  [TO],
-  [GO],
-  [IF],
-  [ON],
-  [A],
-  [B],
-  [C],
-  [F],
-  [E],
-  [G],
-  [P],
-  [L],
-  [R],
-  [V],
-  [X],
-].forEach((list) => {
-  const item = list[0] as TokenType;
-  keywordMap.set(item.name, item);
-  for (let i = 1; i < list.length; i++) {
-    const alias = list[i] as string;
-    keywordMap.set(alias, item);
-  }
-});
-
-// Special handling for VX token
-keywordMap.set("V1", VX);
-keywordMap.set("V2", VX);
-keywordMap.set("V3", VX);
 
 export const all = [
   WS,

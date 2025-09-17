@@ -78,7 +78,6 @@ export enum SyntaxKind {
   DoSpecification,
   DoStatement,
   DoType3,
-  DoType3Variable,
   DoUntil,
   DoWhile,
   EFormatItem,
@@ -114,6 +113,10 @@ export enum SyntaxKind {
   GenericReference,
   GenericDescriptor,
   HandleAttribute,
+  HostVariableAttribute,
+  HostVariableLOB,
+  HostVariableRowId,
+  HostVariableBinary,
   IfStatement,
   IncludeDirective,
   IncludeAltDirective,
@@ -348,6 +351,10 @@ export type SyntaxNode =
   | GenericReference
   | GenericDescriptor
   | HandleAttribute
+  | HostVariableAttribute
+  | HostVariableLOB
+  | HostVariableBinary
+  | HostVariableRowId
   | IfStatement
   | IncludeDirective
   | IncludeAltDirective
@@ -1504,6 +1511,67 @@ export interface HandleAttribute extends AstNode {
   kind: SyntaxKind.HandleAttribute;
   size: string | null;
   type: Reference<NamedType> | null;
+}
+export interface HostVariableAttribute extends AstNode {
+  kind: SyntaxKind.HostVariableAttribute;
+  type: HostVariableType | null;
+}
+export function createHostVariableAttribute(): HostVariableAttribute {
+  return {
+    kind: SyntaxKind.HostVariableAttribute,
+    container: null,
+    type: null,
+  };
+}
+export type HostVariableType =
+  | HostVariableLOB
+  | HostVariableRowId
+  | HostVariableBinary;
+export enum HostVariableLOBType {
+  BLOB,
+  CLOB,
+  DBCLOB,
+  BLOB_LOCATOR,
+  CLOB_LOCATOR,
+  DBCLOB_LOCATOR,
+  BLOB_FILE,
+  CLOB_FILE,
+  DBCLOB_FILE,
+}
+export interface HostVariableLOB extends AstNode {
+  kind: SyntaxKind.HostVariableLOB;
+  xml: boolean;
+  type: HostVariableLOBType | null;
+  length: string | null;
+  lengthSuffix: "K" | "M" | "G" | null;
+}
+export function createHostVariableLOB(): HostVariableLOB {
+  return {
+    kind: SyntaxKind.HostVariableLOB,
+    container: null,
+    xml: false,
+    type: null,
+    length: null,
+    lengthSuffix: null,
+  };
+}
+export interface HostVariableRowId extends AstNode {
+  kind: SyntaxKind.HostVariableRowId;
+}
+export function createHostVariableRowId(): HostVariableRowId {
+  return {
+    kind: SyntaxKind.HostVariableRowId,
+    container: null,
+  };
+}
+export interface HostVariableBinary extends AstNode {
+  kind: SyntaxKind.HostVariableBinary;
+}
+export function createHostVariableBinary(): HostVariableBinary {
+  return {
+    kind: SyntaxKind.HostVariableBinary,
+    container: null,
+  };
 }
 export interface IfStatement extends AstNode {
   kind: SyntaxKind.IfStatement;
