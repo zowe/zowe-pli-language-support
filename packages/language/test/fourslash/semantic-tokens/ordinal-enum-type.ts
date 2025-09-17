@@ -11,8 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
-//// %REPLACE <|1:HELLO|> WITH "HELLO WORLD";
-//// PUT(<|1>HELLO);
+// @wrap: main
+//// DEFINE ORDINAL <|enum:HELLO|>(A, B, C);
+//// DCL MY_ORDINAL TYPE <|enum:HELLO>;
 
-verify.noDiagnostics();
-linker.expectLinks();
+semanticTokens.expectAt("enum");

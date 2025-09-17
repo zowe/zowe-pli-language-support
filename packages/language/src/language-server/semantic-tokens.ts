@@ -17,7 +17,7 @@ import {
   SemanticTokensLegend,
   SemanticTokenTypes,
 } from "vscode-languageserver-types";
-import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import { StructureItem, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { Token } from "../parser/tokens";
 
@@ -27,6 +27,10 @@ export const semanticTokenTypes = [
   SemanticTokenTypes.number,
   SemanticTokenTypes.function,
   SemanticTokenTypes.parameter,
+  SemanticTokenTypes.enum,
+  SemanticTokenTypes.enumMember,
+  SemanticTokenTypes.class,
+  SemanticTokenTypes.type,
 ];
 
 export const tokenTypes = new Map<string, number>(
@@ -67,12 +71,43 @@ export function semanticTokens(
 }
 
 function tokenType(token: Token): string | undefined {
+  const referenceTarget = getReferenceTarget(token);
+  if (referenceTarget) {
+    switch (referenceTarget.kind) {
+      case SyntaxKind.LabelPrefix:
+        if (isProcedurePrefix(referenceTarget)) {
+          return SemanticTokenTypes.function;
+        } else {
+          return SemanticTokenTypes.variable;
+        }
+      case SyntaxKind.OrdinalValue:
+        return SemanticTokenTypes.enumMember;
+      case SyntaxKind.DefineOrdinalStatement:
+        return SemanticTokenTypes.enum;
+      case SyntaxKind.DefineAliasStatement:
+        return SemanticTokenTypes.type;
+      case SyntaxKind.StructureItem:
+        if (isFirstStructureItem(referenceTarget)) {
+          return SemanticTokenTypes.class;
+        } else {
+          return SemanticTokenTypes.variable;
+        }
+      case SyntaxKind.DeclaredVariable:
+        return SemanticTokenTypes.variable;
+    }
+  }
   if (isProcedureType(token)) {
     return SemanticTokenTypes.function;
-  }
-
-  if (isVariableType(token)) {
+  } else if (isVariableType(token)) {
     return SemanticTokenTypes.variable;
+  } else if (isEnumToken(token)) {
+    return SemanticTokenTypes.enum;
+  } else if (isEnumMemberToken(token)) {
+    return SemanticTokenTypes.enumMember;
+  } else if (isClassToken(token)) {
+    return SemanticTokenTypes.class;
+  } else if (isTypeToken(token)) {
+    return SemanticTokenTypes.type;
   } else if (token.kind === CstNodeKind.ProcedureParameter_Id) {
     return SemanticTokenTypes.parameter;
   } else if (token.kind === CstNodeKind.CompilerOption_Name) {
@@ -81,6 +116,36 @@ function tokenType(token: Token): string | undefined {
     return SemanticTokenTypes.number;
   }
 
+  return undefined;
+}
+
+/**
+ * If the specified token represents a reference, this function returns the target SyntaxNode of that reference.
+ */
+function getReferenceTarget(token: Token): SyntaxNode | undefined {
+  if (
+    token.kind === CstNodeKind.ReferenceItem_Ref &&
+    token.element?.kind === SyntaxKind.ReferenceItem
+  ) {
+    return token.element.ref?.node ?? undefined;
+  } else if (
+    token.kind === CstNodeKind.LabelReference_LabelRef &&
+    token.element?.kind === SyntaxKind.LabelReference
+  ) {
+    return token.element.label?.node ?? undefined;
+  } else if (
+    (token.kind === CstNodeKind.TypeAttribute_TypeId0 ||
+      token.kind === CstNodeKind.TypeAttribute_TypeId1) &&
+    token.element?.kind === SyntaxKind.TypeAttribute
+  ) {
+    return token.element.type?.node ?? undefined;
+  } else if (
+    (token.kind === CstNodeKind.HandleAttribute_TypeId0 ||
+      token.kind === CstNodeKind.HandleAttribute_TypeId1) &&
+    token.element?.kind === SyntaxKind.HandleAttribute
+  ) {
+    return token.element.type?.node ?? undefined;
+  }
   return undefined;
 }
 
@@ -102,24 +167,9 @@ function isProcedureKind(container: SyntaxNode | null | undefined): boolean {
 
 function isProcedureType(token: Token): boolean {
   const kind = token.kind;
-  const element = token.element;
-  if (
-    kind === CstNodeKind.ReferenceItem_Ref &&
-    element?.kind === SyntaxKind.ReferenceItem
-  ) {
-    const ref = element.ref?.node;
-    return isProcedurePrefix(ref);
-  }
   if (
     kind === CstNodeKind.LabelPrefix_Name &&
     isProcedurePrefix(token.element)
-  ) {
-    return true;
-  }
-  if (
-    kind === CstNodeKind.LabelReference_LabelRef &&
-    element?.container?.kind === SyntaxKind.EndStatement &&
-    isProcedureKind(element?.container.container)
   ) {
     return true;
   }
@@ -156,13 +206,50 @@ function isVariableType(token: Token): boolean {
     case CstNodeKind.ReplaceStatement_Id:
     case CstNodeKind.TypeAttribute_TypeId0:
     case CstNodeKind.TypeAttribute_TypeId1:
-    case CstNodeKind.OrdinalTypeAttribute_TypeId0:
-    case CstNodeKind.OrdinalTypeAttribute_TypeId1:
     case CstNodeKind.HandleAttribute_TypeId0:
     case CstNodeKind.HandleAttribute_TypeId1:
     case CstNodeKind.LabelReference_LabelRef:
     case CstNodeKind.IncludeItem_FileID:
       return true;
+    case CstNodeKind.StructureItem_Name:
+      if (token.element?.kind === SyntaxKind.StructureItem) {
+        return !isFirstStructureItem(token.element);
+      }
+      return false;
   }
   return false;
+}
+
+function isEnumToken(token: Token): boolean {
+  return token.kind === CstNodeKind.DefineOrdinalStatement_Name;
+}
+
+function isEnumMemberToken(token: Token): boolean {
+  if (token.kind === CstNodeKind.OrdinalValue_Name) {
+    return true;
+  }
+  return false;
+}
+
+function isClassToken(token: Token): boolean {
+  const { kind, element } = token;
+  if (
+    kind === CstNodeKind.StructureItem_Name &&
+    element?.kind === SyntaxKind.StructureItem
+  ) {
+    return isFirstStructureItem(element);
+  }
+  return false;
+}
+
+function isFirstStructureItem(element: StructureItem): boolean {
+  const container = element.container;
+  if (container?.kind === SyntaxKind.DefineStructureStatement) {
+    return container.items[0] === element;
+  }
+  return false;
+}
+
+function isTypeToken(token: Token): boolean {
+  return token.kind === CstNodeKind.DefineAliasStatement_Name;
 }

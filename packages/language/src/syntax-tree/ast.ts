@@ -152,7 +152,6 @@ export enum SyntaxKind {
   OpenOption,
   OpenStatement,
   Options,
-  OrdinalTypeAttribute,
   OrdinalValue,
   OrdinalValueList,
   OtherwiseStatement,
@@ -237,28 +236,39 @@ export function isSyntaxNode(node: unknown): node is SyntaxNode {
   );
 }
 
+export enum ReferenceType {
+  /**
+   * A variable reference in the PL/I code. Can also target labels.
+   */
+  Variable,
+  /**
+   * A type reference in the PL/I code. Only valid for normal PL/I code.
+   */
+  Type,
+}
+
 export interface Reference<T extends SyntaxNode = SyntaxNode> {
   owner: SyntaxNode;
   text: string;
   token: Token;
   node: T | null | undefined;
-  preprocessor: boolean;
+  type: ReferenceType;
 }
 
 export function createReference<T extends SyntaxNode>(
   owner: SyntaxNode,
   token: Token,
-  preprocessor?: boolean,
+  type: ReferenceType,
 ): Reference<T>;
 export function createReference<T extends SyntaxNode>(
   owner: SyntaxNode,
   token: Token | null | undefined,
-  preprocessor?: boolean,
+  type: ReferenceType,
 ): Reference<T> | null;
 export function createReference<T extends SyntaxNode>(
   owner: SyntaxNode,
   token: Token | null | undefined,
-  preprocessor = false,
+  type: ReferenceType,
 ): Reference<T> | null {
   if (!token) {
     return null;
@@ -268,7 +278,7 @@ export function createReference<T extends SyntaxNode>(
     text: token.image,
     token,
     node: undefined,
-    preprocessor,
+    type,
   };
 }
 
@@ -413,7 +423,6 @@ export type SyntaxNode =
   | OpenOption
   | OpenStatement
   | Options
-  | OrdinalTypeAttribute
   | OrdinalValue
   | OrdinalValueList
   | OtherwiseStatement
@@ -527,7 +536,6 @@ export type CommonDeclarationAttribute =
   | HandleAttribute
   | InitialAttribute
   | LikeAttribute
-  | OrdinalTypeAttribute
   | PictureAttribute
   | ReturnsAttribute
   | TypeAttribute
@@ -686,8 +694,15 @@ export type InitialAttributeSpecificationIteration =
   | InitialAttributeItemStar
   | InitialAttributeSpecificationIterationValue;
 export type LiteralValue = NumberLiteral | StringLiteral;
-export type NamedElement = DeclaredVariable | OrdinalValue | LabelPrefix;
-export type NamedType = DefineAliasStatement;
+export type NamedElement =
+  | DeclaredVariable
+  | OrdinalValue
+  | LabelPrefix
+  | StructureItem;
+export type NamedType =
+  | DefineAliasStatement
+  | DefineOrdinalStatement
+  | StructureItem;
 export type OptionsItem =
   | CMPATOptionsItem
   | LinkageOptionsItem
@@ -1200,6 +1215,7 @@ export interface DefaultValueAttributeItem extends AstNode {
 export interface DefineAliasStatement extends AstNode {
   kind: SyntaxKind.DefineAliasStatement;
   name: string | null;
+  nameToken: Token | null;
   xDefine: boolean;
   attributes: DeclarationAttribute[];
 }
@@ -1210,7 +1226,8 @@ export interface DefinedAttribute extends AstNode {
 }
 export interface DefineOrdinalStatement extends AstNode {
   kind: SyntaxKind.DefineOrdinalStatement;
-  name: FQN | null;
+  name: string | null;
+  nameToken: Token | null;
   ordinalValues: OrdinalValueList | null;
   xDefine: boolean;
   attributes: ("SIGNED" | "UNSIGNED" | "PRECISION" | "PREC")[];
@@ -1932,11 +1949,6 @@ export interface Options extends AstNode {
   kind: SyntaxKind.Options;
   items: OptionsItem[];
 }
-export interface OrdinalTypeAttribute extends AstNode {
-  kind: SyntaxKind.OrdinalTypeAttribute;
-  type: Reference<OrdinalType> | null;
-  byvalue: boolean;
-}
 export interface OrdinalValue extends AstNode {
   kind: SyntaxKind.OrdinalValue;
   name: string | null;
@@ -2396,11 +2408,18 @@ export interface StructureItem extends AstNode {
   kind: SyntaxKind.StructureItem;
   level: string | null;
   name: string | null;
+  nameToken: Token | null;
   attributes: DeclarationAttribute[];
 }
 export interface TypeAttribute extends AstNode {
   kind: SyntaxKind.TypeAttribute;
   type: Reference<NamedType> | null;
+  /**
+   * To differentiate whether "TYPE" or "ORDINAL" was used
+   *
+   * "ORDINAL" is only valid for references to ordinal types.
+   */
+  typeToken: Token | null;
 }
 export interface UnaryExpression extends AstNode {
   kind: SyntaxKind.UnaryExpression;
