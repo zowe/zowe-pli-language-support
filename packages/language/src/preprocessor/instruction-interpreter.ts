@@ -32,7 +32,7 @@ import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state
 import { preprocessorParse } from "./preprocessor-parser";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import { tokenMatcher, TokenType } from "chevrotain";
+import { tokenMatcher } from "chevrotain";
 import { PLICodes } from "../validation/messages";
 import { FileStore } from "../workspace/file-store";
 import {
@@ -492,13 +492,6 @@ function runInstructionSync(
   return undefined;
 }
 
-function tokenOfType(token: Token, type: TokenType): boolean {
-  return (
-    token.tokenType === type ||
-    (token.tokenType.CATEGORIES?.includes(type) ?? false)
-  );
-}
-
 function runAnswerInstruction(
   instruction: inst.AnswerInstruction,
   context: InterpreterContext,
@@ -524,27 +517,17 @@ function runAnswerInstruction(
     const expression = evaluateExpression(instruction.expression, context);
     const text = valueToString(expression) ?? "";
     let tokens = lex(text);
+    if (tokens.length > 0) {
+      const lastToken = tokens[tokens.length - 1];
+      lastToken.immediateFollow = lastToken.endOffset + 1 === text.length;
+    }
     if (instruction.scanMode !== inst.ScanMode.NoScan) {
       tokens = replaceTokensInText(tokens, context);
     }
     if (breakCount > 0) {
       context.tokens.push(...tokens);
     } else {
-      if (
-        context.tokens.length > 0 &&
-        tokenOfType(
-          context.tokens[context.tokens.length - 1],
-          PreprocessorTokens.Id,
-        ) &&
-        tokens.length > 0 &&
-        tokenOfType(tokens[0], PreprocessorTokens.Id)
-      ) {
-        const lastToken = context.tokens.pop()!;
-        const firstToken = tokens.shift()!;
-        const newToken: Token = mergeIdTokens(lastToken, firstToken);
-        context.tokens.push(newToken);
-      }
-      context.tokens.push(...tokens);
+      mergePush(context.tokens, tokens, true);
     }
   }
   if (instruction.column) {
@@ -585,22 +568,6 @@ function runAnswerInstruction(
       );
     }
   }
-}
-
-function mergeIdTokens(leftId: Token, rightId: Token): Token {
-  return {
-    image: leftId.image + rightId.image,
-    originalImage: leftId.originalImage + rightId.originalImage,
-    startOffset: leftId.startOffset,
-    endOffset: rightId.endOffset,
-    tokenType: PreprocessorTokens.Id,
-    element: undefined,
-    kind: undefined,
-    immediateFollow: false,
-    tokenTypeIdx: leftId.tokenTypeIdx,
-    uri: undefined,
-    isInsertedInRecovery: false,
-  };
 }
 
 function runNoteInstruction(
@@ -1371,7 +1338,7 @@ function runTokenInstruction(
 }
 
 function mergePush(target: Token[], source: Token[], firstSource: boolean) {
-  if (firstSource) {
+  if (firstSource && source.length > 0) {
     const prefix = target[target.length - 1];
     if (prefix && prefix.immediateFollow) {
       target.pop();
