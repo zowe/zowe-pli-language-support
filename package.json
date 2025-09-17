@@ -10,7 +10,7 @@
     "bundle": "pnpm --dir packages/vscode-extension esbuild:bundle",
     "merge": "tsx ./scripts/generate-tmlanguage.mts",
     "build": "pnpm clean && pnpm compile && pnpm bundle && pnpm merge",
-    "package": "pnpm build && pnpm --dir packages/vscode-extension package",
+    "package": "pnpm build && pnpm --dir packages/vscode-extension package --allow-package-secrets sendgrid",
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "prettier -c \"**/*.ts\"",
