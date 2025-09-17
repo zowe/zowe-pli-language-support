@@ -32,7 +32,7 @@ import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state
 import { preprocessorParse } from "./preprocessor-parser";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import { tokenMatcher } from "chevrotain";
+import { tokenMatcher, TokenType } from "chevrotain";
 import { PLICodes } from "../validation/messages";
 import { FileStore } from "../workspace/file-store";
 import {
@@ -150,32 +150,6 @@ function valueToString(value?: Value, defaultStr?: string): string | undefined {
     return defaultStr;
   }
   return value.value;
-}
-
-function concatValues(returnValue: Value, expression: Value): ScalarValue {
-  // TODO verify on mainframe if this is correct
-  const values: ScalarValue[] = [];
-  function pushValue(value: Value): void {
-    if (isScalarValue(value)) {
-      values.push(value);
-    } else if (isArrayValue(value)) {
-      unpackArrayValue(value);
-    }
-  }
-  function unpackArrayValue(val: ArrayValue): void {
-    for (const item of val.array) {
-      pushValue(item);
-    }
-  }
-  pushValue(returnValue);
-  pushValue(expression);
-  if (values.length === 0) {
-    return defaultEmptyValue;
-  }
-  return {
-    type: inst.DeclaredType.Character,
-    value: values.map((v) => v.value).join(""),
-  };
 }
 
 function getVariable(
@@ -518,6 +492,13 @@ function runInstructionSync(
   return undefined;
 }
 
+function tokenOfType(token: Token, type: TokenType): boolean {
+  return (
+    token.tokenType === type ||
+    (token.tokenType.CATEGORIES?.includes(type) ?? false)
+  );
+}
+
 function runAnswerInstruction(
   instruction: inst.AnswerInstruction,
   context: InterpreterContext,
@@ -541,17 +522,29 @@ function runAnswerInstruction(
   }
   if (instruction.expression) {
     const expression = evaluateExpression(instruction.expression, context);
+    const text = valueToString(expression) ?? "";
+    let tokens = lex(text);
+    if (instruction.scanMode !== inst.ScanMode.NoScan) {
+      tokens = replaceTokensInText(tokens, context);
+    }
     if (breakCount > 0) {
-      const newLinesValue: Value = {
-        type: inst.DeclaredType.Character,
-        value: "\n".repeat(breakCount),
-      };
-      context.returnValue = concatValues(
-        concatValues(context.returnValue, newLinesValue),
-        expression,
-      );
+      context.tokens.push(...tokens);
     } else {
-      context.returnValue = concatValues(context.returnValue, expression);
+      if (
+        context.tokens.length > 0 &&
+        tokenOfType(
+          context.tokens[context.tokens.length - 1],
+          PreprocessorTokens.Id,
+        ) &&
+        tokens.length > 0 &&
+        tokenOfType(tokens[0], PreprocessorTokens.Id)
+      ) {
+        const lastToken = context.tokens.pop()!;
+        const firstToken = tokens.shift()!;
+        const newToken: Token = mergeIdTokens(lastToken, firstToken);
+        context.tokens.push(newToken);
+      }
+      context.tokens.push(...tokens);
     }
   }
   if (instruction.column) {
@@ -592,6 +585,22 @@ function runAnswerInstruction(
       );
     }
   }
+}
+
+function mergeIdTokens(leftId: Token, rightId: Token): Token {
+  return {
+    image: leftId.image + rightId.image,
+    originalImage: leftId.originalImage + rightId.originalImage,
+    startOffset: leftId.startOffset,
+    endOffset: rightId.endOffset,
+    tokenType: PreprocessorTokens.Id,
+    element: undefined,
+    kind: undefined,
+    immediateFollow: false,
+    tokenTypeIdx: leftId.tokenTypeIdx,
+    uri: undefined,
+    isInsertedInRecovery: false,
+  };
 }
 
 function runNoteInstruction(
@@ -1343,22 +1352,38 @@ function runTokenInstruction(
   instruction: inst.TokensInstruction,
   context: InterpreterContext,
 ): void {
-  const replacedTokens = replaceTokensInText(instruction.tokens, context);
-  const prefix = context.tokens[context.tokens.length - 1];
-  if (prefix && prefix.immediateFollow) {
-    // Remove the last token if it was immediately followed by the new tokens
-    context.tokens.pop();
-    // In the next step, we need to merge them again
-    const firstToken = replacedTokens.shift();
-    const mergedTokens = lex(prefix.image + (firstToken?.image ?? ""));
-    setImmediateFollowProperty(firstToken?.immediateFollow, mergedTokens);
-    // Push merged and new tokens to the stack
-    largePush(context.tokens, mergedTokens);
-    largePush(context.tokens, replacedTokens);
-  } else {
-    // If there is no need to merge the tokens, simply push them to the output
-    largePush(context.tokens, replacedTokens);
+  const tokens = instruction.tokens;
+  let i = 0;
+  const length = tokens.length;
+  while (i < length) {
+    const result = performTokenScan(tokens, i, context);
+    if (result) {
+      // Replace the token with the scan result
+      // i.e. the variable content, recursively replaced
+      mergePush(context.tokens, result.tokens, i === 0);
+      i += result.advance;
+    } else {
+      // If the scan found no active variable, push the original token
+      mergePush(context.tokens, [tokens[i]], i === 0);
+      i++;
+    }
   }
+}
+
+function mergePush(target: Token[], source: Token[], firstSource: boolean) {
+  if (firstSource) {
+    const prefix = target[target.length - 1];
+    if (prefix && prefix.immediateFollow) {
+      target.pop();
+      const firstToken = source.shift();
+      const mergedTokens = lex(prefix.image + (firstToken?.image ?? ""));
+      setImmediateFollowProperty(firstToken?.immediateFollow, mergedTokens);
+      largePush(target, mergedTokens);
+      largePush(target, source);
+      return;
+    }
+  }
+  largePush(target, source);
 }
 
 function largePush<T>(target: T[], source: T[]): void {
