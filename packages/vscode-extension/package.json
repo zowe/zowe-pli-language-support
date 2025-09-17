@@ -103,7 +103,7 @@
   "scripts": {
     "clean": "shx rm -fr *.tsbuildinfo out syntaxes/pli.merged.json",
     "vscode:prepublish": "node esbuild.mjs --minify",
-    "package": "vsce package",
+    "package": "vsce package --allow-package-secrets sendgrid",
     "esbuild:bundle": "node esbuild.mjs"
   },
   "vsce": {

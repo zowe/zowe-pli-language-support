@@ -498,20 +498,9 @@ function runAnswerInstruction(
 ): void {
   let breakCount = 0;
   if (instruction.skip) {
-    const skip = evaluateExpression(instruction.skip, context);
-    const skipCount = valueToNumber(skip);
-    if (typeof skipCount === "number") {
-      breakCount = skipCount;
-    } else {
-      context.diagnostics.push(
-        diagnosticFromCode(
-          Severe.IBM3948I,
-          instruction.skipToken,
-          "CONVERSION",
-          "612",
-        ),
-      );
-    }
+    const skipValue = evaluateExpression(instruction.skip, context);
+    breakCount =
+      tryValueToNumber(context, instruction.skipToken, skipValue) ?? 0;
   }
   if (instruction.expression) {
     const expression = evaluateExpression(instruction.expression, context);
@@ -531,43 +520,36 @@ function runAnswerInstruction(
     }
   }
   if (instruction.column) {
-    const columnCount = evaluateExpression(instruction.column, context);
-    if (typeof valueToNumber(columnCount) !== "number") {
-      context.diagnostics.push(
-        diagnosticFromCode(
-          Severe.IBM3948I,
-          instruction.columnToken,
-          "CONVERSION",
-          "612",
-        ),
-      );
-    }
+    const columnValue = evaluateExpression(instruction.column, context);
+    tryValueToNumber(context, instruction.columnToken, columnValue);
   }
   if (instruction.margins) {
-    let hasError = false;
     if (instruction.margins.left) {
-      const leftCount = evaluateExpression(instruction.margins.left, context);
-      if (typeof valueToNumber(leftCount) !== "number") {
-        hasError = true;
-      }
+      const leftValue = evaluateExpression(instruction.margins.left, context);
+      tryValueToNumber(context, instruction.marginsToken, leftValue);
     }
     if (instruction.margins.right) {
-      const rightCount = evaluateExpression(instruction.margins.right, context);
-      if (typeof valueToNumber(rightCount) !== "number") {
-        hasError = true;
-      }
-    }
-    if (hasError) {
-      context.diagnostics.push(
-        diagnosticFromCode(
-          Severe.IBM3948I,
-          instruction.marginsToken,
-          "CONVERSION",
-          "612",
-        ),
-      );
+      const rightValue = evaluateExpression(instruction.margins.right, context);
+      tryValueToNumber(context, instruction.marginsToken, rightValue);
     }
   }
+}
+
+function tryValueToNumber(
+  context: InterpreterContext,
+  token: Token | undefined,
+  value: Value,
+) {
+  //TODO move this check to the future type system
+  const numericValue = valueToNumber(value);
+  if (typeof numericValue === "number") {
+    return numericValue;
+  }
+  token &&
+    context.diagnostics.push(
+      diagnosticFromCode(Severe.IBM3948I, token, "CONVERSION", "612"),
+    );
+  return undefined;
 }
 
 function runNoteInstruction(
