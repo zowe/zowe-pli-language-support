@@ -169,6 +169,9 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.NoteDirective:
       instruction = generateNoteInstruction(value);
       break;
+    case ast.SyntaxKind.AnswerStatement:
+      instruction = generateAnswerInstruction(value);
+      break;
     default:
       return undefined;
   }
@@ -208,6 +211,49 @@ const DefaultCode: inst.ExpressionInstruction = {
   kind: inst.InstructionKind.Number,
   value: "0",
 };
+
+function generateAnswerInstruction(
+  node: ast.AnswerStatement,
+): inst.AnswerInstruction | undefined {
+  let expression: inst.ExpressionInstruction | undefined = undefined;
+  if (node.expression) {
+    expression = generateExpressionInstruction(node.expression);
+  }
+  let skip: inst.ExpressionInstruction | undefined = undefined;
+  if (node.skip) {
+    if (node.skip.type === ast.SkipModeType.Skip && node.skip.count) {
+      skip = generateExpressionInstruction(node.skip.count);
+    } else {
+      // at least insert one line for a page break
+      skip = { kind: inst.InstructionKind.Number, value: "1" };
+    }
+  }
+  let column: inst.ExpressionInstruction | undefined = undefined;
+  if (node.column) {
+    column = generateExpressionInstruction(node.column);
+  }
+  let margins: inst.AnswerInstruction["margins"] = undefined;
+  if (node.margins) {
+    margins = {
+      left: generateExpressionInstruction(node.margins.left),
+      right: generateExpressionInstruction(node.margins.right),
+    };
+  }
+  const scanMode = node.scanMode
+    ? inst.ScanModeAstToInstruction[node.scanMode]
+    : undefined;
+  return {
+    kind: inst.InstructionKind.Answer,
+    expression,
+    scanMode,
+    skip,
+    skipToken: node.skipToken,
+    column,
+    columnToken: node.columnToken,
+    margins,
+    marginsToken: node.marginsToken,
+  };
+}
 
 function generateNoteInstruction(
   node: ast.NoteDirective,

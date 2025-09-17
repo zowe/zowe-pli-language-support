@@ -18,6 +18,7 @@ export enum SyntaxKind {
   ActivateItem,
   DeactivateStatement,
   TokenStatement,
+  AnswerStatement,
   // Normal AST
   AFormatItem,
   AllocateDimension,
@@ -252,6 +253,7 @@ export type SyntaxNode =
   | ActivateItem
   | DeactivateStatement
   | TokenStatement
+  | AnswerStatement
   // Normal nodes
   | AFormatItem
   | AllocateDimension
@@ -712,6 +714,7 @@ export type Unit =
   | WaitStatement
   | WriteStatement
   // Exclusive to preprocessor
+  | AnswerStatement
   | TokenStatement
   | IncludeDirective
   | IncludeAltDirective
@@ -781,6 +784,47 @@ export function createTokenStatement(): TokenStatement {
     kind: SyntaxKind.TokenStatement,
     container: null,
     tokens: [],
+  };
+}
+
+export enum SkipModeType {
+  Page,
+  Skip,
+}
+
+export type SkipMode =
+  | {
+      type: SkipModeType.Page;
+    }
+  | {
+      type: SkipModeType.Skip;
+      count: Expression | null;
+    };
+
+export interface AnswerStatement extends AstNode {
+  kind: SyntaxKind.AnswerStatement;
+  expression: Expression | null;
+  scanMode: ScanMode | null;
+  skip: SkipMode | null;
+  skipToken?: Token;
+  column: Expression | null;
+  columnToken?: Token;
+  margins: {
+    left: Expression;
+    right: Expression | null;
+  } | null;
+  marginsToken?: Token;
+}
+
+export function createAnswerStatement(): AnswerStatement {
+  return {
+    kind: SyntaxKind.AnswerStatement,
+    container: null,
+    expression: null,
+    scanMode: null,
+    skip: null,
+    column: null,
+    margins: null,
   };
 }
 
