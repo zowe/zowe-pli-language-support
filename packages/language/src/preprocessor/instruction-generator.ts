@@ -208,12 +208,15 @@ function generateCallInstruction(
   if (!node.call?.procedure?.text) {
     return undefined; // No procedure to call
   }
-  if(!node.call.procedure.text) {
+  if (!node.call.procedure.text) {
     return undefined;
   }
   const args = (node.call.args1?.list ?? []).map((arg) => {
     assertType<ast.Expression>(arg);
-    return generateExpressionInstruction(arg) ?? <inst.NumberInstruction>{ kind: inst.InstructionKind.Number, value: "0" };
+    return (
+      generateExpressionInstruction(arg) ??
+      <inst.NumberInstruction>{ kind: inst.InstructionKind.Number, value: "0" }
+    );
   });
   return {
     kind: inst.InstructionKind.Call,

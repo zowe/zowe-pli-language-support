@@ -275,7 +275,11 @@ function callStatement(state: PreprocessorParserState): ast.CallStatement {
     CstNodeKind.CallStatement_CALL,
     PreprocessorTokens.Call,
   );
-  const nameToken = state.consume(statement, CstNodeKind.ProcedureCall_ProcedureRef, PreprocessorTokens.Id);
+  const nameToken = state.consume(
+    statement,
+    CstNodeKind.ProcedureCall_ProcedureRef,
+    PreprocessorTokens.Id,
+  );
   statement.call = ast.createProcedureCall();
   statement.call.procedure = ast.createReference(statement, nameToken);
   state.consume(
@@ -288,7 +292,13 @@ function callStatement(state: PreprocessorParserState): ast.CallStatement {
     do {
       const argument = expression(state);
       statement.call.args1.list.push(argument);
-    } while (state.tryConsume(statement, CstNodeKind.ProcedureCallArgs_Comma, PreprocessorTokens.Comma));
+    } while (
+      state.tryConsume(
+        statement,
+        CstNodeKind.ProcedureCallArgs_Comma,
+        PreprocessorTokens.Comma,
+      )
+    );
   }
   state.consume(
     statement,

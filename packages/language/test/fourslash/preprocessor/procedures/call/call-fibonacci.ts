@@ -15,6 +15,7 @@
 ////   DCL N FIXED;
 ////   DCL PREVIOUS FIXED;
 ////   DCL CURRENT FIXED;
+////   DCL I FIXED;
 ////   PREVIOUS = 0;
 ////   CURRENT = 1;
 ////   DO I = 1 TO N;
