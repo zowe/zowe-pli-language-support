@@ -292,6 +292,11 @@ function callStatement(state: PreprocessorParserState): ast.CallStatement {
   }
   state.consume(
     statement,
+    CstNodeKind.ProcedureCallArgs_CloseParen,
+    PreprocessorTokens.RParen,
+  );
+  state.consume(
+    statement,
     CstNodeKind.CallStatement_Semicolon,
     PreprocessorTokens.Semicolon,
   );

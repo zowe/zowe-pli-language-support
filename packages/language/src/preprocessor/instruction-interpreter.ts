@@ -485,11 +485,31 @@ function runInstructionSync(
     case inst.InstructionKind.Answer:
       runAnswerInstruction(instruction, context);
       break;
+    case inst.InstructionKind.Call:
+      runCallInstruction(instruction, context);
+      break;
     case inst.InstructionKind.Halt:
       runHaltInstruction(instruction, context);
       break;
   }
   return undefined;
+}
+
+function runCallInstruction(
+  instruction: inst.CallInstruction,
+  context: InterpreterContext,
+): void {
+  const procedure = context.procedures.get(instruction.procedureName);
+  if (!procedure) {
+    //TODO report error: procedure not found
+    return;
+  }
+  if (procedure.parameters.length !== instruction.args.length) {
+    //TODO report error: wrong number of arguments
+    return;
+  }
+  const args = instruction.args;
+  evaluateProcedure(procedure, args, context);
 }
 
 function runAnswerInstruction(

@@ -11,7 +11,7 @@
 
 import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
-import { getAttributes } from "./util";
+import { assertType, getAttributes } from "./util";
 
 interface GenerateInstructionContext {
   labels: Map<string, inst.InstructionNode>;
@@ -172,6 +172,9 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.AnswerStatement:
       instruction = generateAnswerInstruction(value);
       break;
+    case ast.SyntaxKind.CallStatement:
+      instruction = generateCallInstruction(value, context);
+      break;
     default:
       return undefined;
   }
@@ -195,6 +198,28 @@ function generateReturnInstruction(
   return {
     kind: inst.InstructionKind.Halt,
     value: generateExpressionInstruction(node.expression),
+  };
+}
+
+function generateCallInstruction(
+  node: ast.CallStatement,
+  context: GenerateInstructionContext,
+): inst.CallInstruction | undefined {
+  if (!node.call?.procedure?.text) {
+    return undefined; // No procedure to call
+  }
+  if(!node.call.procedure.text) {
+    return undefined;
+  }
+  const args = (node.call.args1?.list ?? []).map((arg) => {
+    assertType<ast.Expression>(arg);
+    return generateExpressionInstruction(arg) ?? <inst.NumberInstruction>{ kind: inst.InstructionKind.Number, value: "0" };
+  });
+  return {
+    kind: inst.InstructionKind.Call,
+    procedureName: node.call.procedure.text,
+    args,
+    node,
   };
 }
 
