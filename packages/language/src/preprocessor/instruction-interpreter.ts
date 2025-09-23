@@ -509,12 +509,24 @@ function runCallInstruction(
 ): void {
   const procedure = context.procedures.get(instruction.procedureName);
   if (!procedure) {
-    context.diagnostics.push(diagnosticFromCode(Severe.IBM3968I, instruction.procedureNameToken));
+    context.diagnostics.push(
+      diagnosticFromCode(Severe.IBM3968I, instruction.procedureNameToken),
+    );
     return;
   }
   if (procedure.parameters.length > instruction.args.length) {
-    context.diagnostics.push(diagnosticFromCode(Warning.IBM3323I, instruction.procedureNameToken, instruction.procedureNameToken!.image));
-    for (let count = instruction.args.length; count < procedure.parameters.length; count++) {
+    context.diagnostics.push(
+      diagnosticFromCode(
+        Warning.IBM3323I,
+        instruction.procedureNameToken,
+        instruction.procedureNameToken!.image,
+      ),
+    );
+    for (
+      let count = instruction.args.length;
+      count < procedure.parameters.length;
+      count++
+    ) {
       instruction.args.push({
         kind: inst.InstructionKind.Number,
         value: "0",
@@ -522,16 +534,34 @@ function runCallInstruction(
     }
   }
   if (procedure.parameters.length < instruction.args.length) {
-    context.diagnostics.push(diagnosticFromCode(Warning.IBM3324I, instruction.procedureNameToken, instruction.procedureNameToken!.image));
-    for (let count = procedure.parameters.length; count < instruction.args.length; count++) {
+    context.diagnostics.push(
+      diagnosticFromCode(
+        Warning.IBM3324I,
+        instruction.procedureNameToken,
+        instruction.procedureNameToken!.image,
+      ),
+    );
+    for (
+      let count = procedure.parameters.length;
+      count < instruction.args.length;
+      count++
+    ) {
       instruction.args.pop();
     }
   }
-  if(procedure.statement) {
-    context.diagnostics.push(diagnosticFromCode(Severe.IBM3971I, instruction.procedureNameToken));
+  if (procedure.statement) {
+    context.diagnostics.push(
+      diagnosticFromCode(Severe.IBM3971I, instruction.procedureNameToken),
+    );
   }
-  if (procedure.options.some(option => option.kind === ast.SyntaxKind.ReturnsOption)) {
-    context.diagnostics.push(diagnosticFromCode(Severe.IBM3970I, instruction.procedureNameToken));
+  if (
+    procedure.options.some(
+      (option) => option.kind === ast.SyntaxKind.ReturnsOption,
+    )
+  ) {
+    context.diagnostics.push(
+      diagnosticFromCode(Severe.IBM3970I, instruction.procedureNameToken),
+    );
   }
   const args = instruction.args;
   evaluateProcedure(procedure, args, context);

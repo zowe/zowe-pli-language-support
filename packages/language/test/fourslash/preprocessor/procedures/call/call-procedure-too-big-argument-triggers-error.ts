@@ -25,6 +25,8 @@
 ////   something
 //// END;
 
-verify.expectDiagnosticsAt(1, [{
+verify.expectDiagnosticsAt(1, [
+  {
     code: code.Warning.IBM3324I.fullCode,
-}]);
+  },
+]);
