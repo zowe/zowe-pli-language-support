@@ -116,6 +116,7 @@ export interface ProcedureInstructionContainer {
   parameters: string[];
   statement: boolean;
   node: InstructionNode;
+  options: ast.ProcedureOption[];
 }
 
 export interface HaltInstruction {
@@ -154,6 +155,7 @@ export interface AnswerInstruction {
 export interface CallInstruction {
   kind: InstructionKind.Call;
   procedureName: string;
+  procedureNameToken?: Token;
   args: ExpressionInstruction[];
   node: ast.CallStatement;
 }

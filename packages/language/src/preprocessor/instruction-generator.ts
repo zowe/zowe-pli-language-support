@@ -104,6 +104,7 @@ function generateProcedureInstructionContainer(
     statement: statementType,
     parameters: params,
     node: instructionList.entryNode,
+    options: procedure.options
   };
 }
 
@@ -221,6 +222,7 @@ function generateCallInstruction(
   return {
     kind: inst.InstructionKind.Call,
     procedureName: node.call.procedure.text,
+    procedureNameToken: node.call.procedure.token,
     args,
     node,
   };
