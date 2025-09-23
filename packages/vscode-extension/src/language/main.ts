@@ -21,8 +21,7 @@ import {
   setFileSystemProvider,
 } from "pli-language";
 import * as fs from "fs";
-import * as nPath from "path";
-import { searchFiles } from "../common/file-search";
+import * as glob from "glob";
 
 class NodeFileSystemProvider implements FileSystemProvider {
   readFile(uri: URI): Promise<string> {
@@ -37,21 +36,26 @@ class NodeFileSystemProvider implements FileSystemProvider {
     }
   }
   async writeFile(uri: URI, value: string): Promise<void> {
-    throw new Error("Not supported.");
+    await fs.promises.writeFile(uri.fsPath, value, "utf8");
   }
   async deleteFile(uri: URI): Promise<void> {
     throw new Error("Not supported.");
   }
   async search(options: SearchOptions): Promise<URI | undefined> {
-    const path = await searchFiles(options, async (path) => {
-      const result = await fs.promises.readdir(path);
-      return result.map((file) => nPath.basename(file));
+    const GLOBAL_PATTERN = "**";
+    const path = options.path.fsPath.replace(/\\/g, "/");
+    const pattern = options.global
+      ? `${GLOBAL_PATTERN}${path}{,${options.extensions.join(",")}}`
+      : `${path}{,${options.extensions.join(",")}}`;
+    const files = await glob.glob(pattern, {
+      nodir: true,
+      absolute: true,
+      nocase: true,
     });
-    if (path) {
-      return options.path.with({ path });
-    } else {
-      return undefined;
-    }
+    if (!files.length) return undefined;
+    const result = URI.file(files[0]);
+    if (!result) return undefined;
+    return result;
   }
 }
 
