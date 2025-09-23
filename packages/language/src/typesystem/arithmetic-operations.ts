@@ -1,6 +1,9 @@
-import { Base, MaximumPrecisions, TypesDescriptions } from "./descriptions";
+import { Base, MaximumPrecisions, ScaleMode, TypesDescriptions } from "./descriptions";
 
-export type CompilerOptionRules = 'ans' | 'ibm';
+export enum CompilerOptionRules {
+    ANS,
+    IBM
+}
 export type ComputeOperationReturnType = ({ op, lhs, rhs }: { op: ArithmeticOperator, lhs: TypesDescriptions.Arithmetic, rhs: TypesDescriptions.Arithmetic }) => TypesDescriptions.Any | undefined;
 type BinaryOperatorPredicate = ({ op, lhs, rhs }: { op: ArithmeticOperator, lhs: TypesDescriptions.Arithmetic, rhs: TypesDescriptions.Arithmetic }) => boolean;
 type ArithmeticTypeRule = {
@@ -21,49 +24,49 @@ export const createArithmeticOperationTable = (rulesOption: CompilerOptionRules)
      * Table 1: Results of arithmetic operations for one or more FLOAT operands
      * @see https://www.ibm.com/docs/en/epfz/6.1?topic=operations-results-arithmetic#resarithoprt__fig16
      */
-    whenAtLeastOneFloatCaseOnOperator(['+', '-', '*', '/'], 'decimal', 'decimal', 'decimal', ({ p1, p2 }) => Math.max(p1, p2)),
+    whenAtLeastOneFloatCaseOnOperator(['+', '-', '*', '/'], Base.Decimal, Base.Decimal, Base.Decimal, ({ p1, p2 }) => Math.max(p1, p2)),
     /** @todo special case C */
-    whenAtLeastOneFloatCaseOnOperator(['**'], 'decimal', 'decimal', 'decimal', ({ p1, p2 }) => Math.max(p1, p2)),
-    whenAtLeastOneFloatCaseOnOperator(['+', '-', '*', '/'], 'binary', 'binary', 'binary', ({ p1, p2 }) => Math.max(p1, p2)),
+    whenAtLeastOneFloatCaseOnOperator(['**'], Base.Decimal, Base.Decimal, Base.Decimal, ({ p1, p2 }) => Math.max(p1, p2)),
+    whenAtLeastOneFloatCaseOnOperator(['+', '-', '*', '/'], Base.Binary, Base.Binary, Base.Binary, ({ p1, p2 }) => Math.max(p1, p2)),
     /** @todo special case C */
-    whenAtLeastOneFloatCaseOnOperator(['**'], 'binary', 'binary', 'binary', ({ p1, p2 }) => Math.max(p1, p2)),
-    whenAtLeastOneFloatCaseOnOperator(['+', '-', '*', '/'], 'decimal', 'binary', 'binary', ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
+    whenAtLeastOneFloatCaseOnOperator(['**'], Base.Binary, Base.Binary, Base.Binary, ({ p1, p2 }) => Math.max(p1, p2)),
+    whenAtLeastOneFloatCaseOnOperator(['+', '-', '*', '/'], Base.Decimal, Base.Binary, Base.Binary, ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
     /** @todo special case A or C */
-    whenAtLeastOneFloatCaseOnOperator(['**'], 'decimal', 'binary', 'binary', ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
-    whenAtLeastOneFloatCaseOnOperator(['+', '-', '*', '/'], 'binary', 'decimal', 'binary', ({ p1, p2 }) => Math.max(p1, Math.ceil(p2 * DecimalToBinaryDigitsFactor))),
+    whenAtLeastOneFloatCaseOnOperator(['**'], Base.Decimal, Base.Binary, Base.Binary, ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
+    whenAtLeastOneFloatCaseOnOperator(['+', '-', '*', '/'], Base.Binary, Base.Decimal, Base.Binary, ({ p1, p2 }) => Math.max(p1, Math.ceil(p2 * DecimalToBinaryDigitsFactor))),
     /** @todo special case B or C */
-    whenAtLeastOneFloatCaseOnOperator(['**'], 'binary', 'decimal', 'binary', ({ p1, p2 }) => Math.max(p1, Math.ceil(p2 * DecimalToBinaryDigitsFactor))),
-].concat(rulesOption === 'ans' ? [
+    whenAtLeastOneFloatCaseOnOperator(['**'], Base.Binary, Base.Decimal, Base.Binary, ({ p1, p2 }) => Math.max(p1, Math.ceil(p2 * DecimalToBinaryDigitsFactor))),
+].concat(rulesOption === CompilerOptionRules.ANS ? [
     /**
      * Table 2. Results of arithmetic operations between two unscaled FIXED operands under RULES(ANS)
      * @see https://www.ibm.com/docs/en/epfz/6.1?topic=operations-results-arithmetic#resarithoprt__fig17
      * @todo applies only if RULES(ANS) is given
      */
     //## decimals only
-    whenUnscaledFixedCaseOnOperatorANS(['+', '-'], 'decimal', 'decimal', 'decimal', ({ p1, p2 }) => 1 + Math.max(p1, p2)),
-    whenUnscaledFixedCaseOnOperatorANS(['*'], 'decimal', 'decimal', 'decimal', ({ p1, p2 }) => 1 + p1 + p2),
-    whenUnscaledFixedCaseOnOperatorANS(['/'], 'decimal', 'decimal', 'decimal', ({ N }) => N, ({ N, p1 }) => N - p1),
+    whenUnscaledFixedCaseOnOperatorANS(['+', '-'], Base.Decimal, Base.Decimal, Base.Decimal, ({ p1, p2 }) => 1 + Math.max(p1, p2)),
+    whenUnscaledFixedCaseOnOperatorANS(['*'], Base.Decimal, Base.Decimal, Base.Decimal, ({ p1, p2 }) => 1 + p1 + p2),
+    whenUnscaledFixedCaseOnOperatorANS(['/'], Base.Decimal, Base.Decimal, Base.Decimal, ({ N }) => N, ({ N, p1 }) => N - p1),
     /** @todo special case A */
-    whenUnscaledFixedCaseOnOperatorANS(['**'], 'decimal', 'decimal', 'decimal', ({ p1, p2 }) => Math.max(p1, p2)),
+    whenUnscaledFixedCaseOnOperatorANS(['**'], Base.Decimal, Base.Decimal, Base.Decimal, ({ p1, p2 }) => Math.max(p1, p2)),
     //## binary only
-    whenUnscaledFixedCaseOnOperatorANS(['+', '-'], 'binary', 'binary', 'binary', ({ p1, p2 }) => 1 + Math.max(p1, p2)),
-    whenUnscaledFixedCaseOnOperatorANS(['*'], 'binary', 'binary', 'binary', ({ p1, p2 }) => 1 + p1 + p2),
-    whenUnscaledFixedCaseOnOperatorANS(['/'], 'binary', 'binary', 'binary', ({ p1, p2 }) => 1 + p1 + p2),
+    whenUnscaledFixedCaseOnOperatorANS(['+', '-'], Base.Binary, Base.Binary, Base.Binary, ({ p1, p2 }) => 1 + Math.max(p1, p2)),
+    whenUnscaledFixedCaseOnOperatorANS(['*'], Base.Binary, Base.Binary, Base.Binary, ({ p1, p2 }) => 1 + p1 + p2),
+    whenUnscaledFixedCaseOnOperatorANS(['/'], Base.Binary, Base.Binary, Base.Binary, ({ p1, p2 }) => 1 + p1 + p2),
     /** @todo special case B */
-    whenUnscaledFixedCaseOnOperatorANS(['**'], 'binary', 'binary', 'binary', ({ p1, p2 }) => Math.max(p1, p2)),
+    whenUnscaledFixedCaseOnOperatorANS(['**'], Base.Binary, Base.Binary, Base.Binary, ({ p1, p2 }) => Math.max(p1, p2)),
     //## decimal, then binary
-    whenUnscaledFixedCaseOnOperatorANS(['+', '-'], 'decimal', 'binary', 'binary', ({ p2, r }) => 1 + Math.max(r, p2)),
-    whenUnscaledFixedCaseOnOperatorANS(['*'], 'decimal', 'binary', 'binary', ({ p2, r }) => 1 + r + p2),
-    whenUnscaledFixedCaseOnOperatorANS(['/'], 'decimal', 'binary', 'binary', ({ M }) => M),
+    whenUnscaledFixedCaseOnOperatorANS(['+', '-'], Base.Decimal, Base.Binary, Base.Binary, ({ p2, r }) => 1 + Math.max(r, p2)),
+    whenUnscaledFixedCaseOnOperatorANS(['*'], Base.Decimal, Base.Binary, Base.Binary, ({ p2, r }) => 1 + r + p2),
+    whenUnscaledFixedCaseOnOperatorANS(['/'], Base.Decimal, Base.Binary, Base.Binary, ({ M }) => M),
     /** @todo special case A */
-    whenUnscaledFixedCaseOnOperatorANS(['**'], 'decimal', 'binary', 'binary', ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
+    whenUnscaledFixedCaseOnOperatorANS(['**'], Base.Decimal, Base.Binary, Base.Binary, ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
     //## binary, then decimal
-    whenUnscaledFixedCaseOnOperatorANS(['+', '-'], 'binary', 'decimal', 'binary', ({ p1, t }) => 1 + Math.max(p1, t)),
-    whenUnscaledFixedCaseOnOperatorANS(['*'], 'binary', 'decimal', 'binary', ({ p1, t }) => 1 + p1 + t),
-    whenUnscaledFixedCaseOnOperatorANS(['/'], 'binary', 'decimal', 'binary', ({ M }) => M),
+    whenUnscaledFixedCaseOnOperatorANS(['+', '-'], Base.Binary, Base.Decimal, Base.Binary, ({ p1, t }) => 1 + Math.max(p1, t)),
+    whenUnscaledFixedCaseOnOperatorANS(['*'], Base.Binary, Base.Decimal, Base.Binary, ({ p1, t }) => 1 + p1 + t),
+    whenUnscaledFixedCaseOnOperatorANS(['/'], Base.Binary, Base.Decimal, Base.Binary, ({ M }) => M),
     /** @todo special case B */
     //ATTENTION! Broken IBM documentation here!
-    whenUnscaledFixedCaseOnOperatorANS(['**'], 'binary', 'decimal', 'binary', ({ p1, p2 }) => Math.max(p1, Math.ceil(p2 * DecimalToBinaryDigitsFactor))),
+    whenUnscaledFixedCaseOnOperatorANS(['**'], Base.Binary, Base.Decimal, Base.Binary, ({ p1, p2 }) => Math.max(p1, Math.ceil(p2 * DecimalToBinaryDigitsFactor))),
 
     /**
      * Table 3. Results of arithmetic operations between two scaled FIXED operands under RULES(ANS)
@@ -72,34 +75,34 @@ export const createArithmeticOperationTable = (rulesOption: CompilerOptionRules)
      */
     //## binary only is forbidden! see appendix of Table 3
     //## decimals only
-    whenScaledFixedCaseOnOperatorANS(['+', '-'], 'decimal', 'decimal', 'decimal', ({ p1, p2, q1, q2, q }) => 1 + Math.max(p1 - q1, p2 - q2) + q, ({ q1, q2 }) => Math.max(q1, q2)),
-    whenScaledFixedCaseOnOperatorANS(['*'], 'decimal', 'decimal', 'decimal', ({ p1, p2 }) => 1 + p1 + p2, ({ q1, q2 }) => q1 + q2),
-    whenScaledFixedCaseOnOperatorANS(['/'], 'decimal', 'decimal', 'decimal', ({ N }) => N, ({ N, p1, q1, q2 }) => N - p1 + q1 - q2),
+    whenScaledFixedCaseOnOperatorANS(['+', '-'], Base.Decimal, Base.Decimal, Base.Decimal, ({ p1, p2, q1, q2, q }) => 1 + Math.max(p1 - q1, p2 - q2) + q, ({ q1, q2 }) => Math.max(q1, q2)),
+    whenScaledFixedCaseOnOperatorANS(['*'], Base.Decimal, Base.Decimal, Base.Decimal, ({ p1, p2 }) => 1 + p1 + p2, ({ q1, q2 }) => q1 + q2),
+    whenScaledFixedCaseOnOperatorANS(['/'], Base.Decimal, Base.Decimal, Base.Decimal, ({ N }) => N, ({ N, p1, q1, q2 }) => N - p1 + q1 - q2),
     /**
      * @todo special case A
      * @todo what is q?
      */
-    whenScaledFixedCaseOnOperatorANS(['**'], 'decimal', 'decimal', 'decimal', ({ p1, p2 }) => Math.max(p1, p2)),
+    whenScaledFixedCaseOnOperatorANS(['**'], Base.Decimal, Base.Decimal, Base.Decimal, ({ p1, p2 }) => Math.max(p1, p2)),
     //## decimal, then binary
-    whenScaledFixedCaseOnOperatorANS(['+', '-'], 'decimal', 'binary', 'decimal', ({ p1, v, q1, q }) => 1 + Math.max(p1 - q1, v) + q, ({ q1 }) => q1),
+    whenScaledFixedCaseOnOperatorANS(['+', '-'], Base.Decimal, Base.Binary, Base.Decimal, ({ p1, v, q1, q }) => 1 + Math.max(p1 - q1, v) + q, ({ q1 }) => q1),
     //ATTENTION! Broken IBM documentation here!
-    whenScaledFixedCaseOnOperatorANS(['*'], 'decimal', 'binary', 'decimal', ({ p1, v }) => 1 + p1 + v, ({ q1 }) => q1),
-    whenScaledFixedCaseOnOperatorANS(['/'], 'decimal', 'binary', 'decimal', ({ N }) => N, ({ N, p1, q1 }) => N - p1 + q1),
+    whenScaledFixedCaseOnOperatorANS(['*'], Base.Decimal, Base.Binary, Base.Decimal, ({ p1, v }) => 1 + p1 + v, ({ q1 }) => q1),
+    whenScaledFixedCaseOnOperatorANS(['/'], Base.Decimal, Base.Binary, Base.Decimal, ({ N }) => N, ({ N, p1, q1 }) => N - p1 + q1),
     /**
      * @todo special case A
      * @todo what is q?
      */
-    whenScaledFixedCaseOnOperatorANS(['**'], 'decimal', 'binary', 'decimal', ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
+    whenScaledFixedCaseOnOperatorANS(['**'], Base.Decimal, Base.Binary, Base.Decimal, ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
     //## binary, then decimal
-    whenScaledFixedCaseOnOperatorANS(['+', '-'], 'binary', 'decimal', 'decimal', ({ p2, w, q2, q }) => 1 + Math.max(w, p2 - q2) + q, ({ q2 }) => q2),
+    whenScaledFixedCaseOnOperatorANS(['+', '-'], Base.Binary, Base.Decimal, Base.Decimal, ({ p2, w, q2, q }) => 1 + Math.max(w, p2 - q2) + q, ({ q2 }) => q2),
     //ATTENTION! Broken IBM documentation here for Q!
-    whenScaledFixedCaseOnOperatorANS(['*'], 'binary', 'decimal', 'decimal', ({ p2, w }) => 1 + p2 + w, ({ q2 }) => q2),
-    whenScaledFixedCaseOnOperatorANS(['/'], 'binary', 'decimal', 'decimal', ({ N }) => N, ({ N, w, q2 }) => N - w - q2),
+    whenScaledFixedCaseOnOperatorANS(['*'], Base.Binary, Base.Decimal, Base.Decimal, ({ p2, w }) => 1 + p2 + w, ({ q2 }) => q2),
+    whenScaledFixedCaseOnOperatorANS(['/'], Base.Binary, Base.Decimal, Base.Decimal, ({ N }) => N, ({ N, w, q2 }) => N - w - q2),
     /**
      * @todo special case B
      * @todo what is q?
      */
-    whenScaledFixedCaseOnOperatorANS(['**'], 'binary', 'decimal', 'decimal', ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
+    whenScaledFixedCaseOnOperatorANS(['**'], Base.Binary, Base.Decimal, Base.Decimal, ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
 ] : [
     /**
      * Table 4. Results of arithmetic operations between two FIXED operands under RULES(IBM)
@@ -107,41 +110,41 @@ export const createArithmeticOperationTable = (rulesOption: CompilerOptionRules)
      * @todo applies only if RULES(IBM) is given
      */
     //## decimals only
-    whenScaledFixedCaseOnOperatorIBM(['+', '-'], 'decimal', 'decimal', 'decimal', ({ p1, q1, p2, q2, q }) => 1 + Math.max(p1 - q1, p2 - q2) + q, ({ q1, q2 }) => Math.max(q1, q2)),
-    whenScaledFixedCaseOnOperatorIBM(['*'], 'decimal', 'decimal', 'decimal', ({ p1, p2 }) => 1 + p1 + p2, ({ q1, q2 }) => q1 + q2),
-    whenScaledFixedCaseOnOperatorIBM(['/'], 'decimal', 'decimal', 'decimal', ({ N }) => N, ({ N, p1, q1, q2 }) => N - p1 + q1 - q2),
+    whenScaledFixedCaseOnOperatorIBM(['+', '-'], Base.Decimal, Base.Decimal, Base.Decimal, ({ p1, q1, p2, q2, q }) => 1 + Math.max(p1 - q1, p2 - q2) + q, ({ q1, q2 }) => Math.max(q1, q2)),
+    whenScaledFixedCaseOnOperatorIBM(['*'], Base.Decimal, Base.Decimal, Base.Decimal, ({ p1, p2 }) => 1 + p1 + p2, ({ q1, q2 }) => q1 + q2),
+    whenScaledFixedCaseOnOperatorIBM(['/'], Base.Decimal, Base.Decimal, Base.Decimal, ({ N }) => N, ({ N, p1, q1, q2 }) => N - p1 + q1 - q2),
     /**
      * @todo special case A
      * @todo what is q?
      */
-    whenScaledFixedCaseOnOperatorIBM(['**'], 'decimal', 'decimal', 'decimal', ({ p1, p2 }) => Math.max(p1, p2)),
+    whenScaledFixedCaseOnOperatorIBM(['**'], Base.Decimal, Base.Decimal, Base.Decimal, ({ p1, p2 }) => Math.max(p1, p2)),
     //## binaries only
-    whenScaledFixedCaseOnOperatorIBM(['+', '-'], 'binary', 'binary', 'binary', ({ p1, p2, q1, q2, q }) => 1 + Math.max(p1 - q1, p2 - q2) + q, ({ q1, q2 }) => Math.max(q1, q2)),
-    whenScaledFixedCaseOnOperatorIBM(['*'], 'binary', 'binary', 'binary', ({ p1, p2 }) => 1 + p1 + p2, ({ q1, q2 }) => q1 + q2),
-    whenScaledFixedCaseOnOperatorIBM(['/'], 'binary', 'binary', 'binary', ({ M }) => M, ({ M, p1, q1, q2 }) => M - p1 + q1 - q2),
+    whenScaledFixedCaseOnOperatorIBM(['+', '-'], Base.Binary, Base.Binary, Base.Binary, ({ p1, p2, q1, q2, q }) => 1 + Math.max(p1 - q1, p2 - q2) + q, ({ q1, q2 }) => Math.max(q1, q2)),
+    whenScaledFixedCaseOnOperatorIBM(['*'], Base.Binary, Base.Binary, Base.Binary, ({ p1, p2 }) => 1 + p1 + p2, ({ q1, q2 }) => q1 + q2),
+    whenScaledFixedCaseOnOperatorIBM(['/'], Base.Binary, Base.Binary, Base.Binary, ({ M }) => M, ({ M, p1, q1, q2 }) => M - p1 + q1 - q2),
     /**
      * @todo special case B
      * @todo what is q?
      */
-    whenScaledFixedCaseOnOperatorIBM(['**'], 'binary', 'binary', 'binary', ({ p1, p2 }) => Math.max(p1, p2)),
+    whenScaledFixedCaseOnOperatorIBM(['**'], Base.Binary, Base.Binary, Base.Binary, ({ p1, p2 }) => Math.max(p1, p2)),
     //## decimal, then binary
-    whenScaledFixedCaseOnOperatorIBM(['+', '-'], 'decimal', 'binary', 'binary', ({ p2, r, s, q, q2 }) => 1 + Math.max(r - s, p2 - q2) + q, ({ s, q2 }) => Math.max(s, q2)),
-    whenScaledFixedCaseOnOperatorIBM(['*'], 'decimal', 'binary', 'binary', ({ p2, r }) => 1 + r + p2, ({ s, q2 }) => s + q2),
-    whenScaledFixedCaseOnOperatorIBM(['/'], 'decimal', 'binary', 'binary', ({ M }) => M, ({ M, r, s, q2 }) => M - r + s - q2),
+    whenScaledFixedCaseOnOperatorIBM(['+', '-'], Base.Decimal, Base.Binary, Base.Binary, ({ p2, r, s, q, q2 }) => 1 + Math.max(r - s, p2 - q2) + q, ({ s, q2 }) => Math.max(s, q2)),
+    whenScaledFixedCaseOnOperatorIBM(['*'], Base.Decimal, Base.Binary, Base.Binary, ({ p2, r }) => 1 + r + p2, ({ s, q2 }) => s + q2),
+    whenScaledFixedCaseOnOperatorIBM(['/'], Base.Decimal, Base.Binary, Base.Binary, ({ M }) => M, ({ M, r, s, q2 }) => M - r + s - q2),
     /**
      * @todo special case A
      * @todo what is q?
      */
-    whenScaledFixedCaseOnOperatorIBM(['**'], 'decimal', 'binary', 'binary', ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
+    whenScaledFixedCaseOnOperatorIBM(['**'], Base.Decimal, Base.Binary, Base.Binary, ({ p1, p2 }) => Math.max(Math.ceil(p1 * DecimalToBinaryDigitsFactor), p2)),
     //## binary, then decimal
-    whenScaledFixedCaseOnOperatorIBM(['+', '-'], 'binary', 'decimal', 'binary', ({ p1, t, u, q, q1 }) => 1 + Math.max(p1 - q1, t - u) + q, ({ s, q1, u }) => Math.max(s, q1, u)),
-    whenScaledFixedCaseOnOperatorIBM(['*'], 'binary', 'decimal', 'binary', ({ p1, t }) => 1 + p1 + t, ({ u, q1 }) => q1 + u),
-    whenScaledFixedCaseOnOperatorIBM(['/'], 'binary', 'decimal', 'binary', ({ M }) => M, ({ M, p1, q1, u }) => M - p1 + q1 - u),
+    whenScaledFixedCaseOnOperatorIBM(['+', '-'], Base.Binary, Base.Decimal, Base.Binary, ({ p1, t, u, q, q1 }) => 1 + Math.max(p1 - q1, t - u) + q, ({ s, q1, u }) => Math.max(s, q1, u)),
+    whenScaledFixedCaseOnOperatorIBM(['*'], Base.Binary, Base.Decimal, Base.Binary, ({ p1, t }) => 1 + p1 + t, ({ u, q1 }) => q1 + u),
+    whenScaledFixedCaseOnOperatorIBM(['/'], Base.Binary, Base.Decimal, Base.Binary, ({ M }) => M, ({ M, p1, q1, u }) => M - p1 + q1 - u),
     /**
      * @todo special case B
      * @todo what is q?
      */
-    whenScaledFixedCaseOnOperatorIBM(['**'], 'binary', 'decimal', 'binary', ({ p1, p2 }) => Math.max(p1, Math.ceil(p2 * DecimalToBinaryDigitsFactor))),
+    whenScaledFixedCaseOnOperatorIBM(['**'], Base.Binary, Base.Decimal, Base.Binary, ({ p1, p2 }) => Math.max(p1, Math.ceil(p2 * DecimalToBinaryDigitsFactor))),
 ]));
 
 interface QComputationVariables {
@@ -171,7 +174,7 @@ function whenAtLeastOneFloatCaseOnOperator(whenOp: ArithmeticOperator[], whenLef
         whenLeftBase,
         whenRightBase,
         when({ lhs, rhs }) {
-            return lhs.scale.mode === 'float' || rhs.scale.mode === 'float';
+            return lhs.scale.mode === ScaleMode.Float || rhs.scale.mode === ScaleMode.Float;
         },
         then({ lhs, rhs }) {
             const { scale: { totalDigitsCount: p1 } } = lhs;
@@ -180,7 +183,7 @@ function whenAtLeastOneFloatCaseOnOperator(whenOp: ArithmeticOperator[], whenLef
             const variablesForP = createVariablesForP(variablesForQ, () => 0);
             return TypesDescriptions.Arithmetic({
                 scale: {
-                    mode: "float",
+                    mode: ScaleMode.Float,
                     totalDigitsCount: thenP(variablesForP)
                 },
                 base: resultBase
@@ -207,7 +210,7 @@ function whenUnscaledFixedCaseOnOperatorANS(whenOp: ArithmeticOperator[], whenLe
         whenRightBase,
         when({ lhs, rhs }) {
             //for fixed
-            return lhs.scale.mode === 'fixed' && rhs.scale.mode === 'fixed'
+            return lhs.scale.mode === ScaleMode.Fixed && rhs.scale.mode === ScaleMode.Fixed
                 //for unscaled
                 && lhs.scale.fractionalDigitsCount === 0 && rhs.scale.fractionalDigitsCount === 0;
         },
@@ -218,7 +221,7 @@ function whenUnscaledFixedCaseOnOperatorANS(whenOp: ArithmeticOperator[], whenLe
             const variablesForP = createVariablesForP(variablesForQ, thenQ);
             return TypesDescriptions.Arithmetic({
                 scale: {
-                    mode: "fixed",
+                    mode: ScaleMode.Fixed,
                     fractionalDigitsCount: thenQ?.call(undefined, variablesForQ) ?? 0,
                     totalDigitsCount: thenP(variablesForP),
                 },
@@ -245,7 +248,7 @@ function whenScaledFixedCaseOnOperatorANS(whenOp: ArithmeticOperator[], whenLeft
         whenLeftBase,
         whenRightBase,
         when({ lhs, rhs }) {
-            return lhs.scale.mode === 'fixed' && rhs.scale.mode === 'fixed'
+            return lhs.scale.mode === ScaleMode.Fixed && rhs.scale.mode === ScaleMode.Fixed
                 //for at least one scaled
                 && (lhs.scale.fractionalDigitsCount !== 0 || rhs.scale.fractionalDigitsCount !== 0);
         },
@@ -256,7 +259,7 @@ function whenScaledFixedCaseOnOperatorANS(whenOp: ArithmeticOperator[], whenLeft
             const variablesForP = createVariablesForP(variablesForQ, thenQ);
             return TypesDescriptions.Arithmetic({
                 scale: {
-                    mode: "fixed",
+                    mode: ScaleMode.Fixed,
                     totalDigitsCount: thenP(variablesForP),
                     fractionalDigitsCount: thenQ?.call(undefined, variablesForQ) ?? 0,
                 },
@@ -283,7 +286,7 @@ function whenScaledFixedCaseOnOperatorIBM(whenOp: ArithmeticOperator[], whenLeft
         whenLeftBase,
         whenRightBase,
         when({ lhs, rhs }) {
-            return lhs.scale.mode === 'fixed' && rhs.scale.mode === 'fixed';
+            return lhs.scale.mode === ScaleMode.Fixed && rhs.scale.mode === ScaleMode.Fixed;
         },
         then({ lhs, rhs }) {
             const { scale: { totalDigitsCount: p1 } } = lhs;
@@ -292,7 +295,7 @@ function whenScaledFixedCaseOnOperatorIBM(whenOp: ArithmeticOperator[], whenLeft
             const variablesForP = createVariablesForP(variablesForQ, thenQ);
             return TypesDescriptions.Arithmetic({
                 scale: {
-                    mode: "fixed",
+                    mode: ScaleMode.Fixed,
                     totalDigitsCount: thenP(variablesForP),
                     fractionalDigitsCount: thenQ?.call(undefined, variablesForQ) ?? 0,
                 },
@@ -305,8 +308,8 @@ function whenScaledFixedCaseOnOperatorIBM(whenOp: ArithmeticOperator[], whenLeft
 
 
 function createVariablesForQ(p1: number, p2: number, lhs: TypesDescriptions.Arithmetic, rhs: TypesDescriptions.Arithmetic): QComputationVariables {
-    const q1 = lhs.scale.mode === 'fixed' ? lhs.scale.fractionalDigitsCount : 0;
-    const q2 = rhs.scale.mode === 'fixed' ? rhs.scale.fractionalDigitsCount : 0;
+    const q1 = lhs.scale.mode === ScaleMode.Fixed ? lhs.scale.fractionalDigitsCount : 0;
+    const q2 = rhs.scale.mode === ScaleMode.Fixed ? rhs.scale.fractionalDigitsCount : 0;
     return {
         lhs,
         rhs,
@@ -314,8 +317,8 @@ function createVariablesForQ(p1: number, p2: number, lhs: TypesDescriptions.Arit
         p2,
         q1,
         q2,
-        M: MaximumPrecisions['fixed']['binary'],
-        N: MaximumPrecisions['fixed']['decimal'],
+        M: MaximumPrecisions[ScaleMode.Fixed][Base.Binary],
+        N: MaximumPrecisions[ScaleMode.Fixed][Base.Decimal],
         get r() {
             return 1 + Math.ceil(p1 * DecimalToBinaryDigitsFactor);
         },

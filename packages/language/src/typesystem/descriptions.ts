@@ -14,20 +14,39 @@ interface BaseTypeDescriptionProps {
     variable?: boolean;
 }
 interface BaseTypeDescription extends BaseTypeDescriptionProps {
-    type: string;
+    type: DataType;
 }
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
-export type Alignment = { type: 'aligned', alignment: 1 | 2 | 4 | 8 } | { type: 'unaligned' };
+export enum AlignmentType {
+    Aligned,
+    Unaligned,
+}
+export type Alignment = { type: AlignmentType.Aligned, alignment: 1 | 2 | 4 | 8 } | { type: AlignmentType.Unaligned };
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=declarations-internal-external-attributes */
-export type Scope = { type: 'internal' } | { type: 'external', environment: string };
+export enum ScopeType {
+    Internal,
+    External,
+}
+export type Scope = { type: ScopeType.Internal } | { type: ScopeType.External, environment: string };
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-storage-classes-allocation-deallocation */
-export type StorageClass = 'automatic' | 'static' | 'based' | 'controlled';
+export enum StorageClass {
+    Automatic,
+    Static,
+    Based,
+    Controlled,
+}
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-connected-nonconnected-attributes */
-export type StorageConnection = 'connected' | 'nonconnected';
+export enum StorageConnection {
+    Connected,
+    Nonconnected,
+}
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-assignable-nonassignable-attributes */
-export type Assignability = 'assignable' | 'nonassignable';
+export enum Assignability {
+    Assignable,
+    Nonassignable,
+}
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-defined-position-attributes */
 export type StoragePosition = { //DEFINED variable [POSITION (position)]
     variable: null;//TODO set to "Variable" AstNode
@@ -35,7 +54,24 @@ export type StoragePosition = { //DEFINED variable [POSITION (position)]
 }
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-normal-abnormal-attributes */
-export type Volatility = 'normal' | 'abnormal';
+export enum Volatility {
+    Normal,
+    Abnormal,
+}
+
+export enum DataType {
+    Area,
+    Arithmetic,
+    File,
+    Format,
+    Label,
+    Locator,
+    Entry,
+    Ordinal,
+    Picture,
+    String,
+    Task,
+}
 
 /* TODO for storage attributes:
 Parameter:
@@ -50,9 +86,9 @@ PARAMETER
 function createBaseTypeDescription(type: TypeDescriptionType, { alignment, connection, scope, storage, volatility, position, assignability, variable }: Partial<BaseTypeDescriptionProps>): BaseTypeDescriptionProps {
     if (!alignment) {
         if (type === PictureType || type === StringType) {
-            alignment = { type: 'unaligned' };
+            alignment = { type: AlignmentType.Unaligned };
         } else {
-            alignment = { type: 'aligned', alignment: 1 }; //TODO no documentation of default value for alignment
+            alignment = { type: AlignmentType.Aligned, alignment: 1 }; //TODO no documentation of default value for alignment
         }
     }
 
@@ -62,16 +98,16 @@ function createBaseTypeDescription(type: TypeDescriptionType, { alignment, conne
         }
     }
 
-    assignability ??= 'assignable';
-    connection ??= 'nonconnected';
-    scope ??= { type: 'internal' };
-    volatility ??= 'normal';
+    assignability ??= Assignability.Assignable;
+    connection ??= StorageConnection.Nonconnected;
+    scope ??= { type: ScopeType.Internal };
+    volatility ??= Volatility.Normal;
 
     if (!storage) {
-        if (scope?.type === 'internal') {
-            storage = 'automatic';
+        if (scope?.type === ScopeType.Internal) {
+            storage = StorageClass.Automatic;
         } else {
-            storage = 'static';
+            storage = StorageClass.Static;
         }
     }
 
@@ -88,7 +124,7 @@ function createBaseTypeDescription(type: TypeDescriptionType, { alignment, conne
 }
 
 //--- Area ---
-const AreaType = 'area';
+const AreaType = DataType.Area;
 type AreaType = typeof AreaType;
 
 interface AreaTypeDescriptionProps extends BaseTypeDescriptionProps {
@@ -116,26 +152,38 @@ function isAreaTypeDescription(description: BaseTypeDescription): description is
 }
 
 //--- Arithmetic ---
-const ArithmeticType = 'arithmetic';
+const ArithmeticType = DataType.Arithmetic;
 type ArithmeticType = typeof ArithmeticType;
 
-export type NumberMode = 'real' | 'complex';
-export type Base = 'binary' | 'decimal';
-export type ScaleMode = 'fixed' | 'float';
+export enum NumberMode {
+    Real,
+    Complex
+}
+export enum Base {
+    Binary,
+    Decimal
+}
+export enum ScaleMode {
+    Fixed,
+    Float
+}
 export type Scale = {
     /** Formally known as `p`. */
     totalDigitsCount: number;
 } & ({
-    mode: 'float';
+    mode: ScaleMode.Float;
 } | {
-    mode: 'fixed';
+    mode: ScaleMode.Fixed;
     /**
      * Formally known as `q`.
      * Attention: fractionalDigitsCount <= totalDigitsCount
      */
     fractionalDigitsCount: number;
 });
-export type Sign = 'signed' | 'unsigned';
+export enum Sign {
+    Signed,
+    Unsigned,
+}
 
 interface ArithmeticTypeDescriptionProps {
     mode: NumberMode;
@@ -157,31 +205,31 @@ interface ArithmeticTypeDescription extends BaseTypeDescription, ArithmeticTypeD
 //Float Decimal	16	                6
 //TODO * The -Iongint Compiler option changes the default precision of fixed binary from 15 to 31.
 export const DefaultPrecisions: Record<ScaleMode, Record<Base, number>> = {
-    float: {
-        binary: 23,
-        decimal: 6
+    [ScaleMode.Float]: {
+        [Base.Binary]: 23,
+        [Base.Decimal]: 6
     },
-    fixed: {
-        binary: 15,
-        decimal: 5
+    [ScaleMode.Fixed]: {
+        [Base.Binary]: 15,
+        [Base.Decimal]: 5
     }
 };
 
 export const MaximumPrecisions: Record<ScaleMode, Record<Base, number>> = {
-    float: {
-        binary: 52,
-        decimal: 16
+    [ScaleMode.Float]: {
+        [Base.Binary]: 52,
+        [Base.Decimal]: 16
     },
-    fixed: {
-        binary: 31,
-        decimal: 18
+    [ScaleMode.Fixed]: {
+        [Base.Binary]: 31,
+        [Base.Decimal]: 18
     }
 };
 
-function createArithmeticTypeDescription({ mode = 'real', scale, base: unit = 'decimal', sign = 'signed', ...base }: Partial<ArithmeticTypeDescriptionProps>): ArithmeticTypeDescription {
+function createArithmeticTypeDescription({ mode = NumberMode.Real, scale, base: unit = Base.Decimal, sign = Sign.Signed, ...base }: Partial<ArithmeticTypeDescriptionProps>): ArithmeticTypeDescription {
     scale ??= {
-        mode: 'float',
-        totalDigitsCount: DefaultPrecisions['float'][unit],
+        mode: ScaleMode.Float,
+        totalDigitsCount: DefaultPrecisions[ScaleMode.Float][unit],
     };
     return {
         type: ArithmeticType,
@@ -198,7 +246,7 @@ function isArithmeticTypeDescription(description: BaseTypeDescription): descript
 }
 
 //--- File ---
-const FileType = "file";
+const FileType = DataType.File;
 type FileType = typeof FileType;
 
 interface FileTypeDescriptionProps extends BaseTypeDescriptionProps {
@@ -221,7 +269,7 @@ function isFileTypeDescription(description: BaseTypeDescription): description is
 }
 
 //--- Format ---
-const FormatType = "format";
+const FormatType = DataType.Format;
 type FormatType = typeof FormatType;
 
 interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps {
@@ -244,7 +292,7 @@ function isFormatTypeDescription(description: BaseTypeDescription): description 
 }
 
 //--- Label ---
-const LabelType = "label";
+const LabelType = DataType.Label;
 type LabelType = typeof LabelType;
 
 interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps {
@@ -268,7 +316,7 @@ function isLabelTypeDescription(description: BaseTypeDescription): description i
 }
 
 //--- Locator ---
-const LocatorType = "locator";
+const LocatorType = DataType.Locator;
 type LocatorType = typeof LocatorType;
 
 export type LocatorKind = { type: 'pointer', size: 32 | 64 }
@@ -296,7 +344,7 @@ function isLocatorTypeDescription(description: BaseTypeDescription): description
 }
 
 //--- Entry ---
-const EntryType = "entry";
+const EntryType = DataType.Entry;
 type EntryType = typeof EntryType;
 
 interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps {
@@ -319,7 +367,7 @@ function isEntryTypeDescription(description: BaseTypeDescription): description i
 }
 
 //--- Ordinal ---
-const OrdinalType = "ordinal";
+const OrdinalType = DataType.Ordinal;
 type OrdinalType = typeof OrdinalType;
 
 interface OrdinalTypeDescriptionProps extends BaseTypeDescriptionProps {
@@ -344,7 +392,7 @@ function isOrdinalTypeDescription(description: BaseTypeDescription): description
 }
 
 //--- Picture ---
-const PictureType = "picture";
+const PictureType = DataType.Picture;
 type PictureType = typeof PictureType;
 
 export type PictureWideness = 'picture' | 'widepic';
@@ -359,7 +407,7 @@ interface PictureTypeDescription extends BaseTypeDescription, PictureTypeDescrip
     type: PictureType;
 }
 
-function createPictureTypeDescription({ kind, domain = 'real', ...base }: PartialPartial<PictureTypeDescriptionProps, 'kind'>): PictureTypeDescription {
+function createPictureTypeDescription({ kind, domain = NumberMode.Real, ...base }: PartialPartial<PictureTypeDescriptionProps, 'kind'>): PictureTypeDescription {
     return {
         type: PictureType,
         ...createBaseTypeDescription(PictureType, base),
@@ -373,11 +421,23 @@ function isPictureTypeDescription(description: BaseTypeDescription): description
 }
 
 //--- String ---
-const StringType = "string";
+const StringType = DataType.String;
 type StringType = typeof StringType;
 
-export type StringKind = 'bit' | 'character' | 'graphic' | 'uchar' | 'widechar';
-export type StringFormat = 'varying' | 'varying4' | 'varyingz' | 'nonvarying';
+export enum StringKind {
+    Bit,
+    Character,
+    Graphic,
+    UChar,
+    WideChar
+}
+
+export enum StringFormat {
+    Varying,
+    Varying4,
+    VaryingZ,
+    NonVarying
+}
 
 interface StringTypeDescriptionProps extends BaseTypeDescriptionProps {
     kind: StringKind;
@@ -404,7 +464,7 @@ function isStringTypeDescription(description: BaseTypeDescription): description 
 }
 
 //--- Task ---
-const TaskType = "task";
+const TaskType = DataType.Task;
 type TaskType = typeof TaskType;
 
 interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps {
@@ -492,9 +552,9 @@ export namespace TypesDescriptions {
 
     /** fake type */
     export const Boolean = createStringTypeDescription({
-        kind: 'bit',
-        format: "nonvarying",
+        kind: StringKind.Bit,
+        format: StringFormat.NonVarying,
         length: 1
     });
-    export const isBoolean = (type: TypeDescription): type is StringTypeDescription => isString(type) && type.kind === 'bit' && type.length === 1;
+    export const isBoolean = (type: TypeDescription): type is StringTypeDescription => isString(type) && type.kind === StringKind.Bit && type.length === 1;
 }
