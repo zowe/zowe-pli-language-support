@@ -27,6 +27,8 @@ import { IBM2615I_do_loops_execute_once } from "./messages/warning-severity/IBM2
 import * as PLICodes from "./messages/pli-codes";
 import { ValidationAcceptor, ValidationChecks, Validator } from "./validator";
 import { IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att } from "./messages/error-severity/IBM2412I-IBM2410I-IBM2409I-handle-return-stmt-and-returns-att";
+import { TypeCheck } from "./type-check-validator";
+import { DefaultPliTypeInferer } from "../typesystem/infer";
 import { retrieveProcedureFromLabelPrefix } from "./utils";
 
 /**
@@ -38,6 +40,7 @@ import { retrieveProcedureFromLabelPrefix } from "./utils";
  */
 export function registerPliValidationChecks(unit: CompilationUnit): Validator {
   const validator = new PliValidator(unit);
+  const typeCheck = new TypeCheck(new DefaultPliTypeInferer());
   validator.addHandler({
     // DimensionBound: [IBM1295IE_sole_bound_specified],
     PliProgram: [validator.checkPliProgram],
@@ -60,6 +63,7 @@ export function registerPliValidationChecks(unit: CompilationUnit): Validator {
     DoStatement: [IBM2615I_do_loops_execute_once],
     LeaveStatement: [IBM1219I_leave_exits_noniterative_do],
     SelectStatement: [IBM1059I_select_without_otherwise],
+    IfStatement: [typeCheck.checkIfStatementConditionIsBoolean.bind(typeCheck)],
     // TODO @wagner-laranjeiras -> When adding ReturnStatement to this list, make sure to include comment about IBM2412/10/09I.
   });
 

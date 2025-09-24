@@ -1,6 +1,6 @@
 import * as ast from "../syntax-tree/ast";
 import { TypesDescriptions } from "./descriptions";
-import { ArithmeticOperator, createArithmeticOperationTable } from "./arithmetic-operations";
+import { ArithmeticOperator, CompilerOptionRules, createArithmeticOperationTable } from "./arithmetic-operations";
 import { assertUnreachable } from "../utils/common";
 
 export interface PliTypeInferer {
@@ -11,84 +11,99 @@ export class DefaultPliTypeInferer implements PliTypeInferer {
     private inferArithmeticOperation: ({ op, lhs, rhs }: { op: ArithmeticOperator; lhs: TypesDescriptions.Arithmetic; rhs: TypesDescriptions.Arithmetic; }) => TypesDescriptions.Any | undefined;
     constructor() {
         /** @todo pass in the compiler flag RULES(X), where X = 'ans' or 'ibm' */
-        this.inferArithmeticOperation = createArithmeticOperationTable('ans');
+        this.inferArithmeticOperation = createArithmeticOperationTable(CompilerOptionRules.ANS);
     }
+
     inferType(node: ast.Expression): TypesDescriptions.Any | undefined {
         switch (node.kind) {
             case ast.SyntaxKind.BinaryExpression:
-                switch (node.op) {
-                    case "+":
-                    case "-":
-                    case "*":
-                    case "/":
-                    case "**": {
-                        //@see https://www.ibm.com/docs/en/epfz/6.1?topic=operations-results-arithmetic
-                        const op = node.op;
-                        const lhs = this.inferType(node.left!);
-                        const rhs = this.inferType(node.right!);
-                        if (!lhs || !rhs || !TypesDescriptions.isArithmetic(lhs) || !TypesDescriptions.isArithmetic(rhs)) {
-                            /** @todo also take care of this branch */
-                            return undefined;
-                        }
-                        return this.inferArithmeticOperation({ op, lhs, rhs })
-                    }
-                    case "<":
-                    case "<=":
-                    case "<>":
-                    case "=":
-                    case ">":
-                    case ">=": {
-                        return TypesDescriptions.Boolean;
-                    }
-                    case "^":
-                    case "&":
-                    case "^=":
-                    case "|":
-                    case "||":
-                    case "^<":
-                    case "^>":
-                    case null:
-                        /** @todo */
-                        return undefined;
-                    default:
-                        assertUnreachable(node)
-                }
+                return this.inferBinaryExpression(node);
             case ast.SyntaxKind.UnaryExpression:
-                switch (node.op) {
-                    case "+":
-                    case "-":
-                        /** @todo what about negating vs. sign of the type */
-                        return this.inferType(node.expr!);
-                    case "^":
-                    case null:
-                        /** @todo */
-                        return undefined;
-                    default:
-                        assertUnreachable(node)
-                }
+                return this.inferUnaryExpression(node);
             case ast.SyntaxKind.Literal:
-                if (!node.value) {
-                    /** @todo */
-                    return undefined;
-                } else if (node.value.kind === ast.SyntaxKind.StringLiteral) {
-                    /** @todo */
-                    return undefined;
-                } else if (node.value.kind === ast.SyntaxKind.NumberLiteral) {
-                    /** @todo */
-                    return undefined;
-                } else {
-                    assertUnreachable(node.value);
-                }
-            case ast.SyntaxKind.LocatorCall: {
-                //node.previous -> node.element
-                /** @todo */
-                return undefined;
-            }
-            case ast.SyntaxKind.Parenthesis: {
-                return this.inferType(node.value!);
-            }
+                return this.inferLiteral(node);
+            case ast.SyntaxKind.LocatorCall:
+                return this.inferLocatorCall(node);
+            case ast.SyntaxKind.Parenthesis:
+                return node.value ? this.inferType(node.value!) : undefined;
             default:
                 assertUnreachable(node);
+        }
+    }
+
+    private inferLocatorCall(node: ast.LocatorCall) {
+        /** @todo */
+        //node.previous -> node.element
+        return undefined;
+    }
+
+    private inferLiteral(node: ast.Literal) {
+        if (!node.value) {
+            /** @todo */
+            return undefined;
+        } else if (node.value.kind === ast.SyntaxKind.StringLiteral) {
+            /** @todo */
+            return undefined;
+        } else if (node.value.kind === ast.SyntaxKind.NumberLiteral) {
+            /** @todo */
+            return undefined;
+        } else {
+            assertUnreachable(node.value);
+        }
+    }
+
+    private inferUnaryExpression(node: ast.UnaryExpression) {
+        switch (node.op) {
+            case "+":
+            case "-":
+                /** @todo what about negating vs. sign of the type */
+                return this.inferType(node.expr!);
+            case "^":
+            case null:
+                /** @todo */
+                return undefined;
+            default:
+                assertUnreachable(node.op);
+        }
+    }
+
+    private inferBinaryExpression(node: ast.BinaryExpression): TypesDescriptions.Any | undefined {
+        switch (node.op) {
+            case "+":
+            case "-":
+            case "*":
+            case "/":
+            case "**": {
+                //@see https://www.ibm.com/docs/en/epfz/6.1?topic=operations-results-arithmetic
+                const op = node.op;
+                const lhs = this.inferType(node.left!);
+                const rhs = this.inferType(node.right!);
+                if (!lhs || !rhs || !TypesDescriptions.isArithmetic(lhs) || !TypesDescriptions.isArithmetic(rhs)) {
+                    /** @todo also take care of this branch */
+                    return undefined;
+                }
+                return this.inferArithmeticOperation({ op, lhs, rhs })
+            }
+            case "<":
+            case "<=":
+            case "<>":
+            case "=":
+            case ">":
+            case ">=": {
+                return TypesDescriptions.Boolean;
+            }
+            case "^":
+            case "&":
+            case "^=":
+            case "|":
+            case "||":
+            case "^<":
+            case "^>":
+            case null:
+                /** @todo */
+                return undefined;
+            default:
+                assertUnreachable(node.op);
         }
     }
 }
