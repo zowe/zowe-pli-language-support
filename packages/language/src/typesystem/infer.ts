@@ -4,7 +4,8 @@ import { ArithmeticOperator, CompilerOptionRules, createArithmeticOperationTable
 import { assertUnreachable } from "../utils/common";
 
 export interface PliTypeInferer {
-    inferType(node: ast.Expression): TypesDescriptions.Any | undefined;
+    inferExpressionType(node: ast.Expression): TypesDescriptions.Any | undefined;
+    inferDeclarationType(node: ast.DeclaredItem): TypesDescriptions.Any | undefined;
 }
 
 export class DefaultPliTypeInferer implements PliTypeInferer {
@@ -13,8 +14,13 @@ export class DefaultPliTypeInferer implements PliTypeInferer {
         /** @todo pass in the compiler flag RULES(X), where X = 'ans' or 'ibm' */
         this.inferArithmeticOperation = createArithmeticOperationTable(CompilerOptionRules.ANS);
     }
+    
+    inferDeclarationType(node: ast.DeclaredItem): TypesDescriptions.Any | undefined {
+        node.attributes
+        return undefined;
+    }
 
-    inferType(node: ast.Expression): TypesDescriptions.Any | undefined {
+    inferExpressionType(node: ast.Expression): TypesDescriptions.Any | undefined {
         switch (node.kind) {
             case ast.SyntaxKind.BinaryExpression:
                 return this.inferBinaryExpression(node);
@@ -25,7 +31,7 @@ export class DefaultPliTypeInferer implements PliTypeInferer {
             case ast.SyntaxKind.LocatorCall:
                 return this.inferLocatorCall(node);
             case ast.SyntaxKind.Parenthesis:
-                return node.value ? this.inferType(node.value!) : undefined;
+                return node.value ? this.inferExpressionType(node.value!) : undefined;
             default:
                 assertUnreachable(node);
         }
@@ -57,7 +63,7 @@ export class DefaultPliTypeInferer implements PliTypeInferer {
             case "+":
             case "-":
                 /** @todo what about negating vs. sign of the type */
-                return this.inferType(node.expr!);
+                return this.inferExpressionType(node.expr!);
             case "^":
             case null:
                 /** @todo */
@@ -76,8 +82,8 @@ export class DefaultPliTypeInferer implements PliTypeInferer {
             case "**": {
                 //@see https://www.ibm.com/docs/en/epfz/6.1?topic=operations-results-arithmetic
                 const op = node.op;
-                const lhs = this.inferType(node.left!);
-                const rhs = this.inferType(node.right!);
+                const lhs = this.inferExpressionType(node.left!);
+                const rhs = this.inferExpressionType(node.right!);
                 if (!lhs || !rhs || !TypesDescriptions.isArithmetic(lhs) || !TypesDescriptions.isArithmetic(rhs)) {
                     /** @todo also take care of this branch */
                     return undefined;

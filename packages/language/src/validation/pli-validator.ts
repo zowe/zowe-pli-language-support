@@ -379,6 +379,10 @@ export class PliValidator implements Validator {
   }
 
   private knownBuiltins = new Set([
+    //TODO is this the correct place???
+    "TRUE",
+    "FALSE",
+
     "SQLCA",
     "SQLDA",
     "SQLDA2",

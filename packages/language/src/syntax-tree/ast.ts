@@ -1025,6 +1025,7 @@ export interface CompilerOptionText extends AstNode {
 export interface ComputationDataAttribute extends AstNode {
   kind: SyntaxKind.ComputationDataAttribute;
   type: DataAttributeType | null;
+  typeToken: Token | null;
   dimensions: Dimensions | null;
 }
 export function createComputationDataAttribute(): ComputationDataAttribute {
@@ -1032,6 +1033,7 @@ export function createComputationDataAttribute(): ComputationDataAttribute {
     kind: SyntaxKind.ComputationDataAttribute,
     container: null,
     type: null,
+    typeToken: null,
     dimensions: null,
   };
 }

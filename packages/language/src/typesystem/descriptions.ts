@@ -3,6 +3,137 @@
 /** Makes T partial except for properties P, they are required */
 export type PartialPartial<T, P extends keyof T> = Partial<Omit<T, P>> & Required<Omit<T, Exclude<keyof T, P>>>;
 
+export enum DataType {
+    Area,
+    Arithmetic,
+    File,
+    Format,
+    Label,
+    Locator,
+    Entry,
+    Ordinal,
+    Picture,
+    String,
+    Task,
+}
+
+export const DataTypes: DataType[] = [
+    DataType.Area,
+    DataType.Arithmetic,
+    DataType.File,
+    DataType.Format,
+    DataType.Label,
+    DataType.Locator,
+    DataType.Entry,
+    DataType.Ordinal,
+    DataType.Picture,
+    DataType.String,
+    DataType.Task,
+];
+
+export enum AttributeKind {
+    Endianess,
+    DataType,
+    Alignment,
+    Scope,
+    Storage,
+    Volatility,
+    Position,
+    Assignability,
+    Connection,
+    Variable,
+    ScaleMode,
+    Base,
+    Sign,
+    NumberMode,
+    AreaSize,
+    LocatorKind,
+    OrdinalNames,
+    PictureKind,
+    StringKind,
+    StringFormat,
+    StringLength,
+}
+
+export const AttributeKinds: AttributeKind[] = [
+    AttributeKind.Alignment,
+    AttributeKind.Scope,
+    AttributeKind.Storage,
+    AttributeKind.Volatility,
+    AttributeKind.Position,
+    AttributeKind.Assignability,
+    AttributeKind.Connection,
+    AttributeKind.Variable,
+    AttributeKind.ScaleMode,
+    AttributeKind.Base,
+    AttributeKind.Sign,
+    AttributeKind.NumberMode,
+    AttributeKind.AreaSize,
+    AttributeKind.LocatorKind,
+    AttributeKind.OrdinalNames,
+    AttributeKind.PictureKind,
+    AttributeKind.StringKind,
+    AttributeKind.StringFormat,
+    AttributeKind.StringLength,
+];
+
+export type AttributeTypes = {
+    [AttributeKind.Endianess]: Endianess;
+    [AttributeKind.DataType]: DataType;
+    [AttributeKind.Alignment]: Alignment;
+    [AttributeKind.Scope]: Scope;
+    [AttributeKind.Storage]: StorageClass;
+    [AttributeKind.Volatility]: Volatility;
+    [AttributeKind.Position]: StoragePosition;
+    [AttributeKind.Assignability]: Assignability;
+    [AttributeKind.Connection]: StorageConnection;
+    [AttributeKind.Variable]: boolean;
+    [AttributeKind.ScaleMode]: ScaleMode;
+    [AttributeKind.Base]: Base;
+    [AttributeKind.Sign]: Sign;
+    [AttributeKind.NumberMode]: NumberMode;
+    [AttributeKind.AreaSize]: number;
+    [AttributeKind.LocatorKind]: LocatorKind;
+    [AttributeKind.OrdinalNames]: string[];
+    [AttributeKind.PictureKind]: PictureWideness;
+    [AttributeKind.StringKind]: StringKind;
+    [AttributeKind.StringFormat]: StringFormat;
+    [AttributeKind.StringLength]: number;
+};
+
+export const CommonAttributeKinds: AttributeKind[] = [
+    AttributeKind.DataType,
+    AttributeKind.Alignment,
+    AttributeKind.Scope,
+    AttributeKind.Storage,
+    AttributeKind.Volatility,
+    AttributeKind.Position,
+    AttributeKind.Assignability,
+    AttributeKind.Connection,
+    AttributeKind.Variable,
+];
+
+export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
+    [DataType.Area]: [...CommonAttributeKinds, AttributeKind.AreaSize, AttributeKind.Endianess],
+    [DataType.Arithmetic]: [...CommonAttributeKinds, AttributeKind.ScaleMode, AttributeKind.Base, AttributeKind.Sign, AttributeKind.NumberMode, AttributeKind.Endianess],
+    [DataType.File]: [...CommonAttributeKinds],
+    [DataType.Format]: [...CommonAttributeKinds],
+    [DataType.Label]: [...CommonAttributeKinds],
+    [DataType.Locator]: [...CommonAttributeKinds, AttributeKind.LocatorKind],
+    [DataType.Entry]: [...CommonAttributeKinds],
+    [DataType.Ordinal]: [...CommonAttributeKinds, AttributeKind.OrdinalNames],
+    [DataType.Picture]: [...CommonAttributeKinds, AttributeKind.PictureKind, AttributeKind.NumberMode],
+    [DataType.String]: [...CommonAttributeKinds, AttributeKind.StringKind, AttributeKind.StringFormat, AttributeKind.StringLength],
+    [DataType.Task]: [...CommonAttributeKinds],
+};
+
+export const DataTypesByAttributeKind = Object.entries(AttributeKindsByDataType).reduce((acc, [type, properties]) => {
+    for (const property of properties) {
+        (acc[property] ??= []).push(Number(type) as DataType);
+    }
+    return acc;
+}, {} as Record<AttributeKind, DataType[]>);
+
 interface BaseTypeDescriptionProps {
     alignment: Alignment;
     scope: Scope;
@@ -57,20 +188,6 @@ export type StoragePosition = { //DEFINED variable [POSITION (position)]
 export enum Volatility {
     Normal,
     Abnormal,
-}
-
-export enum DataType {
-    Area,
-    Arithmetic,
-    File,
-    Format,
-    Label,
-    Locator,
-    Entry,
-    Ordinal,
-    Picture,
-    String,
-    Task,
 }
 
 /* TODO for storage attributes:
@@ -155,6 +272,10 @@ function isAreaTypeDescription(description: BaseTypeDescription): description is
 const ArithmeticType = DataType.Arithmetic;
 type ArithmeticType = typeof ArithmeticType;
 
+export enum Endianess {
+    Big,
+    Little
+}
 export enum NumberMode {
     Real,
     Complex
@@ -190,6 +311,7 @@ interface ArithmeticTypeDescriptionProps {
     scale: Scale;
     base: Base;
     sign: Sign;
+    endianness: Endianess;
 }
 
 
@@ -226,7 +348,8 @@ export const MaximumPrecisions: Record<ScaleMode, Record<Base, number>> = {
     }
 };
 
-function createArithmeticTypeDescription({ mode = NumberMode.Real, scale, base: unit = Base.Decimal, sign = Sign.Signed, ...base }: Partial<ArithmeticTypeDescriptionProps>): ArithmeticTypeDescription {
+//TODO endianness default value depends on platform (BIGENDIAN except on Intel where the default is LITTLEENDIAN)
+function createArithmeticTypeDescription({ mode = NumberMode.Real, scale, base: unit = Base.Decimal, sign = Sign.Signed, endianness = Endianess.Big, ...base }: Partial<ArithmeticTypeDescriptionProps>): ArithmeticTypeDescription {
     scale ??= {
         mode: ScaleMode.Float,
         totalDigitsCount: DefaultPrecisions[ScaleMode.Float][unit],
@@ -237,7 +360,8 @@ function createArithmeticTypeDescription({ mode = NumberMode.Real, scale, base: 
         mode,
         scale,
         base: unit,
-        sign
+        sign,
+        endianness
     };
 }
 

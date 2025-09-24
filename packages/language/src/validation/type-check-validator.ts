@@ -12,7 +12,7 @@ export class TypeCheck {
         }
     }
     private isExpressionBoolean(node: ast.Expression): boolean {
-        const inferredType = this.inferer.inferType(node);
+        const inferredType = this.inferer.inferExpressionType(node);
         if(!inferredType) {
             return false;
         }
