@@ -4,15 +4,7 @@ import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
 import { Error } from "../validation/messages/pli-codes";
-import { DataType, DataTypes, DataTypesByAttributeKind, AttributeKinds, AttributeTypes, TypesDescriptions, AttributeKind, ScaleMode, Volatility, AlignmentType, Assignability, StorageClass, ScopeType, NumberMode, Base, StorageConnection, StringKind, StringFormat, Endianess, Sign } from "./descriptions";
-
-type AttributeWitnesses = {
-    [K in keyof AttributeTypes]: {
-        value: AttributeTypes[K];
-        witness: ast.DeclarationAttribute;
-        image: string;
-    } | null;
-};
+import { DataType, DataTypes, DataTypesByAttributeKind, AttributeKinds, AttributeTypes, TypesDescriptions, AttributeKind, ScaleMode, Volatility, AlignmentType, Assignability, StorageClass, ScopeType, NumberMode, Base, StorageConnection, StringKind, StringFormat, Endianess, Sign, AttributeWitnesses } from "./descriptions";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
     const obj: Partial<AttributeWitnesses> = {};
@@ -22,12 +14,14 @@ function createEmptyAttributeWitnesses(): AttributeWitnesses {
     return obj as AttributeWitnesses;
 }
 
+type BuiltType = {
+    type: TypesDescriptions.Any | null;
+    diagnostics: Diagnostic[];
+};
+
 export interface TypeBuilder {
     addAttribute(attribute: ast.DeclarationAttribute): void;
-    build(): {
-        type: TypesDescriptions.Any;
-        diagnostics: Diagnostic[];
-    };
+    build(): BuiltType;
 }
 
 export class DefaultTypeBuilder implements TypeBuilder {
@@ -67,14 +61,16 @@ export class DefaultTypeBuilder implements TypeBuilder {
         }
     }
     handleDefaultAttribute(attribute: ast.ComputationDataAttribute) {
-        const token: Token = undefined!;
+        const token = attribute.typeToken!;
         assertType<ast.DefaultAttribute>(attribute.type);
         switch (attribute.type) {
             case "FIXED":
-                this.addAttributeWitness(AttributeKind.ScaleMode, ScaleMode.Fixed, attribute, token);
+                //TODO check digits count
+                this.addAttributeWitness(AttributeKind.Scale, { mode: ScaleMode.Fixed, totalDigitsCount: 5, fractionalDigitsCount: 0 }, attribute, token);
                 break;
             case "FLOAT":
-                this.addAttributeWitness(AttributeKind.ScaleMode, ScaleMode.Float, attribute, token);
+                //TODO check digits count
+                this.addAttributeWitness(AttributeKind.Scale, { mode: ScaleMode.Float, totalDigitsCount: 51 }, attribute, token);
                 break;
             case "CHAR":
             case "CHARACTER":
@@ -252,8 +248,16 @@ export class DefaultTypeBuilder implements TypeBuilder {
         }
     }
     build() {
+        if (this.possibleDataTypes.size !== 1) {
+            //TODO add diagnostic about missing or conflicting type attributes
+            return {
+                type: null,
+                diagnostics: this.diagnostics,
+            };
+        }
+        const dataType = Array.from(this.possibleDataTypes)[0];
         return {
-            type: undefined!, //TypesDescriptions.createType({,
+            type: TypesDescriptions.create(dataType, this.attributeWitnesses),
             diagnostics: this.diagnostics,
         };
     }
@@ -267,7 +271,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
                 this.diagnostics.push(diagnosticFromCode(Error.IBM1309I, token, token.image));
             }
             let possibleDatatypes: Set<DataType>;
-            if(kind === AttributeKind.DataType){
+            if (kind === AttributeKind.DataType) {
                 possibleDatatypes = new Set([value as DataType]);
             } else {
                 possibleDatatypes = new Set(DataTypesByAttributeKind[kind]);

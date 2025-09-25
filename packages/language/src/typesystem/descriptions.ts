@@ -1,3 +1,6 @@
+import * as ast from "../syntax-tree/ast";
+import { assertUnreachable } from "../utils/common";
+
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=attributes-nondata#ndatts__vari */
 
 /** Makes T partial except for properties P, they are required */
@@ -42,7 +45,7 @@ export enum AttributeKind {
     Assignability,
     Connection,
     Variable,
-    ScaleMode,
+    Scale,
     Base,
     Sign,
     NumberMode,
@@ -64,7 +67,7 @@ export const AttributeKinds: AttributeKind[] = [
     AttributeKind.Assignability,
     AttributeKind.Connection,
     AttributeKind.Variable,
-    AttributeKind.ScaleMode,
+    AttributeKind.Scale,
     AttributeKind.Base,
     AttributeKind.Sign,
     AttributeKind.NumberMode,
@@ -88,7 +91,7 @@ export type AttributeTypes = {
     [AttributeKind.Assignability]: Assignability;
     [AttributeKind.Connection]: StorageConnection;
     [AttributeKind.Variable]: boolean;
-    [AttributeKind.ScaleMode]: ScaleMode;
+    [AttributeKind.Scale]: Scale;
     [AttributeKind.Base]: Base;
     [AttributeKind.Sign]: Sign;
     [AttributeKind.NumberMode]: NumberMode;
@@ -115,7 +118,7 @@ export const CommonAttributeKinds: AttributeKind[] = [
 
 export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
     [DataType.Area]: [...CommonAttributeKinds, AttributeKind.AreaSize, AttributeKind.Endianess],
-    [DataType.Arithmetic]: [...CommonAttributeKinds, AttributeKind.ScaleMode, AttributeKind.Base, AttributeKind.Sign, AttributeKind.NumberMode, AttributeKind.Endianess],
+    [DataType.Arithmetic]: [...CommonAttributeKinds, AttributeKind.Scale, AttributeKind.Base, AttributeKind.Sign, AttributeKind.NumberMode, AttributeKind.Endianess],
     [DataType.File]: [...CommonAttributeKinds],
     [DataType.Format]: [...CommonAttributeKinds],
     [DataType.Label]: [...CommonAttributeKinds],
@@ -125,6 +128,14 @@ export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
     [DataType.Picture]: [...CommonAttributeKinds, AttributeKind.PictureKind, AttributeKind.NumberMode],
     [DataType.String]: [...CommonAttributeKinds, AttributeKind.StringKind, AttributeKind.StringFormat, AttributeKind.StringLength],
     [DataType.Task]: [...CommonAttributeKinds],
+};
+
+export type AttributeWitnesses = {
+    [K in keyof AttributeTypes]: {
+        value: AttributeTypes[K];
+        witness: ast.DeclarationAttribute;
+        image: string;
+    } | null;
 };
 
 export const DataTypesByAttributeKind = Object.entries(AttributeKindsByDataType).reduce((acc, [type, properties]) => {
@@ -200,7 +211,7 @@ PARAMETER
 [CALL]]
 */
 
-function createBaseTypeDescription(type: TypeDescriptionType, { alignment, connection, scope, storage, volatility, position, assignability, variable }: Partial<BaseTypeDescriptionProps>): BaseTypeDescriptionProps {
+function createBaseTypeDescription(type: TypesDescriptions.TypeDescriptionType, { alignment, connection, scope, storage, volatility, position, assignability, variable }: Partial<BaseTypeDescriptionProps>): BaseTypeDescriptionProps {
     if (!alignment) {
         if (type === PictureType || type === StringType) {
             alignment = { type: AlignmentType.Unaligned };
@@ -610,25 +621,9 @@ function isTaskTypeDescription(description: BaseTypeDescription): description is
     return description.type === TaskType;
 }
 
-//--- all together ---
-type TypeDescription =
-    | AreaTypeDescription
-    | ArithmeticTypeDescription
-    | FileTypeDescription
-    | FormatTypeDescription
-    | LabelTypeDescription
-    | LocatorTypeDescription
-    | EntryTypeDescription
-    | OrdinalTypeDescription
-    | PictureTypeDescription
-    | StringTypeDescription
-    | TaskTypeDescription
-    ;
-
-type TypeDescriptionType = TypeDescription['type'];
-
 export namespace TypesDescriptions {
-    export type Any = TypeDescription;
+    export type Any = Area | Arithmetic | File | Format | Label | Locator | Entry | Ordinal | Picture | String | Task;
+    export type TypeDescriptionType = Any['type'];
 
     export const Area = createAreaTypeDescription;
     export type Area = AreaTypeDescription;
@@ -680,5 +675,69 @@ export namespace TypesDescriptions {
         format: StringFormat.NonVarying,
         length: 1
     });
-    export const isBoolean = (type: TypeDescription): type is StringTypeDescription => isString(type) && type.kind === StringKind.Bit && type.length === 1;
+    export const isBoolean = (type: TypesDescriptions.Any): type is StringTypeDescription => isString(type) && type.kind === StringKind.Bit && type.length === 1;
+
+    export function create(type: DataType, attributes: AttributeWitnesses): Any {
+        const common = {
+            alignment: attributes[AttributeKind.Alignment]?.value,
+            scope: attributes[AttributeKind.Scope]?.value,
+            storage: attributes[AttributeKind.Storage]?.value,
+            volatility: attributes[AttributeKind.Volatility]?.value,
+            position: attributes[AttributeKind.Position]?.value,
+            assignability: attributes[AttributeKind.Assignability]?.value,
+            connection: attributes[AttributeKind.Connection]?.value,
+            variable: attributes[AttributeKind.Variable]?.value,
+        };
+        switch (type) {
+            case DataType.Area:
+                return TypesDescriptions.Area({
+                    ...common,
+                    size: attributes[AttributeKind.AreaSize]?.value,
+                });
+            case DataType.Arithmetic:
+                return TypesDescriptions.Arithmetic({
+                    ...common,
+                    scale: attributes[AttributeKind.Scale]?.value,
+                    base: attributes[AttributeKind.Base]?.value,
+                    sign: attributes[AttributeKind.Sign]?.value,
+                    mode: attributes[AttributeKind.NumberMode]?.value,
+                    endianness: attributes[AttributeKind.Endianess]?.value,
+                });
+            case DataType.File:
+                return TypesDescriptions.File(common);
+            case DataType.Format:
+                return TypesDescriptions.Format(common);
+            case DataType.Label:
+                return TypesDescriptions.Label(common);
+            case DataType.Locator:
+                return TypesDescriptions.Locator({
+                    ...common,
+                    kind: attributes[AttributeKind.LocatorKind]!.value,
+                });
+            case DataType.Entry:
+                return TypesDescriptions.Entry(common);
+            case DataType.Ordinal:
+                return TypesDescriptions.Ordinal({
+                    ...common,
+                    names: attributes[AttributeKind.OrdinalNames]!.value,
+                });
+            case DataType.Picture:
+                return TypesDescriptions.Picture({
+                    ...common,
+                    kind: attributes[AttributeKind.PictureKind]!.value,
+                    domain: attributes[AttributeKind.NumberMode]?.value,
+                });
+            case DataType.String:
+                return TypesDescriptions.String({
+                    ...common,
+                    kind: attributes[AttributeKind.StringKind]!.value,
+                    format: attributes[AttributeKind.StringFormat]!.value,
+                    length: attributes[AttributeKind.StringLength]!.value,
+                });
+            case DataType.Task:
+                return TypesDescriptions.Task(common);
+            default:
+                assertUnreachable(type);
+        }
+    }
 }
