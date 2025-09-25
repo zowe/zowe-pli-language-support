@@ -15,5 +15,5 @@
 //// DCL ANYTHING FIXED <|1:FLOAT|>;
 
 verify.expectDiagnosticsAt(1, {
-    code: code.Error.IBM2462I.fullCode,
+  code: code.Error.IBM2462I.fullCode,
 });
