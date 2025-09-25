@@ -29,6 +29,7 @@ import {
   FloatFormat,
   BufferMode,
   AccessMode,
+  FileUsage,
 } from "./descriptions";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
@@ -503,6 +504,24 @@ export class DefaultTypeBuilder implements TypeBuilder {
         );
         break;
       }
+      case "RECORD": {
+        this.addAttributeWitness(
+          AttributeKind.FileUsage,
+          FileUsage.Record,
+          attribute,
+          token,
+        );
+        break;
+      }
+      case "STREAM": {
+        this.addAttributeWitness(
+          AttributeKind.FileUsage,
+          FileUsage.Stream,
+          attribute,
+          token,
+        );
+        break;
+      }
       case "BACKWARDS":
       case "EXCLUSIVE":
       case "BYADDR":
@@ -538,11 +557,9 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "POSITION":
       case "PRINT":
       case "RANGE":
-      case "RECORD":
       case "RESCAN":
       case "RESERVED":
       case "SCAN":
-      case "STREAM":
       case "STRUCTURE":
       case "TRANSIENT":
       case "UNAL":
