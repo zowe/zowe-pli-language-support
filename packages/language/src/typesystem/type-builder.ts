@@ -26,6 +26,9 @@ import {
   Endianess,
   Sign,
   AttributeWitnesses,
+  FloatFormat,
+  BufferMode,
+  AccessMode,
 } from "./descriptions";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
@@ -87,30 +90,72 @@ export class DefaultTypeBuilder implements TypeBuilder {
     const token = attribute.typeToken!;
     assertType<ast.DefaultAttribute>(attribute.type);
     switch (attribute.type) {
-      case "FIXED":
-        //TODO check digits count
+      case "PREC":
+      case "PRECISION": {
+        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
+        if (precision) {
+          if (precision.length === 1) {
+            this.addAttributeWitness(
+              AttributeKind.Scale,
+              {
+                mode: ScaleMode.Float,
+                totalDigitsCount: precision[0],
+              },
+              attribute,
+              token,
+            );
+          } else if (precision.length >= 2) {
+            this.addAttributeWitness(
+              AttributeKind.Scale,
+              {
+                mode: ScaleMode.Fixed,
+                totalDigitsCount: precision[0],
+                fractionalDigitsCount: precision[1],
+              },
+              attribute,
+              token,
+            );
+          }
+        }
+        break;
+      }
+      case "FIXED": {
+        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
         this.addAttributeWitness(
           AttributeKind.Scale,
           {
             mode: ScaleMode.Fixed,
-            totalDigitsCount: 5,
-            fractionalDigitsCount: 0,
+            //TODO verify default precision for fixed
+            totalDigitsCount: precision ? precision[0] : 5,
+            fractionalDigitsCount: precision && precision.length > 1 ? precision[1] : 0,
           },
           attribute,
           token,
         );
         break;
-      case "FLOAT":
-        //TODO check digits count
+      }
+      case "FLOAT": {
+        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
         this.addAttributeWitness(
           AttributeKind.Scale,
-          { mode: ScaleMode.Float, totalDigitsCount: 51 },
+          // TODO verify default precision for float
+          { mode: ScaleMode.Float, totalDigitsCount: precision ? precision[0] : 51 },
           attribute,
           token,
         );
         break;
+      }
       case "CHAR":
-      case "CHARACTER":
+      case "CHARACTER": {
+        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
+        if (precision) {
+          this.addAttributeWitness(
+            AttributeKind.StringLength,
+            precision[0],
+            attribute,
+            token,
+          );
+        }
         this.addAttributeWitness(
           AttributeKind.DataType,
           DataType.String,
@@ -124,7 +169,17 @@ export class DefaultTypeBuilder implements TypeBuilder {
           token,
         );
         break;
-      case "BIT":
+      }
+      case "BIT": {
+        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
+        if (precision) {
+          this.addAttributeWitness(
+            AttributeKind.StringLength,
+            precision[0],
+            attribute,
+            token,
+          );
+        }
         this.addAttributeWitness(
           AttributeKind.StringKind,
           StringKind.Bit,
@@ -132,6 +187,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
           token,
         );
         break;
+      }
       case "ABNORMAL":
         this.addAttributeWitness(
           AttributeKind.Volatility,
@@ -362,8 +418,92 @@ export class DefaultTypeBuilder implements TypeBuilder {
           token,
         );
         break;
+      case "PTR":
+      case "POINTER": {
+        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
+        if (precision && precision.length === 1) {
+          const size = precision[0];
+          if(size !== 32 && size !== 64) {
+            //TODO report error about invalid pointer size
+          } else {
+            this.addAttributeWitness(
+              AttributeKind.LocatorKind,
+              { type: "pointer", size },
+              attribute,
+              token,
+            );
+          }
+        }
+        break;
+      }
+      case "OFFSET": {
+        //TODO set areaVariable if any
+        this.addAttributeWitness(
+          AttributeKind.LocatorKind,
+          { type: "offset", areaVariable: null },
+          attribute,
+          token,
+        );
+        break;
+      }
+      case "HEXADEC": {
+        this.addAttributeWitness(
+          AttributeKind.FloatFormat,
+          FloatFormat.HexaDec,
+          attribute,
+          token,
+        );
+        break;
+      }
+      case "IEEE": {
+        this.addAttributeWitness(
+          AttributeKind.FloatFormat,
+          FloatFormat.IEEE,
+          attribute,
+          token,
+        );
+        break;
+      }
+      case "UNBUF":
+      case "UNBUFFERED": {
+        this.addAttributeWitness(
+          AttributeKind.BufferMode,
+          BufferMode.Unbuffered,
+          attribute,
+          token,
+        );
+        break;
+      }
+      case "BUF":
+      case "BUFFERED": {
+        this.addAttributeWitness(
+          AttributeKind.BufferMode,
+          BufferMode.Buffered,
+          attribute,
+          token,
+        );
+        break;
+      }
+      case "SEQL":
+      case "SEQUENTIAL": {
+        this.addAttributeWitness(
+          AttributeKind.AccessMode,
+          AccessMode.Sequential,
+          attribute,
+          token,
+        );
+        break;
+      }
+      case "DIRECT": {
+        this.addAttributeWitness(
+          AttributeKind.AccessMode,
+          AccessMode.Direct,
+          attribute,
+          token,
+        );
+        break;
+      }
       case "BACKWARDS":
-      case "BUFFERED":
       case "EXCLUSIVE":
       case "BYADDR":
       case "BYVALUE":
@@ -376,8 +516,6 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "EXT":
       case "GENERIC":
       case "HEX":
-      case "HEXADEC":
-      case "IEEE":
       case "INONLY":
       case "INOUT":
       case "INPUT":
@@ -392,29 +530,22 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "NONNATIVE":
       case "NOSCAN":
       case "NULLINIT":
-      case "OFFSET":
       case "OPTIONAL":
       case "OPTIONS":
       case "OUTONLY":
       case "OUTPUT":
       case "PARAMETER":
-      case "POINTER":
       case "POSITION":
-      case "PREC":
-      case "PRECISION":
       case "PRINT":
-      case "PTR":
       case "RANGE":
       case "RECORD":
       case "RESCAN":
       case "RESERVED":
       case "SCAN":
-      case "SEQUENTIAL":
       case "STREAM":
       case "STRUCTURE":
       case "TRANSIENT":
       case "UNAL":
-      case "UNBUFFERED":
       case "UNION":
       case "UPDATE":
       case "VAR":
@@ -477,6 +608,28 @@ export class DefaultTypeBuilder implements TypeBuilder {
       type: TypesDescriptions.create(dataType, this.attributeWitnesses),
       diagnostics: this.diagnostics,
     };
+  }
+  private acceptDimensionsAsListOfNumbers(dimensions: ast.Dimensions | null): number[] | null {
+    const result: number[] = [];
+    if (!dimensions) {
+      return null;
+    }
+    for (const dim of dimensions.dimensions) {
+      if (dim.lower) {
+        //TODO lower bound is not acceptable here, report error  
+        break;
+      }
+      if (dim.upper?.expression === '*') {
+        // TODO We don't support * in dimension for now
+        break;
+      } else if (dim.upper?.expression?.kind === ast.SyntaxKind.Literal) {
+        const literal = dim.upper.expression.value;
+        if (literal?.kind === ast.SyntaxKind.NumberLiteral && literal.value) {
+          result.push(parseInt(literal.value));
+        }
+      }
+    }
+    return result;
   }
   private addAttributeWitness<K extends keyof AttributeTypes>(
     kind: K,

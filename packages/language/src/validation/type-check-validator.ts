@@ -1,4 +1,3 @@
-import { diagnosticFromCode } from "../language-server/types";
 import * as ast from "../syntax-tree/ast";
 import { DataType, ScaleMode } from "../typesystem/descriptions";
 import { PliTypeInferer } from "../typesystem/infer";
@@ -16,11 +15,11 @@ export class TypeCheck {
       for (const attribute of item.attributes) {
         builder.addAttribute(attribute);
       }
-      const { diagnostics } = builder.build();
+      const { diagnostics, type: _type } = builder.build();
       for (const diagnostic of diagnostics) {
         acceptor(diagnostic);
       }
-      //TODO do something with the built type
+      //TODO do something with the built _type
     }
   }
   checkIfStatementConditionIsBoolean(

@@ -1,3 +1,4 @@
+import { A } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
 
@@ -57,9 +58,14 @@ export enum AttributeKind {
   StringKind,
   StringFormat,
   StringLength,
+  FloatFormat,
+  AccessMode,
+  BufferMode,
+  FileUsage,
 }
 
 export const AttributeKinds: AttributeKind[] = [
+  AttributeKind.FileUsage,
   AttributeKind.Alignment,
   AttributeKind.Scope,
   AttributeKind.Storage,
@@ -79,9 +85,18 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.StringKind,
   AttributeKind.StringFormat,
   AttributeKind.StringLength,
+  AttributeKind.Endianess,
+  AttributeKind.DataType,
+  AttributeKind.FloatFormat,
+  AttributeKind.AccessMode,
+  AttributeKind.BufferMode,
 ];
 
 export type AttributeTypes = {
+  [AttributeKind.FileUsage]: FileUsage;
+  [AttributeKind.BufferMode]: BufferMode;
+  [AttributeKind.AccessMode]: AccessMode;
+  [AttributeKind.FloatFormat]: FloatFormat;
   [AttributeKind.Endianess]: Endianess;
   [AttributeKind.DataType]: DataType;
   [AttributeKind.Alignment]: Alignment;
@@ -130,8 +145,14 @@ export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
     AttributeKind.Sign,
     AttributeKind.NumberMode,
     AttributeKind.Endianess,
+    AttributeKind.FloatFormat,
   ],
-  [DataType.File]: [...CommonAttributeKinds],
+  [DataType.File]: [
+    ...CommonAttributeKinds,
+    AttributeKind.AccessMode,
+    AttributeKind.BufferMode,
+    AttributeKind.FileUsage,
+  ],
   [DataType.Format]: [...CommonAttributeKinds],
   [DataType.Label]: [...CommonAttributeKinds],
   [DataType.Locator]: [...CommonAttributeKinds, AttributeKind.LocatorKind],
@@ -332,6 +353,11 @@ function isAreaTypeDescription(
 const ArithmeticType = DataType.Arithmetic;
 type ArithmeticType = typeof ArithmeticType;
 
+export enum FloatFormat {
+  IEEE,
+  HexaDec,
+}
+
 export enum Endianess {
   Big,
   Little,
@@ -375,6 +401,7 @@ interface ArithmeticTypeDescriptionProps {
   base: Base;
   sign: Sign;
   endianness: Endianess;
+  floatFormat: FloatFormat;
 }
 
 interface ArithmeticTypeDescription
@@ -419,6 +446,8 @@ function createArithmeticTypeDescription({
   base: unit = Base.Decimal,
   sign = Sign.Signed,
   endianness = Endianess.Big,
+  //TODO default value depends on platform?
+  floatFormat = FloatFormat.IEEE,
   ...base
 }: Partial<ArithmeticTypeDescriptionProps>): ArithmeticTypeDescription {
   scale ??= {
@@ -433,6 +462,7 @@ function createArithmeticTypeDescription({
     base: unit,
     sign,
     endianness,
+    floatFormat,
   };
 }
 
@@ -446,7 +476,26 @@ function isArithmeticTypeDescription(
 const FileType = DataType.File;
 type FileType = typeof FileType;
 
-interface FileTypeDescriptionProps extends BaseTypeDescriptionProps {}
+export enum BufferMode {
+  Unbuffered,
+  Buffered,
+}
+
+export enum AccessMode {
+  Sequential,
+  Direct,
+}
+
+export enum FileUsage {
+  Record,
+  Stream,
+}
+
+interface FileTypeDescriptionProps extends BaseTypeDescriptionProps {
+  accessMode: AccessMode;
+  bufferMode: BufferMode;
+  usage: FileUsage;
+}
 
 interface FileTypeDescription
   extends BaseTypeDescription,
@@ -455,11 +504,17 @@ interface FileTypeDescription
 }
 
 function createFileTypeDescription({
+  usage = FileUsage.Stream,
+  accessMode = AccessMode.Sequential,
+  bufferMode = accessMode === AccessMode.Sequential ? BufferMode.Buffered : BufferMode.Unbuffered,
   ...base
 }: Partial<FileTypeDescriptionProps>): FileTypeDescription {
   return {
     type: FileType,
     ...createBaseTypeDescription(FileType, base),
+    accessMode,
+    bufferMode,
+    usage,
   };
 }
 
@@ -839,9 +894,15 @@ export namespace TypesDescriptions {
           sign: attributes[AttributeKind.Sign]?.value,
           mode: attributes[AttributeKind.NumberMode]?.value,
           endianness: attributes[AttributeKind.Endianess]?.value,
+          floatFormat: attributes[AttributeKind.FloatFormat]?.value,
         });
       case DataType.File:
-        return TypesDescriptions.File(common);
+        return TypesDescriptions.File({
+          ...common,
+          accessMode: attributes[AttributeKind.AccessMode]?.value,
+          bufferMode: attributes[AttributeKind.BufferMode]?.value,
+          usage: attributes[AttributeKind.FileUsage]?.value,
+        });
       case DataType.Format:
         return TypesDescriptions.Format(common);
       case DataType.Label:
