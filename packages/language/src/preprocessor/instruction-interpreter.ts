@@ -1442,7 +1442,6 @@ function parseAndEvaluateProcedure(
   let evaluatedArgs: Value[];
   let advance = 1;
   let immediateFollow = tokens[index].immediateFollow;
-  let suffix: string = "";
   if (!procedure.statement) {
     const parseResult = parseInlineProcedureInvocation(tokens, index);
     advance = parseResult.advance;
@@ -1452,7 +1451,6 @@ function parseAndEvaluateProcedure(
     const parseResult = parseInlineStatementProcedureInvocation(tokens, index);
     advance = parseResult.advance;
     immediateFollow = parseResult.immediateFollow;
-    suffix = parseResult.suffix;
     evaluatedArgs = evaluatePositionalArguments(
       parseResult.positionalArgs,
       context,
@@ -1464,13 +1462,15 @@ function parseAndEvaluateProcedure(
       context,
     );
   }
-
   const localContext = createLocalContext(context, procedure);
   let value = runProcedure(procedure, evaluatedArgs, localContext);
-  if (isScalarValue(value) && suffix) {
-    // Add the suffix to the value, as it was immediately following the procedure call
-    // Otherwise, the suffix will generate a separate token, which is not the intended behavior
-    value = stringToValue(value.value + suffix);
+  const tokenAfterProcedureCall = tokens[index + advance];
+  if (isScalarValue(value) && immediateFollow && tokenAfterProcedureCall) {
+    // Add the token after the procedure call to the value, as it was immediately following the procedure call
+    // Otherwise, the token will be treated separately, which is not the intended behavior
+    value = stringToValue(value.value + tokenAfterProcedureCall.originalImage);
+    advance++;
+    immediateFollow = tokenAfterProcedureCall.immediateFollow;
   }
   return {
     value,
@@ -1607,11 +1607,6 @@ interface InlineStatementProcedureParseResult {
   namedArgs: Map<string, InlineProcedureNamedArgument>;
   advance: number;
   immediateFollow: boolean;
-  /**
-   * If the procedure invocation is immediately followed by another token
-   * This token acts as a suffix to the procedure call and needs to be attached to the return value
-   */
-  suffix: string;
 }
 
 function parseInlineStatementProcedureInvocation(
@@ -1680,19 +1675,11 @@ function parseInlineStatementProcedureInvocation(
       tokens: argTokens,
     });
   }
-  let suffix = "";
-  if (immediateFollow && i < length) {
-    const suffixToken = tokens[i];
-    suffix = suffixToken.image;
-    immediateFollow = suffixToken.immediateFollow;
-    advance++;
-  }
   return {
     positionalArgs: positionalParseResult.args,
     namedArgs,
     advance,
     immediateFollow,
-    suffix,
   };
 }
 

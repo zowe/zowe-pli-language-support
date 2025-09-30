@@ -15,6 +15,6 @@
 ////   RETURN (X);
 //// %END;
 //// %ACTIVATE TEST;
-//// TEST(VALUE)VAR
+//// TEST(VALUE)%;VAR
 
 preprocessor.expectTokens("VALUEVAR");
