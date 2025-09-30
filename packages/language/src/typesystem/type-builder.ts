@@ -687,13 +687,13 @@ export class DefaultTypeBuilder implements TypeBuilder {
           diagnosticFromCode(Error.IBM1309I, token, token.image),
         );
       }
-      let possibleDatatypes: Set<DataType>;
+      let currentDataTypes: Set<DataType>;
       if (kind === AttributeKind.DataType) {
-        possibleDatatypes = new Set([value as DataType]);
+        currentDataTypes = new Set([value as DataType]);
       } else {
-        possibleDatatypes = new Set(DataTypesByAttributeKind[kind]);
+        currentDataTypes = new Set(DataTypesByAttributeKind[kind]);
       }
-      const leftDataTypes = new Set<DataType>([...this.possibleDataTypes].filter(dt => possibleDatatypes.has(dt)));
+      const leftDataTypes = new Set<DataType>([...this.possibleDataTypes].filter(dt => currentDataTypes.has(dt)));
       if (leftDataTypes.size === 0) {
         this.diagnostics.push(
           diagnosticFromCode(Error.IBM2462I, token, token.image, witness.image),
@@ -709,6 +709,9 @@ export class DefaultTypeBuilder implements TypeBuilder {
         image: token.image,
         token,
       } as AttributeWitnesses[K];
+      if (kind === AttributeKind.DataType) {
+        this.possibleDataTypes = new Set([value as DataType]);
+      }
     }
   }
 }
