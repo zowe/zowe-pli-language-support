@@ -7,6 +7,7 @@ import {
 } from "../../src/typesystem/arithmetic-operations";
 import {
   Base,
+  DataType,
   Scale,
   ScaleMode,
   TypesDescriptions,
@@ -993,7 +994,7 @@ describe("Arithmetic operations", () => {
           op: "+",
           rhs: fixedBinary20_10,
         });
-        expect(returnType).toBeUndefined();
+        expect(returnType.type).toBe(DataType.Unknown);
       });
     });
   });

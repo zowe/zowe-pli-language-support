@@ -17,7 +17,7 @@ export type ComputeOperationReturnType = ({
   op: ArithmeticOperator;
   lhs: TypesDescriptions.Arithmetic;
   rhs: TypesDescriptions.Arithmetic;
-}) => TypesDescriptions.Any | undefined;
+}) => TypesDescriptions.Any;
 type BinaryOperatorPredicate = ({
   op,
   lhs,
@@ -811,7 +811,7 @@ function applyRules(rules: ArithmeticTypeRule[]): ComputeOperationReturnType {
     if (key in table) {
       return table[key](args);
     }
-    return undefined;
+    return TypesDescriptions.Unknown();
   };
 }
 
@@ -824,6 +824,6 @@ function aggregateRules(
         return rule.then({ op, lhs, rhs });
       }
     }
-    return undefined;
+    return TypesDescriptions.Unknown();
   };
 }
