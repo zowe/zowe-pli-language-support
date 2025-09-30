@@ -6,13 +6,13 @@ export interface TypeCache {
         node: SyntaxNode,
         getter: () => TypesDescriptions.Any,
     ): TypesDescriptions.Any;
-  reset(): void;
+  clear(): void;
 }
 
 export class DefaultTypeCache implements TypeCache{
   private cache = new Map<SyntaxNode, TypesDescriptions.Any>();
 
-  reset() {
+  clear() {
     this.cache.clear();
   }
 

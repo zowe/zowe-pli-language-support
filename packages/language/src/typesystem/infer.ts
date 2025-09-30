@@ -10,8 +10,8 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultTypeBuilder } from "./type-builder";
 
 export interface TypeInferer {
-  inferExpressionType(node: ast.Expression, compilationUnit: CompilationUnit): TypesDescriptions.Any | undefined;
-  inferDeclarationType(node: ast.DeclaredItem, compilationUnit: CompilationUnit): TypesDescriptions.Any | undefined;
+  inferExpressionType(node: ast.Expression, compilationUnit: CompilationUnit): TypesDescriptions.Any;
+  inferDeclarationType(node: ast.DeclaredItem, compilationUnit: CompilationUnit): TypesDescriptions.Any;
 }
 
 export class DefaultTypeInferer implements TypeInferer {
@@ -32,7 +32,7 @@ export class DefaultTypeInferer implements TypeInferer {
   inferDeclarationType(
     node: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
-  ): TypesDescriptions.Any | undefined {
+  ): TypesDescriptions.Any {
     return compilationUnit.services.typeCache.get(node, () => {
       const typeBuilder = new DefaultTypeBuilder();
       node.attributes.forEach(attr => typeBuilder.addAttribute(attr));

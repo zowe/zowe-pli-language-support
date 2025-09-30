@@ -32,6 +32,7 @@ export async function lifecycle(
   document: TextDocument,
   cancellation: CancellationToken,
 ): Promise<void> {
+  compilationUnit.services.typeCache.clear();
   compilationUnit.statementOrderCache.clear();
   compilationUnit.referencesCache.clear();
   compilationUnit.scopeCaches.clear();
