@@ -1385,13 +1385,13 @@ function parseAndEvaluateProcedure(
   }
   const localContext = createLocalContext(context, procedure);
   let value = runProcedure(procedure, evaluatedArgs, localContext);
-  if (isScalarValue(value) && immediateFollow && tokens[index + advance]) {
-    // Add the suffix to the value, as it was immediately following the procedure call
-    // Otherwise, the suffix will generate a separate token, which is not the intended behavior
-    const nextToken = tokens[index + advance];
-    value = stringToValue(value.value + nextToken.originalImage);
+  const tokenAfterProcedureCall = tokens[index + advance];
+  if (isScalarValue(value) && immediateFollow && tokenAfterProcedureCall) {
+    // Add the token after the procedure call to the value, as it was immediately following the procedure call
+    // Otherwise, the token will be treated separately, which is not the intended behavior
+    value = stringToValue(value.value + tokenAfterProcedureCall.originalImage);
     advance++;
-    immediateFollow = nextToken.immediateFollow;
+    immediateFollow = tokenAfterProcedureCall.immediateFollow;
   }
   return {
     value,
