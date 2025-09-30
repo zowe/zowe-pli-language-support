@@ -41,7 +41,7 @@ function createEmptyAttributeWitnesses(): AttributeWitnesses {
 }
 
 type BuiltType = {
-  type: TypesDescriptions.Any | null;
+  type: TypesDescriptions.Any | undefined;
   diagnostics: Diagnostic[];
 };
 
@@ -537,7 +537,6 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "HEX":
       case "INONLY":
       case "INOUT":
-      case "INPUT":
       case "INT":
       case "IRREDUCIBLE":
       case "KEYED":
@@ -552,7 +551,6 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "OPTIONAL":
       case "OPTIONS":
       case "OUTONLY":
-      case "OUTPUT":
       case "PARAMETER":
       case "POSITION":
       case "PRINT":
@@ -564,9 +562,14 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "TRANSIENT":
       case "UNAL":
       case "UNION":
+        break;
       case "UPDATE":
+      case "INPUT":
+      case "OUTPUT":
+        break;
       case "VAR":
       case "VARIABLE":
+        //https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
         break;
       case "SIGNED":
         this.addAttributeWitness(
@@ -616,7 +619,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
     if (this.possibleDataTypes.size !== 1) {
       //TODO add diagnostic about missing or conflicting type attributes
       return {
-        type: null,
+        type: undefined,
         diagnostics: this.diagnostics,
       };
     }

@@ -40,7 +40,7 @@ import { retrieveProcedureFromLabelPrefix } from "./utils";
  */
 export function registerPliValidationChecks(unit: CompilationUnit): Validator {
   const validator = new PliValidator(unit);
-  const typeCheck = new TypeCheck(new DefaultPliTypeInferer());
+  const typeCheck = new TypeCheck();
   validator.addHandler({
     // DimensionBound: [IBM1295IE_sole_bound_specified],
     PliProgram: [validator.checkPliProgram],

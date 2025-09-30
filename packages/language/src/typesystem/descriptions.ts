@@ -1,4 +1,3 @@
-import { A } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
 
