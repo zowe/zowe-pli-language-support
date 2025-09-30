@@ -134,9 +134,7 @@ export const CommonAttributeKinds: AttributeKind[] = [
 ];
 
 export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
-  [DataType.Unknown]: [
-    ...CommonAttributeKinds,
-  ],
+  [DataType.Unknown]: [...CommonAttributeKinds],
   [DataType.Area]: [
     ...CommonAttributeKinds,
     AttributeKind.AreaSize,
@@ -511,7 +509,9 @@ interface FileTypeDescription
 function createFileTypeDescription({
   usage = FileUsage.Stream,
   accessMode = AccessMode.Sequential,
-  bufferMode = accessMode === AccessMode.Sequential ? BufferMode.Buffered : BufferMode.Unbuffered,
+  bufferMode = accessMode === AccessMode.Sequential
+    ? BufferMode.Buffered
+    : BufferMode.Unbuffered,
   ...base
 }: Partial<FileTypeDescriptionProps>): FileTypeDescription {
   return {
@@ -903,16 +903,16 @@ export namespace TypeDescriptions {
     [AttributeKind.DataType]: DataType.Area,
     [AttributeKind.Alignment]: {
       type: AlignmentType.Aligned,
-      alignment: 1
+      alignment: 1,
     },
     [AttributeKind.Scope]: {
-      type: ScopeType.Internal
+      type: ScopeType.Internal,
     },
     [AttributeKind.Storage]: StorageClass.Automatic,
     [AttributeKind.Volatility]: Volatility.Normal,
     [AttributeKind.Position]: {
       variable: null,
-      position: null
+      position: null,
     },
     [AttributeKind.Assignability]: Assignability.Assignable,
     [AttributeKind.Connection]: StorageConnection.Connected,
@@ -920,7 +920,7 @@ export namespace TypeDescriptions {
     [AttributeKind.Scale]: {
       mode: ScaleMode.Fixed,
       totalDigitsCount: 5,
-      fractionalDigitsCount: 0
+      fractionalDigitsCount: 0,
     },
     [AttributeKind.Base]: Base.Binary,
     [AttributeKind.Sign]: Sign.Signed,
@@ -928,48 +928,84 @@ export namespace TypeDescriptions {
     [AttributeKind.AreaSize]: 0,
     [AttributeKind.LocatorKind]: {
       type: "pointer",
-      size: 32
+      size: 32,
     },
     [AttributeKind.OrdinalNames]: [],
     [AttributeKind.PictureKind]: "picture",
     [AttributeKind.StringKind]: StringKind.Bit,
     [AttributeKind.StringFormat]: StringFormat.Varying,
-    [AttributeKind.StringLength]: 0
+    [AttributeKind.StringLength]: 0,
   };
 
   export function create(type: DataType, attributes: AttributeWitnesses): Any {
     const common = {
-      alignment: attributes[AttributeKind.Alignment]?.value ?? DefaultValues[AttributeKind.Alignment],
-      scope: attributes[AttributeKind.Scope]?.value ?? DefaultValues[AttributeKind.Scope],
-      storage: attributes[AttributeKind.Storage]?.value ?? DefaultValues[AttributeKind.Storage],
-      volatility: attributes[AttributeKind.Volatility]?.value ?? DefaultValues[AttributeKind.Volatility],
-      position: attributes[AttributeKind.Position]?.value ?? DefaultValues[AttributeKind.Position],
-      assignability: attributes[AttributeKind.Assignability]?.value ?? DefaultValues[AttributeKind.Assignability],
-      connection: attributes[AttributeKind.Connection]?.value ?? DefaultValues[AttributeKind.Connection],
-      variable: attributes[AttributeKind.Variable]?.value ?? DefaultValues[AttributeKind.Variable],
+      alignment:
+        attributes[AttributeKind.Alignment]?.value ??
+        DefaultValues[AttributeKind.Alignment],
+      scope:
+        attributes[AttributeKind.Scope]?.value ??
+        DefaultValues[AttributeKind.Scope],
+      storage:
+        attributes[AttributeKind.Storage]?.value ??
+        DefaultValues[AttributeKind.Storage],
+      volatility:
+        attributes[AttributeKind.Volatility]?.value ??
+        DefaultValues[AttributeKind.Volatility],
+      position:
+        attributes[AttributeKind.Position]?.value ??
+        DefaultValues[AttributeKind.Position],
+      assignability:
+        attributes[AttributeKind.Assignability]?.value ??
+        DefaultValues[AttributeKind.Assignability],
+      connection:
+        attributes[AttributeKind.Connection]?.value ??
+        DefaultValues[AttributeKind.Connection],
+      variable:
+        attributes[AttributeKind.Variable]?.value ??
+        DefaultValues[AttributeKind.Variable],
     };
     switch (type) {
       case DataType.Area:
         return TypeDescriptions.Area({
           ...common,
-          size: attributes[AttributeKind.AreaSize]?.value ?? DefaultValues[AttributeKind.AreaSize],
+          size:
+            attributes[AttributeKind.AreaSize]?.value ??
+            DefaultValues[AttributeKind.AreaSize],
         });
       case DataType.Arithmetic:
         return TypeDescriptions.Arithmetic({
           ...common,
-          scale: attributes[AttributeKind.Scale]?.value ?? DefaultValues[AttributeKind.Scale],
-          base: attributes[AttributeKind.Base]?.value ?? DefaultValues[AttributeKind.Base],
-          sign: attributes[AttributeKind.Sign]?.value ?? DefaultValues[AttributeKind.Sign],
-          mode: attributes[AttributeKind.NumberMode]?.value ?? DefaultValues[AttributeKind.NumberMode],
-          endianness: attributes[AttributeKind.Endianess]?.value ?? DefaultValues[AttributeKind.Endianess],
-          floatFormat: attributes[AttributeKind.FloatFormat]?.value ?? DefaultValues[AttributeKind.FloatFormat],
+          scale:
+            attributes[AttributeKind.Scale]?.value ??
+            DefaultValues[AttributeKind.Scale],
+          base:
+            attributes[AttributeKind.Base]?.value ??
+            DefaultValues[AttributeKind.Base],
+          sign:
+            attributes[AttributeKind.Sign]?.value ??
+            DefaultValues[AttributeKind.Sign],
+          mode:
+            attributes[AttributeKind.NumberMode]?.value ??
+            DefaultValues[AttributeKind.NumberMode],
+          endianness:
+            attributes[AttributeKind.Endianess]?.value ??
+            DefaultValues[AttributeKind.Endianess],
+          floatFormat:
+            attributes[AttributeKind.FloatFormat]?.value ??
+            DefaultValues[AttributeKind.FloatFormat],
         });
       case DataType.File:
         return TypeDescriptions.File({
           ...common,
-          accessMode: attributes[AttributeKind.AccessMode]?.value ?? DefaultValues[AttributeKind.AccessMode],
-          bufferMode: attributes[AttributeKind.BufferMode]?.value ?? DefaultValues[AttributeKind.BufferMode],
-          usage: attributes[AttributeKind.FileUsage]?.value ?? DefaultValues[AttributeKind.FileUsage],
+          accessMode:
+            attributes[AttributeKind.AccessMode]?.value ??
+            DefaultValues[AttributeKind.AccessMode],
+          bufferMode:
+            attributes[AttributeKind.BufferMode]?.value ??
+            DefaultValues[AttributeKind.BufferMode],
+          usage:
+            attributes[AttributeKind.FileUsage]?.value ??
+            DefaultValues[AttributeKind.FileUsage],
         });
       case DataType.Format:
         return TypeDescriptions.Format(common);
@@ -978,27 +1014,41 @@ export namespace TypeDescriptions {
       case DataType.Locator:
         return TypeDescriptions.Locator({
           ...common,
-          kind: attributes[AttributeKind.LocatorKind]!.value ?? DefaultValues[AttributeKind.LocatorKind],
+          kind:
+            attributes[AttributeKind.LocatorKind]!.value ??
+            DefaultValues[AttributeKind.LocatorKind],
         });
       case DataType.Entry:
         return TypeDescriptions.Entry(common);
       case DataType.Ordinal:
         return TypeDescriptions.Ordinal({
           ...common,
-          names: attributes[AttributeKind.OrdinalNames]!.value ?? DefaultValues[AttributeKind.OrdinalNames],
+          names:
+            attributes[AttributeKind.OrdinalNames]!.value ??
+            DefaultValues[AttributeKind.OrdinalNames],
         });
       case DataType.Picture:
         return TypeDescriptions.Picture({
           ...common,
-          kind: attributes[AttributeKind.PictureKind]?.value ?? DefaultValues[AttributeKind.PictureKind],
-          domain: attributes[AttributeKind.NumberMode]?.value ?? DefaultValues[AttributeKind.NumberMode],
+          kind:
+            attributes[AttributeKind.PictureKind]?.value ??
+            DefaultValues[AttributeKind.PictureKind],
+          domain:
+            attributes[AttributeKind.NumberMode]?.value ??
+            DefaultValues[AttributeKind.NumberMode],
         });
       case DataType.String:
         return TypeDescriptions.String({
           ...common,
-          kind: attributes[AttributeKind.StringKind]?.value ?? DefaultValues[AttributeKind.StringKind],
-          format: attributes[AttributeKind.StringFormat]?.value ?? DefaultValues[AttributeKind.StringFormat],
-          length: attributes[AttributeKind.StringLength]?.value ?? DefaultValues[AttributeKind.StringLength],
+          kind:
+            attributes[AttributeKind.StringKind]?.value ??
+            DefaultValues[AttributeKind.StringKind],
+          format:
+            attributes[AttributeKind.StringFormat]?.value ??
+            DefaultValues[AttributeKind.StringFormat],
+          length:
+            attributes[AttributeKind.StringLength]?.value ??
+            DefaultValues[AttributeKind.StringLength],
         });
       case DataType.Task:
         return TypeDescriptions.Task(common);

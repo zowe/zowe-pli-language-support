@@ -147,7 +147,11 @@ export async function createCompilationUnit(
   const services: CompilationServices = {
     files: new FileStore(),
     typeCache: new DefaultTypeCache(),
-    inferer: new DefaultTypeInferer((compilerOptions.rules?.ibm ?? 'ANS') === 'ANS' ? CompilerOptionRules.ANS : CompilerOptionRules.IBM),
+    inferer: new DefaultTypeInferer(
+      (compilerOptions.rules?.ibm ?? "ANS") === "ANS"
+        ? CompilerOptionRules.ANS
+        : CompilerOptionRules.IBM,
+    ),
   };
   const unit: CompilationUnit = {
     uri,

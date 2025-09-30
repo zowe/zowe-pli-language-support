@@ -58,9 +58,7 @@ export function registerPliValidationChecks(unit: CompilationUnit): Validator {
       validator.checkArgumentCount.bind(validator),
     ],
     DefineOrdinalStatement: [validator.checkDefineOrdinalStatement],
-    DeclareStatement: [
-      validator.checkDeclareStatement,
-    ],
+    DeclareStatement: [validator.checkDeclareStatement],
     DeclaredItem: [typeCheck.checkDeclaredItem.bind(typeCheck)],
     ReferenceItem: [validator.checkImplicitBuiltins.bind(validator)],
     DoStatement: [IBM2615I_do_loops_execute_once],

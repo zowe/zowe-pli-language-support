@@ -10,8 +10,14 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultTypeBuilder } from "./type-builder";
 
 export interface TypeInferer {
-  inferExpressionType(node: ast.Expression, compilationUnit: CompilationUnit): TypeDescriptions.Any;
-  inferDeclarationType(node: ast.DeclaredItem, compilationUnit: CompilationUnit): TypeDescriptions.Any;
+  inferExpressionType(
+    node: ast.Expression,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any;
+  inferDeclarationType(
+    node: ast.DeclaredItem,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any;
 }
 
 export class DefaultTypeInferer implements TypeInferer {
@@ -46,14 +52,17 @@ export class DefaultTypeInferer implements TypeInferer {
     return compilationUnit.services.typeCache.get(node, () => {
       const element = node.elements[0];
       const typeBuilder = new DefaultTypeBuilder(getNameToken(element));
-      node.attributes.forEach(attr => typeBuilder.addAttribute(attr));
+      node.attributes.forEach((attr) => typeBuilder.addAttribute(attr));
       const { type, diagnostics } = typeBuilder.build();
       compilationUnit.diagnostics.typeSystem.push(...diagnostics);
       return type ?? TypeDescriptions.Unknown();
     });
   }
 
-  inferExpressionType(node: ast.Expression, compilationUnit: CompilationUnit): TypeDescriptions.Any {
+  inferExpressionType(
+    node: ast.Expression,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any {
     return compilationUnit.services.typeCache.get(node, () => {
       switch (node.kind) {
         case ast.SyntaxKind.BinaryExpression:
@@ -65,14 +74,19 @@ export class DefaultTypeInferer implements TypeInferer {
         case ast.SyntaxKind.LocatorCall:
           return this.inferLocatorCall(node, compilationUnit);
         case ast.SyntaxKind.Parenthesis:
-          return node.value ? this.inferExpressionType(node.value!, compilationUnit) : TypeDescriptions.Unknown();
+          return node.value
+            ? this.inferExpressionType(node.value!, compilationUnit)
+            : TypeDescriptions.Unknown();
         default:
           assertUnreachable(node);
       }
     });
   }
 
-  private inferLocatorCall(node: ast.LocatorCall, compilationUnit: CompilationUnit) {
+  private inferLocatorCall(
+    node: ast.LocatorCall,
+    compilationUnit: CompilationUnit,
+  ) {
     /** @todo */
     return TypeDescriptions.Unknown();
   }
@@ -82,7 +96,10 @@ export class DefaultTypeInferer implements TypeInferer {
     return TypeDescriptions.Unknown();
   }
 
-  private inferUnaryExpression(node: ast.UnaryExpression, compilationUnit: CompilationUnit) {
+  private inferUnaryExpression(
+    node: ast.UnaryExpression,
+    compilationUnit: CompilationUnit,
+  ) {
     switch (node.op) {
       case "+":
       case "-":
@@ -97,7 +114,10 @@ export class DefaultTypeInferer implements TypeInferer {
     }
   }
 
-  private inferBinaryExpression(node: ast.BinaryExpression, compilationUnit: CompilationUnit): TypeDescriptions.Any {
+  private inferBinaryExpression(
+    node: ast.BinaryExpression,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any {
     switch (node.op) {
       case "+":
       case "-":

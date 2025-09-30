@@ -32,7 +32,9 @@ export function skippedCode(
   connection: Connection,
   compilationUnit: CompilationUnit,
 ) {
-  const textDocument = compilationUnit.services.files.getDocument(compilationUnit.uri);
+  const textDocument = compilationUnit.services.files.getDocument(
+    compilationUnit.uri,
+  );
   const ranges = textDocument
     ? skippedCodeRanges(compilationUnit, textDocument)
     : [];

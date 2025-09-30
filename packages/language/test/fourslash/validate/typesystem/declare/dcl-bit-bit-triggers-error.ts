@@ -15,5 +15,5 @@
 //// DCL ANYTHING BIT(10) <|1:BIT|>(11);
 
 verify.expectDiagnosticsAt(1, {
-    code: code.Error.IBM1309I.fullCode,
+  code: code.Error.IBM1309I.fullCode,
 });

@@ -15,5 +15,5 @@
 //// DCL ANYTHING CHAR(10) <|1:BIT|>(10);
 
 verify.expectDiagnosticsAt(1, {
-    code: code.Error.IBM2462I.fullCode,
+  code: code.Error.IBM2462I.fullCode,
 });

@@ -15,5 +15,5 @@
 //// DCL <|1:ANYTHING|> NORMAL;
 
 verify.expectDiagnosticsAt(1, {
-    code: code.Error.IBM1482I.fullCode,
+  code: code.Error.IBM1482I.fullCode,
 });

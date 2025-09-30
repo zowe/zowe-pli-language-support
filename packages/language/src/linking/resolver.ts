@@ -378,7 +378,10 @@ export function getReferenceLocations(
   uri: URI,
   offset: number,
 ): Location[] {
-  const token = binaryTokenSearch(unit.services.files.getTokens(uri) ?? [], offset);
+  const token = binaryTokenSearch(
+    unit.services.files.getTokens(uri) ?? [],
+    offset,
+  );
   if (!token) {
     return [];
   }

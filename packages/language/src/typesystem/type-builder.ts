@@ -53,10 +53,9 @@ export interface TypeBuilder {
 export class DefaultTypeBuilder implements TypeBuilder {
   private diagnostics: Diagnostic[] = [];
   private possibleDataTypes = new Set<DataType>(DataTypes);
-  private attributeWitnesses: AttributeWitnesses = createEmptyAttributeWitnesses();
-  constructor(private token: Token|null) {
-
-  }
+  private attributeWitnesses: AttributeWitnesses =
+    createEmptyAttributeWitnesses();
+  constructor(private token: Token | null) {}
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -95,7 +94,9 @@ export class DefaultTypeBuilder implements TypeBuilder {
     switch (attribute.type) {
       case "PREC":
       case "PRECISION": {
-        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
+        const precision = this.acceptDimensionsAsListOfNumbers(
+          attribute.dimensions,
+        );
         if (precision) {
           if (precision.length === 1) {
             this.addAttributeWitness(
@@ -109,10 +110,11 @@ export class DefaultTypeBuilder implements TypeBuilder {
               token,
             );
           } else if (precision.length >= 2) {
-            if(this.attributeWitnesses[AttributeKind.Scale]?.value?.mode === ScaleMode.Float) {
-              this.diagnostics.push(
-                diagnosticFromCode(Error.IBM2424I, token),
-              );
+            if (
+              this.attributeWitnesses[AttributeKind.Scale]?.value?.mode ===
+              ScaleMode.Float
+            ) {
+              this.diagnostics.push(diagnosticFromCode(Error.IBM2424I, token));
               break;
             }
             this.addAttributeWitness(
@@ -130,14 +132,17 @@ export class DefaultTypeBuilder implements TypeBuilder {
         break;
       }
       case "FIXED": {
-        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
+        const precision = this.acceptDimensionsAsListOfNumbers(
+          attribute.dimensions,
+        );
         this.addAttributeWitness(
           AttributeKind.Scale,
           {
             mode: ScaleMode.Fixed,
             //TODO verify default precision for fixed
             totalDigitsCount: precision ? precision[0] : 5,
-            fractionalDigitsCount: precision && precision.length > 1 ? precision[1] : 0,
+            fractionalDigitsCount:
+              precision && precision.length > 1 ? precision[1] : 0,
           },
           attribute,
           token,
@@ -146,17 +151,22 @@ export class DefaultTypeBuilder implements TypeBuilder {
       }
       case "FLOAT": {
         const witness = this.attributeWitnesses[AttributeKind.Scale];
-        if(witness?.value?.mode === ScaleMode.Fixed) {
+        if (witness?.value?.mode === ScaleMode.Fixed) {
           this.diagnostics.push(
             diagnosticFromCode(Error.IBM2424I, witness.token),
           );
           break;
         }
-        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
+        const precision = this.acceptDimensionsAsListOfNumbers(
+          attribute.dimensions,
+        );
         this.addAttributeWitness(
           AttributeKind.Scale,
           // TODO verify default precision for float
-          { mode: ScaleMode.Float, totalDigitsCount: precision ? precision[0] : 51 },
+          {
+            mode: ScaleMode.Float,
+            totalDigitsCount: precision ? precision[0] : 51,
+          },
           attribute,
           token,
         );
@@ -164,7 +174,9 @@ export class DefaultTypeBuilder implements TypeBuilder {
       }
       case "CHAR":
       case "CHARACTER": {
-        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
+        const precision = this.acceptDimensionsAsListOfNumbers(
+          attribute.dimensions,
+        );
         if (precision) {
           this.addAttributeWitness(
             AttributeKind.StringLength,
@@ -188,7 +200,9 @@ export class DefaultTypeBuilder implements TypeBuilder {
         break;
       }
       case "BIT": {
-        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
+        const precision = this.acceptDimensionsAsListOfNumbers(
+          attribute.dimensions,
+        );
         if (precision) {
           this.addAttributeWitness(
             AttributeKind.StringLength,
@@ -437,10 +451,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
         break;
       case "PTR":
       case "POINTER": {
-        const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
+        const precision = this.acceptDimensionsAsListOfNumbers(
+          attribute.dimensions,
+        );
         if (precision && precision.length === 1) {
           const size = precision[0];
-          if(size !== 32 && size !== 64) {
+          if (size !== 32 && size !== 64) {
             //TODO report error about invalid pointer size
           } else {
             this.addAttributeWitness(
@@ -633,8 +649,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
   }
   build() {
     if (this.possibleDataTypes.size !== 1) {
-      if(this.token) {
-        this.diagnostics.push(diagnosticFromCode(Error.IBM1482I, this.token, this.token.image));
+      if (this.token) {
+        this.diagnostics.push(
+          diagnosticFromCode(Error.IBM1482I, this.token, this.token.image),
+        );
       }
       return {
         type: TypeDescriptions.Unknown(),
@@ -647,17 +665,19 @@ export class DefaultTypeBuilder implements TypeBuilder {
       diagnostics: this.diagnostics,
     };
   }
-  private acceptDimensionsAsListOfNumbers(dimensions: ast.Dimensions | null): number[] | null {
+  private acceptDimensionsAsListOfNumbers(
+    dimensions: ast.Dimensions | null,
+  ): number[] | null {
     const result: number[] = [];
     if (!dimensions) {
       return null;
     }
     for (const dim of dimensions.dimensions) {
       if (dim.lower) {
-        //TODO lower bound is not acceptable here, report error  
+        //TODO lower bound is not acceptable here, report error
         break;
       }
-      if (dim.upper?.expression === '*') {
+      if (dim.upper?.expression === "*") {
         // TODO We don't support * in dimension for now
         break;
       } else if (dim.upper?.expression?.kind === ast.SyntaxKind.Literal) {
@@ -693,7 +713,9 @@ export class DefaultTypeBuilder implements TypeBuilder {
       } else {
         currentDataTypes = new Set(DataTypesByAttributeKind[kind]);
       }
-      const leftDataTypes = new Set<DataType>([...this.possibleDataTypes].filter(dt => currentDataTypes.has(dt)));
+      const leftDataTypes = new Set<DataType>(
+        [...this.possibleDataTypes].filter((dt) => currentDataTypes.has(dt)),
+      );
       if (leftDataTypes.size === 0) {
         this.diagnostics.push(
           diagnosticFromCode(Error.IBM2462I, token, token.image, witness.image),
