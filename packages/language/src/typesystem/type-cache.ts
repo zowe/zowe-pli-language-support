@@ -1,16 +1,16 @@
 import { SyntaxNode } from "../syntax-tree/ast";
-import { TypesDescriptions } from "./descriptions";
+import { TypeDescriptions } from "./descriptions";
 
 export interface TypeCache {
     get(
         node: SyntaxNode,
-        getter: () => TypesDescriptions.Any,
-    ): TypesDescriptions.Any;
+        getter: () => TypeDescriptions.Any,
+    ): TypeDescriptions.Any;
   clear(): void;
 }
 
 export class DefaultTypeCache implements TypeCache{
-  private cache = new Map<SyntaxNode, TypesDescriptions.Any>();
+  private cache = new Map<SyntaxNode, TypeDescriptions.Any>();
 
   clear() {
     this.cache.clear();
@@ -18,8 +18,8 @@ export class DefaultTypeCache implements TypeCache{
 
   get(
     node: SyntaxNode,
-    getter: () => TypesDescriptions.Any,
-  ): TypesDescriptions.Any {
+    getter: () => TypeDescriptions.Any,
+  ): TypeDescriptions.Any {
     if (this.cache.has(node)) {
       return this.cache.get(node)!;
     }

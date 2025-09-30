@@ -1,5 +1,5 @@
 import * as ast from "../syntax-tree/ast";
-import { TypesDescriptions } from "./descriptions";
+import { TypeDescriptions } from "./descriptions";
 import {
   ArithmeticOperator,
   CompilerOptionRules,
@@ -10,8 +10,8 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultTypeBuilder } from "./type-builder";
 
 export interface TypeInferer {
-  inferExpressionType(node: ast.Expression, compilationUnit: CompilationUnit): TypesDescriptions.Any;
-  inferDeclarationType(node: ast.DeclaredItem, compilationUnit: CompilationUnit): TypesDescriptions.Any;
+  inferExpressionType(node: ast.Expression, compilationUnit: CompilationUnit): TypeDescriptions.Any;
+  inferDeclarationType(node: ast.DeclaredItem, compilationUnit: CompilationUnit): TypeDescriptions.Any;
 }
 
 export class DefaultTypeInferer implements TypeInferer {
@@ -21,9 +21,9 @@ export class DefaultTypeInferer implements TypeInferer {
     rhs,
   }: {
     op: ArithmeticOperator;
-    lhs: TypesDescriptions.Arithmetic;
-    rhs: TypesDescriptions.Arithmetic;
-  }) => TypesDescriptions.Any;
+    lhs: TypeDescriptions.Arithmetic;
+    rhs: TypeDescriptions.Arithmetic;
+  }) => TypeDescriptions.Any;
 
   constructor(rules: CompilerOptionRules = CompilerOptionRules.ANS) {
     this.inferArithmeticOperation = createArithmeticOperationTable(rules);
@@ -32,17 +32,28 @@ export class DefaultTypeInferer implements TypeInferer {
   inferDeclarationType(
     node: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
-  ): TypesDescriptions.Any {
+  ): TypeDescriptions.Any {
+    function getNameToken(element: ast.DeclaredItemElement) {
+      if (element.kind === ast.SyntaxKind.DeclaredVariable) {
+        return element.nameToken;
+      } else if (element.kind === ast.SyntaxKind.WildcardItem) {
+        return element.token;
+      } else if (element.kind === ast.SyntaxKind.DeclaredItem) {
+        return getNameToken(element.elements[0]);
+      }
+      assertUnreachable(element);
+    }
     return compilationUnit.services.typeCache.get(node, () => {
-      const typeBuilder = new DefaultTypeBuilder();
+      const element = node.elements[0];
+      const typeBuilder = new DefaultTypeBuilder(getNameToken(element));
       node.attributes.forEach(attr => typeBuilder.addAttribute(attr));
       const { type, diagnostics } = typeBuilder.build();
       compilationUnit.diagnostics.typeSystem.push(...diagnostics);
-      return type ?? TypesDescriptions.Unknown();
+      return type ?? TypeDescriptions.Unknown();
     });
   }
 
-  inferExpressionType(node: ast.Expression, compilationUnit: CompilationUnit): TypesDescriptions.Any {
+  inferExpressionType(node: ast.Expression, compilationUnit: CompilationUnit): TypeDescriptions.Any {
     return compilationUnit.services.typeCache.get(node, () => {
       switch (node.kind) {
         case ast.SyntaxKind.BinaryExpression:
@@ -54,7 +65,7 @@ export class DefaultTypeInferer implements TypeInferer {
         case ast.SyntaxKind.LocatorCall:
           return this.inferLocatorCall(node, compilationUnit);
         case ast.SyntaxKind.Parenthesis:
-          return node.value ? this.inferExpressionType(node.value!, compilationUnit) : TypesDescriptions.Unknown();
+          return node.value ? this.inferExpressionType(node.value!, compilationUnit) : TypeDescriptions.Unknown();
         default:
           assertUnreachable(node);
       }
@@ -63,12 +74,12 @@ export class DefaultTypeInferer implements TypeInferer {
 
   private inferLocatorCall(node: ast.LocatorCall, compilationUnit: CompilationUnit) {
     /** @todo */
-    return TypesDescriptions.Unknown();
+    return TypeDescriptions.Unknown();
   }
 
   private inferLiteral(node: ast.Literal, compilationUnit: CompilationUnit) {
     /** @todo */
-    return TypesDescriptions.Unknown();
+    return TypeDescriptions.Unknown();
   }
 
   private inferUnaryExpression(node: ast.UnaryExpression, compilationUnit: CompilationUnit) {
@@ -80,13 +91,13 @@ export class DefaultTypeInferer implements TypeInferer {
       case "^":
       case null:
         /** @todo */
-        return TypesDescriptions.Unknown();
+        return TypeDescriptions.Unknown();
       default:
         assertUnreachable(node.op);
     }
   }
 
-  private inferBinaryExpression(node: ast.BinaryExpression, compilationUnit: CompilationUnit): TypesDescriptions.Any {
+  private inferBinaryExpression(node: ast.BinaryExpression, compilationUnit: CompilationUnit): TypeDescriptions.Any {
     switch (node.op) {
       case "+":
       case "-":
@@ -100,11 +111,11 @@ export class DefaultTypeInferer implements TypeInferer {
         if (
           !lhs ||
           !rhs ||
-          !TypesDescriptions.isArithmetic(lhs) ||
-          !TypesDescriptions.isArithmetic(rhs)
+          !TypeDescriptions.isArithmetic(lhs) ||
+          !TypeDescriptions.isArithmetic(rhs)
         ) {
           /** @todo also take care of this branch */
-          return TypesDescriptions.Unknown();
+          return TypeDescriptions.Unknown();
         }
         return this.inferArithmeticOperation({ op, lhs, rhs });
       }
@@ -114,7 +125,7 @@ export class DefaultTypeInferer implements TypeInferer {
       case "=":
       case ">":
       case ">=": {
-        return TypesDescriptions.Boolean;
+        return TypeDescriptions.Boolean;
       }
       case "^":
       case "&":
@@ -125,7 +136,7 @@ export class DefaultTypeInferer implements TypeInferer {
       case "^>":
       case null:
         /** @todo */
-        return TypesDescriptions.Unknown();
+        return TypeDescriptions.Unknown();
       default:
         assertUnreachable(node.op);
     }

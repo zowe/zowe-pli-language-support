@@ -10,7 +10,7 @@ import {
   DataType,
   Scale,
   ScaleMode,
-  TypesDescriptions,
+  TypeDescriptions,
 } from "../../src/typesystem/descriptions";
 
 function arithmetic(
@@ -30,16 +30,16 @@ function arithmetic(
           mode: ScaleMode.Float,
           totalDigitsCount: p,
         };
-  return TypesDescriptions.Arithmetic({
+  return TypeDescriptions.Arithmetic({
     base,
     scale,
   });
 }
 
 type ExpectWhenType = (
-  lhs: TypesDescriptions.Arithmetic,
+  lhs: TypeDescriptions.Arithmetic,
   op: ArithmeticOperator,
-  rhs: TypesDescriptions.Arithmetic,
+  rhs: TypeDescriptions.Arithmetic,
   expectedScaleMode: ScaleMode,
   expectedBase: Base,
   expectedP: number,
@@ -50,9 +50,9 @@ function expectArithmeticWhenFactory(
   inferArithmeticOp: ComputeOperationReturnType,
 ): ExpectWhenType {
   return function expectArithmeticWhen(
-    lhs: TypesDescriptions.Arithmetic,
+    lhs: TypeDescriptions.Arithmetic,
     op: ArithmeticOperator,
-    rhs: TypesDescriptions.Arithmetic,
+    rhs: TypeDescriptions.Arithmetic,
     expectedScaleMode: ScaleMode,
     expectedBase: Base,
     expectedP: number,
@@ -62,7 +62,7 @@ function expectArithmeticWhenFactory(
       lhs,
       rhs,
       op,
-    }) as TypesDescriptions.Arithmetic;
+    }) as TypeDescriptions.Arithmetic;
     expect(returnType.scale.mode).toBe(expectedScaleMode);
     expect(returnType.base).toBe(expectedBase);
     expect(returnType.scale.totalDigitsCount).toBe(expectedP);

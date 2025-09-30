@@ -10,7 +10,7 @@ import {
   DataTypesByAttributeKind,
   AttributeKinds,
   AttributeTypes,
-  TypesDescriptions,
+  TypeDescriptions,
   AttributeKind,
   ScaleMode,
   Volatility,
@@ -41,7 +41,7 @@ function createEmptyAttributeWitnesses(): AttributeWitnesses {
 }
 
 type BuiltType = {
-  type: TypesDescriptions.Any | undefined;
+  type: TypeDescriptions.Any | undefined;
   diagnostics: Diagnostic[];
 };
 
@@ -53,8 +53,10 @@ export interface TypeBuilder {
 export class DefaultTypeBuilder implements TypeBuilder {
   private diagnostics: Diagnostic[] = [];
   private possibleDataTypes = new Set<DataType>(DataTypes);
-  private attributeWitnesses: AttributeWitnesses =
-    createEmptyAttributeWitnesses();
+  private attributeWitnesses: AttributeWitnesses = createEmptyAttributeWitnesses();
+  constructor(private token: Token|null) {
+
+  }
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -99,13 +101,20 @@ export class DefaultTypeBuilder implements TypeBuilder {
             this.addAttributeWitness(
               AttributeKind.Scale,
               {
-                mode: ScaleMode.Float,
+                mode: ScaleMode.Fixed,
                 totalDigitsCount: precision[0],
+                fractionalDigitsCount: 0,
               },
               attribute,
               token,
             );
           } else if (precision.length >= 2) {
+            if(this.attributeWitnesses[AttributeKind.Scale]?.value?.mode === ScaleMode.Float) {
+              this.diagnostics.push(
+                diagnosticFromCode(Error.IBM2424I, token),
+              );
+              break;
+            }
             this.addAttributeWitness(
               AttributeKind.Scale,
               {
@@ -136,6 +145,13 @@ export class DefaultTypeBuilder implements TypeBuilder {
         break;
       }
       case "FLOAT": {
+        const witness = this.attributeWitnesses[AttributeKind.Scale];
+        if(witness?.value?.mode === ScaleMode.Fixed) {
+          this.diagnostics.push(
+            diagnosticFromCode(Error.IBM2424I, witness.token),
+          );
+          break;
+        }
         const precision = this.acceptDimensionsAsListOfNumbers(attribute.dimensions);
         this.addAttributeWitness(
           AttributeKind.Scale,
@@ -617,15 +633,17 @@ export class DefaultTypeBuilder implements TypeBuilder {
   }
   build() {
     if (this.possibleDataTypes.size !== 1) {
-      //TODO add diagnostic about missing or conflicting type attributes
+      if(this.token) {
+        this.diagnostics.push(diagnosticFromCode(Error.IBM1482I, this.token, this.token.image));
+      }
       return {
-        type: undefined,
+        type: TypeDescriptions.Unknown(),
         diagnostics: this.diagnostics,
       };
     }
     const dataType = Array.from(this.possibleDataTypes)[0];
     return {
-      type: TypesDescriptions.create(dataType, this.attributeWitnesses),
+      type: TypeDescriptions.create(dataType, this.attributeWitnesses),
       diagnostics: this.diagnostics,
     };
   }
@@ -675,8 +693,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
       } else {
         possibleDatatypes = new Set(DataTypesByAttributeKind[kind]);
       }
-      const leftDataTypes =
-        this.possibleDataTypes.intersection(possibleDatatypes);
+      const leftDataTypes = new Set<DataType>([...this.possibleDataTypes].filter(dt => possibleDatatypes.has(dt)));
       if (leftDataTypes.size === 0) {
         this.diagnostics.push(
           diagnosticFromCode(Error.IBM2462I, token, token.image, witness.image),
@@ -690,6 +707,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
         value,
         witness,
         image: token.image,
+        token,
       } as AttributeWitnesses[K];
     }
   }

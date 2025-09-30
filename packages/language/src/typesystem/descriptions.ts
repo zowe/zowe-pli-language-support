@@ -1,3 +1,4 @@
+import { Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
 
@@ -180,6 +181,7 @@ export type AttributeWitnesses = {
     value: AttributeTypes[K];
     witness: ast.DeclarationAttribute;
     image: string;
+    token: Token;
   } | null;
 };
 
@@ -267,7 +269,7 @@ PARAMETER
 */
 
 function createBaseTypeDescription(
-  type: TypesDescriptions.TypeDescriptionType,
+  type: TypeDescriptions.TypeDescriptionType,
   {
     alignment,
     connection,
@@ -817,7 +819,7 @@ function createUnknownTypeDescription(): UnknownTypeDescription {
   };
 }
 
-export namespace TypesDescriptions {
+export namespace TypeDescriptions {
   export type Any =
     | Area
     | Arithmetic
@@ -887,80 +889,121 @@ export namespace TypesDescriptions {
     length: 1,
   });
   export const isBoolean = (
-    type: TypesDescriptions.Any,
+    type: TypeDescriptions.Any,
   ): type is StringTypeDescription =>
     isString(type) && type.kind === StringKind.Bit && type.length === 1;
 
+  //TODO check default values
+  const DefaultValues: AttributeTypes = {
+    [AttributeKind.FileUsage]: FileUsage.Record,
+    [AttributeKind.BufferMode]: BufferMode.Unbuffered,
+    [AttributeKind.AccessMode]: AccessMode.Sequential,
+    [AttributeKind.FloatFormat]: FloatFormat.IEEE,
+    [AttributeKind.Endianess]: Endianess.Big,
+    [AttributeKind.DataType]: DataType.Area,
+    [AttributeKind.Alignment]: {
+      type: AlignmentType.Aligned,
+      alignment: 1
+    },
+    [AttributeKind.Scope]: {
+      type: ScopeType.Internal
+    },
+    [AttributeKind.Storage]: StorageClass.Automatic,
+    [AttributeKind.Volatility]: Volatility.Normal,
+    [AttributeKind.Position]: {
+      variable: null,
+      position: null
+    },
+    [AttributeKind.Assignability]: Assignability.Assignable,
+    [AttributeKind.Connection]: StorageConnection.Connected,
+    [AttributeKind.Variable]: false,
+    [AttributeKind.Scale]: {
+      mode: ScaleMode.Fixed,
+      totalDigitsCount: 5,
+      fractionalDigitsCount: 0
+    },
+    [AttributeKind.Base]: Base.Binary,
+    [AttributeKind.Sign]: Sign.Signed,
+    [AttributeKind.NumberMode]: NumberMode.Real,
+    [AttributeKind.AreaSize]: 0,
+    [AttributeKind.LocatorKind]: {
+      type: "pointer",
+      size: 32
+    },
+    [AttributeKind.OrdinalNames]: [],
+    [AttributeKind.PictureKind]: "picture",
+    [AttributeKind.StringKind]: StringKind.Bit,
+    [AttributeKind.StringFormat]: StringFormat.Varying,
+    [AttributeKind.StringLength]: 0
+  };
+
   export function create(type: DataType, attributes: AttributeWitnesses): Any {
     const common = {
-      alignment: attributes[AttributeKind.Alignment]?.value,
-      scope: attributes[AttributeKind.Scope]?.value,
-      storage: attributes[AttributeKind.Storage]?.value,
-      volatility: attributes[AttributeKind.Volatility]?.value,
-      position: attributes[AttributeKind.Position]?.value,
-      assignability: attributes[AttributeKind.Assignability]?.value,
-      connection: attributes[AttributeKind.Connection]?.value,
-      variable: attributes[AttributeKind.Variable]?.value,
+      alignment: attributes[AttributeKind.Alignment]?.value ?? DefaultValues[AttributeKind.Alignment],
+      scope: attributes[AttributeKind.Scope]?.value ?? DefaultValues[AttributeKind.Scope],
+      storage: attributes[AttributeKind.Storage]?.value ?? DefaultValues[AttributeKind.Storage],
+      volatility: attributes[AttributeKind.Volatility]?.value ?? DefaultValues[AttributeKind.Volatility],
+      position: attributes[AttributeKind.Position]?.value ?? DefaultValues[AttributeKind.Position],
+      assignability: attributes[AttributeKind.Assignability]?.value ?? DefaultValues[AttributeKind.Assignability],
+      connection: attributes[AttributeKind.Connection]?.value ?? DefaultValues[AttributeKind.Connection],
+      variable: attributes[AttributeKind.Variable]?.value ?? DefaultValues[AttributeKind.Variable],
     };
     switch (type) {
       case DataType.Area:
-        return TypesDescriptions.Area({
+        return TypeDescriptions.Area({
           ...common,
-          size: attributes[AttributeKind.AreaSize]?.value,
+          size: attributes[AttributeKind.AreaSize]?.value ?? DefaultValues[AttributeKind.AreaSize],
         });
       case DataType.Arithmetic:
-        return TypesDescriptions.Arithmetic({
+        return TypeDescriptions.Arithmetic({
           ...common,
-          scale: attributes[AttributeKind.Scale]?.value,
-          base: attributes[AttributeKind.Base]?.value,
-          sign: attributes[AttributeKind.Sign]?.value,
-          mode: attributes[AttributeKind.NumberMode]?.value,
-          endianness: attributes[AttributeKind.Endianess]?.value,
-          floatFormat: attributes[AttributeKind.FloatFormat]?.value,
+          scale: attributes[AttributeKind.Scale]?.value ?? DefaultValues[AttributeKind.Scale],
+          base: attributes[AttributeKind.Base]?.value ?? DefaultValues[AttributeKind.Base],
+          sign: attributes[AttributeKind.Sign]?.value ?? DefaultValues[AttributeKind.Sign],
+          mode: attributes[AttributeKind.NumberMode]?.value ?? DefaultValues[AttributeKind.NumberMode],
+          endianness: attributes[AttributeKind.Endianess]?.value ?? DefaultValues[AttributeKind.Endianess],
+          floatFormat: attributes[AttributeKind.FloatFormat]?.value ?? DefaultValues[AttributeKind.FloatFormat],
         });
       case DataType.File:
-        return TypesDescriptions.File({
+        return TypeDescriptions.File({
           ...common,
-          accessMode: attributes[AttributeKind.AccessMode]?.value,
-          bufferMode: attributes[AttributeKind.BufferMode]?.value,
-          usage: attributes[AttributeKind.FileUsage]?.value,
+          accessMode: attributes[AttributeKind.AccessMode]?.value ?? DefaultValues[AttributeKind.AccessMode],
+          bufferMode: attributes[AttributeKind.BufferMode]?.value ?? DefaultValues[AttributeKind.BufferMode],
+          usage: attributes[AttributeKind.FileUsage]?.value ?? DefaultValues[AttributeKind.FileUsage],
         });
       case DataType.Format:
-        return TypesDescriptions.Format(common);
+        return TypeDescriptions.Format(common);
       case DataType.Label:
-        return TypesDescriptions.Label(common);
+        return TypeDescriptions.Label(common);
       case DataType.Locator:
-        return TypesDescriptions.Locator({
+        return TypeDescriptions.Locator({
           ...common,
-          kind: attributes[AttributeKind.LocatorKind]!.value,
+          kind: attributes[AttributeKind.LocatorKind]!.value ?? DefaultValues[AttributeKind.LocatorKind],
         });
       case DataType.Entry:
-        return TypesDescriptions.Entry(common);
+        return TypeDescriptions.Entry(common);
       case DataType.Ordinal:
-        return TypesDescriptions.Ordinal({
+        return TypeDescriptions.Ordinal({
           ...common,
-          names: attributes[AttributeKind.OrdinalNames]!.value,
+          names: attributes[AttributeKind.OrdinalNames]!.value ?? DefaultValues[AttributeKind.OrdinalNames],
         });
       case DataType.Picture:
-        return TypesDescriptions.Picture({
+        return TypeDescriptions.Picture({
           ...common,
-          kind: attributes[AttributeKind.PictureKind]!.value,
-          domain: attributes[AttributeKind.NumberMode]?.value,
+          kind: attributes[AttributeKind.PictureKind]?.value ?? DefaultValues[AttributeKind.PictureKind],
+          domain: attributes[AttributeKind.NumberMode]?.value ?? DefaultValues[AttributeKind.NumberMode],
         });
       case DataType.String:
-        return TypesDescriptions.String({
+        return TypeDescriptions.String({
           ...common,
-          kind: attributes[AttributeKind.StringKind]!.value,
-          format: attributes[AttributeKind.StringFormat]!.value,
-          length: attributes[AttributeKind.StringLength]!.value,
+          kind: attributes[AttributeKind.StringKind]?.value ?? DefaultValues[AttributeKind.StringKind],
+          format: attributes[AttributeKind.StringFormat]?.value ?? DefaultValues[AttributeKind.StringFormat],
+          length: attributes[AttributeKind.StringLength]?.value ?? DefaultValues[AttributeKind.StringLength],
         });
       case DataType.Task:
-        return TypesDescriptions.Task(common);
+        return TypeDescriptions.Task(common);
       case DataType.Unknown:
-        return {
-          type: UnknownType,
-          ...createBaseTypeDescription(UnknownType, common),
-        };
+        return TypeDescriptions.Unknown();
       default:
         assertUnreachable(type);
     }

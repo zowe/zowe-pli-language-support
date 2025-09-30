@@ -2,7 +2,7 @@ import {
   Base,
   MaximumPrecisions,
   ScaleMode,
-  TypesDescriptions,
+  TypeDescriptions,
 } from "./descriptions";
 
 export enum CompilerOptionRules {
@@ -15,17 +15,17 @@ export type ComputeOperationReturnType = ({
   rhs,
 }: {
   op: ArithmeticOperator;
-  lhs: TypesDescriptions.Arithmetic;
-  rhs: TypesDescriptions.Arithmetic;
-}) => TypesDescriptions.Any;
+  lhs: TypeDescriptions.Arithmetic;
+  rhs: TypeDescriptions.Arithmetic;
+}) => TypeDescriptions.Any;
 type BinaryOperatorPredicate = ({
   op,
   lhs,
   rhs,
 }: {
   op: ArithmeticOperator;
-  lhs: TypesDescriptions.Arithmetic;
-  rhs: TypesDescriptions.Arithmetic;
+  lhs: TypeDescriptions.Arithmetic;
+  rhs: TypeDescriptions.Arithmetic;
 }) => boolean;
 type ArithmeticTypeRule = {
   whenOp: ArithmeticOperator[];
@@ -521,8 +521,8 @@ export const createArithmeticOperationTable = (
   );
 
 interface QComputationVariables {
-  lhs: TypesDescriptions.Arithmetic;
-  rhs: TypesDescriptions.Arithmetic;
+  lhs: TypeDescriptions.Arithmetic;
+  rhs: TypeDescriptions.Arithmetic;
   p1: number;
   p2: number;
   q1: number;
@@ -566,7 +566,7 @@ function whenAtLeastOneFloatCaseOnOperator(
       } = rhs;
       const variablesForQ = createVariablesForQ(p1, p2, lhs, rhs);
       const variablesForP = createVariablesForP(variablesForQ, () => 0);
-      return TypesDescriptions.Arithmetic({
+      return TypeDescriptions.Arithmetic({
         scale: {
           mode: ScaleMode.Float,
           totalDigitsCount: thenP(variablesForP),
@@ -619,7 +619,7 @@ function whenUnscaledFixedCaseOnOperatorANS(
       } = rhs;
       const variablesForQ = createVariablesForQ(p1, p2, lhs, rhs);
       const variablesForP = createVariablesForP(variablesForQ, thenQ);
-      return TypesDescriptions.Arithmetic({
+      return TypeDescriptions.Arithmetic({
         scale: {
           mode: ScaleMode.Fixed,
           fractionalDigitsCount: thenQ?.call(undefined, variablesForQ) ?? 0,
@@ -672,7 +672,7 @@ function whenScaledFixedCaseOnOperatorANS(
       } = rhs;
       const variablesForQ = createVariablesForQ(p1, p2, lhs, rhs);
       const variablesForP = createVariablesForP(variablesForQ, thenQ);
-      return TypesDescriptions.Arithmetic({
+      return TypeDescriptions.Arithmetic({
         scale: {
           mode: ScaleMode.Fixed,
           totalDigitsCount: thenP(variablesForP),
@@ -721,7 +721,7 @@ function whenScaledFixedCaseOnOperatorIBM(
       } = rhs;
       const variablesForQ = createVariablesForQ(p1, p2, lhs, rhs);
       const variablesForP = createVariablesForP(variablesForQ, thenQ);
-      return TypesDescriptions.Arithmetic({
+      return TypeDescriptions.Arithmetic({
         scale: {
           mode: ScaleMode.Fixed,
           totalDigitsCount: thenP(variablesForP),
@@ -736,8 +736,8 @@ function whenScaledFixedCaseOnOperatorIBM(
 function createVariablesForQ(
   p1: number,
   p2: number,
-  lhs: TypesDescriptions.Arithmetic,
-  rhs: TypesDescriptions.Arithmetic,
+  lhs: TypeDescriptions.Arithmetic,
+  rhs: TypeDescriptions.Arithmetic,
 ): QComputationVariables {
   const q1 =
     lhs.scale.mode === ScaleMode.Fixed ? lhs.scale.fractionalDigitsCount : 0;
@@ -811,7 +811,7 @@ function applyRules(rules: ArithmeticTypeRule[]): ComputeOperationReturnType {
     if (key in table) {
       return table[key](args);
     }
-    return TypesDescriptions.Unknown();
+    return TypeDescriptions.Unknown();
   };
 }
 
@@ -824,6 +824,6 @@ function aggregateRules(
         return rule.then({ op, lhs, rhs });
       }
     }
-    return TypesDescriptions.Unknown();
+    return TypeDescriptions.Unknown();
   };
 }
