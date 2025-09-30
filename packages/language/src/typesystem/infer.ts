@@ -6,15 +6,15 @@ import {
   createArithmeticOperationTable,
 } from "./arithmetic-operations";
 import { assertUnreachable } from "../utils/common";
+import { CompilationUnit } from "../workspace/compilation-unit";
+import { DefaultTypeBuilder } from "./type-builder";
 
-export interface PliTypeInferer {
-  inferExpressionType(node: ast.Expression): TypesDescriptions.Any | undefined;
-  inferDeclarationType(
-    node: ast.DeclaredItem,
-  ): TypesDescriptions.Any | undefined;
+export interface TypeInferer {
+  inferExpressionType(node: ast.Expression, compilationUnit: CompilationUnit): TypesDescriptions.Any | undefined;
+  inferDeclarationType(node: ast.DeclaredItem, compilationUnit: CompilationUnit): TypesDescriptions.Any | undefined;
 }
 
-export class DefaultPliTypeInferer implements PliTypeInferer {
+export class DefaultTypeInferer implements TypeInferer {
   private inferArithmeticOperation: ({
     op,
     lhs,
@@ -24,44 +24,52 @@ export class DefaultPliTypeInferer implements PliTypeInferer {
     lhs: TypesDescriptions.Arithmetic;
     rhs: TypesDescriptions.Arithmetic;
   }) => TypesDescriptions.Any | undefined;
-  constructor() {
+
+  constructor(rules: CompilerOptionRules = CompilerOptionRules.ANS) {
     /** @todo pass in the compiler flag RULES(X), where X = 'ans' or 'ibm' */
     this.inferArithmeticOperation = createArithmeticOperationTable(
-      CompilerOptionRules.ANS,
+      rules,
     );
   }
 
   inferDeclarationType(
     node: ast.DeclaredItem,
+    compilationUnit: CompilationUnit,
   ): TypesDescriptions.Any | undefined {
-    node.attributes;
+    compilationUnit.services.typeCache.get(node, () => {
+      const typeBuilder = new DefaultTypeBuilder();
+      node.attributes.forEach(attr => typeBuilder.addAttribute(attr));
+      const { type, diagnostics } = typeBuilder.build();
+      compilationUnit.diagnostics.typeSystem.push(...diagnostics);
+      return type ?? TypesDescriptions.Unknown();
+    });
     return undefined;
   }
 
-  inferExpressionType(node: ast.Expression): TypesDescriptions.Any | undefined {
+  inferExpressionType(node: ast.Expression, compilationUnit: CompilationUnit): TypesDescriptions.Any | undefined {
     switch (node.kind) {
       case ast.SyntaxKind.BinaryExpression:
-        return this.inferBinaryExpression(node);
+        return this.inferBinaryExpression(node, compilationUnit);
       case ast.SyntaxKind.UnaryExpression:
-        return this.inferUnaryExpression(node);
+        return this.inferUnaryExpression(node, compilationUnit);
       case ast.SyntaxKind.Literal:
-        return this.inferLiteral(node);
+        return this.inferLiteral(node, compilationUnit);
       case ast.SyntaxKind.LocatorCall:
-        return this.inferLocatorCall(node);
+        return this.inferLocatorCall(node, compilationUnit);
       case ast.SyntaxKind.Parenthesis:
-        return node.value ? this.inferExpressionType(node.value!) : undefined;
+        return node.value ? this.inferExpressionType(node.value!, compilationUnit) : undefined;
       default:
         assertUnreachable(node);
     }
   }
 
-  private inferLocatorCall(node: ast.LocatorCall) {
+  private inferLocatorCall(node: ast.LocatorCall, compilationUnit: CompilationUnit) {
     /** @todo */
     //node.previous -> node.element
     return undefined;
   }
 
-  private inferLiteral(node: ast.Literal) {
+  private inferLiteral(node: ast.Literal, compilationUnit: CompilationUnit) {
     if (!node.value) {
       /** @todo */
       return undefined;
@@ -76,12 +84,12 @@ export class DefaultPliTypeInferer implements PliTypeInferer {
     }
   }
 
-  private inferUnaryExpression(node: ast.UnaryExpression) {
+  private inferUnaryExpression(node: ast.UnaryExpression, compilationUnit: CompilationUnit) {
     switch (node.op) {
       case "+":
       case "-":
         /** @todo what about negating vs. sign of the type */
-        return this.inferExpressionType(node.expr!);
+        return this.inferExpressionType(node.expr!, compilationUnit);
       case "^":
       case null:
         /** @todo */
@@ -91,9 +99,7 @@ export class DefaultPliTypeInferer implements PliTypeInferer {
     }
   }
 
-  private inferBinaryExpression(
-    node: ast.BinaryExpression,
-  ): TypesDescriptions.Any | undefined {
+  private inferBinaryExpression(node: ast.BinaryExpression, compilationUnit: CompilationUnit): TypesDescriptions.Any | undefined {
     switch (node.op) {
       case "+":
       case "-":
@@ -102,8 +108,8 @@ export class DefaultPliTypeInferer implements PliTypeInferer {
       case "**": {
         //@see https://www.ibm.com/docs/en/epfz/6.1?topic=operations-results-arithmetic
         const op = node.op;
-        const lhs = this.inferExpressionType(node.left!);
-        const rhs = this.inferExpressionType(node.right!);
+        const lhs = this.inferExpressionType(node.left!, compilationUnit);
+        const rhs = this.inferExpressionType(node.right!, compilationUnit);
         if (
           !lhs ||
           !rhs ||

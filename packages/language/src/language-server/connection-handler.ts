@@ -100,7 +100,7 @@ export function startLanguageServer(connection: Connection): void {
       const parsedUri = URI.parse(uri);
       const compilationUnit =
         compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = compilationUnit?.files.getDocument(uri);
+      const textDocument = compilationUnit?.services.files.getDocument(uri);
 
       if (!textDocument || !compilationUnit) {
         return null;
@@ -122,7 +122,7 @@ export function startLanguageServer(connection: Connection): void {
       const parsedUri = URI.parse(uri);
       const compilationUnit =
         compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = compilationUnit?.files.getDocument(uri);
+      const textDocument = compilationUnit?.services.files.getDocument(uri);
       if (textDocument && compilationUnit) {
         const offset = textDocument.offsetAt(position);
         const result = completionRequest(
@@ -143,13 +143,13 @@ export function startLanguageServer(connection: Connection): void {
       const position = params.position;
       const uri = URI.parse(params.textDocument.uri);
       const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
-      const textDocument = compilationUnit?.files.getDocument(uri);
+      const textDocument = compilationUnit?.services.files.getDocument(uri);
       if (textDocument && compilationUnit) {
         const offset = textDocument.offsetAt(position);
         const definition = definitionRequest(compilationUnit, uri, offset);
         const lspDefinitions: Location[] = [];
         for (const def of definition) {
-          const doc = compilationUnit?.files.getDocument(def.uri);
+          const doc = compilationUnit?.services.files.getDocument(def.uri);
           if (doc) {
             const range = rangeToLSP(doc, def.range);
             lspDefinitions.push({
@@ -170,7 +170,7 @@ export function startLanguageServer(connection: Connection): void {
       const parsedUri = URI.parse(uri);
       const compilationUnit =
         compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = compilationUnit?.files.getDocument(uri);
+      const textDocument = compilationUnit?.services.files.getDocument(uri);
       if (textDocument && compilationUnit) {
         const offset = textDocument.offsetAt(position);
         const definition = referencesRequest(
@@ -180,7 +180,7 @@ export function startLanguageServer(connection: Connection): void {
         );
         const lspDefinitions: Location[] = [];
         for (const def of definition) {
-          const doc = compilationUnit.files.getDocument(def.uri);
+          const doc = compilationUnit?.services.files.getDocument(def.uri);
           if (doc) {
             const range = rangeToLSP(doc, def.range);
             lspDefinitions.push({
@@ -200,7 +200,7 @@ export function startLanguageServer(connection: Connection): void {
       const compilationUnit = compilationUnitHandler.getCompilationUnit(
         URI.parse(uri),
       );
-      const textDocument = compilationUnit?.files.getDocument(uri);
+      const textDocument = compilationUnit?.services.files.getDocument(uri);
       if (textDocument && compilationUnit) {
         return {
           data: semanticTokens(textDocument, compilationUnit),
@@ -217,7 +217,7 @@ export function startLanguageServer(connection: Connection): void {
       const position = params.position;
       const parsedUri = URI.parse(uri);
       const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = unit?.files.getDocument(uri);
+      const textDocument = unit?.services.files.getDocument(uri);
       if (textDocument && unit) {
         const offset = textDocument.offsetAt(position);
         const definitions = getReferenceLocations(unit, parsedUri, offset);
@@ -236,13 +236,13 @@ export function startLanguageServer(connection: Connection): void {
       const position = params.position;
       const parsedUri = URI.parse(uri);
       const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = unit?.files.getDocument(uri);
+      const textDocument = unit?.services.files.getDocument(uri);
       if (textDocument && unit) {
         const offset = textDocument.offsetAt(position);
         const renameLocations = renameRequest(unit, parsedUri, offset);
         const changes: Record<string, TextEdit[]> = {};
         for (const [key, locations] of Object.entries(renameLocations)) {
-          const textDocument = unit.files.getDocument(key);
+          const textDocument = unit.services.files.getDocument(key);
           if (textDocument) {
             changes[key] = locations.map(
               (location) =>
@@ -267,7 +267,7 @@ export function startLanguageServer(connection: Connection): void {
       const uri = params.textDocument.uri;
       const parsedUri = URI.parse(uri);
       const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = unit?.files.getDocument(uri);
+      const textDocument = unit?.services.files.getDocument(uri);
       if (textDocument && unit) {
         const requestResult = documentSymbolRequest(parsedUri, unit);
         return requestResult.map((symbol) =>

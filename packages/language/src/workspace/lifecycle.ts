@@ -61,7 +61,7 @@ export async function tokenize(
     compilationUnit.uri,
   );
   compilationUnit.tokens = result.all;
-  compilationUnit.files = result.files;
+  compilationUnit.services.files = result.files;
   compilationUnit.preprocessorAst.statements = result.statements;
   compilationUnit.preprocessorEvaluationResults = result.evaluationResults;
   compilationUnit.referencesCache.addAll(result.tokenReferences);

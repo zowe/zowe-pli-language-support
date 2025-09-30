@@ -19,6 +19,7 @@ export enum DataType {
   Picture,
   String,
   Task,
+  Unknown = -1,
 }
 
 export const DataTypes: DataType[] = [
@@ -132,6 +133,9 @@ export const CommonAttributeKinds: AttributeKind[] = [
 ];
 
 export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
+  [DataType.Unknown]: [
+    ...CommonAttributeKinds,
+  ],
   [DataType.Area]: [
     ...CommonAttributeKinds,
     AttributeKind.AreaSize,
@@ -798,6 +802,21 @@ function isTaskTypeDescription(
   return description.type === TaskType;
 }
 
+//--- Unknown ---
+const UnknownType = DataType.Unknown;
+type UnknownType = typeof UnknownType;
+
+interface UnknownTypeDescription extends BaseTypeDescription {
+  type: UnknownType;
+}
+
+function createUnknownTypeDescription(): UnknownTypeDescription {
+  return {
+    type: UnknownType,
+    ...createBaseTypeDescription(UnknownType, {}),
+  };
+}
+
 export namespace TypesDescriptions {
   export type Any =
     | Area
@@ -810,8 +829,12 @@ export namespace TypesDescriptions {
     | Ordinal
     | Picture
     | String
-    | Task;
+    | Task
+    | Unknown;
   export type TypeDescriptionType = Any["type"];
+
+  export const Unknown = createUnknownTypeDescription;
+  export type Unknown = UnknownTypeDescription;
 
   export const Area = createAreaTypeDescription;
   export type Area = AreaTypeDescription;
@@ -933,6 +956,11 @@ export namespace TypesDescriptions {
         });
       case DataType.Task:
         return TypesDescriptions.Task(common);
+      case DataType.Unknown:
+        return {
+          type: UnknownType,
+          ...createBaseTypeDescription(UnknownType, common),
+        };
       default:
         assertUnreachable(type);
     }

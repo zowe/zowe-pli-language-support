@@ -228,7 +228,7 @@ export function diagnosticToLSP(
   ) {
     return undefined;
   }
-  const doc = unit.files.getDocument(diagnostic.uri);
+  const doc = unit.services.files.getDocument(diagnostic.uri);
   if (!doc) {
     return undefined;
   }
