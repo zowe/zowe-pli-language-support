@@ -514,41 +514,6 @@ function runCallInstruction(
     );
     return;
   }
-  if (procedure.parameters.length > instruction.args.length) {
-    context.diagnostics.push(
-      diagnosticFromCode(
-        Warning.IBM3323I,
-        instruction.procedureNameToken,
-        instruction.procedureNameToken!.image,
-      ),
-    );
-    for (
-      let count = instruction.args.length;
-      count < procedure.parameters.length;
-      count++
-    ) {
-      instruction.args.push({
-        kind: inst.InstructionKind.Number,
-        value: "0",
-      });
-    }
-  }
-  if (procedure.parameters.length < instruction.args.length) {
-    context.diagnostics.push(
-      diagnosticFromCode(
-        Warning.IBM3324I,
-        instruction.procedureNameToken,
-        instruction.procedureNameToken!.image,
-      ),
-    );
-    for (
-      let count = procedure.parameters.length;
-      count < instruction.args.length;
-      count++
-    ) {
-      instruction.args.pop();
-    }
-  }
   if (procedure.statement) {
     context.diagnostics.push(
       diagnosticFromCode(Severe.IBM3971I, instruction.procedureNameToken),
@@ -564,7 +529,7 @@ function runCallInstruction(
     );
   }
   const args = instruction.args;
-  evaluateProcedure(procedure, args, context);
+  evaluateProcedure(procedure, args, context, instruction.procedureNameToken);
 }
 
 function runAnswerInstruction(
@@ -1209,7 +1174,7 @@ function evaluateValueAccess(
 ): ValueAccess {
   const empty: ValueAccess = {
     getter: () => defaultEmptyValue,
-    setter: () => {}, // Do nothing
+    setter: () => { }, // Do nothing
   };
   if (args.length === 0) {
     // If there are no args, we simply return the variable value
@@ -1272,10 +1237,11 @@ function evaluateProcedure(
   procedure: inst.ProcedureInstructionContainer,
   args: inst.ExpressionInstruction[],
   context: InterpreterContext,
+  callToken?: Token,
 ): Value {
   const procArgs = args.map((e) => evaluateExpression(e, context));
   const localContext = createLocalContext(context, procedure);
-  return runProcedure(procedure, procArgs, localContext);
+  return runProcedure(procedure, procArgs, localContext, callToken);
 }
 
 function createLocalContext(
@@ -1297,12 +1263,34 @@ function runProcedure(
   procedure: inst.ProcedureInstructionContainer,
   args: Value[],
   context: InterpreterContext,
+  callToken?: Token,
 ): Value {
   if (!context.symbols.parent) {
     throw new Error(
       "Local variables map is not initialized! Use the createLocalContext function before calling runProcedure!",
     );
   }
+
+  if (callToken) {
+    if (procedure.parameters.length > args.length) {
+      context.diagnostics.push(
+        diagnosticFromCode(
+          Warning.IBM3323I,
+          callToken,
+          callToken.image,
+        ),
+      );
+    } else if (procedure.parameters.length < args.length) {
+      context.diagnostics.push(
+        diagnosticFromCode(
+          Warning.IBM3324I,
+          callToken,
+          callToken.image,
+        ),
+      );
+    }
+  }
+
   // Note that in case a procedure has received too many arguments, the excess ones are ignored
   for (let i = 0; i < procedure.parameters.length; i++) {
     const param = procedure.parameters[i];
