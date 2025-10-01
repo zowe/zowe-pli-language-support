@@ -24,7 +24,7 @@ export function IBM1059I_select_without_otherwise(
   const token = node.selectToken;
   if (!token) return;
 
-  const otherwiseStatement = node.statements?.some(
+  const otherwiseStatement = node.cases?.some(
     (stmt) => stmt.kind === AST.SyntaxKind.OtherwiseStatement,
   );
   if (otherwiseStatement) return;

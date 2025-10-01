@@ -133,7 +133,10 @@ function generateInstructionForStatement(
       instruction = generateReturnInstruction(value);
       break;
     case ast.SyntaxKind.IfStatement:
-      instruction = generateIfInstruction(value, context);
+      instruction = generateSelectInstructionFromIf(value, context);
+      break;
+    case ast.SyntaxKind.SelectStatement:
+      instruction = generateSelectInstruction(value, context);
       break;
     case ast.SyntaxKind.DoStatement:
       instruction = generateDoInstruction(value, context);
@@ -402,40 +405,77 @@ function getDimensions(
   return instructions;
 }
 
-function generateIfInstruction(
+function generateSelectInstructionFromIf(
   node: ast.IfStatement,
   context: GenerateInstructionContext,
-): inst.IfInstruction | undefined {
-  const condition = node.expression;
-  if (!condition) {
-    return undefined; // No condition to generate instructions for
-  }
-  const conditionInstruction = generateExpressionInstruction(condition) ?? {
+): inst.SelectInstruction | undefined {
+  const compare = generateExpressionInstruction(node.expression) ?? {
     kind: inst.InstructionKind.Number,
     value: "0",
   };
+  const cases: inst.Cases[] = [];
   const trueBranch = generateInstructionForStatement(node.unit, context);
+  if (trueBranch) {
+    cases.push({
+      conditions: [compare],
+      body: trueBranch,
+    });
+  }
   const falseBranch = node.else
     ? generateInstructionForStatement(node.else, context)
     : undefined;
-  const instruction: inst.IfInstruction = {
-    kind: inst.InstructionKind.If,
-    element: node,
-    condition: conditionInstruction, // Assuming condition.value is the expression to evaluate
-    trueBranch,
-    falseBranch,
-  };
+  if (falseBranch) {
+    // False branch doesn't need a condition, it is always entered if the true branch does not match
+    cases.push({
+      conditions: [],
+      body: falseBranch,
+    });
+  }
   context.onFinish(() => {
     const instructionNode = context.nodes.get(node.container);
-    // Both branches should point to the next instruction after the IF statement
-    if (trueBranch) {
-      trueBranch.next = instructionNode?.next;
-    }
-    if (falseBranch) {
-      falseBranch.next = instructionNode?.next;
+    for (const caseItem of cases) {
+      // All case bodies should point to the next instruction after the IF statement
+      caseItem.body.next = instructionNode?.next;
     }
   });
-  return instruction;
+  return inst.createSelectInstruction(node, undefined, cases);
+}
+
+function generateSelectInstruction(
+  node: ast.SelectStatement,
+  context: GenerateInstructionContext,
+): inst.SelectInstruction | undefined {
+  let compare: inst.ExpressionInstruction | undefined = undefined;
+  if (node.on) {
+    compare = generateExpressionInstruction(node.on);
+  }
+  const cases: inst.Cases[] = [];
+  for (const caseObj of node.cases) {
+    const conditions: inst.ExpressionInstruction[] = [];
+    if (caseObj.kind === ast.SyntaxKind.WhenStatement) {
+      for (const condition of caseObj.conditions) {
+        const conditionInstruction = generateExpressionInstruction(condition);
+        if (conditionInstruction) {
+          conditions.push(conditionInstruction);
+        }
+      }
+    }
+    const body = generateInstructionForStatement(caseObj.unit, context);
+    if (body) {
+      cases.push({
+        body,
+        conditions,
+      });
+    }
+  }
+  context.onFinish(() => {
+    const instructionNode = context.nodes.get(node.container);
+    for (const caseItem of cases) {
+      // All case bodies should point to the next instruction after the SELECT statement
+      caseItem.body.next = instructionNode?.next;
+    }
+  });
+  return inst.createSelectInstruction(node, compare, cases);
 }
 
 function generateDoInstruction(

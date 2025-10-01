@@ -1883,6 +1883,15 @@ export interface OrdinalValueList extends AstNode {
 export interface OtherwiseStatement extends AstNode {
   kind: SyntaxKind.OtherwiseStatement;
   unit: Statement | null;
+  range: Range | null;
+}
+export function createOtherwiseStatement(): OtherwiseStatement {
+  return {
+    kind: SyntaxKind.OtherwiseStatement,
+    container: null,
+    unit: null,
+    range: null,
+  };
 }
 export interface Package extends AstNode {
   kind: SyntaxKind.Package;
@@ -2177,12 +2186,23 @@ export interface RFormatItem extends AstNode {
   kind: SyntaxKind.RFormatItem;
   labelReference: string | null;
 }
+export type SelectCase = WhenStatement | OtherwiseStatement;
 export interface SelectStatement extends AstNode {
   kind: SyntaxKind.SelectStatement;
   on: Expression | null;
-  statements: (WhenStatement | OtherwiseStatement)[];
+  cases: SelectCase[];
   end: EndStatement | null;
   selectToken: Token | null;
+}
+export function createSelectStatement(): SelectStatement {
+  return {
+    kind: SyntaxKind.SelectStatement,
+    container: null,
+    on: null,
+    cases: [],
+    end: null,
+    selectToken: null,
+  };
 }
 export interface SignalStatement extends AstNode {
   kind: SyntaxKind.SignalStatement;
@@ -2311,6 +2331,16 @@ export interface WhenStatement extends AstNode {
   kind: SyntaxKind.WhenStatement;
   conditions: Expression[];
   unit: Statement | null;
+  range: Range | null;
+}
+export function createWhenStatement(): WhenStatement {
+  return {
+    kind: SyntaxKind.WhenStatement,
+    container: null,
+    conditions: [],
+    unit: null,
+    range: null,
+  };
 }
 export interface WriteStatement extends AstNode {
   kind: SyntaxKind.WriteStatement;

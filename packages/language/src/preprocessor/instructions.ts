@@ -72,7 +72,7 @@ export enum InstructionKind {
   Halt,
   Compound,
   Tokens,
-  If,
+  Select,
   Do,
   Declare,
   Assignment,
@@ -95,7 +95,7 @@ export enum InstructionKind {
 export type Instruction =
   | CompoundInstruction
   | HaltInstruction
-  | IfInstruction
+  | SelectInstruction
   | TokensInstruction
   | AssignmentInstruction
   | AnswerInstruction
@@ -156,12 +156,29 @@ export interface NoteInstruction {
   code: ExpressionInstruction;
 }
 
-export interface IfInstruction {
-  kind: InstructionKind.If;
-  element: ast.IfStatement;
-  condition: ExpressionInstruction;
-  trueBranch?: InstructionNode;
-  falseBranch?: InstructionNode;
+export interface SelectInstruction {
+  kind: InstructionKind.Select;
+  element: ast.SyntaxNode;
+  compare?: ExpressionInstruction;
+  cases: Cases[];
+}
+
+export function createSelectInstruction(
+  element: ast.SyntaxNode,
+  compare: ExpressionInstruction | undefined,
+  cases: Cases[],
+): SelectInstruction {
+  return {
+    kind: InstructionKind.Select,
+    element,
+    compare,
+    cases,
+  };
+}
+
+export interface Cases {
+  conditions: ExpressionInstruction[];
+  body: InstructionNode;
 }
 
 export type ExpressionInstruction =
