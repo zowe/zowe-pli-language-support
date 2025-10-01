@@ -1148,11 +1148,7 @@ function evaluateReferenceExpression(
       }
       return defaultEmptyValue;
     }
-    return evaluateProcedure(
-      procedure,
-      expression.args,
-      context,
-    );
+    return evaluateProcedure(procedure, expression.args, context);
   }
   return evaluateValueAccess(variable, expression.args, context).getter();
 }

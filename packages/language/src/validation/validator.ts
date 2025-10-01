@@ -62,7 +62,9 @@ export class ValidationBuffer {
   }
 }
 
-export function generatePreprocessorValidationDiagnostics(unit: CompilationUnit): void {
+export function generatePreprocessorValidationDiagnostics(
+  unit: CompilationUnit,
+): void {
   const validator = registerPreprocessorValidationChecks(unit);
 
   const validationBuffer = new ValidationBuffer();
@@ -72,7 +74,6 @@ export function generatePreprocessorValidationDiagnostics(unit: CompilationUnit)
 
   unit.diagnostics.preprocessor = validationBuffer.getDiagnostics();
 }
-
 
 /**
  * Generates validation diagnostics (semantic checks) from the given AST node.
