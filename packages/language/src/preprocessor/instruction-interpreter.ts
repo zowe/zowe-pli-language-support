@@ -529,7 +529,7 @@ function runCallInstruction(
     );
   }
   const args = instruction.args;
-  evaluateProcedure(procedure, args, context, instruction.procedureNameToken);
+  evaluateProcedure(procedure, args, context);
 }
 
 function runAnswerInstruction(
@@ -1152,7 +1152,6 @@ function evaluateReferenceExpression(
       procedure,
       expression.args,
       context,
-      expression.reference?.token,
     );
   }
   return evaluateValueAccess(variable, expression.args, context).getter();
@@ -1242,11 +1241,10 @@ function evaluateProcedure(
   procedure: inst.ProcedureInstructionContainer,
   args: inst.ExpressionInstruction[],
   context: InterpreterContext,
-  callToken?: Token,
 ): Value {
   const procArgs = args.map((e) => evaluateExpression(e, context));
   const localContext = createLocalContext(context, procedure);
-  return runProcedure(procedure, procArgs, localContext, callToken);
+  return runProcedure(procedure, procArgs, localContext);
 }
 
 function createLocalContext(
@@ -1268,24 +1266,11 @@ function runProcedure(
   procedure: inst.ProcedureInstructionContainer,
   args: Value[],
   context: InterpreterContext,
-  callToken?: Token,
 ): Value {
   if (!context.symbols.parent) {
     throw new Error(
       "Local variables map is not initialized! Use the createLocalContext function before calling runProcedure!",
     );
-  }
-
-  if (callToken) {
-    if (procedure.parameters.length > args.length) {
-      context.diagnostics.push(
-        diagnosticFromCode(Warning.IBM3323I, callToken, callToken.image),
-      );
-    } else if (procedure.parameters.length < args.length) {
-      context.diagnostics.push(
-        diagnosticFromCode(Warning.IBM3324I, callToken, callToken.image),
-      );
-    }
   }
 
   // Note that in case a procedure has received too many arguments, the excess ones are ignored
@@ -1493,7 +1478,6 @@ function performTokenScan(
       index,
       procedure,
       context,
-      callToken,
     );
     value = procedureParseResult.value;
     advance = procedureParseResult.advance;
@@ -1533,7 +1517,6 @@ function parseAndEvaluateProcedure(
   index: number,
   procedure: inst.ProcedureInstructionContainer,
   context: InterpreterContext,
-  callToken: Token,
 ): InlineProcedureEvaluationResult {
   let evaluatedArgs: Value[];
   let advance = 1;
@@ -1562,7 +1545,7 @@ function parseAndEvaluateProcedure(
   }
 
   const localContext = createLocalContext(context, procedure);
-  let value = runProcedure(procedure, evaluatedArgs, localContext, callToken);
+  let value = runProcedure(procedure, evaluatedArgs, localContext);
   if (isScalarValue(value) && suffix) {
     // Add the suffix to the value, as it was immediately following the procedure call
     // Otherwise, the suffix will generate a separate token, which is not the intended behavior

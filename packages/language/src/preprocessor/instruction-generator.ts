@@ -209,9 +209,6 @@ function generateCallInstruction(
   if (!node.call?.procedure?.text) {
     return undefined; // No procedure to call
   }
-  if (!node.call.procedure.text) {
-    return undefined;
-  }
   const args = (node.call.args1?.list ?? []).map((arg) => {
     assertType<ast.Expression>(arg);
     return (
