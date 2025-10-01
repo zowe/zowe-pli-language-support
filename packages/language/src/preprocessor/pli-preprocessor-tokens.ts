@@ -13,6 +13,7 @@ import * as tokens from "../parser/tokens";
 
 export const PreprocessorTokens = {
   Answer: tokens.ANSWER,
+  Call: tokens.CALL,
   Column: tokens.COLUMN,
   Margins: tokens.MARGINS,
   DefaultAttribute: tokens.DefaultAttribute,

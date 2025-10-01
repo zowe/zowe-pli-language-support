@@ -269,6 +269,7 @@ export async function parseAndLink(
   lifecycle.generateSymbolTable(unit);
   lifecycle.link(unit);
   if (options?.validate) {
+    lifecycle.preprocessorValidate(unit);
     lifecycle.validate(unit);
   }
 
