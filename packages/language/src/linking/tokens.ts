@@ -47,6 +47,8 @@ export function getNameToken(node: SyntaxNode): Token | undefined {
       return node.nameToken ?? undefined;
     case SyntaxKind.ReferenceItem:
       return node.ref?.token ?? undefined;
+    case SyntaxKind.ReplaceStatement:
+      return node.nameToken ?? undefined;
   }
   return undefined;
 }

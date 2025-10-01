@@ -837,6 +837,12 @@ export const INSCAN = createToken({
   categories: [ID],
   longer_alt: ID,
 });
+export const REPLACE = createToken({
+  name: "REPLACE",
+  pattern: /REPLACE/iy,
+  categories: [ID],
+  longer_alt: ID,
+});
 export const NOPRINT = createToken({
   name: "NOPRINT",
   pattern: /NOPRINT/iy,
@@ -1846,6 +1852,12 @@ export const DATA = createToken({
   categories: [ID],
   longer_alt: ID,
 });
+export const WITH = createToken({
+  name: "WITH",
+  pattern: /WITH/iy,
+  categories: [ID],
+  longer_alt: ID,
+});
 export const EDIT = createToken({
   name: "EDIT",
   pattern: /EDIT/iy,
@@ -2377,6 +2389,7 @@ export const keywords = [
   INCLUDE,
   INCLUDE_ALT,
   NOPRINT,
+  REPLACE,
   OVERFLOW,
   TRANSMIT,
   LINESIZE,
@@ -2541,6 +2554,7 @@ export const keywords = [
   OPEN,
   DATA,
   EDIT,
+  WITH,
   READ,
   INTO,
   FROM,
@@ -2713,6 +2727,7 @@ export const keywordMap = new Map<string, TokenType>();
   // NO INCLUDE_ALT: It has special handling!
   [INSCAN, "XINSCAN"],
   [NOPRINT],
+  [REPLACE],
   [OVERFLOW, "OFL"],
   [TRANSMIT],
   [LINESIZE],
@@ -2878,6 +2893,7 @@ export const keywordMap = new Map<string, TokenType>();
   [POP],
   [DATA],
   [EDIT],
+  [WITH],
   [READ],
   [INTO],
   [FROM],
