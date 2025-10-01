@@ -7,7 +7,10 @@ export function registerPreprocessorValidationChecks(
 ): Validator {
   const validator = new PliValidator(unit);
   validator.addHandler({
-    CallStatement: [validator.checkArgumentCount.bind(validator)],
+    CallStatement: [
+      validator.checkArgumentCount.bind(validator),
+      validator.checkPreprocessorCallProcedure.bind(validator),
+    ],
   });
   return validator;
 }

@@ -155,7 +155,6 @@ export interface AnswerInstruction {
 export interface CallInstruction {
   kind: InstructionKind.Call;
   procedureName: string;
-  procedureNameToken?: Token;
   args: ExpressionInstruction[];
   node: ast.CallStatement;
 }

@@ -219,7 +219,6 @@ function generateCallInstruction(
   return {
     kind: inst.InstructionKind.Call,
     procedureName: node.call.procedure.text,
-    procedureNameToken: node.call.procedure.token,
     args,
     node,
   };

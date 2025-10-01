@@ -204,28 +204,57 @@ export class PliValidator implements Validator {
     }
   }
 
+  checkPreprocessorCallProcedure(
+    node: AST.CallStatement,
+    acceptor: ValidationAcceptor,
+  ): void {
+    const procedure = this.resolveProcedure(node);
+    if (!procedure) {
+      if (node.call?.procedure?.token) {
+        acceptor(
+          diagnosticFromCode(
+            PLICodes.Severe.IBM3968I,
+            node.call.procedure.token,
+          ),
+        );
+      }
+      return;
+    }
+    const callToken = node.call!.procedure!.token;
+    if (procedure.statement) {
+      acceptor(diagnosticFromCode(PLICodes.Severe.IBM3971I, callToken));
+    }
+    if (
+      procedure.options.some(
+        (option) => option.kind === AST.SyntaxKind.ReturnsOption,
+      )
+    ) {
+      acceptor(diagnosticFromCode(PLICodes.Severe.IBM3970I, callToken));
+    }
+  }
+
+  private resolveProcedure(
+    node: AST.CallStatement,
+  ): AST.ProcedureStatement | null {
+    if (!node.call?.procedure?.node) {
+      return null;
+    }
+    const labelPrefix = node.call.procedure.node;
+    if (!labelPrefix || labelPrefix.kind !== AST.SyntaxKind.LabelPrefix) {
+      return null;
+    }
+    return retrieveProcedureFromLabelPrefix(labelPrefix);
+  }
+
   checkArgumentCount(
     node: AST.CallStatement,
     acceptor: ValidationAcceptor,
   ): void {
-    if (!node.call?.procedure?.node) {
-      return;
-    }
-    const references = this.compilationUnit.referencesCache.findReferences(
-      node.call.procedure.node,
-    );
-    if (references.length !== 1) {
-      return;
-    }
-    const labelPrefix = references[0].node;
-    if (!labelPrefix || labelPrefix.kind !== AST.SyntaxKind.LabelPrefix) {
-      return;
-    }
-    const callToken = node.call.procedure.token;
-    const procedure = retrieveProcedureFromLabelPrefix(labelPrefix);
+    const procedure = this.resolveProcedure(node);
     if (!procedure) {
       return;
     }
+    const callToken = node.call!.procedure!.token;
     const expectedArgs = procedure.parameters.length;
     const providedArgs = node.call?.args1?.list.length || 0;
 

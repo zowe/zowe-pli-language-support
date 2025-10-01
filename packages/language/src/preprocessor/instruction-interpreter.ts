@@ -509,24 +509,7 @@ function runCallInstruction(
 ): void {
   const procedure = context.procedures.get(instruction.procedureName);
   if (!procedure) {
-    context.diagnostics.push(
-      diagnosticFromCode(Severe.IBM3968I, instruction.procedureNameToken),
-    );
     return;
-  }
-  if (procedure.statement) {
-    context.diagnostics.push(
-      diagnosticFromCode(Severe.IBM3971I, instruction.procedureNameToken),
-    );
-  }
-  if (
-    procedure.options.some(
-      (option) => option.kind === ast.SyntaxKind.ReturnsOption,
-    )
-  ) {
-    context.diagnostics.push(
-      diagnosticFromCode(Severe.IBM3970I, instruction.procedureNameToken),
-    );
   }
   const args = instruction.args;
   evaluateProcedure(procedure, args, context);
