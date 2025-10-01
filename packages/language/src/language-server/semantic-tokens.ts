@@ -153,6 +153,7 @@ function isVariableType(token: Token): boolean {
   switch (token.kind) {
     case CstNodeKind.DeclaredVariable_Name:
     case CstNodeKind.ReferenceItem_Ref:
+    case CstNodeKind.ReplaceStatement_Id:
     case CstNodeKind.TypeAttribute_TypeId0:
     case CstNodeKind.TypeAttribute_TypeId1:
     case CstNodeKind.OrdinalTypeAttribute_TypeId0:
