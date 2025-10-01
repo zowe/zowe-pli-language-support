@@ -961,6 +961,15 @@ export interface CallStatement extends AstNode {
   kind: SyntaxKind.CallStatement;
   call: ProcedureCall | null;
 }
+
+export function createCallStatement(): CallStatement {
+  return {
+    kind: SyntaxKind.CallStatement,
+    container: null,
+    call: null,
+  };
+}
+
 export interface CancelThreadStatement extends AstNode {
   kind: SyntaxKind.CancelThreadStatement;
   thread: LocatorCall | null;
@@ -1962,10 +1971,30 @@ export interface ProcedureCall extends AstNode {
    */
   args2: ProcedureCallArgs | null;
 }
+
+export function createProcedureCall(): ProcedureCall {
+  return {
+    kind: SyntaxKind.ProcedureCall,
+    container: null,
+    procedure: null,
+    args1: null,
+    args2: null,
+  };
+}
+
 export interface ProcedureCallArgs extends AstNode {
   kind: SyntaxKind.ProcedureCallArgs;
   list: Wildcard<Expression>[];
 }
+
+export function createProcedureCallArgs(): ProcedureCallArgs {
+  return {
+    kind: SyntaxKind.ProcedureCallArgs,
+    container: null,
+    list: [],
+  };
+}
+
 export interface ProcedureParameter extends AstNode {
   kind: SyntaxKind.ProcedureParameter;
   ref: Reference<NamedElement> | null;

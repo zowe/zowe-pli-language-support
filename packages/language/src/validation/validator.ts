@@ -26,6 +26,7 @@ import {
 } from "../preprocessor/compiler-options/options";
 import * as AST from "../syntax-tree/ast";
 import { Token } from "../parser/tokens";
+import { registerPreprocessorValidationChecks } from "./pp-validator";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -61,10 +62,23 @@ export class ValidationBuffer {
   }
 }
 
+export function generatePreprocessorValidationDiagnostics(
+  unit: CompilationUnit,
+): void {
+  const validator = registerPreprocessorValidationChecks(unit);
+
+  const validationBuffer = new ValidationBuffer();
+  const acceptor = validationBuffer.getAcceptor();
+
+  validateSyntaxNode(unit.preprocessorAst, acceptor, validator.getHandlers());
+
+  unit.diagnostics.preprocessor = validationBuffer.getDiagnostics();
+}
+
 /**
  * Generates validation diagnostics (semantic checks) from the given AST node.
  */
-export function generateValidationDiagnostics(unit: CompilationUnit): void {
+export function generatePliValidationDiagnostics(unit: CompilationUnit): void {
   // TODO @montymxb Mar. 27th, 2025: Checks are generated on each invocation, not ideal, needs a rework still
   const validator = registerPliValidationChecks(unit);
 

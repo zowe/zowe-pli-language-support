@@ -156,26 +156,26 @@ function getVariable(
   context: InterpreterContext,
   name: string,
 ): Variable | undefined {
-  return context.localVariables?.get(name) ?? context.variables.get(name);
+  let table: SymbolTable | null = context.symbols;
+  while (table) {
+    if (table.variables.has(name)) {
+      return table.variables.get(name);
+    }
+    table = table.parent;
+  }
+  return undefined;
 }
 
 function setVariable(context: InterpreterContext, variable: Variable): void {
-  if (context.localVariables) {
-    if (context.localVariables.has(variable.name)) {
-      // Local variables might be shadowing a global variable
-      // Check and update first
-      context.localVariables.set(variable.name, variable);
-    } else if (context.variables.has(variable.name)) {
-      // Variable is actually a global variable that we need to update
-      context.variables.set(variable.name, variable);
-    } else {
-      // Variable doesn't exist yet, so we create it as a local variable
-      context.localVariables.set(variable.name, variable);
+  let table: SymbolTable | null = context.symbols;
+  while (table) {
+    if (table.variables.has(variable.name)) {
+      table.variables.set(variable.name, variable);
+      return;
     }
-  } else {
-    // Not in a procedure, so we only have global variables
-    context.variables.set(variable.name, variable);
+    table = table.parent;
   }
+  context.symbols.variables.set(variable.name, variable);
 }
 
 function generateVariable(
@@ -242,18 +242,22 @@ export interface EvaluationResults {
   ifStatements: Map<ast.IfStatement, IfEvaluationResult>;
 }
 
+interface SymbolTable {
+  variables: Map<string, Variable>;
+  doType3: Map<inst.InstructionNode, DoType3Context>;
+  parent: SymbolTable | null;
+}
+
 interface InterpreterContext {
   unit: CompilationUnit;
   currentUri?: URI;
   entryUri?: URI;
   /**
-   * These are global variables that are defined on the root level of the preprocessor
+   * When symbols.parent === null: These are global variables that are defined on the root level of the preprocessor
+   * Otherwise: Local variables only exist within the scope of a procedure.
    */
-  variables: Map<string, Variable>;
-  /**
-   * Local variables only exist within the scope of a procedure. Set to `undefined` when not in a procedure.
-   */
-  localVariables?: Map<string, Variable>;
+  symbols: SymbolTable;
+  global: SymbolTable;
   statements: ast.Statement[];
   tokens: Token[];
   files: FileStore;
@@ -261,7 +265,6 @@ interface InterpreterContext {
   procedures: Map<string, inst.ProcedureInstructionContainer>;
   activeProcedures: Set<string>;
   counter: Map<inst.InstructionNode, number>;
-  doType3: Map<inst.InstructionNode, DoType3Context>;
   references: ast.Reference[];
   evaluations: EvaluationResults;
   xIncludes: Set<string>;
@@ -303,7 +306,14 @@ export async function runInstructions(
   instruction: InstructionGeneratorResult,
   options: InterpreterOptions,
 ): Promise<InstructionInterpreterResult> {
+  const global = {
+    variables: new Map(),
+    doType3: new Map(),
+    parent: null,
+  };
   const context: InterpreterContext = {
+    symbols: global,
+    global,
     unit,
     currentUri: uri,
     entryUri: uri,
@@ -311,7 +321,6 @@ export async function runInstructions(
     diagnostics: [],
     statements: [],
     xIncludes: new Set(),
-    variables: new Map(),
     procedures: new Map(),
     activeProcedures: new Set(),
     references: [],
@@ -322,7 +331,6 @@ export async function runInstructions(
     files: new FileStore(),
     options,
     counter: new Map(),
-    doType3: new Map(),
     returnValue: defaultEmptyValue,
     counterValue: 1,
     macname: "",
@@ -485,11 +493,26 @@ function runInstructionSync(
     case inst.InstructionKind.Answer:
       runAnswerInstruction(instruction, context);
       break;
+    case inst.InstructionKind.Call:
+      runCallInstruction(instruction, context);
+      break;
     case inst.InstructionKind.Halt:
       runHaltInstruction(instruction, context);
       break;
   }
   return undefined;
+}
+
+function runCallInstruction(
+  instruction: inst.CallInstruction,
+  context: InterpreterContext,
+): void {
+  const procedure = context.procedures.get(instruction.procedureName);
+  if (!procedure) {
+    return;
+  }
+  const args = instruction.args;
+  evaluateProcedure(procedure, args, context);
 }
 
 function runAnswerInstruction(
@@ -679,6 +702,36 @@ function runDoType2Instruction(
   return condition;
 }
 
+function getDoType3Context(
+  node: inst.InstructionNode,
+  context: InterpreterContext,
+): DoType3Context | undefined {
+  let table: SymbolTable | null = context.symbols;
+  while (table) {
+    if (table.doType3.has(node)) {
+      return table.doType3.get(node);
+    }
+    table = table.parent;
+  }
+  return undefined;
+}
+
+function setDoType3Context(
+  node: inst.InstructionNode,
+  context: InterpreterContext,
+  doContext: DoType3Context,
+): void {
+  let table: SymbolTable | null = context.symbols;
+  while (table) {
+    if (table.doType3.has(node)) {
+      table.doType3.set(node, doContext);
+      return;
+    }
+    table = table.parent;
+  }
+  context.symbols.doType3.set(node, doContext);
+}
+
 function runDoType3Instruction(
   doType3: inst.DoType3Instruction,
   context: InterpreterContext,
@@ -687,7 +740,7 @@ function runDoType3Instruction(
   let condition = true;
 
   // Get current do-type3 state
-  const doType3Context = context.doType3.get(node);
+  const doType3Context = getDoType3Context(node, context);
 
   if (!doType3Context) {
     // Store all expressions that must be evaluated at the start of the loop
@@ -772,7 +825,7 @@ function runDoType3Initialization(
     byValue,
   };
 
-  context.doType3.set(node, doType3Context);
+  setDoType3Context(node, context, doType3Context);
   return true;
 }
 
@@ -1179,7 +1232,11 @@ function createLocalContext(
 ): InterpreterContext {
   return {
     ...context,
-    localVariables: new Map(),
+    symbols: {
+      variables: new Map(),
+      doType3: new Map(),
+      parent: context.symbols,
+    },
     macname: procedure.names[0] || "",
   };
 }
@@ -1189,11 +1246,12 @@ function runProcedure(
   args: Value[],
   context: InterpreterContext,
 ): Value {
-  if (!context.localVariables) {
+  if (!context.symbols.parent) {
     throw new Error(
       "Local variables map is not initialized! Use the createLocalContext function before calling runProcedure!",
     );
   }
+
   // Note that in case a procedure has received too many arguments, the excess ones are ignored
   for (let i = 0; i < procedure.parameters.length; i++) {
     const param = procedure.parameters[i];
@@ -1206,7 +1264,7 @@ function runProcedure(
       mode: inst.ScanMode.NoScan,
       declarationNode: null,
     };
-    context.localVariables.set(param, variable);
+    context.symbols.variables.set(variable.name, variable);
   }
   doRunInstructionsSync(context, procedure.node);
   const returnValue = context.returnValue;
@@ -1238,7 +1296,7 @@ function runDeclareInstruction(
   }
   // Consider variables declared in a procedure call
   // and don't override existing variables
-  const variables = context.localVariables ?? context.variables;
+  const variables = context.symbols.variables;
   if (!variables.has(instruction.name)) {
     const variable = generateVariable(instruction, context);
     variables.set(variable.name, variable);
@@ -1251,7 +1309,7 @@ function runActivateInstruction(
 ): void {
   const name = instruction.variable.variable;
   // ACTIVATE only works on global variables
-  const variable = context.variables.get(name);
+  const variable = context.global.variables.get(name);
   if (variable) {
     if (instruction.scanMode !== undefined) {
       variable.mode = instruction.scanMode;
@@ -1271,7 +1329,7 @@ function runDeactivateInstruction(
 ): void {
   const name = instruction.variable.variable;
   // DEACTIVATE only works on global variables
-  const variable = context.variables.get(name);
+  const variable = context.global.variables.get(name);
   context.activeProcedures.delete(name);
   if (variable) {
     variable.active = false;
@@ -1382,15 +1440,15 @@ function performTokenScan(
   index: number,
   context: InterpreterContext,
 ): TokenScanResult | undefined {
-  const token = tokens[index];
-  const image = token.image;
+  const callToken = tokens[index];
+  const image = callToken.image;
   const procedure = context.procedures.get(image);
   // Token scan can only take global variables into account (because it cannot run inside of a procedure)
-  const variable = context.variables.get(image);
+  const variable = context.global.variables.get(image);
   let refNode: ast.SyntaxNode | undefined = undefined;
   let value: Value | undefined = undefined;
   let advance: number = 1;
-  let immediateFollow = token.immediateFollow;
+  let immediateFollow = callToken.immediateFollow;
   if (procedure && context.activeProcedures.has(image)) {
     const label = procedure.labels.get(image);
     refNode = label;
@@ -1407,11 +1465,11 @@ function performTokenScan(
     refNode = variable.declarationNode ?? undefined;
     value = variable.value;
   }
-  if (token.uri && refNode) {
+  if (callToken.uri && refNode) {
     // If the token has a URI, we assume it actually exists in the source code
     // We can now create a synthetic reference to the variable/procedure for it
-    token.element = generateSyntheticRefItem(token, refNode, context);
-    token.kind = CstNodeKind.ReferenceItem_Ref;
+    callToken.element = generateSyntheticRefItem(callToken, refNode, context);
+    callToken.kind = CstNodeKind.ReferenceItem_Ref;
   }
   if (!value || !isScalarValue(value)) {
     // Cannot replace tokens for array variables
