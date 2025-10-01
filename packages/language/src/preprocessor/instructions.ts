@@ -78,6 +78,7 @@ export enum InstructionKind {
   Assignment,
   Activate,
   Answer,
+  Call,
   Deactivate,
   Include,
   Inscan,
@@ -106,7 +107,8 @@ export type Instruction =
   | ActivateInstruction
   | DeactivateInstruction
   | DeclareInstruction
-  | NoteInstruction;
+  | NoteInstruction
+  | CallInstruction;
 
 export interface ProcedureInstructionContainer {
   names: string[];
@@ -147,6 +149,13 @@ export interface AnswerInstruction {
       }
     | undefined;
   scanMode: ScanMode | undefined;
+}
+
+export interface CallInstruction {
+  kind: InstructionKind.Call;
+  procedureName: string;
+  args: ExpressionInstruction[];
+  node: ast.CallStatement;
 }
 
 export interface NoteInstruction {

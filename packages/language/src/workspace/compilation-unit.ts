@@ -80,6 +80,7 @@ export interface CompilationUnit {
 
 export interface CompilationUnitDiagnostics {
   lexer: Diagnostic[];
+  preprocessor: Diagnostic[];
   compilerOptions: Diagnostic[];
   parser: Diagnostic[];
   symbolTable: Diagnostic[];
@@ -90,6 +91,7 @@ export interface CompilationUnitDiagnostics {
 export function collectDiagnostics(sourceFile: CompilationUnit): Diagnostic[] {
   return [
     ...sourceFile.diagnostics.lexer,
+    ...sourceFile.diagnostics.preprocessor,
     ...sourceFile.diagnostics.compilerOptions,
     ...sourceFile.diagnostics.parser,
     ...sourceFile.diagnostics.symbolTable,
@@ -154,6 +156,7 @@ export async function createCompilationUnit(
     instructionCache: new InstructionCache(),
     diagnostics: {
       lexer: [],
+      preprocessor: [],
       compilerOptions: [],
       parser: [],
       symbolTable: [],

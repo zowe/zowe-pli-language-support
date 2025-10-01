@@ -139,10 +139,13 @@ function commonStatement(state: PreprocessorParserState): ast.Statement {
   if (performAssignmentLookahead((la) => state.lookahead(la))) {
     unit = assignmentStatement(state);
   } else if (state.isInProcedure()) {
-    // TODO: Handle missing preprocessor procedure statements: ANSWER, CALL, NOTE, SELECT
+    // TODO: Handle missing preprocessor procedure statements: SELECT
     switch (state.current?.tokenTypeIdx) {
       case PreprocessorTokens.Answer.tokenTypeIdx:
         unit = answerStatement(state);
+        break;
+      case PreprocessorTokens.Call.tokenTypeIdx:
+        unit = callStatement(state);
         break;
       case PreprocessorTokens.Declare.tokenTypeIdx:
         unit = declareStatement(state);
@@ -262,6 +265,51 @@ function commonStatement(state: PreprocessorParserState): ast.Statement {
   //   );
   // }
   statement.value = unit;
+  return statement;
+}
+
+function callStatement(state: PreprocessorParserState): ast.CallStatement {
+  const statement = ast.createCallStatement();
+  state.consume(
+    statement,
+    CstNodeKind.CallStatement_CALL,
+    PreprocessorTokens.Call,
+  );
+  const nameToken = state.consume(
+    statement,
+    CstNodeKind.ProcedureCall_ProcedureRef,
+    PreprocessorTokens.Id,
+  );
+  statement.call = ast.createProcedureCall();
+  statement.call.procedure = ast.createReference(statement, nameToken);
+  state.consume(
+    statement,
+    CstNodeKind.ProcedureCallArgs_OpenParen,
+    PreprocessorTokens.LParen,
+  );
+  if (!state.canConsume(PreprocessorTokens.RParen)) {
+    statement.call.args1 = ast.createProcedureCallArgs();
+    do {
+      const argument = expression(state);
+      statement.call.args1.list.push(argument);
+    } while (
+      state.tryConsume(
+        statement,
+        CstNodeKind.ProcedureCallArgs_Comma,
+        PreprocessorTokens.Comma,
+      )
+    );
+  }
+  state.consume(
+    statement,
+    CstNodeKind.ProcedureCallArgs_CloseParen,
+    PreprocessorTokens.RParen,
+  );
+  state.consume(
+    statement,
+    CstNodeKind.CallStatement_Semicolon,
+    PreprocessorTokens.Semicolon,
+  );
   return statement;
 }
 
