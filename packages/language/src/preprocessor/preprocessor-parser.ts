@@ -245,6 +245,9 @@ function commonStatement(state: PreprocessorParserState): ast.Statement {
       case PreprocessorTokens.Note.tokenTypeIdx:
         unit = noteStatement(state);
         break;
+      case PreprocessorTokens.Replace.tokenTypeIdx:
+        unit = replaceStatement(state);
+        break;
     }
   }
 
@@ -1417,6 +1420,73 @@ function noteStatement(state: PreprocessorParserState): ast.NoteDirective {
   return note;
 }
 
+function replaceStatement(
+  state: PreprocessorParserState,
+): ast.ReplaceStatement {
+  const statement = ast.createReplaceStatement();
+  state.consume(
+    statement,
+    CstNodeKind.ReplaceStatement_REPLACE,
+    PreprocessorTokens.Replace,
+  );
+  const token = state.consume(
+    statement,
+    CstNodeKind.ReplaceStatement_Id,
+    PreprocessorTokens.Id,
+  );
+  statement.name = token.image;
+  statement.nameToken = token;
+
+  if (
+    !state.tryConsume(
+      statement,
+      CstNodeKind.ReplaceStatement_BY,
+      PreprocessorTokens.By,
+    )
+  ) {
+    // If BY is not found, we expect a WITH
+    if (
+      !state.tryConsume(
+        statement,
+        CstNodeKind.ReplaceStatement_WITH,
+        PreprocessorTokens.With,
+      )
+    ) {
+      const currentToken = state.current || state.last;
+      throw new PreprocessorDiagnostic({
+        message:
+          "Expected 'BY' or 'WITH' after identifier, but found '" +
+          currentToken?.image +
+          "'.",
+        token: currentToken,
+        severity: Severity.S,
+      });
+    }
+  }
+
+  if (state.canConsume(PreprocessorTokens.String)) {
+    statement.literal = stringLiteral(state);
+  } else if (state.canConsume(PreprocessorTokens.Number)) {
+    statement.literal = numberLiteral(state);
+  } else {
+    const currentToken = state.current || state.last;
+    throw new PreprocessorDiagnostic({
+      message:
+        "Expected a string or number literal, but found '" +
+        currentToken?.image +
+        "'.",
+      token: currentToken,
+      severity: Severity.S,
+    });
+  }
+  state.consume(
+    statement,
+    CstNodeKind.ReplaceStatement_Semicolon,
+    PreprocessorTokens.Semicolon,
+  );
+  return statement;
+}
+
 function declareStatement(
   state: PreprocessorParserState,
 ): ast.DeclareStatement {
@@ -1680,7 +1750,7 @@ function stringLiteral(state: PreprocessorParserState): ast.Literal {
 }
 
 function unpackCharacterValue(literal: string): string {
-  return literal.substring(1, literal.length - 1);
+  return literal.substring(1, literal.length - 1).replace(/""/g, '"');
 }
 
 function isXInstruction(token: Token): boolean {

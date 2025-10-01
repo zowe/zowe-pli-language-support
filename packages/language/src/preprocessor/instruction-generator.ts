@@ -129,6 +129,9 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.DeclareStatement:
       instruction = generateDeclareInstruction(value);
       break;
+    case ast.SyntaxKind.ReplaceStatement:
+      instruction = generateReplaceInstruction(value);
+      break;
     case ast.SyntaxKind.ReturnStatement:
       instruction = generateReturnInstruction(value);
       break;
@@ -371,6 +374,36 @@ function generateDeclareInstruction(
         item,
       ),
     );
+  }
+  return inst.createCompoundInstruction(instructions);
+}
+
+function generateReplaceInstruction(
+  statement: ast.ReplaceStatement,
+): inst.Instruction {
+  // A replace instruction is a combination of a declare and an assignment
+  const instructions: inst.Instruction[] = [];
+  if (statement.name && statement.nameToken && statement.literal) {
+    instructions.push(
+      inst.createDeclareInstruction(
+        statement.name,
+        undefined,
+        inst.DeclaredType.Character,
+        inst.ScanMode.ReScan,
+        null,
+        statement,
+      ),
+    );
+    const literal = generateExpressionInstruction(statement.literal, true);
+    if (literal) {
+      instructions.push(
+        inst.createAssignmentInstruction(
+          [inst.createReferenceItemInstruction(statement.name, null, [])],
+          "=",
+          literal,
+        ),
+      );
+    }
   }
   return inst.createCompoundInstruction(instructions);
 }
@@ -662,6 +695,7 @@ function lookupDoNode(
 
 function generateExpressionInstruction(
   node: ast.Expression | undefined | null,
+  constant = false,
 ): inst.ExpressionInstruction | undefined {
   if (!node) {
     return undefined;
@@ -672,7 +706,7 @@ function generateExpressionInstruction(
         case ast.SyntaxKind.NumberLiteral:
           return generateNumberInstruction(node.value);
         case ast.SyntaxKind.StringLiteral:
-          return generateStringInstruction(node.value);
+          return generateStringInstruction(node.value, constant);
         default:
           return undefined; // Unsupported literal type
       }
@@ -715,12 +749,23 @@ function generateNumberInstruction(
   };
 }
 
+/**
+ * Generates a string instruction from a string literal node.
+ * @param node The string literal node.
+ * @param constant Whether the string is a constant value, i.e. whether it should output a string literal.
+ * @returns The generated string instruction.
+ */
 function generateStringInstruction(
   node: ast.StringLiteral,
+  constant: boolean,
 ): inst.StringInstruction {
+  let value = node.value ?? "";
+  if (constant) {
+    value = `"${value.replace(/"/g, '""')}"`;
+  }
   return {
     kind: inst.InstructionKind.String,
-    value: node.value ?? "",
+    value,
   };
 }
 
