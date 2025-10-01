@@ -181,6 +181,7 @@ export enum SyntaxKind {
   PutItem,
   PutStringStatement,
   QualifyStatement,
+  ReplaceStatement,
   ReadStatement,
   ReadStatementOption,
   ReferenceItem,
@@ -411,6 +412,7 @@ export type SyntaxNode =
   | PutItem
   | PutStringStatement
   | QualifyStatement
+  | ReplaceStatement
   | ReadStatement
   | ReadStatementOption
   | ReferenceItem
@@ -701,6 +703,7 @@ export type Unit =
   | ProcedureStatement
   | PutStatement
   | QualifyStatement
+  | ReplaceStatement
   | ReadStatement
   | ReinitStatement
   | ReleaseStatement
@@ -2087,6 +2090,21 @@ export interface QualifyStatement extends AstNode {
   kind: SyntaxKind.QualifyStatement;
   statements: Statement[];
   end: EndStatement | null;
+}
+export interface ReplaceStatement extends AstNode {
+  kind: SyntaxKind.ReplaceStatement;
+  name: string | null;
+  nameToken: Token | null;
+  literal: Literal | null;
+}
+export function createReplaceStatement(): ReplaceStatement {
+  return {
+    kind: SyntaxKind.ReplaceStatement,
+    container: null,
+    name: null,
+    nameToken: null,
+    literal: null,
+  };
 }
 export interface ReadStatement extends AstNode {
   kind: SyntaxKind.ReadStatement;
