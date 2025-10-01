@@ -215,11 +215,37 @@ export interface ReferenceItemInstruction {
   args: ExpressionInstruction[];
 }
 
+export function createReferenceItemInstruction(
+  variable: string,
+  reference: ast.Reference | null,
+  args: ExpressionInstruction[],
+): ReferenceItemInstruction {
+  return {
+    kind: InstructionKind.ReferenceItem,
+    variable,
+    reference,
+    args,
+  };
+}
+
 export interface AssignmentInstruction {
   kind: InstructionKind.Assignment;
   refs: ReferenceItemInstruction[];
   operator: string;
   value: ExpressionInstruction;
+}
+
+export function createAssignmentInstruction(
+  refs: ReferenceItemInstruction[],
+  operator: string,
+  value: ExpressionInstruction,
+): AssignmentInstruction {
+  return {
+    kind: InstructionKind.Assignment,
+    refs,
+    operator,
+    value,
+  };
 }
 
 export interface TokensInstruction {
