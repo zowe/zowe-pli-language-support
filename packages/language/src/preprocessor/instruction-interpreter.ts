@@ -1148,7 +1148,12 @@ function evaluateReferenceExpression(
       }
       return defaultEmptyValue;
     }
-    return evaluateProcedure(procedure, expression.args, context, expression.reference?.token);
+    return evaluateProcedure(
+      procedure,
+      expression.args,
+      context,
+      expression.reference?.token,
+    );
   }
   return evaluateValueAccess(variable, expression.args, context).getter();
 }
@@ -1174,7 +1179,7 @@ function evaluateValueAccess(
 ): ValueAccess {
   const empty: ValueAccess = {
     getter: () => defaultEmptyValue,
-    setter: () => { }, // Do nothing
+    setter: () => {}, // Do nothing
   };
   if (args.length === 0) {
     // If there are no args, we simply return the variable value
@@ -1274,19 +1279,11 @@ function runProcedure(
   if (callToken) {
     if (procedure.parameters.length > args.length) {
       context.diagnostics.push(
-        diagnosticFromCode(
-          Warning.IBM3323I,
-          callToken,
-          callToken.image,
-        ),
+        diagnosticFromCode(Warning.IBM3323I, callToken, callToken.image),
       );
     } else if (procedure.parameters.length < args.length) {
       context.diagnostics.push(
-        diagnosticFromCode(
-          Warning.IBM3324I,
-          callToken,
-          callToken.image,
-        ),
+        diagnosticFromCode(Warning.IBM3324I, callToken, callToken.image),
       );
     }
   }
