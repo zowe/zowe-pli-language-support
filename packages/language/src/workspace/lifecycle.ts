@@ -16,7 +16,8 @@ import { CompilationUnit } from "./compilation-unit";
 import { PliProgram } from "../syntax-tree/ast";
 import {
   compilerOptionIssuesToDiagnostics,
-  generateValidationDiagnostics,
+  generatePliValidationDiagnostics,
+  generatePreprocessorValidationDiagnostics,
   linkingErrorsToDiagnostics,
   parserErrorsToDiagnostics,
 } from "../validation/validator";
@@ -36,12 +37,13 @@ export async function lifecycle(
   compilationUnit.scopeCaches.clear();
   await interruptAndCheck(cancellation);
   await tokenize(compilationUnit, document);
-  await interruptAndCheck(cancellation);
   parse(compilationUnit);
   await interruptAndCheck(cancellation);
   generateSymbolTable(compilationUnit);
   await interruptAndCheck(cancellation);
   link(compilationUnit);
+  await interruptAndCheck(cancellation);
+  preprocessorValidate(compilationUnit);
   await interruptAndCheck(cancellation);
   validate(compilationUnit);
   await interruptAndCheck(cancellation);
@@ -112,5 +114,9 @@ export function link(compilationUnit: CompilationUnit): ReferencesCache {
  * Performs semantic validations on the AST of the compilation unit
  */
 export function validate(compilationUnit: CompilationUnit): void {
-  generateValidationDiagnostics(compilationUnit);
+  generatePliValidationDiagnostics(compilationUnit);
+}
+
+export function preprocessorValidate(compilationUnit: CompilationUnit): void {
+  generatePreprocessorValidationDiagnostics(compilationUnit);
 }

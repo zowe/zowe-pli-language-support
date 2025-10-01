@@ -27,6 +27,7 @@ import { IBM2615I_do_loops_execute_once } from "./messages/warning-severity/IBM2
 import * as PLICodes from "./messages/pli-codes";
 import { ValidationAcceptor, ValidationChecks, Validator } from "./validator";
 import { IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att } from "./messages/error-severity/IBM2412I-IBM2410I-IBM2409I-handle-return-stmt-and-returns-att";
+import { retrieveProcedureFromLabelPrefix } from "./utils";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -49,7 +50,10 @@ export function registerPliValidationChecks(unit: CompilationUnit): Validator {
       IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att,
     ],
     LabelReference: [validator.checkLabelReference],
-    CallStatement: [validator.checkCallStatement],
+    CallStatement: [
+      validator.checkCallStatement,
+      validator.checkArgumentCount.bind(validator),
+    ],
     DefineOrdinalStatement: [validator.checkDefineOrdinalStatement],
     DeclareStatement: [validator.checkDeclareStatement],
     ReferenceItem: [validator.checkImplicitBuiltins.bind(validator)],
@@ -197,6 +201,79 @@ export class PliValidator implements Validator {
       //   // property: "label",
       //   // node
       // });
+    }
+  }
+
+  checkPreprocessorCallProcedure(
+    node: AST.CallStatement,
+    acceptor: ValidationAcceptor,
+  ): void {
+    const procedure = this.resolveProcedure(node);
+    if (!procedure) {
+      if (node.call?.procedure?.token) {
+        acceptor(
+          diagnosticFromCode(
+            PLICodes.Severe.IBM3968I,
+            node.call.procedure.token,
+          ),
+        );
+      }
+      return;
+    }
+    const callToken = node.call!.procedure!.token;
+    if (procedure.statement) {
+      acceptor(diagnosticFromCode(PLICodes.Severe.IBM3971I, callToken));
+    }
+    if (
+      procedure.options.some(
+        (option) => option.kind === AST.SyntaxKind.ReturnsOption,
+      )
+    ) {
+      acceptor(diagnosticFromCode(PLICodes.Severe.IBM3970I, callToken));
+    }
+  }
+
+  private resolveProcedure(
+    node: AST.CallStatement,
+  ): AST.ProcedureStatement | null {
+    if (!node.call?.procedure?.node) {
+      return null;
+    }
+    const labelPrefix = node.call.procedure.node;
+    if (!labelPrefix || labelPrefix.kind !== AST.SyntaxKind.LabelPrefix) {
+      return null;
+    }
+    return retrieveProcedureFromLabelPrefix(labelPrefix);
+  }
+
+  checkArgumentCount(
+    node: AST.CallStatement,
+    acceptor: ValidationAcceptor,
+  ): void {
+    const procedure = this.resolveProcedure(node);
+    if (!procedure) {
+      return;
+    }
+    const callToken = node.call!.procedure!.token;
+    const expectedArgs = procedure.parameters.length;
+    const providedArgs = node.call?.args1?.list.length || 0;
+
+    if (providedArgs < expectedArgs) {
+      acceptor(
+        diagnosticFromCode(
+          PLICodes.Warning.IBM3323I,
+          callToken,
+          callToken.image,
+        ),
+      );
+    } else if (providedArgs > expectedArgs) {
+      acceptor(
+        diagnosticFromCode(
+          PLICodes.Warning.IBM3324I,
+          callToken,
+          callToken.image,
+        ),
+      );
     }
   }
 
