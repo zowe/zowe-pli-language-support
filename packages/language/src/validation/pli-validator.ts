@@ -27,6 +27,7 @@ import { IBM2615I_do_loops_execute_once } from "./messages/warning-severity/IBM2
 import * as PLICodes from "./messages/pli-codes";
 import { ValidationAcceptor, ValidationChecks, Validator } from "./validator";
 import { IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att } from "./messages/error-severity/IBM2412I-IBM2410I-IBM2409I-handle-return-stmt-and-returns-att";
+import { retrieveProcedureFromLabelPrefix } from "./utils";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -49,7 +50,7 @@ export function registerPliValidationChecks(unit: CompilationUnit): Validator {
       IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att,
     ],
     LabelReference: [validator.checkLabelReference],
-    CallStatement: [validator.checkCallStatement],
+    CallStatement: [validator.checkCallStatement, validator.checkArgumentCount.bind(validator)],
     DefineOrdinalStatement: [validator.checkDefineOrdinalStatement],
     DeclareStatement: [validator.checkDeclareStatement],
     ReferenceItem: [validator.checkImplicitBuiltins.bind(validator)],
@@ -197,6 +198,36 @@ export class PliValidator implements Validator {
       //   // property: "label",
       //   // node
       // });
+    }
+  }
+
+  checkArgumentCount(
+    node: AST.CallStatement,
+    acceptor: ValidationAcceptor,
+  ): void {
+    if(!node.call?.procedure?.node) {
+      return;
+    }
+    const references = this.compilationUnit.referencesCache.findReferences(node.call.procedure.node);
+    if (references.length !== 1) {
+      return;
+    }
+    const labelPrefix = references[0].node;
+    if(!labelPrefix || labelPrefix.kind !== AST.SyntaxKind.LabelPrefix) {
+      return;
+    }
+    const callToken = node.call.procedure.token;
+    const procedure = retrieveProcedureFromLabelPrefix(labelPrefix);
+    if (!procedure) {
+      return;
+    }
+    const expectedArgs = procedure.parameters.length;
+    const providedArgs = node.call?.args1?.list.length || 0;
+
+    if (providedArgs < expectedArgs) {
+      acceptor(diagnosticFromCode(PLICodes.Warning.IBM3323I, callToken, callToken.image));
+    } else if (providedArgs > expectedArgs) {
+      acceptor(diagnosticFromCode(PLICodes.Warning.IBM3324I, callToken, callToken.image));
     }
   }
 
