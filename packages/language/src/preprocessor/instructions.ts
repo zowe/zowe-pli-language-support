@@ -116,7 +116,6 @@ export interface ProcedureInstructionContainer {
   parameters: string[];
   statement: boolean;
   node: InstructionNode;
-  options: ast.ProcedureOption[];
 }
 
 export interface HaltInstruction {

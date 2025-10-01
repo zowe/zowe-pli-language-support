@@ -104,7 +104,6 @@ function generateProcedureInstructionContainer(
     statement: statementType,
     parameters: params,
     node: instructionList.entryNode,
-    options: procedure.options,
   };
 }
 
