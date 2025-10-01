@@ -1148,7 +1148,7 @@ function evaluateReferenceExpression(
       }
       return defaultEmptyValue;
     }
-    return evaluateProcedure(procedure, expression.args, context);
+    return evaluateProcedure(procedure, expression.args, context, expression.reference?.token);
   }
   return evaluateValueAccess(variable, expression.args, context).getter();
 }
@@ -1479,15 +1479,15 @@ function performTokenScan(
   index: number,
   context: InterpreterContext,
 ): TokenScanResult | undefined {
-  const token = tokens[index];
-  const image = token.image;
+  const callToken = tokens[index];
+  const image = callToken.image;
   const procedure = context.procedures.get(image);
   // Token scan can only take global variables into account (because it cannot run inside of a procedure)
   const variable = context.global.variables.get(image);
   let refNode: ast.SyntaxNode | undefined = undefined;
   let value: Value | undefined = undefined;
   let advance: number = 1;
-  let immediateFollow = token.immediateFollow;
+  let immediateFollow = callToken.immediateFollow;
   if (procedure && context.activeProcedures.has(image)) {
     const label = procedure.labels.get(image);
     refNode = label;
@@ -1496,6 +1496,7 @@ function performTokenScan(
       index,
       procedure,
       context,
+      callToken,
     );
     value = procedureParseResult.value;
     advance = procedureParseResult.advance;
@@ -1504,11 +1505,11 @@ function performTokenScan(
     refNode = variable.declarationNode ?? undefined;
     value = variable.value;
   }
-  if (token.uri && refNode) {
+  if (callToken.uri && refNode) {
     // If the token has a URI, we assume it actually exists in the source code
     // We can now create a synthetic reference to the variable/procedure for it
-    token.element = generateSyntheticRefItem(token, refNode, context);
-    token.kind = CstNodeKind.ReferenceItem_Ref;
+    callToken.element = generateSyntheticRefItem(callToken, refNode, context);
+    callToken.kind = CstNodeKind.ReferenceItem_Ref;
   }
   if (!value || !isScalarValue(value)) {
     // Cannot replace tokens for array variables
@@ -1535,6 +1536,7 @@ function parseAndEvaluateProcedure(
   index: number,
   procedure: inst.ProcedureInstructionContainer,
   context: InterpreterContext,
+  callToken: Token,
 ): InlineProcedureEvaluationResult {
   let evaluatedArgs: Value[];
   let advance = 1;
@@ -1563,7 +1565,7 @@ function parseAndEvaluateProcedure(
   }
 
   const localContext = createLocalContext(context, procedure);
-  let value = runProcedure(procedure, evaluatedArgs, localContext);
+  let value = runProcedure(procedure, evaluatedArgs, localContext, callToken);
   if (isScalarValue(value) && suffix) {
     // Add the suffix to the value, as it was immediately following the procedure call
     // Otherwise, the suffix will generate a separate token, which is not the intended behavior
