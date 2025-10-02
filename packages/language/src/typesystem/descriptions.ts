@@ -11,11 +11,11 @@ export type PartialPartial<T, P extends keyof T> = Partial<Omit<T, P>> &
 export enum DataType {
   Area,
   Arithmetic,
+  Entry,
   File,
   Format,
   Label,
   Locator,
-  Entry,
   Ordinal,
   Picture,
   String,
@@ -26,11 +26,11 @@ export enum DataType {
 export const DataTypes: DataType[] = [
   DataType.Area,
   DataType.Arithmetic,
+  DataType.Entry,
   DataType.File,
   DataType.Format,
   DataType.Label,
   DataType.Locator,
-  DataType.Entry,
   DataType.Ordinal,
   DataType.Picture,
   DataType.String,
@@ -38,99 +38,111 @@ export const DataTypes: DataType[] = [
 ];
 
 export enum AttributeKind {
-  Endianess,
-  DataType,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-sequential-direct-attributes */
+  AccessMode,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
   Alignment,
-  Scope,
-  Storage,
-  Volatility,
-  Position,
-  Assignability,
-  Connection,
-  Variable,
-  Scale,
-  Base,
-  Sign,
-  NumberMode,
+  // ???
   AreaSize,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-assignable-nonassignable-attributes */
+  Assignability,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-coded-arithmetic-data */
+  Base,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-buffered-unbuffered-attributes */
+  BufferMode,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-connected-nonconnected-attributes */
+  Connection,
+  /** This is a meta type that can be set by different attributes. */
+  DataType,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-bigendian-littleendian-attributes */
+  Endianess,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-record-stream-attributes */
+  FileUsage,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-hexadec-ieee-attributes */
+  FloatFormat,
   LocatorKind,
+  NumberMode,
   OrdinalNames,
   PictureKind,
-  StringKind,
+  Position,
+  Scale,
+  Scope,
+  Sign,
+  Storage,
   StringFormat,
+  StringKind,
   StringLength,
-  FloatFormat,
-  AccessMode,
-  BufferMode,
-  FileUsage,
+  Variable,
+  Volatility,
 }
 
 export const AttributeKinds: AttributeKind[] = [
-  AttributeKind.FileUsage,
+  AttributeKind.AccessMode,
   AttributeKind.Alignment,
-  AttributeKind.Scope,
-  AttributeKind.Storage,
-  AttributeKind.Volatility,
-  AttributeKind.Position,
-  AttributeKind.Assignability,
-  AttributeKind.Connection,
-  AttributeKind.Variable,
-  AttributeKind.Scale,
-  AttributeKind.Base,
-  AttributeKind.Sign,
-  AttributeKind.NumberMode,
   AttributeKind.AreaSize,
+  AttributeKind.Assignability,
+  AttributeKind.Base,
+  AttributeKind.BufferMode,
+  AttributeKind.Connection,
+  AttributeKind.DataType,
+  AttributeKind.Endianess,
+  AttributeKind.FileUsage,
+  AttributeKind.FloatFormat,
   AttributeKind.LocatorKind,
+  AttributeKind.NumberMode,
   AttributeKind.OrdinalNames,
   AttributeKind.PictureKind,
-  AttributeKind.StringKind,
+  AttributeKind.Position,
+  AttributeKind.Scale,
+  AttributeKind.Scope,
+  AttributeKind.Sign,
+  AttributeKind.Storage,
   AttributeKind.StringFormat,
+  AttributeKind.StringKind,
   AttributeKind.StringLength,
-  AttributeKind.Endianess,
-  AttributeKind.DataType,
-  AttributeKind.FloatFormat,
-  AttributeKind.AccessMode,
-  AttributeKind.BufferMode,
+  AttributeKind.Variable,
+  AttributeKind.Volatility,
 ];
 
 export type AttributeTypes = {
-  [AttributeKind.FileUsage]: FileUsage;
-  [AttributeKind.BufferMode]: BufferMode;
   [AttributeKind.AccessMode]: AccessMode;
-  [AttributeKind.FloatFormat]: FloatFormat;
-  [AttributeKind.Endianess]: Endianess;
-  [AttributeKind.DataType]: DataType;
   [AttributeKind.Alignment]: Alignment;
-  [AttributeKind.Scope]: Scope;
-  [AttributeKind.Storage]: StorageClass;
-  [AttributeKind.Volatility]: Volatility;
-  [AttributeKind.Position]: StoragePosition;
-  [AttributeKind.Assignability]: Assignability;
-  [AttributeKind.Connection]: StorageConnection;
-  [AttributeKind.Variable]: boolean;
-  [AttributeKind.Scale]: Scale;
-  [AttributeKind.Base]: Base;
-  [AttributeKind.Sign]: Sign;
-  [AttributeKind.NumberMode]: NumberMode;
   [AttributeKind.AreaSize]: number;
+  [AttributeKind.Assignability]: Assignability;
+  [AttributeKind.Base]: Base;
+  [AttributeKind.BufferMode]: BufferMode;
+  [AttributeKind.Connection]: StorageConnection;
+  [AttributeKind.DataType]: DataType;
+  [AttributeKind.Endianess]: Endianess;
+  [AttributeKind.FileUsage]: FileUsage;
+  [AttributeKind.FloatFormat]: FloatFormat;
   [AttributeKind.LocatorKind]: LocatorKind;
+  [AttributeKind.NumberMode]: NumberMode;
   [AttributeKind.OrdinalNames]: string[];
   [AttributeKind.PictureKind]: PictureWideness;
-  [AttributeKind.StringKind]: StringKind;
+  [AttributeKind.Position]: StoragePosition;
+  [AttributeKind.Scale]: Scale;
+  [AttributeKind.Scope]: Scope;
+  [AttributeKind.Sign]: Sign;
+  [AttributeKind.Storage]: StorageClass;
   [AttributeKind.StringFormat]: StringFormat;
+  [AttributeKind.StringKind]: StringKind;
   [AttributeKind.StringLength]: number;
+  [AttributeKind.Variable]: boolean;
+  [AttributeKind.Volatility]: Volatility;
 };
 
 export const CommonAttributeKinds: AttributeKind[] = [
   AttributeKind.DataType,
+
   AttributeKind.Alignment,
-  AttributeKind.Scope,
-  AttributeKind.Storage,
-  AttributeKind.Volatility,
-  AttributeKind.Position,
   AttributeKind.Assignability,
   AttributeKind.Connection,
+  AttributeKind.Position,
+  AttributeKind.Scope,
+  AttributeKind.Storage,
   AttributeKind.Variable,
+  AttributeKind.Volatility,
 ];
 
 export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
@@ -217,6 +229,7 @@ export enum AlignmentType {
 export type Alignment =
   | { type: AlignmentType.Aligned; alignment: 1 | 2 | 4 | 8 }
   | { type: AlignmentType.Unaligned };
+
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=declarations-internal-external-attributes */
 export enum ScopeType {
   Internal,
@@ -328,7 +341,7 @@ interface AreaTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface AreaTypeDescription
   extends BaseTypeDescription,
-    AreaTypeDescriptionProps {
+  AreaTypeDescriptionProps {
   type: AreaType;
 }
 
@@ -356,19 +369,25 @@ function isAreaTypeDescription(
 const ArithmeticType = DataType.Arithmetic;
 type ArithmeticType = typeof ArithmeticType;
 
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-hexadec-ieee-attributes */
 export enum FloatFormat {
   IEEE,
   HexaDec,
 }
 
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-bigendian-littleendian-attributes */
 export enum Endianess {
   Big,
   Little,
 }
+
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-coded-arithmetic-data */
 export enum NumberMode {
   Real,
   Complex,
 }
+
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-coded-arithmetic-data */
 export enum Base {
   Binary,
   Decimal,
@@ -381,10 +400,10 @@ export type Scale = {
   /** Formally known as `p`. */
   totalDigitsCount: number;
 } & (
-  | {
+    | {
       mode: ScaleMode.Float;
     }
-  | {
+    | {
       mode: ScaleMode.Fixed;
       /**
        * Formally known as `q`.
@@ -392,7 +411,7 @@ export type Scale = {
        */
       fractionalDigitsCount: number;
     }
-);
+  );
 export enum Sign {
   Signed,
   Unsigned,
@@ -409,7 +428,7 @@ interface ArithmeticTypeDescriptionProps {
 
 interface ArithmeticTypeDescription
   extends BaseTypeDescription,
-    ArithmeticTypeDescriptionProps {
+  ArithmeticTypeDescriptionProps {
   type: ArithmeticType;
 }
 
@@ -479,16 +498,21 @@ function isArithmeticTypeDescription(
 const FileType = DataType.File;
 type FileType = typeof FileType;
 
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-buffered-unbuffered-attributes */
 export enum BufferMode {
   Unbuffered,
   Buffered,
 }
 
+/**
+ * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-sequential-direct-attributes
+ */
 export enum AccessMode {
   Sequential,
   Direct,
 }
 
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-record-stream-attributes */
 export enum FileUsage {
   Record,
   Stream,
@@ -502,7 +526,7 @@ interface FileTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface FileTypeDescription
   extends BaseTypeDescription,
-    FileTypeDescriptionProps {
+  FileTypeDescriptionProps {
   type: FileType;
 }
 
@@ -533,11 +557,11 @@ function isFileTypeDescription(
 const FormatType = DataType.Format;
 type FormatType = typeof FormatType;
 
-interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface FormatTypeDescription
   extends BaseTypeDescription,
-    FormatTypeDescriptionProps {
+  FormatTypeDescriptionProps {
   type: FormatType;
 }
 
@@ -560,11 +584,11 @@ function isFormatTypeDescription(
 const LabelType = DataType.Label;
 type LabelType = typeof LabelType;
 
-interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface LabelTypeDescription
   extends BaseTypeDescription,
-    LabelTypeDescriptionProps {
+  LabelTypeDescriptionProps {
   type: LabelType;
 }
 
@@ -598,7 +622,7 @@ interface LocatorTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface LocatorTypeDescription
   extends BaseTypeDescription,
-    LocatorTypeDescriptionProps {
+  LocatorTypeDescriptionProps {
   type: LocatorType;
 }
 
@@ -626,11 +650,11 @@ function isLocatorTypeDescription(
 const EntryType = DataType.Entry;
 type EntryType = typeof EntryType;
 
-interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface EntryTypeDescription
   extends BaseTypeDescription,
-    EntryTypeDescriptionProps {
+  EntryTypeDescriptionProps {
   type: EntryType;
 }
 
@@ -659,7 +683,7 @@ interface OrdinalTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface OrdinalTypeDescription
   extends BaseTypeDescription,
-    OrdinalTypeDescriptionProps {
+  OrdinalTypeDescriptionProps {
   type: OrdinalType;
 }
 
@@ -696,7 +720,7 @@ interface PictureTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface PictureTypeDescription
   extends BaseTypeDescription,
-    PictureTypeDescriptionProps {
+  PictureTypeDescriptionProps {
   type: PictureType;
 }
 
@@ -749,7 +773,7 @@ interface StringTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface StringTypeDescription
   extends BaseTypeDescription,
-    StringTypeDescriptionProps {
+  StringTypeDescriptionProps {
   type: StringType;
 }
 
@@ -781,11 +805,11 @@ function isStringTypeDescription(
 const TaskType = DataType.Task;
 type TaskType = typeof TaskType;
 
-interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface TaskTypeDescription
   extends BaseTypeDescription,
-    TaskTypeDescriptionProps {
+  TaskTypeDescriptionProps {
   type: TaskType;
 }
 

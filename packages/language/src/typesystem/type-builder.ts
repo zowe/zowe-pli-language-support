@@ -30,6 +30,7 @@ import {
   BufferMode,
   AccessMode,
   FileUsage,
+  Alignment,
 } from "./descriptions";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
@@ -55,7 +56,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
   private possibleDataTypes = new Set<DataType>(DataTypes);
   private attributeWitnesses: AttributeWitnesses =
     createEmptyAttributeWitnesses();
-  constructor(private token: Token | null) {}
+  constructor(private token: Token | null) { }
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -92,6 +93,171 @@ export class DefaultTypeBuilder implements TypeBuilder {
     const token = attribute.typeToken!;
     assertType<ast.DefaultAttribute>(attribute.type);
     switch (attribute.type) {
+      /**
+       * Access mode attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-sequential-direct-attributes
+       */
+      case "SEQL":
+      case "SEQUENTIAL":
+      case "DIRECT": {
+        this.addAttributeWitness(
+          AttributeKind.AccessMode,
+          attribute.type === "DIRECT" ? AccessMode.Direct : AccessMode.Sequential,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * Alignment attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes
+       */
+      case "ALIGNED":
+      case "UNALIGNED": {
+        //TODO check alignment value
+        const attributeValue: Alignment = attribute.type === "ALIGNED"
+          ? { type: AlignmentType.Aligned, alignment: 1 }
+          : { type: AlignmentType.Unaligned };
+        this.addAttributeWitness(
+          AttributeKind.Alignment,
+          attributeValue,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * Assignability attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-assignable-nonassignable-attributes
+       */
+      case "ASSIGNABLE":
+      case "NONASGN":
+      case "NONASSIGNABLE":
+        const attributeValue = attribute.type === "ASSIGNABLE"
+          ? Assignability.Assignable
+          : Assignability.Nonassignable;
+        this.addAttributeWitness(
+          AttributeKind.Assignability,
+          attributeValue,
+          attribute,
+          token,
+        );
+        break;
+
+      /**
+       * Base attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-coded-arithmetic-data
+       */
+      case "BIN":
+      case "BINARY":
+      case "DEC":
+      case "DECIMAL": {
+        const base = attribute.type === "BIN" || attribute.type === "BINARY"
+          ? Base.Binary
+          : Base.Decimal;
+        this.addAttributeWitness(
+          AttributeKind.Base,
+          base,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * Buffer mode attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-buffered-unbuffered-attributes
+       */
+      case "BUF":
+      case "BUFFERED":
+      case "UNBUF":
+      case "UNBUFFERED": {
+        const mode = attribute.type === "UNBUF" || attribute.type === "UNBUFFERED"
+          ? BufferMode.Unbuffered
+          : BufferMode.Buffered;
+        this.addAttributeWitness(
+          AttributeKind.BufferMode,
+          mode,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * Connection attributes (StorageConnection)
+       * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-connected-nonconnected-attributes
+       */
+      case "CONNECTED":
+      case "NONCONNECTED": {
+        const connection = attribute.type === "CONNECTED"
+          ? StorageConnection.Connected
+          : StorageConnection.Nonconnected;
+        this.addAttributeWitness(
+          AttributeKind.Connection,
+          connection,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * Endianess attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-bigendian-littleendian-attributes
+       */
+      case "BIGENDIAN":
+      case "LITTLEENDIAN": {
+        const endianess = attribute.type === "BIGENDIAN"
+          ? Endianess.Big
+          : Endianess.Little;
+        this.addAttributeWitness(
+          AttributeKind.Endianess,
+          endianess,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * File usage attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-record-stream-attributes
+       */
+      case "STREAM":
+      case "RECORD": {
+        const usage = attribute.type === "STREAM"
+          ? FileUsage.Stream
+          : FileUsage.Record;
+        this.addAttributeWitness(
+          AttributeKind.FileUsage,
+          usage,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * Float format attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-hexadec-ieee-attributes
+       */
+      case "IEEE": 
+      case "HEXADEC": {
+        const format = attribute.type === "IEEE"
+          ? FloatFormat.IEEE
+          : FloatFormat.HexaDec;
+        this.addAttributeWitness(
+          AttributeKind.FloatFormat,
+          format,
+          attribute,
+          token,
+        );
+        break;
+      }
+      
       case "PREC":
       case "PRECISION": {
         const precision = this.acceptDimensionsAsListOfNumbers(
@@ -235,44 +401,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
           token,
         );
         break;
-      case "ALIGNED":
-        //TODO check alignment value
-        this.addAttributeWitness(
-          AttributeKind.Alignment,
-          { type: AlignmentType.Aligned, alignment: 1 },
-          attribute,
-          token,
-        );
-        break;
-      case "UNALIGNED":
-        this.addAttributeWitness(
-          AttributeKind.Alignment,
-          { type: AlignmentType.Unaligned },
-          attribute,
-          token,
-        );
-        break;
       case "AREA":
         this.addAttributeWitness(
           AttributeKind.DataType,
           DataType.Area,
-          attribute,
-          token,
-        );
-        break;
-      case "ASSIGNABLE":
-        this.addAttributeWitness(
-          AttributeKind.Assignability,
-          Assignability.Assignable,
-          attribute,
-          token,
-        );
-        break;
-      case "NONASGN":
-      case "NONASSIGNABLE":
-        this.addAttributeWitness(
-          AttributeKind.Assignability,
-          Assignability.Nonassignable,
           attribute,
           token,
         );
@@ -326,40 +458,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
           token,
         );
         break;
-      case "BIN":
-      case "BINARY":
-        this.addAttributeWitness(
-          AttributeKind.Base,
-          Base.Binary,
-          attribute,
-          token,
-        );
-        break;
-      case "DEC":
-      case "DECIMAL":
-        this.addAttributeWitness(
-          AttributeKind.Base,
-          Base.Decimal,
-          attribute,
-          token,
-        );
-        break;
-      case "NONCONNECTED":
-        this.addAttributeWitness(
-          AttributeKind.Connection,
-          StorageConnection.Nonconnected,
-          attribute,
-          token,
-        );
-        break;
-      case "CONNECTED":
-        this.addAttributeWitness(
-          AttributeKind.Connection,
-          StorageConnection.Connected,
-          attribute,
-          token,
-        );
-        break;
+      
       case "VARYING":
         this.addAttributeWitness(
           AttributeKind.StringFormat,
@@ -409,22 +508,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
           token,
         );
         break;
-      case "BIGENDIAN":
-        this.addAttributeWitness(
-          AttributeKind.Endianess,
-          Endianess.Big,
-          attribute,
-          token,
-        );
-        break;
-      case "LITTLEENDIAN":
-        this.addAttributeWitness(
-          AttributeKind.Endianess,
-          Endianess.Little,
-          attribute,
-          token,
-        );
-        break;
+      
       case "CONTROLLED":
         this.addAttributeWitness(
           AttributeKind.Storage,
@@ -479,81 +563,8 @@ export class DefaultTypeBuilder implements TypeBuilder {
         );
         break;
       }
-      case "HEXADEC": {
-        this.addAttributeWitness(
-          AttributeKind.FloatFormat,
-          FloatFormat.HexaDec,
-          attribute,
-          token,
-        );
-        break;
-      }
-      case "IEEE": {
-        this.addAttributeWitness(
-          AttributeKind.FloatFormat,
-          FloatFormat.IEEE,
-          attribute,
-          token,
-        );
-        break;
-      }
-      case "UNBUF":
-      case "UNBUFFERED": {
-        this.addAttributeWitness(
-          AttributeKind.BufferMode,
-          BufferMode.Unbuffered,
-          attribute,
-          token,
-        );
-        break;
-      }
-      case "BUF":
-      case "BUFFERED": {
-        this.addAttributeWitness(
-          AttributeKind.BufferMode,
-          BufferMode.Buffered,
-          attribute,
-          token,
-        );
-        break;
-      }
-      case "SEQL":
-      case "SEQUENTIAL": {
-        this.addAttributeWitness(
-          AttributeKind.AccessMode,
-          AccessMode.Sequential,
-          attribute,
-          token,
-        );
-        break;
-      }
-      case "DIRECT": {
-        this.addAttributeWitness(
-          AttributeKind.AccessMode,
-          AccessMode.Direct,
-          attribute,
-          token,
-        );
-        break;
-      }
-      case "RECORD": {
-        this.addAttributeWitness(
-          AttributeKind.FileUsage,
-          FileUsage.Record,
-          attribute,
-          token,
-        );
-        break;
-      }
-      case "STREAM": {
-        this.addAttributeWitness(
-          AttributeKind.FileUsage,
-          FileUsage.Stream,
-          attribute,
-          token,
-        );
-        break;
-      }
+      
+      
       case "BACKWARDS":
       case "EXCLUSIVE":
       case "BYADDR":
