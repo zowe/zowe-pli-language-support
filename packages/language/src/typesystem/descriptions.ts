@@ -87,7 +87,7 @@ export enum AttributeKind {
   StringKind,
   /** TODO belongs to StringKind, maybe refactor later */
   StringLength,
-  /** 
+  /**
    * TODO still needs to be handled by the type builder
    * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
    */
@@ -362,7 +362,7 @@ interface AreaTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface AreaTypeDescription
   extends BaseTypeDescription,
-  AreaTypeDescriptionProps {
+    AreaTypeDescriptionProps {
   type: AreaType;
 }
 
@@ -423,10 +423,10 @@ export type Scale = {
   /** Formally known as `p`. */
   totalDigitsCount: number;
 } & (
-    | {
+  | {
       mode: ScaleMode.Float;
     }
-    | {
+  | {
       mode: ScaleMode.Fixed;
       /**
        * Formally known as `q`.
@@ -434,7 +434,7 @@ export type Scale = {
        */
       fractionalDigitsCount: number;
     }
-  );
+);
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-signed-unsigned */
 export enum Sign {
@@ -453,7 +453,7 @@ interface ArithmeticTypeDescriptionProps {
 
 interface ArithmeticTypeDescription
   extends BaseTypeDescription,
-  ArithmeticTypeDescriptionProps {
+    ArithmeticTypeDescriptionProps {
   type: ArithmeticType;
 }
 
@@ -551,7 +551,7 @@ interface FileTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface FileTypeDescription
   extends BaseTypeDescription,
-  FileTypeDescriptionProps {
+    FileTypeDescriptionProps {
   type: FileType;
 }
 
@@ -582,11 +582,11 @@ function isFileTypeDescription(
 const FormatType = DataType.Format;
 type FormatType = typeof FormatType;
 
-interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface FormatTypeDescription
   extends BaseTypeDescription,
-  FormatTypeDescriptionProps {
+    FormatTypeDescriptionProps {
   type: FormatType;
 }
 
@@ -609,11 +609,11 @@ function isFormatTypeDescription(
 const LabelType = DataType.Label;
 type LabelType = typeof LabelType;
 
-interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface LabelTypeDescription
   extends BaseTypeDescription,
-  LabelTypeDescriptionProps {
+    LabelTypeDescriptionProps {
   type: LabelType;
 }
 
@@ -653,7 +653,7 @@ interface LocatorTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface LocatorTypeDescription
   extends BaseTypeDescription,
-  LocatorTypeDescriptionProps {
+    LocatorTypeDescriptionProps {
   type: LocatorType;
 }
 
@@ -681,11 +681,11 @@ function isLocatorTypeDescription(
 const EntryType = DataType.Entry;
 type EntryType = typeof EntryType;
 
-interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface EntryTypeDescription
   extends BaseTypeDescription,
-  EntryTypeDescriptionProps {
+    EntryTypeDescriptionProps {
   type: EntryType;
 }
 
@@ -714,7 +714,7 @@ interface OrdinalTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface OrdinalTypeDescription
   extends BaseTypeDescription,
-  OrdinalTypeDescriptionProps {
+    OrdinalTypeDescriptionProps {
   type: OrdinalType;
 }
 
@@ -752,7 +752,7 @@ interface PictureTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface PictureTypeDescription
   extends BaseTypeDescription,
-  PictureTypeDescriptionProps {
+    PictureTypeDescriptionProps {
   type: PictureType;
 }
 
@@ -807,7 +807,7 @@ interface StringTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface StringTypeDescription
   extends BaseTypeDescription,
-  StringTypeDescriptionProps {
+    StringTypeDescriptionProps {
   type: StringType;
 }
 
@@ -839,11 +839,11 @@ function isStringTypeDescription(
 const TaskType = DataType.Task;
 type TaskType = typeof TaskType;
 
-interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface TaskTypeDescription
   extends BaseTypeDescription,
-  TaskTypeDescriptionProps {
+    TaskTypeDescriptionProps {
   type: TaskType;
 }
 

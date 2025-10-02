@@ -57,7 +57,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
   private possibleDataTypes = new Set<DataType>(DataTypes);
   private attributeWitnesses: AttributeWitnesses =
     createEmptyAttributeWitnesses();
-  constructor(private token: Token | null) { }
+  constructor(private token: Token | null) {}
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -132,7 +132,9 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "DIRECT": {
         this.addAttributeWitness(
           AttributeKind.AccessMode,
-          attribute.type === "DIRECT" ? AccessMode.Direct : AccessMode.Sequential,
+          attribute.type === "DIRECT"
+            ? AccessMode.Direct
+            : AccessMode.Sequential,
           attribute,
           token,
         );
@@ -146,9 +148,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "ALIGNED":
       case "UNALIGNED": {
         //TODO check alignment value
-        const attributeValue: Alignment = attribute.type === "ALIGNED"
-          ? { type: AlignmentType.Aligned, alignment: 1 }
-          : { type: AlignmentType.Unaligned };
+        const attributeValue: Alignment =
+          attribute.type === "ALIGNED"
+            ? { type: AlignmentType.Aligned, alignment: 1 }
+            : { type: AlignmentType.Unaligned };
         this.addAttributeWitness(
           AttributeKind.Alignment,
           attributeValue,
@@ -165,9 +168,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "ASSIGNABLE":
       case "NONASGN":
       case "NONASSIGNABLE":
-        const attributeValue = attribute.type === "ASSIGNABLE"
-          ? Assignability.Assignable
-          : Assignability.Nonassignable;
+        const attributeValue =
+          attribute.type === "ASSIGNABLE"
+            ? Assignability.Assignable
+            : Assignability.Nonassignable;
         this.addAttributeWitness(
           AttributeKind.Assignability,
           attributeValue,
@@ -184,15 +188,11 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "BINARY":
       case "DEC":
       case "DECIMAL": {
-        const base = attribute.type === "BIN" || attribute.type === "BINARY"
-          ? Base.Binary
-          : Base.Decimal;
-        this.addAttributeWitness(
-          AttributeKind.Base,
-          base,
-          attribute,
-          token,
-        );
+        const base =
+          attribute.type === "BIN" || attribute.type === "BINARY"
+            ? Base.Binary
+            : Base.Decimal;
+        this.addAttributeWitness(AttributeKind.Base, base, attribute, token);
         break;
       }
 
@@ -204,9 +204,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "BUFFERED":
       case "UNBUF":
       case "UNBUFFERED": {
-        const mode = attribute.type === "UNBUF" || attribute.type === "UNBUFFERED"
-          ? BufferMode.Unbuffered
-          : BufferMode.Buffered;
+        const mode =
+          attribute.type === "UNBUF" || attribute.type === "UNBUFFERED"
+            ? BufferMode.Unbuffered
+            : BufferMode.Buffered;
         this.addAttributeWitness(
           AttributeKind.BufferMode,
           mode,
@@ -222,9 +223,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
        */
       case "CONNECTED":
       case "NONCONNECTED": {
-        const connection = attribute.type === "CONNECTED"
-          ? StorageConnection.Connected
-          : StorageConnection.Nonconnected;
+        const connection =
+          attribute.type === "CONNECTED"
+            ? StorageConnection.Connected
+            : StorageConnection.Nonconnected;
         this.addAttributeWitness(
           AttributeKind.Connection,
           connection,
@@ -240,9 +242,8 @@ export class DefaultTypeBuilder implements TypeBuilder {
        */
       case "BIGENDIAN":
       case "LITTLEENDIAN": {
-        const endianess = attribute.type === "BIGENDIAN"
-          ? Endianess.Big
-          : Endianess.Little;
+        const endianess =
+          attribute.type === "BIGENDIAN" ? Endianess.Big : Endianess.Little;
         this.addAttributeWitness(
           AttributeKind.Endianess,
           endianess,
@@ -258,9 +259,8 @@ export class DefaultTypeBuilder implements TypeBuilder {
        */
       case "STREAM":
       case "RECORD": {
-        const usage = attribute.type === "STREAM"
-          ? FileUsage.Stream
-          : FileUsage.Record;
+        const usage =
+          attribute.type === "STREAM" ? FileUsage.Stream : FileUsage.Record;
         this.addAttributeWitness(
           AttributeKind.FileUsage,
           usage,
@@ -274,11 +274,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Float format attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-hexadec-ieee-attributes
        */
-      case "IEEE": 
+      case "IEEE":
       case "HEXADEC": {
-        const format = attribute.type === "IEEE"
-          ? FloatFormat.IEEE
-          : FloatFormat.HexaDec;
+        const format =
+          attribute.type === "IEEE" ? FloatFormat.IEEE : FloatFormat.HexaDec;
         this.addAttributeWitness(
           AttributeKind.FloatFormat,
           format,
@@ -292,11 +291,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Number mode attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-real-complex
        */
-      case "COMPLEX": 
+      case "COMPLEX":
       case "REAL": {
-        const mode = attribute.type === "COMPLEX"
-          ? NumberMode.Complex
-          : NumberMode.Real;
+        const mode =
+          attribute.type === "COMPLEX" ? NumberMode.Complex : NumberMode.Real;
         this.addAttributeWitness(
           AttributeKind.NumberMode,
           mode,
@@ -359,15 +357,11 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "INTERNAL":
       case "EXTERNAL": {
         //TODO check environment
-        const scope: Scope = attribute.type === "INTERNAL"
-          ? { type: ScopeType.Internal }
-          : { type: ScopeType.External, environment: "TODO" };
-        this.addAttributeWitness(
-          AttributeKind.Scope,
-          scope,
-          attribute,
-          token,
-        );
+        const scope: Scope =
+          attribute.type === "INTERNAL"
+            ? { type: ScopeType.Internal }
+            : { type: ScopeType.External, environment: "TODO" };
+        this.addAttributeWitness(AttributeKind.Scope, scope, attribute, token);
         break;
       }
 
@@ -378,12 +372,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "UNSIGNED":
       case "SIGNED": {
         const sign = attribute.type === "SIGNED" ? Sign.Signed : Sign.Unsigned;
-        this.addAttributeWitness(
-          AttributeKind.Sign,
-          sign,
-          attribute,
-          token,
-        );
+        this.addAttributeWitness(AttributeKind.Sign, sign, attribute, token);
         break;
       }
 
@@ -402,12 +391,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
           CONTROLLED: StorageClass.Controlled,
         };
         const clss = mapTo[attribute.type];
-        this.addAttributeWitness(
-          AttributeKind.Storage,
-          clss,
-          attribute,
-          token,
-        );
+        this.addAttributeWitness(AttributeKind.Storage, clss, attribute, token);
         break;
       }
 
@@ -488,9 +472,8 @@ export class DefaultTypeBuilder implements TypeBuilder {
        */
       case "NORMAL":
       case "ABNORMAL": {
-        const volatility = attribute.type === "NORMAL"
-          ? Volatility.Normal
-          : Volatility.Abnormal;
+        const volatility =
+          attribute.type === "NORMAL" ? Volatility.Normal : Volatility.Abnormal;
         this.addAttributeWitness(
           AttributeKind.Volatility,
           volatility,
@@ -543,10 +526,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
         }
         break;
       }
-      
-     
-      
-      
+
       case "PTR":
       case "POINTER": {
         const precision = this.acceptDimensionsAsListOfNumbers(
@@ -578,7 +558,6 @@ export class DefaultTypeBuilder implements TypeBuilder {
         break;
       }
 
-      
       case "BACKWARDS":
       case "EXCLUSIVE":
       case "BYADDR":
@@ -619,16 +598,13 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "TRANSIENT":
       case "UNAL":
       case "UNION":
-        break;
       case "UPDATE":
       case "INPUT":
       case "OUTPUT":
-        break;
       case "VAR":
       case "VARIABLE":
-        //https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
         break;
-            default:
+      default:
         assertUnreachable(attribute.type);
     }
   }
