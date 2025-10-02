@@ -1940,7 +1940,7 @@ async function resolveIncludeFileUri(
         // use lib path over workspace
         const libUri = URI.from({
           scheme: "file",
-          path: lib
+          path: lib,
         });
         libFileUri = UriUtils.joinPath(libUri, item.fileName);
       }
