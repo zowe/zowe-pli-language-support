@@ -559,20 +559,21 @@ export class DefaultTypeBuilder implements TypeBuilder {
       }
 
       case "BACKWARDS":
-      case "EXCLUSIVE":
+      case "BUILTIN":
       case "BYADDR":
       case "BYVALUE":
-      case "BUILTIN":
       case "CONDITION":
       case "CONSTANT":
       case "CTL":
       case "DIMACROSS":
       case "EVENT":
+      case "EXCLUSIVE":
       case "EXT":
       case "GENERIC":
       case "HEX":
       case "INONLY":
       case "INOUT":
+      case "INPUT":
       case "INT":
       case "IRREDUCIBLE":
       case "KEYED":
@@ -587,6 +588,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "OPTIONAL":
       case "OPTIONS":
       case "OUTONLY":
+      case "OUTPUT":
       case "PARAMETER":
       case "POSITION":
       case "PRINT":
@@ -599,8 +601,6 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "UNAL":
       case "UNION":
       case "UPDATE":
-      case "INPUT":
-      case "OUTPUT":
       case "VAR":
       case "VARIABLE":
         break;
