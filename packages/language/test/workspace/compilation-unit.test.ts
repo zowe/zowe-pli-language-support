@@ -9,12 +9,18 @@
  *
  */
 
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import { URI } from "../../src/utils/uri";
 import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
 
 describe("Compilation Unit Tests", () => {
+
+  afterEach(() => {
+    PluginConfigurationProviderInstance.setProgramConfigs("", []);
+    PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+  });
+
   test("Create", async () => {
     const uri = URI.parse("memory:///test/test.pli");
     const ch = new CompilationUnitHandler();

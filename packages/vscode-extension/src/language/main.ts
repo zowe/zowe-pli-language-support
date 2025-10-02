@@ -27,6 +27,20 @@ class NodeFileSystemProvider implements FileSystemProvider {
   readFile(uri: URI): Promise<string> {
     return fs.promises.readFile(uri.fsPath, "utf8");
   }
+
+  /**
+   * Reads directory contents, returning pairs of file/directory names and their types.
+   * 2 = Directory, 1 = File
+   * @param uri 
+   * @returns 
+   */
+  async readDir(uri: URI): Promise<Array<[string, number]>> {
+    const results = await fs.promises.readdir(uri.fsPath, {
+      withFileTypes: true
+    });
+    return results.map((dirent) => [dirent.name, dirent.isDirectory() ? 2 : 1]);
+  }
+
   async fileExists(uri: URI): Promise<boolean> {
     try {
       await fs.promises.access(uri.fsPath);

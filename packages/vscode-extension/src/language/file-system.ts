@@ -12,6 +12,7 @@
 import { FileSystemProvider, SearchOptions, URI } from "pli-language";
 import { Connection } from "vscode-languageserver";
 import { Messages } from "../common/messages";
+import type * as vscode from "vscode";
 
 export class VSCodeFileSystemProvider implements FileSystemProvider {
   private _connection: Connection;
@@ -31,6 +32,23 @@ export class VSCodeFileSystemProvider implements FileSystemProvider {
       return undefined;
     }
   }
+
+  /**
+   * Submits a request to the client to read the contents of a directory.
+   * Returns an array of file and directory names.
+   */
+  async readDir(uri: URI): Promise<Array<[string, vscode.FileType]>> {
+    const result = await this._connection.sendRequest(
+      Messages.ReadDir,
+      uri.toString(),
+    );
+    if (Array.isArray(result)) {
+      return result as Array<[string, vscode.FileType]>;
+    } else {
+      return [];
+    }
+  }
+
   async fileExists(uri: URI): Promise<boolean> {
     const result = await this._connection.sendRequest(
       Messages.FileExists,

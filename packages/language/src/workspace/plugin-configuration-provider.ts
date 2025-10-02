@@ -308,6 +308,7 @@ export class PluginConfigurationProvider {
         try {
           this.parseProcessGroupConfigs(processGrpConfig);
           this.postProcessProgramConfigs();
+          await this.postProcessProcessGroups();
           return;
         } catch (e) {
           console.error("Failed to load process group config, skipping:", e);
@@ -322,6 +323,40 @@ export class PluginConfigurationProvider {
     console.warn(
       "No process group config found, clearing existing configurations.",
     );
+  }
+
+  /**
+   * Go through all process groups & expand libs recursively to ensure all libs are findable when searching
+   * Has a side-effect of adding sub-directories to the libs list of each process group
+   */
+  private async postProcessProcessGroups() {
+    for (const processGroup of this.processGroupConfigs.values()) {
+      const allLibs = new Set(processGroup.libs);
+      const libsToProcess = [...processGroup.libs];
+      while (libsToProcess.length > 0) {
+        const lib = libsToProcess.pop();
+        if (lib) {
+          // read all files in this lib path
+          // add any contained directories to the libs list, as well as the toProcess list
+          const libUri = UriUtils.joinPath(
+            URI.parse(this.workspacePath),
+            lib,
+          );
+          const entries = await FileSystemProviderInstance.readDir(libUri);
+          if (entries.length) {
+            for (const [fileName, fileType] of entries) {
+              if (fileType === 2) {
+                // directory to add for handling
+                libsToProcess.push(`${lib}/${fileName}`);
+                // also add to the full libs list
+                allLibs.add(`${lib}/${fileName}`);
+              }
+            }
+          }
+        }
+      }
+      processGroup.libs = Array.from(allLibs);
+    }
   }
 
   /**
@@ -406,7 +441,12 @@ export class PluginConfigurationProvider {
     }
   }
 
-  parseProcessGroupConfigs(text: string): boolean {
+  /**
+   * Parses & sets the process group configs of this plugin configuration provider, overwriting any existing configs.
+   * @param text Raw text content of .pliplugin/proc_grps.json to parse
+   * @returns Whether parsing was successful
+   */
+  public parseProcessGroupConfigs(text: string): boolean {
     try {
       const serializedData: SerializedProcessGroup[] = JSON.parse(text).pgroups;
       const groupConfigs = serializedData.map(deserializeProcessGroup);
@@ -424,12 +464,13 @@ export class PluginConfigurationProvider {
    * @param processGroupConfigs List of process group configs loaded from
    *  .pliplugin/proc_grps.json (when present)
    */
-  public setProcessGroupConfigs(processGroupConfigs: ProcessGroup[]): void {
+  public async setProcessGroupConfigs(processGroupConfigs: ProcessGroup[]): Promise<void> {
     this.processGroupConfigs.clear();
     for (const config of processGroupConfigs) {
       this.processGroupConfigs.set(config.name, config);
     }
     this.postProcessProgramConfigs();
+    await this.postProcessProcessGroups();
     this.libFileGlobPatterns = undefined;
   }
 
@@ -497,7 +538,7 @@ export class PluginConfigurationProvider {
    * Returns the process group config for the given URI. This is used to find the
    * process group associated with a library file. It is rather fuzzy and might not be 100% accurate.
    * @param libUri URI of the including file (likely a library file)
-   * @returns Associated process group config, or undefined if not found
+   * @returns First process group config that includes a matching lib path, or undefined if not found
    */
   public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
