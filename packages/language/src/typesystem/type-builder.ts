@@ -31,6 +31,7 @@ import {
   AccessMode,
   FileUsage,
   Alignment,
+  Scope,
 } from "./descriptions";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
@@ -77,7 +78,13 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case ast.SyntaxKind.InitialAttribute:
       case ast.SyntaxKind.LikeAttribute:
       case ast.SyntaxKind.OrdinalTypeAttribute:
+        break;
       case ast.SyntaxKind.PictureAttribute:
+        /**
+         * Picture wideness attributes
+         * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-picture-widepic
+         */
+        break;
       case ast.SyntaxKind.ReturnsAttribute:
       case ast.SyntaxKind.TypeAttribute:
       case ast.SyntaxKind.ValueAttribute:
@@ -93,6 +100,29 @@ export class DefaultTypeBuilder implements TypeBuilder {
     const token = attribute.typeToken!;
     assertType<ast.DefaultAttribute>(attribute.type);
     switch (attribute.type) {
+      /**
+       * Data type attributes
+       */
+      case "TASK":
+      case "FILE":
+      case "FORMAT":
+      case "AREA": {
+        const mapTo = {
+          AREA: DataType.Area,
+          FILE: DataType.File,
+          FORMAT: DataType.Format,
+          TASK: DataType.Task,
+        };
+        const dataType = mapTo[attribute.type];
+        this.addAttributeWitness(
+          AttributeKind.DataType,
+          dataType,
+          attribute,
+          token,
+        );
+        break;
+      }
+
       /**
        * Access mode attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-sequential-direct-attributes
@@ -257,46 +287,29 @@ export class DefaultTypeBuilder implements TypeBuilder {
         );
         break;
       }
-      
-      case "PREC":
-      case "PRECISION": {
-        const precision = this.acceptDimensionsAsListOfNumbers(
-          attribute.dimensions,
+
+      /**
+       * Number mode attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-real-complex
+       */
+      case "COMPLEX": 
+      case "REAL": {
+        const mode = attribute.type === "COMPLEX"
+          ? NumberMode.Complex
+          : NumberMode.Real;
+        this.addAttributeWitness(
+          AttributeKind.NumberMode,
+          mode,
+          attribute,
+          token,
         );
-        if (precision) {
-          if (precision.length === 1) {
-            this.addAttributeWitness(
-              AttributeKind.Scale,
-              {
-                mode: ScaleMode.Fixed,
-                totalDigitsCount: precision[0],
-                fractionalDigitsCount: 0,
-              },
-              attribute,
-              token,
-            );
-          } else if (precision.length >= 2) {
-            if (
-              this.attributeWitnesses[AttributeKind.Scale]?.value?.mode ===
-              ScaleMode.Float
-            ) {
-              this.diagnostics.push(diagnosticFromCode(Error.IBM2424I, token));
-              break;
-            }
-            this.addAttributeWitness(
-              AttributeKind.Scale,
-              {
-                mode: ScaleMode.Fixed,
-                totalDigitsCount: precision[0],
-                fractionalDigitsCount: precision[1],
-              },
-              attribute,
-              token,
-            );
-          }
-        }
         break;
       }
+
+      /**
+       * Scale mode attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-fixed-float
+       */
       case "FIXED": {
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
@@ -338,6 +351,100 @@ export class DefaultTypeBuilder implements TypeBuilder {
         );
         break;
       }
+
+      /**
+       * Scope attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1?topic=declarations-internal-external-attributes
+       */
+      case "INTERNAL":
+      case "EXTERNAL": {
+        //TODO check environment
+        const scope: Scope = attribute.type === "INTERNAL"
+          ? { type: ScopeType.Internal }
+          : { type: ScopeType.External, environment: "TODO" };
+        this.addAttributeWitness(
+          AttributeKind.Scope,
+          scope,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * Sign attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-signed-unsigned
+       */
+      case "UNSIGNED":
+      case "SIGNED": {
+        const sign = attribute.type === "SIGNED" ? Sign.Signed : Sign.Unsigned;
+        this.addAttributeWitness(
+          AttributeKind.Sign,
+          sign,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * Storage class attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-storage-classes-allocation-deallocation
+       */
+      case "AUTOMATIC":
+      case "STATIC":
+      case "BASED":
+      case "CONTROLLED": {
+        const mapTo = {
+          AUTOMATIC: StorageClass.Automatic,
+          STATIC: StorageClass.Static,
+          BASED: StorageClass.Based,
+          CONTROLLED: StorageClass.Controlled,
+        };
+        const clss = mapTo[attribute.type];
+        this.addAttributeWitness(
+          AttributeKind.Storage,
+          clss,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * String format attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-varying-varying4-varyingz-nonvarying
+       */
+      case "VARYING4":
+      case "VARYING":
+      case "VARZ":
+      case "VARYINGZ":
+      case "NONVARYING": {
+        const mapTo = {
+          VARYING4: StringFormat.Varying4,
+          VARYING: StringFormat.Varying,
+          VARZ: StringFormat.VaryingZ,
+          VARYINGZ: StringFormat.VaryingZ,
+          NONVARYING: StringFormat.NonVarying,
+        };
+        const format = mapTo[attribute.type];
+        this.addAttributeWitness(
+          AttributeKind.StringFormat,
+          format,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * String kind attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-bit-character-graphic-uchar-widechar
+       */
+      case "BIT":
+      case "UCHAR":
+      case "WIDECHAR":
+      case "GRAPHIC":
       case "CHAR":
       case "CHARACTER": {
         const precision = this.acceptDimensionsAsListOfNumbers(
@@ -357,182 +464,89 @@ export class DefaultTypeBuilder implements TypeBuilder {
           attribute,
           token,
         );
+        const mapTo = {
+          CHAR: StringKind.Character,
+          CHARACTER: StringKind.Character,
+          BIT: StringKind.Bit,
+          UCHAR: StringKind.UChar,
+          WIDECHAR: StringKind.WideChar,
+          GRAPHIC: StringKind.Graphic,
+        };
+        const kind = mapTo[attribute.type];
         this.addAttributeWitness(
           AttributeKind.StringKind,
-          StringKind.Character,
+          kind,
           attribute,
           token,
         );
         break;
       }
-      case "BIT": {
+
+      /**
+       * Volatility attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-normal-abnormal-attributes
+       */
+      case "NORMAL":
+      case "ABNORMAL": {
+        const volatility = attribute.type === "NORMAL"
+          ? Volatility.Normal
+          : Volatility.Abnormal;
+        this.addAttributeWitness(
+          AttributeKind.Volatility,
+          volatility,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * Scale attributes with precision
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-precision-attribute
+       */
+      case "PREC":
+      case "PRECISION": {
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
         );
         if (precision) {
-          this.addAttributeWitness(
-            AttributeKind.StringLength,
-            precision[0],
-            attribute,
-            token,
-          );
+          if (precision.length === 1) {
+            this.addAttributeWitness(
+              AttributeKind.Scale,
+              {
+                mode: ScaleMode.Fixed,
+                totalDigitsCount: precision[0],
+                fractionalDigitsCount: 0,
+              },
+              attribute,
+              token,
+            );
+          } else if (precision.length >= 2) {
+            if (
+              this.attributeWitnesses[AttributeKind.Scale]?.value?.mode ===
+              ScaleMode.Float
+            ) {
+              this.diagnostics.push(diagnosticFromCode(Error.IBM2424I, token));
+              break;
+            }
+            this.addAttributeWitness(
+              AttributeKind.Scale,
+              {
+                mode: ScaleMode.Fixed,
+                totalDigitsCount: precision[0],
+                fractionalDigitsCount: precision[1],
+              },
+              attribute,
+              token,
+            );
+          }
         }
-        this.addAttributeWitness(
-          AttributeKind.StringKind,
-          StringKind.Bit,
-          attribute,
-          token,
-        );
         break;
       }
-      case "ABNORMAL":
-        this.addAttributeWitness(
-          AttributeKind.Volatility,
-          Volatility.Abnormal,
-          attribute,
-          token,
-        );
-        break;
-      case "NORMAL":
-        this.addAttributeWitness(
-          AttributeKind.Volatility,
-          Volatility.Normal,
-          attribute,
-          token,
-        );
-        break;
-      case "AREA":
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.Area,
-          attribute,
-          token,
-        );
-        break;
-      case "AUTOMATIC":
-        this.addAttributeWitness(
-          AttributeKind.Storage,
-          StorageClass.Automatic,
-          attribute,
-          token,
-        );
-        break;
-      case "EXTERNAL":
-        //TODO check environment
-        this.addAttributeWitness(
-          AttributeKind.Scope,
-          { type: ScopeType.External, environment: "TODO" },
-          attribute,
-          token,
-        );
-        break;
-      case "INTERNAL":
-        this.addAttributeWitness(
-          AttributeKind.Scope,
-          { type: ScopeType.Internal },
-          attribute,
-          token,
-        );
-        break;
-      case "STATIC":
-        this.addAttributeWitness(
-          AttributeKind.Storage,
-          StorageClass.Static,
-          attribute,
-          token,
-        );
-        break;
-      case "COMPLEX":
-        this.addAttributeWitness(
-          AttributeKind.NumberMode,
-          NumberMode.Complex,
-          attribute,
-          token,
-        );
-        break;
-      case "REAL":
-        this.addAttributeWitness(
-          AttributeKind.NumberMode,
-          NumberMode.Real,
-          attribute,
-          token,
-        );
-        break;
       
-      case "VARYING":
-        this.addAttributeWitness(
-          AttributeKind.StringFormat,
-          StringFormat.Varying,
-          attribute,
-          token,
-        );
-        break;
-      case "VARYING4":
-        this.addAttributeWitness(
-          AttributeKind.StringFormat,
-          StringFormat.Varying4,
-          attribute,
-          token,
-        );
-        break;
-      case "VARZ":
-      case "VARYINGZ":
-        this.addAttributeWitness(
-          AttributeKind.StringFormat,
-          StringFormat.VaryingZ,
-          attribute,
-          token,
-        );
-        break;
-      case "NONVARYING":
-        this.addAttributeWitness(
-          AttributeKind.StringFormat,
-          StringFormat.NonVarying,
-          attribute,
-          token,
-        );
-        break;
-      case "FILE":
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.File,
-          attribute,
-          token,
-        );
-        break;
-      case "TASK":
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.Task,
-          attribute,
-          token,
-        );
-        break;
+     
       
-      case "CONTROLLED":
-        this.addAttributeWitness(
-          AttributeKind.Storage,
-          StorageClass.Controlled,
-          attribute,
-          token,
-        );
-        break;
-      case "BASED":
-        this.addAttributeWitness(
-          AttributeKind.Storage,
-          StorageClass.Based,
-          attribute,
-          token,
-        );
-        break;
-      case "FORMAT":
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.Format,
-          attribute,
-          token,
-        );
-        break;
+      
       case "PTR":
       case "POINTER": {
         const precision = this.acceptDimensionsAsListOfNumbers(
@@ -563,7 +577,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
         );
         break;
       }
-      
+
       
       case "BACKWARDS":
       case "EXCLUSIVE":
@@ -614,47 +628,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case "VARIABLE":
         //https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
         break;
-      case "SIGNED":
-        this.addAttributeWitness(
-          AttributeKind.Sign,
-          Sign.Signed,
-          attribute,
-          token,
-        );
-        break;
-      case "UNSIGNED":
-        this.addAttributeWitness(
-          AttributeKind.Sign,
-          Sign.Unsigned,
-          attribute,
-          token,
-        );
-        break;
-      case "UCHAR":
-        this.addAttributeWitness(
-          AttributeKind.StringKind,
-          StringKind.UChar,
-          attribute,
-          token,
-        );
-        break;
-      case "WIDECHAR":
-        this.addAttributeWitness(
-          AttributeKind.StringKind,
-          StringKind.WideChar,
-          attribute,
-          token,
-        );
-        break;
-      case "GRAPHIC":
-        this.addAttributeWitness(
-          AttributeKind.StringKind,
-          StringKind.Graphic,
-          attribute,
-          token,
-        );
-        break;
-      default:
+            default:
         assertUnreachable(attribute.type);
     }
   }

@@ -42,7 +42,7 @@ export enum AttributeKind {
   AccessMode,
   /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
   Alignment,
-  // ???
+  /** TODO still needs to be handled by the type builder */
   AreaSize,
   /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-assignable-nonassignable-attributes */
   Assignability,
@@ -60,19 +60,39 @@ export enum AttributeKind {
   FileUsage,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-hexadec-ieee-attributes */
   FloatFormat,
+  /** TODO need to find out whether LocatorKind can be split into more attribute kinds */
   LocatorKind,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-real-complex */
   NumberMode,
+  /** TODO still needs to be handled by the type builder */
   OrdinalNames,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-picture-widepic */
   PictureKind,
+  /**
+   * TODO still needs to be handled by the type builder
+   * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-defined-position-attributes
+   */
   Position,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-fixed-float */
   Scale,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=declarations-internal-external-attributes */
   Scope,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-signed-unsigned */
   Sign,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-storage-classes-allocation-deallocation */
   Storage,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-varying-varying4-varyingz-nonvarying */
   StringFormat,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-bit-character-graphic-uchar-widechar */
   StringKind,
+  /** TODO belongs to StringKind, maybe refactor later */
   StringLength,
+  /** 
+   * TODO still needs to be handled by the type builder
+   * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
+   */
   Variable,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-normal-abnormal-attributes */
   Volatility,
 }
 
@@ -238,6 +258,7 @@ export enum ScopeType {
 export type Scope =
   | { type: ScopeType.Internal }
   | { type: ScopeType.External; environment: string };
+
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-storage-classes-allocation-deallocation */
 export enum StorageClass {
   Automatic,
@@ -392,6 +413,8 @@ export enum Base {
   Binary,
   Decimal,
 }
+
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-fixed-float */
 export enum ScaleMode {
   Fixed,
   Float,
@@ -412,6 +435,8 @@ export type Scale = {
       fractionalDigitsCount: number;
     }
   );
+
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-signed-unsigned */
 export enum Sign {
   Signed,
   Unsigned,
@@ -611,6 +636,12 @@ function isLabelTypeDescription(
 const LocatorType = DataType.Locator;
 type LocatorType = typeof LocatorType;
 
+/**
+ * TODO may need to be split into PointerKind, HandleKind, OffsetKind
+ * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attribute-pointer-variable
+ * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=unions-handle-attribute
+ * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attribute-offset-data
+ */
 export type LocatorKind =
   | { type: "pointer"; size: 32 | 64 }
   | { type: "handle"; size: 32 | 64; structTypeName: string }
@@ -711,6 +742,7 @@ function isOrdinalTypeDescription(
 const PictureType = DataType.Picture;
 type PictureType = typeof PictureType;
 
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-picture-widepic */
 export type PictureWideness = "picture" | "widepic";
 
 interface PictureTypeDescriptionProps extends BaseTypeDescriptionProps {
@@ -750,6 +782,7 @@ function isPictureTypeDescription(
 const StringType = DataType.String;
 type StringType = typeof StringType;
 
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-bit-character-graphic-uchar-widechar */
 export enum StringKind {
   Bit,
   Character,
@@ -758,6 +791,7 @@ export enum StringKind {
   WideChar,
 }
 
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-varying-varying4-varyingz-nonvarying */
 export enum StringFormat {
   Varying,
   Varying4,
