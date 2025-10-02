@@ -53,7 +53,7 @@ export class DefaultTypeInferer implements TypeInferer {
     return compilationUnit.services.typeCache.get(node, () => {
       // TODO: Temporary: We only infer type for single item declaration, otherwise it is unknown
       assertType<ast.DeclareStatement>(node.container);
-      if((node.container.items?.length ?? 0) > 1) {
+      if ((node.container.items?.length ?? 0) > 1) {
         return TypeDescriptions.Unknown();
       }
       const element = node.elements[0];

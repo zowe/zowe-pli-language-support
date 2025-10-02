@@ -55,8 +55,9 @@ export interface TypeBuilder {
 export class DefaultTypeBuilder implements TypeBuilder {
   private diagnostics: Diagnostic[] = [];
   private possibleDataTypes = new Set<DataType>(DataTypes);
-  private attributeWitnesses: AttributeWitnesses = createEmptyAttributeWitnesses();
-  constructor(private token: Token | null) { }
+  private attributeWitnesses: AttributeWitnesses =
+    createEmptyAttributeWitnesses();
+  constructor(private token: Token | null) {}
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -591,7 +592,6 @@ export class DefaultTypeBuilder implements TypeBuilder {
         );
         break;
       }
-        
 
       case "BACKWARDS":
       case "BYADDR":
