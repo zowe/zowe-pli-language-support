@@ -14,17 +14,19 @@
 // @wrap: process
 ////*PROCESS <|1:RTCHECK|>;
 ////*PROCESS <|2:RTCHECK|>(<|3:INVALID|>);
-////*PROCESS <|4:RTCHECK|>(NULL370);
+////*PROCESS <|4:RTCHECK|>(<|5:)|>;
+////*PROCESS <|6:RTCHECK|>(NULL370);
 
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1, 1),
 });
-verify.expectDiagnosticsAt([2, 4], {
+verify.expectDiagnosticsAt([2, 4, 6], {
   message: code.CompilerOptions.DupeOptionIssue.message("RTCHECK"),
 });
 verify.expectDiagnosticsAt(3, {
   message: code.CompilerOptions.RtCheck.InvalidParameter.message("INVALID"),
 });
+verify.noDiagnostics(5);
 verify.expectCompilerOptions({
   rtCheck: "NULL370",
 });

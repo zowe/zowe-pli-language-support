@@ -12,19 +12,19 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS <|2:QUOTE|>;
-////*PROCESS <|4:QUOTE|>(<|5:)|>;
-////*PROCESS <|6:QUOTE|>(<|7:INVALID|>);
-////*PROCESS <|8:QUOTE|>(<|9:'##'|>);
-////*PROCESS <|10:QUOTE|>(<|11:'z'|>);
-////*PROCESS <|12:QUOTE|>(<|13:'"'|>);
-////*PROCESS <|14:QUOTE|>('$');
+////*PROCESS <|2:OR|>;
+////*PROCESS <|4:OR|>(<|5:)|>;
+////*PROCESS <|6:OR|>(<|7:INVALID|>);
+////*PROCESS <|8:OR|>(<|9:'##'|>);
+////*PROCESS <|10:OR|>(<|11:'z'|>);
+////*PROCESS <|12:OR|>(<|13:'|'|>);
+////*PROCESS <|14:OR|>('$');
 
 verify.expectDiagnosticsAt(2, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1, 1),
 });
 verify.expectDiagnosticsAt([4, 6, 8, 10, 12, 14], {
-  message: code.CompilerOptions.DupeOptionIssue.message("QUOTE"),
+  message: code.CompilerOptions.DupeOptionIssue.message("OR"),
 });
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.ExpectedString.message(),
@@ -33,12 +33,12 @@ verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.ExpectedString.message(),
 });
 verify.expectDiagnosticsAt(9, {
-  message: code.CompilerOptions.Quote.InvalidParameterLength.message("##"),
+  message: code.CompilerOptions.Or.InvalidParameterLength.message("##"),
 });
 verify.expectDiagnosticsAt(11, {
-  message: code.CompilerOptions.Quote.InvalidParameterCharacter.message("z"),
+  message: code.CompilerOptions.Or.InvalidParameterCharacter.message("z"),
 });
 verify.noDiagnostics(13);
 verify.expectCompilerOptions({
-  quote: "$",
+  or: "$",
 });

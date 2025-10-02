@@ -15,7 +15,7 @@
 ////*PROCESS <|1:PRECTYPE|>;
 ////*PROCESS <|2:PRECTYPE|>(<|3:)|>;
 ////*PROCESS <|4:PRECTYPE|>(<|5:INVALID|>);
-////*PROCESS <|6:PRECTYPE|>(ANS, DECDIGIT);
+////*PROCESS <|6:PRECTYPE|>(<|7:ANS|>, DECDIGIT);
 ////*PROCESS <|8:PRECTYPE|>(DECDIGIT);
 
 verify.expectDiagnosticsAt(1, {
@@ -33,6 +33,7 @@ verify.expectDiagnosticsAt(5, {
 verify.expectDiagnosticsAt(6, {
   message: code.CompilerOptions.InvalidParameterCount.message(2, 1, 1),
 });
+verify.noDiagnostics(7);
 verify.expectCompilerOptions({
   precType: "DECDIGIT",
 });
