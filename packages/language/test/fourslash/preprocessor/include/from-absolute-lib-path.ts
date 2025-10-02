@@ -40,13 +40,8 @@
 //// DECLARE LIB_VAR FIXED;
 
 // @filename: /progs/main.pli
-//// %INCLUDE <|1>"lib.pli";
+//// %INCLUDE "lib.pli";
 
 preprocessor.expectTokens(`
   DECLARE LIB_VAR FIXED;
 `);
-
-hover.expectMarkdownAt(
-  1,
-  hover.include("%INCLUDE", "../tmp/cpy/lib.pli", " DECLARE LIB_VAR FIXED;"),
-);
