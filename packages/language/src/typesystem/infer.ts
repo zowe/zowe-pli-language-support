@@ -8,6 +8,7 @@ import {
 import { assertUnreachable } from "../utils/common";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultTypeBuilder } from "./type-builder";
+import { assertType } from "../preprocessor/util";
 
 export interface TypeInferer {
   inferExpressionType(
@@ -50,6 +51,11 @@ export class DefaultTypeInferer implements TypeInferer {
       assertUnreachable(element);
     }
     return compilationUnit.services.typeCache.get(node, () => {
+      // TODO: Temporary: We only infer type for single item declaration, otherwise it is unknown
+      assertType<ast.DeclareStatement>(node.container);
+      if((node.container.items?.length ?? 0) > 1) {
+        return TypeDescriptions.Unknown();
+      }
       const element = node.elements[0];
       const typeBuilder = new DefaultTypeBuilder(getNameToken(element));
       node.attributes.forEach((attr) => typeBuilder.addAttribute(attr));

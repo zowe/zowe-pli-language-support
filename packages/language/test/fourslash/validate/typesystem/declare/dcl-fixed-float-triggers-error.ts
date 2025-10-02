@@ -12,8 +12,8 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// DCL ANYTHING FIXED <|1:FLOAT|>;
+//// DCL ANYTHING <|1:FIXED|> FLOAT;
 
 verify.expectDiagnosticsAt(1, {
-  code: code.Error.IBM2462I.fullCode,
+  code: code.Error.IBM2424I.fullCode,
 });

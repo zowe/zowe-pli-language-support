@@ -55,9 +55,8 @@ export interface TypeBuilder {
 export class DefaultTypeBuilder implements TypeBuilder {
   private diagnostics: Diagnostic[] = [];
   private possibleDataTypes = new Set<DataType>(DataTypes);
-  private attributeWitnesses: AttributeWitnesses =
-    createEmptyAttributeWitnesses();
-  constructor(private token: Token | null) {}
+  private attributeWitnesses: AttributeWitnesses = createEmptyAttributeWitnesses();
+  constructor(private token: Token | null) { }
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -313,6 +312,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
           attribute.dimensions,
         );
         this.addAttributeWitness(
+          AttributeKind.DataType,
+          DataType.Arithmetic,
+          attribute,
+          token,
+        );
+        this.addAttributeWitness(
           AttributeKind.Scale,
           {
             mode: ScaleMode.Fixed,
@@ -344,6 +349,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
             mode: ScaleMode.Float,
             totalDigitsCount: precision ? precision[0] : 51,
           },
+          attribute,
+          token,
+        );
+        this.addAttributeWitness(
+          AttributeKind.DataType,
+          DataType.Arithmetic,
           attribute,
           token,
         );
@@ -495,6 +506,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
         if (precision) {
           if (precision.length === 1) {
             this.addAttributeWitness(
+              AttributeKind.DataType,
+              DataType.Arithmetic,
+              attribute,
+              token,
+            );
+            this.addAttributeWitness(
               AttributeKind.Scale,
               {
                 mode: ScaleMode.Fixed,
@@ -512,6 +529,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
               this.diagnostics.push(diagnosticFromCode(Error.IBM2424I, token));
               break;
             }
+            this.addAttributeWitness(
+              AttributeKind.DataType,
+              DataType.Arithmetic,
+              attribute,
+              token,
+            );
             this.addAttributeWitness(
               AttributeKind.Scale,
               {
@@ -558,8 +581,19 @@ export class DefaultTypeBuilder implements TypeBuilder {
         break;
       }
 
+      case "BUILTIN": {
+        //TODO temporary solution
+        this.addAttributeWitness(
+          AttributeKind.DataType,
+          DataType.Unknown,
+          attribute,
+          token,
+        );
+        break;
+      }
+        
+
       case "BACKWARDS":
-      case "BUILTIN":
       case "BYADDR":
       case "BYVALUE":
       case "CONDITION":

@@ -28,7 +28,6 @@ import * as PLICodes from "./messages/pli-codes";
 import { ValidationAcceptor, ValidationChecks, Validator } from "./validator";
 import { IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att } from "./messages/error-severity/IBM2412I-IBM2410I-IBM2409I-handle-return-stmt-and-returns-att";
 import { TypeCheck } from "./type-check-validator";
-import { DefaultPliTypeInferer } from "../typesystem/infer";
 import { retrieveProcedureFromLabelPrefix } from "./utils";
 
 /**
