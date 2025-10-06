@@ -4325,20 +4325,8 @@ export class PliParser extends AbstractParser {
     return this.pop<ast.GenericDescriptor>();
   });
 
-  private createIfStatement(): ast.IfStatement {
-    return {
-      kind: ast.SyntaxKind.IfStatement,
-      container: null,
-      expression: null,
-      unit: null,
-      else: null,
-      unitRange: null,
-      elseRange: null,
-    };
-  }
-
   IfStatement = this.RULE("IfStatement", () => {
-    let element = this.push(this.createIfStatement());
+    let element = this.push(ast.createIfStatement());
 
     this.CONSUME_ASSIGN1(tokens.IF, (token) => {
       this.tokenPayload(token, element, CstNodeKind.IfStatement_IF);
@@ -5656,19 +5644,8 @@ export class PliParser extends AbstractParser {
     return this.pop<ast.RewriteStatementOption>();
   });
 
-  private createSelectStatement(): ast.SelectStatement {
-    return {
-      kind: ast.SyntaxKind.SelectStatement,
-      container: null,
-      on: null,
-      statements: [],
-      end: null,
-      selectToken: null,
-    };
-  }
-
   SelectStatement = this.RULE("SelectStatement", () => {
-    let element = this.push(this.createSelectStatement());
+    let element = this.push(ast.createSelectStatement());
 
     this.CONSUME_ASSIGN1(tokens.SELECT, (token) => {
       this.tokenPayload(token, element, CstNodeKind.SelectStatement_SELECT);
@@ -5704,7 +5681,7 @@ export class PliParser extends AbstractParser {
           ALT: () => {
             this.SUBRULE_ASSIGN1(this.WhenStatement, {
               assign: (result) => {
-                element.statements.push(result);
+                element.cases.push(result);
               },
             });
           },
@@ -5713,7 +5690,7 @@ export class PliParser extends AbstractParser {
           ALT: () => {
             this.SUBRULE_ASSIGN1(this.OtherwiseStatement, {
               assign: (result) => {
-                element.statements.push(result);
+                element.cases.push(result);
               },
             });
           },
@@ -5731,17 +5708,9 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.SelectStatement>();
   });
-  private createWhenStatement(): ast.WhenStatement {
-    return {
-      kind: ast.SyntaxKind.WhenStatement,
-      container: null,
-      conditions: [],
-      unit: null,
-    };
-  }
 
   WhenStatement = this.RULE("WhenStatement", () => {
-    let element = this.push(this.createWhenStatement());
+    let element = this.push(ast.createWhenStatement());
 
     this.CONSUME_ASSIGN1(tokens.WHEN, (token) => {
       this.tokenPayload(token, element, CstNodeKind.WhenStatement_WHEN);
@@ -5775,16 +5744,9 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.WhenStatement>();
   });
-  private createOtherwiseStatement(): ast.OtherwiseStatement {
-    return {
-      kind: ast.SyntaxKind.OtherwiseStatement,
-      container: null,
-      unit: null,
-    };
-  }
 
   OtherwiseStatement = this.RULE("OtherwiseStatement", () => {
-    let element = this.push(this.createOtherwiseStatement());
+    let element = this.push(ast.createOtherwiseStatement());
 
     this.CONSUME_ASSIGN1(tokens.OTHERWISE, (token) => {
       this.tokenPayload(

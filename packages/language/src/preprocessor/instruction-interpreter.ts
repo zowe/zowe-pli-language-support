@@ -232,14 +232,8 @@ function generateVariableValue(
   return value;
 }
 
-export enum IfEvaluationResult {
-  True = 1,
-  False = 2,
-  Both = 3,
-}
-
 export interface EvaluationResults {
-  ifStatements: Map<ast.IfStatement, IfEvaluationResult>;
+  branchExecutions: Map<ast.SyntaxNode, Set<number>>;
 }
 
 interface SymbolTable {
@@ -325,7 +319,7 @@ export async function runInstructions(
     activeProcedures: new Set(),
     references: [],
     evaluations: {
-      ifStatements: new Map(),
+      branchExecutions: new Map(),
     },
     tokens: [],
     files: new FileStore(),
@@ -470,8 +464,8 @@ function runInstructionSync(
       break;
     case inst.InstructionKind.Goto:
       return instruction.node;
-    case inst.InstructionKind.If:
-      return runIfInstruction(instruction, context);
+    case inst.InstructionKind.Select:
+      return runSelectInstruction(instruction, context);
     case inst.InstructionKind.Do:
       return runDoInstruction(instruction, context, node);
     case inst.InstructionKind.Include:
@@ -945,29 +939,46 @@ function runAssignmentInstruction(
   }
 }
 
-function runIfInstruction(
-  instruction: inst.IfInstruction,
+function runSelectInstruction(
+  instruction: inst.SelectInstruction,
   context: InterpreterContext,
 ): inst.InstructionNode | undefined {
-  const condition = evaluateExpression(instruction.condition, context);
+  // If there is no compare expression, we always take the first case that evaluates to "1" (true).
+  let condition: Value = {
+    type: inst.DeclaredType.Fixed,
+    value: "1",
+  };
+  if (instruction.compare) {
+    condition = evaluateExpression(instruction.compare, context);
+  }
   if (!isScalarValue(condition)) {
     // Condition cannot be evaluated, simply skip the whole if instruction
     return undefined;
   }
-  const existing = context.evaluations.ifStatements.get(instruction.element);
-  if (valueToBool(condition)) {
-    context.evaluations.ifStatements.set(
-      instruction.element,
-      existing ? IfEvaluationResult.Both : IfEvaluationResult.True,
-    );
-    return instruction.trueBranch;
-  } else {
-    context.evaluations.ifStatements.set(
-      instruction.element,
-      existing ? IfEvaluationResult.Both : IfEvaluationResult.False,
-    );
-    return instruction.falseBranch;
+  const set =
+    context.evaluations.branchExecutions.get(instruction.element) ?? new Set();
+  context.evaluations.branchExecutions.set(instruction.element, set);
+  for (let i = 0; i < instruction.cases.length; i++) {
+    const selectCase = instruction.cases[i];
+    // No conditions indicates that this is the OTHERWISE/false branch
+    // If we have arrived here, we can safely return the branch
+    if (selectCase.conditions.length === 0) {
+      set.add(i);
+      return selectCase.body;
+    }
+    for (const caseCondition of selectCase.conditions) {
+      const caseValue = evaluateExpression(caseCondition, context);
+      if (!isScalarValue(caseValue)) {
+        // Condition cannot be evaluated, skip this case
+        continue;
+      }
+      if (condition.value === caseValue.value) {
+        set.add(i);
+        return selectCase.body;
+      }
+    }
   }
+  return undefined;
 }
 
 function evaluateExpression(

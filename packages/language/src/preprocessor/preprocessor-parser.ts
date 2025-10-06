@@ -221,6 +221,9 @@ function commonStatement(state: PreprocessorParserState): ast.Statement {
       case PreprocessorTokens.Do.tokenTypeIdx:
         unit = doStatement(state);
         break;
+      case PreprocessorTokens.Select.tokenTypeIdx:
+        unit = selectStatement(state);
+        break;
       case PreprocessorTokens.Goto.tokenTypeIdx:
       case PreprocessorTokens.Go.tokenTypeIdx:
         unit = goToStatement(state);
@@ -1088,6 +1091,101 @@ function statements(state: PreprocessorParserState): ast.Statement[] {
     statements.push(stmt);
   }
   return statements;
+}
+
+function selectStatement(state: PreprocessorParserState): ast.SelectStatement {
+  const statement = ast.createSelectStatement();
+  statement.selectToken = state.consume(
+    statement,
+    CstNodeKind.SelectStatement_SELECT,
+    PreprocessorTokens.Select,
+  );
+  if (
+    state.tryConsume(
+      statement,
+      CstNodeKind.SelectStatement_OpenParen,
+      PreprocessorTokens.LParen,
+    )
+  ) {
+    statement.on = expression(state);
+    state.consume(
+      statement,
+      CstNodeKind.SelectStatement_CloseParen,
+      PreprocessorTokens.RParen,
+    );
+  }
+  state.consume(
+    statement,
+    CstNodeKind.SelectStatement_Semicolon0,
+    PreprocessorTokens.Semicolon,
+  );
+  while (state.canConsumeKeyword(PreprocessorTokens.When)) {
+    statement.cases.push(whenStatement(state));
+  }
+  if (state.canConsumeKeyword(PreprocessorTokens.Otherwise)) {
+    statement.cases.push(otherwiseStatement(state));
+  }
+  statement.end = endStatement(state);
+  state.consume(
+    statement,
+    CstNodeKind.SelectStatement_Semicolon1,
+    PreprocessorTokens.Semicolon,
+  );
+  return statement;
+}
+
+function whenStatement(state: PreprocessorParserState): ast.WhenStatement {
+  const when = ast.createWhenStatement();
+  state.consumeKeyword(
+    when,
+    CstNodeKind.WhenStatement_WHEN,
+    PreprocessorTokens.When,
+  );
+  state.consume(
+    when,
+    CstNodeKind.WhenStatement_OpenParen,
+    PreprocessorTokens.LParen,
+  );
+  when.conditions.push(expression(state));
+  while (
+    state.tryConsume(
+      when,
+      CstNodeKind.WhenStatement_Comma,
+      PreprocessorTokens.Comma,
+    )
+  ) {
+    when.conditions.push(expression(state));
+  }
+  state.consume(
+    when,
+    CstNodeKind.WhenStatement_CloseParen,
+    PreprocessorTokens.RParen,
+  );
+  when.range = {
+    start: state.current!.startOffset,
+    end: NaN,
+  };
+  when.unit = statement(state);
+  when.range.end = state.last!.endOffset + 1;
+  return when;
+}
+
+function otherwiseStatement(
+  state: PreprocessorParserState,
+): ast.OtherwiseStatement {
+  const otherwise = ast.createOtherwiseStatement();
+  state.consumeKeyword(
+    otherwise,
+    CstNodeKind.OtherwiseStatement_OTHERWISE,
+    PreprocessorTokens.Otherwise,
+  );
+  otherwise.range = {
+    start: state.current!.startOffset,
+    end: NaN,
+  };
+  otherwise.unit = statement(state);
+  otherwise.range.end = state.last!.endOffset + 1;
+  return otherwise;
 }
 
 function nullStatement(state: PreprocessorParserState): ast.NullStatement {
