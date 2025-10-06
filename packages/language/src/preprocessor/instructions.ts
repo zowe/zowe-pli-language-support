@@ -159,6 +159,10 @@ export interface NoteInstruction {
 export interface SelectInstruction {
   kind: InstructionKind.Select;
   element: ast.SyntaxNode;
+  /**
+   * The expression to compare each case against.
+   * If not provided, case conditions are compared to the "1" (true) value.
+   */
   compare?: ExpressionInstruction;
   cases: Cases[];
 }
@@ -177,6 +181,10 @@ export function createSelectInstruction(
 }
 
 export interface Cases {
+  /**
+   * Conditions for this case. If any condition matches, the body is executed.
+   * No conditions means "default" case or "else" branch, and will be executed if no other case matches.
+   */
   conditions: ExpressionInstruction[];
   body: InstructionNode;
 }

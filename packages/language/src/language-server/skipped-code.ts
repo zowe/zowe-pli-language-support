@@ -94,13 +94,13 @@ export function skippedCodeRanges(
         const executedThen = evaluationResult.has(0);
         const executedElse = evaluationResult.has(1);
         if (elseRange && executedThen && !executedElse) {
-          // If the "then" branch has been evaluated, it means we need to skip the "else" branch
+          // If the "then" branch has been exclusively evaluated, it means we need to skip the "else" branch
           result.push({
             start: textDocument.positionAt(elseRange.start),
             end: textDocument.positionAt(elseRange.end),
           });
         } else if (unitRange && !executedThen && executedElse) {
-          // If the "else" branch has been evaluated, it means we need to skip the "then" branch
+          // If the "else" branch has been exclusively evaluated, it means we need to skip the "then" branch
           result.push({
             start: textDocument.positionAt(unitRange.start),
             end: textDocument.positionAt(unitRange.end),
