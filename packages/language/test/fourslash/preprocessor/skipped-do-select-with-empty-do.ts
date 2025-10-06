@@ -12,13 +12,9 @@
 /// <reference path="../framework.ts" />
 
 // @wrap: main
-//// %DECLARE C fixed;
-//// %C = 1;
-//// %IF C %THEN %DO;
-////   WHAT = 123;
+//// %SELECT;
+//// %WHEN (1) <|notSkipped:%DO; %END;|>
+//// %WHEN (2) DCL TEST FIXED;
 //// %END;
-//// %ELSE <|skipped:%DO;
-////   WHAT = 456;
-//// %END;|>
 
-preprocessor.expectSkippedCodeAt("skipped");
+preprocessor.not.expectSkippedCodeAt("notSkipped");

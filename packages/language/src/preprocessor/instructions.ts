@@ -195,7 +195,11 @@ export interface Cases {
    * No conditions means "default" case or "else" branch, and will be executed if no other case matches.
    */
   conditions: ExpressionInstruction[];
-  body: InstructionNode;
+  /**
+   * In some cases the body can be empty, for example in empty do statements.
+   * If the empty body is returned during interpretation, the interpreter will just continue with the following instruction.
+   */
+  body?: InstructionNode;
 }
 
 export type ExpressionInstruction =
