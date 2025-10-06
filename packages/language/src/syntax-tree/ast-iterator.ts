@@ -861,7 +861,7 @@ export function forEachNode(
       if (node.on) {
         action(node.on);
       }
-      node.statements.forEach(action);
+      node.cases.forEach(action);
       if (node.end) {
         action(node.end);
       }
