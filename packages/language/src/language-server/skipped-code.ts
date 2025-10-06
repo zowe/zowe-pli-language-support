@@ -14,7 +14,6 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { isEqual } from "lodash-es";
 import { SyntaxKind } from "../syntax-tree/ast";
-import { IfEvaluationResult } from "../preprocessor/instruction-interpreter";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 export interface SkippedCodeNotificationParams {
@@ -83,24 +82,51 @@ export function skippedCodeRanges(
     ) {
       const element = token.element;
       const evaluationResult =
-        compilationUnit.preprocessorEvaluationResults.ifStatements.get(element);
+        compilationUnit.preprocessorEvaluationResults.branchExecutions.get(
+          element,
+        );
       if (
         // If the code block hasn't been evaluated, it likely was included in another un-evaluated block
         // This will automatically skip the block already, so we don't have to do anything
-        evaluationResult !== undefined &&
-        // If both branches have been evaluated (maybe as part of a loop), do nothing
-        evaluationResult !== IfEvaluationResult.Both
+        evaluationResult !== undefined
       ) {
         const { elseRange, unitRange } = element;
-        // If the "else" branch has been evaluated, it means we need to skip the "then" branch
-        // If the "then" branch has been evaluated, it means we need to skip the "else" branch
-        const range =
-          evaluationResult === IfEvaluationResult.False ? unitRange : elseRange;
-        if (range) {
+        const executedThen = evaluationResult.has(0);
+        const executedElse = evaluationResult.has(1);
+        if (elseRange && executedThen && !executedElse) {
+          // If the "then" branch has been exclusively evaluated, it means we need to skip the "else" branch
           result.push({
-            start: textDocument.positionAt(range.start),
-            end: textDocument.positionAt(range.end),
+            start: textDocument.positionAt(elseRange.start),
+            end: textDocument.positionAt(elseRange.end),
           });
+        } else if (unitRange && !executedThen && executedElse) {
+          // If the "else" branch has been exclusively evaluated, it means we need to skip the "then" branch
+          result.push({
+            start: textDocument.positionAt(unitRange.start),
+            end: textDocument.positionAt(unitRange.end),
+          });
+        }
+      }
+    } else if (
+      token.kind === CstNodeKind.SelectStatement_SELECT &&
+      token.element?.kind === SyntaxKind.SelectStatement
+    ) {
+      const element = token.element;
+      const evaluationResult =
+        compilationUnit.preprocessorEvaluationResults.branchExecutions.get(
+          element,
+        );
+      if (evaluationResult !== undefined) {
+        for (let i = 0; i < element.cases.length; i++) {
+          const caseElement = element.cases[i];
+          const caseRange = caseElement.range;
+          // If the case hasn't been executed, we display it as skipped
+          if (caseRange && !evaluationResult.has(i)) {
+            result.push({
+              start: textDocument.positionAt(caseRange.start),
+              end: textDocument.positionAt(caseRange.end),
+            });
+          }
         }
       }
     } else if (

@@ -147,7 +147,7 @@ export async function createCompilationUnit(
       statements: [],
     },
     preprocessorEvaluationResults: {
-      ifStatements: new Map(),
+      branchExecutions: new Map(),
     },
     tokens: [],
     referencesCache: new ReferencesCache(),

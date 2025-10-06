@@ -72,7 +72,7 @@ export enum InstructionKind {
   Halt,
   Compound,
   Tokens,
-  If,
+  Select,
   Do,
   Declare,
   Assignment,
@@ -96,7 +96,7 @@ export enum InstructionKind {
 export type Instruction =
   | CompoundInstruction
   | HaltInstruction
-  | IfInstruction
+  | SelectInstruction
   | TokensInstruction
   | AssignmentInstruction
   | AnswerInstruction
@@ -165,12 +165,37 @@ export interface NoteInstruction {
   code: ExpressionInstruction;
 }
 
-export interface IfInstruction {
-  kind: InstructionKind.If;
-  element: ast.IfStatement;
-  condition: ExpressionInstruction;
-  trueBranch?: InstructionNode;
-  falseBranch?: InstructionNode;
+export interface SelectInstruction {
+  kind: InstructionKind.Select;
+  element: ast.SyntaxNode;
+  /**
+   * The expression to compare each case against.
+   * If not provided, case conditions are compared to the "1" (true) value.
+   */
+  compare?: ExpressionInstruction;
+  cases: Cases[];
+}
+
+export function createSelectInstruction(
+  element: ast.SyntaxNode,
+  compare: ExpressionInstruction | undefined,
+  cases: Cases[],
+): SelectInstruction {
+  return {
+    kind: InstructionKind.Select,
+    element,
+    compare,
+    cases,
+  };
+}
+
+export interface Cases {
+  /**
+   * Conditions for this case. If any condition matches, the body is executed.
+   * No conditions means "default" case or "else" branch, and will be executed if no other case matches.
+   */
+  conditions: ExpressionInstruction[];
+  body: InstructionNode;
 }
 
 export type ExpressionInstruction =
