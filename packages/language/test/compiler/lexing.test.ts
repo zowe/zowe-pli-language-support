@@ -12,7 +12,7 @@
 import { describe, test } from "vitest";
 import { assertNoParseErrors, parse, parseStmts } from "../utils";
 
-describe("CompilerOptions parser", () => {
+describe("Lexer uses compiler options", () => {
   test("Should lex correct NOT without compiler option", async () => {
     // Allow both ^ and ¬ as NOT operators by default
     const doc = await parseStmts(`
