@@ -21,6 +21,8 @@ import { CompilerOptions } from "../../src/preprocessor/compiler-options/options
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
+export type Not<T> = Omit<T, "not">;
+
 export interface HarnessTesterInterface {
   testAPI: {
     /**
@@ -169,6 +171,7 @@ export interface HarnessTesterInterface {
   };
 
   preprocessor: {
+    not: Not<HarnessTesterInterface["preprocessor"]>;
     /**
      * Expect that the preprocessor produces the given text or tokens.
      * @param textOrTokens The text or tokens to expect.

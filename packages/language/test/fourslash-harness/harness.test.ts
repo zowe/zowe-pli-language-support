@@ -74,6 +74,10 @@ async function createTestingHarnessImplementation(
       expectAt: listen("semanticTokens.expectAt"),
     },
     preprocessor: {
+      not: {
+        expectTokens: listen("preprocessor.not.expectTokens"),
+        expectSkippedCodeAt: listen("preprocessor.not.expectSkippedCodeAt"),
+      },
       expectTokens: listen("preprocessor.expectTokens"),
       expectSkippedCodeAt: listen("preprocessor.expectSkippedCodeAt"),
     },
