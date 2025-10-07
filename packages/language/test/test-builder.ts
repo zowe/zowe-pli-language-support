@@ -57,6 +57,10 @@ export type TestBuilderOptions = {
   fs?: FileSystemProvider;
 
   /**
+   * Inverts the testing steps.
+   */
+  not?: boolean;
+  /**
    * Override the location of files.
    * This is useful for harness tests, where files are 'virtually' created inside a single test file
    */
@@ -166,6 +170,25 @@ export class TestBuilder {
         replaceNamedIndicesWithDocument(file),
       ]),
     );
+  }
+
+  get not(): TestBuilder {
+    const copy = this.copy();
+    copy.options.not = !this.options.not;
+    return copy;
+  }
+
+  private copy(): TestBuilder {
+    const copy = new TestBuilder([], {
+      ...this.options,
+    });
+    copy.files = this.files;
+    copy.unit = this.unit;
+    copy.output = this.output;
+    copy.indices = this.indices;
+    copy.ranges = this.ranges;
+    copy.diagnostics = this.diagnostics;
+    return copy;
   }
 
   private async init() {
@@ -292,9 +315,6 @@ export class TestBuilder {
   expectPreprocessorTokens(textOrTokens: string | string[]): void {
     const actualTokens = this.unit.tokens.map((e) => e.image);
     let expectedTokens: string[] = [];
-    // TODO: Instead of calling the lifecycle, we should simply call the lexer
-    // Currently, everything related to the lexer lives in rather complicated services
-    // Eventually, we want to refactor those to use functions
     if (Array.isArray(textOrTokens)) {
       expectedTokens = textOrTokens;
     } else {
@@ -302,7 +322,11 @@ export class TestBuilder {
         (e) => e.image,
       );
     }
-    expect(actualTokens).toEqual(expectedTokens);
+    let exp = expect(actualTokens);
+    if (this.options.not) {
+      exp = exp.not;
+    }
+    exp.toEqual(expectedTokens);
   }
 
   /**
@@ -712,16 +736,35 @@ export class TestBuilder {
       const textDocument = file.textDocument;
       const codeRanges = skippedCodeRanges(this.unit, textDocument);
 
-      const message = `Expected ${ranges.length} skipped code ranges but received ${codeRanges.length} for label "${label}" (${this.createLabelRangeMessage(label)})`;
-      expect(codeRanges, message).toHaveLength(ranges.length);
+      if (this.options.not) {
+        for (let i = 0; i < ranges.length; i++) {
+          const startPosition = textDocument.positionAt(ranges[i][0]);
+          const endPosition = textDocument.positionAt(ranges[i][1]);
+          const codeRange = codeRanges.find(
+            (cr) =>
+              cr.start.line === startPosition.line &&
+              cr.start.character === startPosition.character &&
+              cr.end.line === endPosition.line &&
+              cr.end.character === endPosition.character,
+          );
+          if (codeRange) {
+            fail(
+              `Found unexpected skipped code from ${formatPosition(startPosition)} to ${formatPosition(endPosition)} for label "${label}" (${this.createLabelRangeMessage(label)})`,
+            );
+          }
+        }
+      } else {
+        const message = `Expected ${ranges.length} skipped code ranges but received ${codeRanges.length} for label "${label}" (${this.createLabelRangeMessage(label)})`;
+        expect(codeRanges, message).toHaveLength(ranges.length);
 
-      for (let i = 0; i < ranges.length; i++) {
-        const startPosition = textDocument.positionAt(ranges[i][0]);
-        const endPosition = textDocument.positionAt(ranges[i][1]);
-        const messageStart = `Expected skipped code to start at ${formatPosition(startPosition)} but received ${formatPosition(codeRanges[i].start)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
-        expect(codeRanges[i].start, messageStart).toEqual(startPosition);
-        const messageEnd = `Expected skipped code to end at ${formatPosition(endPosition)} but received ${formatPosition(codeRanges[i].end)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
-        expect(codeRanges[i].end, messageEnd).toEqual(endPosition);
+        for (let i = 0; i < ranges.length; i++) {
+          const startPosition = textDocument.positionAt(ranges[i][0]);
+          const endPosition = textDocument.positionAt(ranges[i][1]);
+          const messageStart = `Expected skipped code to start at ${formatPosition(startPosition)} but received ${formatPosition(codeRanges[i].start)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
+          expect(codeRanges[i].start, messageStart).toEqual(startPosition);
+          const messageEnd = `Expected skipped code to end at ${formatPosition(endPosition)} but received ${formatPosition(codeRanges[i].end)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
+          expect(codeRanges[i].end, messageEnd).toEqual(endPosition);
+        }
       }
     }
   }

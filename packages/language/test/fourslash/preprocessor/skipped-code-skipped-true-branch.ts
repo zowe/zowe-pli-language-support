@@ -12,10 +12,6 @@
 /// <reference path="../framework.ts" />
 
 // @wrap: main
-//// IGNO: PROCEDURE OPTIONS (MAIN);
-//// dcl A fixed bin(31);
-//// dcl B fixed bin(31);
-//// dcl WHAT fixed bin(31);
 //// %DECLARE C fixed;
 //// %C = 0;
 //// %IF C %THEN <|skipped:%DO;
@@ -24,6 +20,5 @@
 //// %ELSE %DO;
 ////   WHAT = 456;
 //// %END;
-//// END;
 
 preprocessor.expectSkippedCodeAt("skipped");
