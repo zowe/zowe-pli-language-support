@@ -1161,12 +1161,14 @@ function whenStatement(state: PreprocessorParserState): ast.WhenStatement {
     CstNodeKind.WhenStatement_CloseParen,
     PreprocessorTokens.RParen,
   );
-  when.range = {
-    start: state.current!.startOffset,
-    end: NaN,
-  };
+  const rangeStart = state.current?.startOffset;
   when.unit = statement(state);
-  when.range.end = state.last!.endOffset + 1;
+  if (rangeStart != undefined && state.last) {
+    when.range = {
+      start: rangeStart,
+      end: state.last.endOffset + 1,
+    };
+  }
   return when;
 }
 
@@ -1179,12 +1181,14 @@ function otherwiseStatement(
     CstNodeKind.OtherwiseStatement_OTHERWISE,
     PreprocessorTokens.Otherwise,
   );
-  otherwise.range = {
-    start: state.current!.startOffset,
-    end: NaN,
-  };
+  const rangeStart = state.current?.startOffset;
   otherwise.unit = statement(state);
-  otherwise.range.end = state.last!.endOffset + 1;
+  if (rangeStart != undefined && state.last) {
+    otherwise.range = {
+      start: rangeStart,
+      end: state.last.endOffset + 1,
+    };
+  }
   return otherwise;
 }
 
@@ -1207,24 +1211,28 @@ function ifStatement(state: PreprocessorParserState): ast.IfStatement {
     CstNodeKind.IfStatement_THEN,
     PreprocessorTokens.Then,
   );
-  ifStatement.unitRange = {
-    start: state.current!.startOffset,
-    end: NaN,
-  };
+  const unitRangeStart = state.current?.startOffset;
   ifStatement.unit = statement(state);
-  ifStatement.unitRange.end = state.last!.endOffset + 1;
+  if (unitRangeStart != undefined && state.last) {
+    ifStatement.unitRange = {
+      start: unitRangeStart,
+      end: state.last.endOffset + 1,
+    };
+  }
   if (state.canConsumeKeyword(PreprocessorTokens.Else)) {
     state.consumeKeyword(
       ifStatement,
       CstNodeKind.IfStatement_ELSE,
       PreprocessorTokens.Else,
     );
-    ifStatement.elseRange = {
-      start: state.current!.startOffset,
-      end: NaN,
-    };
+    const elseRangeStart = state.current?.startOffset;
     ifStatement.else = statement(state);
-    ifStatement.elseRange.end = state.last!.endOffset + 1;
+    if (elseRangeStart != undefined && state.last) {
+      ifStatement.elseRange = {
+        start: elseRangeStart,
+        end: state.last.endOffset + 1,
+      };
+    }
   }
   return ifStatement;
 }

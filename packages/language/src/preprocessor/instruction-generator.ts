@@ -473,16 +473,12 @@ function generateSelectInstructionFromIf(
   };
   const cases: inst.Cases[] = [];
   const trueBranch = generateInstructionForStatement(node.unit, context);
-  if (trueBranch) {
-    cases.push({
-      conditions: [compare],
-      body: trueBranch,
-    });
-  }
-  const falseBranch = node.else
-    ? generateInstructionForStatement(node.else, context)
-    : undefined;
-  if (falseBranch) {
+  cases.push({
+    conditions: [compare],
+    body: trueBranch,
+  });
+  if (node.else) {
+    const falseBranch = generateInstructionForStatement(node.else, context);
     // False branch doesn't need a condition, it is always entered if the true branch does not match
     cases.push({
       conditions: [],
@@ -492,8 +488,10 @@ function generateSelectInstructionFromIf(
   context.onFinish(() => {
     const instructionNode = context.nodes.get(node.container);
     for (const caseItem of cases) {
-      // All case bodies should point to the next instruction after the IF statement
-      caseItem.body.next = instructionNode?.next;
+      if (caseItem.body) {
+        // All case bodies should point to the next instruction after the IF statement
+        caseItem.body.next = instructionNode?.next;
+      }
     }
   });
   return inst.createSelectInstruction(node, undefined, cases);
@@ -519,18 +517,18 @@ function generateSelectInstruction(
       }
     }
     const body = generateInstructionForStatement(caseObj.unit, context);
-    if (body) {
-      cases.push({
-        body,
-        conditions,
-      });
-    }
+    cases.push({
+      body,
+      conditions,
+    });
   }
   context.onFinish(() => {
     const instructionNode = context.nodes.get(node.container);
     for (const caseItem of cases) {
-      // All case bodies should point to the next instruction after the SELECT statement
-      caseItem.body.next = instructionNode?.next;
+      if (caseItem.body) {
+        // All case bodies should point to the next instruction after the SELECT statement
+        caseItem.body.next = instructionNode?.next;
+      }
     }
   });
   return inst.createSelectInstruction(node, compare, cases);
