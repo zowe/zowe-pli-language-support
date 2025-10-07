@@ -10,7 +10,7 @@
  */
 
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
-import { preprocessorParse } from "./preprocessor-parser";
+import { preprocessorParse } from "../parser/parser-entry";
 import * as ast from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
 import {
@@ -25,8 +25,8 @@ import { generateInstructions } from "./instruction-generator";
 import { EvaluationResults, runInstructions } from "./instruction-interpreter";
 import { createIncludeInstruction, InstructionNode } from "./instructions";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { initLexer } from "../parser/tokenizer";
-import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
+import { initLexer, tokenize } from "../parser/tokenizer";
+import { preprocessorParserState } from "../parser/parser-state";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { FileStore } from "../workspace/file-store";
 import { getDefaultCompilerOptions } from "./compiler-options/options";
@@ -74,7 +74,8 @@ export class PliLexer {
         compilerOptionsResult,
         uri,
       );
-      const state = preprocessorParserStateFromText(textWithoutMargins, uri);
+      const tokenizeResult = tokenize(textWithoutMargins, uri);
+      const state = preprocessorParserState(tokenizeResult.tokens);
       // Do a full parsing of the input text to extract all *local* statements
       const {
         statements,
@@ -82,7 +83,7 @@ export class PliLexer {
         tokens: fileTokens,
       } = preprocessorParse(state);
       const result = generateInstructions(statements);
-      diagnostics.push(...state.diagnostics);
+      diagnostics.push(...tokenizeResult.diagnostics);
       return {
         tokens: fileTokens,
         diagnostics: diagnostics,

@@ -278,11 +278,11 @@ function generateAnswerInstruction(
     expression,
     scanMode,
     skip,
-    skipToken: node.skipToken,
+    skipToken: node.skipToken ?? undefined,
     column,
-    columnToken: node.columnToken,
+    columnToken: node.columnToken ?? undefined,
     margins,
-    marginsToken: node.marginsToken,
+    marginsToken: node.marginsToken ?? undefined,
   };
 }
 

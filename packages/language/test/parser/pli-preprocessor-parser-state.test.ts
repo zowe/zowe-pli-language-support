@@ -11,15 +11,21 @@
 
 import { describe, expect, test } from "vitest";
 import { PreprocessorTokens } from "../../src/preprocessor/pli-preprocessor-tokens";
-import { preprocessorParserStateFromText } from "../../src/preprocessor/pli-preprocessor-parser-state";
+import { preprocessorParserState } from "../../src/parser/parser-state";
 import { URI } from "../../src/utils/uri";
+import { tokenize } from "../../src/parser/tokenizer";
+
+function parserStateFromText(text: string, uri: URI) {
+  const result = tokenize(text, uri);
+  const state = preprocessorParserState(result.tokens);
+  return state;
+}
 
 namespace Fixtures {
   const uri = URI.file("file:///test.pli");
-  export const Empty = () => preprocessorParserStateFromText("", uri);
-  export const OneToken = () => preprocessorParserStateFromText("ABC", uri);
-  export const TwoTokens = () =>
-    preprocessorParserStateFromText("ABC 123", uri);
+  export const Empty = () => parserStateFromText("", uri);
+  export const OneToken = () => parserStateFromText("ABC", uri);
+  export const TwoTokens = () => parserStateFromText("ABC 123", uri);
 }
 
 describe("Preprocessor parser state", () => {
@@ -30,7 +36,7 @@ describe("Preprocessor parser state", () => {
 
       //assert
       expect(state.eof).toBe(true);
-      expect(state.current).toBeUndefined();
+      expect(state.token).toBeUndefined();
       expect(state.last).toBeUndefined();
     });
 
@@ -40,7 +46,7 @@ describe("Preprocessor parser state", () => {
 
       //assert
       expect(state.eof).toBe(false);
-      expect(state.current).not.toBeUndefined();
+      expect(state.token).not.toBeUndefined();
       expect(state.last).toBeUndefined();
     });
   });
@@ -55,7 +61,7 @@ describe("Preprocessor parser state", () => {
 
       //assert
       expect(state.eof).toBe(true);
-      expect(state.current).toBeUndefined();
+      expect(state.token).toBeUndefined();
       expect(state.last).toBeUndefined();
     });
 
@@ -68,8 +74,8 @@ describe("Preprocessor parser state", () => {
 
       //assert
       expect(state.eof).toBe(false);
-      expect(state.current).not.toBeUndefined();
-      expect(state.current!.image).toBe("ABC");
+      expect(state.token).not.toBeUndefined();
+      expect(state.token!.image).toBe("ABC");
       expect(state.last).toBeUndefined();
     });
 
@@ -82,8 +88,8 @@ describe("Preprocessor parser state", () => {
 
       //assert
       expect(state.eof).toBe(false);
-      expect(state.current).not.toBeUndefined();
-      expect(state.current!.image).toBe("ABC");
+      expect(state.token).not.toBeUndefined();
+      expect(state.token!.image).toBe("ABC");
       expect(state.last).toBeUndefined();
     });
   });
@@ -94,9 +100,10 @@ describe("Preprocessor parser state", () => {
       const state = Fixtures.Empty();
 
       //act + assert
-      expect(() =>
+      expect(
         state.consume(undefined, undefined, PreprocessorTokens.Id),
-      ).toThrowError();
+      ).toBeNull();
+      expect(state.inError).toBe(true);
     });
 
     test("Consume positive for non-empty", () => {
@@ -105,12 +112,12 @@ describe("Preprocessor parser state", () => {
 
       //act
       expect(
-        state.consume(undefined, undefined, PreprocessorTokens.Id).image,
+        state.consume(undefined, undefined, PreprocessorTokens.Id)?.image,
       ).toBe("ABC");
 
       //assert
       expect(state.eof).toBe(true);
-      expect(state.current).toBeUndefined();
+      expect(state.token).toBeUndefined();
       expect(state.last).not.toBeUndefined();
       expect(state.last!.image).toBe("ABC");
     });
@@ -120,9 +127,10 @@ describe("Preprocessor parser state", () => {
       const state = Fixtures.OneToken();
 
       //act + assert
-      expect(() =>
+      expect(
         state.consume(undefined, undefined, PreprocessorTokens.Builtin),
-      ).toThrowError();
+      ).toBeFalsy();
+      expect(state.inError).toBe(true);
     });
   });
 
@@ -135,6 +143,7 @@ describe("Preprocessor parser state", () => {
       expect(
         state.tryConsume(undefined, undefined, PreprocessorTokens.Id),
       ).toBeFalsy();
+      expect(state.inError).toBe(false);
     });
 
     test("tryConsume positve for non-empty", () => {
@@ -146,7 +155,7 @@ describe("Preprocessor parser state", () => {
         state.tryConsume(undefined, undefined, PreprocessorTokens.Id),
       ).toBeTruthy();
       expect(state.eof).toBeTruthy();
-      expect(state.current).toBeUndefined();
+      expect(state.token).toBeUndefined();
       expect(state.last).not.toBeUndefined();
       expect(state.last!.image).toBe("ABC");
     });
@@ -160,8 +169,8 @@ describe("Preprocessor parser state", () => {
         state.tryConsume(undefined, undefined, PreprocessorTokens.Builtin),
       ).toBeFalsy();
       expect(state.eof).toBeFalsy();
-      expect(state.current).not.toBeUndefined();
-      expect(state.current!.image).toBe("ABC");
+      expect(state.token).not.toBeUndefined();
+      expect(state.token!.image).toBe("ABC");
       expect(state.last).toBeUndefined();
     });
 
@@ -174,9 +183,9 @@ describe("Preprocessor parser state", () => {
         state.tryConsume(undefined, undefined, PreprocessorTokens.Id),
       ).toBeTruthy();
       expect(state.eof).toBeFalsy();
-      expect(state.current).not.toBeUndefined();
-      expect(state.current!.image).toBe("123");
-      expect(state.current!.tokenType.name).toBe("NUMBER");
+      expect(state.token).not.toBeUndefined();
+      expect(state.token!.image).toBe("123");
+      expect(state.token!.tokenType.name).toBe("NUMBER");
       expect(state.last).not.toBeUndefined();
       expect(state.last!.image).toBe("ABC");
     });

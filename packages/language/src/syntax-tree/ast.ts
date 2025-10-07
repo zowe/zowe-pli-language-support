@@ -235,8 +235,21 @@ export interface Reference<T extends SyntaxNode = SyntaxNode> {
 export function createReference<T extends SyntaxNode>(
   owner: SyntaxNode,
   token: Token,
+  preprocessor?: boolean,
+): Reference<T>;
+export function createReference<T extends SyntaxNode>(
+  owner: SyntaxNode,
+  token: Token | null | undefined,
+  preprocessor?: boolean,
+): Reference<T> | null;
+export function createReference<T extends SyntaxNode>(
+  owner: SyntaxNode,
+  token: Token | null | undefined,
   preprocessor = false,
-): Reference<T> {
+): Reference<T> | null {
+  if (!token) {
+    return null;
+  }
   return {
     owner,
     text: token.image,
@@ -813,14 +826,14 @@ export interface AnswerStatement extends AstNode {
   expression: Expression | null;
   scanMode: ScanMode | null;
   skip: SkipMode | null;
-  skipToken?: Token;
+  skipToken: Token | null;
   column: Expression | null;
-  columnToken?: Token;
+  columnToken: Token | null;
   margins: {
-    left: Expression;
+    left: Expression | null;
     right: Expression | null;
   } | null;
-  marginsToken?: Token;
+  marginsToken: Token | null;
 }
 
 export function createAnswerStatement(): AnswerStatement {
@@ -830,8 +843,11 @@ export function createAnswerStatement(): AnswerStatement {
     expression: null,
     scanMode: null,
     skip: null,
+    skipToken: null,
     column: null,
+    columnToken: null,
     margins: null,
+    marginsToken: null,
   };
 }
 
