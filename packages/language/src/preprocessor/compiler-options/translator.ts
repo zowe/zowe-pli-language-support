@@ -35,7 +35,10 @@ interface TranslatorRule<T extends CompilerOptionsPP = CompilerOptionsPP> {
 type Translate<T extends CompilerOptionsPP> = (
   option: CompilerOption,
   options: T,
+  acceptor: TranslationErrorAcceptor,
 ) => void;
+
+type TranslationErrorAcceptor = (error: TranslationError) => void;
 
 /**
  * Tracks how a rule is applied, either positively or negatively
@@ -156,7 +159,16 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
       }
 
       try {
-        translate?.(option, this.options);
+        const localDiagnostics: CompilerOptionIssue[] = [];
+        const diagnosticsAcceptor: TranslationErrorAcceptor = (error) => {
+          localDiagnostics.push({
+            range: tokenToRange(error.token),
+            message: error.message,
+            severity: error.severity,
+          });
+        };
+        translate?.(option, this.options, diagnosticsAcceptor);
+        this.issues.push(...localDiagnostics); // Only add diagnostics if no exception is thrown.
       } catch (err) {
         reportError(err);
       }
@@ -164,7 +176,7 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
       this.issues.push({
         range: tokenToRange(option.token),
         message: PLIWarning.IBM1159I.message(option.name),
-        severity: Severity.W,
+        severity: Severity.E,
       });
     }
   }

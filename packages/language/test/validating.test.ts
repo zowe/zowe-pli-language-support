@@ -315,7 +315,7 @@ describe("Validating", () => {
         `);
       assertDiagnostic(doc, {
         message: PLICodes.Warning.IBM1159I.message("TYPEFOXOPT"),
-        severity: Severity.W,
+        severity: Severity.E,
       });
     });
 

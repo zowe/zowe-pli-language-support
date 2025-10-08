@@ -244,7 +244,7 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.caserules} */
-translator.rule(["CASERULES"], (option, options) => {
+translator.rule(["CASERULES"], (option, options, acceptor) => {
   ensureArguments(option, 1, 1);
   const keyword = option.values[0];
   ensureType(keyword, "option");
@@ -266,7 +266,7 @@ translator.rule(["CASERULES"], (option, options) => {
     "UPPER",
     "LOWER",
     "START",
-  )(keyword, options);
+  )(keyword, options, acceptor);
 });
 
 /** {@link CompilerOptions.check} */
