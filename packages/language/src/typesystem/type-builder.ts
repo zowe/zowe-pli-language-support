@@ -1,9 +1,11 @@
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
-import { DefaultAttributeEnum, DefaultAttributeToEnum } from "../parser/token-mappings";
+import {
+  DefaultAttributeEnum,
+  DefaultAttributeToEnum,
+} from "../parser/token-mappings";
 import { Token } from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
-import { DefaultAttribute } from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
 import { Error } from "../validation/messages/pli-codes";
 import {
@@ -147,7 +149,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Alignment attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes
        */
-      case  DefaultAttributeEnum.ALIGNED:
+      case DefaultAttributeEnum.ALIGNED:
       case DefaultAttributeEnum.UNALIGNED: {
         //TODO check alignment value
         const attributeValue: Alignment =
@@ -168,7 +170,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-assignable-nonassignable-attributes
        */
       case DefaultAttributeEnum.ASSIGNABLE:
-      case DefaultAttributeEnum.NONASSIGNABLE: {  
+      case DefaultAttributeEnum.NONASSIGNABLE: {
         const attributeValue =
           typeAsEnum === DefaultAttributeEnum.ASSIGNABLE
             ? Assignability.Assignable
@@ -389,7 +391,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
        */
       case DefaultAttributeEnum.UNSIGNED:
       case DefaultAttributeEnum.SIGNED: {
-        const sign = typeAsEnum === DefaultAttributeEnum.SIGNED ? Sign.Signed : Sign.Unsigned;
+        const sign =
+          typeAsEnum === DefaultAttributeEnum.SIGNED
+            ? Sign.Signed
+            : Sign.Unsigned;
         this.addAttributeWitness(AttributeKind.Sign, sign, attribute, token);
         break;
       }
