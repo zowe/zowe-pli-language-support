@@ -17,4 +17,7 @@
 //// PUT(<|1>A);
 
 verify.expectExclusiveErrorCodesAt(1, code.Error.IBM1373I.fullCode);
+verify.expectDiagnosticsAt(1, {
+  severity: constants.Severity.W,
+});
 linker.expectLinks();

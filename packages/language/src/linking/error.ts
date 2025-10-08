@@ -164,9 +164,10 @@ export class LinkerErrorReporter {
     }
 
     this.implicitlyDeclaredNodes.add(node);
-    this.accept(
-      diagnosticFromCode(PLICodes.Error.IBM1373I, node.token, node.name),
-    );
+    this.accept({
+      ...diagnosticFromCode(PLICodes.Error.IBM1373I, node.token, node.name),
+      severity: Severity.W, // Downgrade to a warning.
+    });
   }
 
   /**
