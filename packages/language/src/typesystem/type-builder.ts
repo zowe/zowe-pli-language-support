@@ -1,7 +1,9 @@
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
+import { DefaultAttributeEnum, DefaultAttributeToEnum } from "../parser/token-mappings";
 import { Token } from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
+import { DefaultAttribute } from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
 import { Error } from "../validation/messages/pli-codes";
 import {
@@ -98,22 +100,23 @@ export class DefaultTypeBuilder implements TypeBuilder {
   }
   handleDefaultAttribute(attribute: ast.ComputationDataAttribute) {
     const token = attribute.typeToken!;
-    assertType<ast.DefaultAttribute>(attribute.type);
-    switch (attribute.type) {
+    assertType<number>(attribute.typeToken?.tokenTypeIdx);
+    const typeAsEnum = DefaultAttributeToEnum[attribute.typeToken.tokenTypeIdx];
+    switch (typeAsEnum) {
       /**
        * Data type attributes
        */
-      case "TASK":
-      case "FILE":
-      case "FORMAT":
-      case "AREA": {
+      case DefaultAttributeEnum.TASK:
+      case DefaultAttributeEnum.FILE:
+      case DefaultAttributeEnum.FORMAT:
+      case DefaultAttributeEnum.AREA: {
         const mapTo = {
-          AREA: DataType.Area,
-          FILE: DataType.File,
-          FORMAT: DataType.Format,
-          TASK: DataType.Task,
+          [DefaultAttributeEnum.AREA]: DataType.Area,
+          [DefaultAttributeEnum.FILE]: DataType.File,
+          [DefaultAttributeEnum.FORMAT]: DataType.Format,
+          [DefaultAttributeEnum.TASK]: DataType.Task,
         };
-        const dataType = mapTo[attribute.type];
+        const dataType = mapTo[typeAsEnum];
         this.addAttributeWitness(
           AttributeKind.DataType,
           dataType,
@@ -127,12 +130,11 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Access mode attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-sequential-direct-attributes
        */
-      case "SEQL":
-      case "SEQUENTIAL":
-      case "DIRECT": {
+      case DefaultAttributeEnum.SEQUENTIAL:
+      case DefaultAttributeEnum.DIRECT: {
         this.addAttributeWitness(
           AttributeKind.AccessMode,
-          attribute.type === "DIRECT"
+          typeAsEnum === DefaultAttributeEnum.DIRECT
             ? AccessMode.Direct
             : AccessMode.Sequential,
           attribute,
@@ -145,11 +147,11 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Alignment attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes
        */
-      case "ALIGNED":
-      case "UNALIGNED": {
+      case  DefaultAttributeEnum.ALIGNED:
+      case DefaultAttributeEnum.UNALIGNED: {
         //TODO check alignment value
         const attributeValue: Alignment =
-          attribute.type === "ALIGNED"
+          typeAsEnum === DefaultAttributeEnum.ALIGNED
             ? { type: AlignmentType.Aligned, alignment: 1 }
             : { type: AlignmentType.Unaligned };
         this.addAttributeWitness(
@@ -165,11 +167,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Assignability attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-assignable-nonassignable-attributes
        */
-      case "ASSIGNABLE":
-      case "NONASGN":
-      case "NONASSIGNABLE":
+      case DefaultAttributeEnum.ASSIGNABLE:
+      case DefaultAttributeEnum.NONASSIGNABLE: {  
         const attributeValue =
-          attribute.type === "ASSIGNABLE"
+          typeAsEnum === DefaultAttributeEnum.ASSIGNABLE
             ? Assignability.Assignable
             : Assignability.Nonassignable;
         this.addAttributeWitness(
@@ -179,17 +180,16 @@ export class DefaultTypeBuilder implements TypeBuilder {
           token,
         );
         break;
+      }
 
       /**
        * Base attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-coded-arithmetic-data
        */
-      case "BIN":
-      case "BINARY":
-      case "DEC":
-      case "DECIMAL": {
+      case DefaultAttributeEnum.BINARY:
+      case DefaultAttributeEnum.DECIMAL: {
         const base =
-          attribute.type === "BIN" || attribute.type === "BINARY"
+          typeAsEnum === DefaultAttributeEnum.BINARY
             ? Base.Binary
             : Base.Decimal;
         this.addAttributeWitness(AttributeKind.Base, base, attribute, token);
@@ -200,12 +200,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Buffer mode attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-buffered-unbuffered-attributes
        */
-      case "BUF":
-      case "BUFFERED":
-      case "UNBUF":
-      case "UNBUFFERED": {
+      case DefaultAttributeEnum.BUFFERED:
+      case DefaultAttributeEnum.UNBUFFERED: {
         const mode =
-          attribute.type === "UNBUF" || attribute.type === "UNBUFFERED"
+          typeAsEnum === DefaultAttributeEnum.UNBUFFERED
             ? BufferMode.Unbuffered
             : BufferMode.Buffered;
         this.addAttributeWitness(
@@ -221,10 +219,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Connection attributes (StorageConnection)
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-connected-nonconnected-attributes
        */
-      case "CONNECTED":
-      case "NONCONNECTED": {
+      case DefaultAttributeEnum.CONNECTED:
+      case DefaultAttributeEnum.NONCONNECTED: {
         const connection =
-          attribute.type === "CONNECTED"
+          typeAsEnum === DefaultAttributeEnum.CONNECTED
             ? StorageConnection.Connected
             : StorageConnection.Nonconnected;
         this.addAttributeWitness(
@@ -240,10 +238,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Endianess attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-bigendian-littleendian-attributes
        */
-      case "BIGENDIAN":
-      case "LITTLEENDIAN": {
+      case DefaultAttributeEnum.BIGENDIAN:
+      case DefaultAttributeEnum.LITTLEENDIAN: {
         const endianess =
-          attribute.type === "BIGENDIAN" ? Endianess.Big : Endianess.Little;
+          typeAsEnum === DefaultAttributeEnum.BIGENDIAN
+            ? Endianess.Big
+            : Endianess.Little;
         this.addAttributeWitness(
           AttributeKind.Endianess,
           endianess,
@@ -257,10 +257,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * File usage attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-record-stream-attributes
        */
-      case "STREAM":
-      case "RECORD": {
+      case DefaultAttributeEnum.STREAM:
+      case DefaultAttributeEnum.RECORD: {
         const usage =
-          attribute.type === "STREAM" ? FileUsage.Stream : FileUsage.Record;
+          typeAsEnum === DefaultAttributeEnum.STREAM
+            ? FileUsage.Stream
+            : FileUsage.Record;
         this.addAttributeWitness(
           AttributeKind.FileUsage,
           usage,
@@ -274,10 +276,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Float format attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-hexadec-ieee-attributes
        */
-      case "IEEE":
-      case "HEXADEC": {
+      case DefaultAttributeEnum.IEEE:
+      case DefaultAttributeEnum.HEXADEC: {
         const format =
-          attribute.type === "IEEE" ? FloatFormat.IEEE : FloatFormat.HexaDec;
+          typeAsEnum === DefaultAttributeEnum.IEEE
+            ? FloatFormat.IEEE
+            : FloatFormat.HexaDec;
         this.addAttributeWitness(
           AttributeKind.FloatFormat,
           format,
@@ -291,10 +295,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Number mode attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-real-complex
        */
-      case "COMPLEX":
-      case "REAL": {
+      case DefaultAttributeEnum.COMPLEX:
+      case DefaultAttributeEnum.REAL: {
         const mode =
-          attribute.type === "COMPLEX" ? NumberMode.Complex : NumberMode.Real;
+          typeAsEnum === DefaultAttributeEnum.COMPLEX
+            ? NumberMode.Complex
+            : NumberMode.Real;
         this.addAttributeWitness(
           AttributeKind.NumberMode,
           mode,
@@ -308,7 +314,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Scale mode attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-fixed-float
        */
-      case "FIXED": {
+      case DefaultAttributeEnum.FIXED: {
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
         );
@@ -332,7 +338,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
         );
         break;
       }
-      case "FLOAT": {
+      case DefaultAttributeEnum.FLOAT: {
         const witness = this.attributeWitnesses[AttributeKind.Scale];
         if (witness?.value?.mode === ScaleMode.Fixed) {
           this.diagnostics.push(
@@ -366,11 +372,11 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Scope attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=declarations-internal-external-attributes
        */
-      case "INTERNAL":
-      case "EXTERNAL": {
+      case DefaultAttributeEnum.INTERNAL:
+      case DefaultAttributeEnum.EXTERNAL: {
         //TODO check environment
         const scope: Scope =
-          attribute.type === "INTERNAL"
+          typeAsEnum === DefaultAttributeEnum.INTERNAL
             ? { type: ScopeType.Internal }
             : { type: ScopeType.External, environment: "TODO" };
         this.addAttributeWitness(AttributeKind.Scope, scope, attribute, token);
@@ -381,9 +387,9 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Sign attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-signed-unsigned
        */
-      case "UNSIGNED":
-      case "SIGNED": {
-        const sign = attribute.type === "SIGNED" ? Sign.Signed : Sign.Unsigned;
+      case DefaultAttributeEnum.UNSIGNED:
+      case DefaultAttributeEnum.SIGNED: {
+        const sign = typeAsEnum === DefaultAttributeEnum.SIGNED ? Sign.Signed : Sign.Unsigned;
         this.addAttributeWitness(AttributeKind.Sign, sign, attribute, token);
         break;
       }
@@ -392,17 +398,17 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Storage class attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-storage-classes-allocation-deallocation
        */
-      case "AUTOMATIC":
-      case "STATIC":
-      case "BASED":
-      case "CONTROLLED": {
+      case DefaultAttributeEnum.AUTOMATIC:
+      case DefaultAttributeEnum.STATIC:
+      case DefaultAttributeEnum.BASED:
+      case DefaultAttributeEnum.CONTROLLED: {
         const mapTo = {
-          AUTOMATIC: StorageClass.Automatic,
-          STATIC: StorageClass.Static,
-          BASED: StorageClass.Based,
-          CONTROLLED: StorageClass.Controlled,
+          [DefaultAttributeEnum.AUTOMATIC]: StorageClass.Automatic,
+          [DefaultAttributeEnum.STATIC]: StorageClass.Static,
+          [DefaultAttributeEnum.BASED]: StorageClass.Based,
+          [DefaultAttributeEnum.CONTROLLED]: StorageClass.Controlled,
         };
-        const clss = mapTo[attribute.type];
+        const clss = mapTo[typeAsEnum];
         this.addAttributeWitness(AttributeKind.Storage, clss, attribute, token);
         break;
       }
@@ -411,19 +417,17 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * String format attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-varying-varying4-varyingz-nonvarying
        */
-      case "VARYING4":
-      case "VARYING":
-      case "VARZ":
-      case "VARYINGZ":
-      case "NONVARYING": {
+      case DefaultAttributeEnum.VARYING4:
+      case DefaultAttributeEnum.VARYING:
+      case DefaultAttributeEnum.VARYINGZ:
+      case DefaultAttributeEnum.NONVARYING: {
         const mapTo = {
-          VARYING4: StringFormat.Varying4,
-          VARYING: StringFormat.Varying,
-          VARZ: StringFormat.VaryingZ,
-          VARYINGZ: StringFormat.VaryingZ,
-          NONVARYING: StringFormat.NonVarying,
+          [DefaultAttributeEnum.VARYING4]: StringFormat.Varying4,
+          [DefaultAttributeEnum.VARYING]: StringFormat.Varying,
+          [DefaultAttributeEnum.VARYINGZ]: StringFormat.VaryingZ,
+          [DefaultAttributeEnum.NONVARYING]: StringFormat.NonVarying,
         };
-        const format = mapTo[attribute.type];
+        const format = mapTo[typeAsEnum];
         this.addAttributeWitness(
           AttributeKind.StringFormat,
           format,
@@ -437,12 +441,11 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * String kind attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-bit-character-graphic-uchar-widechar
        */
-      case "BIT":
-      case "UCHAR":
-      case "WIDECHAR":
-      case "GRAPHIC":
-      case "CHAR":
-      case "CHARACTER": {
+      case DefaultAttributeEnum.BIT:
+      case DefaultAttributeEnum.UCHAR:
+      case DefaultAttributeEnum.WIDECHAR:
+      case DefaultAttributeEnum.GRAPHIC:
+      case DefaultAttributeEnum.CHARACTER: {
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
         );
@@ -461,14 +464,13 @@ export class DefaultTypeBuilder implements TypeBuilder {
           token,
         );
         const mapTo = {
-          CHAR: StringKind.Character,
-          CHARACTER: StringKind.Character,
-          BIT: StringKind.Bit,
-          UCHAR: StringKind.UChar,
-          WIDECHAR: StringKind.WideChar,
-          GRAPHIC: StringKind.Graphic,
+          [DefaultAttributeEnum.CHARACTER]: StringKind.Character,
+          [DefaultAttributeEnum.BIT]: StringKind.Bit,
+          [DefaultAttributeEnum.UCHAR]: StringKind.UChar,
+          [DefaultAttributeEnum.WIDECHAR]: StringKind.WideChar,
+          [DefaultAttributeEnum.GRAPHIC]: StringKind.Graphic,
         };
-        const kind = mapTo[attribute.type];
+        const kind = mapTo[typeAsEnum];
         this.addAttributeWitness(
           AttributeKind.StringKind,
           kind,
@@ -482,10 +484,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Volatility attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-normal-abnormal-attributes
        */
-      case "NORMAL":
-      case "ABNORMAL": {
+      case DefaultAttributeEnum.NORMAL:
+      case DefaultAttributeEnum.ABNORMAL: {
         const volatility =
-          attribute.type === "NORMAL" ? Volatility.Normal : Volatility.Abnormal;
+          typeAsEnum === DefaultAttributeEnum.NORMAL
+            ? Volatility.Normal
+            : Volatility.Abnormal;
         this.addAttributeWitness(
           AttributeKind.Volatility,
           volatility,
@@ -499,8 +503,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
        * Scale attributes with precision
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-precision-attribute
        */
-      case "PREC":
-      case "PRECISION": {
+      case DefaultAttributeEnum.PRECISION: {
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
         );
@@ -551,8 +554,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
         break;
       }
 
-      case "PTR":
-      case "POINTER": {
+      case DefaultAttributeEnum.POINTER: {
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
         );
@@ -571,7 +573,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
         }
         break;
       }
-      case "OFFSET": {
+      case DefaultAttributeEnum.OFFSET: {
         //TODO set areaVariable if any
         this.addAttributeWitness(
           AttributeKind.LocatorKind,
@@ -582,7 +584,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
         break;
       }
 
-      case "BUILTIN": {
+      case DefaultAttributeEnum.BUILTIN: {
         //TODO temporary solution
         this.addAttributeWitness(
           AttributeKind.DataType,
@@ -593,53 +595,48 @@ export class DefaultTypeBuilder implements TypeBuilder {
         break;
       }
 
-      case "BACKWARDS":
-      case "BYADDR":
-      case "BYVALUE":
-      case "CONDITION":
-      case "CONSTANT":
-      case "CTL":
-      case "DIMACROSS":
-      case "EVENT":
-      case "EXCLUSIVE":
-      case "EXT":
-      case "GENERIC":
-      case "HEX":
-      case "INONLY":
-      case "INOUT":
-      case "INPUT":
-      case "INT":
-      case "IRREDUCIBLE":
-      case "KEYED":
-      case "LABEL":
-      case "LIST":
-      case "MEMBER":
-      case "NATIVE":
-      case "NOINIT":
-      case "NONNATIVE":
-      case "NOSCAN":
-      case "NULLINIT":
-      case "OPTIONAL":
-      case "OPTIONS":
-      case "OUTONLY":
-      case "OUTPUT":
-      case "PARAMETER":
-      case "POSITION":
-      case "PRINT":
-      case "RANGE":
-      case "RESCAN":
-      case "RESERVED":
-      case "SCAN":
-      case "STRUCTURE":
-      case "TRANSIENT":
-      case "UNAL":
-      case "UNION":
-      case "UPDATE":
-      case "VAR":
-      case "VARIABLE":
+      case DefaultAttributeEnum.BACKWARDS:
+      case DefaultAttributeEnum.BYADDR:
+      case DefaultAttributeEnum.BYVALUE:
+      case DefaultAttributeEnum.CONDITION:
+      case DefaultAttributeEnum.CONSTANT:
+      case DefaultAttributeEnum.DIMACROSS:
+      case DefaultAttributeEnum.EVENT:
+      case DefaultAttributeEnum.EXCLUSIVE:
+      case DefaultAttributeEnum.GENERIC:
+      case DefaultAttributeEnum.HEX:
+      case DefaultAttributeEnum.INONLY:
+      case DefaultAttributeEnum.INOUT:
+      case DefaultAttributeEnum.INPUT:
+      case DefaultAttributeEnum.IRREDUCIBLE:
+      case DefaultAttributeEnum.KEYED:
+      case DefaultAttributeEnum.LABEL:
+      case DefaultAttributeEnum.LIST:
+      case DefaultAttributeEnum.MEMBER:
+      case DefaultAttributeEnum.NATIVE:
+      case DefaultAttributeEnum.NOINIT:
+      case DefaultAttributeEnum.NONNATIVE:
+      case DefaultAttributeEnum.NOSCAN:
+      case DefaultAttributeEnum.NULLINIT:
+      case DefaultAttributeEnum.OPTIONAL:
+      case DefaultAttributeEnum.OPTIONS:
+      case DefaultAttributeEnum.OUTONLY:
+      case DefaultAttributeEnum.OUTPUT:
+      case DefaultAttributeEnum.PARAMETER:
+      case DefaultAttributeEnum.POSITION:
+      case DefaultAttributeEnum.PRINT:
+      case DefaultAttributeEnum.RANGE:
+      case DefaultAttributeEnum.RESCAN:
+      case DefaultAttributeEnum.RESERVED:
+      case DefaultAttributeEnum.SCAN:
+      case DefaultAttributeEnum.STRUCTURE:
+      case DefaultAttributeEnum.TRANSIENT:
+      case DefaultAttributeEnum.UNION:
+      case DefaultAttributeEnum.UPDATE:
+      case DefaultAttributeEnum.VARIABLE:
         break;
       default:
-        assertUnreachable(attribute.type);
+        assertUnreachable(typeAsEnum);
     }
   }
   build() {

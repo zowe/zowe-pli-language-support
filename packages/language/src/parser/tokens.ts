@@ -484,7 +484,11 @@ export const ABNORMAL = registerKeyword({
   categories: [DefaultAttribute],
 });
 export const BUFFERED = registerKeyword({
-  name: ["BUFFERED", "BUF", "UNBUFFERED", "UNBUF"],
+  names: ["BUFFERED", "BUF"],
+  categories: [DefaultAttribute, OpenOptionType],
+});
+export const UNBUFFERED = registerKeyword({
+  names: ["UNBUFFERED", "UNBUF"],
   categories: [DefaultAttribute, OpenOptionType],
 });
 export const CONSTANT = registerKeyword({
