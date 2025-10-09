@@ -26,3 +26,6 @@
 
 verify.expectExclusiveErrorCodesAt(1, code.Error.IBM1373I.fullCode);
 verify.expectExclusiveErrorCodesAt(2, code.Error.IBM1373I.fullCode);
+verify.expectDiagnosticsAt(2, {
+  severity: constants.Severity.W,
+});
