@@ -1028,6 +1028,14 @@ function stringOperation(
   };
 }
 
+function stringBoolOperation(
+  callback: (left: string, right: string) => boolean,
+): ValueOperation {
+  return (left: ScalarValue, right: ScalarValue) => {
+    return boolToValue(callback(left.value, right.value));
+  };
+}
+
 const plus = intOperation((left, right) => left + right);
 const minus = intOperation((left, right) => left - right);
 const multiply = intOperation((left, right) => left * right);
@@ -1036,10 +1044,10 @@ const exponentiate = intOperation((left, right) => left ** right);
 const concat = stringOperation((left, right) => left + right);
 const lessThan = intBoolOperation((left, right) => left < right);
 const greaterThan = intBoolOperation((left, right) => left > right);
-const equals = intBoolOperation((left, right) => left === right);
+const equals = stringBoolOperation((left, right) => left === right);
 const lessThanEquals = intBoolOperation((left, right) => left <= right);
 const greaterThanEquals = intBoolOperation((left, right) => left >= right);
-const notEquals = intBoolOperation((left, right) => left !== right);
+const notEquals = stringBoolOperation((left, right) => left !== right);
 const and = intOperation((left, right) => left & right);
 const or = intOperation((left, right) => left | right);
 const xor = intOperation((left, right) => left ^ right);
