@@ -15,7 +15,7 @@ import {
   parseAbstractCompilerOptions,
   AbstractCompilerOptions,
 } from "./compiler-options/parser";
-import { translateCompilerOptions } from "./compiler-options/translator";
+import { translateCompilerOptions } from "./compiler-options/translate";
 import { createTokenInstance, PROCESS, Token } from "../parser/tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI } from "../utils/uri";
