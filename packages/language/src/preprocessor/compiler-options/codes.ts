@@ -34,7 +34,7 @@ export const CompilerOptionsCodes = {
   DupeOptionIssue: {
     code: "COOP02",
     severity: Severity.W,
-    message: (name: string) => `Duplicate compiler option ${name}`,
+    message: (name: string) => `Duplicate compiler option found for ${name}.`,
     fullCode: "COOP02W",
   } as ParametricPLICode,
 

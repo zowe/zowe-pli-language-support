@@ -303,7 +303,7 @@ describe("Validating", () => {
         END EP;
         `);
       assertDiagnostic(doc, {
-        message: "Duplicate compiler option AGGREGATE",
+        message: "Duplicate compiler option found for AGGREGATE.",
         severity: Severity.W,
       });
     });
@@ -338,7 +338,7 @@ describe("Validating", () => {
         END EP;
         `);
       assertDiagnostic(doc, {
-        message: "Duplicate compiler option AGGREGATE",
+        message: "Duplicate compiler option found for AGGREGATE.",
         severity: Severity.W,
       });
     });

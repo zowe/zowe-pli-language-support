@@ -451,3 +451,65 @@ export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
     callback(options, value);
   };
 }
+
+export function getCompilerOptionValueName(value: CompilerOptionValue): string {
+  if (
+    value.kind === SyntaxKind.CompilerOptionText ||
+    value.kind === SyntaxKind.CompilerOptionString
+  ) {
+    return value.value;
+  } else if (value.kind === SyntaxKind.CompilerOption) {
+    return value.name;
+  }
+  throw new Error("Compiler option value is not supported.");
+}
+
+export function reportDuplicateSubOptions(
+  parent: CompilerOption,
+  acceptor: TranslationErrorAcceptor,
+) {
+  const values = parent.values;
+  const seen = new Set<string>();
+  for (const value of values) {
+    const name = getCompilerOptionValueName(value);
+    if (seen.has(name)) {
+      acceptor(
+        TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.DupeOptionIssue,
+          `${parent.token.image}(${value.token.image})`,
+        ),
+      );
+    } else {
+      seen.add(name);
+    }
+  }
+}
+
+export function reportMutexSubOptions(
+  parent: CompilerOption,
+  acceptor: TranslationErrorAcceptor,
+  mutex: string[][],
+) {
+  const values = parent.values;
+  const seen = new Set<string>();
+  for (const value of values) {
+    const name = getCompilerOptionValueName(value);
+    for (const group of mutex) {
+      if (group.includes(name)) {
+        for (const other of group) {
+          if (other !== name && seen.has(other)) {
+            acceptor(
+              TranslationError.fromCode(
+                value.token,
+                CompilerOptionsCodes.MutexOptionIssue,
+                `${parent.token.image}(${value.token.image})`,
+              ),
+            );
+          }
+        }
+      }
+    }
+    seen.add(name);
+  }
+}

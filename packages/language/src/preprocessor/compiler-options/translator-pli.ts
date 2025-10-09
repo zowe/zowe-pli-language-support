@@ -31,6 +31,8 @@ import {
   ensureType,
   isEmptyParameterList,
   plainTranslate,
+  reportDuplicateSubOptions,
+  reportMutexSubOptions,
   stringTranslate,
   TranslationError,
   Translator,
@@ -270,30 +272,16 @@ translator.rule(["CASERULES"], (option, options, acceptor) => {
 });
 
 /** {@link CompilerOptions.check} */
-translator.rule(["CHECK"], (option, options) => {
+translator.rule(["CHECK"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   for (const value of option.values) {
     ensureType(value, "plain");
     const text = value.value.toUpperCase();
     if (text === "STORAGE" || text === "STG") {
-      if (options.check?.storage === "NOSTORAGE") {
-        throw new TranslationError(
-          value.token,
-          `The compiler option value ${text} conflicts with other options: NOSTORAGE.`,
-          1,
-        );
-      }
       options.check = {
         storage: "STORAGE",
       };
     } else if (text === "NOSTORAGE" || text === "NSTG") {
-      if (options.check?.storage === "STORAGE") {
-        throw new TranslationError(
-          value.token,
-          `The compiler option value ${text} conflicts with other options: STORAGE.`,
-          1,
-        );
-      }
       options.check = {
         storage: "NOSTORAGE",
       };
@@ -305,6 +293,8 @@ translator.rule(["CHECK"], (option, options) => {
       );
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
+  reportMutexSubOptions(option, acceptor, [["STORAGE", "NOSTORAGE"]]);
 });
 
 /** {@link CompilerOptions.cmpat} */
@@ -521,7 +511,7 @@ translator.rule(["DDSQL"], (option, options) => {
 });
 
 /** {@link CompilerOptions.decimal} */
-translator.rule(["DECIMAL", "DEC"], (option, options) => {
+translator.rule(["DECIMAL", "DEC"], (option, options, acceptor) => {
   options.decimal = {};
   ensureArguments(option, 1);
   for (const opt of option.values) {
@@ -584,13 +574,24 @@ translator.rule(["DECIMAL", "DEC"], (option, options) => {
         );
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
+  reportMutexSubOptions(option, acceptor, [
+    ["CHECKFLOAT", "NOCHECKFLOAT"],
+    ["FOFLONADD", "NOFOFLONADD"],
+    ["FOFLONASGN", "NOFOFLONASGN"],
+    ["FOFLONDIV", "NOFOFLONDIV"],
+    ["FOFLONMULT", "NOFOFLONMULT"],
+    ["FORCEDSIGN", "NOFORCEDSIGN"],
+    ["KEEPMINUS", "NOKEEPMINUS"],
+    ["TRUNCFLOAT", "NOTRUNCFLOAT"],
+  ]);
 });
 
 /** {@link CompilerOptions.decomp} */
 translator.flag("decomp", ["DECOMP"], ["NODECOMP"]);
 
 /** {@link CompilerOptions.default} */
-translator.rule(["DEFAULT", "DFT"], (option, options) => {
+translator.rule(["DEFAULT", "DFT"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   const def: CompilerOptions.Default = (options.default = {});
   if (
@@ -600,23 +601,6 @@ translator.rule(["DEFAULT", "DFT"], (option, options) => {
   ) {
     return;
   }
-  const setOptions = new Set<string>();
-
-  const ensureNotAlreadySet = (
-    option: CompilerOptionText,
-    exclusive: string[],
-  ) => {
-    const value = option.value.toUpperCase();
-    for (const exclude of exclusive) {
-      if (setOptions.has(exclude) && value !== exclude) {
-        throw new TranslationError(
-          option.token,
-          `The compiler option value ${value} conflicts with other options: ${exclusive.join(", ")}.`,
-          1,
-        );
-      }
-    }
-  };
 
   for (const opt of option.values) {
     if (opt.kind === SyntaxKind.CompilerOptionText) {
@@ -624,127 +608,102 @@ translator.rule(["DEFAULT", "DFT"], (option, options) => {
       switch (val) {
         case "ALIGNED":
         case "UNALIGNED":
-          ensureNotAlreadySet(opt, ["ALIGNED", "UNALIGNED"]);
           def.aligned = val === "ALIGNED";
           break;
         case "IBM":
         case "ANS":
-          ensureNotAlreadySet(opt, ["IBM", "ANS"]);
           def.architecture = val;
           break;
         case "EBCDIC":
         case "ASCII":
-          ensureNotAlreadySet(opt, ["EBCDIC", "ASCII"]);
           def.encoding = val;
           break;
         case "ASSIGNABLE":
         case "NONASSIGNABLE":
-          ensureNotAlreadySet(opt, ["ASSIGNABLE", "NONASSIGNABLE"]);
           def.assignable = val === "ASSIGNABLE";
           break;
         case "BIN1ARG":
         case "NOBIN1ARG":
-          ensureNotAlreadySet(opt, ["BIN1ARG", "NOBIN1ARG"]);
           def.bin1arg = val === "BIN1ARG";
           break;
         case "BYADDR":
         case "BYVALUE":
-          ensureNotAlreadySet(opt, ["BYADDR", "BYVALUE"]);
           def.allocator = val;
           break;
         case "CONNECTED":
         case "NONCONNECTED":
-          ensureNotAlreadySet(opt, ["CONNECTED", "NONCONNECTED"]);
           def.connected = val === "CONNECTED";
           break;
         case "DESCLIST":
         case "DESCLOCATOR":
-          ensureNotAlreadySet(opt, ["DESCLIST", "DESCLOCATOR"]);
           def.desc = val.substring(4) as "LIST" | "LOCATOR";
           break;
         case "DESCRIPTOR":
         case "NODESCRIPTOR":
-          ensureNotAlreadySet(opt, ["DESCRIPTOR", "NODESCRIPTOR"]);
           def.descriptor = val === "DESCRIPTOR";
           break;
         case "EVENDEC":
         case "NOEVENDEC":
-          ensureNotAlreadySet(opt, ["EVENDEC", "NOEVENDEC"]);
           def.evendec = val === "EVENDEC";
           break;
         case "HEXADEC":
         case "IEEE":
-          ensureNotAlreadySet(opt, ["HEXADEC", "IEEE"]);
           def.format = val;
           break;
         case "INITFILL":
         case "NOINITFILL":
-          ensureNotAlreadySet(opt, ["INITFILL", "NOINITFILL"]);
           def.initfill = val === "INITFILL" ? "00" : false;
           break;
         case "INLINE":
         case "NOINLINE":
-          ensureNotAlreadySet(opt, ["INLINE", "NOINLINE"]);
           def.inline = val === "INLINE";
           break;
         case "LAXQUAL":
         case "NOLAXQUAL":
-          ensureNotAlreadySet(opt, ["LAXQUAL", "NOLAXQUAL"]);
           def.laxqual = val === "LAXQUAL";
           break;
         case "LOWERINC":
         case "UPPERINC":
-          ensureNotAlreadySet(opt, ["LOWERINC", "UPPERINC"]);
           def.inc = val;
           break;
         case "NATIVE":
         case "NONNATIVE":
-          ensureNotAlreadySet(opt, ["NATIVE", "NONNATIVE"]);
           def.native = val === "NATIVE";
           break;
         case "NATIVEADDR":
         case "NONATIVEADDR":
-          ensureNotAlreadySet(opt, ["NATIVEADDR", "NONNATIVEADDR"]);
           def.nativeAddr = val === "NATIVEADDR";
           break;
         case "NULLSYS":
         case "NULL370":
-          ensureNotAlreadySet(opt, ["NULLSYS", "NULL370"]);
           def.nullsys = val;
           break;
         case "NULLSTRADDR":
         case "NONULLSTRADDR":
-          ensureNotAlreadySet(opt, ["NULLSTRADDR", "NONULLSTRADDR"]);
           def.nullStrAddr = val === "NULLSTRADDR";
           break;
         case "ORDER":
         case "REORDER":
-          ensureNotAlreadySet(opt, ["ORDER", "REORDER"]);
           def.order = val;
           break;
         case "OVERLAP":
         case "NOOVERLAP":
-          ensureNotAlreadySet(opt, ["OVERLAP", "NOOVERLAP"]);
           def.overlap = val === "OVERLAP";
           break;
         case "PADDING":
         case "NOPADDING":
-          ensureNotAlreadySet(opt, ["PADDING", "NOPADDING"]);
           def.padding = val === "PADDING";
           break;
         case "PSEUDODUMMY":
         case "NOPSEUDODUMMY":
-          ensureNotAlreadySet(opt, ["PSEUDODUMMY", "NOPSEUDODUMMY"]);
           def.pseudodummy = val === "PSEUDODUMMY";
           break;
         case "RECURSIVE":
         case "NORECURSIVE":
-          ensureNotAlreadySet(opt, ["RECURSIVE", "NORECURSIVE"]);
           def.recursive = val === "RECURSIVE";
           break;
         case "RETCODE":
         case "NORETCODE":
-          ensureNotAlreadySet(opt, ["RETCODE", "NORETCODE"]);
           def.retcode = val === "RETCODE";
           break;
         default:
@@ -754,7 +713,6 @@ translator.rule(["DEFAULT", "DFT"], (option, options) => {
             1,
           );
       }
-      setOptions.add(val);
     } else if (opt.kind === SyntaxKind.CompilerOption) {
       ensureArguments(opt, 1, 1);
       ensureType(opt.values[0], "plain");
@@ -882,6 +840,33 @@ translator.rule(["DEFAULT", "DFT"], (option, options) => {
       );
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
+  reportMutexSubOptions(option, acceptor, [
+    ["ALIGNED", "UNALIGNED"],
+    ["IBM", "ANS"],
+    ["EBCDIC", "ASCII"],
+    ["ASSIGNABLE", "NONASSIGNABLE"],
+    ["BIN1ARG", "NOBIN1ARG"],
+    ["BYADDR", "BYVALUE"],
+    ["CONNECTED", "NONCONNECTED"],
+    ["DESCLIST", "DESCLOCATOR"],
+    ["DESCRIPTOR", "NODESCRIPTOR"],
+    ["EVENDEC", "NOEVENDEC"],
+    ["HEXADEC", "IEEE"],
+    ["INLINE", "NOINLINE"],
+    ["LAXQUAL", "NOLAXQUAL"],
+    ["LOWERINC", "UPPERINC"],
+    ["NATIVE", "NONNATIVE"],
+    ["NATIVEADDR", "NONATIVEADDR"],
+    ["NULLSYS", "NULL370"],
+    ["NULLSTRADDR", "NONULLSTRADDR"],
+    ["ORDER", "REORDER"],
+    ["OVERLAP", "NOOVERLAP"],
+    ["PADDING", "NOPADDING"],
+    ["PSEUDODUMMY", "NOPSEUDODUMMY"],
+    ["RECURSIVE", "NORECURSIVE"],
+    ["RETCODE", "NORETCODE"],
+  ]);
 });
 
 /** {@link CompilerOptions.deprecate} */
@@ -1150,7 +1135,7 @@ translator.rule(["HGPR"], (option, options) => {
 /** {@link CompilerOptions.ignore} */
 translator.rule(
   ["IGNORE"],
-  (option, options) => {
+  (option, options, acceptor) => {
     ensureArguments(option, 1);
     options.ignore = {
       items: [],
@@ -1169,6 +1154,7 @@ translator.rule(
         );
       }
     }
+    reportDuplicateSubOptions(option, acceptor);
   },
   ["NOIGNORE"],
   (option, options) => {
@@ -1329,7 +1315,7 @@ translator.rule(
 translator.flag("interrupt", ["INTERRUPT", "INT"], ["NOINTERRUPT", "NINT"]);
 
 /** {@link CompilerOptions.json} */
-translator.rule(["JSON"], (option, options) => {
+translator.rule(["JSON"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   ensureToBeDefined(options.json);
   for (const opt of option.values) {
@@ -1396,10 +1382,12 @@ translator.rule(["JSON"], (option, options) => {
       );
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
+  reportMutexSubOptions(option, acceptor, [["TRIMR", "NOTRIMR"]]);
 });
 
 /** {@link CompilerOptions.langlvl} */
-translator.rule(["LANGLVL"], (option, options) => {
+translator.rule(["LANGLVL"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   for (const value of option.values) {
     ensureType(value, "plain");
@@ -1414,10 +1402,12 @@ translator.rule(["LANGLVL"], (option, options) => {
       );
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
+  reportMutexSubOptions(option, acceptor, [["OS", "NOEXT"]]);
 });
 
 /** {@link CompilerOptions.limits} */
-translator.rule(["LIMITS"], (option, options) => {
+translator.rule(["LIMITS"], (option, options, acceptor) => {
   const optionNumberValue = (
     option: CompilerOption,
     index: number,
@@ -1529,6 +1519,7 @@ translator.rule(["LIMITS"], (option, options) => {
       );
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
 });
 
 /** {@link CompilerOptions.lineCount} */
@@ -1554,7 +1545,7 @@ translator.flag("lineDir", ["LINEDIR"], ["NOLINEDIR"]);
 translator.flag("list", ["LIST"], ["NOLIST"]);
 
 /** {@link CompilerOptions.listView} */
-translator.rule(["LISTVIEW"], (option, options) => {
+translator.rule(["LISTVIEW"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   for (const value of option.values) {
     ensureType(value, "plain");
@@ -1573,6 +1564,9 @@ translator.rule(["LISTVIEW"], (option, options) => {
       );
     }
   }
+  reportMutexSubOptions(option, acceptor, [
+    ["SOURCE", "AFTERALL", "AFTERCICS", "AFTERMACRO", "AFTERSQL"],
+  ]);
 });
 
 /** {@link CompilerOptions.LP} */
@@ -1698,7 +1692,7 @@ translator.rule(["MAXMEM", "MAXM"], (option, options) => {
 });
 
 /** {@link CompilerOptions.maxmsg} */
-translator.rule(["MAXMSG"], (option, options) => {
+translator.rule(["MAXMSG"], (option, options, acceptor) => {
   // MAXMSG only recognizes the last letter or number, respectively.
   // The letter/number order does not matter.
   ensureArguments(option, 1);
@@ -1715,10 +1709,12 @@ translator.rule(["MAXMSG"], (option, options) => {
       options.maxmsg.n = ensureNumberValue(value, 0, 32767);
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
+  reportMutexSubOptions(option, acceptor, [["I", "W", "E", "S"]]);
 });
 
 /** {@link CompilerOptions.maxnest} */
-translator.rule(["MAXNEST"], (option, options) => {
+translator.rule(["MAXNEST"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   ensureToBeDefined(options.maxnest);
   // Suboptions may override previously set values.
@@ -1739,6 +1735,7 @@ translator.rule(["MAXNEST"], (option, options) => {
       );
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
 });
 
 /** {@link CompilerOptions.maxRunOnIf} */
@@ -1791,7 +1788,7 @@ translator.rule(["MAXTEMP"], (option, options) => {
 /** {@link CompilerOptions.mDeck} */
 translator.rule(
   ["MDECK", "MD"],
-  (option, options) => {
+  (option, options, acceptor) => {
     ensureArguments(option, 1);
     // Only the last value takes effect.
     for (const value of option.values) {
@@ -1807,6 +1804,8 @@ translator.rule(
         );
       }
     }
+    reportDuplicateSubOptions(option, acceptor);
+    reportMutexSubOptions(option, acceptor, [["AFTERALL", "AFTERMACRO"]]);
   },
   ["NOMDECK", "NMD"],
   (option, options) => {
@@ -1978,7 +1977,7 @@ translator.rule(["OFFSETSIZE"], (option, options) => {
 /** {@link CompilerOptions.onSnap} */
 translator.rule(
   ["ONSNAP"],
-  (option, options) => {
+  (option, options, acceptor) => {
     ensureArguments(option, 1);
     if (!options.onSnap) {
       options.onSnap = {
@@ -2008,6 +2007,7 @@ translator.rule(
       // Special case: If both stringRange and stringSize are false, the onSnap option is disabled.
       options.onSnap = false;
     }
+    reportDuplicateSubOptions(option, acceptor);
   },
   ["NOONSNAP"],
   (option, options) => {
@@ -2019,7 +2019,7 @@ translator.rule(
 /** {@link CompilerOptions.optimize} */
 translator.rule(
   ["OPTIMIZE", "OPT"],
-  (option, options) => {
+  (option, options, acceptor) => {
     // Verified 0 and more than 1 argument. The last one takes effect.
     ensureArguments(option, 0);
     if (option.values.length === 0) {
@@ -2046,6 +2046,8 @@ translator.rule(
         );
       }
     }
+    reportDuplicateSubOptions(option, acceptor);
+    reportMutexSubOptions(option, acceptor, [["0", "2", "3", "TIME"]]);
   },
   ["NOOPTIMIZE", "NOPT"],
   (option, options) => {
@@ -2267,7 +2269,7 @@ translator.rule(["PRECTYPE"], (option, options) => {
 });
 
 /** {@link CompilerOptions.prefix} */
-translator.rule(["PREFIX"], (option, options) => {
+translator.rule(["PREFIX"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   ensureToBeDefined(options.prefix);
   for (const value of option.values) {
@@ -2300,6 +2302,14 @@ translator.rule(["PREFIX"], (option, options) => {
       condition.condition[0].toLowerCase() as keyof CompilerConditions.ConditionOptions
     ] = setCondition;
   }
+  reportDuplicateSubOptions(option, acceptor);
+  reportMutexSubOptions(
+    option,
+    acceptor,
+    CompilerConditions.PLI_CONDITIONS.flatMap((c) =>
+      c.condition.map((condition) => [condition, `NO${condition}`]),
+    ),
+  );
 });
 
 /** {@link CompilerOptions.proceed} */
@@ -2434,7 +2444,7 @@ translator.rule(["RTCHECK"], (option, options) => {
 });
 
 /** {@link CompilerOptions.rules} */
-translator.rule(["RULES"], (option, options) => {
+translator.rule(["RULES"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   ensureToBeDefined(options.rules);
   // Multiple RULES calls are accumulated.
@@ -3022,6 +3032,61 @@ translator.rule(["RULES"], (option, options) => {
       }
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
+  reportMutexSubOptions(option, acceptor, [
+    ["IBM", "ANS"],
+    ["BYNAME", "NOBYNAME"],
+    ["CONTROLLED", "NOCONTROLLED"],
+    ["DECSIZE", "NODECSIZE"],
+    ["ELSEIF", "NOELSEIF"],
+    ["EVENDEC", "NOEVENDEC"],
+    ["GLOBAL", "NOGLOBAL"],
+    ["GLOBALDO", "NOGLOBALDO"],
+    ["GOTO", "NOGOTO"],
+    ["LAXBIF", "NOLAXBIF"],
+    ["LAXCONV", "NOLAXCONV"],
+    ["LAXCTL", "NOLAXCTL"],
+    ["LAXDCL", "NOLAXDCL"],
+    ["LAXDEF", "NOLAXDEF"],
+    ["LAXENTRY", "NOLAXENTRY"],
+    ["LAXEXPORTS", "NOLAXEXPORTS"],
+    ["LAXFIELDS", "NOLAXFIELDS"],
+    ["LAXIF", "NOLAXIF"],
+    ["LAXINOUT", "NOLAXINOUT"],
+    ["LAXINTERFACE", "NOLAXINTERFACE"],
+    ["LAXLINK", "NOLAXLINK"],
+    ["LAXMARGINS", "NOLAXMARGINS"],
+    ["LAXNESTED", "NOLAXNESTED"],
+    ["LAXOPTIONAL", "NOLAXOPTIONAL"],
+    ["LAXPACKAGE", "NOLAXPACKAGE"],
+    ["LAXPARMS", "NOLAXPARMS"],
+    ["LAXPUNC", "NOLAXPUNC"],
+    ["LAXQUAL", "NOLAXQUAL"],
+    ["LAXRETURN", "NOLAXRETURN"],
+    ["LAXSCALE", "NOLAXSCALE"],
+    ["LAXSEMI", "NOLAXSEMI"],
+    ["LAXSTG", "NOLAXSTG"],
+    ["LAXSTMT", "NOLAXSTMT"],
+    ["LAXSTRZ", "NOLAXSTRZ"],
+    ["MULTICLOSE", "NOMULTICLOSE"],
+    ["MULTIENTRY", "NOMULTIENTRY"],
+    ["MULTIEXIT", "NOMULTIEXIT"],
+    ["MULTISEMI", "NOMULTISEMI"],
+    ["PADDING", "NOPADDING"],
+    ["PROCENDONLY", "NOPROCENDONLY"],
+    ["RECURSIVE", "NORECURSIVE"],
+    ["SELFASSIGN", "NOSELFASSIGN"],
+    ["UNREF", "NOUNREF"],
+    ["UNREFBASED", "NOUNREFBASED"],
+    ["UNREFCTL", "NOUNREFCTL"],
+    ["UNREFDEFINED", "NOUNREFDEFINED"],
+    ["UNREFENTRY", "NOUNREFENTRY"],
+    ["UNREFFILE", "NOUNREFFILE"],
+    ["UNREFSTATIC", "NOUNREFSTATIC"],
+    ["UNREFVALUE", "NOUNREFVALUE"],
+    ["UNSET", "NOUNSET"],
+    ["YY", "NOYY"],
+  ]);
 });
 
 /** {@link CompilerOptions.semantic} */
@@ -3204,7 +3269,7 @@ translator.flag("terminal", ["TERMINAL", "TERM"], ["NOTERMINAL", "NTERM"]);
 /** {@link CompilerOptions.test} */
 translator.rule(
   ["TEST"],
-  (option, options) => {
+  (option, options, acceptor) => {
     // If there are multiple *PROCESS TEST directives,
     // the last one takes precedence and all suboptions that are not specified
     // are set to default.
@@ -3220,10 +3285,6 @@ translator.rule(
       ensureType(value, "plain");
       const name = value.value.toUpperCase();
       switch (name) {
-        // TODO ssmifi: We could also report contradicting suboptions here,
-        // but that would abort the option evaluation. We can add a way to
-        // report multiple diagnostics per rule in the future.
-        // In case of a contradiction, the last suboption takes effect.
         case "ALL":
         case "BLOCK":
         case "NONE":
@@ -3269,6 +3330,15 @@ translator.rule(
           );
       }
     }
+    reportDuplicateSubOptions(option, acceptor);
+    reportMutexSubOptions(option, acceptor, [
+      ["ALL", "BLOCK", "NONE", "PATH", "STMT"],
+      ["HOOK", "NOHOOK"],
+      ["SEPARATE", "NOSEPARATE"],
+      ["SEPNAME", "NOSEPNAME"],
+      ["SOURCE", "NOSOURCE"],
+      ["SYM", "NOSYM"],
+    ]);
   },
   ["NOTEST"],
   (option, options) => {
@@ -3295,7 +3365,7 @@ translator.rule(["UNROLL"], (option, options) => {
 });
 
 /** {@link CompilerOptions.usage} */
-translator.rule(["USAGE"], (option, options) => {
+translator.rule(["USAGE"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   ensureToBeDefined(options.usage);
   ensureToBeDefined(options.usage.regex);
@@ -3363,6 +3433,7 @@ translator.rule(["USAGE"], (option, options) => {
         );
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
 });
 
 /** {@link CompilerOptions.widechar} */
@@ -3413,7 +3484,7 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.xInfo} */
-translator.rule(["XINFO"], (option, options) => {
+translator.rule(["XINFO"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   ensureToBeDefined(options.xInfo);
   for (const value of option.values) {
@@ -3482,10 +3553,18 @@ translator.rule(["XINFO"], (option, options) => {
         );
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
+  reportMutexSubOptions(option, acceptor, [
+    ["DEF", "NODEF"],
+    ["MSG", "NOMSG"],
+    ["SYM", "NOSYM"],
+    ["SYN", "NOSYN"],
+    ["XML", "NOXML"],
+  ]);
 });
 
 /** {@link CompilerOptions.xml} */
-translator.rule(["XML"], (option, options) => {
+translator.rule(["XML"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   ensureToBeDefined(options.xml);
   for (const value of option.values) {
@@ -3514,12 +3593,13 @@ translator.rule(["XML"], (option, options) => {
         );
     }
   }
+  reportDuplicateSubOptions(option, acceptor);
 });
 
 /** {@link CompilerOptions.xRef} */
 translator.rule(
   ["XREF", "X"],
-  (option, options) => {
+  (option, options, acceptor) => {
     // No arguments is ok.
     ensureArguments(option, 0);
     ensureToBeDefined(options.xRef);
@@ -3559,6 +3639,11 @@ translator.rule(
           );
       }
     }
+    reportDuplicateSubOptions(option, acceptor);
+    reportMutexSubOptions(option, acceptor, [
+      ["FULL", "SHORT"],
+      ["IMPLICIT", "EXPLICIT"],
+    ]);
   },
   ["NOXREF", "NX"],
   (option, options) => {
