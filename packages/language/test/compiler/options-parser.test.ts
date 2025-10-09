@@ -11,14 +11,14 @@
 
 import { describe, test, expect } from "vitest";
 import { parseAbstractCompilerOptions } from "../../src/preprocessor/compiler-options/parser";
-import { translateCompilerOptions } from "../../src/preprocessor/compiler-options/translator";
+import { translateCompilerOptions } from "../../src/preprocessor/compiler-options/translate";
 import {
   CompilerOption,
   CompilerOptionString,
   CompilerOptionText,
   SyntaxKind,
 } from "../../src/syntax-tree/ast";
-import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
+import { CompilerOptions } from "../../src/preprocessor/compiler-options/options-pli";
 import { parse } from "../utils";
 
 describe("CompilerOptions parser", async () => {
@@ -614,7 +614,9 @@ describe("Process directives", async () => {
     expect(doc.compilerOptions.aggregate).toBeDefined();
     expect(doc.compilerOptions.attributes?.identifiers).toBe("FULL");
     expect(doc.compilerOptions.margins).toEqual({ m: 2, n: 75 });
-    expect(doc.compilerOptions.default?.returns).toEqual({ type: "BYADDR" });
+    expect(doc.compilerOptions.default?.returns).toEqual({
+      type: "BYADDR",
+    });
   });
 
   test("should parse multiple process directives with comments inbetween", async () => {
@@ -637,7 +639,9 @@ describe("Process directives", async () => {
     expect(doc.compilerOptions.aggregate).toBeDefined();
     expect(doc.compilerOptions.attributes?.identifiers).toBe("FULL");
     expect(doc.compilerOptions.margins).toEqual({ m: 2, n: 75 });
-    expect(doc.compilerOptions.default?.returns).toEqual({ type: "BYADDR" });
+    expect(doc.compilerOptions.default?.returns).toEqual({
+      type: "BYADDR",
+    });
   });
 
   test("should parse multiple process directives with windows line endings", async () => {

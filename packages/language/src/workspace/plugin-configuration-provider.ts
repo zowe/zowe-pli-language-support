@@ -15,7 +15,7 @@ import {
   AbstractCompilerOptions,
   parseAbstractCompilerOptions,
 } from "../preprocessor/compiler-options/parser";
-import { translateCompilerOptions } from "../preprocessor/compiler-options/translator";
+import { translateCompilerOptions } from "../preprocessor/compiler-options/translate";
 import { minimatch } from "minimatch";
 import { CompilerOptionResult } from "../preprocessor/compiler-options/options";
 import { isBoolean, isRecordOf, isString, isStringArray } from "../utils/types";

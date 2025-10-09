@@ -116,6 +116,14 @@ export const CompilerOptionsCodes = {
     fullCode: "COOP11W",
   } as ParametricPLICode,
 
+  ExpectedPlainTranslate: {
+    code: "COOP12",
+    severity: Severity.W,
+    message: (...values: string[]) =>
+      `Expected one of '${values.splice(1).join("', '")}', but received '${values[0]}'.`,
+    fullCode: "COOP12W",
+  } as ParametricPLICode,
+
   GoNumber: {
     InvalidParameter: {
       code: "COGN01",
@@ -867,5 +875,77 @@ export const CompilerOptionsCodes = {
         `Expected "FULL", "SHORT", "IMPLICIT", or "EXPLICIT", but received '${value}'.`,
       fullCode: "COXR03W",
     } as ParametricPLICode,
+  },
+
+  PPMacro: {
+    Case: {
+      InvalidParameter: {
+        code: "COPPMacro01",
+        severity: Severity.W,
+        message: (value: string) =>
+          `Expected "UPPER" or "ASIS", but received '${value}'.`,
+        fullCode: "COPPMacro01W",
+      } as ParametricPLICode,
+    },
+
+    Dbcs: {
+      InvalidParameter: {
+        code: "COPPMacro02",
+        severity: Severity.W,
+        message: (value: string) =>
+          `Expected "EXACT" or "INEXACT", but received '${value}'.`,
+        fullCode: "COPPMacro02W",
+      } as ParametricPLICode,
+    },
+
+    Deprecate: {
+      InvalidSubOption: {
+        code: "COPPMacro03",
+        severity: Severity.W,
+        message: (value: string) =>
+          `Expected "ENTRY" suboption, but received '${value}'.`,
+        fullCode: "COPPMacro03W",
+      } as ParametricPLICode,
+    },
+
+    Fixed: {
+      InvalidParameter: {
+        code: "COPPMacro04",
+        severity: Severity.W,
+        message: (value: string) =>
+          `Expected "DECIMAL" or "BINARY", but received '${value}'.`,
+        fullCode: "COPPMacro04W",
+      } as ParametricPLICode,
+    },
+
+    Ignore: {
+      InvalidParameter: {
+        code: "COPPMacro05",
+        severity: Severity.W,
+        message: (value: string) =>
+          `Expected "NOPRINT", but received '${value}'.`,
+        fullCode: "COPPMacro05W",
+      } as ParametricPLICode,
+    },
+
+    NamePrefix: {
+      InvalidParameterLength: {
+        code: "COPPMacro06",
+        severity: Severity.W,
+        message: (value: string) =>
+          `Expected a single character, but received '${value}'.`,
+        fullCode: "COPPMacro06W",
+      } as ParametricPLICode,
+    },
+
+    Rescan: {
+      InvalidParameter: {
+        code: "COPPMacro07",
+        severity: Severity.W,
+        message: (value: string) =>
+          `Expected "UPPER" or "ASIS", but received '${value}'.`,
+        fullCode: "COPPMacro07W",
+      } as ParametricPLICode,
+    },
   },
 };
