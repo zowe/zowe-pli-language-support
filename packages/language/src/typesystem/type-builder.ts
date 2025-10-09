@@ -61,7 +61,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
   private possibleDataTypes = new Set<DataType>(DataTypes);
   private attributeWitnesses: AttributeWitnesses =
     createEmptyAttributeWitnesses();
-  constructor(private token: Token | null) {}
+  constructor(private tokens: Token[]) {}
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -75,6 +75,13 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case ast.SyntaxKind.DimensionsDataAttribute:
         break;
       case ast.SyntaxKind.EntryAttribute:
+        this.addAttributeWitness(
+          AttributeKind.DataType,
+          DataType.Entry,
+          attribute,
+          attribute.entryToken!,
+        );
+        break;
       case ast.SyntaxKind.EnvironmentAttribute:
       case ast.SyntaxKind.GenericAttribute:
       case ast.SyntaxKind.HandleAttribute:
@@ -88,9 +95,24 @@ export class DefaultTypeBuilder implements TypeBuilder {
          * Picture wideness attributes
          * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-picture-widepic
          */
+        this.addAttributeWitness(
+          AttributeKind.DataType,
+          DataType.Picture,
+          attribute,
+          attribute.pictureToken!,
+        );
         break;
       case ast.SyntaxKind.ReturnsAttribute:
+        break;
       case ast.SyntaxKind.TypeAttribute:
+        //TODO handle type attribute
+        this.addAttributeWitness(
+          AttributeKind.DataType,
+          DataType.Unknown,
+          attribute,
+          attribute.type!.token,
+        );
+        break;
       case ast.SyntaxKind.ValueAttribute:
       case ast.SyntaxKind.ValueListAttribute:
       case ast.SyntaxKind.ValueListFromAttribute:
@@ -560,6 +582,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
       }
 
       case DefaultAttributeEnum.POINTER: {
+        this.addAttributeWitness(
+          AttributeKind.DataType,
+          DataType.Locator,
+          attribute,
+          token,
+        );
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
         );
@@ -600,6 +628,20 @@ export class DefaultTypeBuilder implements TypeBuilder {
         break;
       }
 
+      case DefaultAttributeEnum.INPUT:
+      case DefaultAttributeEnum.UPDATE:
+      case DefaultAttributeEnum.OUTPUT: {
+        //TODO add a attribute kind for transmission direction
+        //https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-input-output-update-attributes
+        this.addAttributeWitness(
+          AttributeKind.DataType,
+          DataType.File,
+          attribute,
+          token,
+        );
+        break;
+      }
+
       case DefaultAttributeEnum.BACKWARDS:
       case DefaultAttributeEnum.BYADDR:
       case DefaultAttributeEnum.BYVALUE:
@@ -612,7 +654,6 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case DefaultAttributeEnum.HEX:
       case DefaultAttributeEnum.INONLY:
       case DefaultAttributeEnum.INOUT:
-      case DefaultAttributeEnum.INPUT:
       case DefaultAttributeEnum.IRREDUCIBLE:
       case DefaultAttributeEnum.KEYED:
       case DefaultAttributeEnum.LABEL:
@@ -626,7 +667,6 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case DefaultAttributeEnum.OPTIONAL:
       case DefaultAttributeEnum.OPTIONS:
       case DefaultAttributeEnum.OUTONLY:
-      case DefaultAttributeEnum.OUTPUT:
       case DefaultAttributeEnum.PARAMETER:
       case DefaultAttributeEnum.POSITION:
       case DefaultAttributeEnum.PRINT:
@@ -637,7 +677,6 @@ export class DefaultTypeBuilder implements TypeBuilder {
       case DefaultAttributeEnum.STRUCTURE:
       case DefaultAttributeEnum.TRANSIENT:
       case DefaultAttributeEnum.UNION:
-      case DefaultAttributeEnum.UPDATE:
       case DefaultAttributeEnum.VARIABLE:
         break;
       default:
@@ -646,10 +685,12 @@ export class DefaultTypeBuilder implements TypeBuilder {
   }
   build() {
     if (this.possibleDataTypes.size !== 1) {
-      if (this.token) {
-        this.diagnostics.push(
-          diagnosticFromCode(Error.IBM1482I, this.token, this.token.image),
-        );
+      if (this.tokens.length > 0) {
+        for (const token of this.tokens) {
+          this.diagnostics.push(
+            diagnosticFromCode(Error.IBM1482I, token, token.image),
+          );
+        }
       }
       return {
         type: TypeDescriptions.Unknown(),

@@ -1366,6 +1366,7 @@ export interface EntryAttribute extends AstNode {
   variable: "VARIABLE"[];
   returns: ReturnsOption[];
   environmentName: Expression[];
+  entryToken: Token | null;
 }
 export interface EntryParameterDescription extends AstNode {
   kind: SyntaxKind.EntryParameterDescription;
@@ -1943,6 +1944,7 @@ export interface PFormatItem extends AstNode {
 export interface PictureAttribute extends AstNode {
   kind: SyntaxKind.PictureAttribute;
   picture: string | null;
+  pictureToken: Token | null;
 }
 export interface PliProgram extends AstNode {
   kind: SyntaxKind.PliProgram;

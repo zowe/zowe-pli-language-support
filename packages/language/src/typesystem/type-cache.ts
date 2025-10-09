@@ -6,6 +6,7 @@ export interface TypeCache {
     node: SyntaxNode,
     getter: () => TypeDescriptions.Any,
   ): TypeDescriptions.Any;
+  set(node: SyntaxNode, description: TypeDescriptions.Any): void;
   clear(): void;
 }
 
@@ -14,6 +15,10 @@ export class DefaultTypeCache implements TypeCache {
 
   clear() {
     this.cache.clear();
+  }
+
+  set(node: SyntaxNode, description: TypeDescriptions.Any): void {
+    this.cache.set(node, description);
   }
 
   get(

@@ -1073,7 +1073,7 @@ export namespace TypeDescriptions {
         return TypeDescriptions.Locator({
           ...common,
           kind:
-            attributes[AttributeKind.LocatorKind]!.value ??
+            attributes[AttributeKind.LocatorKind]?.value ??
             DefaultValues[AttributeKind.LocatorKind],
         });
       case DataType.Entry:

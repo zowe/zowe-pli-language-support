@@ -1,5 +1,5 @@
 import * as ast from "../syntax-tree/ast";
-import { TypeDescriptions } from "./descriptions";
+import { DataType, TypeDescriptions } from "./descriptions";
 import {
   ArithmeticOperator,
   CompilerOptionRules,
@@ -8,7 +8,7 @@ import {
 import { assertUnreachable } from "../utils/common";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultTypeBuilder } from "./type-builder";
-import { assertType } from "../preprocessor/util";
+import { Token } from "../parser/tokens";
 
 export interface TypeInferer {
   inferExpressionType(
@@ -18,7 +18,7 @@ export interface TypeInferer {
   inferDeclarationType(
     node: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
-  ): TypeDescriptions.Any;
+  ): Map<ast.SyntaxNode, TypeDescriptions.Any>;
 }
 
 export class DefaultTypeInferer implements TypeInferer {
@@ -36,33 +36,74 @@ export class DefaultTypeInferer implements TypeInferer {
     this.inferArithmeticOperation = createArithmeticOperationTable(rules);
   }
 
+  private getTypeOfElement(
+    nameTokens: Token[],
+    node: ast.DeclaredItem,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any | undefined {
+    const typeBuilder = new DefaultTypeBuilder(nameTokens);
+    while (
+      node.attributes.length === 0 &&
+      node.container?.kind === ast.SyntaxKind.DeclaredItem
+    ) {
+      node = node.container;
+    }
+    node.attributes.forEach((attr) => typeBuilder.addAttribute(attr));
+    const { type, diagnostics } = typeBuilder.build();
+    if (type.type !== DataType.Unknown) {
+      compilationUnit.diagnostics.typeSystem.push(...diagnostics);
+    }
+    return type;
+  }
+
+  private inferDeclaredItemElement(
+    element: ast.DeclaredItemElement,
+    parent: ast.DeclaredItem,
+    compilationUnit: CompilationUnit,
+  ): Map<ast.SyntaxNode, TypeDescriptions.Any> {
+    if (element.kind === ast.SyntaxKind.DeclaredVariable) {
+      if (element.nameToken) {
+        const type = this.getTypeOfElement(
+          [element.nameToken],
+          parent,
+          compilationUnit,
+        );
+        return type ? new Map([[element, type]]) : new Map();
+      }
+    } else if (element.kind === ast.SyntaxKind.WildcardItem) {
+      if (element.token) {
+        const type = this.getTypeOfElement(
+          [element.token],
+          parent,
+          compilationUnit,
+        );
+        return type ? new Map([[element, type]]) : new Map();
+      }
+    } else if (element.kind === ast.SyntaxKind.DeclaredItem) {
+      return this.inferDeclarationType(element, compilationUnit);
+    }
+    return new Map();
+  }
+
   inferDeclarationType(
     node: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
-  ): TypeDescriptions.Any {
-    function getNameToken(element: ast.DeclaredItemElement) {
-      if (element.kind === ast.SyntaxKind.DeclaredVariable) {
-        return element.nameToken;
-      } else if (element.kind === ast.SyntaxKind.WildcardItem) {
-        return element.token;
-      } else if (element.kind === ast.SyntaxKind.DeclaredItem) {
-        return getNameToken(element.elements[0]);
+  ): Map<ast.SyntaxNode, TypeDescriptions.Any> {
+    const result = new Map<ast.SyntaxNode, TypeDescriptions.Any>();
+    for (const element of node.elements) {
+      const typesByElement = this.inferDeclaredItemElement(
+        element,
+        node,
+        compilationUnit,
+      );
+      for (const [element, type] of typesByElement) {
+        result.set(element, type);
       }
-      assertUnreachable(element);
     }
-    return compilationUnit.services.typeCache.get(node, () => {
-      // TODO: Temporary: We only infer type for single item declaration, otherwise it is unknown
-      assertType<ast.DeclareStatement>(node.container);
-      if ((node.container.items?.length ?? 0) > 1) {
-        return TypeDescriptions.Unknown();
-      }
-      const element = node.elements[0];
-      const typeBuilder = new DefaultTypeBuilder(getNameToken(element));
-      node.attributes.forEach((attr) => typeBuilder.addAttribute(attr));
-      const { type, diagnostics } = typeBuilder.build();
-      compilationUnit.diagnostics.typeSystem.push(...diagnostics);
-      return type ?? TypeDescriptions.Unknown();
-    });
+    for (const [element, type] of result.entries()) {
+      compilationUnit.services.typeCache.set(element, type);
+    }
+    return result;
   }
 
   inferExpressionType(
