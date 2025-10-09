@@ -20,10 +20,6 @@ import {
   parse,
   tokenize,
 } from "./lifecycle.js";
-import {
-  CompilerOptions,
-  getDefaultCompilerOptions,
-} from "../preprocessor/compiler-options/options.js";
 import { skippedCode } from "../language-server/skipped-code.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
@@ -46,6 +42,10 @@ import { isOperationCancelled } from "../utils/promises.js";
 import { InstructionCache } from "../preprocessor/instruction-cache.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { FileStore } from "./file-store.js";
+import {
+  CompilerOptions,
+  getDefaultCompilerOptions,
+} from "../preprocessor/compiler-options/options.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
