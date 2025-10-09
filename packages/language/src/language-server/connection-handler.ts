@@ -20,7 +20,7 @@ import { URI, UriUtils } from "../utils/uri";
 import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
-import { Location, TextEdit } from "vscode-languageserver-types";
+import { Location, TextEdit, WorkspaceFolder } from "vscode-languageserver-types";
 import {
   completionItemToLSP,
   documentSymbolToLSP,
@@ -50,12 +50,11 @@ export const WorkspaceDidChangePlipluginConfigNotification =
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
   compilationUnitHandler.listen(connection);
+  let workspaceFolders: WorkspaceFolder[] = [];
   connection.onInitialize(async (params) => {
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
     // TODO @montymxb Apr 23rd, 2025: Consider addressing multiple workspaces w/ multiple plugin configs
-    for (const folder of params.workspaceFolders?.reverse() ?? []) {
-      await PluginConfigurationProviderInstance.init(folder.uri);
-    }
+    workspaceFolders = params.workspaceFolders ?? [];
 
     BuiltinDocuments.set(BuiltinsTextDocument);
     BuiltinDocuments.set(BuiltinsMacroTextDocument);
@@ -92,6 +91,11 @@ export function startLanguageServer(connection: Connection): void {
         },
       },
     };
+  });
+  connection.onInitialized(async () => {
+    for (const folder of workspaceFolders.reverse()) {
+      await PluginConfigurationProviderInstance.init(folder.uri);
+    }
   });
   connection.onHover(async (params) => {
     return Mutex.read(async () => {
