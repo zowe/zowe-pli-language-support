@@ -81,21 +81,19 @@ export function createTokenInstance(
 }
 
 export const keywordMap = new Map<string, TokenType>();
+const keywords: TokenType[] = [];
 
-function registerKeyword(
-  config:
-    | {
-        name?: string;
-        names: string[];
-        categories?: TokenType[];
-      }
-    | {
-        name: string;
-        categories?: TokenType[];
-      },
-): TokenType {
-  const names = "names" in config ? config.names : [config.name];
-  const name = config.name ?? names[0];
+interface KeywordConfig {
+  /**
+   * The keyword name or names (aliases). The first name is the canonical name.
+   */
+  name: string | string[];
+  categories?: TokenType[];
+}
+
+function registerKeyword(config: KeywordConfig): TokenType {
+  const names = Array.isArray(config.name) ? config.name : [config.name];
+  const name = names[0];
   if (!name) {
     throw new Error("Keyword must have at least one, non-empty name");
   }
@@ -107,117 +105,50 @@ function registerKeyword(
   for (const alias of names) {
     keywordMap.set(alias, tokenType);
   }
+  keywords.push(tokenType);
+  return tokenType;
+}
+
+const combinations: TokenType[] = [];
+
+function registerCombination(name: string): TokenType {
+  const tokenType = createToken({
+    name,
+    pattern: Lexer.NA,
+  });
+  combinations.push(tokenType);
   return tokenType;
 }
 
 // Combination tokens (parser optimization)
-export const LinkageOption = createToken({
-  name: "LinkageOption",
-  pattern: Lexer.NA,
-});
-export const NoMapOption = createToken({
-  name: "NoMapOption",
-  pattern: Lexer.NA,
-});
-export const SimpleOptions = createToken({
-  name: "SimpleOptions",
-  pattern: Lexer.NA,
-});
-export const DefaultAttribute = createToken({
-  name: "DefaultAttribute",
-  pattern: Lexer.NA,
-});
-export const DefaultAttributeBinaryOperator = createToken({
-  name: "DefaultAttributeBinaryOperator",
-  pattern: Lexer.NA,
-});
-export const BinaryOperator = createToken({
-  name: "BinaryOperator",
-  pattern: Lexer.NA,
-});
-export const UnaryOperator = createToken({
-  name: "UnaryOperator",
-  pattern: Lexer.NA,
-});
-export const ScopeAttribute = createToken({
-  name: "ScopeAttribute",
-  pattern: Lexer.NA,
-});
-export const AllocateAttributeType = createToken({
-  name: "AllocateAttributeType",
-  pattern: Lexer.NA,
-});
-export const AssignmentOperator = createToken({
-  name: "AssignmentOperator",
-  pattern: Lexer.NA,
-});
-export const KeywordConditions = createToken({
-  name: "KeywordConditions",
-  pattern: Lexer.NA,
-});
-export const FileReferenceConditions = createToken({
-  name: "FileReferenceConditions",
-  pattern: Lexer.NA,
-});
-export const PutAttribute = createToken({
-  name: "PutAttribute",
-  pattern: Lexer.NA,
-});
-export const Varying = createToken({
-  name: "Varying",
-  pattern: Lexer.NA,
-});
-export const Char = createToken({
-  name: "Char",
-  pattern: Lexer.NA,
-});
-export const ReadStatementType = createToken({
-  name: "ReadStatementType",
-  pattern: Lexer.NA,
-});
-export const WriteStatementType = createToken({
-  name: "WriteStatementType",
-  pattern: Lexer.NA,
-});
-export const RewriteStatementType = createToken({
-  name: "RewriteStatementType",
-  pattern: Lexer.NA,
-});
-export const Boolean = createToken({
-  name: "Boolean",
-  pattern: Lexer.NA,
-});
-export const LocateType = createToken({
-  name: "LocateType",
-  pattern: Lexer.NA,
-});
-export const OpenOptionType = createToken({
-  name: "OpenOptionType",
-  pattern: Lexer.NA,
-});
-
-export const combinations = [
-  LinkageOption,
-  NoMapOption,
-  SimpleOptions,
-  DefaultAttribute,
-  DefaultAttributeBinaryOperator,
-  BinaryOperator,
-  UnaryOperator,
-  ScopeAttribute,
-  AllocateAttributeType,
-  AssignmentOperator,
-  KeywordConditions,
-  FileReferenceConditions,
-  PutAttribute,
-  Varying,
-  Char,
-  ReadStatementType,
-  WriteStatementType,
-  Boolean,
-  LocateType,
-  OpenOptionType,
-];
+export const LinkageOption = registerCombination("LinkageOption");
+export const NoMapOption = registerCombination("NoMapOption");
+export const SimpleOptions = registerCombination("SimpleOptions");
+export const DefaultAttribute = registerCombination("DefaultAttribute");
+export const DefaultAttributeBinaryOperator = registerCombination(
+  "DefaultAttributeBinaryOperator",
+);
+export const BinaryOperator = registerCombination("BinaryOperator");
+export const UnaryOperator = registerCombination("UnaryOperator");
+export const ScopeAttribute = registerCombination("ScopeAttribute");
+export const AllocateAttributeType = registerCombination(
+  "AllocateAttributeType",
+);
+export const AssignmentOperator = registerCombination("AssignmentOperator");
+export const KeywordConditions = registerCombination("KeywordConditions");
+export const FileReferenceConditions = registerCombination(
+  "FileReferenceConditions",
+);
+export const PutAttribute = registerCombination("PutAttribute");
+export const Varying = registerCombination("Varying");
+export const Char = registerCombination("Char");
+export const ReadStatementType = registerCombination("ReadStatementType");
+export const WriteStatementType = registerCombination("WriteStatementType");
+export const RewriteStatementType = registerCombination("RewriteStatementType");
+export const Boolean = registerCombination("Boolean");
+export const LocateType = registerCombination("LocateType");
+export const OpenOptionType = registerCombination("OpenOptionType");
+export const VX = registerCombination("VX");
 
 // Custom functions
 
@@ -275,15 +206,15 @@ export const NOCHARGRAPHIC = registerKeyword({
   categories: [SimpleOptions],
 });
 export const NONASSIGNABLE = registerKeyword({
-  names: ["NONASSIGNABLE", "NONASGN"],
+  name: ["NONASSIGNABLE", "NONASGN"],
   categories: [DefaultAttribute],
 });
 export const FIXEDOVERFLOW = registerKeyword({
-  names: ["FIXEDOVERFLOW", "FOFL"],
+  name: ["FIXEDOVERFLOW", "FOFL"],
   categories: [KeywordConditions],
 });
 export const UNDEFINEDFILE = registerKeyword({
-  names: ["UNDEFINEDFILE", "UNDF"],
+  name: ["UNDEFINEDFILE", "UNDF"],
   categories: [FileReferenceConditions],
 });
 export const VALUELISTFROM = registerKeyword({
@@ -302,7 +233,7 @@ export const LITTLEENDIAN = registerKeyword({
   categories: [DefaultAttribute],
 });
 export const ANYCONDITION = registerKeyword({
-  names: ["ANYCONDITION", "ANYCOND"],
+  name: ["ANYCONDITION", "ANYCOND"],
   categories: [KeywordConditions],
 });
 export const CHARGRAPHIC = registerKeyword({
@@ -310,7 +241,7 @@ export const CHARGRAPHIC = registerKeyword({
   categories: [SimpleOptions],
 });
 export const IRREDUCIBLE = registerKeyword({
-  names: ["IRREDUCIBLE", "IRRED"],
+  name: ["IRREDUCIBLE", "IRRED"],
   categories: [SimpleOptions, DefaultAttribute],
 });
 export const DLLINTERNAL = registerKeyword({
@@ -321,7 +252,7 @@ export const UNREACHABLE = registerKeyword({
   name: "UNREACHABLE",
 });
 export const ENVIRONMENT = registerKeyword({
-  names: ["ENVIRONMENT", "ENV"],
+  name: ["ENVIRONMENT", "ENV"],
 });
 export const DESCRIPTORS = registerKeyword({
   name: "DESCRIPTORS",
@@ -351,19 +282,19 @@ export const ASSIGNABLE = registerKeyword({
   categories: [DefaultAttribute],
 });
 export const CONTROLLED = registerKeyword({
-  names: ["CONTROLLED", "CTL"],
+  name: ["CONTROLLED", "CTL"],
   categories: [DefaultAttribute],
 });
 export const NONVARYING = registerKeyword({
-  names: ["NONVARYING", "NONVAR"],
+  name: ["NONVARYING", "NONVAR"],
   categories: [DefaultAttribute, Varying],
 });
 export const SEQUENTIAL = registerKeyword({
-  names: ["SEQUENTIAL", "SEQ"],
+  name: ["SEQUENTIAL", "SEQ"],
   categories: [DefaultAttribute, OpenOptionType],
 });
 export const CONVERSION = registerKeyword({
-  names: ["CONVERSION"],
+  name: ["CONVERSION"],
   categories: [ID, KeywordConditions],
 });
 export const STRINGSIZE = registerKeyword({
@@ -371,7 +302,7 @@ export const STRINGSIZE = registerKeyword({
   categories: [KeywordConditions],
 });
 export const ZERODIVIDE = registerKeyword({
-  names: ["ZERODIVIDE", "ZDIV"],
+  name: ["ZERODIVIDE", "ZDIV"],
   categories: [KeywordConditions],
 });
 export const INITACROSS = registerKeyword({
@@ -393,10 +324,10 @@ export const NOEXECOPS = registerKeyword({
   categories: [SimpleOptions],
 });
 export const DEACTIVATE = registerKeyword({
-  names: ["DEACTIVATE", "DEACT"],
+  name: ["DEACTIVATE", "DEACT"],
 });
 export const REDUCIBLE = registerKeyword({
-  names: ["REDUCIBLE", "RED"],
+  name: ["REDUCIBLE", "RED"],
   categories: [SimpleOptions],
 });
 export const REENTRANT = registerKeyword({
@@ -412,7 +343,7 @@ export const FROMALIEN = registerKeyword({
   categories: [SimpleOptions],
 });
 export const ASSEMBLER = registerKeyword({
-  names: ["ASSEMBLER", "ASM"],
+  name: ["ASSEMBLER", "ASM"],
   categories: [SimpleOptions],
 });
 export const RECURSIVE = registerKeyword({
@@ -420,21 +351,21 @@ export const RECURSIVE = registerKeyword({
   categories: [SimpleOptions],
 });
 export const PROCEDURE = registerKeyword({
-  names: ["PROCEDURE", "PROC", "XPROCEDURE", "XPROC"],
+  name: ["PROCEDURE", "PROC", "XPROCEDURE", "XPROC"],
 });
 export const STATEMENT = registerKeyword({
-  names: ["STATEMENT", "STMT"],
+  name: ["STATEMENT", "STMT"],
 });
 export const CHARACTER = registerKeyword({
-  names: ["CHARACTER", "CHAR"],
-  categories: [DefaultAttribute, AllocateAttributeType],
+  name: ["CHARACTER", "CHAR"],
+  categories: [DefaultAttribute, AllocateAttributeType, Char],
 });
 export const DIMACROSS = registerKeyword({
   name: "DIMACROSS",
   categories: [DefaultAttribute],
 });
 export const AUTOMATIC = registerKeyword({
-  names: ["AUTOMATIC", "AUTO"],
+  name: ["AUTOMATIC", "AUTO"],
   categories: [DefaultAttribute],
 });
 export const BACKWARDS = registerKeyword({
@@ -442,7 +373,7 @@ export const BACKWARDS = registerKeyword({
   categories: [DefaultAttribute],
 });
 export const CONDITION = registerKeyword({
-  names: ["CONDITION", "COND"],
+  name: ["CONDITION", "COND"],
   categories: [DefaultAttribute],
 });
 export const CONNECTED = registerKeyword({
@@ -462,11 +393,11 @@ export const PARAMETER = registerKeyword({
   categories: [DefaultAttribute],
 });
 export const PRECISION = registerKeyword({
-  names: ["PRECISION", "PREC"],
+  name: ["PRECISION", "PREC"],
   categories: [DefaultAttribute],
 });
 export const STRUCTURE = registerKeyword({
-  names: ["STRUCTURE", "STRUCT"],
+  name: ["STRUCTURE", "STRUCT"],
   categories: [DefaultAttribute],
 });
 export const TRANSIENT = registerKeyword({
@@ -474,7 +405,7 @@ export const TRANSIENT = registerKeyword({
   categories: [DefaultAttribute],
 });
 export const UNALIGNED = registerKeyword({
-  names: ["UNALIGNED", "UNAL"],
+  name: ["UNALIGNED", "UNAL"],
   categories: [DefaultAttribute],
 });
 export const BIGENDIAN = registerKeyword({
@@ -494,14 +425,14 @@ export const INVALIDOP = registerKeyword({
   categories: [KeywordConditions],
 });
 export const UNDERFLOW = registerKeyword({
-  names: ["UNDERFLOW", "UFL"],
+  name: ["UNDERFLOW", "UFL"],
   categories: [KeywordConditions],
 });
 export const OTHERWISE = registerKeyword({
-  names: ["OTHERWISE", "OTHER"],
+  name: ["OTHERWISE", "OTHER"],
 });
 export const DIMENSION = registerKeyword({
-  names: ["DIMENSION", "DIM"],
+  name: ["DIMENSION", "DIM"],
 });
 export const VALUELIST = registerKeyword({
   name: "VALUELIST",
@@ -534,7 +465,7 @@ export const NORETURN = registerKeyword({
   categories: [SimpleOptions],
 });
 export const EXTERNAL = registerKeyword({
-  names: ["EXTERNAL", "EXT"],
+  name: ["EXTERNAL", "EXT"],
   categories: [DefaultAttribute],
 });
 export const VARIABLE = registerKeyword({
@@ -542,18 +473,18 @@ export const VARIABLE = registerKeyword({
   categories: [DefaultAttribute],
 });
 export const ALLOCATE = registerKeyword({
-  names: ["ALLOCATE", "ALLOC"],
+  name: ["ALLOCATE", "ALLOC"],
 });
 export const WIDECHAR = registerKeyword({
-  names: ["WIDECHAR", "WCHAR"],
-  categories: [DefaultAttribute, AllocateAttributeType],
+  name: ["WIDECHAR", "WCHAR"],
+  categories: [DefaultAttribute, AllocateAttributeType, Char],
 });
 export const ABNORMAL = registerKeyword({
   name: "ABNORMAL",
   categories: [DefaultAttribute],
 });
 export const BUFFERED = registerKeyword({
-  names: ["BUFFERED", "BUF", "UNBUFFERED", "UNBUF"],
+  name: ["BUFFERED", "BUF", "UNBUFFERED", "UNBUF"],
   categories: [DefaultAttribute, OpenOptionType],
 });
 export const CONSTANT = registerKeyword({
@@ -569,7 +500,7 @@ export const OPTIONAL = registerKeyword({
   categories: [DefaultAttribute],
 });
 export const POSITION = registerKeyword({
-  names: ["POSITION", "POS"],
+  name: ["POSITION", "POS"],
   categories: [DefaultAttribute],
 });
 export const RESERVED = registerKeyword({
@@ -585,21 +516,21 @@ export const VARYING4 = registerKeyword({
   categories: [DefaultAttribute, Varying],
 });
 export const VARYINGZ = registerKeyword({
-  names: ["VARYINGZ", "VARZ"],
+  name: ["VARYINGZ", "VARZ"],
   categories: [DefaultAttribute, Varying],
 });
 export const DOWNTHRU = registerKeyword({
   name: "DOWNTHRU",
 });
 export const INCLUDE = registerKeyword({
-  names: ["INCLUDE", "XINCLUDE"],
+  name: ["INCLUDE", "XINCLUDE"],
 });
 export const INCLUDE_ALT = createToken({
   name: "INCLUDE_ALT",
   pattern: Lexer.NA,
 });
 export const INSCAN = registerKeyword({
-  names: ["INSCAN", "XINSCAN"],
+  name: ["INSCAN", "XINSCAN"],
 });
 export const REPLACE = registerKeyword({
   name: "REPLACE",
@@ -608,7 +539,7 @@ export const NOPRINT = registerKeyword({
   name: "NOPRINT",
 });
 export const OVERFLOW = registerKeyword({
-  names: ["OVERFLOW", "OFL"],
+  name: ["OVERFLOW", "OFL"],
   categories: [KeywordConditions],
 });
 export const TRANSMIT = registerKeyword({
@@ -712,7 +643,7 @@ export const COMPARE = registerKeyword({
   name: "COMPARE",
 });
 export const DEFAULT = registerKeyword({
-  names: ["DEFAULT", "DFT"],
+  name: ["DEFAULT", "DFT"],
 });
 export const ALIGNED = registerKeyword({
   name: "ALIGNED",
@@ -727,7 +658,7 @@ export const COMPLEX = registerKeyword({
   categories: [DefaultAttribute],
 });
 export const DECIMAL = registerKeyword({
-  names: ["DECIMAL", "DEC"],
+  name: ["DECIMAL", "DEC"],
   categories: [DefaultAttribute],
 });
 export const GENERIC = registerKeyword({
@@ -742,11 +673,11 @@ export const OUTONLY = registerKeyword({
   categories: [DefaultAttribute],
 });
 export const POINTER = registerKeyword({
-  names: ["POINTER", "PTR"],
+  name: ["POINTER", "PTR"],
   categories: [DefaultAttribute],
 });
 export const VARYING = registerKeyword({
-  names: ["VARYING", "VAR"],
+  name: ["VARYING", "VAR"],
   categories: [DefaultAttribute, Varying],
 });
 export const ORDINAL = registerKeyword({
@@ -762,7 +693,7 @@ export const ITERATE = registerKeyword({
   name: "ITERATE",
 });
 export const ACTIVATE = registerKeyword({
-  names: ["ACTIVATE", "ACT"],
+  name: ["ACTIVATE", "ACT"],
 });
 export const NORESCAN = registerKeyword({
   name: "NORESCAN",
@@ -794,13 +725,13 @@ export const REWRITE = registerKeyword({
   name: "REWRITE",
 });
 export const INITIAL = registerKeyword({
-  names: ["INITIAL", "INIT"],
+  name: ["INITIAL", "INIT"],
 });
 export const DECLARE = registerKeyword({
-  names: ["DECLARE", "DCL", "XDECLARE", "XDCL"],
+  name: ["DECLARE", "DCL", "XDECLARE", "XDCL"],
 });
 export const PICTURE = registerKeyword({
-  names: ["PICTURE", "PIC"],
+  name: ["PICTURE", "PIC"],
 });
 export const WIDEPIC = registerKeyword({
   name: "WIDEPIC",
@@ -831,10 +762,10 @@ export const ATTACH = registerKeyword({
   name: "ATTACH",
 });
 export const ANSWER = registerKeyword({
-  names: ["ANSWER", "ANS"],
+  name: ["ANSWER", "ANS"],
 });
 export const MARGINS = registerKeyword({
-  names: ["MARGINS", "MAR"],
+  name: ["MARGINS", "MAR"],
 });
 export const THREAD = registerKeyword({
   name: "THREAD",
@@ -846,7 +777,7 @@ export const CANCEL = registerKeyword({
   name: "CANCEL",
 });
 export const BINARY = registerKeyword({
-  names: ["BINARY", "BIN"],
+  name: ["BINARY", "BIN"],
   categories: [DefaultAttribute],
 });
 export const FORMAT = registerKeyword({
@@ -901,10 +832,10 @@ export const UPDATE = registerKeyword({
   categories: [DefaultAttribute, OpenOptionType],
 });
 export const DEFINE = registerKeyword({
-  names: ["DEFINE", "XDEFINE"],
+  name: ["DEFINE", "XDEFINE"],
 });
 export const DEFINED = registerKeyword({
-  names: ["DEFINED", "DEF"],
+  name: ["DEFINED", "DEF"],
 });
 export const DELETE = registerKeyword({
   name: "DELETE",
@@ -919,7 +850,7 @@ export const REPEAT = registerKeyword({
   name: "REPEAT",
 });
 export const COLUMN = registerKeyword({
-  names: ["COLUMN", "COL"],
+  name: ["COLUMN", "COL"],
 });
 export const STRING = registerKeyword({
   name: "STRING",
@@ -974,7 +905,7 @@ export const NOMAP = registerKeyword({
   categories: [NoMapOption],
 });
 export const ORDER = registerKeyword({
-  names: ["ORDER", "REORDER"],
+  name: ["ORDER", "REORDER"],
   categories: [SimpleOptions],
 });
 export const COBOL = registerKeyword({
@@ -1228,7 +1159,7 @@ export const FROM = registerKeyword({
   categories: [WriteStatementType, RewriteStatementType],
 });
 export const LOOP = registerKeyword({
-  names: ["LOOP", "FOREVER"],
+  name: ["LOOP", "FOREVER"],
 });
 export const WHEN = registerKeyword({
   name: "WHEN",
@@ -1298,9 +1229,17 @@ export const GET = registerKeyword({
 export const PUT = registerKeyword({
   name: "PUT",
 });
-export const VX = registerKeyword({
-  name: "VX",
-  names: ["V1", "V2", "V3"],
+export const V1 = registerKeyword({
+  name: "V1",
+  categories: [VX],
+});
+export const V2 = registerKeyword({
+  name: "V2",
+  categories: [VX],
+});
+export const V3 = registerKeyword({
+  name: "V3",
+  categories: [VX],
 });
 export const IN = registerKeyword({
   name: "IN",
@@ -1527,288 +1466,10 @@ export const terminals = [
   SL_COMMENT,
 ];
 
-export const keywords = [
-  SUBSCRIPTRANGE,
-  NOCHARGRAPHIC,
-  NONASSIGNABLE,
-  FIXEDOVERFLOW,
-  UNDEFINEDFILE,
-  VALUELISTFROM,
-  NODESCRIPTOR,
-  NONCONNECTED,
-  LITTLEENDIAN,
-  ANYCONDITION,
-  CHARGRAPHIC,
-  IRREDUCIBLE,
-  DLLINTERNAL,
-  UNREACHABLE,
-  ENVIRONMENT,
-  DESCRIPTORS,
-  CONFORMANCE,
-  STRINGRANGE,
-  DESCRIPTOR,
-  XMLCONTENT,
-  JSONIGNORE,
-  ASSIGNABLE,
-  CONTROLLED,
-  NONVARYING,
-  SEQUENTIAL,
-  CONVERSION,
-  STRINGSIZE,
-  ZERODIVIDE,
-  INITACROSS,
-  VALUERANGE,
-  DEACTIVATE,
-  NOEXECOPS,
-  XMLIGNORE,
-  JSONTRIMR,
-  REDUCIBLE,
-  REENTRANT,
-  STATEMENT,
-  FETCHABLE,
-  FROMALIEN,
-  ASSEMBLER,
-  RECURSIVE,
-  PROCEDURE,
-  CHARACTER,
-  DIMACROSS,
-  AUTOMATIC,
-  BACKWARDS,
-  CONDITION,
-  CONNECTED,
-  EXCLUSIVE,
-  NONNATIVE,
-  PARAMETER,
-  PRECISION,
-  STRUCTURE,
-  TRANSIENT,
-  UNALIGNED,
-  BIGENDIAN,
-  ASSERTION,
-  ATTENTION,
-  INVALIDOP,
-  UNDERFLOW,
-  OTHERWISE,
-  DIMENSION,
-  VALUELIST,
-  RESERVES,
-  JSONNAME,
-  JSONOMIT,
-  JSONNULL,
-  NOMAPOUT,
-  NOINLINE,
-  NORETURN,
-  EXTERNAL,
-  VARIABLE,
-  ALLOCATE,
-  WIDECHAR,
-  ABNORMAL,
-  BUFFERED,
-  CONSTANT,
-  INTERNAL,
-  OPTIONAL,
-  POSITION,
-  RESERVED,
-  UNSIGNED,
-  VARYING4,
-  VARYINGZ,
-  DOWNTHRU,
-  RESIGNAL,
-  INCLUDE,
+export const operators = [
   INCLUDE_ALT,
-  NOPRINT,
-  REPLACE,
-  OVERFLOW,
-  TRANSMIT,
-  LINESIZE,
-  PAGESIZE,
-  ACTIVATE,
-  NORESCAN,
-  PROCESS,
-  PROCINC,
-  XMLNAME,
-  XMLATTR,
-  XMLOMIT,
-  PACKAGE,
-  EXPORTS,
-  OPTIONS,
-  LINKAGE,
-  OPTLINK,
-  STDCALL,
-  NOMAPIN,
-  FORTRAN,
-  BYVALUE,
-  AMODE31,
-  AMODE64,
-  RETCODE,
-  WINMAIN,
-  DYNAMIC,
-  LIMITED,
-  GRAPHIC,
-  COMPARE,
-  DEFAULT,
-  ALIGNED,
-  BUILTIN,
-  COMPLEX,
-  GENERIC,
-  HEXADEC,
-  OUTONLY,
-  POINTER,
-  VARYING,
-  ORDINAL,
-  DISPLAY,
-  ROUTCDE,
-  ITERATE,
-  KEYFROM,
-  STORAGE,
-  ENDFILE,
-  ENDPAGE,
-  QUALIFY,
-  RELEASE,
-  REWRITE,
-  INITIAL,
-  DECLARE,
-  DECIMAL,
-  PICTURE,
-  WIDEPIC,
-  RETURNS,
-  SYSTEM,
-  INSCAN,
-  INLINE,
-  BYADDR,
-  STATIC,
-  ASSERT,
-  ATTACH,
-  THREAD,
-  TSTACK,
-  CANCEL,
-  BINARY,
-  FORMAT,
-  INONLY,
-  INDFOR,
-  MEMBER,
-  NATIVE,
-  NORMAL,
-  OFFSET,
-  OUTPUT,
-  RECORD,
-  SIGNED,
-  STREAM,
-  UPDATE,
-  DEFINE,
-  DEFINED,
-  DELETE,
-  DETACH,
-  UPTHRU,
-  REPEAT,
-  COLUMN,
-  NOSCAN,
-  RESCAN,
-  STRING,
-  LOCATE,
-  FINISH,
-  DIRECT,
-  IGNORE,
-  REINIT,
-  RETURN,
-  SELECT,
-  SIGNAL,
-  HANDLE,
-  CDECL,
-  CMPAT,
-  NOMAP,
-  ORDER,
-  COBOL,
-  INTER,
-  ENTRY,
-  UCHAR,
-  FALSE,
-  BEGIN,
-  CLOSE,
-  RANGE,
-  BASED,
-  EVENT,
-  FIXED,
-  FLOAT,
-  INOUT,
-  INPUT,
-  KEYED,
-  LABEL,
-  PRINT,
-  UNION,
-  ALIAS,
-  VALUE,
-  DELAY,
-  REPLY,
-  WHILE,
-  UNTIL,
-  FETCH,
-  TITLE,
-  FLUSH,
-  LEAVE,
-  ERROR,
-  PUSH,
-  KEYTO,
-  REVERT,
-  WRITE,
-  REFER,
-  NOTE,
-  MAIN,
-  RENT,
-  AREA,
-  TRUE,
-  TEXT,
-  NAME,
-  CALL,
-  FILE,
-  IEEE,
-  LIST,
-  REAL,
-  TASK,
-  DESC,
-  EXEC,
-  EXIT,
-  LINE,
-  PAGE,
-  SKIP,
-  SCAN,
-  FREE,
-  COPY,
-  GOTO,
-  THEN,
-  ELSE,
-  SNAP,
-  SIZE,
-  OPEN,
-  DATA,
-  EDIT,
-  WITH,
-  READ,
-  INTO,
-  FROM,
-  LOOP,
-  WHEN,
-  STOP,
-  WAIT,
-  DATE,
-  TYPE,
-  LIKE,
-  POP,
-  SET,
-  BIT,
   PipePipeEquals,
   StarStarEquals,
-  END,
-  AND,
-  NOT,
-  HEX,
-  INT,
-  KEY,
-  GET,
-  PUT,
-  VX,
-  IN,
-  BY,
   PlusEquals,
   MinusEquals,
   StarEquals,
@@ -1817,12 +1478,6 @@ export const keywords = [
   AmpersandEquals,
   NotEquals,
   LessThanGreaterThan,
-  OR,
-  DO,
-  TO,
-  GO,
-  IF,
-  ON,
   NotLessThan,
   LessThanEquals,
   GreaterThanEquals,
@@ -1838,17 +1493,6 @@ export const keywords = [
   Comma,
   Star,
   Equals,
-  A,
-  B,
-  C,
-  F,
-  E,
-  G,
-  P,
-  L,
-  R,
-  V,
-  X,
   Pipe,
   Not,
   Ampersand,
@@ -1866,6 +1510,7 @@ export const all = [
   ExecFragment,
   ...combinations,
   ...keywords,
+  ...operators,
   ID,
   NUMBER,
   STRING_TERM,
