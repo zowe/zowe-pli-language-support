@@ -14,4 +14,4 @@
 // @wrap: main
 //// DCL ANYTHING PRECISION(10, 5);
 
-verify.noDiagnostics();
+verify.noDiagnostics(undefined, ...code.TypeSystem);

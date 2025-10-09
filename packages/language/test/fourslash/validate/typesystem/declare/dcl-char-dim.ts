@@ -14,4 +14,4 @@
 // @wrap: main
 //// DCL ANYTHING CHARACTER(10);
 
-verify.noDiagnostics();
+verify.noDiagnostics(undefined, ...code.TypeSystem);

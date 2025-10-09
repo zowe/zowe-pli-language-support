@@ -10,7 +10,7 @@
  */
 
 import { Severity } from "../../language-server/types";
-import { ParametricPLICode } from "./pli-codes";
+import { ParametricPLICode, PLICode, Error } from "./pli-codes";
 
 export const Internal = {
   DiagnosticURIMismatch: {
@@ -21,3 +21,10 @@ export const Internal = {
     fullCode: "_TB0001E",
   } as ParametricPLICode,
 };
+
+export const TypeSystem: PLICode[] = [
+  Error.IBM1309I,
+  Error.IBM2462I,
+  Error.IBM2424I,
+  Error.IBM1482I,
+];

@@ -17,6 +17,7 @@ import { HarnessTesterInterface } from "../harness-interface";
 import { HarnessCodes } from "./codes";
 import { HarnessConstants } from "./constants";
 import { generateIncludeItemMarkup } from "../../../src/language-server/hover-request";
+import { PLICode } from "../../../src/validation/messages/pli-codes";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -44,10 +45,10 @@ export function createTestBuilderHarnessImplementation(
         testBuilder.expectExclusiveDiagnosticsAt(label.toString(), diagnostics),
       expectDiagnosticsAt: (label, diagnostics) =>
         testBuilder.expectDiagnosticsAt(label, diagnostics),
-      noDiagnostics: (label) =>
+      noDiagnostics: (label, ...errorCodes: PLICode[]) =>
         label !== undefined
-          ? testBuilder.expectNoDiagnosticsAt(label)
-          : testBuilder.expectNoDiagnostics(),
+          ? testBuilder.expectNoDiagnosticsAt(label, ...errorCodes)
+          : testBuilder.expectNoDiagnostics(...errorCodes),
       noDiagnosticsExcept: (regex: RegExp[] | string[]) =>
         testBuilder.noDiagnosticsExcept(regex),
       noDiagnosticsExceptAt: (label, regex: RegExp[] | string[]) =>

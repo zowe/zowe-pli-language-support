@@ -14,4 +14,4 @@
 // @wrap: main
 //// DCL ANYTHING FIXED;
 
-verify.noDiagnostics();
+verify.noDiagnostics(undefined, ...code.TypeSystem);

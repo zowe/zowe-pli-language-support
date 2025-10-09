@@ -18,4 +18,4 @@
 //// IF FALSE THEN
 ////   ANYTHING = 1;
 
-verify.noDiagnostics();
+verify.noDiagnostics(undefined, ...code.TypeSystem);

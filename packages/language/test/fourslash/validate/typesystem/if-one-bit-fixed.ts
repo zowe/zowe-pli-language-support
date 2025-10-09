@@ -17,4 +17,4 @@
 //// IF BIT THEN
 ////   BIT = 0;
 
-verify.noDiagnostics();
+verify.noDiagnostics(undefined, ...code.TypeSystem);
