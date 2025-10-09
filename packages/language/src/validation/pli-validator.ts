@@ -377,19 +377,8 @@ export class PliValidator implements Validator {
     }
   }
 
-  private knownBuiltins = new Set([
-    "TRUE",
-    "FALSE",
-
-    "SQLCA",
-    "SQLDA",
-    "SQLDA2",
-    "SQLSIZE",
-    "SQLDAPTR",
-    "SQLTRIPLED",
-    "SQLDOUBLED",
-    "SQLSINGLED",
-  ]);
+  // Builtins after this offset are valid to be used even if not listed
+  private knownBuiltinsOffset = 0;
 
   checkImplicitBuiltins(
     node: AST.ReferenceItem,
@@ -405,18 +394,29 @@ export class PliValidator implements Validator {
       return;
     }
 
+    const nameToken = node.ref?.node?.nameToken;
+    const uri = nameToken?.uri;
+
     // Check if the reference item is a builtin.
-    if (node.ref?.node?.nameToken?.uri?.scheme !== BuiltinsUriSchema) {
+    if (!nameToken || !uri || uri?.scheme !== BuiltinsUriSchema) {
       return;
     }
 
-    if (node.container?.kind === AST.SyntaxKind.ReferenceItem) {
-      return; // skip qualified names
+    // This is a rather hacky way to determine what are "valid" builtins
+    // We should have a separate file for that
+    // TODO: Refactor this, probably when fixing the LSP features for builtins
+    if (this.knownBuiltinsOffset === 0) {
+      const file = this.compilationUnit.files.getDocument(uri);
+      if (!file) {
+        return;
+      }
+      const text = file.getText();
+      this.knownBuiltinsOffset = text.indexOf("/* Known Builtins */");
     }
 
-    const name = node.ref.node.name.toUpperCase();
+    const name = nameToken.image;
     if (
-      !this.knownBuiltins.has(name) &&
+      nameToken.startOffset < this.knownBuiltinsOffset &&
       !this.processGroup.implicitBuiltins.has(name)
     ) {
       acceptor({

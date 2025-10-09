@@ -339,7 +339,7 @@ export const Builtins =
  DATE: PROC () RETURNS ();
  END;
 
- DATEIME: PROC () RETURNS ();
+ DATETIME: PROC () RETURNS ();
  END;
 
  DAYS: PROC () RETURNS ();
@@ -813,6 +813,7 @@ export const Builtins =
  PLISTCKEUTC: PROC (value) RETURNS (); END;
  PLITRANxy: PROC (value) RETURNS (); END;
 
+ /* Known Builtins */
 
  define alias __SIGNED_INT signed fixed bin(31,0);
  define alias __UNSIGNED_INT unsigned fixed bin(32,0);
