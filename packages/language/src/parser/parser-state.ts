@@ -10,17 +10,22 @@
  */
 
 import { tokenMatcher, TokenType } from "chevrotain";
-import { PreprocessorTokens } from "../preprocessor/pli-preprocessor-tokens";
 import { SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { Token } from "./tokens";
-import { diagnostic, Diagnostic, Severity } from "../language-server/types";
+import * as t from "./tokens";
+import {
+  diagnostic,
+  Diagnostic,
+  diagnosticFromCode,
+  Severity,
+} from "../language-server/types";
+import { PLICodes } from "../validation/messages";
 
-export function preprocessorParserState(tokens: Token[]): ParserState {
+export function preprocessorParserState(tokens: t.Token[]): ParserState {
   return new ParserState(tokens, ParserStateMode.Preprocessor);
 }
 
-export function finalParserState(tokens: Token[]): ParserState {
+export function finalParserState(tokens: t.Token[]): ParserState {
   return new ParserState(tokens, ParserStateMode.Final);
 }
 
@@ -30,7 +35,7 @@ export enum ParserStateMode {
 }
 
 export class ParserState {
-  readonly tokens: Token[];
+  readonly tokens: t.Token[];
   readonly mode: ParserStateMode;
   readonly diagnostics: Diagnostic[];
   public index: number;
@@ -38,7 +43,7 @@ export class ParserState {
 
   private inProcedure = false;
 
-  constructor(tokens: Token[], mode: ParserStateMode) {
+  constructor(tokens: t.Token[], mode: ParserStateMode) {
     this.tokens = tokens;
     this.mode = mode;
     this.diagnostics = [];
@@ -53,16 +58,16 @@ export class ParserState {
     this.inProcedure = false;
   }
 
-  lookahead(la: number): Token | undefined {
+  peek(la: number): t.Token | undefined {
     const index = this.index + la - 1;
     return this.tokens[index];
   }
 
-  get token(): Token | undefined {
+  get token(): t.Token | undefined {
     return this.tokens[this.index];
   }
 
-  get last(): Token | undefined {
+  get last(): t.Token | undefined {
     return this.tokens[this.index - 1];
   }
 
@@ -99,7 +104,7 @@ export class ParserState {
   error(
     message?: string,
     token = this.token || this.last,
-    severity = Severity.E,
+    severity = Severity.S,
   ) {
     if (!this.inError) {
       const msg =
@@ -136,10 +141,10 @@ export class ParserState {
       if (token.startLine !== currentLine) {
         // Moved to next line, stop here
         break;
-      } else if (tokenMatcher(token, PreprocessorTokens.Semicolon)) {
+      } else if (tokenMatcher(token, t.Semicolon)) {
         this.index++;
         break;
-      } else if (tokenMatcher(token, PreprocessorTokens.Percentage)) {
+      } else if (tokenMatcher(token, t.Percent)) {
         break;
       } else {
         this.index++;
@@ -151,7 +156,7 @@ export class ParserState {
     element: SyntaxNode | undefined,
     kind: CstNodeKind | undefined,
     tokenType: TokenType,
-  ): Token | null {
+  ): t.Token | null {
     if (!this.canConsume(tokenType)) {
       return null;
     }
@@ -166,11 +171,11 @@ export class ParserState {
     element: SyntaxNode | undefined,
     kind: CstNodeKind | undefined,
     tokenType: TokenType,
-  ): Token | null {
+  ): t.Token | null {
     const token = this.token;
     if (!token || !this.canConsume(tokenType)) {
       if (!this.inError) {
-        const message = `Expected token '${tokenType.name}', but received ${generateTokenErrorName(token)} instead.`;
+        const message = `Expected token "${tokenType.name}", but received ${generateTokenErrorName(token)} instead.`;
         this.error(message);
       }
       return null;
@@ -185,58 +190,50 @@ export class ParserState {
   }
 
   canConsumeKeyword(...tokenTypes: TokenType[]): boolean {
-    if (!this.isInProcedure()) {
-      tokenTypes = [PreprocessorTokens.Percentage, ...tokenTypes];
+    const withPercent = this.canConsume(t.Percent, ...tokenTypes);
+    if (this.isInProcedure()) {
+      // In a procedure, we should only consume the tokens if there's no percentage sign
+      // However, if there's a percentage sign, we should still return true to indicate
+      // that the tokens can be consumed, and then show an error on the percent token
+      return withPercent || this.canConsume(...tokenTypes);
+    } else {
+      return withPercent;
     }
-    return this.canConsume(...tokenTypes);
   }
 
   tryConsumeKeyword(
     element: SyntaxNode | undefined,
     kind: CstNodeKind | undefined,
     tokenType: TokenType,
-  ): Token | null {
-    const percentage = !this.isInProcedure();
-    const start = this.index;
-    if (percentage) {
-      if (!this.canConsume(PreprocessorTokens.Percentage)) {
-        return null;
-      }
-      // Increment, so the next canConsume operates on the actual requested token type
-      this.index++;
-    }
-    if (!this.canConsume(tokenType)) {
-      this.index = start;
+  ): t.Token | null {
+    if (this.canConsumeKeyword(tokenType)) {
+      return this.consumeKeyword(element, kind, tokenType);
+    } else {
       return null;
     }
-    this.index = start;
-    if (percentage) {
-      this.consume(
-        element,
-        CstNodeKind.Percentage,
-        PreprocessorTokens.Percentage,
-      );
-    }
-    return this.consume(element, kind, tokenType);
   }
 
   consumeKeyword(
     element: SyntaxNode | undefined,
     kind: CstNodeKind | undefined,
     tokenType: TokenType,
-  ): Token | null {
+  ): t.Token | null {
     if (!this.isInProcedure()) {
-      this.consume(
-        element,
-        CstNodeKind.Percentage,
-        PreprocessorTokens.Percentage,
+      // If were outside of a procedure, we must have a percent token
+      this.consume(element, CstNodeKind.Percentage, t.Percent);
+    } else if (this.canConsume(t.Percent)) {
+      // If we're inside a procedure, there shouldn't be a percent token
+      // but if there is one, consume it and show an error
+      const percent = this.consume(element, CstNodeKind.Percentage, t.Percent);
+      this.diagnostics.push(
+        diagnosticFromCode(PLICodes.Severe.IBM3762I, percent),
       );
     }
     return this.consume(element, kind, tokenType);
   }
 }
 
-export function generateTokenErrorName(token: Token | undefined): string {
+export function generateTokenErrorName(token: t.Token | undefined): string {
   if (!token) {
     return "end of file";
   } else {

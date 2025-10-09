@@ -11,6 +11,7 @@
 
 import { Range } from "../language-server/types";
 import { Token } from "../parser/tokens";
+import { isObject } from "../utils/types";
 
 export enum SyntaxKind {
   // Preprocessor AST
@@ -162,7 +163,7 @@ export enum SyntaxKind {
   Parenthesis,
   PFormatItem,
   PictureAttribute,
-  PliProgram,
+  Program,
   PopDirective,
   PrefixedAttribute,
   PrintDirective,
@@ -222,6 +223,14 @@ export enum SyntaxKind {
 export interface AstNode {
   container: SyntaxNode | null;
   kind: SyntaxKind;
+}
+
+export function isSyntaxNode(node: unknown): node is SyntaxNode {
+  return (
+    isObject<AstNode>(node) &&
+    typeof node.kind === "number" &&
+    typeof node.container === "object"
+  );
 }
 
 export interface Reference<T extends SyntaxNode = SyntaxNode> {
@@ -410,7 +419,7 @@ export type SyntaxNode =
   | Parenthesis
   | PFormatItem
   | PictureAttribute
-  | PliProgram
+  | Program
   | PopDirective
   | PrefixedAttribute
   | PrintDirective
@@ -1962,8 +1971,8 @@ export interface PictureAttribute extends AstNode {
   picture: string | null;
   pictureToken: Token | null;
 }
-export interface PliProgram extends AstNode {
-  kind: SyntaxKind.PliProgram;
+export interface Program extends AstNode {
+  kind: SyntaxKind.Program;
   statements: Statement[];
 }
 export interface PopDirective extends AstNode {

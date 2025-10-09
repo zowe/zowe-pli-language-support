@@ -20,12 +20,14 @@ import { CompilerOptionsCodes } from "../../src/preprocessor/compiler-options/co
 import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
 import { TypeSystem } from "../../src/validation/messages/internal-codes";
 import { PLICode } from "../../src/validation/messages/pli-codes";
+import { SyntaxKind } from "../../src/syntax-tree/ast";
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
 export type Not<T> = Omit<T, "not">;
 
 export interface HarnessTesterInterface {
+  Syntax: typeof SyntaxKind;
   testAPI: {
     /**
      * Expose the test builder.
@@ -104,6 +106,19 @@ export interface HarnessTesterInterface {
      * @param expectedOptions The expected compiler options.
      */
     expectCompilerOptions(expectedOptions: Partial<CompilerOptions>): void;
+
+    /**
+     * TODO: Fix the type of statements. This isn't trivial, since we transform the actual AST before comparing it.
+     * Expect that the parsed AST matches the given statements.
+     * @param statements The expected statements.
+     */
+    expectAst(...statements: any[]): void;
+
+    /**
+     * Expect that the parsed preprocessor AST matches the given statements.
+     * @param statements The expected statements.
+     */
+    expectPPAst(...statements: any[]): void;
   };
 
   linker: {

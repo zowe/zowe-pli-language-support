@@ -19,7 +19,12 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import * as t from "./tokens";
 import { performAssignmentLookahead } from "./parser";
 import { tokenMatcher, TokenType } from "chevrotain";
-import { diagnostic, Severity } from "../language-server/types";
+import {
+  diagnostic,
+  diagnosticFromCode,
+  Severity,
+} from "../language-server/types";
+import { PLICodes } from "../validation/messages";
 
 export function consumeTokenStatement(state: ParserState): ast.Statement {
   const tokenStatement = ast.createTokenStatement();
@@ -44,35 +49,81 @@ export function consumeTokenStatement(state: ParserState): ast.Statement {
   return statement;
 }
 
-export function statement(state: ParserState): ast.Statement | null {
+export function statement(state: ParserState): ast.Statement | null;
+export function statement(
+  state: ParserState,
+  withEnd: true,
+  endPercent: boolean,
+): ast.Statement | ast.EndStatement | null;
+export function statement(
+  state: ParserState,
+  withEnd?: true,
+  endPercent?: boolean,
+): ast.Statement | ast.EndStatement | null {
+  let end = withEnd ?? false;
+  let endP = endPercent ?? false;
   if (!state.isInProcedure()) {
     if (state.tryConsume(undefined, CstNodeKind.Percentage, t.Percent)) {
-      return commonStatement(state);
+      return commonStatement(state, end, endP);
     } else {
       return consumeTokenStatement(state);
     }
   } else {
     //state.isInProcedure()
-    return commonStatement(state);
+    return commonStatement(state, end, endP);
   }
 }
 
-export function commonStatement(state: ParserState): ast.Statement | null {
-  const statement = ast.createStatement();
+function labels(state: ParserState): ast.LabelPrefix[] {
+  const labels: ast.LabelPrefix[] = [];
   while (state.canConsume(t.ID, t.Colon)) {
     const label = ast.createLabelPrefix();
     const labelToken = state.consume(label, CstNodeKind.LabelPrefix_Name, t.ID);
     label.name = labelToken?.image ?? null;
     label.nameToken = labelToken;
     state.consume(label, CstNodeKind.LabelPrefix_Colon, t.Colon);
-    statement.labels.push(label);
+    labels.push(label);
   }
+  return labels;
+}
+
+/**
+ * @param state
+ * @param withEnd Whether the `END` statement is allowed
+ * @param endPercent Whether the `END` statement must be prefixed with a `%` (even in a procedure)
+ * @returns
+ */
+export function commonStatement(
+  state: ParserState,
+  withEnd: boolean,
+  endPercent: boolean,
+): ast.Statement | ast.EndStatement | null {
+  const statement = ast.createStatement();
+  let startPercent: t.Token | null = null;
+  if (state.isInProcedure()) {
+    // In some cases, we enter this function with the current token being a `%`
+    // This might be due to errors in the input, or if we are parsing a procedure end statement
+    // After parsing the "unit" below, we will check if we have a `%END` statement
+    // Only then will we actually know whether this token is invalid
+    startPercent = state.tryConsume(
+      statement,
+      CstNodeKind.Percentage,
+      t.Percent,
+    );
+  }
+  const stmtLabels = labels(state);
+  statement.labels = stmtLabels;
   let unit: ast.Unit | null = null;
-  if (performAssignmentLookahead((la) => state.lookahead(la))) {
+  let endStmt: ast.EndStatement | null = null;
+  if (performAssignmentLookahead((la) => state.peek(la))) {
     unit = assignmentStatement(state);
   } else if (state.isInProcedure()) {
-    // TODO: Handle missing preprocessor procedure statements: SELECT
     switch (state.token?.tokenTypeIdx) {
+      case t.END.tokenTypeIdx:
+        if (withEnd) {
+          endStmt = endStatement(state, stmtLabels);
+        }
+        break;
       case t.ANSWER.tokenTypeIdx:
         unit = answerStatement(state);
         break;
@@ -84,6 +135,9 @@ export function commonStatement(state: ParserState): ast.Statement | null {
         break;
       case t.DO.tokenTypeIdx:
         unit = doStatement(state);
+        break;
+      case t.SELECT.tokenTypeIdx:
+        unit = selectStatement(state);
         break;
       case t.GO.tokenTypeIdx:
       case t.GOTO.tokenTypeIdx:
@@ -110,6 +164,11 @@ export function commonStatement(state: ParserState): ast.Statement | null {
     }
   } else {
     switch (state.token?.tokenTypeIdx) {
+      case t.END.tokenTypeIdx:
+        if (withEnd) {
+          endStmt = endStatement(state, stmtLabels);
+        }
+        break;
       case t.Semicolon.tokenTypeIdx:
         unit = nullStatement(state);
         break;
@@ -184,6 +243,17 @@ export function commonStatement(state: ParserState): ast.Statement | null {
         break;
     }
   }
+  // Recover at the end of a statement, noop if not in error case
+  state.recover();
+  if (endStmt) {
+    if (!endPercent && startPercent) {
+      // We have a starting percent, but don't require it for the %END statement
+      state.diagnostics.push(
+        diagnosticFromCode(PLICodes.Severe.IBM3762I, startPercent),
+      );
+    }
+    return endStmt;
+  }
   if (!unit) {
     state.diagnostics.push(
       diagnostic(
@@ -192,11 +262,13 @@ export function commonStatement(state: ParserState): ast.Statement | null {
         state.token || state.last,
       ),
     );
+  } else if (startPercent) {
+    // We have a starting percent, but didn't parse a %END statement, this is always an error
+    state.diagnostics.push(
+      diagnosticFromCode(PLICodes.Severe.IBM3762I, startPercent),
+    );
   }
-  if (state.inError) {
-    // Recover at the end of a statement
-    state.recover();
-  }
+
   statement.value = unit;
   return statement;
 }
@@ -333,16 +405,9 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
     CstNodeKind.ProcedureStatement_Semicolon0,
     t.Semicolon,
   );
-  const body = statements(state);
-  statement.statements = body;
-  // Manually consume the percentage sign before the end
-  state.consume(statement, CstNodeKind.Percentage, t.Percent);
-  state.consume(statement, CstNodeKind.ProcedureStatement_PROCEDURE_END, t.END);
-  state.consume(
-    statement,
-    CstNodeKind.ProcedureStatement_Semicolon1,
-    t.Semicolon,
-  );
+  const body = statements(state, true);
+  statement.statements = body.statements;
+  statement.end = body.end;
   return statement;
 }
 
@@ -597,11 +662,26 @@ function inscanStatement(state: ParserState): ast.InscanDirective {
   return directive;
 }
 
-function endStatement(state: ParserState): ast.EndStatement {
+function endStatement(
+  state: ParserState,
+  existingLabels?: ast.LabelPrefix[],
+): ast.EndStatement {
   const statement = ast.createEndStatement();
-
-  state.consumeKeyword(statement, CstNodeKind.EndStatement_END, t.END);
-
+  // Assign existing labels if provided
+  // Otherwise, parse new labels
+  statement.labels = existingLabels ?? labels(state);
+  state.consume(statement, CstNodeKind.EndStatement_END, t.END);
+  if (state.canConsume(t.ID)) {
+    const label = ast.createLabelReference();
+    statement.label = label;
+    const labelToken = state.consume(
+      label,
+      CstNodeKind.LabelReference_LabelRef,
+      t.ID,
+    );
+    label.label = ast.createReference(label, labelToken, true);
+  }
+  state.consume(statement, CstNodeKind.EndStatement_Semicolon, t.Semicolon);
   return statement;
 }
 
@@ -613,10 +693,9 @@ function doStatement(state: ParserState): ast.DoStatement {
     // skip command
     state.consume(statement, CstNodeKind.DoStatement_SKIP, t.SKIP);
     state.consume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon);
-    statements(state);
     statement.skip = true;
-    statement.end = endStatement(state);
-    state.consume(statement, CstNodeKind.DoStatement_Semicolon1, t.Semicolon);
+    const body = statements(state);
+    statement.end = body.end;
     return statement;
   } else if (state.canConsume(t.WHILE)) {
     //type-2-do-while-first
@@ -624,18 +703,16 @@ function doStatement(state: ParserState): ast.DoStatement {
     state.consume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon);
     const body = statements(state);
     statement.doType2 = type2;
-    statement.statements = body;
-    statement.end = endStatement(state);
-    state.consume(statement, CstNodeKind.DoStatement_Semicolon1, t.Semicolon);
+    statement.statements = body.statements;
+    statement.end = body.end;
   } else if (state.canConsume(t.UNTIL)) {
     //type-2-do-until-first
     const type2 = doUntil(state);
     state.consume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon);
     const body = statements(state);
     statement.doType2 = type2;
-    statement.statements = body;
-    statement.end = endStatement(state);
-    state.consume(statement, CstNodeKind.DoStatement_Semicolon1, t.Semicolon);
+    statement.statements = body.statements;
+    statement.end = body.end;
   } else if (
     state.tryConsume(statement, CstNodeKind.DoStatement_LOOP, t.LOOP)
   ) {
@@ -643,26 +720,23 @@ function doStatement(state: ParserState): ast.DoStatement {
     statement.doType4 = true;
     state.consume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon);
     const body = statements(state);
-    statement.statements = body;
-    statement.end = endStatement(state);
-    state.consume(statement, CstNodeKind.DoStatement_Semicolon1, t.Semicolon);
+    statement.statements = body.statements;
+    statement.end = body.end;
   } else if (state.canConsume(t.ID)) {
     // type-3-do
     const type3 = doType3(state);
     state.consume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon);
     const body = statements(state);
     statement.doType3 = type3;
-    statement.statements = body;
-    statement.end = endStatement(state);
-    state.consume(statement, CstNodeKind.DoStatement_Semicolon1, t.Semicolon);
+    statement.statements = body.statements;
+    statement.end = body.end;
   } else if (
     state.tryConsume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon)
   ) {
     //type-1-do
-    const stmts = statements(state);
-    statement.statements = stmts;
-    statement.end = endStatement(state);
-    state.consume(statement, CstNodeKind.DoStatement_Semicolon1, t.Semicolon);
+    const body = statements(state);
+    statement.statements = body.statements;
+    statement.end = body.end;
   } else {
     state.error();
   }
@@ -773,20 +847,34 @@ function doSpecification(state: ParserState): ast.DoSpecification {
   return specification;
 }
 
-function statements(state: ParserState): ast.Statement[] {
+interface StatementList {
+  statements: ast.Statement[];
+  end: ast.EndStatement | null;
+}
+
+function statements(state: ParserState, endWithPercent = false): StatementList {
   const statements: ast.Statement[] = [];
-  while (!state.eof && !state.canConsumeKeyword(t.END)) {
-    if (state.isInProcedure() && state.canConsume(t.Percent, t.END)) {
-      // Even though the %END; statement is technically part of the procedure, it still has a % prefix.
-      // We need special handling for it here. End statements list if we encounter it.
-      break;
-    }
-    const stmt = statement(state);
+  let end: ast.EndStatement | null = null;
+  while (!state.eof) {
+    const startIndex = state.index;
+    const stmt = statement(state, true, endWithPercent);
     if (stmt) {
-      statements.push(stmt);
+      if (stmt.kind === ast.SyntaxKind.EndStatement) {
+        end = stmt;
+        break;
+      } else {
+        statements.push(stmt);
+      }
+    }
+    if (state.index === startIndex) {
+      // No progress made, avoid infinite loop
+      state.index++;
     }
   }
-  return statements;
+  return {
+    statements,
+    end,
+  };
 }
 
 function selectStatement(state: ParserState): ast.SelectStatement {
@@ -817,8 +905,9 @@ function selectStatement(state: ParserState): ast.SelectStatement {
   if (state.canConsumeKeyword(t.OTHERWISE)) {
     statement.cases.push(otherwiseStatement(state));
   }
+  // END statement is preceded by a percent
+  state.consume(statement, CstNodeKind.Percentage, t.Percent);
   statement.end = endStatement(state);
-  state.consume(statement, CstNodeKind.SelectStatement_Semicolon1, t.Semicolon);
   return statement;
 }
 

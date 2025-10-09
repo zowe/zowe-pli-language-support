@@ -41,6 +41,9 @@ import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
 import { tokenize } from "../src/parser/tokenizer";
 import { escapeRegExp } from "../src/parser/tokens";
 import { PLICode } from "../src/validation/messages/pli-codes";
+import { isSyntaxNode, SyntaxKind } from "../src/syntax-tree/ast";
+import { isObject } from "../src/utils/types";
+import { format } from "util";
 
 export type Label = string | number | string[] | number[];
 
@@ -311,6 +314,114 @@ export class TestBuilder {
         );
       }
     }
+  }
+
+  expectAst(statements: any[]): void {
+    const actualStatements = this.unit.ast.statements;
+    this.matchStatements(statements, actualStatements);
+  }
+
+  expectMacroAst(statements: any[]): void {
+    const preprocessorStatements = this.unit.preprocessorAst.statements;
+    this.matchStatements(statements, preprocessorStatements);
+  }
+
+  private matchStatements(expected: any[], actual: any[]): void {
+    expect(
+      actual,
+      `Expected ${expected.length} statements, but received ${actual.length}`,
+    ).toHaveLength(expected.length);
+    for (let i = 0; i < expected.length; i++) {
+      this.matchObj(
+        expected[i],
+        this.transformActualValue(actual[i]),
+        `statements[${i}]`,
+      );
+    }
+  }
+
+  private matchObj(
+    expected: Record<string, unknown>,
+    actual: object,
+    path: string,
+  ): void {
+    // We can always expect that the `actual` node contains ALL properties, even if they're null
+    // Therefore, we simply iterate over its properties and check if they match the expected values
+    for (const [key, actualValue] of Object.entries(actual)) {
+      if (key === "container" || key.endsWith("Token")) {
+        // Skip container and token properties
+        continue;
+      }
+      const currentPath = `${path}.${key}`;
+      const expectedValue = expected[key];
+      this.matchValue(expectedValue, actualValue, currentPath);
+    }
+  }
+
+  private matchValue(expected: any, actual: any, path: string): void {
+    const value = this.transformActualValue(actual);
+    if (value === null || value === undefined || value === false) {
+      // If the actual value is null, undefined or false, we only check if the expected value is somehow falsy
+      if (expected) {
+        fail(`Expected no value for ${path}, but received ${format(value)}`);
+      }
+    } else if (Array.isArray(value)) {
+      if (value.length === 0) {
+        // If the actual value is an empty array, the expected value can be undefined or an empty array as well
+        if (
+          expected === undefined ||
+          (Array.isArray(expected) && expected.length === 0)
+        ) {
+          return;
+        }
+        fail(
+          `Expected no value or empty array for ${path}, but received ${format(value)}`,
+        );
+      } else if (!Array.isArray(expected)) {
+        fail(`Expected an array for ${path}, but received ${typeof expected}`);
+      } else {
+        expect(
+          expected.length,
+          `Expected ${path} to have ${value.length} elements, but received ${expected.length}`,
+        ).toBe(value.length);
+        for (let i = 0; i < value.length; i++) {
+          this.matchValue(expected[i], value[i], `${path}[${i}]`);
+        }
+      }
+    } else {
+      if (isObject(expected)) {
+        if (!isObject(value)) {
+          fail(
+            `Expected an AST node for ${path}, but received ${format(actual)}`,
+          );
+        }
+        this.matchObj(expected, value, path);
+      } else {
+        expect(
+          value,
+          `Expected ${path} to be ${format(expected)}, but received ${format(value)}`,
+        ).toEqual(expected);
+      }
+    }
+  }
+
+  private transformActualValue(value: any): any {
+    if (Array.isArray(value)) {
+      return value.map((v) => this.transformActualValue(v));
+    }
+    if (isSyntaxNode(value)) {
+      if (value.kind === SyntaxKind.LabelPrefix) {
+        return value.name;
+      } else if (value.kind === SyntaxKind.Statement) {
+        return {
+          ...value.value,
+          labels: value.labels,
+        };
+      } else if (value.kind === SyntaxKind.LabelReference) {
+        return value.label?.text;
+      }
+    }
+    return value;
   }
 
   expectPreprocessorTokens(textOrTokens: string | string[]): void {
