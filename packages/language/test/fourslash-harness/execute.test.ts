@@ -49,7 +49,7 @@ const fourslashPath = path.join(__dirname, "../fourslash");
 
 let fs: VirtualFileSystemProvider;
 
-beforeEach(() => {
+beforeEach(async () => {
   fs = new VirtualFileSystemProvider();
   setFileSystemProvider(fs);
   resetDocumentProviders();
@@ -77,7 +77,7 @@ beforeEach(() => {
   ]);
 });
 
-afterEach(() => {
+afterEach(async () => {
   setFileSystemProvider(undefined);
   setPluginConfigurationProvider(undefined);
   PluginConfigurationProviderInstance.setProgramConfigs("", []);
@@ -227,7 +227,7 @@ function runSingleHarnessTest(filePath: string) {
     });
     const implementation = createTestBuilderHarnessImplementation(testBuilder);
 
-    await runHarnessTest(testFile, implementation);
+    runHarnessTest(testFile, implementation);
   });
 }
 

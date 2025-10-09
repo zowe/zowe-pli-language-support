@@ -24,15 +24,13 @@ import { Token } from "../parser/tokens";
 import { generateInstructions } from "./instruction-generator";
 import { EvaluationResults, runInstructions } from "./instruction-interpreter";
 import { createIncludeInstruction, InstructionNode } from "./instructions";
-import {
-  CompilerOptions,
-  getDefaultCompilerOptions,
-} from "./compiler-options/options";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { initLexer } from "../parser/tokenizer";
 import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { FileStore } from "../workspace/file-store";
+import { getDefaultCompilerOptions } from "./compiler-options/options";
+import { CompilerOptions } from "./compiler-options/options-pli";
 
 export interface LexerResult {
   all: Token[];
