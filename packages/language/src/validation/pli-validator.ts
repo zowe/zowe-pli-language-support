@@ -9,7 +9,7 @@
  *
  */
 
-import { diagnosticFromCode } from "../language-server/types";
+import { diagnosticFromCode, Severity } from "../language-server/types";
 import * as AST from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { BuiltinsUriSchema } from "../workspace/builtins";
@@ -413,13 +413,14 @@ export class PliValidator implements Validator {
       !this.knownBuiltins.has(name) &&
       !this.processGroup.implicitBuiltins.has(name)
     ) {
-      acceptor(
-        diagnosticFromCode(
+      acceptor({
+        ...diagnosticFromCode(
           PLICodes.Error.IBM1373I,
           node.ref.token,
           node.ref.text,
         ),
-      );
+        severity: Severity.W, // Downgrade to a warning.
+      });
     }
   }
 }
