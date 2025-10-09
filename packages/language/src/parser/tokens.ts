@@ -423,7 +423,7 @@ export const PROCEDURE = registerKeyword({
   names: ["PROCEDURE", "PROC", "XPROCEDURE", "XPROC"],
 });
 export const STATEMENT = registerKeyword({
-  name: "STATEMENT",
+  names: ["STATEMENT", "STMT"],
 });
 export const CHARACTER = registerKeyword({
   names: ["CHARACTER", "CHAR"],
