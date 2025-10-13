@@ -18,6 +18,8 @@ import { SemanticTokenTypes } from "vscode-languageserver-types";
 import { PliMarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
 import { CompilerOptionsCodes } from "../../src/preprocessor/compiler-options/codes";
 import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
+import { TypeSystem } from "../../src/validation/messages/internal-codes";
+import { PLICode } from "../../src/validation/messages/pli-codes";
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
@@ -66,13 +68,17 @@ export interface HarnessTesterInterface {
      * Expect that the compilation unit has no diagnostics.
      *
      * @param label The label to expect no diagnostics at. If not provided, all diagnostics are expected to be absent.
+     * @param errorCodes A subset of error codes to expect no diagnostics for.
      * @example
+     *
      * ```ts
      * verify.noDiagnostics();
      * verify.noDiagnostics('i');
+     * verify.noDiagnostics(undefined, ...code.TypeSystem);
+     * verify.noDiagnostics('i', ...code.TypeSystem);
      * ```
      */
-    noDiagnostics(label?: Label): void;
+    noDiagnostics(label?: Label, ...errorCodes: PLICode[]): void;
 
     /**
      * Expect that the compilation unit has no diagnostics apart from the given regexes.
@@ -199,6 +205,7 @@ export interface HarnessTesterInterface {
       };
     };
     CompilerOptions: typeof CompilerOptionsCodes;
+    TypeSystem: typeof TypeSystem;
   };
 
   constants: {

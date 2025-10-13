@@ -398,6 +398,7 @@ function procedureStatement(
     }
     if (returnType) {
       dataAttribute.type = returnType as ast.DefaultAttribute;
+      dataAttribute.typeToken = state.last!;
       returnsOption.returnAttributes.push(dataAttribute);
     }
     state.consume(
@@ -1753,6 +1754,7 @@ function attributes(
         PreprocessorTokens.DefaultAttribute,
       );
       dataAttribute.type = attributeToken.image as ast.DefaultAttribute;
+      dataAttribute.typeToken = attributeToken;
       attributes.push(dataAttribute);
     } else if (state.canConsume(PreprocessorTokens.LParen)) {
       const dim = dimensions(state);

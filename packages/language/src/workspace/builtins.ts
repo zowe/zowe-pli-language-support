@@ -18,6 +18,13 @@ import { URI } from "../utils/uri";
 
 export const BuiltinsUriSchema = "pli-builtin";
 
+export const BuiltinsBoolean = `
+ /* Boolean built-in constants */
+ DECLARE TRUE  BIT(1) INITIAL(1);
+ DECLARE FALSE BIT(1) INITIAL(0);
+
+`;
+
 export const BuiltinsSQLCA = `
  DECLARE 1 SQLCA,
     2 SQLCAID CHAR(8),
@@ -79,7 +86,8 @@ export const BuiltinsSQLDA = `
 export const BuiltinsFile = "builtins.pli";
 export const BuiltinsUri = `${BuiltinsUriSchema}:/${BuiltinsFile}`;
 export const Builtins =
-  ` /* Arithmetic built-in functions */
+  ` ${BuiltinsBoolean}
+ /* Arithmetic built-in functions */
  ABS: PROC (value) RETURNS ();
  END;
 

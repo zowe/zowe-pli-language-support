@@ -6700,6 +6700,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.PictureAttribute,
       container: null,
       picture: null,
+      pictureToken: null,
     };
   }
 
@@ -6738,6 +6739,7 @@ export class PliParser extends AbstractParser {
           CstNodeKind.PictureAttribute_PictureString,
         );
         element.picture = token.image;
+        element.pictureToken = token;
       });
     });
 
@@ -6968,6 +6970,7 @@ export class PliParser extends AbstractParser {
   private createComputationDataAttribute(): ast.ComputationDataAttribute {
     return {
       kind: ast.SyntaxKind.ComputationDataAttribute,
+      typeToken: null,
       container: null,
       type: null,
       dimensions: null,
@@ -6979,6 +6982,7 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN(tokens.DefaultAttribute, (token) => {
       this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_Value);
+      element.typeToken = token;
       element.type = token.image as ast.DefaultAttribute;
     });
     this.OPTION1(() => {
@@ -7579,6 +7583,7 @@ export class PliParser extends AbstractParser {
       variable: [],
       returns: [],
       environmentName: [],
+      entryToken: null,
     };
   }
 
@@ -7592,6 +7597,7 @@ export class PliParser extends AbstractParser {
       });
     });
     this.CONSUME_ASSIGN1(tokens.ENTRY, (token) => {
+      element.entryToken = token;
       this.tokenPayload(token, element, CstNodeKind.EntryAttribute_ENTRY);
     });
     this.OPTION1(() => {
