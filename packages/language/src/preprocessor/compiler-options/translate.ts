@@ -17,7 +17,10 @@ import {
 import { CompilerOption, SyntaxKind } from "../../syntax-tree/ast";
 import { getTranslator as getTranslatorPLI } from "./translator-pli";
 import { getTranslator as getTranslatorMacro } from "./translator-macro";
-import { CompilerOptions as CompilerOptionsPLI } from "./options-pli";
+import {
+  CompilerOptions,
+  CompilerOptions as CompilerOptionsPLI,
+} from "./options-pli";
 import { CompilerOptions as CompilerOptionsMacro } from "./options-macro";
 
 const translator = getTranslatorPLI();
@@ -40,19 +43,22 @@ export function translateCompilerOptions(
 
   // Handle nested compiler options that are not yet parsed.
   translatorMacro.clear();
-  if (translator.options.pp) {
-    for (const item of translator.options.pp.items.filter(
-      (item) => item.name === "MACRO" && typeof item.value === "string",
-    )) {
-      const nestedOptions = parseAbstractCompilerOptions(
-        item.value as string,
-        (item.token?.startOffset ?? 0) + 1,
-      );
-      for (const nestedOption of nestedOptions.options) {
-        translatorMacro.translate(nestedOption);
-      }
-      translatorMacro.issues.push(...nestedOptions.issues);
-    }
+  const macroItems: CompilerOptions.PPValue[] = [
+    ...(translator.options.ppMacro ? [translator.options.ppMacro] : []),
+    ...(translator.options.pp?.items
+      .filter((item) => item.name === "MACRO" && typeof item.value === "string")
+      .map((item) => ({ value: item.value, token: item.token })) ?? []),
+  ];
+
+  for (const item of macroItems) {
+    const nestedOptions = parseAbstractCompilerOptions(
+      item.value as string,
+      (item.token?.startOffset ?? 0) + 1,
+    );
+    nestedOptions.options.forEach((option) =>
+      translatorMacro.translate(option),
+    );
+    translatorMacro.issues.push(...nestedOptions.issues);
   }
 
   return {

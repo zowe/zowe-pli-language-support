@@ -18,7 +18,9 @@
 ////*PROCESS <|6:SERVICE|>(<|7:"xXx"|>);
 ////*PROCESS <|8:SERVICE|>(<|9:'yYy'|>);
 ////*PROCESS <|10:SERVICE|>(<|11:xxxxxxxxx1xxxxxxxxx2xxxxxxxxx3xxxxxxxxx4xxxxxxxxx5xxxxxxxxx6xxxxxxxxx7xxxxxxxxx8|>);
-////*PROCESS <|12:SERVICE|>(xYz);
+////*PROCESS <|12:SERVICE|>(xXx);
+////*PROCESS <|14:NOSERV|>;
+////*PROCESS <|16:SERV|>(xYz);
 
 verify.noDiagnostics([1, 7, 9]);
 verify.expectDiagnosticsAt([2, 4, 6, 8, 10], {
@@ -32,6 +34,12 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectDiagnosticsAt(11, {
   message: code.CompilerOptions.Service.InvalidParameterLength.message("80"),
+});
+verify.expectDiagnosticsAt(14, {
+  message: code.CompilerOptions.DupeOptionIssue.message("NOSERV"),
+});
+verify.expectDiagnosticsAt(16, {
+  message: code.CompilerOptions.MutexOptionIssue.message("SERV"),
 });
 verify.expectCompilerOptions({
   service: "XYZ", // Checked capitalization on the mainframe.
