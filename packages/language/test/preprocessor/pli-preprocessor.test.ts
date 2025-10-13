@@ -68,7 +68,7 @@ async function expectTokensForWorkspace(
   expectedTokens: string[],
 ): Promise<void> {
   for (const [path, content] of libFiles) {
-    FileSystemProviderInstance.writeFile(URI.file(path), content);
+    await FileSystemProviderInstance.writeFile(URI.file(path), content);
   }
 
   // parse the main program
@@ -99,7 +99,7 @@ describe("Preprocessor Tests", () => {
   });
 
   // macOS + linux absolute path resolution
-  test.runIf(["darwin", "linux"].includes(process.platform))(
+  test.runIf(["darwin", "linux", "win32"].includes(process.platform))(
     "unix path resolution",
     async () => {
       await init("/test/libs");
@@ -121,21 +121,6 @@ describe("Preprocessor Tests", () => {
       await expectTokensForWorkspace(
         ` %INCLUDE "lib.pli";`,
         [["C:/test/libs/lib.pli", ` DECLARE LIB_VAR FIXED;`]],
-        ["DECLARE", "LIB_VAR", "FIXED", ";"],
-      );
-    },
-  );
-
-  // test win absolute path resolution w/out a drive letter
-  test.runIf(process.platform === "win32")(
-    "Windows path resolution",
-    async () => {
-      // also test absolute path resolution w/ windows too
-      await init("/test/libs/");
-
-      await expectTokensForWorkspace(
-        ` %INCLUDE "lib.pli";`,
-        [["/test/libs/lib.pli", ` DECLARE LIB_VAR FIXED;`]],
         ["DECLARE", "LIB_VAR", "FIXED", ";"],
       );
     },

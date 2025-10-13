@@ -1926,7 +1926,7 @@ async function resolveIncludeFileUri(
 
   if (pgroup) {
     // lib file as either a string or a member from a known process group
-    const absPathRegex = /^\/|\\|[A-Z]:/i;
+    const absPathRegex = /^(?:\/|\\|[A-Z]:)/i;
     for (const lib of pgroup.libs) {
       let libFileUri: URI;
       if (!absPathRegex.test(lib)) {
@@ -1938,7 +1938,9 @@ async function resolveIncludeFileUri(
         );
       } else {
         // use lib path over workspace
-        const libUri = URI.file(lib);
+        const libUri = URI.file(lib).with({
+          scheme: context.entryUri.scheme,
+        });
         libFileUri = UriUtils.joinPath(libUri, item.fileName);
       }
 
