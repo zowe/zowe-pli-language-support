@@ -10,118 +10,131 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { PluginConfigurationProviderInstance, ProcessGroup, ProgramConfig, setPluginConfigurationProvider } from "../../src/workspace/plugin-configuration-provider";
+import {
+  PluginConfigurationProviderInstance,
+  ProcessGroup,
+  ProgramConfig,
+  setPluginConfigurationProvider,
+} from "../../src/workspace/plugin-configuration-provider";
 import { URI } from "vscode-uri";
 import { parse } from "../utils";
-import { FileSystemProviderInstance, setFileSystemProvider, VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
+import {
+  FileSystemProviderInstance,
+  setFileSystemProvider,
+  VirtualFileSystemProvider,
+} from "../../src/workspace/file-system-provider";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
 
 /**
  * Helper to modify the program config & process group w/ a given lib for each os-specific test
  */
 async function init(libPath: string) {
-    const programConfig: ProgramConfig = {
-        program: "test.pli",
-        pgroup: "testGroup",
-        pliOptions: {},
-    };
-    const processGroupConfig: ProcessGroup = {
-        name: "testGroup",
-        compilerOptions: [],
-        implicitBuiltins: new Set(),
-        includeExtensions: [],
-        libs: [
-            libPath
-        ],
-        lspOptions: { checkMargins: false },
-        pliOptions: {},
-    };
+  const programConfig: ProgramConfig = {
+    program: "test.pli",
+    pgroup: "testGroup",
+    pliOptions: {},
+  };
+  const processGroupConfig: ProcessGroup = {
+    name: "testGroup",
+    compilerOptions: [],
+    implicitBuiltins: new Set(),
+    includeExtensions: [],
+    libs: [libPath],
+    lspOptions: { checkMargins: false },
+    pliOptions: {},
+  };
 
-    await PluginConfigurationProviderInstance.init("/test");
-        PluginConfigurationProviderInstance.setProgramConfigs("/test", [
-        programConfig,
-    ]);
-    PluginConfigurationProviderInstance.setProcessGroupConfigs([
-        processGroupConfig,
-    ]);
+  await PluginConfigurationProviderInstance.init("/test");
+  PluginConfigurationProviderInstance.setProgramConfigs("/test", [
+    programConfig,
+  ]);
+  PluginConfigurationProviderInstance.setProcessGroupConfigs([
+    processGroupConfig,
+  ]);
 }
 
 /**
  * Expect tokens for a given workspace, by dictating the main file + lib files to create & test.
  * One compile unit will be generated from the main file, which will include the lib files as needed.
  * Note that this function does not clean up the vfs afterwards.
- * 
+ *
  * @param mainFileContent Main file to build a compile unit from, name is fixed to /test/test.pli
  * @param libFiles Pairs of [path, content] entries to create lib files in the virtual file system
  * @param expectedTokens Expected array of tokens (by image) to be found in the resulting compile unit once done
  */
-async function expectTokensForWorkspace(mainFileContent: string, libFiles: Array<[string,string]>, expectedTokens: string[]): Promise<void> {
-    for (const [path, content] of libFiles) {
-        FileSystemProviderInstance.writeFile(URI.file(path), content);
-    }
+async function expectTokensForWorkspace(
+  mainFileContent: string,
+  libFiles: Array<[string, string]>,
+  expectedTokens: string[],
+): Promise<void> {
+  for (const [path, content] of libFiles) {
+    FileSystemProviderInstance.writeFile(URI.file(path), content);
+  }
 
-    // parse the main program
-    const cu = await parse(mainFileContent, {
-        validate: true,
-        uri: URI.file("/test/test.pli")
-    });
+  // parse the main program
+  const cu = await parse(mainFileContent, {
+    validate: true,
+    uri: URI.file("/test/test.pli"),
+  });
 
-    // ensure we have a clean result w/ the right tokens
-    expect(cu.diagnostics.lexer).toHaveLength(0);
-    expect(cu.diagnostics.parser).toHaveLength(0);
-    const tokenImgs = cu.tokens.map(t => t.image);
-    expect(tokenImgs).toEqual(expectedTokens);
+  // ensure we have a clean result w/ the right tokens
+  expect(cu.diagnostics.lexer).toHaveLength(0);
+  expect(cu.diagnostics.parser).toHaveLength(0);
+  const tokenImgs = cu.tokens.map((t) => t.image);
+  expect(tokenImgs).toEqual(expectedTokens);
 }
 
 describe("Preprocessor Tests", () => {
+  beforeEach(() => {
+    const vfs = new VirtualFileSystemProvider();
+    setFileSystemProvider(vfs);
+    resetDocumentProviders();
+  });
 
-    beforeEach(() => {
-        const vfs = new VirtualFileSystemProvider();
-        setFileSystemProvider(vfs);
-        resetDocumentProviders();
-    });
+  afterEach(() => {
+    setFileSystemProvider(undefined);
+    setPluginConfigurationProvider(undefined);
+    PluginConfigurationProviderInstance.setProgramConfigs("", []);
+    PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+  });
 
-    afterEach(() => {
-        setFileSystemProvider(undefined);
-        setPluginConfigurationProvider(undefined);
-        PluginConfigurationProviderInstance.setProgramConfigs("", []);
-        PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
-    });
+  test.runIf(["darwin", "linux"].includes(process.platform))(
+    "unix path resolution",
+    async () => {
+      await init("/test/libs");
 
-    test.runIf(["darwin","linux"].includes(process.platform))("unix path resolution", async () => {
-        await init("/test/libs");
+      await expectTokensForWorkspace(
+        ` %INCLUDE "lib.pli";`,
+        [["/test/libs/lib.pli", ` DECLARE LIB_VAR FIXED;`]],
+        ["DECLARE", "LIB_VAR", "FIXED", ";"],
+      );
+    },
+  );
 
-        await expectTokensForWorkspace(
-            ` %INCLUDE "lib.pli";`,
-            [
-                ["/test/libs/lib.pli", ` DECLARE LIB_VAR FIXED;`]
-            ],
-            ["DECLARE", "LIB_VAR", "FIXED", ";"]
-        );
-    });
+  test.runIf(process.platform === "win32")(
+    "Windows path resolution",
+    async () => {
+      await init("C:/test/libs/");
 
-    test.runIf(process.platform === "win32")("Windows path resolution", async () => {
-        await init("C:/test/libs/");
+      await expectTokensForWorkspace(
+        ` %INCLUDE "lib.pli";`,
+        [["C:/test/libs/lib.pli", ` DECLARE LIB_VAR FIXED;`]],
+        ["DECLARE", "LIB_VAR", "FIXED", ";"],
+      );
+    },
+  );
 
-        await expectTokensForWorkspace(
-            ` %INCLUDE "lib.pli";`,
-            [
-                ["C:/test/libs/lib.pli", ` DECLARE LIB_VAR FIXED;`]
-            ],
-            ["DECLARE", "LIB_VAR", "FIXED", ";"]
-        );
-    });
+  test.runIf(process.platform === "win32")(
+    "Windows path resolution",
+    async () => {
+      // also test absolute path resolution w/ windows too
+      await init("/test/libs/");
 
-    test.runIf(process.platform === "win32")("Windows path resolution", async () => {
-        // also test absolute path resolution w/ windows too
-        await init("/test/libs/");
-
-        await expectTokensForWorkspace(
-            ` %INCLUDE "lib.pli";`,
-            [
-                ["/test/libs/lib.pli", ` DECLARE LIB_VAR FIXED;`]
-            ],
-            ["DECLARE", "LIB_VAR", "FIXED", ";"]
-        );
-    });
+      await expectTokensForWorkspace(
+        ` %INCLUDE "lib.pli";`,
+        [["/test/libs/lib.pli", ` DECLARE LIB_VAR FIXED;`]],
+        ["DECLARE", "LIB_VAR", "FIXED", ";"],
+      );
+    },
+  );
 });
