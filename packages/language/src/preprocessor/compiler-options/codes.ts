@@ -456,6 +456,23 @@ export const CompilerOptionsCodes = {
     } as ParametricPLICode,
   },
 
+  Or: {
+    InvalidParameterLength: {
+      code: "COOR01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected a single character, but received '${value}'.`,
+      fullCode: "COOR01W",
+    } as ParametricPLICode,
+    InvalidParameterCharacter: {
+      code: "COOR02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected a valid or character, but received '${value}'.`,
+      fullCode: "COOR02W",
+    } as ParametricPLICode,
+  },
+
   PP: {
     InvalidParameterType: {
       code: "COPP01",
@@ -792,39 +809,11 @@ export const CompilerOptionsCodes = {
         `Expected "DEF", "NODEF", "MSG", "NOMSG", "SYM", "NOSYM", "SYN", "NOSYN", "XML", or "NOXML", but received '${value}'.`,
       fullCode: "COXI01W",
     } as ParametricPLICode,
-    InvalidDefParameter: {
-      code: "COXI02",
-      severity: Severity.W,
-      message: (value: string) =>
-        `Expected "DEF" or "NODEF", but received '${value}'.`,
-      fullCode: "COXI02W",
-    } as ParametricPLICode,
-    InvalidMsgParameter: {
-      code: "COXI03",
-      severity: Severity.W,
-      message: (value: string) =>
-        `Expected "MSG" or "NOMSG", but received '${value}'.`,
-      fullCode: "COXI03W",
-    } as ParametricPLICode,
-    InvalidSymParameter: {
-      code: "COXI04",
-      severity: Severity.W,
-      message: (value: string) =>
-        `Expected "SYM" or "NOSYM", but received '${value}'.`,
-      fullCode: "COXI04W",
-    } as ParametricPLICode,
-    InvalidSynParameter: {
-      code: "COXI05",
-      severity: Severity.W,
-      message: (value: string) =>
-        `Expected "SYN" or "NOSYN", but received '${value}'.`,
-      fullCode: "COXI05W",
-    } as ParametricPLICode,
     InvalidXmlParameter: {
       code: "COXI06",
       severity: Severity.W,
       message: (value: string) =>
-        `Expected "XML" or "NOXML", but received '${value}'.`,
+        `Expected "HASH" or "NOHASH", but received '${value}'.`,
       fullCode: "COXI06W",
     } as ParametricPLICode,
   },

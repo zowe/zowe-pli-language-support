@@ -403,7 +403,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-ppmacro
    */
-  ppMacro?: string | false;
+  ppMacro?: CompilerOptions.PPValue | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-ppsql
    */
@@ -808,8 +808,10 @@ export declare namespace CompilerOptions {
     value: string;
   }
 
-  export interface PPItem {
+  export interface PPItem extends PPValue {
     name: "MACRO" | "SQL" | "CICS" | "INCLUDE";
+  }
+  export interface PPValue {
     value?: string;
     token?: Token;
   }

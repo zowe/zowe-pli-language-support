@@ -16,17 +16,18 @@
 ////*PROCESS <|d2:XINFO|>();
 ////*PROCESS <|d3:XINFO|>(<|2:INVALID|>);
 ////*PROCESS <|d3:XINFO|>(<|3:INVALID|>());
-////*PROCESS <|d4:XINFO|>(XML(<|4:INVALID|>));
-////*PROCESS <|d5:XINFO|>(XML(HASH));
-////*PROCESS <|d6:XINFO|>(DEF);
-////*PROCESS <|d7:XINFO|>(MSG SYM);
-////*PROCESS <|d8:XINFO|>(NOSYM, SYN);
+////*PROCESS <|d4:XINFO|>(<|4:XML|>);
+////*PROCESS <|d5:XINFO|>(XML(<|5:INVALID|>));
+////*PROCESS <|d6:XINFO|>(XML(HASH));
+////*PROCESS <|d7:XINFO|>(DEF);
+////*PROCESS <|d8:XINFO|>(MSG SYM);
+////*PROCESS <|d9:XINFO|>(NOSYM, SYN);
 
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1),
 });
 verify.expectDiagnosticsAt(
-  Array.from({ length: 7 }, (_, i) => `d${i + 2}`),
+  Array.from({ length: 8 }, (_, i) => `d${i + 2}`),
   {
     message: code.CompilerOptions.DupeOptionIssue.message("XINFO"),
   },
@@ -37,7 +38,8 @@ verify.expectDiagnosticsAt(2, {
 verify.expectDiagnosticsAt(3, {
   message: code.CompilerOptions.ExpectedPlain.message(),
 });
-verify.expectDiagnosticsAt(4, {
+verify.noDiagnostics(4);
+verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.XInfo.InvalidXmlParameter.message("INVALID"),
 });
 verify.expectCompilerOptions({
