@@ -18,6 +18,7 @@ import {
 } from "../preprocessor/compiler-options/options";
 import { diagnostic, Diagnostic } from "../language-server/types";
 import { PLICodes } from "../validation/messages";
+import { NOT_CHARACTER } from "../utils/const";
 
 interface TwoCharToken {
   char: string;
@@ -433,7 +434,7 @@ function isWhitespace(char: number): boolean {
 // Function map
 const funcs = new Map<string, TokenizeFunc>();
 const defaultOr = "|";
-const defaultNot = "¬^";
+const defaultNot = NOT_CHARACTER + "^";
 let orSymbols = defaultOr;
 let notSymbols = defaultNot;
 let includeAlt: string | undefined = undefined;
