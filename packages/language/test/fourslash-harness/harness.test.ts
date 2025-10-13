@@ -19,6 +19,7 @@ import { parseWrapperFile } from "./wrapper";
 import { HarnessConstants } from "./implementation/constants";
 import { TestBuilder } from "../test-builder";
 import { generateIncludeItemMarkup } from "../../src/language-server/hover-request";
+import { SyntaxKind } from "../../src/syntax-tree/ast";
 
 type HarnessImplementationListener = (method: string, ...args: any[]) => void;
 
@@ -41,6 +42,7 @@ async function createTestingHarnessImplementation(
   const listen = createListenerCreator(listener);
 
   return {
+    Syntax: SyntaxKind,
     linker: {
       expectLinks: listen("linker.expectLinks"),
       expectNoLinksAt: listen("linker.expectNoLinksAt"),
@@ -60,6 +62,8 @@ async function createTestingHarnessImplementation(
       noDiagnosticsExceptAt: listen("verify.noDiagnosticsExceptAt"),
       expectToThrow: listen("verify.expectToThrow"),
       expectCompilerOptions: listen("verify.expectCompilerOptions"),
+      expectAst: listen("verify.expectAst"),
+      expectPPAst: listen("verify.expectPPAst"),
     },
     completion: {
       expectAt: listen("completion.expectAt"),

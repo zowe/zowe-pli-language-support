@@ -92,12 +92,93 @@ class TokenizerContext {
   public input: string;
   public length: number;
   public index: number = 0;
+  public line: number = 0;
+  public column: number = 0;
   public uri: URI | undefined;
+
+  private storedIndex: number = 0;
+  private storedLine: number = 0;
+  private storedColumn: number = 0;
 
   constructor(input: string, uri: URI | undefined) {
     this.input = input;
     this.length = input.length;
     this.uri = uri;
+  }
+
+  store() {
+    this.storedIndex = this.index;
+    this.storedLine = this.line;
+    this.storedColumn = this.column;
+  }
+
+  advance(n: number, newLines: boolean): void {
+    if (newLines) {
+      const end = this.index + n;
+      for (let i = this.index; i < end; i++) {
+        if (this.input[i] === "\n") {
+          this.line++;
+          this.column = 0;
+        } else {
+          this.column++;
+        }
+      }
+    } else {
+      this.column += n;
+    }
+    this.index += n;
+  }
+
+  advanceWhitespace(): void {
+    while (this.index < this.length) {
+      const charCode = this.input.charCodeAt(this.index);
+      if (isWhitespace(charCode)) {
+        this.index++;
+        if (charCode === lineFeed) {
+          this.line++;
+          this.column = 0;
+        } else {
+          this.column++;
+        }
+      } else {
+        break;
+      }
+    }
+  }
+
+  createTokenInstance(tokenType: TokenType): tokens.Token {
+    const image = this.input.substring(this.storedIndex, this.index);
+    return tokens.createTokenInstance(
+      image,
+      image,
+      tokenType,
+      this.storedIndex,
+      this.storedLine,
+      this.storedColumn,
+      this.index - 1,
+      this.line,
+      this.column - 1,
+      this.uri,
+    );
+  }
+
+  createTokenInstanceWithImage(
+    image: string,
+    originalImage: string,
+    tokenType: TokenType,
+  ): tokens.Token {
+    return tokens.createTokenInstance(
+      image,
+      originalImage,
+      tokenType,
+      this.storedIndex,
+      this.storedLine,
+      this.storedColumn,
+      this.index - 1,
+      this.line,
+      this.column - 1,
+      this.uri,
+    );
   }
 }
 
@@ -135,31 +216,16 @@ function tokenizeIdentifier(
     while (i < context.length && context.input[i] !== ";") {
       i++;
     }
-    const execImage = context.input.substring(start, i);
-    context.index = i; // Keep the semicolon token
-    return tokens.createTokenInstance(
-      execImage,
-      execImage,
-      tokens.ExecFragment,
-      start,
-      i - 1,
-      context.uri,
-    );
+    context.advance(i - start, true);
+    return context.createTokenInstance(tokens.ExecFragment);
   }
   let tokenType = tokens.ID;
   const keyword = Keywords.get(hash);
   if (keyword && keyword.image === image) {
     tokenType = keyword.kind;
   }
-  context.index = i;
-  return tokens.createTokenInstance(
-    image,
-    originalImage,
-    tokenType,
-    start,
-    i - 1,
-    context.uri,
-  );
+  context.advance(i - start, false);
+  return context.createTokenInstanceWithImage(image, originalImage, tokenType);
 }
 
 const stringRegex = tokens.STRING_TERM.PATTERN as RegExp;
@@ -171,18 +237,9 @@ function tokenizeRegex(tokenType: TokenType, regex: RegExp): TokenizeFunc {
     regex.lastIndex = start;
     const match = regex.exec(context.input);
     if (match) {
-      context.index = match.index + match[0].length;
-      const image = context.input.substring(start, context.index);
-      return tokens.createTokenInstance(
-        image,
-        image,
-        tokenType,
-        start,
-        context.index - 1,
-        context.uri,
-      );
+      context.advance(match[0].length, false);
+      return context.createTokenInstance(tokenType);
     } else {
-      context.index++;
       return undefined;
     }
   };
@@ -192,115 +249,65 @@ const tokenizeString = tokenizeRegex(tokens.STRING_TERM, stringRegex);
 const tokenizeNumber = tokenizeRegex(tokens.NUMBER, numberRegex);
 
 function tokenizeOrSymbol(context: TokenizerContext): tokens.Token | undefined {
-  const start = context.index;
-
+  context.store();
   let nextChar = context.input[context.index + 1];
   if (orSymbols.includes(nextChar)) {
     nextChar = context.input[context.index + 2];
     if (nextChar === "=") {
-      context.index += 3;
-      const image = context.input.substring(start, context.index);
-      return tokens.createTokenInstance(
-        image,
-        image,
-        tokens.PipePipeEquals,
-        start,
-        context.index - 1,
-        context.uri,
-      );
+      context.advance(3, false);
+      return context.createTokenInstance(tokens.PipePipeEquals);
     }
-    context.index += 2;
-    const image = context.input.substring(start, context.index);
-    return tokens.createTokenInstance(
-      image,
-      image,
-      tokens.PipePipe,
-      start,
-      context.index - 1,
-      context.uri,
-    );
+    context.advance(2, false);
+    return context.createTokenInstance(tokens.PipePipe);
   } else if (nextChar === "=") {
-    context.index += 2;
-    const image = context.input.substring(start, context.index);
-    return tokens.createTokenInstance(
-      image,
-      image,
-      tokens.PipeEquals,
-      start,
-      context.index - 1,
-      context.uri,
-    );
+    context.advance(2, false);
+    return context.createTokenInstance(tokens.PipeEquals);
   }
   context.index++;
-  const image = context.input.substring(start, context.index);
-  return tokens.createTokenInstance(
-    image,
-    image,
-    tokens.Pipe,
-    start,
-    start,
-    context.uri,
-  );
+  context.advance(1, false);
+  return context.createTokenInstance(tokens.Pipe);
 }
 
 function tokenizeAsterisk(context: TokenizerContext): tokens.Token | undefined {
-  const start = context.index;
-
   let nextChar = context.input[context.index + 1];
   if (nextChar === "*") {
     nextChar = context.input[context.index + 2];
     if (nextChar === "=") {
-      context.index += 3;
-      const image = context.input.substring(start, context.index);
-      return tokens.createTokenInstance(
-        image,
-        image,
-        tokens.StarStarEquals,
-        start,
-        context.index - 1,
-        context.uri,
-      );
+      context.advance(3, false);
+      return context.createTokenInstance(tokens.StarStarEquals);
     }
-    context.index += 2;
-    const image = context.input.substring(start, context.index);
-    return tokens.createTokenInstance(
-      image,
-      image,
-      tokens.StarStar,
-      start,
-      context.index - 1,
-      context.uri,
-    );
+    context.advance(2, false);
+    return context.createTokenInstance(tokens.StarStar);
   }
-  context.index++;
-  const image = context.input.substring(start, context.index);
-  return tokens.createTokenInstance(
-    image,
-    image,
-    tokens.Star,
-    start,
-    context.index - 1,
-    context.uri,
-  );
+  context.advance(1, false);
+  return context.createTokenInstance(tokens.Star);
 }
 
 function tokenizeSlash(context: TokenizerContext): tokens.Token | undefined {
-  const start = context.index;
-
   if (context.index + 1 < context.length) {
     const nextChar = context.input[context.index + 1];
 
     if (nextChar === "*") {
       // Block comment
+      let line = context.line;
+      let column = context.column + 2;
       let i = context.index + 2;
       while (i < context.length - 1) {
         if (context.input[i] === "*" && context.input[i + 1] === "/") {
           i += 2;
+          column += 2;
           break;
+        } else if (context.input[i] === "\n") {
+          line++;
+          column = 0;
+        } else {
+          column++;
         }
         i++;
       }
       context.index = i;
+      context.line = line;
+      context.column = column;
       return undefined;
     } else if (nextChar === "/") {
       // Line comment
@@ -308,35 +315,23 @@ function tokenizeSlash(context: TokenizerContext): tokens.Token | undefined {
       while (i < context.length - 1) {
         i++;
         if (context.input[i] === "\n") {
+          // Skip the newline character as well
+          i++;
+          context.column = 0;
+          context.line++;
           break;
         }
       }
       context.index = i;
       return undefined;
     } else if (nextChar === "=") {
-      context.index += 2;
-      const image = context.input.substring(start, context.index);
-      return tokens.createTokenInstance(
-        image,
-        image,
-        tokens.SlashEquals,
-        start,
-        context.index - 1,
-        context.uri,
-      );
+      context.advance(2, false);
+      return context.createTokenInstance(tokens.SlashEquals);
     }
   }
 
-  context.index++;
-  const image = context.input.substring(start, context.index);
-  return tokens.createTokenInstance(
-    image,
-    image,
-    tokens.Slash,
-    start,
-    context.index - 1,
-    context.uri,
-  );
+  context.advance(1, false);
+  return context.createTokenInstance(tokens.Slash);
 }
 
 function generateDoubleCharFunc(
@@ -344,61 +339,32 @@ function generateDoubleCharFunc(
   others: TwoCharToken[],
 ): TokenizeFunc {
   return function (context: TokenizerContext): tokens.Token | undefined {
-    const start = context.index;
-
     if (context.index + 1 < context.length) {
       const nextChar = context.input[context.index + 1];
 
       for (const follow of others) {
         if (nextChar === follow.char) {
-          context.index += 2;
-          const image = context.input.substring(start, context.index);
-          return tokens.createTokenInstance(
-            image,
-            image,
-            follow.tokenType,
-            start,
-            start + 1,
-            context.uri,
-          );
+          context.advance(2, false);
+          return context.createTokenInstance(follow.tokenType);
         }
       }
     }
-
-    context.index++;
-    const image = context.input.substring(start, context.index);
-    return tokens.createTokenInstance(
-      image,
-      image,
-      tokenType,
-      start,
-      start,
-      context.uri,
-    );
+    context.advance(1, false);
+    return context.createTokenInstance(tokenType);
   };
 }
 
 function generateSingleCharFunc(tokenType: TokenType): TokenizeFunc {
   return function (context: TokenizerContext): tokens.Token | undefined {
-    const start = context.index;
-    context.index++;
-    return tokens.createTokenInstance(
-      context.char,
-      context.char,
-      tokenType,
-      start,
-      start,
-      context.uri,
-    );
+    context.advance(1, false);
+    return context.createTokenInstance(tokenType);
   };
 }
 
 function tokenizeWhitespace(
   context: TokenizerContext,
 ): tokens.Token | undefined {
-  do {
-    context.index++;
-  } while (isWhitespace(context.input.charCodeAt(context.index)));
+  context.advanceWhitespace();
   return undefined;
 }
 
@@ -418,15 +384,11 @@ function tokenizeIncludeAlt(
       return undefined;
     }
   }
-  const start = context.index;
-  context.index += includeAlt.length;
-  return tokens.createTokenInstance(
+  context.advance(includeAlt.length, false);
+  return context.createTokenInstanceWithImage(
     includeAlt,
     includeAlt,
     tokens.INCLUDE_ALT,
-    start,
-    context.index - 1,
-    context.uri,
   );
 }
 
@@ -556,6 +518,7 @@ export function tokenize(
   while (context.index < context.length) {
     const char = input[context.index];
     context.char = char;
+    context.store();
 
     // VERY special case for include alt
     const includeAltToken = tokenizeIncludeAlt(context);

@@ -11,6 +11,7 @@
 
 import { Range } from "../language-server/types";
 import { Token } from "../parser/tokens";
+import { isObject } from "../utils/types";
 
 export enum SyntaxKind {
   // Preprocessor AST
@@ -162,7 +163,7 @@ export enum SyntaxKind {
   Parenthesis,
   PFormatItem,
   PictureAttribute,
-  PliProgram,
+  Program,
   PopDirective,
   PrefixedAttribute,
   PrintDirective,
@@ -224,6 +225,14 @@ export interface AstNode {
   kind: SyntaxKind;
 }
 
+export function isSyntaxNode(node: unknown): node is SyntaxNode {
+  return (
+    isObject<AstNode>(node) &&
+    typeof node.kind === "number" &&
+    typeof node.container === "object"
+  );
+}
+
 export interface Reference<T extends SyntaxNode = SyntaxNode> {
   owner: SyntaxNode;
   text: string;
@@ -235,8 +244,21 @@ export interface Reference<T extends SyntaxNode = SyntaxNode> {
 export function createReference<T extends SyntaxNode>(
   owner: SyntaxNode,
   token: Token,
+  preprocessor?: boolean,
+): Reference<T>;
+export function createReference<T extends SyntaxNode>(
+  owner: SyntaxNode,
+  token: Token | null | undefined,
+  preprocessor?: boolean,
+): Reference<T> | null;
+export function createReference<T extends SyntaxNode>(
+  owner: SyntaxNode,
+  token: Token | null | undefined,
   preprocessor = false,
-): Reference<T> {
+): Reference<T> | null {
+  if (!token) {
+    return null;
+  }
   return {
     owner,
     text: token.image,
@@ -397,7 +419,7 @@ export type SyntaxNode =
   | Parenthesis
   | PFormatItem
   | PictureAttribute
-  | PliProgram
+  | Program
   | PopDirective
   | PrefixedAttribute
   | PrintDirective
@@ -813,14 +835,14 @@ export interface AnswerStatement extends AstNode {
   expression: Expression | null;
   scanMode: ScanMode | null;
   skip: SkipMode | null;
-  skipToken?: Token;
+  skipToken: Token | null;
   column: Expression | null;
-  columnToken?: Token;
+  columnToken: Token | null;
   margins: {
-    left: Expression;
+    left: Expression | null;
     right: Expression | null;
   } | null;
-  marginsToken?: Token;
+  marginsToken: Token | null;
 }
 
 export function createAnswerStatement(): AnswerStatement {
@@ -830,8 +852,11 @@ export function createAnswerStatement(): AnswerStatement {
     expression: null,
     scanMode: null,
     skip: null,
+    skipToken: null,
     column: null,
+    columnToken: null,
     margins: null,
+    marginsToken: null,
   };
 }
 
@@ -1946,8 +1971,8 @@ export interface PictureAttribute extends AstNode {
   picture: string | null;
   pictureToken: Token | null;
 }
-export interface PliProgram extends AstNode {
-  kind: SyntaxKind.PliProgram;
+export interface Program extends AstNode {
+  kind: SyntaxKind.Program;
   statements: Statement[];
 }
 export interface PopDirective extends AstNode {

@@ -9,10 +9,16 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// %SKIP;
-//// dcl A fixed bin(31);
-//// dcl B fixed bin(31);
+//// %TEST: PROC;
+//// %endLabel: END;
 
-preprocessor.expectTokens(" dcl B fixed bin(31);");
+verify.expectPPAst({
+  kind: Syntax.ProcedureStatement,
+  labels: ["TEST"],
+  end: {
+    kind: Syntax.EndStatement,
+    labels: ["ENDLABEL"],
+  },
+});

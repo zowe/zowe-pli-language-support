@@ -13,7 +13,7 @@ import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols } from "../linking/symbol-table";
 import { PliParserInstance } from "../parser/parser";
 import { CompilationUnit } from "./compilation-unit";
-import { PliProgram } from "../syntax-tree/ast";
+import { Program } from "../syntax-tree/ast";
 import {
   compilerOptionIssuesToDiagnostics,
   generatePliValidationDiagnostics,
@@ -76,7 +76,7 @@ export async function tokenize(
   return result;
 }
 
-export function parse(compilationUnit: CompilationUnit): PliProgram {
+export function parse(compilationUnit: CompilationUnit): Program {
   PliParserInstance.input = compilationUnit.tokens;
   const ast = PliParserInstance.parse();
   compilationUnit.ast = ast;
