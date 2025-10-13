@@ -37,7 +37,7 @@ export function workspaceSymbolRequestForCompilationUnit(
   unit: CompilationUnit,
 ): SymbolInformation[] {
   // Get symbols for all files in the compilation unit.
-  const unitSymbols = Array.from(unit.files.values()).flatMap((file) =>
+  const unitSymbols = Array.from(unit.services.files.values()).flatMap((file) =>
     collectSymbolsForDocument(file.uri, unit),
   );
 
@@ -57,7 +57,7 @@ function collectSymbolsForDocument(
 ): WorkspaceSymbol[] {
   const uriString = uri.toString();
   const documentSymbols = documentSymbolRequest(uri, unit);
-  const textDocument = unit.files.getDocument(uriString);
+  const textDocument = unit.services.files.getDocument(uriString);
   if (!textDocument) {
     return [];
   }

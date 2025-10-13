@@ -532,6 +532,7 @@ export type DefaultAttribute =
   | "BINARY"
   | "BIT"
   | "BUFFERED"
+  | "BUF"
   | "BUILTIN"
   | "BYADDR"
   | "BYVALUE"
@@ -546,6 +547,7 @@ export type DefaultAttribute =
   | "DEC"
   | "DECIMAL"
   | "DIMACROSS"
+  | "DIRECT"
   | "EVENT"
   | "EXCLUSIVE"
   | "EXT"
@@ -595,6 +597,7 @@ export type DefaultAttribute =
   | "REAL"
   | "RECORD"
   | "RESERVED"
+  | "SEQL"
   | "SEQUENTIAL"
   | "SIGNED"
   | "STATIC"
@@ -605,6 +608,7 @@ export type DefaultAttribute =
   | "UCHAR"
   | "UNAL"
   | "UNALIGNED"
+  | "UNBUF"
   | "UNBUFFERED"
   | "UNION"
   | "UNSIGNED"
@@ -1025,6 +1029,7 @@ export interface CompilerOptionText extends AstNode {
 export interface ComputationDataAttribute extends AstNode {
   kind: SyntaxKind.ComputationDataAttribute;
   type: DataAttributeType | null;
+  typeToken: Token | null;
   dimensions: Dimensions | null;
 }
 export function createComputationDataAttribute(): ComputationDataAttribute {
@@ -1032,6 +1037,7 @@ export function createComputationDataAttribute(): ComputationDataAttribute {
     kind: SyntaxKind.ComputationDataAttribute,
     container: null,
     type: null,
+    typeToken: null,
     dimensions: null,
   };
 }
@@ -1360,6 +1366,7 @@ export interface EntryAttribute extends AstNode {
   variable: "VARIABLE"[];
   returns: ReturnsOption[];
   environmentName: Expression[];
+  entryToken: Token | null;
 }
 export interface EntryParameterDescription extends AstNode {
   kind: SyntaxKind.EntryParameterDescription;
@@ -1937,6 +1944,7 @@ export interface PFormatItem extends AstNode {
 export interface PictureAttribute extends AstNode {
   kind: SyntaxKind.PictureAttribute;
   picture: string | null;
+  pictureToken: Token | null;
 }
 export interface PliProgram extends AstNode {
   kind: SyntaxKind.PliProgram;
