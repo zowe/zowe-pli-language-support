@@ -119,11 +119,6 @@ export function commonStatement(
     unit = assignmentStatement(state);
   } else if (state.isInProcedure()) {
     switch (state.token?.tokenTypeIdx) {
-      case t.END.tokenTypeIdx:
-        if (withEnd) {
-          endStmt = endStatement(state, stmtLabels);
-        }
-        break;
       case t.ANSWER.tokenTypeIdx:
         unit = answerStatement(state);
         break;
@@ -136,8 +131,10 @@ export function commonStatement(
       case t.DO.tokenTypeIdx:
         unit = doStatement(state);
         break;
-      case t.SELECT.tokenTypeIdx:
-        unit = selectStatement(state);
+      case t.END.tokenTypeIdx:
+        if (withEnd) {
+          endStmt = endStatement(state, stmtLabels);
+        }
         break;
       case t.GO.tokenTypeIdx:
       case t.GOTO.tokenTypeIdx:
@@ -146,32 +143,27 @@ export function commonStatement(
       case t.IF.tokenTypeIdx:
         unit = ifStatement(state);
         break;
-      case t.LEAVE.tokenTypeIdx:
-        unit = leaveStatement(state);
-        break;
       case t.ITERATE.tokenTypeIdx:
         unit = iterateStatement(state);
         break;
-      case t.RETURN.tokenTypeIdx:
-        unit = returnStatement(state);
-        break;
-      case t.Semicolon.tokenTypeIdx:
-        unit = nullStatement(state);
+      case t.LEAVE.tokenTypeIdx:
+        unit = leaveStatement(state);
         break;
       case t.NOTE.tokenTypeIdx:
         unit = noteStatement(state);
         break;
-    }
-  } else {
-    switch (state.token?.tokenTypeIdx) {
-      case t.END.tokenTypeIdx:
-        if (withEnd) {
-          endStmt = endStatement(state, stmtLabels);
-        }
+      case t.RETURN.tokenTypeIdx:
+        unit = returnStatement(state);
+        break;
+      case t.SELECT.tokenTypeIdx:
+        unit = selectStatement(state);
         break;
       case t.Semicolon.tokenTypeIdx:
         unit = nullStatement(state);
         break;
+    }
+  } else {
+    switch (state.token?.tokenTypeIdx) {
       case t.ACTIVATE.tokenTypeIdx:
         unit = activateStatement(state);
         break;
@@ -180,6 +172,11 @@ export function commonStatement(
         break;
       case t.DECLARE.tokenTypeIdx:
         unit = declareStatement(state);
+        break;
+      case t.END.tokenTypeIdx:
+        if (withEnd) {
+          endStmt = endStatement(state, stmtLabels);
+        }
         break;
       case t.PAGE.tokenTypeIdx:
         unit = pageDirective(state);
@@ -196,23 +193,8 @@ export function commonStatement(
       case t.NOPRINT.tokenTypeIdx:
         unit = noprintDirective(state);
         break;
-      case t.SKIP.tokenTypeIdx:
-        unit = skipStatement(state);
-        break;
-      case t.INCLUDE.tokenTypeIdx:
-        unit = includeStatement(state);
-        break;
-      case t.INSCAN.tokenTypeIdx:
-        unit = inscanStatement(state);
-        break;
-      case t.IF.tokenTypeIdx:
-        unit = ifStatement(state);
-        break;
       case t.DO.tokenTypeIdx:
         unit = doStatement(state);
-        break;
-      case t.SELECT.tokenTypeIdx:
-        unit = selectStatement(state);
         break;
       case t.GOTO.tokenTypeIdx:
       case t.GO.tokenTypeIdx:
@@ -221,8 +203,20 @@ export function commonStatement(
       case t.LEAVE.tokenTypeIdx:
         unit = leaveStatement(state);
         break;
+      case t.IF.tokenTypeIdx:
+        unit = ifStatement(state);
+        break;
+      case t.INCLUDE.tokenTypeIdx:
+        unit = includeStatement(state);
+        break;
+      case t.INSCAN.tokenTypeIdx:
+        unit = inscanStatement(state);
+        break;
       case t.ITERATE.tokenTypeIdx:
         unit = iterateStatement(state);
+        break;
+      case t.NOTE.tokenTypeIdx:
+        unit = noteStatement(state);
         break;
       case t.PROCEDURE.tokenTypeIdx:
         try {
@@ -235,11 +229,17 @@ export function commonStatement(
       case t.RETURN.tokenTypeIdx:
         unit = returnStatement(state);
         break;
-      case t.NOTE.tokenTypeIdx:
-        unit = noteStatement(state);
-        break;
       case t.REPLACE.tokenTypeIdx:
         unit = replaceStatement(state);
+        break;
+      case t.SELECT.tokenTypeIdx:
+        unit = selectStatement(state);
+        break;
+      case t.Semicolon.tokenTypeIdx:
+        unit = nullStatement(state);
+        break;
+      case t.SKIP.tokenTypeIdx:
+        unit = skipStatement(state);
         break;
     }
   }
@@ -1071,6 +1071,11 @@ function tryScanMode(state: ParserState): ast.ScanMode | null {
   return scanMode;
 }
 
+/**
+ * Note: Even though the SKIP statement is documented in the language manual,
+ * the compiler does not seem to support it.
+ * Therefore, we parse it, but don't actually generate any instructions for it.
+ */
 function skipStatement(state: ParserState): ast.SkipDirective {
   const statement = ast.createSkipDirective();
   state.consume(statement, CstNodeKind.SkipDirective_SKIP, t.SKIP);
