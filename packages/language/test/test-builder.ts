@@ -12,10 +12,11 @@
 import { definitionRequest } from "../src/language-server/definition-request";
 import {
   collectDiagnostics,
+  collectSyntaxNodesByOffset,
   CompilationUnit,
 } from "../src/workspace/compilation-unit";
 import { URI } from "vscode-uri";
-import { Diagnostic, Range, Severity } from "../src/language-server/types";
+import { Diagnostic, getSyntaxNodeRange, Range, Severity } from "../src/language-server/types";
 import { parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
@@ -41,9 +42,11 @@ import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
 import { tokenize } from "../src/parser/tokenizer";
 import { escapeRegExp } from "../src/parser/tokens";
 import { PLICode } from "../src/validation/messages/pli-codes";
-import { isSyntaxNode, SyntaxKind } from "../src/syntax-tree/ast";
+import { isSyntaxNode, SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
 import { isObject } from "../src/utils/types";
 import { format } from "util";
+import { TypeDescriptions } from "../src/typesystem/descriptions";
+
 
 export type Label = string | number | string[] | number[];
 
@@ -124,6 +127,7 @@ export class TestBuilder {
   private indices!: Record<string, number[]>;
   private ranges!: Record<string, Array<[number, number]>>;
   private diagnostics!: Diagnostic[];
+  private syntaxNodesByOffset!: Map<number, SyntaxNode>;
   private options: TestBuilderOptions;
 
   getDiagnostics(): Diagnostic[] {
@@ -192,6 +196,7 @@ export class TestBuilder {
     copy.indices = this.indices;
     copy.ranges = this.ranges;
     copy.diagnostics = this.diagnostics;
+    copy.syntaxNodesByOffset = this.syntaxNodesByOffset;
     return copy;
   }
 
@@ -215,6 +220,7 @@ export class TestBuilder {
     });
     this.diagnostics = collectDiagnostics(this.unit);
     this.checkDiagnosticsURIs();
+    this.syntaxNodesByOffset = collectSyntaxNodesByOffset(this.unit);
 
     // After the test-builder is done with its tests, reset the plugin configuration provider
     // so that potential test functions that invoke functions of the lifecycle are not affected
@@ -930,6 +936,20 @@ export class TestBuilder {
         expect(completionResult, message).not.toContain(completion);
       }
     });
+  }
+
+  expectTypeAt(label: string, expectedType: Partial<TypeDescriptions.Any>): void {
+    const ranges = this.getLabelRanges(label);
+    for (const [start] of ranges) {
+      const node = this.syntaxNodesByOffset.get(start);
+      if (!node) {
+        throw new Error(
+          `No syntax node found at position ${this.createPositionMessage(start)}`,
+        );
+      }
+      const actualType = this.unit.services.inferer.inferType(node, this.unit);
+      expect(actualType, `Type at label "${label}"`).toContainEqual(expect.objectContaining(expectedType));
+    }
   }
 
   private createLabelRangeMessage(label: string): string {

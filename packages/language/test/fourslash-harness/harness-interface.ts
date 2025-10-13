@@ -21,6 +21,7 @@ import { CompilerOptions } from "../../src/preprocessor/compiler-options/options
 import { TypeSystem } from "../../src/validation/messages/internal-codes";
 import { PLICode } from "../../src/validation/messages/pli-codes";
 import { SyntaxKind } from "../../src/syntax-tree/ast";
+import { AccessModes, Alignments, Assignabilities, Bases, BufferModes, DataType, DataTypes, Endianesses, FileUsages, FloatFormats, NumberModes, NumberScales, PictureWidenesses, Scopes, Signs, StorageClasses, StorageConnections, StringFormats, StringKinds, TypeDescriptions, Volatilities } from "../../src/typesystem/descriptions";
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
@@ -33,6 +34,33 @@ export interface HarnessTesterInterface {
      * Expose the test builder.
      */
     testBuilder: TestBuilder;
+  };
+
+  types: {
+    expectTypeAt(label: Label, type: Partial<TypeDescriptions.Any>): void;
+    dataTypes: typeof DataTypes;
+
+    accessModes: typeof AccessModes;
+    alignments: typeof Alignments;
+    assignabilities: typeof Assignabilities;
+    bases: typeof Bases;
+    bufferModes: typeof BufferModes;
+    connections: typeof StorageConnections;
+    endianesses: typeof Endianesses;
+    fileUsages: typeof FileUsages;
+    floatFormats: typeof FloatFormats;
+    //TODO locator types
+    numberModes: typeof NumberModes;
+    //TODO ordinal names
+    pictureWidenesses: typeof PictureWidenesses;
+    //TODO positions
+    scales: typeof NumberScales;
+    scopes: typeof Scopes;
+    signs: typeof Signs;
+    storageClasses: typeof StorageClasses;
+    stringFormats: typeof StringFormats;
+    stringKinds: typeof StringKinds;
+    volatilities: typeof Volatilities;
   };
 
   verify: {

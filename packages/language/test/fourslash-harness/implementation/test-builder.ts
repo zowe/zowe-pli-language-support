@@ -19,6 +19,7 @@ import { HarnessConstants } from "./constants";
 import { generateIncludeItemMarkup } from "../../../src/language-server/hover-request";
 import { PLICode } from "../../../src/validation/messages/pli-codes";
 import { SyntaxKind } from "../../../src/syntax-tree/ast";
+import { AccessModes, Alignments, Assignabilities, Bases, BufferModes, DataTypes, Endianesses, FileUsages, FloatFormats, NumberModes, NumberScales, PictureWidenesses, Scopes, Signs, StorageClasses, StorageConnections, StringFormats, StringKinds, Volatilities } from "../../../src/typesystem/descriptions";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -96,6 +97,34 @@ export function createTestBuilderHarnessImplementation(
       expectTokens: (text) => testBuilder.expectPreprocessorTokens(text),
       expectSkippedCodeAt: (label) =>
         testBuilder.expectSkippedCode(label.toString()),
+    },
+    types: {
+      dataTypes: DataTypes,
+
+      accessModes: AccessModes,
+      alignments: Alignments,
+      assignabilities: Assignabilities,
+      bases: Bases,
+      bufferModes: BufferModes,
+      connections: StorageConnections,
+      endianesses: Endianesses,
+      fileUsages: FileUsages,
+      floatFormats: FloatFormats,
+      //TODO locator types
+      numberModes: NumberModes,
+      //TODO ordinal names
+      pictureWidenesses: PictureWidenesses,
+      //TODO positions
+      scales: NumberScales,
+      scopes: Scopes,
+      signs: Signs,
+      storageClasses: StorageClasses,
+      stringFormats: StringFormats,
+      stringKinds: StringKinds,
+      volatilities: Volatilities,
+
+      expectTypeAt: (label, type) =>
+        testBuilder.expectTypeAt(label.toString(), type),
     },
     code: HarnessCodes,
     constants: HarnessConstants,

@@ -47,6 +47,7 @@ import {
   FileUsage,
   Alignment,
   Scope,
+  DataTypesArray,
 } from "./descriptions";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
@@ -69,7 +70,7 @@ export interface TypeBuilder {
 
 export class DefaultTypeBuilder implements TypeBuilder {
   private diagnostics: Diagnostic[] = [];
-  private possibleDataTypes = new Set<DataType>(DataTypes);
+  private possibleDataTypes = new Set<DataType>(DataTypesArray);
   private attributeWitnesses: AttributeWitnesses =
     createEmptyAttributeWitnesses();
   constructor(private tokens: Token[]) {}
