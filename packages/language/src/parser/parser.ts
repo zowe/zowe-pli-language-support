@@ -24,17 +24,23 @@ export class PliParser extends AbstractParser {
     this.performSelfAnalysis();
   }
 
-  parse(): ast.PliProgram {
-    const result = this.PliProgram();
+  parse(): ast.Program {
+    let result: ast.Program | undefined;
+    try {
+      result = this.PliProgram();
+    } catch {
+      // Parser errors on the root rule are not caught within Chevrotain
+      // so we catch them here instead
+    }
     if (result === undefined) {
-      return this.pop<ast.PliProgram>();
+      return this.pop<ast.Program>();
     }
     return result;
   }
 
-  private createPliProgram(): ast.PliProgram {
+  private createPliProgram(): ast.Program {
     return {
-      kind: ast.SyntaxKind.PliProgram,
+      kind: ast.SyntaxKind.Program,
       container: null,
       statements: [],
     };
@@ -51,7 +57,7 @@ export class PliParser extends AbstractParser {
       });
     });
 
-    return this.pop<ast.PliProgram>();
+    return this.pop<ast.Program>();
   });
   private createPackage(): ast.Package {
     return {
@@ -8229,16 +8235,8 @@ export class PliParser extends AbstractParser {
     return this.pop<ast.ProcedureCallArgs>();
   });
 
-  private createLabelReference(): ast.LabelReference {
-    return {
-      kind: ast.SyntaxKind.LabelReference,
-      container: null,
-      label: null,
-    };
-  }
-
   LabelReference = this.RULE("LabelReference", () => {
-    let element = this.push(this.createLabelReference());
+    let element = this.push(ast.createLabelReference());
 
     this.CONSUME_ASSIGN1(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.LabelReference_LabelRef);

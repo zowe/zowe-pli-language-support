@@ -734,7 +734,7 @@ export function forEachNode(
       break;
     case SyntaxKind.PictureAttribute:
       break;
-    case SyntaxKind.PliProgram:
+    case SyntaxKind.Program:
       node.statements.forEach(action);
       break;
     case SyntaxKind.PopDirective:

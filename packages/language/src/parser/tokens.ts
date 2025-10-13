@@ -18,7 +18,11 @@ export interface Token {
   image: string;
   originalImage: string;
   startOffset: number;
+  startLine: number;
+  startColumn: number;
   endOffset: number;
+  endLine: number;
+  endColumn: number;
   tokenTypeIdx: number;
   isInsertedInRecovery?: boolean;
   tokenType: TokenType;
@@ -32,7 +36,11 @@ class TokenImpl implements Token {
   image: string;
   originalImage: string;
   startOffset: number;
+  startLine: number;
+  startColumn: number;
   endOffset: number;
+  endLine: number;
+  endColumn: number;
   tokenTypeIdx: number;
   isInsertedInRecovery: boolean;
   tokenType: TokenType;
@@ -45,13 +53,21 @@ class TokenImpl implements Token {
     originalImage: string,
     tokenType: TokenType,
     startOffset: number,
+    startLine: number,
+    startColumn: number,
     endOffset: number,
+    endLine: number,
+    endColumn: number,
     uri: URI | undefined,
   ) {
     this.image = image;
     this.originalImage = originalImage;
     this.startOffset = startOffset;
+    this.startLine = startLine;
+    this.startColumn = startColumn;
     this.endOffset = endOffset;
+    this.endLine = endLine;
+    this.endColumn = endColumn;
     this.tokenTypeIdx = tokenType.tokenTypeIdx!;
     this.tokenType = tokenType;
     this.uri = uri;
@@ -67,7 +83,11 @@ export function createTokenInstance(
   originalImage: string,
   tokenType: TokenType,
   startOffset: number,
+  startLine: number,
+  startColumn: number,
   endOffset: number,
+  endLine: number,
+  endColumn: number,
   uri: URI | undefined,
 ): Token {
   return new TokenImpl(
@@ -75,7 +95,11 @@ export function createTokenInstance(
     originalImage,
     tokenType,
     startOffset,
+    startLine,
+    startColumn,
     endOffset,
+    endLine,
+    endColumn,
     uri,
   );
 }

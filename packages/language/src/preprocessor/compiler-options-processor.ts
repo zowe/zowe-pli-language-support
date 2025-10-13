@@ -157,11 +157,13 @@ export class CompilerOptionsProcessor {
       currentPosition,
       text,
     );
+    let line = 0;
     while ((match = processRegex.exec(text))) {
       const directiveStart = match.index;
       const directiveEnd = match.index + match[0].length;
       const processStart = directiveStart + 1; // Skip the % or *
-      const tokenEnd = processStart + "PROCESS".length;
+      const tokenLength = "PROCESS".length;
+      const tokenEnd = processStart + tokenLength;
 
       const image = text.substring(directiveStart, tokenEnd);
       const token = createTokenInstance(
@@ -169,7 +171,11 @@ export class CompilerOptionsProcessor {
         image,
         PROCESS,
         directiveStart,
+        line,
+        0,
         tokenEnd,
+        line++,
+        tokenLength,
         uri,
       );
       token.kind = CstNodeKind.ProcessDirective_PROCESS;

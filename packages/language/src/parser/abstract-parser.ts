@@ -19,6 +19,7 @@ import {
 } from "chevrotain";
 import { LLStarLookaheadStrategy } from "chevrotain-allstar";
 import {
+  Expression,
   SyntaxKind,
   type BinaryExpression,
   type SyntaxNode,
@@ -48,7 +49,7 @@ export interface IntermediateBinaryExpression {
   /**
    * The items (operands) in the binary expression.
    */
-  items: any[];
+  items: (Expression | null)[];
 
   /**
    * The operators in the binary expression.
@@ -327,7 +328,7 @@ const binaryPrecedence = buildPrecendenceMap([
  */
 export function constructBinaryExpression(
   obj: IntermediateBinaryExpression,
-): BinaryExpression {
+): Expression | null {
   if (obj.items.length === 1) {
     // Captured just a single, non-binary expression
     // Simply return the expression as is.

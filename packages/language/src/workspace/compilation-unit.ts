@@ -9,7 +9,7 @@
  *
  */
 
-import { PliProgram, SyntaxKind } from "../syntax-tree/ast.js";
+import { Program, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
 import { CancellationToken, Connection } from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
@@ -66,8 +66,8 @@ export interface CompilationUnit {
    */
   uri: URI;
   compilerOptions: CompilerOptions;
-  ast: PliProgram;
-  preprocessorAst: PliProgram;
+  ast: Program;
+  preprocessorAst: Program;
   preprocessorEvaluationResults: EvaluationResults;
   tokens: Token[];
   referencesCache: ReferencesCache;
@@ -158,12 +158,12 @@ export async function createCompilationUnit(
     services,
     compilerOptions,
     ast: {
-      kind: SyntaxKind.PliProgram,
+      kind: SyntaxKind.Program,
       container: null,
       statements: [],
     },
     preprocessorAst: {
-      kind: SyntaxKind.PliProgram,
+      kind: SyntaxKind.Program,
       container: null,
       statements: [],
     },
