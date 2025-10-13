@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/utils/code-block.ts</title>
+    <title>Code coverage report for src/validation/type-check-validator.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/utils</a> code-block.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/validation</a> type-check-validator.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
@@ -87,7 +87,14 @@
 <a name='L22'></a><a href='#L22'>22</a>
 <a name='L23'></a><a href='#L23'>23</a>
 <a name='L24'></a><a href='#L24'>24</a>
-<a name='L25'></a><a href='#L25'>25</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -99,17 +106,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">24x</span>
-<span class="cline-any cline-yes">24x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">411x</span>
+<span class="cline-any cline-yes">411x</span>
+<span class="cline-any cline-yes">411x</span>
+<span class="cline-any cline-yes">411x</span>
+<span class="cline-any cline-yes">411x</span>
+<span class="cline-any cline-yes">411x</span>
+<span class="cline-any cline-yes">411x</span>
+<span class="cline-any cline-yes">411x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
@@ -122,19 +128,22 @@
  *
  */
 &nbsp;
-export function formatCodeBlock(language: string) {
-  return (text: string): string =&gt; {
-    return `\`\`\`${language}\n${text}\n\`\`\`\n`;
-  };
-}
+import * as ast from "../syntax-tree/ast";
+import { CompilationUnit } from "../workspace/compilation-unit";
+import { ValidationAcceptor } from "./validator";
 &nbsp;
-/**
- * Format a code block for Pli.
- *
- * @example
- * formatPliCodeBlock("DCL A") === "```pli\nDCL A\n```\n"
- */
-export const formatPliCodeBlock = formatCodeBlock("pli");
+export class TypeCheck {
+  constructor(private compilationUnit: CompilationUnit) {}
+  checkDeclaredItem(
+    declaredItem: ast.DeclaredItem,
+    _acceptor: ValidationAcceptor,
+  ) {
+    this.compilationUnit.services.inferer.inferDeclarationType(
+      declaredItem,
+      this.compilationUnit,
+    );
+  }
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->

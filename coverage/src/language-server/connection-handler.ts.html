@@ -771,7 +771,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >      const parsedUri = URI.parse(uri);</span>
 <span class="cstat-no" title="statement not covered" >      const compilationUnit =</span>
 <span class="cstat-no" title="statement not covered" >        compilationUnitHandler.getCompilationUnit(parsedUri);</span>
-<span class="cstat-no" title="statement not covered" >      const textDocument = compilationUnit?.files.getDocument(uri);</span>
+<span class="cstat-no" title="statement not covered" >      const textDocument = compilationUnit?.services.files.getDocument(uri);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      if (!textDocument || !compilationUnit) {</span>
 <span class="cstat-no" title="statement not covered" >        return null;</span>
@@ -793,7 +793,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >      const parsedUri = URI.parse(uri);</span>
 <span class="cstat-no" title="statement not covered" >      const compilationUnit =</span>
 <span class="cstat-no" title="statement not covered" >        compilationUnitHandler.getCompilationUnit(parsedUri);</span>
-<span class="cstat-no" title="statement not covered" >      const textDocument = compilationUnit?.files.getDocument(uri);</span>
+<span class="cstat-no" title="statement not covered" >      const textDocument = compilationUnit?.services.files.getDocument(uri);</span>
 <span class="cstat-no" title="statement not covered" >      if (textDocument &amp;&amp; compilationUnit) {</span>
 <span class="cstat-no" title="statement not covered" >        const offset = textDocument.offsetAt(position);</span>
 <span class="cstat-no" title="statement not covered" >        const result = completionRequest(</span>
@@ -814,13 +814,13 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >      const position = params.position;</span>
 <span class="cstat-no" title="statement not covered" >      const uri = URI.parse(params.textDocument.uri);</span>
 <span class="cstat-no" title="statement not covered" >      const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);</span>
-<span class="cstat-no" title="statement not covered" >      const textDocument = compilationUnit?.files.getDocument(uri);</span>
+<span class="cstat-no" title="statement not covered" >      const textDocument = compilationUnit?.services.files.getDocument(uri);</span>
 <span class="cstat-no" title="statement not covered" >      if (textDocument &amp;&amp; compilationUnit) {</span>
 <span class="cstat-no" title="statement not covered" >        const offset = textDocument.offsetAt(position);</span>
 <span class="cstat-no" title="statement not covered" >        const definition = definitionRequest(compilationUnit, uri, offset);</span>
 <span class="cstat-no" title="statement not covered" >        const lspDefinitions: Location[] = [];</span>
 <span class="cstat-no" title="statement not covered" >        for (const def of definition) {</span>
-<span class="cstat-no" title="statement not covered" >          const doc = compilationUnit?.files.getDocument(def.uri);</span>
+<span class="cstat-no" title="statement not covered" >          const doc = compilationUnit?.services.files.getDocument(def.uri);</span>
 <span class="cstat-no" title="statement not covered" >          if (doc) {</span>
 <span class="cstat-no" title="statement not covered" >            const range = rangeToLSP(doc, def.range);</span>
 <span class="cstat-no" title="statement not covered" >            lspDefinitions.push({</span>
@@ -841,7 +841,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >      const parsedUri = URI.parse(uri);</span>
 <span class="cstat-no" title="statement not covered" >      const compilationUnit =</span>
 <span class="cstat-no" title="statement not covered" >        compilationUnitHandler.getCompilationUnit(parsedUri);</span>
-<span class="cstat-no" title="statement not covered" >      const textDocument = compilationUnit?.files.getDocument(uri);</span>
+<span class="cstat-no" title="statement not covered" >      const textDocument = compilationUnit?.services.files.getDocument(uri);</span>
 <span class="cstat-no" title="statement not covered" >      if (textDocument &amp;&amp; compilationUnit) {</span>
 <span class="cstat-no" title="statement not covered" >        const offset = textDocument.offsetAt(position);</span>
 <span class="cstat-no" title="statement not covered" >        const definition = referencesRequest(</span>
@@ -851,7 +851,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >        );</span>
 <span class="cstat-no" title="statement not covered" >        const lspDefinitions: Location[] = [];</span>
 <span class="cstat-no" title="statement not covered" >        for (const def of definition) {</span>
-<span class="cstat-no" title="statement not covered" >          const doc = compilationUnit.files.getDocument(def.uri);</span>
+<span class="cstat-no" title="statement not covered" >          const doc = compilationUnit?.services.files.getDocument(def.uri);</span>
 <span class="cstat-no" title="statement not covered" >          if (doc) {</span>
 <span class="cstat-no" title="statement not covered" >            const range = rangeToLSP(doc, def.range);</span>
 <span class="cstat-no" title="statement not covered" >            lspDefinitions.push({</span>
@@ -871,7 +871,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >      const compilationUnit = compilationUnitHandler.getCompilationUnit(</span>
 <span class="cstat-no" title="statement not covered" >        URI.parse(uri),</span>
 <span class="cstat-no" title="statement not covered" >      );</span>
-<span class="cstat-no" title="statement not covered" >      const textDocument = compilationUnit?.files.getDocument(uri);</span>
+<span class="cstat-no" title="statement not covered" >      const textDocument = compilationUnit?.services.files.getDocument(uri);</span>
 <span class="cstat-no" title="statement not covered" >      if (textDocument &amp;&amp; compilationUnit) {</span>
 <span class="cstat-no" title="statement not covered" >        return {</span>
 <span class="cstat-no" title="statement not covered" >          data: semanticTokens(textDocument, compilationUnit),</span>
@@ -888,7 +888,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >      const position = params.position;</span>
 <span class="cstat-no" title="statement not covered" >      const parsedUri = URI.parse(uri);</span>
 <span class="cstat-no" title="statement not covered" >      const unit = compilationUnitHandler.getCompilationUnit(parsedUri);</span>
-<span class="cstat-no" title="statement not covered" >      const textDocument = unit?.files.getDocument(uri);</span>
+<span class="cstat-no" title="statement not covered" >      const textDocument = unit?.services.files.getDocument(uri);</span>
 <span class="cstat-no" title="statement not covered" >      if (textDocument &amp;&amp; unit) {</span>
 <span class="cstat-no" title="statement not covered" >        const offset = textDocument.offsetAt(position);</span>
 <span class="cstat-no" title="statement not covered" >        const definitions = getReferenceLocations(unit, parsedUri, offset);</span>
@@ -907,13 +907,13 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >      const position = params.position;</span>
 <span class="cstat-no" title="statement not covered" >      const parsedUri = URI.parse(uri);</span>
 <span class="cstat-no" title="statement not covered" >      const unit = compilationUnitHandler.getCompilationUnit(parsedUri);</span>
-<span class="cstat-no" title="statement not covered" >      const textDocument = unit?.files.getDocument(uri);</span>
+<span class="cstat-no" title="statement not covered" >      const textDocument = unit?.services.files.getDocument(uri);</span>
 <span class="cstat-no" title="statement not covered" >      if (textDocument &amp;&amp; unit) {</span>
 <span class="cstat-no" title="statement not covered" >        const offset = textDocument.offsetAt(position);</span>
 <span class="cstat-no" title="statement not covered" >        const renameLocations = renameRequest(unit, parsedUri, offset);</span>
 <span class="cstat-no" title="statement not covered" >        const changes: Record&lt;string, TextEdit[]&gt; = {};</span>
 <span class="cstat-no" title="statement not covered" >        for (const [key, locations] of Object.entries(renameLocations)) {</span>
-<span class="cstat-no" title="statement not covered" >          const textDocument = unit.files.getDocument(key);</span>
+<span class="cstat-no" title="statement not covered" >          const textDocument = unit.services.files.getDocument(key);</span>
 <span class="cstat-no" title="statement not covered" >          if (textDocument) {</span>
 <span class="cstat-no" title="statement not covered" >            changes[key] = locations.map(</span>
 <span class="cstat-no" title="statement not covered" >              (location) =&gt;</span>
@@ -938,7 +938,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >      const uri = params.textDocument.uri;</span>
 <span class="cstat-no" title="statement not covered" >      const parsedUri = URI.parse(uri);</span>
 <span class="cstat-no" title="statement not covered" >      const unit = compilationUnitHandler.getCompilationUnit(parsedUri);</span>
-<span class="cstat-no" title="statement not covered" >      const textDocument = unit?.files.getDocument(uri);</span>
+<span class="cstat-no" title="statement not covered" >      const textDocument = unit?.services.files.getDocument(uri);</span>
 <span class="cstat-no" title="statement not covered" >      if (textDocument &amp;&amp; unit) {</span>
 <span class="cstat-no" title="statement not covered" >        const requestResult = documentSymbolRequest(parsedUri, unit);</span>
 <span class="cstat-no" title="statement not covered" >        return requestResult.map((symbol) =&gt;</span>
@@ -979,7 +979,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-10T09:30:44.446Z
+                at 2025-10-13T09:20:33.026Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
