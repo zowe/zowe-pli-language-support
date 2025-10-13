@@ -98,6 +98,7 @@ describe("Preprocessor Tests", () => {
     PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
   });
 
+  // macOS + linux absolute path resolution
   test.runIf(["darwin", "linux"].includes(process.platform))(
     "unix path resolution",
     async () => {
@@ -111,6 +112,7 @@ describe("Preprocessor Tests", () => {
     },
   );
 
+  // tets win absolute path resolution w/ a drive letter
   test.runIf(process.platform === "win32")(
     "Windows path resolution",
     async () => {
@@ -124,6 +126,7 @@ describe("Preprocessor Tests", () => {
     },
   );
 
+  // test win absolute path resolution w/out a drive letter
   test.runIf(process.platform === "win32")(
     "Windows path resolution",
     async () => {
