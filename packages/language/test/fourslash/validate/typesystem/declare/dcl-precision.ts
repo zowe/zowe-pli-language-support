@@ -12,6 +12,10 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// DCL ANYTHING PRECISION(10, 5);
+//// DCL <|1:ANYTHING|> PRECISION(10, 5);
 
 verify.noDiagnostics(undefined, ...code.TypeSystem);
+types.expectTypeAt(1, {
+  type: types.dataTypes.Arithmetic,
+  scale: types.scales.Fixed(10, 5),
+});

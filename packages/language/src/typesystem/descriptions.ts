@@ -35,18 +35,18 @@ export enum DataType {
 }
 
 export const DataTypes = {
-  'Area': DataType.Area,
-  'Arithmetic': DataType.Arithmetic,
-  'Entry': DataType.Entry,
-  'File': DataType.File,
-  'Format': DataType.Format,
-  'Label': DataType.Label,
-  'Locator': DataType.Locator,
-  'Ordinal': DataType.Ordinal,
-  'Picture': DataType.Picture,
-  'String': DataType.String,
-  'Task': DataType.Task,
-  'Unknown': DataType.Unknown,
+  'Area': DataType.Area as const,
+  'Arithmetic': DataType.Arithmetic as const,
+  'Entry': DataType.Entry as const,
+  'File': DataType.File as const,
+  'Format': DataType.Format as const,
+  'Label': DataType.Label as const,
+  'Locator': DataType.Locator as const,
+  'Ordinal': DataType.Ordinal as const,
+  'Picture': DataType.Picture as const,
+  'String': DataType.String as const,
+  'Task': DataType.Task as const,
+  'Unknown': DataType.Unknown as const,
 };
 
 export const DataTypesArray: DataType[] = Object.values(DataTypes);

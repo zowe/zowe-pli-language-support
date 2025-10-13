@@ -17,6 +17,6 @@
 types.expectTypeAt('1', {
   type: types.dataTypes.Arithmetic,  
   scale: types.scales.Fixed(5, 0),
-  mode: types.numberModes.Real,
+  mode: types.modes.Real,
 });
 verify.noDiagnostics(undefined, ...code.TypeSystem);

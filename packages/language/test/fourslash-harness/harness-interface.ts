@@ -50,7 +50,7 @@ export interface HarnessTesterInterface {
     fileUsages: typeof FileUsages;
     floatFormats: typeof FloatFormats;
     //TODO locator types
-    numberModes: typeof NumberModes;
+    modes: typeof NumberModes;
     //TODO ordinal names
     pictureWidenesses: typeof PictureWidenesses;
     //TODO positions

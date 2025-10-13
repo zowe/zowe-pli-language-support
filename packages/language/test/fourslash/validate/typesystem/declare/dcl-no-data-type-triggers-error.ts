@@ -19,3 +19,6 @@ verify.noDiagnostics(undefined, ...code.TypeSystem);
 // verify.expectDiagnosticsAt(1, {
 //  code: code.Error.IBM1482I.fullCode,
 //});
+types.expectTypeAt(1, {
+  type: types.dataTypes.Unknown,
+});

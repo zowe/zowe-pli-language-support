@@ -12,8 +12,12 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// DCL ANYTHING <|1:PRECISION|>(10, 5) FLOAT;
+//// DCL <|1:ANYTHING|> <|2:PRECISION|>(10, 5) FLOAT;
 
-verify.expectDiagnosticsAt(1, {
+verify.expectDiagnosticsAt(2, {
   code: code.Error.IBM2424I.fullCode,
+});
+types.expectTypeAt(1, {
+  type: types.dataTypes.Arithmetic,
+  scale: types.scales.Fixed(10, 5),
 });

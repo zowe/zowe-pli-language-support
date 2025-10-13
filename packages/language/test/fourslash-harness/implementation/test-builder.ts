@@ -111,7 +111,7 @@ export function createTestBuilderHarnessImplementation(
       fileUsages: FileUsages,
       floatFormats: FloatFormats,
       //TODO locator types
-      numberModes: NumberModes,
+      modes: NumberModes,
       //TODO ordinal names
       pictureWidenesses: PictureWidenesses,
       //TODO positions
