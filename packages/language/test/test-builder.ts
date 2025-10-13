@@ -948,7 +948,15 @@ export class TestBuilder {
         );
       }
       const actualType = this.unit.services.inferer.inferType(node, this.unit);
-      expect(actualType, `Type at label "${label}"`).toContainEqual(expect.objectContaining(expectedType));
+      for (const [key, value] of Object.entries(expectedType)) {
+        if (typeof value === "object" && value !== null) {
+          expect(actualType[key as keyof typeof actualType]).toEqual(
+            expect.objectContaining(value),
+          );
+        } else {
+          expect(actualType[key as keyof typeof actualType]).toEqual(value);
+        }
+      }
     }
   }
 
