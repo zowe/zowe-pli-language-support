@@ -27,6 +27,13 @@ type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
 export type Not<T> = Omit<T, "not">;
 
+export type TypeExpectation =
+  | Partial<Exclude<TypeDescriptions.Any, TypeDescriptions.Structure>>
+  | {
+      type: DataType.Structure;
+      members: Record<string, TypeExpectation>;
+    };
+
 export interface HarnessTesterInterface {
   Syntax: typeof SyntaxKind;
   testAPI: {
@@ -37,7 +44,7 @@ export interface HarnessTesterInterface {
   };
 
   types: {
-    expectTypeAt(label: Label, type: Partial<TypeDescriptions.Any>): void;
+    expectTypeAt(label: Label, expectedType: TypeExpectation): void;
     dataTypes: typeof DataTypes;
 
     accessModes: typeof AccessModes;

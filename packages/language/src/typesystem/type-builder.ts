@@ -72,7 +72,7 @@ export class DefaultTypeBuilder implements TypeBuilder {
   private possibleDataTypes = new Set<DataType>(DataTypesArray);
   private attributeWitnesses: AttributeWitnesses =
     createEmptyAttributeWitnesses();
-  constructor(private tokens: Token[]) {}
+  constructor(private elementName: Token) {}
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -696,12 +696,14 @@ export class DefaultTypeBuilder implements TypeBuilder {
   }
   build() {
     if (this.possibleDataTypes.size !== 1) {
-      if (this.tokens.length > 0) {
-        for (const token of this.tokens) {
-          this.diagnostics.push(
-            diagnosticFromCode(Error.IBM1482I, token, token.image),
-          );
-        }
+      if (this.elementName) {
+        this.diagnostics.push(
+          diagnosticFromCode(
+            Error.IBM1482I,
+            this.elementName,
+            this.elementName.image,
+          ),
+        );
       }
       return {
         type: TypeDescriptions.Unknown(),

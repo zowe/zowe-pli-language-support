@@ -45,8 +45,8 @@ import { PLICode } from "../src/validation/messages/pli-codes";
 import { isSyntaxNode, SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
 import { isObject } from "../src/utils/types";
 import { format } from "util";
-import { TypeDescriptions } from "../src/typesystem/descriptions";
-
+import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
+import { TypeExpectation } from "./fourslash-harness/harness-interface";
 
 export type Label = string | number | string[] | number[];
 
@@ -938,10 +938,7 @@ export class TestBuilder {
     });
   }
 
-  expectTypeAt(
-    label: string,
-    expectedType: Partial<TypeDescriptions.Any>,
-  ): void {
+  expectTypeAt(label: string, expectedType: TypeExpectation): void {
     const ranges = this.getLabelRanges(label);
     for (const [start] of ranges) {
       const node = this.syntaxNodesByOffset.get(start);
@@ -951,14 +948,40 @@ export class TestBuilder {
         );
       }
       const actualType = this.unit.services.inferer.inferType(node, this.unit);
-      for (const [key, value] of Object.entries(expectedType)) {
-        if (typeof value === "object" && value !== null) {
-          expect(actualType[key as keyof typeof actualType]).toEqual(
-            expect.objectContaining(value),
+      if (expectedType.type === DataType.Structure) {
+        if (actualType.type !== DataType.Structure) {
+          throw new Error(
+            `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]} at position ${this.createPositionMessage(start)}, but got ${TypeDescriptions.Names[actualType.type]}`,
           );
-        } else {
-          expect(actualType[key as keyof typeof actualType]).toEqual(value);
         }
+        for (const [name, expectedMemberType] of Object.entries(
+          expectedType.members ?? {},
+        )) {
+          const actualMemberType = actualType.members[name];
+          if (!actualMemberType) {
+            throw new Error(
+              `Expected member "${name}" to be present at position ${this.createPositionMessage(start)}, but got undefined`,
+            );
+          }
+          this.expectType(expectedMemberType, actualMemberType);
+        }
+      } else {
+        this.expectType(expectedType, actualType);
+      }
+    }
+  }
+
+  private expectType(
+    expectedType: TypeExpectation,
+    actualType: TypeDescriptions.Any,
+  ) {
+    for (const [key, value] of Object.entries(expectedType)) {
+      if (typeof value === "object" && value !== null) {
+        expect(actualType[key as keyof typeof actualType]).toEqual(
+          expect.objectContaining(value),
+        );
+      } else {
+        expect(actualType[key as keyof typeof actualType]).toEqual(value);
       }
     }
   }

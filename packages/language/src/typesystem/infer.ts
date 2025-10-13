@@ -20,20 +20,10 @@ import { assertUnreachable } from "../utils/common";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultTypeBuilder } from "./type-builder";
 import { Token } from "../parser/tokens";
+import { getNameToken } from "../linking/tokens";
 
 export interface TypeInferer {
-  inferType(
-    node: ast.SyntaxNode,
-    compilationUnit: CompilationUnit,
-  ): TypeDescriptions.Any;
-  // inferExpressionType(
-  //   node: ast.Expression,
-  //   compilationUnit: CompilationUnit,
-  // ): TypeDescriptions.Any;
-  // inferDeclarationType(
-  //   node: ast.DeclaredItem,
-  //   compilationUnit: CompilationUnit,
-  // ): Map<ast.SyntaxNode, TypeDescriptions.Any>;
+  inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
 }
 
 export class DefaultTypeInferer implements TypeInferer {
@@ -55,37 +45,88 @@ export class DefaultTypeInferer implements TypeInferer {
     node: ast.SyntaxNode,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
-    if (
-      node.kind === ast.SyntaxKind.DeclaredVariable &&
-      node.container?.kind === ast.SyntaxKind.DeclaredItem
-    ) {
-      const types = this.inferDeclarationType(node.container, compilationUnit);
-      return types.get(node) ?? TypeDescriptions.Unknown();
-    } else if (node.kind === ast.SyntaxKind.DeclaredItem) {
-      const types = this.inferDeclarationType(node, compilationUnit);
-      return types.get(node) ?? TypeDescriptions.Unknown();
-    } else {
-      //TODO other kinds of nodes
-    }
-    return TypeDescriptions.Unknown();
+    return compilationUnit.services.typeCache.get(node, () => {
+      if (node.kind === ast.SyntaxKind.DeclareStatement) {
+        const topLevelMembers = new Map<string, TypeDescriptions.Any>();
+        const structureParents: [string, TypeDescriptions.Structure][] = [];
+        for (const item of node.items) {
+          const currentLevel = item.level;
+          const itemTypes = this.inferDeclaredItem(item, compilationUnit);
+          if (currentLevel === null) {
+            for (const [element, type] of itemTypes.entries()) {
+              topLevelMembers.set(getNameToken(element)!.image, type);
+            }
+          } else if (structureParents.length > 0) {
+            let lastParent: TypeDescriptions.Structure | null =
+              structureParents[structureParents.length - 1][1];
+            while (
+              lastParent &&
+              lastParent.level > currentLevel &&
+              structureParents.length > 0
+            ) {
+              structureParents.pop();
+              lastParent =
+                structureParents.length > 0
+                  ? structureParents[structureParents.length - 1][1]
+                  : null;
+            }
+            if (lastParent && currentLevel > lastParent.level) {
+              for (const [element, type] of itemTypes.entries()) {
+                lastParent.members[getNameToken(element)!.image] = type;
+              }
+            }
+          } else {
+            if (itemTypes.size === 1) {
+              const [element, type] = [...itemTypes.entries()][0];
+              const name = getNameToken(element)!.image;
+              if (TypeDescriptions.isStructure(type)) {
+                structureParents.push([name, type]);
+              } else {
+                //TODO error?
+              }
+            }
+          }
+        }
+        return TypeDescriptions.Unknown();
+      } else if (
+        node.kind === ast.SyntaxKind.DeclaredVariable &&
+        node.container?.kind === ast.SyntaxKind.DeclaredItem
+      ) {
+        const types = this.inferDeclaredItem(node.container, compilationUnit);
+        return types.get(node) ?? TypeDescriptions.Unknown();
+      } else if (node.kind === ast.SyntaxKind.DeclaredItem) {
+        const types = this.inferDeclaredItem(node, compilationUnit);
+        return types.get(node) ?? TypeDescriptions.Unknown();
+      } else {
+        //TODO other kinds of nodes
+      }
+      return TypeDescriptions.Unknown();
+    });
   }
 
   private getTypeOfElement(
-    nameTokens: Token[],
-    node: ast.DeclaredItem,
+    elementName: Token,
+    parent: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any | undefined {
-    const typeBuilder = new DefaultTypeBuilder(nameTokens);
+    const typeBuilder = new DefaultTypeBuilder(elementName);
     while (
-      node.attributes.length === 0 &&
-      node.container?.kind === ast.SyntaxKind.DeclaredItem
+      parent.attributes.length === 0 &&
+      parent.container?.kind === ast.SyntaxKind.DeclaredItem
     ) {
-      node = node.container;
+      parent = parent.container;
     }
-    node.attributes.forEach((attr) => typeBuilder.addAttribute(attr));
-    const { type, diagnostics } = typeBuilder.build();
+    parent.attributes.forEach((attr) => typeBuilder.addAttribute(attr));
+    let { type, diagnostics } = typeBuilder.build();
     if (type.type !== DataType.Unknown) {
       compilationUnit.diagnostics.typeSystem.push(...diagnostics);
+    } else {
+      if (parent.level !== null) {
+        type = TypeDescriptions.Structure({
+          level: parent.level,
+          members: {},
+        });
+      }
     }
     return type;
   }
@@ -98,7 +139,7 @@ export class DefaultTypeInferer implements TypeInferer {
     if (element.kind === ast.SyntaxKind.DeclaredVariable) {
       if (element.nameToken) {
         const type = this.getTypeOfElement(
-          [element.nameToken],
+          element.nameToken,
           parent,
           compilationUnit,
         );
@@ -107,19 +148,19 @@ export class DefaultTypeInferer implements TypeInferer {
     } else if (element.kind === ast.SyntaxKind.WildcardItem) {
       if (element.token) {
         const type = this.getTypeOfElement(
-          [element.token],
+          element.token,
           parent,
           compilationUnit,
         );
         return type ? new Map([[element, type]]) : new Map();
       }
     } else if (element.kind === ast.SyntaxKind.DeclaredItem) {
-      return this.inferDeclarationType(element, compilationUnit);
+      return this.inferDeclaredItem(element, compilationUnit);
     }
     return new Map();
   }
 
-  private inferDeclarationType(
+  private inferDeclaredItem(
     node: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
   ): Map<ast.SyntaxNode, TypeDescriptions.Any> {

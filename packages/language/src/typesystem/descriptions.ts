@@ -30,6 +30,7 @@ export enum DataType {
   Ordinal,
   Picture,
   String,
+  Structure,
   Task,
   Unknown = -1,
 }
@@ -45,6 +46,7 @@ export const DataTypes = {
   Ordinal: DataType.Ordinal as const,
   Picture: DataType.Picture as const,
   String: DataType.String as const,
+  Structure: DataType.Structure as const,
   Task: DataType.Task as const,
   Unknown: DataType.Unknown as const,
 };
@@ -181,6 +183,7 @@ export const CommonAttributeKinds: AttributeKind[] = [
 
 export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
   [DataType.Unknown]: [...CommonAttributeKinds],
+  [DataType.Structure]: [],
   [DataType.Area]: [
     ...CommonAttributeKinds,
     AttributeKind.AreaSize,
@@ -251,9 +254,14 @@ interface BaseTypeDescriptionProps {
   connection: StorageConnection;
   variable?: boolean;
 }
-interface BaseTypeDescription extends BaseTypeDescriptionProps {
+
+interface WithTypeDescriminator {
   type: DataType;
 }
+
+interface BaseTypeDescription
+  extends WithTypeDescriminator,
+    BaseTypeDescriptionProps {}
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
 export enum AlignmentType {
@@ -435,7 +443,7 @@ function createAreaTypeDescription({
 }
 
 function isAreaTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is AreaTypeDescription {
   return description.type === AreaType;
 }
@@ -495,7 +503,7 @@ export enum ScaleMode {
 }
 
 export const NumberScales = {
-  Fixed: (totalDigitsCount: number, fractionalDigitsCount: number) =>
+  Fixed: (totalDigitsCount: number = 5, fractionalDigitsCount: number = 0) =>
     ({
       mode: ScaleMode.Fixed,
       totalDigitsCount,
@@ -604,7 +612,7 @@ function createArithmeticTypeDescription({
 }
 
 function isArithmeticTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is ArithmeticTypeDescription {
   return description.type === ArithmeticType;
 }
@@ -678,7 +686,7 @@ function createFileTypeDescription({
 }
 
 function isFileTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is FileTypeDescription {
   return description.type === FileType;
 }
@@ -705,7 +713,7 @@ function createFormatTypeDescription({
 }
 
 function isFormatTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is FormatTypeDescription {
   return description.type === FormatType;
 }
@@ -732,7 +740,7 @@ function createLabelTypeDescription({
 }
 
 function isLabelTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is LabelTypeDescription {
   return description.type === LabelType;
 }
@@ -777,7 +785,7 @@ function createLocatorTypeDescription({
 }
 
 function isLocatorTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is LocatorTypeDescription {
   return description.type === LocatorType;
 }
@@ -804,7 +812,7 @@ function createEntryTypeDescription({
 }
 
 function isEntryTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is EntryTypeDescription {
   return description.type === EntryType;
 }
@@ -838,7 +846,7 @@ function createOrdinalTypeDescription({
 }
 
 function isOrdinalTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is OrdinalTypeDescription {
   return description.type === OrdinalType;
 }
@@ -886,7 +894,7 @@ function createPictureTypeDescription({
 }
 
 function isPictureTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is PictureTypeDescription {
   return description.type === PictureType;
 }
@@ -958,7 +966,7 @@ function createStringTypeDescription({
 }
 
 function isStringTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is StringTypeDescription {
   return description.type === StringType;
 }
@@ -985,7 +993,7 @@ function createTaskTypeDescription({
 }
 
 function isTaskTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is TaskTypeDescription {
   return description.type === TaskType;
 }
@@ -1005,7 +1013,46 @@ function createUnknownTypeDescription(): UnknownTypeDescription {
   };
 }
 
+//--- Structure ---
+const StructureType = DataType.Structure;
+type StructureType = typeof StructureType;
+
+interface StructureTypeDescriptionProps {
+  level: number;
+  members: Record<string, TypeDescriptions.Any>;
+}
+
+interface StructureTypeDescription extends StructureTypeDescriptionProps {
+  type: StructureType;
+}
+
+function createStructureTypeDescription({
+  level,
+  members = {},
+}: StructureTypeDescriptionProps): StructureTypeDescription {
+  return {
+    type: StructureType,
+    level,
+    members,
+  };
+}
+
 export namespace TypeDescriptions {
+  export const Names = {
+    [AreaType]: "Area",
+    [ArithmeticType]: "Arithmetic",
+    [FileType]: "File",
+    [FormatType]: "Format",
+    [LabelType]: "Label",
+    [LocatorType]: "Locator",
+    [EntryType]: "Entry",
+    [OrdinalType]: "Ordinal",
+    [PictureType]: "Picture",
+    [StringType]: "String",
+    [TaskType]: "Task",
+    [UnknownType]: "Unknown",
+    [StructureType]: "Structure",
+  };
   export type Any =
     | Area
     | Arithmetic
@@ -1018,11 +1065,21 @@ export namespace TypeDescriptions {
     | Picture
     | String
     | Task
-    | Unknown;
+    | Unknown
+    | Structure;
   export type TypeDescriptionType = Any["type"];
+
+  export const Structure = createStructureTypeDescription;
+  export type Structure = StructureTypeDescription;
+  export const isStructure = (
+    type: TypeDescriptions.Any,
+  ): type is StructureTypeDescription => type.type === StructureType;
 
   export const Unknown = createUnknownTypeDescription;
   export type Unknown = UnknownTypeDescription;
+  export const isUnknown = (
+    type: TypeDescriptions.Any,
+  ): type is UnknownTypeDescription => type.type === UnknownType;
 
   export const Area = createAreaTypeDescription;
   export type Area = AreaTypeDescription;
@@ -1123,7 +1180,12 @@ export namespace TypeDescriptions {
     [AttributeKind.StringLength]: 0,
   };
 
-  export function create(type: DataType, attributes: AttributeWitnesses): Any {
+  export function create(
+    type: DataType,
+    attributes: AttributeWitnesses,
+    level: number = 1,
+    ...members: [string, Any][]
+  ): Any {
     const common = {
       alignment:
         attributes[AttributeKind.Alignment]?.value ??
@@ -1240,6 +1302,11 @@ export namespace TypeDescriptions {
         return TypeDescriptions.Task(common);
       case DataType.Unknown:
         return TypeDescriptions.Unknown();
+      case DataType.Structure:
+        return TypeDescriptions.Structure({
+          level,
+          members: Object.fromEntries(members),
+        });
       default:
         assertUnreachable(type);
     }
