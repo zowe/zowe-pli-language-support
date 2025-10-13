@@ -42,6 +42,9 @@ import { isOperationCancelled } from "../utils/promises.js";
 import { InstructionCache } from "../preprocessor/instruction-cache.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { FileStore } from "./file-store.js";
+import { DefaultTypeInferer, TypeInferer } from "../typesystem/infer.js";
+import { CompilerOptionRules } from "../typesystem/arithmetic-operations.js";
+import { DefaultTypeCache, TypeCache } from "../typesystem/type-cache.js";
 import {
   CompilerOptions,
   getDefaultCompilerOptions,
@@ -62,7 +65,6 @@ export interface CompilationUnit {
    * This might not be the same as the URI of the currently open file.
    */
   uri: URI;
-  files: FileStore;
   compilerOptions: CompilerOptions;
   ast: PliProgram;
   preprocessorAst: PliProgram;
@@ -76,6 +78,13 @@ export interface CompilationUnit {
   instructionCache: InstructionCache;
   rootScope: Scope;
   rootPreprocessorScope: Scope;
+  services: CompilationServices;
+}
+
+export interface CompilationServices {
+  files: FileStore;
+  typeCache: TypeCache;
+  inferer: TypeInferer;
 }
 
 export interface CompilationUnitDiagnostics {
@@ -85,6 +94,7 @@ export interface CompilationUnitDiagnostics {
   parser: Diagnostic[];
   symbolTable: Diagnostic[];
   linking: Diagnostic[];
+  typeSystem: Diagnostic[];
   validation: Diagnostic[];
 }
 
@@ -96,6 +106,7 @@ export function collectDiagnostics(sourceFile: CompilationUnit): Diagnostic[] {
     ...sourceFile.diagnostics.parser,
     ...sourceFile.diagnostics.symbolTable,
     ...sourceFile.diagnostics.linking,
+    ...sourceFile.diagnostics.typeSystem,
     ...sourceFile.diagnostics.validation,
   ];
 }
@@ -132,10 +143,20 @@ const getRootPreprocessorScope = createBuiltinScopeGetter(
 export async function createCompilationUnit(
   uri: URI,
 ): Promise<CompilationUnit> {
+  const compilerOptions = getDefaultCompilerOptions();
+  const services: CompilationServices = {
+    files: new FileStore(),
+    typeCache: new DefaultTypeCache(),
+    inferer: new DefaultTypeInferer(
+      (compilerOptions.rules?.ibm ?? "ANS") === "ANS"
+        ? CompilerOptionRules.ANS
+        : CompilerOptionRules.IBM,
+    ),
+  };
   const unit: CompilationUnit = {
     uri,
-    files: new FileStore(),
-    compilerOptions: getDefaultCompilerOptions(),
+    services,
+    compilerOptions,
     ast: {
       kind: SyntaxKind.PliProgram,
       container: null,
@@ -162,6 +183,7 @@ export async function createCompilationUnit(
       symbolTable: [],
       linking: [],
       validation: [],
+      typeSystem: [],
     },
     requestCaches: createLSRequestCaches()
       .onRevalidate("margins", ({ connection, unit }) => {
@@ -220,7 +242,7 @@ export class CompilationUnitHandler {
       return false;
     }
 
-    for (const file of unit.files.keys()) {
+    for (const file of unit.services.files.keys()) {
       this.compilationUnits.delete(file);
     }
     this.compilationUnits.delete(uri.toString());
@@ -280,11 +302,11 @@ export class CompilationUnitHandler {
   ): Promise<void> {
     try {
       await lifecycle(unit, document, cancellationToken);
-      for (const file of unit.files.keys()) {
+      for (const file of unit.services.files.keys()) {
         this.compilationUnits.set(file, unit);
       }
       const allDiagnostics = diagnosticsToLSP(unit, collectDiagnostics(unit));
-      for (const file of unit.files.keys()) {
+      for (const file of unit.services.files.keys()) {
         if (BuiltinDocuments.get(file) || !EditorDocuments.get(file)) {
           // do not report diagnostics for built-in files or files not currently open in the editor
           continue;
