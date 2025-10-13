@@ -226,10 +226,10 @@ export function commonStatement(
         break;
       case t.PROCEDURE.tokenTypeIdx:
         try {
-          state.pushProcedure();
+          state.enterProcedure();
           unit = procedureStatement(state);
         } finally {
-          state.popProcedure();
+          state.leaveProcedure();
         }
         break;
       case t.RETURN.tokenTypeIdx:
@@ -391,6 +391,7 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
     }
     if (returnType) {
       dataAttribute.type = returnType as ast.DefaultAttribute;
+      dataAttribute.typeToken = state.last ?? null;
       returnsOption.returnAttributes.push(dataAttribute);
     }
     state.consume(
@@ -1341,6 +1342,7 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
       );
       if (attributeToken) {
         dataAttribute.type = attributeToken.image as ast.DefaultAttribute;
+        dataAttribute.typeToken = attributeToken;
         attributes.push(dataAttribute);
       }
     } else if (state.canConsume(t.OpenParen)) {

@@ -50,14 +50,20 @@ export class ParserState {
     this.index = 0;
   }
 
-  pushProcedure(): void {
+  enterProcedure(): void {
     this.inProcedure = true;
   }
 
-  popProcedure(): void {
+  leaveProcedure(): void {
     this.inProcedure = false;
   }
 
+  /**
+   * Peeks into the token stream without consuming any tokens.
+   *
+   * @param la The lookahead distance (in tokens). 1 means the current token, 2 means the next token after that, etc.
+   * @returns The token at the specified lookahead distance, or undefined if out of bounds
+   */
   peek(la: number): t.Token | undefined {
     const index = this.index + la - 1;
     return this.tokens[index];

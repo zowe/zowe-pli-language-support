@@ -35,6 +35,7 @@ export function preprocessorParse(
       // Parse a preprocessor statement
       const stmt = statement(state);
       if (stmt) {
+        recursivelySetContainer(stmt);
         statements.push(stmt);
       }
     } else if (state.canConsume(t.INCLUDE_ALT)) {
@@ -43,17 +44,17 @@ export function preprocessorParse(
       const includeAlt = includeAltStatement(state);
       const stmt = ast.createStatement();
       stmt.value = includeAlt;
+      recursivelySetContainer(stmt);
       statements.push(stmt);
     } else {
       // TODO: Handle other preprocessors (SQL, CICS) here!
       // state.canConsume(EXEC_SQL/DFHRESP/EXEC_CICS/...)
 
       // Otherwise construct a token statement
-      statements.push(consumeTokenStatement(state));
+      const stmt = consumeTokenStatement(state);
+      recursivelySetContainer(stmt);
+      statements.push(stmt);
     }
-  }
-  for (const statement of statements) {
-    recursivelySetContainer(statement);
   }
   return {
     statements,

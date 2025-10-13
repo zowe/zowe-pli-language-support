@@ -29,7 +29,8 @@ export class PliParser extends AbstractParser {
     try {
       result = this.PliProgram();
     } catch {
-      // Sometimes, this happens
+      // Parser errors on the root rule are not caught within Chevrotain
+      // so we catch them here instead
     }
     if (result === undefined) {
       return this.pop<ast.Program>();
