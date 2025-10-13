@@ -198,7 +198,7 @@ function runHarnessTests() {
  *
  * @param filePath - The path to the test file.
  */
-function runSingleHarnessTest(filePath: string) {
+function runSingleHarnessTest(filePath: string, timeout = 10_000) {
   // e.g. 'linker/implicit-declaration.ts'
   const relativePath = path.relative(fourslashPath, filePath);
   // e.g. 'packages/language/test/fourslash/linker/implicit-declaration.ts'
@@ -207,28 +207,35 @@ function runSingleHarnessTest(filePath: string) {
     ? path.basename(relativePath)
     : relativePath;
 
-  test(`${testName}`, async () => {
-    const wrappers = getWrappers();
-    const testFile = await parseHarnessTestFile(relativePath, filePath, {
-      wrappers,
-    });
+  test(
+    `${testName}`,
+    {
+      timeout,
+    },
+    async () => {
+      const wrappers = getWrappers();
+      const testFile = await parseHarnessTestFile(relativePath, filePath, {
+        wrappers,
+      });
 
-    const locationOverrides = getLocationOverrides(
-      testFile,
-      relativePathToProjectRoot,
-    );
+      const locationOverrides = getLocationOverrides(
+        testFile,
+        relativePathToProjectRoot,
+      );
 
-    // We want to load the files in reverse order, so that the included files are inserted in the correct order.
-    const files = getFiles(testFile).toReversed();
-    const testBuilder = await TestBuilder.create(files, {
-      fs,
-      validate: true,
-      locationOverrides,
-    });
-    const implementation = createTestBuilderHarnessImplementation(testBuilder);
+      // We want to load the files in reverse order, so that the included files are inserted in the correct order.
+      const files = getFiles(testFile).toReversed();
+      const testBuilder = await TestBuilder.create(files, {
+        fs,
+        validate: true,
+        locationOverrides,
+      });
+      const implementation =
+        createTestBuilderHarnessImplementation(testBuilder);
 
-    runHarnessTest(testFile, implementation);
-  });
+      runHarnessTest(testFile, implementation);
+    },
+  );
 }
 
 /**
@@ -253,5 +260,5 @@ if (!HARNESS_TEST_FILE) {
   }
 
   const fullPath = path.resolve(HARNESS_TEST_FILE);
-  runSingleHarnessTest(fullPath);
+  runSingleHarnessTest(fullPath, 600_000); // 10 minute timeout for debugging
 }

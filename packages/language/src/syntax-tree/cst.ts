@@ -147,6 +147,7 @@ export enum CstNodeKind {
   BeginStatement_Semicolon0,
   BeginStatement_Semicolon1,
   EndStatement_END,
+  EndStatement_Semicolon,
   CallStatement_CALL,
   CallStatement_Semicolon,
   CancelThreadStatement_CANCEL,

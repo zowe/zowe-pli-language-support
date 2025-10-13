@@ -18,6 +18,7 @@ import { HarnessCodes } from "./codes";
 import { HarnessConstants } from "./constants";
 import { generateIncludeItemMarkup } from "../../../src/language-server/hover-request";
 import { PLICode } from "../../../src/validation/messages/pli-codes";
+import { SyntaxKind } from "../../../src/syntax-tree/ast";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -29,6 +30,7 @@ export function createTestBuilderHarnessImplementation(
   testBuilder: TestBuilder,
 ): HarnessTesterInterface {
   return {
+    Syntax: SyntaxKind,
     testAPI: {
       testBuilder,
     },
@@ -57,6 +59,8 @@ export function createTestBuilderHarnessImplementation(
         testBuilder.expectToThrow(fn, messageToThrow),
       expectCompilerOptions: (expectedOptions) =>
         testBuilder.expectCompilerOptions(expectedOptions),
+      expectAst: (...expectedAst) => testBuilder.expectAst(expectedAst),
+      expectPPAst: (...expectedAst) => testBuilder.expectMacroAst(expectedAst),
     },
     completion: {
       expectAt: (label, content) =>

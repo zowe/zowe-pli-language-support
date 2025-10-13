@@ -41,7 +41,7 @@ describe("PL/1 Lexer", () => {
 
   test("Preprocessor garbage", async () => {
     expect(await tokenizeWithErrors(" %garbage")).toStrictEqual([
-      `Unexpected token 'GARBAGE'.`,
+      `Unexpected token 'GARBAGE', expected statement.`,
     ]);
   });
 
@@ -58,7 +58,7 @@ describe("PL/1 Lexer", () => {
             %A = 'B';
             dcl A%;C fixed bin(31);
         `),
-    ).toStrictEqual(["Unexpected token 'DECL'."]);
+    ).toStrictEqual(["Unexpected token 'DECL', expected statement."]);
   });
 
   test("Tokenize multiple errors in declaration with preprocessor", async () => {
@@ -67,7 +67,10 @@ describe("PL/1 Lexer", () => {
             %decl A char;
             %%A = 'B';
         `),
-    ).toStrictEqual(["Unexpected token 'DECL'.", "Unexpected token '%'."]);
+    ).toStrictEqual([
+      "Unexpected token 'DECL', expected statement.",
+      "Unexpected token '%', expected statement.",
+    ]);
   });
 
   test("Skip directive without parentheses should not lex correctly", async () => {

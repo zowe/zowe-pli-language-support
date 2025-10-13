@@ -42,7 +42,7 @@ export function registerPliValidationChecks(unit: CompilationUnit): Validator {
   const typeCheck = new TypeCheck(unit);
   validator.addHandler({
     // DimensionBound: [IBM1295IE_sole_bound_specified],
-    PliProgram: [validator.checkPliProgram],
+    Program: [validator.checkPliProgram],
     Exports: [IBM1324IE_name_occurs_more_than_once_within_exports_clause],
     ReturnsOption: [validator.checkReturnsOption],
     // TODO @montymxb Mar. 27th, 2025: Needs to have a way to readily access the containing 'document' (SourceFile) to compare the offsets (see def)
@@ -100,7 +100,7 @@ export class PliValidator implements Validator {
   /**
    * Verify programs contain at least one parsed statement
    */
-  checkPliProgram(node: AST.PliProgram, acceptor: ValidationAcceptor): void {
+  checkPliProgram(node: AST.Program, acceptor: ValidationAcceptor): void {
     if (node.statements.length === 0) {
       // TODO: Reimplement this validation and add tests
       // acceptor(Severity.S, PLICodes.Severe.IBM1917I.message, {
