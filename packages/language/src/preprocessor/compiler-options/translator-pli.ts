@@ -2083,60 +2083,83 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.or} */
-translator.rule(
-  ["OR"],
-  stringTranslate((options, text) => {
-    options.or = text.value;
-  }),
-);
+translator.rule(["OR"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "string");
+  if (value.value.length !== 1) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.Or.InvalidParameterLength,
+      value.value,
+    );
+  }
+  if (value.value !== "|" && Options.PLI_CHARACTER_REGEX.test(value.value)) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.Or.InvalidParameterCharacter,
+      value.value,
+    );
+  }
+  options.or = value.value;
+});
 
 /** {@link CompilerOptions.pp} */
-translator.rule(["PP"], (option, options) => {
-  // 1 or more pre-processor options to collect
-  ensureArguments(option, 1);
-  ensureToBeDefined(options.pp);
+translator.rule(
+  ["PP"],
+  (option, options) => {
+    // 1 or more pre-processor options to collect
+    ensureArguments(option, 1);
+    ensureToBeDefined(options.pp);
+    ensureToBeDefined(options.pp.items);
 
-  for (const value of option.values) {
-    const name = ensureArgument<CompilerOptions.PPItem["name"]>(
-      value,
-      CompilerOptionsCodes.PP.InvalidParameter,
-      ["MACRO", "SQL", "CICS", "INCLUDE"],
-    );
-    if (value.kind === SyntaxKind.CompilerOptionText) {
-      options.pp.items.push({ name });
-    } else if (value.kind === SyntaxKind.CompilerOption) {
-      if (value.values.length !== 1) {
+    for (const value of option.values) {
+      const name = ensureArgument<CompilerOptions.PPItem["name"]>(
+        value,
+        CompilerOptionsCodes.PP.InvalidParameter,
+        ["MACRO", "SQL", "CICS", "INCLUDE"],
+      );
+      if (value.kind === SyntaxKind.CompilerOptionText) {
+        options.pp.items.push({ name });
+      } else if (value.kind === SyntaxKind.CompilerOption) {
+        if (value.values.length !== 1) {
+          throw TranslationError.fromCode(
+            value.token,
+            CompilerOptionsCodes.PP.InvalidOptionParameter,
+            value.token.image,
+            value.values.length,
+          );
+        }
+        ensureType(value.values[0], "string");
+        options.pp.items.push({
+          name,
+          value: value.values[0].value,
+          token: value.values[0].token,
+        });
+
+        if (name === "INCLUDE") {
+          // set this as the effective INCLUDE PP option value, overriding any previous INCLUDE options
+          const match = value.values[0].value.match(/ID\(([^\)]+)\)\s*$/);
+          if (match && match.length > 0) {
+            options.pp.ppInclude = {
+              value: match[0].slice(3, -1).toUpperCase(),
+            };
+          }
+        }
+      } else {
         throw TranslationError.fromCode(
           value.token,
-          CompilerOptionsCodes.PP.InvalidOptionParameter,
-          value.token.image,
-          value.values.length,
+          CompilerOptionsCodes.PP.InvalidParameterType,
         );
       }
-      ensureType(value.values[0], "string");
-      options.pp.items.push({
-        name,
-        value: value.values[0].value,
-        token: value.values[0].token,
-      });
-
-      if (name === "INCLUDE") {
-        // set this as the effective INCLUDE PP option value, overriding any previous INCLUDE options
-        const match = value.values[0].value.match(/ID\(([^\)]+)\)\s*$/);
-        if (match && match.length > 0) {
-          options.pp.ppInclude = {
-            value: match[0].slice(3, -1).toUpperCase(),
-          };
-        }
-      }
-    } else {
-      throw TranslationError.fromCode(
-        value.token,
-        CompilerOptionsCodes.PP.InvalidParameterType,
-      );
     }
-  }
-});
+  },
+  ["NOPP"],
+  (option, options) => {
+    ensureArguments(option, 0, 0);
+    options.pp = { items: [] };
+  },
+);
 
 /** {@link CompilerOptions.ppCics} */
 translator.rule(
@@ -2189,7 +2212,10 @@ translator.rule(
     ensureArguments(option, 1, 1);
     const value = option.values[0];
     ensureType(value, "string");
-    options.ppMacro = value.value;
+    options.ppMacro = {
+      value: value.value,
+      token: value.token,
+    };
   },
   ["NOPPMACRO"],
   (option, options) => {
@@ -2233,16 +2259,11 @@ translator.rule(["PRECTYPE"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   ensureType(value, "plainNotEmpty");
-  const name = value.value.toUpperCase();
-  if (["AND", "DECDIGIT", "DECRESULT"].includes(name)) {
-    options.precType = name as CompilerOptions.PrecType;
-  } else {
-    throw TranslationError.fromCode(
-      value.token,
-      CompilerOptionsCodes.PrecType.InvalidParameter,
-      name,
-    );
-  }
+  options.precType = ensureArgument(
+    value,
+    CompilerOptionsCodes.PrecType.InvalidParameter,
+    ["ANS", "DECDIGIT", "DECRESULT"],
+  );
 });
 
 /** {@link CompilerOptions.prefix} */
@@ -2352,7 +2373,7 @@ translator.rule(["QUOTE"], (option, options) => {
       value.value,
     );
   }
-  if (Options.PLI_CHARACTER_REGEX.test(value.value)) {
+  if (value.value !== '"' && Options.PLI_CHARACTER_REGEX.test(value.value)) {
     throw TranslationError.fromCode(
       value.token,
       CompilerOptionsCodes.Quote.InvalidParameterCharacter,
@@ -3034,7 +3055,7 @@ translator.rule(
 
 /** {@link CompilerOptions.service} */
 translator.rule(
-  ["SERVICE"],
+  ["SERVICE", "SERV"],
   (option, options) => {
     ensureArguments(option, 1, 1);
     const value = option.values[0];
@@ -3058,7 +3079,7 @@ translator.rule(
     }
     options.service = value.value;
   },
-  ["NOSERVICE"],
+  ["NOSERVICE", "NOSERV"],
   (option, options) => {
     ensureArguments(option, 0, 0);
     options.service = false;
@@ -3417,7 +3438,7 @@ translator.rule(["XINFO"], (option, options) => {
       case "NODEF":
         options.xInfo.def = ensureFlag(
           value,
-          CompilerOptionsCodes.XInfo.InvalidDefParameter,
+          CompilerOptionsCodes.XInfo.InvalidParameter,
           ["DEF", "NODEF"],
         );
         break;
@@ -3425,7 +3446,7 @@ translator.rule(["XINFO"], (option, options) => {
       case "NOMSG":
         options.xInfo.msg = ensureFlag(
           value,
-          CompilerOptionsCodes.XInfo.InvalidMsgParameter,
+          CompilerOptionsCodes.XInfo.InvalidParameter,
           ["MSG", "NOMSG"],
         );
         break;
@@ -3433,7 +3454,7 @@ translator.rule(["XINFO"], (option, options) => {
       case "NOSYM":
         options.xInfo.sym = ensureFlag(
           value,
-          CompilerOptionsCodes.XInfo.InvalidSymParameter,
+          CompilerOptionsCodes.XInfo.InvalidParameter,
           ["SYM", "NOSYM"],
         );
         break;
@@ -3441,9 +3462,13 @@ translator.rule(["XINFO"], (option, options) => {
       case "NOSYN":
         options.xInfo.syn = ensureFlag(
           value,
-          CompilerOptionsCodes.XInfo.InvalidSynParameter,
+          CompilerOptionsCodes.XInfo.InvalidParameter,
           ["SYN", "NOSYN"],
         );
+        break;
+      case "XML":
+        ensureType(value, "plain");
+        options.xInfo.xml = { hash: false };
         break;
       case "NOXML":
         ensureType(value, "plain");
@@ -3499,7 +3524,10 @@ translator.rule(
     ensureArguments(option, 0);
     ensureToBeDefined(options.xRef);
     for (const value of option.values) {
-      ensureType(value, "plainNotEmpty");
+      ensureType(value, "plain");
+      if (value.value.length === 0) {
+        continue;
+      }
       switch (value.value.toUpperCase()) {
         case "FULL":
         case "SHORT":

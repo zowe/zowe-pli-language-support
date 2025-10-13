@@ -15,7 +15,7 @@
 ////*PROCESS <|1:NOXREF|>;
 ////*PROCESS <|2:NX|>();
 ////*PROCESS <|4:XREF|>;
-////*PROCESS <|6:XREF|>();
+////*PROCESS <|6:XREF|>(<|7:)|>;
 ////*PROCESS <|8:XREF|>(<|9:INVALID|>);
 ////*PROCESS <|10:X|>(FULL SHORT IMPLICIT EXPLICIT);
 
@@ -26,11 +26,12 @@ verify.expectDiagnosticsAt(2, {
 verify.expectDiagnosticsAt([4, 6, 8], {
   message: code.CompilerOptions.MutexOptionIssue.message("XREF"),
 });
-verify.expectDiagnosticsAt(10, {
-  message: code.CompilerOptions.MutexOptionIssue.message("X"),
-});
+verify.noDiagnostics(7);
 verify.expectDiagnosticsAt(9, {
   message: code.CompilerOptions.XRef.InvalidParameter.message("INVALID"),
+});
+verify.expectDiagnosticsAt(10, {
+  message: code.CompilerOptions.MutexOptionIssue.message("X"),
 });
 verify.expectCompilerOptions({
   xRef: {

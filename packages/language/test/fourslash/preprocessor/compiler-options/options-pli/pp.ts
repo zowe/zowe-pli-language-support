@@ -21,12 +21,10 @@
 ////*PROCESS <|12:PP|>(<|11:MACRO|>("X", "Z">));
 ////*PROCESS <|14:PP|>(MACRO, SQL, CICS);
 
-verify.expectDiagnosticsAt(1, {
-  message: code.Warning.IBM1159I.message("NOPP"),
-});
-// TODO ssmifi: Should actually not report a dupe warning in the future.
+verify.noDiagnostics(1);
+// TODO ssmifi: Should actually not report a dupe/mutex warning in the future.
 verify.expectDiagnosticsAt([4, 6, 8], {
-  message: code.CompilerOptions.DupeOptionIssue.message("PP"),
+  message: code.CompilerOptions.MutexOptionIssue.message("PP"),
 });
 verify.expectDiagnosticsAt(2, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1),
