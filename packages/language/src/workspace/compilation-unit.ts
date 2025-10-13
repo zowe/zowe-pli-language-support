@@ -13,7 +13,11 @@ import { Program, SyntaxKind, SyntaxNode } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
 import { CancellationToken, Connection } from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
-import { Diagnostic, diagnosticsToLSP, getSyntaxNodeRange } from "../language-server/types.js";
+import {
+  Diagnostic,
+  diagnosticsToLSP,
+  getSyntaxNodeRange,
+} from "../language-server/types.js";
 import {
   generateSymbolTable,
   lifecycle,
@@ -119,7 +123,7 @@ export function collectSyntaxNodesByOffset(
 
   function visitNode(node: SyntaxNode) {
     const range = getSyntaxNodeRange(node);
-    if(range) {
+    if (range) {
       map.set(range.start, node);
     }
     forEachNode(node, (child) => {

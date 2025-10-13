@@ -21,7 +21,6 @@ import { assertUnreachable } from "../utils/common";
 import { Error } from "../validation/messages/pli-codes";
 import {
   DataType,
-  DataTypes,
   DataTypesByAttributeKind,
   AttributeKinds,
   AttributeTypes,

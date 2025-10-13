@@ -16,7 +16,7 @@ import {
   CompilationUnit,
 } from "../src/workspace/compilation-unit";
 import { URI } from "vscode-uri";
-import { Diagnostic, getSyntaxNodeRange, Range, Severity } from "../src/language-server/types";
+import { Diagnostic, Range, Severity } from "../src/language-server/types";
 import { parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
@@ -938,7 +938,10 @@ export class TestBuilder {
     });
   }
 
-  expectTypeAt(label: string, expectedType: Partial<TypeDescriptions.Any>): void {
+  expectTypeAt(
+    label: string,
+    expectedType: Partial<TypeDescriptions.Any>,
+  ): void {
     const ranges = this.getLabelRanges(label);
     for (const [start] of ranges) {
       const node = this.syntaxNodesByOffset.get(start);

@@ -19,7 +19,7 @@ export class TypeCheck {
     declaredItem: ast.DeclaredItem,
     _acceptor: ValidationAcceptor,
   ) {
-    this.compilationUnit.services.inferer.inferDeclarationType(
+    this.compilationUnit.services.inferer.inferType(
       declaredItem,
       this.compilationUnit,
     );

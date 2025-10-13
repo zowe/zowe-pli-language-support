@@ -22,7 +22,10 @@ import { DefaultTypeBuilder } from "./type-builder";
 import { Token } from "../parser/tokens";
 
 export interface TypeInferer {
-  inferType(node: ast.SyntaxNode, compilationUnit: CompilationUnit): TypeDescriptions.Any;
+  inferType(
+    node: ast.SyntaxNode,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any;
   // inferExpressionType(
   //   node: ast.Expression,
   //   compilationUnit: CompilationUnit,
@@ -48,10 +51,21 @@ export class DefaultTypeInferer implements TypeInferer {
     this.inferArithmeticOperation = createArithmeticOperationTable(rules);
   }
 
-  inferType(node: ast.SyntaxNode, compilationUnit: CompilationUnit): TypeDescriptions.Any {
-    if(node.kind === ast.SyntaxKind.DeclaredVariable && node.container?.kind === ast.SyntaxKind.DeclaredItem) {
+  inferType(
+    node: ast.SyntaxNode,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any {
+    if (
+      node.kind === ast.SyntaxKind.DeclaredVariable &&
+      node.container?.kind === ast.SyntaxKind.DeclaredItem
+    ) {
       const types = this.inferDeclarationType(node.container, compilationUnit);
       return types.get(node) ?? TypeDescriptions.Unknown();
+    } else if (node.kind === ast.SyntaxKind.DeclaredItem) {
+      const types = this.inferDeclarationType(node, compilationUnit);
+      return types.get(node) ?? TypeDescriptions.Unknown();
+    } else {
+      //TODO other kinds of nodes
     }
     return TypeDescriptions.Unknown();
   }
@@ -105,7 +119,7 @@ export class DefaultTypeInferer implements TypeInferer {
     return new Map();
   }
 
-  inferDeclarationType(
+  private inferDeclarationType(
     node: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
   ): Map<ast.SyntaxNode, TypeDescriptions.Any> {
@@ -126,7 +140,7 @@ export class DefaultTypeInferer implements TypeInferer {
     return result;
   }
 
-  inferExpressionType(
+  private inferExpressionType(
     node: ast.Expression,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {

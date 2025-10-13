@@ -35,18 +35,18 @@ export enum DataType {
 }
 
 export const DataTypes = {
-  'Area': DataType.Area as const,
-  'Arithmetic': DataType.Arithmetic as const,
-  'Entry': DataType.Entry as const,
-  'File': DataType.File as const,
-  'Format': DataType.Format as const,
-  'Label': DataType.Label as const,
-  'Locator': DataType.Locator as const,
-  'Ordinal': DataType.Ordinal as const,
-  'Picture': DataType.Picture as const,
-  'String': DataType.String as const,
-  'Task': DataType.Task as const,
-  'Unknown': DataType.Unknown as const,
+  Area: DataType.Area as const,
+  Arithmetic: DataType.Arithmetic as const,
+  Entry: DataType.Entry as const,
+  File: DataType.File as const,
+  Format: DataType.Format as const,
+  Label: DataType.Label as const,
+  Locator: DataType.Locator as const,
+  Ordinal: DataType.Ordinal as const,
+  Picture: DataType.Picture as const,
+  String: DataType.String as const,
+  Task: DataType.Task as const,
+  Unknown: DataType.Unknown as const,
 };
 
 export const DataTypesArray: DataType[] = Object.values(DataTypes);
@@ -128,7 +128,7 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.PictureKind,
   AttributeKind.Position,
   AttributeKind.Scale,
-  AttributeKind.Scope, 
+  AttributeKind.Scope,
   AttributeKind.Sign,
   AttributeKind.Storage,
   AttributeKind.StringFormat,
@@ -265,8 +265,11 @@ export type Alignment =
   | { type: AlignmentType.Unaligned };
 
 export const Alignments = {
-  'Aligned': (alignment: 1 | 2 | 4 | 8) => ({ type: AlignmentType.Aligned, alignment }),
-  'Unaligned': () => ({ type: AlignmentType.Unaligned }),
+  Aligned: (alignment: 1 | 2 | 4 | 8) => ({
+    type: AlignmentType.Aligned,
+    alignment,
+  }),
+  Unaligned: () => ({ type: AlignmentType.Unaligned }),
 };
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=declarations-internal-external-attributes */
@@ -279,8 +282,11 @@ export type Scope =
   | { type: ScopeType.External; environment: string };
 
 export const Scopes = {
-  'Internal': ScopeType.Internal,
-  'External': (environment: string) => ({ type: ScopeType.External, environment }),
+  Internal: ScopeType.Internal,
+  External: (environment: string) => ({
+    type: ScopeType.External,
+    environment,
+  }),
 };
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-storage-classes-allocation-deallocation */
@@ -292,10 +298,10 @@ export enum StorageClass {
 }
 
 export const StorageClasses = {
-  'Automatic': StorageClass.Automatic,
-  'Static': StorageClass.Static,
-  'Based': StorageClass.Based,
-  'Controlled': StorageClass.Controlled,
+  Automatic: StorageClass.Automatic,
+  Static: StorageClass.Static,
+  Based: StorageClass.Based,
+  Controlled: StorageClass.Controlled,
 };
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-connected-nonconnected-attributes */
@@ -305,8 +311,8 @@ export enum StorageConnection {
 }
 
 export const StorageConnections = {
-  'Connected': StorageConnection.Connected,
-  'Nonconnected': StorageConnection.Nonconnected,
+  Connected: StorageConnection.Connected,
+  Nonconnected: StorageConnection.Nonconnected,
 };
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-assignable-nonassignable-attributes */
@@ -316,8 +322,8 @@ export enum Assignability {
 }
 
 export const Assignabilities = {
-  'Assignable': Assignability.Assignable,
-  'Nonassignable': Assignability.Nonassignable,
+  Assignable: Assignability.Assignable,
+  Nonassignable: Assignability.Nonassignable,
 };
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-defined-position-attributes */
@@ -334,8 +340,8 @@ export enum Volatility {
 }
 
 export const Volatilities = {
-  'Normal': Volatility.Normal,
-  'Abnormal': Volatility.Abnormal,
+  Normal: Volatility.Normal,
+  Abnormal: Volatility.Abnormal,
 };
 
 /* TODO for storage attributes:
@@ -445,8 +451,8 @@ export enum FloatFormat {
 }
 
 export const FloatFormats = {
-  'IEEE': FloatFormat.IEEE,
-  'HexaDec': FloatFormat.HexaDec,
+  IEEE: FloatFormat.IEEE,
+  HexaDec: FloatFormat.HexaDec,
 };
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-bigendian-littleendian-attributes */
@@ -456,8 +462,8 @@ export enum Endianess {
 }
 
 export const Endianesses = {
-  'Big': Endianess.Big,
-  'Little': Endianess.Little,
+  Big: Endianess.Big,
+  Little: Endianess.Little,
 };
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-coded-arithmetic-data */
@@ -467,8 +473,8 @@ export enum NumberMode {
 }
 
 export const NumberModes = {
-  'Real': NumberMode.Real,
-  'Complex': NumberMode.Complex,
+  Real: NumberMode.Real,
+  Complex: NumberMode.Complex,
 };
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-coded-arithmetic-data */
@@ -478,8 +484,8 @@ export enum Base {
 }
 
 export const Bases = {
-  'Binary': Base.Binary,
-  'Decimal': Base.Decimal,
+  Binary: Base.Binary,
+  Decimal: Base.Decimal,
 };
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-fixed-float */
@@ -489,8 +495,13 @@ export enum ScaleMode {
 }
 
 export const NumberScales = {
-  'Fixed': (totalDigitsCount: number, fractionalDigitsCount: number) => ({ mode: ScaleMode.Fixed, totalDigitsCount, fractionalDigitsCount } as Scale),
-  'Float': () => ({ mode: ScaleMode.Float } as Scale),
+  Fixed: (totalDigitsCount: number, fractionalDigitsCount: number) =>
+    ({
+      mode: ScaleMode.Fixed,
+      totalDigitsCount,
+      fractionalDigitsCount,
+    }) as Scale,
+  Float: () => ({ mode: ScaleMode.Float }) as Scale,
 };
 
 export type Scale = {
@@ -517,8 +528,8 @@ export enum Sign {
 }
 
 export const Signs = {
-  'Signed': Sign.Signed,
-  'Unsigned': Sign.Unsigned,
+  Signed: Sign.Signed,
+  Unsigned: Sign.Unsigned,
 };
 
 interface ArithmeticTypeDescriptionProps {
@@ -609,8 +620,8 @@ export enum BufferMode {
 }
 
 export const BufferModes = {
-  'Unbuffered': BufferMode.Unbuffered,
-  'Buffered': BufferMode.Buffered,
+  Unbuffered: BufferMode.Unbuffered,
+  Buffered: BufferMode.Buffered,
 };
 
 /**
@@ -622,8 +633,8 @@ export enum AccessMode {
 }
 
 export const AccessModes = {
-  'Sequential': AccessMode.Sequential,
-  'Direct': AccessMode.Direct,
+  Sequential: AccessMode.Sequential,
+  Direct: AccessMode.Direct,
 };
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-record-stream-attributes */
@@ -633,8 +644,8 @@ export enum FileUsage {
 }
 
 export const FileUsages = {
-  'Record': FileUsage.Record,
-  'Stream': FileUsage.Stream,
+  Record: FileUsage.Record,
+  Stream: FileUsage.Stream,
 };
 
 interface FileTypeDescriptionProps extends BaseTypeDescriptionProps {
@@ -839,12 +850,12 @@ type PictureType = typeof PictureType;
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-picture-widepic */
 export enum PictureWideness {
   Picture,
-  WidePicture
+  WidePicture,
 }
 
 export const PictureWidenesses = {
-  'Picture': PictureWideness.Picture,
-  'WidePicture': PictureWideness.WidePicture,
+  Picture: PictureWideness.Picture,
+  WidePicture: PictureWideness.WidePicture,
 };
 
 interface PictureTypeDescriptionProps extends BaseTypeDescriptionProps {
@@ -894,11 +905,11 @@ export enum StringKind {
 }
 
 export const StringKinds = {
-  'Bit': StringKind.Bit,
-  'Character': StringKind.Character,
-  'Graphic': StringKind.Graphic,
-  'UChar': StringKind.UChar,
-  'WideChar': StringKind.WideChar,
+  Bit: StringKind.Bit,
+  Character: StringKind.Character,
+  Graphic: StringKind.Graphic,
+  UChar: StringKind.UChar,
+  WideChar: StringKind.WideChar,
 };
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-varying-varying4-varyingz-nonvarying */
@@ -910,10 +921,10 @@ export enum StringFormat {
 }
 
 export const StringFormats = {
-  'Varying': StringFormat.Varying,
-  'Varying4': StringFormat.Varying4,
-  'VaryingZ': StringFormat.VaryingZ,
-  'NonVarying': StringFormat.NonVarying,
+  Varying: StringFormat.Varying,
+  Varying4: StringFormat.Varying4,
+  VaryingZ: StringFormat.VaryingZ,
+  NonVarying: StringFormat.NonVarying,
 };
 
 interface StringTypeDescriptionProps extends BaseTypeDescriptionProps {

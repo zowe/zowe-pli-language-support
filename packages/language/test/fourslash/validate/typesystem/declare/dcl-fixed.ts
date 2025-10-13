@@ -14,8 +14,8 @@
 // @wrap: main
 //// DCL <|1:ANYTHING|> FIXED;
 
-types.expectTypeAt('1', {
-  type: types.dataTypes.Arithmetic,  
+types.expectTypeAt("1", {
+  type: types.dataTypes.Arithmetic,
   scale: types.scales.Fixed(5, 0),
   mode: types.modes.Real,
 });
