@@ -28,8 +28,8 @@ import * as ast from "../syntax-tree/ast";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { tokenize } from "../parser/tokenizer";
-import { preprocessorParserStateFromText } from "./pli-preprocessor-parser-state";
-import { preprocessorParse } from "./preprocessor-parser";
+import { preprocessorParserState } from "../parser/parser-state";
+import { preprocessorParse } from "../parser/parser-entry";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { tokenMatcher } from "chevrotain";
@@ -1915,9 +1915,10 @@ async function runInclude(
         },
         uri,
       );
-      const subState = preprocessorParserStateFromText(processedContent, uri);
+      const tokenizeResult = tokenize(processedContent, uri);
+      const subState = preprocessorParserState(tokenizeResult.tokens);
       const subProgram = preprocessorParse(subState);
-      subProgram.diagnostics.push(...subState.diagnostics);
+      subProgram.diagnostics.push(...tokenizeResult.diagnostics);
       const result = generateInstructions(subProgram.statements);
       return {
         tokens: subProgram.tokens,
