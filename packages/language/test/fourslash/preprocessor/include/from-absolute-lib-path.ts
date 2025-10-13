@@ -9,6 +9,8 @@
  *
  */
 
+// Test that specifying an absolute path to a library in proc_grps.json works correctly
+
 /// <reference path="../../framework.ts" />
 
 // @filename: .pliplugin/pgm_conf.json
