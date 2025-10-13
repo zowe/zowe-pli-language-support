@@ -256,7 +256,7 @@ function getIncludeItemRepresentation(
   if (!partialContent) {
     // load up the first 20 lines of content from the file (semi-arbitrary cutoff)
     const lineCutoff = 20;
-    const doc = unit.files.getDocument(fileUri);
+    const doc = unit.services.files.getDocument(fileUri);
     if (!doc) {
       return null;
     }
@@ -377,7 +377,7 @@ export function hoverRequest(
   uri: URI,
   offset: number,
 ): HoverResponse | null {
-  const tokens = unit.files.getTokens(uri);
+  const tokens = unit.services.files.getTokens(uri);
   if (!tokens) {
     return null;
   }

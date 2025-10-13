@@ -40,6 +40,7 @@ import { InternalCodes } from "../src/validation/messages";
 import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
 import { tokenize } from "../src/parser/tokenizer";
 import { escapeRegExp } from "../src/parser/tokens";
+import { PLICode } from "../src/validation/messages/pli-codes";
 
 export type Label = string | number | string[] | number[];
 
@@ -478,18 +479,22 @@ export class TestBuilder {
     return this;
   }
 
-  expectNoDiagnosticsAt(label: Label): TestBuilder {
+  expectNoDiagnosticsAt(label: Label, ...errorCodes: PLICode[]): TestBuilder {
     if (Array.isArray(label)) {
       for (const l of label) {
-        this.expectNoDiagnosticsAt(l);
+        this.expectNoDiagnosticsAt(l, ...errorCodes);
       }
       return this;
     }
 
     const { exactMatches } = this.getMatchingDiagnostics(label.toString());
+    const filteredDiagnostics = this.filterByErrorCodes(
+      exactMatches,
+      errorCodes,
+    );
 
-    if (exactMatches.length > 0) {
-      const message = exactMatches
+    if (filteredDiagnostics.length > 0) {
+      const message = filteredDiagnostics
         .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
         .join("\n- ");
       fail(
@@ -500,15 +505,27 @@ export class TestBuilder {
     return this;
   }
 
-  expectNoDiagnostics(): TestBuilder {
-    if (this.diagnostics.length > 0) {
-      const message = this.diagnostics
+  expectNoDiagnostics(...errorCodes: PLICode[]): TestBuilder {
+    const diagnostics = this.filterByErrorCodes(this.diagnostics, errorCodes);
+    if (diagnostics.length > 0) {
+      const message = diagnostics
         .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
         .join("\n- ");
       fail(`Expected no diagnostics but received:\n- ${message}`);
     }
 
     return this;
+  }
+
+  private filterByErrorCodes(diagnostics: Diagnostic[], errorCodes: PLICode[]) {
+    return errorCodes.length > 0
+      ? diagnostics.filter((diagnostic) => {
+          return (
+            diagnostic.code !== undefined &&
+            errorCodes.map(({ fullCode }) => fullCode).includes(diagnostic.code)
+          );
+        })
+      : diagnostics;
   }
 
   noDiagnosticsExcept(
