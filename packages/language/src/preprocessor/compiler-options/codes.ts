@@ -415,6 +415,23 @@ export const CompilerOptionsCodes = {
     InvalidParameterLengths: PLICodes.Warning.IBM1205I,
   },
 
+  Not: {
+    InvalidParameterLength: {
+      code: "CONO01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected a single character, but received '${value}'.`,
+      fullCode: "CONO01W",
+    } as ParametricPLICode,
+    InvalidParameterCharacter: {
+      code: "CONO02",
+      severity: Severity.W,
+      message: (value: string) =>
+        `Expected a valid not character, but received '${value}'.`,
+      fullCode: "CONO02W",
+    } as ParametricPLICode,
+  },
+
   OffsetSize: {
     // [Warning] IBM1161I: The suboption 3 is not valid for the OFFSETSIZE compiler option.
     InvalidParameter: {
