@@ -227,8 +227,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case DefaultAttributeEnum.BINARY:
       case DefaultAttributeEnum.DECIMAL: {
         this.addPrecision(attribute, token);
-        const base =
-          typeAsEnum === DefaultAttributeEnum.BINARY
+        const base = typeAsEnum === DefaultAttributeEnum.BINARY
             ? Base.Binary
             : Base.Decimal;
         this.addAttributeWitness(AttributeKind.Base, base, attribute, token);
@@ -358,7 +357,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         const scaleMode = typeAsEnum === DefaultAttributeEnum.FIXED
           ? ScaleMode.Fixed
           : ScaleMode.Float;
-        this.addPrecision(attribute, token, scaleMode);
+        this.addPrecision(attribute, token);
         this.addAttributeWitness(
           AttributeKind.Scale,
           scaleMode,
@@ -607,7 +606,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         assertUnreachable(typeAsEnum);
     }
   }
-  private addPrecision(attribute: ast.ComputationDataAttribute, token: Token, scaleMode?: ScaleMode) {
+  private addPrecision(attribute: ast.ComputationDataAttribute, token: Token) {
     const precision = this.acceptDimensionsAsListOfNumbers(
       attribute.dimensions
     );
@@ -616,7 +615,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         AttributeKind.Precision,
         Precisions.create(
           precision[0],
-          precision.length > 1 ? precision[1] : scaleMode === ScaleMode.Fixed ? 0 :undefined
+          precision.length > 1 ? precision[1] : undefined
         ),
         attribute,
         token
@@ -732,6 +731,9 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       const targetKind = parseInt(targetKindString) as keyof AttributeTypes;
       const targetWitness = this.attributeWitnesses[targetKind];
       const impliedValue = implication(value);
+      if(typeof impliedValue === "undefined") {
+        continue;
+      }
       if (targetWitness && targetWitness.value !== impliedValue) {
         this.diagnostics.push(
           diagnosticFromCode(Error.IBM2462I, targetWitness.token, current.token.image, targetWitness.image),

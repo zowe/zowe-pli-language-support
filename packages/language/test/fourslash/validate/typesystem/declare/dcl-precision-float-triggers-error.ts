@@ -12,7 +12,7 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// DCL <|1:ANYTHING|> <|2:PRECISION|>(10, 5) FLOAT;
+//// DCL <|1:ANYTHING|> PRECISION(10, 5) <|2:FLOAT|>;
 
 verify.expectDiagnosticsAt(2, {
   code: code.Error.IBM2424I.fullCode,
