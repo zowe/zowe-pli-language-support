@@ -12,7 +12,7 @@
 import { diagnosticFromCode, Severity } from "../language-server/types";
 import * as AST from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
-import { BuiltinsUriSchema } from "../workspace/builtins";
+import { BuiltinsUriSchema, KNOWN_BUILTINS } from "../workspace/builtins";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import {
   PluginConfigurationProviderInstance,
@@ -406,12 +406,12 @@ export class PliValidator implements Validator {
     // We should have a separate file for that
     // TODO: Refactor this, probably when fixing the LSP features for builtins
     if (this.knownBuiltinsOffset === 0) {
-      const file = this.compilationUnit.files.getDocument(uri);
+      const file = this.compilationUnit.services.files.getDocument(uri);
       if (!file) {
         return;
       }
       const text = file.getText();
-      this.knownBuiltinsOffset = text.indexOf("/* Known Builtins */");
+      this.knownBuiltinsOffset = text.indexOf(KNOWN_BUILTINS);
     }
 
     const name = nameToken.image;
