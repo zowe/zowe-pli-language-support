@@ -244,8 +244,8 @@ interface SymbolTable {
 
 interface InterpreterContext {
   unit: CompilationUnit;
-  currentUri?: URI;
-  entryUri?: URI;
+  currentUri: URI;
+  entryUri: URI;
   /**
    * When symbols.parent === null: These are global variables that are defined on the root level of the preprocessor
    * Otherwise: Local variables only exist within the scope of a procedure.
@@ -1836,6 +1836,14 @@ async function runIncludeInstruction(
   }
 }
 
+/**
+ * Sets the filePath & relativeFilePath of the given item, if a filePath is provided
+ * The relativeFilePath is calculated based on the currentUri in the context
+ *
+ * @param item Item to set the file paths for
+ * @param filePath File path to set, if null, no changes are made
+ * @param context Used for currentUri to calculate relative paths
+ */
 function setFilePath(
   item: { filePath: string | null; relativeFilePath: string | null },
   filePath: string | null,
@@ -1996,12 +2004,24 @@ async function resolveIncludeFileUri(
 
   if (pgroup) {
     // lib file as either a string or a member from a known process group
+    const absPathRegex = /^(?:\/|\\|[A-Z]:)/i;
     for (const lib of pgroup.libs) {
-      const libFileUri = UriUtils.joinPath(
-        URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
-        lib,
-        item.fileName,
-      );
+      let libFileUri: URI;
+      if (!absPathRegex.test(lib)) {
+        // relative lib path, combine w/ workspace
+        libFileUri = UriUtils.joinPath(
+          URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
+          lib,
+          item.fileName,
+        );
+      } else {
+        // use lib path over workspace
+        const libUri = URI.file(lib).with({
+          scheme: context.entryUri.scheme,
+        });
+        libFileUri = UriUtils.joinPath(libUri, item.fileName);
+      }
+
       const match = await FileSystemProviderInstance.search({
         path: libFileUri,
         extensions: pgroup.includeExtensions,
