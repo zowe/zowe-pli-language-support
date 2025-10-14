@@ -12,6 +12,8 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "../utils/uri";
 
+export const KNOWN_BUILTINS = "/* Known Builtins */";
+
 /**
  * For CTRL+F: pli-builtin:///builtins.pli
  */
@@ -86,8 +88,7 @@ export const BuiltinsSQLDA = `
 export const BuiltinsFile = "builtins.pli";
 export const BuiltinsUri = `${BuiltinsUriSchema}:/${BuiltinsFile}`;
 export const Builtins =
-  ` ${BuiltinsBoolean}
- /* Arithmetic built-in functions */
+  ` /* Arithmetic built-in functions */
  ABS: PROC (value) RETURNS ();
  END;
 
@@ -339,7 +340,7 @@ export const Builtins =
  DATE: PROC () RETURNS ();
  END;
 
- DATEIME: PROC () RETURNS ();
+ DATETIME: PROC () RETURNS ();
  END;
 
  DAYS: PROC () RETURNS ();
@@ -813,10 +814,12 @@ export const Builtins =
  PLISTCKEUTC: PROC (value) RETURNS (); END;
  PLITRANxy: PROC (value) RETURNS (); END;
 
+ ${KNOWN_BUILTINS}
 
  define alias __SIGNED_INT signed fixed bin(31,0);
  define alias __UNSIGNED_INT unsigned fixed bin(32,0);
  ` +
+  BuiltinsBoolean +
   BuiltinsSQLCA +
   BuiltinsSQLDA;
 
