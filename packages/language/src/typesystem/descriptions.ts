@@ -228,13 +228,16 @@ export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
   [DataType.Task]: [...CommonAttributeKinds],
 };
 
+export type AttributeWitness<K extends keyof AttributeTypes> = {
+  value: AttributeTypes[K];
+  witness: ast.DeclarationAttribute;
+  image: string;
+  token: Token;
+  implicit: boolean;
+};
+
 export type AttributeWitnesses = {
-  [K in keyof AttributeTypes]: {
-    value: AttributeTypes[K];
-    witness: ast.DeclarationAttribute;
-    image: string;
-    token: Token;
-  } | null;
+  [K in keyof AttributeTypes]: AttributeWitness<K> | null;
 };
 
 export const DataTypesByAttributeKind = Object.entries(
@@ -1031,6 +1034,74 @@ function createStructureTypeDescription({
     members,
   };
 }
+
+export type Implications = {
+  [S in AttributeKind]: Partial<{[T in AttributeKind]: (value: AttributeTypes[S]) => AttributeTypes[T]}>;
+};
+
+/**
+ * Defines implications between attributes, e.g. setting Precision implies setting Scale=<precision-dependent> and DataType=Arithmetic
+ */
+export const Implications: Partial<Implications> = {
+  [AttributeKind.AccessMode]: {
+    [AttributeKind.DataType]: () => DataType.File,
+  },
+  [AttributeKind.Alignment]: undefined,
+  [AttributeKind.AreaSize]: undefined,
+  [AttributeKind.Assignability]: undefined,
+  [AttributeKind.Base]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.BufferMode]: {
+    [AttributeKind.DataType]: () => DataType.File,
+  },
+  [AttributeKind.Connection]: undefined,
+  [AttributeKind.DataType]: undefined,
+  [AttributeKind.Endianess]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.FileUsage]: {
+    [AttributeKind.DataType]: () => DataType.File,
+  },
+  [AttributeKind.FloatFormat]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.LocatorKind]: undefined,
+  [AttributeKind.NumberMode]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.OrdinalNames]: undefined,
+  [AttributeKind.PictureKind]: undefined,
+  [AttributeKind.Position]: undefined,
+  [AttributeKind.Precision]: {
+    [AttributeKind.Scale]: (value) => {
+      if (typeof value.fractionalDigitsCount === 'undefined') {
+        return ScaleMode.Float;
+      }
+      return ScaleMode.Fixed;
+    },
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.Scale]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.Scope]: undefined,
+  [AttributeKind.Sign]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.Storage]: undefined,
+  [AttributeKind.StringFormat]: {
+    [AttributeKind.DataType]: () => DataType.String,
+  },
+  [AttributeKind.StringKind]: {
+    [AttributeKind.DataType]: () => DataType.String,
+  },
+  [AttributeKind.StringLength]: {
+    [AttributeKind.DataType]: () => DataType.String,
+  },
+  [AttributeKind.Variable]: undefined,
+  [AttributeKind.Volatility]: undefined
+};
 
 export namespace TypeDescriptions {
   export const Names = {

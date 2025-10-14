@@ -48,6 +48,8 @@ import {
   Scope,
   DataTypesArray,
   Precisions,
+  AttributeWitness,
+  Implications,
 } from "./descriptions";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
@@ -224,20 +226,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        */
       case DefaultAttributeEnum.BINARY:
       case DefaultAttributeEnum.DECIMAL: {
-        const precision = this.acceptDimensionsAsListOfNumbers(
-          attribute.dimensions,
-        );
-        if (precision && precision.length > 0) {
-          this.addAttributeWitness(
-            AttributeKind.Precision,
-            Precisions.create(
-              precision[0],
-              precision.length > 1 ? precision[1] : 0,
-            ),
-            attribute,
-            token,
-          );
-        }
+        this.addPrecision(attribute, token);
         const base =
           typeAsEnum === DefaultAttributeEnum.BINARY
             ? Base.Binary
@@ -364,57 +353,15 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Scale mode attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-fixed-float
        */
+      case DefaultAttributeEnum.FLOAT:
       case DefaultAttributeEnum.FIXED: {
-        const precision = this.acceptDimensionsAsListOfNumbers(
-          attribute.dimensions,
-        );
-        if (precision && precision.length > 0) {
-          this.addAttributeWitness(
-            AttributeKind.Precision,
-            Precisions.create(
-              precision[0],
-              precision.length > 1 ? precision[1] : 0,
-            ),
-            attribute,
-            token,
-          );
-        }
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.Arithmetic,
-          attribute,
-          token,
-        );
-        break;
-      }
-      case DefaultAttributeEnum.FLOAT: {
-        const witness = this.attributeWitnesses[AttributeKind.Scale];
-        if (witness?.value === ScaleMode.Fixed) {
-          this.diagnostics.push(
-            diagnosticFromCode(Error.IBM2424I, witness.token),
-          );
-          break;
-        }
-        const precision = this.acceptDimensionsAsListOfNumbers(
-          attribute.dimensions,
-        );
-        if (precision && precision.length > 0) {
-          this.addAttributeWitness(
-            AttributeKind.Precision,
-            Precisions.create(precision[0]),
-            attribute,
-            token,
-          );
-        }
+        const scaleMode = typeAsEnum === DefaultAttributeEnum.FIXED
+          ? ScaleMode.Fixed
+          : ScaleMode.Float;
+        this.addPrecision(attribute, token, scaleMode);
         this.addAttributeWitness(
           AttributeKind.Scale,
-          ScaleMode.Float,
-          attribute,
-          token,
-        );
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.Arithmetic,
+          scaleMode,
           attribute,
           token,
         );
@@ -513,12 +460,6 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
             token,
           );
         }
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.String,
-          attribute,
-          token,
-        );
         const mapTo = {
           [DefaultAttributeEnum.CHARACTER]: StringKind.Character,
           [DefaultAttributeEnum.BIT]: StringKind.Bit,
@@ -560,39 +501,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-precision-attribute
        */
       case DefaultAttributeEnum.PRECISION: {
-        const precision = this.acceptDimensionsAsListOfNumbers(
-          attribute.dimensions,
-        );
-        if (precision) {
-          this.addAttributeWitness(
-            AttributeKind.DataType,
-            DataType.Arithmetic,
-            attribute,
-            token,
-          );
-          if (precision.length > 0) {
-            const witness = this.attributeWitnesses[AttributeKind.Scale];
-            const scaleMode =
-              precision.length > 1 ? ScaleMode.Fixed : ScaleMode.Float;
-            if (!witness || scaleMode !== witness.value) {
-              this.addAttributeWitness(
-                AttributeKind.Scale,
-                scaleMode,
-                attribute,
-                token,
-              );
-            }
-            this.addAttributeWitness(
-              AttributeKind.Precision,
-              Precisions.create(
-                precision[0],
-                precision.length > 1 ? precision[1] : undefined,
-              ),
-              attribute,
-              token,
-            );
-          }
-        }
+        this.addPrecision(attribute, token);
         break;
       }
 
@@ -698,6 +607,23 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         assertUnreachable(typeAsEnum);
     }
   }
+  private addPrecision(attribute: ast.ComputationDataAttribute, token: Token, scaleMode?: ScaleMode) {
+    const precision = this.acceptDimensionsAsListOfNumbers(
+      attribute.dimensions
+    );
+    if (precision && precision.length > 0) {
+      this.addAttributeWitness(
+        AttributeKind.Precision,
+        Precisions.create(
+          precision[0],
+          precision.length > 1 ? precision[1] : scaleMode === ScaleMode.Fixed ? 0 :undefined
+        ),
+        attribute,
+        token
+      );
+    }
+  }
+
   build() {
     if (this.possibleDataTypes.size !== 1) {
       if (this.elementName) {
@@ -745,6 +671,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
     }
     return result;
   }
+
   private addAttributeWitness<K extends keyof AttributeTypes>(
     kind: K,
     value: AttributeTypes[K],
@@ -758,7 +685,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           diagnosticFromCode(Error.IBM2462I, token, token.image, witness.image),
         );
         return;
-      } else {
+      } else if(!witness.implicit) {
         this.diagnostics.push(
           diagnosticFromCode(Error.IBM1309I, token, token.image),
         );
@@ -780,15 +707,48 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       } else {
         this.possibleDataTypes = leftDataTypes;
       }
-    } else {
-      this.attributeWitnesses[kind] = {
-        value: value as AttributeTypes[K],
+    } else { //first time seeing this attribute
+      const current: AttributeWitness<K> = {
+        value,
         witness: attribute,
         image: token.image,
         token,
-      } as AttributeWitnesses[K];
+        implicit: false,
+      };
+      this.attributeWitnesses[kind] = current as AttributeWitnesses[K];
       if (kind === AttributeKind.DataType) {
         this.possibleDataTypes = new Set([value as DataType]);
+      }
+      this.applyWitnessImplications(kind, current as AttributeWitness<K>);
+    }
+  }
+  private applyWitnessImplications<S extends keyof AttributeTypes>(sourceKind: S, current: AttributeWitness<S>) {
+    const value = current.value;
+    const implications = Implications[sourceKind];
+    if (!implications) {
+      return;
+    }
+    for (const [targetKindString, implication] of Object.entries(implications)) {
+      const targetKind = parseInt(targetKindString) as keyof AttributeTypes;
+      const targetWitness = this.attributeWitnesses[targetKind];
+      const impliedValue = implication(value);
+      if (targetWitness && targetWitness.value !== impliedValue) {
+        this.diagnostics.push(
+          diagnosticFromCode(Error.IBM2462I, targetWitness.token, current.token.image, targetWitness.image),
+        );
+      } else {
+        const newtargetWitness: AttributeWitness<typeof targetKind> = {
+          value: impliedValue,
+          witness: current.witness,
+          image: `${current.image}`,
+          token: current.token,
+          implicit: true,
+        };
+        this.attributeWitnesses[targetKind] = newtargetWitness as any;
+        if (targetKind === AttributeKind.DataType) {
+          this.possibleDataTypes = new Set([impliedValue as DataType]);
+        }
+        this.applyWitnessImplications(targetKind, newtargetWitness as AttributeWitness<typeof targetKind>); //recursively apply implications
       }
     }
   }
