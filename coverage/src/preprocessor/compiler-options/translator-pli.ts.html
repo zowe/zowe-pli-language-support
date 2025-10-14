@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.87% </span>
+                <span class="strong">83.96% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2767/3299</span>
+                <span class='fraction'>2785/3317</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">79.96% </span>
+                <span class="strong">80.12% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>527/659</span>
+                <span class='fraction'>532/664</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.87% </span>
+                <span class="strong">83.96% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2767/3299</span>
+                <span class='fraction'>2785/3317</span>
             </div>
         
             
@@ -3720,7 +3720,25 @@
 <a name='L3655'></a><a href='#L3655'>3655</a>
 <a name='L3656'></a><a href='#L3656'>3656</a>
 <a name='L3657'></a><a href='#L3657'>3657</a>
-<a name='L3658'></a><a href='#L3658'>3658</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L3658'></a><a href='#L3658'>3658</a>
+<a name='L3659'></a><a href='#L3659'>3659</a>
+<a name='L3660'></a><a href='#L3660'>3660</a>
+<a name='L3661'></a><a href='#L3661'>3661</a>
+<a name='L3662'></a><a href='#L3662'>3662</a>
+<a name='L3663'></a><a href='#L3663'>3663</a>
+<a name='L3664'></a><a href='#L3664'>3664</a>
+<a name='L3665'></a><a href='#L3665'>3665</a>
+<a name='L3666'></a><a href='#L3666'>3666</a>
+<a name='L3667'></a><a href='#L3667'>3667</a>
+<a name='L3668'></a><a href='#L3668'>3668</a>
+<a name='L3669'></a><a href='#L3669'>3669</a>
+<a name='L3670'></a><a href='#L3670'>3670</a>
+<a name='L3671'></a><a href='#L3671'>3671</a>
+<a name='L3672'></a><a href='#L3672'>3672</a>
+<a name='L3673'></a><a href='#L3673'>3673</a>
+<a name='L3674'></a><a href='#L3674'>3674</a>
+<a name='L3675'></a><a href='#L3675'>3675</a>
+<a name='L3676'></a><a href='#L3676'>3676</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3737,6 +3755,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -5665,11 +5684,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -7394,6 +7430,7 @@ import {
   CompilerOptionText,
   SyntaxKind,
 } from "../../syntax-tree/ast";
+import { NOT_CHARACTER } from "../../utils/const";
 import { CompilerOptionsCodes } from "./codes";
 import { CompilerOptions as Options } from "./options";
 import {
@@ -9321,12 +9358,29 @@ translator.rule(["NATLANG"], (option, options) =&gt; {
 translator.flag("nest", ["NEST"], ["NONEST"]);
 &nbsp;
 /** {@link CompilerOptions.not} */
-translator.rule(
-  ["NOT"],
-  stringTranslate((options, text) =&gt; {
-    options.not = text.value;
-  }),
-);
+translator.rule(["NOT"], (option, options) =&gt; {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "string");
+  if (value.value.length !== 1) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.Not.InvalidParameterLength,
+      value.value,
+    );
+  }
+  if (
+    value.value !== NOT_CHARACTER &amp;&amp;
+    Options.PLI_CHARACTER_REGEX.test(value.value)
+  ) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.Not.InvalidParameterCharacter,
+      value.value,
+    );
+  }
+  options.not = value.value;
+});
 &nbsp;
 /** {@link CompilerOptions.nullDate} */
 translator.flag("nullDate", ["NULLDATE"], ["NONULLDATE"]);
@@ -11041,7 +11095,7 @@ export function getTranslator(): Translator&lt;CompilerOptions&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-14T13:41:34.349Z
+                at 2025-10-14T16:01:13.046Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
