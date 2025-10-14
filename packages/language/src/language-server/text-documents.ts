@@ -34,6 +34,10 @@ import {
 } from "vscode-languageserver-textdocument";
 import { URI, UriUtils } from "../utils/uri.js";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider.js";
+import {
+  BuiltinsMacroTextDocument,
+  BuiltinsTextDocument,
+} from "../workspace/builtins.js";
 
 export type TextDocumentConnection = Pick<
   Connection,
@@ -434,6 +438,8 @@ export function resetDocumentProviders() {
     FileDocuments,
     BuiltinDocuments,
   );
+  BuiltinDocuments.set(BuiltinsTextDocument);
+  BuiltinDocuments.set(BuiltinsMacroTextDocument);
 }
 
 resetDocumentProviders();
