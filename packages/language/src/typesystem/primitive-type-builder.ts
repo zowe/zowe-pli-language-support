@@ -47,6 +47,7 @@ import {
   Alignment,
   Scope,
   DataTypesArray,
+  Precisions,
 } from "./descriptions";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
@@ -70,8 +71,9 @@ export interface PrimitiveTypeBuilder {
 export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   private diagnostics: Diagnostic[] = [];
   private possibleDataTypes = new Set<DataType>(DataTypesArray);
-  private attributeWitnesses: AttributeWitnesses = createEmptyAttributeWitnesses();
-  constructor(private elementName: Token) { }
+  private attributeWitnesses: AttributeWitnesses =
+    createEmptyAttributeWitnesses();
+  constructor(private elementName: Token) {}
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -225,14 +227,13 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
         );
-        if(precision && precision.length > 0) {
+        if (precision && precision.length > 0) {
           this.addAttributeWitness(
-            AttributeKind.Scale,
-            {
-              mode: ScaleMode.Fixed,
-              totalDigitsCount: precision[0],
-              fractionalDigitsCount:  precision.length > 1 ? precision[1] : 0,
-            },
+            AttributeKind.Precision,
+            Precisions.create(
+              precision[0],
+              precision.length > 1 ? precision[1] : 0,
+            ),
             attribute,
             token,
           );
@@ -367,21 +368,20 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
         );
+        if (precision && precision.length > 0) {
+          this.addAttributeWitness(
+            AttributeKind.Precision,
+            Precisions.create(
+              precision[0],
+              precision.length > 1 ? precision[1] : 0,
+            ),
+            attribute,
+            token,
+          );
+        }
         this.addAttributeWitness(
           AttributeKind.DataType,
           DataType.Arithmetic,
-          attribute,
-          token,
-        );
-        this.addAttributeWitness(
-          AttributeKind.Scale,
-          {
-            mode: ScaleMode.Fixed,
-            //TODO verify default precision for fixed
-            totalDigitsCount: precision ? precision[0] : 5,
-            fractionalDigitsCount:
-              precision && precision.length > 1 ? precision[1] : 0,
-          },
           attribute,
           token,
         );
@@ -389,7 +389,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       }
       case DefaultAttributeEnum.FLOAT: {
         const witness = this.attributeWitnesses[AttributeKind.Scale];
-        if (witness?.value?.mode === ScaleMode.Fixed) {
+        if (witness?.value === ScaleMode.Fixed) {
           this.diagnostics.push(
             diagnosticFromCode(Error.IBM2424I, witness.token),
           );
@@ -398,16 +398,14 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
         );
-        this.addAttributeWitness(
-          AttributeKind.Scale,
-          // TODO verify default precision for float
-          {
-            mode: ScaleMode.Float,
-            totalDigitsCount: precision ? precision[0] : 51,
-          },
-          attribute,
-          token,
-        );
+        if (precision && precision.length > 0) {
+          this.addAttributeWitness(
+            AttributeKind.Precision,
+            Precisions.create(precision[0]),
+            attribute,
+            token,
+          );
+        }
         this.addAttributeWitness(
           AttributeKind.DataType,
           DataType.Arithmetic,
@@ -560,44 +558,25 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           attribute.dimensions,
         );
         if (precision) {
-          if (precision.length === 1) {
-            this.addAttributeWitness(
-              AttributeKind.DataType,
-              DataType.Arithmetic,
-              attribute,
-              token,
-            );
-            this.addAttributeWitness(
-              AttributeKind.Scale,
-              {
-                mode: ScaleMode.Fixed,
-                totalDigitsCount: precision[0],
-                fractionalDigitsCount: 0,
-              },
-              attribute,
-              token,
-            );
-          } else if (precision.length >= 2) {
-            if (
-              this.attributeWitnesses[AttributeKind.Scale]?.value?.mode ===
-              ScaleMode.Float
-            ) {
-              this.diagnostics.push(diagnosticFromCode(Error.IBM2424I, token));
-              break;
-            }
-            this.addAttributeWitness(
-              AttributeKind.DataType,
-              DataType.Arithmetic,
-              attribute,
-              token,
-            );
+          this.addAttributeWitness(
+            AttributeKind.DataType,
+            DataType.Arithmetic,
+            attribute,
+            token,
+          );
+          if (precision.length > 1) {
             this.addAttributeWitness(
               AttributeKind.Scale,
-              {
-                mode: ScaleMode.Fixed,
-                totalDigitsCount: precision[0],
-                fractionalDigitsCount: precision[1],
-              },
+              ScaleMode.Fixed,
+              attribute,
+              token,
+            );
+            this.addAttributeWitness(
+              AttributeKind.Precision,
+              Precisions.create(
+                precision[0],
+                precision.length > 1 ? precision[1] : 0,
+              ),
               attribute,
               token,
             );

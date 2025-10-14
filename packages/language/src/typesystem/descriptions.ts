@@ -89,6 +89,8 @@ export enum AttributeKind {
    * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-defined-position-attributes
    */
   Position,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-precision-attribute */
+  Precision,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-fixed-float */
   Scale,
   /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=declarations-internal-external-attributes */
@@ -157,7 +159,8 @@ export type AttributeTypes = {
   [AttributeKind.OrdinalNames]: string[];
   [AttributeKind.PictureKind]: PictureWideness;
   [AttributeKind.Position]: StoragePosition;
-  [AttributeKind.Scale]: Scale;
+  [AttributeKind.Precision]: Precision;
+  [AttributeKind.Scale]: ScaleMode;
   [AttributeKind.Scope]: Scope;
   [AttributeKind.Sign]: Sign;
   [AttributeKind.Storage]: StorageClass;
@@ -194,6 +197,7 @@ export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
     AttributeKind.Scale,
     AttributeKind.Base,
     AttributeKind.Sign,
+    AttributeKind.Precision,
     AttributeKind.NumberMode,
     AttributeKind.Endianess,
     AttributeKind.FloatFormat,
@@ -503,31 +507,22 @@ export enum ScaleMode {
 }
 
 export const NumberScales = {
-  Fixed: (totalDigitsCount: number = 5, fractionalDigitsCount: number = 0) =>
-    ({
-      mode: ScaleMode.Fixed,
-      totalDigitsCount,
-      fractionalDigitsCount,
-    }) as Scale,
-  Float: () => ({ mode: ScaleMode.Float }) as Scale,
+  Fixed: ScaleMode.Fixed,
+  Float: ScaleMode.Float,
 };
 
-export type Scale = {
-  /** Formally known as `p`. */
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-precision-attribute */
+export type Precision = {
   totalDigitsCount: number;
-} & (
-  | {
-      mode: ScaleMode.Float;
-    }
-  | {
-      mode: ScaleMode.Fixed;
-      /**
-       * Formally known as `q`.
-       * Attention: fractionalDigitsCount <= totalDigitsCount
-       */
-      fractionalDigitsCount: number;
-    }
-);
+  fractionalDigitsCount?: number;
+};
+
+export const Precisions = {
+  create: (totalDigitsCount: number = 5, fractionalDigitsCount?: number) => ({
+    totalDigitsCount,
+    fractionalDigitsCount,
+  }),
+};
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-signed-unsigned */
 export enum Sign {
@@ -542,7 +537,8 @@ export const Signs = {
 
 interface ArithmeticTypeDescriptionProps {
   mode: NumberMode;
-  scale: Scale;
+  scale: ScaleMode;
+  precision: Precision;
   base: Base;
   sign: Sign;
   endianness: Endianess;
@@ -587,23 +583,21 @@ export const MaximumPrecisions: Record<ScaleMode, Record<Base, number>> = {
 //TODO endianness default value depends on platform (BIGENDIAN except on Intel where the default is LITTLEENDIAN)
 function createArithmeticTypeDescription({
   mode = NumberMode.Real,
-  scale,
+  scale = ScaleMode.Float,
   base: unit = Base.Decimal,
+  precision = { totalDigitsCount: 5, fractionalDigitsCount: 0 },
   sign = Sign.Signed,
   endianness = Endianess.Big,
   //TODO default value depends on platform?
   floatFormat = FloatFormat.IEEE,
   ...base
 }: Partial<ArithmeticTypeDescriptionProps>): ArithmeticTypeDescription {
-  scale ??= {
-    mode: ScaleMode.Float,
-    totalDigitsCount: DefaultPrecisions[ScaleMode.Float][unit],
-  };
   return {
     type: ArithmeticType,
     ...createBaseTypeDescription(ArithmeticType, base),
     mode,
     scale,
+    precision,
     base: unit,
     sign,
     endianness,
@@ -1160,8 +1154,8 @@ export namespace TypeDescriptions {
     [AttributeKind.Assignability]: Assignability.Assignable,
     [AttributeKind.Connection]: StorageConnection.Connected,
     [AttributeKind.Variable]: false,
-    [AttributeKind.Scale]: {
-      mode: ScaleMode.Fixed,
+    [AttributeKind.Scale]: ScaleMode.Fixed,
+    [AttributeKind.Precision]: {
       totalDigitsCount: 5,
       fractionalDigitsCount: 0,
     },
@@ -1180,7 +1174,10 @@ export namespace TypeDescriptions {
     [AttributeKind.StringLength]: 0,
   };
 
-  export function createPrimitive(type: Exclude<DataType, DataType.Structure>, attributes: AttributeWitnesses): Any {
+  export function createPrimitive(
+    type: Exclude<DataType, DataType.Structure>,
+    attributes: AttributeWitnesses,
+  ): Any {
     const common = {
       alignment:
         attributes[AttributeKind.Alignment]?.value ??
@@ -1236,6 +1233,9 @@ export namespace TypeDescriptions {
           floatFormat:
             attributes[AttributeKind.FloatFormat]?.value ??
             DefaultValues[AttributeKind.FloatFormat],
+          precision:
+            attributes[AttributeKind.Precision]?.value ??
+            DefaultValues[AttributeKind.Precision],
         });
       case DataType.File:
         return TypeDescriptions.File({

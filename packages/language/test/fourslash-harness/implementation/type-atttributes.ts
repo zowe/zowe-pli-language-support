@@ -11,6 +11,7 @@ import {
   NumberModes,
   NumberScales,
   PictureWidenesses,
+  Precisions,
   Scopes,
   Signs,
   StorageClasses,
@@ -39,6 +40,7 @@ export const HarnessTypeAttributes: Omit<
   modes: NumberModes,
   //TODO ordinal names
   pictureWidenesses: PictureWidenesses,
+  precision: Precisions,
   //TODO positions
   scales: NumberScales,
   scopes: Scopes,

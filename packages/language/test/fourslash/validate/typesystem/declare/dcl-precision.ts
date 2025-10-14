@@ -17,5 +17,6 @@
 verify.noDiagnostics(undefined, ...code.TypeSystem);
 types.expectTypeAt(1, {
   type: types.dataTypes.Arithmetic,
-  scale: types.scales.Fixed(10, 5),
+  scale: types.scales.Fixed,
+  precision: types.precision.create(10, 5),
 });

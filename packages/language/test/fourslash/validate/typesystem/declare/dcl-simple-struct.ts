@@ -24,7 +24,7 @@ types.expectTypeAt(1, {
     },
     AGE: {
       type: types.dataTypes.Arithmetic,
-      scale: types.scales.Fixed(),
+      scale: types.scales.Fixed,
     },
   },
 });
@@ -34,5 +34,5 @@ types.expectTypeAt(2, {
 });
 types.expectTypeAt(3, {
   type: types.dataTypes.Arithmetic,
-  scale: types.scales.Fixed(),
+  scale: types.scales.Fixed,
 });

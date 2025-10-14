@@ -62,6 +62,7 @@ export interface HarnessTesterInterface {
     pictureWidenesses: typeof PictureWidenesses;
     //TODO positions
     scales: typeof NumberScales;
+    precision: typeof Precisions;
     scopes: typeof Scopes;
     signs: typeof Signs;
     storageClasses: typeof StorageClasses;

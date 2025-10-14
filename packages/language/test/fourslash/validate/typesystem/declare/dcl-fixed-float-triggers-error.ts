@@ -19,5 +19,6 @@ verify.expectDiagnosticsAt(2, {
 });
 types.expectTypeAt(1, {
   type: types.dataTypes.Arithmetic,
-  scale: types.scales.Fixed(5, 0),
+  scale: types.scales.Fixed,
+  precision: types.precision.create(5, 0),
 });

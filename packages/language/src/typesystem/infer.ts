@@ -65,7 +65,10 @@ export class DefaultTypeInferer implements TypeInferer {
     });
   }
 
-  private inferDeclareStatement(node: ast.DeclareStatement, compilationUnit: CompilationUnit) {
+  private inferDeclareStatement(
+    node: ast.DeclareStatement,
+    compilationUnit: CompilationUnit,
+  ) {
     const builder = new DefaultCompositeTypeBuilder();
     const items = builder.flattenDeclareStatement(node);
     const topLevelMembers = new Map<string, TypeDescriptions.Any>();
@@ -73,22 +76,28 @@ export class DefaultTypeInferer implements TypeInferer {
     let previousLevel: number | undefined = undefined;
     for (const item of items) {
       if (builder.isCompositeDeclaredItem(item)) {
-        const structureType = builder.handleCompositeDeclaredItem(item, compilationUnit);
+        const structureType = builder.handleCompositeDeclaredItem(
+          item,
+          compilationUnit,
+        );
         compilationUnit.services.typeCache.set(item.node, structureType);
-        if(previousLevel === undefined) {
+        if (previousLevel === undefined) {
           topLevelMembers.set(item.name, structureType);
           structureParents.push(structureType);
         } else {
-          while(previousLevel && structureType.level < previousLevel) {
+          while (previousLevel && structureType.level < previousLevel) {
             structureParents.pop();
-            previousLevel = structureParents.length > 0 ? structureParents[structureParents.length - 1].level : undefined;
+            previousLevel =
+              structureParents.length > 0
+                ? structureParents[structureParents.length - 1].level
+                : undefined;
           }
-          if(previousLevel && structureType.level > previousLevel) {
-            const parent = structureParents[structureParents.length -1];
+          if (previousLevel && structureType.level > previousLevel) {
+            const parent = structureParents[structureParents.length - 1];
             parent.members[item.name] = structureType;
             structureParents.push(structureType);
           } else {
-            if(structureParents.length > 0) {
+            if (structureParents.length > 0) {
               structureParents.pop();
             }
             structureParents.push(structureType);
@@ -96,21 +105,27 @@ export class DefaultTypeInferer implements TypeInferer {
         }
         previousLevel = structureType.level;
       } else {
-        const primitiveType = builder.handlePrimitiveDeclaredItem(item, compilationUnit);
+        const primitiveType = builder.handlePrimitiveDeclaredItem(
+          item,
+          compilationUnit,
+        );
         compilationUnit.services.typeCache.set(item.node, primitiveType);
         if (item.level === undefined) {
           topLevelMembers.set(item.name, primitiveType);
         } else {
-          while(previousLevel && item.level < previousLevel) {
+          while (previousLevel && item.level < previousLevel) {
             structureParents.pop();
-            previousLevel = structureParents.length > 0 ? structureParents[structureParents.length - 1].level : undefined;
+            previousLevel =
+              structureParents.length > 0
+                ? structureParents[structureParents.length - 1].level
+                : undefined;
           }
-          if(previousLevel && item.level > previousLevel) {
-            const parent = structureParents[structureParents.length -1];
+          if (previousLevel && item.level > previousLevel) {
+            const parent = structureParents[structureParents.length - 1];
             parent.members[item.name] = primitiveType;
           } else {
-            if(structureParents.length > 0) {
-              const parent = structureParents[structureParents.length -1];
+            if (structureParents.length > 0) {
+              const parent = structureParents[structureParents.length - 1];
               parent.members[item.name] = primitiveType;
             } else {
               topLevelMembers.set(item.name, primitiveType);
@@ -166,11 +181,7 @@ export class DefaultTypeInferer implements TypeInferer {
       }
     } else if (element.kind === ast.SyntaxKind.WildcardItem) {
       if (element.token) {
-        const type = this.inferElement(
-          element.token,
-          parent,
-          compilationUnit,
-        );
+        const type = this.inferElement(element.token, parent, compilationUnit);
         return type ? new Map([[element, type]]) : new Map();
       }
     } else if (element.kind === ast.SyntaxKind.DeclaredItem) {

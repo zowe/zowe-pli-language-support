@@ -637,11 +637,11 @@ export class TestBuilder {
   private filterByErrorCodes(diagnostics: Diagnostic[], errorCodes: PLICode[]) {
     return errorCodes.length > 0
       ? diagnostics.filter((diagnostic) => {
-        return (
-          diagnostic.code !== undefined &&
-          errorCodes.map(({ fullCode }) => fullCode).includes(diagnostic.code)
-        );
-      })
+          return (
+            diagnostic.code !== undefined &&
+            errorCodes.map(({ fullCode }) => fullCode).includes(diagnostic.code)
+          );
+        })
       : diagnostics;
   }
 
@@ -684,8 +684,9 @@ export class TestBuilder {
   }
 
   expectToThrow(fn: () => void, messageToThrow?: string) {
-    const message = `Expected function to throw an error ${messageToThrow ? `with message "${messageToThrow}"` : ""
-      }, but it did not`;
+    const message = `Expected function to throw an error ${
+      messageToThrow ? `with message "${messageToThrow}"` : ""
+    }, but it did not`;
     try {
       fn();
       fail(message);
@@ -951,7 +952,10 @@ export class TestBuilder {
     }
   }
 
-  private expectTypeWithStructure(expectedType: TypeExpectation, actualType: TypeDescriptions.Any) {
+  private expectTypeWithStructure(
+    expectedType: TypeExpectation,
+    actualType: TypeDescriptions.Any,
+  ) {
     if (expectedType.type === DataType.Structure) {
       if (actualType.type !== DataType.Structure) {
         throw new Error(

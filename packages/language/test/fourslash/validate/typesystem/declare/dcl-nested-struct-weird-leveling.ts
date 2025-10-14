@@ -38,37 +38,41 @@ types.expectTypeAt(1, {
           kind: types.stringKinds.Character,
           length: 15,
         },
-      }
+      },
     },
     HOURS: {
       type: types.dataTypes.Structure,
       members: {
         REGULAR: {
           type: types.dataTypes.Arithmetic,
-          scale: types.scales.Fixed(5, 2),
+          scale: types.scales.Fixed,
+          precision: types.precision.create(5, 2),
           base: types.bases.Decimal,
         },
         OVERTIME: {
           type: types.dataTypes.Arithmetic,
-          scale: types.scales.Fixed(5, 2),
+          scale: types.scales.Fixed,
+          precision: types.precision.create(5, 2),
           base: types.bases.Decimal,
         },
-      }
+      },
     },
     RATE: {
       type: types.dataTypes.Structure,
       members: {
         REGULAR: {
           type: types.dataTypes.Arithmetic,
-          scale: types.scales.Fixed(3, 2),
+          scale: types.scales.Fixed,
+          precision: types.precision.create(3, 2),
           base: types.bases.Decimal,
         },
         OVERTIME: {
           type: types.dataTypes.Arithmetic,
-          scale: types.scales.Fixed(3, 2),
+          scale: types.scales.Fixed,
+          precision: types.precision.create(3, 2),
           base: types.bases.Decimal,
         },
-      }
+      },
     },
   },
 });

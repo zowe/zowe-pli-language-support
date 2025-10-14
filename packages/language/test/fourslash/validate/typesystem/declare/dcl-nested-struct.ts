@@ -32,9 +32,9 @@ types.expectTypeAt(1, {
         },
         AGE: {
           type: types.dataTypes.Arithmetic,
-          scale: types.scales.Fixed(),
+          scale: types.scales.Fixed,
         },
-      }
+      },
     },
     SIGNATURE: {
       type: types.dataTypes.Structure,
@@ -49,7 +49,7 @@ types.expectTypeAt(1, {
           kind: types.stringKinds.Bit,
           length: 1,
         },
-      }
+      },
     },
   },
 });

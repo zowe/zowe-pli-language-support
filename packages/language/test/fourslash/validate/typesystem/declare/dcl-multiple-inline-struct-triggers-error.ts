@@ -15,18 +15,18 @@
 //// declare 01 (<|a:a|>,<|b:b|>,<|c:c|>),
 ////            02 x FIXED,
 ////            02 y CHAR(10);
-types.expectTypeAt('a', {
-    type: types.dataTypes.Unknown,
+types.expectTypeAt("a", {
+  type: types.dataTypes.Unknown,
 });
-types.expectTypeAt('b', {
-    type: types.dataTypes.Unknown,
+types.expectTypeAt("b", {
+  type: types.dataTypes.Unknown,
 });
-types.expectTypeAt('c', {
+types.expectTypeAt("c", {
   type: types.dataTypes.Structure,
   members: {
     X: {
       type: types.dataTypes.Arithmetic,
-      scale: types.scales.Fixed(),
+      scale: types.scales.Fixed,
     },
     Y: {
       type: types.dataTypes.String,
@@ -35,4 +35,3 @@ types.expectTypeAt('c', {
     },
   },
 });
-
