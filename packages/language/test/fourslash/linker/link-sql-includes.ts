@@ -12,10 +12,11 @@
 /// <reference path="../framework.ts" />
 
 // @wrap: main
-//// PUT(<|1:SQLCA|>.SQLCODE);
-//// PUT(<|2:SQLDA|>.SQLTYPE);
+//// PUT(<|1:SQLCA|>.<|2:SQLCODE|>);
+//// PUT(<|3:SQLDA|>.<|4:SQLTYPE|>);
+//// PUT(<|5:SQLCODE|>);
+//// PUT(<|6:SQLTYPE|>);
 
 // Should link to the SQLCA/SQLDA builtin copybook definition
 // Therefore, no diagnostics expected
-verify.noDiagnostics(1);
-verify.noDiagnostics(2);
+verify.noDiagnostics([1, 2, 3, 4, 5, 6]);

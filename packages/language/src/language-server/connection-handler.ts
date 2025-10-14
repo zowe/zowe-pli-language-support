@@ -33,11 +33,6 @@ import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { completionRequest } from "./completion/completion-request";
-import {
-  BuiltinsMacroTextDocument,
-  BuiltinsTextDocument,
-} from "../workspace/builtins";
-import { BuiltinDocuments } from "./text-documents";
 import { hoverRequest } from "./hover-request";
 import { Mutex } from "../workspace/mutex";
 
@@ -56,9 +51,6 @@ export function startLanguageServer(connection: Connection): void {
     for (const folder of params.workspaceFolders?.reverse() ?? []) {
       await PluginConfigurationProviderInstance.init(folder.uri);
     }
-
-    BuiltinDocuments.set(BuiltinsTextDocument);
-    BuiltinDocuments.set(BuiltinsMacroTextDocument);
 
     return {
       capabilities: {
