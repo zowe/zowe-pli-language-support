@@ -7579,22 +7579,9 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.EnvironmentAttributeItem>();
   });
-  private createEntryAttribute(): ast.EntryAttribute {
-    return {
-      kind: ast.SyntaxKind.EntryAttribute,
-      container: null,
-      limited: [],
-      attributes: [],
-      options: [],
-      variable: [],
-      returns: [],
-      environmentName: [],
-      entryToken: null,
-    };
-  }
 
   EntryAttribute = this.RULE("EntryAttribute", () => {
-    let element = this.push(this.createEntryAttribute());
+    let element = this.push(ast.createEntryAttribute());
 
     this.MANY1(() => {
       this.CONSUME_ASSIGN1(tokens.LIMITED, (token) => {
