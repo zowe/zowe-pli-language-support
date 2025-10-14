@@ -35,7 +35,10 @@ interface TranslatorRule<T extends CompilerOptionsPP = CompilerOptionsPP> {
 type Translate<T extends CompilerOptionsPP> = (
   option: CompilerOption,
   options: T,
+  acceptor: TranslationErrorAcceptor,
 ) => void;
+
+type TranslationErrorAcceptor = (error: TranslationError) => void;
 
 /**
  * Tracks how a rule is applied, either positively or negatively
@@ -156,7 +159,16 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
       }
 
       try {
-        translate?.(option, this.options);
+        const localDiagnostics: CompilerOptionIssue[] = [];
+        const diagnosticsAcceptor: TranslationErrorAcceptor = (error) => {
+          localDiagnostics.push({
+            range: tokenToRange(error.token),
+            message: error.message,
+            severity: error.severity,
+          });
+        };
+        translate?.(option, this.options, diagnosticsAcceptor);
+        this.issues.push(...localDiagnostics); // Only add diagnostics if no exception is thrown.
       } catch (err) {
         reportError(err);
       }
@@ -164,7 +176,7 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
       this.issues.push({
         range: tokenToRange(option.token),
         message: PLIWarning.IBM1159I.message(option.name),
-        severity: Severity.W,
+        severity: Severity.E,
       });
     }
   }
@@ -438,4 +450,66 @@ export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
     }
     callback(options, value);
   };
+}
+
+export function getCompilerOptionValueName(value: CompilerOptionValue): string {
+  if (
+    value.kind === SyntaxKind.CompilerOptionText ||
+    value.kind === SyntaxKind.CompilerOptionString
+  ) {
+    return value.value;
+  } else if (value.kind === SyntaxKind.CompilerOption) {
+    return value.name;
+  }
+  throw new Error("Compiler option value is not supported.");
+}
+
+export function reportDuplicateSubOptions(
+  parent: CompilerOption,
+  acceptor: TranslationErrorAcceptor,
+) {
+  const values = parent.values;
+  const seen = new Set<string>();
+  for (const value of values) {
+    const name = getCompilerOptionValueName(value);
+    if (seen.has(name)) {
+      acceptor(
+        TranslationError.fromCode(
+          value.token,
+          CompilerOptionsCodes.DupeOptionIssue,
+          `${parent.token.image}(${value.token.image})`,
+        ),
+      );
+    } else {
+      seen.add(name);
+    }
+  }
+}
+
+export function reportMutexSubOptions(
+  parent: CompilerOption,
+  acceptor: TranslationErrorAcceptor,
+  mutex: string[][],
+) {
+  const values = parent.values;
+  const seen = new Set<string>();
+  for (const value of values) {
+    const name = getCompilerOptionValueName(value);
+    for (const group of mutex) {
+      if (group.includes(name)) {
+        for (const other of group) {
+          if (other !== name && seen.has(other)) {
+            acceptor(
+              TranslationError.fromCode(
+                value.token,
+                CompilerOptionsCodes.MutexOptionIssue,
+                `${parent.token.image}(${value.token.image})`,
+              ),
+            );
+          }
+        }
+      }
+    }
+    seen.add(name);
+  }
 }

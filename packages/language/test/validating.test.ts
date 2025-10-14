@@ -303,7 +303,7 @@ describe("Validating", () => {
         END EP;
         `);
       assertDiagnostic(doc, {
-        message: "Duplicate compiler option AGGREGATE",
+        message: "Duplicate compiler option found for AGGREGATE.",
         severity: Severity.W,
       });
     });
@@ -315,7 +315,7 @@ describe("Validating", () => {
         `);
       assertDiagnostic(doc, {
         message: PLICodes.Warning.IBM1159I.message("TYPEFOXOPT"),
-        severity: Severity.W,
+        severity: Severity.E,
       });
     });
 
@@ -338,7 +338,7 @@ describe("Validating", () => {
         END EP;
         `);
       assertDiagnostic(doc, {
-        message: "Duplicate compiler option AGGREGATE",
+        message: "Duplicate compiler option found for AGGREGATE.",
         severity: Severity.W,
       });
     });
