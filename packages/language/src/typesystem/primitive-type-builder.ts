@@ -62,17 +62,16 @@ type BuiltType = {
   diagnostics: Diagnostic[];
 };
 
-export interface TypeBuilder {
+export interface PrimitiveTypeBuilder {
   addAttribute(attribute: ast.DeclarationAttribute): void;
   build(): BuiltType;
 }
 
-export class DefaultTypeBuilder implements TypeBuilder {
+export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   private diagnostics: Diagnostic[] = [];
   private possibleDataTypes = new Set<DataType>(DataTypesArray);
-  private attributeWitnesses: AttributeWitnesses =
-    createEmptyAttributeWitnesses();
-  constructor(private elementName: Token) {}
+  private attributeWitnesses: AttributeWitnesses = createEmptyAttributeWitnesses();
+  constructor(private elementName: Token) { }
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -223,6 +222,21 @@ export class DefaultTypeBuilder implements TypeBuilder {
        */
       case DefaultAttributeEnum.BINARY:
       case DefaultAttributeEnum.DECIMAL: {
+        const precision = this.acceptDimensionsAsListOfNumbers(
+          attribute.dimensions,
+        );
+        if(precision && precision.length > 0) {
+          this.addAttributeWitness(
+            AttributeKind.Scale,
+            {
+              mode: ScaleMode.Fixed,
+              totalDigitsCount: precision[0],
+              fractionalDigitsCount:  precision.length > 1 ? precision[1] : 0,
+            },
+            attribute,
+            token,
+          );
+        }
         const base =
           typeAsEnum === DefaultAttributeEnum.BINARY
             ? Base.Binary
@@ -710,9 +724,10 @@ export class DefaultTypeBuilder implements TypeBuilder {
         diagnostics: this.diagnostics,
       };
     }
-    const dataType = Array.from(this.possibleDataTypes)[0];
+    let dataType = Array.from(this.possibleDataTypes)[0];
+    assertType<Exclude<DataType, DataType.Structure>>(dataType);
     return {
-      type: TypeDescriptions.create(dataType, this.attributeWitnesses),
+      type: TypeDescriptions.createPrimitive(dataType, this.attributeWitnesses),
       diagnostics: this.diagnostics,
     };
   }

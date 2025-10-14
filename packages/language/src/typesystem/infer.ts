@@ -18,9 +18,9 @@ import {
 } from "./arithmetic-operations";
 import { assertUnreachable } from "../utils/common";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { DefaultTypeBuilder } from "./type-builder";
+import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 import { Token } from "../parser/tokens";
-import { getNameToken } from "../linking/tokens";
+import { DefaultCompositeTypeBuilder } from "./composite-type-builder";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
@@ -47,46 +47,7 @@ export class DefaultTypeInferer implements TypeInferer {
   ): TypeDescriptions.Any {
     return compilationUnit.services.typeCache.get(node, () => {
       if (node.kind === ast.SyntaxKind.DeclareStatement) {
-        const topLevelMembers = new Map<string, TypeDescriptions.Any>();
-        const structureParents: [string, TypeDescriptions.Structure][] = [];
-        for (const item of node.items) {
-          const currentLevel = item.level;
-          const itemTypes = this.inferDeclaredItem(item, compilationUnit);
-          if (currentLevel === null) {
-            for (const [element, type] of itemTypes.entries()) {
-              topLevelMembers.set(getNameToken(element)!.image, type);
-            }
-          } else if (structureParents.length > 0) {
-            let lastParent: TypeDescriptions.Structure | null =
-              structureParents[structureParents.length - 1][1];
-            while (
-              lastParent &&
-              lastParent.level > currentLevel &&
-              structureParents.length > 0
-            ) {
-              structureParents.pop();
-              lastParent =
-                structureParents.length > 0
-                  ? structureParents[structureParents.length - 1][1]
-                  : null;
-            }
-            if (lastParent && currentLevel > lastParent.level) {
-              for (const [element, type] of itemTypes.entries()) {
-                lastParent.members[getNameToken(element)!.image] = type;
-              }
-            }
-          } else {
-            if (itemTypes.size === 1) {
-              const [element, type] = [...itemTypes.entries()][0];
-              const name = getNameToken(element)!.image;
-              if (TypeDescriptions.isStructure(type)) {
-                structureParents.push([name, type]);
-              } else {
-                //TODO error?
-              }
-            }
-          }
-        }
+        this.inferDeclareStatement(node, compilationUnit);
         return TypeDescriptions.Unknown();
       } else if (
         node.kind === ast.SyntaxKind.DeclaredVariable &&
@@ -104,12 +65,70 @@ export class DefaultTypeInferer implements TypeInferer {
     });
   }
 
-  private getTypeOfElement(
+  private inferDeclareStatement(node: ast.DeclareStatement, compilationUnit: CompilationUnit) {
+    const builder = new DefaultCompositeTypeBuilder();
+    const items = builder.flattenDeclareStatement(node);
+    const topLevelMembers = new Map<string, TypeDescriptions.Any>();
+    const structureParents: TypeDescriptions.Structure[] = [];
+    let previousLevel: number | undefined = undefined;
+    for (const item of items) {
+      if (builder.isCompositeDeclaredItem(item)) {
+        const structureType = builder.handleCompositeDeclaredItem(item, compilationUnit);
+        compilationUnit.services.typeCache.set(item.node, structureType);
+        if(previousLevel === undefined) {
+          topLevelMembers.set(item.name, structureType);
+          structureParents.push(structureType);
+        } else {
+          while(previousLevel && structureType.level < previousLevel) {
+            structureParents.pop();
+            previousLevel = structureParents.length > 0 ? structureParents[structureParents.length - 1].level : undefined;
+          }
+          if(previousLevel && structureType.level > previousLevel) {
+            const parent = structureParents[structureParents.length -1];
+            parent.members[item.name] = structureType;
+            structureParents.push(structureType);
+          } else {
+            if(structureParents.length > 0) {
+              structureParents.pop();
+            }
+            structureParents.push(structureType);
+          }
+        }
+        previousLevel = structureType.level;
+      } else {
+        const primitiveType = builder.handlePrimitiveDeclaredItem(item, compilationUnit);
+        compilationUnit.services.typeCache.set(item.node, primitiveType);
+        if (item.level === undefined) {
+          topLevelMembers.set(item.name, primitiveType);
+        } else {
+          while(previousLevel && item.level < previousLevel) {
+            structureParents.pop();
+            previousLevel = structureParents.length > 0 ? structureParents[structureParents.length - 1].level : undefined;
+          }
+          if(previousLevel && item.level > previousLevel) {
+            const parent = structureParents[structureParents.length -1];
+            parent.members[item.name] = primitiveType;
+          } else {
+            if(structureParents.length > 0) {
+              const parent = structureParents[structureParents.length -1];
+              parent.members[item.name] = primitiveType;
+            } else {
+              topLevelMembers.set(item.name, primitiveType);
+            }
+          }
+        }
+        previousLevel = item.level;
+      }
+    }
+    return topLevelMembers;
+  }
+
+  private inferElement(
     elementName: Token,
     parent: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any | undefined {
-    const typeBuilder = new DefaultTypeBuilder(elementName);
+    const typeBuilder = new DefaultPrimitiveTypeBuilder(elementName);
     while (
       parent.attributes.length === 0 &&
       parent.container?.kind === ast.SyntaxKind.DeclaredItem
@@ -138,7 +157,7 @@ export class DefaultTypeInferer implements TypeInferer {
   ): Map<ast.SyntaxNode, TypeDescriptions.Any> {
     if (element.kind === ast.SyntaxKind.DeclaredVariable) {
       if (element.nameToken) {
-        const type = this.getTypeOfElement(
+        const type = this.inferElement(
           element.nameToken,
           parent,
           compilationUnit,
@@ -147,7 +166,7 @@ export class DefaultTypeInferer implements TypeInferer {
       }
     } else if (element.kind === ast.SyntaxKind.WildcardItem) {
       if (element.token) {
-        const type = this.getTypeOfElement(
+        const type = this.inferElement(
           element.token,
           parent,
           compilationUnit,

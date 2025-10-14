@@ -1180,12 +1180,7 @@ export namespace TypeDescriptions {
     [AttributeKind.StringLength]: 0,
   };
 
-  export function create(
-    type: DataType,
-    attributes: AttributeWitnesses,
-    level: number = 1,
-    ...members: [string, Any][]
-  ): Any {
+  export function createPrimitive(type: Exclude<DataType, DataType.Structure>, attributes: AttributeWitnesses): Any {
     const common = {
       alignment:
         attributes[AttributeKind.Alignment]?.value ??
@@ -1302,11 +1297,6 @@ export namespace TypeDescriptions {
         return TypeDescriptions.Task(common);
       case DataType.Unknown:
         return TypeDescriptions.Unknown();
-      case DataType.Structure:
-        return TypeDescriptions.Structure({
-          level,
-          members: Object.fromEntries(members),
-        });
       default:
         assertUnreachable(type);
     }

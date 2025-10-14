@@ -637,11 +637,11 @@ export class TestBuilder {
   private filterByErrorCodes(diagnostics: Diagnostic[], errorCodes: PLICode[]) {
     return errorCodes.length > 0
       ? diagnostics.filter((diagnostic) => {
-          return (
-            diagnostic.code !== undefined &&
-            errorCodes.map(({ fullCode }) => fullCode).includes(diagnostic.code)
-          );
-        })
+        return (
+          diagnostic.code !== undefined &&
+          errorCodes.map(({ fullCode }) => fullCode).includes(diagnostic.code)
+        );
+      })
       : diagnostics;
   }
 
@@ -684,9 +684,8 @@ export class TestBuilder {
   }
 
   expectToThrow(fn: () => void, messageToThrow?: string) {
-    const message = `Expected function to throw an error ${
-      messageToThrow ? `with message "${messageToThrow}"` : ""
-    }, but it did not`;
+    const message = `Expected function to throw an error ${messageToThrow ? `with message "${messageToThrow}"` : ""
+      }, but it did not`;
     try {
       fn();
       fail(message);
@@ -948,30 +947,34 @@ export class TestBuilder {
         );
       }
       const actualType = this.unit.services.inferer.inferType(node, this.unit);
-      if (expectedType.type === DataType.Structure) {
-        if (actualType.type !== DataType.Structure) {
-          throw new Error(
-            `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]} at position ${this.createPositionMessage(start)}, but got ${TypeDescriptions.Names[actualType.type]}`,
-          );
-        }
-        for (const [name, expectedMemberType] of Object.entries(
-          expectedType.members ?? {},
-        )) {
-          const actualMemberType = actualType.members[name];
-          if (!actualMemberType) {
-            throw new Error(
-              `Expected member "${name}" to be present at position ${this.createPositionMessage(start)}, but got undefined`,
-            );
-          }
-          this.expectType(expectedMemberType, actualMemberType);
-        }
-      } else {
-        this.expectType(expectedType, actualType);
-      }
+      this.expectTypeWithStructure(expectedType, actualType);
     }
   }
 
-  private expectType(
+  private expectTypeWithStructure(expectedType: TypeExpectation, actualType: TypeDescriptions.Any) {
+    if (expectedType.type === DataType.Structure) {
+      if (actualType.type !== DataType.Structure) {
+        throw new Error(
+          `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got ${TypeDescriptions.Names[actualType.type]}`,
+        );
+      }
+      for (const [name, expectedMemberType] of Object.entries(
+        expectedType.members ?? {},
+      )) {
+        const actualMemberType = actualType.members[name];
+        if (!actualMemberType) {
+          throw new Error(
+            `Expected member "${name}" to be present, but got undefined`,
+          );
+        }
+        this.expectTypeWithStructure(expectedMemberType, actualMemberType);
+      }
+    } else {
+      this.expectTypeNoStructure(expectedType, actualType);
+    }
+  }
+
+  private expectTypeNoStructure(
     expectedType: TypeExpectation,
     actualType: TypeDescriptions.Any,
   ) {
