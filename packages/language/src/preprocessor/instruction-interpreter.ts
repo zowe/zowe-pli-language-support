@@ -244,8 +244,8 @@ export interface EvaluationResults {
 
 interface InterpreterContext {
   unit: CompilationUnit;
-  currentUri?: URI;
-  entryUri?: URI;
+  currentUri: URI;
+  entryUri: URI;
   /**
    * These are global variables that are defined on the root level of the preprocessor
    */
