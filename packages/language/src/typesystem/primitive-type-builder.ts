@@ -407,6 +407,12 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           );
         }
         this.addAttributeWitness(
+          AttributeKind.Scale,
+          ScaleMode.Float,
+          attribute,
+          token,
+        );
+        this.addAttributeWitness(
           AttributeKind.DataType,
           DataType.Arithmetic,
           attribute,
@@ -564,18 +570,23 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
             attribute,
             token,
           );
-          if (precision.length > 1) {
-            this.addAttributeWitness(
-              AttributeKind.Scale,
-              ScaleMode.Fixed,
-              attribute,
-              token,
-            );
+          if (precision.length > 0) {
+            const witness = this.attributeWitnesses[AttributeKind.Scale];
+            const scaleMode =
+              precision.length > 1 ? ScaleMode.Fixed : ScaleMode.Float;
+            if (!witness || scaleMode !== witness.value) {
+              this.addAttributeWitness(
+                AttributeKind.Scale,
+                scaleMode,
+                attribute,
+                token,
+              );
+            }
             this.addAttributeWitness(
               AttributeKind.Precision,
               Precisions.create(
                 precision[0],
-                precision.length > 1 ? precision[1] : 0,
+                precision.length > 1 ? precision[1] : undefined,
               ),
               attribute,
               token,
@@ -737,7 +748,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   private addAttributeWitness<K extends keyof AttributeTypes>(
     kind: K,
     value: AttributeTypes[K],
-    witness: ast.DeclarationAttribute,
+    attribute: ast.DeclarationAttribute,
     token: Token,
   ) {
     if (this.attributeWitnesses[kind]) {
@@ -771,8 +782,8 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       }
     } else {
       this.attributeWitnesses[kind] = {
-        value,
-        witness,
+        value: value as AttributeTypes[K],
+        witness: attribute,
         image: token.image,
         token,
       } as AttributeWitnesses[K];

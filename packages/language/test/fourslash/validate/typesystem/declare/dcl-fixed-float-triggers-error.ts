@@ -12,13 +12,13 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// DCL <|1:ANYTHING|> <|2:FIXED|> FLOAT;
+//// DCL <|1:ANYTHING|> FIXED <|2:FLOAT|>;
 
-verify.expectDiagnosticsAt(2, {
-  code: code.Error.IBM2424I.fullCode,
-});
 types.expectTypeAt(1, {
   type: types.dataTypes.Arithmetic,
   scale: types.scales.Fixed,
   precision: types.precision.create(5, 0),
+});
+verify.expectDiagnosticsAt(2, {
+  code: code.Error.IBM1309I.fullCode,
 });

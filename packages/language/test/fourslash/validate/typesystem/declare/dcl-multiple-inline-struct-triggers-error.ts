@@ -11,15 +11,20 @@
 
 /// <reference path="../../../framework.ts" />
 
+// Attention! Only the last item in line can have the structure definition!
+
 // @wrap: main
 //// declare 01 (<|a:a|>,<|b:b|>,<|c:c|>),
 ////            02 x FIXED,
 ////            02 y CHAR(10);
+
 types.expectTypeAt("a", {
-  type: types.dataTypes.Unknown,
+  type: types.dataTypes.Structure,
+  members: {},
 });
 types.expectTypeAt("b", {
-  type: types.dataTypes.Unknown,
+  type: types.dataTypes.Structure,
+  members: {},
 });
 types.expectTypeAt("c", {
   type: types.dataTypes.Structure,

@@ -100,6 +100,12 @@ export class DefaultTypeInferer implements TypeInferer {
             if (structureParents.length > 0) {
               structureParents.pop();
             }
+            if (structureParents.length > 0) {
+              const parent = structureParents[structureParents.length - 1];
+              parent.members[item.name] = structureType;
+            } else {
+              topLevelMembers.set(item.name, structureType);
+            }
             structureParents.push(structureType);
           }
         }
@@ -132,7 +138,6 @@ export class DefaultTypeInferer implements TypeInferer {
             }
           }
         }
-        previousLevel = item.level;
       }
     }
     return topLevelMembers;

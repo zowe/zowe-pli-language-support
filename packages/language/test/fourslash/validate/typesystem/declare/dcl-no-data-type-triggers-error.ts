@@ -14,11 +14,9 @@
 // @wrap: main
 //// DCL <|1:ANYTHING|> NORMAL;
 
-verify.noDiagnostics(undefined, ...code.TypeSystem);
-//TODO should be an error, but is currently mapped to unknown data type, which swallows the case
-// verify.expectDiagnosticsAt(1, {
-//  code: code.Error.IBM1482I.fullCode,
-//});
+verify.expectDiagnosticsAt(1, {
+  code: code.Error.IBM1482I.fullCode,
+});
 types.expectTypeAt(1, {
   type: types.dataTypes.Unknown,
 });

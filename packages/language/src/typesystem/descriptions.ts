@@ -131,6 +131,7 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.OrdinalNames,
   AttributeKind.PictureKind,
   AttributeKind.Position,
+  AttributeKind.Precision,
   AttributeKind.Scale,
   AttributeKind.Scope,
   AttributeKind.Sign,

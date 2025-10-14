@@ -15,6 +15,7 @@
 //// DCL <|1:ANYTHING|> FLOAT <|2:PRECISION|>(10, 5);
 
 verify.expectDiagnosticsAt(2, {
+  //code: code.Error.IBM2462I.fullCode,
   code: code.Error.IBM2424I.fullCode,
 });
 types.expectTypeAt(1, {
