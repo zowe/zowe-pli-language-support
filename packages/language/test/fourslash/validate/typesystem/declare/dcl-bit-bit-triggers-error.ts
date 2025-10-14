@@ -14,9 +14,7 @@
 // @wrap: main
 //// DCL <|1:ANYTHING|> BIT(10) <|2:BIT|>(11);
 
-verify.expectDiagnosticsAt(2, {
-  code: code.Error.IBM1309I.fullCode,
-});
+verify.expectDiagnosticsAt(2, code.Error.IBM1309I);
 types.expectTypeAt(1, {
   type: types.dataTypes.String,
   length: 10,

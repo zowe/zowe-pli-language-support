@@ -14,9 +14,7 @@
 // @wrap: main
 //// DCL <|1:ANYTHING|> CHAR(10) <|2:BIT|>(10);
 
-verify.expectDiagnosticsAt(2, {
-  code: code.Error.IBM2462I.fullCode,
-});
+verify.expectDiagnosticsAt(2, code.Error.IBM2462I);
 types.expectTypeAt(1, {
   type: types.dataTypes.String,
   kind: types.stringKinds.Character,

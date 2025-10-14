@@ -10,7 +10,7 @@
  */
 
 import { describe, expect, test } from "vitest";
-import { Severity } from "../src/language-server/types";
+import { fullCode, Severity } from "../src/language-server/types";
 import * as PLICodes from "../src/validation/pli-codes";
 import { collectDiagnostics } from "../src/workspace/compilation-unit";
 import { assertDiagnostic, assertNoDiagnostics, parse } from "./utils";
@@ -46,7 +46,7 @@ describe("Validating", () => {
   test.skip("check empty program", async () => {
     const doc = await parseWithValidations(`;`);
     assertDiagnostic(doc, {
-      code: PLICodes.Severe.IBM1917I.fullCode,
+      code: fullCode(PLICodes.Severe.IBM1917I),
       severity: Severity.S,
     });
   });
@@ -61,7 +61,7 @@ describe("Validating", () => {
         END H;
             `);
     assertDiagnostic(doc, {
-      code: PLICodes.Error.IBM2462I.fullCode,
+      code: fullCode(PLICodes.Error.IBM2462I),
       severity: Severity.E,
     });
   });
@@ -87,11 +87,11 @@ describe("Validating", () => {
     expect(diagnostics[0].severity).toBe(Severity.E);
 
     // verify the 2nd diagnostic is an error w/ the IBM3332I as the code
-    expect(diagnostics[1].code).toBe(PLICodes.Warning.IBM3332I.fullCode);
+    expect(diagnostics[1].code).toBe(fullCode(PLICodes.Warning.IBM3332I));
     expect(diagnostics[1].severity).toBe(Severity.W);
 
     // verify the 3rd diagnostic is an error w/ the IBM1316IE as the code
-    expect(diagnostics[2].code).toBe(PLICodes.Error.IBM1316I.fullCode);
+    expect(diagnostics[2].code).toBe(fullCode(PLICodes.Error.IBM1316I));
     expect(diagnostics[2].severity).toBe(Severity.E);
   });
 
@@ -177,7 +177,7 @@ describe("Validating", () => {
              `,
       );
       assertDiagnostic(doc, {
-        code: PLICodes.Severe.IBM1695I.fullCode,
+        code: fullCode(PLICodes.Severe.IBM1695I),
         severity: Severity.S,
       });
       // expect(doc.diagnostics?.length).toBe(1);
@@ -195,12 +195,12 @@ describe("Validating", () => {
                 `,
       );
       assertDiagnostic(doc, {
-        code: PLICodes.Severe.IBM1695I.fullCode,
+        code: fullCode(PLICodes.Severe.IBM1695I),
         severity: Severity.S,
       });
       assertDiagnostic(doc, {
         // since we have parens
-        code: PLICodes.Error.IBM1231I.fullCode,
+        code: fullCode(PLICodes.Error.IBM1231I),
         severity: Severity.E,
       });
       const diagnostics = collectDiagnostics(doc);
@@ -263,9 +263,9 @@ describe("Validating", () => {
        2 (3 E, (<|c:4|> F));`,
         )
       )
-        .expectExclusiveErrorCodesAt("a", PLICodes.Error.IBM1376I.fullCode)
-        .expectExclusiveErrorCodesAt("b", PLICodes.Error.IBM1376I.fullCode)
-        .expectExclusiveErrorCodesAt("c", PLICodes.Error.IBM1376I.fullCode));
+        .expectExclusiveErrorCodesAt("a", fullCode(PLICodes.Error.IBM1376I))
+        .expectExclusiveErrorCodesAt("b", fullCode(PLICodes.Error.IBM1376I))
+        .expectExclusiveErrorCodesAt("c", fullCode(PLICodes.Error.IBM1376I)));
   });
 
   describe("*PROCESS Validations", () => {

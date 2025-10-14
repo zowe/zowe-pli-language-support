@@ -34,11 +34,6 @@ export interface SimplePLICode {
   severity: Severity;
 
   /**
-   * Full code w/ severity, ex. 'IBM1018II'
-   */
-  fullCode: string;
-
-  /**
    * Human readable message for the code
    */
   message: string;
@@ -59,14 +54,19 @@ export interface ParametricPLICode {
   severity: Severity;
 
   /**
-   * Full code w/ severity, ex. 'IBM1018I I'
-   */
-  fullCode: string;
-
-  /**
    * Message for the code, with placeholders for parameters
    */
   message: (...args: any[]) => string;
+}
+
+export function isPLICode(code: any): code is PLICode {
+  return (
+    typeof code === "object" &&
+    code !== null &&
+    "code" in code &&
+    "severity" in code &&
+    "message" in code
+  );
 }
 
 export const Info = {
@@ -79,7 +79,6 @@ export const Info = {
     severity: Severity.I,
     message: (optionname: string) =>
       `${optionname} should be specified within OPTIONS, but is accepted as is.`,
-    fullCode: "IBM1018II",
   },
 
   /**
@@ -91,7 +90,6 @@ export const Info = {
     code: "IBM1035I",
     severity: Severity.I,
     message: "The next statement was merged with this statement.",
-    fullCode: "IBM1035II",
   },
 
   /**
@@ -104,7 +102,6 @@ export const Info = {
     severity: Severity.I,
     message: (statementcount: string) =>
       `The next ${statementcount} statements were merged with this statement.`,
-    fullCode: "IBM1036II",
   },
 
   /**
@@ -115,7 +112,6 @@ export const Info = {
     code: "IBM1038I",
     severity: Severity.I,
     message: (note: string) => `${note}`,
-    fullCode: "IBM1038II",
   },
 
   /**
@@ -128,7 +124,6 @@ export const Info = {
     severity: Severity.I,
     message: (variablename: string) =>
       `Variable ${variablename} is implicitly declared.`,
-    fullCode: "IBM1039II",
   },
 
   /**
@@ -139,7 +134,6 @@ export const Info = {
     code: "IBM1040I",
     severity: Severity.I,
     message: (note: string) => `${note}`,
-    fullCode: "IBM1040II",
   },
 
   /**
@@ -151,7 +145,6 @@ export const Info = {
     code: "IBM1041I",
     severity: Severity.I,
     message: (linecount: string) => `Comment spans ${linecount} lines.`,
-    fullCode: "IBM1041II",
   },
 
   /**
@@ -163,7 +156,6 @@ export const Info = {
     code: "IBM1042I",
     severity: Severity.I,
     message: (linecount: string) => `String spans ${linecount} lines.`,
-    fullCode: "IBM1042II",
   },
 
   /**
@@ -177,7 +169,6 @@ export const Info = {
     severity: Severity.I,
     message: (variablename: string, attribute: string) =>
       `${variablename} is contextually declared as ${attribute} .`,
-    fullCode: "IBM1043II",
   },
 
   /**
@@ -188,7 +179,6 @@ export const Info = {
     code: "IBM1044I",
     severity: Severity.I,
     message: "FIXED BINARY with precision 7 or less is mapped to 1 byte.",
-    fullCode: "IBM1044II",
   },
 
   /**
@@ -200,7 +190,6 @@ export const Info = {
     code: "IBM1046I",
     severity: Severity.I,
     message: "UNSPEC applied to an array is handled as a scalar reference.",
-    fullCode: "IBM1046II",
   },
 
   /**
@@ -213,7 +202,6 @@ export const Info = {
     code: "IBM1047I",
     severity: Severity.I,
     message: "ORDER option may inhibit optimization.",
-    fullCode: "IBM1047II",
   },
 
   /**
@@ -226,7 +214,6 @@ export const Info = {
     code: "IBM1048I",
     severity: Severity.I,
     message: "GET/PUT DATA without a data-list inhibits optimization.",
-    fullCode: "IBM1048II",
   },
 
   /**
@@ -239,7 +226,6 @@ export const Info = {
     code: "IBM1050I",
     severity: Severity.I,
     message: "INITIAL attribute for RESERVED STATIC is ignored.",
-    fullCode: "IBM1050II",
   },
 
   /**
@@ -253,7 +239,6 @@ export const Info = {
     severity: Severity.I,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built-in function may not be byte aligned.`,
-    fullCode: "IBM1051II",
   },
 
   /**
@@ -272,7 +257,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "The NODESCRIPTOR attribute is accepted even though some arguments have * extents.",
-    fullCode: "IBM1052II",
   },
 
   /**
@@ -285,7 +269,6 @@ export const Info = {
     code: "IBM1053I",
     severity: Severity.I,
     message: "Scaled FIXED operation evaluated as FIXED DECIMAL.",
-    fullCode: "IBM1053II",
   },
 
   /**
@@ -298,7 +281,6 @@ export const Info = {
     severity: Severity.I,
     message: (sourcetype: string, targettype: string) =>
       `Conversion from ${sourcetype} to ${targettype} will be done by library call.`,
-    fullCode: "IBM1058II",
   },
 
   /**
@@ -309,7 +291,6 @@ export const Info = {
     code: "IBM1059I",
     severity: Severity.I,
     message: "SELECT statement contains no OTHERWISE clause.",
-    fullCode: "IBM1059II",
   },
 
   /**
@@ -336,7 +317,6 @@ export const Info = {
     severity: Severity.I,
     message: (identifier: string) =>
       `Name resolution for ${identifier} selected its declaration in a structure, rather than its non- member declaration in a parent block.`,
-    fullCode: "IBM1060II",
   },
 
   /**
@@ -350,7 +330,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "Probable DATE calculation should be examined for validity after the year 1999.",
-    fullCode: "IBM1061II",
   },
 
   /**
@@ -363,7 +342,6 @@ export const Info = {
     severity: Severity.I,
     message: (variable: string) =>
       `${variable} inferred to contain a two- digit year.`,
-    fullCode: "IBM1062II",
   },
 
   /**
@@ -375,7 +353,6 @@ export const Info = {
     code: "IBM1064I",
     severity: Severity.I,
     message: "Use of OPT(2) forces TEST(BLOCK).",
-    fullCode: "IBM1064II",
   },
 
   /**
@@ -390,7 +367,6 @@ export const Info = {
     severity: Severity.I,
     message: (constant: string) =>
       `FLOAT constant ${constant} would be more precise if specified as a long FLOAT.`,
-    fullCode: "IBM1065II",
   },
 
   /**
@@ -408,7 +384,6 @@ export const Info = {
     code: "IBM1067I",
     severity: Severity.I,
     message: "UNTIL clause ignored.",
-    fullCode: "IBM1067II",
   },
 
   /**
@@ -426,7 +401,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "PROCEDURE has no RETURNS attribute, but contains a RETURN statement. A RETURNS attribute will be assumed.",
-    fullCode: "IBM1068II",
   },
 
   /**
@@ -444,7 +418,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "The AUTOMATIC variables in a block should not be used in the prologue of that block.",
-    fullCode: "IBM1069II",
   },
 
   /**
@@ -458,7 +431,6 @@ export const Info = {
     severity: Severity.I,
     message: (procname: string) =>
       `The PROCEDURE ${procname} is not referenced.`,
-    fullCode: "IBM2800II",
   },
 
   /**
@@ -479,7 +451,6 @@ export const Info = {
       resultscale: string,
     ) =>
       `FIXED DEC( ${sourceprecision} , ${sourcescale} ) operand will be converted to FIXED BIN( ${targetprecision} , ${targetscale} ). This introduces a non-zero scale factor into an integer operation and will produce a result with the attributes FIXED BIN( ${resultprecision} , ${resultscale} ).`,
-    fullCode: "IBM2801II",
   },
 
   /**
@@ -494,7 +465,6 @@ export const Info = {
     code: "IBM2802I",
     severity: Severity.I,
     message: "Aggregate mapping will be done by library call.",
-    fullCode: "IBM2802II",
   },
 
   /**
@@ -506,7 +476,6 @@ export const Info = {
     code: "IBM2803I",
     severity: Severity.I,
     message: (keyword: string) => `${keyword} STRING EDIT statement optimized.`,
-    fullCode: "IBM2803II",
   },
 
   /**
@@ -519,7 +488,6 @@ export const Info = {
     severity: Severity.I,
     message: (variablename: string, sourcetype: string, targettype: string) =>
       `For assignment to ${variablename} , conversion from ${sourcetype} to ${targettype} will be done by library call.`,
-    fullCode: "IBM2805II",
   },
 
   /**
@@ -532,7 +500,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "Passing a LABEL to another routine is poor coding practice and will cause the compiler to generate less than optimal code.",
-    fullCode: "IBM2806II",
   },
 
   /**
@@ -554,7 +521,6 @@ export const Info = {
       targetscale: string,
     ) =>
       `FIXED DEC( ${sourceprecision} , ${sourcescale} ) operand will be converted to FIXED BIN( ${targetprecision} , ${targetscale} ). This introduces 8-byte integer arithmetic into an operation that might be faster if computed in decimal.`,
-    fullCode: "IBM2809II",
   },
 
   /**
@@ -572,7 +538,6 @@ export const Info = {
       targetscale: string,
     ) =>
       `Conversion of FIXED BIN( ${sourceprecision} , ${sourcescale} ) to FIXED DEC( ${targetprecision} , ${targetscale} ) may produce a more accurate result than under the old compiler.`,
-    fullCode: "IBM2810II",
   },
 
   /**
@@ -585,7 +550,6 @@ export const Info = {
     severity: Severity.I,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function would lead to much better code if declared with the VALUE attribute.`,
-    fullCode: "IBM2812II",
   },
 
   /**
@@ -600,7 +564,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "Aggregate mapping for storage allocation will be done by library call.",
-    fullCode: "IBM2814II",
   },
 
   /**
@@ -615,7 +578,6 @@ export const Info = {
     severity: Severity.I,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is not recommended to be passed BYVALUE.`,
-    fullCode: "IBM2815II",
   },
 
   /**
@@ -630,7 +592,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "BYVALUE parameters should ideally be ones that can reasonably be passed in registers.",
-    fullCode: "IBM2816II",
   },
 
   /**
@@ -645,7 +606,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "BYVALUE in RETURNS is recommended only for types that can reasonably be returned in registers.",
-    fullCode: "IBM2817II",
   },
 
   /**
@@ -664,7 +624,6 @@ export const Info = {
       scalefactor2: string,
     ) =>
       `Addition or subtraction of FIXED DEC( ${precision} , ${scalefactor} ) and FIXED DEC( ${precision2} , ${scalefactor2} ) may raise FIXEDOVERFLOW.`,
-    fullCode: "IBM2818II",
   },
 
   /**
@@ -683,7 +642,6 @@ export const Info = {
       scalefactor2: string,
     ) =>
       `Multiplication of FIXED DEC( ${precision} , ${scalefactor} ) and FIXED DEC( ${precision2} , ${scalefactor2} ) may raise FIXEDOVERFLOW.`,
-    fullCode: "IBM2819II",
   },
 
   /**
@@ -697,7 +655,6 @@ export const Info = {
     severity: Severity.I,
     message: (optionname: string) =>
       `The ${optionname} option is not supported on this platform.`,
-    fullCode: "IBM2820II",
   },
 
   /**
@@ -710,7 +667,6 @@ export const Info = {
     severity: Severity.I,
     message: (sourcetype: string, targettype: string) =>
       `Conversion from ${sourcetype} to ${targettype} will be done by library call.`,
-    fullCode: "IBM2825II",
   },
 
   /**
@@ -723,7 +679,6 @@ export const Info = {
     severity: Severity.I,
     message: (variablename: string, sourcetype: string, targettype: string) =>
       `For assignment to ${variablename} , conversion from ${sourcetype} to ${targettype} will be done by library call.`,
-    fullCode: "IBM2826II",
   },
 
   /**
@@ -739,7 +694,6 @@ export const Info = {
     severity: Severity.I,
     message: (sourcetype: string, targettype: string) =>
       `Conversion from ${sourcetype} to ${targettype} can produce an inexact or incorrect result.`,
-    fullCode: "IBM2827II",
   },
 
   /**
@@ -770,7 +724,6 @@ export const Info = {
     severity: Severity.I,
     message: (typename: string) =>
       `VALUE(: ${typename} :) will return an instance of the structure type that is only partially initialized.`,
-    fullCode: "IBM2830II",
   },
 
   /**
@@ -782,7 +735,6 @@ export const Info = {
     code: "IBM2831I",
     severity: Severity.I,
     message: "ASSERT statement may never be executed.",
-    fullCode: "IBM2831II",
   },
 
   /**
@@ -794,7 +746,6 @@ export const Info = {
     severity: Severity.I,
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} and all other PROCEDUREs since the TEST option is on.`,
-    fullCode: "IBM2832II",
   },
 
   /**
@@ -806,7 +757,6 @@ export const Info = {
     severity: Severity.I,
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it contains ENTRY statements.`,
-    fullCode: "IBM2833II",
   },
 
   /**
@@ -819,7 +769,6 @@ export const Info = {
     severity: Severity.I,
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it contains nested PROCEDUREs and/or BEGIN blocks.`,
-    fullCode: "IBM2834II",
   },
 
   /**
@@ -832,7 +781,6 @@ export const Info = {
     severity: Severity.I,
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it has OPTIONS(NODESCRIPTOR), but has some parameters with nonconstant extents.`,
-    fullCode: "IBM2835II",
   },
 
   /**
@@ -845,7 +793,6 @@ export const Info = {
     severity: Severity.I,
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it contains labels that may be targets of out-of-block GOTOs.`,
-    fullCode: "IBM2836II",
   },
 
   /**
@@ -858,7 +805,6 @@ export const Info = {
     severity: Severity.I,
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it contains some DATA-directed I/O statements.`,
-    fullCode: "IBM2837II",
   },
 
   /**
@@ -871,7 +817,6 @@ export const Info = {
     severity: Severity.I,
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it has non-default condition enablement.`,
-    fullCode: "IBM2838II",
   },
 
   /**
@@ -883,7 +828,6 @@ export const Info = {
     severity: Severity.I,
     message: (procedurename: string) =>
       `INLINE directive will be ignored for ${procedurename} since it contains ON-units.`,
-    fullCode: "IBM2839II",
   },
 
   /**
@@ -919,7 +863,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "If TRANSLATE is being used to reformat a date-time value, it would be better to use the REPATTERN or DATETIME built-in function instead.",
-    fullCode: "IBM2840II",
   },
 
   /**
@@ -931,7 +874,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "Changing MEMCONVERT(p,n,1200,q,m,1208 ) to MEMCU12(p,n,q,m) would be better for performance.",
-    fullCode: "IBM2841II",
   },
 
   /**
@@ -943,7 +885,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "Changing MEMCONVERT(p,n,1208,q,m,1200 ) to MEMCU21(p,n,q,m) would be better for performance.",
-    fullCode: "IBM2842II",
   },
 
   /**
@@ -956,7 +897,6 @@ export const Info = {
     severity: Severity.I,
     message: (characters: string) =>
       `The characters ${characters} will be accepted as two separate characters. It would be better to separate these characters with a blank.`,
-    fullCode: "IBM2844II",
   },
 
   /**
@@ -969,7 +909,6 @@ export const Info = {
     severity: Severity.I,
     message: (characters: string) =>
       `The characters ${characters} will be accepted as two separate characters. It would be better to separate these characters with a blank.`,
-    fullCode: "IBM2845II",
   },
 
   /**
@@ -982,7 +921,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "It would be better to convert nested PROCEDUREs in a PACKAGE into sister nonnested PROCEDUREs.",
-    fullCode: "IBM2846II",
   },
 
   /**
@@ -1004,7 +942,6 @@ export const Info = {
     severity: Severity.I,
     message: (returnlength: string, returnslength: string) =>
       `Source in RETURN statement has a MAXLENGTH of ${returnlength} which is greater than the length of ${returnslength} in the corresponding RETURNS attribute.`,
-    fullCode: "IBM2847II",
   },
 
   /**
@@ -1024,7 +961,6 @@ export const Info = {
       resultscale: string,
     ) =>
       `ADD of FIXED DEC( ${xprecision} , ${xscale} ) and FIXED DEC( ${yprecision} , ${yscale} ) with a result precision and scale of ( ${resultprecision} , ${resultscale} ) might overflow.`,
-    fullCode: "IBM2848II",
   },
 
   /**
@@ -1041,7 +977,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "CEIL will be evaluated by computing the integral quotient and if the quotient is nonnegative, rounding it up by one if the remainder is non-zero.",
-    fullCode: "IBM2851II",
   },
 
   /**
@@ -1058,7 +993,6 @@ export const Info = {
     severity: Severity.I,
     message:
       "FLOOR will be evaluated by computing the integral quotient and if the quotient is not positive, rounding it down by one if the remainder is non-zero.",
-    fullCode: "IBM2852II",
   },
 
   /**
@@ -1070,7 +1004,6 @@ export const Info = {
     code: "IBM3000I",
     severity: Severity.I,
     message: (note: string) => `${note}`,
-    fullCode: "IBM3000II",
   },
 
   /**
@@ -1083,7 +1016,6 @@ export const Info = {
     code: "IBM3019I",
     severity: Severity.I,
     message: "Program contains no EXEC SQL statements requiring translation.",
-    fullCode: "IBM3019II",
   },
 
   /**
@@ -1095,7 +1027,6 @@ export const Info = {
     code: "IBM3020I",
     severity: Severity.I,
     message: (linecount: string) => `Comment spans ${linecount} lines.`,
-    fullCode: "IBM3020II",
   },
 
   /**
@@ -1107,7 +1038,6 @@ export const Info = {
     code: "IBM3021I",
     severity: Severity.I,
     message: (linecount: string) => `String spans ${linecount} lines.`,
-    fullCode: "IBM3021II",
   },
 
   /**
@@ -1118,7 +1048,6 @@ export const Info = {
     code: "IBM3024I",
     severity: Severity.I,
     message: (note: string) => `${note}`,
-    fullCode: "IBM3024II",
   },
 };
 
@@ -1132,7 +1061,6 @@ export const Warning = {
     code: "IBM1078I",
     severity: Severity.W,
     message: "Statement may never be executed.",
-    fullCode: "IBM1078IW",
   },
 
   /**
@@ -1145,7 +1073,6 @@ export const Warning = {
     severity: Severity.W,
     message: (ENTRYname: string) =>
       `Too few arguments have been specified for the ENTRY ${ENTRYname} .`,
-    fullCode: "IBM1079IW",
   },
 
   /**
@@ -1166,7 +1093,6 @@ export const Warning = {
     severity: Severity.W,
     message: (labelname: string) =>
       `The keyword ${labelname} , which could form a complete statement, is accepted as a label name, but a colon may have been used where a semicolon was meant.`,
-    fullCode: "IBM1080IW",
   },
 
   /**
@@ -1185,7 +1111,6 @@ export const Warning = {
     severity: Severity.W,
     message: (keyword: string) =>
       `${keyword} expression should be scalar. Lower bounds assumed for any missing subscripts.`,
-    fullCode: "IBM1081IW",
   },
 
   /**
@@ -1205,7 +1130,6 @@ export const Warning = {
     severity: Severity.W,
     message: (argumentnumber: string, entryname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${entryname} is a scalar, but its declare specifies a structure.`,
-    fullCode: "IBM1082IW",
   },
 
   /**
@@ -1220,7 +1144,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Source in label assignment is inside a DO-loop, and an illegal jump into the loop may be attempted. Optimization will also be very inhibited.",
-    fullCode: "IBM1083IW",
   },
 
   /**
@@ -1233,7 +1156,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Nonblanks after right margin are not allowed under RULES(NOLAXMARGINS).",
-    fullCode: "IBM1084IW",
   },
 
   /**
@@ -1245,7 +1167,6 @@ export const Warning = {
     code: "IBM1085I",
     severity: Severity.W,
     message: (variable: string) => `${variable} may be unset when used.`,
-    fullCode: "IBM1085IW",
   },
 
   /**
@@ -1259,7 +1180,6 @@ export const Warning = {
     severity: Severity.W,
     message: (builtinfunction: string) =>
       `${builtinfunction} will be evaluated using long rather than extended routines.`,
-    fullCode: "IBM1086IW",
   },
 
   /**
@@ -1273,7 +1193,6 @@ export const Warning = {
     severity: Severity.W,
     message: (assumedvalue: string) =>
       `FLOAT source is too big for its target. An appropriate HUGE value of ${assumedvalue} is assumed.`,
-    fullCode: "IBM1087IW",
   },
 
   /**
@@ -1287,7 +1206,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "FLOAT literal is too big for its implicit precision. The E in the exponent will be replaced by a D.",
-    fullCode: "IBM1088IW",
   },
 
   /**
@@ -1313,7 +1231,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Control variable in DO loop cannot exceed TO value, and loop may be infinite.",
-    fullCode: "IBM1089IW",
   },
 
   /**
@@ -1331,7 +1248,6 @@ export const Warning = {
     code: "IBM1090I",
     severity: Severity.W,
     message: "Constant used as locator qualifier.",
-    fullCode: "IBM1090IW",
   },
 
   /**
@@ -1345,7 +1261,6 @@ export const Warning = {
     code: "IBM1091I",
     severity: Severity.W,
     message: "FIXED BIN precision less than storage allows.",
-    fullCode: "IBM1091IW",
   },
 
   /**
@@ -1358,7 +1273,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "GOTO whose target is or may be in another block severely limits optimization.",
-    fullCode: "IBM1092IW",
   },
 
   /**
@@ -1371,7 +1285,6 @@ export const Warning = {
     severity: Severity.W,
     message: (messagenumber: string) =>
       `PLIXOPT string is invalid. See related runtime message ${messagenumber} .`,
-    fullCode: "IBM1093IW",
   },
 
   /**
@@ -1384,7 +1297,6 @@ export const Warning = {
     severity: Severity.W,
     message: (option: string, messagenumber: string) =>
       `Element ${option} in PLIXOPT is invalid. See related runtime message ${messagenumber} .`,
-    fullCode: "IBM1094IW",
   },
 
   /**
@@ -1397,7 +1309,6 @@ export const Warning = {
     severity: Severity.W,
     message: (option: string, option2: string, messagenumber: string) =>
       `Element ${option} in PLIXOPT has been remapped to ${option2} . See related runtime message ${messagenumber} .`,
-    fullCode: "IBM1095IW",
   },
 
   /**
@@ -1412,7 +1323,6 @@ export const Warning = {
     severity: Severity.W,
     message: (messagenumber: string) =>
       `STAE and SPIE in PLIXOPT is not supported. See related runtime message ${messagenumber} .`,
-    fullCode: "IBM1096IW",
   },
 
   /**
@@ -1430,7 +1340,6 @@ export const Warning = {
     severity: Severity.W,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Scalar accepted as argument number ${argumentnumber} in ENTRY reference ${ENTRYname} although parameter description specifies an array.`,
-    fullCode: "IBM1097IW",
   },
 
   /**
@@ -1446,7 +1355,6 @@ export const Warning = {
     code: "IBM1098I",
     severity: Severity.W,
     message: "Extraneous comma at end of statement ignored.",
-    fullCode: "IBM1098IW",
   },
 
   /**
@@ -1481,7 +1389,6 @@ export const Warning = {
       targetscale: string,
     ) =>
       `FIXED DEC( ${sourceprecision} , ${sourcescale} ) operand will be converted to FIXED BIN( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
-    fullCode: "IBM1099IW",
   },
 
   /**
@@ -1497,7 +1404,6 @@ export const Warning = {
     severity: Severity.W,
     message: (attributeoption: string) =>
       `The attribute ${attributeoption} is not valid on BEGIN blocks and is ignored.`,
-    fullCode: "IBM1100IW",
   },
 
   /**
@@ -1513,7 +1419,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `${optionname} is not a known PROCEDURE attribute and is ignored.`,
-    fullCode: "IBM1101IW",
   },
 
   /**
@@ -1529,7 +1434,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `${optionname} is not a known BEGIN attribute and is ignored.`,
-    fullCode: "IBM1102IW",
   },
 
   /**
@@ -1544,7 +1448,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `${optionname} is not a supported compiler option and is ignored.`,
-    fullCode: "IBM1103IW",
   },
 
   /**
@@ -1559,7 +1462,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `Suboptions of the compiler option ${optionname} are not supported and are ignored.`,
-    fullCode: "IBM1104IW",
   },
 
   /**
@@ -1575,7 +1477,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string, numberofletters: string) =>
       `A suboption of the compiler option ${optionname} is too long. It is shortened to length ${numberofletters} .`,
-    fullCode: "IBM1105IW",
   },
 
   /**
@@ -1591,7 +1492,6 @@ export const Warning = {
     severity: Severity.W,
     message: (keyword: string) =>
       `Condition prefixes on ${keyword} statements are ignored.`,
-    fullCode: "IBM1106IW",
   },
 
   /**
@@ -1607,7 +1507,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `${optionname} is not a known ENTRY statement attribute and is ignored.`,
-    fullCode: "IBM1107IW",
   },
 
   /**
@@ -1624,7 +1523,6 @@ export const Warning = {
     severity: Severity.W,
     message: (char: string, option: string) =>
       `The character ${char} specified in the ${option} option is already defined and may not be redefined. The redefinition will be ignored.`,
-    fullCode: "IBM1108IW",
   },
 
   /**
@@ -1639,7 +1537,6 @@ export const Warning = {
     code: "IBM1109I",
     severity: Severity.W,
     message: "The second argument in the C- format item will be ignored.",
-    fullCode: "IBM1109IW",
   },
 
   /**
@@ -1654,7 +1551,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "The INCLUDE statement should be on a line by itself. The source on the line after the INCLUDE statement is ignored.",
-    fullCode: "IBM1110IW",
   },
 
   /**
@@ -1668,7 +1564,6 @@ export const Warning = {
     code: "IBM1111I",
     severity: Severity.W,
     message: "CHECK prefix is not supported and is ignored.",
-    fullCode: "IBM1111IW",
   },
 
   /**
@@ -1683,7 +1578,6 @@ export const Warning = {
     severity: Severity.W,
     message: (conditionname: string) =>
       `${conditionname} condition is not supported and is ignored.`,
-    fullCode: "IBM1112IW",
   },
 
   /**
@@ -1696,7 +1590,6 @@ export const Warning = {
     severity: Severity.W,
     message: (verbname: string) =>
       `${verbname} statement is not supported and is ignored.`,
-    fullCode: "IBM1113IW",
   },
 
   /**
@@ -1709,7 +1602,6 @@ export const Warning = {
     code: "IBM1114I",
     severity: Severity.W,
     message: "Comparands are both constant.",
-    fullCode: "IBM1114IW",
   },
 
   /**
@@ -1725,7 +1617,6 @@ export const Warning = {
     severity: Severity.W,
     message: (count: string, variablename: string, arraysize: string) =>
       `INITIAL list contains ${count} items, but the array ${variablename} contains only ${arraysize} . Excess is ignored.`,
-    fullCode: "IBM1115IW",
   },
 
   /**
@@ -1737,7 +1628,6 @@ export const Warning = {
     code: "IBM1116I",
     severity: Severity.W,
     message: "Comment spans more than one file.",
-    fullCode: "IBM1116IW",
   },
 
   /**
@@ -1749,7 +1639,6 @@ export const Warning = {
     code: "IBM1117I",
     severity: Severity.W,
     message: "String spans more than one file.",
-    fullCode: "IBM1117IW",
   },
 
   /**
@@ -1765,7 +1654,6 @@ export const Warning = {
     severity: Severity.W,
     message: (nondelimiter: string, nondelimiter2: string) =>
       `Delimiter missing between ${nondelimiter} and ${nondelimiter2} . A blank is assumed.`,
-    fullCode: "IBM1118IW",
   },
 
   /**
@@ -1778,7 +1666,6 @@ export const Warning = {
     severity: Severity.W,
     message: (name: string) =>
       `Code generated for DO group would be more efficient if control variable ${name} were not an aggregate member.`,
-    fullCode: "IBM1119IW",
   },
 
   /**
@@ -1791,7 +1678,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Multiple closure of groups. END statements will be inserted to close intervening groups.",
-    fullCode: "IBM1120IW",
   },
 
   /**
@@ -1804,7 +1690,6 @@ export const Warning = {
     code: "IBM1121I",
     severity: Severity.W,
     message: (character: string) => `Missing ${character} assumed.`,
-    fullCode: "IBM1121IW",
   },
 
   /**
@@ -1820,7 +1705,6 @@ export const Warning = {
     severity: Severity.W,
     message: (character: string, character2: string) =>
       `Missing ${character} assumed before ${character2} .`,
-    fullCode: "IBM1122IW",
   },
 
   /**
@@ -1835,7 +1719,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string, optionname2: string) =>
       `The ENVIRONMENT option ${optionname} has been specified without a suboption. The option ${optionname2} is ignored.`,
-    fullCode: "IBM1123IW",
   },
 
   /**
@@ -1851,7 +1734,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `A suboption has been specified for the ENVIRONMENT option ${optionname} . The suboption will be ignored.`,
-    fullCode: "IBM1124IW",
   },
 
   /**
@@ -1866,7 +1748,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `The ENVIRONMENT option ${optionname} has been specified more than once.`,
-    fullCode: "IBM1125IW",
   },
 
   /**
@@ -1881,7 +1762,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `The ENVIRONMENT option ${optionname} has an invalid suboption. The option will be ignored.`,
-    fullCode: "IBM1126IW",
   },
 
   /**
@@ -1896,7 +1776,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `${optionname} is not a known ENVIRONMENT option. It will be ignored.`,
-    fullCode: "IBM1127IW",
   },
 
   /**
@@ -1911,7 +1790,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `The ENVIRONMENT option ${optionname} conflicts with the LANGLVL compiler option. The option will be ignored.`,
-    fullCode: "IBM1128IW",
   },
 
   /**
@@ -1927,7 +1805,6 @@ export const Warning = {
     severity: Severity.W,
     message: (verbname: string, processorname: string) =>
       `${verbname} ${processorname} statement ignored up to closing semicolon.`,
-    fullCode: "IBM1129IW",
   },
 
   /**
@@ -1944,7 +1821,6 @@ export const Warning = {
     severity: Severity.W,
     message: (identifier: string, identifier2: string) =>
       `The external name ${identifier} is too long. It will be shortened to ${identifier2} .`,
-    fullCode: "IBM1130IW",
   },
 
   /**
@@ -1961,7 +1837,6 @@ export const Warning = {
     severity: Severity.W,
     message: (name: string) =>
       `An EXTERNAL name specification for ${name} has been specified on its PROCEDURE statement and in the EXPORTS clause of the PACKAGE statement. The EXPORTS specification will be used.`,
-    fullCode: "IBM1131IW",
   },
 
   /**
@@ -1978,7 +1853,6 @@ export const Warning = {
     severity: Severity.W,
     message: (name: string) =>
       `An EXTERNAL name specification for ${name} has been specified in its declaration and in the RESERVES clause of the PACKAGE statement. The RESERVES specification will be used.`,
-    fullCode: "IBM1132IW",
   },
 
   /**
@@ -1995,7 +1869,6 @@ export const Warning = {
     severity: Severity.W,
     message: (labelname: string) =>
       `The FORMAT CONSTANT array ${labelname} is not fully initialized.`,
-    fullCode: "IBM1133IW",
   },
 
   /**
@@ -2012,7 +1885,6 @@ export const Warning = {
     severity: Severity.W,
     message: (labelreference: string) =>
       `The LABEL CONSTANT array ${labelreference} is not fully initialized.`,
-    fullCode: "IBM1134IW",
   },
 
   /**
@@ -2029,7 +1901,6 @@ export const Warning = {
     code: "IBM1135I",
     severity: Severity.W,
     message: "Logical operand is constant.",
-    fullCode: "IBM1135IW",
   },
 
   /**
@@ -2043,7 +1914,6 @@ export const Warning = {
     code: "IBM1136I",
     severity: Severity.W,
     message: "Function invoked as a subroutine.",
-    fullCode: "IBM1136IW",
   },
 
   /**
@@ -2059,7 +1929,6 @@ export const Warning = {
     severity: Severity.W,
     message: (attribute: string) =>
       `The attribute ${attribute} is invalid in GENERIC descriptions and will be ignored.`,
-    fullCode: "IBM1137IW",
   },
 
   /**
@@ -2077,7 +1946,6 @@ export const Warning = {
     severity: Severity.W,
     message: (count: string, variablename: string, arraysize: string) =>
       `Number of items in INITIAL list is ${count} for the array ${variablename} which contains ${arraysize} elements.`,
-    fullCode: "IBM1138IW",
   },
 
   /**
@@ -2089,7 +1957,6 @@ export const Warning = {
     code: "IBM1139I",
     severity: Severity.W,
     message: "Syntax of the CONTROL statement is incorrect.",
-    fullCode: "IBM1139IW",
   },
 
   /**
@@ -2102,7 +1969,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Syntax of the LANGLVL option in the OPTION statement is incorrect.",
-    fullCode: "IBM1140IW",
   },
 
   /**
@@ -2114,7 +1980,6 @@ export const Warning = {
     code: "IBM1141I",
     severity: Severity.W,
     message: "Syntax of the NOPRINT statement is incorrect.",
-    fullCode: "IBM1141IW",
   },
 
   /**
@@ -2126,7 +1991,6 @@ export const Warning = {
     code: "IBM1142I",
     severity: Severity.W,
     message: "Syntax of the PAGE statement is incorrect.",
-    fullCode: "IBM1142IW",
   },
 
   /**
@@ -2138,7 +2002,6 @@ export const Warning = {
     code: "IBM1143I",
     severity: Severity.W,
     message: "Syntax of the PRINT statement is incorrect.",
-    fullCode: "IBM1143IW",
   },
 
   /**
@@ -2153,7 +2016,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Number of lines specified with SKIP must be between 0 and 999 inclusive.",
-    fullCode: "IBM1144IW",
   },
 
   /**
@@ -2165,7 +2027,6 @@ export const Warning = {
     code: "IBM1145I",
     severity: Severity.W,
     message: "Syntax of the SKIP statement is incorrect.",
-    fullCode: "IBM1145IW",
   },
 
   /**
@@ -2177,7 +2038,6 @@ export const Warning = {
     code: "IBM1146I",
     severity: Severity.W,
     message: "Syntax of the TEST option in the OPTION statement is incorrect.",
-    fullCode: "IBM1146IW",
   },
 
   /**
@@ -2190,7 +2050,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Syntax of the NOTEST option in the OPTION statement is incorrect.",
-    fullCode: "IBM1147IW",
   },
 
   /**
@@ -2202,7 +2061,6 @@ export const Warning = {
     code: "IBM1148I",
     severity: Severity.W,
     message: "Syntax of the PUSH statement is incorrect.",
-    fullCode: "IBM1148IW",
   },
 
   /**
@@ -2214,7 +2072,6 @@ export const Warning = {
     code: "IBM1149I",
     severity: Severity.W,
     message: "Syntax of the POP statement is incorrect.",
-    fullCode: "IBM1149IW",
   },
 
   /**
@@ -2226,7 +2083,6 @@ export const Warning = {
     code: "IBM1150I",
     severity: Severity.W,
     message: "Syntax of the NOTE statement is incorrect.",
-    fullCode: "IBM1150IW",
   },
 
   /**
@@ -2238,7 +2094,6 @@ export const Warning = {
     severity: Severity.W,
     message: (maximumvalue: string) =>
       `FIXED BINARY precision is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1151IW",
   },
 
   /**
@@ -2250,7 +2105,6 @@ export const Warning = {
     severity: Severity.W,
     message: (maximumvalue: string) =>
       `FIXED DECIMAL precision is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1152IW",
   },
 
   /**
@@ -2262,7 +2116,6 @@ export const Warning = {
     severity: Severity.W,
     message: (maximumvalue: string) =>
       `FLOAT BINARY precision is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1153IW",
   },
 
   /**
@@ -2275,7 +2128,6 @@ export const Warning = {
     severity: Severity.W,
     message: (maximumvalue: string) =>
       `FLOAT DECIMAL precision is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1154IW",
   },
 
   /**
@@ -2295,7 +2147,6 @@ export const Warning = {
     severity: Severity.W,
     message: (aggregatename: string) =>
       `The aggregate ${aggregatename} contains noncomputational values. Those values will be ignored.`,
-    fullCode: "IBM1155IW",
   },
 
   /**
@@ -2307,7 +2158,6 @@ export const Warning = {
     code: "IBM1156I",
     severity: Severity.W,
     message: "Arguments to MAIN PROCEDURE are not all POINTER.",
-    fullCode: "IBM1156IW",
   },
 
   /**
@@ -2318,7 +2168,6 @@ export const Warning = {
     code: "IBM1157I",
     severity: Severity.W,
     message: (note: string) => `${note}`,
-    fullCode: "IBM1157IW",
   },
 
   /**
@@ -2331,7 +2180,6 @@ export const Warning = {
     severity: Severity.W,
     message: (option: string, option2: string) =>
       `A ${option} is missing in the specification of the ${option2} option. One is assumed.`,
-    fullCode: "IBM1158IW",
   },
 
   /**
@@ -2343,7 +2191,6 @@ export const Warning = {
     severity: Severity.W,
     message: (option: string) =>
       `The string ${option} is not recognized as a valid option keyword and is ignored.`,
-    fullCode: "IBM1159IW",
   },
 
   /**
@@ -2354,7 +2201,6 @@ export const Warning = {
     code: "IBM1160I",
     severity: Severity.W,
     message: "The third argument to the MARGINS option is not supported.",
-    fullCode: "IBM1160IW",
   },
 
   /**
@@ -2370,7 +2216,6 @@ export const Warning = {
     severity: Severity.W,
     message: (suboption: string, option: string) =>
       `The suboption ${suboption} is not valid for the ${option} compiler option.`,
-    fullCode: "IBM1161IW",
   },
 
   /**
@@ -2385,7 +2230,6 @@ export const Warning = {
     severity: Severity.W,
     message: (suboption: string) =>
       `A required suboption is missing for the ${suboption} option.`,
-    fullCode: "IBM1162IW",
   },
 
   /**
@@ -2400,7 +2244,6 @@ export const Warning = {
     severity: Severity.W,
     message: (option: string) =>
       `Required sub-fields are missing for the ${option} option. Default values are assumed.`,
-    fullCode: "IBM1163IW",
   },
 
   /**
@@ -2414,7 +2257,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `${optionname} should be specified within OPTIONS, but is accepted as is.`,
-    fullCode: "IBM1164IW",
   },
 
   /**
@@ -2426,7 +2268,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `The OPTIONS option ${optionname} has been specified more than once.`,
-    fullCode: "IBM1165IW",
   },
 
   /**
@@ -2439,7 +2280,6 @@ export const Warning = {
     severity: Severity.W,
     message: (suboptionname: string, optionname: string, optionname2: string) =>
       `${suboptionname} is not a known ${optionname} suboption. The ${optionname2} option will be ignored.`,
-    fullCode: "IBM1166IW",
   },
 
   /**
@@ -2451,7 +2291,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Maximum number of PUSH statements exceeded. The control statement is ignored.",
-    fullCode: "IBM1167IW",
   },
 
   /**
@@ -2463,7 +2302,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "No PUSH statements are in effect. The POP control statement is ignored.",
-    fullCode: "IBM1168IW",
   },
 
   /**
@@ -2478,7 +2316,6 @@ export const Warning = {
     severity: Severity.W,
     message: (builtinname: string) =>
       `No precision was specified for the result of the ${builtinname} built- in function. The precision will be determined from the argument.`,
-    fullCode: "IBM1169IW",
   },
 
   /**
@@ -2493,7 +2330,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionattribute: string) =>
       `The OPTIONS attribute ${optionattribute} is not supported and is ignored.`,
-    fullCode: "IBM1170IW",
   },
 
   /**
@@ -2505,7 +2341,6 @@ export const Warning = {
     code: "IBM1171I",
     severity: Severity.W,
     message: "SELECT statement contains no WHEN or OTHERWISE clauses.",
-    fullCode: "IBM1171IW",
   },
 
   /**
@@ -2520,7 +2355,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `A zero length string has been entered for the ${optionname} option. The option is ignored.`,
-    fullCode: "IBM1172IW",
   },
 
   /**
@@ -2532,7 +2366,6 @@ export const Warning = {
     code: "IBM1173I",
     severity: Severity.W,
     message: "SELECT statement contains no WHEN clauses.",
-    fullCode: "IBM1173IW",
   },
 
   /**
@@ -2545,7 +2378,6 @@ export const Warning = {
     severity: Severity.W,
     message: (fromintoclause: string) =>
       `The reference in the ${fromintoclause} clause may not be byte- aligned.`,
-    fullCode: "IBM1174IW",
   },
 
   /**
@@ -2558,7 +2390,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "FIXED BINARY constant contains too many digits. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM1175IW",
   },
 
   /**
@@ -2571,7 +2402,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "FIXED DECIMAL constant contains too many digits. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM1176IW",
   },
 
   /**
@@ -2584,7 +2414,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Mantissa in FLOAT BINARY constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM1177IW",
   },
 
   /**
@@ -2597,7 +2426,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Mantissa in FLOAT DECIMAL constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM1178IW",
   },
 
   /**
@@ -2611,7 +2439,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "FLOAT literal is too big for its implicit precision. An appropriate HUGE value is assumed.",
-    fullCode: "IBM1179IW",
   },
 
   /**
@@ -2625,7 +2452,6 @@ export const Warning = {
     severity: Severity.W,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} is not byte aligned.`,
-    fullCode: "IBM1180IW",
   },
 
   /**
@@ -2641,7 +2467,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "A WHILE or UNTIL option at the end of a series of DO specifications applies only to the last specification.",
-    fullCode: "IBM1181IW",
   },
 
   /**
@@ -2659,7 +2484,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Invocation of a NONRECURSIVE PROCEDURE from within that PROCEDURE is invalid. RECURSIVE attribute is assumed.",
-    fullCode: "IBM1182IW",
   },
 
   /**
@@ -2675,7 +2499,6 @@ export const Warning = {
     severity: Severity.W,
     message: (conditionname: string) =>
       `${conditionname} condition is disabled. Statement is ignored.`,
-    fullCode: "IBM1183IW",
   },
 
   /**
@@ -2695,7 +2518,6 @@ export const Warning = {
       stringlength2: string,
     ) =>
       `Source with length ${stringlength} in INITIAL clause for ${variablename} has length greater than the length ${stringlength2} of that INITIAL variable.`,
-    fullCode: "IBM1184IW",
   },
 
   /**
@@ -2713,7 +2535,6 @@ export const Warning = {
     severity: Severity.W,
     message: (stringlength: string) =>
       `Source with length ${stringlength} in RETURN statement has length greater than that in the corresponding RETURNS attribute.`,
-    fullCode: "IBM1185IW",
   },
 
   /**
@@ -2730,7 +2551,6 @@ export const Warning = {
     severity: Severity.W,
     message: (stringlength: string, stringlength2: string) =>
       `Source with length ${stringlength} in string assignment has length greater than the length ${stringlength2} of the target.`,
-    fullCode: "IBM1186IW",
   },
 
   /**
@@ -2751,7 +2571,6 @@ export const Warning = {
       stringlength: string,
     ) =>
       `Argument number ${argumentnumber} in ENTRY reference ${entryname} has length ${stringlength} which is greater than that of the corresponding parameter.`,
-    fullCode: "IBM1187IW",
   },
 
   /**
@@ -2763,7 +2582,6 @@ export const Warning = {
     code: "IBM1188I",
     severity: Severity.W,
     message: "Result of concatenating two strings is too long.",
-    fullCode: "IBM1188IW",
   },
 
   /**
@@ -2777,7 +2595,6 @@ export const Warning = {
     severity: Severity.W,
     message: (parametername: string) =>
       `NODESCRIPTOR attribute conflicts with the NONCONNECTED attribute for the parameter ${parametername} . CONNECTED is assumed.`,
-    fullCode: "IBM1189IW",
   },
 
   /**
@@ -2790,7 +2607,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `The OPTIONS option ${optionname} conflicts with the LANGLVL compiler option. The option will be applied.`,
-    fullCode: "IBM1190IW",
   },
 
   /**
@@ -2803,7 +2619,6 @@ export const Warning = {
     code: "IBM1191I",
     severity: Severity.W,
     message: "Result of FIXED BIN divide will not be scaled.",
-    fullCode: "IBM1191IW",
   },
 
   /**
@@ -2817,7 +2632,6 @@ export const Warning = {
     code: "IBM1192I",
     severity: Severity.W,
     message: "WHEN clauses contain duplicate values.",
-    fullCode: "IBM1192IW",
   },
 
   /**
@@ -2830,7 +2644,6 @@ export const Warning = {
     severity: Severity.W,
     message: (statementcount: string, blockname: string) =>
       `${statementcount} statements in block ${blockname} .`,
-    fullCode: "IBM1193IW",
   },
 
   /**
@@ -2842,7 +2655,6 @@ export const Warning = {
     code: "IBM1194I",
     severity: Severity.W,
     message: "More than one argument to MAIN PROCEDURE.",
-    fullCode: "IBM1194IW",
   },
 
   /**
@@ -2854,7 +2666,6 @@ export const Warning = {
     code: "IBM1195I",
     severity: Severity.W,
     message: "Argument to MAIN PROCEDURE is not CHARACTER VARYING.",
-    fullCode: "IBM1195IW",
   },
 
   /**
@@ -2866,7 +2677,6 @@ export const Warning = {
     code: "IBM1196I",
     severity: Severity.W,
     message: "AREA initialized with EMPTY - INITIAL attribute is ignored.",
-    fullCode: "IBM1196IW",
   },
 
   /**
@@ -2880,7 +2690,6 @@ export const Warning = {
     severity: Severity.W,
     message: (filename: string) =>
       `${filename} assumed as file condition reference.`,
-    fullCode: "IBM1197IW",
   },
 
   /**
@@ -2900,7 +2709,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variablename: string) =>
       `A null argument list is assumed for ${variablename} .`,
-    fullCode: "IBM1198IW",
   },
 
   /**
@@ -2915,7 +2723,6 @@ export const Warning = {
     code: "IBM1199I",
     severity: Severity.W,
     message: "Syntax of the LINE directive is incorrect.",
-    fullCode: "IBM1199IW",
   },
 
   /**
@@ -2927,7 +2734,6 @@ export const Warning = {
     code: "IBM1200I",
     severity: Severity.W,
     message: "Use of DATE built-in function may cause problems.",
-    fullCode: "IBM1200IW",
   },
 
   /**
@@ -2943,7 +2749,6 @@ export const Warning = {
     severity: Severity.W,
     message: (suboption: string, option: string) =>
       `${suboption} conflicts with a previously specified suboption for the ${option} compiler option.`,
-    fullCode: "IBM1201IW",
   },
 
   /**
@@ -2954,7 +2759,6 @@ export const Warning = {
     code: "IBM1202I",
     severity: Severity.W,
     message: "Syntax of the OPTION statement is incorrect.",
-    fullCode: "IBM1202IW",
   },
 
   /**
@@ -2965,7 +2769,6 @@ export const Warning = {
     code: "IBM1203I",
     severity: Severity.W,
     message: "Argument to PLITEST is ignored.",
-    fullCode: "IBM1203IW",
   },
 
   /**
@@ -2981,7 +2784,6 @@ export const Warning = {
     code: "IBM1204I",
     severity: Severity.W,
     message: "INTERNAL CONSTANT assumed for initialized STATIC LABEL.",
-    fullCode: "IBM1204IW",
   },
 
   /**
@@ -2999,7 +2801,6 @@ export const Warning = {
     severity: Severity.W,
     message: (option: string) =>
       `Arguments of the ${option} compiler option must be the same length.`,
-    fullCode: "IBM1205IW",
   },
 
   /**
@@ -3011,7 +2812,6 @@ export const Warning = {
     code: "IBM1206I",
     severity: Severity.W,
     message: "BIT operators should be applied only to BIT operands.",
-    fullCode: "IBM1206IW",
   },
 
   /**
@@ -3024,7 +2824,6 @@ export const Warning = {
     code: "IBM1207I",
     severity: Severity.W,
     message: "Operand to LENGTH built-in function should have string type.",
-    fullCode: "IBM1207IW",
   },
 
   /**
@@ -3045,7 +2844,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variablename: string) =>
       `INITIAL list for the array ${variablename} contains only one item.`,
-    fullCode: "IBM1208IW",
   },
 
   /**
@@ -3064,7 +2862,6 @@ export const Warning = {
     severity: Severity.W,
     message: (filename: string) =>
       `INDEXED environment option for file ${filename} will be treated as ORGANIZATION(INDEXED).`,
-    fullCode: "IBM1209IW",
   },
 
   /**
@@ -3077,7 +2874,6 @@ export const Warning = {
     severity: Severity.W,
     message: (keyword: string) =>
       `The field width specified in the ${keyword} -format item may be too small for complete output of the data item.`,
-    fullCode: "IBM1210IW",
   },
 
   /**
@@ -3094,7 +2890,6 @@ export const Warning = {
     severity: Severity.W,
     message: (stringlength: string, stringlength2: string, variable: string) =>
       `Source with length ${stringlength} in string assignment has length greater than the length ${stringlength2} of the target ${variable} .`,
-    fullCode: "IBM1211IW",
   },
 
   /**
@@ -3109,7 +2904,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "The A format item requires an argument when used in GET statement. An L format item is assumed in its place.",
-    fullCode: "IBM1212IW",
   },
 
   /**
@@ -3123,7 +2917,6 @@ export const Warning = {
     severity: Severity.W,
     message: (procname: string) =>
       `The PROCEDURE ${procname} is not referenced.`,
-    fullCode: "IBM1213IW",
   },
 
   /**
@@ -3145,7 +2938,6 @@ export const Warning = {
     severity: Severity.W,
     message: (argumentnumber: string, entryname: string) =>
       `A dummy argument will be created for argument number ${argumentnumber} in ENTRY reference ${entryname} .`,
-    fullCode: "IBM1214IW",
   },
 
   /**
@@ -3161,7 +2953,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variablename: string) =>
       `The variable ${variablename} is declared without any data attributes.`,
-    fullCode: "IBM1215IW",
   },
 
   /**
@@ -3182,7 +2973,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variablename: string) =>
       `The structure member ${variablename} is declared without any data attributes. A level number may be incorrect.`,
-    fullCode: "IBM1216IW",
   },
 
   /**
@@ -3203,7 +2993,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "An unnamed structure member is declared without any data attributes. A level number may be incorrect.",
-    fullCode: "IBM1217IW",
   },
 
   /**
@@ -3220,7 +3009,6 @@ export const Warning = {
     severity: Severity.W,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function should have string type.`,
-    fullCode: "IBM1218IW",
   },
 
   /**
@@ -3243,7 +3031,6 @@ export const Warning = {
     code: "IBM1219I",
     severity: Severity.W,
     message: "LEAVE will exit noniterative DO- group.",
-    fullCode: "IBM1219IW",
   },
 
   /**
@@ -3262,7 +3049,6 @@ export const Warning = {
     code: "IBM1220I",
     severity: Severity.W,
     message: "Result of comparison is always constant.",
-    fullCode: "IBM1220IW",
   },
 
   /**
@@ -3275,7 +3061,6 @@ export const Warning = {
     severity: Severity.W,
     message: (count: string) =>
       `Statement uses ${count} bytes for temporaries.`,
-    fullCode: "IBM1221IW",
   },
 
   /**
@@ -3287,7 +3072,6 @@ export const Warning = {
     code: "IBM1222I",
     severity: Severity.W,
     message: "Comparison involving 2-digit year is problematic.",
-    fullCode: "IBM1222IW",
   },
 
   /**
@@ -3306,7 +3090,6 @@ export const Warning = {
     code: "IBM1223I",
     severity: Severity.W,
     message: "Literal in comparison interpreted with DATE attribute.",
-    fullCode: "IBM1223IW",
   },
 
   /**
@@ -3324,7 +3107,6 @@ export const Warning = {
     code: "IBM1224I",
     severity: Severity.W,
     message: "DATE attribute ignored in comparison with non-date literal.",
-    fullCode: "IBM1224IW",
   },
 
   /**
@@ -3341,7 +3123,6 @@ export const Warning = {
     code: "IBM1225I",
     severity: Severity.W,
     message: "DATE attribute ignored in conversion from literal.",
-    fullCode: "IBM1225IW",
   },
 
   /**
@@ -3352,7 +3133,6 @@ export const Warning = {
     code: "IBM2600I",
     severity: Severity.W,
     message: "Compiler backend issued warning messages to STDOUT.",
-    fullCode: "IBM2600IW",
   },
 
   /**
@@ -3368,7 +3148,6 @@ export const Warning = {
     severity: Severity.W,
     message: (character: string, character2: string) =>
       `Missing ${character} assumed before ${character2} . DECLARE and other nonexecutable statements should not have labels.`,
-    fullCode: "IBM2601IW",
   },
 
   /**
@@ -3389,7 +3168,6 @@ export const Warning = {
     severity: Severity.W,
     message: (count: string, variablename: string, arraysize: string) =>
       `Number of items in INITIAL list is ${count} for the array ${variablename} which contains ${arraysize} elements.`,
-    fullCode: "IBM2602IW",
   },
 
   /**
@@ -3413,7 +3191,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variablename: string) =>
       `INITIAL list for the array ${variablename} contains only one item.`,
-    fullCode: "IBM2603IW",
   },
 
   /**
@@ -3439,7 +3216,6 @@ export const Warning = {
       targetscale: string,
     ) =>
       `FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
-    fullCode: "IBM2604IW",
   },
 
   /**
@@ -3451,7 +3227,6 @@ export const Warning = {
     code: "IBM2605I",
     severity: Severity.W,
     message: "Invalid carriage control character. Blank assumed.",
-    fullCode: "IBM2605IW",
   },
 
   /**
@@ -3464,7 +3239,6 @@ export const Warning = {
     severity: Severity.W,
     message: (referencename: string) =>
       `Code generated for the REFER object ${referencename} would be more efficient if the REFER object had the attributes REAL FIXED BIN(p,0).`,
-    fullCode: "IBM2606IW",
   },
 
   /**
@@ -3490,7 +3264,6 @@ export const Warning = {
       targetscale: string,
     ) =>
       `PICTURE representing FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
-    fullCode: "IBM2607IW",
   },
 
   /**
@@ -3518,7 +3291,6 @@ export const Warning = {
       targetscale: string,
     ) =>
       `PICTURE representing FIXED DEC( ${sourceprecision} , ${sourcescale} ) will be converted to PICTURE representing FIXED DEC( ${targetprecision} , ${targetscale} ). Significant digits may be lost.`,
-    fullCode: "IBM2608IW",
   },
 
   /**
@@ -3537,7 +3309,6 @@ export const Warning = {
     severity: Severity.W,
     message: (linenumber: string, filenumber: string) =>
       `Comment contains a semicolon on line ${linenumber} . ${filenumber} .`,
-    fullCode: "IBM2609IW",
   },
 
   /**
@@ -3559,7 +3330,6 @@ export const Warning = {
     severity: Severity.W,
     message: (BUILTINname: string) =>
       `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FIXED BIN. Compiler will not interpret precision as FIXED DEC.`,
-    fullCode: "IBM2610IW",
   },
 
   /**
@@ -3574,7 +3344,6 @@ export const Warning = {
     severity: Severity.W,
     message: (binaryvalue: string) =>
       `The binary value ${binaryvalue} appears in more than one WHEN clause.`,
-    fullCode: "IBM2611IW",
   },
 
   /**
@@ -3589,7 +3358,6 @@ export const Warning = {
     severity: Severity.W,
     message: (characterstring: string) =>
       `The character string ${characterstring} appears in more than one WHEN clause.`,
-    fullCode: "IBM2612IW",
   },
 
   /**
@@ -3603,7 +3371,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variable: string) =>
       `RULES(NOLAXINOUT) violation: ${variable} is being passed as an INOUT parameter, but may be unset.`,
-    fullCode: "IBM2613IW",
   },
 
   /**
@@ -3618,7 +3385,6 @@ export const Warning = {
     code: "IBM2614I",
     severity: Severity.W,
     message: "Both comparands are Booleans.",
-    fullCode: "IBM2614IW",
   },
 
   /**
@@ -3638,7 +3404,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "DO-loop will always execute exactly once. A semicolon after the DO may be missing.",
-    fullCode: "IBM2615IW",
   },
 
   /**
@@ -3653,7 +3418,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variable: string) =>
       `Size of parameter ${variable} will return the currentsize value since no descriptor is available.`,
-    fullCode: "IBM2616IW",
   },
 
   /**
@@ -3669,7 +3433,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Passing a LABEL to a non-PL/I routine is very poor coding practice and will cause the compiler to generate less than optimal code.",
-    fullCode: "IBM2617IW",
   },
 
   /**
@@ -3685,7 +3448,6 @@ export const Warning = {
     severity: Severity.W,
     message: (suboption: string, option: string, option2: string) =>
       `The suboption ${suboption} is not valid for the suboption ${option} of the ${option2} compiler option.`,
-    fullCode: "IBM2618IW",
   },
 
   /**
@@ -3709,7 +3471,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Target structure contains REFER objects. Results are undefined if the assignment changes any REFER object.",
-    fullCode: "IBM2620IW",
   },
 
   /**
@@ -3723,7 +3484,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "ON ERROR block does not start with ON ERROR SYSTEM. An error inside the block may lead to an infinite loop.",
-    fullCode: "IBM2621IW",
   },
 
   /**
@@ -3745,7 +3505,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "ENTRY used to set the initial value in a DO loop will be invoked after any TO or BY values are set.",
-    fullCode: "IBM2622IW",
   },
 
   /**
@@ -3766,7 +3525,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Mixing FIXED BIN and FLOAT DEC produces a FLOAT BIN result. Under DFP, this will lead to poor performance.",
-    fullCode: "IBM2623IW",
   },
 
   /**
@@ -3787,7 +3545,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Mixing BIT and FLOAT DEC produces a FLOAT BIN result. 27 Under DFP, this will lead to poor performance.",
-    fullCode: "IBM2624IW",
   },
 
   /**
@@ -3800,7 +3557,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Mixing FLOAT BIN and FLOAT DEC produces a FLOAT BIN result. Under DFP, this will lead to poor performance.",
-    fullCode: "IBM2625IW",
   },
 
   /**
@@ -3813,7 +3569,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Use of SUBSTR with a third argument equal to 0 is somewhat pointless since the result will always be a null string.",
-    fullCode: "IBM2626IW",
   },
 
   /**
@@ -3826,7 +3581,6 @@ export const Warning = {
     severity: Severity.W,
     message: (identifier: string) =>
       `No metadata will be generated for the structure ${identifier} since its use of REFER is too complex.`,
-    fullCode: "IBM2627IW",
   },
 
   /**
@@ -3838,7 +3592,6 @@ export const Warning = {
     code: "IBM2628I",
     severity: Severity.W,
     message: "BYVALUE parameters should ideally be no larger than 32 bytes.",
-    fullCode: "IBM2628IW",
   },
 
   /**
@@ -3851,7 +3604,6 @@ export const Warning = {
     severity: Severity.W,
     message: (identifier: string) =>
       `No debug symbol information will be generated for ${identifier} .`,
-    fullCode: "IBM2629IW",
   },
 
   /**
@@ -3873,7 +3625,6 @@ export const Warning = {
       resultattributes: string,
     ) =>
       `The operands in an arithmetic operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is greater than its precision! That may lead to an overflow and unexpected results.`,
-    fullCode: "IBM2630IW",
   },
 
   /**
@@ -3895,7 +3646,6 @@ export const Warning = {
     severity: Severity.W,
     message: (BUILTINname: string) =>
       `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FLOAT BIN. Compiler will not interpret precision as FIXED DEC.`,
-    fullCode: "IBM2631IW",
   },
 
   /**
@@ -3917,7 +3667,6 @@ export const Warning = {
     severity: Severity.W,
     message: (BUILTINname: string) =>
       `One argument to ${BUILTINname} built-in function is FIXED DEC while the other is FLOAT DEC. Compiler will not interpret precision as FIXED DEC.`,
-    fullCode: "IBM2632IW",
   },
 
   /**
@@ -3930,7 +3679,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Given the support for addressing arithmetic, basing a POINTER or OFFSET on a FIXED BIN is unnecessary, and it will also fail to work properly if the size of a POINTER changes.",
-    fullCode: "IBM2633IW",
   },
 
   /**
@@ -3943,7 +3691,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Given the support for addressing arithmetic, basing a FIXED BIN on a POINTER or OFFSET is unnecessary, and it will also fail to work properly if the size of a POINTER changes.",
-    fullCode: "IBM2634IW",
   },
 
   /**
@@ -3965,7 +3712,6 @@ export const Warning = {
       resultattributes: string,
     ) =>
       `The operands in an arithmetic operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is negative! That may lead to the loss of significant digits and unexpected results.`,
-    fullCode: "IBM2635IW",
   },
 
   /**
@@ -3980,7 +3726,6 @@ export const Warning = {
     severity: Severity.W,
     message: (ordinalname: string) =>
       `The ordinal ${ordinalname} appears in more than one WHEN clause.`,
-    fullCode: "IBM2636IW",
   },
 
   /**
@@ -4001,7 +3746,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "An ENTRY invoked as a function should have the RETURNS attribute.",
-    fullCode: "IBM2637IW",
   },
 
   /**
@@ -4015,7 +3759,6 @@ export const Warning = {
     severity: Severity.W,
     message: (count: string) =>
       `Statement used ${count} intermediate language instructions.`,
-    fullCode: "IBM2638IW",
   },
 
   /**
@@ -4031,7 +3774,6 @@ export const Warning = {
     severity: Severity.W,
     message: (count: string) =>
       `Previous statement used ${count} intermediate language instructions.`,
-    fullCode: "IBM2639IW",
   },
 
   /**
@@ -4056,7 +3798,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Target is a REFER object. Results are undefined if an assignment changes a REFER object.",
-    fullCode: "IBM2640IW",
   },
 
   /**
@@ -4073,7 +3814,6 @@ export const Warning = {
     severity: Severity.W,
     message: (option: string, option2: string) =>
       `The suboption ${option} of the ${option2} compiler option must be followed by a (possibly empty) parenthesized list.`,
-    fullCode: "IBM2641IW",
   },
 
   /**
@@ -4087,7 +3827,6 @@ export const Warning = {
     code: "IBM2642I",
     severity: Severity.W,
     message: "OPTIONS(REENTRANT) is ignored.",
-    fullCode: "IBM2642IW",
   },
 
   /**
@@ -4100,7 +3839,6 @@ export const Warning = {
     severity: Severity.W,
     message: (builtin: string) =>
       `The built-in function ${builtin} will be deprecated.`,
-    fullCode: "IBM2643IW",
   },
 
   /**
@@ -4113,7 +3851,6 @@ export const Warning = {
     severity: Severity.W,
     message: (filename: string) =>
       `The INCLUDE file ${filename} will be deprecated.`,
-    fullCode: "IBM2644IW",
   },
 
   /**
@@ -4126,7 +3863,6 @@ export const Warning = {
     severity: Severity.W,
     message: (entryname: string) =>
       `The ENTRY named ${entryname} will be deprecated.`,
-    fullCode: "IBM2645IW",
   },
 
   /**
@@ -4139,7 +3875,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variable: string) =>
       `The VARIABLE named ${variable} will be deprecated.`,
-    fullCode: "IBM2646IW",
   },
 
   /**
@@ -4152,7 +3887,6 @@ export const Warning = {
     severity: Severity.W,
     message: (statementname: string) =>
       `The ${statementname} statement will be deprecated.`,
-    fullCode: "IBM2647IW",
   },
 
   /**
@@ -4164,7 +3898,6 @@ export const Warning = {
     code: "IBM2648I",
     severity: Severity.W,
     message: (count: string) => `Declaration contains ${count} INITIAL items.`,
-    fullCode: "IBM2648IW",
   },
 
   /**
@@ -4178,7 +3911,6 @@ export const Warning = {
     severity: Severity.W,
     message: (binaryvalue: string) =>
       `The binary value ${binaryvalue} appears more than once in the INLIST argument set.`,
-    fullCode: "IBM2649IW",
   },
 
   /**
@@ -4192,7 +3924,6 @@ export const Warning = {
     severity: Severity.W,
     message: (ordinalname: string) =>
       `The ordinal ${ordinalname} appears more than once in the INLIST argument set.`,
-    fullCode: "IBM2650IW",
   },
 
   /**
@@ -4205,7 +3936,6 @@ export const Warning = {
     severity: Severity.W,
     message: (blockname: string, count: string) =>
       `Block ${blockname} contains ${count} branches.`,
-    fullCode: "IBM2651IW",
   },
 
   /**
@@ -4217,7 +3947,6 @@ export const Warning = {
     code: "IBM2652I",
     severity: Severity.W,
     message: "REINIT reference contains no element with an INITIAL attribute.",
-    fullCode: "IBM2652IW",
   },
 
   /**
@@ -4230,7 +3959,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "The list of preprocessor options must be enclosed in quotation marks.",
-    fullCode: "IBM2653IW",
   },
 
   /**
@@ -4248,7 +3976,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "INITIAL attribute for BASED on ADDR has no effect on the base variable.",
-    fullCode: "IBM2654IW",
   },
 
   /**
@@ -4262,7 +3989,6 @@ export const Warning = {
     code: "IBM2655I",
     severity: Severity.W,
     message: "Some options conflict with the non-overridable options.",
-    fullCode: "IBM2655IW",
   },
 
   /**
@@ -4280,7 +4006,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variablename: string) =>
       `Simple defining applies to ${variablename}. If string-overlay defining is intended, then add POS(1) to its declaration.`,
-    fullCode: "IBM2656IW",
   },
 
   /**
@@ -4291,7 +4016,6 @@ export const Warning = {
     code: "IBM2657I",
     severity: Severity.W,
     message: "Both logical AND operands are identical.",
-    fullCode: "IBM2657IW",
   },
 
   /**
@@ -4302,7 +4026,6 @@ export const Warning = {
     code: "IBM2658I",
     severity: Severity.W,
     message: "Both logical OR operands are identical.",
-    fullCode: "IBM2658IW",
   },
 
   /**
@@ -4318,7 +4041,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variablename: string) =>
       `Generated code would be better if all the INITIAL attributes in the declare for ${variablename} were changed to VALUE.`,
-    fullCode: "IBM2659IW",
   },
 
   /**
@@ -4343,7 +4065,6 @@ export const Warning = {
     severity: Severity.W,
     message: (procedurename: string, procedurename2: string) =>
       `Program logic may lead to the END statement for ${procedurename} even though ${procedurename2} is a function that should return a value.`,
-    fullCode: "IBM2660IW",
   },
 
   /**
@@ -4357,7 +4078,6 @@ export const Warning = {
     severity: Severity.W,
     message: (stringvalue: string) =>
       `The string ${stringvalue} appears more than once in the INLIST argument set.`,
-    fullCode: "IBM2661IW",
   },
 
   /**
@@ -4370,7 +4090,6 @@ export const Warning = {
     code: "IBM2662I",
     severity: Severity.W,
     message: "INLIST argument set contains duplicate values.",
-    fullCode: "IBM2662IW",
   },
 
   /**
@@ -4385,7 +4104,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "WHEN clause contains an expression that matches the previous expression in the containing SELECT statement.",
-    fullCode: "IBM2663IW",
   },
 
   /**
@@ -4400,7 +4118,6 @@ export const Warning = {
     severity: Severity.W,
     message: (count: string) =>
       `WHEN clause contains an expression that matches the expression ${count} previous in the containing SELECT statement.`,
-    fullCode: "IBM2664IW",
   },
 
   /**
@@ -4413,7 +4130,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "EXTERNAL PLIXOPT declare specifies run-time options only if the variable has the attribute CHARACTER VARYING INITIAL and is not an array.",
-    fullCode: "IBM2665IW",
   },
 
   /**
@@ -4426,7 +4142,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "RETURN expression holds the address of a variable in AUTOMATIC storage.",
-    fullCode: "IBM2666IW",
   },
 
   /**
@@ -4440,7 +4155,6 @@ export const Warning = {
     severity: Severity.W,
     message: (first: string, second: string) =>
       `The string lengths in the declare for ${first} depend on the size of ${second} whose declare comes later in the block. Consider moving the first declare after the second.`,
-    fullCode: "IBM2667IW",
   },
 
   /**
@@ -4455,7 +4169,6 @@ export const Warning = {
     severity: Severity.W,
     message: (type: string, count: string) =>
       `Using the VALUE function with the structure type ${type} adds ${count} bytes to the generated object.`,
-    fullCode: "IBM2668IW",
   },
 
   /**
@@ -4468,7 +4181,6 @@ export const Warning = {
     severity: Severity.W,
     message: (attributekeyword: string) =>
       `The ${attributekeyword} attribute is ignored in an ALIAS definition.`,
-    fullCode: "IBM2669IW",
   },
 
   /**
@@ -4480,7 +4192,6 @@ export const Warning = {
     code: "IBM2670I",
     severity: Severity.W,
     message: "The parameter to MAIN should be declared as CHAR(*) VARYING.",
-    fullCode: "IBM2670IW",
   },
 
   /**
@@ -4504,7 +4215,6 @@ export const Warning = {
     severity: Severity.W,
     message: (X: string, n: string, E: string, A: string, D: string) =>
       `The variable ${X} is passed as argument number ${n} to entry ${E} . The corresponding parameter has the ${A} attribute, and hence the variable could be modified despite having the ${D} attribute.`,
-    fullCode: "IBM2671IW",
   },
 
   /**
@@ -4524,7 +4234,6 @@ export const Warning = {
     severity: Severity.W,
     message: (extentvariable: string) =>
       `If ${extentvariable} is constant, then removing its STATIC attribute and changing its INITIAL attribute to the VALUE attribute would improve the performance of the generated code.`,
-    fullCode: "IBM2672IW",
   },
 
   /**
@@ -4545,7 +4254,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Boolean is compared with something other than a BIT(1) restricted expression.",
-    fullCode: "IBM2673IW",
   },
 
   /**
@@ -4569,7 +4277,6 @@ export const Warning = {
     severity: Severity.W,
     message: (structname: string, alignment: string, storagesize: string) =>
       `The defined structure ${structname} is ${alignment} byte aligned, but occupies only ${storagesize} bytes of storage. This may lead to addressing problems and data corruption.`,
-    fullCode: "IBM2674IW",
   },
 
   /**
@@ -4582,7 +4289,6 @@ export const Warning = {
     code: "IBM2675I",
     severity: Severity.W,
     message: "Use of PICTURE as DO control variable is not recommended.",
-    fullCode: "IBM2675IW",
   },
 
   /**
@@ -4596,7 +4302,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Code generated for DO group would be more efficient if control variable had type FIXED BIN with zero scale factor.",
-    fullCode: "IBM2676IW",
   },
 
   /**
@@ -4611,7 +4316,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variablename: string) =>
       `Generated code would be better if the declare for ${variablename} were changed from AUTOMATIC to STATIC NONASSIGNABLE.`,
-    fullCode: "IBM2677IW",
   },
 
   /**
@@ -4629,7 +4333,6 @@ export const Warning = {
     code: "IBM2678I",
     severity: Severity.W,
     message: "Loop will never be run. TO value may be incorrect.",
-    fullCode: "IBM2678IW",
   },
 
   /**
@@ -4642,7 +4345,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "GONUMBER(SEPARATE) changed to GONUMBER(NOSEPARATE) since the SEPARATE suboption for the GONUMBER option should be specified only when the TEST option and its SEPARATE suboption are also specified.",
-    fullCode: "IBM2679IW",
   },
 
   /**
@@ -4655,7 +4357,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Code generated for DO group would perform better if control variable was STATIC or AUTOMATIC.",
-    fullCode: "IBM2680IW",
   },
 
   /**
@@ -4668,7 +4369,6 @@ export const Warning = {
     severity: Severity.W,
     message: (sourcelength: string, sourcepattern: string) =>
       `Source has length ${sourcelength} which is greater than the length of the source pattern ${sourcepattern} . Unless the source has enough leading blanks, invoking this REPATTERN will cause the ERROR condition to be raised. The required checking will also cause this REPATTERN not to be inlined.`,
-    fullCode: "IBM2681IW",
   },
 
   /**
@@ -4681,7 +4381,6 @@ export const Warning = {
     severity: Severity.W,
     message: (name: string, count: string) =>
       `The variable ${name} needs ${count} storage bytes which exceeds the MAXSTATIC limit.`,
-    fullCode: "IBM2682IW",
   },
 
   /**
@@ -4693,7 +4392,6 @@ export const Warning = {
     code: "IBM3250I",
     severity: Severity.W,
     message: (note: string) => `${note}`,
-    fullCode: "IBM3250IW",
   },
 
   /**
@@ -4710,7 +4408,6 @@ export const Warning = {
     severity: Severity.W,
     message: (identifier: string) =>
       `${identifier} is multiply defined, but with different attributes. The declaration is ignored.`,
-    fullCode: "IBM3251IW",
   },
 
   /**
@@ -4725,7 +4422,6 @@ export const Warning = {
     severity: Severity.W,
     message: (attribute: string) =>
       `The attribute ${attribute} conflicts with previous attributes and is ignored.`,
-    fullCode: "IBM3252IW",
   },
 
   /**
@@ -4737,7 +4433,6 @@ export const Warning = {
     code: "IBM3253I",
     severity: Severity.W,
     message: "Comment spans more than one file.",
-    fullCode: "IBM3253IW",
   },
 
   /**
@@ -4749,7 +4444,6 @@ export const Warning = {
     code: "IBM3254I",
     severity: Severity.W,
     message: "String spans more than one file.",
-    fullCode: "IBM3254IW",
   },
 
   /**
@@ -4765,7 +4459,6 @@ export const Warning = {
     severity: Severity.W,
     message: (nondelimiter: string, nondelimiter2: string) =>
       `Delimiter missing between ${nondelimiter} and ${nondelimiter2} . A blank is assumed.`,
-    fullCode: "IBM3255IW",
   },
 
   /**
@@ -4778,7 +4471,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Multiple closure of groups. END statements will be inserted to close intervening groups.",
-    fullCode: "IBM3256IW",
   },
 
   /**
@@ -4791,7 +4483,6 @@ export const Warning = {
     code: "IBM3257I",
     severity: Severity.W,
     message: (character: string) => `Missing ${character} assumed.`,
-    fullCode: "IBM3257IW",
   },
 
   /**
@@ -4809,7 +4500,6 @@ export const Warning = {
     severity: Severity.W,
     message: (character: string, character2: string) =>
       `Missing ${character} assumed before ${character2} .`,
-    fullCode: "IBM3258IW",
   },
 
   /**
@@ -4820,7 +4510,6 @@ export const Warning = {
     code: "IBM3259I",
     severity: Severity.W,
     message: (note: string) => `${note}`,
-    fullCode: "IBM3259IW",
   },
 
   /**
@@ -4832,7 +4521,6 @@ export const Warning = {
     code: "IBM3260I",
     severity: Severity.W,
     message: "Syntax of the %CONTROL statement is incorrect.",
-    fullCode: "IBM3260IW",
   },
 
   /**
@@ -4848,7 +4536,6 @@ export const Warning = {
     severity: Severity.W,
     message: (suboption: string, option: string, option2: string) =>
       `The suboption ${suboption} is not valid for the suboption ${option} of the ${option2} option.`,
-    fullCode: "IBM3261IW",
   },
 
   /**
@@ -4865,7 +4552,6 @@ export const Warning = {
     severity: Severity.W,
     message: (option: string, option2: string) =>
       `The suboption ${option} of the ${option2} option must be followed by a (possibly empty) parenthesized list.`,
-    fullCode: "IBM3262IW",
   },
 
   /**
@@ -4880,7 +4566,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Number of lines specified with %SKIP must be between 0 and 999 inclusive.",
-    fullCode: "IBM3265IW",
   },
 
   /**
@@ -4892,7 +4577,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "'EXEC CICS' encountered, but the CICS option is not in effect. Command ignored.",
-    fullCode: "IBM3270IW",
   },
 
   /**
@@ -4904,7 +4588,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "'EXEC CSPM' encountered, but the CSPM option is not in effect. Command ignored.",
-    fullCode: "IBM3271IW",
   },
 
   /**
@@ -4916,7 +4599,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "'EXEC DLI' encountered, but the DLI option is not in effect. Command ignored.",
-    fullCode: "IBM3272IW",
   },
 
   /**
@@ -4928,7 +4610,6 @@ export const Warning = {
     code: "IBM3281I",
     severity: Severity.W,
     message: "SELECT statement contains no WHEN or OTHERWISE clauses.",
-    fullCode: "IBM3281IW",
   },
 
   /**
@@ -4940,7 +4621,6 @@ export const Warning = {
     code: "IBM3283I",
     severity: Severity.W,
     message: "SELECT statement contains no WHEN clauses.",
-    fullCode: "IBM3283IW",
   },
 
   /**
@@ -4952,7 +4632,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "FIXED BINARY constant contains too many digits. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM3285IW",
   },
 
   /**
@@ -4965,7 +4644,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "FIXED DECIMAL constant contains too many digits. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM3286IW",
   },
 
   /**
@@ -4977,7 +4655,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Mantissa in FLOAT BINARY constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM3287IW",
   },
 
   /**
@@ -4989,7 +4666,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Mantissa in FLOAT DECIMAL constant contains more digits than the implementation maximum. Excess nonsignificant digits will be ignored.",
-    fullCode: "IBM3288IW",
   },
 
   /**
@@ -5003,7 +4679,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "FLOAT literal is too big for its implicit precision. An appropriate HUGE value is assumed.",
-    fullCode: "IBM3289IW",
   },
 
   /**
@@ -5016,7 +4691,6 @@ export const Warning = {
     severity: Severity.W,
     message: (optionname: string) =>
       `The OPTIONS option ${optionname} conflicts with the LANGLVL compiler option. The option will be applied.`,
-    fullCode: "IBM3291IW",
   },
 
   /**
@@ -5032,7 +4706,6 @@ export const Warning = {
     severity: Severity.W,
     message: (suboption: string, option: string) =>
       `${suboption} is not a valid suboption for ${option} .`,
-    fullCode: "IBM3292IW",
   },
 
   /**
@@ -5047,7 +4720,6 @@ export const Warning = {
     severity: Severity.W,
     message: (suboption: string) =>
       `A required suboption is missing for the ${suboption} option.`,
-    fullCode: "IBM3293IW",
   },
 
   /**
@@ -5062,7 +4734,6 @@ export const Warning = {
     severity: Severity.W,
     message: (option: string) =>
       `A closing parenthesis is missing in the specification of the ${option} option. One is assumed.`,
-    fullCode: "IBM3294IW",
   },
 
   /**
@@ -5076,7 +4747,6 @@ export const Warning = {
     code: "IBM3295I",
     severity: Severity.W,
     message: (option: string) => `${option} is not a supported option.`,
-    fullCode: "IBM3295IW",
   },
 
   /**
@@ -5091,7 +4761,6 @@ export const Warning = {
     code: "IBM3299I",
     severity: Severity.W,
     message: "Syntax of the %LINE directive is incorrect.",
-    fullCode: "IBM3299IW",
   },
 
   /**
@@ -5103,7 +4772,6 @@ export const Warning = {
     severity: Severity.W,
     message: (identifier: string) =>
       `${identifier} has not been declared. CHARACTER attribute assumed.`,
-    fullCode: "IBM3300IW",
   },
 
   /**
@@ -5117,7 +4785,6 @@ export const Warning = {
     severity: Severity.W,
     message: (BUILTINname: string) =>
       `Comparison of ${BUILTINname} to a value it could not return is odd.`,
-    fullCode: "IBM3309IW",
   },
 
   /**
@@ -5134,7 +4801,6 @@ export const Warning = {
     severity: Severity.W,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in should have string type.`,
-    fullCode: "IBM3310IW",
   },
 
   /**
@@ -5151,7 +4817,6 @@ export const Warning = {
     severity: Severity.W,
     message: (number: string, BUILTINname: string) =>
       `Argument ${number} to the ${BUILTINname} built-in function is missing. A null value will be passed for the missing argument.`,
-    fullCode: "IBM3311IW",
   },
 
   /**
@@ -5174,7 +4839,6 @@ export const Warning = {
     code: "IBM3312I",
     severity: Severity.W,
     message: "LEAVE will exit noniterative DO- group.",
-    fullCode: "IBM3312IW",
   },
 
   /**
@@ -5193,7 +4857,6 @@ export const Warning = {
     code: "IBM3313I",
     severity: Severity.W,
     message: "Result of comparison is always constant.",
-    fullCode: "IBM3313IW",
   },
 
   /**
@@ -5208,7 +4871,6 @@ export const Warning = {
     severity: Severity.W,
     message: (reference: string) =>
       `The reference ${reference} could refer to a parent or its child, but the child is assumed.`,
-    fullCode: "IBM3314IW",
   },
 
   /**
@@ -5221,7 +4883,6 @@ export const Warning = {
     severity: Severity.W,
     message: (reference: string) =>
       `The reference ${reference} is an array of structures. Arrays of structures are not valid in SQL statements, but because this structure consists of only one element, the reference is treated as if it were a reference to its lone child.`,
-    fullCode: "IBM3315IW",
   },
 
   /**
@@ -5234,7 +4895,6 @@ export const Warning = {
     severity: Severity.W,
     message: (reference: string) =>
       `The reference ${reference} is a structure containing an array. 152 Structures containing arrays are not valid in SQL statements, but because this structure consists of only one element, the reference is treated as if it were a reference to its lone child.`,
-    fullCode: "IBM3316IW",
   },
 
   /**
@@ -5245,7 +4905,6 @@ export const Warning = {
     code: "IBM3317I",
     severity: Severity.W,
     message: (note: string) => `${note}`,
-    fullCode: "IBM3317IW",
   },
 
   /**
@@ -5260,7 +4919,6 @@ export const Warning = {
     code: "IBM3320I",
     severity: Severity.W,
     message: "RETURNS attribute in ENTRY declare ignored.",
-    fullCode: "IBM3320IW",
   },
 
   /**
@@ -5279,7 +4937,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "RETURNS option assumed to enclose attribute in PROCEDURE statement.",
-    fullCode: "IBM3321IW",
   },
 
   /**
@@ -5301,7 +4958,6 @@ export const Warning = {
     severity: Severity.W,
     message: (identifier: string) =>
       `Argument list for PROCEDURE ${identifier} is missing. It will be invoked without any arguments.`,
-    fullCode: "IBM3322IW",
   },
 
   /**
@@ -5322,7 +4978,6 @@ export const Warning = {
     severity: Severity.W,
     message: (identifier: string) =>
       `Too few arguments for PROCEDURE ${identifier} . Null values will be passed for the missing arguments.`,
-    fullCode: "IBM3323IW",
   },
 
   /**
@@ -5343,7 +4998,6 @@ export const Warning = {
     severity: Severity.W,
     message: (identifier: string) =>
       `Too many arguments for PROCEDURE ${identifier} . Excess ignored.`,
-    fullCode: "IBM3324IW",
   },
 
   /**
@@ -5360,7 +5014,6 @@ export const Warning = {
     severity: Severity.W,
     message: (identifier: string) =>
       `No data attributes specified in declare for ${identifier} .`,
-    fullCode: "IBM3325IW",
   },
 
   /**
@@ -5376,7 +5029,6 @@ export const Warning = {
     code: "IBM3326I",
     severity: Severity.W,
     message: "The LIKE reference is neither a structure nor a union.",
-    fullCode: "IBM3326IW",
   },
 
   /**
@@ -5402,7 +5054,6 @@ export const Warning = {
     code: "IBM3327I",
     severity: Severity.W,
     message: "The LIKE reference is ambiguous.",
-    fullCode: "IBM3327IW",
   },
 
   /**
@@ -5425,7 +5076,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "Neither the LIKE reference nor any of its substructures can be declared with the LIKE attribute.",
-    fullCode: "IBM3328IW",
   },
 
   /**
@@ -5448,7 +5098,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "The LIKE reference must not be a member of a structure or union declared with the LIKE attribute.",
-    fullCode: "IBM3329IW",
   },
 
   /**
@@ -5460,7 +5109,6 @@ export const Warning = {
     code: "IBM3330I",
     severity: Severity.W,
     message: "The LIKE reference is unknown.",
-    fullCode: "IBM3330IW",
   },
 
   /**
@@ -5473,7 +5121,6 @@ export const Warning = {
     severity: Severity.W,
     message: (filename: string) =>
       `The INCLUDE file ${filename} will be deprecated.`,
-    fullCode: "IBM3331IW",
   },
 
   /**
@@ -5487,7 +5134,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "The END statement has no matching BEGIN, DO, PACKAGE, PROC, or SELECT. This may indicate a problem with the syntax of a previous statement.",
-    fullCode: "IBM3332IW",
   },
 
   /**
@@ -5501,7 +5147,6 @@ export const Warning = {
     severity: Severity.W,
     message:
       "One or more END statements are missing. This may indicate a problem with the syntax of a previous statement.",
-    fullCode: "IBM3333IW",
   },
 
   /**
@@ -5514,7 +5159,6 @@ export const Warning = {
     severity: Severity.W,
     message: (variable: string) =>
       `The ENTRY named ${variable} will be deprecated.`,
-    fullCode: "IBM3334IW",
   },
 };
 
@@ -5528,7 +5172,6 @@ export const Error = {
     severity: Severity.E,
     message: (maximumvalue: string) =>
       `Area extent is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1226IE",
   },
 
   /**
@@ -5543,7 +5186,6 @@ export const Error = {
     severity: Severity.E,
     message: (keyword: string, keyword2: string) =>
       `${keyword} statement is not allowed where an executable statement is required. A null statement will be inserted before the ${keyword2} statement.`,
-    fullCode: "IBM1227IE",
   },
 
   /**
@@ -5558,7 +5200,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "DEFAULT statement is not allowed where an executable statement is required. The DEFAULT statement will be enrolled in the current block, and a null statement will be inserted in its place.",
-    fullCode: "IBM1228IE",
   },
 
   /**
@@ -5573,7 +5214,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "FORMAT statement is not allowed where an executable statement is required. The FORMAT statement will be enrolled in the current block, and a null statement will be inserted in its place.",
-    fullCode: "IBM1229IE",
   },
 
   /**
@@ -5589,7 +5229,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `Arguments have been specified for the variable ${variablename}, but it is not an entry variable.`,
-    fullCode: "IBM1230IE",
   },
 
   /**
@@ -5605,7 +5244,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `Arguments/subscripts have been specified for the variable ${variablename} , but it is neither an entry nor an array variable.`,
-    fullCode: "IBM1231IE",
   },
 
   /**
@@ -5623,7 +5261,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXPUNC) violation: extraneous comma at end of statement ignored.",
-    fullCode: "IBM1232IE",
   },
 
   /**
@@ -5638,7 +5275,6 @@ export const Error = {
     severity: Severity.E,
     message: (character: string) =>
       `RULES(NOLAXPUNC) violation: missing ${character} assumed.`,
-    fullCode: "IBM1233IE",
   },
 
   /**
@@ -5655,7 +5291,6 @@ export const Error = {
     severity: Severity.E,
     message: (character: string, character2: string) =>
       `RULES(NOLAXPUNC) violation: missing ${character} assumed before ${character2} .`,
-    fullCode: "IBM1234IE",
   },
 
   /**
@@ -5670,7 +5305,6 @@ export const Error = {
     code: "IBM1235I",
     severity: Severity.E,
     message: "No data format item in format list.",
-    fullCode: "IBM1235IE",
   },
 
   /**
@@ -5683,7 +5317,6 @@ export const Error = {
     severity: Severity.E,
     message: (keyword: string) =>
       `Subscripts on ${keyword} labels are ignored.`,
-    fullCode: "IBM1236IE",
   },
 
   /**
@@ -5696,7 +5329,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `EXTERNAL ENTRY attribute is assumed for ${variablename} .`,
-    fullCode: "IBM1237IE",
   },
 
   /**
@@ -5712,7 +5344,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `The second argument to the ${BUILTINname} built-in function is greater than the precision of the result.`,
-    fullCode: "IBM1238IE",
   },
 
   /**
@@ -5728,7 +5359,6 @@ export const Error = {
     severity: Severity.E,
     message: (attribute: string) =>
       `The ${attribute} attribute is not supported and is ignored.`,
-    fullCode: "IBM1239IE",
   },
 
   /**
@@ -5743,7 +5373,6 @@ export const Error = {
     severity: Severity.E,
     message: (attribute: string) =>
       `The ${attribute} attribute is invalid in a RETURNS descriptor.`,
-    fullCode: "IBM1240IE",
   },
 
   /**
@@ -5756,7 +5385,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Equality and inequality are the only valid comparisons of COMPLEX numbers.",
-    fullCode: "IBM1241IE",
   },
 
   /**
@@ -5769,7 +5397,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Equality and inequality are the only valid comparisons of program control data.",
-    fullCode: "IBM1242IE",
   },
 
   /**
@@ -5782,7 +5409,6 @@ export const Error = {
     severity: Severity.E,
     message: (integerSpec2or3: string) =>
       `REGIONAL(${integerSpec2or3}) ENVIRONMENT option is not supported.`,
-    fullCode: "IBM1243IE",
   },
 
   /**
@@ -5794,7 +5420,6 @@ export const Error = {
     severity: Severity.E,
     message: (option: string) =>
       `The variable specified as the ${option} value in an ENVIRONMENT option must be a STATIC scalar 36 with the attributes REAL FIXED BIN(31,0).`,
-    fullCode: "IBM1244IE",
   },
 
   /**
@@ -5806,7 +5431,6 @@ export const Error = {
     severity: Severity.E,
     message: (option: string) =>
       `The variable specified as the ${option} value in an ENVIRONMENT option must be a STATIC scalar with the attribute CHARACTER.`,
-    fullCode: "IBM1245IE",
   },
 
   /**
@@ -5822,7 +5446,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built-in function should be CONNECTED.`,
-    fullCode: "IBM1246IE",
   },
 
   /**
@@ -5839,7 +5462,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXCONV) violation: arithmetic operands should both be numeric.",
-    fullCode: "IBM1247IE",
   },
 
   /**
@@ -5853,7 +5475,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `RULES(NOLAXCONV) violation: argument to ${BUILTINname} built- in function should have arithmetic type.`,
-    fullCode: "IBM1248IE",
   },
 
   /**
@@ -5867,7 +5488,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built-in function should have CHARACTER type.`,
-    fullCode: "IBM1249IE",
   },
 
   /**
@@ -5884,7 +5504,6 @@ export const Error = {
     severity: Severity.E,
     message: (argumentnumber: string, BUILTINname: string) =>
       `RULES(NOLAXCONV) violation: argument number ${argumentnumber} to ${BUILTINname} built-in function should have arithmetic type.`,
-    fullCode: "IBM1252IE",
   },
 
   /**
@@ -5901,7 +5520,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXCONV) violation: arithmetic prefix operand should be numeric.",
-    fullCode: "IBM1254IE",
   },
 
   /**
@@ -5917,7 +5535,6 @@ export const Error = {
     severity: Severity.E,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function is negative. It will be changed to 0.`,
-    fullCode: "IBM1272IE",
   },
 
   /**
@@ -5933,7 +5550,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Third argument to ${BUILTINname} built-in function is negative. It will be changed to 0.`,
-    fullCode: "IBM1273IE",
   },
 
   /**
@@ -5952,7 +5568,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXIF) violation: conditional expression does not have the attributes BIT(1).",
-    fullCode: "IBM1274IE",
   },
 
   /**
@@ -5964,7 +5579,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "OPTIONS(RETCODE) on ATTACH reference is invalid and will be ignored.",
-    fullCode: "IBM1281IE",
   },
 
   /**
@@ -5977,7 +5591,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXCONV) violation: exponentiation operands should have numeric type.",
-    fullCode: "IBM1287IE",
   },
 
   /**
@@ -5990,7 +5603,6 @@ export const Error = {
     severity: Severity.E,
     message: (maximumvalue: string) =>
       `WIDECHAR extent is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1293IE",
   },
 
   /**
@@ -6003,7 +5615,6 @@ export const Error = {
     severity: Severity.E,
     message: (maximumvalue: string) =>
       `BIT extent is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1294IE",
   },
 
   /**
@@ -6019,7 +5630,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Sole bound specified is less than 1. An upper bound of 1 is assumed.",
-    fullCode: "IBM1295IE",
   },
 
   /**
@@ -6036,7 +5646,6 @@ export const Error = {
     code: "IBM1296I",
     severity: Severity.E,
     message: "The BYADDR option conflicts with the SYSTEM option.",
-    fullCode: "IBM1296IE",
   },
 
   /**
@@ -6054,7 +5663,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Source and target in BY NAME assignment have no matching assignable base identifiers.",
-    fullCode: "IBM1297IE",
   },
 
   /**
@@ -6065,7 +5673,6 @@ export const Error = {
     code: "IBM1298I",
     severity: Severity.E,
     message: "Characters in B3 literals must be 0-7.",
-    fullCode: "IBM1298IE",
   },
 
   /**
@@ -6078,7 +5685,6 @@ export const Error = {
     severity: Severity.E,
     message: (maximumvalue: string) =>
       `CHARACTER extent is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1299IE",
   },
 
   /**
@@ -6090,7 +5696,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string, attribute: string) =>
       `RULES(NOLAXDCL) violation: ${variablename} is contextually declared as ${attribute} .`,
-    fullCode: "IBM1300IE",
   },
 
   /**
@@ -6102,7 +5707,6 @@ export const Error = {
     code: "IBM1301I",
     severity: Severity.E,
     message: "A DECIMAL exponent is required.",
-    fullCode: "IBM1301IE",
   },
 
   /**
@@ -6114,7 +5718,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The limit on the number of DEFAULT predicates in a block has already been reached. This and subsequent DEFAULT predicates in this block will be ignored.",
-    fullCode: "IBM1302IE",
   },
 
   /**
@@ -6131,7 +5734,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `A second argument to the ${BUILTINname} built-in function must be supplied for arrays with more than one dimension. A value of 1 is assumed.`,
-    fullCode: "IBM1303IE",
   },
 
   /**
@@ -6144,7 +5746,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function is not positive. A value of 1 is assumed.`,
-    fullCode: "IBM1304IE",
   },
 
   /**
@@ -6161,7 +5762,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string, dimensioncount: string) =>
       `Second argument to ${BUILTINname} built-in function is greater than the number of dimensions for the first argument. A value of ${dimensioncount} is assumed.`,
-    fullCode: "IBM1305IE",
   },
 
   /**
@@ -6176,7 +5776,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `Repeated declaration of ${identifier} is invalid and will be ignored.`,
-    fullCode: "IBM1306IE",
   },
 
   /**
@@ -6191,7 +5790,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Duplicate specification of arithmetic precision. Subsequent specification ignored.",
-    fullCode: "IBM1307IE",
   },
 
   /**
@@ -6209,7 +5807,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `Repeated declaration of ${identifier} is invalid. The name will be replaced by an asterisk.`,
-    fullCode: "IBM1308IE",
   },
 
   /**
@@ -6225,7 +5822,6 @@ export const Error = {
     severity: Severity.E,
     message: (attribute: string) =>
       `Duplicate specification of ${attribute} . Subsequent specification ignored.`,
-    fullCode: "IBM1309IE",
   },
 
   /**
@@ -6240,7 +5836,6 @@ export const Error = {
     severity: Severity.E,
     message: (character: string) =>
       `The attribute ${character} conflicts with previous attributes and is ignored.`,
-    fullCode: "IBM1310IE",
   },
 
   /**
@@ -6254,7 +5849,6 @@ export const Error = {
     code: "IBM1311I",
     severity: Severity.E,
     message: "EXTERNAL name contains no non- blank characters and is ignored.",
-    fullCode: "IBM1311IE",
   },
 
   /**
@@ -6269,7 +5863,6 @@ export const Error = {
     code: "IBM1312I",
     severity: Severity.E,
     message: "WX literals should contain a multiple of 4 hex digits.",
-    fullCode: "IBM1312IE",
   },
 
   /**
@@ -6283,7 +5876,6 @@ export const Error = {
     code: "IBM1314I",
     severity: Severity.E,
     message: "ELSE clause outside of an open IF- THEN statement is ignored.",
-    fullCode: "IBM1314IE",
   },
 
   /**
@@ -6301,7 +5893,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "END label matches a label on an open group, but that group label is subscripted.",
-    fullCode: "IBM1315IE",
   },
 
   /**
@@ -6318,7 +5909,6 @@ export const Error = {
     code: "IBM1316I",
     severity: Severity.E,
     message: "END label is not a label on any open group.",
-    fullCode: "IBM1316IE",
   },
 
   /**
@@ -6340,7 +5930,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "An END statement may be missing after an OTHERWISE unit. One will be inserted.",
-    fullCode: "IBM1317IE",
   },
 
   /**
@@ -6354,7 +5943,6 @@ export const Error = {
     severity: Severity.E,
     message: (optionname: string) =>
       `The ENVIRONMENT option ${optionname} conflicts with preceding ENVIRONMENT options. This option will be ignored.`,
-    fullCode: "IBM1318IE",
   },
 
   /**
@@ -6368,7 +5956,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "STRINGSIZE condition raised while evaluating expression. Result is truncated.",
-    fullCode: "IBM1319IE",
   },
 
   /**
@@ -6386,7 +5973,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "STRINGRANGE condition raised while evaluating expression. Arguments are adjusted to fit.",
-    fullCode: "IBM1320IE",
   },
 
   /**
@@ -6404,7 +5990,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "LEAVE/ITERATE label matches a label on an open DO group, but that DO group label is subscripted.",
-    fullCode: "IBM1321IE",
   },
 
   /**
@@ -6422,7 +6007,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "LEAVE/ITERATE label is not a label on any open DO group in its containing block.",
-    fullCode: "IBM1322IE",
   },
 
   /**
@@ -6441,7 +6025,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "ITERATE/LEAVE statement is invalid outside an open DO statement. The statement will be ignored.",
-    fullCode: "IBM1323IE",
   },
 
   /**
@@ -6456,7 +6039,6 @@ export const Error = {
     severity: Severity.E,
     message: (name: string) =>
       `The name ${name} occurs more than once in the EXPORTS clause.`,
-    fullCode: "IBM1324IE",
   },
 
   /**
@@ -6472,7 +6054,6 @@ export const Error = {
     severity: Severity.E,
     message: (name: string) =>
       `The name ${name} occurs in the EXPORTS clause, but is not the name of any nonnested PROCEDURE.`,
-    fullCode: "IBM1325IE",
   },
 
   /**
@@ -6490,7 +6071,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Variables declared without a name must be structure members or followed by a substructure list.",
-    fullCode: "IBM1326IE",
   },
 
   /**
@@ -6503,7 +6083,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The CHARACTER VARYING parameter to MAIN should be ASCII with the attribute NATIVE.",
-    fullCode: "IBM1327IE",
   },
 
   /**
@@ -6516,7 +6095,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The CHARACTER VARYING parameter to MAIN should be EBCDIC with the attribute BIGENDIAN.",
-    fullCode: "IBM1328IE",
   },
 
   /**
@@ -6528,7 +6106,6 @@ export const Error = {
     code: "IBM1329I",
     severity: Severity.E,
     message: "ENTRY statements are not allowed under RULES(NOMULTIENTRY).",
-    fullCode: "IBM1329IE",
   },
 
   /**
@@ -6543,7 +6120,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The I in an iSUB token must be bigger than zero. A value of 1 is assumed.",
-    fullCode: "IBM1330IE",
   },
 
   /**
@@ -6558,7 +6134,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The I in an iSUB token must have no more than 2 digits. A value of 1 is assumed.",
-    fullCode: "IBM1331IE",
   },
 
   /**
@@ -6574,7 +6149,6 @@ export const Error = {
     severity: Severity.E,
     message: (formatitem: string) =>
       `The ${formatitem} format item requires an argument when used in GET statement. A value of 1 is assumed.`,
-    fullCode: "IBM1332IE",
   },
 
   /**
@@ -6589,7 +6163,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Non-asterisk array bounds are not permitted in GENERIC descriptions.",
-    fullCode: "IBM1333IE",
   },
 
   /**
@@ -6604,7 +6177,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "String lengths and area sizes are not permitted in GENERIC descriptions.",
-    fullCode: "IBM1334IE",
   },
 
   /**
@@ -6620,7 +6192,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Entry description lists are not permitted in GENERIC descriptions.",
-    fullCode: "IBM1335IE",
   },
 
   /**
@@ -6633,7 +6204,6 @@ export const Error = {
     severity: Severity.E,
     message: (maximumvalue: string) =>
       `GRAPHIC extent is reduced to ${maximumvalue} .`,
-    fullCode: "IBM1336IE",
   },
 
   /**
@@ -6648,7 +6218,6 @@ export const Error = {
     code: "IBM1337I",
     severity: Severity.E,
     message: "GX literals should contain a multiple of 4 hex digits.",
-    fullCode: "IBM1337IE",
   },
 
   /**
@@ -6661,7 +6230,6 @@ export const Error = {
     code: "IBM1338I",
     severity: Severity.E,
     message: "Upper bound is less than lower bound. Bounds will be reversed.",
-    fullCode: "IBM1338IE",
   },
 
   /**
@@ -6674,7 +6242,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `Identifier is too long. It will be collapsed to ${identifier} .`,
-    fullCode: "IBM1339IE",
   },
 
   /**
@@ -6692,7 +6259,6 @@ export const Error = {
     severity: Severity.E,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} contains BIT data. NOMAP is assumed.`,
-    fullCode: "IBM1340IE",
   },
 
   /**
@@ -6711,7 +6277,6 @@ export const Error = {
     severity: Severity.E,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is or contains a UNION. NOMAP is assumed.`,
-    fullCode: "IBM1341IE",
   },
 
   /**
@@ -6730,7 +6295,6 @@ export const Error = {
     severity: Severity.E,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} contains non-constant extents. NOMAP is assumed.`,
-    fullCode: "IBM1342IE",
   },
 
   /**
@@ -6747,7 +6311,6 @@ export const Error = {
     severity: Severity.E,
     message: (nomapsuboption: string, option: string) =>
       `${nomapsuboption} is invalid as a suboption of ${option} .`,
-    fullCode: "IBM1343IE",
   },
 
   /**
@@ -6759,7 +6322,6 @@ export const Error = {
     code: "IBM1344I",
     severity: Severity.E,
     message: "NOMAP specifications are valid only for ILC routines.",
-    fullCode: "IBM1344IE",
   },
 
   /**
@@ -6778,7 +6340,6 @@ export const Error = {
     code: "IBM1345I",
     severity: Severity.E,
     message: "Initial level number in a structure is not 1.",
-    fullCode: "IBM1345IE",
   },
 
   /**
@@ -6794,7 +6355,6 @@ export const Error = {
     code: "IBM1346I",
     severity: Severity.E,
     message: "INIT expression should be enclosed in parentheses.",
-    fullCode: "IBM1346IE",
   },
 
   /**
@@ -6808,7 +6368,6 @@ export const Error = {
     code: "IBM1347I",
     severity: Severity.E,
     message: "B assumed to complete iSUB.",
-    fullCode: "IBM1347IE",
   },
 
   /**
@@ -6819,7 +6378,6 @@ export const Error = {
     code: "IBM1348I",
     severity: Severity.E,
     message: "Digit in BINARY constant is not zero or one.",
-    fullCode: "IBM1348IE",
   },
 
   /**
@@ -6830,7 +6388,6 @@ export const Error = {
     code: "IBM1349I",
     severity: Severity.E,
     message: "Characters in BIT literals must be 0 or 1.",
-    fullCode: "IBM1349IE",
   },
 
   /**
@@ -6845,7 +6402,6 @@ export const Error = {
     severity: Severity.E,
     message: (n: string) =>
       `Character with decimal value ${n} does not belong to the PL/I character set. It will be ignored.`,
-    fullCode: "IBM1350IE",
   },
 
   /**
@@ -6856,7 +6412,6 @@ export const Error = {
     code: "IBM1351I",
     severity: Severity.E,
     message: "Characters in hex literals must be 0-9 or A-F.",
-    fullCode: "IBM1351IE",
   },
 
   /**
@@ -6869,7 +6424,6 @@ export const Error = {
     severity: Severity.E,
     message: (character: string) =>
       `The statement element ${character} is invalid. The statement will be ignored.`,
-    fullCode: "IBM1352IE",
   },
 
   /**
@@ -6884,7 +6438,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Use of underscore as initial character in an identifier accepted although invalid under LANGLVL(SAA).",
-    fullCode: "IBM1353IE",
   },
 
   /**
@@ -6896,7 +6449,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Multiple argument lists are valid only with the last identifier in a reference.",
-    fullCode: "IBM1354IE",
   },
 
   /**
@@ -6908,7 +6460,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Empty argument lists are valid only with the last identifier in a reference.",
-    fullCode: "IBM1355IE",
   },
 
   /**
@@ -6924,7 +6475,6 @@ export const Error = {
     severity: Severity.E,
     message: (n: string) =>
       `Character with decimal value ${n} does not belong to the PL/I character set. It is assumed to be an OR symbol.`,
-    fullCode: "IBM1356IE",
   },
 
   /**
@@ -6940,7 +6490,6 @@ export const Error = {
     severity: Severity.E,
     message: (n: string) =>
       `Character with decimal value ${n} does not belong to the PL/I 44 character set. It is assumed to be a NOT symbol.`,
-    fullCode: "IBM1357IE",
   },
 
   /**
@@ -6957,7 +6506,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `The scale factor specified in ${BUILTINname} built-in function with a floating-point argument must be positive. It will be changed to 1.`,
-    fullCode: "IBM1358IE",
   },
 
   /**
@@ -6972,7 +6520,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string, identifier2: string) =>
       `Names in RANGE( ${identifier} : ${identifier2} ) are not in ascending order. Order is reversed.`,
-    fullCode: "IBM1359IE",
   },
 
   /**
@@ -6989,7 +6536,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `The name ${identifier} has already been defined as a FORMAT constant.`,
-    fullCode: "IBM1360IE",
   },
 
   /**
@@ -7006,7 +6552,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `The name ${identifier} has already been defined as a LABEL constant.`,
-    fullCode: "IBM1361IE",
   },
 
   /**
@@ -7023,7 +6568,6 @@ export const Error = {
     severity: Severity.E,
     message: (labelname: string) =>
       `The label ${labelname} has already been declared. The explicit declaration of the label will not be accepted.`,
-    fullCode: "IBM1362IE",
   },
 
   /**
@@ -7041,7 +6585,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Structure level greater than 255 specified. It will be replaced by 255.",
-    fullCode: "IBM1363IE",
   },
 
   /**
@@ -7059,7 +6602,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Elements with level numbers greater than 1 follow an element without a level number. A level number of 1 is assumed.",
-    fullCode: "IBM1364IE",
   },
 
   /**
@@ -7077,7 +6619,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Statement type resolution requires too many lexical units to 45 be examined. The statement will be ignored.",
-    fullCode: "IBM1365IE",
   },
 
   /**
@@ -7095,7 +6636,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Level number following LIKE specification is greater than than the level number for the LIKE specification. LIKE attribute will be ignored.",
-    fullCode: "IBM1366IE",
   },
 
   /**
@@ -7113,7 +6653,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Statements inside a SELECT must be preceded by a WHEN or an OTHERWISE clause. Statement is ignored.",
-    fullCode: "IBM1367IE",
   },
 
   /**
@@ -7133,7 +6672,6 @@ export const Error = {
     severity: Severity.E,
     message: (character: string) =>
       `The attribute ${character} is invalid if it is not followed by an element with a greater logical level.`,
-    fullCode: "IBM1368IE",
   },
 
   /**
@@ -7145,7 +6683,6 @@ export const Error = {
     code: "IBM1369I",
     severity: Severity.E,
     message: "MAIN has already been specified in the PACKAGE.",
-    fullCode: "IBM1369IE",
   },
 
   /**
@@ -7160,7 +6697,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Extent expression is negative. It will be replaced by the constant 1.",
-    fullCode: "IBM1370IE",
   },
 
   /**
@@ -7173,7 +6709,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `RULES(NOLAXQUAL) violation: structure element ${identifier} is not dot qualified.`,
-    fullCode: "IBM1371IE",
   },
 
   /**
@@ -7191,7 +6726,6 @@ export const Error = {
     code: "IBM1372I",
     severity: Severity.E,
     message: "EXTERNAL specified on internal entry point.",
-    fullCode: "IBM1372IE",
   },
 
   /**
@@ -7204,7 +6738,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `RULES(NOLAXDCL) violation: variable ${variablename} is implicitly declared.`,
-    fullCode: "IBM1373IE",
   },
 
   /**
@@ -7222,7 +6755,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `Contextual attributes conflicting with PARAMETER will not be applied to ${variablename} .`,
-    fullCode: "IBM1374IE",
   },
 
   /**
@@ -7239,7 +6771,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `The DEFINED variable ${variablename} does not fit into its base variable.`,
-    fullCode: "IBM1375IE",
   },
 
   /**
@@ -7254,7 +6785,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Factoring of level numbers into declaration lists containing level numbers is invalid. The level numbers in the declaration list will be ignored.",
-    fullCode: "IBM1376IE",
   },
 
   /**
@@ -7269,7 +6799,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `A scale factor has been specified as an argument to the ${BUILTINname} built-in function, but the result of that function has type FLOAT. The scale factor will be ignored.`,
-    fullCode: "IBM1377IE",
   },
 
   /**
@@ -7286,7 +6815,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "An arguments list or subscripts list has been provided for a GENERIC ENTRY reference. It will be ignored.",
-    fullCode: "IBM1378IE",
   },
 
   /**
@@ -7301,7 +6829,6 @@ export const Error = {
     code: "IBM1379I",
     severity: Severity.E,
     message: "Locator qualifier for GENERIC reference is ignored.",
-    fullCode: "IBM1379IE",
   },
 
   /**
@@ -7321,7 +6848,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Target structure in assignment contains no elements with the ASSIGNABLE attribute. No assignments will be generated.",
-    fullCode: "IBM1380IE",
   },
 
   /**
@@ -7334,7 +6860,6 @@ export const Error = {
     code: "IBM1381I",
     severity: Severity.E,
     message: "DEFINED base for a BIT structure should be aligned.",
-    fullCode: "IBM1381IE",
   },
 
   /**
@@ -7349,7 +6874,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "INITIAL attribute is invalid for STATIC FORMAT variables. Storage class is changed to AUTOMATIC.",
-    fullCode: "IBM1382IE",
   },
 
   /**
@@ -7362,7 +6886,6 @@ export const Error = {
     severity: Severity.E,
     message: (keyword: string) =>
       `Labels on ${keyword} statements are invalid and ignored.`,
-    fullCode: "IBM1383IE",
   },
 
   /**
@@ -7373,7 +6896,6 @@ export const Error = {
     code: "IBM1384I",
     severity: Severity.E,
     message: (message: string) => `${message}`,
-    fullCode: "IBM1384IE",
   },
 
   /**
@@ -7385,7 +6907,6 @@ export const Error = {
     code: "IBM1385I",
     severity: Severity.E,
     message: "Invalid DEFINED - string overlay defining attempted.",
-    fullCode: "IBM1385IE",
   },
 
   /**
@@ -7401,7 +6922,6 @@ export const Error = {
     code: "IBM1386I",
     severity: Severity.E,
     message: "DEFINED base for a BIT variable should not be subscripted.",
-    fullCode: "IBM1386IE",
   },
 
   /**
@@ -7419,7 +6939,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The NODESCRIPTOR attribute is invalid when any parameters have * extents. The NODESCRIPTOR attribute will be ignored.",
-    fullCode: "IBM1387IE",
   },
 
   /**
@@ -7436,7 +6955,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The NODESCRIPTOR attribute is invalid when any parameters have the NONCONNECTED attribute.",
-    fullCode: "IBM1388IE",
   },
 
   /**
@@ -7449,7 +6967,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `The identifier ${identifier} is not the name of a built-in function. The BUILTIN attribute will be ignored.`,
-    fullCode: "IBM1389IE",
   },
 
   /**
@@ -7460,7 +6977,6 @@ export const Error = {
     code: "IBM1390I",
     severity: Severity.E,
     message: (note: string) => `${note}`,
-    fullCode: "IBM1390IE",
   },
 
   /**
@@ -7472,7 +6988,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "End-of-source has been encountered after an unmatched comment marker.",
-    fullCode: "IBM1391IE",
   },
 
   /**
@@ -7483,7 +6998,6 @@ export const Error = {
     code: "IBM1392I",
     severity: Severity.E,
     message: "End-of-source has been encountered after an unmatched quote.",
-    fullCode: "IBM1392IE",
   },
 
   /**
@@ -7498,7 +7012,6 @@ export const Error = {
     severity: Severity.E,
     message: (optionname: string) =>
       `Item in OPTIONS list conflicts with other attributes in the declaration. ${optionname} is ignored.`,
-    fullCode: "IBM1393IE",
   },
 
   /**
@@ -7514,7 +7027,6 @@ export const Error = {
     severity: Severity.E,
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for BEGIN blocks. ${optionname} is ignored.`,
-    fullCode: "IBM1394IE",
   },
 
   /**
@@ -7530,7 +7042,6 @@ export const Error = {
     severity: Severity.E,
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for PACKAGEs. ${optionname} is ignored.`,
-    fullCode: "IBM1395IE",
   },
 
   /**
@@ -7546,7 +7057,6 @@ export const Error = {
     severity: Severity.E,
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for PROCEDUREs. ${optionname} is ignored.`,
-    fullCode: "IBM1396IE",
   },
 
   /**
@@ -7563,7 +7073,6 @@ export const Error = {
     severity: Severity.E,
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for nested PROCEDUREs. ${optionname} is ignored.`,
-    fullCode: "IBM1397IE",
   },
 
   /**
@@ -7579,7 +7088,6 @@ export const Error = {
     severity: Severity.E,
     message: (optionname: string) =>
       `Invalid item in OPTIONS list. ${optionname} is ignored.`,
-    fullCode: "IBM1398IE",
   },
 
   /**
@@ -7595,7 +7103,6 @@ export const Error = {
     severity: Severity.E,
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for ENTRY statements. ${optionname} is ignored.`,
-    fullCode: "IBM1399IE",
   },
 
   /**
@@ -7611,7 +7118,6 @@ export const Error = {
     severity: Severity.E,
     message: (optionname: string) =>
       `Item in OPTIONS list conflicts with preceding items. ${optionname} is ignored.`,
-    fullCode: "IBM1400IE",
   },
 
   /**
@@ -7628,7 +7134,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Parameter attributes have been specified for a variable that is not a parameter. The parameter attributes are ignored.",
-    fullCode: "IBM1401IE",
   },
 
   /**
@@ -7642,7 +7147,6 @@ export const Error = {
     code: "IBM1402I",
     severity: Severity.E,
     message: "Constant in POSITION attribute is less than 1.",
-    fullCode: "IBM1402IE",
   },
 
   /**
@@ -7656,7 +7160,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The end of the source was reached before the logical end of the program. Null statements and END statements will be inserted as necessary to complete the program.",
-    fullCode: "IBM1403IE",
   },
 
   /**
@@ -7673,7 +7176,6 @@ export const Error = {
     severity: Severity.E,
     message: (procname: string) =>
       `The PROCEDURE name ${procname} has already been declared. The explicit declaration of the PROCEDURE name will not be accepted.`,
-    fullCode: "IBM1404IE",
   },
 
   /**
@@ -7687,7 +7189,6 @@ export const Error = {
     code: "IBM1405I",
     severity: Severity.E,
     message: "Only one description is allowed in a returns descriptor.",
-    fullCode: "IBM1405IE",
   },
 
   /**
@@ -7703,7 +7204,6 @@ export const Error = {
     severity: Severity.E,
     message: (repetitionfactor: string, string: string) =>
       `The product of the repetition factor ${repetitionfactor} and the length of the constant ${string} to which it is applied is greater than the maximum length allowed for a constant. The repetition factor will be ignored.`,
-    fullCode: "IBM1406IE",
   },
 
   /**
@@ -7714,7 +7214,6 @@ export const Error = {
     code: "IBM1407I",
     severity: Severity.E,
     message: "Scale factor is bigger than 127. It will be replaced by 127.",
-    fullCode: "IBM1407IE",
   },
 
   /**
@@ -7725,7 +7224,6 @@ export const Error = {
     code: "IBM1408I",
     severity: Severity.E,
     message: "Scale factor is less than -128. It will be replaced by -128.",
-    fullCode: "IBM1408IE",
   },
 
   /**
@@ -7737,7 +7235,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "A SELECT statement may be missing. A SELECT statement, without an expression, will be inserted.",
-    fullCode: "IBM1409IE",
   },
 
   /**
@@ -7756,7 +7253,6 @@ export const Error = {
     code: "IBM1410I",
     severity: Severity.E,
     message: "Semicolon inserted after ELSE keyword.",
-    fullCode: "IBM1410IE",
   },
 
   /**
@@ -7774,7 +7270,6 @@ export const Error = {
     code: "IBM1411I",
     severity: Severity.E,
     message: "Semicolon inserted after ON clause.",
-    fullCode: "IBM1411IE",
   },
 
   /**
@@ -7785,7 +7280,6 @@ export const Error = {
     code: "IBM1412I",
     severity: Severity.E,
     message: "Semicolon inserted after OTHERWISE keyword.",
-    fullCode: "IBM1412IE",
   },
 
   /**
@@ -7796,7 +7290,6 @@ export const Error = {
     code: "IBM1413I",
     severity: Severity.E,
     message: "Semicolon inserted after THEN keyword.",
-    fullCode: "IBM1413IE",
   },
 
   /**
@@ -7807,7 +7300,6 @@ export const Error = {
     code: "IBM1414I",
     severity: Severity.E,
     message: "Semicolon inserted after WHEN clause.",
-    fullCode: "IBM1414IE",
   },
 
   /**
@@ -7820,7 +7312,6 @@ export const Error = {
     code: "IBM1415I",
     severity: Severity.E,
     message: "Source file does not end with the logical end of the program.",
-    fullCode: "IBM1415IE",
   },
 
   /**
@@ -7832,7 +7323,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `Subscripts have been specified for the variable ${variablename} , but it is not an array variable.`,
-    fullCode: "IBM1416IE",
   },
 
   /**
@@ -7844,7 +7334,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Second argument in ${BUILTINname} reference is less than 1. It will be replaced by 1.`,
-    fullCode: "IBM1417IE",
   },
 
   /**
@@ -7856,7 +7345,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Second argument in ${BUILTINname} reference is too big. It will be trimmed to fit.`,
-    fullCode: "IBM1418IE",
   },
 
   /**
@@ -7868,7 +7356,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Third argument in ${BUILTINname} reference is less than 0. It will be replaced by 0.`,
-    fullCode: "IBM1419IE",
   },
 
   /**
@@ -7880,7 +7367,6 @@ export const Error = {
     severity: Severity.E,
     message: (kmConstant: string, maximumfactor: string) =>
       `The factor in ${kmConstant} is too large and is replaced by ${maximumfactor} .`,
-    fullCode: "IBM1420IE",
   },
 
   /**
@@ -7893,7 +7379,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "More than 15 dimensions have been specified. Excess will be ignored.",
-    fullCode: "IBM1421IE",
   },
 
   /**
@@ -7905,7 +7390,6 @@ export const Error = {
     code: "IBM1422I",
     severity: Severity.E,
     message: "Maximum of 500 LIKE attributes per block exceeded.",
-    fullCode: "IBM1422IE",
   },
 
   /**
@@ -7916,7 +7400,6 @@ export const Error = {
     code: "IBM1423I",
     severity: Severity.E,
     message: "UNALIGNED attribute conflicts with AREA attribute.",
-    fullCode: "IBM1423IE",
   },
 
   /**
@@ -7928,7 +7411,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "End of comment marker found when there are no open comments. Marker will be ignored.",
-    fullCode: "IBM1424IE",
   },
 
   /**
@@ -7940,7 +7422,6 @@ export const Error = {
     severity: Severity.E,
     message: (directive: string) =>
       `There is no compiler directive ${directive} . Input up to the next semicolon will be ignored.`,
-    fullCode: "IBM1425IE",
   },
 
   /**
@@ -7951,7 +7432,6 @@ export const Error = {
     code: "IBM1426I",
     severity: Severity.E,
     message: "Structure level of 0 replaced by 1.",
-    fullCode: "IBM1426IE",
   },
 
   /**
@@ -7962,7 +7442,6 @@ export const Error = {
     code: "IBM1427I",
     severity: Severity.E,
     message: "Numeric precision of 0 replaced by 1.",
-    fullCode: "IBM1427IE",
   },
 
   /**
@@ -7973,7 +7452,6 @@ export const Error = {
     code: "IBM1428I",
     severity: Severity.E,
     message: "X literals should contain a multiple of 2 hex digits.",
-    fullCode: "IBM1428IE",
   },
 
   /**
@@ -7986,7 +7464,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `INITIAL attribute for REFER object ${variablename} is invalid.`,
-    fullCode: "IBM1429IE",
   },
 
   /**
@@ -7999,7 +7476,6 @@ export const Error = {
     severity: Severity.E,
     message: (typetype: string, typename: string) =>
       `UNSIGNED attribute for ${typetype} type ${typename} conflicts with negative INITIAL values and is ignored.`,
-    fullCode: "IBM1430IE",
   },
 
   /**
@@ -8019,7 +7495,6 @@ export const Error = {
     severity: Severity.E,
     message: (typetype: string, typename: string) =>
       `PRECISION specified for ${typetype} type ${typename} is too small to cover its INITIAL values and is adjusted to fit.`,
-    fullCode: "IBM1431IE",
   },
 
   /**
@@ -8031,7 +7506,6 @@ export const Error = {
     severity: Severity.E,
     message: (typename: string) =>
       `The type ${typename} is already defined. The redefinition is ignored.`,
-    fullCode: "IBM1432IE",
   },
 
   /**
@@ -8046,7 +7520,6 @@ export const Error = {
     severity: Severity.E,
     message: (name: string) =>
       `The name ${name} occurs more than once in the RESERVES clause.`,
-    fullCode: "IBM1433IE",
   },
 
   /**
@@ -8062,7 +7535,6 @@ export const Error = {
     severity: Severity.E,
     message: (name: string) =>
       `The name ${name} occurs in the RESERVES clause, but is not the name of any level 1 STATIC EXTERNAL variable.`,
-    fullCode: "IBM1434IE",
   },
 
   /**
@@ -8077,7 +7549,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `A precision value less than 1 has been specified as an argument to the ${BUILTINname} built-in function. It will be replaced by 15.`,
-    fullCode: "IBM1435IE",
   },
 
   /**
@@ -8092,7 +7563,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `The scale factor specified as an argument to the ${BUILTINname} built-in function is out of the valid range. It will be replaced by the nearest valid value.`,
-    fullCode: "IBM1436IE",
   },
 
   /**
@@ -8108,7 +7578,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `The second argument to the ${BUILTINname} built-in function is greater than the maximum FIXED BINARY precision. It will be replaced by the maximum value.`,
-    fullCode: "IBM1437IE",
   },
 
   /**
@@ -8125,7 +7594,6 @@ export const Error = {
     severity: Severity.E,
     message: (ENTRYname: string) =>
       `Excess arguments for ENTRY ${ENTRYname} ignored.`,
-    fullCode: "IBM1438IE",
   },
 
   /**
@@ -8141,7 +7609,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Excess arguments for ${BUILTINname} built-in function ignored.`,
-    fullCode: "IBM1439IE",
   },
 
   /**
@@ -8157,7 +7624,6 @@ export const Error = {
     code: "IBM1441I",
     severity: Severity.E,
     message: "ENTRY/RETURNS description lists for comparands do not match.",
-    fullCode: "IBM1441IE",
   },
 
   /**
@@ -8176,7 +7642,6 @@ export const Error = {
     severity: Severity.E,
     message: (targetvariable: string) =>
       `The ENTRY/RETURNS description lists in the ENTRY to be assigned to ${targetvariable} do not match those of the target variable.`,
-    fullCode: "IBM1442IE",
   },
 
   /**
@@ -8194,7 +7659,6 @@ export const Error = {
     severity: Severity.E,
     message: (targetvariable: string) =>
       `An ENTRY/RETURNS description list in an ENTRY in the INITIAL list for ${targetvariable} do not match those of the target variable.`,
-    fullCode: "IBM1443IE",
   },
 
   /**
@@ -8213,7 +7677,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The ENTRY/RETURNS description lists in the RETURN statement do not match those in the corresponding RETURNS attribute",
-    fullCode: "IBM1444IE",
   },
 
   /**
@@ -8230,7 +7693,6 @@ export const Error = {
     severity: Severity.E,
     message: (argumentnumber: string, entryname: string) =>
       `The ENTRY/RETURNS description lists for argument number ${argumentnumber} in ENTRY reference ${entryname} do not match those in the corresponding parameter.`,
-    fullCode: "IBM1445IE",
   },
 
   /**
@@ -8242,7 +7704,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Third argument in ${BUILTINname} reference is too big. It will be trimmed to fit.`,
-    fullCode: "IBM1446IE",
   },
 
   /**
@@ -8253,7 +7714,6 @@ export const Error = {
     code: "IBM1447I",
     severity: Severity.E,
     message: "Literals with an X prefix are valid only in EXEC SQL statements.",
-    fullCode: "IBM1447IE",
   },
 
   /**
@@ -8269,7 +7729,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Use of nonconstant extents in BASED variables without REFER accepted although invalid under LANGLVL(SAA).",
-    fullCode: "IBM1448IE",
   },
 
   /**
@@ -8281,7 +7740,6 @@ export const Error = {
     severity: Severity.E,
     message: (typefunction: string) =>
       `Use of ${typefunction} accepted although invalid under LANGLVL(SAA).`,
-    fullCode: "IBM1449IE",
   },
 
   /**
@@ -8297,7 +7755,6 @@ export const Error = {
     severity: Severity.E,
     message: (keyword: string) =>
       `${keyword} keyword accepted although invalid under LANGLVL(SAA).`,
-    fullCode: "IBM1450IE",
   },
 
   /**
@@ -8310,7 +7767,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Use of S, D and Q constants accepted although invalid under LANGLVL(SAA).",
-    fullCode: "IBM1451IE",
   },
 
   /**
@@ -8323,7 +7779,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Use of underscores in constants accepted although invalid under LANGLVL(SAA).",
-    fullCode: "IBM1452IE",
   },
 
   /**
@@ -8336,7 +7791,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Use of asterisks for names in declares accepted although invalid under LANGLVL(SAA).",
-    fullCode: "IBM1453IE",
   },
 
   /**
@@ -8348,7 +7802,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Use of XN and XU constants accepted although invalid under LANGLVL(SAA).",
-    fullCode: "IBM1454IE",
   },
 
   /**
@@ -8363,7 +7816,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Use of arguments with ${BUILTINname} built-in function accepted although invalid under LANGLVL(SAA).`,
-    fullCode: "IBM1455IE",
   },
 
   /**
@@ -8379,7 +7831,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Use of 3 arguments with ${BUILTINname} built-in function accepted although invalid under LANGLVL(SAA).`,
-    fullCode: "IBM1456IE",
   },
 
   /**
@@ -8395,7 +7846,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Use of 1 argument with ${BUILTINname} built-in function accepted although invalid under LANGLVL(SAA).`,
-    fullCode: "IBM1457IE",
   },
 
   /**
@@ -8407,7 +7857,6 @@ export const Error = {
     code: "IBM1458I",
     severity: Severity.E,
     message: "GOTO is not allowed under RULES(NOGOTO).",
-    fullCode: "IBM1458IE",
   },
 
   /**
@@ -8425,7 +7874,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Uninitialized AUTOMATIC variables in a block should not be used in the prologue of that block.",
-    fullCode: "IBM1459IE",
   },
 
   /**
@@ -8442,7 +7890,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Under RULES(ANS), nonzero scale factors are not permitted in declarations of FIXED BIN. Declared scale factor will be ignored.",
-    fullCode: "IBM1460IE",
   },
 
   /**
@@ -8460,7 +7907,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string, precision: string, scalefactor: string) =>
       `Tne result of the ${BUILTINname} built-in would have the attributes FIXED BIN( ${precision} , ${scalefactor} ), but under RULES(ANS), FIXED BIN scale factors must be zero. The scale factor will be set to zero.`,
-    fullCode: "IBM1461IE",
   },
 
   /**
@@ -8474,7 +7920,6 @@ export const Error = {
     code: "IBM1462I",
     severity: Severity.E,
     message: "Expression in comparison interpreted with DATE attribute.",
-    fullCode: "IBM1462IE",
   },
 
   /**
@@ -8493,7 +7938,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Operand with DATE attribute is invalid except in compare or 55 assign. DATE attribute will be ignored.",
-    fullCode: "IBM1463IE",
   },
 
   /**
@@ -8506,7 +7950,6 @@ export const Error = {
     code: "IBM1464I",
     severity: Severity.E,
     message: "DATE attribute ignored in comparison with non-date expression.",
-    fullCode: "IBM1464IE",
   },
 
   /**
@@ -8523,7 +7966,6 @@ export const Error = {
     severity: Severity.E,
     message: (variable: string) =>
       `Source in assignment has the DATE attribute, but target ${variable} does not. The DATE attribute will be ignored.`,
-    fullCode: "IBM1465IE",
   },
 
   /**
@@ -8535,7 +7977,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Source in assignment has the DATE attribute, but target does not. The DATE attribute will be ignored.",
-    fullCode: "IBM1466IE",
   },
 
   /**
@@ -8547,7 +7988,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `Source in INITIAL clause for ${variablename} has the DATE attribute but the target does not. The DATE attribute will be ignored.`,
-    fullCode: "IBM1467IE",
   },
 
   /**
@@ -8563,7 +8003,6 @@ export const Error = {
     severity: Severity.E,
     message: (argumentnumber: string, entryname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${entryname} has the DATE attribute but the corresponding parameter does not. The DATE attribute will be ignored.`,
-    fullCode: "IBM1468IE",
   },
 
   /**
@@ -8581,7 +8020,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Source in RETURN statement has the DATE attribute, but the corresponding RETURNS option does not. The DATE attribute will be ignored.",
-    fullCode: "IBM1469IE",
   },
 
   /**
@@ -8592,7 +8030,6 @@ export const Error = {
     code: "IBM1470I",
     severity: Severity.E,
     message: "An ID option must be specified for the INCLUDE preprocessor.",
-    fullCode: "IBM1470IE",
   },
 
   /**
@@ -8604,7 +8041,6 @@ export const Error = {
     code: "IBM1471I",
     severity: Severity.E,
     message: "The ID option specified for the INCLUDE preprocessor is invalid.",
-    fullCode: "IBM1471IE",
   },
 
   /**
@@ -8617,7 +8053,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "A closing right parenthesis is missing from the ID option specified for the INCLUDE preprocessor.",
-    fullCode: "IBM1472IE",
   },
 
   /**
@@ -8630,7 +8065,6 @@ export const Error = {
     code: "IBM1473I",
     severity: Severity.E,
     message: "The syntax of the preprocessor INCLUDE directive is incorrect.",
-    fullCode: "IBM1473IE",
   },
 
   /**
@@ -8647,7 +8081,6 @@ export const Error = {
     severity: Severity.E,
     message: (variable: string) =>
       `Source in assignment does not have the DATE attribute, but target ${variable} does. The DATE attribute will be ignored.`,
-    fullCode: "IBM1474IE",
   },
 
   /**
@@ -8659,7 +8092,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Target in assignment has the DATE attribute, but source does not. The DATE attribute will be ignored.",
-    fullCode: "IBM1475IE",
   },
 
   /**
@@ -8671,7 +8103,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `Source in INITIAL clause for ${variablename} does not have the DATE attribute but the target does. The DATE attribute will be ignored.`,
-    fullCode: "IBM1476IE",
   },
 
   /**
@@ -8687,7 +8118,6 @@ export const Error = {
     severity: Severity.E,
     message: (argumentnumber: string, entryname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${entryname} does not have the DATE attribute but the corresponding parameter does. The DATE attribute will be ignored.`,
-    fullCode: "IBM1477IE",
   },
 
   /**
@@ -8705,7 +8135,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Source in RETURN statement does not have the DATE attribute, but the corresponding RETURNS option does. The DATE attribute will be ignored.",
-    fullCode: "IBM1478IE",
   },
 
   /**
@@ -8718,7 +8147,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Multiple RETURN statements are not allowed under RULES(NOMULTIEXIT).",
-    fullCode: "IBM1479IE",
   },
 
   /**
@@ -8731,7 +8159,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Multiple closure of groups is not allowed under RULES(NOMULTICLOSE).",
-    fullCode: "IBM1480IE",
   },
 
   /**
@@ -8744,7 +8171,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "BYNAME assignment statements are not allowed under RULES(NOBYNAME).",
-    fullCode: "IBM1481IE",
   },
 
   /**
@@ -8761,7 +8187,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `RULES(NOLAXDCL) violation: the variable ${variablename} is declared without any data attributes.`,
-    fullCode: "IBM1482IE",
   },
 
   /**
@@ -8782,7 +8207,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `RULES(NOLAXDCL) violation: the structure member ${variablename} is declared without any data attributes. A level number may be incorrect.`,
-    fullCode: "IBM1483IE",
   },
 
   /**
@@ -8803,7 +8227,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXDCL) violation: an unnamed structure member is declared without any data attributes. A level number may be incorrect.",
-    fullCode: "IBM1484IE",
   },
 
   /**
@@ -8817,7 +8240,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "A WHEN or OTHERWISE clause has been found inside of an open DO group contained in an open SELECT group. An END statement may be missing and will be inserted in an attempt to fix the problem.",
-    fullCode: "IBM1485IE",
   },
 
   /**
@@ -8828,7 +8250,6 @@ export const Error = {
     code: "IBM1486I",
     severity: Severity.E,
     message: "Statement contains a mismatching number of ( and ).",
-    fullCode: "IBM1486IE",
   },
 
   /**
@@ -8839,7 +8260,6 @@ export const Error = {
     code: "IBM1487I",
     severity: Severity.E,
     message: "Statement contains a mismatching number of (: and :).",
-    fullCode: "IBM1487IE",
   },
 
   /**
@@ -8851,7 +8271,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Specification of an alternate DD for SYSIN after the source has been opened will be ignored.",
-    fullCode: "IBM1488IE",
   },
 
   /**
@@ -8862,7 +8281,6 @@ export const Error = {
     code: "IBM2400I",
     severity: Severity.E,
     message: "Compiler backend issued error messages to STDOUT.",
-    fullCode: "IBM2400IE",
   },
 
   /**
@@ -8879,7 +8297,6 @@ export const Error = {
     severity: Severity.E,
     message: (character: string, character2: string) =>
       `RULES(NOLAXPUNC) violation: missing ${character} assumed before ${character2} . DECLARE and other nonexecutable statements should not have labels.`,
-    fullCode: "IBM2401IE",
   },
 
   /**
@@ -8901,7 +8318,6 @@ export const Error = {
       variablename4: string,
     ) =>
       `${variablename} is declared as BASED on the ADDR of ${variablename2} , but ${variablename3} requires more storage than ${variablename4} .`,
-    fullCode: "IBM2402IE",
   },
 
   /**
@@ -8913,7 +8329,6 @@ export const Error = {
     code: "IBM2403I",
     severity: Severity.E,
     message: "PROCESS statements are not permitted under the NOPROCESS option.",
-    fullCode: "IBM2403IE",
   },
 
   /**
@@ -8936,7 +8351,6 @@ export const Error = {
       variablename5: string,
     ) =>
       `${variablename} is declared as BASED on the ADDR of ${variablename2} , but ${variablename3} requires more storage than remains in the enclosing level 1 structure ${variablename4} after the location of ${variablename5} .`,
-    fullCode: "IBM2404IE",
   },
 
   /**
@@ -8951,7 +8365,6 @@ export const Error = {
     code: "IBM2405I",
     severity: Severity.E,
     message: "Even decimal precisions are not allowed under RULES(NOEVENDEC).",
-    fullCode: "IBM2405IE",
   },
 
   /**
@@ -8966,7 +8379,6 @@ export const Error = {
     code: "IBM2406I",
     severity: Severity.E,
     message: "Precision outside VALUE clause will be ignored.",
-    fullCode: "IBM2406IE",
   },
 
   /**
@@ -8981,7 +8393,6 @@ export const Error = {
     code: "IBM2407I",
     severity: Severity.E,
     message: "Length outside VALUE clause will be ignored.",
-    fullCode: "IBM2407IE",
   },
 
   /**
@@ -8996,7 +8407,6 @@ export const Error = {
     code: "IBM2408I",
     severity: Severity.E,
     message: "AREA size outside VALUE clause will be ignored.",
-    fullCode: "IBM2408IE",
   },
 
   /**
@@ -9012,7 +8422,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RETURN statement without an expression is invalid inside a nested PROCEDURE that specified the RETURNS attribute.",
-    fullCode: "IBM2409IE",
   },
 
   /**
@@ -9024,7 +8433,6 @@ export const Error = {
     severity: Severity.E,
     message: (functionname: string) =>
       `Function ${functionname} contains no valid RETURN statement.`,
-    fullCode: "IBM2410IE",
   },
 
   /**
@@ -9038,7 +8446,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "STRINGOFGRAPHIC( CHARACTER ) option is ignored because argument to STRING built-in 59 function is possibly not contiguous.",
-    fullCode: "IBM2411IE",
   },
 
   /**
@@ -9056,7 +8463,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "PROCEDURE has no RETURNS attribute, but contains a RETURN statement. A RETURNS attribute will be assumed.",
-    fullCode: "IBM2412IE",
   },
 
   /**
@@ -9071,7 +8477,6 @@ export const Error = {
     severity: Severity.E,
     message: (attribute: string) =>
       `The attribute ${attribute} should be specified only on parameters and descriptors.`,
-    fullCode: "IBM2413IE",
   },
 
   /**
@@ -9087,7 +8492,6 @@ export const Error = {
     severity: Severity.E,
     message: (option: string, option2: string, option3: string) =>
       `The ${option} option conflicts with the ${option2} option. The ${option3} option will be used instead.`,
-    fullCode: "IBM2414IE",
   },
 
   /**
@@ -9099,7 +8503,6 @@ export const Error = {
     severity: Severity.E,
     message: (number: string) =>
       `Without APAR ${number} , compiler would generate incorrect code for this statement.`,
-    fullCode: "IBM2415IE",
   },
 
   /**
@@ -9112,7 +8515,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The SEPARATE suboption of TEST is not supported when the LINEDIR option is in effect.",
-    fullCode: "IBM2416IE",
   },
 
   /**
@@ -9124,7 +8526,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "In FETCHABLE code compiled with NORENT NOWRITABLE(PRV), it is invalid to ALLOCATE or FREE a CONTROLLED variable unless it is a PARAMETER.",
-    fullCode: "IBM2417IE",
   },
 
   /**
@@ -9137,7 +8538,6 @@ export const Error = {
     code: "IBM2418I",
     severity: Severity.E,
     message: (variable: string) => `Variable ${variable} is unreferenced.`,
-    fullCode: "IBM2418IE",
   },
 
   /**
@@ -9150,7 +8550,6 @@ export const Error = {
     severity: Severity.E,
     message: (option: string, level: string) =>
       `${option} is invalid and ignored unless the ARCH option is ${level} or greater.`,
-    fullCode: "IBM2419IE",
   },
 
   /**
@@ -9163,7 +8562,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "DFP is invalid and ignored unless the ARCH option is 7 or greater.",
-    fullCode: "IBM2420IE",
   },
 
   /**
@@ -9175,7 +8573,6 @@ export const Error = {
     code: "IBM2421I",
     severity: Severity.E,
     message: "A file should not be closed in its ENDFILE block.",
-    fullCode: "IBM2421IE",
   },
 
   /**
@@ -9188,7 +8585,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Under the DFP option, the HEXADEC attribute is not supported for FLOAT DEC.",
-    fullCode: "IBM2422IE",
   },
 
   /**
@@ -9201,7 +8597,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Under the DFP option, the IEEE attribute is not supported for FLOAT DEC.",
-    fullCode: "IBM2423IE",
   },
 
   /**
@@ -9218,7 +8613,6 @@ export const Error = {
     code: "IBM2424I",
     severity: Severity.E,
     message: "Scale factors are not allowed in FLOAT declarations.",
-    fullCode: "IBM2424IE",
   },
 
   /**
@@ -9230,7 +8624,6 @@ export const Error = {
     code: "IBM2425I",
     severity: Severity.E,
     message: "Statement with ELSE IF should be rewritten using SELECT.",
-    fullCode: "IBM2425IE",
   },
 
   /**
@@ -9242,7 +8635,6 @@ export const Error = {
     code: "IBM2426I",
     severity: Severity.E,
     message: "Maximum nesting of DO statements has been exceeded.",
-    fullCode: "IBM2426IE",
   },
 
   /**
@@ -9254,7 +8646,6 @@ export const Error = {
     code: "IBM2427I",
     severity: Severity.E,
     message: "Maximum nesting of IF statements has been exceeded.",
-    fullCode: "IBM2427IE",
   },
 
   /**
@@ -9266,7 +8657,6 @@ export const Error = {
     code: "IBM2428I",
     severity: Severity.E,
     message: "Maximum nesting of PROC and BEGIN statements has been exceeded.",
-    fullCode: "IBM2428IE",
   },
 
   /**
@@ -9282,7 +8672,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "CMPAT(V3) requires that 8-byte integers be allowed. The second value in the FIXEDBIN suboption of the LIMITS option will be set to 63.",
-    fullCode: "IBM2429IE",
   },
 
   /**
@@ -9298,7 +8687,6 @@ export const Error = {
     severity: Severity.E,
     message: (filename: string) =>
       `The LINESIZE value specified in the OPEN of file ${filename} is not compatible with the RECSIZE specified in its declare.`,
-    fullCode: "IBM2430IE",
   },
 
   /**
@@ -9312,7 +8700,6 @@ export const Error = {
     severity: Severity.E,
     message: (option: string) =>
       `The ${option} option conflicts with the GOFF option. NOGOFF will be used instead.`,
-    fullCode: "IBM2431IE",
   },
 
   /**
@@ -9328,7 +8715,6 @@ export const Error = {
     severity: Severity.E,
     message: (character: string) =>
       `The attribute ${character} is invalid with parameters and is ignored.`,
-    fullCode: "IBM2432IE",
   },
 
   /**
@@ -9344,7 +8730,6 @@ export const Error = {
     severity: Severity.E,
     message: (attribute: string) =>
       `The attribute ${attribute} is invalid with DEFINED and is ignored.`,
-    fullCode: "IBM2433IE",
   },
 
   /**
@@ -9358,7 +8743,6 @@ export const Error = {
     severity: Severity.E,
     message: (name: string) =>
       `RULES(NOLAXENTRY) violation: ${name} does not specify a parameter list.`,
-    fullCode: "IBM2434IE",
   },
 
   /**
@@ -9373,7 +8757,6 @@ export const Error = {
     code: "IBM2435I",
     severity: Severity.E,
     message: "RULES(NOLAXSCALE) violation: scale factor is less than 0.",
-    fullCode: "IBM2435IE",
   },
 
   /**
@@ -9388,7 +8771,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXSCALE) violation: scale factor is larger than the precision.",
-    fullCode: "IBM2436IE",
   },
 
   /**
@@ -9402,7 +8784,6 @@ export const Error = {
     code: "IBM2437I",
     severity: Severity.E,
     message: "SQL preprocessor invoked more than once without INCONLY.",
-    fullCode: "IBM2437IE",
   },
 
   /**
@@ -9414,7 +8795,6 @@ export const Error = {
     code: "IBM2438I",
     severity: Severity.E,
     message: "STOP and EXIT statements are not allowed.",
-    fullCode: "IBM2438IE",
   },
 
   /**
@@ -9428,7 +8808,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOPROCENDONLY) violation: END statement for a PROCEDURE must include the name of the PROCEDURE.",
-    fullCode: "IBM2439IE",
   },
 
   /**
@@ -9441,7 +8820,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `RULES(NOLAXQUAL) violation: structure element ${identifier} is not qualified with the name of its containing level 1 structure.`,
-    fullCode: "IBM2440IE",
   },
 
   /**
@@ -9454,7 +8832,6 @@ export const Error = {
     code: "IBM2441I",
     severity: Severity.E,
     message: "RULES(NOGOTO) violation: GOTO exits the current block.",
-    fullCode: "IBM2441IE",
   },
 
   /**
@@ -9466,7 +8843,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `RULES(NOPADDING) violation: structure ${identifier} contains padding.`,
-    fullCode: "IBM2442IE",
   },
 
   /**
@@ -9479,7 +8855,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOGLOBALDO) violation: control variable in DO statement belongs to a parent block.",
-    fullCode: "IBM2443IE",
   },
 
   /**
@@ -9492,7 +8867,6 @@ export const Error = {
     severity: Severity.E,
     message: (builtin: string) =>
       `The built-in function ${builtin} has been deprecated.`,
-    fullCode: "IBM2444IE",
   },
 
   /**
@@ -9505,7 +8879,6 @@ export const Error = {
     severity: Severity.E,
     message: (filename: string) =>
       `The INCLUDE file ${filename} has been deprecated.`,
-    fullCode: "IBM2445IE",
   },
 
   /**
@@ -9518,7 +8891,6 @@ export const Error = {
     severity: Severity.E,
     message: (variable: string) =>
       `The ENTRY named ${variable} has been deprecated.`,
-    fullCode: "IBM2446IE",
   },
 
   /**
@@ -9531,7 +8903,6 @@ export const Error = {
     severity: Severity.E,
     message: (variable: string) =>
       `The VARIABLE named ${variable} has been deprecated.`,
-    fullCode: "IBM2447IE",
   },
 
   /**
@@ -9545,7 +8916,6 @@ export const Error = {
     code: "IBM2448I",
     severity: Severity.E,
     message: "CICS preprocessor invoked more than once.",
-    fullCode: "IBM2448IE",
   },
 
   /**
@@ -9558,7 +8928,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOSELFASSIGN) violation: source and target in assignment are identical.",
-    fullCode: "IBM2449IE",
   },
 
   /**
@@ -9573,7 +8942,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string, length: string) =>
       `First argument to ${BUILTINname} built-in function should have length greater than or equal to ${length} .`,
-    fullCode: "IBM2450IE",
   },
 
   /**
@@ -9593,7 +8961,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXIF) violation: source in the assignment is a Boolean, but the target is not BIT(1).",
-    fullCode: "IBM2451IE",
   },
 
   /**
@@ -9610,7 +8977,6 @@ export const Error = {
     code: "IBM2452I",
     severity: Severity.E,
     message: "RULES(NOLAXSCALE) violation: scale factor is less than 0.",
-    fullCode: "IBM2452IE",
   },
 
   /**
@@ -9624,7 +8990,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXNESTED) violation: code should come in one group of statements with no intervening procedures or BEGIN blocks.",
-    fullCode: "IBM2453IE",
   },
 
   /**
@@ -9637,7 +9002,6 @@ export const Error = {
     severity: Severity.E,
     message: (builtin: string) =>
       `The ${builtin} statement has been deprecated.`,
-    fullCode: "IBM2454IE",
   },
 
   /**
@@ -9650,7 +9014,6 @@ export const Error = {
     severity: Severity.E,
     message: (builtin: string) =>
       `The ${builtin} keyword does not conform to the CASERULES option.`,
-    fullCode: "IBM2455IE",
   },
 
   /**
@@ -9663,7 +9026,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NORECURSIVE) violation: RECURSIVE PROCEDUREs are not allowed under RULES(NORECURSIVE).",
-    fullCode: "IBM2456IE",
   },
 
   /**
@@ -9676,7 +9038,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NORECURSIVE) conflicts with DFT(RECURSIVE). The compiler will apply RULES(RECURSIVE) instead.",
-    fullCode: "IBM2457IE",
   },
 
   /**
@@ -9688,7 +9049,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The CONTROLLED attribute is not allowed under RULES(NOCONTROLLED).",
-    fullCode: "IBM2458IE",
   },
 
   /**
@@ -9701,7 +9061,6 @@ export const Error = {
     severity: Severity.E,
     message: (option: string) =>
       `The characters specified in the ${option} option must all have hexadecimal values less than 80.`,
-    fullCode: "IBM2459IE",
   },
 
   /**
@@ -9714,7 +9073,6 @@ export const Error = {
     severity: Severity.E,
     message: (option: string) =>
       `The ${option} option conflicts with the ENCODING(UTF8) option. ENCODING(ASCII) will be assumed.`,
-    fullCode: "IBM2460IE",
   },
 
   /**
@@ -9727,7 +9085,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The MARGINI option must specify a valid UTF-8 string consisting of one UTF-8 character.",
-    fullCode: "IBM2461IE",
   },
 
   /**
@@ -9742,7 +9099,6 @@ export const Error = {
     severity: Severity.E,
     message: (character: string, character2: string) =>
       `The attribute ${character} conflicts with the attribute ${character2} and is ignored.`,
-    fullCode: "IBM2462IE",
   },
 
   /**
@@ -9754,7 +9110,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "LINKAGE(SYSTEM) is not supported for PL/I PROCEDUREs, and LINKAGE(OPTLINK) will be assumed instead.",
-    fullCode: "IBM2463IE",
   },
 
   /**
@@ -9766,7 +9121,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXSTMT) violation: line contains more than one statement.",
-    fullCode: "IBM2464IE",
   },
 
   /**
@@ -9777,7 +9131,6 @@ export const Error = {
     code: "IBM2465I",
     severity: Severity.E,
     message: "Assignment of a null string to a pointer is invalid.",
-    fullCode: "IBM2465IE",
   },
 
   /**
@@ -9788,7 +9141,6 @@ export const Error = {
     code: "IBM2466I",
     severity: Severity.E,
     message: "Comparison of a null string to a pointer is invalid.",
-    fullCode: "IBM2466IE",
   },
 
   /**
@@ -9800,7 +9152,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOYY) conflicts with use of a date pattern with a 2-digit year.",
-    fullCode: "IBM2467IE",
   },
 
   /**
@@ -9811,7 +9162,6 @@ export const Error = {
     code: "IBM2468I",
     severity: Severity.E,
     message: "RULES(NOYY) conflicts with use of a date pattern with a ZY.",
-    fullCode: "IBM2468IE",
   },
 
   /**
@@ -9824,7 +9174,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOYY) conflicts with use of the DATE attribute without a pattern.",
-    fullCode: "IBM2469IE",
   },
 
   /**
@@ -9836,7 +9185,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `RULES(NOYY) conflicts with use of the ${BUILTINname} built-in function.`,
-    fullCode: "IBM2470IE",
   },
 
   /**
@@ -9849,7 +9197,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `RULES(NOYY) conflicts with use of the ${BUILTINname} built-in function with a window argument.`,
-    fullCode: "IBM2471IE",
   },
 
   /**
@@ -9861,7 +9208,6 @@ export const Error = {
     code: "IBM2472I",
     severity: Severity.E,
     message: "RULES(NOYY) conflicts with use of the DATE built-in function.",
-    fullCode: "IBM2472IE",
   },
 
   /**
@@ -9874,7 +9220,6 @@ export const Error = {
     severity: Severity.E,
     message: (procname: string) =>
       `RULES(NOLAXINTERFACE) violation: ${procname} has not been explicitly declared.`,
-    fullCode: "IBM2473IE",
   },
 
   /**
@@ -9888,7 +9233,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOGOTO) violation: GOTO jumps to a previous line in the current block.",
-    fullCode: "IBM2474IE",
   },
 
   /**
@@ -9899,7 +9243,6 @@ export const Error = {
     code: "IBM2475I",
     severity: Severity.E,
     message: "RULES(NOMULTISEMI) violation: line contains too many semicolons.",
-    fullCode: "IBM2475IE",
   },
 
   /**
@@ -9915,7 +9258,6 @@ export const Error = {
     severity: Severity.E,
     message: (optionname: string) =>
       `Item in OPTIONS list is invalid for ON-unit BEGIN blocks. ${optionname} is ignored.`,
-    fullCode: "IBM2476IE",
   },
 
   /**
@@ -9928,7 +9270,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Under RULES(NOCOMPLEX), the COMPLEX attribute, the COMPLEX built-in function, and constants ending with the I suffix are not allowed.",
-    fullCode: "IBM2478IE",
   },
 
   /**
@@ -9941,7 +9282,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXPACKAGE) violation: compilation unit does not contain a PACKAGE statement.",
-    fullCode: "IBM2479IE",
   },
 
   /**
@@ -9954,7 +9294,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOLAXEXPORTS) violation: package contains PROCEDUREs but no EXPORTS clause naming specifically which PROCEDUREs are exported.",
-    fullCode: "IBM2480IE",
   },
 
   /**
@@ -9971,7 +9310,6 @@ export const Error = {
     code: "IBM2481I",
     severity: Severity.E,
     message: "RULES(NOLAXSCALE) violation: scale factor is greater than 0.",
-    fullCode: "IBM2481IE",
   },
 
   /**
@@ -9985,7 +9323,6 @@ export const Error = {
     severity: Severity.E,
     message: (variable: string) =>
       `RULES(NOLAXPARMS) violation: Parameter ${variable} is declared without INONLY, OUTONLY, or INOUT.`,
-    fullCode: "IBM2482IE",
   },
 
   /**
@@ -9997,7 +9334,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string, count: string, count2: string) =>
       `RULES(NOPADDING) violation: the structure ${identifier} is ${count} -byte aligned, but does not have a multiple of ${count2} bytes before its first element with that alignment.`,
-    fullCode: "IBM2483IE",
   },
 
   /**
@@ -10009,7 +9345,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `RULES(NOPADDING) violation: the structure ${identifier} does not have a multiple of 8 bits before its first element with byte (or greater) alignment.`,
-    fullCode: "IBM2484IE",
   },
 
   /**
@@ -10021,7 +9356,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `RULES(NOPADDING) violation: the size of the structure ${identifier} is not a multiple of its alignment.`,
-    fullCode: "IBM2485IE",
   },
 
   /**
@@ -10033,7 +9367,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `RULES(NOPADDING) violation: the structure ${identifier} does not have a multiple of 8 bits after its last element with byte (or greater) alignment.`,
-    fullCode: "IBM2486IE",
   },
 
   /**
@@ -10045,7 +9378,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `RULES(NOPADDING) violation: the structure ${identifier} does not contain a multiple of 8 bits.`,
-    fullCode: "IBM2487IE",
   },
 
   /**
@@ -10067,7 +9399,6 @@ export const Error = {
       resultscale: string,
     ) =>
       `RULES(NOLAXSCALE) violation: FIXED DEC( ${sourceprecision} , ${sourcescale} ) operand 66 will be converted to FIXED BIN( ${targetprecision} , ${targetscale} ). This introduces a non-zero scale factor into an integer operation and will produce a result with the attributes FIXED BIN( ${resultprecision} , ${resultscale} ).`,
-    fullCode: "IBM2489IE",
   },
 
   /**
@@ -10080,7 +9411,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Source in assignment does not fit in the the VALUERANGE of the target.",
-    fullCode: "IBM2490IE",
   },
 
   /**
@@ -10093,7 +9423,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Source in assignment does not occur in the the VALUELIST of the target.",
-    fullCode: "IBM2491IE",
   },
 
   /**
@@ -10107,7 +9436,6 @@ export const Error = {
     severity: Severity.E,
     message: (variable: string) =>
       `RULES(NOGLOBAL) violation: Variable ${variable} is used inside a nested PROCEDURE.`,
-    fullCode: "IBM2492IE",
   },
 
   /**
@@ -10121,7 +9449,6 @@ export const Error = {
     severity: Severity.E,
     message: (variable: string, BUILTINname: string) =>
       `RULES(NOLAXOPTIONAL) violation: Variable ${variable} is used as an argument to the ${BUILTINname} function, but does not have the OPTIONAL attribute.`,
-    fullCode: "IBM2493IE",
   },
 
   /**
@@ -10134,7 +9461,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `RULES(NOLAXQUAL) violation: Structure element ${identifier} is not fully qualified.`,
-    fullCode: "IBM2494IE",
   },
 
   /**
@@ -10147,7 +9473,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Third argument in ${BUILTINname} reference is too small. It will be replaced by the value of the second argument minus 1.`,
-    fullCode: "IBM2495IE",
   },
 
   /**
@@ -10161,7 +9486,6 @@ export const Error = {
     severity: Severity.E,
     message: (count: string) =>
       `MAXRUNONIF limit exceeded: IF statement tests an expression that consists of ${count} comparisons of the same reference against a series of constant values. The expression could be replaced by one INLIST reference.`,
-    fullCode: "IBM2499IE",
   },
 
   /**
@@ -10175,7 +9499,6 @@ export const Error = {
     severity: Severity.E,
     message: (count: string) =>
       `MAXRUNONIF limit exceeded: IF statement tests an expression that consists of ${count} comparisons of the same reference against a series of constant values. The statement could be replaced by a SELECT statement containing one large WHEN statement.`,
-    fullCode: "IBM2500IE",
   },
 
   /**
@@ -10189,7 +9512,6 @@ export const Error = {
     code: "IBM2501I",
     severity: Severity.E,
     message: "Alignment value is invalid and will be ignored.",
-    fullCode: "IBM2501IE",
   },
 
   /**
@@ -10202,7 +9524,6 @@ export const Error = {
     severity: Severity.E,
     message: (optionvalue: string, suboptionvalue: string) =>
       `The compiler option CMPAT specifies V ${optionvalue} but the CMPAT suboption in the OPTIONS attribute specifies V ${suboptionvalue} . These values should match.`,
-    fullCode: "IBM2502IE",
   },
 
   /**
@@ -10216,7 +9537,6 @@ export const Error = {
     severity: Severity.E,
     message: (name: string) =>
       `RULES(NOLAXENTRY) violation: ${name} has a parameter with the ENTRY attribute but which does not specify a parameter list.`,
-    fullCode: "IBM2503IE",
   },
 
   /**
@@ -10228,7 +9548,6 @@ export const Error = {
     code: "IBM2504I",
     severity: Severity.E,
     message: "PROCINC syntax is invalid.",
-    fullCode: "IBM2504IE",
   },
 
   /**
@@ -10239,7 +9558,6 @@ export const Error = {
     code: "IBM2505I",
     severity: Severity.E,
     message: "PROCINC files must include only PROCESS and PROCINC statements.",
-    fullCode: "IBM2505IE",
   },
 
   /**
@@ -10251,7 +9569,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Only LIMITED ENTRY may be passed BYVALUE. All other ENTRY must be passed BYADDR.",
-    fullCode: "IBM2506IE",
   },
 
   /**
@@ -10269,7 +9586,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string, precision: string, scalefactor: string) =>
       `Tne result of the ${BUILTINname} built-in would have the attributes FIXED BIN( ${precision} , ${scalefactor} ), but FIXED BIN scale factors must be between zero and the specified precision. The scale factor will be adjusted to fit.`,
-    fullCode: "IBM2507IE",
   },
 
   /**
@@ -10282,7 +9598,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "In FIXED BIN(p,q) declares q must be between 0 and p (inclusive).",
-    fullCode: "IBM2508IE",
   },
 
   /**
@@ -10295,7 +9610,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Support for ROUND of fixed binary expressions is deprecated and will be withdrawn in the next release.",
-    fullCode: "IBM2509IE",
   },
 
   /**
@@ -10309,7 +9623,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `In ${BUILTINname} of FIXED BIN(p,q), q should be greater than 0.`,
-    fullCode: "IBM2510IE",
   },
 
   /**
@@ -10329,7 +9642,6 @@ export const Error = {
       resultattributes: string,
     ) =>
       `The operands in a multiplication operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is greater than its precision! That may lead to the loss of significant digits and unexpected results. You may be able to avoid this problem by reducing the the scale factor of 68 one of the operands or by using the MULTIPLY built-in function.`,
-    fullCode: "IBM2511IE",
   },
 
   /**
@@ -10350,7 +9662,6 @@ export const Error = {
       resultattributes: string,
     ) =>
       `The operands in a division operation have the attributes ${operandattributes} and ${operandattributes2} which will produce a result with the attributes ${resultattributes} . This means that its scale factor is negative! That may lead to the loss of significant digits and unexpected results. You may be able to avoid this problem by changing the the scale factor of the divisor (for example, if the divisor is the constant 100.0, by changing it to 100) or by using the DIVIDE built-in function.`,
-    fullCode: "IBM2512IE",
   },
 
   /**
@@ -10362,7 +9673,6 @@ export const Error = {
     code: "IBM3500I",
     severity: Severity.E,
     message: (note: string) => `${note}`,
-    fullCode: "IBM3500IE",
   },
 
   /**
@@ -10373,7 +9683,6 @@ export const Error = {
     code: "IBM3501I",
     severity: Severity.E,
     message: (note: string) => `${note}`,
-    fullCode: "IBM3501IE",
   },
 
   /**
@@ -10385,7 +9694,6 @@ export const Error = {
     code: "IBM3502I",
     severity: Severity.E,
     message: "An integer with a K suffix must have no more than 7 digits.",
-    fullCode: "IBM3502IE",
   },
 
   /**
@@ -10398,7 +9706,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "In an integer with a K suffix the digits must specify a value less than or equal to 2097152.",
-    fullCode: "IBM3503IE",
   },
 
   /**
@@ -10410,7 +9717,6 @@ export const Error = {
     code: "IBM3504I",
     severity: Severity.E,
     message: "An integer with an M suffix must have no more than 4 digits.",
-    fullCode: "IBM3504IE",
   },
 
   /**
@@ -10423,7 +9729,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "In an integer with an M suffix the digits must specify a value less than or equal to 2048.",
-    fullCode: "IBM3505IE",
   },
 
   /**
@@ -10435,7 +9740,6 @@ export const Error = {
     code: "IBM3506I",
     severity: Severity.E,
     message: "An integer with a G suffix must have only 1 digit.",
-    fullCode: "IBM3506IE",
   },
 
   /**
@@ -10448,7 +9752,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "In an integer with an G suffix the digits must specify a value less than or equal to 2.",
-    fullCode: "IBM3507IE",
   },
 
   /**
@@ -10459,7 +9762,6 @@ export const Error = {
     code: "IBM3508I",
     severity: Severity.E,
     message: "Numeric precision of 0 replaced by 1.",
-    fullCode: "IBM3508IE",
   },
 
   /**
@@ -10471,7 +9773,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "DECLARE statement has invalid syntax. No variables in it may be used in EXEC SQL statements.",
-    fullCode: "IBM3509IE",
   },
 
   /**
@@ -10486,7 +9787,6 @@ export const Error = {
     severity: Severity.E,
     message: (keyword: string, keyword2: string) =>
       `${keyword} statement is not allowed where an executable statement is required. A null statement will be inserted before the ${keyword2} statement.`,
-    fullCode: "IBM3510IE",
   },
 
   /**
@@ -10497,7 +9797,6 @@ export const Error = {
     code: "IBM3511I",
     severity: Severity.E,
     message: "COUNTER value would exceed 99999. It will be reset to 0.",
-    fullCode: "IBM3511IE",
   },
 
   /**
@@ -10510,7 +9809,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Multiple closure of groups is not allowed under RULES(NOMULTICLOSE).",
-    fullCode: "IBM3512IE",
   },
 
   /**
@@ -10526,7 +9824,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in is negative. It will be changed to 0.`,
-    fullCode: "IBM3514IE",
   },
 
   /**
@@ -10537,7 +9834,6 @@ export const Error = {
     code: "IBM3515I",
     severity: Severity.E,
     message: "Scale factor is bigger than 127. It is replaced by 127.",
-    fullCode: "IBM3515IE",
   },
 
   /**
@@ -10548,7 +9844,6 @@ export const Error = {
     code: "IBM3516I",
     severity: Severity.E,
     message: "Scale factor is less than -128. It is replaced by -128.",
-    fullCode: "IBM3516IE",
   },
 
   /**
@@ -10564,7 +9859,6 @@ export const Error = {
     severity: Severity.E,
     message: (dimensionnumber: string, variablename: string) =>
       `Sole bound specified for dimension ${dimensionnumber} of array ${variablename} is less than 1. An upper bound of 1 is assumed.`,
-    fullCode: "IBM3517IE",
   },
 
   /**
@@ -10577,7 +9871,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `${identifier} does not conform to the NAMEPREFIX option.`,
-    fullCode: "IBM3518IE",
   },
 
   /**
@@ -10588,7 +9881,6 @@ export const Error = {
     code: "IBM3519I",
     severity: Severity.E,
     message: "Characters in B3 literals must be 0-7.",
-    fullCode: "IBM3519IE",
   },
 
   /**
@@ -10599,7 +9891,6 @@ export const Error = {
     code: "IBM3520I",
     severity: Severity.E,
     message: "Structure level of 0 replaced by 1.",
-    fullCode: "IBM3520IE",
   },
 
   /**
@@ -10617,7 +9908,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Structure level greater than 255 specified. It is replaced by 255.",
-    fullCode: "IBM3521IE",
   },
 
   /**
@@ -10629,7 +9919,6 @@ export const Error = {
     code: "IBM3522I",
     severity: Severity.E,
     message: "A DECIMAL exponent is required.",
-    fullCode: "IBM3522IE",
   },
 
   /**
@@ -10646,7 +9935,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `A second argument to the ${BUILTINname} built-in must be supplied for arrays with more than one dimension. A value of 1 is assumed.`,
-    fullCode: "IBM3523IE",
   },
 
   /**
@@ -10659,7 +9947,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in is not positive. A value of 1 is assumed.`,
-    fullCode: "IBM3524IE",
   },
 
   /**
@@ -10676,7 +9963,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string, dimensioncount: string) =>
       `Second argument to ${BUILTINname} built-in is greater than the number of dimensions for the first argument. A value of ${dimensioncount} is assumed.`,
-    fullCode: "IBM3525IE",
   },
 
   /**
@@ -10691,7 +9977,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `Repeated declaration of ${identifier} is invalid and will be ignored.`,
-    fullCode: "IBM3526IE",
   },
 
   /**
@@ -10702,7 +9987,6 @@ export const Error = {
     code: "IBM3527I",
     severity: Severity.E,
     message: "Missing THEN assumed.",
-    fullCode: "IBM3527IE",
   },
 
   /**
@@ -10717,7 +10001,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Duplicate specification of arithmetic precision. Subsequent specification ignored.",
-    fullCode: "IBM3528IE",
   },
 
   /**
@@ -10735,7 +10018,6 @@ export const Error = {
     code: "IBM3529I",
     severity: Severity.E,
     message: "Scale factors are not allowed in FLOAT declarations.",
-    fullCode: "IBM3529IE",
   },
 
   /**
@@ -10747,7 +10029,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `${identifier} is an array. ACTIVATE and DEACTIVATE are invalid for arrays.`,
-    fullCode: "IBM3530IE",
   },
 
   /**
@@ -10759,7 +10040,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `${identifier} is a statement label. ACTIVATE and DEACTIVATE are invalid for labels.`,
-    fullCode: "IBM3531IE",
   },
 
   /**
@@ -10773,7 +10053,6 @@ export const Error = {
     code: "IBM3533I",
     severity: Severity.E,
     message: "THEN clause outside of an open IF statement is ignored.",
-    fullCode: "IBM3533IE",
   },
 
   /**
@@ -10787,7 +10066,6 @@ export const Error = {
     code: "IBM3534I",
     severity: Severity.E,
     message: "ELSE clause outside of an open IF- THEN statement is ignored.",
-    fullCode: "IBM3534IE",
   },
 
   /**
@@ -10804,7 +10082,6 @@ export const Error = {
     code: "IBM3536I",
     severity: Severity.E,
     message: "END label is not a label on any open group.",
-    fullCode: "IBM3536IE",
   },
 
   /**
@@ -10828,7 +10105,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "An END statement may be missing after an OTHERWISE unit. One will be inserted.",
-    fullCode: "IBM3537IE",
   },
 
   /**
@@ -10841,7 +10117,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "%END statement found without any open %PROCEDURE, %DO or %SELECT statements. It will be ignored.",
-    fullCode: "IBM3538IE",
   },
 
   /**
@@ -10855,7 +10130,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "STRINGSIZE condition raised while evaluating expression. Result is truncated.",
-    fullCode: "IBM3539IE",
   },
 
   /**
@@ -10873,7 +10147,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "STRINGRANGE condition raised while evaluating expression. Arguments are adjusted to fit.",
-    fullCode: "IBM3540IE",
   },
 
   /**
@@ -10889,7 +10162,6 @@ export const Error = {
     code: "IBM3542I",
     severity: Severity.E,
     message: "LEAVE/ITERATE label is not a label on any open DO group.",
-    fullCode: "IBM3542IE",
   },
 
   /**
@@ -10906,7 +10178,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "ITERATE/LEAVE statement is invalid outside an open DO statement. The statement will be ignored.",
-    fullCode: "IBM3543IE",
   },
 
   /**
@@ -10921,7 +10192,6 @@ export const Error = {
     code: "IBM3544I",
     severity: Severity.E,
     message: "GX literals should contain a multiple of 4 hex digits.",
-    fullCode: "IBM3544IE",
   },
 
   /**
@@ -10935,7 +10205,6 @@ export const Error = {
     severity: Severity.E,
     message: (dimensionnumber: string, variablename: string) =>
       `Upper bound for dimension ${dimensionnumber} of array ${variablename} is less than lower bound. Bounds will be reversed.`,
-    fullCode: "IBM3545IE",
   },
 
   /**
@@ -10948,7 +10217,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `Identifier is too long. It will be collapsed to ${identifier} .`,
-    fullCode: "IBM3546IE",
   },
 
   /**
@@ -10962,7 +10230,6 @@ export const Error = {
     code: "IBM3547I",
     severity: Severity.E,
     message: "B assumed to complete iSUB.",
-    fullCode: "IBM3547IE",
   },
 
   /**
@@ -10973,7 +10240,6 @@ export const Error = {
     code: "IBM3548I",
     severity: Severity.E,
     message: "Digit in BINARY constant is not zero or one.",
-    fullCode: "IBM3548IE",
   },
 
   /**
@@ -10984,7 +10250,6 @@ export const Error = {
     code: "IBM3549I",
     severity: Severity.E,
     message: "Characters in BIT literals must be 0 or 1.",
-    fullCode: "IBM3549IE",
   },
 
   /**
@@ -10999,7 +10264,6 @@ export const Error = {
     severity: Severity.E,
     message: (n: string) =>
       `Character '${n}' with decimal value ${n.charCodeAt(0)} does not belong to the PL/I character set. It will be ignored.`,
-    fullCode: "IBM3550IE",
   },
 
   /**
@@ -11010,7 +10274,6 @@ export const Error = {
     code: "IBM3551I",
     severity: Severity.E,
     message: "Characters in hex literals must be 0-9 or A-F.",
-    fullCode: "IBM3551IE",
   },
 
   /**
@@ -11023,7 +10286,6 @@ export const Error = {
     severity: Severity.E,
     message: (character: string) =>
       `The statement element ${character} is invalid. The statement will be ignored.`,
-    fullCode: "IBM3552IE",
   },
 
   /**
@@ -11038,7 +10300,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Use of underscore as initial character in an identifier accepted although invalid under LANGLVL(SAA).",
-    fullCode: "IBM3553IE",
   },
 
   /**
@@ -11054,7 +10315,6 @@ export const Error = {
     severity: Severity.E,
     message: (n: string) =>
       `Character with decimal value ${n} does not belong to the PL/I character set. It is assumed to be an OR symbol.`,
-    fullCode: "IBM3556IE",
   },
 
   /**
@@ -11070,7 +10330,6 @@ export const Error = {
     severity: Severity.E,
     message: (n: string) =>
       `Character with decimal value ${n} does not belong to the PL/I character set. It is assumed to be a NOT symbol.`,
-    fullCode: "IBM3557IE",
   },
 
   /**
@@ -11085,7 +10344,6 @@ export const Error = {
     code: "IBM3558I",
     severity: Severity.E,
     message: "WX literals should contain a multiple of 4 hex digits.",
-    fullCode: "IBM3558IE",
   },
 
   /**
@@ -11098,7 +10356,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOGOTO) violation: the use of EXEC SQL WHENEVER statements violates RULES(NOGOTO).",
-    fullCode: "IBM3559IE",
   },
 
   /**
@@ -11111,7 +10368,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "RULES(NOGOTO) violation: the use of EXEC CICS HANDLE CONDITION statements violates RULES(NOGOTO).",
-    fullCode: "IBM3560IE",
   },
 
   /**
@@ -11129,7 +10385,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Statement type resolution requires too many lexical units to 159 be examined. The statement will be ignored.",
-    fullCode: "IBM3565IE",
   },
 
   /**
@@ -11147,7 +10402,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Statements inside a SELECT must be preceded by a WHEN or an OTHERWISE clause.",
-    fullCode: "IBM3567IE",
   },
 
   /**
@@ -11160,7 +10414,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Under RULES(NOLAXFIELDS), EXEC SQL SELECT statements must specify a list of field names.",
-    fullCode: "IBM3568IE",
   },
 
   /**
@@ -11173,7 +10426,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Under RULES(NOLAXFIELDS), EXEC SQL INSERT INTO statements must specify a list of field names.",
-    fullCode: "IBM3569IE",
   },
 
   /**
@@ -11188,7 +10440,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Extent expression is negative. It will be replaced by the constant 1.",
-    fullCode: "IBM3570IE",
   },
 
   /**
@@ -11200,7 +10451,6 @@ export const Error = {
     code: "IBM3571I",
     severity: Severity.E,
     message: "The SQL and PL/I float options are inconsistent.",
-    fullCode: "IBM3571IE",
   },
 
   /**
@@ -11217,7 +10467,6 @@ export const Error = {
     code: "IBM3572I",
     severity: Severity.E,
     message: "Initial level number in a structure is not 1.",
-    fullCode: "IBM3572IE",
   },
 
   /**
@@ -11235,7 +10484,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Elements with level numbers greater than 1 follow an element without a level number. A level number of 1 is assumed.",
-    fullCode: "IBM3573IE",
   },
 
   /**
@@ -11253,7 +10501,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Variables declared without a name must be structure members or followed by a substructure list.",
-    fullCode: "IBM3574IE",
   },
 
   /**
@@ -11269,7 +10516,6 @@ export const Error = {
     severity: Severity.E,
     message: (attribute: string) =>
       `Duplicate specification of ${attribute} . Subsequent specification ignored.`,
-    fullCode: "IBM3575IE",
   },
 
   /**
@@ -11280,7 +10526,6 @@ export const Error = {
     code: "IBM3576I",
     severity: Severity.E,
     message: "The SQL statement is empty and is ignored.",
-    fullCode: "IBM3576IE",
   },
 
   /**
@@ -11291,7 +10536,6 @@ export const Error = {
     code: "IBM3577I",
     severity: Severity.E,
     message: "INCONLY option is ignored because preceded by other options.",
-    fullCode: "IBM3577IE",
   },
 
   /**
@@ -11314,7 +10558,6 @@ export const Error = {
     severity: Severity.E,
     message: (keyword: string) =>
       `Parameter ${keyword} may not be set more than once. First setting is assumed.`,
-    fullCode: "IBM3580IE",
   },
 
   /**
@@ -11335,7 +10578,6 @@ export const Error = {
     severity: Severity.E,
     message: (keyword: string) =>
       `Unknown keyword in statement- form procedure invocation. ${keyword} and any argument are ignored.`,
-    fullCode: "IBM3581IE",
   },
 
   /**
@@ -11351,7 +10593,6 @@ export const Error = {
     code: "IBM3582I",
     severity: Severity.E,
     message: (identifier: string) => `Parameter ${identifier} is not declared.`,
-    fullCode: "IBM3582IE",
   },
 
   /**
@@ -11363,7 +10604,6 @@ export const Error = {
     severity: Severity.E,
     message: (keyword: string) =>
       `Labels on ${keyword} statements are invalid and ignored.`,
-    fullCode: "IBM3583IE",
   },
 
   /**
@@ -11376,7 +10616,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `The identifier ${identifier} is not the name of a built-in function. The BUILTIN attribute will be ignored.`,
-    fullCode: "IBM3589IE",
   },
 
   /**
@@ -11391,7 +10630,6 @@ export const Error = {
     severity: Severity.E,
     message: (keyword: string) =>
       `The attribute ${keyword} is not supported and will be ignored.`,
-    fullCode: "IBM3590IE",
   },
 
   /**
@@ -11406,7 +10644,6 @@ export const Error = {
     code: "IBM3591I",
     severity: Severity.E,
     message: "Right parenthesis will be assumed at end of argument list.",
-    fullCode: "IBM3591IE",
   },
 
   /**
@@ -11419,7 +10656,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "The end of the source was reached before the logical end of the program. Null statements and END statements will be inserted as necessary to complete the program.",
-    fullCode: "IBM3603IE",
   },
 
   /**
@@ -11436,7 +10672,6 @@ export const Error = {
     severity: Severity.E,
     message: (procname: string) =>
       `The procedure name ${procname} has already been declared. The explicit declaration of the procedure name will not be accepted.`,
-    fullCode: "IBM3604IE",
   },
 
   /**
@@ -11448,7 +10683,6 @@ export const Error = {
     severity: Severity.E,
     message: (typetype: string, typename: string) =>
       `The ${typetype} type ${typename} is already defined. The redefinition is ignored.`,
-    fullCode: "IBM3605IE",
   },
 
   /**
@@ -11464,7 +10698,6 @@ export const Error = {
     severity: Severity.E,
     message: (identifier: string) =>
       `Repeated declaration of ${identifier} is invalid. The name will be replaced by an asterisk.`,
-    fullCode: "IBM3606IE",
   },
 
   /**
@@ -11477,7 +10710,6 @@ export const Error = {
     severity: Severity.E,
     message: (typetype: string, typename: string) =>
       `UNSIGNED attribute for ${typetype} type ${typename} conflicts with negative INITIAL values and is ignored.`,
-    fullCode: "IBM3607IE",
   },
 
   /**
@@ -11497,7 +10729,6 @@ export const Error = {
     severity: Severity.E,
     message: (typetype: string, typename: string) =>
       `PRECISION specified for ${typetype} type ${typename} is too small to cover its INITIAL values and is adjusted to fit.`,
-    fullCode: "IBM3608IE",
   },
 
   /**
@@ -11509,7 +10740,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "A SELECT statement may be missing. A SELECT statement, without an expression, will be inserted.",
-    fullCode: "IBM3609IE",
   },
 
   /**
@@ -11528,7 +10758,6 @@ export const Error = {
     code: "IBM3610I",
     severity: Severity.E,
     message: "Semicolon inserted after ELSE keyword.",
-    fullCode: "IBM3610IE",
   },
 
   /**
@@ -11539,7 +10768,6 @@ export const Error = {
     code: "IBM3612I",
     severity: Severity.E,
     message: "Semicolon inserted after OTHERWISE keyword.",
-    fullCode: "IBM3612IE",
   },
 
   /**
@@ -11550,7 +10778,6 @@ export const Error = {
     code: "IBM3613I",
     severity: Severity.E,
     message: "Semicolon inserted after THEN keyword.",
-    fullCode: "IBM3613IE",
   },
 
   /**
@@ -11561,7 +10788,6 @@ export const Error = {
     code: "IBM3614I",
     severity: Severity.E,
     message: "Semicolon inserted after WHEN clause.",
-    fullCode: "IBM3614IE",
   },
 
   /**
@@ -11574,7 +10800,6 @@ export const Error = {
     code: "IBM3615I",
     severity: Severity.E,
     message: "Source file does not end with the logical end of the program.",
-    fullCode: "IBM3615IE",
   },
 
   /**
@@ -11586,7 +10811,6 @@ export const Error = {
     severity: Severity.E,
     message: (variablename: string) =>
       `Subscripts have been specified for the variable ${variablename} , but it is not an array variable.`,
-    fullCode: "IBM3616IE",
   },
 
   /**
@@ -11598,7 +10822,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Second argument in SUBSTR reference is less than 1. It will be replaced by 1.",
-    fullCode: "IBM3617IE",
   },
 
   /**
@@ -11610,7 +10833,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Second argument in SUBSTR reference is too big. It will be trimmed to fit.",
-    fullCode: "IBM3618IE",
   },
 
   /**
@@ -11622,7 +10844,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Third argument in SUBSTR reference is less than 0. It will be replaced by 0.",
-    fullCode: "IBM3619IE",
   },
 
   /**
@@ -11634,7 +10855,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Third argument in SUBSTR reference is too big. It will be trimmed to fit.",
-    fullCode: "IBM3620IE",
   },
 
   /**
@@ -11647,7 +10867,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "More than 15 dimensions have been specified. Excess will be ignored.",
-    fullCode: "IBM3621IE",
   },
 
   /**
@@ -11659,7 +10878,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "End-of-comment marker found when there are no open comments. Marker will be ignored.",
-    fullCode: "IBM3624IE",
   },
 
   /**
@@ -11671,7 +10889,6 @@ export const Error = {
     severity: Severity.E,
     message: (directive: string) =>
       `There is no compiler directive ${directive} . Input up to the next semicolon will be ignored.`,
-    fullCode: "IBM3625IE",
   },
 
   /**
@@ -11688,7 +10905,6 @@ export const Error = {
     code: "IBM3626I",
     severity: Severity.E,
     message: "Listing control statement must start with a percent symbol.",
-    fullCode: "IBM3626IE",
   },
 
   /**
@@ -11699,7 +10915,6 @@ export const Error = {
     code: "IBM3628I",
     severity: Severity.E,
     message: "X literals should contain a multiple of 2 hex digits.",
-    fullCode: "IBM3628IE",
   },
 
   /**
@@ -11716,7 +10931,6 @@ export const Error = {
     severity: Severity.E,
     message: (ENTRYname: string) =>
       `Excess arguments for ENTRY ${ENTRYname} ignored.`,
-    fullCode: "IBM3638IE",
   },
 
   /**
@@ -11732,7 +10946,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Excess arguments for ${BUILTINname} built-in ignored.`,
-    fullCode: "IBM3639IE",
   },
 
   /**
@@ -11752,7 +10965,6 @@ export const Error = {
     severity: Severity.E,
     message: (attribute: string) =>
       `The attribute ${attribute} is invalid if it is not followed by an element with a greater logical level.`,
-    fullCode: "IBM3640IE",
   },
 
   /**
@@ -11770,7 +10982,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Level number following LIKE specification is greater than the level number for the LIKE specification. LIKE attribute is ignored.",
-    fullCode: "IBM3641IE",
   },
 
   /**
@@ -11786,7 +10997,6 @@ export const Error = {
     severity: Severity.E,
     message: (keyword: string) =>
       `${keyword} keyword accepted although invalid under LANGLVL(SAA).`,
-    fullCode: "IBM3650IE",
   },
 
   /**
@@ -11799,7 +11009,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Use of S, D and Q constants accepted although invalid under LANGLVL(SAA).",
-    fullCode: "IBM3651IE",
   },
 
   /**
@@ -11812,7 +11021,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Use of underscores in constants accepted although invalid under LANGLVL(SAA).",
-    fullCode: "IBM3652IE",
   },
 
   /**
@@ -11825,7 +11033,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Use of asterisks for names in declares accepted although invalid under LANGLVL(SAA).",
-    fullCode: "IBM3653IE",
   },
 
   /**
@@ -11837,7 +11044,6 @@ export const Error = {
     severity: Severity.E,
     message:
       "Use of XN constants accepted although invalid under LANGLVL(SAA).",
-    fullCode: "IBM3654IE",
   },
 
   /**
@@ -11853,7 +11059,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Use of 3 arguments with ${BUILTINname} built-in accepted although invalid under LANGLVL(SAA).`,
-    fullCode: "IBM3656IE",
   },
 
   /**
@@ -11869,7 +11074,6 @@ export const Error = {
     severity: Severity.E,
     message: (BUILTINname: string) =>
       `Use of 1 argument with ${BUILTINname} built-in accepted although invalid under LANGLVL(SAA).`,
-    fullCode: "IBM3657IE",
   },
 
   /**
@@ -11882,7 +11086,6 @@ export const Error = {
     severity: Severity.E,
     message: (filename: string) =>
       `The INCLUDE file ${filename} has been deprecated.`,
-    fullCode: "IBM3658IE",
   },
 
   /**
@@ -11895,7 +11098,6 @@ export const Error = {
     severity: Severity.E,
     message: (statement: string) =>
       `The EXEC SQL ${statement} statement has been deprecated.`,
-    fullCode: "IBM3659IE",
   },
 
   /**
@@ -11908,7 +11110,6 @@ export const Error = {
     severity: Severity.E,
     message: (variable: string) =>
       `The ENTRY named ${variable} has been deprecated.`,
-    fullCode: "IBM3660IE",
   },
 
   /**
@@ -11920,7 +11121,6 @@ export const Error = {
     code: "IBM3661I",
     severity: Severity.E,
     message: "Invalid use of question mark.",
-    fullCode: "IBM3661IE",
   },
 };
 
@@ -11940,7 +11140,6 @@ export const Severe = {
       targettype: string,
     ) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has type ${sourcetype} , which is invalid for a parameter with type ${targettype} .`,
-    fullCode: "IBM1500IS",
   },
 
   /**
@@ -11953,7 +11152,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has a different strong type than the corresponding parameter.`,
-    fullCode: "IBM1501IS",
   },
 
   /**
@@ -11971,7 +11169,6 @@ export const Severe = {
       targettype: string,
     ) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has type ${sourcetype} , which is invalid for a parameter with type ${targettype} . If the ENTRY should be invoked, an argument list must be provided.`,
-    fullCode: "IBM1502IS",
   },
 
   /**
@@ -11985,7 +11182,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string, sourcetype: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has type ${sourcetype} , which is invalid for a parameter with type LIMITED ENTRY.`,
-    fullCode: "IBM1503IS",
   },
 
   /**
@@ -11998,7 +11194,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has type POINTER, which is invalid for an OFFSET parameter without an AREA qualifier.`,
-    fullCode: "IBM1504IS",
   },
 
   /**
@@ -12011,7 +11206,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has type POINTER, which is invalid for a POINTER parameter since the OFFSET argument is not an OFFSET variable declared with an AREA qualifier.`,
-    fullCode: "IBM1505IS",
   },
 
   /**
@@ -12023,7 +11217,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} has a different ORDINAL type than the corresponding parameter.`,
-    fullCode: "IBM1506IS",
   },
 
   /**
@@ -12040,7 +11233,6 @@ export const Severe = {
     code: "IBM1507I",
     severity: Severity.S,
     message: "Arrays of label constants may not be passed as arguments.",
-    fullCode: "IBM1507IS",
   },
 
   /**
@@ -12053,7 +11245,6 @@ export const Severe = {
     severity: Severity.S,
     message: (ENTRYname: string) =>
       `Too few arguments have been specified for the ENTRY ${ENTRYname} .`,
-    fullCode: "IBM1508IS",
   },
 
   /**
@@ -12071,7 +11262,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Argument to ${variablename} pseudovariable must be ASSIGNABLE.`,
-    fullCode: "IBM1509IS",
   },
 
   /**
@@ -12089,7 +11279,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `First argument to ${variablename} pseudovariable must be ASSIGNABLE.`,
-    fullCode: "IBM1510IS",
   },
 
   /**
@@ -12105,7 +11294,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an aggregate, but the parameter description specifies a scalar.`,
-    fullCode: "IBM1511IS",
   },
 
   /**
@@ -12124,7 +11312,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is a scalar, but the parameter description specifies an aggregate to which it cannot be passed.`,
-    fullCode: "IBM1512IS",
   },
 
   /**
@@ -12138,7 +11325,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an aggregate that does not exactly match the corresponding parameter description.`,
-    fullCode: "IBM1513IS",
   },
 
   /**
@@ -12152,7 +11338,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an aggregate with more members than its corresponding parameter description.`,
-    fullCode: "IBM1514IS",
   },
 
   /**
@@ -12166,7 +11351,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an aggregate with fewer members than its corresponding parameter description.`,
-    fullCode: "IBM1515IS",
   },
 
   /**
@@ -12180,7 +11364,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `The number of dimensions in the subelements of argument number ${argumentnumber} in ENTRY reference ${ENTRYname} and in its corresponding parameter description do not match.`,
-    fullCode: "IBM1516IS",
   },
 
   /**
@@ -12194,7 +11377,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `The upper and lower bounds in the subelements of argument number ${argumentnumber} in 72 ENTRY reference ${ENTRYname} and in its corresponding parameter description do not match.`,
-    fullCode: "IBM1517IS",
   },
 
   /**
@@ -12211,7 +11393,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `The number of dimensions for argument number ${argumentnumber} in ENTRY reference ${ENTRYname} and in its corresponding parameter description do not match.`,
-    fullCode: "IBM1518IS",
   },
 
   /**
@@ -12228,7 +11409,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `The upper and lower bounds for argument number ${argumentnumber} in ENTRY reference ${ENTRYname} and in its corresponding parameter description do not match.`,
-    fullCode: "IBM1519IS",
   },
 
   /**
@@ -12240,7 +11420,6 @@ export const Severe = {
     code: "IBM1520I",
     severity: Severity.S,
     message: "Charset 48 is not supported.",
-    fullCode: "IBM1520IS",
   },
 
   /**
@@ -12254,7 +11433,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Not enough virtual memory is available to continue the compilation.",
-    fullCode: "IBM1521IS",
   },
 
   /**
@@ -12267,7 +11445,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variable: string) =>
       `${variable} cannot be SET unless an IN clause is specified.`,
-    fullCode: "IBM1522IS",
   },
 
   /**
@@ -12279,7 +11456,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function must be an AREA reference.`,
-    fullCode: "IBM1523IS",
   },
 
   /**
@@ -12292,7 +11468,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} (x) is undefined if ABS(x) > 1.`,
-    fullCode: "IBM1524IS",
   },
 
   /**
@@ -12304,7 +11479,6 @@ export const Severe = {
     code: "IBM1525I",
     severity: Severity.S,
     message: "ATANH(x) is undefined if x is REAL and ABS(x) >= 1.",
-    fullCode: "IBM1525IS",
   },
 
   /**
@@ -12317,7 +11491,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} must have derived mode REAL.`,
-    fullCode: "IBM1526IS",
   },
 
   /**
@@ -12330,7 +11503,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have locator type.`,
-    fullCode: "IBM1527IS",
   },
 
   /**
@@ -12344,7 +11516,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have derived mode REAL.`,
-    fullCode: "IBM1528IS",
   },
 
   /**
@@ -12358,7 +11529,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have derived mode REAL.`,
-    fullCode: "IBM1530IS",
   },
 
   /**
@@ -12371,7 +11541,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument has invalid type.`,
-    fullCode: "IBM1531IS",
   },
 
   /**
@@ -12382,7 +11551,6 @@ export const Severe = {
     code: "IBM1532I",
     severity: Severity.S,
     message: "E35 sort exit routines must use a 32-bit linkage.",
-    fullCode: "IBM1532IS",
   },
 
   /**
@@ -12395,7 +11563,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have computational type.`,
-    fullCode: "IBM1533IS",
   },
 
   /**
@@ -12408,7 +11575,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} result would be too long.`,
-    fullCode: "IBM1534IS",
   },
 
   /**
@@ -12423,7 +11589,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have type REAL FLOAT.`,
-    fullCode: "IBM1535IS",
   },
 
   /**
@@ -12436,7 +11601,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a reference.`,
-    fullCode: "IBM1536IS",
   },
 
   /**
@@ -12450,7 +11614,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be an array expression.`,
-    fullCode: "IBM1537IS",
   },
 
   /**
@@ -12464,7 +11627,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a FILE reference.`,
-    fullCode: "IBM1538IS",
   },
 
   /**
@@ -12480,7 +11642,6 @@ export const Severe = {
     code: "IBM1539I",
     severity: Severity.S,
     message: "* is invalid as a built-in function argument.",
-    fullCode: "IBM1539IS",
   },
 
   /**
@@ -12493,7 +11654,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have derived mode REAL.`,
-    fullCode: "IBM1540IS",
   },
 
   /**
@@ -12507,7 +11667,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have computational type.`,
-    fullCode: "IBM1541IS",
   },
 
   /**
@@ -12520,7 +11679,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have computational type.`,
-    fullCode: "IBM1542IS",
   },
 
   /**
@@ -12532,7 +11690,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function must have type CHARACTER(1) NONVARYING.`,
-    fullCode: "IBM1543IS",
   },
 
   /**
@@ -12546,7 +11703,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must be an array.`,
-    fullCode: "IBM1545IS",
   },
 
   /**
@@ -12558,7 +11714,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have type CHARACTER(1) NONVARYING.`,
-    fullCode: "IBM1546IS",
   },
 
   /**
@@ -12571,7 +11726,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have computational type.`,
-    fullCode: "IBM1547IS",
   },
 
   /**
@@ -12583,7 +11737,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} may not be used inside a BEGIN block.`,
-    fullCode: "IBM1548IS",
   },
 
   /**
@@ -12596,7 +11749,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} may be used only in PROCEDUREs with LINKAGE(SYSTEM).`,
-    fullCode: "IBM1549IS",
   },
 
   /**
@@ -12608,7 +11760,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to the ${BUILTINname} pseudovariable must be an EVENT variable.`,
-    fullCode: "IBM1550IS",
   },
 
   /**
@@ -12620,7 +11771,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to the ${BUILTINname} pseudovariable must be a TASK variable.`,
-    fullCode: "IBM1551IS",
   },
 
   /**
@@ -12634,7 +11784,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Third argument to ${BUILTINname} built-in function must have computational type.`,
-    fullCode: "IBM1552IS",
   },
 
   /**
@@ -12660,7 +11809,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function must be either a NONVARYING BIT array reference or else an array expression with known length.`,
-    fullCode: "IBM1554IS",
   },
 
   /**
@@ -12673,7 +11821,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have computational type.`,
-    fullCode: "IBM1555IS",
   },
 
   /**
@@ -12688,7 +11835,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function would force STRINGRANGE.`,
-    fullCode: "IBM1556IS",
   },
 
   /**
@@ -12701,7 +11847,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must be positive.`,
-    fullCode: "IBM1557IS",
   },
 
   /**
@@ -12714,7 +11859,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Argument to VALID built-in function must have the attributes FIXED DECIMAL or PICTURE.",
-    fullCode: "IBM1558IS",
   },
 
   /**
@@ -12726,7 +11870,6 @@ export const Severe = {
     code: "IBM1559I",
     severity: Severity.S,
     message: "SQRT(x) is undefined if x is REAL and negative.",
-    fullCode: "IBM1559IS",
   },
 
   /**
@@ -12740,7 +11883,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} (x) is undefined if x is REAL and not positive.`,
-    fullCode: "IBM1560IS",
   },
 
   /**
@@ -12753,7 +11895,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built-in function has invalid type.`,
-    fullCode: "IBM1562IS",
   },
 
   /**
@@ -12766,7 +11907,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must be nonnegative.`,
-    fullCode: "IBM1563IS",
   },
 
   /**
@@ -12778,7 +11918,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Too few arguments have been specified for the ${BUILTINname} built-in function.`,
-    fullCode: "IBM1564IS",
   },
 
   /**
@@ -12791,7 +11930,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} (x) is undefined for x outside the supported domain.`,
-    fullCode: "IBM1566IS",
   },
 
   /**
@@ -12804,7 +11942,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} (x,y) is undefined if x and y are both zero.`,
-    fullCode: "IBM1568IS",
   },
 
   /**
@@ -12817,7 +11954,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a CONNECTED reference.`,
-    fullCode: "IBM1569IS",
   },
 
   /**
@@ -12830,7 +11966,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a reference to a level 1 CONTROLLED variable.`,
-    fullCode: "IBM1570IS",
   },
 
   /**
@@ -12843,7 +11978,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a reference to a level 1 BYADDR parameter.`,
-    fullCode: "IBM1571IS",
   },
 
   /**
@@ -12856,7 +11990,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The use of * as an argument is permitted only for parameters declared with the OPTIONAL attribute.",
-    fullCode: "IBM1573IS",
   },
 
   /**
@@ -12869,7 +12002,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have type POINTER or OFFSET.`,
-    fullCode: "IBM1575IS",
   },
 
   /**
@@ -12881,7 +12013,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function must have type CHARACTER(1) NONVARYING.`,
-    fullCode: "IBM1576IS",
   },
 
   /**
@@ -12893,7 +12024,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type POINTER.`,
-    fullCode: "IBM1577IS",
   },
 
   /**
@@ -12905,7 +12035,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type OFFSET.`,
-    fullCode: "IBM1578IS",
   },
 
   /**
@@ -12917,7 +12046,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have type AREA.`,
-    fullCode: "IBM1579IS",
   },
 
   /**
@@ -12930,7 +12058,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function is an OFFSET value.`,
-    fullCode: "IBM1580IS",
   },
 
   /**
@@ -12944,7 +12071,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function is an OFFSET variable declared without an AREA qualifier.`,
-    fullCode: "IBM1581IS",
   },
 
   /**
@@ -12957,7 +12083,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function is an OFFSET value.`,
-    fullCode: "IBM1582IS",
   },
 
   /**
@@ -12971,7 +12096,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function is an OFFSET variable declared without an AREA qualifier.`,
-    fullCode: "IBM1583IS",
   },
 
   /**
@@ -12983,7 +12107,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have type OFFSET.`,
-    fullCode: "IBM1584IS",
   },
 
   /**
@@ -12995,7 +12118,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have type POINTER.`,
-    fullCode: "IBM1585IS",
   },
 
   /**
@@ -13008,7 +12130,6 @@ export const Severe = {
     code: "IBM1586I",
     severity: Severity.S,
     message: "Argument to the STRING built-in function must be CONNECTED.",
-    fullCode: "IBM1586IS",
   },
 
   /**
@@ -13021,7 +12142,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have the ENTRY attribute.`,
-    fullCode: "IBM1587IS",
   },
 
   /**
@@ -13039,7 +12159,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type GRAPHIC.`,
-    fullCode: "IBM1588IS",
   },
 
   /**
@@ -13052,7 +12171,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must not have any subscripts.`,
-    fullCode: "IBM1589IS",
   },
 
   /**
@@ -13065,7 +12183,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Argument to the STRING built-in function must not be a UNION and must not contain a UNION.",
-    fullCode: "IBM1590IS",
   },
 
   /**
@@ -13078,7 +12195,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "All members of an argument to the STRING built-in function must have the UNALIGNED attribute.",
-    fullCode: "IBM1591IS",
   },
 
   /**
@@ -13091,7 +12207,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "All members of an argument to the STRING built-in function must have the NONVARYING attribute.",
-    fullCode: "IBM1592IS",
   },
 
   /**
@@ -13105,7 +12220,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "All members of an argument to the STRING built-in function must have string type.",
-    fullCode: "IBM1593IS",
   },
 
   /**
@@ -13119,7 +12233,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "All members of an argument to the STRING built-in function must have the same string type.",
-    fullCode: "IBM1594IS",
   },
 
   /**
@@ -13132,7 +12245,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type REAL FLOAT.`,
-    fullCode: "IBM1595IS",
   },
 
   /**
@@ -13144,7 +12256,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in function must have type CHARACTER.`,
-    fullCode: "IBM1596IS",
   },
 
   /**
@@ -13156,7 +12267,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have type TASK.`,
-    fullCode: "IBM1597IS",
   },
 
   /**
@@ -13168,7 +12278,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have type EVENT.`,
-    fullCode: "IBM1598IS",
   },
 
   /**
@@ -13180,7 +12289,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The built-in function ${variablename} may not be used as a pseudovariable.`,
-    fullCode: "IBM1599IS",
   },
 
   /**
@@ -13193,7 +12301,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Source to ${BUILTINname} pseudovariable must be scalar.`,
-    fullCode: "IBM1600IS",
   },
 
   /**
@@ -13206,7 +12313,6 @@ export const Severe = {
     severity: Severity.S,
     message: (identifier: string) =>
       `The identifier ${identifier} is not the name of a built-in function. Any use of it is unsupported.`,
-    fullCode: "IBM1601IS",
   },
 
   /**
@@ -13226,7 +12332,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Fourth argument to ${BUILTINname} built-in function must have the attributes REAL FIXED BIN(31,0).`,
-    fullCode: "IBM1602IS",
   },
 
   /**
@@ -13239,7 +12344,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must not have the CONSTANT attribute.`,
-    fullCode: "IBM1603IS",
   },
 
   /**
@@ -13251,7 +12355,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} argument must be nonnegative.`,
-    fullCode: "IBM1604IS",
   },
 
   /**
@@ -13264,7 +12367,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Argument to ENTRYADDR built- in function must be an ENTRY variable or an EXTERNAL ENTRY constant.",
-    fullCode: "IBM1605IS",
   },
 
   /**
@@ -13279,7 +12381,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Argument to ${variablename} pseudovariable must be a reference.`,
-    fullCode: "IBM1606IS",
   },
 
   /**
@@ -13294,7 +12395,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `First argument to ${variablename} pseudovariable must be a reference.`,
-    fullCode: "IBM1607IS",
   },
 
   /**
@@ -13307,7 +12407,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Argument to ${variablename} pseudovariable must be a scalar.`,
-    fullCode: "IBM1608IS",
   },
 
   /**
@@ -13320,7 +12419,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `First argument to ${variablename} pseudovariable must be a scalar.`,
-    fullCode: "IBM1609IS",
   },
 
   /**
@@ -13333,7 +12431,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Argument to ${variablename} pseudovariable must be COMPLEX.`,
-    fullCode: "IBM1610IS",
   },
 
   /**
@@ -13346,7 +12443,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} pseudovariable must have string type.`,
-    fullCode: "IBM1611IS",
   },
 
   /**
@@ -13358,7 +12454,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Argument to the ENTRYADDR pseudovariable must be an ENTRY variable.",
-    fullCode: "IBM1612IS",
   },
 
   /**
@@ -13371,7 +12466,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string, fileattribute: string) =>
       `Argument to ${BUILTINname} built- in function has attributes that conflict with ${fileattribute} .`,
-    fullCode: "IBM1613IS",
   },
 
   /**
@@ -13383,7 +12477,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function has attributes that conflict with STREAM.`,
-    fullCode: "IBM1614IS",
   },
 
   /**
@@ -13395,7 +12488,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function has attributes that conflict with PRINT.`,
-    fullCode: "IBM1615IS",
   },
 
   /**
@@ -13412,7 +12504,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) =>
       `Attributes and ENVIRONMENT options for file ${filename} conflict.`,
-    fullCode: "IBM1616IS",
   },
 
   /**
@@ -13428,7 +12519,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) =>
       `DIRECT attribute for file ${filename} needs ENVIRONMENT option specification of INDEXED, REGIONAL, RELATIVE, or VSAM.`,
-    fullCode: "IBM1617IS",
   },
 
   /**
@@ -13440,7 +12530,6 @@ export const Severe = {
     code: "IBM1618I",
     severity: Severity.S,
     message: "Syntax of the INCLUDE statement is incorrect.",
-    fullCode: "IBM1618IS",
   },
 
   /**
@@ -13451,7 +12540,6 @@ export const Severe = {
     code: "IBM1619I",
     severity: Severity.S,
     message: "File specification after INCLUDE is too long.",
-    fullCode: "IBM1619IS",
   },
 
   /**
@@ -13462,7 +12550,6 @@ export const Severe = {
     code: "IBM1620I",
     severity: Severity.S,
     message: "File specification missing after INCLUDE.",
-    fullCode: "IBM1620IS",
   },
 
   /**
@@ -13476,7 +12563,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "NODESCRIPTOR attribute is invalid if any parameters have bit alignment.",
-    fullCode: "IBM1621IS",
   },
 
   /**
@@ -13489,7 +12575,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The number of elements and dimension specifications in an aggregate must not exceed 131071.",
-    fullCode: "IBM1622IS",
   },
 
   /**
@@ -13502,7 +12587,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The dot-qualified reference ${referencename} is unknown.`,
-    fullCode: "IBM1623IS",
   },
 
   /**
@@ -13514,7 +12598,6 @@ export const Severe = {
     code: "IBM1625I",
     severity: Severity.S,
     message: "Extent must be a scalar.",
-    fullCode: "IBM1625IS",
   },
 
   /**
@@ -13526,7 +12609,6 @@ export const Severe = {
     code: "IBM1626I",
     severity: Severity.S,
     message: "Extent must have computational type.",
-    fullCode: "IBM1626IS",
   },
 
   /**
@@ -13538,7 +12620,6 @@ export const Severe = {
     code: "IBM1627I",
     severity: Severity.S,
     message: "Subscript expressions must be scalars.",
-    fullCode: "IBM1627IS",
   },
 
   /**
@@ -13550,7 +12631,6 @@ export const Severe = {
     severity: Severity.S,
     message: (indexnumber: string, variablename: string) =>
       `Index number ${indexnumber} into the array ${variablename} must have computational type.`,
-    fullCode: "IBM1628IS",
   },
 
   /**
@@ -13562,7 +12642,6 @@ export const Severe = {
     code: "IBM1629I",
     severity: Severity.S,
     message: "Extents for STATIC variable are not constant.",
-    fullCode: "IBM1629IS",
   },
 
   /**
@@ -13574,7 +12653,6 @@ export const Severe = {
     code: "IBM1630I",
     severity: Severity.S,
     message: "Number of dimensions in arrays do not match.",
-    fullCode: "IBM1630IS",
   },
 
   /**
@@ -13586,7 +12664,6 @@ export const Severe = {
     code: "IBM1631I",
     severity: Severity.S,
     message: "Upper and lower bounds in arrays do not match.",
-    fullCode: "IBM1631IS",
   },
 
   /**
@@ -13602,7 +12679,6 @@ export const Severe = {
     severity: Severity.S,
     message: (indexnumber: string, variablename: string) =>
       `Index number ${indexnumber} into the variable ${variablename} is less than the lower bound for that dimension.`,
-    fullCode: "IBM1632IS",
   },
 
   /**
@@ -13618,7 +12694,6 @@ export const Severe = {
     severity: Severity.S,
     message: (indexnumber: string, variablename: string) =>
       `Index number ${indexnumber} into the variable ${variablename} is greater than the upper bound for that dimension.`,
-    fullCode: "IBM1633IS",
   },
 
   /**
@@ -13641,7 +12716,6 @@ export const Severe = {
     code: "IBM1634I",
     severity: Severity.S,
     message: "Number of dimensions in subelements of structures do not match.",
-    fullCode: "IBM1634IS",
   },
 
   /**
@@ -13665,7 +12739,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Upper and lower bounds in subelements of structures do not match.",
-    fullCode: "IBM1635IS",
   },
 
   /**
@@ -13678,7 +12751,6 @@ export const Severe = {
     code: "IBM1636I",
     severity: Severity.S,
     message: "Substructuring in subelements of structures do not match.",
-    fullCode: "IBM1636IS",
   },
 
   /**
@@ -13690,7 +12762,6 @@ export const Severe = {
     code: "IBM1637I",
     severity: Severity.S,
     message: "Number of subelements in structures do not match.",
-    fullCode: "IBM1637IS",
   },
 
   /**
@@ -13701,7 +12772,6 @@ export const Severe = {
     code: "IBM1638I",
     severity: Severity.S,
     message: "Structures and unions are not permitted in GENERIC descriptions.",
-    fullCode: "IBM1638IS",
   },
 
   /**
@@ -13714,7 +12784,6 @@ export const Severe = {
     severity: Severity.S,
     message: (aggregatename: string) =>
       `The aggregate ${aggregatename} contains only noncomputational values. The aggregate will be ignored.`,
-    fullCode: "IBM1639IS",
   },
 
   /**
@@ -13727,7 +12796,6 @@ export const Severe = {
     severity: Severity.S,
     message: (aggregatename: string) =>
       `The aggregate ${aggregatename} contains one or more unions and cannot be used in stream I/O.`,
-    fullCode: "IBM1640IS",
   },
 
   /**
@@ -13746,7 +12814,6 @@ export const Severe = {
     severity: Severity.S,
     message: (structurename: string) =>
       `References to slices of the array of structures ${structurename} are not permitted.`,
-    fullCode: "IBM1641IS",
   },
 
   /**
@@ -13765,7 +12832,6 @@ export const Severe = {
     severity: Severity.S,
     message: (unionname: string) =>
       `References to slices of the array of unions ${unionname} are not permitted.`,
-    fullCode: "IBM1642IS",
   },
 
   /**
@@ -13778,7 +12844,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Each dimension of an array must contain no more than 2147483647 elements.",
-    fullCode: "IBM1643IS",
   },
 
   /**
@@ -13789,7 +12854,6 @@ export const Severe = {
     code: "IBM1644I",
     severity: Severity.S,
     message: "Aggregate contains more than 15 logical levels.",
-    fullCode: "IBM1644IS",
   },
 
   /**
@@ -13801,7 +12865,6 @@ export const Severe = {
     code: "IBM1645I",
     severity: Severity.S,
     message: "Data aggregate exceeds the maximum length.",
-    fullCode: "IBM1645IS",
   },
 
   /**
@@ -13826,7 +12889,6 @@ export const Severe = {
     code: "IBM1646I",
     severity: Severity.S,
     message: "SIZE would be raised in assigning TO value to control variable.",
-    fullCode: "IBM1646IS",
   },
 
   /**
@@ -13839,7 +12901,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Too few subscripts specified for the variable ${variablename} .`,
-    fullCode: "IBM1647IS",
   },
 
   /**
@@ -13852,7 +12913,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Too many subscripts specified for the variable ${variablename} .`,
-    fullCode: "IBM1648IS",
   },
 
   /**
@@ -13874,7 +12934,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The number of inherited dimensions plus the number of member dimensions exceeds 15.",
-    fullCode: "IBM1649IS",
   },
 
   /**
@@ -13890,7 +12949,6 @@ export const Severe = {
     code: "IBM1650I",
     severity: Severity.S,
     message: "The LIKE reference is neither a structure nor a union.",
-    fullCode: "IBM1650IS",
   },
 
   /**
@@ -13918,7 +12976,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keywordname: string) =>
       `The ${keywordname} reference is ambiguous.`,
-    fullCode: "IBM1651IS",
   },
 
   /**
@@ -13941,7 +12998,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Neither the LIKE reference nor any of its substructures can be declared with the LIKE attribute.",
-    fullCode: "IBM1652IS",
   },
 
   /**
@@ -13961,7 +13017,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A LIKE reference in an ENTRY declaration must not be a member of a structure or union containing that ENTRY declaration.",
-    fullCode: "IBM1653IS",
   },
 
   /**
@@ -13974,7 +13029,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keywordname: string) =>
       `The ${keywordname} reference is unknown.`,
-    fullCode: "IBM1654IS",
   },
 
   /**
@@ -13993,7 +13047,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Only CONTROLLED variables can be passed to CONTROLLED parameters.",
-    fullCode: "IBM1655IS",
   },
 
   /**
@@ -14014,7 +13067,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A CONTROLLED variable passed to a CONTROLLED parameter must have the same attributes as that parameter.",
-    fullCode: "IBM1656IS",
   },
 
   /**
@@ -14026,7 +13078,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `A subscript has been specified for the non-array variable ${variablename} .`,
-    fullCode: "IBM1657IS",
   },
 
   /**
@@ -14042,7 +13093,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an array expression requiring a temporary array with strings of unknown length.`,
-    fullCode: "IBM1658IS",
   },
 
   /**
@@ -14054,7 +13104,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "After LIKE expansion, aggregate would contain more than 15 logical levels.",
-    fullCode: "IBM1659IS",
   },
 
   /**
@@ -14073,7 +13122,6 @@ export const Severe = {
     severity: Severity.S,
     message: (recordsize: string, recsize: string) =>
       `The size ( ${recordsize} ) of the record conflicts with the RECSIZE ( ${recsize} ) specified in the ENVIRONMENT attribute.`,
-    fullCode: "IBM1660IS",
   },
 
   /**
@@ -14084,7 +13132,6 @@ export const Severe = {
     code: "IBM1661I",
     severity: Severity.S,
     message: "Aggregates cannot be assigned to scalars.",
-    fullCode: "IBM1661IS",
   },
 
   /**
@@ -14096,7 +13143,6 @@ export const Severe = {
     code: "IBM1662I",
     severity: Severity.S,
     message: "Unsupported use of union or structure containing a union.",
-    fullCode: "IBM1662IS",
   },
 
   /**
@@ -14107,7 +13153,6 @@ export const Severe = {
     code: "IBM1663I",
     severity: Severity.S,
     message: "Unsupported or invalid use of structure expression.",
-    fullCode: "IBM1663IS",
   },
 
   /**
@@ -14118,7 +13163,6 @@ export const Severe = {
     code: "IBM1664I",
     severity: Severity.S,
     message: "Array expressions cannot be assigned to non-arrays.",
-    fullCode: "IBM1664IS",
   },
 
   /**
@@ -14130,7 +13174,6 @@ export const Severe = {
     code: "IBM1665I",
     severity: Severity.S,
     message: "E15 sort exit routines must have the RETURNS attribute.",
-    fullCode: "IBM1665IS",
   },
 
   /**
@@ -14142,7 +13185,6 @@ export const Severe = {
     code: "IBM1666I",
     severity: Severity.S,
     message: "E15 sort exit routines must return a CHARACTER string.",
-    fullCode: "IBM1666IS",
   },
 
   /**
@@ -14153,7 +13195,6 @@ export const Severe = {
     code: "IBM1667I",
     severity: Severity.S,
     message: "Target in assignment is NONASSIGNABLE.",
-    fullCode: "IBM1667IS",
   },
 
   /**
@@ -14165,7 +13206,6 @@ export const Severe = {
     code: "IBM1668I",
     severity: Severity.S,
     message: "Target in assignment is a function reference.",
-    fullCode: "IBM1668IS",
   },
 
   /**
@@ -14179,7 +13219,6 @@ export const Severe = {
     code: "IBM1669I",
     severity: Severity.S,
     message: "Unsupported assignment to a target containing a UNION.",
-    fullCode: "IBM1669IS",
   },
 
   /**
@@ -14203,7 +13242,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A PROCEDURE containing ENTRY statements with differing RETURNS attributes must return values BYADDR.",
-    fullCode: "IBM1670IS",
   },
 
   /**
@@ -14216,7 +13254,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The source in a structure assignment must be a scalar expression or a matching structure.",
-    fullCode: "IBM1671IS",
   },
 
   /**
@@ -14234,7 +13271,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "In multiple BY NAME assignments, if one target is an array of structures, then all must be.",
-    fullCode: "IBM1672IS",
   },
 
   /**
@@ -14247,7 +13283,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The target in a compound concatenate and assign must be a VARYING or VARYINGZ string.",
-    fullCode: "IBM1673IS",
   },
 
   /**
@@ -14258,7 +13293,6 @@ export const Severe = {
     code: "IBM1674I",
     severity: Severity.S,
     message: "Target in assignment contains UNIONs.",
-    fullCode: "IBM1674IS",
   },
 
   /**
@@ -14269,7 +13303,6 @@ export const Severe = {
     code: "IBM1675I",
     severity: Severity.S,
     message: "FROMALIEN option cannot be used with MAIN.",
-    fullCode: "IBM1675IS",
   },
 
   /**
@@ -14283,7 +13316,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Source in assignment to LIMITED ENTRY must be either a non- nested ENTRY constant or another LIMITED ENTRY.",
-    fullCode: "IBM1676IS",
   },
 
   /**
@@ -14296,7 +13328,6 @@ export const Severe = {
     severity: Severity.S,
     message: (targettype: string) =>
       `Assignment of ENTRY to ${targettype} is invalid. If the ENTRY should be invoked, an argument list must be provided.`,
-    fullCode: "IBM1677IS",
   },
 
   /**
@@ -14308,7 +13339,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `Assignment of ${sourcetype} to ${targettype} is invalid.`,
-    fullCode: "IBM1678IS",
   },
 
   /**
@@ -14321,7 +13351,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Assignment of POINTER to OFFSET is invalid unless the OFFSET is declared with an AREA qualifier.",
-    fullCode: "IBM1679IS",
   },
 
   /**
@@ -14334,7 +13363,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Assignment of OFFSET to POINTER is invalid unless the OFFSET is declared with an AREA qualifier.",
-    fullCode: "IBM1680IS",
   },
 
   /**
@@ -14347,7 +13375,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The number of preprocessor invocations specified exceeds the maximum number (25) allowed.",
-    fullCode: "IBM1681IS",
   },
 
   /**
@@ -14358,7 +13385,6 @@ export const Severe = {
     code: "IBM1682I",
     severity: Severity.S,
     message: "The target in a BY NAME assignment must be a structure.",
-    fullCode: "IBM1682IS",
   },
 
   /**
@@ -14372,7 +13398,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Set of matching names in the expansion of BY NAME assignment must contain either all structures or no structures.",
-    fullCode: "IBM1683IS",
   },
 
   /**
@@ -14396,7 +13421,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, variablename2: string) =>
       `Number of dimensions in the BY NAME corresponding elements ${variablename} and ${variablename2} do not match.`,
-    fullCode: "IBM1684IS",
   },
 
   /**
@@ -14420,7 +13444,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, variablename2: string) =>
       `Upper and lower bounds in BY NAME corresponding elements ${variablename} and ${variablename2} do not match.`,
-    fullCode: "IBM1685IS",
   },
 
   /**
@@ -14433,7 +13456,6 @@ export const Severe = {
     code: "IBM1686I",
     severity: Severity.S,
     message: "BY NAME assignment contains UNIONs.",
-    fullCode: "IBM1686IS",
   },
 
   /**
@@ -14446,7 +13468,6 @@ export const Severe = {
     severity: Severity.S,
     message: (reservedname: string) =>
       `${reservedname} cannot be declared with OPTIONS other than ASM.`,
-    fullCode: "IBM1687IS",
   },
 
   /**
@@ -14459,7 +13480,6 @@ export const Severe = {
     severity: Severity.S,
     message: (reservedname: string) =>
       `${reservedname} cannot be declared with an entry description list.`,
-    fullCode: "IBM1688IS",
   },
 
   /**
@@ -14472,7 +13492,6 @@ export const Severe = {
     severity: Severity.S,
     message: (reservedname: string) =>
       `${reservedname} cannot be declared as a function.`,
-    fullCode: "IBM1689IS",
   },
 
   /**
@@ -14485,7 +13504,6 @@ export const Severe = {
     severity: Severity.S,
     message: (languagename: string) =>
       `OPTIONS( ${languagename} ) is not supported for functions.`,
-    fullCode: "IBM1690IS",
   },
 
   /**
@@ -14499,7 +13517,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Extents in ENTRY descriptors must be asterisks or restricted expressions with computational type.",
-    fullCode: "IBM1691IS",
   },
 
   /**
@@ -14514,7 +13531,6 @@ export const Severe = {
     code: "IBM1692I",
     severity: Severity.S,
     message: "An ENTRY invoked as a function must have the RETURNS attribute.",
-    fullCode: "IBM1692IS",
   },
 
   /**
@@ -14527,7 +13543,6 @@ export const Severe = {
     severity: Severity.S,
     message: (calloption: string) =>
       `${calloption} option repeated in CALL statement.`,
-    fullCode: "IBM1693IS",
   },
 
   /**
@@ -14540,7 +13555,6 @@ export const Severe = {
     code: "IBM1694I",
     severity: Severity.S,
     message: "Reference in CALL statement must not be a built-in function.",
-    fullCode: "IBM1694IS",
   },
 
   /**
@@ -14553,7 +13567,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Reference in CALL statement must either be a built-in subroutine or have type ENTRY.",
-    fullCode: "IBM1695IS",
   },
 
   /**
@@ -14569,7 +13582,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "RETURN statement without an expression is invalid inside a nested PROCEDURE that specified the RETURNS attribute.",
-    fullCode: "IBM1696IS",
   },
 
   /**
@@ -14582,7 +13594,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "RETURN statement is invalid inside a PROCEDURE that did not specify the RETURNS attribute.",
-    fullCode: "IBM1697IS",
   },
 
   /**
@@ -14596,7 +13607,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "RETURN statement with an expression is invalid inside a BEGIN in a PROCEDURE that does not have the RETURNS(BYADDR) attribute.",
-    fullCode: "IBM1698IS",
   },
 
   /**
@@ -14608,7 +13618,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is an aggregate. This conflicts with the BYVALUE option.`,
-    fullCode: "IBM1699IS",
   },
 
   /**
@@ -14619,7 +13628,6 @@ export const Severe = {
     code: "IBM1700I",
     severity: Severity.S,
     message: (attribute: string) => `${attribute} must be passed BYADDR.`,
-    fullCode: "IBM1700IS",
   },
 
   /**
@@ -14631,7 +13639,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, ENTRYname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${ENTRYname} is a string with unknown size. This conflicts with the BYVALUE option.`,
-    fullCode: "IBM1701IS",
   },
 
   /**
@@ -14646,7 +13653,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attributekeyword: string) =>
       `The ${attributekeyword} attribute is invalid as a RETURNS subattribute.`,
-    fullCode: "IBM1702IS",
   },
 
   /**
@@ -14661,7 +13667,6 @@ export const Severe = {
     code: "IBM1703I",
     severity: Severity.S,
     message: "Reference in CALL statement must not be an aggregate reference.",
-    fullCode: "IBM1703IS",
   },
 
   /**
@@ -14675,7 +13680,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Too many argument lists have been specified for the variable ${variablename} .`,
-    fullCode: "IBM1704IS",
   },
 
   /**
@@ -14693,7 +13697,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `RETURN expression with attribute ${sourcetype} is invalid for RETURNS options specifying the attribute ${targettype} .`,
-    fullCode: "IBM1705IS",
   },
 
   /**
@@ -14712,7 +13715,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `RETURN expression with attribute ${sourcetype} is invalid for RETURNS options specifying the attribute ${targettype} . If the ENTRY should be invoked, an argument list must be provided.`,
-    fullCode: "IBM1706IS",
   },
 
   /**
@@ -14726,7 +13728,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string) =>
       `RETURN expression with attribute ${sourcetype} is invalid for RETURNS options specifying the attribute LIMITED ENTRY.`,
-    fullCode: "IBM1707IS",
   },
 
   /**
@@ -14739,7 +13740,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "RETURN expression with attribute POINTER is invalid for RETURNS options specifying the attribute OFFSET since the OFFSET attribute is not declared with an AREA qualifier.",
-    fullCode: "IBM1708IS",
   },
 
   /**
@@ -14752,7 +13752,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "RETURN expression with attribute OFFSET is invalid for RETURNS options specifying the attribute POINTER since the OFFSET expression is not an OFFSET variable declared with an AREA qualifier.",
-    fullCode: "IBM1709IS",
   },
 
   /**
@@ -14770,7 +13769,6 @@ export const Severe = {
     code: "IBM1710I",
     severity: Severity.S,
     message: "ORDINAL type in RETURN expression and RETURNS option must match.",
-    fullCode: "IBM1710IS",
   },
 
   /**
@@ -14782,7 +13780,6 @@ export const Severe = {
     code: "IBM1711I",
     severity: Severity.S,
     message: "Expression in RETURN statement must be scalar.",
-    fullCode: "IBM1711IS",
   },
 
   /**
@@ -14793,7 +13790,6 @@ export const Severe = {
     code: "IBM1712I",
     severity: Severity.S,
     message: "External name specification must be a non-null string.",
-    fullCode: "IBM1712IS",
   },
 
   /**
@@ -14805,7 +13801,6 @@ export const Severe = {
     severity: Severity.S,
     message: (functionname: string) =>
       `Function ${functionname} contains no RETURN statement.`,
-    fullCode: "IBM1713IS",
   },
 
   /**
@@ -14818,7 +13813,6 @@ export const Severe = {
     code: "IBM1714I",
     severity: Severity.S,
     message: "Extents in RETURNS descriptors must be constants.",
-    fullCode: "IBM1714IS",
   },
 
   /**
@@ -14831,7 +13825,6 @@ export const Severe = {
     code: "IBM1715I",
     severity: Severity.S,
     message: "Exit from an ON-unit via RETURN is invalid.",
-    fullCode: "IBM1715IS",
   },
 
   /**
@@ -14843,7 +13836,6 @@ export const Severe = {
     code: "IBM1716I",
     severity: Severity.S,
     message: "FORMAT expression must be a scalar value.",
-    fullCode: "IBM1716IS",
   },
 
   /**
@@ -14855,7 +13847,6 @@ export const Severe = {
     code: "IBM1717I",
     severity: Severity.S,
     message: "FORMAT expression must have computational type.",
-    fullCode: "IBM1717IS",
   },
 
   /**
@@ -14868,7 +13859,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string) =>
       `${sourcetype} is invalid as a Boolean expression.`,
-    fullCode: "IBM1718IS",
   },
 
   /**
@@ -14883,7 +13873,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "ENTRY is invalid as a Boolean expression. If an ENTRY should be invoked, an argument list must be provided.",
-    fullCode: "IBM1719IS",
   },
 
   /**
@@ -14897,7 +13886,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Expression for calculating size of variable with adjustable extents is 90 too complicated. Variable may be defined in terms of itself.",
-    fullCode: "IBM1720IS",
   },
 
   /**
@@ -14909,7 +13897,6 @@ export const Severe = {
     code: "IBM1721I",
     severity: Severity.S,
     message: "Expression contains too many nested subexpressions.",
-    fullCode: "IBM1721IS",
   },
 
   /**
@@ -14922,7 +13909,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The number of error messages allowed by the MAXMSG option has been exceeded.",
-    fullCode: "IBM1722IS",
   },
 
   /**
@@ -14935,7 +13921,6 @@ export const Severe = {
     code: "IBM1723I",
     severity: Severity.S,
     message: "Result of concatenating two literals is too long.",
-    fullCode: "IBM1723IS",
   },
 
   /**
@@ -14948,7 +13933,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `Addition of ${sourcetype} and ${targettype} is invalid.`,
-    fullCode: "IBM1724IS",
   },
 
   /**
@@ -14962,7 +13946,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `Addition of ${sourcetype} and ${targettype} is invalid. If an ENTRY should be invoked, an argument list must be provided.`,
-    fullCode: "IBM1725IS",
   },
 
   /**
@@ -14976,7 +13959,6 @@ export const Severe = {
     severity: Severity.S,
     message: (targettype: string, sourcetype: string) =>
       `Subtraction of ${targettype} from ${sourcetype} is invalid.`,
-    fullCode: "IBM1726IS",
   },
 
   /**
@@ -14990,7 +13972,6 @@ export const Severe = {
     severity: Severity.S,
     message: (targettype: string, sourcetype: string) =>
       `Subtraction of ${targettype} from ${sourcetype} is invalid. If an ENTRY should be invoked, an argument list must be provided.`,
-    fullCode: "IBM1727IS",
   },
 
   /**
@@ -15002,7 +13983,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `Multiplication of ${sourcetype} by ${targettype} is invalid.`,
-    fullCode: "IBM1728IS",
   },
 
   /**
@@ -15016,7 +13996,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `Multiplication of ${sourcetype} by ${targettype} is invalid. If an ENTRY should be invoked, an argument list must be provided.`,
-    fullCode: "IBM1729IS",
   },
 
   /**
@@ -15028,7 +14007,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `Division of ${sourcetype} by ${targettype} is invalid.`,
-    fullCode: "IBM1730IS",
   },
 
   /**
@@ -15042,7 +14020,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `Division of ${sourcetype} by ${targettype} is invalid. If an ENTRY should be invoked, an argument list must be provided.`,
-    fullCode: "IBM1731IS",
   },
 
   /**
@@ -15055,7 +14032,6 @@ export const Severe = {
     code: "IBM1732I",
     severity: Severity.S,
     message: "Unsupported use of aggregate expression.",
-    fullCode: "IBM1732IS",
   },
 
   /**
@@ -15066,7 +14042,6 @@ export const Severe = {
     code: "IBM1733I",
     severity: Severity.S,
     message: "Concatenate operands must have computational type.",
-    fullCode: "IBM1733IS",
   },
 
   /**
@@ -15078,7 +14053,6 @@ export const Severe = {
     code: "IBM1734I",
     severity: Severity.S,
     message: "Operand in a prefix expression is not computational.",
-    fullCode: "IBM1734IS",
   },
 
   /**
@@ -15089,7 +14063,6 @@ export const Severe = {
     code: "IBM1735I",
     severity: Severity.S,
     message: "AREA variables may not be compared.",
-    fullCode: "IBM1735IS",
   },
 
   /**
@@ -15102,7 +14075,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `Comparison of ${sourcetype} to ${targettype} is invalid.`,
-    fullCode: "IBM1736IS",
   },
 
   /**
@@ -15116,7 +14088,6 @@ export const Severe = {
     severity: Severity.S,
     message: (targettype: string) =>
       `Comparison of ENTRY to ${targettype} is invalid. If the ENTRY should be invoked, an argument list must be provided.`,
-    fullCode: "IBM1737IS",
   },
 
   /**
@@ -15130,7 +14101,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string) =>
       `Comparison of ${sourcetype} to ENTRY is invalid. If the ENTRY should be invoked, an argument list must be provided.`,
-    fullCode: "IBM1738IS",
   },
 
   /**
@@ -15141,7 +14111,6 @@ export const Severe = {
     code: "IBM1739I",
     severity: Severity.S,
     message: "TASK variables may not be compared.",
-    fullCode: "IBM1739IS",
   },
 
   /**
@@ -15154,7 +14123,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Comparison of an OFFSET to a POINTER is invalid since the OFFSET comparand is not an OFFSET variable declared with an AREA qualifier.",
-    fullCode: "IBM1740IS",
   },
 
   /**
@@ -15172,7 +14140,6 @@ export const Severe = {
     code: "IBM1741I",
     severity: Severity.S,
     message: "Operands in comparison have differing strong types.",
-    fullCode: "IBM1741IS",
   },
 
   /**
@@ -15183,7 +14150,6 @@ export const Severe = {
     code: "IBM1742I",
     severity: Severity.S,
     message: "Compared ORDINALs must have the same ORDINAL type.",
-    fullCode: "IBM1742IS",
   },
 
   /**
@@ -15195,7 +14161,6 @@ export const Severe = {
     code: "IBM1743I",
     severity: Severity.S,
     message: "Source and target in assignment have differing strong types.",
-    fullCode: "IBM1743IS",
   },
 
   /**
@@ -15207,7 +14172,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Conversion of ORDINALs is invalid unless both have the same ORDINAL type.",
-    fullCode: "IBM1744IS",
   },
 
   /**
@@ -15220,7 +14184,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "In a function that returns a strong type, the type in any RETURN expression must be the same as that returned by the function.",
-    fullCode: "IBM1745IS",
   },
 
   /**
@@ -15238,7 +14201,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "VALUE, VALUELIST, VALUERANGE, and STATIC INITIAL expressions must be constant.",
-    fullCode: "IBM1746IS",
   },
 
   /**
@@ -15256,7 +14218,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Function cannot be used before the function's descriptor list has been scanned.",
-    fullCode: "IBM1747IS",
   },
 
   /**
@@ -15273,7 +14234,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Extents of automatic variables must not depend on the extents of automatic variables declared later in the same block.",
-    fullCode: "IBM1748IS",
   },
 
   /**
@@ -15284,7 +14244,6 @@ export const Severe = {
     code: "IBM1749I",
     severity: Severity.S,
     message: "VALUE and INITIAL expressions must be scalars.",
-    fullCode: "IBM1749IS",
   },
 
   /**
@@ -15297,7 +14256,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `INITIAL attribute is invalid for the STATIC LABEL variable ${variablename} since it has the MEMBER attribute.`,
-    fullCode: "IBM1750IS",
   },
 
   /**
@@ -15310,7 +14268,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `INITIAL attribute is valid for the STATIC ENTRY variable ${variablename} only if it has the LIMITED attribute.`,
-    fullCode: "IBM1751IS",
   },
 
   /**
@@ -15324,7 +14281,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `INITIAL attribute is invalid for the STATIC FORMAT variable ${variablename} .`,
-    fullCode: "IBM1753IS",
   },
 
   /**
@@ -15341,7 +14297,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `An asterisk iteration factor can be applied only to the last expression in the INITIAL item list for ${variablename} .`,
-    fullCode: "IBM1754IS",
   },
 
   /**
@@ -15358,7 +14313,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `An asterisk iteration factor cannot be used in the nested INITIAL item list for ${variablename} .`,
-    fullCode: "IBM1755IS",
   },
 
   /**
@@ -15373,7 +14327,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The scalar variable ${variablename} has an INITIAL list with more than one item.`,
-    fullCode: "IBM1756IS",
   },
 
   /**
@@ -15391,7 +14344,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `LABEL constant in STATIC INITIAL for the variable ${variablename} must be in the same block as the LABEL being initialized.`,
-    fullCode: "IBM1757IS",
   },
 
   /**
@@ -15410,7 +14362,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Only one element in the STATIC UNION ${variablename} may have the INITIAL attribute.`,
-    fullCode: "IBM1758IS",
   },
 
   /**
@@ -15429,7 +14380,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Non-null INITIAL values are not supported for the STATIC NONCONNECTED array ${variablename} since it has the attributes UNALIGNED BIT.`,
-    fullCode: "IBM1759IS",
   },
 
   /**
@@ -15448,7 +14398,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `LABEL constant in the STATIC INITIAL list for ${variablename} must not be an element of a LABEL CONSTANT array.`,
-    fullCode: "IBM1760IS",
   },
 
   /**
@@ -15462,7 +14411,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `ENTRY reference in INITIAL clause for the STATIC ENTRY variable ${variablename} must not be FETCHABLE.`,
-    fullCode: "IBM1761IS",
   },
 
   /**
@@ -15473,7 +14421,6 @@ export const Severe = {
     code: "IBM1762I",
     severity: Severity.S,
     message: "INITIAL iteration factor must have computational type.",
-    fullCode: "IBM1762IS",
   },
 
   /**
@@ -15485,7 +14432,6 @@ export const Severe = {
     code: "IBM1763I",
     severity: Severity.S,
     message: "INITIAL iteration factor must be a scalar.",
-    fullCode: "IBM1763IS",
   },
 
   /**
@@ -15501,7 +14447,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The BYVALUE attribute is invalid for strings of nonconstant length.",
-    fullCode: "IBM1764IS",
   },
 
   /**
@@ -15518,7 +14463,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Length of string with the VALUE attribute must be a constant or an asterisk.",
-    fullCode: "IBM1765IS",
   },
 
   /**
@@ -15535,7 +14479,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `VALUE for ${variablename} must be evaluated before its first use.`,
-    fullCode: "IBM1766IS",
   },
 
   /**
@@ -15550,7 +14493,6 @@ export const Severe = {
     code: "IBM1767I",
     severity: Severity.S,
     message: "Control variable in DO statement must not be a named constant.",
-    fullCode: "IBM1767IS",
   },
 
   /**
@@ -15565,7 +14507,6 @@ export const Severe = {
     code: "IBM1768I",
     severity: Severity.S,
     message: "Control variable in DO statement must have VARIABLE attribute.",
-    fullCode: "IBM1768IS",
   },
 
   /**
@@ -15578,7 +14519,6 @@ export const Severe = {
     code: "IBM1769I",
     severity: Severity.S,
     message: "Control variable has type POINTER, but TO expression does not.",
-    fullCode: "IBM1769IS",
   },
 
   /**
@@ -15592,7 +14532,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Control variable in loop with TO clause must have computational or locator type.",
-    fullCode: "IBM1770IS",
   },
 
   /**
@@ -15605,7 +14544,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The ${variablename} built-in function may be used as a pseudovariable in a DO-loop only if the length of the pseudovariable reference is known at compile time.`,
-    fullCode: "IBM1771IS",
   },
 
   /**
@@ -15616,7 +14554,6 @@ export const Severe = {
     code: "IBM1772I",
     severity: Severity.S,
     message: "Source in DO loop initialization must be scalar.",
-    fullCode: "IBM1772IS",
   },
 
   /**
@@ -15627,7 +14564,6 @@ export const Severe = {
     code: "IBM1773I",
     severity: Severity.S,
     message: "Control variable in DO statement must be a scalar.",
-    fullCode: "IBM1773IS",
   },
 
   /**
@@ -15640,7 +14576,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Compiler restriction: control variable in DO statement must not be a BASED or CONTROLLED string or area that has non-constant extent.",
-    fullCode: "IBM1774IS",
   },
 
   /**
@@ -15652,7 +14587,6 @@ export const Severe = {
     code: "IBM1775I",
     severity: Severity.S,
     message: "BY expression must have computational type.",
-    fullCode: "IBM1775IS",
   },
 
   /**
@@ -15667,7 +14601,6 @@ export const Severe = {
     code: "IBM1776I",
     severity: Severity.S,
     message: "BY expression must not be COMPLEX.",
-    fullCode: "IBM1776IS",
   },
 
   /**
@@ -15682,7 +14615,6 @@ export const Severe = {
     code: "IBM1777I",
     severity: Severity.S,
     message: "TO expression must not be COMPLEX.",
-    fullCode: "IBM1777IS",
   },
 
   /**
@@ -15695,7 +14627,6 @@ export const Severe = {
     code: "IBM1778I",
     severity: Severity.S,
     message: "Control variable in loop with TO clause must not be COMPLEX.",
-    fullCode: "IBM1778IS",
   },
 
   /**
@@ -15706,7 +14637,6 @@ export const Severe = {
     code: "IBM1779I",
     severity: Severity.S,
     message: "TO expression must have computational type.",
-    fullCode: "IBM1779IS",
   },
 
   /**
@@ -15718,7 +14648,6 @@ export const Severe = {
     code: "IBM1780I",
     severity: Severity.S,
     message: "SIGNAL ANYCONDITION is invalid.",
-    fullCode: "IBM1780IS",
   },
 
   /**
@@ -15730,7 +14659,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `And, or and exclusive-or of ${sourcetype} and ${targettype} is invalid.`,
-    fullCode: "IBM1781IS",
   },
 
   /**
@@ -15744,7 +14672,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `And, or and exclusive-or of ${sourcetype} and ${targettype} is invalid. If an ENTRY should be invoked, an argument list must be provided.`,
-    fullCode: "IBM1782IS",
   },
 
   /**
@@ -15758,7 +14685,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "BASED variable without an implicit qualifier must be explicitly qualified.",
-    fullCode: "IBM1783IS",
   },
 
   /**
@@ -15771,7 +14697,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a locator qualifier since it does not have the RETURNS attribute.`,
-    fullCode: "IBM1784IS",
   },
 
   /**
@@ -15783,7 +14708,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The variable ${variablename} is used as a locator qualifier, but it is not a scalar.`,
-    fullCode: "IBM1785IS",
   },
 
   /**
@@ -15796,7 +14720,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} built-in function may not be used as a locator qualifier.`,
-    fullCode: "IBM1786IS",
   },
 
   /**
@@ -15809,7 +14732,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a locator qualifier.`,
-    fullCode: "IBM1787IS",
   },
 
   /**
@@ -15822,7 +14744,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The qualifier ${variablename} does not have locator type.`,
-    fullCode: "IBM1789IS",
   },
 
   /**
@@ -15834,7 +14755,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Locator qualification is invalid for ${variablename} .`,
-    fullCode: "IBM1790IS",
   },
 
   /**
@@ -15846,7 +14766,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The locator qualified reference ${referencename} is ambiguous.`,
-    fullCode: "IBM1791IS",
   },
 
   /**
@@ -15859,7 +14778,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The locator qualified reference ${referencename} is unknown.`,
-    fullCode: "IBM1792IS",
   },
 
   /**
@@ -15871,7 +14789,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The ${variablename} built-in function may not be used as a pseudovariable in a DO-loop.`,
-    fullCode: "IBM1793IS",
   },
 
   /**
@@ -15890,7 +14807,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Too many implicit locators are needed to resolve the qualification for a variable. Variable may be based on itself.",
-    fullCode: "IBM1794IS",
   },
 
   /**
@@ -15904,7 +14820,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The OFFSET variable ${variablename} may not be used as a locator qualifier since it was not declared with an AREA specification.`,
-    fullCode: "IBM1795IS",
   },
 
   /**
@@ -15915,7 +14830,6 @@ export const Severe = {
     code: "IBM1796I",
     severity: Severity.S,
     message: "Qualifier must be a scalar.",
-    fullCode: "IBM1796IS",
   },
 
   /**
@@ -15928,7 +14842,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "BASED variables may not contain extents with nonconstant values if other extents use the REFER option.",
-    fullCode: "IBM1797IS",
   },
 
   /**
@@ -15941,7 +14854,6 @@ export const Severe = {
     code: "IBM1798I",
     severity: Severity.S,
     message: "Invalid scale factor in PICTURE specification.",
-    fullCode: "IBM1798IS",
   },
 
   /**
@@ -15954,7 +14866,6 @@ export const Severe = {
     code: "IBM1799I",
     severity: Severity.S,
     message: "Invalid characters in PICTURE specification.",
-    fullCode: "IBM1799IS",
   },
 
   /**
@@ -15967,7 +14878,6 @@ export const Severe = {
     code: "IBM1800I",
     severity: Severity.S,
     message: "Invalid characters in the F scaling factor.",
-    fullCode: "IBM1800IS",
   },
 
   /**
@@ -15979,7 +14889,6 @@ export const Severe = {
     code: "IBM1801I",
     severity: Severity.S,
     message: "A character PICTURE string may have only A, X, or 9.",
-    fullCode: "IBM1801IS",
   },
 
   /**
@@ -15991,7 +14900,6 @@ export const Severe = {
     code: "IBM1802I",
     severity: Severity.S,
     message: "Invalid precision in PICTURE fixed decimal precision.",
-    fullCode: "IBM1802IS",
   },
 
   /**
@@ -16005,7 +14913,6 @@ export const Severe = {
     code: "IBM1803I",
     severity: Severity.S,
     message: "Too many T, I, or R appear in the PICTURE specification.",
-    fullCode: "IBM1803IS",
   },
 
   /**
@@ -16016,7 +14923,6 @@ export const Severe = {
     code: "IBM1804I",
     severity: Severity.S,
     message: "PICTURE specifications in C- format items must be arithmetic.",
-    fullCode: "IBM1804IS",
   },
 
   /**
@@ -16028,7 +14934,6 @@ export const Severe = {
     code: "IBM1805I",
     severity: Severity.S,
     message: "Precision in numeric PICTURE must NOT be less than 1.",
-    fullCode: "IBM1805IS",
   },
 
   /**
@@ -16040,7 +14945,6 @@ export const Severe = {
     code: "IBM1806I",
     severity: Severity.S,
     message: "The precision in FIXED DECIMAL PICTURE is too big.",
-    fullCode: "IBM1806IS",
   },
 
   /**
@@ -16052,7 +14956,6 @@ export const Severe = {
     code: "IBM1807I",
     severity: Severity.S,
     message: "Precision in FLOAT DECIMAL PICTURE is too big.",
-    fullCode: "IBM1807IS",
   },
 
   /**
@@ -16063,7 +14966,6 @@ export const Severe = {
     code: "IBM1808I",
     severity: Severity.S,
     message: "PICTURE string is empty.",
-    fullCode: "IBM1808IS",
   },
 
   /**
@@ -16076,7 +14978,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Exponent in FLOAT PICTURE is too long. Exponent will be truncated to fit.",
-    fullCode: "IBM1809IS",
   },
 
   /**
@@ -16088,7 +14989,6 @@ export const Severe = {
     code: "IBM1810I",
     severity: Severity.S,
     message: "Exponent in FLOAT PICTURE has no digits.",
-    fullCode: "IBM1810IS",
   },
 
   /**
@@ -16100,7 +15000,6 @@ export const Severe = {
     code: "IBM1811I",
     severity: Severity.S,
     message: "Exponent in PICTURE specification cannot contain V.",
-    fullCode: "IBM1811IS",
   },
 
   /**
@@ -16112,7 +15011,6 @@ export const Severe = {
     code: "IBM1812I",
     severity: Severity.S,
     message: "FLOAT PICTURE cannot contain CR, DB or F.",
-    fullCode: "IBM1812IS",
   },
 
   /**
@@ -16129,7 +15027,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "PICTURE specification is too long. Excess characters are truncated on the right.",
-    fullCode: "IBM1813IS",
   },
 
   /**
@@ -16146,7 +15043,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "PICTURE string has an invalid floating insertion character string.",
-    fullCode: "IBM1814IS",
   },
 
   /**
@@ -16163,7 +15059,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} is a built-in subroutine. It should be used only in CALL statements and not as a function.`,
-    fullCode: "IBM1815IS",
   },
 
   /**
@@ -16179,7 +15074,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string, variablename: string) =>
       `${keyword} item ${variablename} is not computational.`,
-    fullCode: "IBM1816IS",
   },
 
   /**
@@ -16191,7 +15085,6 @@ export const Severe = {
     code: "IBM1817I",
     severity: Severity.S,
     message: "The KEYTO reference must be of type CHARACTER or GRAPHIC.",
-    fullCode: "IBM1817IS",
   },
 
   /**
@@ -16207,7 +15100,6 @@ export const Severe = {
     severity: Severity.S,
     message: (ioOption: string, ioStmt: string) =>
       `${ioOption} conflicts with previous options on the ${ioStmt} statement.`,
-    fullCode: "IBM1818IS",
   },
 
   /**
@@ -16222,7 +15114,6 @@ export const Severe = {
     severity: Severity.S,
     message: (ioOption: string, ioStmt: string) =>
       `The ${ioOption} option is multiply specified on the ${ioStmt} statement.`,
-    fullCode: "IBM1819IS",
   },
 
   /**
@@ -16238,7 +15129,6 @@ export const Severe = {
     severity: Severity.S,
     message: (ioOption: string, ioStmt: string) =>
       `Mandatory ${ioOption} option not specified on the ${ioStmt} statement.`,
-    fullCode: "IBM1820IS",
   },
 
   /**
@@ -16256,7 +15146,6 @@ export const Severe = {
     severity: Severity.S,
     message: (fromintooption: string) =>
       `Reference for ${fromintooption} is an invalid element or aggregate type.`,
-    fullCode: "IBM1821IS",
   },
 
   /**
@@ -16269,7 +15158,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keywordtype: string) =>
       `The ${keywordtype} expression must be computational.`,
-    fullCode: "IBM1822IS",
   },
 
   /**
@@ -16281,7 +15169,6 @@ export const Severe = {
     code: "IBM1823I",
     severity: Severity.S,
     message: "SET reference must have locator type.",
-    fullCode: "IBM1823IS",
   },
 
   /**
@@ -16299,7 +15186,6 @@ export const Severe = {
     code: "IBM1824I",
     severity: Severity.S,
     message: (keyword: string) => `${keyword} expression must be scalar.`,
-    fullCode: "IBM1824IS",
   },
 
   /**
@@ -16317,7 +15203,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) =>
       `The reference in the ${keyword} clause cannot be a built-in function reference.`,
-    fullCode: "IBM1825IS",
   },
 
   /**
@@ -16330,7 +15215,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) =>
       `The reference in the ${keyword} clause cannot be a function invocation.`,
-    fullCode: "IBM1826IS",
   },
 
   /**
@@ -16347,7 +15231,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) =>
       `The reference in the ${keyword} clause must have CHARACTER type.`,
-    fullCode: "IBM1827IS",
   },
 
   /**
@@ -16364,7 +15247,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) =>
       `The reference in the ${keyword} clause must be a scalar variable.`,
-    fullCode: "IBM1828IS",
   },
 
   /**
@@ -16380,7 +15262,6 @@ export const Severe = {
     severity: Severity.S,
     message: (clause: string) =>
       `The attributes of the argument in the ${clause} clause conflict with its usage.`,
-    fullCode: "IBM1829IS",
   },
 
   /**
@@ -16395,7 +15276,6 @@ export const Severe = {
     code: "IBM1830I",
     severity: Severity.S,
     message: (keyword: string) => `${keyword} expression is not computational.`,
-    fullCode: "IBM1830IS",
   },
 
   /**
@@ -16414,7 +15294,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The LOCATE reference ${variablename} is not implicitly qualified and is invalid without a SET clause.`,
-    fullCode: "IBM1831IS",
   },
 
   /**
@@ -16426,7 +15305,6 @@ export const Severe = {
     code: "IBM1832I",
     severity: Severity.S,
     message: "SET reference must have POINTER type.",
-    fullCode: "IBM1832IS",
   },
 
   /**
@@ -16446,7 +15324,6 @@ export const Severe = {
     severity: Severity.S,
     message: (fromintoclause: string) =>
       `The aggregate reference in the ${fromintoclause} clause must be CONNECTED.`,
-    fullCode: "IBM1833IS",
   },
 
   /**
@@ -16462,7 +15339,6 @@ export const Severe = {
     code: "IBM1834I",
     severity: Severity.S,
     message: "The expression in IGNORE must be computational.",
-    fullCode: "IBM1834IS",
   },
 
   /**
@@ -16475,7 +15351,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The LOCATE reference ${variablename} is not a level 1 BASED variable.`,
-    fullCode: "IBM1835IS",
   },
 
   /**
@@ -16486,7 +15361,6 @@ export const Severe = {
     code: "IBM1836I",
     severity: Severity.S,
     message: "INITIAL attribute is invalid for structures.",
-    fullCode: "IBM1836IS",
   },
 
   /**
@@ -16505,7 +15379,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) =>
       `The reference in the ${keyword} clause cannot be a named constant.`,
-    fullCode: "IBM1837IS",
   },
 
   /**
@@ -16522,7 +15395,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string) =>
       `The attributes of ${argumentnumber} conflict with its usage in data directed I/O.`,
-    fullCode: "IBM1838IS",
   },
 
   /**
@@ -16533,7 +15405,6 @@ export const Severe = {
     code: "IBM1839I",
     severity: Severity.S,
     message: "DATA-directed I/O does not support references with locators.",
-    fullCode: "IBM1839IS",
   },
 
   /**
@@ -16544,7 +15415,6 @@ export const Severe = {
     code: "IBM1840I",
     severity: Severity.S,
     message: "Subscripted references are not allowed in GET DATA.",
-    fullCode: "IBM1840IS",
   },
 
   /**
@@ -16559,7 +15429,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) =>
       `The first argument in the ${keyword} - format item is invalid.`,
-    fullCode: "IBM1841IS",
   },
 
   /**
@@ -16574,7 +15443,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) =>
       `The field width specified in the ${keyword} -format item is too small for complete input or output of the data item.`,
-    fullCode: "IBM1842IS",
   },
 
   /**
@@ -16587,7 +15455,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) =>
       `The fractional digits specified in the ${keyword} -format item is invalid.`,
-    fullCode: "IBM1843IS",
   },
 
   /**
@@ -16600,7 +15467,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The argument in the R-format item is not a format constant or format variable.",
-    fullCode: "IBM1844IS",
   },
 
   /**
@@ -16612,7 +15478,6 @@ export const Severe = {
     code: "IBM1845I",
     severity: Severity.S,
     message: "The significant digits specified in E-format item is invalid.",
-    fullCode: "IBM1845IS",
   },
 
   /**
@@ -16625,7 +15490,6 @@ export const Severe = {
     severity: Severity.S,
     message: (formatitem: string) =>
       `The ${formatitem} format item is invalid with GET/PUT STRING.`,
-    fullCode: "IBM1846IS",
   },
 
   /**
@@ -16637,7 +15501,6 @@ export const Severe = {
     code: "IBM1847I",
     severity: Severity.S,
     message: "GOTO target is inside a (different) DO loop.",
-    fullCode: "IBM1847IS",
   },
 
   /**
@@ -16649,7 +15512,6 @@ export const Severe = {
     severity: Severity.S,
     message: (includestmtarg: string) =>
       `The INCLUDE file for ${includestmtarg} could not be found.`,
-    fullCode: "IBM1848IS",
   },
 
   /**
@@ -16661,7 +15523,6 @@ export const Severe = {
     code: "IBM1849I",
     severity: Severity.S,
     message: "Under CMPAT(V1), bounds must not be greater than 32767.",
-    fullCode: "IBM1849IS",
   },
 
   /**
@@ -16673,7 +15534,6 @@ export const Severe = {
     code: "IBM1850I",
     severity: Severity.S,
     message: "Under CMPAT(V1), bounds must not be less than -32768.",
-    fullCode: "IBM1850IS",
   },
 
   /**
@@ -16685,7 +15545,6 @@ export const Severe = {
     severity: Severity.S,
     message: (includefilename: string) =>
       `The INCLUDE file ${includefilename} could not be opened.`,
-    fullCode: "IBM1851IS",
   },
 
   /**
@@ -16697,7 +15556,6 @@ export const Severe = {
     severity: Severity.S,
     message: (preprocessor: string) =>
       `The preprocessor ${preprocessor} is not known to the compiler.`,
-    fullCode: "IBM1852IS",
   },
 
   /**
@@ -16710,7 +15568,6 @@ export const Severe = {
     severity: Severity.S,
     message: (statement: string) =>
       `Variable in ${statement} statement must be a FETCHABLE entry constant.`,
-    fullCode: "IBM1853IS",
   },
 
   /**
@@ -16722,7 +15579,6 @@ export const Severe = {
     severity: Severity.S,
     message: (PPname: string, oncode: string) =>
       `Fetch of the ${PPname} preprocessor failed with ONCODE= ${oncode} .`,
-    fullCode: "IBM1854IS",
   },
 
   /**
@@ -16734,7 +15590,6 @@ export const Severe = {
     severity: Severity.S,
     message: (PPname: string, oncodevalue: string) =>
       `Preprocessor ${PPname} terminated abnormally with ONCODE= ${oncodevalue} .`,
-    fullCode: "IBM1855IS",
   },
 
   /**
@@ -16746,7 +15601,6 @@ export const Severe = {
     severity: Severity.S,
     message: (oncode: string) =>
       `Fetch of the user exit initialization routine failed with ONCODE= ${oncode} .`,
-    fullCode: "IBM1856IS",
   },
 
   /**
@@ -16758,7 +15612,6 @@ export const Severe = {
     severity: Severity.S,
     message: (oncodevalue: string) =>
       `User exit routine terminated abnormally with ONCODE= ${oncodevalue} .`,
-    fullCode: "IBM1857IS",
   },
 
   /**
@@ -16769,7 +15622,6 @@ export const Severe = {
     code: "IBM1858I",
     severity: Severity.S,
     message: "Compilation aborted by user exit.",
-    fullCode: "IBM1858IS",
   },
 
   /**
@@ -16780,7 +15632,6 @@ export const Severe = {
     code: "IBM1859I",
     severity: Severity.S,
     message: "The first statement must be a PROCEDURE or PACKAGE statement.",
-    fullCode: "IBM1859IS",
   },
 
   /**
@@ -16791,7 +15642,6 @@ export const Severe = {
     code: "IBM1860I",
     severity: Severity.S,
     message: "PACKAGE statement must be the first statement in the program.",
-    fullCode: "IBM1860IS",
   },
 
   /**
@@ -16804,7 +15654,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "All statements other than DECLARE, DEFAULT and PROCEDURE statements must be contained inside a PROCEDURE.",
-    fullCode: "IBM1861IS",
   },
 
   /**
@@ -16816,7 +15665,6 @@ export const Severe = {
     code: "IBM1862I",
     severity: Severity.S,
     message: "Statements are nested too deep.",
-    fullCode: "IBM1862IS",
   },
 
   /**
@@ -16829,7 +15677,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Variables declared in a PACKAGE outside of any PROCEDURE must have the storage class STATIC, BASED or CONTROLLED or must be DEFINED on STATIC.",
-    fullCode: "IBM1863IS",
   },
 
   /**
@@ -16841,7 +15688,6 @@ export const Severe = {
     severity: Severity.S,
     message: (functionname: string) =>
       `The ${functionname} built-in function is not supported.`,
-    fullCode: "IBM1864IS",
   },
 
   /**
@@ -16855,7 +15701,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The only BASED variables supported in data-directed i/o are those that have constant extents and that are implicitly qualified by simple variables.",
-    fullCode: "IBM1865IS",
   },
 
   /**
@@ -16866,7 +15711,6 @@ export const Severe = {
     code: "IBM1866I",
     severity: Severity.S,
     message: (keyword: string) => `The ${keyword} statement is not supported.`,
-    fullCode: "IBM1866IS",
   },
 
   /**
@@ -16878,7 +15722,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The pseudovariable ${variablename} is not supported.`,
-    fullCode: "IBM1867IS",
   },
 
   /**
@@ -16889,7 +15732,6 @@ export const Severe = {
     code: "IBM1868I",
     severity: Severity.S,
     message: "Invalid use of iSUB.",
-    fullCode: "IBM1868IS",
   },
 
   /**
@@ -16904,7 +15746,6 @@ export const Severe = {
     code: "IBM1869I",
     severity: Severity.S,
     message: "ALLOCATE with attribute lists is not supported.",
-    fullCode: "IBM1869IS",
   },
 
   /**
@@ -16919,7 +15760,6 @@ export const Severe = {
     code: "IBM1870I",
     severity: Severity.S,
     message: "ON statement cannot specify both SYSTEM and an ON-unit.",
-    fullCode: "IBM1870IS",
   },
 
   /**
@@ -16931,7 +15771,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The reference in the CONDITION condition must have type CONDITION.",
-    fullCode: "IBM1871IS",
   },
 
   /**
@@ -16943,7 +15782,6 @@ export const Severe = {
     severity: Severity.S,
     message: (conditionname: string) =>
       `The reference in the ${conditionname} condition must have type FILE.`,
-    fullCode: "IBM1872IS",
   },
 
   /**
@@ -16954,7 +15792,6 @@ export const Severe = {
     code: "IBM1873I",
     severity: Severity.S,
     message: "Nesting of DO statements exceeds the maximum.",
-    fullCode: "IBM1873IS",
   },
 
   /**
@@ -16965,7 +15802,6 @@ export const Severe = {
     code: "IBM1874I",
     severity: Severity.S,
     message: "Nesting of IF statements exceeds the maximum.",
-    fullCode: "IBM1874IS",
   },
 
   /**
@@ -16976,7 +15812,6 @@ export const Severe = {
     code: "IBM1875I",
     severity: Severity.S,
     message: "Nesting of SELECT statements exceeds the maximum.",
-    fullCode: "IBM1875IS",
   },
 
   /**
@@ -16987,7 +15822,6 @@ export const Severe = {
     code: "IBM1876I",
     severity: Severity.S,
     message: "Nesting of blocks exceeds the maximum.",
-    fullCode: "IBM1876IS",
   },
 
   /**
@@ -16998,7 +15832,6 @@ export const Severe = {
     code: "IBM1878I",
     severity: Severity.S,
     message: "The reference in the EVENT clause must have type EVENT.",
-    fullCode: "IBM1878IS",
   },
 
   /**
@@ -17009,7 +15842,6 @@ export const Severe = {
     code: "IBM1879I",
     severity: Severity.S,
     message: "The reference in the TASK clause must have type TASK.",
-    fullCode: "IBM1879IS",
   },
 
   /**
@@ -17024,7 +15856,6 @@ export const Severe = {
     code: "IBM1880I",
     severity: Severity.S,
     message: "Reference must have FILE type.",
-    fullCode: "IBM1880IS",
   },
 
   /**
@@ -17036,7 +15867,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The reference ${referencename} is ambiguous.`,
-    fullCode: "IBM1881IS",
   },
 
   /**
@@ -17049,7 +15879,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The ALLOCATE reference ${variablename} is not a level 1 BASED or CONTROLLED variable.`,
-    fullCode: "IBM1882IS",
   },
 
   /**
@@ -17065,7 +15894,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The ALLOCATE reference ${variablename} is not implicitly qualified and is invalid without a SET clause.`,
-    fullCode: "IBM1883IS",
   },
 
   /**
@@ -17077,7 +15905,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The reference ${variablename} in the GENERIC attribute list is not a scalar ENTRY reference.`,
-    fullCode: "IBM1884IS",
   },
 
   /**
@@ -17088,7 +15915,6 @@ export const Severe = {
     code: "IBM1885I",
     severity: Severity.S,
     message: "IN option reference must have AREA type.",
-    fullCode: "IBM1885IS",
   },
 
   /**
@@ -17111,7 +15937,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The REFER object name ${referencename} is ambiguous.`,
-    fullCode: "IBM1886IS",
   },
 
   /**
@@ -17124,7 +15949,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The REFER object ${referencename} must be an element of the same structure where it is used, and must precede its first usage in that structure.`,
-    fullCode: "IBM1887IS",
   },
 
   /**
@@ -17145,7 +15969,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The REFER object ${referencename} must have computational type.`,
-    fullCode: "IBM1888IS",
   },
 
   /**
@@ -17166,7 +15989,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The REFER object ${referencename} must be a scalar.`,
-    fullCode: "IBM1889IS",
   },
 
   /**
@@ -17187,7 +16009,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The REFER object ${referencename} must precede the first level-2 element containing a REFER.`,
-    fullCode: "IBM1890IS",
   },
 
   /**
@@ -17198,7 +16019,6 @@ export const Severe = {
     code: "IBM1891I",
     severity: Severity.S,
     message: "REFER is not allowed on non- BASED variables.",
-    fullCode: "IBM1891IS",
   },
 
   /**
@@ -17210,7 +16030,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The REFER object ${referencename} must have constant length.`,
-    fullCode: "IBM1892IS",
   },
 
   /**
@@ -17221,7 +16040,6 @@ export const Severe = {
     code: "IBM1893I",
     severity: Severity.S,
     message: "REFER is allowed only on members of structures and unions.",
-    fullCode: "IBM1893IS",
   },
 
   /**
@@ -17232,7 +16050,6 @@ export const Severe = {
     code: "IBM1894I",
     severity: Severity.S,
     message: "REINIT references must not be subscripted.",
-    fullCode: "IBM1894IS",
   },
 
   /**
@@ -17247,7 +16064,6 @@ export const Severe = {
     severity: Severity.S,
     message: (languagename: string) =>
       `Operations involving OPTIONS( ${languagename} ) routines are not supported if the DIRECTED option applies.`,
-    fullCode: "IBM1895IS",
   },
 
   /**
@@ -17261,7 +16077,6 @@ export const Severe = {
     severity: Severity.S,
     message: (languagename: string) =>
       `OPTIONS( ${languagename} ) is not supported for ENTRY VARIABLEs if the DIRECTED option applies.`,
-    fullCode: "IBM1896IS",
   },
 
   /**
@@ -17274,7 +16089,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Simple defining is supported only for scalars, for structures with constant extents matching those in the base variable, and for arrays of such scalars and structures as long as the array is not based on a controlled variable.",
-    fullCode: "IBM1897IS",
   },
 
   /**
@@ -17286,7 +16100,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The base reference in the DEFINED attribute cannot be a built-in or type function.",
-    fullCode: "IBM1898IS",
   },
 
   /**
@@ -17298,7 +16111,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The base variable in the DEFINED attribute cannot be BASED, DEFINED or CONSTANT.",
-    fullCode: "IBM1899IS",
   },
 
   /**
@@ -17310,7 +16122,6 @@ export const Severe = {
     code: "IBM1900I",
     severity: Severity.S,
     message: "Extents for DEFINED bit structures must be constant.",
-    fullCode: "IBM1900IS",
   },
 
   /**
@@ -17321,7 +16132,6 @@ export const Severe = {
     code: "IBM1901I",
     severity: Severity.S,
     message: "POSITION attribute is invalid without the DEFINED attribute.",
-    fullCode: "IBM1901IS",
   },
 
   /**
@@ -17333,7 +16143,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The expression in the POSITION attribute must have computational type.",
-    fullCode: "IBM1902IS",
   },
 
   /**
@@ -17346,7 +16155,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The expression in the POSITION attribute for bit string-overlay defining must be an integer constant.",
-    fullCode: "IBM1903IS",
   },
 
   /**
@@ -17359,7 +16167,6 @@ export const Severe = {
     severity: Severity.S,
     message: (freeclause: string) =>
       `Variable following the ${freeclause} clause must be level 1 and either BASED or CONTROLLED.`,
-    fullCode: "IBM1904IS",
   },
 
   /**
@@ -17372,7 +16179,6 @@ export const Severe = {
     severity: Severity.S,
     message: (INorSEToption: string, ALLOCATEorFREEclause: string) =>
       `${INorSEToption} option invalid after the CONTROLLED variable in the ${ALLOCATEorFREEclause} clause.`,
-    fullCode: "IBM1905IS",
   },
 
   /**
@@ -17389,7 +16195,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The reference qualifying an OFFSET attribute must be a scalar AREA reference.",
-    fullCode: "IBM1906IS",
   },
 
   /**
@@ -17405,7 +16210,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Extents for CONTROLLED variables cannot be specified using asterisks or REFER.",
-    fullCode: "IBM1907IS",
   },
 
   /**
@@ -17417,7 +16221,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string) =>
       `Extents for ${attribute} variables cannot be specified using asterisks or REFER.`,
-    fullCode: "IBM1908IS",
   },
 
   /**
@@ -17429,7 +16232,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string, attribute2: string) =>
       `The ${attribute} attribute conflicts with the ${attribute2} attribute.`,
-    fullCode: "IBM1909IS",
   },
 
   /**
@@ -17443,7 +16245,6 @@ export const Severe = {
     severity: Severity.S,
     message: (identifier: string) =>
       `The attributes given in the declaration for ${identifier} conflict with its use as a parameter.`,
-    fullCode: "IBM1910IS",
   },
 
   /**
@@ -17455,7 +16256,6 @@ export const Severe = {
     severity: Severity.S,
     message: (character: string) =>
       `Repeated specifications of the unsubscripted statement label ${character} are in error.`,
-    fullCode: "IBM1911IS",
   },
 
   /**
@@ -17467,7 +16267,6 @@ export const Severe = {
     severity: Severity.S,
     message: (character: string) =>
       `Indices specified for the LABEL ${character} have already been specified.`,
-    fullCode: "IBM1912IS",
   },
 
   /**
@@ -17478,7 +16277,6 @@ export const Severe = {
     code: "IBM1913I",
     severity: Severity.S,
     message: "ON-units may not be labeled. All such labels will be ignored.",
-    fullCode: "IBM1913IS",
   },
 
   /**
@@ -17489,7 +16287,6 @@ export const Severe = {
     code: "IBM1914I",
     severity: Severity.S,
     message: "GOTO target must be a LABEL reference.",
-    fullCode: "IBM1914IS",
   },
 
   /**
@@ -17500,7 +16297,6 @@ export const Severe = {
     code: "IBM1915I",
     severity: Severity.S,
     message: "GOTO target must be a scalar.",
-    fullCode: "IBM1915IS",
   },
 
   /**
@@ -17520,7 +16316,6 @@ export const Severe = {
     severity: Severity.S,
     message: (procname: string) =>
       `The PROCEDURE/ENTRY ${procname} has already been defined.`,
-    fullCode: "IBM1916IS",
   },
 
   /**
@@ -17532,7 +16327,6 @@ export const Severe = {
     code: "IBM1917I",
     severity: Severity.S,
     message: "Program contains no valid source lines.",
-    fullCode: "IBM1917IS",
   },
 
   /**
@@ -17545,7 +16339,6 @@ export const Severe = {
     severity: Severity.S,
     message: (ordinalname: string) =>
       `All the names in the ORDINAL ${ordinalname} have been previously declared.`,
-    fullCode: "IBM1918IS",
   },
 
   /**
@@ -17563,7 +16356,6 @@ export const Severe = {
     severity: Severity.S,
     message: (string: string, name: string, name2: string) =>
       `The EXTERNAL name ${string} is specified for the differing names ${name} and ${name2} .`,
-    fullCode: "IBM1919IS",
   },
 
   /**
@@ -17575,7 +16367,6 @@ export const Severe = {
     code: "IBM1920I",
     severity: Severity.S,
     message: "FIXED BINARY constant contains too many digits.",
-    fullCode: "IBM1920IS",
   },
 
   /**
@@ -17587,7 +16378,6 @@ export const Severe = {
     code: "IBM1921I",
     severity: Severity.S,
     message: "FIXED DECIMAL constant contains too many significant digits.",
-    fullCode: "IBM1921IS",
   },
 
   /**
@@ -17599,7 +16389,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Exponent in FLOAT BINARY constant contains more digits than the implementation maximum.",
-    fullCode: "IBM1922IS",
   },
 
   /**
@@ -17611,7 +16400,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Mantissa in FLOAT BINARY constant contains more significant digits than the implementation maximum.",
-    fullCode: "IBM1923IS",
   },
 
   /**
@@ -17623,7 +16411,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Exponent in FLOAT DECIMAL constant contains more digits than the implementation maximum.",
-    fullCode: "IBM1924IS",
   },
 
   /**
@@ -17636,7 +16423,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Mantissa in FLOAT DECIMAL constant contains more significant digits than the implementation maximum.",
-    fullCode: "IBM1925IS",
   },
 
   /**
@@ -17650,7 +16436,6 @@ export const Severe = {
     code: "IBM1926I",
     severity: Severity.S,
     message: "Constants must not exceed 8192 bytes.",
-    fullCode: "IBM1926IS",
   },
 
   /**
@@ -17666,7 +16451,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcevalue: string, targetattributes: string) =>
       `SIZE condition raised by attempt to convert ${sourcevalue} to ${targetattributes}`,
-    fullCode: "IBM1927IS",
   },
 
   /**
@@ -17678,7 +16462,6 @@ export const Severe = {
     code: "IBM1928I",
     severity: Severity.S,
     message: "ERROR raised while building CEEUOPT from PLIXOPT.",
-    fullCode: "IBM1928IS",
   },
 
   /**
@@ -17691,7 +16474,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string, procname: string, linenumber: string) =>
       `Unable to open file ${filename} in routine ${procname} ( ${linenumber} ).`,
-    fullCode: "IBM1929IS",
   },
 
   /**
@@ -17705,7 +16487,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) =>
       `Unable to write to file ${filename} . Disk may be full.`,
-    fullCode: "IBM1930IS",
   },
 
   /**
@@ -17718,7 +16499,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string, procname: string, linenumber: string) =>
       `Unable to close file ${filename} in routine ${procname} ( ${linenumber} ).`,
-    fullCode: "IBM1932IS",
   },
 
   /**
@@ -17731,7 +16511,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Unable to open temporary files because the path and filename are too long.",
-    fullCode: "IBM1933IS",
   },
 
   /**
@@ -17744,7 +16523,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "If a parameter is a structure with nonconstant extents, only matching structures are supported as arguments.",
-    fullCode: "IBM1934IS",
   },
 
   /**
@@ -17757,7 +16535,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Structure expressions as arguments are not supported for undescribed parameters.",
-    fullCode: "IBM1935IS",
   },
 
   /**
@@ -17771,7 +16548,6 @@ export const Severe = {
     code: "IBM1936I",
     severity: Severity.S,
     message: "Invocation of compiler backend ended abnormally.",
-    fullCode: "IBM1936IS",
   },
 
   /**
@@ -17784,7 +16560,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Extents for parameters must be asterisks or restricted expressions with computational type.",
-    fullCode: "IBM1937IS",
   },
 
   /**
@@ -17796,7 +16571,6 @@ export const Severe = {
     code: "IBM1938I",
     severity: Severity.S,
     message: (filename: string) => `Message file ${filename} not found.`,
-    fullCode: "IBM1938IS",
   },
 
   /**
@@ -17807,7 +16581,6 @@ export const Severe = {
     code: "IBM1939I",
     severity: Severity.S,
     message: "Exponentiation operands must have computational type.",
-    fullCode: "IBM1939IS",
   },
 
   /**
@@ -17818,7 +16591,6 @@ export const Severe = {
     code: "IBM1940I",
     severity: Severity.S,
     message: (note: string) => `${note}`,
-    fullCode: "IBM1940IS",
   },
 
   /**
@@ -17829,7 +16601,6 @@ export const Severe = {
     code: "IBM1941I",
     severity: Severity.U,
     message: (note: string) => `${note}`,
-    fullCode: "IBM1941IU",
   },
 
   /**
@@ -17841,7 +16612,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The scale factor specified in ${BUILTINname} built-in function must be a restricted expression with integer type.`,
-    fullCode: "IBM1942IS",
   },
 
   /**
@@ -17854,7 +16624,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The number of error messages allowed by the FLAG option has been exceeded.",
-    fullCode: "IBM1943IS",
   },
 
   /**
@@ -17866,7 +16635,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The precision specified in ${BUILTINname} built-in function must be a restricted expression with integer type.`,
-    fullCode: "IBM1944IS",
   },
 
   /**
@@ -17878,7 +16646,6 @@ export const Severe = {
     code: "IBM1945I",
     severity: Severity.S,
     message: "Extents for BASED variable may not contain asterisks.",
-    fullCode: "IBM1945IS",
   },
 
   /**
@@ -17889,7 +16656,6 @@ export const Severe = {
     code: "IBM1946I",
     severity: Severity.S,
     message: "Reference must be an AREA variable.",
-    fullCode: "IBM1946IS",
   },
 
   /**
@@ -17904,7 +16670,6 @@ export const Severe = {
     severity: Severity.S,
     message: (GENERICvariablename: string) =>
       `The reference to the GENERIC variable ${GENERICvariablename} cannot be resolved.`,
-    fullCode: "IBM1947IS",
   },
 
   /**
@@ -17919,7 +16684,6 @@ export const Severe = {
     severity: Severity.S,
     message: (conditionname: string, oncodevalue: string) =>
       `${conditionname} condition with ONCODE= ${oncodevalue} raised while evaluating restricted expression.`,
-    fullCode: "IBM1948IS",
   },
 
   /**
@@ -17934,7 +16698,6 @@ export const Severe = {
     severity: Severity.S,
     message: (identifier: string) =>
       `Parameter name ${identifier} appears more than once in parameter list.`,
-    fullCode: "IBM1949IS",
   },
 
   /**
@@ -17948,7 +16711,6 @@ export const Severe = {
     severity: Severity.S,
     message: (storageclass: string) =>
       `${storageclass} variables must be named.`,
-    fullCode: "IBM1951IS",
   },
 
   /**
@@ -17960,7 +16722,6 @@ export const Severe = {
     code: "IBM1952I",
     severity: Severity.S,
     message: "INITIAL CALL cannot be used to initialize STATIC data.",
-    fullCode: "IBM1952IS",
   },
 
   /**
@@ -17973,7 +16734,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration.`,
-    fullCode: "IBM1953IS",
   },
 
   /**
@@ -17984,7 +16744,6 @@ export const Severe = {
     code: "IBM1954I",
     severity: Severity.S,
     message: "The base reference in the DEFINED attribute must be CONNECTED.",
-    fullCode: "IBM1954IS",
   },
 
   /**
@@ -17997,7 +16756,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string, variablename: string) =>
       `Repeated declarations of the EXTERNAL ${attribute} ${variablename} are not supported.`,
-    fullCode: "IBM1955IS",
   },
 
   /**
@@ -18008,7 +16766,6 @@ export const Severe = {
     code: "IBM1956I",
     severity: Severity.S,
     message: "ITERATE is valid only for iterative DO-groups.",
-    fullCode: "IBM1956IS",
   },
 
   /**
@@ -18026,7 +16783,6 @@ export const Severe = {
     code: "IBM1957I",
     severity: Severity.S,
     message: "The WAIT event number specification must be computational.",
-    fullCode: "IBM1957IS",
   },
 
   /**
@@ -18042,7 +16798,6 @@ export const Severe = {
     code: "IBM1958I",
     severity: Severity.S,
     message: "References in the WAIT statement must be of type EVENT.",
-    fullCode: "IBM1958IS",
   },
 
   /**
@@ -18055,7 +16810,6 @@ export const Severe = {
     code: "IBM1959I",
     severity: Severity.S,
     message: "Invalid aggregate expression specified in WAIT statement.",
-    fullCode: "IBM1959IS",
   },
 
   /**
@@ -18067,7 +16821,6 @@ export const Severe = {
     code: "IBM1960I",
     severity: Severity.S,
     message: (typename: string) => `${typename} is not a type name.`,
-    fullCode: "IBM1960IS",
   },
 
   /**
@@ -18080,7 +16833,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typetype: string, typename: string) =>
       `INITIAL values for ${typetype} type ${typename} must be in increasing order.`,
-    fullCode: "IBM1961IS",
   },
 
   /**
@@ -18092,7 +16844,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typetype: string, typename: string) =>
       `INITIAL values for ${typetype} type ${typename} must be less than 2G.`,
-    fullCode: "IBM1962IS",
   },
 
   /**
@@ -18106,7 +16857,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have ORDINAL type.`,
-    fullCode: "IBM1963IS",
   },
 
   /**
@@ -18120,7 +16870,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration.`,
-    fullCode: "IBM1964IS",
   },
 
   /**
@@ -18132,7 +16881,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string, structurename: string) =>
       `There is more than one element named ${referencename} in the class ${structurename} .`,
-    fullCode: "IBM1965IS",
   },
 
   /**
@@ -18144,7 +16892,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string, structurename: string) =>
       `There is no element named ${referencename} in the class ${structurename} .`,
-    fullCode: "IBM1966IS",
   },
 
   /**
@@ -18157,7 +16904,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a handle since it does not have the RETURNS attribute.`,
-    fullCode: "IBM1967IS",
   },
 
   /**
@@ -18169,7 +16915,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a handle.`,
-    fullCode: "IBM1968IS",
   },
 
   /**
@@ -18181,7 +16926,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The variable ${variablename} is used as a handle, but it is not a scalar.`,
-    fullCode: "IBM1969IS",
   },
 
   /**
@@ -18193,7 +16937,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} built-in function may not be used as a handle.`,
-    fullCode: "IBM1970IS",
   },
 
   /**
@@ -18205,7 +16948,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The GENERIC variable ${variablename} may not be used as a handle.`,
-    fullCode: "IBM1971IS",
   },
 
   /**
@@ -18217,7 +16959,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `${variablename} may not be used as a handle.`,
-    fullCode: "IBM1972IS",
   },
 
   /**
@@ -18230,7 +16971,6 @@ export const Severe = {
     code: "IBM1976I",
     severity: Severity.S,
     message: "DBCS characters are allowed only in G and M constants.",
-    fullCode: "IBM1976IS",
   },
 
   /**
@@ -18241,7 +16981,6 @@ export const Severe = {
     code: "IBM1977I",
     severity: Severity.S,
     message: "SBCS characters are not allowed in G constants.",
-    fullCode: "IBM1977IS",
   },
 
   /**
@@ -18252,7 +16991,6 @@ export const Severe = {
     code: "IBM1978I",
     severity: Severity.S,
     message: "Invalid use of SBCS encoded as DBCS.",
-    fullCode: "IBM1978IS",
   },
 
   /**
@@ -18264,7 +17002,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} may not be used outside a PROCEDURE.`,
-    fullCode: "IBM1981IS",
   },
 
   /**
@@ -18277,7 +17014,6 @@ export const Severe = {
     code: "IBM1984I",
     severity: Severity.S,
     message: (filename: string) => `File ${filename} could not be opened.`,
-    fullCode: "IBM1984IS",
   },
 
   /**
@@ -18291,7 +17027,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string, Clibrarymessage: string) =>
       `File ${filename} could not be opened. ${Clibrarymessage}`,
-    fullCode: "IBM1985IS",
   },
 
   /**
@@ -18304,7 +17039,6 @@ export const Severe = {
     code: "IBM1986I",
     severity: Severity.S,
     message: "A system or user abend has occurred.",
-    fullCode: "IBM1986IS",
   },
 
   /**
@@ -18318,7 +17052,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) =>
       `File ${filename} could not be opened because too many files have been opened.`,
-    fullCode: "IBM1987IS",
   },
 
   /**
@@ -18331,7 +17064,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) =>
       `File ${filename} could not be opened due to an access violation.`,
-    fullCode: "IBM1988IS",
   },
 
   /**
@@ -18343,7 +17075,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) =>
       `File name or extension for ${filename} is too long.`,
-    fullCode: "IBM1989IS",
   },
 
   /**
@@ -18355,7 +17086,6 @@ export const Severe = {
     code: "IBM1990I",
     severity: Severity.S,
     message: (filename: string) => `File name ${filename} has invalid format.`,
-    fullCode: "IBM1990IS",
   },
 
   /**
@@ -18369,7 +17099,6 @@ export const Severe = {
     code: "IBM1992I",
     severity: Severity.S,
     message: "A file name must be specified.",
-    fullCode: "IBM1992IS",
   },
 
   /**
@@ -18380,7 +17109,6 @@ export const Severe = {
     code: "IBM1993I",
     severity: Severity.S,
     message: "Compilation terminated by ATTENTION condition.",
-    fullCode: "IBM1993IS",
   },
 
   /**
@@ -18392,7 +17120,6 @@ export const Severe = {
     code: "IBM1994I",
     severity: Severity.S,
     message: "Internal compiler error: storage header has been overwritten",
-    fullCode: "IBM1994IS",
   },
 
   /**
@@ -18404,7 +17131,6 @@ export const Severe = {
     code: "IBM1995I",
     severity: Severity.S,
     message: "Internal compiler error: storage tail has been overwritten.",
-    fullCode: "IBM1995IS",
   },
 
   /**
@@ -18417,7 +17143,6 @@ export const Severe = {
     severity: Severity.S,
     message: (freerequestsize: string, allocatedsize: string) =>
       `Internal compiler error: free amount ${freerequestsize} does not match allocated size ${allocatedsize} .`,
-    fullCode: "IBM1996IS",
   },
 
   /**
@@ -18430,7 +17155,6 @@ export const Severe = {
     severity: Severity.S,
     message: (modulename: string) =>
       `Internal compiler error: no WHEN clause satisfied within ${modulename}`,
-    fullCode: "IBM1997IS",
   },
 
   /**
@@ -18443,7 +17167,6 @@ export const Severe = {
     severity: Severity.S,
     message: (modulename: string) =>
       `Internal compiler error: protection exception in ${modulename}`,
-    fullCode: "IBM1998IS",
   },
 
   /**
@@ -18455,7 +17178,6 @@ export const Severe = {
     code: "IBM1999I",
     severity: Severity.S,
     message: (note: string) => `${note}`,
-    fullCode: "IBM1999IS",
   },
 
   /**
@@ -18473,7 +17195,6 @@ export const Severe = {
       extratext: string,
     ) =>
       `Internal compiler error: assertion failed on line ${sourceline} in ${procedurename} in ${packagename} >> ${extratext}`,
-    fullCode: "IBM2000IS",
   },
 
   /**
@@ -18486,7 +17207,6 @@ export const Severe = {
     severity: Severity.S,
     message: (STATUSCODE: string, RETURNCODE: string) =>
       `A LICENSE REQUEST WAS DENIED FOR PL/I, PID 5655- B22. THE REQUEST ENDED WITH STATUS CODE ${STATUSCODE} AND RETURN CODE ${RETURNCODE} . THE COMPILATION WILL BE TERMINATED.`,
-    fullCode: "IBM2001IS",
   },
 
   /**
@@ -18498,7 +17218,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) =>
       `Close of file ${filename} failed. There may be a space problem.`,
-    fullCode: "IBM2002IS",
   },
 
   /**
@@ -18510,7 +17229,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) =>
       `Write to file ${filename} failed. There may be a space problem.`,
-    fullCode: "IBM2003IS",
   },
 
   /**
@@ -18523,7 +17241,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "ATTACH reference must be declared with either a null argument list or with an argument list specifying only one argument.",
-    fullCode: "IBM2004IS",
   },
 
   /**
@@ -18534,7 +17251,6 @@ export const Severe = {
     code: "IBM2005I",
     severity: Severity.S,
     message: "ATTACH reference must be an ENTRY reference.",
-    fullCode: "IBM2005IS",
   },
 
   /**
@@ -18546,7 +17262,6 @@ export const Severe = {
     code: "IBM2006I",
     severity: Severity.S,
     message: "ATTACH reference cannot be a function reference.",
-    fullCode: "IBM2006IS",
   },
 
   /**
@@ -18558,7 +17273,6 @@ export const Severe = {
     code: "IBM2007I",
     severity: Severity.S,
     message: "ATTACH reference must use LINKAGE(SYSTEM).",
-    fullCode: "IBM2007IS",
   },
 
   /**
@@ -18569,7 +17283,6 @@ export const Severe = {
     code: "IBM2008I",
     severity: Severity.S,
     message: "ATTACH reference cannot be FETCHABLE.",
-    fullCode: "IBM2008IS",
   },
 
   /**
@@ -18581,7 +17294,6 @@ export const Severe = {
     code: "IBM2009I",
     severity: Severity.S,
     message: "ATTACH reference cannot be a nested PROCEDURE.",
-    fullCode: "IBM2009IS",
   },
 
   /**
@@ -18592,7 +17304,6 @@ export const Severe = {
     code: "IBM2010I",
     severity: Severity.S,
     message: "ATTACH reference, if an ENTRY variable, must be a LIMITED ENTRY.",
-    fullCode: "IBM2010IS",
   },
 
   /**
@@ -18604,7 +17315,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "ATTACH reference, if it has an argument, must declare that argument as POINTER BYVALUE.",
-    fullCode: "IBM2011IS",
   },
 
   /**
@@ -18624,7 +17334,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attributekeyword: string) =>
       `The ${attributekeyword} attribute is invalid in an ALIAS definition.`,
-    fullCode: "IBM2012IS",
   },
 
   /**
@@ -18640,7 +17349,6 @@ export const Severe = {
     code: "IBM2013I",
     severity: Severity.S,
     message: "Only one description is allowed in an ALIAS definition.",
-    fullCode: "IBM2013IS",
   },
 
   /**
@@ -18653,7 +17361,6 @@ export const Severe = {
     code: "IBM2014I",
     severity: Severity.S,
     message: "Extents in type descriptors must be constant.",
-    fullCode: "IBM2014IS",
   },
 
   /**
@@ -18665,7 +17372,6 @@ export const Severe = {
     code: "IBM2015I",
     severity: Severity.S,
     message: "VALUE attribute conflicts with data type.",
-    fullCode: "IBM2015IS",
   },
 
   /**
@@ -18676,7 +17382,6 @@ export const Severe = {
     code: "IBM2016I",
     severity: Severity.S,
     message: "The VALUE attribute is not allowed with typed structures.",
-    fullCode: "IBM2016IS",
   },
 
   /**
@@ -18688,7 +17393,6 @@ export const Severe = {
     code: "IBM2017I",
     severity: Severity.S,
     message: "INITIAL TO is valid only for NATIVE POINTER.",
-    fullCode: "IBM2017IS",
   },
 
   /**
@@ -18700,7 +17404,6 @@ export const Severe = {
     code: "IBM2018I",
     severity: Severity.S,
     message: "INITIAL TO is supported only for STATIC variables.",
-    fullCode: "IBM2018IS",
   },
 
   /**
@@ -18713,7 +17416,6 @@ export const Severe = {
     code: "IBM2019I",
     severity: Severity.S,
     message: "Unsupported LINKAGE used with the LIST attribute.",
-    fullCode: "IBM2019IS",
   },
 
   /**
@@ -18725,7 +17427,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string, structurename: string) =>
       `There is more than one element named ${referencename} in the typed structure ${structurename} .`,
-    fullCode: "IBM2020IS",
   },
 
   /**
@@ -18737,7 +17438,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string, structurename: string) =>
       `There is no element named ${referencename} in the structure ${structurename} .`,
-    fullCode: "IBM2021IS",
   },
 
   /**
@@ -18750,7 +17450,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a typed structure qualifier since it does not have the RETURNS attribute.`,
-    fullCode: "IBM2022IS",
   },
 
   /**
@@ -18762,7 +17461,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The ENTRY ${variablename} may not be used as a typed structure qualifier.`,
-    fullCode: "IBM2023IS",
   },
 
   /**
@@ -18775,7 +17473,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The array variable ${variablename} may be used as a typed structure qualifier only if it is completely subscripted before its dot qualification.`,
-    fullCode: "IBM2024IS",
   },
 
   /**
@@ -18787,7 +17484,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} built-in function may not be used as a typed structure qualifier.`,
-    fullCode: "IBM2025IS",
   },
 
   /**
@@ -18799,7 +17495,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The GENERIC variable ${variablename} may not be used as a typed structure qualifier.`,
-    fullCode: "IBM2026IS",
   },
 
   /**
@@ -18812,7 +17507,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `${variablename} may not be used as a structure qualifier.`,
-    fullCode: "IBM2027IS",
   },
 
   /**
@@ -18832,7 +17526,6 @@ export const Severe = {
     code: "IBM2028I",
     severity: Severity.S,
     message: "TYPEs must be defined before their use.",
-    fullCode: "IBM2028IS",
   },
 
   /**
@@ -18849,7 +17542,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A DEFINE STRUCTURE statement must consist of a level one structure name optionally followed by its substructures. Use DEFINE ALIAS to set a name as a synonym for a data type.",
-    fullCode: "IBM2029IS",
   },
 
   /**
@@ -18860,7 +17552,6 @@ export const Severe = {
     code: "IBM2030I",
     severity: Severity.S,
     message: "INITIAL attribute is invalid in structure definitions.",
-    fullCode: "IBM2030IS",
   },
 
   /**
@@ -18872,7 +17563,6 @@ export const Severe = {
     code: "IBM2031I",
     severity: Severity.S,
     message: "Storage attributes are invalid in structure definition.",
-    fullCode: "IBM2031IS",
   },
 
   /**
@@ -18883,7 +17573,6 @@ export const Severe = {
     code: "IBM2032I",
     severity: Severity.S,
     message: "DEFINE STRUCTURE may not specify an array of structures.",
-    fullCode: "IBM2032IS",
   },
 
   /**
@@ -18905,7 +17594,6 @@ export const Severe = {
     code: "IBM2033I",
     severity: Severity.S,
     message: "Only one description is allowed in a structure definition.",
-    fullCode: "IBM2033IS",
   },
 
   /**
@@ -18918,7 +17606,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `The argument to the type function ${typefunction} must be an ordinal type name.`,
-    fullCode: "IBM2034IS",
   },
 
   /**
@@ -18931,7 +17618,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `The argument to the type function ${typefunction} must be a structure type name.`,
-    fullCode: "IBM2035IS",
   },
 
   /**
@@ -18945,7 +17631,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `The second argument to the type function ${typefunction} must have locator type.`,
-    fullCode: "IBM2036IS",
   },
 
   /**
@@ -18958,7 +17643,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `The first argument to the type function ${typefunction} must be a structure type name.`,
-    fullCode: "IBM2037IS",
   },
 
   /**
@@ -18971,7 +17655,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have HANDLE type.`,
-    fullCode: "IBM2038IS",
   },
 
   /**
@@ -18983,7 +17666,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Argument to ${variablename} pseudovariable must be a HANDLE.`,
-    fullCode: "IBM2039IS",
   },
 
   /**
@@ -18996,7 +17678,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `The argument to the type function ${typefunction} must be a defined type.`,
-    fullCode: "IBM2040IS",
   },
 
   /**
@@ -19009,7 +17690,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `The first argument to the type function ${typefunction} must be a defined type.`,
-    fullCode: "IBM2041IS",
   },
 
   /**
@@ -19021,7 +17701,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `The second argument to the type function ${typefunction} must be a scalar.`,
-    fullCode: "IBM2042IS",
   },
 
   /**
@@ -19034,7 +17713,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `The second argument to the type function ${typefunction} must have the same size as the first argument.`,
-    fullCode: "IBM2043IS",
   },
 
   /**
@@ -19052,7 +17730,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The get storage function to ${BUILTINname} must be a LIMITED ENTRY with LINKAGE(OPTLINK) and an appropriate entry description list.`,
-    fullCode: "IBM2044IS",
   },
 
   /**
@@ -19069,7 +17746,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The free storage function to ${BUILTINname} must be a LIMITED ENTRY with LINKAGE(OPTLINK) and an appropriate entry description list.`,
-    fullCode: "IBM2045IS",
   },
 
   /**
@@ -19083,7 +17759,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "OPTIONS(NODESCRIPTOR) is required if the last parameter to an ENTRY or PROC has the LIST attribute.",
-    fullCode: "IBM2046IS",
   },
 
   /**
@@ -19098,7 +17773,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The VARGLIST built-in function may be used only inside PROCEDUREs whose last parameter had the LIST attribute.",
-    fullCode: "IBM2047IS",
   },
 
   /**
@@ -19112,7 +17786,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The LIST attribute may be specified only on non-nested PROCEDUREs, external entry constants, and limited entry variables.",
-    fullCode: "IBM2048IS",
   },
 
   /**
@@ -19125,7 +17798,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The LIST attribute may be specified only on the last element of an entry description list.",
-    fullCode: "IBM2049IS",
   },
 
   /**
@@ -19138,7 +17810,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Descriptors are supported for Fortran only for scalar character strings.",
-    fullCode: "IBM2050IS",
   },
 
   /**
@@ -19151,7 +17822,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Descriptors are not supported for Fortran for routines defined by or containing ENTRY statements.",
-    fullCode: "IBM2051IS",
   },
 
   /**
@@ -19164,7 +17834,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A function defined by a PROCEDURE containing ENTRY statements must return aggregate values BYADDR.",
-    fullCode: "IBM2052IS",
   },
 
   /**
@@ -19177,7 +17846,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A function defined by an ENTRY statement must return aggregate values BYADDR.",
-    fullCode: "IBM2053IS",
   },
 
   /**
@@ -19190,7 +17858,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A PROCEDURE containing ENTRY statements must receive all non- pointer parameters BYADDR.",
-    fullCode: "IBM2054IS",
   },
 
   /**
@@ -19202,7 +17869,6 @@ export const Severe = {
     code: "IBM2055I",
     severity: Severity.S,
     message: "An ENTRY statement must receive all parameters BYADDR.",
-    fullCode: "IBM2055IS",
   },
 
   /**
@@ -19214,7 +17880,6 @@ export const Severe = {
     code: "IBM2056I",
     severity: Severity.S,
     message: "ENTRY statement is not allowed in DO loops.",
-    fullCode: "IBM2056IS",
   },
 
   /**
@@ -19227,7 +17892,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "RETURN statement is invalid inside a BEGIN in a PROCEDURE that contains ENTRY statements.",
-    fullCode: "IBM2057IS",
   },
 
   /**
@@ -19240,7 +17904,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "In a PROCEDURE without the RETURNS option, any ENTRY statement must use BYADDR for its RETURNS value.",
-    fullCode: "IBM2058IS",
   },
 
   /**
@@ -19251,7 +17914,6 @@ export const Severe = {
     code: "IBM2059I",
     severity: Severity.S,
     message: "OPTIONS(FORTRAN) is invalid if any parameters are UNALIGNED BIT.",
-    fullCode: "IBM2059IS",
   },
 
   /**
@@ -19262,7 +17924,6 @@ export const Severe = {
     code: "IBM2060I",
     severity: Severity.S,
     message: "Attributes may not be specified in ALLOCATEs of BASED variables.",
-    fullCode: "IBM2060IS",
   },
 
   /**
@@ -19275,7 +17936,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Attributes specified for ${variablename} in ALLOCATE statement do not match those in its declaration.`,
-    fullCode: "IBM2061IS",
   },
 
   /**
@@ -19288,7 +17948,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Structuring specified in ALLOCATE of ${variablename} does not match that in its declaration.`,
-    fullCode: "IBM2062IS",
   },
 
   /**
@@ -19302,7 +17961,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Specification of extent for ${variablename} in ALLOCATE statement is invalid since it was declared with a constant extent.`,
-    fullCode: "IBM2063IS",
   },
 
   /**
@@ -19315,7 +17973,6 @@ export const Severe = {
     severity: Severity.S,
     message: (dimensionvalue: string, variablename: string) =>
       `The extent specified for the lower bound for dimension ${dimensionvalue} of ${variablename} in ALLOCATE statement is invalid since that variable was declared with a different constant extent.`,
-    fullCode: "IBM2064IS",
   },
 
   /**
@@ -19328,7 +17985,6 @@ export const Severe = {
     severity: Severity.S,
     message: (dimensionvalue: string, variablename: string) =>
       `The extent specified for the upper bound for dimension ${dimensionvalue} of ${variablename} in ALLOCATE statement is invalid since that variable was declared with a different constant extent.`,
-    fullCode: "IBM2065IS",
   },
 
   /**
@@ -19341,7 +17997,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `ENTRY types and arguments in ${typefunction} must be LIMITED.`,
-    fullCode: "IBM2075IS",
   },
 
   /**
@@ -19354,7 +18009,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `FLOAT types and arguments in ${typefunction} must be NATIVE REAL.`,
-    fullCode: "IBM2076IS",
   },
 
   /**
@@ -19367,7 +18021,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `FIXED BIN types and arguments in ${typefunction} must be REAL with scale factor zero.`,
-    fullCode: "IBM2077IS",
   },
 
   /**
@@ -19380,7 +18033,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attributes: string, typefunction: string) =>
       `Types with the attributes ${attributes} are not supported as the target of the ${typefunction} function.`,
-    fullCode: "IBM2078IS",
   },
 
   /**
@@ -19393,7 +18045,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attributes: string, typefunction: string) =>
       `Arguments with the attributes ${attributes} are not supported as the source in the ${typefunction} function.`,
-    fullCode: "IBM2079IS",
   },
 
   /**
@@ -19404,7 +18055,6 @@ export const Severe = {
     code: "IBM2080I",
     severity: Severity.S,
     message: "DATE pattern is invalid.",
-    fullCode: "IBM2080IS",
   },
 
   /**
@@ -19416,7 +18066,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "DATE attribute is valid only with NONVARYING CHARACTER, FIXED DECIMAL and arithmetic PICTURE.",
-    fullCode: "IBM2081IS",
   },
 
   /**
@@ -19428,7 +18077,6 @@ export const Severe = {
     code: "IBM2082I",
     severity: Severity.S,
     message: "DATE attribute conflicts with non- zero scale factor.",
-    fullCode: "IBM2082IS",
   },
 
   /**
@@ -19439,7 +18087,6 @@ export const Severe = {
     code: "IBM2083I",
     severity: Severity.S,
     message: "DATE attribute conflicts with COMPLEX attribute.",
-    fullCode: "IBM2083IS",
   },
 
   /**
@@ -19452,7 +18099,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "DATE attribute conflicts with PICTURE string containing characters other than 9.",
-    fullCode: "IBM2084IS",
   },
 
   /**
@@ -19464,7 +18110,6 @@ export const Severe = {
     code: "IBM2085I",
     severity: Severity.S,
     message: "Length of DATE pattern and base precision do not match.",
-    fullCode: "IBM2085IS",
   },
 
   /**
@@ -19476,7 +18121,6 @@ export const Severe = {
     code: "IBM2086I",
     severity: Severity.S,
     message: "Length of DATE pattern and base length do not match.",
-    fullCode: "IBM2086IS",
   },
 
   /**
@@ -19488,7 +18132,6 @@ export const Severe = {
     code: "IBM2087I",
     severity: Severity.S,
     message: "DATE attribute conflicts with adjustable length.",
-    fullCode: "IBM2087IS",
   },
 
   /**
@@ -19500,7 +18143,6 @@ export const Severe = {
     code: "IBM2088I",
     severity: Severity.S,
     message: "Response file is too large. Excess will be ignored.",
-    fullCode: "IBM2088IS",
   },
 
   /**
@@ -19512,7 +18154,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Line in response file is longer than 100 characters. That line and rest of file will be ignored.",
-    fullCode: "IBM2089IS",
   },
 
   /**
@@ -19524,7 +18165,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) =>
       `The ${keyword} statement cannot be used under SYSTEM(CICS).`,
-    fullCode: "IBM2090IS",
   },
 
   /**
@@ -19535,7 +18175,6 @@ export const Severe = {
     code: "IBM2091I",
     severity: Severity.S,
     message: "DISPLAY with REPLY cannot be used under SYSTEM(CICS).",
-    fullCode: "IBM2091IS",
   },
 
   /**
@@ -19547,7 +18186,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function cannot be used under SYSTEM(CICS).`,
-    fullCode: "IBM2092IS",
   },
 
   /**
@@ -19560,7 +18198,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string) =>
       `The ${keyword} statement cannot be used under SYSTEM(CICS) except with SYSPRINT.`,
-    fullCode: "IBM2093IS",
   },
 
   /**
@@ -19571,7 +18208,6 @@ export const Severe = {
     code: "IBM2094I",
     severity: Severity.S,
     message: "Source in CAST to FLOAT must be FLOAT, FIXED or ORDINAL.",
-    fullCode: "IBM2094IS",
   },
 
   /**
@@ -19582,7 +18218,6 @@ export const Severe = {
     code: "IBM2095I",
     severity: Severity.S,
     message: "Target in CAST from FLOAT must be FLOAT, FIXED BIN or ORDINAL.",
-    fullCode: "IBM2095IS",
   },
 
   /**
@@ -19594,7 +18229,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Target in CAST from FIXED DEC must be FLOAT, FIXED BIN or ORDINAL.",
-    fullCode: "IBM2096IS",
   },
 
   /**
@@ -19607,7 +18241,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `FIXED DEC types and arguments in ${typefunction} must be REAL with non-negative scale factor.`,
-    fullCode: "IBM2097IS",
   },
 
   /**
@@ -19618,7 +18251,6 @@ export const Severe = {
     code: "IBM2098I",
     severity: Severity.S,
     message: "Source in CAST to FIXED DEC must be FLOAT, FIXED or ORDINAL.",
-    fullCode: "IBM2098IS",
   },
 
   /**
@@ -19631,7 +18263,6 @@ export const Severe = {
     code: "IBM2099I",
     severity: Severity.S,
     message: "CASEX strings must have the same length.",
-    fullCode: "IBM2099IS",
   },
 
   /**
@@ -19644,7 +18275,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. The ORDINAL types do not match.`,
-    fullCode: "IBM2100IS",
   },
 
   /**
@@ -19657,7 +18287,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. The HANDLE types do not match.`,
-    fullCode: "IBM2101IS",
   },
 
   /**
@@ -19670,7 +18299,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. The STRUCTURE types do not match.`,
-    fullCode: "IBM2102IS",
   },
 
   /**
@@ -19683,7 +18311,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Alignment does not match.`,
-    fullCode: "IBM2103IS",
   },
 
   /**
@@ -19696,7 +18323,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Number and attributes of structure members do not match.`,
-    fullCode: "IBM2104IS",
   },
 
   /**
@@ -19709,7 +18335,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. The number of dimensions do not match.`,
-    fullCode: "IBM2105IS",
   },
 
   /**
@@ -19722,7 +18347,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Lower bounds do not match.`,
-    fullCode: "IBM2106IS",
   },
 
   /**
@@ -19735,7 +18359,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Upper bounds do not match.`,
-    fullCode: "IBM2107IS",
   },
 
   /**
@@ -19748,7 +18371,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. RETURNS attributes do not match.`,
-    fullCode: "IBM2108IS",
   },
 
   /**
@@ -19761,7 +18383,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. BYVALUE and BYADDR attributes in RETURNS do not match.`,
-    fullCode: "IBM2109IS",
   },
 
   /**
@@ -19774,7 +18395,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. LINKAGE values do not match.`,
-    fullCode: "IBM2110IS",
   },
 
   /**
@@ -19787,7 +18407,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. OPTIONS values do not match.`,
-    fullCode: "IBM2111IS",
   },
 
   /**
@@ -19800,7 +18419,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Parameter counts do not match.`,
-    fullCode: "IBM2112IS",
   },
 
   /**
@@ -19813,7 +18431,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. BYVALUE and BYADDR attributes in parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2113IS",
   },
 
   /**
@@ -19826,7 +18443,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. The number of dimensions for parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2114IS",
   },
 
   /**
@@ -19839,7 +18455,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Lower bounds for parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2115IS",
   },
 
   /**
@@ -19852,7 +18467,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Upper bounds for parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2116IS",
   },
 
   /**
@@ -19865,7 +18479,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do 122 not match those in its previous declaration. Alignment of parameter ${parameternumber} does not match.`,
-    fullCode: "IBM2117IS",
   },
 
   /**
@@ -19878,7 +18491,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Number and attributes of structure members in parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2118IS",
   },
 
   /**
@@ -19891,7 +18503,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes of the EXTERNAL variable ${variablename} do not match those in its previous declaration. Attributes of parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2119IS",
   },
 
   /**
@@ -19902,7 +18513,6 @@ export const Severe = {
     code: "IBM2120I",
     severity: Severity.S,
     message: "AREAs are not supported in RETURNS.",
-    fullCode: "IBM2120IS",
   },
 
   /**
@@ -19921,7 +18531,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, entryname: string) =>
       `Argument number ${argumentnumber} in ENTRY reference ${entryname} must have the same size as the corresponding parameter.`,
-    fullCode: "IBM2121IS",
   },
 
   /**
@@ -19934,7 +18543,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "User exit routine addresses are invalid. Check that the user exit routine is a PACKAGE that exports only IBMUEXIT.",
-    fullCode: "IBM2122IS",
   },
 
   /**
@@ -19947,7 +18555,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "When expanded, DEFINE STRUCTURE type would have an array with more than 15 total dimensions.",
-    fullCode: "IBM2123IS",
   },
 
   /**
@@ -19960,7 +18567,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "When expanded, DEFINE STRUCTURE type would contain more than 15 logical levels.",
-    fullCode: "IBM2124IS",
   },
 
   /**
@@ -19980,7 +18586,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `${variablename} is a typed structure and hence cannot be used in GET DATA.`,
-    fullCode: "IBM2125IS",
   },
 
   /**
@@ -20003,7 +18608,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `${variablename} is a member of a typed structure and hence cannot be used in data directed I/O.`,
-    fullCode: "IBM2126IS",
   },
 
   /**
@@ -20027,7 +18631,6 @@ export const Severe = {
     severity: Severity.S,
     message: (ENTRYvariablename: string, GENERICvariablename: string) =>
       `The ENTRY named ${ENTRYvariablename} matches the reference to the GENERIC variable ${GENERICvariablename} , but while the GENERIC reference is used as a function, the matching ENTRY does not have the RETURNS attribute.`,
-    fullCode: "IBM2127IS",
   },
 
   /**
@@ -20053,7 +18656,6 @@ export const Severe = {
     severity: Severity.S,
     message: (ENTRYvariablename: string, GENERICvariablename: string) =>
       `The ENTRY named ${ENTRYvariablename} matches the reference to the GENERIC variable ${GENERICvariablename} , but while the GENERIC reference is used as a function acting as a locator qualifier, the matching ENTRY does not return a POINTER.`,
-    fullCode: "IBM2128IS",
   },
 
   /**
@@ -20080,7 +18682,6 @@ export const Severe = {
     severity: Severity.S,
     message: (ENTRYvariablename: string, GENERICvariablename: string) =>
       `The ENTRY named ${ENTRYvariablename} matches the reference to the GENERIC variable ${GENERICvariablename} , but while the GENERIC reference is used as a repeating function reference, the matching ENTRY cannot be so used.`,
-    fullCode: "IBM2129IS",
   },
 
   /**
@@ -20094,7 +18695,6 @@ export const Severe = {
     code: "IBM2130I",
     severity: Severity.S,
     message: "iSUB defining is not valid with the POSITION attribute.",
-    fullCode: "IBM2130IS",
   },
 
   /**
@@ -20110,7 +18710,6 @@ export const Severe = {
     code: "IBM2131I",
     severity: Severity.S,
     message: "In iSUB defining, the base and DEFINED variables must match.",
-    fullCode: "IBM2131IS",
   },
 
   /**
@@ -20127,7 +18726,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The i in an iSUB reference must not exceed the dimensionality of the DEFINED variable.",
-    fullCode: "IBM2132IS",
   },
 
   /**
@@ -20144,7 +18742,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "An iSUB variable cannot be defined on a cross-section of its base.",
-    fullCode: "IBM2133IS",
   },
 
   /**
@@ -20155,7 +18752,6 @@ export const Severe = {
     code: "IBM2134I",
     severity: Severity.S,
     message: "iSUB defining is supported only for arrays of scalars.",
-    fullCode: "IBM2134IS",
   },
 
   /**
@@ -20168,7 +18764,6 @@ export const Severe = {
     severity: Severity.S,
     message: (cmpatsuboption: string) =>
       `DFT(DESCLIST) conflicts with CMPAT( ${cmpatsuboption} ).`,
-    fullCode: "IBM2135IS",
   },
 
   /**
@@ -20186,7 +18781,6 @@ export const Severe = {
     severity: Severity.S,
     message: (identifier: string) =>
       `The number of indices specified for the LABEL ${identifier} does not match the number previously specified.`,
-    fullCode: "IBM2136IS",
   },
 
   /**
@@ -20202,7 +18796,6 @@ export const Severe = {
     severity: Severity.S,
     message: (identifier: string) =>
       `Indices have been specified for the LABEL ${identifier} when it was previously specified without indices.`,
-    fullCode: "IBM2137IS",
   },
 
   /**
@@ -20218,7 +18811,6 @@ export const Severe = {
     severity: Severity.S,
     message: (identifier: string) =>
       `Indices have not been specified for the LABEL ${identifier} when it was previously specified with indices.`,
-    fullCode: "IBM2138IS",
   },
 
   /**
@@ -20229,7 +18821,6 @@ export const Severe = {
     code: "IBM2139I",
     severity: Severity.S,
     message: "The Language Enviroment run- time is not current enough.",
-    fullCode: "IBM2139IS",
   },
 
   /**
@@ -20243,7 +18834,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Length of second argument to the REPLACEBY2 built-in function must be twice that of the third.",
-    fullCode: "IBM2140IS",
   },
 
   /**
@@ -20255,7 +18845,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to the ${BUILTINname} built-in function must be a structure.`,
-    fullCode: "IBM2141IS",
   },
 
   /**
@@ -20269,7 +18858,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Event structure argument to the ${BUILTINname} built-in function has too few elements.`,
-    fullCode: "IBM2142IS",
   },
 
   /**
@@ -20283,7 +18871,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Event structure argument to the ${BUILTINname} built-in function has too many elements.`,
-    fullCode: "IBM2143IS",
   },
 
   /**
@@ -20297,7 +18884,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function is not a scalar.`,
-    fullCode: "IBM2144IS",
   },
 
   /**
@@ -20310,7 +18896,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must be a LIMITED ENTRY.`,
-    fullCode: "IBM2145IS",
   },
 
   /**
@@ -20324,7 +18909,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must return BYVALUE a NATIVE FIXED BIN(31).`,
-    fullCode: "IBM2146IS",
   },
 
   /**
@@ -20338,7 +18922,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a non-empty entry description list.`,
-    fullCode: "IBM2147IS",
   },
 
   /**
@@ -20357,7 +18940,6 @@ export const Severe = {
       requiredparmcount: string,
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function has a parameter count of ${specifiedparmcount} when the correct parameter count is ${requiredparmcount} .`,
-    fullCode: "IBM2148IS",
   },
 
   /**
@@ -20371,7 +18953,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE POINTER as its first parameter.`,
-    fullCode: "IBM2149IS",
   },
 
   /**
@@ -20385,7 +18966,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE POINTER as its second parameter.`,
-    fullCode: "IBM2150IS",
   },
 
   /**
@@ -20399,7 +18979,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE NATIVE FIXED BIN(31) as its third parameter.`,
-    fullCode: "IBM2151IS",
   },
 
   /**
@@ -20413,7 +18992,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE POINTER as its fourth parameter.`,
-    fullCode: "IBM2152IS",
   },
 
   /**
@@ -20427,7 +19005,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE NATIVE FIXED BIN(31) as its fifth parameter.`,
-    fullCode: "IBM2153IS",
   },
 
   /**
@@ -20441,7 +19018,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE POINTER as its second parameter.`,
-    fullCode: "IBM2154IS",
   },
 
   /**
@@ -20455,7 +19031,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE NATIVE FIXED BIN(31) as its fourth parameter.`,
-    fullCode: "IBM2155IS",
   },
 
   /**
@@ -20469,7 +19044,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE NATIVE FIXED BIN(31) as its second parameter.`,
-    fullCode: "IBM2156IS",
   },
 
   /**
@@ -20483,7 +19057,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE CHAR(1) or BYVALUE WCHAR(1) as its second parameter.`,
-    fullCode: "IBM2157IS",
   },
 
   /**
@@ -20497,7 +19070,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function has the wrong linkage.`,
-    fullCode: "IBM2158IS",
   },
 
   /**
@@ -20510,7 +19082,6 @@ export const Severe = {
     severity: Severity.S,
     message: (membernumber: string, BUILTINname: string) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have the NODESCRIPTOR option.`,
-    fullCode: "IBM2159IS",
   },
 
   /**
@@ -20523,7 +19094,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `All members of the input structure to the ${BUILTINname} built-in function must have computational type.`,
-    fullCode: "IBM2160IS",
   },
 
   /**
@@ -20536,7 +19106,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The input structure to the ${BUILTINname} built-in function must not be a UNION or contain any UNIONs.`,
-    fullCode: "IBM2161IS",
   },
 
   /**
@@ -20549,7 +19118,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The input structure to the ${BUILTINname} built-in function must not contain any GRAPHIC elements.`,
-    fullCode: "IBM2162IS",
   },
 
   /**
@@ -20562,7 +19130,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The input structure to the ${BUILTINname} built-in function must not contain any UTF-16 elements.`,
-    fullCode: "IBM2163IS",
   },
 
   /**
@@ -20575,7 +19142,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The input structure to the ${BUILTINname} built-in function must not contain any unnamed substructures.`,
-    fullCode: "IBM2164IS",
   },
 
   /**
@@ -20588,7 +19154,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "PRV support is provided only if the LIMITS(EXTNAME(7)) option is in effect.",
-    fullCode: "IBM2165IS",
   },
 
   /**
@@ -20600,7 +19165,6 @@ export const Severe = {
     code: "IBM2166I",
     severity: Severity.S,
     message: "PRV support is provided only if the NORENT option is in effect.",
-    fullCode: "IBM2166IS",
   },
 
   /**
@@ -20613,7 +19177,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "PRV support is provided only if the CMPAT(V2) or CMPAT(V3) option is in effect.",
-    fullCode: "IBM2167IS",
   },
 
   /**
@@ -20625,7 +19188,6 @@ export const Severe = {
     code: "IBM2170I",
     severity: Severity.S,
     message: "Too many INTERNAL CONTROLLED variables.",
-    fullCode: "IBM2170IS",
   },
 
   /**
@@ -20638,7 +19200,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Under the NOWRITABLE option, no FETCHABLE ENTRY may be declared at the PACKAGE level.",
-    fullCode: "IBM2171IS",
   },
 
   /**
@@ -20651,7 +19212,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Under the NOWRITABLE option, no FILE CONSTANT may be declared at the PACKAGE level.",
-    fullCode: "IBM2172IS",
   },
 
   /**
@@ -20664,7 +19224,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Under the NOWRITABLE option, no CONTROLLED may be declared at the PACKAGE level.",
-    fullCode: "IBM2173IS",
   },
 
   /**
@@ -20677,7 +19236,6 @@ export const Severe = {
     code: "IBM2174I",
     severity: Severity.S,
     message: "Result of REPLACEBY2 is too long.",
-    fullCode: "IBM2174IS",
   },
 
   /**
@@ -20690,7 +19248,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The second and third arguments to REPLACEBY2 must be restricted expressions.",
-    fullCode: "IBM2175IS",
   },
 
   /**
@@ -20703,7 +19260,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The result of the ${BUILTINname} built-in function would require more than 32767 bytes.`,
-    fullCode: "IBM2176IS",
   },
 
   /**
@@ -20716,7 +19272,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string) =>
       `The file ${filename} is a PDS member and hence cannot be used for SYSADATA.`,
-    fullCode: "IBM2177IS",
   },
 
   /**
@@ -20729,7 +19284,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "INCLUDE statements are not supported when the LINEDIR option is in effect.",
-    fullCode: "IBM2178IS",
   },
 
   /**
@@ -20743,7 +19297,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "There is too little room between the margins for the LINE directive. The PPTRACE option will be turned off.",
-    fullCode: "IBM2179IS",
   },
 
   /**
@@ -20756,7 +19309,6 @@ export const Severe = {
     severity: Severity.S,
     message: (filename: string, keyword: string) =>
       `Use of the KEYED DIRECT file ${filename} in a ${keyword} statement without a KEY/KEYFROM clause is invalid.`,
-    fullCode: "IBM2180IS",
   },
 
   /**
@@ -20768,7 +19320,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type CHARACTER.`,
-    fullCode: "IBM2181IS",
   },
 
   /**
@@ -20781,7 +19332,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must be a constant.`,
-    fullCode: "IBM2182IS",
   },
 
   /**
@@ -20793,7 +19343,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The first argument to ${BUILTINname} built-in function must have constant length equal to that of the second argument.`,
-    fullCode: "IBM2183IS",
   },
 
   /**
@@ -20804,7 +19353,6 @@ export const Severe = {
     code: "IBM2184I",
     severity: Severity.S,
     message: "Compiler input files must have less then 1000000 lines.",
-    fullCode: "IBM2184IS",
   },
 
   /**
@@ -20816,7 +19364,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function must have type REAL DECIMAL FLOAT, and the DFP option must be in effect.`,
-    fullCode: "IBM2185IS",
   },
 
   /**
@@ -20829,7 +19376,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} is not supported for DFP.`,
-    fullCode: "IBM2186IS",
   },
 
   /**
@@ -20844,7 +19390,6 @@ export const Severe = {
     severity: Severity.S,
     message: (value: string, precision: string) =>
       `The exponent in the literal ${value} is too large for DECIMAL FLOAT with precision ${precision} .`,
-    fullCode: "IBM2187IS",
   },
 
   /**
@@ -20859,7 +19404,6 @@ export const Severe = {
     severity: Severity.S,
     message: (value: string, precision: string) =>
       `The exponent in the literal ${value} is too small for DECIMAL FLOAT with precision ${precision} .`,
-    fullCode: "IBM2188IS",
   },
 
   /**
@@ -20872,7 +19416,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Under CMPAT(V2) and CMPAT(LE), bounds must not be greater than +2147483647.",
-    fullCode: "IBM2189IS",
   },
 
   /**
@@ -20885,7 +19428,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Under CMPAT(V2) and CMPAT(LE), bounds must not be less than -2147483648.",
-    fullCode: "IBM2190IS",
   },
 
   /**
@@ -20898,7 +19440,6 @@ export const Severe = {
     severity: Severity.S,
     message: (option: string) =>
       `No valid character specified in the ${option} option.`,
-    fullCode: "IBM2191IS",
   },
 
   /**
@@ -20916,7 +19457,6 @@ export const Severe = {
       parameternumber: string,
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE POINTER as parameter number ${parameternumber} .`,
-    fullCode: "IBM2192IS",
   },
 
   /**
@@ -20934,7 +19474,6 @@ export const Severe = {
       parameternumber: string,
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE NATIVE FIXED BIN(31) as parameter number ${parameternumber} .`,
-    fullCode: "IBM2193IS",
   },
 
   /**
@@ -20952,7 +19491,6 @@ export const Severe = {
       parameternumber: string,
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYADDR POINTER as parameter number ${parameternumber} .`,
-    fullCode: "IBM2194IS",
   },
 
   /**
@@ -20970,7 +19508,6 @@ export const Severe = {
       parameternumber: string,
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYADDR NATIVE 130 FIXED BIN(31) as parameter number ${parameternumber} .`,
-    fullCode: "IBM2195IS",
   },
 
   /**
@@ -20988,7 +19525,6 @@ export const Severe = {
       parameternumber: string,
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYVALUE ALIGNED BIT(8) as parameter number ${parameternumber} .`,
-    fullCode: "IBM2196IS",
   },
 
   /**
@@ -21000,7 +19536,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built-in function must have type CHAR or WIDECHAR.`,
-    fullCode: "IBM2197IS",
   },
 
   /**
@@ -21012,7 +19547,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type CHAR or WIDECHAR.`,
-    fullCode: "IBM2198IS",
   },
 
   /**
@@ -21024,7 +19558,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The run-time option XPLINK(ON) must be in effect if object code is to be generated.",
-    fullCode: "IBM2199IS",
   },
 
   /**
@@ -21038,7 +19571,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcetype: string, targettype: string) =>
       `DFP conversion from ${sourcetype} to ${targettype} failed with an operation exception. The most likely cause for this is lack of DFP hardware.`,
-    fullCode: "IBM2200IS",
   },
 
   /**
@@ -21050,7 +19582,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must have type REAL DECIMAL FIXED, or REAL DECIMAL FLOAT, and in the latter case, the DFP option must be in effect.`,
-    fullCode: "IBM2201IS",
   },
 
   /**
@@ -21063,7 +19594,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string, level: string) =>
       `Use of the ${BUILTINname} built-in function requires ARCH( ${level} ) or greater.`,
-    fullCode: "IBM2202IS",
   },
 
   /**
@@ -21076,7 +19606,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The VALUE attribute may be used on a structure member only if it is used on all base members of that structure.",
-    fullCode: "IBM2203IS",
   },
 
   /**
@@ -21089,7 +19618,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The VALUE attribute may be used on a structure member only if no storage attribute is specified for the structure.",
-    fullCode: "IBM2204IS",
   },
 
   /**
@@ -21102,7 +19630,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The VALUE attribute may be used on a structure member only if no dimension attributes are specified for its parents.",
-    fullCode: "IBM2205IS",
   },
 
   /**
@@ -21113,7 +19640,6 @@ export const Severe = {
     code: "IBM2206I",
     severity: Severity.S,
     message: "The VALUE attribute conflicts with the DIMENSION attribute.",
-    fullCode: "IBM2206IS",
   },
 
   /**
@@ -21125,7 +19651,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The VALUE attribute may be used on a structure member only if no parent has the UNION attribute.",
-    fullCode: "IBM2207IS",
   },
 
   /**
@@ -21139,7 +19664,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Structure references that contain the VALUE attribute are invalid.",
-    fullCode: "IBM2208IS",
   },
 
   /**
@@ -21157,7 +19681,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Use of nonconstant extents in BASED variables without REFER is invalid except on scalars.",
-    fullCode: "IBM2209IS",
   },
 
   /**
@@ -21170,7 +19693,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `The VALUE type function cannot be applied to ${typename} since that structure has no members with an INITIAL attribute.`,
-    fullCode: "IBM2210IS",
   },
 
   /**
@@ -21183,7 +19705,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Shift-out code has no closing shift- in code before the right margin.",
-    fullCode: "IBM2211IS",
   },
 
   /**
@@ -21195,7 +19716,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to the ${BUILTINname} built-in function must be a structure.`,
-    fullCode: "IBM2212IS",
   },
 
   /**
@@ -21206,7 +19726,6 @@ export const Severe = {
     code: "IBM2213I",
     severity: Severity.S,
     message: "Block contains too many label arrays.",
-    fullCode: "IBM2213IS",
   },
 
   /**
@@ -21218,7 +19737,6 @@ export const Severe = {
     severity: Severity.S,
     message: (Attribute: string) =>
       `${Attribute} is invalid on structure parents.`,
-    fullCode: "IBM2214IS",
   },
 
   /**
@@ -21230,7 +19748,6 @@ export const Severe = {
     severity: Severity.S,
     message: (Attribute: string) =>
       `${Attribute} is invalid on unnamed structure elements.`,
-    fullCode: "IBM2215IS",
   },
 
   /**
@@ -21242,7 +19759,6 @@ export const Severe = {
     code: "IBM2216I",
     severity: Severity.S,
     message: (Attribute: string) => `${Attribute} is invalid on arrays.`,
-    fullCode: "IBM2216IS",
   },
 
   /**
@@ -21255,7 +19771,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "XMLATTR is invalid if the previous element at that logical level does not also have the XMLATTR attribute.",
-    fullCode: "IBM2217IS",
   },
 
   /**
@@ -21268,7 +19783,6 @@ export const Severe = {
     severity: Severity.S,
     message: (Attribute: string) =>
       `${Attribute} is invalid on non-native FLOAT elements.`,
-    fullCode: "IBM2218IS",
   },
 
   /**
@@ -21281,7 +19795,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Parameters declared as INONLY must not contain any elements declared with the ASSIGNABLE attribute.",
-    fullCode: "IBM2219IS",
   },
 
   /**
@@ -21294,7 +19807,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Parameters declared as OUTONLY must contain at least one element declared with the ASSIGNABLE attribute.",
-    fullCode: "IBM2220IS",
   },
 
   /**
@@ -21307,7 +19819,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A non-constant array extent in a BASED variable is invalid if the array has more than one dimension.",
-    fullCode: "IBM2221IS",
   },
 
   /**
@@ -21320,7 +19831,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A non-constant array extent in a BASED variable is invalid if the array has a non-constant lower bound.",
-    fullCode: "IBM2222IS",
   },
 
   /**
@@ -21334,7 +19844,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A non-constant array extent in a BASED structure is invalid if any other fields in the structure have non-constant extents.",
-    fullCode: "IBM2223IS",
   },
 
   /**
@@ -21348,7 +19857,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A non-constant AREA, BIT, GRAPHIC, or WIDECHAR extent in a BASED variable is invalid if the variable is an array element or part of a structure.",
-    fullCode: "IBM2224IS",
   },
 
   /**
@@ -21362,7 +19870,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A non-constant CHARACTER extent in a BASED variable is invalid if the string is ALIGNED and either VARYING or VARYING4.",
-    fullCode: "IBM2225IS",
   },
 
   /**
@@ -21376,7 +19883,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A non-constant array extent in a BASED variable is invalid if there are any sibling fields after the array or any of the array's parents.",
-    fullCode: "IBM2226IS",
   },
 
   /**
@@ -21390,7 +19896,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A non-constant CHARACTER extent in a BASED structure is invalid if the string is a member of an array of structures.",
-    fullCode: "IBM2227IS",
   },
 
   /**
@@ -21404,7 +19909,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A non-constant CHARACTER extent in a BASED structure is invalid unless the string is the last field in the structure and not part of a union.",
-    fullCode: "IBM2228IS",
   },
 
   /**
@@ -21416,7 +19920,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must have the attributes REAL FIXED BIN and scale factor zero.`,
-    fullCode: "IBM2230IS",
   },
 
   /**
@@ -21429,7 +19932,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function is supported only with the native character set.`,
-    fullCode: "IBM2231IS",
   },
 
   /**
@@ -21447,7 +19949,6 @@ export const Severe = {
     code: "IBM2232I",
     severity: Severity.S,
     message: "There must be only one target in a BY DIMACROSS assignment.",
-    fullCode: "IBM2232IS",
   },
 
   /**
@@ -21467,7 +19968,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The target in a BY DIMACROSS assignment must be a structure reference.",
-    fullCode: "IBM2233IS",
   },
 
   /**
@@ -21479,7 +19979,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "No arrays are permitted in the source in a BY DIMACROSS assignment.",
-    fullCode: "IBM2234IS",
   },
 
   /**
@@ -21500,7 +19999,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "In a BY DIMACROSS assignment, the immediate children of any structure not declared with DIMACROSS must not be arrays.",
-    fullCode: "IBM2235IS",
   },
 
   /**
@@ -21513,7 +20011,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have the DIMACROSS attribute.`,
-    fullCode: "IBM2236IS",
   },
 
   /**
@@ -21526,7 +20023,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The third argument to the ALLCOMPARE built-in function must be a CHAR(2) constant.",
-    fullCode: "IBM2237IS",
   },
 
   /**
@@ -21539,7 +20035,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The third argument to the ALLCOMPARE built-in function must specify the name of a comparison operator.",
-    fullCode: "IBM2238IS",
   },
 
   /**
@@ -21552,7 +20047,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `Invalid use of unspecified STRUCT type ${typename} .`,
-    fullCode: "IBM2239IS",
   },
 
   /**
@@ -21565,7 +20059,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Arithmetic operations are not allowed on handles for unspecified structure definitions.",
-    fullCode: "IBM2240IS",
   },
 
   /**
@@ -21578,7 +20071,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typefunction: string) =>
       `The argument to the type function ${typefunction} must be a specified structure type name.`,
-    fullCode: "IBM2241IS",
   },
 
   /**
@@ -21591,7 +20083,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Subtraction of HANDLE from HANDLE is invalid unless both point to the same type.",
-    fullCode: "IBM2242IS",
   },
 
   /**
@@ -21605,7 +20096,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. RETURNS attributes do not match.`,
-    fullCode: "IBM2243IS",
   },
 
   /**
@@ -21619,7 +20109,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. BYVALUE/BYADDR attributes in RETURNS do not match.`,
-    fullCode: "IBM2244IS",
   },
 
   /**
@@ -21633,7 +20122,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. LINKAGE values do not match.`,
-    fullCode: "IBM2245IS",
   },
 
   /**
@@ -21647,7 +20135,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. OPTIONS values do not match.`,
-    fullCode: "IBM2246IS",
   },
 
   /**
@@ -21661,7 +20148,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Parameter counts do not match.`,
-    fullCode: "IBM2247IS",
   },
 
   /**
@@ -21675,7 +20161,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. BYVALUE/BYADDR attributes in parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2248IS",
   },
 
   /**
@@ -21689,7 +20174,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Number of dimensions for parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2249IS",
   },
 
   /**
@@ -21703,7 +20187,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Lower bounds for parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2250IS",
   },
 
   /**
@@ -21717,7 +20200,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Upper bounds for parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2251IS",
   },
 
   /**
@@ -21731,7 +20213,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Alignment of parameter ${parameternumber} does not match.`,
-    fullCode: "IBM2252IS",
   },
 
   /**
@@ -21745,7 +20226,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Number and attributes of structure members in parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2253IS",
   },
 
   /**
@@ -21759,7 +20239,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string, parameternumber: string) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. Attributes of parameter ${parameternumber} do not match.`,
-    fullCode: "IBM2254IS",
   },
 
   /**
@@ -21772,7 +20251,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must be numeric, BIT, or CHARACTER.`,
-    fullCode: "IBM2255IS",
   },
 
   /**
@@ -21788,7 +20266,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The result of the ${BUILTINname} built-in function would have a length greater than the the maximum allowed for a CHARACTER string.`,
-    fullCode: "IBM2256IS",
   },
 
   /**
@@ -21800,7 +20277,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must hold valid UTF-16.`,
-    fullCode: "IBM2257IS",
   },
 
   /**
@@ -21812,7 +20288,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must have type CHARACTER.`,
-    fullCode: "IBM2258IS",
   },
 
   /**
@@ -21824,7 +20299,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must contain valid UTF-8.`,
-    fullCode: "IBM2259IS",
   },
 
   /**
@@ -21837,7 +20311,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "INITIAL expressions in DEFINE STRUCT must not depend on any address values.",
-    fullCode: "IBM2260IS",
   },
 
   /**
@@ -21849,7 +20322,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Overpunch and currency characters are not allowed in WIDEPIC specifications.",
-    fullCode: "IBM2261IS",
   },
 
   /**
@@ -21860,7 +20332,6 @@ export const Severe = {
     code: "IBM2262I",
     severity: Severity.S,
     message: "A and X characters are not allowed in WIDEPIC specifications.",
-    fullCode: "IBM2262IS",
   },
 
   /**
@@ -21871,7 +20342,6 @@ export const Severe = {
     code: "IBM2263I",
     severity: Severity.S,
     message: "REFER objects must not be COMPLEX WIDEPIC.",
-    fullCode: "IBM2263IS",
   },
 
   /**
@@ -21888,7 +20358,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string) =>
       `The ${attribute} attribute is invalid in a LOCATES descriptor.`,
-    fullCode: "IBM2264IS",
   },
 
   /**
@@ -21900,7 +20369,6 @@ export const Severe = {
     code: "IBM2265I",
     severity: Severity.S,
     message: "Extents in LOCATES descriptors must be constants.",
-    fullCode: "IBM2265IS",
   },
 
   /**
@@ -21912,7 +20380,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The argument to ${BUILTINname} built-in function must have the LOCATES attribute.`,
-    fullCode: "IBM2266IS",
   },
 
   /**
@@ -21924,7 +20391,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The first argument to ${BUILTINname} built-in function must have the LOCATES attribute.`,
-    fullCode: "IBM2267IS",
   },
 
   /**
@@ -21937,7 +20403,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Argument to the LOCVAL pseudovariable must have the LOCATES attribute.",
-    fullCode: "IBM2268IS",
   },
 
   /**
@@ -21948,7 +20413,6 @@ export const Severe = {
     code: "IBM2269I",
     severity: Severity.S,
     message: "LOCATES attribute is valid only with OFFSET.",
-    fullCode: "IBM2269IS",
   },
 
   /**
@@ -21963,7 +20427,6 @@ export const Severe = {
     code: "IBM2270I",
     severity: Severity.S,
     message: "Only one description is allowed in a LOCATES descriptor.",
-    fullCode: "IBM2270IS",
   },
 
   /**
@@ -21975,7 +20438,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The first argument to ${BUILTINname} built-in function must be a scalar reference.`,
-    fullCode: "IBM2271IS",
   },
 
   /**
@@ -21987,7 +20449,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The second argument to ${BUILTINname} built-in function must be a scalar reference.`,
-    fullCode: "IBM2272IS",
   },
 
   /**
@@ -21999,7 +20460,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The OFFSET argument to ${BUILTINname} built-in function must have an AREA qualification.`,
-    fullCode: "IBM2273IS",
   },
 
   /**
@@ -22011,7 +20471,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The second argument to ${BUILTINname} built-in function must have the LOCATES attribute.`,
-    fullCode: "IBM2274IS",
   },
 
   /**
@@ -22023,7 +20482,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Third argument to ${BUILTINname} built-in function must have type AREA.`,
-    fullCode: "IBM2275IS",
   },
 
   /**
@@ -22035,7 +20493,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The argument to ${BUILTINname} built-in function must have the LOCATES attribute or contain subelements with the LOCATES attribute.`,
-    fullCode: "IBM2276IS",
   },
 
   /**
@@ -22047,7 +20504,6 @@ export const Severe = {
     code: "IBM2277I",
     severity: Severity.S,
     message: "INCLUDE statements are not allowed under NOINCLUDE.",
-    fullCode: "IBM2277IS",
   },
 
   /**
@@ -22059,7 +20515,6 @@ export const Severe = {
     code: "IBM2278I",
     severity: Severity.S,
     message: "Source is not valid UTF-8.",
-    fullCode: "IBM2278IS",
   },
 
   /**
@@ -22071,7 +20526,6 @@ export const Severe = {
     code: "IBM2279I",
     severity: Severity.S,
     message: (option: string) => `${option} option contains invalid UTF-8.`,
-    fullCode: "IBM2279IS",
   },
 
   /**
@@ -22085,7 +20539,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The corresponding characters in the two NAMES strings must have the same length.",
-    fullCode: "IBM2280IS",
   },
 
   /**
@@ -22099,7 +20552,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The first argument to ${BUILTINname} built-in function must have computational type or ordinal type.`,
-    fullCode: "IBM2281IS",
   },
 
   /**
@@ -22110,7 +20562,6 @@ export const Severe = {
     code: "IBM2282I",
     severity: Severity.S,
     message: "REINIT reference must be a level 1 item.",
-    fullCode: "IBM2282IS",
   },
 
   /**
@@ -22121,7 +20572,6 @@ export const Severe = {
     code: "IBM2283I",
     severity: Severity.S,
     message: "REINIT references must be BASED, AUTO, CTL or STATIC.",
-    fullCode: "IBM2283IS",
   },
 
   /**
@@ -22135,7 +20585,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The first and second arguments to the ${BUILTINname} built-in function must have matching types.`,
-    fullCode: "IBM2284IS",
   },
 
   /**
@@ -22147,7 +20596,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must have the attributes UNSIGNED REAL FIXED BIN(64,0).`,
-    fullCode: "IBM2285IS",
   },
 
   /**
@@ -22160,7 +20608,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string, length: string) =>
       `The argument to the ${BUILTINname} built-in function must have the attributes CHAR NONVARYING and length ${length} .`,
-    fullCode: "IBM2286IS",
   },
 
   /**
@@ -22175,7 +20622,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to the ${BUILTINname} built- in function must contain only standard computational types.`,
-    fullCode: "IBM2287IS",
   },
 
   /**
@@ -22188,7 +20634,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to the ${BUILTINname} built- in function must not be a UNION or contain any UNIONs.`,
-    fullCode: "IBM2288IS",
   },
 
   /**
@@ -22201,7 +20646,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to the ${BUILTINname} built- in function must not contain any GRAPHIC elements.`,
-    fullCode: "IBM2289IS",
   },
 
   /**
@@ -22219,7 +20663,6 @@ export const Severe = {
       parameternumber: string,
     ) =>
       `Member ${membernumber} in the event structure argument to the ${BUILTINname} built-in function must have a BYADDR NATIVE FIXED BIN(63) as parameter number ${parameternumber} .`,
-    fullCode: "IBM2290IS",
   },
 
   /**
@@ -22231,7 +20674,6 @@ export const Severe = {
     code: "IBM2291I",
     severity: Severity.S,
     message: (attribute: string) => `${attribute} precision is invalid.`,
-    fullCode: "IBM2291IS",
   },
 
   /**
@@ -22244,7 +20686,6 @@ export const Severe = {
     severity: Severity.S,
     message: (statement: string) =>
       `Target in ${statement} statement must not be the name of a PROC or ENTRY statement.`,
-    fullCode: "IBM2292IS",
   },
 
   /**
@@ -22257,7 +20698,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function is not supported under CMPAT(V1).`,
-    fullCode: "IBM2293IS",
   },
 
   /**
@@ -22269,7 +20709,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A value greater than 64K for the STRING suboption of the 139 LIMITS option is valid only under CMPAT(V3) and CMPAT(LE).",
-    fullCode: "IBM2294IS",
   },
 
   /**
@@ -22281,7 +20720,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A value greater than 32K for the STRING suboption of the LIMITS option is valid only under BIFPREC(31).",
-    fullCode: "IBM2295IS",
   },
 
   /**
@@ -22296,7 +20734,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function must have the same ordinal type as the first argument.`,
-    fullCode: "IBM2296IS",
   },
 
   /**
@@ -22309,7 +20746,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function is supported only under LP(64).`,
-    fullCode: "IBM2297IS",
   },
 
   /**
@@ -22322,7 +20758,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function is supported only when the compiler option CHECK(STORAGE) is used.`,
-    fullCode: "IBM2298IS",
   },
 
   /**
@@ -22336,7 +20771,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `No value can fall in the interval defined by the second and third arguments to the ${BUILTINname} built-in function.`,
-    fullCode: "IBM2299IS",
   },
 
   /**
@@ -22349,7 +20783,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The compiler was disabled in the IFAPRDxx parmlib member. The compilation will terminate without further processing.",
-    fullCode: "IBM2300IS",
   },
 
   /**
@@ -22361,7 +20794,6 @@ export const Severe = {
     severity: Severity.S,
     message: (returncode: string) =>
       `The IFAEDREG registration of the compiler failed with return code ${returncode} . The compilation will terminate without further processing.`,
-    fullCode: "IBM2301IS",
   },
 
   /**
@@ -22374,7 +20806,6 @@ export const Severe = {
     severity: Severity.S,
     message: (option: string) =>
       `The option ${option} is not supported under LP(64).`,
-    fullCode: "IBM2302IS",
   },
 
   /**
@@ -22386,7 +20817,6 @@ export const Severe = {
     code: "IBM2303I",
     severity: Severity.S,
     message: (codepage: string) => `${codepage} is not a supported codepage.`,
-    fullCode: "IBM2303IS",
   },
 
   /**
@@ -22399,7 +20829,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string) =>
       `The ${attribute} attribute is not supported under CMPAT(V1).`,
-    fullCode: "IBM2304IS",
   },
 
   /**
@@ -22411,7 +20840,6 @@ export const Severe = {
     code: "IBM2305I",
     severity: Severity.S,
     message: "The ASSERT COMPARE operator must be a CHAR(2) constant.",
-    fullCode: "IBM2305IS",
   },
 
   /**
@@ -22424,7 +20852,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The ASSERT COMPARE operator must specify the name of a comparison operator.",
-    fullCode: "IBM2306IS",
   },
 
   /**
@@ -22438,7 +20865,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The first argument to the ${BUILTINname} built-in function must be a suitable one-dimensional array.`,
-    fullCode: "IBM2307IS",
   },
 
   /**
@@ -22452,7 +20878,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The first argument to the ${BUILTINname} built-in function must be ALIGNED if NONVARYING BIT.`,
-    fullCode: "IBM2308IS",
   },
 
   /**
@@ -22467,7 +20892,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Comparison in ${BUILTINname} built-in function is unsupported.`,
-    fullCode: "IBM2309IS",
   },
 
   /**
@@ -22483,7 +20907,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The compare function passed to the ${BUILTINname} built-in function must be a LIMITED ENTRY, must return BYVALUE a NATIVE FIXED BIN(31), must have exactly two BYVALUE POINTER arguments, and must have the OPTLINK linkage.`,
-    fullCode: "IBM2310IS",
   },
 
   /**
@@ -22494,7 +20917,6 @@ export const Severe = {
     code: "IBM2311I",
     severity: Severity.S,
     message: "Labels are not allowed on the END statement for a PACKAGE.",
-    fullCode: "IBM2311IS",
   },
 
   /**
@@ -22507,7 +20929,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function must be a scalar expression.`,
-    fullCode: "IBM2312IS",
   },
 
   /**
@@ -22520,7 +20941,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function must be an array expression.`,
-    fullCode: "IBM2313IS",
   },
 
   /**
@@ -22533,7 +20953,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} built-in function does not support arrays of this type.`,
-    fullCode: "IBM2314IS",
   },
 
   /**
@@ -22547,7 +20966,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have type size_t.`,
-    fullCode: "IBM2315IS",
   },
 
   /**
@@ -22560,7 +20978,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must have CHARACTER type.`,
-    fullCode: "IBM2316IS",
   },
 
   /**
@@ -22574,7 +20991,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must be an ASSIGNABLE reference.`,
-    fullCode: "IBM2317IS",
   },
 
   /**
@@ -22587,7 +21003,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string) =>
       `${attribute} attribute is valid only with computational types.`,
-    fullCode: "IBM2318IS",
   },
 
   /**
@@ -22599,7 +21014,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string) =>
       `${attribute} attribute is not valid with COMPLEX types.`,
-    fullCode: "IBM2319IS",
   },
 
   /**
@@ -22612,7 +21026,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in function must be a reference to a variable with the VALIDLIST or VALIDRANGE attribute.`,
-    fullCode: "IBM2320IS",
   },
 
   /**
@@ -22623,7 +21036,6 @@ export const Severe = {
     code: "IBM2321I",
     severity: Severity.S,
     message: (attribute: string) => `${attribute} contains duplicate values.`,
-    fullCode: "IBM2321IS",
   },
 
   /**
@@ -22640,7 +21052,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The second value in the VALUERANGE attribute must be larger than the first.",
-    fullCode: "IBM2322IS",
   },
 
   /**
@@ -22656,7 +21067,6 @@ export const Severe = {
     severity: Severity.S,
     message: (number: string, number2: string, BUILTINname: string) =>
       `Arguments ${number} and ${number2} to the ${BUILTINname} built-in function must have comparable types.`,
-    fullCode: "IBM2323IS",
   },
 
   /**
@@ -22674,7 +21084,6 @@ export const Severe = {
       externalname2: string,
     ) =>
       `The attributes derived from the PROCEDURE statement for the ENTRY constant ${variablename} do not match those in its explicit declaration. The EXTERNAL names do not match: one name is ${externalname} , and the other is ${externalname2} .`,
-    fullCode: "IBM2324IS",
   },
 
   /**
@@ -22688,7 +21097,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The values specified for the ROUTCDE and DESC in a WTO must be between 1 and 16.",
-    fullCode: "IBM2325IS",
   },
 
   /**
@@ -22701,7 +21109,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The argument to the ${BUILTINname} built-in function must have UCHAR type.`,
-    fullCode: "IBM2326IS",
   },
 
   /**
@@ -22714,7 +21121,6 @@ export const Severe = {
     code: "IBM2327I",
     severity: Severity.S,
     message: "TRANSLATE of a UCHAR string requires 3 arguments.",
-    fullCode: "IBM2327IS",
   },
 
   /**
@@ -22726,7 +21132,6 @@ export const Severe = {
     code: "IBM2328I",
     severity: Severity.S,
     message: "UX literal specifies an invalid UTF-8 string.",
-    fullCode: "IBM2328IS",
   },
 
   /**
@@ -22738,7 +21143,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in function must have type CHAR, UCHAR or WCHAR.`,
-    fullCode: "IBM2329IS",
   },
 
   /**
@@ -22750,7 +21154,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The ${BUILTINname} built-in function does not support UCHAR arguments.`,
-    fullCode: "IBM2330IS",
   },
 
   /**
@@ -22763,7 +21166,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The input structure to the ${BUILTINname} built-in function must not contain any UTF-8 elements.`,
-    fullCode: "IBM2331IS",
   },
 
   /**
@@ -22775,7 +21177,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The base reference in the DEFINED attribute cannot have a UTF-8 type.",
-    fullCode: "IBM2332IS",
   },
 
   /**
@@ -22789,7 +21190,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built- in function must have a computational, ordinal or pointer type.`,
-    fullCode: "IBM2333IS",
   },
 
   /**
@@ -22803,7 +21203,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function must be nonvarying with a known length.`,
-    fullCode: "IBM2334IS",
   },
 
   /**
@@ -22816,7 +21215,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "VALUELISTFROM reference must name a structure consisting only of elements with the VALUE attribute.",
-    fullCode: "IBM2335IS",
   },
 
   /**
@@ -22829,7 +21227,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The fourth argument to the ${BUILTINname} built-in function must be a constant specifying the name of a casing rule.`,
-    fullCode: "IBM2336IS",
   },
 
   /**
@@ -22842,7 +21239,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must have numeric type.`,
-    fullCode: "IBM2337IS",
   },
 
   /**
@@ -22854,7 +21250,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A QUALIFY block may contain only DEFINE statements, DECLARE statements, and nested QUALIFY blocks.",
-    fullCode: "IBM2338IS",
   },
 
   /**
@@ -22865,7 +21260,6 @@ export const Severe = {
     code: "IBM2339I",
     severity: Severity.S,
     message: "A QUALIFY block must have a name, but only one.",
-    fullCode: "IBM2339IS",
   },
 
   /**
@@ -22877,7 +21271,6 @@ export const Severe = {
     code: "IBM2340I",
     severity: Severity.S,
     message: "A name declared in a QUALIFY block must be a scalar.",
-    fullCode: "IBM2340IS",
   },
 
   /**
@@ -22890,7 +21283,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A name declared in a QUALIFY block must have the VALUE attribute.",
-    fullCode: "IBM2341IS",
   },
 
   /**
@@ -22902,7 +21294,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcevalue: string) =>
       `CONVERSION condition raised by attempt to convert the GRAPHIC character with hex value ${sourcevalue} to CHARACTER.`,
-    fullCode: "IBM2342IS",
   },
 
   /**
@@ -22913,7 +21304,6 @@ export const Severe = {
     code: "IBM2343I",
     severity: Severity.S,
     message: (typename: string) => `The type name ${typename} is ambiguous.`,
-    fullCode: "IBM2343IS",
   },
 
   /**
@@ -22926,7 +21316,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `${typename} is a type name, but not the name of a STRUCTURE type.`,
-    fullCode: "IBM2344IS",
   },
 
   /**
@@ -22939,7 +21328,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `${typename} is a type name, but not the name of an ORDINAL type.`,
-    fullCode: "IBM2345IS",
   },
 
   /**
@@ -22951,7 +21339,6 @@ export const Severe = {
     severity: Severity.S,
     message: (argumentnumber: string, BUILTINname: string) =>
       `Argument number ${argumentnumber} to ${BUILTINname} built-in function built-in function must be either a scalar or a one- dimensional array of scalars.`,
-    fullCode: "IBM2346IS",
   },
 
   /**
@@ -22964,7 +21351,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `The second argument to the ${BUILTINname} built-in function must have the same number of dimensions as the first argument.`,
-    fullCode: "IBM2347IS",
   },
 
   /**
@@ -22976,7 +21362,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string, lbound: string, lbound2: string) =>
       `The second argument to the ${BUILTINname} built-in function must have the same lower bound as the first argument. But its lower bound is ${lbound} while the first argument's lower bound is ${lbound2} .`,
-    fullCode: "IBM2348IS",
   },
 
   /**
@@ -22988,7 +21373,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string, hbound: string, hbound2: string) =>
       `The second argument to the ${BUILTINname} built-in function must have the same upper bound as the first argument. But its upper bound is ${hbound} while the first argument's upper bound is ${hbound2} .`,
-    fullCode: "IBM2349IS",
   },
 
   /**
@@ -22999,7 +21383,6 @@ export const Severe = {
     code: "IBM2350I",
     severity: Severity.S,
     message: (attribute: string) => `${attribute} must be returned BYADDR.`,
-    fullCode: "IBM2350IS",
   },
 
   /**
@@ -23017,7 +21400,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Scale factor in ${BUILTINname} is less than 0.`,
-    fullCode: "IBM2351IS",
   },
 
   /**
@@ -23034,7 +21416,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Scale factor in ${BUILTINname} must not be greater than the precision.`,
-    fullCode: "IBM2352IS",
   },
 
   /**
@@ -23052,7 +21433,6 @@ export const Severe = {
       scalefactor2: string,
     ) =>
       `Multiplication of FIXED( ${precision} , ${scalefactor} ) and FIXED( ${precision2} , ${scalefactor2} ) would produce a result with a scale factor that is not between -128 and 127.`,
-    fullCode: "IBM2353IS",
   },
 
   /**
@@ -23071,7 +21451,6 @@ export const Severe = {
       scalefactor2: string,
     ) =>
       `Divison of FIXED( ${precision} , ${scalefactor} ) and FIXED( ${precision2} , ${scalefactor2} ) would produce a result with a scale factor that is not between -128 and 127.`,
-    fullCode: "IBM2354IS",
   },
 
   /**
@@ -23090,7 +21469,6 @@ export const Severe = {
       scalefactor2: string,
     ) =>
       `Add and subtract of FIXED( ${precision} , ${scalefactor} ) and FIXED( ${precision2} , ${scalefactor2} ) is not allowed because the difference in scale factors is greater than the maximum precision allowed.`,
-    fullCode: "IBM2355IS",
   },
 
   /**
@@ -23119,7 +21497,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "In commalist number ${commalist_count} , the number of expressions is ${element_count} , but the number of expressions in the first commalist is ${element_count} . The number of expressions in each commalist must match.",
-    fullCode: "IBM2356IS",
   },
 
   /**
@@ -23149,7 +21526,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "INITACROSS structure member count of ${member_count} does not match the implied member count of ${element_count} from the INITACROSS attribute.",
-    fullCode: "IBM2357IS",
   },
 
   /**
@@ -23161,7 +21537,6 @@ export const Severe = {
     code: "IBM2358I",
     severity: Severity.S,
     message: "INITACROSS structures must be one-dimensional arrays.",
-    fullCode: "IBM2358IS",
   },
 
   /**
@@ -23174,7 +21549,6 @@ export const Severe = {
     code: "IBM2359I",
     severity: Severity.S,
     message: "INITACROSS structure members must all be scalars.",
-    fullCode: "IBM2359IS",
   },
 
   /**
@@ -23187,7 +21561,6 @@ export const Severe = {
     severity: Severity.S,
     message: (amodeoption: string, optionname: string) =>
       `ENTRY declared with OPTIONS( ${amodeoption} ) must also specify OPTIONS( ${optionname} ).`,
-    fullCode: "IBM2364IS",
   },
 
   /**
@@ -23201,7 +21574,6 @@ export const Severe = {
     severity: Severity.S,
     message: (amodeoption: string) =>
       `ENTRY declared with OPTIONS( ${amodeoption} ) must specify either RETURNS BYVALUE of a small integer type, or RETURNS BYADDR, or no RETURNS.`,
-    fullCode: "IBM2365IS",
   },
 
   /**
@@ -23214,7 +21586,6 @@ export const Severe = {
     severity: Severity.S,
     message: (amodeoption: string) =>
       `With the exception of addresses and integers, all arguments passed to an ENTRY declared with OPTIONS( ${amodeoption} ) must be passed BYADDR.`,
-    fullCode: "IBM2366IS",
   },
 
   /**
@@ -23227,7 +21598,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "An ENTRY declared with OPTIONS( AMODE31 ) or OPTIONS( AMODE64 ) cannot be implicitly or explicitly assigned to another ENTRY.",
-    fullCode: "IBM2367IS",
   },
 
   /**
@@ -23242,7 +21612,6 @@ export const Severe = {
     severity: Severity.S,
     message: (amodeoption: string) =>
       `ENTRY declared with OPTIONS( ${amodeoption} ) must specify a (possibly empty) parenthesized list of no more than 64 parameters.`,
-    fullCode: "IBM2368IS",
   },
 
   /**
@@ -23255,7 +21624,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "All aggregate arguments passed to an ENTRY declared with OPTIONS( AMODE31 ) must be connected variable references.",
-    fullCode: "IBM2369IS",
   },
 
   /**
@@ -23267,7 +21635,6 @@ export const Severe = {
     severity: Severity.S,
     message: (keyword: string, name: string) =>
       `The attributes specified in the ${keyword} of ${name} do not match those in its original definition.`,
-    fullCode: "IBM2370IS",
   },
 
   /**
@@ -23280,7 +21647,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourcelength: string, sourcepattern: string) =>
       `Source has length ${sourcelength} which is less than the length of the source pattern ${sourcepattern} . Since the pattern has no zero suppression, invoking this REPATTERN will cause the ERROR condition to be raised.`,
-    fullCode: "IBM2371IS",
   },
 
   /**
@@ -23292,7 +21658,6 @@ export const Severe = {
     code: "IBM2372I",
     severity: Severity.S,
     message: "XDECLARE statement must specify a name.",
-    fullCode: "IBM2372IS",
   },
 
   /**
@@ -23304,7 +21669,6 @@ export const Severe = {
     code: "IBM3750I",
     severity: Severity.S,
     message: (note: string) => `${note}`,
-    fullCode: "IBM3750IS",
   },
 
   /**
@@ -23317,7 +21681,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A colon in an EXEC SQL statement must be followed by an identifier that starts a host variable reference.",
-    fullCode: "IBM3751IS",
   },
 
   /**
@@ -23330,7 +21693,6 @@ export const Severe = {
     code: "IBM3752I",
     severity: Severity.S,
     message: "Dot-qualified reference implies too many structure levels.",
-    fullCode: "IBM3752IS",
   },
 
   /**
@@ -23343,7 +21705,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `Length in SQL TYPE IS ${typename} is too large.`,
-    fullCode: "IBM3753IS",
   },
 
   /**
@@ -23355,7 +21716,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `SQL TYPE IS ${typename} must be followed by an opening left parenthesis.`,
-    fullCode: "IBM3754IS",
   },
 
   /**
@@ -23367,7 +21727,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `SQL TYPE IS ${typename} must have an integer specifying its length after the opening left parenthesis.`,
-    fullCode: "IBM3755IS",
   },
 
   /**
@@ -23379,7 +21738,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `SQL TYPE IS ${typename} must have a closing right parenthesis after the integer specifying its length.`,
-    fullCode: "IBM3756IS",
   },
 
   /**
@@ -23391,7 +21749,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `SQL TYPE IS XML AS ${typename} must be followed by an opening left parenthesis.`,
-    fullCode: "IBM3757IS",
   },
 
   /**
@@ -23403,7 +21760,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `SQL TYPE IS XML AS ${typename} must have an integer specifying its length after the opening left parenthesis.`,
-    fullCode: "IBM3758IS",
   },
 
   /**
@@ -23415,7 +21771,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `SQL TYPE IS XML AS ${typename} must have a closing right parenthesis after the integer specifying its length.`,
-    fullCode: "IBM3759IS",
   },
 
   /**
@@ -23428,7 +21783,6 @@ export const Severe = {
     severity: Severity.S,
     message: (ENTRYname: string) =>
       `Too few arguments have been specified for the ENTRY ${ENTRYname} .`,
-    fullCode: "IBM3760IS",
   },
 
   /**
@@ -23439,7 +21793,6 @@ export const Severe = {
     code: "IBM3761I",
     severity: Severity.S,
     message: "Procedures may not be nested.",
-    fullCode: "IBM3761IS",
   },
 
   /**
@@ -23457,7 +21810,6 @@ export const Severe = {
     code: "IBM3762I",
     severity: Severity.S,
     message: "No percent statements are allowed inside procedures.",
-    fullCode: "IBM3762IS",
   },
 
   /**
@@ -23470,7 +21822,6 @@ export const Severe = {
     code: "IBM3763I",
     severity: Severity.S,
     message: "Not enough virtual memory is available to continue the compile.",
-    fullCode: "IBM3763IS",
   },
 
   /**
@@ -23483,7 +21834,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a parameter.`,
-    fullCode: "IBM3764IS",
   },
 
   /**
@@ -23496,7 +21846,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `${BUILTINname} argument must be a reference.`,
-    fullCode: "IBM3765IS",
   },
 
   /**
@@ -23507,7 +21856,6 @@ export const Severe = {
     code: "IBM3766I",
     severity: Severity.S,
     message: "Aggregate contains more than 15 logical levels.",
-    fullCode: "IBM3766IS",
   },
 
   /**
@@ -23519,7 +21867,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `Length in SQL TYPE IS ${typename} must be greater than zero.`,
-    fullCode: "IBM3767IS",
   },
 
   /**
@@ -23531,7 +21878,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The use of asterisks as subscripts is not permitted in the macro facility.",
-    fullCode: "IBM3768IS",
   },
 
   /**
@@ -23543,7 +21889,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to ${BUILTINname} built- in must have type CHARACTER(1) NONVARYING.`,
-    fullCode: "IBM3769IS",
   },
 
   /**
@@ -23557,7 +21902,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `First argument to ${BUILTINname} built-in must be an array.`,
-    fullCode: "IBM3770IS",
   },
 
   /**
@@ -23568,7 +21912,6 @@ export const Severe = {
     code: "IBM3771I",
     severity: Severity.S,
     message: (note: string) => `${note}`,
-    fullCode: "IBM3771IS",
   },
 
   /**
@@ -23581,7 +21924,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Third argument to ${BUILTINname} built-in would force STRINGRANGE.`,
-    fullCode: "IBM3772IS",
   },
 
   /**
@@ -23594,7 +21936,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Second argument to ${BUILTINname} built-in must be nonnegative.`,
-    fullCode: "IBM3773IS",
   },
 
   /**
@@ -23606,7 +21947,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Too few arguments have been specified for the ${BUILTINname} built-in.`,
-    fullCode: "IBM3774IS",
   },
 
   /**
@@ -23619,7 +21959,6 @@ export const Severe = {
     severity: Severity.S,
     message: (preprocessorname: string) =>
       `The ${preprocessorname} preprocessor requires the DFT(EBCDIC) option.`,
-    fullCode: "IBM3775IS",
   },
 
   /**
@@ -23631,7 +21970,6 @@ export const Severe = {
     code: "IBM3778I",
     severity: Severity.S,
     message: "Syntax of the %INCLUDE statement is incorrect.",
-    fullCode: "IBM3778IS",
   },
 
   /**
@@ -23642,7 +21980,6 @@ export const Severe = {
     code: "IBM3779I",
     severity: Severity.S,
     message: "File specification after %INCLUDE is too long.",
-    fullCode: "IBM3779IS",
   },
 
   /**
@@ -23653,7 +21990,6 @@ export const Severe = {
     code: "IBM3780I",
     severity: Severity.S,
     message: "File specification missing after %INCLUDE.",
-    fullCode: "IBM3780IS",
   },
 
   /**
@@ -23664,7 +22000,6 @@ export const Severe = {
     code: "IBM3781I",
     severity: Severity.S,
     message: "Procedures may have no more than 63 parameters.",
-    fullCode: "IBM3781IS",
   },
 
   /**
@@ -23675,7 +22010,6 @@ export const Severe = {
     code: "IBM3782I",
     severity: Severity.S,
     message: "SQL TYPE IS XML must be followed by the keyword AS.",
-    fullCode: "IBM3782IS",
   },
 
   /**
@@ -23686,7 +22020,6 @@ export const Severe = {
     code: "IBM3783I",
     severity: Severity.S,
     message: "SQL TYPE IS XML AS must be followed by a valid type name.",
-    fullCode: "IBM3783IS",
   },
 
   /**
@@ -23697,7 +22030,6 @@ export const Severe = {
     code: "IBM3784I",
     severity: Severity.S,
     message: "SQL TYPE IS TABLE must be followed by the keyword LIKE.",
-    fullCode: "IBM3784IS",
   },
 
   /**
@@ -23708,7 +22040,6 @@ export const Severe = {
     code: "IBM3785I",
     severity: Severity.S,
     message: "SQL TYPE IS TABLE LIKE must be followed by a table name.",
-    fullCode: "IBM3785IS",
   },
 
   /**
@@ -23720,7 +22051,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "SQL TYPE IS TABLE LIKE must be followed by the keyword AS after the table name.",
-    fullCode: "IBM3786IS",
   },
 
   /**
@@ -23732,7 +22062,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "SQL TYPE IS TABLE must be followed by the keyword LOCATOR after the table name and the AS keyword.",
-    fullCode: "IBM3787IS",
   },
 
   /**
@@ -23743,7 +22072,6 @@ export const Severe = {
     code: "IBM3788I",
     severity: Severity.S,
     message: "SQL TYPE IS must be followed by a valid type name.",
-    fullCode: "IBM3788IS",
   },
 
   /**
@@ -23759,7 +22087,6 @@ export const Severe = {
     severity: Severity.S,
     message: (indexnumber: string, variablename: string) =>
       `Index number ${indexnumber} into the variable ${variablename} is less than the lower bound for that dimension.`,
-    fullCode: "IBM3789IS",
   },
 
   /**
@@ -23775,7 +22102,6 @@ export const Severe = {
     severity: Severity.S,
     message: (indexnumber: string, variablename: string) =>
       `Index number ${indexnumber} into the variable ${variablename} is greater than the upper bound for that dimension.`,
-    fullCode: "IBM3790IS",
   },
 
   /**
@@ -23788,7 +22114,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Each dimension of an array must contain no more than 2147483647 elements.",
-    fullCode: "IBM3791IS",
   },
 
   /**
@@ -23800,7 +22125,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Array ${variablename} has too many elements. Bounds set to 1.`,
-    fullCode: "IBM3792IS",
   },
 
   /**
@@ -23813,7 +22137,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Too few subscripts specified for the variable ${variablename} .`,
-    fullCode: "IBM3793IS",
   },
 
   /**
@@ -23826,7 +22149,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `Too many subscripts specified for the variable ${variablename} .`,
-    fullCode: "IBM3794IS",
   },
 
   /**
@@ -23839,7 +22161,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Shift-out code has no closing shift- in code before the right margin.",
-    fullCode: "IBM3795IS",
   },
 
   /**
@@ -23851,7 +22172,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Array expressions cannot be assigned to non-arrays, and if any target in a multiple assignment is an array, then all the targets must be arrays.",
-    fullCode: "IBM3796IS",
   },
 
   /**
@@ -23868,7 +22188,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "RETURN statement without an expression is invalid inside a PROCEDURE that specified the RETURNS attribute.",
-    fullCode: "IBM3797IS",
   },
 
   /**
@@ -23886,7 +22205,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "RETURN statement with an expression is invalid inside a 168 PROCEDURE that did not specify the RETURNS attribute.",
-    fullCode: "IBM3798IS",
   },
 
   /**
@@ -23899,7 +22217,6 @@ export const Severe = {
     severity: Severity.S,
     message: (reference: string) =>
       `The DECLARE statement for the host variable ${reference} is not inside an SQL DECLARE SECTION.`,
-    fullCode: "IBM3799IS",
   },
 
   /**
@@ -23911,7 +22228,6 @@ export const Severe = {
     severity: Severity.S,
     message: (functionname: string) =>
       `Function ${functionname} contains no RETURN statement.`,
-    fullCode: "IBM3800IS",
   },
 
   /**
@@ -23923,7 +22239,6 @@ export const Severe = {
     code: "IBM3801I",
     severity: Severity.S,
     message: "Target in assignment is invalid.",
-    fullCode: "IBM3801IS",
   },
 
   /**
@@ -23934,7 +22249,6 @@ export const Severe = {
     code: "IBM3802I",
     severity: Severity.S,
     message: "Statement labels may not be used in expressions.",
-    fullCode: "IBM3802IS",
   },
 
   /**
@@ -23950,7 +22264,6 @@ export const Severe = {
     code: "IBM3803I",
     severity: Severity.S,
     message: "Target in concatenate-equals assignment must have type char.",
-    fullCode: "IBM3803IS",
   },
 
   /**
@@ -23966,7 +22279,6 @@ export const Severe = {
     code: "IBM3804I",
     severity: Severity.S,
     message: "Target in arithmetic-equals assignment must have type fixed.",
-    fullCode: "IBM3804IS",
   },
 
   /**
@@ -23978,7 +22290,6 @@ export const Severe = {
     severity: Severity.S,
     message: (type: string) =>
       `SQL TYPE IS XML ${type} must be followed by the keyword LARGE.`,
-    fullCode: "IBM3805IS",
   },
 
   /**
@@ -23990,7 +22301,6 @@ export const Severe = {
     severity: Severity.S,
     message: (type: string) =>
       `SQL TYPE IS XML ${type} LARGE must be followed by the keyword OBJECT.`,
-    fullCode: "IBM3806IS",
   },
 
   /**
@@ -24001,7 +22311,6 @@ export const Severe = {
     code: "IBM3807I",
     severity: Severity.S,
     message: "SQL TYPE IS CHARACTER must be followed by the keyword LARGE.",
-    fullCode: "IBM3807IS",
   },
 
   /**
@@ -24014,7 +22323,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "SQL TYPE IS BINARY must be followed by the keyword LARGE or by a length enclosed in parentheses.",
-    fullCode: "IBM3808IS",
   },
 
   /**
@@ -24026,7 +22334,6 @@ export const Severe = {
     severity: Severity.S,
     message: (type: string) =>
       `SQL TYPE IS ${type} LARGE must be followed by the keyword OBJECT.`,
-    fullCode: "IBM3809IS",
   },
 
   /**
@@ -24038,7 +22345,6 @@ export const Severe = {
     code: "IBM3810I",
     severity: Severity.S,
     message: "Statement has too many labels.",
-    fullCode: "IBM3810IS",
   },
 
   /**
@@ -24050,7 +22356,6 @@ export const Severe = {
     code: "IBM3811I",
     severity: Severity.S,
     message: "Expression contains too many nested subexpressions.",
-    fullCode: "IBM3811IS",
   },
 
   /**
@@ -24063,7 +22368,6 @@ export const Severe = {
     severity: Severity.S,
     message: (stringlength: string, stringlength2: string) =>
       `Result of concatenating a string of length ${stringlength} to a string of length ${stringlength2} would produce a string that is too long.`,
-    fullCode: "IBM3812IS",
   },
 
   /**
@@ -24080,7 +22384,6 @@ export const Severe = {
       stringlength: string,
     ) =>
       `Result of ${BUILTINname} applied ${repetitionvalue} times to a string of length ${stringlength} would produce a string that is too long.`,
-    fullCode: "IBM3813IS",
   },
 
   /**
@@ -24092,7 +22395,6 @@ export const Severe = {
     code: "IBM3814I",
     severity: Severity.S,
     message: "Unsupported use of aggregate expression.",
-    fullCode: "IBM3814IS",
   },
 
   /**
@@ -24103,7 +22405,6 @@ export const Severe = {
     code: "IBM3815I",
     severity: Severity.S,
     message: "Operand in bit operation must have length less than 32768.",
-    fullCode: "IBM3815IS",
   },
 
   /**
@@ -24116,7 +22417,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Second and third arguments to the TRANSLATE built-in function must have length less than 32768.",
-    fullCode: "IBM3816IS",
   },
 
   /**
@@ -24129,7 +22429,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Result of ${BUILTINname} would exceed maximum string length.`,
-    fullCode: "IBM3817IS",
   },
 
   /**
@@ -24142,7 +22441,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Under the INCONLY option, the use of INCLUDE or XINCLUDE as a macro procedure name is invalid unless the colon follows immediately after the name.",
-    fullCode: "IBM3820IS",
   },
 
   /**
@@ -24155,7 +22453,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Under the INCONLY option, the use of INCLUDE or XINCLUDE as a macro statement label is invalid unless the colon follows immediately after the name.",
-    fullCode: "IBM3821IS",
   },
 
   /**
@@ -24174,7 +22471,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Under the INCONLY option, the use of INCLUDE or XINCLUDE as a macro variable that is the target of an assignment is invalid unless the equals sign follows immediately after the name.",
-    fullCode: "IBM3822IS",
   },
 
   /**
@@ -24186,7 +22482,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A QUALIFY block may contain only DEFINE statements, DECLARE 170 statements, and nested QUALIFY blocks.",
-    fullCode: "IBM3823IS",
   },
 
   /**
@@ -24198,7 +22493,6 @@ export const Severe = {
     code: "IBM3824I",
     severity: Severity.S,
     message: "A name declared in a QUALIFY block must be a scalar.",
-    fullCode: "IBM3824IS",
   },
 
   /**
@@ -24211,7 +22505,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "A name declared in a QUALIFY block must have the VALUE attribute.",
-    fullCode: "IBM3825IS",
   },
 
   /**
@@ -24222,7 +22515,6 @@ export const Severe = {
     code: "IBM3826I",
     severity: Severity.S,
     message: (typename: string) => `The type name ${typename} is ambiguous.`,
-    fullCode: "IBM3826IS",
   },
 
   /**
@@ -24235,7 +22527,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typename: string) =>
       `${typename} is a type name, but not the name of an ORDINAL type.`,
-    fullCode: "IBM3827IS",
   },
 
   /**
@@ -24247,7 +22538,6 @@ export const Severe = {
     code: "IBM3837I",
     severity: Severity.S,
     message: "GOTO target is inside a (different) DO loop.",
-    fullCode: "IBM3837IS",
   },
 
   /**
@@ -24259,7 +22549,6 @@ export const Severe = {
     severity: Severity.S,
     message: (includefilename: string) =>
       `The INCLUDE file ${includefilename} could not be opened.`,
-    fullCode: "IBM3841IS",
   },
 
   /**
@@ -24271,7 +22560,6 @@ export const Severe = {
     code: "IBM3842I",
     severity: Severity.S,
     message: "Statements are nested too deep.",
-    fullCode: "IBM3842IS",
   },
 
   /**
@@ -24283,7 +22571,6 @@ export const Severe = {
     severity: Severity.S,
     message: (functionname: string) =>
       `The ${functionname} built-in is not supported.`,
-    fullCode: "IBM3844IS",
   },
 
   /**
@@ -24294,7 +22581,6 @@ export const Severe = {
     code: "IBM3846I",
     severity: Severity.S,
     message: (keyword: string) => `The ${keyword} statement is not supported.`,
-    fullCode: "IBM3846IS",
   },
 
   /**
@@ -24305,7 +22591,6 @@ export const Severe = {
     code: "IBM3848I",
     severity: Severity.S,
     message: "Use of iSUB is not supported.",
-    fullCode: "IBM3848IS",
   },
 
   /**
@@ -24316,7 +22601,6 @@ export const Severe = {
     code: "IBM3849I",
     severity: Severity.S,
     message: (typename: string) => `${typename} is not a type name.`,
-    fullCode: "IBM3849IS",
   },
 
   /**
@@ -24336,7 +22620,6 @@ export const Severe = {
     code: "IBM3850I",
     severity: Severity.S,
     message: "TYPEs must be defined before their use.",
-    fullCode: "IBM3850IS",
   },
 
   /**
@@ -24349,7 +22632,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typetype: string, typename: string) =>
       `INITIAL values for ${typetype} type ${typename} must be in increasing order.`,
-    fullCode: "IBM3851IS",
   },
 
   /**
@@ -24361,7 +22643,6 @@ export const Severe = {
     severity: Severity.S,
     message: (typetype: string, typename: string) =>
       `INITIAL values for ${typetype} type ${typename} must be less than 2G.`,
-    fullCode: "IBM3852IS",
   },
 
   /**
@@ -24372,7 +22653,6 @@ export const Severe = {
     code: "IBM3853I",
     severity: Severity.S,
     message: "Nesting of DO statements exceeds the maximum.",
-    fullCode: "IBM3853IS",
   },
 
   /**
@@ -24383,7 +22663,6 @@ export const Severe = {
     code: "IBM3854I",
     severity: Severity.S,
     message: "Nesting of IF statements exceeds the maximum.",
-    fullCode: "IBM3854IS",
   },
 
   /**
@@ -24394,7 +22673,6 @@ export const Severe = {
     code: "IBM3855I",
     severity: Severity.S,
     message: "Nesting of SELECT statements exceeds the maximum.",
-    fullCode: "IBM3855IS",
   },
 
   /**
@@ -24405,7 +22683,6 @@ export const Severe = {
     code: "IBM3856I",
     severity: Severity.S,
     message: "Nesting of blocks exceeds the maximum.",
-    fullCode: "IBM3856IS",
   },
 
   /**
@@ -24427,7 +22704,6 @@ export const Severe = {
     code: "IBM3857I",
     severity: Severity.S,
     message: "Only one description is allowed in a structure definition.",
-    fullCode: "IBM3857IS",
   },
 
   /**
@@ -24440,7 +22716,6 @@ export const Severe = {
     severity: Severity.S,
     message: (ordinalname: string) =>
       `All the names in the ORDINAL ${ordinalname} have been previously declared.`,
-    fullCode: "IBM3858IS",
   },
 
   /**
@@ -24452,7 +22727,6 @@ export const Severe = {
     code: "IBM3859I",
     severity: Severity.S,
     message: "Storage attributes are invalid in structure definition.",
-    fullCode: "IBM3859IS",
   },
 
   /**
@@ -24463,7 +22737,6 @@ export const Severe = {
     code: "IBM3860I",
     severity: Severity.S,
     message: "DEFINE STRUCTURE may not specify an array of structures.",
-    fullCode: "IBM3860IS",
   },
 
   /**
@@ -24475,7 +22748,6 @@ export const Severe = {
     code: "IBM3861I",
     severity: Severity.S,
     message: "Open of dbrm dataset failed.",
-    fullCode: "IBM3861IS",
   },
 
   /**
@@ -24488,7 +22760,6 @@ export const Severe = {
     severity: Severity.S,
     message: (infocode: string, errorcode: string) =>
       `Dynamic allocation of DBRMLIB failed with the SVC 99 info code ${infocode} and the SVC 99 error code ${errorcode} .`,
-    fullCode: "IBM3862IS",
   },
 
   /**
@@ -24500,7 +22771,6 @@ export const Severe = {
     code: "IBM3863I",
     severity: Severity.S,
     message: "The DBRMLIB compiler option must be specified.",
-    fullCode: "IBM3863IS",
   },
 
   /**
@@ -24511,7 +22781,6 @@ export const Severe = {
     code: "IBM3870I",
     severity: Severity.S,
     message: "The FETCH of the CICS backend failed.",
-    fullCode: "IBM3870IS",
   },
 
   /**
@@ -24523,7 +22792,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The CICS backend reported an internal error while attempting to perform its initialization.",
-    fullCode: "IBM3871IS",
   },
 
   /**
@@ -24535,7 +22803,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The CICS backend reported an internal error while attempting to parse its options.",
-    fullCode: "IBM3872IS",
   },
 
   /**
@@ -24547,7 +22814,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The CICS backend reported an internal error while attempting to build and emit the local declares.",
-    fullCode: "IBM3873IS",
   },
 
   /**
@@ -24559,7 +22825,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The CICS backend reported an internal error while attempting to translate an EXEC statement.",
-    fullCode: "IBM3874IS",
   },
 
   /**
@@ -24571,7 +22836,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The CICS backend reported an internal error while attempting to translate a CICS macro (such as DFHVALUE).",
-    fullCode: "IBM3875IS",
   },
 
   /**
@@ -24583,7 +22847,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The CICS backend reported an internal error while attempting to perform its termination.",
-    fullCode: "IBM3876IS",
   },
 
   /**
@@ -24595,7 +22858,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The SQL backend reported an internal error while attempting to perform its initialization.",
-    fullCode: "IBM3877IS",
   },
 
   /**
@@ -24606,7 +22868,6 @@ export const Severe = {
     code: "IBM3878I",
     severity: Severity.S,
     message: "SQL initialization did not complete successfully.",
-    fullCode: "IBM3878IS",
   },
 
   /**
@@ -24618,7 +22879,6 @@ export const Severe = {
     severity: Severity.S,
     message: (reference: string) =>
       `The reference ${reference} could not be resolved.`,
-    fullCode: "IBM3880IS",
   },
 
   /**
@@ -24630,7 +22890,6 @@ export const Severe = {
     code: "IBM3881I",
     severity: Severity.S,
     message: (reference: string) => `The reference ${reference} is ambiguous.`,
-    fullCode: "IBM3881IS",
   },
 
   /**
@@ -24642,7 +22901,6 @@ export const Severe = {
     severity: Severity.S,
     message: (reference: string) =>
       `The indicator array ${reference} must have only one dimension.`,
-    fullCode: "IBM3882IS",
   },
 
   /**
@@ -24655,7 +22913,6 @@ export const Severe = {
     severity: Severity.S,
     message: (reference: string) =>
       `The indicator array ${reference} must have constant bounds.`,
-    fullCode: "IBM3883IS",
   },
 
   /**
@@ -24668,7 +22925,6 @@ export const Severe = {
     severity: Severity.S,
     message: (reference: string) =>
       `The indicator variable ${reference} is used with a structure and hence must be an array or a structure.`,
-    fullCode: "IBM3884IS",
   },
 
   /**
@@ -24680,7 +22936,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostvariable: string) =>
       `The host variable ${hostvariable} must have only one dimension.`,
-    fullCode: "IBM3885IS",
   },
 
   /**
@@ -24693,7 +22948,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostvariable: string) =>
       `The host variable ${hostvariable} must have constant bounds.`,
-    fullCode: "IBM3886IS",
   },
 
   /**
@@ -24707,7 +22961,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostvariable: string) =>
       `The host variable ${hostvariable} must be CONNECTED.`,
-    fullCode: "IBM3887IS",
   },
 
   /**
@@ -24721,7 +22974,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostreference: string) =>
       `The reference ${hostreference} has no corresponding DB2 type.`,
-    fullCode: "IBM3888IS",
   },
 
   /**
@@ -24734,7 +22986,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostreference: string) =>
       `The reference ${hostreference} is a union and thus must not be used as a host variable.`,
-    fullCode: "IBM3889IS",
   },
 
   /**
@@ -24746,7 +22997,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostreference: string) =>
       `The reference ${hostreference} is an array of structures and thus must not be used as a host variable.`,
-    fullCode: "IBM3890IS",
   },
 
   /**
@@ -24759,7 +23009,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostreference: string) =>
       `Since the structure reference ${hostreference} contains an array, it must not have an indicator that is a scalar or an array of scalars.`,
-    fullCode: "IBM3891IS",
   },
 
   /**
@@ -24772,7 +23021,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostreference: string) =>
       `The reference ${hostreference} contains a substructure and thus must not be used as a host variable.`,
-    fullCode: "IBM3892IS",
   },
 
   /**
@@ -24784,7 +23032,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostreference: string) =>
       `The reference ${hostreference} contains unnamed elements and thus must not be used as a host variable.`,
-    fullCode: "IBM3893IS",
   },
 
   /**
@@ -24796,7 +23043,6 @@ export const Severe = {
     severity: Severity.S,
     message: (reference: string) =>
       `The indicator variable ${reference} must be FIXED BIN(15).`,
-    fullCode: "IBM3894IS",
   },
 
   /**
@@ -24809,7 +23055,6 @@ export const Severe = {
     severity: Severity.S,
     message: (reference: string) =>
       `The indicator variable ${reference} is used with an array and hence must be an array as well.`,
-    fullCode: "IBM3895IS",
   },
 
   /**
@@ -24823,7 +23068,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostreference: string) =>
       `The VALUE reference ${hostreference} could not be reduced to a character literal and thus must not be used as a host variable.`,
-    fullCode: "IBM3896IS",
   },
 
   /**
@@ -24837,7 +23081,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostreference: string) =>
       `The VALUE reference ${hostreference} could not be reduced to a numeric literal and thus must not be used as a host variable.`,
-    fullCode: "IBM3897IS",
   },
 
   /**
@@ -24850,7 +23093,6 @@ export const Severe = {
     severity: Severity.S,
     message: (hostreference: string) =>
       `The VALUE reference ${hostreference} does not have character, integer or decimal type and thus must not be used as a host variable.`,
-    fullCode: "IBM3898IS",
   },
 
   /**
@@ -24862,7 +23104,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The reference ${referencename} is ambiguous.`,
-    fullCode: "IBM3899IS",
   },
 
   /**
@@ -24875,7 +23116,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The dot-qualified reference ${referencename} is unknown.`,
-    fullCode: "IBM3900IS",
   },
 
   /**
@@ -24889,7 +23129,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The element ${referencename} in the indicator structure must have the same array bounds as the corresponding element in the host structure.`,
-    fullCode: "IBM3901IS",
   },
 
   /**
@@ -24901,7 +23140,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINname: string) =>
       `Argument to the ${BUILTINname} built-in must be a structure.`,
-    fullCode: "IBM3902IS",
   },
 
   /**
@@ -24913,7 +23151,6 @@ export const Severe = {
     severity: Severity.S,
     message: (referencename: string) =>
       `The indicator ${referencename} must not be a uinon.`,
-    fullCode: "IBM3903IS",
   },
 
   /**
@@ -24925,7 +23162,6 @@ export const Severe = {
     severity: Severity.S,
     message: (attribute: string, attribute2: string) =>
       `The ${attribute} attribute conflicts with the ${attribute2} attribute.`,
-    fullCode: "IBM3909IS",
   },
 
   /**
@@ -24937,7 +23173,6 @@ export const Severe = {
     severity: Severity.S,
     message: (identifier: string) =>
       `The statement label ${identifier} has already been declared.`,
-    fullCode: "IBM3911IS",
   },
 
   /**
@@ -24948,7 +23183,6 @@ export const Severe = {
     code: "IBM3914I",
     severity: Severity.S,
     message: "GOTO target must be a LABEL reference.",
-    fullCode: "IBM3914IS",
   },
 
   /**
@@ -24959,7 +23193,6 @@ export const Severe = {
     code: "IBM3915I",
     severity: Severity.S,
     message: "GOTO target must be a scalar.",
-    fullCode: "IBM3915IS",
   },
 
   /**
@@ -24977,7 +23210,6 @@ export const Severe = {
     severity: Severity.S,
     message: (procname: string) =>
       `The procedure ${procname} has already been defined.`,
-    fullCode: "IBM3916IS",
   },
 
   /**
@@ -24989,7 +23221,6 @@ export const Severe = {
     code: "IBM3917I",
     severity: Severity.S,
     message: "Program contains no valid source lines.",
-    fullCode: "IBM3917IS",
   },
 
   /**
@@ -25000,7 +23231,6 @@ export const Severe = {
     code: "IBM3920I",
     severity: Severity.S,
     message: "FIXED BINARY constant contains too many digits.",
-    fullCode: "IBM3920IS",
   },
 
   /**
@@ -25012,7 +23242,6 @@ export const Severe = {
     code: "IBM3921I",
     severity: Severity.S,
     message: "FIXED DECIMAL constant contains too many significant digits.",
-    fullCode: "IBM3921IS",
   },
 
   /**
@@ -25024,7 +23253,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Exponent in FLOAT BINARY constant contains more digits than the implementation maximum.",
-    fullCode: "IBM3922IS",
   },
 
   /**
@@ -25036,7 +23264,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Mantissa in FLOAT BINARY constant contains more significant digits than the implementation maximum.",
-    fullCode: "IBM3923IS",
   },
 
   /**
@@ -25048,7 +23275,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Exponent in FLOAT DECIMAL constant contains more digits than the implementation maximum.",
-    fullCode: "IBM3924IS",
   },
 
   /**
@@ -25060,7 +23286,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Mantissa in FLOAT DECIMAL constant contains more significant digits than the implementation maximum.",
-    fullCode: "IBM3925IS",
   },
 
   /**
@@ -25074,7 +23299,6 @@ export const Severe = {
     code: "IBM3926I",
     severity: Severity.S,
     message: "Constants must not exceed 30720 bytes.",
-    fullCode: "IBM3926IS",
   },
 
   /**
@@ -25089,7 +23313,6 @@ export const Severe = {
     code: "IBM3927I",
     severity: Severity.S,
     message: "Numeric constants must be real, unscaled and fixed.",
-    fullCode: "IBM3927IS",
   },
 
   /**
@@ -25103,7 +23326,6 @@ export const Severe = {
     code: "IBM3928I",
     severity: Severity.S,
     message: "Only B, BX and X string suffixes are supported.",
-    fullCode: "IBM3928IS",
   },
 
   /**
@@ -25116,7 +23338,6 @@ export const Severe = {
     code: "IBM3929I",
     severity: Severity.S,
     message: "EXEC SQL statement must be in a PROCEDURE.",
-    fullCode: "IBM3929IS",
   },
 
   /**
@@ -25139,7 +23360,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Invalid syntax in statement-form of procedure invocation. Text up to next semicolon will be ignored.",
-    fullCode: "IBM3930IS",
   },
 
   /**
@@ -25152,7 +23372,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Under the FIXED(DEC) option, decimal constants must have no more than 5 digits.",
-    fullCode: "IBM3931IS",
   },
 
   /**
@@ -25163,7 +23382,6 @@ export const Severe = {
     code: "IBM3934I",
     severity: Severity.S,
     message: "EXEC SQL INCLUDE statement has incorrect syntax.",
-    fullCode: "IBM3934IS",
   },
 
   /**
@@ -25174,7 +23392,6 @@ export const Severe = {
     code: "IBM3935I",
     severity: Severity.S,
     message: "The FETCH of the SQL backend failed.",
-    fullCode: "IBM3935IS",
   },
 
   /**
@@ -25185,7 +23402,6 @@ export const Severe = {
     code: "IBM3936I",
     severity: Severity.S,
     message: "The SQL backend must be from DB2 V9 or later.",
-    fullCode: "IBM3936IS",
   },
 
   /**
@@ -25196,7 +23412,6 @@ export const Severe = {
     code: "IBM3937I",
     severity: Severity.S,
     message: "EXEC SQL statement is too long.",
-    fullCode: "IBM3937IS",
   },
 
   /**
@@ -25209,7 +23424,6 @@ export const Severe = {
     code: "IBM3938I",
     severity: Severity.S,
     message: "EXEC SQL statement has too many host variable references.",
-    fullCode: "IBM3938IS",
   },
 
   /**
@@ -25221,7 +23435,6 @@ export const Severe = {
     code: "IBM3939I",
     severity: Severity.S,
     message: "The DBNAME option must specify a valid database name.",
-    fullCode: "IBM3939IS",
   },
 
   /**
@@ -25234,7 +23447,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "The number of error messages allowed by the FLAG option has been exceeded.",
-    fullCode: "IBM3943IS",
   },
 
   /**
@@ -25249,7 +23461,6 @@ export const Severe = {
     severity: Severity.S,
     message: (conditionname: string, oncodevalue: string) =>
       `${conditionname} condition with ONCODE= ${oncodevalue} raised while evaluating expression.`,
-    fullCode: "IBM3948IS",
   },
 
   /**
@@ -25264,7 +23475,6 @@ export const Severe = {
     severity: Severity.S,
     message: (identifier: string) =>
       `Parameter name ${identifier} appears more than once in parameter list.`,
-    fullCode: "IBM3949IS",
   },
 
   /**
@@ -25280,7 +23490,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `An asterisk iteration factor can be applied only to the last expression in the INITIAL item list for ${variablename} .`,
-    fullCode: "IBM3950IS",
   },
 
   /**
@@ -25296,7 +23505,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `An asterisk iteration factor cannot be used in the nested INITIAL item list for ${variablename} .`,
-    fullCode: "IBM3951IS",
   },
 
   /**
@@ -25308,7 +23516,6 @@ export const Severe = {
     severity: Severity.S,
     message: (variablename: string) =>
       `INITIAL attribute on the parameter ${variablename} is invalid.`,
-    fullCode: "IBM3952IS",
   },
 
   /**
@@ -25324,7 +23531,6 @@ export const Severe = {
     severity: Severity.S,
     message: (count: string, variablename: string, arraysize: string) =>
       `INITIAL list contains ${count} items, but the array ${variablename} contains only ${arraysize} . Excess is ignored.`,
-    fullCode: "IBM3953IS",
   },
 
   /**
@@ -25335,7 +23541,6 @@ export const Severe = {
     code: "IBM3956I",
     severity: Severity.S,
     message: "ITERATE is valid only for iterative DO-groups.",
-    fullCode: "IBM3956IS",
   },
 
   /**
@@ -25346,7 +23551,6 @@ export const Severe = {
     code: "IBM3957I",
     severity: Severity.S,
     message: "RETURN statement outside of a PROCEDURE is invalid.",
-    fullCode: "IBM3957IS",
   },
 
   /**
@@ -25362,7 +23566,6 @@ export const Severe = {
     code: "IBM3958I",
     severity: Severity.S,
     message: "INCLUDE statement inside of a PROCEDURE is invalid.",
-    fullCode: "IBM3958IS",
   },
 
   /**
@@ -25373,7 +23576,6 @@ export const Severe = {
     code: "IBM3959I",
     severity: Severity.S,
     message: "Length of parameter exceeds 32767 bytes.",
-    fullCode: "IBM3959IS",
   },
 
   /**
@@ -25385,7 +23587,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "End-of-source has been encountered after an unmatched comment marker.",
-    fullCode: "IBM3960IS",
   },
 
   /**
@@ -25396,7 +23597,6 @@ export const Severe = {
     code: "IBM3961I",
     severity: Severity.S,
     message: "End-of-source has been encountered after an unmatched quote.",
-    fullCode: "IBM3961IS",
   },
 
   /**
@@ -25408,7 +23608,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Replacement value contains no end-of-comment delimiter. A comment delimiter will be assumed at the end of the replacement value.",
-    fullCode: "IBM3962IS",
   },
 
   /**
@@ -25420,7 +23619,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Replacement value contains no end-of-string delimiter. A string delimiter will be assumed at the end of the replacement value.",
-    fullCode: "IBM3963IS",
   },
 
   /**
@@ -25431,7 +23629,6 @@ export const Severe = {
     code: "IBM3964I",
     severity: Severity.S,
     message: "ANSWER statement outside of a PROCEDURE is invalid.",
-    fullCode: "IBM3964IS",
   },
 
   /**
@@ -25451,7 +23648,6 @@ export const Severe = {
     code: "IBM3965I",
     severity: Severity.S,
     message: "ANSWER statement inside of a PROCEDURE with RETURNS is invalid.",
-    fullCode: "IBM3965IS",
   },
 
   /**
@@ -25477,7 +23673,6 @@ export const Severe = {
     code: "IBM3966I",
     severity: Severity.S,
     message: "Source has caused too many rescans.",
-    fullCode: "IBM3966IS",
   },
 
   /**
@@ -25488,7 +23683,6 @@ export const Severe = {
     code: "IBM3967I",
     severity: Severity.S,
     message: "CALL statement outside of a PROCEDURE is invalid.",
-    fullCode: "IBM3967IS",
   },
 
   /**
@@ -25499,7 +23693,6 @@ export const Severe = {
     code: "IBM3968I",
     severity: Severity.S,
     message: "CALL reference is undefined.",
-    fullCode: "IBM3968IS",
   },
 
   /**
@@ -25510,7 +23703,6 @@ export const Severe = {
     code: "IBM3969I",
     severity: Severity.S,
     message: "CALL reference is not a macro entry.",
-    fullCode: "IBM3969IS",
   },
 
   /**
@@ -25521,7 +23713,6 @@ export const Severe = {
     code: "IBM3970I",
     severity: Severity.S,
     message: "CALL reference must not be a function.",
-    fullCode: "IBM3970IS",
   },
 
   /**
@@ -25532,7 +23723,6 @@ export const Severe = {
     code: "IBM3971I",
     severity: Severity.S,
     message: "CALL reference must not have the STATEMENT option.",
-    fullCode: "IBM3971IS",
   },
 
   /**
@@ -25544,7 +23734,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "End-of-file has been encountered after an unmatched comment marker.",
-    fullCode: "IBM3972IS",
   },
 
   /**
@@ -25555,7 +23744,6 @@ export const Severe = {
     code: "IBM3973I",
     severity: Severity.S,
     message: "End-of-file has been encountered after an unmatched quote.",
-    fullCode: "IBM3973IS",
   },
 
   /**
@@ -25567,7 +23755,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Every shift-in character after the left margin of a source line must have a matching shift-out character before the right margin of the same line.",
-    fullCode: "IBM3974IS",
   },
 
   /**
@@ -25579,7 +23766,6 @@ export const Severe = {
     severity: Severity.S,
     message:
       "Every shift-in character within a string generated for rescan must have a matching shift-out character within that same string.",
-    fullCode: "IBM3975IS",
   },
 
   /**
@@ -25592,7 +23778,6 @@ export const Severe = {
     code: "IBM3976I",
     severity: Severity.S,
     message: "DBCS characters are allowed only in G and M constants.",
-    fullCode: "IBM3976IS",
   },
 
   /**
@@ -25603,7 +23788,6 @@ export const Severe = {
     code: "IBM3977I",
     severity: Severity.S,
     message: "SBCS characters are not allowed in G constants.",
-    fullCode: "IBM3977IS",
   },
 
   /**
@@ -25614,7 +23798,6 @@ export const Severe = {
     code: "IBM3978I",
     severity: Severity.S,
     message: "Invalid use of SBCS encoded as DBCS.",
-    fullCode: "IBM3978IS",
   },
 
   /**
@@ -25626,7 +23809,6 @@ export const Severe = {
     code: "IBM3979I",
     severity: Severity.S,
     message: "UX literal specifies an invalid UTF-8 string.",
-    fullCode: "IBM3979IS",
   },
 
   /**
@@ -25637,7 +23819,6 @@ export const Severe = {
     code: "IBM3980I",
     severity: Severity.S,
     message: "Recursion of procedures is not allowed.",
-    fullCode: "IBM3980IS",
   },
 
   /**
@@ -25649,7 +23830,6 @@ export const Severe = {
     severity: Severity.S,
     message: (BUILTINfunction: string) =>
       `${BUILTINfunction} may not be used outside a procedure.`,
-    fullCode: "IBM3981IS",
   },
 
   /**
@@ -25661,7 +23841,6 @@ export const Severe = {
     severity: Severity.S,
     message: (procedurename: string) =>
       `Procedure ${procedurename} is undefined and cannot be invoked.`,
-    fullCode: "IBM3982IS",
   },
 
   /**
@@ -25680,7 +23859,6 @@ export const Severe = {
     code: "IBM3983I",
     severity: Severity.S,
     message: "Premature end-of-source in scan.",
-    fullCode: "IBM3983IS",
   },
 
   /**
@@ -25692,7 +23870,6 @@ export const Severe = {
     code: "IBM3984I",
     severity: Severity.S,
     message: (filename: string) => `File ${filename} could not be opened.`,
-    fullCode: "IBM3984IS",
   },
 
   /**
@@ -25707,7 +23884,6 @@ export const Severe = {
     code: "IBM3985I",
     severity: Severity.S,
     message: "Semicolon found before required closing right parenthesis.",
-    fullCode: "IBM3985IS",
   },
 
   /**
@@ -25721,7 +23897,6 @@ export const Severe = {
     code: "IBM3986I",
     severity: Severity.S,
     message: "IF statement syntax is invalid.",
-    fullCode: "IBM3986IS",
   },
 
   /**
@@ -25739,7 +23914,6 @@ export const Severe = {
     code: "IBM3987I",
     severity: Severity.S,
     message: "Statement must start with a keyword or assignment target.",
-    fullCode: "IBM3987IS",
   },
 
   /**
@@ -25755,7 +23929,6 @@ export const Severe = {
     code: "IBM3988I",
     severity: Severity.S,
     message: "Statement has invalid syntax.",
-    fullCode: "IBM3988IS",
   },
 
   /**
@@ -25768,7 +23941,6 @@ export const Severe = {
     severity: Severity.S,
     message: (sourceline: string, procedurename: string, packagename: string) =>
       `Internal preprocessor error: assertion failed on line ${sourceline} in ${procedurename} in ${packagename}`,
-    fullCode: "IBM3993IS",
   },
 
   /**
@@ -25780,7 +23952,6 @@ export const Severe = {
     code: "IBM3994I",
     severity: Severity.S,
     message: "Source is not valid UTF-8.",
-    fullCode: "IBM3994IS",
   },
 
   /**
@@ -25792,7 +23963,6 @@ export const Severe = {
     code: "IBM3995I",
     severity: Severity.S,
     message: "Generated text contains invalid UTF-8.",
-    fullCode: "IBM3995IS",
   },
 
   /**
@@ -25805,7 +23975,6 @@ export const Severe = {
     severity: Severity.S,
     message: (modulename: string) =>
       `Internal preprocessor error: protection exception in ${modulename} .`,
-    fullCode: "IBM3996IS",
   },
 
   /**
@@ -25818,7 +23987,6 @@ export const Severe = {
     severity: Severity.S,
     message: (modulename: string) =>
       `Internal preprocessor error: no WHEN clause satisfied within ${modulename} .`,
-    fullCode: "IBM3997IS",
   },
 
   /**
@@ -25830,7 +23998,6 @@ export const Severe = {
     code: "IBM3998I",
     severity: Severity.S,
     message: (note: string) => `${note}`,
-    fullCode: "IBM3998IS",
   },
 
   /**
@@ -25841,7 +24008,6 @@ export const Severe = {
     code: "IBM3999I",
     severity: Severity.U,
     message: (note: string) => `${note}`,
-    fullCode: "IBM3999IU",
   },
 };
 

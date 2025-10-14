@@ -21,4 +21,4 @@
 ////   return(1);
 //// end;
 
-verify.expectExclusiveErrorCodesAt(1, code.Error.IBM2412I.fullCode);
+verify.expectExclusiveErrorCodesAt(1, code.Error.IBM2412I);

@@ -15,11 +15,11 @@ import { PliParserInstance } from "../parser/parser";
 import { CompilationUnit } from "./compilation-unit";
 import { Program } from "../syntax-tree/ast";
 import {
-  compilerOptionIssuesToDiagnostics,
   generatePliValidationDiagnostics,
   generatePreprocessorValidationDiagnostics,
   linkingErrorsToDiagnostics,
   parserErrorsToDiagnostics,
+  filteredDiagnosticsWithUri,
 } from "../validation/validator";
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { assignDebugKinds } from "../utils/debug-kinds";
@@ -68,11 +68,10 @@ export async function tokenize(
   compilationUnit.referencesCache.addAll(result.tokenReferences);
   const uri = compilationUnit.uri.toString();
   compilationUnit.diagnostics.lexer = result.diagnostics;
-  compilationUnit.diagnostics.compilerOptions =
-    compilerOptionIssuesToDiagnostics(
-      result.compilerOptions.result?.issues,
-      uri,
-    );
+  compilationUnit.diagnostics.compilerOptions = filteredDiagnosticsWithUri(
+    result.compilerOptions.result?.issues,
+    uri,
+  );
   return result;
 }
 

@@ -16,5 +16,5 @@
 //// A.C, <|1:B|> = 1;
 //// PUT(<|1>B);
 
-verify.expectExclusiveErrorCodesAt(1, code.Error.IBM1373I.fullCode);
+verify.expectExclusiveErrorCodesAt(1, code.Error.IBM1373I);
 linker.expectLinks();

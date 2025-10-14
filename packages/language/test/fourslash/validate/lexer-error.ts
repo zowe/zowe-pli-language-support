@@ -18,4 +18,4 @@
 // @wrap: main
 //// DCL <|1:§|> FIXED;
 
-verify.expectExclusiveErrorCodesAt(1, code.Error.IBM3550I.fullCode);
+verify.expectExclusiveErrorCodesAt(1, code.Error.IBM3550I);

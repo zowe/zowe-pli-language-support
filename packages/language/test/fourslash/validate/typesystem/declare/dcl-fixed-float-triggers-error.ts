@@ -19,7 +19,5 @@ types.expectTypeAt(1, {
   scale: types.scales.Fixed,
   precision: types.precision.create(5, 0),
 });
-verify.expectDiagnosticsAt(2, {
-  code: code.Error.IBM2462I.fullCode,
-  //TODO on mainframe this is: IBM2424I, scaling factors not allowed with FLOAT
-});
+//TODO on mainframe this is: IBM2424I, scaling factors not allowed with FLOAT
+verify.expectDiagnosticsAt(2, code.Error.IBM2462I);
