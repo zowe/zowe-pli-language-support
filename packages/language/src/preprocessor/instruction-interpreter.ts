@@ -2026,10 +2026,10 @@ async function resolveIncludeFileUri(
         libFileUri = UriUtils.joinPath(libUri, item.fileName);
       }
 
-      const match = await FileSystemProviderInstance.search({
+      const match = (await FileSystemProviderInstance.search({
         path: libFileUri,
         extensions: pgroup.includeExtensions,
-      }) as URI | undefined;
+      })) as URI | undefined;
       if (match) {
         return match;
       }
