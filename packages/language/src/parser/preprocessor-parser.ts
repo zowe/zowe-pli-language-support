@@ -1355,6 +1355,16 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
       const dimensionAttribute = ast.createDimensionsDataAttribute();
       dimensionAttribute.dimensions = dim;
       attributes.push(dimensionAttribute);
+    } else if (state.canConsume(t.ENTRY)) {
+      // TODO: This is not the full entry attribute syntax
+      // This is just to provide support for the common case of "ENTRY" on declarations
+      const entryAttribute = ast.createEntryAttribute();
+      entryAttribute.entryToken = state.consume(
+        entryAttribute,
+        CstNodeKind.EntryAttribute_ENTRY,
+        t.ENTRY,
+      );
+      attributes.push(entryAttribute);
     } else {
       break;
     }
