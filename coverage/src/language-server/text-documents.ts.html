@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">43.77% </span>
+                <span class="strong">45.23% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>109/249</span>
+                <span class='fraction'>114/252</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.22% </span>
+                <span class="strong">73.68% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>13/18</span>
+                <span class='fraction'>14/19</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">45% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>9/20</span>
+                <span class='fraction'>10/20</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">43.77% </span>
+                <span class="strong">45.23% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>109/249</span>
+                <span class='fraction'>114/252</span>
             </div>
         
             
@@ -502,7 +502,13 @@
 <a name='L437'></a><a href='#L437'>437</a>
 <a name='L438'></a><a href='#L438'>438</a>
 <a name='L439'></a><a href='#L439'>439</a>
-<a name='L440'></a><a href='#L440'>440</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L440'></a><a href='#L440'>440</a>
+<a name='L441'></a><a href='#L441'>441</a>
+<a name='L442'></a><a href='#L442'>442</a>
+<a name='L443'></a><a href='#L443'>443</a>
+<a name='L444'></a><a href='#L444'>444</a>
+<a name='L445'></a><a href='#L445'>445</a>
+<a name='L446'></a><a href='#L446'>446</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -538,6 +544,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -885,22 +895,22 @@
 <span class="cline-any cline-yes">525x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">525x</span>
-<span class="cline-any cline-yes">36x</span>
-<span class="cline-any cline-yes">36x</span>
+<span class="cline-any cline-yes">44x</span>
+<span class="cline-any cline-yes">44x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">525x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">525x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">525x</span>
-<span class="cline-any cline-yes">525x</span>
-<span class="cline-any cline-yes">525x</span>
+<span class="cline-any cline-yes">1050x</span>
+<span class="cline-any cline-yes">1050x</span>
 <span class="cline-any cline-yes">525x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">525x</span>
+<span class="cline-any cline-yes">525x</span>
+<span class="cline-any cline-yes">525x</span>
+<span class="cline-any cline-yes">525x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">36x</span>
 <span class="cline-any cline-yes">36x</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -928,6 +938,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">525x</span>
+<span class="cline-any cline-yes">525x</span>
 <span class="cline-any cline-yes">525x</span>
 <span class="cline-any cline-yes">525x</span>
 <span class="cline-any cline-yes">525x</span>
@@ -977,6 +989,10 @@ import {
 } from "vscode-languageserver-textdocument";
 import { URI, UriUtils } from "../utils/uri.js";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider.js";
+import {
+  BuiltinsMacroTextDocument,
+  BuiltinsTextDocument,
+} from "../workspace/builtins.js";
 &nbsp;
 export type TextDocumentConnection = Pick&lt;
   Connection,
@@ -1327,9 +1343,9 @@ class BuiltinTextDocuments&lt;T extends { uri: string }&gt; {
     return this.documents.get(uri.toString());
   }
 &nbsp;
-  public <span class="fstat-no" title="function not covered" >set(document: T) {</span>
-<span class="cstat-no" title="statement not covered" >    this.documents.set(document.uri, document);</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
+  public set(document: T) {
+    this.documents.set(document.uri, document);
+  }
 }
 &nbsp;
 export class DocumentConsolidator&lt;T extends { uri: string }&gt; {
@@ -1377,6 +1393,8 @@ export function resetDocumentProviders() {
     FileDocuments,
     BuiltinDocuments,
   );
+  BuiltinDocuments.set(BuiltinsTextDocument);
+  BuiltinDocuments.set(BuiltinsMacroTextDocument);
 }
 &nbsp;
 resetDocumentProviders();
@@ -1387,7 +1405,7 @@ resetDocumentProviders();
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-14T09:08:38.566Z
+                at 2025-10-14T12:46:37.297Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
