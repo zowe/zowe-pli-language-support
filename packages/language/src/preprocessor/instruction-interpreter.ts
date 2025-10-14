@@ -2029,7 +2029,7 @@ async function resolveIncludeFileUri(
       const match = await FileSystemProviderInstance.search({
         path: libFileUri,
         extensions: pgroup.includeExtensions,
-      })) as URI | undefined;
+      }) as URI | undefined;
       if (match) {
         return match;
       }
