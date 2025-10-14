@@ -1393,6 +1393,19 @@ export interface EntryAttribute extends AstNode {
   environmentName: Expression[];
   entryToken: Token | null;
 }
+export function createEntryAttribute(): EntryAttribute {
+  return {
+    kind: SyntaxKind.EntryAttribute,
+    container: null,
+    limited: [],
+    attributes: [],
+    options: [],
+    variable: [],
+    returns: [],
+    environmentName: [],
+    entryToken: null,
+  };
+}
 export interface EntryParameterDescription extends AstNode {
   kind: SyntaxKind.EntryParameterDescription;
   attributes: DeclarationAttribute[];
