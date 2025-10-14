@@ -15,6 +15,7 @@ import {
   CompilerOptionText,
   SyntaxKind,
 } from "../../syntax-tree/ast";
+import { NOT_CHARACTER } from "../../utils/const";
 import { CompilerOptionsCodes } from "./codes";
 import { CompilerOptions as Options } from "./options";
 import {
@@ -1942,12 +1943,29 @@ translator.rule(["NATLANG"], (option, options) => {
 translator.flag("nest", ["NEST"], ["NONEST"]);
 
 /** {@link CompilerOptions.not} */
-translator.rule(
-  ["NOT"],
-  stringTranslate((options, text) => {
-    options.not = text.value;
-  }),
-);
+translator.rule(["NOT"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "string");
+  if (value.value.length !== 1) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.Not.InvalidParameterLength,
+      value.value,
+    );
+  }
+  if (
+    value.value !== NOT_CHARACTER &&
+    Options.PLI_CHARACTER_REGEX.test(value.value)
+  ) {
+    throw TranslationError.fromCode(
+      value.token,
+      CompilerOptionsCodes.Not.InvalidParameterCharacter,
+      value.value,
+    );
+  }
+  options.not = value.value;
+});
 
 /** {@link CompilerOptions.nullDate} */
 translator.flag("nullDate", ["NULLDATE"], ["NONULLDATE"]);
