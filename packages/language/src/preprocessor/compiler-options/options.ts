@@ -13,6 +13,7 @@ import { Diagnostic, Range, Severity } from "../../language-server/types";
 import { Token } from "../../parser/tokens";
 import * as Pli from "./options-pli";
 import * as Macro from "./options-macro";
+import { NOT_CHARACTER } from "../../utils/const";
 
 export type CompilerOptionsPP = Pli.CompilerOptions | Macro.CompilerOptions;
 
@@ -45,11 +46,14 @@ export function compilerOptionIssueToDiagnostics(
 }
 
 export namespace CompilerOptions {
-  export const PLI_CHARACTER_REGEX = /[A-Za-z0-9 =+\-*/()\.,'"%;:&|<>_¬]/;
+  export const PLI_CHARACTER_REGEX = new RegExp(
+    `[A-Za-z0-9 =+\\-*/()\\.,'"%;:&|<>_${NOT_CHARACTER}]`,
+  );
   export const PLI_CHARACTER_SET = new Set(
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 =+-*/().,'\"%;:&|<>_¬".split(
-      "",
-    ),
+    (
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 =+-*/().,'\"%;:&|<>_" +
+      NOT_CHARACTER
+    ).split(""),
   );
 }
 
