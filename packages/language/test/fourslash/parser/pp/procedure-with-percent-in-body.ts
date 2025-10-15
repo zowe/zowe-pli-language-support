@@ -12,11 +12,11 @@
 /// <reference path="../../framework.ts" />
 
 //// %TEST: PROC;
-////   <|1:%|>DCL I FIXED;
+////   <|%|>DCL I FIXED;
 //// %END;
 
 // The DCL statement uses an illegal % character, so we expect a parser error
-verify.expectErrorCodesAt("1", code.Severe.IBM3762I.fullCode);
+verify.expectErrorCodesAt("%", code.Severe.IBM3762I.fullCode);
 // But the content of the procedure should still be parsed correctly
 verify.expectPPAst({
   kind: Syntax.ProcedureStatement,

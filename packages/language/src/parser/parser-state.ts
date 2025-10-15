@@ -20,6 +20,7 @@ import {
   Severity,
 } from "../language-server/types";
 import { PLICodes } from "../validation/messages";
+import { SimplePLICode } from "../validation/messages/pli-codes";
 
 export function preprocessorParserState(tokens: t.Token[]): ParserState {
   return new ParserState(tokens, ParserStateMode.Preprocessor);
@@ -108,17 +109,21 @@ export class ParserState {
    * until a successful consume() happens or the recover() method is called.
    */
   error(
-    message?: string,
+    message?: string | SimplePLICode,
     token = this.token || this.last,
     severity = Severity.S,
   ) {
     if (!this.inError) {
-      const msg =
-        message ??
-        (this.eof
-          ? "Unexpected end of file."
-          : `Unexpected token '${generateTokenErrorName(token)}'.`);
-      this.diagnostics.push(diagnostic(severity, msg, token));
+      if (!message || typeof message === "string") {
+        const msg =
+          message ??
+          (this.eof
+            ? "Unexpected end of file."
+            : `Unexpected token '${generateTokenErrorName(token)}'.`);
+        this.diagnostics.push(diagnostic(severity, msg, token));
+      } else {
+        this.diagnostics.push(diagnosticFromCode(message, token));
+      }
       this.inError = true;
     }
   }
@@ -177,12 +182,17 @@ export class ParserState {
     element: SyntaxNode | undefined,
     kind: CstNodeKind | undefined,
     tokenType: TokenType,
+    code?: SimplePLICode,
   ): t.Token | null {
     const token = this.token;
     if (!token || !this.canConsume(tokenType)) {
       if (!this.inError) {
-        const message = `Expected token "${tokenType.name}", but received ${generateTokenErrorName(token)} instead.`;
-        this.error(message);
+        if (code) {
+          this.error(code);
+        } else {
+          const message = `Expected token "${tokenType.name}", but received ${generateTokenErrorName(token)} instead.`;
+          this.error(message);
+        }
       }
       return null;
     } else {
