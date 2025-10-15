@@ -34,10 +34,10 @@ export class DefaultTypeInferer implements TypeInferer {
       } else if (node.kind === ast.SyntaxKind.DeclaredVariable) {
         assertType<ast.DeclaredItem>(node.container);
         const types = this.inferDeclaredItem(node.container, compilationUnit);
-        return types.get(node) ?? TypeDescriptions.Unknown();
+        return this.lookupByAstNode(types, node);
       } else if (node.kind === ast.SyntaxKind.DeclaredItem) {
         const types = this.inferDeclaredItem(node, compilationUnit);
-        return types.get(node) ?? TypeDescriptions.Unknown();
+        return this.lookupByAstNode(types, node);
       } else {
         //TODO other kinds of nodes
       }
@@ -45,10 +45,19 @@ export class DefaultTypeInferer implements TypeInferer {
     });
   }
 
+  private lookupByAstNode(types: Map<BuilderDeclareItem, TypeDescriptions.Any>, node: ast.SyntaxNode): TypeDescriptions.Any {
+    for (const [item, type] of types) {
+      if (item.node === node) {
+        return type;
+      }
+    }
+    return TypeDescriptions.Unknown();
+  }
+
   private inferDeclareStatement(
     node: ast.DeclareStatement,
     compilationUnit: CompilationUnit,
-  ) {
+  ): Map<BuilderDeclareItem, TypeDescriptions.Any> {
     const builder = new DefaultCompositeTypeBuilder();
     const items = builder.flattenDeclareStatement(node);
     const topLevelMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>();
@@ -152,7 +161,7 @@ export class DefaultTypeInferer implements TypeInferer {
     predicate: (type: TypeDescriptions.Any) => type is T,
     callback: (type: T, item: BuilderDeclareItem, isTopLevel: boolean) => void,
     isTopLevel = true,
-  ) {
+  ): void {
     members.forEach((type, item) => {
       if (predicate(type)) {
         callback(type, item, isTopLevel);
@@ -172,7 +181,7 @@ export class DefaultTypeInferer implements TypeInferer {
   private inferDeclaredItem(
     node: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
-  ) {
+  ): Map<BuilderDeclareItem, TypeDescriptions.Any> {
     let parent: ast.SyntaxNode | null = node;
     while (parent && parent.kind !== ast.SyntaxKind.DeclareStatement) {
       parent = parent.container;
