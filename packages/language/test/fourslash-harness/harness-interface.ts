@@ -21,7 +21,30 @@ import { CompilerOptions } from "../../src/preprocessor/compiler-options/options
 import { TypeSystem } from "../../src/validation/messages/internal-codes";
 import { PLICode } from "../../src/validation/messages/pli-codes";
 import { SyntaxKind } from "../../src/syntax-tree/ast";
-import { AccessModes, Alignments, Assignabilities, Bases, BufferModes, DataType, DataTypes, Endianesses, FileUsages, FloatFormats, NumberModes, NumberScales, PictureWidenesses, Scopes, Signs, StorageClasses, StorageConnections, StringFormats, StringKinds, TypeDescriptions, Volatilities } from "../../src/typesystem/descriptions";
+import {
+  AccessModes,
+  Alignments,
+  Assignabilities,
+  Bases,
+  BufferModes,
+  DataType,
+  DataTypes,
+  Endianesses,
+  FileUsages,
+  FloatFormats,
+  NumberModes,
+  NumberScales,
+  PictureWidenesses,
+  Precisions,
+  Scopes,
+  Signs,
+  StorageClasses,
+  StorageConnections,
+  StringFormats,
+  StringKinds,
+  TypeDescriptions,
+  Volatilities,
+} from "../../src/typesystem/descriptions";
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 

@@ -20,7 +20,6 @@ import { generateIncludeItemMarkup } from "../../../src/language-server/hover-re
 import { PLICode } from "../../../src/validation/messages/pli-codes";
 import { HarnessTypeAttributes } from "./type-atttributes";
 import { SyntaxKind } from "../../../src/syntax-tree/ast";
-import { AccessModes, Alignments, Assignabilities, Bases, BufferModes, DataTypes, Endianesses, FileUsages, FloatFormats, NumberModes, NumberScales, PictureWidenesses, Scopes, Signs, StorageClasses, StorageConnections, StringFormats, StringKinds, Volatilities } from "../../../src/typesystem/descriptions";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
