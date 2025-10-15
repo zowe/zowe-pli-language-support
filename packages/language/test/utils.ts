@@ -317,6 +317,11 @@ export function replaceNamedIndices(text: string): {
   }[] = [];
 
   const regex =
+    // Regex with named capture groups for:
+    // indexMarker: `<|label>`
+    // rangeStartMarker (alone): `<|`
+    // rangeStartMarker (with label): `<|label:`
+    // rangeEndMarker: `|>`
     /<\|(?<indexMarker>\w+)>|(?<rangeStartMarker><\|)((?<rangeLabel>\w+):)?|\|>/;
 
   let matched = true;
