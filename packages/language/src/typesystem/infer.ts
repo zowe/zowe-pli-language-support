@@ -45,7 +45,10 @@ export class DefaultTypeInferer implements TypeInferer {
     });
   }
 
-  private lookupByAstNode(types: Map<BuilderDeclareItem, TypeDescriptions.Any>, node: ast.SyntaxNode): TypeDescriptions.Any {
+  private lookupByAstNode(
+    types: Map<BuilderDeclareItem, TypeDescriptions.Any>,
+    node: ast.SyntaxNode,
+  ): TypeDescriptions.Any {
     for (const [item, type] of types) {
       if (item.node === node) {
         return type;
