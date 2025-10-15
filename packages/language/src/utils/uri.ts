@@ -61,4 +61,35 @@ export namespace UriUtils {
   export function normalize(uri: URI | string): string {
     return URI.parse(uri.toString()).toString();
   }
+
+  /**
+   * Compute workspace-relative parent folder for a found file candidate.
+   *
+   * Examples:
+   *  - workspace root: /repo/plugin-example
+   *  - candidate: /repo/plugin-example/cpy/test-nested-included/nested-not-here.pli
+   *  -> returns "cpy/test-nested-included"
+   *
+   * If workspace-relative cannot be computed, returns the parent folder name (e.g. "test-nested-included").
+   * Returns undefined if candidate looks invalid.
+   */
+  export function computeWorkspaceRelativeParentFolder(
+    candidateRaw: URI,
+    workspaceFolderUri: URI,
+  ): string | undefined {
+    if (!candidateRaw) return undefined;
+
+    const candidate = normalize(candidateRaw);
+    const workspaceFolder = normalize(workspaceFolderUri);
+
+    if (!candidate.startsWith(workspaceFolder)) return undefined;
+
+    const relativePath = candidate.slice(workspaceFolder.length);
+    const parentDir = relativePath.substring(0, relativePath.lastIndexOf("/"));
+    const parentRelativePath = parentDir.startsWith("/")
+      ? parentDir.slice(1)
+      : parentDir;
+
+    return parentRelativePath;
+  }
 }

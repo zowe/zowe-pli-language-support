@@ -14,6 +14,7 @@ import { URI } from "../utils/uri";
 export interface SearchOptions {
   path: URI;
   extensions: string[];
+  global?: boolean;
 }
 
 export interface FileSystemProvider {
@@ -95,18 +96,38 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
     this.files.delete(uri.toString().toLowerCase());
   }
 
-  async search(pattern: SearchOptions): Promise<URI | undefined> {
-    const uri = pattern.path.toString().toLowerCase();
-    if (this.files.has(uri)) {
-      return pattern.path;
-    }
-    const extensions = pattern.extensions ?? [];
-    for (const ext of extensions) {
-      const fullPath = uri + (ext.startsWith(".") ? ext : `.${ext}`);
-      if (this.files.has(fullPath)) {
-        return URI.parse(fullPath).with({ scheme: pattern.path.scheme });
+  async search(options: SearchOptions): Promise<URI | undefined> {
+    const searchPath = options.path
+      .toString()
+      .toLowerCase()
+      .replace(/\\/g, "/");
+    const extensions = options.extensions ?? [];
+
+    if (!options.global) {
+      if (this.files.has(searchPath)) {
+        return options.path;
+      }
+      for (const ext of extensions) {
+        const fullPath = searchPath + (ext.startsWith(".") ? ext : `.${ext}`);
+        if (this.files.has(fullPath)) {
+          return URI.parse(fullPath).with({ scheme: options.path.scheme });
+        }
+      }
+    } else {
+      // @wagner-laranjeiras. TODO: Optimize this matching pattern.
+      for (const [filePath] of this.files) {
+        if (filePath.endsWith(searchPath)) {
+          return URI.parse(filePath);
+        }
+        for (const ext of extensions) {
+          const fullPath = searchPath + (ext.startsWith(".") ? ext : `.${ext}`);
+          if (filePath.endsWith(fullPath)) {
+            return URI.parse(filePath).with({ scheme: options.path.scheme });
+          }
+        }
       }
     }
+
     return undefined;
   }
 }
