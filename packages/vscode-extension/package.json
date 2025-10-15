@@ -40,7 +40,9 @@
           "PL/1"
         ],
         "extensions": [
-          ".pli", ".pl1", ".inc"
+          ".pli",
+          ".pl1",
+          ".inc"
         ],
         "firstLine": "^[*%][Pp][Rr][Oo][Cc][Ee][Ss][Ss]|\\s+[Dd][Ee][Cc][Ll][Aa][Rr][Ee]|\\s+[Dd][Cc][Ll]|\\s+\\w+: [Pp][Rr][Oo][Cc]",
         "icon": {
@@ -90,7 +92,11 @@
         },
         "pli.marginIndicator.rulers": {
           "type": "string",
-          "enum": ["off", "default", "automatic"],
+          "enum": [
+            "off",
+            "default",
+            "automatic"
+          ],
           "default": "automatic",
           "description": "Controls the rulers for the margin compiler option. 'off' disables rulers, 'default' shows the PL/I default rulers [2, 72], 'automatic' adds rulers based on margin compiler options."
         }
@@ -111,6 +117,7 @@
   },
   "dependencies": {
     "@vscode/extension-telemetry": "^0.9.8",
+    "glob": "11.0.2",
     "pli-language": "workspace:*",
     "vscode-languageclient": "~9.0.1",
     "vscode-languageserver": "~9.0.1"
