@@ -69,8 +69,11 @@ describe("quickFixResolveInclude", () => {
 
   test("should return code action when all conditions are met", async () => {
     const diagnostic = {
-      data: { unresolvedFile: "some/file.inc" },
+      data: { unresolvedFile: "some/file.inc", entryUri: "" },
     } as Diagnostic;
+    PluginConfigurationProviderInstance.getProgramConfig = vi
+      .fn()
+      .mockReturnValue({ pgroup: "default" });
     PluginConfigurationProviderInstance.getProcessGroupConfig = vi
       .fn()
       .mockReturnValue(mockConfig);
@@ -100,6 +103,9 @@ describe("applyQuickFixes", () => {
       { code: "IBM3842IS", data: {} } as Diagnostic,
       { code: "IBM3841IS", data: { unresolvedFile: "file2" } } as Diagnostic,
     ];
+    PluginConfigurationProviderInstance.getProgramConfig = vi
+      .fn()
+      .mockReturnValue({ pgroup: "default" });
     FileSystemProviderInstance.search = vi
       .fn()
       .mockReturnValueOnce(URI.parse("/workspace/some/file1.inc"))
