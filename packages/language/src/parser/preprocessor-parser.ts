@@ -582,45 +582,58 @@ function labelReference(state: ParserState): ast.LabelReference {
 
 function includeStatement(state: ParserState): ast.IncludeDirective {
   const directive = ast.createIncludeDirective();
-  const token = state.consume(
+  const includeToken = state.consume(
     directive,
     CstNodeKind.IncludeDirective_INCLUDE,
     t.INCLUDE,
   );
-  directive.token = token;
-  directive.idempotent = isXInstruction(token);
+  directive.token = includeToken;
+  directive.idempotent = isXInstruction(includeToken);
+  let parseError = false;
   while (true) {
     const item = ast.createIncludeItem();
-    if (state.canConsume(t.ID)) {
-      // member include
-      const token = state.consume(item, CstNodeKind.IncludeItem_FileID, t.ID);
-      if (token) {
-        const fileName = token.image;
-        item.fileName = fileName;
-        item.token = token;
-      }
-    } else if (state.canConsume(t.STRING_TERM)) {
-      // literal file include (relative, absolute, or lib sourced)
-      const token = state.consume(
+    const idToken = state.tryConsume(
+      item,
+      CstNodeKind.IncludeItem_FileID,
+      t.ID,
+    );
+    if (idToken) {
+      const fileName = idToken.image;
+      item.fileName = fileName;
+      item.token = idToken;
+    } else {
+      const stringToken = state.tryConsume(
         item,
         CstNodeKind.IncludeItem_FileString,
         t.STRING_TERM,
       );
-      if (token) {
-        const file = token.image;
-        const fileName = file.substring(1, file.length - 1);
+      if (stringToken) {
+        const fileName = unpackCharacterValue(stringToken.image);
         item.fileName = fileName;
         item.string = true;
-        item.token = token;
+        item.token = stringToken;
+      } else {
+        // At least one include item is required
+        // If none is found, we will report an error at the end of the statement
+        parseError = directive.items.length === 0;
+        break;
       }
-    } else {
-      break;
     }
     directive.items.push(item);
     // Optional comma
     state.tryConsume(directive, CstNodeKind.IncludeDirective_Comma, t.Comma);
   }
-  state.consume(directive, CstNodeKind.IncludeDirective_Semicolon, t.Semicolon);
+  const semicolon = state.consume(
+    directive,
+    CstNodeKind.IncludeDirective_Semicolon,
+    t.Semicolon,
+    PLICodes.Severe.IBM1618I,
+  );
+  if (parseError && !state.inError) {
+    state.diagnostics.push(
+      diagnosticFromCode(PLICodes.Severe.IBM1620I, semicolon || includeToken),
+    );
+  }
   return directive;
 }
 

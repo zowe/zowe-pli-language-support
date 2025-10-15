@@ -11,9 +11,9 @@
 
 /// <reference path="../../framework.ts" />
 
-//// %DCL VAR <|entry:ENTRY|>;
+//// %DCL VAR <|ENTRY|>;
 
-verify.noDiagnostics("entry");
+verify.noDiagnostics("ENTRY");
 
 verify.expectPPAst({
   kind: Syntax.DeclareStatement,
