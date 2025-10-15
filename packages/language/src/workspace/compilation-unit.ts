@@ -47,7 +47,6 @@ import { InstructionCache } from "../preprocessor/instruction-cache.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { FileStore } from "./file-store.js";
 import { DefaultTypeInferer, TypeInferer } from "../typesystem/infer.js";
-import { CompilerOptionRules } from "../typesystem/arithmetic-operations.js";
 import { DefaultTypeCache, TypeCache } from "../typesystem/type-cache.js";
 import {
   CompilerOptions,
@@ -171,11 +170,7 @@ export async function createCompilationUnit(
   const services: CompilationServices = {
     files: new FileStore(),
     typeCache: new DefaultTypeCache(),
-    inferer: new DefaultTypeInferer(
-      (compilerOptions.rules?.ibm ?? "ANS") === "ANS"
-        ? CompilerOptionRules.ANS
-        : CompilerOptionRules.IBM,
-    ),
+    inferer: new DefaultTypeInferer(),
   };
   const unit: CompilationUnit = {
     uri,

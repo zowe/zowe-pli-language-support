@@ -21,4 +21,5 @@ types.expectTypeAt(1, {
 });
 verify.expectDiagnosticsAt(2, {
   code: code.Error.IBM2462I.fullCode,
+  //TODO on mainframe this is: IBM2424I, scaling factors not allowed with FLOAT
 });
