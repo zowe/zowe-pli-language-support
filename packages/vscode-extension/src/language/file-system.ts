@@ -9,10 +9,9 @@
  *
  */
 
-import { FileSystemProvider, SearchOptions, URI } from "pli-language";
+import { DirEntry, FileSystemProvider, SearchOptions, URI } from "pli-language";
 import { Connection } from "vscode-languageserver";
 import { Messages } from "../common/messages";
-import type * as vscode from "vscode";
 
 export class VSCodeFileSystemProvider implements FileSystemProvider {
   private _connection: Connection;
@@ -35,15 +34,15 @@ export class VSCodeFileSystemProvider implements FileSystemProvider {
 
   /**
    * Submits a request to the client to read the contents of a directory.
-   * Returns an array of file and directory names.
+   * Returns an array of directory entries
    */
-  async readDir(uri: URI): Promise<Array<[string, vscode.FileType]>> {
+  async readDir(uri: URI): Promise<DirEntry[]> {
     const result = await this._connection.sendRequest(
       Messages.ReadDir,
       uri.toString(),
     );
     if (Array.isArray(result)) {
-      return result as Array<[string, vscode.FileType]>;
+      return result as DirEntry[];
     } else {
       return [];
     }

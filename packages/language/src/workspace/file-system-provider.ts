@@ -17,12 +17,28 @@ export interface SearchOptions {
   global?: boolean;
 }
 
+/**
+ * Directory entry types, used in readDir results
+ */
+export enum DirEntryType {
+  File = 1,
+  Directory = 2,
+};
+
+/**
+ * Directory entry, used in readDir results
+ */
+export interface DirEntry {
+  name: string;
+  type: DirEntryType;
+}
+
 export interface FileSystemProvider {
   readFile(uri: URI): Promise<string | undefined>;
   /**
-   * Reads the contents of a directory. The result is an array of file and directory names w/ types
+   * Reads the contents of a directory. The result is an array of directory entries w/ types
    */
-  readDir(uri: URI): Promise<Array<[string, number]>>;
+  readDir(uri: URI): Promise<DirEntry[]>;
   fileExists(uri: URI): Promise<boolean>;
   writeFile(uri: URI, value: string): Promise<void>;
   deleteFile(uri: URI): Promise<void>;
@@ -41,7 +57,7 @@ class _EmptyFileSystemProvider implements FileSystemProvider {
     return Promise.resolve("");
   }
 
-  readDir(_uri: URI): Promise<Array<[string, number]>> {
+  readDir(_uri: URI): Promise<DirEntry[]> {
     return Promise.resolve([]);
   }
 
@@ -93,24 +109,30 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
 
   /**
    * Reads the contents of a directory in the virtualized file system.
-   * The result is an array of file and directory names w/ types.
-   * Directories are only virtual in this case, only existing if there are files with matching prefixes.
+   * The result is an array of directory entries w/ types.
+   * Directories are virtual in this case, only existing if there are files with matching prefixes.
    * If no entries are found, an empty array is returned.
    */
-  async readDir(uri: URI): Promise<Array<[string, number]>> {
+  async readDir(uri: URI): Promise<DirEntry[]> {
     // collect all entries which start with the given path
     const path = uri.toString().toLowerCase();
-    const entries: Array<[string, number]> = [];
+    const entries: DirEntry[] = [];
     for (const filePath of this.files.keys()) {
       if (filePath.startsWith(path)) {
         const relativePath = filePath.substring(path.length);
         const parts = relativePath.split("/").filter(p => p.length > 0);
         if (parts.length === 1) {
           // file
-          entries.push([parts[0], 1]);
+          entries.push({
+            name: parts[0],
+            type: DirEntryType.File
+          });
         } else {
           // directory
-          entries.push([parts[0], 2]);
+          entries.push({
+            name: parts[0],
+            type: DirEntryType.Directory
+          });
         }
       }
     }

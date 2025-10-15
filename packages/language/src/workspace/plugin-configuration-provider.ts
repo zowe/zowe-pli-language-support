@@ -344,7 +344,9 @@ export class PluginConfigurationProvider {
           );
           const entries = await FileSystemProviderInstance.readDir(libUri);
           if (entries.length) {
-            for (const [fileName, fileType] of entries) {
+            for (const dirEntry of entries) {
+              const fileName = dirEntry.name;
+              const fileType = dirEntry.type;
               if (fileType === 2) {
                 // directory to add for handling
                 libsToProcess.push(`${lib}/${fileName}`);
