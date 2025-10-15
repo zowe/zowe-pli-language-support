@@ -211,7 +211,8 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
       const searchPath = options.path
         .toString(true)
         .toLowerCase()
-        .replace(/\\/g, "/");
+        .replace(/\\/g, "/")
+        .replace("file:///", "");
       const extensions = options.extensions ?? [];
 
       if (!options.global) {

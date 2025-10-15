@@ -34,6 +34,7 @@ import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { tokenMatcher } from "chevrotain";
 import { PLICodes } from "../validation/pli-codes";
+import { LspCodes } from "../validation/lsp-codes";
 
 interface Variable {
   name: string;
@@ -2286,6 +2287,7 @@ async function resolveIncludeFileUri(
         const match = await FileSystemProviderInstance.search({
           path: libFileUri,
           extensions: pgroup.includeExtensions,
+          global: true,
         });
         if (match) {
           return match;

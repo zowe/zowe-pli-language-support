@@ -14,6 +14,12 @@ import { fullCode, Severity } from "../src/language-server/types";
 import * as PLICodes from "../src/validation/pli-codes";
 import { assertDiagnostic, assertNoDiagnostics, parse } from "./utils";
 import { TestBuilder } from "./test-builder";
+import {
+  deserializeProcessGroup,
+  PluginConfigurationProvider,
+  setPluginConfigurationProvider,
+} from "../src/workspace/plugin-configuration-provider";
+import { LspCodes } from "../src/validation/lsp-codes";
 
 // beforeAll(async () => {
 //   services = createPliServices(EmptyFileSystem);
@@ -363,7 +369,18 @@ describe("Validating", () => {
       assertNoDiagnostics(doc);
     });
 
-    test("Error on invalid %INCLUDE directive", async () => {
+    test("Error on invalid %INCLUDE directive (file doesn't exist)", async () => {
+      const pluginConfig = new PluginConfigurationProvider();
+      setPluginConfigurationProvider(pluginConfig);
+      await pluginConfig.init("/");
+      const processGroup = deserializeProcessGroup({
+        name: "default",
+      });
+      await pluginConfig.setProcessGroupConfigs([processGroup]);
+      pluginConfig.setProgramConfigs("/", [
+        { program: "**/*.pli", pgroup: "default", pliOptions: {} },
+      ]);
+
       const doc = await parseWithValidations(` %INCLUDE 'nonexistent.pli';
         EP: PROC OPTIONS (MAIN);
         END EP;
@@ -371,6 +388,18 @@ describe("Validating", () => {
       assertDiagnostic(doc, {
         message: "The INCLUDE file nonexistent.pli could not be opened.",
         severity: Severity.S,
+      });
+      setPluginConfigurationProvider(undefined);
+    });
+
+    test("Error on invalid %INCLUDE directive (config doesn't exist)", async () => {
+      const doc = await parseWithValidations(` %INCLUDE 'nonexistent.pli';
+        EP: PROC OPTIONS (MAIN);
+        END EP;
+      `);
+      assertDiagnostic(doc, {
+        message: LspCodes.IncludeResolution.MissingConfiguration.message,
+        severity: LspCodes.IncludeResolution.MissingConfiguration.severity,
       });
     });
   });
