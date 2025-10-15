@@ -227,7 +227,8 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case DefaultAttributeEnum.BINARY:
       case DefaultAttributeEnum.DECIMAL: {
         this.addPrecision(attribute, token);
-        const base = typeAsEnum === DefaultAttributeEnum.BINARY
+        const base =
+          typeAsEnum === DefaultAttributeEnum.BINARY
             ? Base.Binary
             : Base.Decimal;
         this.addAttributeWitness(AttributeKind.Base, base, attribute, token);
@@ -354,9 +355,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        */
       case DefaultAttributeEnum.FLOAT:
       case DefaultAttributeEnum.FIXED: {
-        const scaleMode = typeAsEnum === DefaultAttributeEnum.FIXED
-          ? ScaleMode.Fixed
-          : ScaleMode.Float;
+        const scaleMode =
+          typeAsEnum === DefaultAttributeEnum.FIXED
+            ? ScaleMode.Fixed
+            : ScaleMode.Float;
         this.addPrecision(attribute, token);
         this.addAttributeWitness(
           AttributeKind.Scale,
@@ -608,17 +610,17 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   }
   private addPrecision(attribute: ast.ComputationDataAttribute, token: Token) {
     const precision = this.acceptDimensionsAsListOfNumbers(
-      attribute.dimensions
+      attribute.dimensions,
     );
     if (precision && precision.length > 0) {
       this.addAttributeWitness(
         AttributeKind.Precision,
         Precisions.create(
           precision[0],
-          precision.length > 1 ? precision[1] : undefined
+          precision.length > 1 ? precision[1] : undefined,
         ),
         attribute,
-        token
+        token,
       );
     }
   }
@@ -684,7 +686,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           diagnosticFromCode(Error.IBM2462I, token, token.image, witness.image),
         );
         return;
-      } else if(!witness.implicit) {
+      } else if (!witness.implicit) {
         this.diagnostics.push(
           diagnosticFromCode(Error.IBM1309I, token, token.image),
         );
@@ -706,7 +708,8 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       } else {
         this.possibleDataTypes = leftDataTypes;
       }
-    } else { //first time seeing this attribute
+    } else {
+      //first time seeing this attribute
       const current: AttributeWitness<K> = {
         value,
         witness: attribute,
@@ -721,22 +724,32 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       this.applyWitnessImplications(kind, current as AttributeWitness<K>);
     }
   }
-  private applyWitnessImplications<S extends keyof AttributeTypes>(sourceKind: S, current: AttributeWitness<S>) {
+  private applyWitnessImplications<S extends keyof AttributeTypes>(
+    sourceKind: S,
+    current: AttributeWitness<S>,
+  ) {
     const value = current.value;
     const implications = Implications[sourceKind];
     if (!implications) {
       return;
     }
-    for (const [targetKindString, implication] of Object.entries(implications)) {
+    for (const [targetKindString, implication] of Object.entries(
+      implications,
+    )) {
       const targetKind = parseInt(targetKindString) as keyof AttributeTypes;
       const targetWitness = this.attributeWitnesses[targetKind];
       const impliedValue = implication(value);
-      if(typeof impliedValue === "undefined") {
+      if (typeof impliedValue === "undefined") {
         continue;
       }
       if (targetWitness && targetWitness.value !== impliedValue) {
         this.diagnostics.push(
-          diagnosticFromCode(Error.IBM2462I, targetWitness.token, current.token.image, targetWitness.image),
+          diagnosticFromCode(
+            Error.IBM2462I,
+            current.token,
+            current.token.image,
+            targetWitness.image,
+          ),
         );
       } else {
         const newtargetWitness: AttributeWitness<typeof targetKind> = {
@@ -750,7 +763,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         if (targetKind === AttributeKind.DataType) {
           this.possibleDataTypes = new Set([impliedValue as DataType]);
         }
-        this.applyWitnessImplications(targetKind, newtargetWitness as AttributeWitness<typeof targetKind>); //recursively apply implications
+        this.applyWitnessImplications(
+          targetKind,
+          newtargetWitness as AttributeWitness<typeof targetKind>,
+        ); //recursively apply implications
       }
     }
   }

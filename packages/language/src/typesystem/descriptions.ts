@@ -1036,7 +1036,11 @@ function createStructureTypeDescription({
 }
 
 export type Implications = {
-  [S in AttributeKind]: Partial<{[T in AttributeKind]: (value: AttributeTypes[S]) => AttributeTypes[T]|undefined}>;
+  [S in AttributeKind]: Partial<{
+    [T in AttributeKind]: (
+      value: AttributeTypes[S],
+    ) => AttributeTypes[T] | undefined;
+  }>;
 };
 
 /**
@@ -1075,7 +1079,7 @@ export const Implications: Partial<Implications> = {
   [AttributeKind.Position]: undefined,
   [AttributeKind.Precision]: {
     [AttributeKind.Scale]: (value) => {
-      if (typeof value.fractionalDigitsCount !== 'undefined') {
+      if (typeof value.fractionalDigitsCount !== "undefined") {
         return ScaleMode.Fixed;
       }
       return undefined;
@@ -1100,7 +1104,7 @@ export const Implications: Partial<Implications> = {
     [AttributeKind.DataType]: () => DataType.String,
   },
   [AttributeKind.Variable]: undefined,
-  [AttributeKind.Volatility]: undefined
+  [AttributeKind.Volatility]: undefined,
 };
 
 export namespace TypeDescriptions {

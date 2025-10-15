@@ -20,5 +20,5 @@ types.expectTypeAt(1, {
   precision: types.precision.create(5, 0),
 });
 verify.expectDiagnosticsAt(2, {
-  code: code.Error.IBM1309I.fullCode,
+  code: code.Error.IBM2462I.fullCode,
 });
