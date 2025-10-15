@@ -35,12 +35,12 @@ class NodeFileSystemProvider implements FileSystemProvider {
    */
   async readDir(uri: URI): Promise<DirEntry[]> {
     const results = await fs.promises.readdir(uri.fsPath, {
-      withFileTypes: true
+      withFileTypes: true,
     });
     return results.map((dirent) => {
       return {
         name: dirent.name,
-        type: dirent.isDirectory() ? DirEntryType.Directory : DirEntryType.File
+        type: dirent.isDirectory() ? DirEntryType.Directory : DirEntryType.File,
       };
     });
   }

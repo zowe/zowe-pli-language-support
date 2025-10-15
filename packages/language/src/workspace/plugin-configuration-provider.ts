@@ -338,10 +338,7 @@ export class PluginConfigurationProvider {
         if (lib) {
           // read all files in this lib path
           // add any contained directories to the libs list, as well as the toProcess list
-          const libUri = UriUtils.joinPath(
-            URI.parse(this.workspacePath),
-            lib,
-          );
+          const libUri = UriUtils.joinPath(URI.parse(this.workspacePath), lib);
           const entries = await FileSystemProviderInstance.readDir(libUri);
           if (entries.length) {
             for (const dirEntry of entries) {
@@ -466,7 +463,9 @@ export class PluginConfigurationProvider {
    * @param processGroupConfigs List of process group configs loaded from
    *  .pliplugin/proc_grps.json (when present)
    */
-  public async setProcessGroupConfigs(processGroupConfigs: ProcessGroup[]): Promise<void> {
+  public async setProcessGroupConfigs(
+    processGroupConfigs: ProcessGroup[],
+  ): Promise<void> {
     this.processGroupConfigs.clear();
     for (const config of processGroupConfigs) {
       this.processGroupConfigs.set(config.name, config);

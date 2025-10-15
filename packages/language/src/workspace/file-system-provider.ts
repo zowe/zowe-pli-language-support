@@ -23,7 +23,7 @@ export interface SearchOptions {
 export enum DirEntryType {
   File = 1,
   Directory = 2,
-};
+}
 
 /**
  * Directory entry, used in readDir results
@@ -120,18 +120,18 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
     for (const filePath of this.files.keys()) {
       if (filePath.startsWith(path)) {
         const relativePath = filePath.substring(path.length);
-        const parts = relativePath.split("/").filter(p => p.length > 0);
+        const parts = relativePath.split("/").filter((p) => p.length > 0);
         if (parts.length === 1) {
           // file
           entries.push({
             name: parts[0],
-            type: DirEntryType.File
+            type: DirEntryType.File,
           });
         } else {
           // directory
           entries.push({
             name: parts[0],
-            type: DirEntryType.Directory
+            type: DirEntryType.Directory,
           });
         }
       }

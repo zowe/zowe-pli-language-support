@@ -15,7 +15,6 @@ import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
 
 describe("Compilation Unit Tests", () => {
-
   afterEach(() => {
     PluginConfigurationProviderInstance.setProgramConfigs("", []);
     PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
