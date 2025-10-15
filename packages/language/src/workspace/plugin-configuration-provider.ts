@@ -72,6 +72,14 @@ export interface ProcessGroup {
   compilerOptions: string[];
   pliOptions: PliOptions;
   libs: string[];
+
+  /**
+   * Sub directories of libs, populated after reading the configs.
+   * A computed property that is not serialized like regular 'libs',
+   * but is also used to resolve includes.
+   */
+  _subLibs: string[];
+
   includeExtensions: string[];
   implicitBuiltins: Set<string>;
   lspOptions: {
@@ -85,6 +93,10 @@ export interface ProcessGroup {
   issueCount?: number;
 }
 
+/**
+ * Deserializes a process group config from a plain object.
+ * Generates an empty _subLibs array in the process, but does not populate it
+ */
 export function deserializeProcessGroup(
   obj: SerializedProcessGroup,
 ): ProcessGroup {
@@ -100,6 +112,7 @@ export function deserializeProcessGroup(
     compilerOptions: isStringArray(compilerOptions) ? compilerOptions : [],
     pliOptions: isRecordOf(pliOptions, isString) ? pliOptions : {},
     libs: isStringArray(libs) ? libs : [],
+    _subLibs: [],
     includeExtensions: isStringArray(includeExtensions)
       ? includeExtensions
       : [],
@@ -112,6 +125,10 @@ export function deserializeProcessGroup(
   };
 }
 
+/**
+ * Serializes a process group config to a plain object.
+ * Drops the _subLibs field in the process, to avoid polluting the original config
+ */
 export function serializeProcessGroup(
   group: ProcessGroup,
 ): SerializedProcessGroup {
@@ -199,9 +216,9 @@ export class PluginConfigurationProvider {
       wsPrefix += "/";
     }
     for (const processGroup of this.processGroupConfigs.values()) {
-      const libs = processGroup.libs;
+      const allLibs = processGroup.libs.concat(processGroup._subLibs);
       const extensions = processGroup.includeExtensions;
-      for (let lib of libs) {
+      for (let lib of allLibs) {
         lib = lib.replace(/[\\/]+$/, "");
         for (const ext of extensions) {
           patterns.push(`${wsPrefix}${lib}/*${ext}`);
@@ -327,7 +344,7 @@ export class PluginConfigurationProvider {
 
   /**
    * Go through all process groups & expand libs recursively to ensure all libs are findable when searching
-   * Has a side-effect of adding sub-directories to the libs list of each process group
+   * Has a side-effect of adding sub-directories to the _subLibs list of each process group
    */
   private async postProcessProcessGroups() {
     for (const processGroup of this.processGroupConfigs.values()) {
@@ -354,7 +371,7 @@ export class PluginConfigurationProvider {
           }
         }
       }
-      processGroup.libs = Array.from(allLibs);
+      processGroup._subLibs = Array.from(allLibs);
     }
   }
 
@@ -545,6 +562,8 @@ export class PluginConfigurationProvider {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
     for (const config of this.processGroupConfigs.values()) {
       if (config.libs?.includes(dirname)) {
+        return config;
+      } else if (config._subLibs?.includes(dirname)) {
         return config;
       }
     }

@@ -40,6 +40,7 @@ async function init(libPath: string) {
     implicitBuiltins: new Set(),
     includeExtensions: [],
     libs: [libPath],
+    _subLibs: [],
     lspOptions: { checkMargins: false },
     pliOptions: {},
   };

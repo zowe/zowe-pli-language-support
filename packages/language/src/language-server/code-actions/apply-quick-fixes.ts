@@ -48,7 +48,12 @@ export async function quickFixResolveInclude(
     workspaceFolderUri,
   );
   if (!parentFolder) return undefined;
-  if (procGrpsConfig.libs.includes(parentFolder)) return undefined;
+  if (
+    procGrpsConfig.libs.includes(parentFolder) ||
+    procGrpsConfig._subLibs.includes(parentFolder)
+  ) {
+    return undefined;
+  }
 
   const serializedProcGrpsConfig = serializeProcessGroup(procGrpsConfig);
   const newContent = JSON.stringify(
