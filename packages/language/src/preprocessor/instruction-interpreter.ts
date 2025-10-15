@@ -1886,9 +1886,13 @@ async function runInclude(
     if (error) {
       console.log("Failed to resolve include file:", error);
     }
-    context.diagnostics.push(
-      diagnosticFromCode(PLICodes.Severe.IBM3841I, item.token, item.fileName),
+    const diagnostic = diagnosticFromCode(
+      PLICodes.Severe.IBM3841I,
+      item.token,
+      item.fileName,
     );
+    if (item.fileName) diagnostic.data = { unresolvedFile: item.fileName };
+    context.diagnostics.push(diagnostic);
   }
 
   if (!uri) {

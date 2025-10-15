@@ -80,4 +80,8 @@ function registerFileSystemProvider(client: LanguageClient): void {
       return result.map((r) => r[0]);
     });
   });
+  client.onRequest(Messages.WriteFile, async (uriString, value) => {
+    const uri = vscode.Uri.parse(uriString);
+    await vscode.workspace.fs.writeFile(uri, value);
+  });
 }

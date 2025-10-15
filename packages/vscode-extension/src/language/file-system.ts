@@ -49,9 +49,14 @@ export class VSCodeFileSystemProvider implements FileSystemProvider {
       return undefined;
     }
   }
-  writeFile(_uri: URI, _value: string): Promise<void> {
-    throw new Error("Not supported.");
+  async writeFile(uri: URI, value: string): Promise<void> {
+    const stringUri = uri.toString();
+    await this._connection.sendRequest(Messages.WriteFile, {
+      stringUri,
+      value,
+    });
   }
+
   deleteFile(_uri: URI): Promise<void> {
     throw new Error("Not supported.");
   }
