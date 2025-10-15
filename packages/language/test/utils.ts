@@ -313,10 +313,16 @@ export function replaceNamedIndices(text: string): {
   const ranges: Record<string, Array<[number, number]>> = {};
   const rangeStack: {
     index: number;
-    label: string;
+    label?: string;
   }[] = [];
 
-  const regex = /<\|(?<indexMarker>\w+)>|<\|(?<rangeStartMarker>\w+):|\|>/;
+  const regex =
+    // Regex with named capture groups for:
+    // indexMarker: `<|label>`
+    // rangeStartMarker (alone): `<|`
+    // rangeStartMarker (with label): `<|label:`
+    // rangeEndMarker: `|>`
+    /<\|(?<indexMarker>\w+)>|(?<rangeStartMarker><\|)((?<rangeLabel>\w+):)?|\|>/;
 
   let matched = true;
   let input = text;
@@ -337,10 +343,14 @@ export function replaceNamedIndices(text: string): {
         if (!ranges[label]) {
           ranges[label] = [];
         }
+      } else if (regexMatch.groups.rangeLabel) {
+        rangeStack.push({
+          index: regexMatch.index,
+          label: regexMatch.groups.rangeLabel,
+        });
       } else if (regexMatch.groups.rangeStartMarker) {
         rangeStack.push({
           index: regexMatch.index,
-          label: regexMatch.groups.rangeStartMarker,
         });
       } else {
         const rangeStart = rangeStack.pop();
@@ -348,11 +358,13 @@ export function replaceNamedIndices(text: string): {
           throw new Error("Range start not found");
         }
 
-        if (!ranges[rangeStart.label]) {
-          ranges[rangeStart.label] = [];
+        const label =
+          rangeStart.label ??
+          input.substring(rangeStart.index, regexMatch.index);
+        if (!ranges[label]) {
+          ranges[label] = [];
         }
-
-        ranges[rangeStart.label].push([rangeStart.index, regexMatch.index]);
+        ranges[label].push([rangeStart.index, regexMatch.index]);
       }
 
       const matchedString = regexMatch[0];
