@@ -25,10 +25,12 @@ import {
 
 export async function quickFixResolveInclude(
   diagnostic: Diagnostic,
-): Promise<CodeAction | undefined> {
-  const unresolvedFile = diagnostic.data?.unresolvedFile;
+): Promise<CodeAction | undefined> {  
+  const progConfig = PluginConfigurationProviderInstance.getProgramConfig(URI.parse(diagnostic.data.entryUri));
+  if (!progConfig) return;
   const procGrpsConfig =
-    PluginConfigurationProviderInstance.getProcessGroupConfig("default");
+  PluginConfigurationProviderInstance.getProcessGroupConfig(progConfig.pgroup);
+  const unresolvedFile = diagnostic.data?.unresolvedFile;
   if (!procGrpsConfig || !unresolvedFile) return undefined;
 
   const configExtensions = procGrpsConfig.includeExtensions;
