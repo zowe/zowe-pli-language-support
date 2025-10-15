@@ -67,6 +67,7 @@ describe("quickFixResolveInclude", () => {
     expect(result).toBeUndefined();
   });
 
+  // test
   test("should return code action when all conditions are met", async () => {
     const diagnostic = {
       data: { unresolvedFile: "some/file.inc" },
@@ -94,6 +95,7 @@ describe("applyQuickFixes", () => {
     vi.resetAllMocks();
   });
 
+  // testq
   test("should return code actions only for IBM3841IS diagnostics", async () => {
     const diagnostics = [
       { code: "IBM3841IS", data: { unresolvedFile: "file1" } } as Diagnostic,

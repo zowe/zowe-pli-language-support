@@ -1891,7 +1891,11 @@ async function runInclude(
       item.token,
       item.fileName,
     );
-    if (item.fileName) diagnostic.data = { unresolvedFile: item.fileName, entryUri: context.entryUri.toString() };
+    if (item.fileName)
+      diagnostic.data = {
+        unresolvedFile: item.fileName,
+        entryUri: context.entryUri.toString(),
+      };
     context.diagnostics.push(diagnostic);
   }
 
