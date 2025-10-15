@@ -85,7 +85,9 @@ export interface ProcessGroup {
   issueCount?: number;
 }
 
-function deserializeProcessGroup(obj: SerializedProcessGroup): ProcessGroup {
+export function deserializeProcessGroup(
+  obj: SerializedProcessGroup,
+): ProcessGroup {
   const compilerOptions = obj["compiler-options"] || [];
   const pliOptions = obj["pli-options"] || {};
   const includeExtensions = obj["include-extensions"] || [];
@@ -106,6 +108,24 @@ function deserializeProcessGroup(obj: SerializedProcessGroup): ProcessGroup {
       : new Set(),
     lspOptions: {
       checkMargins: isBoolean(checkMargins) ? checkMargins : false,
+    },
+  };
+}
+
+export function serializeProcessGroup(
+  group: ProcessGroup,
+): SerializedProcessGroup {
+  return {
+    name: group.name,
+    "compiler-options": group.compilerOptions,
+    "pli-options": group.pliOptions,
+    libs: group.libs,
+    "include-extensions": group.includeExtensions,
+    "implicit-builtins": Array.from(group.implicitBuiltins).map((b) =>
+      b.toLowerCase(),
+    ),
+    "lsp-options": {
+      "check-margins": group.lspOptions.checkMargins,
     },
   };
 }

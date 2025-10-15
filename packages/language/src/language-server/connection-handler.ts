@@ -20,7 +20,12 @@ import { URI, UriUtils } from "../utils/uri";
 import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
-import { Location, TextEdit } from "vscode-languageserver-types";
+import {
+  CodeAction,
+  Diagnostic,
+  Location,
+  TextEdit,
+} from "vscode-languageserver-types";
 import {
   completionItemToLSP,
   documentSymbolToLSP,
@@ -35,6 +40,8 @@ import { PluginConfigurationProviderInstance } from "../workspace/plugin-configu
 import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { Mutex } from "../workspace/mutex";
+import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
+import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 
 /**
  * Notification sent to the LS when the workspace's plugin configuration changes.
@@ -45,6 +52,8 @@ export const WorkspaceDidChangePlipluginConfigNotification =
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
   compilationUnitHandler.listen(connection);
+  const APPLY_QUICK_FIXES = "pli.applyIncludeFix";
+
   connection.onInitialize(async (params) => {
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
     // TODO @montymxb Apr 23rd, 2025: Consider addressing multiple workspaces w/ multiple plugin configs
@@ -71,6 +80,10 @@ export function startLanguageServer(connection: Connection): void {
         renameProvider: true,
         definitionProvider: true,
         referencesProvider: true,
+        codeActionProvider: true,
+        executeCommandProvider: {
+          commands: [APPLY_QUICK_FIXES],
+        },
         documentHighlightProvider: true,
         semanticTokensProvider: {
           legend: semanticTokenLegend,
@@ -291,5 +304,31 @@ export function startLanguageServer(connection: Connection): void {
       });
     },
   );
+
+  connection.onCodeAction(async (params) => {
+    return Mutex.read(async () => {
+      const diagnostics = params.context.diagnostics as Diagnostic[];
+      if (!diagnostics.length) return;
+      const actions: CodeAction[] | undefined =
+        await applyQuickFixes(diagnostics);
+      if (!actions) return;
+
+      return actions;
+    });
+  });
+
+  connection.onExecuteCommand(async (params) => {
+    if (params.command === APPLY_QUICK_FIXES) {
+      return Mutex.run(async () => {
+        const [uri, content] = params.arguments as string[];
+        try {
+          await FileSystemProviderInstance.writeFile(URI.parse(uri), content);
+        } catch (err) {
+          console.error("Failed to write proc_grps.json:", err);
+        }
+      });
+    }
+  });
+
   connection.listen();
 }
