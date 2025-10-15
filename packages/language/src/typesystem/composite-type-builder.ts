@@ -2,20 +2,11 @@ import {
   DefaultAttributeEnum,
   DefaultAttributeToEnum,
 } from "../parser/token-mappings";
-import { Token } from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { TypeDescriptions } from "./descriptions";
+import { BuilderDeclareItem, TypeDescriptions } from "./descriptions";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
-
-export interface BuilderDeclareItem {
-  name: string;
-  nameToken: Token;
-  node: ast.SyntaxNode;
-  attributes: ast.DeclarationAttribute[];
-  level?: number;
-}
 
 export interface CompositeTypeBuilder {
   flattenDeclareStatement(
@@ -41,6 +32,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     return TypeDescriptions.Structure({
       level: declaredItem.level!,
       members: {},
+      membersMetadata: {},
     });
   }
   handlePrimitiveDeclaredItem(

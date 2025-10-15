@@ -14,19 +14,11 @@
 // Attention! Only the last item in line can have the structure definition!
 
 // @wrap: main
-//// declare 01 (<|a:a|>,<|b:b|>,<|c:c|>),
+//// declare 01 <|a:a|>,
 ////            02 x FIXED,
-////            02 y CHAR(10);
+////            02 <|y:y|>; //empty nested structure
 
 types.expectTypeAt("a", {
-  type: types.dataTypes.Structure,
-  members: {},
-});
-types.expectTypeAt("b", {
-  type: types.dataTypes.Structure,
-  members: {},
-});
-types.expectTypeAt("c", {
   type: types.dataTypes.Structure,
   members: {
     X: {
@@ -34,15 +26,11 @@ types.expectTypeAt("c", {
       scale: types.scales.Fixed,
     },
     Y: {
-      type: types.dataTypes.String,
-      kind: types.stringKinds.Character,
-      length: 10,
+      type: types.dataTypes.Structure,
+      members: {},
     },
   },
 });
-verify.expectDiagnosticsAt("a", {
-  code: code.Error.IBM1482I.fullCode,
-});
-verify.expectDiagnosticsAt("b", {
-  code: code.Error.IBM1482I.fullCode,
+verify.expectDiagnosticsAt("y", {
+  code: code.Error.IBM1483I.fullCode,
 });

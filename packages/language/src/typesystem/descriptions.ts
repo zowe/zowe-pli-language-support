@@ -1018,6 +1018,7 @@ type StructureType = typeof StructureType;
 interface StructureTypeDescriptionProps {
   level: number;
   members: Record<string, TypeDescriptions.Any>;
+  membersMetadata: Record<string, BuilderDeclareItem>;
 }
 
 interface StructureTypeDescription extends StructureTypeDescriptionProps {
@@ -1027,11 +1028,13 @@ interface StructureTypeDescription extends StructureTypeDescriptionProps {
 function createStructureTypeDescription({
   level,
   members = {},
+  membersMetadata = {},
 }: StructureTypeDescriptionProps): StructureTypeDescription {
   return {
     type: StructureType,
     level,
     members,
+    membersMetadata,
   };
 }
 
@@ -1377,4 +1380,12 @@ export namespace TypeDescriptions {
         assertUnreachable(type);
     }
   }
+}
+
+export interface BuilderDeclareItem {
+  name: string;
+  nameToken: Token;
+  node: ast.SyntaxNode;
+  attributes: ast.DeclarationAttribute[];
+  level?: number;
 }
