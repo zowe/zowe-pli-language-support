@@ -94,10 +94,10 @@ describe("PL/1 Lexer", () => {
   });
 
   describe("Compiler Options", () => {
-    afterAll(() => {
+    afterAll(async () => {
       // Reset the plugin configuration state
       PluginConfigurationProviderInstance.setProgramConfigs("", []);
-      PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+      await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
     });
 
     test("Inject process group compiler options after *PROCESS directive", async () => {
@@ -126,7 +126,7 @@ describe("PL/1 Lexer", () => {
       PluginConfigurationProviderInstance.setProgramConfigs("/test", [
         programConfig,
       ]);
-      PluginConfigurationProviderInstance.setProcessGroupConfigs([
+      await PluginConfigurationProviderInstance.setProcessGroupConfigs([
         processGroupConfig,
       ]);
 
@@ -192,7 +192,7 @@ describe("PL/1 Lexer", () => {
       PluginConfigurationProviderInstance.setProgramConfigs("/test", [
         programConfig,
       ]);
-      PluginConfigurationProviderInstance.setProcessGroupConfigs([
+      await PluginConfigurationProviderInstance.setProcessGroupConfigs([
         processGroupConfig,
       ]);
 

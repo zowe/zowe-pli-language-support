@@ -49,7 +49,7 @@ async function init(libPath: string) {
   PluginConfigurationProviderInstance.setProgramConfigs("/test", [
     programConfig,
   ]);
-  PluginConfigurationProviderInstance.setProcessGroupConfigs([
+  await PluginConfigurationProviderInstance.setProcessGroupConfigs([
     processGroupConfig,
   ]);
 }
@@ -92,11 +92,11 @@ describe("Preprocessor Tests", () => {
     resetDocumentProviders();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     setFileSystemProvider(undefined);
     setPluginConfigurationProvider(undefined);
     PluginConfigurationProviderInstance.setProgramConfigs("", []);
-    PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+    await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
   });
 
   // macOS + linux absolute path resolution

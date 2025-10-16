@@ -331,7 +331,7 @@ export class PluginConfigurationProvider {
 
       if (processGrpConfig !== undefined) {
         try {
-          this.parseProcessGroupConfigs(processGrpConfig);
+          await this.parseProcessGroupConfigs(processGrpConfig);
           this.postProcessProgramConfigs();
           await this.postProcessProcessGroups();
           return;
@@ -470,11 +470,11 @@ export class PluginConfigurationProvider {
    * @param text Raw text content of .pliplugin/proc_grps.json to parse
    * @returns Whether parsing was successful
    */
-  public parseProcessGroupConfigs(text: string): boolean {
+  public async parseProcessGroupConfigs(text: string): Promise<boolean> {
     try {
       const serializedData: SerializedProcessGroup[] = JSON.parse(text).pgroups;
       const groupConfigs = serializedData.map(deserializeProcessGroup);
-      this.setProcessGroupConfigs(groupConfigs);
+      await this.setProcessGroupConfigs(groupConfigs);
       this.postProcessProgramConfigs();
       return true;
     } catch {
@@ -569,7 +569,7 @@ export class PluginConfigurationProvider {
   public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
     for (const config of this.processGroupConfigs.values()) {
-      if (config.$computedLibs?.includes(dirname)) {
+      if (config.$computedLibs.includes(dirname)) {
         return config;
       }
     }

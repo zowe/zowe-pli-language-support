@@ -64,7 +64,7 @@ beforeEach(async () => {
       pliOptions: {},
     },
   ]);
-  PluginConfigurationProviderInstance.setProcessGroupConfigs([
+  await PluginConfigurationProviderInstance.setProcessGroupConfigs([
     {
       name: "default",
       libs: ["cpy"],
@@ -82,7 +82,7 @@ afterEach(async () => {
   setFileSystemProvider(undefined);
   setPluginConfigurationProvider(undefined);
   PluginConfigurationProviderInstance.setProgramConfigs("", []);
-  PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+  await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
 });
 
 function getTestFiles() {

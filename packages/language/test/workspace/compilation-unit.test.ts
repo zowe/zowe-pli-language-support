@@ -15,9 +15,9 @@ import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
 
 describe("Compilation Unit Tests", () => {
-  afterEach(() => {
+  afterEach(async () => {
     PluginConfigurationProviderInstance.setProgramConfigs("", []);
-    PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+    await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
   });
 
   test("Create", async () => {
@@ -127,7 +127,7 @@ describe("Compilation Unit Tests", () => {
   test("Cannot create compile unit from copybook directly", async () => {
     const ch = new CompilationUnitHandler();
 
-    PluginConfigurationProviderInstance.init("file:///");
+    await PluginConfigurationProviderInstance.init("file:///");
 
     // Simulate a process group 'default' with a cpy folder and include-extensions
     PluginConfigurationProviderInstance.setProgramConfigs("file:///", [
@@ -138,7 +138,7 @@ describe("Compilation Unit Tests", () => {
       },
     ]);
     // Simulate the process group config (normally this would be loaded from a config file)
-    PluginConfigurationProviderInstance.setProcessGroupConfigs([
+    await PluginConfigurationProviderInstance.setProcessGroupConfigs([
       {
         name: "default",
         compilerOptions: [],
