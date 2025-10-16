@@ -11,6 +11,7 @@
 
 import { PLICodes } from "../../../validation/messages";
 import { diagnosticFromCode } from "../../../language-server/types";
+import { CompilationUnit } from "../../../workspace/compilation-unit";
 import * as AST from "../../../syntax-tree/ast";
 import { ValidationAcceptor } from "../../validator";
 
@@ -18,6 +19,7 @@ import { ValidationAcceptor } from "../../validator";
  * IBM1059I: The ERROR condition will be raised if SELECT statement contains no OTHERWISE clause.
  */
 export function IBM1059I_select_without_otherwise(
+  _: CompilationUnit,
   node: AST.SelectStatement,
   acceptor: ValidationAcceptor,
 ) {

@@ -12,6 +12,7 @@
 import { ValidationAcceptor } from "../../validator";
 import * as AST from "../../../syntax-tree/ast";
 import { diagnosticFromCode } from "../../../language-server/types";
+import { CompilationUnit } from "../../../workspace/compilation-unit";
 import * as PLICodes from "../pli-codes";
 import {
   TraversalState,
@@ -33,6 +34,7 @@ import {
  * @returns Validation results or diagnostics, as appropriate.
  */
 export function IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att(
+  _: CompilationUnit,
   node: AST.ProcedureStatement,
   acceptor: ValidationAcceptor,
 ): void {

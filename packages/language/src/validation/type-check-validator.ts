@@ -13,15 +13,10 @@ import * as ast from "../syntax-tree/ast";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ValidationAcceptor } from "./validator";
 
-export class TypeCheck {
-  constructor(private compilationUnit: CompilationUnit) {}
-  checkDeclareStatement(
-    declareStatement: ast.DeclareStatement,
-    _acceptor: ValidationAcceptor,
-  ) {
-    this.compilationUnit.services.inferer.inferType(
-      declareStatement,
-      this.compilationUnit,
-    );
-  }
+export function typeCheckDeclareStatement(
+  compilationUnit: CompilationUnit,
+  declareStatement: ast.DeclareStatement,
+  _acceptor: ValidationAcceptor,
+) {
+  compilationUnit.services.inferer.inferType(declareStatement, compilationUnit);
 }

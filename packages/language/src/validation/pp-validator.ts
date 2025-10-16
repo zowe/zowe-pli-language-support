@@ -5,11 +5,11 @@ import { Validator } from "./validator";
 export function registerPreprocessorValidationChecks(
   unit: CompilationUnit,
 ): Validator {
-  const validator = new PliValidator(unit);
+  const validator = new PliValidator();
   validator.addHandler({
     CallStatement: [
-      validator.checkArgumentCount.bind(validator),
-      validator.checkPreprocessorCallProcedure.bind(validator),
+      validator.checkArgumentCount,
+      validator.checkPreprocessorCallProcedure,
     ],
   });
   return validator;

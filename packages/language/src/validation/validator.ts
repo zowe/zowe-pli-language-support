@@ -33,16 +33,19 @@ import { registerPreprocessorValidationChecks } from "./pp-validator";
  */
 export type ValidationAcceptor = (diagnostic: Diagnostic) => void;
 
-export type ValidationFunction = (
-  node: any,
+export type ValidationFunction<T extends SyntaxNode> = (
+  compilationUnit: CompilationUnit,
+  node: T,
   acceptor: ValidationAcceptor,
 ) => void;
 
-export type SyntaxKindStrings = keyof typeof AST.SyntaxKind;
-
-export type ValidationChecks = Partial<
-  Record<SyntaxKindStrings, ValidationFunction[]>
->;
+export type ValidationChecks = Partial<{
+  [K in keyof typeof AST.SyntaxKind as (typeof AST.SyntaxKind)[K] extends SyntaxNode["kind"]
+    ? K
+    : never]: ValidationFunction<
+    Extract<SyntaxNode, { kind: (typeof SyntaxKind)[K] }>
+  >[];
+}>;
 
 export interface Validator {
   getHandlers(): ValidationChecks;
@@ -70,7 +73,12 @@ export function generatePreprocessorValidationDiagnostics(
   const validationBuffer = new ValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
 
-  validateSyntaxNode(unit.preprocessorAst, acceptor, validator.getHandlers());
+  validateSyntaxNode(
+    unit,
+    unit.preprocessorAst,
+    acceptor,
+    validator.getHandlers(),
+  );
 
   unit.diagnostics.preprocessor = validationBuffer.getDiagnostics();
 }
@@ -86,7 +94,7 @@ export function generatePliValidationDiagnostics(unit: CompilationUnit): void {
   const acceptor = validationBuffer.getAcceptor();
 
   // iterate over all nodes and validate them
-  validateSyntaxNode(unit.ast, acceptor, validator.getHandlers());
+  validateSyntaxNode(unit, unit.ast, acceptor, validator.getHandlers());
 
   unit.diagnostics.validation = validationBuffer.getDiagnostics();
 }
@@ -97,22 +105,23 @@ export function generatePliValidationDiagnostics(unit: CompilationUnit): void {
  * @param acceptor Acceptor for logging diagnostics
  * @param handlers Registered handlers for validating specific node types
  */
-// function validateSyntaxNode(node: SyntaxNode, acceptor: PliValidationAcceptor, handlers: Map<SyntaxKind, AstNodeValidator>): void {
 function validateSyntaxNode(
+  compilationUnit: CompilationUnit,
   node: SyntaxNode,
   acceptor: ValidationAcceptor,
   handlers: ValidationChecks,
 ): void {
   // get the name of enum value for node.kind
   const name = SyntaxKind[node.kind] as keyof typeof SyntaxKind;
-  if (handlers[name]) {
-    for (const validationFunc of handlers[name]) {
-      validationFunc(node, acceptor);
+  const kindHandlers = handlers[name];
+  if (kindHandlers) {
+    for (const validationFunc of kindHandlers) {
+      validationFunc(compilationUnit, node as any, acceptor);
     }
   }
 
   forEachNode(node, (childNode: SyntaxNode) => {
-    validateSyntaxNode(childNode, acceptor, handlers);
+    validateSyntaxNode(compilationUnit, childNode, acceptor, handlers);
   });
 }
 

@@ -14,10 +14,7 @@ import { Token } from "../parser/tokens";
 import { URI, UriUtils } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
-import {
-  PluginConfigurationProviderInstance,
-  ProcessGroup,
-} from "../workspace/plugin-configuration-provider";
+import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { CompilerOptionResult } from "./compiler-options/options";
 import {
   generateInstructions,
@@ -1980,21 +1977,11 @@ async function resolveIncludeFileUri(
   if (!context.entryUri || !item.fileName) {
     return undefined;
   }
-
-  // check to validate include extension, if a program config & process group is available
-  const programConfig = PluginConfigurationProviderInstance.getProgramConfig(
-    context.entryUri,
-  );
-  let pgroup: ProcessGroup | undefined = undefined;
-  if (programConfig) {
-    pgroup = PluginConfigurationProviderInstance.getProcessGroupConfig(
-      programConfig.pgroup,
-    );
-  } else if (context.currentUri) {
-    pgroup = PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(
+  const pgroup =
+    context.unit.processGroup ??
+    PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(
       context.currentUri,
     );
-  }
 
   // TODO @montymxb Jun 24th, 2025: Disabled relative & absolute pathing per request, however mainframe tests do show this works w/ the right JCL config
   // temporarily retaining here until we know we won't need this going forward, or we decide to re-enable it based on some configuration setting
