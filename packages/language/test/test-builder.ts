@@ -955,11 +955,14 @@ export class TestBuilder {
     actualType: TypeDescriptions.Any,
   ) {
     if (expectedType.type === DataType.Structure) {
+      //check: is structure?
       if (actualType.type !== DataType.Structure) {
         throw new Error(
           `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got ${TypeDescriptions.Names[actualType.type]}`,
         );
       }
+
+      //check: are expected members present?
       for (const [name, expectedMemberType] of Object.entries(
         expectedType.members ?? {},
       )) {
@@ -970,6 +973,16 @@ export class TestBuilder {
           );
         }
         this.expectTypeWithStructure(expectedMemberType, actualMemberType);
+      }
+
+      //check: are there any actual members missing in our expectation?
+      const missingActualMembers = Object.keys(actualType.members).filter(
+        (name) => !expectedType.members || !(name in expectedType.members),
+      );
+      if (missingActualMembers.length > 0) {
+        throw new Error(
+          `Actual type provides more members than the expected type: ${missingActualMembers.join(", ")}`,
+        );
       }
     } else {
       this.expectTypeNoStructure(expectedType, actualType);
