@@ -19,31 +19,16 @@ import {
 import {
   Base,
   DataType,
-  Scale,
   ScaleMode,
+  Precisions,
   TypeDescriptions,
 } from "../../src/typesystem/descriptions";
 
-function arithmetic(
-  scaleMode: ScaleMode,
-  base: Base,
-  p: number,
-  q: number = 0,
-) {
-  const scale: Scale =
-    scaleMode === ScaleMode.Fixed
-      ? {
-          mode: ScaleMode.Fixed,
-          totalDigitsCount: p,
-          fractionalDigitsCount: q,
-        }
-      : {
-          mode: ScaleMode.Float,
-          totalDigitsCount: p,
-        };
+function arithmetic(scale: ScaleMode, base: Base, p: number, q: number = 0) {
   return TypeDescriptions.Arithmetic({
     base,
     scale,
+    precision: Precisions.create(p, q),
   });
 }
 
@@ -74,11 +59,11 @@ function expectArithmeticWhenFactory(
       rhs,
       op,
     }) as TypeDescriptions.Arithmetic;
-    expect(returnType.scale.mode).toBe(expectedScaleMode);
+    expect(returnType.scale).toBe(expectedScaleMode);
     expect(returnType.base).toBe(expectedBase);
-    expect(returnType.scale.totalDigitsCount).toBe(expectedP);
-    if (returnType.scale.mode === ScaleMode.Fixed) {
-      expect(returnType.scale.fractionalDigitsCount).toBe(expectedQ);
+    expect(returnType.precision.totalDigitsCount).toBe(expectedP);
+    if (returnType.scale === ScaleMode.Fixed) {
+      expect(returnType.precision.fractionalDigitsCount).toBe(expectedQ);
     }
   };
 }

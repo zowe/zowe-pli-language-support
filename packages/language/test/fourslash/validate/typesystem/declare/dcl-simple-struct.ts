@@ -12,11 +12,27 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// DCL <|1:ANYTHING|> PRECISION(10, 5);
-
-verify.noDiagnostics(undefined, ...code.TypeSystem);
+//// declare 01 <|1:struct|>,
+////           02 <|2:name|> CHAR(10),
+////           02 <|3:age|> FIXED;
 types.expectTypeAt(1, {
+  type: types.dataTypes.Structure,
+  members: {
+    NAME: {
+      type: types.dataTypes.String,
+      length: 10,
+    },
+    AGE: {
+      type: types.dataTypes.Arithmetic,
+      scale: types.scales.Fixed,
+    },
+  },
+});
+types.expectTypeAt(2, {
+  type: types.dataTypes.String,
+  length: 10,
+});
+types.expectTypeAt(3, {
   type: types.dataTypes.Arithmetic,
   scale: types.scales.Fixed,
-  precision: types.precision.create(10, 5),
 });

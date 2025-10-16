@@ -30,11 +30,12 @@ export enum DataType {
   Ordinal,
   Picture,
   String,
+  Structure,
   Task,
   Unknown = -1,
 }
 
-export const DataTypes: DataType[] = [
+export const DataTypesArray: DataType[] = [
   DataType.Area,
   DataType.Arithmetic,
   DataType.Entry,
@@ -45,7 +46,9 @@ export const DataTypes: DataType[] = [
   DataType.Ordinal,
   DataType.Picture,
   DataType.String,
+  DataType.Structure,
   DataType.Task,
+  DataType.Unknown,
 ];
 
 export enum AttributeKind {
@@ -84,6 +87,8 @@ export enum AttributeKind {
    * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-defined-position-attributes
    */
   Position,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-precision-attribute */
+  Precision,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-fixed-float */
   Scale,
   /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=declarations-internal-external-attributes */
@@ -124,6 +129,7 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.OrdinalNames,
   AttributeKind.PictureKind,
   AttributeKind.Position,
+  AttributeKind.Precision,
   AttributeKind.Scale,
   AttributeKind.Scope,
   AttributeKind.Sign,
@@ -152,7 +158,8 @@ export type AttributeTypes = {
   [AttributeKind.OrdinalNames]: string[];
   [AttributeKind.PictureKind]: PictureWideness;
   [AttributeKind.Position]: StoragePosition;
-  [AttributeKind.Scale]: Scale;
+  [AttributeKind.Precision]: Precision;
+  [AttributeKind.Scale]: ScaleMode;
   [AttributeKind.Scope]: Scope;
   [AttributeKind.Sign]: Sign;
   [AttributeKind.Storage]: StorageClass;
@@ -178,6 +185,7 @@ export const CommonAttributeKinds: AttributeKind[] = [
 
 export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
   [DataType.Unknown]: [...CommonAttributeKinds],
+  [DataType.Structure]: [],
   [DataType.Area]: [
     ...CommonAttributeKinds,
     AttributeKind.AreaSize,
@@ -188,6 +196,7 @@ export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
     AttributeKind.Scale,
     AttributeKind.Base,
     AttributeKind.Sign,
+    AttributeKind.Precision,
     AttributeKind.NumberMode,
     AttributeKind.Endianess,
     AttributeKind.FloatFormat,
@@ -217,13 +226,16 @@ export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
   [DataType.Task]: [...CommonAttributeKinds],
 };
 
+export type AttributeWitness<K extends keyof AttributeTypes> = {
+  value: AttributeTypes[K];
+  witness: ast.DeclarationAttribute;
+  image: string;
+  token: Token;
+  implicit: boolean;
+};
+
 export type AttributeWitnesses = {
-  [K in keyof AttributeTypes]: {
-    value: AttributeTypes[K];
-    witness: ast.DeclarationAttribute;
-    image: string;
-    token: Token;
-  } | null;
+  [K in keyof AttributeTypes]: AttributeWitness<K> | null;
 };
 
 export const DataTypesByAttributeKind = Object.entries(
@@ -248,9 +260,14 @@ interface BaseTypeDescriptionProps {
   connection: StorageConnection;
   variable?: boolean;
 }
-interface BaseTypeDescription extends BaseTypeDescriptionProps {
+
+interface WithTypeDescriminator {
   type: DataType;
 }
+
+interface BaseTypeDescription
+  extends WithTypeDescriminator,
+    BaseTypeDescriptionProps {}
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
 export enum AlignmentType {
@@ -261,6 +278,14 @@ export type Alignment =
   | { type: AlignmentType.Aligned; alignment: 1 | 2 | 4 | 8 }
   | { type: AlignmentType.Unaligned };
 
+export const Alignments = {
+  Aligned: (alignment: 1 | 2 | 4 | 8) => ({
+    type: AlignmentType.Aligned,
+    alignment,
+  }),
+  Unaligned: () => ({ type: AlignmentType.Unaligned }),
+};
+
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=declarations-internal-external-attributes */
 export enum ScopeType {
   Internal,
@@ -270,6 +295,14 @@ export type Scope =
   | { type: ScopeType.Internal }
   | { type: ScopeType.External; environment: string };
 
+export const Scopes = {
+  Internal: ScopeType.Internal,
+  External: (environment: string) => ({
+    type: ScopeType.External,
+    environment,
+  }),
+};
+
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-storage-classes-allocation-deallocation */
 export enum StorageClass {
   Automatic,
@@ -277,6 +310,7 @@ export enum StorageClass {
   Based,
   Controlled,
 }
+
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-connected-nonconnected-attributes */
 export enum StorageConnection {
   Connected,
@@ -288,6 +322,7 @@ export enum Assignability {
   Assignable,
   Nonassignable,
 }
+
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-defined-position-attributes */
 export type StoragePosition = {
   //DEFINED variable [POSITION (position)]
@@ -392,7 +427,7 @@ function createAreaTypeDescription({
 }
 
 function isAreaTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is AreaTypeDescription {
   return description.type === AreaType;
 }
@@ -430,22 +465,19 @@ export enum ScaleMode {
   Fixed,
   Float,
 }
-export type Scale = {
-  /** Formally known as `p`. */
+
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-precision-attribute */
+export type Precision = {
   totalDigitsCount: number;
-} & (
-  | {
-      mode: ScaleMode.Float;
-    }
-  | {
-      mode: ScaleMode.Fixed;
-      /**
-       * Formally known as `q`.
-       * Attention: fractionalDigitsCount <= totalDigitsCount
-       */
-      fractionalDigitsCount: number;
-    }
-);
+  fractionalDigitsCount?: number;
+};
+
+export const Precisions = {
+  create: (totalDigitsCount: number = 5, fractionalDigitsCount?: number) => ({
+    totalDigitsCount,
+    fractionalDigitsCount,
+  }),
+};
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-signed-unsigned */
 export enum Sign {
@@ -455,7 +487,8 @@ export enum Sign {
 
 interface ArithmeticTypeDescriptionProps {
   mode: NumberMode;
-  scale: Scale;
+  scale: ScaleMode;
+  precision: Precision;
   base: Base;
   sign: Sign;
   endianness: Endianess;
@@ -500,23 +533,21 @@ export const MaximumPrecisions: Record<ScaleMode, Record<Base, number>> = {
 //TODO endianness default value depends on platform (BIGENDIAN except on Intel where the default is LITTLEENDIAN)
 function createArithmeticTypeDescription({
   mode = NumberMode.Real,
-  scale,
+  scale = ScaleMode.Float,
   base: unit = Base.Decimal,
+  precision = { totalDigitsCount: 5, fractionalDigitsCount: 0 },
   sign = Sign.Signed,
   endianness = Endianess.Big,
   //TODO default value depends on platform?
   floatFormat = FloatFormat.IEEE,
   ...base
 }: Partial<ArithmeticTypeDescriptionProps>): ArithmeticTypeDescription {
-  scale ??= {
-    mode: ScaleMode.Float,
-    totalDigitsCount: DefaultPrecisions[ScaleMode.Float][unit],
-  };
   return {
     type: ArithmeticType,
     ...createBaseTypeDescription(ArithmeticType, base),
     mode,
     scale,
+    precision,
     base: unit,
     sign,
     endianness,
@@ -525,7 +556,7 @@ function createArithmeticTypeDescription({
 }
 
 function isArithmeticTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is ArithmeticTypeDescription {
   return description.type === ArithmeticType;
 }
@@ -584,7 +615,7 @@ function createFileTypeDescription({
 }
 
 function isFileTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is FileTypeDescription {
   return description.type === FileType;
 }
@@ -611,7 +642,7 @@ function createFormatTypeDescription({
 }
 
 function isFormatTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is FormatTypeDescription {
   return description.type === FormatType;
 }
@@ -638,7 +669,7 @@ function createLabelTypeDescription({
 }
 
 function isLabelTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is LabelTypeDescription {
   return description.type === LabelType;
 }
@@ -683,7 +714,7 @@ function createLocatorTypeDescription({
 }
 
 function isLocatorTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is LocatorTypeDescription {
   return description.type === LocatorType;
 }
@@ -710,7 +741,7 @@ function createEntryTypeDescription({
 }
 
 function isEntryTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is EntryTypeDescription {
   return description.type === EntryType;
 }
@@ -744,7 +775,7 @@ function createOrdinalTypeDescription({
 }
 
 function isOrdinalTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is OrdinalTypeDescription {
   return description.type === OrdinalType;
 }
@@ -754,7 +785,10 @@ const PictureType = DataType.Picture;
 type PictureType = typeof PictureType;
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-picture-widepic */
-export type PictureWideness = "picture" | "widepic";
+export enum PictureWideness {
+  Picture,
+  WidePicture,
+}
 
 interface PictureTypeDescriptionProps extends BaseTypeDescriptionProps {
   kind: PictureWideness;
@@ -784,7 +818,7 @@ function createPictureTypeDescription({
 }
 
 function isPictureTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is PictureTypeDescription {
   return description.type === PictureType;
 }
@@ -841,7 +875,7 @@ function createStringTypeDescription({
 }
 
 function isStringTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is StringTypeDescription {
   return description.type === StringType;
 }
@@ -868,7 +902,7 @@ function createTaskTypeDescription({
 }
 
 function isTaskTypeDescription(
-  description: BaseTypeDescription,
+  description: WithTypeDescriminator,
 ): description is TaskTypeDescription {
   return description.type === TaskType;
 }
@@ -888,7 +922,121 @@ function createUnknownTypeDescription(): UnknownTypeDescription {
   };
 }
 
+//--- Structure ---
+const StructureType = DataType.Structure;
+type StructureType = typeof StructureType;
+
+interface StructureTypeDescriptionProps {
+  level: number;
+  members: Record<string, TypeDescriptions.Any>;
+  membersMetadata: Record<string, BuilderDeclareItem>;
+}
+
+interface StructureTypeDescription extends StructureTypeDescriptionProps {
+  type: StructureType;
+}
+
+function createStructureTypeDescription({
+  level,
+  members = {},
+  membersMetadata = {},
+}: StructureTypeDescriptionProps): StructureTypeDescription {
+  return {
+    type: StructureType,
+    level,
+    members,
+    membersMetadata,
+  };
+}
+
+export type Implications = {
+  [S in AttributeKind]: Partial<{
+    [T in AttributeKind]: (
+      value: AttributeTypes[S],
+    ) => AttributeTypes[T] | undefined;
+  }>;
+};
+
+/**
+ * Defines implications between attributes, e.g. setting Precision implies setting Scale=<precision-dependent> and DataType=Arithmetic
+ */
+export const Implications: Partial<Implications> = {
+  [AttributeKind.AccessMode]: {
+    [AttributeKind.DataType]: () => DataType.File,
+  },
+  [AttributeKind.Alignment]: undefined,
+  [AttributeKind.AreaSize]: undefined,
+  [AttributeKind.Assignability]: undefined,
+  [AttributeKind.Base]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.BufferMode]: {
+    [AttributeKind.DataType]: () => DataType.File,
+  },
+  [AttributeKind.Connection]: undefined,
+  [AttributeKind.DataType]: undefined,
+  [AttributeKind.Endianess]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.FileUsage]: {
+    [AttributeKind.DataType]: () => DataType.File,
+  },
+  [AttributeKind.FloatFormat]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.LocatorKind]: undefined,
+  [AttributeKind.NumberMode]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.OrdinalNames]: undefined,
+  [AttributeKind.PictureKind]: undefined,
+  [AttributeKind.Position]: undefined,
+  [AttributeKind.Precision]: {
+    [AttributeKind.Scale]: (value) => {
+      if (typeof value.fractionalDigitsCount !== "undefined") {
+        return ScaleMode.Fixed;
+      }
+      return undefined;
+    },
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.Scale]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.Scope]: undefined,
+  [AttributeKind.Sign]: {
+    [AttributeKind.DataType]: () => DataType.Arithmetic,
+  },
+  [AttributeKind.Storage]: undefined,
+  [AttributeKind.StringFormat]: {
+    [AttributeKind.DataType]: () => DataType.String,
+  },
+  [AttributeKind.StringKind]: {
+    [AttributeKind.DataType]: () => DataType.String,
+  },
+  [AttributeKind.StringLength]: {
+    [AttributeKind.DataType]: () => DataType.String,
+  },
+  [AttributeKind.Variable]: undefined,
+  [AttributeKind.Volatility]: undefined,
+};
+
 export namespace TypeDescriptions {
+  export const Names = {
+    [AreaType]: "Area",
+    [ArithmeticType]: "Arithmetic",
+    [FileType]: "File",
+    [FormatType]: "Format",
+    [LabelType]: "Label",
+    [LocatorType]: "Locator",
+    [EntryType]: "Entry",
+    [OrdinalType]: "Ordinal",
+    [PictureType]: "Picture",
+    [StringType]: "String",
+    [TaskType]: "Task",
+    [UnknownType]: "Unknown",
+    [StructureType]: "Structure",
+  };
   export type Any =
     | Area
     | Arithmetic
@@ -901,11 +1049,21 @@ export namespace TypeDescriptions {
     | Picture
     | String
     | Task
-    | Unknown;
+    | Unknown
+    | Structure;
   export type TypeDescriptionType = Any["type"];
+
+  export const Structure = createStructureTypeDescription;
+  export type Structure = StructureTypeDescription;
+  export const isStructure = (
+    type: TypeDescriptions.Any,
+  ): type is StructureTypeDescription => type.type === StructureType;
 
   export const Unknown = createUnknownTypeDescription;
   export type Unknown = UnknownTypeDescription;
+  export const isUnknown = (
+    type: TypeDescriptions.Any,
+  ): type is UnknownTypeDescription => type.type === UnknownType;
 
   export const Area = createAreaTypeDescription;
   export type Area = AreaTypeDescription;
@@ -986,8 +1144,8 @@ export namespace TypeDescriptions {
     [AttributeKind.Assignability]: Assignability.Assignable,
     [AttributeKind.Connection]: StorageConnection.Connected,
     [AttributeKind.Variable]: false,
-    [AttributeKind.Scale]: {
-      mode: ScaleMode.Fixed,
+    [AttributeKind.Scale]: ScaleMode.Fixed,
+    [AttributeKind.Precision]: {
       totalDigitsCount: 5,
       fractionalDigitsCount: 0,
     },
@@ -1000,13 +1158,16 @@ export namespace TypeDescriptions {
       size: 32,
     },
     [AttributeKind.OrdinalNames]: [],
-    [AttributeKind.PictureKind]: "picture",
+    [AttributeKind.PictureKind]: PictureWideness.Picture,
     [AttributeKind.StringKind]: StringKind.Bit,
     [AttributeKind.StringFormat]: StringFormat.Varying,
     [AttributeKind.StringLength]: 0,
   };
 
-  export function create(type: DataType, attributes: AttributeWitnesses): Any {
+  export function createPrimitive(
+    type: Exclude<DataType, DataType.Structure>,
+    attributes: AttributeWitnesses,
+  ): Any {
     const common = {
       alignment:
         attributes[AttributeKind.Alignment]?.value ??
@@ -1062,6 +1223,9 @@ export namespace TypeDescriptions {
           floatFormat:
             attributes[AttributeKind.FloatFormat]?.value ??
             DefaultValues[AttributeKind.FloatFormat],
+          precision:
+            attributes[AttributeKind.Precision]?.value ??
+            DefaultValues[AttributeKind.Precision],
         });
       case DataType.File:
         return TypeDescriptions.File({
@@ -1127,4 +1291,12 @@ export namespace TypeDescriptions {
         assertUnreachable(type);
     }
   }
+}
+
+export interface BuilderDeclareItem {
+  name: string;
+  nameToken: Token;
+  node: ast.SyntaxNode;
+  attributes: ast.DeclarationAttribute[];
+  level?: number;
 }
