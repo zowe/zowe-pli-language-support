@@ -12,7 +12,6 @@
 import { definitionRequest } from "../src/language-server/definition-request";
 import {
   collectDiagnostics,
-  collectSyntaxNodesByOffset,
   CompilationUnit,
 } from "../src/workspace/compilation-unit";
 import { URI } from "vscode-uri";
@@ -42,11 +41,12 @@ import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
 import { tokenize } from "../src/parser/tokenizer";
 import { escapeRegExp } from "../src/parser/tokens";
 import { PLICode } from "../src/validation/messages/pli-codes";
-import { isSyntaxNode, SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
+import { isSyntaxNode, SyntaxKind } from "../src/syntax-tree/ast";
 import { isObject } from "../src/utils/types";
 import { format } from "util";
 import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
 import { TypeExpectation } from "./fourslash-harness/harness-interface";
+import { binaryTokenSearch } from "../src/utils/search";
 
 export type Label = string | number | string[] | number[];
 
@@ -127,7 +127,6 @@ export class TestBuilder {
   private indices!: Record<string, number[]>;
   private ranges!: Record<string, Array<[number, number]>>;
   private diagnostics!: Diagnostic[];
-  private syntaxNodesByOffset!: Map<number, SyntaxNode>;
   private options: TestBuilderOptions;
 
   getDiagnostics(): Diagnostic[] {
@@ -196,7 +195,6 @@ export class TestBuilder {
     copy.indices = this.indices;
     copy.ranges = this.ranges;
     copy.diagnostics = this.diagnostics;
-    copy.syntaxNodesByOffset = this.syntaxNodesByOffset;
     return copy;
   }
 
@@ -220,7 +218,6 @@ export class TestBuilder {
     });
     this.diagnostics = collectDiagnostics(this.unit);
     this.checkDiagnosticsURIs();
-    this.syntaxNodesByOffset = collectSyntaxNodesByOffset(this.unit);
 
     // After the test-builder is done with its tests, reset the plugin configuration provider
     // so that potential test functions that invoke functions of the lifecycle are not affected
@@ -941,7 +938,8 @@ export class TestBuilder {
   expectTypeAt(label: string, expectedType: TypeExpectation): void {
     const ranges = this.getLabelRanges(label);
     for (const [start] of ranges) {
-      const node = this.syntaxNodesByOffset.get(start);
+      const token = binaryTokenSearch(this.unit.tokens, start);
+      const node = token?.element;
       if (!node) {
         throw new Error(
           `No syntax node found at position ${this.createPositionMessage(start)}`,

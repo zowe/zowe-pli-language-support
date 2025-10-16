@@ -9,15 +9,11 @@
  *
  */
 
-import { Program, SyntaxKind, SyntaxNode } from "../syntax-tree/ast.js";
+import { Program, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
 import { CancellationToken, Connection } from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
-import {
-  Diagnostic,
-  diagnosticsToLSP,
-  getSyntaxNodeRange,
-} from "../language-server/types.js";
+import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
 import {
   generateSymbolTable,
   lifecycle,
@@ -52,7 +48,6 @@ import {
   CompilerOptions,
   getDefaultCompilerOptions,
 } from "../preprocessor/compiler-options/options.js";
-import { forEachNode } from "../syntax-tree/ast-iterator.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -113,25 +108,6 @@ export function collectDiagnostics(sourceFile: CompilationUnit): Diagnostic[] {
     ...sourceFile.diagnostics.typeSystem,
     ...sourceFile.diagnostics.validation,
   ];
-}
-
-export function collectSyntaxNodesByOffset(
-  sourceFile: CompilationUnit,
-): Map<number, SyntaxNode> {
-  const map = new Map<number, SyntaxNode>();
-
-  function visitNode(node: SyntaxNode) {
-    const range = getSyntaxNodeRange(node);
-    if (range) {
-      map.set(range.start, node);
-    }
-    forEachNode(node, (child) => {
-      visitNode(child);
-    });
-  }
-
-  visitNode(sourceFile.ast);
-  return map;
 }
 
 const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
