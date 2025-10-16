@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/20</span>
+                <span class='fraction'>20/20</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/20</span>
+                <span class='fraction'>20/20</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -133,28 +133,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">832x</span>
+<span class="cline-any cline-yes">837x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">832x</span>
+<span class="cline-any cline-yes">837x</span>
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">832x</span>
-<span class="cline-any cline-yes">473x</span>
-<span class="cline-any cline-yes">473x</span>
+<span class="cline-any cline-yes">837x</span>
+<span class="cline-any cline-yes">422x</span>
+<span class="cline-any cline-yes">422x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">832x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">832x</span>
+<span class="cline-any cline-yes">837x</span>
+<span class="cline-any cline-yes">317x</span>
+<span class="cline-any cline-yes">317x</span>
+<span class="cline-any cline-yes">317x</span>
+<span class="cline-any cline-yes">317x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">299x</span>
+<span class="cline-any cline-yes">299x</span>
+<span class="cline-any cline-yes">299x</span>
+<span class="cline-any cline-yes">317x</span>
+<span class="cline-any cline-yes">837x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -189,17 +189,17 @@ export class DefaultTypeCache implements TypeCache {
     this.cache.set(node, description);
   }
 &nbsp;
-<span class="fstat-no" title="function not covered" >  get(</span>
-<span class="cstat-no" title="statement not covered" >    node: SyntaxNode,</span>
-<span class="cstat-no" title="statement not covered" >    getter: () =&gt; TypeDescriptions.Any,</span>
-<span class="cstat-no" title="statement not covered" >  ): TypeDescriptions.Any {</span>
-<span class="cstat-no" title="statement not covered" >    if (this.cache.has(node)) {</span>
-<span class="cstat-no" title="statement not covered" >      return this.cache.get(node)!;</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >    const description = getter();</span>
-<span class="cstat-no" title="statement not covered" >    this.cache.set(node, description);</span>
-<span class="cstat-no" title="statement not covered" >    return description;</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
+  get(
+    node: SyntaxNode,
+    getter: () =&gt; TypeDescriptions.Any,
+  ): TypeDescriptions.Any {
+    if (this.cache.has(node)) {
+      return this.cache.get(node)!;
+    }
+    const description = getter();
+    this.cache.set(node, description);
+    return description;
+  }
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -208,7 +208,7 @@ export class DefaultTypeCache implements TypeCache {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-16T09:28:40.021Z
+                at 2025-10-16T13:58:42.123Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
