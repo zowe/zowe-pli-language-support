@@ -68,7 +68,7 @@ beforeEach(async () => {
     {
       name: "default",
       libs: ["cpy"],
-      _subLibs: [],
+      $computedLibs: [],
       includeExtensions: [".pli"],
       compilerOptions: [],
       implicitBuiltins: new Set(),

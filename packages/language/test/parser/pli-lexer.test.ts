@@ -117,7 +117,7 @@ describe("PL/1 Lexer", () => {
         implicitBuiltins: new Set(),
         includeExtensions: [],
         libs: [],
-        _subLibs: [],
+        $computedLibs: [],
         lspOptions: { checkMargins: false },
         pliOptions: {},
       };
@@ -183,7 +183,7 @@ describe("PL/1 Lexer", () => {
         implicitBuiltins: new Set(),
         includeExtensions: [],
         libs: [],
-        _subLibs: [],
+        $computedLibs: [],
         lspOptions: { checkMargins: false },
         pliOptions: {},
       };

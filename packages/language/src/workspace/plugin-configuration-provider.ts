@@ -9,7 +9,10 @@
  *
  */
 
-import { FileSystemProviderInstance } from "./file-system-provider";
+import {
+  DirEntryType,
+  FileSystemProviderInstance,
+} from "./file-system-provider";
 import { URI, UriUtils } from "../utils/uri";
 import {
   AbstractCompilerOptions,
@@ -71,14 +74,19 @@ export interface ProcessGroup {
   name: string;
   compilerOptions: string[];
   pliOptions: PliOptions;
+
+  /**
+   * Actual libs as they're loaded from the config on disk.
+   * Feeds into computed libs, not directly used for resolving includes.
+   */
   libs: string[];
 
   /**
-   * Sub directories of libs, populated after reading the configs.
-   * A computed property that is not serialized like regular 'libs',
-   * but is also used to resolve includes.
+   * Computed libs, includes libs from disks & all sub directories of libs.
+   * Populated after reading the configs & not serialized like regular 'libs'.
+   * Used to resolve includes.
    */
-  _subLibs: string[];
+  $computedLibs: string[];
 
   includeExtensions: string[];
   implicitBuiltins: Set<string>;
@@ -95,7 +103,7 @@ export interface ProcessGroup {
 
 /**
  * Deserializes a process group config from a plain object.
- * Generates an empty _subLibs array in the process, but does not populate it
+ * Generates an empty $computedLibs array in the process, but does not populate it
  */
 export function deserializeProcessGroup(
   obj: SerializedProcessGroup,
@@ -112,7 +120,7 @@ export function deserializeProcessGroup(
     compilerOptions: isStringArray(compilerOptions) ? compilerOptions : [],
     pliOptions: isRecordOf(pliOptions, isString) ? pliOptions : {},
     libs: isStringArray(libs) ? libs : [],
-    _subLibs: [],
+    $computedLibs: [],
     includeExtensions: isStringArray(includeExtensions)
       ? includeExtensions
       : [],
@@ -127,7 +135,7 @@ export function deserializeProcessGroup(
 
 /**
  * Serializes a process group config to a plain object.
- * Drops the _subLibs field in the process, to avoid polluting the original config
+ * Drops computed fields in the process (such as $computedLibs)
  */
 export function serializeProcessGroup(
   group: ProcessGroup,
@@ -216,9 +224,9 @@ export class PluginConfigurationProvider {
       wsPrefix += "/";
     }
     for (const processGroup of this.processGroupConfigs.values()) {
-      const allLibs = processGroup.libs.concat(processGroup._subLibs);
+      const computedLibs = processGroup.$computedLibs;
       const extensions = processGroup.includeExtensions;
-      for (let lib of allLibs) {
+      for (let lib of computedLibs) {
         lib = lib.replace(/[\\/]+$/, "");
         for (const ext of extensions) {
           patterns.push(`${wsPrefix}${lib}/*${ext}`);
@@ -344,11 +352,11 @@ export class PluginConfigurationProvider {
 
   /**
    * Go through all process groups & expand libs recursively to ensure all libs are findable when searching
-   * Has a side-effect of adding sub-directories to the _subLibs list of each process group
+   * Populates the $computedLibs property of each process group, which is used to resolve includes
    */
   private async postProcessProcessGroups() {
     for (const processGroup of this.processGroupConfigs.values()) {
-      const allLibs = new Set(processGroup.libs);
+      const computedLibs = new Set(processGroup.libs);
       const libsToProcess = [...processGroup.libs];
       while (libsToProcess.length > 0) {
         const lib = libsToProcess.pop();
@@ -361,17 +369,17 @@ export class PluginConfigurationProvider {
             for (const dirEntry of entries) {
               const fileName = dirEntry.name;
               const fileType = dirEntry.type;
-              if (fileType === 2) {
+              if (fileType === DirEntryType.Directory) {
                 // directory to add for handling
                 libsToProcess.push(`${lib}/${fileName}`);
                 // also add to the full libs list
-                allLibs.add(`${lib}/${fileName}`);
+                computedLibs.add(`${lib}/${fileName}`);
               }
             }
           }
         }
       }
-      processGroup._subLibs = Array.from(allLibs);
+      processGroup.$computedLibs = Array.from(computedLibs);
     }
   }
 
@@ -561,9 +569,7 @@ export class PluginConfigurationProvider {
   public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
     for (const config of this.processGroupConfigs.values()) {
-      if (config.libs?.includes(dirname)) {
-        return config;
-      } else if (config._subLibs?.includes(dirname)) {
+      if (config.$computedLibs?.includes(dirname)) {
         return config;
       }
     }

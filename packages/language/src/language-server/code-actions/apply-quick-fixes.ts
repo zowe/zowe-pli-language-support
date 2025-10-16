@@ -47,11 +47,7 @@ export async function quickFixResolveInclude(
     unresolvedFilePath,
     workspaceFolderUri,
   );
-  if (!parentFolder) return undefined;
-  if (
-    procGrpsConfig.libs.includes(parentFolder) ||
-    procGrpsConfig._subLibs.includes(parentFolder)
-  ) {
+  if (!parentFolder || procGrpsConfig.$computedLibs.includes(parentFolder)) {
     return undefined;
   }
 

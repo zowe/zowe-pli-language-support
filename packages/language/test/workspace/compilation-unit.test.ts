@@ -143,7 +143,7 @@ describe("Compilation Unit Tests", () => {
         name: "default",
         compilerOptions: [],
         libs: ["cpy"],
-        _subLibs: [],
+        $computedLibs: [],
         includeExtensions: [".inc"],
         lspOptions: { checkMargins: false },
         pliOptions: {},

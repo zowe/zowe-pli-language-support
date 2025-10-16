@@ -2009,8 +2009,8 @@ async function resolveIncludeFileUri(
   if (pgroup) {
     // lib file as either a string or a member from a known process group
     const absPathRegex = /^(?:\/|\\|[A-Z]:)/i;
-    const allLibs = pgroup.libs.concat(pgroup._subLibs);
-    for (const lib of allLibs) {
+    const computedLibs = pgroup.$computedLibs;
+    for (const lib of computedLibs) {
       let libFileUri: URI;
       if (!absPathRegex.test(lib)) {
         // relative lib path, combine w/ workspace
