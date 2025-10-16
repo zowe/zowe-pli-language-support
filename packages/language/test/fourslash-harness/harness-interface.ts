@@ -22,28 +22,27 @@ import { TypeSystem } from "../../src/validation/messages/internal-codes";
 import { PLICode } from "../../src/validation/messages/pli-codes";
 import { SyntaxKind } from "../../src/syntax-tree/ast";
 import {
-  AccessModes,
+  AccessMode,
   Alignments,
-  Assignabilities,
-  Bases,
-  BufferModes,
+  Assignability,
+  Base,
+  BufferMode,
   DataType,
-  DataTypes,
-  Endianesses,
-  FileUsages,
-  FloatFormats,
-  NumberModes,
-  NumberScales,
-  PictureWidenesses,
+  Endianess,
+  FileUsage,
+  FloatFormat,
+  NumberMode,
+  PictureWideness,
   Precisions,
+  ScaleMode,
   Scopes,
-  Signs,
-  StorageClasses,
-  StorageConnections,
-  StringFormats,
-  StringKinds,
+  Sign,
+  StorageClass,
+  StorageConnection,
+  StringFormat,
+  StringKind,
   TypeDescriptions,
-  Volatilities,
+  Volatility,
 } from "../../src/typesystem/descriptions";
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
@@ -68,30 +67,30 @@ export interface HarnessTesterInterface {
 
   types: {
     expectTypeAt(label: Label, expectedType: TypeExpectation): void;
-    dataTypes: typeof DataTypes;
+    dataTypes: typeof DataType;
 
-    accessModes: typeof AccessModes;
+    accessModes: typeof AccessMode;
     alignments: typeof Alignments;
-    assignabilities: typeof Assignabilities;
-    bases: typeof Bases;
-    bufferModes: typeof BufferModes;
-    connections: typeof StorageConnections;
-    endianesses: typeof Endianesses;
-    fileUsages: typeof FileUsages;
-    floatFormats: typeof FloatFormats;
+    assignabilities: typeof Assignability;
+    bases: typeof Base;
+    bufferModes: typeof BufferMode;
+    connections: typeof StorageConnection;
+    endianesses: typeof Endianess;
+    fileUsages: typeof FileUsage;
+    floatFormats: typeof FloatFormat;
     //TODO locator types
-    modes: typeof NumberModes;
+    modes: typeof NumberMode;
     //TODO ordinal names
-    pictureWidenesses: typeof PictureWidenesses;
+    pictureWidenesses: typeof PictureWideness;
     //TODO positions
-    scales: typeof NumberScales;
+    scales: typeof ScaleMode;
     precision: typeof Precisions;
     scopes: typeof Scopes;
-    signs: typeof Signs;
-    storageClasses: typeof StorageClasses;
-    stringFormats: typeof StringFormats;
-    stringKinds: typeof StringKinds;
-    volatilities: typeof Volatilities;
+    signs: typeof Sign;
+    storageClasses: typeof StorageClass;
+    stringFormats: typeof StringFormat;
+    stringKinds: typeof StringKind;
+    volatilities: typeof Volatility;
   };
 
   verify: {

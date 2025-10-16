@@ -35,23 +35,21 @@ export enum DataType {
   Unknown = -1,
 }
 
-export const DataTypes = {
-  Area: DataType.Area as const,
-  Arithmetic: DataType.Arithmetic as const,
-  Entry: DataType.Entry as const,
-  File: DataType.File as const,
-  Format: DataType.Format as const,
-  Label: DataType.Label as const,
-  Locator: DataType.Locator as const,
-  Ordinal: DataType.Ordinal as const,
-  Picture: DataType.Picture as const,
-  String: DataType.String as const,
-  Structure: DataType.Structure as const,
-  Task: DataType.Task as const,
-  Unknown: DataType.Unknown as const,
-};
-
-export const DataTypesArray: DataType[] = Object.values(DataTypes);
+export const DataTypesArray: DataType[] = [
+  DataType.Area,
+  DataType.Arithmetic,
+  DataType.Entry,
+  DataType.File,
+  DataType.Format,
+  DataType.Label,
+  DataType.Locator,
+  DataType.Ordinal,
+  DataType.Picture,
+  DataType.String,
+  DataType.Structure,
+  DataType.Task,
+  DataType.Unknown,
+];
 
 export enum AttributeKind {
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-sequential-direct-attributes */
@@ -313,34 +311,17 @@ export enum StorageClass {
   Controlled,
 }
 
-export const StorageClasses = {
-  Automatic: StorageClass.Automatic,
-  Static: StorageClass.Static,
-  Based: StorageClass.Based,
-  Controlled: StorageClass.Controlled,
-};
-
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-connected-nonconnected-attributes */
 export enum StorageConnection {
   Connected,
   Nonconnected,
 }
 
-export const StorageConnections = {
-  Connected: StorageConnection.Connected,
-  Nonconnected: StorageConnection.Nonconnected,
-};
-
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-assignable-nonassignable-attributes */
 export enum Assignability {
   Assignable,
   Nonassignable,
 }
-
-export const Assignabilities = {
-  Assignable: Assignability.Assignable,
-  Nonassignable: Assignability.Nonassignable,
-};
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-defined-position-attributes */
 export type StoragePosition = {
@@ -354,11 +335,6 @@ export enum Volatility {
   Normal,
   Abnormal,
 }
-
-export const Volatilities = {
-  Normal: Volatility.Normal,
-  Abnormal: Volatility.Abnormal,
-};
 
 /* TODO for storage attributes:
 Parameter:
@@ -466,21 +442,11 @@ export enum FloatFormat {
   HexaDec,
 }
 
-export const FloatFormats = {
-  IEEE: FloatFormat.IEEE,
-  HexaDec: FloatFormat.HexaDec,
-};
-
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-bigendian-littleendian-attributes */
 export enum Endianess {
   Big,
   Little,
 }
-
-export const Endianesses = {
-  Big: Endianess.Big,
-  Little: Endianess.Little,
-};
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-coded-arithmetic-data */
 export enum NumberMode {
@@ -488,32 +454,17 @@ export enum NumberMode {
   Complex,
 }
 
-export const NumberModes = {
-  Real: NumberMode.Real,
-  Complex: NumberMode.Complex,
-};
-
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-coded-arithmetic-data */
 export enum Base {
   Binary,
   Decimal,
 }
 
-export const Bases = {
-  Binary: Base.Binary,
-  Decimal: Base.Decimal,
-};
-
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-fixed-float */
 export enum ScaleMode {
   Fixed,
   Float,
 }
-
-export const NumberScales = {
-  Fixed: ScaleMode.Fixed,
-  Float: ScaleMode.Float,
-};
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-precision-attribute */
 export type Precision = {
@@ -533,11 +484,6 @@ export enum Sign {
   Signed,
   Unsigned,
 }
-
-export const Signs = {
-  Signed: Sign.Signed,
-  Unsigned: Sign.Unsigned,
-};
 
 interface ArithmeticTypeDescriptionProps {
   mode: NumberMode;
@@ -625,11 +571,6 @@ export enum BufferMode {
   Buffered,
 }
 
-export const BufferModes = {
-  Unbuffered: BufferMode.Unbuffered,
-  Buffered: BufferMode.Buffered,
-};
-
 /**
  * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-sequential-direct-attributes
  */
@@ -638,21 +579,11 @@ export enum AccessMode {
   Direct,
 }
 
-export const AccessModes = {
-  Sequential: AccessMode.Sequential,
-  Direct: AccessMode.Direct,
-};
-
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-record-stream-attributes */
 export enum FileUsage {
   Record,
   Stream,
 }
-
-export const FileUsages = {
-  Record: FileUsage.Record,
-  Stream: FileUsage.Stream,
-};
 
 interface FileTypeDescriptionProps extends BaseTypeDescriptionProps {
   accessMode: AccessMode;
@@ -859,11 +790,6 @@ export enum PictureWideness {
   WidePicture,
 }
 
-export const PictureWidenesses = {
-  Picture: PictureWideness.Picture,
-  WidePicture: PictureWideness.WidePicture,
-};
-
 interface PictureTypeDescriptionProps extends BaseTypeDescriptionProps {
   kind: PictureWideness;
   domain: NumberMode;
@@ -910,14 +836,6 @@ export enum StringKind {
   WideChar,
 }
 
-export const StringKinds = {
-  Bit: StringKind.Bit,
-  Character: StringKind.Character,
-  Graphic: StringKind.Graphic,
-  UChar: StringKind.UChar,
-  WideChar: StringKind.WideChar,
-};
-
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-varying-varying4-varyingz-nonvarying */
 export enum StringFormat {
   Varying,
@@ -925,13 +843,6 @@ export enum StringFormat {
   VaryingZ,
   NonVarying,
 }
-
-export const StringFormats = {
-  Varying: StringFormat.Varying,
-  Varying4: StringFormat.Varying4,
-  VaryingZ: StringFormat.VaryingZ,
-  NonVarying: StringFormat.NonVarying,
-};
 
 interface StringTypeDescriptionProps extends BaseTypeDescriptionProps {
   kind: StringKind;
