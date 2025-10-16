@@ -12,6 +12,12 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// DCL ANYTHING FIXED;
+//// DCL <|1:ANYTHING|> FIXED;
 
+types.expectTypeAt("1", {
+  type: types.dataTypes.Arithmetic,
+  scale: types.scales.Fixed,
+  precision: types.precision.create(5, 0),
+  mode: types.modes.Real,
+});
 verify.noDiagnostics(undefined, ...code.TypeSystem);

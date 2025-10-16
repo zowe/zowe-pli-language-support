@@ -564,22 +564,20 @@ function whenAtLeastOneFloatCaseOnOperator(
     whenLeftBase,
     whenRightBase,
     when({ lhs, rhs }) {
-      return (
-        lhs.scale.mode === ScaleMode.Float || rhs.scale.mode === ScaleMode.Float
-      );
+      return lhs.scale === ScaleMode.Float || rhs.scale === ScaleMode.Float;
     },
     then({ lhs, rhs }) {
       const {
-        scale: { totalDigitsCount: p1 },
+        precision: { totalDigitsCount: p1 },
       } = lhs;
       const {
-        scale: { totalDigitsCount: p2 },
+        precision: { totalDigitsCount: p2 },
       } = rhs;
       const variablesForQ = createVariablesForQ(p1, p2, lhs, rhs);
       const variablesForP = createVariablesForP(variablesForQ, () => 0);
       return TypeDescriptions.Arithmetic({
-        scale: {
-          mode: ScaleMode.Float,
+        scale: ScaleMode.Float,
+        precision: {
           totalDigitsCount: thenP(variablesForP),
         },
         base: resultBase,
@@ -614,25 +612,25 @@ function whenUnscaledFixedCaseOnOperatorANS(
     when({ lhs, rhs }) {
       //for fixed
       return (
-        lhs.scale.mode === ScaleMode.Fixed &&
-        rhs.scale.mode === ScaleMode.Fixed &&
+        lhs.scale === ScaleMode.Fixed &&
+        rhs.scale === ScaleMode.Fixed &&
         //for unscaled
-        lhs.scale.fractionalDigitsCount === 0 &&
-        rhs.scale.fractionalDigitsCount === 0
+        lhs.precision.fractionalDigitsCount === 0 &&
+        rhs.precision.fractionalDigitsCount === 0
       );
     },
     then({ lhs, rhs }) {
       const {
-        scale: { totalDigitsCount: p1 },
+        precision: { totalDigitsCount: p1 },
       } = lhs;
       const {
-        scale: { totalDigitsCount: p2 },
+        precision: { totalDigitsCount: p2 },
       } = rhs;
       const variablesForQ = createVariablesForQ(p1, p2, lhs, rhs);
       const variablesForP = createVariablesForP(variablesForQ, thenQ);
       return TypeDescriptions.Arithmetic({
-        scale: {
-          mode: ScaleMode.Fixed,
+        scale: ScaleMode.Fixed,
+        precision: {
           fractionalDigitsCount: thenQ?.call(undefined, variablesForQ) ?? 0,
           totalDigitsCount: thenP(variablesForP),
         },
@@ -667,25 +665,25 @@ function whenScaledFixedCaseOnOperatorANS(
     whenRightBase,
     when({ lhs, rhs }) {
       return (
-        lhs.scale.mode === ScaleMode.Fixed &&
-        rhs.scale.mode === ScaleMode.Fixed &&
+        lhs.scale === ScaleMode.Fixed &&
+        rhs.scale === ScaleMode.Fixed &&
         //for at least one scaled
-        (lhs.scale.fractionalDigitsCount !== 0 ||
-          rhs.scale.fractionalDigitsCount !== 0)
+        (lhs.precision.fractionalDigitsCount !== 0 ||
+          rhs.precision.fractionalDigitsCount !== 0)
       );
     },
     then({ lhs, rhs }) {
       const {
-        scale: { totalDigitsCount: p1 },
+        precision: { totalDigitsCount: p1 },
       } = lhs;
       const {
-        scale: { totalDigitsCount: p2 },
+        precision: { totalDigitsCount: p2 },
       } = rhs;
       const variablesForQ = createVariablesForQ(p1, p2, lhs, rhs);
       const variablesForP = createVariablesForP(variablesForQ, thenQ);
       return TypeDescriptions.Arithmetic({
-        scale: {
-          mode: ScaleMode.Fixed,
+        scale: ScaleMode.Fixed,
+        precision: {
           totalDigitsCount: thenP(variablesForP),
           fractionalDigitsCount: thenQ?.call(undefined, variablesForQ) ?? 0,
         },
@@ -719,22 +717,20 @@ function whenScaledFixedCaseOnOperatorIBM(
     whenLeftBase,
     whenRightBase,
     when({ lhs, rhs }) {
-      return (
-        lhs.scale.mode === ScaleMode.Fixed && rhs.scale.mode === ScaleMode.Fixed
-      );
+      return lhs.scale === ScaleMode.Fixed && rhs.scale === ScaleMode.Fixed;
     },
     then({ lhs, rhs }) {
       const {
-        scale: { totalDigitsCount: p1 },
+        precision: { totalDigitsCount: p1 },
       } = lhs;
       const {
-        scale: { totalDigitsCount: p2 },
+        precision: { totalDigitsCount: p2 },
       } = rhs;
       const variablesForQ = createVariablesForQ(p1, p2, lhs, rhs);
       const variablesForP = createVariablesForP(variablesForQ, thenQ);
       return TypeDescriptions.Arithmetic({
-        scale: {
-          mode: ScaleMode.Fixed,
+        scale: ScaleMode.Fixed,
+        precision: {
           totalDigitsCount: thenP(variablesForP),
           fractionalDigitsCount: thenQ?.call(undefined, variablesForQ) ?? 0,
         },
@@ -751,9 +747,13 @@ function createVariablesForQ(
   rhs: TypeDescriptions.Arithmetic,
 ): QComputationVariables {
   const q1 =
-    lhs.scale.mode === ScaleMode.Fixed ? lhs.scale.fractionalDigitsCount : 0;
+    lhs.scale === ScaleMode.Fixed
+      ? (lhs.precision.fractionalDigitsCount ?? 0)
+      : 0;
   const q2 =
-    rhs.scale.mode === ScaleMode.Fixed ? rhs.scale.fractionalDigitsCount : 0;
+    rhs.scale === ScaleMode.Fixed
+      ? (rhs.precision.fractionalDigitsCount ?? 0)
+      : 0;
   return {
     lhs,
     rhs,

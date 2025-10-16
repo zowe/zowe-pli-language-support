@@ -21,10 +21,40 @@ import { CompilerOptions } from "../../src/preprocessor/compiler-options/options
 import { TypeSystem } from "../../src/validation/messages/internal-codes";
 import { PLICode } from "../../src/validation/messages/pli-codes";
 import { SyntaxKind } from "../../src/syntax-tree/ast";
+import {
+  AccessMode,
+  Alignments,
+  Assignability,
+  Base,
+  BufferMode,
+  DataType,
+  Endianess,
+  FileUsage,
+  FloatFormat,
+  NumberMode,
+  PictureWideness,
+  Precisions,
+  ScaleMode,
+  Scopes,
+  Sign,
+  StorageClass,
+  StorageConnection,
+  StringFormat,
+  StringKind,
+  TypeDescriptions,
+  Volatility,
+} from "../../src/typesystem/descriptions";
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
 export type Not<T> = Omit<T, "not">;
+
+export type TypeExpectation =
+  | Partial<Exclude<TypeDescriptions.Any, TypeDescriptions.Structure>>
+  | {
+      type: DataType.Structure;
+      members: Record<string, TypeExpectation>;
+    };
 
 export interface HarnessTesterInterface {
   Syntax: typeof SyntaxKind;
@@ -33,6 +63,34 @@ export interface HarnessTesterInterface {
      * Expose the test builder.
      */
     testBuilder: TestBuilder;
+  };
+
+  types: {
+    expectTypeAt(label: Label, expectedType: TypeExpectation): void;
+    dataTypes: typeof DataType;
+
+    accessModes: typeof AccessMode;
+    alignments: typeof Alignments;
+    assignabilities: typeof Assignability;
+    bases: typeof Base;
+    bufferModes: typeof BufferMode;
+    connections: typeof StorageConnection;
+    endianesses: typeof Endianess;
+    fileUsages: typeof FileUsage;
+    floatFormats: typeof FloatFormat;
+    //TODO locator types
+    modes: typeof NumberMode;
+    //TODO ordinal names
+    pictureWidenesses: typeof PictureWideness;
+    //TODO positions
+    scales: typeof ScaleMode;
+    precision: typeof Precisions;
+    scopes: typeof Scopes;
+    signs: typeof Sign;
+    storageClasses: typeof StorageClass;
+    stringFormats: typeof StringFormat;
+    stringKinds: typeof StringKind;
+    volatilities: typeof Volatility;
   };
 
   verify: {

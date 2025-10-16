@@ -20,6 +20,7 @@ import { HarnessConstants } from "./implementation/constants";
 import { TestBuilder } from "../test-builder";
 import { generateIncludeItemMarkup } from "../../src/language-server/hover-request";
 import { SyntaxKind } from "../../src/syntax-tree/ast";
+import { HarnessTypeAttributes } from "./implementation/type-atttributes";
 
 type HarnessImplementationListener = (method: string, ...args: any[]) => void;
 
@@ -64,6 +65,10 @@ async function createTestingHarnessImplementation(
       expectCompilerOptions: listen("verify.expectCompilerOptions"),
       expectAst: listen("verify.expectAst"),
       expectPPAst: listen("verify.expectPPAst"),
+    },
+    types: {
+      ...HarnessTypeAttributes,
+      expectTypeAt: listen("types.expectTypeAt"),
     },
     completion: {
       expectAt: listen("completion.expectAt"),
