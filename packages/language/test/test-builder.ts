@@ -202,7 +202,7 @@ export class TestBuilder {
       }
     }
 
-    this.configurePluginConfigurationProvider();
+    await this.configurePluginConfigurationProvider();
 
     const [[firstFileUri, firstFile]] = this.files.entries();
     this.output = firstFile.output;
@@ -259,7 +259,7 @@ export class TestBuilder {
     return testBuilder;
   }
 
-  private configurePluginConfigurationProvider() {
+  private async configurePluginConfigurationProvider() {
     // Check if the files contain a program config or process group.
     for (const [uri, file] of this.files) {
       if (uri.endsWith(PluginConfigurationProvider.PROGRAM_CONFIG_FILE)) {
@@ -269,7 +269,7 @@ export class TestBuilder {
         );
       }
       if (uri.endsWith(PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE)) {
-        PluginConfigurationProviderInstance.parseProcessGroupConfigs(
+        await PluginConfigurationProviderInstance.parseProcessGroupConfigs(
           file.output,
         );
       }
