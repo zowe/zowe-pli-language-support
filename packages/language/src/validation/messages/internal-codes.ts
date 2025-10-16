@@ -27,4 +27,5 @@ export const TypeSystem: PLICode[] = [
   Error.IBM2462I,
   Error.IBM2424I,
   Error.IBM1482I,
+  Error.IBM1483I,
 ];

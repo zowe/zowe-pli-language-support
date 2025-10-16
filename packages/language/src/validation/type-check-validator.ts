@@ -15,12 +15,12 @@ import { ValidationAcceptor } from "./validator";
 
 export class TypeCheck {
   constructor(private compilationUnit: CompilationUnit) {}
-  checkDeclaredItem(
-    declaredItem: ast.DeclaredItem,
+  checkDeclareStatement(
+    declareStatement: ast.DeclareStatement,
     _acceptor: ValidationAcceptor,
   ) {
-    this.compilationUnit.services.inferer.inferDeclarationType(
-      declaredItem,
+    this.compilationUnit.services.inferer.inferType(
+      declareStatement,
       this.compilationUnit,
     );
   }

@@ -12,8 +12,12 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// DCL ANYTHING BIT(10) <|1:BIT|>(11);
+//// DCL <|1:ANYTHING|> BIT(10) <|2:BIT|>(11);
 
-verify.expectDiagnosticsAt(1, {
+verify.expectDiagnosticsAt(2, {
   code: code.Error.IBM1309I.fullCode,
+});
+types.expectTypeAt(1, {
+  type: types.dataTypes.String,
+  length: 10,
 });

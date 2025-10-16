@@ -44,6 +44,9 @@ import { PLICode } from "../src/validation/messages/pli-codes";
 import { isSyntaxNode, SyntaxKind } from "../src/syntax-tree/ast";
 import { isObject } from "../src/utils/types";
 import { format } from "util";
+import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
+import { TypeExpectation } from "./fourslash-harness/harness-interface";
+import { binaryTokenSearch } from "../src/utils/search";
 
 export type Label = string | number | string[] | number[];
 
@@ -930,6 +933,75 @@ export class TestBuilder {
         expect(completionResult, message).not.toContain(completion);
       }
     });
+  }
+
+  expectTypeAt(label: string, expectedType: TypeExpectation): void {
+    const ranges = this.getLabelRanges(label);
+    for (const [start] of ranges) {
+      const token = binaryTokenSearch(this.unit.tokens, start);
+      const node = token?.element;
+      if (!node) {
+        throw new Error(
+          `No syntax node found at position ${this.createPositionMessage(start)}`,
+        );
+      }
+      const actualType = this.unit.services.inferer.inferType(node, this.unit);
+      this.expectTypeWithStructure(expectedType, actualType);
+    }
+  }
+
+  private expectTypeWithStructure(
+    expectedType: TypeExpectation,
+    actualType: TypeDescriptions.Any,
+  ) {
+    if (expectedType.type === DataType.Structure) {
+      //check: is structure?
+      if (actualType.type !== DataType.Structure) {
+        throw new Error(
+          `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got ${TypeDescriptions.Names[actualType.type]}`,
+        );
+      }
+
+      //check: are expected members present?
+      for (const [name, expectedMemberType] of Object.entries(
+        expectedType.members ?? {},
+      )) {
+        const actualMemberType = actualType.members[name];
+        if (!actualMemberType) {
+          throw new Error(
+            `Expected member "${name}" to be present, but got undefined`,
+          );
+        }
+        this.expectTypeWithStructure(expectedMemberType, actualMemberType);
+      }
+
+      //check: are there any actual members missing in our expectation?
+      const missingActualMembers = Object.keys(actualType.members).filter(
+        (name) => !expectedType.members || !(name in expectedType.members),
+      );
+      if (missingActualMembers.length > 0) {
+        throw new Error(
+          `Actual type provides more members than the expected type: ${missingActualMembers.join(", ")}`,
+        );
+      }
+    } else {
+      this.expectTypeNoStructure(expectedType, actualType);
+    }
+  }
+
+  private expectTypeNoStructure(
+    expectedType: TypeExpectation,
+    actualType: TypeDescriptions.Any,
+  ) {
+    for (const [key, value] of Object.entries(expectedType)) {
+      if (typeof value === "object" && value !== null) {
+        expect(actualType[key as keyof typeof actualType]).toEqual(
+          expect.objectContaining(value),
+        );
+      } else {
+        expect(actualType[key as keyof typeof actualType]).toEqual(value);
+      }
+    }
   }
 
   private createLabelRangeMessage(label: string): string {
