@@ -64,10 +64,11 @@ beforeEach(async () => {
       pliOptions: {},
     },
   ]);
-  PluginConfigurationProviderInstance.setProcessGroupConfigs([
+  await PluginConfigurationProviderInstance.setProcessGroupConfigs([
     {
       name: "default",
       libs: ["cpy"],
+      $computedLibs: [],
       includeExtensions: [".pli"],
       compilerOptions: [],
       implicitBuiltins: new Set(),
@@ -81,7 +82,7 @@ afterEach(async () => {
   setFileSystemProvider(undefined);
   setPluginConfigurationProvider(undefined);
   PluginConfigurationProviderInstance.setProgramConfigs("", []);
-  PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+  await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
 });
 
 function getTestFiles() {

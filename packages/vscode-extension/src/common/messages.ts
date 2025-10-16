@@ -10,6 +10,7 @@
  */
 
 export namespace Messages {
+  export const ReadDir = "fs/readDir";
   export const ReadFile = "fs/readFile";
   export const WriteFile = "fs/writeFile";
   export const FileExists = "fs/fileExists";

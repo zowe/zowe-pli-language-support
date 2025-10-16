@@ -17,13 +17,34 @@ export interface SearchOptions {
   global?: boolean;
 }
 
+/**
+ * Directory entry types, used in readDir results
+ */
+export enum DirEntryType {
+  File = 1,
+  Directory = 2,
+}
+
+/**
+ * Directory entry, used in readDir results
+ */
+export interface DirEntry {
+  name: string;
+  type: DirEntryType;
+}
+
 export interface FileSystemProvider {
   readFile(uri: URI): Promise<string | undefined>;
+  /**
+   * Reads the contents of a directory. The result is an array of directory entries w/ types
+   */
+  readDir(uri: URI): Promise<DirEntry[]>;
   fileExists(uri: URI): Promise<boolean>;
   writeFile(uri: URI, value: string): Promise<void>;
   deleteFile(uri: URI): Promise<void>;
   /**
    * Performs a file search. Implementation depends on the provider.
+   * Returns a singular URI if found, otherwise undefined.
    */
   search(options: SearchOptions): Promise<URI | undefined>;
 }
@@ -34,6 +55,10 @@ export interface FileSystemProvider {
 class _EmptyFileSystemProvider implements FileSystemProvider {
   readFile(_uri: URI): Promise<string | undefined> {
     return Promise.resolve("");
+  }
+
+  readDir(_uri: URI): Promise<DirEntry[]> {
+    return Promise.resolve([]);
   }
 
   fileExists(_uri: URI): Promise<boolean> {
@@ -83,6 +108,38 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
   }
 
   /**
+   * Reads the contents of a directory in the virtualized file system.
+   * The result is an array of directory entries w/ types.
+   * Directories are virtual in this case, only existing if there are files with matching prefixes.
+   * If no entries are found, an empty array is returned.
+   */
+  async readDir(uri: URI): Promise<DirEntry[]> {
+    // collect all entries which start with the given path
+    const path = uri.toString().toLowerCase();
+    const entries: DirEntry[] = [];
+    for (const filePath of this.files.keys()) {
+      if (filePath.startsWith(path)) {
+        const relativePath = filePath.substring(path.length);
+        const parts = relativePath.split("/").filter((p) => p.length > 0);
+        if (parts.length === 1) {
+          // file
+          entries.push({
+            name: parts[0],
+            type: DirEntryType.File,
+          });
+        } else {
+          // directory
+          entries.push({
+            name: parts[0],
+            type: DirEntryType.Directory,
+          });
+        }
+      }
+    }
+    return entries;
+  }
+
+  /**
    * Checks if a file exists in the virtualized file system
    */
   async fileExists(uri: URI): Promise<boolean> {
@@ -96,6 +153,12 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
     this.files.delete(uri.toString().toLowerCase());
   }
 
+  /**
+   * Performs a simple search in the virtualized file system.
+   * Checks if the exact path exists, otherwise tries with each of the given extensions.
+   * @param options Options to configure the search
+   * @returns First match, or undefined if no match found
+   */
   async search(options: SearchOptions): Promise<URI | undefined> {
     const searchPath = options.path
       .toString()

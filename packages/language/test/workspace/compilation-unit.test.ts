@@ -9,12 +9,17 @@
  *
  */
 
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import { URI } from "../../src/utils/uri";
 import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
 
 describe("Compilation Unit Tests", () => {
+  afterEach(async () => {
+    PluginConfigurationProviderInstance.setProgramConfigs("", []);
+    await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+  });
+
   test("Create", async () => {
     const uri = URI.parse("memory:///test/test.pli");
     const ch = new CompilationUnitHandler();
@@ -122,7 +127,7 @@ describe("Compilation Unit Tests", () => {
   test("Cannot create compile unit from copybook directly", async () => {
     const ch = new CompilationUnitHandler();
 
-    PluginConfigurationProviderInstance.init("file:///");
+    await PluginConfigurationProviderInstance.init("file:///");
 
     // Simulate a process group 'default' with a cpy folder and include-extensions
     PluginConfigurationProviderInstance.setProgramConfigs("file:///", [
@@ -133,11 +138,12 @@ describe("Compilation Unit Tests", () => {
       },
     ]);
     // Simulate the process group config (normally this would be loaded from a config file)
-    PluginConfigurationProviderInstance.setProcessGroupConfigs([
+    await PluginConfigurationProviderInstance.setProcessGroupConfigs([
       {
         name: "default",
         compilerOptions: [],
         libs: ["cpy"],
+        $computedLibs: [],
         includeExtensions: [".inc"],
         lspOptions: { checkMargins: false },
         pliOptions: {},
