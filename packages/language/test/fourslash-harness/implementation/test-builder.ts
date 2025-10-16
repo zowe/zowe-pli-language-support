@@ -18,6 +18,7 @@ import { HarnessCodes } from "./codes";
 import { HarnessConstants } from "./constants";
 import { generateIncludeItemMarkup } from "../../../src/language-server/hover-request";
 import { PLICode } from "../../../src/validation/messages/pli-codes";
+import { HarnessTypeAttributes } from "./type-atttributes";
 import { SyntaxKind } from "../../../src/syntax-tree/ast";
 
 /**
@@ -96,6 +97,11 @@ export function createTestBuilderHarnessImplementation(
       expectTokens: (text) => testBuilder.expectPreprocessorTokens(text),
       expectSkippedCodeAt: (label) =>
         testBuilder.expectSkippedCode(label.toString()),
+    },
+    types: {
+      ...HarnessTypeAttributes,
+      expectTypeAt: (label, type) =>
+        testBuilder.expectTypeAt(label.toString(), type),
     },
     code: HarnessCodes,
     constants: HarnessConstants,

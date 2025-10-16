@@ -12,6 +12,11 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// DCL ANYTHING CHARACTER(10);
+//// DCL <|1:ANYTHING|> CHARACTER(10);
 
 verify.noDiagnostics(undefined, ...code.TypeSystem);
+types.expectTypeAt(1, {
+  type: types.dataTypes.String,
+  kind: types.stringKinds.Character,
+  length: 10,
+});

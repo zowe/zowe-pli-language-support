@@ -12,8 +12,14 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// DCL ANYTHING FLOAT <|1:PRECISION|>(10, 5);
+//// DCL <|1:ANYTHING|> <|2:FLOAT|> <|3:PRECISION|>(10, 5);
 
-verify.expectDiagnosticsAt(1, {
-  code: code.Error.IBM2424I.fullCode,
+types.expectTypeAt(1, {
+  type: types.dataTypes.Arithmetic,
+  scale: types.scales.Float,
+});
+verify.noDiagnostics(2, ...code.TypeSystem);
+verify.expectDiagnosticsAt(3, {
+  code: code.Error.IBM2462I.fullCode,
+  //TODO on mainframe this is: IBM2424I, scaling factors not allowed with FLOAT
 });
