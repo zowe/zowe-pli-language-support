@@ -17,7 +17,7 @@ import {
   getDefaultCompilerOptions,
 } from "../preprocessor/compiler-options/options";
 import { diagnostic, Diagnostic } from "../language-server/types";
-import { PLICodes } from "../validation/messages";
+import { PLICodes } from "../validation/pli-codes";
 import { NOT_CHARACTER } from "../utils/const";
 
 interface TwoCharToken {

@@ -10,8 +10,8 @@
  */
 
 import { Severity } from "../../language-server/types";
-import { PLICodes } from "../../validation/messages";
-import { ParametricPLICode } from "../../validation/messages/pli-codes";
+import { PLICodes } from "../../validation/pli-codes";
+import { ParametricPLICode } from "../../validation/pli-codes";
 
 export const CompilerOptionsCodes = {
   // At the moment, the actual codes are only used internally.

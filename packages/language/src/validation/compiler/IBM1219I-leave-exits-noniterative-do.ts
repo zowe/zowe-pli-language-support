@@ -13,7 +13,7 @@ import { diagnosticFromCode } from "../../language-server/types";
 import * as AST from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
 import { CompilationUnit } from "../../workspace/compilation-unit";
-import * as PLICodes from "./pli-codes";
+import * as PLICodes from "../pli-codes";
 
 /**
  * IBM1219I – LEAVE will exit noniterative DO.

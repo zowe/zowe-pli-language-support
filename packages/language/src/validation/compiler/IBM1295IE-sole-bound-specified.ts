@@ -13,7 +13,7 @@ import { getSyntaxNodeRange, Severity } from "../../language-server/types";
 import { Bound, DimensionBound, SyntaxKind } from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
 import { CompilationUnit } from "../../workspace/compilation-unit";
-import { Error } from "./pli-codes";
+import { Error } from "../pli-codes";
 
 export function IBM1295IE_sole_bound_specified(
   _: CompilationUnit,

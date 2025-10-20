@@ -36,11 +36,11 @@ import {
   PluginConfigurationProviderInstance,
   setPluginConfigurationProvider,
 } from "../src/workspace/plugin-configuration-provider";
-import { InternalCodes } from "../src/validation/messages";
+import { InternalCodes } from "../src/validation/internal-codes";
 import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
 import { tokenize } from "../src/parser/tokenizer";
 import { escapeRegExp } from "../src/parser/tokens";
-import { PLICode } from "../src/validation/messages/pli-codes";
+import { PLICode } from "../src/validation/pli-codes";
 import { isSyntaxNode, SyntaxKind } from "../src/syntax-tree/ast";
 import { isObject } from "../src/utils/types";
 import { format } from "util";
@@ -309,7 +309,7 @@ export class TestBuilder {
         }
 
         fail(
-          InternalCodes.Internal.DiagnosticURIMismatch.message(
+          InternalCodes.DiagnosticURIMismatch.message(
             label,
             labelFile,
             diagnostic.uri,

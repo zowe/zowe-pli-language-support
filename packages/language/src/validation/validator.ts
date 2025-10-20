@@ -47,10 +47,6 @@ export type ValidationChecks = Partial<{
   >[];
 }>;
 
-export interface Validator {
-  getHandlers(): ValidationChecks;
-}
-
 export class ValidationBuffer {
   private diagnostics: Diagnostic[] = [];
 
@@ -65,36 +61,30 @@ export class ValidationBuffer {
   }
 }
 
+const ppValidations = registerPreprocessorValidationChecks();
+
 export function generatePreprocessorValidationDiagnostics(
   unit: CompilationUnit,
 ): void {
-  const validator = registerPreprocessorValidationChecks(unit);
-
   const validationBuffer = new ValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
 
-  validateSyntaxNode(
-    unit,
-    unit.preprocessorAst,
-    acceptor,
-    validator.getHandlers(),
-  );
+  validateSyntaxNode(unit, unit.preprocessorAst, acceptor, ppValidations);
 
   unit.diagnostics.preprocessor = validationBuffer.getDiagnostics();
 }
+
+const pliValidations = registerPliValidationChecks();
 
 /**
  * Generates validation diagnostics (semantic checks) from the given AST node.
  */
 export function generatePliValidationDiagnostics(unit: CompilationUnit): void {
-  // TODO @montymxb Mar. 27th, 2025: Checks are generated on each invocation, not ideal, needs a rework still
-  const validator = registerPliValidationChecks(unit);
-
   const validationBuffer = new ValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
 
   // iterate over all nodes and validate them
-  validateSyntaxNode(unit, unit.ast, acceptor, validator.getHandlers());
+  validateSyntaxNode(unit, unit.ast, acceptor, pliValidations);
 
   unit.diagnostics.validation = validationBuffer.getDiagnostics();
 }

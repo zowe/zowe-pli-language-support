@@ -30,14 +30,14 @@ import { preprocessorParse } from "../parser/parser-entry";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { tokenMatcher } from "chevrotain";
-import { PLICodes } from "../validation/messages";
+import { PLICodes } from "../validation/pli-codes";
 import { FileStore } from "../workspace/file-store";
 import {
   Error as PliError,
   Info,
   Severe,
   Warning,
-} from "../validation/messages/pli-codes";
+} from "../validation/pli-codes";
 
 interface Variable {
   name: string;

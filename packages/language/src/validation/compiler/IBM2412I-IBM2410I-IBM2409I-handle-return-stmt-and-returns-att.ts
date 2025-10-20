@@ -9,15 +9,15 @@
  *
  */
 
-import { ValidationAcceptor } from "../../validator";
-import * as AST from "../../../syntax-tree/ast";
-import { diagnosticFromCode } from "../../../language-server/types";
-import { CompilationUnit } from "../../../workspace/compilation-unit";
+import { ValidationAcceptor } from "../validator";
+import * as AST from "../../syntax-tree/ast";
+import { diagnosticFromCode } from "../../language-server/types";
+import { CompilationUnit } from "../../workspace/compilation-unit";
 import * as PLICodes from "../pli-codes";
 import {
   TraversalState,
   traverseAllNodes,
-} from "../../../syntax-tree/ast-iterator";
+} from "../../syntax-tree/ast-iterator";
 
 /**
  * IBM2412I: If a procedure contains a RETURN statement, it should have the RETURNS attribute

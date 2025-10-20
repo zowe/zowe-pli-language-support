@@ -16,7 +16,7 @@ import { DefaultCompositeTypeBuilder } from "./composite-type-builder";
 import { BuilderDeclareItem } from "./descriptions";
 import { assertType } from "../preprocessor/util";
 import { diagnosticFromCode } from "../language-server/types";
-import { Error } from "../validation/messages/pli-codes";
+import { Error } from "../validation/pli-codes";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
