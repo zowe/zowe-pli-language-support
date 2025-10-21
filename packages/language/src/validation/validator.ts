@@ -24,7 +24,6 @@ import {
   CompilerOptionIssue,
   compilerOptionIssueToDiagnostics,
 } from "../preprocessor/compiler-options/options";
-import * as AST from "../syntax-tree/ast";
 import { Token } from "../parser/tokens";
 import { registerPreprocessorValidationChecks } from "./pp-validator";
 
@@ -33,20 +32,19 @@ import { registerPreprocessorValidationChecks } from "./pp-validator";
  */
 export type ValidationAcceptor = (diagnostic: Diagnostic) => void;
 
-export type ValidationFunction = (
-  node: any,
+export type ValidationFunction<T extends SyntaxNode> = (
+  node: T,
   acceptor: ValidationAcceptor,
+  compilationUnit: CompilationUnit,
 ) => void;
 
-export type SyntaxKindStrings = keyof typeof AST.SyntaxKind;
-
-export type ValidationChecks = Partial<
-  Record<SyntaxKindStrings, ValidationFunction[]>
->;
-
-export interface Validator {
-  getHandlers(): ValidationChecks;
-}
+export type ValidationChecks = Partial<{
+  [K in keyof typeof SyntaxKind as (typeof SyntaxKind)[K] extends SyntaxNode["kind"]
+    ? K
+    : never]: ValidationFunction<
+    Extract<SyntaxNode, { kind: (typeof SyntaxKind)[K] }>
+  >[];
+}>;
 
 export class ValidationBuffer {
   private diagnostics: Diagnostic[] = [];
@@ -62,31 +60,30 @@ export class ValidationBuffer {
   }
 }
 
+const ppValidations = registerPreprocessorValidationChecks();
+
 export function generatePreprocessorValidationDiagnostics(
   unit: CompilationUnit,
 ): void {
-  const validator = registerPreprocessorValidationChecks(unit);
-
   const validationBuffer = new ValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
 
-  validateSyntaxNode(unit.preprocessorAst, acceptor, validator.getHandlers());
+  validateSyntaxNode(unit, unit.preprocessorAst, acceptor, ppValidations);
 
   unit.diagnostics.preprocessor = validationBuffer.getDiagnostics();
 }
+
+const pliValidations = registerPliValidationChecks();
 
 /**
  * Generates validation diagnostics (semantic checks) from the given AST node.
  */
 export function generatePliValidationDiagnostics(unit: CompilationUnit): void {
-  // TODO @montymxb Mar. 27th, 2025: Checks are generated on each invocation, not ideal, needs a rework still
-  const validator = registerPliValidationChecks(unit);
-
   const validationBuffer = new ValidationBuffer();
   const acceptor = validationBuffer.getAcceptor();
 
   // iterate over all nodes and validate them
-  validateSyntaxNode(unit.ast, acceptor, validator.getHandlers());
+  validateSyntaxNode(unit, unit.ast, acceptor, pliValidations);
 
   unit.diagnostics.validation = validationBuffer.getDiagnostics();
 }
@@ -97,22 +94,23 @@ export function generatePliValidationDiagnostics(unit: CompilationUnit): void {
  * @param acceptor Acceptor for logging diagnostics
  * @param handlers Registered handlers for validating specific node types
  */
-// function validateSyntaxNode(node: SyntaxNode, acceptor: PliValidationAcceptor, handlers: Map<SyntaxKind, AstNodeValidator>): void {
 function validateSyntaxNode(
+  compilationUnit: CompilationUnit,
   node: SyntaxNode,
   acceptor: ValidationAcceptor,
   handlers: ValidationChecks,
 ): void {
   // get the name of enum value for node.kind
   const name = SyntaxKind[node.kind] as keyof typeof SyntaxKind;
-  if (handlers[name]) {
-    for (const validationFunc of handlers[name]) {
-      validationFunc(node, acceptor);
+  const kindHandlers = handlers[name];
+  if (kindHandlers) {
+    for (const validationFunc of kindHandlers) {
+      validationFunc(node as any, acceptor, compilationUnit);
     }
   }
 
   forEachNode(node, (childNode: SyntaxNode) => {
-    validateSyntaxNode(childNode, acceptor, handlers);
+    validateSyntaxNode(compilationUnit, childNode, acceptor, handlers);
   });
 }
 

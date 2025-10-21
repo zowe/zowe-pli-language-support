@@ -9,10 +9,10 @@
  *
  */
 
-import { diagnosticFromCode } from "../../../language-server/types";
-import * as AST from "../../../syntax-tree/ast";
-import { ValidationAcceptor } from "../../validator";
-import * as PLICodes from "../pli-codes";
+import { diagnosticFromCode } from "../../language-server/types";
+import * as AST from "../../syntax-tree/ast";
+import { ValidationAcceptor } from "../validator";
+import { PLICodes } from "../pli-codes";
 
 /**
  * IBM2615I – Warn when a doType3 statement will execute only once

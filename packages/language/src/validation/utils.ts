@@ -10,6 +10,7 @@
  */
 
 import {
+  CallStatement,
   LabelPrefix,
   ProcedureStatement,
   SyntaxKind,
@@ -21,6 +22,19 @@ export function normalizeIdentifier<T extends string>(id: T): Uppercase<T> {
 
 export function compareIdentifiers<T extends string>(lhs: T, rhs: T) {
   return normalizeIdentifier(lhs) === normalizeIdentifier(rhs);
+}
+
+export function resolveProcedureFromCall(
+  node: CallStatement,
+): ProcedureStatement | null {
+  if (!node.call?.procedure?.node) {
+    return null;
+  }
+  const labelPrefix = node.call.procedure.node;
+  if (!labelPrefix || labelPrefix.kind !== SyntaxKind.LabelPrefix) {
+    return null;
+  }
+  return retrieveProcedureFromLabelPrefix(labelPrefix);
 }
 
 /**
