@@ -16,10 +16,7 @@ import { SyntaxNode } from "../syntax-tree/ast";
 import { Token } from "../parser/tokens";
 import { InsertTextFormat, MarkupContent } from "vscode-languageserver-types";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import {
-  ParametricPLICode,
-  SimplePLICode,
-} from "../validation/messages/pli-codes";
+import { ParametricPLICode, SimplePLICode } from "../validation/pli-codes";
 
 export type Offset = number;
 

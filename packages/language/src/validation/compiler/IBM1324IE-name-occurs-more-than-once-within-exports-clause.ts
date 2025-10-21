@@ -12,7 +12,7 @@
 import { diagnosticFromCode } from "../../language-server/types";
 import { Exports } from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
-import { Error } from "./pli-codes";
+import { Error } from "../pli-codes";
 
 export function IBM1324IE_name_occurs_more_than_once_within_exports_clause(
   exports: Exports,

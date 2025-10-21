@@ -17,7 +17,7 @@ import { HarnessTesterInterface } from "../harness-interface";
 import { HarnessCodes } from "./codes";
 import { HarnessConstants } from "./constants";
 import { generateIncludeItemMarkup } from "../../../src/language-server/hover-request";
-import { PLICode } from "../../../src/validation/messages/pli-codes";
+import { PLICode } from "../../../src/validation/pli-codes";
 import { HarnessTypeAttributes } from "./type-atttributes";
 import { SyntaxKind } from "../../../src/syntax-tree/ast";
 

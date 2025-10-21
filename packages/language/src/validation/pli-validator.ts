@@ -9,26 +9,18 @@
  *
  */
 
-import { diagnosticFromCode, Severity } from "../language-server/types";
 import * as AST from "../syntax-tree/ast";
-import { forEachNode } from "../syntax-tree/ast-iterator";
-import { BuiltinsUriSchema, KNOWN_BUILTINS } from "../workspace/builtins";
-import { CompilationUnit } from "../workspace/compilation-unit";
-import {
-  PluginConfigurationProviderInstance,
-  ProcessGroup,
-  ProgramConfig,
-} from "../workspace/plugin-configuration-provider";
-import { IBM1059I_select_without_otherwise } from "./messages/info-severity/IBM1059I-select-without-otherwise";
-import { IBM1219I_leave_exits_noniterative_do } from "./messages/IBM1219I-leave-exits-noniterative-do";
-import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./messages/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
-import { IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute } from "./messages/IBM1388IE-NODESCRIPTOR-attribute-is-invalid-when-any-parameter-has-NONCONNECTED-attribute.js";
-import { IBM2615I_do_loops_execute_once } from "./messages/warning-severity/IBM2615I-do-loops-execute-once";
-import * as PLICodes from "./messages/pli-codes";
-import { ValidationAcceptor, ValidationChecks, Validator } from "./validator";
-import { IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att } from "./messages/error-severity/IBM2412I-IBM2410I-IBM2409I-handle-return-stmt-and-returns-att";
-import { TypeCheck } from "./type-check-validator";
-import { retrieveProcedureFromLabelPrefix } from "./utils";
+import { IBM1059I_select_without_otherwise } from "./compiler/IBM1059I-select-without-otherwise";
+import { IBM1219I_leave_exits_noniterative_do } from "./compiler/IBM1219I-leave-exits-noniterative-do";
+import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./compiler/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
+import { IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute } from "./compiler/IBM1388IE-NODESCRIPTOR-attribute-is-invalid-when-any-parameter-has-NONCONNECTED-attribute.js";
+import { IBM2615I_do_loops_execute_once } from "./compiler/IBM2615I-do-loops-execute-once";
+import { ValidationAcceptor, ValidationChecks } from "./validator";
+import { IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att } from "./compiler/IBM2412I-IBM2410I-IBM2409I-handle-return-stmt-and-returns-att";
+import { typeCheckDeclareStatement } from "./type-check-validator";
+import { checkImplicitBuiltins } from "./language-server/implicit-builtins";
+import { IBM1376IE_attributes_in_declaration_lists } from "./compiler/IBM1376IE-attributes-in-declaration-lists";
+import { IBM3323I_IBM3324I_check_argument_count } from "./compiler/IBM3323I-IBM3324I-check-argument-count";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -37,68 +29,33 @@ import { retrieveProcedureFromLabelPrefix } from "./utils";
 /**
  * Register custom validation checks.
  */
-export function registerPliValidationChecks(unit: CompilationUnit): Validator {
-  const validator = new PliValidator(unit);
-  const typeCheck = new TypeCheck(unit);
-  validator.addHandler({
-    // DimensionBound: [IBM1295IE_sole_bound_specified],
-    Program: [validator.checkPliProgram],
+export function registerPliValidationChecks(): ValidationChecks {
+  return {
     Exports: [IBM1324IE_name_occurs_more_than_once_within_exports_clause],
-    ReturnsOption: [validator.checkReturnsOption],
     // TODO @montymxb Mar. 27th, 2025: Needs to have a way to readily access the containing 'document' (SourceFile) to compare the offsets (see def)
     // MemberCall: [IBM1747IS_Function_cannot_be_used_before_the_functions_descriptor_list_has_been_scanned],
     ProcedureStatement: [
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
       IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att,
     ],
-    LabelReference: [validator.checkLabelReference],
-    CallStatement: [
-      validator.checkCallStatement,
-      validator.checkArgumentCount.bind(validator),
-    ],
-    DefineOrdinalStatement: [validator.checkDefineOrdinalStatement],
+    CallStatement: [IBM3323I_IBM3324I_check_argument_count],
     DeclareStatement: [
-      validator.checkDeclareStatement,
-      typeCheck.checkDeclareStatement.bind(typeCheck),
+      IBM1376IE_attributes_in_declaration_lists,
+      typeCheckDeclareStatement,
     ],
-    ReferenceItem: [validator.checkImplicitBuiltins.bind(validator)],
+    ReferenceItem: [checkImplicitBuiltins],
     DoStatement: [IBM2615I_do_loops_execute_once],
     LeaveStatement: [IBM1219I_leave_exits_noniterative_do],
     SelectStatement: [IBM1059I_select_without_otherwise],
     // TODO @wagner-laranjeiras -> When adding ReturnStatement to this list, make sure to include comment about IBM2412/10/09I.
-  });
-
-  return validator;
+  };
 }
 
+// TODO: Refactor validation methods of this class into their own files and add tests
 /**
  * Implementation of custom validations.
  */
-export class PliValidator implements Validator {
-  protected handlers: ValidationChecks = {};
-  protected programConfig: ProgramConfig | undefined = undefined;
-  protected processGroup: ProcessGroup | undefined = undefined;
-
-  constructor(protected compilationUnit: CompilationUnit) {
-    this.programConfig = PluginConfigurationProviderInstance.getProgramConfig(
-      compilationUnit.uri,
-    );
-    if (this.programConfig) {
-      this.processGroup =
-        PluginConfigurationProviderInstance.getProcessGroupConfig(
-          this.programConfig.pgroup,
-        );
-    }
-  }
-
-  getHandlers(): ValidationChecks {
-    return this.handlers;
-  }
-
-  addHandler(handlerConfig: ValidationChecks) {
-    this.handlers = { ...this.handlers, ...handlerConfig };
-  }
-
+export class PliValidator {
   /**
    * Verify programs contain at least one parsed statement
    */
@@ -111,27 +68,6 @@ export class PliValidator implements Validator {
       //   uri: "", // TODO @montymxb Still need to supply URI for this document we're working in
       // });
     }
-  }
-
-  checkDeclareStatement(
-    node: AST.DeclareStatement,
-    accept: ValidationAcceptor,
-  ): void {
-    const checkNode = (hasLevel: boolean) => (child: AST.SyntaxNode) => {
-      if (child.kind === AST.SyntaxKind.DeclaredItem) {
-        if (hasLevel && child.levelToken) {
-          accept(diagnosticFromCode(PLICodes.Error.IBM1376I, child.levelToken));
-        }
-
-        const childHasLevel = child.level !== undefined;
-        const nextCheckNode = checkNode(childHasLevel);
-        child.elements.forEach(nextCheckNode);
-      } else {
-        forEachNode(child, checkNode(false));
-      }
-    };
-
-    node.items.forEach(checkNode(false));
   }
 
   /**
@@ -206,79 +142,6 @@ export class PliValidator implements Validator {
       //   // property: "label",
       //   // node
       // });
-    }
-  }
-
-  checkPreprocessorCallProcedure(
-    node: AST.CallStatement,
-    acceptor: ValidationAcceptor,
-  ): void {
-    const procedure = this.resolveProcedure(node);
-    if (!procedure) {
-      if (node.call?.procedure?.token) {
-        acceptor(
-          diagnosticFromCode(
-            PLICodes.Severe.IBM3968I,
-            node.call.procedure.token,
-          ),
-        );
-      }
-      return;
-    }
-    const callToken = node.call!.procedure!.token;
-    if (procedure.statement) {
-      acceptor(diagnosticFromCode(PLICodes.Severe.IBM3971I, callToken));
-    }
-    if (
-      procedure.options.some(
-        (option) => option.kind === AST.SyntaxKind.ReturnsOption,
-      )
-    ) {
-      acceptor(diagnosticFromCode(PLICodes.Severe.IBM3970I, callToken));
-    }
-  }
-
-  private resolveProcedure(
-    node: AST.CallStatement,
-  ): AST.ProcedureStatement | null {
-    if (!node.call?.procedure?.node) {
-      return null;
-    }
-    const labelPrefix = node.call.procedure.node;
-    if (!labelPrefix || labelPrefix.kind !== AST.SyntaxKind.LabelPrefix) {
-      return null;
-    }
-    return retrieveProcedureFromLabelPrefix(labelPrefix);
-  }
-
-  checkArgumentCount(
-    node: AST.CallStatement,
-    acceptor: ValidationAcceptor,
-  ): void {
-    const procedure = this.resolveProcedure(node);
-    if (!procedure) {
-      return;
-    }
-    const callToken = node.call!.procedure!.token;
-    const expectedArgs = procedure.parameters.length;
-    const providedArgs = node.call?.args1?.list.length || 0;
-
-    if (providedArgs < expectedArgs) {
-      acceptor(
-        diagnosticFromCode(
-          PLICodes.Warning.IBM3323I,
-          callToken,
-          callToken.image,
-        ),
-      );
-    } else if (providedArgs > expectedArgs) {
-      acceptor(
-        diagnosticFromCode(
-          PLICodes.Warning.IBM3324I,
-          callToken,
-          callToken.image,
-        ),
-      );
     }
   }
 
@@ -376,59 +239,6 @@ export class PliValidator implements Validator {
         // add it in, normalizing precision & prec to 'prec' along the way
         attrSet.add(lattr.match(/prec/) ? "prec" : lattr);
       }
-    }
-  }
-
-  // Builtins after this offset are valid to be used even if not listed
-  private knownBuiltinsOffset = 0;
-
-  checkImplicitBuiltins(
-    node: AST.ReferenceItem,
-    acceptor: ValidationAcceptor,
-  ): void {
-    // Skip if there is no process group information available.
-    if (!this.processGroup) {
-      return;
-    }
-
-    // Check for present name
-    if (!node.ref?.node?.name) {
-      return;
-    }
-
-    const nameToken = node.ref?.node?.nameToken;
-    const uri = nameToken?.uri;
-
-    // Check if the reference item is a builtin.
-    if (!nameToken || !uri || uri?.scheme !== BuiltinsUriSchema) {
-      return;
-    }
-
-    // This is a rather hacky way to determine what are "valid" builtins
-    // We should have a separate file for that
-    // TODO: Refactor this, probably when fixing the LSP features for builtins
-    if (this.knownBuiltinsOffset === 0) {
-      const file = this.compilationUnit.services.files.getDocument(uri);
-      if (!file) {
-        return;
-      }
-      const text = file.getText();
-      this.knownBuiltinsOffset = text.indexOf(KNOWN_BUILTINS);
-    }
-
-    const name = nameToken.image;
-    if (
-      nameToken.startOffset < this.knownBuiltinsOffset &&
-      !this.processGroup.implicitBuiltins.has(name)
-    ) {
-      acceptor({
-        ...diagnosticFromCode(
-          PLICodes.Error.IBM1373I,
-          node.ref.token,
-          node.ref.text,
-        ),
-        severity: Severity.W, // Downgrade to a warning.
-      });
     }
   }
 }

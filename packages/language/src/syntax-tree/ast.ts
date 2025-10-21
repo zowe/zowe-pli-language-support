@@ -79,7 +79,6 @@ export enum SyntaxKind {
   DoSpecification,
   DoStatement,
   DoType3,
-  DoType3Variable,
   DoUntil,
   DoWhile,
   EFormatItem,

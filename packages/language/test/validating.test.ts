@@ -11,7 +11,7 @@
 
 import { describe, expect, test } from "vitest";
 import { Severity } from "../src/language-server/types";
-import * as PLICodes from "../src/validation/messages/pli-codes";
+import * as PLICodes from "../src/validation/pli-codes";
 import { collectDiagnostics } from "../src/workspace/compilation-unit";
 import { assertDiagnostic, assertNoDiagnostics, parse } from "./utils";
 import { TestBuilder } from "./test-builder";

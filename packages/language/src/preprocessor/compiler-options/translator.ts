@@ -21,7 +21,7 @@ import {
 import {
   ParametricPLICode,
   Warning as PLIWarning,
-} from "../../validation/messages/pli-codes";
+} from "../../validation/pli-codes";
 import { Token } from "../../parser/tokens";
 import { CompilerOptionsCodes } from "./codes";
 

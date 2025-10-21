@@ -15,7 +15,7 @@
  * from PL/I Messages & Codes 6.1 Documentation
  * Version 6 Release 1 (GC31-5717-00)
  **/
-import { Severity } from "../../language-server/types";
+import { Severity } from "../language-server/types";
 
 export type PLICode = SimplePLICode | ParametricPLICode;
 
@@ -25844,3 +25844,16 @@ export const Severe = {
     fullCode: "IBM3999IU",
   },
 };
+
+// Local aliases for export
+const localSevere = Severe;
+const localError = Error;
+const localWarning = Warning;
+const localInfo = Info;
+
+export namespace PLICodes {
+  export const Severe = localSevere;
+  export const Error = localError;
+  export const Warning = localWarning;
+  export const Info = localInfo;
+}

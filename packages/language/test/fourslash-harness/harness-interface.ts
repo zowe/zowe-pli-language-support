@@ -11,15 +11,17 @@
 
 import { CompletionKeywords } from "../../src/language-server/completion/keywords";
 import { Diagnostic } from "../../src/language-server/types";
-import { InternalCodes, PLICodes } from "../../src/validation/messages";
 import { ExpectedCompletion, Label, TestBuilder } from "../test-builder";
 import { type Severity } from "../../src/language-server/types";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
 import { PliMarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
 import { CompilerOptionsCodes } from "../../src/preprocessor/compiler-options/codes";
 import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
-import { TypeSystem } from "../../src/validation/messages/internal-codes";
-import { PLICode } from "../../src/validation/messages/pli-codes";
+import {
+  InternalCodes,
+  TypeSystemCodes,
+} from "../../src/validation/internal-codes";
+import { PLICode, PLICodes } from "../../src/validation/pli-codes";
 import { SyntaxKind } from "../../src/syntax-tree/ast";
 import {
   AccessMode,
@@ -270,7 +272,7 @@ export interface HarnessTesterInterface {
     Warning: typeof PLICodes.Warning;
     Information: typeof PLICodes.Info;
     Error: typeof PLICodes.Error;
-    Internal: typeof InternalCodes.Internal;
+    Internal: typeof InternalCodes;
     Lexer: {
       Margins: {
         ErrorLeft: typeof PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT;
@@ -278,7 +280,7 @@ export interface HarnessTesterInterface {
       };
     };
     CompilerOptions: typeof CompilerOptionsCodes;
-    TypeSystem: typeof TypeSystem;
+    TypeSystem: typeof TypeSystemCodes;
   };
 
   constants: {
