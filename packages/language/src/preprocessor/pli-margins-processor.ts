@@ -17,7 +17,7 @@ import {
 } from "../language-server/types";
 import { CompilerOptionsProcessorResult } from "./compiler-options-processor";
 import { URI } from "../utils/uri";
-import { Warning } from "../validation/messages/pli-codes";
+import { Warning } from "../validation/pli-codes";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 
 const NEWLINE = "\n".charCodeAt(0);

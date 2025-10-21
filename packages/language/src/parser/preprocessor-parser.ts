@@ -24,7 +24,7 @@ import {
   diagnosticFromCode,
   Severity,
 } from "../language-server/types";
-import { PLICodes } from "../validation/messages";
+import { PLICodes } from "../validation/pli-codes";
 
 export function consumeTokenStatement(state: ParserState): ast.Statement {
   const tokenStatement = ast.createTokenStatement();

@@ -35,7 +35,11 @@ import {
   BuiltinsTextDocument,
   BuiltinsUriSchema,
 } from "./builtins.js";
-import { PluginConfigurationProviderInstance } from "./plugin-configuration-provider.js";
+import {
+  PluginConfigurationProviderInstance,
+  ProcessGroup,
+  ProgramConfig,
+} from "./plugin-configuration-provider.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
 import { Mutex } from "./mutex.js";
 import { isOperationCancelled } from "../utils/promises.js";
@@ -77,7 +81,9 @@ export interface CompilationUnit {
   instructionCache: InstructionCache;
   rootScope: Scope;
   rootPreprocessorScope: Scope;
-  services: CompilationServices;
+  readonly services: CompilationServices;
+  readonly programConfig: ProgramConfig | undefined;
+  readonly processGroup: ProcessGroup | undefined;
 }
 
 export interface CompilationServices {
@@ -189,6 +195,17 @@ export async function createCompilationUnit(
       }),
     rootScope: undefined!, // Assigned later
     rootPreprocessorScope: undefined!, // Assigned later
+    get programConfig() {
+      return PluginConfigurationProviderInstance.getProgramConfig(uri);
+    },
+    get processGroup() {
+      if (this.programConfig) {
+        return PluginConfigurationProviderInstance.getProcessGroupConfig(
+          this.programConfig.pgroup,
+        );
+      }
+      return undefined;
+    },
   };
 
   unit.rootScope = await getBuiltinScope(uri, unit);
@@ -218,7 +235,8 @@ export class CompilationUnitHandler {
       return this.compilationUnits.get(uri.toString());
     } else if (!PluginConfigurationProviderInstance.isLibFileCandidate(uri)) {
       // non-library files should always generate a compilation unit
-      return await this.createAndStoreCompilationUnit(uri);
+      const unit = await this.createAndStoreCompilationUnit(uri);
+      return unit;
     } else {
       // do not generate compilation units for standalone library files
       return undefined;
@@ -246,7 +264,7 @@ export class CompilationUnitHandler {
   }
 
   getAllCompilationUnits(): CompilationUnit[] {
-    return Array.from(this.compilationUnits.values());
+    return Array.from(new Set(this.compilationUnits.values()));
   }
 
   listen(connection: Connection): void {
