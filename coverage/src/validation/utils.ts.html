@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.33% </span>
+                <span class="strong">87.5% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>30/36</span>
+                <span class='fraction'>42/48</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.66% </span>
+                <span class="strong">94.44% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>11/12</span>
+                <span class='fraction'>17/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">60% </span>
+                <span class="strong">66.66% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/5</span>
+                <span class='fraction'>4/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.33% </span>
+                <span class="strong">87.5% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>30/36</span>
+                <span class='fraction'>42/48</span>
             </div>
         
             
@@ -141,7 +141,21 @@
 <a name='L76'></a><a href='#L76'>76</a>
 <a name='L77'></a><a href='#L77'>77</a>
 <a name='L78'></a><a href='#L78'>78</a>
-<a name='L79'></a><a href='#L79'>79</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -158,6 +172,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -165,6 +180,19 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">99x</span>
+<span class="cline-any cline-yes">99x</span>
+<span class="cline-any cline-yes">99x</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-yes">99x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">68x</span>
+<span class="cline-any cline-yes">68x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -231,6 +259,7 @@
  */
 &nbsp;
 import {
+  CallStatement,
   LabelPrefix,
   ProcedureStatement,
   SyntaxKind,
@@ -243,6 +272,19 @@ export <span class="fstat-no" title="function not covered" >function normalizeId
 export <span class="fstat-no" title="function not covered" >function compareIdentifiers&lt;T extends string&gt;(lhs: T, rhs: T) {</span>
 <span class="cstat-no" title="statement not covered" >  return normalizeIdentifier(lhs) === normalizeIdentifier(rhs);</span>
 <span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+export function resolveProcedureFromCall(
+  node: CallStatement,
+): ProcedureStatement | null {
+  if (!node.call?.procedure?.node) {
+    return null;
+  }
+  const labelPrefix = node.call.procedure.node;
+  if (!labelPrefix || labelPrefix.kind !== SyntaxKind.LabelPrefix) {
+    return null;
+  }
+  return retrieveProcedureFromLabelPrefix(labelPrefix);
+}
 &nbsp;
 /**
  * Helper to attempt to retrieve a procedure statement from a label prefix.
@@ -304,7 +346,7 @@ export function labelPrefixPointsToPackage(labelPrefix: LabelPrefix) {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-16T13:58:42.123Z
+                at 2025-10-21T10:31:32.631Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

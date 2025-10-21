@@ -3,15 +3,15 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/validation/messages/pli-codes.ts</title>
+    <title>Code coverage report for src/validation/pli-codes.ts</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="../../../prettify.css" />
-    <link rel="stylesheet" href="../../../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(../../../sort-arrow-sprite.png);
+            background-image: url(../../sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -19,20 +19,20 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/validation/messages</a> pli-codes.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/validation</a> pli-codes.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">91.86% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>11432/12445</span>
+                <span class='fraction'>11441/12454</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>24/24</span>
+                <span class='fraction'>25/25</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">91.86% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>11432/12445</span>
+                <span class='fraction'>11441/12454</span>
             </div>
         
             
@@ -25909,7 +25909,20 @@
 <a name='L25844'></a><a href='#L25844'>25844</a>
 <a name='L25845'></a><a href='#L25845'>25845</a>
 <a name='L25846'></a><a href='#L25846'>25846</a>
-<a name='L25847'></a><a href='#L25847'>25847</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L25847'></a><a href='#L25847'>25847</a>
+<a name='L25848'></a><a href='#L25848'>25848</a>
+<a name='L25849'></a><a href='#L25849'>25849</a>
+<a name='L25850'></a><a href='#L25850'>25850</a>
+<a name='L25851'></a><a href='#L25851'>25851</a>
+<a name='L25852'></a><a href='#L25852'>25852</a>
+<a name='L25853'></a><a href='#L25853'>25853</a>
+<a name='L25854'></a><a href='#L25854'>25854</a>
+<a name='L25855'></a><a href='#L25855'>25855</a>
+<a name='L25856'></a><a href='#L25856'>25856</a>
+<a name='L25857'></a><a href='#L25857'>25857</a>
+<a name='L25858'></a><a href='#L25858'>25858</a>
+<a name='L25859'></a><a href='#L25859'>25859</a>
+<a name='L25860'></a><a href='#L25860'>25860</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -51755,6 +51768,19 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -51772,7 +51798,7 @@
  * from PL/I Messages &amp; Codes 6.1 Documentation
  * Version 6 Release 1 (GC31-5717-00)
  **/
-import { Severity } from "../../language-server/types";
+import { Severity } from "../language-server/types";
 &nbsp;
 export type PLICode = SimplePLICode | ParametricPLICode;
 &nbsp;
@@ -77601,6 +77627,19 @@ export const Severe = {
     fullCode: "IBM3999IU",
   },
 };
+&nbsp;
+// Local aliases for export
+const localSevere = Severe;
+const localError = Error;
+const localWarning = Warning;
+const localInfo = Info;
+&nbsp;
+export namespace PLICodes {
+  export const Severe = localSevere;
+  export const Error = localError;
+  export const Warning = localWarning;
+  export const Info = localInfo;
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -77608,16 +77647,16 @@ export const Severe = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-16T13:58:42.123Z
+                at 2025-10-21T10:31:32.631Z
             </div>
-        <script src="../../../prettify.js"></script>
+        <script src="../../prettify.js"></script>
         <script>
             window.onload = function () {
                 prettyPrint();
             };
         </script>
-        <script src="../../../sorter.js"></script>
-        <script src="../../../block-navigation.js"></script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
     </body>
 </html>
     

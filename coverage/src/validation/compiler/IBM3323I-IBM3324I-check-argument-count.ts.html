@@ -3,15 +3,15 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/validation/type-check-validator.ts</title>
+    <title>Code coverage report for src/validation/compiler/IBM3323I-IBM3324I-check-argument-count.ts</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="../../prettify.css" />
-    <link rel="stylesheet" href="../../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(../../sort-arrow-sprite.png);
+            background-image: url(../../../sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -19,20 +19,20 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/validation</a> type-check-validator.ts</h1>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/validation/compiler</a> IBM3323I-IBM3324I-check-argument-count.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>24/24</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>24/24</span>
             </div>
         
             
@@ -85,49 +85,67 @@
 <a name='L20'></a><a href='#L20'>20</a>
 <a name='L21'></a><a href='#L21'>21</a>
 <a name='L22'></a><a href='#L22'>22</a>
-<a name='L23'></a><a href='#L23'>23</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">299x</span>
-<span class="cline-any cline-yes">299x</span>
-<span class="cline-any cline-yes">299x</span>
-<span class="cline-any cline-yes">299x</span>
-<span class="cline-any cline-yes">299x</span>
-<span class="cline-any cline-yes">299x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
- * This program and the accompanying materials are made available under the terms of the
- * Eclipse Public License v2.0 which accompanies this distribution, and is available at
- * https://www.eclipse.org/legal/epl-v20.html
- *
- * SPDX-License-Identifier: EPL-2.0
- *
- * Copyright Contributors to the Zowe Project.
- *
- */
+<span class="cline-any cline-yes">87x</span>
+<span class="cline-any cline-yes">87x</span>
+<span class="cline-any cline-yes">87x</span>
+<span class="cline-any cline-yes">87x</span>
+<span class="cline-any cline-yes">87x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-yes">87x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">87x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">87x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">87x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { diagnosticFromCode } from "../../language-server/types";
+import { CallStatement } from "../../syntax-tree/ast";
+import { PLICodes } from "../pli-codes";
+import { resolveProcedureFromCall } from "../utils";
+import { ValidationAcceptor } from "../validator";
 &nbsp;
-import * as ast from "../syntax-tree/ast";
-import { CompilationUnit } from "../workspace/compilation-unit";
-import { ValidationAcceptor } from "./validator";
+export function IBM3323I_IBM3324I_check_argument_count(
+  node: CallStatement,
+  acceptor: ValidationAcceptor,
+): void {
+  const procedure = resolveProcedureFromCall(node);
+  if (!procedure) {
+    return;
+  }
+  const callToken = node.call!.procedure!.token;
+  const expectedArgs = procedure.parameters.length;
+  const providedArgs = node.call?.args1?.list.length || 0;
 &nbsp;
-export function typeCheckDeclareStatement(
-  declareStatement: ast.DeclareStatement,
-  _acceptor: ValidationAcceptor,
-  compilationUnit: CompilationUnit,
-) {
-  compilationUnit.services.inferer.inferType(declareStatement, compilationUnit);
+  if (providedArgs &lt; expectedArgs) {
+    acceptor(
+      diagnosticFromCode(PLICodes.Warning.IBM3323I, callToken, callToken.image),
+    );
+  } else if (providedArgs &gt; expectedArgs) {
+    acceptor(
+      diagnosticFromCode(PLICodes.Warning.IBM3324I, callToken, callToken.image),
+    );
+  }
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -138,14 +156,14 @@ export function typeCheckDeclareStatement(
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
                 at 2025-10-21T10:31:32.631Z
             </div>
-        <script src="../../prettify.js"></script>
+        <script src="../../../prettify.js"></script>
         <script>
             window.onload = function () {
                 prettyPrint();
             };
         </script>
-        <script src="../../sorter.js"></script>
-        <script src="../../block-navigation.js"></script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
     </body>
 </html>
     
