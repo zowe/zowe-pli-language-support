@@ -14,9 +14,9 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { ValidationAcceptor } from "./validator";
 
 export function typeCheckDeclareStatement(
-  compilationUnit: CompilationUnit,
   declareStatement: ast.DeclareStatement,
   _acceptor: ValidationAcceptor,
+  compilationUnit: CompilationUnit,
 ) {
   compilationUnit.services.inferer.inferType(declareStatement, compilationUnit);
 }

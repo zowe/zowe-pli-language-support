@@ -19,8 +19,7 @@ import {
   diagnosticFromCode,
   Severity,
 } from "../language-server/types";
-import { PLICodes } from "../validation/pli-codes";
-import { SimplePLICode } from "../validation/pli-codes";
+import { PLICodes, SimplePLICode } from "../validation/pli-codes";
 
 export function preprocessorParserState(tokens: t.Token[]): ParserState {
   return new ParserState(tokens, ParserStateMode.Preprocessor);

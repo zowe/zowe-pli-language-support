@@ -32,12 +32,6 @@ import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { tokenMatcher } from "chevrotain";
 import { PLICodes } from "../validation/pli-codes";
 import { FileStore } from "../workspace/file-store";
-import {
-  Error as PliError,
-  Info,
-  Severe,
-  Warning,
-} from "../validation/pli-codes";
 
 interface Variable {
   name: string;
@@ -561,7 +555,7 @@ function tryValueToNumber(
   }
   token &&
     context.diagnostics.push(
-      diagnosticFromCode(Severe.IBM3948I, token, "CONVERSION", "612"),
+      diagnosticFromCode(PLICodes.Severe.IBM3948I, token, "CONVERSION", "612"),
     );
   return undefined;
 }
@@ -589,7 +583,7 @@ function runNoteInstruction(
       case 2:
       case 3:
         error = diagnosticFromCode(
-          Info.IBM1040I,
+          PLICodes.Info.IBM1040I,
           instruction.noteToken,
           message,
         );
@@ -599,7 +593,7 @@ function runNoteInstruction(
       case 6:
       case 7:
         error = diagnosticFromCode(
-          Warning.IBM1157I,
+          PLICodes.Warning.IBM1157I,
           instruction.noteToken,
           message,
         );
@@ -609,7 +603,7 @@ function runNoteInstruction(
       case 10:
       case 11:
         error = diagnosticFromCode(
-          PliError.IBM1390I,
+          PLICodes.Error.IBM1390I,
           instruction.noteToken,
           message,
         );
@@ -619,14 +613,14 @@ function runNoteInstruction(
       case 14:
       case 15:
         error = diagnosticFromCode(
-          Severe.IBM1940I,
+          PLICodes.Severe.IBM1940I,
           instruction.noteToken,
           message,
         );
         break;
       default:
         error = diagnosticFromCode(
-          Severe.IBM1941I,
+          PLICodes.Severe.IBM1941I,
           instruction.noteToken,
           message,
         );

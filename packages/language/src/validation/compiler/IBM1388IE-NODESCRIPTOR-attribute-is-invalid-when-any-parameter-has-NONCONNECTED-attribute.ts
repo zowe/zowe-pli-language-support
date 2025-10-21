@@ -15,12 +15,10 @@ import {
   SimpleOptionsItem,
   SyntaxKind,
 } from "../../syntax-tree/ast";
-import { CompilationUnit } from "../../workspace/compilation-unit";
 import { compareIdentifiers, normalizeIdentifier } from "../utils";
 import { ValidationAcceptor } from "../validator";
 
 export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute(
-  _: CompilationUnit,
   procedureStatement: ProcedureStatement,
   accept: ValidationAcceptor,
 ): void {

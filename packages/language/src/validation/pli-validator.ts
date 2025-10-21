@@ -10,7 +10,6 @@
  */
 
 import * as AST from "../syntax-tree/ast";
-import { CompilationUnit } from "../workspace/compilation-unit";
 import { IBM1059I_select_without_otherwise } from "./compiler/IBM1059I-select-without-otherwise";
 import { IBM1219I_leave_exits_noniterative_do } from "./compiler/IBM1219I-leave-exits-noniterative-do";
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./compiler/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
@@ -60,11 +59,7 @@ export class PliValidator {
   /**
    * Verify programs contain at least one parsed statement
    */
-  checkPliProgram(
-    unit: CompilationUnit,
-    node: AST.Program,
-    acceptor: ValidationAcceptor,
-  ): void {
+  checkPliProgram(node: AST.Program, acceptor: ValidationAcceptor): void {
     if (node.statements.length === 0) {
       // TODO: Reimplement this validation and add tests
       // acceptor(Severity.S, PLICodes.Severe.IBM1917I.message, {
@@ -79,7 +74,6 @@ export class PliValidator {
    * Checks return options for mutually exclusive attributes
    */
   checkReturnsOption(
-    compilationUnit: CompilationUnit,
     node: AST.ReturnsOption,
     acceptor: ValidationAcceptor,
   ): void {
@@ -128,7 +122,6 @@ export class PliValidator {
    * Verify label references
    */
   checkLabelReference(
-    compilationUnit: CompilationUnit,
     node: AST.LabelReference,
     acceptor: ValidationAcceptor,
   ): void {
@@ -156,7 +149,6 @@ export class PliValidator {
    * Validate call statements to external declarations (requires an entry check)
    */
   checkCallStatement(
-    compilationUnit: CompilationUnit,
     node: AST.CallStatement,
     acceptor: ValidationAcceptor,
   ): void {
@@ -206,7 +198,6 @@ export class PliValidator {
    * Ensure ordinal statements don't have conflicting attributes, and only 1 precision attribute
    */
   checkDefineOrdinalStatement(
-    compilationUnit: CompilationUnit,
     node: AST.DefineOrdinalStatement,
     acceptor: ValidationAcceptor,
   ): void {

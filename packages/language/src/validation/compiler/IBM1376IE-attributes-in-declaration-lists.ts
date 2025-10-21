@@ -16,12 +16,10 @@ import {
   SyntaxNode,
 } from "../../syntax-tree/ast";
 import { forEachNode } from "../../syntax-tree/ast-iterator";
-import { CompilationUnit } from "../../workspace/compilation-unit";
 import { PLICodes } from "../pli-codes";
 import { ValidationAcceptor } from "../validator";
 
 export function IBM1376IE_attributes_in_declaration_lists(
-  compilationUnit: CompilationUnit,
   node: DeclareStatement,
   accept: ValidationAcceptor,
 ): void {

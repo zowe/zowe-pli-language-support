@@ -24,7 +24,6 @@ import {
   CompilerOptionIssue,
   compilerOptionIssueToDiagnostics,
 } from "../preprocessor/compiler-options/options";
-import * as AST from "../syntax-tree/ast";
 import { Token } from "../parser/tokens";
 import { registerPreprocessorValidationChecks } from "./pp-validator";
 
@@ -34,13 +33,13 @@ import { registerPreprocessorValidationChecks } from "./pp-validator";
 export type ValidationAcceptor = (diagnostic: Diagnostic) => void;
 
 export type ValidationFunction<T extends SyntaxNode> = (
-  compilationUnit: CompilationUnit,
   node: T,
   acceptor: ValidationAcceptor,
+  compilationUnit: CompilationUnit,
 ) => void;
 
 export type ValidationChecks = Partial<{
-  [K in keyof typeof AST.SyntaxKind as (typeof AST.SyntaxKind)[K] extends SyntaxNode["kind"]
+  [K in keyof typeof SyntaxKind as (typeof SyntaxKind)[K] extends SyntaxNode["kind"]
     ? K
     : never]: ValidationFunction<
     Extract<SyntaxNode, { kind: (typeof SyntaxKind)[K] }>
@@ -106,7 +105,7 @@ function validateSyntaxNode(
   const kindHandlers = handlers[name];
   if (kindHandlers) {
     for (const validationFunc of kindHandlers) {
-      validationFunc(compilationUnit, node as any, acceptor);
+      validationFunc(node as any, acceptor, compilationUnit);
     }
   }
 

@@ -9,9 +9,9 @@ import { ValidationAcceptor } from "../validator";
 let knownBuiltinsOffset = 0;
 
 export function checkImplicitBuiltins(
-  compilationUnit: CompilationUnit,
   node: AST.ReferenceItem,
   acceptor: ValidationAcceptor,
+  compilationUnit: CompilationUnit,
 ): void {
   // Skip if there is no process group information available.
   if (!compilationUnit.processGroup) {

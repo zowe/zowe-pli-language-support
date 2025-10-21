@@ -1,12 +1,10 @@
 import { diagnosticFromCode } from "../../language-server/types";
 import { CallStatement } from "../../syntax-tree/ast";
-import { CompilationUnit } from "../../workspace/compilation-unit";
 import { PLICodes } from "../pli-codes";
 import { resolveProcedureFromCall } from "../utils";
 import { ValidationAcceptor } from "../validator";
 
 export function IBM3323I_IBM3324I_check_argument_count(
-  compilationUnit: CompilationUnit,
   node: CallStatement,
   acceptor: ValidationAcceptor,
 ): void {

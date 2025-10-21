@@ -1,12 +1,10 @@
 import { diagnosticFromCode } from "../../language-server/types";
 import { CallStatement, SyntaxKind } from "../../syntax-tree/ast";
-import { CompilationUnit } from "../../workspace/compilation-unit";
 import { PLICodes } from "../pli-codes";
 import { resolveProcedureFromCall } from "../utils";
 import { ValidationAcceptor } from "../validator";
 
 export function IBM3970IS_IBM3971IS_check_pp_call_procedure(
-  compilationUnit: CompilationUnit,
   node: CallStatement,
   acceptor: ValidationAcceptor,
 ): void {

@@ -11,12 +11,10 @@
 
 import { diagnosticFromCode } from "../../language-server/types";
 import { Exports } from "../../syntax-tree/ast";
-import { CompilationUnit } from "../../workspace/compilation-unit";
 import { ValidationAcceptor } from "../validator";
 import { Error } from "../pli-codes";
 
 export function IBM1324IE_name_occurs_more_than_once_within_exports_clause(
-  _: CompilationUnit,
   exports: Exports,
   accept: ValidationAcceptor,
 ): void {

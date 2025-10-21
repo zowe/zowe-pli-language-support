@@ -12,7 +12,6 @@
 import { diagnosticFromCode } from "../../language-server/types";
 import * as AST from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
-import { CompilationUnit } from "../../workspace/compilation-unit";
 import * as PLICodes from "../pli-codes";
 
 /**
@@ -21,7 +20,6 @@ import * as PLICodes from "../pli-codes";
  * Warn when an unlabeled LEAVE sits inside a non-iterative DO.
  */
 export function IBM1219I_leave_exits_noniterative_do(
-  _: CompilationUnit,
   node: AST.LeaveStatement,
   acceptor: ValidationAcceptor,
 ): void {
