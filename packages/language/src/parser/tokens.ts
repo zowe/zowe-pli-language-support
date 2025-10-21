@@ -173,6 +173,11 @@ export const Boolean = registerCombination("Boolean");
 export const LocateType = registerCombination("LocateType");
 export const OpenOptionType = registerCombination("OpenOptionType");
 export const VX = registerCombination("VX");
+export const CharOrBinary = registerCombination("CharOrBinary");
+export const LOB = registerCombination("LOB");
+export const LOBLocator = registerCombination("LOBLocator");
+export const LOBFile = registerCombination("LOBFile");
+export const LOBSize = registerCombination("LOBSize");
 
 // Custom functions
 
@@ -382,7 +387,7 @@ export const STATEMENT = registerKeyword({
 });
 export const CHARACTER = registerKeyword({
   name: ["CHARACTER", "CHAR"],
-  categories: [DefaultAttribute, AllocateAttributeType, Char],
+  categories: [DefaultAttribute, AllocateAttributeType, Char, CharOrBinary],
 });
 export const DIMACROSS = registerKeyword({
   name: "DIMACROSS",
@@ -805,7 +810,11 @@ export const CANCEL = registerKeyword({
   name: "CANCEL",
 });
 export const BINARY = registerKeyword({
-  name: ["BINARY", "BIN"],
+  name: "BINARY",
+  categories: [DefaultAttribute, CharOrBinary],
+});
+export const BIN = registerKeyword({
+  name: "BIN",
   categories: [DefaultAttribute],
 });
 export const FORMAT = registerKeyword({
@@ -1419,6 +1428,15 @@ export const E = registerKeyword({
 });
 export const G = registerKeyword({
   name: "G",
+  categories: [LOBSize],
+});
+export const K = registerKeyword({
+  name: "K",
+  categories: [LOBSize],
+});
+export const M = registerKeyword({
+  name: "M",
+  categories: [LOBSize],
 });
 export const P = registerKeyword({
   name: "P",
@@ -1483,6 +1501,72 @@ export const Percent = createToken({
   name: "%",
   pattern: Lexer.NA,
 });
+
+// "SQL TYPE IS" attribute tokens
+// https://www.ibm.com/docs/en/db2-for-zos/12.0.0?topic=pli-host-variable-arrays-in
+export const SQL = registerKeyword({
+  name: "SQL",
+});
+export const IS = registerKeyword({
+  name: "IS",
+});
+export const XML = registerKeyword({
+  name: "XML",
+});
+export const AS = registerKeyword({
+  name: "AS",
+});
+export const LARGE = registerKeyword({
+  name: "LARGE",
+});
+export const OBJECT = registerKeyword({
+  name: "OBJECT",
+});
+export const BLOB = registerKeyword({
+  name: "BLOB",
+  categories: [LOB],
+});
+export const CLOB = registerKeyword({
+  name: "CLOB",
+  categories: [LOB],
+});
+export const DBCLOB = registerKeyword({
+  name: "DBCLOB",
+  categories: [LOB],
+});
+export const BLOB_LOCATOR = registerKeyword({
+  name: "BLOB_LOCATOR",
+  categories: [LOBLocator],
+});
+export const CLOB_LOCATOR = registerKeyword({
+  name: "CLOB_LOCATOR",
+  categories: [LOBLocator],
+});
+export const DBCLOB_LOCATOR = registerKeyword({
+  name: "DBCLOB_LOCATOR",
+  categories: [LOBLocator],
+});
+export const BLOB_FILE = registerKeyword({
+  name: "BLOB_FILE",
+  categories: [LOBFile],
+});
+export const CLOB_FILE = registerKeyword({
+  name: "CLOB_FILE",
+  categories: [LOBFile],
+});
+export const DBCLOB_FILE = registerKeyword({
+  name: "DBCLOB_FILE",
+  categories: [LOBFile],
+});
+export const ROWID = registerKeyword({
+  name: "ROWID",
+});
+
+/**
+ * Characters which start a preprocessor directive.
+ * Used as start/stop points for the token statement
+ */
+export const PPSignifier = [Percent, INCLUDE_ALT, SQL];
 
 export const terminals = [
   WS,

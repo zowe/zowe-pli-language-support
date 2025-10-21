@@ -32,6 +32,8 @@ export async function lifecycle(
   document: TextDocument,
   cancellation: CancellationToken,
 ): Promise<void> {
+  compilationUnit.services.files.clear();
+  compilationUnit.diagnostics.typeSystem = [];
   compilationUnit.services.typeCache.clear();
   compilationUnit.statementOrderCache.clear();
   compilationUnit.referencesCache.clear();
@@ -62,7 +64,6 @@ export async function tokenize(
     compilationUnit.uri,
   );
   compilationUnit.tokens = result.all;
-  compilationUnit.services.files = result.files;
   compilationUnit.preprocessorAst.statements = result.statements;
   compilationUnit.preprocessorEvaluationResults = result.evaluationResults;
   compilationUnit.referencesCache.addAll(result.tokenReferences);

@@ -9,6 +9,7 @@
  *
  */
 
+import { assertUnreachable } from "../utils/common";
 import { SyntaxKind, SyntaxNode } from "./ast";
 
 export enum TraversalState {
@@ -36,6 +37,22 @@ export function forEachNode(
     case SyntaxKind.ActivateItem:
       if (node.reference) {
         action(node.reference);
+      }
+      break;
+    case SyntaxKind.AnswerStatement:
+      if (node.expression) {
+        action(node.expression);
+      }
+      if (node.column) {
+        action(node.column);
+      }
+      if (node.margins) {
+        if (node.margins.left) {
+          action(node.margins.left);
+        }
+        if (node.margins.right) {
+          action(node.margins.right);
+        }
       }
       break;
     case SyntaxKind.DeactivateStatement:
@@ -857,6 +874,11 @@ export function forEachNode(
       break;
     case SyntaxKind.RFormatItem:
       break;
+    case SyntaxKind.ReplaceStatement:
+      if (node.literal) {
+        action(node.literal);
+      }
+      break;
     case SyntaxKind.SelectStatement:
       if (node.on) {
         action(node.on);
@@ -927,6 +949,8 @@ export function forEachNode(
         action(node.task);
       }
       break;
+    case SyntaxKind.WildcardItem:
+      break;
     case SyntaxKind.WhenStatement:
       node.conditions.forEach(action);
       if (node.unit) {
@@ -946,6 +970,20 @@ export function forEachNode(
         action(node.width);
       }
       break;
+    case SyntaxKind.SqlAttributeStatement:
+      if (node.body) {
+        action(node.body);
+      }
+      break;
+    case SyntaxKind.SqlAttributeLob:
+    case SyntaxKind.SqlAttributeLobFile:
+    case SyntaxKind.SqlAttributeLobLocator:
+    case SyntaxKind.SqlAttributeRowId:
+      break;
+    default:
+      if (node && "kind" in node) {
+        assertUnreachable(node);
+      }
   }
 }
 
