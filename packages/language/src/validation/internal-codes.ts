@@ -9,10 +9,10 @@
  *
  */
 
-import { Severity } from "../../language-server/types";
+import { Severity } from "../language-server/types";
 import { ParametricPLICode, PLICode, Error } from "./pli-codes";
 
-export const Internal = {
+export const InternalCodes = {
   DiagnosticURIMismatch: {
     code: "_TB0001", // TestBuilder diagnostic code
     severity: Severity.E,
@@ -22,7 +22,7 @@ export const Internal = {
   } as ParametricPLICode,
 };
 
-export const TypeSystem: PLICode[] = [
+export const TypeSystemCodes: PLICode[] = [
   Error.IBM1309I,
   Error.IBM2462I,
   Error.IBM2424I,

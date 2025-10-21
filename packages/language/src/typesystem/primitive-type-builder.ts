@@ -18,7 +18,7 @@ import { Token } from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
-import { Error } from "../validation/messages/pli-codes";
+import { Error } from "../validation/pli-codes";
 import {
   DataType,
   DataTypesByAttributeKind,
