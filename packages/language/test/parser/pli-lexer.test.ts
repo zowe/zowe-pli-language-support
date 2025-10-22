@@ -118,6 +118,7 @@ describe("PL/1 Lexer", () => {
         includeExtensions: [],
         libs: [],
         $computedLibs: [],
+        $computedLibsSet: new Set<string>(),
         lspOptions: { checkMargins: false },
         pliOptions: {},
       };
@@ -184,6 +185,7 @@ describe("PL/1 Lexer", () => {
         includeExtensions: [],
         libs: [],
         $computedLibs: [],
+        $computedLibsSet: new Set<string>(),
         lspOptions: { checkMargins: false },
         pliOptions: {},
       };

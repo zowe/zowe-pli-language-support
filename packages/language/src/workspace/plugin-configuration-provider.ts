@@ -82,11 +82,19 @@ export interface ProcessGroup {
   libs: string[];
 
   /**
-   * Computed libs, includes libs from disks & all sub directories of libs.
-   * Populated after reading the configs & not serialized like regular 'libs'.
+   * Computed libs, includes libs from discs, sub dirs of libs, & dd names.
+   * DD name entries are derived from files like `abc(member)`, which produce a ddname of `abc`.
+   * This is populated after reading the configs, not serialized like regular 'libs'.
    * Used to resolve includes.
    */
-  $computedLibs: string[];
+  $computedLibs: LibsEntry[];
+
+  /**
+   * Set of computed libs for fast lookup.
+   * Only contains directory entries, not DD name entries, which are partial.
+   * Used to find process groups from a lib URI
+   */
+  $computedLibsSet: Set<string>;
 
   includeExtensions: string[];
   implicitBuiltins: Set<string>;
@@ -121,6 +129,7 @@ export function deserializeProcessGroup(
     pliOptions: isRecordOf(pliOptions, isString) ? pliOptions : {},
     libs: isStringArray(libs) ? libs : [],
     $computedLibs: [],
+    $computedLibsSet: new Set<string>(),
     includeExtensions: isStringArray(includeExtensions)
       ? includeExtensions
       : [],
@@ -165,6 +174,29 @@ interface SerializedProcessGroup {
   "lsp-options"?: {
     "check-margins"?: boolean;
   };
+}
+
+/**
+ * Library entry, either a directory or a DD entry
+ */
+export type LibsEntry = LibsDirEntry | LibsDDEntry;
+
+/**
+ * Library directory entry
+ */
+export interface LibsDirEntry {
+  dir: string;
+}
+
+/**
+ * Library DD name entry
+ */
+export interface LibsDDEntry {
+  ddLib: string;
+}
+
+export function isLibsDir(entry: LibsEntry): entry is LibsDirEntry {
+  return (entry as LibsDirEntry).dir !== undefined;
 }
 
 /**
@@ -214,6 +246,7 @@ export class PluginConfigurationProvider {
 
   /**
    * Builds and saves the glob patterns for library file matching.
+   * Omits DD entries, only includes directory-based libs.
    * Patterns are prefixed with the workspace path and are intended to match full file paths.
    */
   private buildLibFileGlobPatterns(): void {
@@ -227,9 +260,11 @@ export class PluginConfigurationProvider {
       const computedLibs = processGroup.$computedLibs;
       const extensions = processGroup.includeExtensions;
       for (let lib of computedLibs) {
-        lib = lib.replace(/[\\/]+$/, "");
-        for (const ext of extensions) {
-          patterns.push(`${wsPrefix}${lib}/*${ext}`);
+        if (isLibsDir(lib)) {
+          const entry = lib.dir.replace(/[\\/]+$/, "");
+          for (const ext of extensions) {
+            patterns.push(`${wsPrefix}${entry}/*${ext}`);
+          }
         }
       }
     }
@@ -356,7 +391,7 @@ export class PluginConfigurationProvider {
    */
   private async postProcessProcessGroups() {
     for (const processGroup of this.processGroupConfigs.values()) {
-      const computedLibs = new Set(processGroup.libs);
+      const computedLibs: Set<LibsEntry> = new Set();
       const libsToProcess = [...processGroup.libs];
       while (libsToProcess.length > 0) {
         const lib = libsToProcess.pop();
@@ -364,22 +399,58 @@ export class PluginConfigurationProvider {
           // read all files in this lib path
           // add any contained directories to the libs list, as well as the toProcess list
           const libUri = UriUtils.joinPath(URI.parse(this.workspacePath), lib);
-          const entries = await FileSystemProviderInstance.readDir(libUri);
-          if (entries.length) {
-            for (const dirEntry of entries) {
-              const fileName = dirEntry.name;
-              const fileType = dirEntry.type;
-              if (fileType === DirEntryType.Directory) {
-                // directory to add for handling
-                libsToProcess.push(`${lib}/${fileName}`);
-                // also add to the full libs list
-                computedLibs.add(`${lib}/${fileName}`);
+          try {
+            const entries = await FileSystemProviderInstance.readDir(libUri);
+            if (entries.length) {
+              for (const dirEntry of entries) {
+                const fileName = dirEntry.name;
+                const fileType = dirEntry.type;
+                if (fileType === DirEntryType.Directory) {
+                  // directory to add for handling
+                  libsToProcess.push(`${lib}/${fileName}`);
+                  // also add to the full libs list
+                  computedLibs.add({
+                    dir: `${lib}/${fileName}`,
+                  });
+                }
               }
+            }
+            // add the lib itself, now that we know it exists
+            computedLibs.add({
+              dir: lib,
+            });
+          } catch (e) {
+            // could not read, try again to retrieve & read the parent directory
+            // take its entries to see if our lib exists as a file or directory
+            // if so, add it as a ddLib entry instead
+            const parentUri = UriUtils.dirname(libUri);
+            const libName = UriUtils.basename(libUri);
+            try {
+              const parentEntries =
+                await FileSystemProviderInstance.readDir(parentUri);
+              const ddnamePattern = new RegExp(`^${libName}\\(`, "i");
+              for (const entry of parentEntries) {
+                if (ddnamePattern.test(entry.name)) {
+                  // found a ddname-style entry, add full lib & break out, only need one to confirm
+                  computedLibs.add({
+                    ddLib: lib,
+                  });
+                  break;
+                }
+              }
+            } catch (parentError) {
+              // parent directory also failed to read, skip this lib
+              console.warn(`Failed to resolve library entry "${lib}"`);
             }
           }
         }
       }
-      processGroup.$computedLibs = Array.from(computedLibs);
+      const cl = Array.from(computedLibs);
+      processGroup.$computedLibs = cl;
+      // build a lookup set for dir entries only
+      processGroup.$computedLibsSet = new Set(
+        cl.filter((e) => isLibsDir(e)).map((e) => e.dir),
+      );
     }
   }
 
@@ -569,7 +640,7 @@ export class PluginConfigurationProvider {
   public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
     for (const config of this.processGroupConfigs.values()) {
-      if (config.$computedLibs.includes(dirname)) {
+      if (config.$computedLibsSet.has(dirname)) {
         return config;
       }
     }

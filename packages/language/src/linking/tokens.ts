@@ -75,6 +75,7 @@ export function isIncludeItemToken(kind: CstNodeKind | undefined): boolean {
   switch (kind) {
     case CstNodeKind.IncludeItem_FileString:
     case CstNodeKind.IncludeItem_FileID:
+    case CstNodeKind.IncludeItem_MemberID:
     case CstNodeKind.InscanDirective_INSCAN:
       return true;
   }

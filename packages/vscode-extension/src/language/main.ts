@@ -21,6 +21,8 @@ import {
   setFileSystemProvider,
   DirEntry,
   DirEntryType,
+  isPathSearch,
+  isMemberSearchInDir,
 } from "pli-language";
 import * as fs from "fs";
 import * as glob from "glob";
@@ -60,19 +62,49 @@ class NodeFileSystemProvider implements FileSystemProvider {
     throw new Error("Not supported.");
   }
   async search(options: SearchOptions): Promise<URI | undefined> {
-    const GLOBAL_PATTERN = "**";
-    const path = options.path.fsPath.replace(/\\/g, "/");
-    const pattern = options.global
-      ? `${GLOBAL_PATTERN}${path}{,${options.extensions.join(",")}}`
-      : `${path}{,${options.extensions.join(",")}}`;
-    const files = await glob.glob(pattern, {
-      nodir: true,
-      absolute: true,
-      nocase: true,
-    });
-    if (!files.length) return undefined;
+    let files: string[] = [];
+    if (isPathSearch(options)) {
+      // uri lookup
+      const GLOBAL_PATTERN = "**";
+      const path = options.path.fsPath.replace(/\\/g, "/");
+      const pattern = options.global
+        ? `${GLOBAL_PATTERN}${path}{,${options.extensions.join(",")}}`
+        : `${path}{,${options.extensions.join(",")}}`;
+      files = await glob.glob(pattern, {
+        nodir: true,
+        absolute: true,
+        nocase: true,
+      });
+    } else if (isMemberSearchInDir(options)) {
+      // member lookup w/ dir path
+      files = await glob.glob(
+        `${options.dirPath.fsPath}**/*\\(${options.member}\\)`,
+        {
+          nodir: true,
+          absolute: true,
+          nocase: true,
+        },
+      );
+    } else {
+      // member lookup w/ dd path (partial lib file as entry)
+      const uri = URI.parse(options.ddPath + `(${options.member})`);
+      const exists = await fs.promises
+        .access(uri.fsPath)
+        .then(() => true)
+        .catch(() => false);
+      if (exists) {
+        files.push(uri.path);
+      }
+    }
+
+    // return first match when present
+    if (!files.length) {
+      return undefined;
+    }
     const result = URI.file(files[0]);
-    if (!result) return undefined;
+    if (!result) {
+      return undefined;
+    }
     return result;
   }
 }

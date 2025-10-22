@@ -162,6 +162,7 @@ function isVariableType(token: Token): boolean {
     case CstNodeKind.HandleAttribute_TypeId1:
     case CstNodeKind.LabelReference_LabelRef:
     case CstNodeKind.IncludeItem_FileID:
+    case CstNodeKind.IncludeItem_MemberID:
       return true;
   }
   return false;

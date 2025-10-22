@@ -1584,7 +1584,7 @@ export interface IncludeDirective extends AstNode {
   kind: SyntaxKind.IncludeDirective;
   idempotent: boolean;
   token: Token | null;
-  items: IncludeItem[];
+  items: Array<IncludeItemFile | IncludeItemMember>;
 }
 export function createIncludeDirective(): IncludeDirective {
   return {
@@ -1602,7 +1602,7 @@ export interface IncludeAltDirective extends AstNode {
   kind: SyntaxKind.IncludeAltDirective;
   idempotent: boolean;
   token: Token | null;
-  items: IncludeItem[];
+  items: Array<IncludeItemFile | IncludeItemMember>;
 }
 export function createIncludeAltDirective(): IncludeAltDirective {
   return {
@@ -1613,24 +1613,64 @@ export function createIncludeAltDirective(): IncludeAltDirective {
     items: [],
   };
 }
-export interface IncludeItem extends AstNode {
+
+interface IncludeItem extends AstNode {
   kind: SyntaxKind.IncludeItem;
-  fileName: string | null;
-  string: boolean;
-  ddname: string | null;
+
+  /**
+   * Token shared by either fileName | member
+   */
   token: Token | null;
+
   // Properties filled by the preprocessor
   filePath: string | null;
   relativeFilePath: string | null;
   sourceText: string | null;
 }
+
+/**
+ * Include item by file name
+ */
+export type IncludeItemFile = IncludeItem & {
+  fileName: string | null;
+};
+
+/**
+ * Include item by member name + optional ddname
+ */
+export type IncludeItemMember = IncludeItem & {
+  /**
+   * Member name of the include, if present
+   */
+  memberName: string | null;
+
+  /**
+   * Explicit ddname for resolving the member within
+   */
+  ddname: string | null;
+
+  /**
+   * Contributing tokens for ddname components
+   */
+  ddnameTokens: Token[] | null;
+};
+
+export function isIncludeItemFile(
+  item: IncludeItem,
+): item is IncludeItemFile & { fileName: string } {
+  return !!(item as IncludeItemFile).fileName;
+}
+
+export function isIncludeItemMember(
+  item: IncludeItem,
+): item is IncludeItemMember & { memberName: string } {
+  return !!(item as IncludeItemMember).memberName;
+}
+
 export function createIncludeItem(): IncludeItem {
   return {
     kind: SyntaxKind.IncludeItem,
     container: null,
-    fileName: null,
-    string: false,
-    ddname: null,
     filePath: null,
     relativeFilePath: null,
     token: null,

@@ -41,6 +41,7 @@ async function init(libPath: string) {
     includeExtensions: [],
     libs: [libPath],
     $computedLibs: [],
+    $computedLibsSet: new Set<string>(),
     lspOptions: { checkMargins: false },
     pliOptions: {},
   };

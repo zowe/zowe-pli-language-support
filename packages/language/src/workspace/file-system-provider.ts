@@ -11,10 +11,87 @@
 
 import { URI } from "../utils/uri";
 
-export interface SearchOptions {
+export type SearchOptions =
+  | PathSearch
+  | MemberSearchInDir
+  | MemberSearchWithDDPath;
+
+/**
+ * Search by full path with optional extensions.
+ * Global option indicates whether to perform a global lookup or not
+ */
+interface PathSearch {
   path: URI;
   extensions: string[];
   global?: boolean;
+}
+
+/**
+ * Search by member name in given directory
+ * We don't know the ddname up front, but we know the member.
+ * So we'll need to perform a search in the given directory for any file matching the member
+ * Ex. a/b/c ... m1, where we search for any file in a/b/c that ends with (m1)
+ */
+interface MemberSearchInDir {
+  /**
+   * Path to candidate directory, which may contain this member under a ddname
+   */
+  dirPath: URI;
+
+  /**
+   * Member we're looking for
+   */
+  member: string;
+}
+
+/**
+ * Search by member name w/ a path up to & including the ddname.
+ * Combined with the member, we can construct a complete path to search.
+ * The search implementation determines how best to combine the two.
+ */
+interface MemberSearchWithDDPath {
+  /**
+   * Partial path that corresponds to a common ddname
+   * Ex. entries like A.B.C(m1) & A.B.C(m2) would result in ddPath 'A.B.C'
+   */
+  ddPath: string;
+
+  /**
+   * Member we're looking for
+   */
+  member: string;
+}
+
+export function isPathSearch(obj: any): obj is PathSearch {
+  return (
+    obj &&
+    typeof obj === "object" &&
+    "path" in obj &&
+    "extensions" in obj &&
+    Array.isArray(obj.extensions)
+  );
+}
+
+export function isMemberSearchInDir(obj: any): obj is MemberSearchInDir {
+  return (
+    obj &&
+    typeof obj === "object" &&
+    "dirPath" in obj &&
+    "member" in obj &&
+    typeof obj.member === "string"
+  );
+}
+
+export function isMemberSearchWithDDPath(
+  obj: any,
+): obj is MemberSearchWithDDPath {
+  return (
+    obj &&
+    typeof obj === "object" &&
+    "ddPath" in obj &&
+    "member" in obj &&
+    typeof obj.member === "string"
+  );
 }
 
 /**
@@ -96,7 +173,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * Write a file to the virtualized file system
    */
   async writeFile(uri: URI, value: string): Promise<void> {
-    this.files.set(uri.toString().toLowerCase(), value);
+    this.files.set(uri.toString(true).toLowerCase(), value);
   }
 
   /**
@@ -104,18 +181,26 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * If the file does not exist, undefined is returned.
    */
   async readFile(uri: URI): Promise<string | undefined> {
-    return this.files.get(uri.toString().toLowerCase());
+    return this.files.get(uri.toString(true).toLowerCase());
   }
 
   /**
    * Reads the contents of a directory in the virtualized file system.
    * The result is an array of directory entries w/ types.
    * Directories are virtual in this case, only existing if there are files with matching prefixes.
-   * If no entries are found, an empty array is returned.
+   * If no matching directory entry is found (i.e. no entries), an exception is thrown
+   * If the file system is empty, an empty array is returned (assuming uninitialized)
    */
   async readDir(uri: URI): Promise<DirEntry[]> {
+    if (this.files.size === 0) {
+      // not populated yet
+      return [];
+    }
     // collect all entries which start with the given path
-    const path = uri.toString().toLowerCase();
+    let path = uri.toString(true).toLowerCase();
+    if (!path.endsWith("/")) {
+      path += "/";
+    }
     const entries: DirEntry[] = [];
     for (const filePath of this.files.keys()) {
       if (filePath.startsWith(path)) {
@@ -136,6 +221,11 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
         }
       }
     }
+    if (entries.length === 0) {
+      // when no files are found, we assume the directory does not exist
+      // as we don't currently support creating empty dirs in the vfs
+      throw new Error(`Directory not found: ${uri.toString(true)}`);
+    }
     return entries;
   }
 
@@ -143,14 +233,14 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * Checks if a file exists in the virtualized file system
    */
   async fileExists(uri: URI): Promise<boolean> {
-    return this.files.has(uri.toString().toLowerCase());
+    return this.files.has(uri.toString(true).toLowerCase());
   }
 
   /**
    * Deletes a file from the virtualized file system
    */
   async deleteFile(uri: URI): Promise<void> {
-    this.files.delete(uri.toString().toLowerCase());
+    this.files.delete(uri.toString(true).toLowerCase());
   }
 
   /**
@@ -160,33 +250,58 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * @returns First match, or undefined if no match found
    */
   async search(options: SearchOptions): Promise<URI | undefined> {
-    const searchPath = options.path
-      .toString()
-      .toLowerCase()
-      .replace(/\\/g, "/");
-    const extensions = options.extensions ?? [];
+    if (isPathSearch(options)) {
+      // perform a search with a uri
+      const searchPath = options.path
+        .toString(true)
+        .toLowerCase()
+        .replace(/\\/g, "/");
+      const extensions = options.extensions ?? [];
 
-    if (!options.global) {
-      if (this.files.has(searchPath)) {
-        return options.path;
-      }
-      for (const ext of extensions) {
-        const fullPath = searchPath + (ext.startsWith(".") ? ext : `.${ext}`);
-        if (this.files.has(fullPath)) {
-          return URI.parse(fullPath).with({ scheme: options.path.scheme });
-        }
-      }
-    } else {
-      // @wagner-laranjeiras. TODO: Optimize this matching pattern.
-      for (const [filePath] of this.files) {
-        if (filePath.endsWith(searchPath)) {
-          return URI.parse(filePath);
+      if (!options.global) {
+        if (this.files.has(searchPath)) {
+          return options.path;
         }
         for (const ext of extensions) {
           const fullPath = searchPath + (ext.startsWith(".") ? ext : `.${ext}`);
-          if (filePath.endsWith(fullPath)) {
-            return URI.parse(filePath).with({ scheme: options.path.scheme });
+          if (this.files.has(fullPath)) {
+            return URI.parse(fullPath).with({ scheme: options.path.scheme });
           }
+        }
+      } else {
+        // @wagner-laranjeiras. TODO: Optimize this matching pattern.
+        for (const [filePath] of this.files) {
+          if (filePath.endsWith(searchPath)) {
+            return URI.parse(filePath);
+          }
+          for (const ext of extensions) {
+            const fullPath =
+              searchPath + (ext.startsWith(".") ? ext : `.${ext}`);
+            if (filePath.endsWith(fullPath)) {
+              return URI.parse(filePath).with({ scheme: options.path.scheme });
+            }
+          }
+        }
+      }
+    } else if (isMemberSearchInDir(options)) {
+      // perform a search by a member w/ candidate dir path
+      const memberPart = `(${options.member})`.toLowerCase();
+      for (const [filePath] of this.files) {
+        const fpl = filePath.toLowerCase();
+        if (
+          fpl.endsWith(memberPart) &&
+          fpl.startsWith(options.dirPath.toString(true).toLowerCase())
+        ) {
+          return URI.parse(filePath);
+        }
+      }
+    } else {
+      // member search w/ full path
+      const memberPart = `(${options.member})`.toLowerCase();
+      const searchPath = options.ddPath.toLowerCase() + memberPart;
+      for (const [filePath] of this.files) {
+        if (filePath.toLowerCase() === searchPath) {
+          return URI.parse(filePath);
         }
       }
     }

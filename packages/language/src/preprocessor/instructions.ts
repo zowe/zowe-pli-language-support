@@ -370,12 +370,12 @@ export function createDeclareInstruction(
 
 export interface IncludeInstruction {
   kind: InstructionKind.Include;
-  items: ast.IncludeItem[];
+  items: Array<ast.IncludeItemFile | ast.IncludeItemMember>;
   idempotent: boolean;
 }
 
 export function createIncludeInstruction(
-  items: ast.IncludeItem[],
+  items: Array<ast.IncludeItemFile | ast.IncludeItemMember>,
   idempotent: boolean,
 ): IncludeInstruction {
   return {
