@@ -181,6 +181,9 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.CallStatement:
       instruction = generateCallInstruction(value, context);
       break;
+    case ast.SyntaxKind.SqlAttributeStatement:
+      instruction = generateSqlAttributeInstruction(value);
+      break;
     default:
       return undefined;
   }
@@ -299,6 +302,15 @@ function generateNoteInstruction(
         code,
       }
     : undefined;
+}
+
+function generateSqlAttributeInstruction(
+  node: ast.SqlAttributeStatement,
+): inst.SqlAttributeInstruction {
+  return {
+    kind: inst.InstructionKind.SqlAttribute,
+    attribute: node,
+  };
 }
 
 function generateActivateInstruction(

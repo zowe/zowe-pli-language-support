@@ -84,6 +84,7 @@ export enum InstructionKind {
   Inscan,
   Goto,
   Note,
+  SqlAttribute,
 
   // Expression types
   BinaryExpression,
@@ -108,7 +109,13 @@ export type Instruction =
   | DeactivateInstruction
   | DeclareInstruction
   | NoteInstruction
-  | CallInstruction;
+  | CallInstruction
+  | SqlAttributeInstruction;
+
+export interface SqlAttributeInstruction {
+  kind: InstructionKind.SqlAttribute;
+  attribute: ast.SqlAttributeStatement;
+}
 
 export interface ProcedureInstructionContainer {
   names: string[];

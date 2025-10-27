@@ -18,7 +18,7 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import * as t from "./tokens";
 import { performAssignmentLookahead } from "./parser";
-import { tokenMatcher, TokenType } from "chevrotain";
+import { TokenType } from "chevrotain";
 import {
   diagnostic,
   diagnosticFromCode,
@@ -26,16 +26,16 @@ import {
 } from "../language-server/types";
 import { PLICodes } from "../validation/pli-codes";
 
+const tokenEndSet = new Set(t.PPSignifier.map((tok) => tok.tokenTypeIdx!));
+
 export function consumeTokenStatement(state: ParserState): ast.Statement {
   const tokenStatement = ast.createTokenStatement();
   const start = state.index;
-  // We can assume that the first token is always a non-% token
-  // Otherwise we wouldn't be able to get here in the first place
   let currentToken: t.Token | undefined = state.token;
   while (currentToken) {
     if (
-      tokenMatcher(currentToken, t.Percent) ||
-      tokenMatcher(currentToken, t.INCLUDE_ALT) ||
+      // Check if we have consumed any tokens and reached a token that can end the statement
+      (state.index > start && tokenEndSet.has(currentToken.tokenTypeIdx)) ||
       // We cap a single token statement to 100_000 tokens to avoid stack overflows
       state.index - start >= 100_000
     ) {
