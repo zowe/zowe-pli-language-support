@@ -205,6 +205,11 @@ export enum SyntaxKind {
   StopStatement,
   StringLiteral,
   StructureItem,
+  SqlAttributeStatement,
+  SqlAttributeLob,
+  SqlAttributeLobLocator,
+  SqlAttributeLobFile,
+  SqlAttributeRowId,
   TypeAttribute,
   UnaryExpression,
   ValueAttribute,
@@ -457,6 +462,11 @@ export type SyntaxNode =
   | StopStatement
   | StringLiteral
   | StructureItem
+  | SqlAttributeStatement
+  | SqlAttributeLob
+  | SqlAttributeLobLocator
+  | SqlAttributeLobFile
+  | SqlAttributeRowId
   | TypeAttribute
   | UnaryExpression
   | ValueAttribute
@@ -756,7 +766,8 @@ export type Unit =
   | PopDirective
   | PrintDirective
   | NoPrintDirective
-  | SkipDirective;
+  | SkipDirective
+  | SqlAttributeStatement;
 export type Varying = "NONVARYING" | "VARYING" | "VARYING4" | "VARYINGZ";
 
 // Preprocessor AST
@@ -2443,7 +2454,95 @@ export interface WriteStatementOption extends AstNode {
   type: "FILE" | "FROM" | "KEYFROM" | "KEYTO" | null;
   value: Expression | null;
 }
+
 export interface XFormatItem extends AstNode {
   kind: SyntaxKind.XFormatItem;
   width: Expression | null;
+}
+
+export enum SQLAttributeLobType {
+  BLOB,
+  CLOB,
+  DBCLOB,
+}
+
+export enum SQLAttributeLobSize {
+  K,
+  M,
+  G,
+}
+
+export interface SqlAttributeLob extends AstNode {
+  kind: SyntaxKind.SqlAttributeLob;
+  type: SQLAttributeLobType | null;
+  length: number | null;
+  size: SQLAttributeLobSize | null;
+}
+
+export function createSQLAttributeLob(): SqlAttributeLob {
+  return {
+    kind: SyntaxKind.SqlAttributeLob,
+    container: null,
+    type: null,
+    length: null,
+    size: null,
+  };
+}
+
+export interface SqlAttributeLobLocator extends AstNode {
+  kind: SyntaxKind.SqlAttributeLobLocator;
+  type: SQLAttributeLobType | null;
+}
+
+export function createSQLAttributeLobLocator(): SqlAttributeLobLocator {
+  return {
+    kind: SyntaxKind.SqlAttributeLobLocator,
+    container: null,
+    type: null,
+  };
+}
+
+export interface SqlAttributeLobFile extends AstNode {
+  kind: SyntaxKind.SqlAttributeLobFile;
+  type: SQLAttributeLobType | null;
+}
+
+export function createSQLAttributeLobFile(): SqlAttributeLobFile {
+  return {
+    kind: SyntaxKind.SqlAttributeLobFile,
+    container: null,
+    type: null,
+  };
+}
+
+export interface SqlAttributeRowId extends AstNode {
+  kind: SyntaxKind.SqlAttributeRowId;
+}
+
+export function createSQLAttributeRowId(): SqlAttributeRowId {
+  return {
+    kind: SyntaxKind.SqlAttributeRowId,
+    container: null,
+  };
+}
+
+export type SqlAttributeType =
+  | SqlAttributeLob
+  | SqlAttributeLobLocator
+  | SqlAttributeLobFile
+  | SqlAttributeRowId;
+
+export interface SqlAttributeStatement extends AstNode {
+  kind: SyntaxKind.SqlAttributeStatement;
+  isXml: boolean;
+  body: SqlAttributeType | null;
+}
+
+export function createSQLAttributeStatement(): SqlAttributeStatement {
+  return {
+    kind: SyntaxKind.SqlAttributeStatement,
+    container: null,
+    isXml: false,
+    body: null,
+  };
 }

@@ -31,7 +31,6 @@ import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { tokenMatcher } from "chevrotain";
 import { PLICodes } from "../validation/pli-codes";
-import { FileStore } from "../workspace/file-store";
 
 interface Variable {
   name: string;
@@ -245,7 +244,6 @@ interface InterpreterContext {
   global: SymbolTable;
   statements: ast.Statement[];
   tokens: Token[];
-  files: FileStore;
   diagnostics: Diagnostic[];
   procedures: Map<string, inst.ProcedureInstructionContainer>;
   activeProcedures: Set<string>;
@@ -257,11 +255,22 @@ interface InterpreterContext {
   options: InterpreterOptions;
   returnValue: Value;
   counterValue: number;
+  sqlAttributeCache: SqlAttributeCache;
   /**
    * MACNAME returns the name of the preprocessor procedure within which it is invoked.
    * It is invalid to invoke MACNAME outside of a preprocessor procedure.
    */
   macname: string;
+}
+
+interface SqlAttributeCache {
+  lastProcedureTokenIndex: number;
+  entries: Map<number, SqlAttributeEntry>;
+}
+
+interface SqlAttributeEntry {
+  hasFile: boolean;
+  lobSizes: Set<number>;
 }
 
 interface DoType3Context {
@@ -271,7 +280,6 @@ interface DoType3Context {
 
 export type InstructionInterpreterResult = {
   all: Token[];
-  files: FileStore;
   evaluationResults: EvaluationResults;
   errors: Diagnostic[];
   statements: ast.Statement[];
@@ -313,11 +321,14 @@ export async function runInstructions(
       branchExecutions: new Map(),
     },
     tokens: [],
-    files: new FileStore(),
     options,
     counter: new Map(),
     returnValue: defaultEmptyValue,
     counterValue: 1,
+    sqlAttributeCache: {
+      lastProcedureTokenIndex: 0,
+      entries: new Map(),
+    },
     macname: "",
   };
   for (const [key, value] of instruction.procedures.entries()) {
@@ -327,7 +338,6 @@ export async function runInstructions(
   await doRunInstructions(context, instruction.entryNode);
   return {
     all: context.tokens,
-    files: context.files,
     evaluationResults: context.evaluations,
     errors: context.diagnostics,
     references: context.references,
@@ -484,6 +494,140 @@ function runInstructionSync(
     case inst.InstructionKind.Halt:
       runHaltInstruction(instruction, context);
       break;
+    case inst.InstructionKind.SqlAttribute:
+      runSqlAttributeInstruction(instruction, context);
+  }
+  return undefined;
+}
+
+const LOB_LOCATOR_TYPE = "FIXED BIN(31)";
+const ROWID_TYPE = "CHAR(40) VARYING";
+const LOB_FILE_TYPE = "LIKE SQL_LOB_FILE";
+const LOB_TYPE = (length: number) => `LIKE SQL_LOB${length}`;
+
+function runSqlAttributeInstruction(
+  instruction: inst.SqlAttributeInstruction,
+  context: InterpreterContext,
+): void {
+  const body = instruction.attribute.body;
+  if (!body) {
+    return;
+  }
+  if (body.kind === ast.SyntaxKind.SqlAttributeLobLocator) {
+    context.tokens.push(...lex(LOB_LOCATOR_TYPE));
+  } else if (body.kind === ast.SyntaxKind.SqlAttributeRowId) {
+    context.tokens.push(...lex(ROWID_TYPE));
+  } else {
+    // The LOB_FILE and LOB attributes require additional declarations to be inserted
+    // They are always inserted after the semicolon of the procedure statement
+    const procSemicolonIndex = findProcSemicolon(context);
+    if (procSemicolonIndex === undefined) {
+      return;
+    }
+    let entry = context.sqlAttributeCache.entries.get(procSemicolonIndex);
+    if (!entry) {
+      entry = {
+        hasFile: false,
+        lobSizes: new Set(),
+      };
+      context.sqlAttributeCache.entries.set(procSemicolonIndex, entry);
+    }
+    if (body.kind === ast.SyntaxKind.SqlAttributeLobFile) {
+      if (!entry.hasFile) {
+        insertSqlAttributeLobFileTokens(context, procSemicolonIndex);
+      }
+      context.tokens.push(...lex(LOB_FILE_TYPE));
+    } else if (body.kind === ast.SyntaxKind.SqlAttributeLob) {
+      const computedLength = computeLobLength(body);
+      if (!entry.lobSizes.has(computedLength)) {
+        entry.lobSizes.add(computedLength);
+        insertSqlAttributeLobTokens(
+          context,
+          procSemicolonIndex,
+          computedLength,
+        );
+      }
+      context.tokens.push(...lex(LOB_TYPE(computedLength)));
+    }
+  }
+}
+
+function computeLobLength(lob: ast.SqlAttributeLob): number {
+  if (lob.length !== null) {
+    let givenLength = lob.length;
+    switch (lob.size) {
+      case ast.SQLAttributeLobSize.G:
+        givenLength *= 1024;
+      // fallthrough
+      case ast.SQLAttributeLobSize.M:
+        givenLength *= 1024;
+      // fallthrough
+      case ast.SQLAttributeLobSize.K:
+        givenLength *= 1024;
+    }
+    return givenLength;
+  }
+  return 0;
+}
+
+function insertSqlAttributeLobFileTokens(
+  context: InterpreterContext,
+  offset: number,
+): void {
+  context.tokens.splice(
+    offset,
+    0,
+    ...lex(`
+    DCL
+      1 SQL_LOB_FILE BASED,
+        2 SQL_LOB_FILE_NAME_LEN FIXED BIN(31),
+        2 SQL_LOB_FILE_DATA_LEN FIXED BIN(31),
+        2 SQL_LOB_FILE_OPTIONS FIXED BIN(31),
+        2 SQL_LOB_FILE_NAME CHAR(256);
+
+    DCL SQL_FILE_READ      FIXED BIN(31) VALUE(2);
+    DCL SQL_FILE_CREATE    FIXED BIN(31) VALUE(8);
+    DCL SQL_FILE_OVERWRITE FIXED BIN(31) VALUE(16);
+    DCL SQL_FILE_APPEND    FIXED BIN(31) VALUE(32);
+  `),
+  );
+}
+
+function insertSqlAttributeLobTokens(
+  context: InterpreterContext,
+  offset: number,
+  length: number,
+): void {
+  context.tokens.splice(
+    offset,
+    0,
+    ...lex(`
+    DCL
+      1 SQL_LOB${length} BASED,
+        2 SQL_LOB_LEN FIXED BIN(31),
+        2 SQL_LOB_BUF(10) CHAR(1);
+  `),
+  );
+}
+
+/**
+ * Searches for the nearest procedure semicolon token before the current position
+ */
+function findProcSemicolon(context: InterpreterContext): number | undefined {
+  const min = context.sqlAttributeCache.lastProcedureTokenIndex;
+  const max = context.tokens.length - 1;
+  for (let i = max; i >= min; i--) {
+    const token = context.tokens[i];
+    if (token.tokenTypeIdx === PreprocessorTokens.Procedure.tokenTypeIdx) {
+      context.sqlAttributeCache.lastProcedureTokenIndex = i;
+      for (let j = i + 1; j <= max; j++) {
+        const nextToken = context.tokens[j].tokenTypeIdx;
+        if (nextToken === PreprocessorTokens.Semicolon.tokenTypeIdx) {
+          return j + 1;
+        }
+      }
+      return undefined;
+    }
   }
   return undefined;
 }
@@ -1935,7 +2079,7 @@ async function runInclude(
       };
     });
     context.statements.push(...cachedResult.statements);
-    context.files.set({
+    context.unit.services.files.set({
       textDocument: document,
       tokens: cachedResult.tokens,
       uri,

@@ -132,7 +132,7 @@ const TypeToTokenTypeMapping: Record<DefaultAttributeType, TokenType> = {
   BACKWARDS: tokens.BACKWARDS,
   BASED: tokens.BASED,
   BIGENDIAN: tokens.BIGENDIAN,
-  BIN: tokens.BINARY,
+  BIN: tokens.BIN,
   BINARY: tokens.BINARY,
   BIT: tokens.BIT,
   BUFFERED: tokens.BUFFERED,
