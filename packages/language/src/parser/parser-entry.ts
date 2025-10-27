@@ -31,6 +31,8 @@ export function preprocessorParse(
   state: ParserState,
 ): PreprocessorParserResult {
   const statements: ast.Statement[] = [];
+
+  let index = state.index;
   let token = state.token;
   while (token) {
     let isTokenStatement = true;
@@ -71,7 +73,12 @@ export function preprocessorParse(
       recursivelySetContainer(tokenStmt);
       statements.push(tokenStmt);
     }
+    if (index === state.index) {
+      console.error("Parser did not advance at token: " + token.image);
+      state.index++;
+    }
     token = state.token;
+    index = state.index;
   }
   return {
     statements,

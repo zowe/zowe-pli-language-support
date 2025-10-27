@@ -521,32 +521,33 @@ function runSqlAttributeInstruction(
     // The LOB_FILE and LOB attributes require additional declarations to be inserted
     // They are always inserted after the semicolon of the procedure statement
     const procSemicolonIndex = findProcSemicolon(context);
-    if (procSemicolonIndex !== undefined) {
-      let entry = context.sqlAttributeCache.entries.get(procSemicolonIndex);
-      if (!entry) {
-        entry = {
-          hasFile: false,
-          lobSizes: new Set(),
-        };
-        context.sqlAttributeCache.entries.set(procSemicolonIndex, entry);
+    if (procSemicolonIndex === undefined) {
+      return;
+    }
+    let entry = context.sqlAttributeCache.entries.get(procSemicolonIndex);
+    if (!entry) {
+      entry = {
+        hasFile: false,
+        lobSizes: new Set(),
+      };
+      context.sqlAttributeCache.entries.set(procSemicolonIndex, entry);
+    }
+    if (body.kind === ast.SyntaxKind.SqlAttributeLobFile) {
+      if (!entry.hasFile) {
+        insertSqlAttributeLobFileTokens(context, procSemicolonIndex);
       }
-      if (body.kind === ast.SyntaxKind.SqlAttributeLobFile) {
-        if (!entry.hasFile) {
-          insertSqlAttributeLobFileTokens(context, procSemicolonIndex);
-        }
-        context.tokens.push(...lex(LOB_FILE_TYPE));
-      } else if (body.kind === ast.SyntaxKind.SqlAttributeLob) {
-        const computedLength = computeLobLength(body);
-        if (!entry.lobSizes.has(computedLength)) {
-          entry.lobSizes.add(computedLength);
-          insertSqlAttributeLobTokens(
-            context,
-            procSemicolonIndex,
-            computedLength,
-          );
-        }
-        context.tokens.push(...lex(LOB_TYPE(computedLength)));
+      context.tokens.push(...lex(LOB_FILE_TYPE));
+    } else if (body.kind === ast.SyntaxKind.SqlAttributeLob) {
+      const computedLength = computeLobLength(body);
+      if (!entry.lobSizes.has(computedLength)) {
+        entry.lobSizes.add(computedLength);
+        insertSqlAttributeLobTokens(
+          context,
+          procSemicolonIndex,
+          computedLength,
+        );
       }
+      context.tokens.push(...lex(LOB_TYPE(computedLength)));
     }
   }
 }
@@ -620,10 +621,8 @@ function findProcSemicolon(context: InterpreterContext): number | undefined {
     if (token.tokenTypeIdx === PreprocessorTokens.Procedure.tokenTypeIdx) {
       context.sqlAttributeCache.lastProcedureTokenIndex = i;
       for (let j = i + 1; j <= max; j++) {
-        const nextToken = context.tokens[j];
-        if (
-          nextToken.tokenTypeIdx === PreprocessorTokens.Semicolon.tokenTypeIdx
-        ) {
+        const nextToken = context.tokens[j].tokenTypeIdx;
+        if (nextToken === PreprocessorTokens.Semicolon.tokenTypeIdx) {
           return j + 1;
         }
       }
