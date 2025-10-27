@@ -28,7 +28,6 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { initLexer, tokenize } from "../parser/tokenizer";
 import { preprocessorParserState } from "../parser/parser-state";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { FileStore } from "../workspace/file-store";
 import { getDefaultCompilerOptions } from "./compiler-options/options";
 import { CompilerOptions } from "./compiler-options/options-pli";
 
@@ -37,7 +36,6 @@ export interface LexerResult {
   diagnostics: Diagnostic[];
   compilerOptions: CompilerOptionsProcessorResult;
   statements: Statement[];
-  files: FileStore;
   evaluationResults: EvaluationResults;
   tokenReferences: Reference[];
 }
@@ -108,7 +106,7 @@ export class PliLexer {
       compilerOptions: compilerOptionsResult.result,
       marginsProcessor: this.marginsProcessor,
     });
-    output.files.set({
+    unit.services.files.set({
       textDocument: document,
       tokens: instruction.tokens,
       uri,
@@ -122,7 +120,6 @@ export class PliLexer {
       compilerOptions: compilerOptionsResult,
       diagnostics: allDiagnostics,
       statements: [...instruction.statements, ...output.statements],
-      files: output.files,
       evaluationResults: output.evaluationResults,
       tokenReferences: output.references,
     };
