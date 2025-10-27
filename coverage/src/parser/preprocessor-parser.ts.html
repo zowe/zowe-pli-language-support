@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">95.41% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1270/1331</span>
+                <span class='fraction'>1269/1330</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">88.33% </span>
+                <span class="strong">88.38% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>212/240</span>
+                <span class='fraction'>213/241</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">95.41% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1270/1331</span>
+                <span class='fraction'>1269/1330</span>
             </div>
         
             
@@ -1568,36 +1568,36 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">902x</span>
-<span class="cline-any cline-yes">902x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">902x</span>
-<span class="cline-any cline-yes">902x</span>
-<span class="cline-any cline-yes">105421x</span>
-<span class="cline-any cline-yes">105421x</span>
-<span class="cline-any cline-yes">105301x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">918x</span>
+<span class="cline-any cline-yes">918x</span>
+<span class="cline-any cline-yes">918x</span>
+<span class="cline-any cline-yes">918x</span>
+<span class="cline-any cline-yes">105507x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">105301x</span>
-<span class="cline-any cline-yes">105421x</span>
-<span class="cline-any cline-yes">120x</span>
-<span class="cline-any cline-yes">120x</span>
-<span class="cline-any cline-yes">105301x</span>
-<span class="cline-any cline-yes">105301x</span>
-<span class="cline-any cline-yes">902x</span>
-<span class="cline-any cline-yes">902x</span>
-<span class="cline-any cline-yes">902x</span>
-<span class="cline-any cline-yes">902x</span>
-<span class="cline-any cline-yes">902x</span>
+<span class="cline-any cline-yes">105507x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">105378x</span>
+<span class="cline-any cline-yes">105507x</span>
+<span class="cline-any cline-yes">129x</span>
+<span class="cline-any cline-yes">129x</span>
+<span class="cline-any cline-yes">105378x</span>
+<span class="cline-any cline-yes">105378x</span>
+<span class="cline-any cline-yes">918x</span>
+<span class="cline-any cline-yes">918x</span>
+<span class="cline-any cline-yes">918x</span>
+<span class="cline-any cline-yes">918x</span>
+<span class="cline-any cline-yes">918x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3053,7 +3053,7 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import * as t from "./tokens";
 import { performAssignmentLookahead } from "./parser";
-import { tokenMatcher, TokenType } from "chevrotain";
+import { TokenType } from "chevrotain";
 import {
   diagnostic,
   diagnosticFromCode,
@@ -3061,16 +3061,16 @@ import {
 } from "../language-server/types";
 import { PLICodes } from "../validation/pli-codes";
 &nbsp;
+const tokenEndSet = new Set(t.PPSignifier.map((tok) =&gt; tok.tokenTypeIdx!));
+&nbsp;
 export function consumeTokenStatement(state: ParserState): ast.Statement {
   const tokenStatement = ast.createTokenStatement();
   const start = state.index;
-  // We can assume that the first token is always a non-% token
-  // Otherwise we wouldn't be able to get here in the first place
   let currentToken: t.Token | undefined = state.token;
   while (currentToken) {
     if (
-      tokenMatcher(currentToken, t.Percent) ||
-      tokenMatcher(currentToken, t.INCLUDE_ALT) ||
+      // Check if we have consumed any tokens and reached a token that can end the statement
+      (state.index &gt; start &amp;&amp; tokenEndSet.has(currentToken.tokenTypeIdx)) ||
       // We cap a single token statement to 100_000 tokens to avoid stack overflows
       state.index - start &gt;= 100_000
     ) {
@@ -4525,7 +4525,7 @@ function isXInstruction(token: t.Token | null | undefined): boolean {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-21T10:31:32.631Z
+                at 2025-10-27T09:14:05.185Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
