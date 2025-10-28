@@ -1655,12 +1655,18 @@ export type IncludeItemMember = IncludeItem & {
   ddnameTokens: Token[] | null;
 };
 
+/**
+ * Type guard for an IncludeItemFile w/ fileName prop
+ */
 export function isIncludeItemFile(
   item: IncludeItem,
 ): item is IncludeItemFile & { fileName: string } {
   return !!(item as IncludeItemFile).fileName;
 }
 
+/**
+ * Type guard for an IncludeItemMember w/ memberName prop
+ */
 export function isIncludeItemMember(
   item: IncludeItem,
 ): item is IncludeItemMember & { memberName: string } {

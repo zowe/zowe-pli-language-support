@@ -1832,6 +1832,7 @@ async function runIncludeInstruction(
         idempotent: instruction.idempotent,
       };
     } else {
+      // not a valid include item (neither member nor fileName is present), skip it
       continue;
     }
 
@@ -1938,12 +1939,15 @@ async function runInclude(
           : item.memberName,
     );
 
+    // check to set optional diagnostic data iff we have a valid fileName/memberName to work with
     if (isFileIncludeItem(item)) {
+      // item w/ valid fileName
       diagnostic.data = {
         unresolvedFile: item.fileName,
         entryUri: context.entryUri.toString(),
       };
     } else if (isMemberIncludeItem(item)) {
+      // item w/ memberName & optional ddname
       diagnostic.data = {
         unresolvedFile: item.ddname
           ? `${item.ddname}(${item.memberName})`
@@ -2022,6 +2026,29 @@ async function runInclude(
 }
 
 /**
+ * Returns the appropriate file name or partial name for an include item.
+ * Partial names refer to member includes that do not have an explicit ddname specified, but can still be resolved
+ * in the context of a known process group lib that may contain the member.
+ * Before checking we can't state whether a pure member name returned here is partial or not, as that depends on the libs.
+ * @returns Relevant fileName or member w/ or w/out a ddname, otherwise undefined when none are found
+ */
+function getFileNameOrPartialName(item: IncludeItem): string | undefined {
+  if (isMemberIncludeItem(item) && item.ddname) {
+    // fully resolvable member w/ ddname
+    return `${item.ddname}(${item.memberName})`;
+  } else if (isMemberIncludeItem(item)) {
+    // pure member w/out a ddname, may be partial depending on libs
+    return item.memberName;
+  } else if (item.fileName) {
+    // literal file include
+    return item.fileName;
+  } else {
+    // no fileName or memberName to work with
+    return undefined;
+  }
+}
+
+/**
  * Attempts to resolve the URI of an include file factoring in process group libs, relative & absolute paths
  *
  * @param item Include item to resolve a URI for
@@ -2060,19 +2087,16 @@ async function resolveIncludeFileUri(
     const computedLibs = pgroup.$computedLibs;
 
     // construct the appropriate file name or partial name for members
-    let fileNameOrPartial: string;
+    // let fileNameOrPartial: string;
     // used to denote whether we're working with a pure member (requires special lookup handling)
-    let isPureMember = false;
-    if (isMemberIncludeItem(item) && item.ddname) {
-      fileNameOrPartial = `${item.ddname}(${item.memberName})`;
-    } else if (isMemberIncludeItem(item)) {
-      isPureMember = true;
-      fileNameOrPartial = item.memberName;
-    } else if (item.fileName) {
-      fileNameOrPartial = item.fileName;
-    } else {
+    const fileNameOrPartial = getFileNameOrPartialName(item);
+    if (!fileNameOrPartial) {
+      // no fileName or memberName to work with, abandon resolution
       return undefined;
     }
+
+    // whether the include item is a pure (standalone) member, no ddname specified
+    const isPureMember = isMemberIncludeItem(item) && !item.ddname;
 
     /**
      * Computes the URI for a lib file based on whether the path is absolute or relative
