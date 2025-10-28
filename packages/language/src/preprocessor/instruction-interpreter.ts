@@ -2103,7 +2103,10 @@ async function resolveIncludeFileUri(
         const libFileUri = resolveLibFileUri(lib.dir, fileNameOrPartial);
 
         if (isPureMember) {
-          // attempt an early resolution for any DDName that introduces this member
+          // attempt to first resolve for any DDName that introduces this member
+          // This is done to ensure resolution order of libs is maintained as members > files
+          // Ex. If we have both `cpy/member.pli` and `cpy/A.B.C(member)`, with `cpy` in the libs list
+          // We want to ensure that `A.B.C(member)` is resolved first before falling back to `member.pli`
           const memberMatch = await FileSystemProviderInstance.search({
             dirPath: resolveLibFileUri(lib.dir),
             member: fileNameOrPartial,
