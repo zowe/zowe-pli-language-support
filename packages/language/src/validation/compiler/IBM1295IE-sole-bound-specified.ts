@@ -9,7 +9,11 @@
  *
  */
 
-import { getSyntaxNodeRange, Severity } from "../../language-server/types";
+import {
+  fullCode,
+  getSyntaxNodeRange,
+  Severity,
+} from "../../language-server/types";
 import { Bound, DimensionBound, SyntaxKind } from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
 import { Error } from "../pli-codes";
@@ -29,7 +33,7 @@ export function IBM1295IE_sole_bound_specified(
       message: code.message,
       range: getSyntaxNodeRange(bound),
       uri: "", // TODO: Add URI
-      code: code.fullCode,
+      code: fullCode(code),
     });
   }
 }

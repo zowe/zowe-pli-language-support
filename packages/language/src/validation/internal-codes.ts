@@ -18,7 +18,6 @@ export const InternalCodes = {
     severity: Severity.E,
     message: (label: string, file: string, uri: string) =>
       `Expected diagnostic at label "${label}" to be in file "${file}" but received: ${uri}`,
-    fullCode: "_TB0001E",
   } as ParametricPLICode,
 };
 

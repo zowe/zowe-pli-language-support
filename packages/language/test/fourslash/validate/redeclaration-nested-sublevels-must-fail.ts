@@ -21,4 +21,4 @@
 ////       2 <|1:B|>,
 ////         3 D CHAR(8) VALUE("D");
 
-verify.expectExclusiveErrorCodesAt("1", code.Error.IBM1308I.fullCode);
+verify.expectExclusiveErrorCodesAt("1", code.Error.IBM1308I);

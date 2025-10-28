@@ -13,4 +13,4 @@
 
 //// %INCLUDE<|;|>
 
-verify.expectErrorCodesAt(";", code.Severe.IBM1620I.fullCode);
+verify.expectErrorCodesAt(";", code.Severe.IBM1620I);

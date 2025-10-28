@@ -9,6 +9,7 @@
  *
  */
 
+import { diagnosticFromCode } from "../../language-server/types";
 import {
   CompilerOption,
   CompilerOptionString,
@@ -35,7 +36,6 @@ import {
   reportDuplicateSubOptions,
   reportMutexSubOptions,
   stringTranslate,
-  TranslationError,
   Translator,
 } from "./translator";
 
@@ -49,24 +49,18 @@ translator.rule(
   ["AGGREGATE", "AG"],
   (option, options) => {
     ensureArguments(option, 0, 1);
-    const value = option.values[0];
-    if (value) {
-      ensureType(value, "plain");
-      const text = value.value.toUpperCase();
-      if (text === "DECIMAL" || text === "HEXADEC") {
-        options.aggregate = {
-          offsets: text,
-        };
-      } else {
-        throw new TranslationError(
-          value.token,
-          "Invalid aggregate value. Expected DECIMAL or HEXADEC.",
-          1,
-        );
-      }
+    if (option.values.length === 0) {
+      // Default is DECIMAL.
+      options.aggregate = { offsets: "DECIMAL" };
     } else {
-      // AGGREGATE can be set without the suboption.
-      options.aggregate = {};
+      ensureType(option.values[0], "plainNotEmpty");
+      options.aggregate = {
+        offsets: ensureArgument(
+          option.values[0],
+          CompilerOptionsCodes.Aggregate.InvalidParameter,
+          ["DECIMAL", "HEXADEC"],
+        ),
+      };
     }
   },
   ["NOAGGREGATE", "NAG"],
@@ -134,10 +128,10 @@ function attributeIdentifiers(
     } else if (text === "S" || text === "SHORT") {
       return "SHORT";
     } else {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Attribute.InvalidParameter,
         value.token,
-        "Invalid attribute value. Expected FULL or SHORT.",
-        1,
+        value.token.image,
       );
     }
   }
@@ -175,18 +169,18 @@ translator.rule(["BLANK"], (option, options) => {
   ensureType(value, "string");
 
   if (value.value.length !== 1) {
-    throw new TranslationError(
+    throw diagnosticFromCode(
+      CompilerOptionsCodes.Blank.InvalidParameterLength,
       value.token,
-      "BLANK option value must be a single character.",
-      1,
+      value.value,
     );
   }
 
   if (Options.PLI_CHARACTER_REGEX.test(value.value)) {
-    throw new TranslationError(
+    throw diagnosticFromCode(
+      CompilerOptionsCodes.Blank.InvalidParameter,
       value.token,
-      "BLANK option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
-      1,
+      value.value,
     );
   }
 
@@ -202,10 +196,10 @@ translator.rule(
   stringTranslate((options, value) => {
     const length = value.value.length;
     if (length !== 2) {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Brackets.InvalidParameterLength,
         value.token,
-        "BRACKETS option value must be two characters.",
-        1,
+        value.value,
       );
     }
     const start = value.value.charAt(0);
@@ -215,18 +209,18 @@ translator.rule(
       Options.PLI_CHARACTER_REGEX.test(start) ||
       Options.PLI_CHARACTER_REGEX.test(end)
     ) {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Brackets.InvalidParameter,
         value.token,
-        "BRACKETS option value contains disallowed characters. Cannot contain letters, numbers, spaces, or PL/I special characters.",
-        1,
+        value.value,
       );
     }
 
     if (start === end) {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Brackets.InvalidEqualCharacters,
         value.token,
-        "BRACKETS option value must be two different characters.",
-        1,
+        value.value,
       );
     }
 
@@ -235,41 +229,38 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.case} */
-translator.rule(
-  ["CASE"],
-  plainTranslate(
-    (options, value) => {
-      options.case = value.value as CompilerOptions.Case;
-    },
-    "UPPER",
-    "ASIS",
-  ),
-);
+translator.rule(["CASE"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  ensureType(option.values[0], "plainNotEmpty");
+  options.case = ensureArgument(
+    option.values[0],
+    CompilerOptionsCodes.Case.InvalidParameter,
+    ["UPPER", "ASIS"],
+  );
+});
 
 /** {@link CompilerOptions.caserules} */
 translator.rule(["CASERULES"], (option, options, acceptor) => {
-  ensureArguments(option, 1, 1);
-  const keyword = option.values[0];
-  ensureType(keyword, "option");
-  if (keyword.name.toUpperCase() !== "KEYWORD") {
-    throw new TranslationError(
-      keyword.token,
-      `Expected "KEYWORD" as compiler option value.`,
-      1,
+  ensureArguments(option, 1);
+  for (const keyword of option.values) {
+    ensureType(keyword, "option");
+    if (keyword.name !== "KEYWORD") {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.CaseRules.InvalidParameter,
+        keyword.token,
+        keyword.token.image,
+      );
+    }
+    ensureArguments(keyword, 1, 1);
+    const keywordCase = keyword.values[0];
+    ensureType(keywordCase, "plainNotEmpty");
+    options.caserules = ensureArgument(
+      keywordCase,
+      CompilerOptionsCodes.CaseRules.InvalidKeywordParameter,
+      ["MIXED", "UPPER", "LOWER", "START"],
     );
+    reportDuplicateSubOptions(option, acceptor);
   }
-  ensureArguments(keyword, 1, 1);
-  const keywordCase = keyword.values[0];
-  ensureType(keywordCase, "plain");
-  plainTranslate<CompilerOptions>(
-    (options, value) => {
-      options.caserules = value.value as CompilerOptions.CaseRules;
-    },
-    "MIXED",
-    "UPPER",
-    "LOWER",
-    "START",
-  )(keyword, options, acceptor);
 });
 
 /** {@link CompilerOptions.check} */
@@ -277,25 +268,33 @@ translator.rule(["CHECK"], (option, options, acceptor) => {
   ensureArguments(option, 1);
   for (const value of option.values) {
     ensureType(value, "plain");
-    const text = value.value.toUpperCase();
-    if (text === "STORAGE" || text === "STG") {
-      options.check = {
-        storage: "STORAGE",
-      };
-    } else if (text === "NOSTORAGE" || text === "NSTG") {
-      options.check = {
-        storage: "NOSTORAGE",
-      };
-    } else {
-      throw new TranslationError(
-        value.token,
-        `Invalid check option value. Expected STORAGE or NOSTORAGE, but received '${text}'.`,
-        1,
-      );
+    switch (value.value) {
+      case "STORAGE":
+      case "STG":
+        options.check = { storage: "STORAGE" };
+        break;
+      case "NOSTORAGE":
+      case "NSTG":
+        options.check = { storage: "NOSTORAGE" };
+        break;
+      case "":
+        // Ignore empty parameters.
+        break;
+      default:
+        throw diagnosticFromCode(
+          CompilerOptionsCodes.Check.InvalidParameter,
+          value.token,
+          value.token.image,
+        );
     }
   }
   reportDuplicateSubOptions(option, acceptor);
-  reportMutexSubOptions(option, acceptor, [["STORAGE", "NOSTORAGE"]]);
+  reportMutexSubOptions(option, acceptor, [
+    ["STORAGE", "NOSTORAGE"],
+    ["STG", "NSTG"],
+    ["STORAGE", "NSTG"],
+    ["NOSTORAGE", "STG"],
+  ]);
 });
 
 /** {@link CompilerOptions.cmpat} */
@@ -315,40 +314,13 @@ translator.rule(
 /** {@link CompilerOptions.codepage} */
 translator.rule(["CODEPAGE", "CP"], (option, options) => {
   ensureArguments(option, 1, 1);
-  ensureType(option.values[0], "plain");
-  const validCodepages = [
-    "01047",
-    "01140",
-    "01141",
-    "01142",
-    "01143",
-    "01144",
-    "01025",
-    "01145",
-    "01146",
-    "01147",
-    "01148",
-    "01149",
-    "00037",
-    "01155",
-    "00273",
-    "00277",
-    "00278",
-    "00280",
-    "00284",
-    "00285",
-    "00297",
-    "00500",
-    "00871",
-    "00819",
-    "00813",
-    "00920",
-  ];
-  if (!validCodepages.includes(option.values[0].value)) {
-    throw new TranslationError(
+  ensureType(option.values[0], "plainNotEmpty");
+
+  if (!Options.PLI_CODEPAGE_SET.has(option.values[0].value)) {
+    throw diagnosticFromCode(
+      CompilerOptionsCodes.CodePage.InvalidParameter,
       option.values[0].token,
-      `Invalid codepage value. Expected one of ${validCodepages.join(", ")}, but received '${option.values[0].value}'.`,
-      1,
+      option.values[0].value,
     );
   }
   options.codepage = option.values[0].value;
@@ -362,33 +334,24 @@ translator.rule(
   ["COMPILE", "C"],
   (option, options) => {
     ensureArguments(option, 0, 0);
-    options.compile = true;
+    ensureToBeDefined(options.compile);
+    // COMPILE is equivalent to NOCOMPILE(S).
+    options.compile.noCompile = "S";
   },
   ["NOCOMPILE", "NC"],
   (option, options) => {
     ensureArguments(option, 0, 1);
-    const severity = option.values[0];
-    let sev: CompilerOptions.Compile["severity"] | undefined;
-    if (severity) {
-      ensureType(severity, "plain");
-      const value = severity.value.toUpperCase();
-      if (value === "S") {
-        sev = "SEVERE";
-      } else if (value === "W") {
-        sev = "WARNING";
-      } else if (value === "E") {
-        sev = "ERROR";
-      } else {
-        throw new TranslationError(
-          severity.token,
-          `Invalid severity value. Expected S, W or E, but received '${value}'`,
-          1,
-        );
-      }
+    ensureToBeDefined(options.compile);
+    if (option.values.length === 0) {
+      options.compile.noCompile = true;
+    } else {
+      ensureType(option.values[0], "plainNotEmpty");
+      options.compile.noCompile = ensureArgument(
+        option.values[0],
+        CompilerOptionsCodes.Compile.InvalidParameter,
+        ["S", "W", "E"],
+      );
     }
-    options.compile = {
-      severity: sev,
-    };
   },
 );
 
@@ -399,6 +362,13 @@ translator.rule(
     ensureArguments(option, 1, 1);
     const valueOption = option.values[0];
     ensureType(valueOption, "string");
+    if (valueOption.value.length > 1000) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Copyright.InvalidParameterLength,
+        valueOption.token,
+        valueOption.value,
+      );
+    }
     options.copyright = valueOption.value;
   },
   ["NOCOPYRIGHT"],
@@ -416,10 +386,10 @@ translator.rule(
   ["CSECTCUT"],
   plainTranslate((options, value) => {
     if (!["0", "1", "2", "3", "4", "5", "6", "7"].includes(value.value)) {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.CSectCut.InvalidParameter,
         value.token,
-        `Invalid csectcut value. Expected a number between 0 and 7, but received '${value.value}'.`,
-        1,
+        value.token.image,
       );
     }
     options.csectcut = Number(value);
@@ -427,25 +397,19 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.currency} */
-translator.rule(
-  ["CURRENCY", "CURR"],
-  stringTranslate((options, value) => {
-    if (value.value.length === 0) {
-      throw new TranslationError(
-        value.token,
-        "Currency character required.",
-        1,
-      );
-    } else if (value.value.length > 1) {
-      throw new TranslationError(
-        value.token,
-        `Currency character must be a single character, but received '${value.value}'.`,
-        1,
-      );
-    }
-    options.currency = value.value;
-  }),
-);
+translator.rule(["CURRENCY", "CURR"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  const value = option.values[0];
+  ensureType(value, "plainOrString");
+  if (value.value.length !== 1) {
+    throw diagnosticFromCode(
+      CompilerOptionsCodes.Currency.InvalidParameterLength,
+      value.token,
+      value.value,
+    );
+  }
+  options.currency = value.value;
+});
 
 /** {@link CompilerOptions.dbcs} */
 translator.flag("dbcs", ["DBCS"], ["NODBCS"]);
@@ -484,10 +448,10 @@ translator.rule(["DD"], (option, options) => {
     const value = option.values[i];
     ensureType(value, "plain");
     if (!/^[a-z]+$/i.test(value.value)) {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.DD.InvalidParameter,
         value.token,
-        `Invalid DD name. Expected a text containing only letters, but received '${value.value}'.`,
-        1,
+        value.token.image,
       );
     }
     options.dd[dd[i]] = value.value;
@@ -501,10 +465,9 @@ translator.rule(["DDSQL"], (option, options) => {
   ensureType(value, "plainOrString");
   if (value.kind === SyntaxKind.CompilerOptionText) {
     if (value.value.length === 0) {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.DDSQL.InvalidParameter,
         value.token,
-        "DDSQL option value cannot be empty without parentheses.",
-        1,
       );
     }
   }
@@ -513,8 +476,9 @@ translator.rule(["DDSQL"], (option, options) => {
 
 /** {@link CompilerOptions.decimal} */
 translator.rule(["DECIMAL", "DEC"], (option, options, acceptor) => {
-  options.decimal = {};
+  // DECIMAL() is valid, but does not reset previous settings.
   ensureArguments(option, 1);
+  ensureToBeDefined(options.decimal);
   for (const opt of option.values) {
     ensureType(opt, "plain");
     const value = opt.value.toUpperCase();
@@ -567,11 +531,13 @@ translator.rule(["DECIMAL", "DEC"], (option, options, acceptor) => {
       case "NOTRUNCFLOAT":
         options.decimal.truncfloat = false;
         break;
+      case "":
+        break;
       default:
-        throw new TranslationError(
+        throw diagnosticFromCode(
+          CompilerOptionsCodes.Decimal.InvalidParameter,
           opt.token,
-          `Invalid decimal option. Expected one of 'CHECKFLOAT', 'NOCHECKFLOAT', 'FOFLONADD', 'NOFOFLONADD', 'FOFLONASGN', 'NOFOFLONASGN', 'FOFLONDIV', 'NOFOFLONDIV', 'FOFLONMULT', 'NOFOFLONMULT', 'FORCEDSIGN', 'NOFORCEDSIGN', 'KEEPMINUS', 'NOKEEPMINUS', 'TRUNCFLOAT', 'NOTRUNCFLOAT', but received '${value}'.`,
-          1,
+          value,
         );
     }
   }
@@ -594,18 +560,11 @@ translator.flag("decomp", ["DECOMP"], ["NODECOMP"]);
 /** {@link CompilerOptions.default} */
 translator.rule(["DEFAULT", "DFT"], (option, options, acceptor) => {
   ensureArguments(option, 1);
-  const def: CompilerOptions.Default = (options.default = {});
-  if (
-    option.values.length === 1 &&
-    option.values[0].kind === SyntaxKind.CompilerOptionText &&
-    option.values[0].value === ""
-  ) {
-    return;
-  }
-
+  ensureToBeDefined(options.default);
+  const def = options.default;
   for (const opt of option.values) {
     if (opt.kind === SyntaxKind.CompilerOptionText) {
-      const val = opt.value.toUpperCase();
+      const val = opt.value;
       switch (val) {
         case "ALIGNED":
         case "UNALIGNED":
@@ -653,6 +612,7 @@ translator.rule(["DEFAULT", "DFT"], (option, options, acceptor) => {
           break;
         case "INITFILL":
         case "NOINITFILL":
+          // Initfill is actually valid without a parameter and falls back to 00 in that case.
           def.initfill = val === "INITFILL" ? "00" : false;
           break;
         case "INLINE":
@@ -672,7 +632,7 @@ translator.rule(["DEFAULT", "DFT"], (option, options, acceptor) => {
           def.native = val === "NATIVE";
           break;
         case "NATIVEADDR":
-        case "NONATIVEADDR":
+        case "NONNATIVEADDR":
           def.nativeAddr = val === "NATIVEADDR";
           break;
         case "NULLSYS":
@@ -707,27 +667,43 @@ translator.rule(["DEFAULT", "DFT"], (option, options, acceptor) => {
         case "NORETCODE":
           def.retcode = val === "RETCODE";
           break;
-        default:
-          throw new TranslationError(
+        case "":
+          // Empty is valid.
+          break;
+        case "DUMMY":
+        case "E":
+        case "LINKAGE":
+        case "NULLINIT":
+        case "NULLSTRPTR":
+        case "ORDINAL":
+        case "RETURNS":
+        case "SHORT":
+          // All option values should report an expected option error.
+          throw diagnosticFromCode(
+            CompilerOptionsCodes.ExpectedOption,
             opt.token,
-            `Invalid default option value: ${val}`,
-            1,
+          );
+        default:
+          throw diagnosticFromCode(
+            CompilerOptionsCodes.Default.InvalidParameter,
+            opt.token,
+            val,
           );
       }
     } else if (opt.kind === SyntaxKind.CompilerOption) {
       ensureArguments(opt, 1, 1);
-      ensureType(opt.values[0], "plain");
-      const value = opt.values[0].value.toUpperCase();
+      ensureType(opt.values[0], "plainNotEmpty");
+      const value = opt.values[0].value;
 
       const invalidOption = () => {
-        throw new TranslationError(
+        throw diagnosticFromCode(
+          CompilerOptionsCodes.Default.InvalidParameter,
           opt.values[0].token,
-          `Invalid default option value: ${value}`,
-          1,
+          value,
         );
       };
 
-      switch (opt.name.toUpperCase()) {
+      switch (opt.name) {
         case "DUMMY":
           def.dummy = {};
           if (value === "ALIGNED" || value === "") {
@@ -755,10 +731,10 @@ translator.rule(["DEFAULT", "DFT"], (option, options, acceptor) => {
           if (/[0-9a-fA-F]{2}x/i.test(value)) {
             def.initfill = value;
           } else {
-            throw new TranslationError(
+            throw diagnosticFromCode(
+              CompilerOptionsCodes.Default.InvalidInitFillParameter,
               opt.values[0].token,
-              `INITFILL expects a hex value, but received '${value}'.`,
-              1,
+              value,
             );
           }
           break;
@@ -834,10 +810,10 @@ translator.rule(["DEFAULT", "DFT"], (option, options, acceptor) => {
           invalidOption();
       }
     } else {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Default.InvalidParameter,
         opt.token,
-        `Invalid default option value: ${opt.value}`,
-        1,
+        opt.value,
       );
     }
   }
@@ -858,7 +834,7 @@ translator.rule(["DEFAULT", "DFT"], (option, options, acceptor) => {
     ["LAXQUAL", "NOLAXQUAL"],
     ["LOWERINC", "UPPERINC"],
     ["NATIVE", "NONNATIVE"],
-    ["NATIVEADDR", "NONATIVEADDR"],
+    ["NATIVEADDR", "NONNATIVEADDR"],
     ["NULLSYS", "NULL370"],
     ["NULLSTRADDR", "NONULLSTRADDR"],
     ["ORDER", "REORDER"],
@@ -872,31 +848,40 @@ translator.rule(["DEFAULT", "DFT"], (option, options, acceptor) => {
 
 /** {@link CompilerOptions.deprecate} */
 /** {@link CompilerOptions.deprecateNext} */
-translator.rule(["DEPRECATE", "DEPRECATENEXT"], (option, options) => {
-  const items: CompilerOptions.DeprecateItem[] = [];
+translator.rule(["DEPRECATE", "DEPRECATENEXT"], (option, options, acceptor) => {
+  ensureArguments(option, 1);
+  let items: CompilerOptions.DeprecateItem[] = [];
+  if (option.name === "DEPRECATE") {
+    ensureToBeDefined(options.deprecate);
+    items = options.deprecate.items;
+  } else {
+    ensureToBeDefined(options.deprecateNext);
+    items = options.deprecateNext.items;
+  }
   for (const opt of option.values) {
     ensureType(opt, "option");
-    const name = opt.name.toUpperCase();
-    if (!["BUILTIN", "ENTRY", "INCLUDE", "STMT", "VARIABLE"].includes(name)) {
-      throw new TranslationError(
-        opt.token,
-        `Invalid DEPRECATE option. Expected one of BUILTIN, ENTRY, INCLUDE, STMT or VARIABLE, but received '${opt.name}'`,
-        1,
-      );
-    }
+    const type = ensureArgument(
+      opt,
+      CompilerOptionsCodes.Deprecate.InvalidParameter,
+      ["BUILTIN", "ENTRY", "INCLUDE", "STMT", "VARIABLE"],
+    );
     ensureArguments(opt, 0, 1);
     const optionValue = opt.values[0];
     ensureType(optionValue, "plain");
+    const value =
+      type === "STMT"
+        ? ensureArgument(
+            optionValue,
+            CompilerOptionsCodes.Deprecate.InvalidStatementParameter,
+            Options.PLI_STATEMENT_NAMES,
+          )
+        : optionValue.value;
     items.push({
-      type: name as CompilerOptions.DeprecateItem["type"],
-      value: optionValue.value,
+      type: type as CompilerOptions.DeprecateItem["type"],
+      value: value,
     });
   }
-  if (option.name === "DEPRECATE") {
-    options.deprecate = { items };
-  } else {
-    options.deprecateNext = { items };
-  }
+  reportDuplicateSubOptions(option, acceptor);
 });
 
 /** {@link CompilerOptions.display} */
@@ -911,18 +896,18 @@ translator.rule(["DISPLAY"], (option, options) => {
     } else if (text === "WTO") {
       display.wto = true;
     } else {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Display.InvalidSTDParameter,
         value.token,
-        `Invalid display value. Expected STD or WTO, but received '${value.value}'.`,
-        1,
+        value.value,
       );
     }
   } else if (value.kind === SyntaxKind.CompilerOption) {
     if (value.name.toUpperCase() !== "WTO") {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Display.InvalidWTOParameter,
         value.token,
-        `Invalid display option. Expected WTO, but received '${value.name}'.`,
-        1,
+        value.name,
       );
     }
     display.wto = true;
@@ -941,18 +926,17 @@ translator.rule(["DISPLAY"], (option, options) => {
       } else if (name === "REPLY") {
         display.reply = parameters;
       } else {
-        throw new TranslationError(
+        throw diagnosticFromCode(
+          CompilerOptionsCodes.Display.InvalidRoutCDEParameter,
           opt.token,
-          `Invalid display option. Expected ROUTCDE, DESC or REPLY, but received '${opt.name}'.`,
-          1,
+          opt.name,
         );
       }
     }
   } else {
-    throw new TranslationError(
+    throw diagnosticFromCode(
+      CompilerOptionsCodes.Display.InvalidParameter,
       value.token,
-      `Invalid display value. Expected a text or an option.`,
-      1,
     );
   }
 });
@@ -1027,10 +1011,10 @@ translator.rule(["FLAG", "F"], (option, options) => {
     if (flag === "S" || flag === "E" || flag === "I" || flag === "W") {
       options.flag = flag;
     } else {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Flag.InvalidParameter,
         value.token,
-        `Invalid flag value. Expected S, E, I or W, but received '${flag}'.`,
-        1,
+        flag,
       );
     }
   }
@@ -1106,9 +1090,9 @@ translator.rule(["HEADER"], (option, options) => {
   if (["ALL", "FILE", "FIRST", "SOURCE"].includes(headValue)) {
     options.header = headValue as CompilerOptions.Header;
   } else {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Header.InvalidParameter,
+      value.token,
       value.value,
     );
   }
@@ -1125,9 +1109,9 @@ translator.rule(["HGPR"], (option, options) => {
       preserve: hgprValue === "PRESERVE",
     };
   } else {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Hgpr.InvalidParameter,
+      value.token,
       value.value,
     );
   }
@@ -1148,9 +1132,9 @@ translator.rule(
       if (["ASSERT", "DISPLAY", "PUT"].includes(ignoreValue)) {
         options.ignore.items.push(ignoreValue as "ASSERT" | "DISPLAY" | "PUT");
       } else {
-        throw TranslationError.fromCode(
-          opt.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.Ignore.InvalidParameter,
+          opt.token,
           opt.value,
         );
       }
@@ -1178,18 +1162,18 @@ translator.rule(["INCAFTER"], (option, options) => {
       options.incAfter = { process: "", token: option.token };
       return;
     }
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.IncAfter.InvalidParameter,
+      value.token,
       value.token.image,
     );
   }
 
   ensureType(value, "option");
   if (value.name.toUpperCase() !== "PROCESS") {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.IncAfter.InvalidParameter,
+      value.token,
       value.token.image,
     );
   }
@@ -1261,9 +1245,9 @@ translator.rule(
       if (["SHORT", "FULL"].includes(value)) {
         options.initAuto = value as CompilerOptions.InitAuto;
       } else {
-        throw TranslationError.fromCode(
-          option.values[0].token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.InitAuto.InvalidParameter,
+          option.values[0].token,
           option.values[0].value,
         );
       }
@@ -1297,9 +1281,9 @@ translator.rule(
       if (["FULL", "SHORT", "ALL", "FIRST"].includes(value)) {
         options.inSource.type = value as CompilerOptions.InSource["type"];
       } else {
-        throw TranslationError.fromCode(
-          option.values[0].token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.InSource.InvalidParameter,
+          option.values[0].token,
           option.values[0].value,
         );
       }
@@ -1336,9 +1320,9 @@ translator.rule(["JSON"], (option, options, acceptor) => {
       switch (name) {
         case "CASE":
           if (!["UPPER", "LOWER", "ASIS"].includes(valueName)) {
-            throw TranslationError.fromCode(
-              value.token,
+            throw diagnosticFromCode(
               CompilerOptionsCodes.Json.InvalidCaseParameter,
+              value.token,
               value.value,
             );
           }
@@ -1346,9 +1330,9 @@ translator.rule(["JSON"], (option, options, acceptor) => {
           break;
         case "ENCODING":
           if (!["UTF8", "EBCDIC", "37", "1047"].includes(valueName)) {
-            throw TranslationError.fromCode(
-              value.token,
+            throw diagnosticFromCode(
               CompilerOptionsCodes.Json.InvalidEncodingParameter,
+              value.token,
               value.value,
             );
           }
@@ -1356,9 +1340,9 @@ translator.rule(["JSON"], (option, options, acceptor) => {
           break;
         case "GET":
           if (!["HEEDCASE", "IGNORECASE"].includes(valueName)) {
-            throw TranslationError.fromCode(
-              value.token,
+            throw diagnosticFromCode(
               CompilerOptionsCodes.Json.InvalidGetParameter,
+              value.token,
               value.value,
             );
           }
@@ -1366,9 +1350,9 @@ translator.rule(["JSON"], (option, options, acceptor) => {
           break;
         case "PARSE":
           if (!["V1", "V2"].includes(valueName)) {
-            throw TranslationError.fromCode(
-              value.token,
+            throw diagnosticFromCode(
               CompilerOptionsCodes.Json.InvalidParseParameter,
+              value.token,
               value.value,
             );
           }
@@ -1376,9 +1360,9 @@ translator.rule(["JSON"], (option, options, acceptor) => {
           break;
       }
     } else {
-      throw TranslationError.fromCode(
-        opt.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Json.InvalidParameter,
+        opt.token,
         name,
       );
     }
@@ -1396,9 +1380,9 @@ translator.rule(["LANGLVL"], (option, options, acceptor) => {
     if (["OS", "NOEXT"].includes(valueName)) {
       options.langlvl = valueName as CompilerOptions.LangLvl;
     } else {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.LangLvl.InvalidParameter,
+        value.token,
         value.value,
       );
     }
@@ -1437,16 +1421,16 @@ translator.rule(["LIMITS"], (option, options, acceptor) => {
           const maxBin =
             value.values.length > 1 ? optionNumberValue(value, 1) : 63;
           if (minBin !== 31 && minBin !== 63) {
-            throw TranslationError.fromCode(
-              value.values[0].token,
+            throw diagnosticFromCode(
               CompilerOptionsCodes.Limits.InvalidFixedBinMinParameter,
+              value.values[0].token,
               minBin.toString(),
             );
           }
           if (maxBin !== 63) {
-            throw TranslationError.fromCode(
-              value.values[1].token,
+            throw diagnosticFromCode(
               CompilerOptionsCodes.Limits.InvalidFixedBinMaxParameter,
+              value.values[1].token,
               maxBin.toString(),
             );
           }
@@ -1461,23 +1445,23 @@ translator.rule(["LIMITS"], (option, options, acceptor) => {
           const maxDec =
             value.values.length > 1 ? optionNumberValue(value, 1) : minDec;
           if (minDec !== 15 && minDec !== 31) {
-            throw TranslationError.fromCode(
-              value.values[0].token,
+            throw diagnosticFromCode(
               CompilerOptionsCodes.Limits.InvalidFixedDecMinParameter,
+              value.values[0].token,
               minDec.toString(),
             );
           }
           if (maxDec !== 15 && maxDec !== 31) {
-            throw TranslationError.fromCode(
-              value.values[1].token,
+            throw diagnosticFromCode(
               CompilerOptionsCodes.Limits.InvalidFixedDecMaxParameter,
+              value.values[1].token,
               maxDec.toString(),
             );
           }
           if (minDec > maxDec) {
-            throw TranslationError.fromCode(
-              value.values[0].token,
+            throw diagnosticFromCode(
               CompilerOptionsCodes.Limits.InvalidFixedDecRange,
+              value.values[0].token,
             );
           }
           options.limits.fixedDec = {
@@ -1504,18 +1488,18 @@ translator.rule(["LIMITS"], (option, options, acceptor) => {
           ) {
             options.limits.string = stringValue;
           } else {
-            throw TranslationError.fromCode(
-              value.values[0].token,
+            throw diagnosticFromCode(
               CompilerOptionsCodes.Limits.InvalidStringParameter,
+              value.values[0].token,
               stringValue,
             );
           }
           break;
       }
     } else {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Limits.InvalidParameter,
+        value.token,
         name,
       );
     }
@@ -1530,9 +1514,9 @@ translator.rule(["LINECOUNT", "LC"], (option, options) => {
   ensureType(value, "plainNotEmpty");
   const lineCount = ensureNumberValue(value, 0, 65535);
   if (lineCount > 0 && lineCount < 10) {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.LineCount.InvalidRange,
+      value.token,
       value.value,
     );
   }
@@ -1558,9 +1542,9 @@ translator.rule(["LISTVIEW"], (option, options, acceptor) => {
     ) {
       options.listView = valueName as CompilerOptions.ListView;
     } else {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.ListView.InvalidParameter,
+        value.token,
         value.value,
       );
     }
@@ -1578,9 +1562,9 @@ translator.rule(["LP"], (option, options) => {
   if (["32", "64"].includes(value)) {
     options.LP = value as "32" | "64";
   } else {
-    throw TranslationError.fromCode(
-      option.values[0].token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Lp.InvalidParameter,
+      option.values[0].token,
       option.values[0].value,
     );
   }
@@ -1604,9 +1588,9 @@ translator.rule(
       options.margini = " ";
       return;
     } else if (value.value.length !== 1) {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Margini.InvalidParameter,
+        value.token,
         value.value,
       );
     }
@@ -1631,9 +1615,9 @@ translator.rule(
     const mValue = ensureNumberValue(m, 1, 100);
     const nValue = ensureNumberValue(n, 1, 200);
     if (mValue >= nValue) {
-      throw TranslationError.fromCode(
-        m.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Margins.InvalidMarginPosition,
+        m.token,
       );
     }
     options.margins = {
@@ -1645,9 +1629,9 @@ translator.rule(
       ensureType(c, "plainNotEmpty");
       const cValue = ensureNumberValue(c, 0, 200);
       if (cValue >= mValue && cValue <= nValue) {
-        throw TranslationError.fromCode(
-          c.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.Margins.InvalidAnsPosition,
+          c.token,
         );
       }
       options.margins.c = cValue;
@@ -1729,9 +1713,9 @@ translator.rule(["MAXNEST"], (option, options, acceptor) => {
       options.maxnest[name as keyof CompilerOptions.MaxNest] =
         ensureNumberValue(value, 1, 50);
     } else {
-      throw TranslationError.fromCode(
-        suboption.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.MaxNest.InvalidParameter,
+        suboption.token,
         suboption.name,
       );
     }
@@ -1767,9 +1751,9 @@ translator.rule(["MAXSTMT"], (option, options) => {
   const m = ensureNumberValue(mValue, 1);
   const n = ensureNumberValue(nValue, 1);
   if (m > n) {
-    throw TranslationError.fromCode(
-      mValue.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.MaxStmt.InvalidRange,
+      mValue.token,
     );
   }
   options.maxStmt = {
@@ -1798,9 +1782,9 @@ translator.rule(
       if (["AFTERALL", "AFTERMACRO"].includes(valueName)) {
         options.mDeck = valueName as CompilerOptions.MDeck;
       } else {
-        throw TranslationError.fromCode(
-          value.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.MDeck.InvalidParameter,
+          value.token,
           value.value,
         );
       }
@@ -1832,9 +1816,9 @@ translator.rule(
       options.msgSummary = valueName as CompilerOptions.MsgSummary;
     } else {
       // Can only be reached if the value is plain.
-      throw TranslationError.fromCode(
-        option.values[0].token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.MsgSummary.InvalidParameter,
+        option.values[0].token,
         (option.values[0] as CompilerOptionText).value,
       );
     }
@@ -1859,9 +1843,9 @@ translator.rule(
         value.value.length === 0
       ) {
         // If it is just plain text, no text is not recognized.
-        throw TranslationError.fromCode(
-          value.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.ExpectedPlainNotEmpty,
+          value.token,
           value.value,
         );
       }
@@ -1886,9 +1870,9 @@ translator.rule(["NAMES"], (option, options) => {
     for (const char of value.value) {
       // The character must not be from the character or set nor occur more than once.
       if (Options.PLI_CHARACTER_SET.has(char) || seen.has(char)) {
-        throw TranslationError.fromCode(
-          value.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.Names.CharacterAlreadyDefined,
+          value.token,
           char,
           "NAMES",
         );
@@ -1912,9 +1896,9 @@ translator.rule(["NAMES"], (option, options) => {
     ensureType(secondValue, "plainOrString");
     ensureSafeCharacters(secondValue);
     if (firstValue.value.length !== secondValue.value.length) {
-      throw TranslationError.fromCode(
-        secondValue.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Names.InvalidParameterLengths,
+        secondValue.token,
         "NAMES",
       );
     }
@@ -1931,9 +1915,9 @@ translator.rule(["NATLANG"], (option, options) => {
   if (["ENU", "UEN"].includes(lang)) {
     options.natlang = lang as CompilerOptions.NatLang;
   } else {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.NatLang.InvalidParameter,
+      value.token,
       value.value,
     );
   }
@@ -1948,9 +1932,9 @@ translator.rule(["NOT"], (option, options) => {
   const value = option.values[0];
   ensureType(value, "string");
   if (value.value.length !== 1) {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Not.InvalidParameterLength,
+      value.token,
       value.value,
     );
   }
@@ -1958,9 +1942,9 @@ translator.rule(["NOT"], (option, options) => {
     value.value !== NOT_CHARACTER &&
     Options.PLI_CHARACTER_REGEX.test(value.value)
   ) {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Not.InvalidParameterCharacter,
+      value.token,
       value.value,
     );
   }
@@ -1983,9 +1967,9 @@ translator.rule(["OFFSETSIZE"], (option, options) => {
   ensureType(value, "plainNotEmpty");
   const offsetSize = ensureNumberValue(value);
   if (offsetSize !== 4 && offsetSize !== 8) {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.OffsetSize.InvalidParameter,
+      value.token,
       value.value,
     );
   }
@@ -2014,9 +1998,9 @@ translator.rule(
       } else if (onSnapValue === "STRINGSIZE") {
         options.onSnap.stringSize = true;
       } else {
-        throw TranslationError.fromCode(
-          value.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.OnSnap.InvalidParameter,
+          value.token,
           value.value,
         );
       }
@@ -2057,9 +2041,9 @@ translator.rule(
       ) {
         options.optimize = 3;
       } else {
-        throw TranslationError.fromCode(
-          value.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.Optimize.InvalidParameter,
+          value.token,
           value.value,
         );
       }
@@ -2088,9 +2072,9 @@ translator.rule(
     if (["DOC", "ALL"].includes(valueName)) {
       options.options = valueName as CompilerOptions.Options;
     } else {
-      throw TranslationError.fromCode(
-        option.values[0].token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Options.InvalidParameter,
+        option.values[0].token,
         valueName,
       );
     }
@@ -2108,16 +2092,16 @@ translator.rule(["OR"], (option, options) => {
   const value = option.values[0];
   ensureType(value, "string");
   if (value.value.length !== 1) {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Or.InvalidParameterLength,
+      value.token,
       value.value,
     );
   }
   if (value.value !== "|" && Options.PLI_CHARACTER_REGEX.test(value.value)) {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Or.InvalidParameterCharacter,
+      value.token,
       value.value,
     );
   }
@@ -2143,9 +2127,9 @@ translator.rule(
         options.pp.items.push({ name });
       } else if (value.kind === SyntaxKind.CompilerOption) {
         if (value.values.length !== 1) {
-          throw TranslationError.fromCode(
-            value.token,
+          throw diagnosticFromCode(
             CompilerOptionsCodes.PP.InvalidOptionParameter,
+            value.token,
             value.token.image,
             value.values.length,
           );
@@ -2167,9 +2151,9 @@ translator.rule(
           }
         }
       } else {
-        throw TranslationError.fromCode(
-          value.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.PP.InvalidParameterType,
+          value.token,
         );
       }
     }
@@ -2303,16 +2287,16 @@ translator.rule(["PREFIX"], (option, options, acceptor) => {
       (c.condition as readonly string[]).includes(name),
     ) as CompilerConditions.Condition | undefined;
     if (!condition) {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Prefix.InvalidParameter,
+        value.token,
         value.value,
       );
     }
     if (condition.alwaysEnabled) {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Prefix.ConditionIsAlwaysEnabled,
+        value.token,
         value.value,
       );
     }
@@ -2350,9 +2334,9 @@ translator.rule(
     if (["S", "E", "W"].includes(name)) {
       options.proceed = { noProceed: name as CompilerOptions.Flag };
     } else {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Proceed.InvalidParameter,
+        value.token,
         name,
       );
     }
@@ -2374,9 +2358,9 @@ translator.rule(
     if (["DELETE", "KEEP"].includes(name)) {
       options.process = name as CompilerOptions.Process;
     } else {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Process.InvalidParameter,
+        value.token,
         name,
       );
     }
@@ -2395,16 +2379,16 @@ translator.rule(["QUOTE"], (option, options) => {
   // TODO ssmifi: The directive does not allow to use " as string delimiter. It must be set via '.
   ensureType(value, "string");
   if (value.value.length !== 1) {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Quote.InvalidParameterLength,
+      value.token,
       value.value,
     );
   }
   if (value.value !== '"' && Options.PLI_CHARACTER_REGEX.test(value.value)) {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Quote.InvalidParameterCharacter,
+      value.token,
       value.value,
     );
   }
@@ -2432,9 +2416,9 @@ translator.rule(["RESPECT"], (option, options) => {
   if (value.value.toUpperCase() === "DATE") {
     options.respect = { date: true };
   } else {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Respect.InvalidParameter,
+      value.token,
       value.value,
     );
   }
@@ -2453,9 +2437,9 @@ translator.rule(["RTCHECK"], (option, options) => {
   if (["NONULLPTR", "NULLPTR", "NULL370"].includes(name)) {
     options.rtCheck = name as CompilerOptions.RtCheck;
   } else {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.RtCheck.InvalidParameter,
+      value.token,
       value.value,
     );
   }
@@ -2469,9 +2453,9 @@ translator.rule(["RULES"], (option, options, acceptor) => {
   for (const value of option.values) {
     if (value.kind === SyntaxKind.CompilerOptionText) {
       if (value.value.length === 0) {
-        throw TranslationError.fromCode(
-          value.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.ExpectedPlainNotEmpty,
+          value.token,
         );
       }
       const name = value.value.toUpperCase();
@@ -2796,9 +2780,9 @@ translator.rule(["RULES"], (option, options, acceptor) => {
           options.rules.yy = false;
           break;
         default:
-          throw TranslationError.fromCode(
-            value.token,
+          throw diagnosticFromCode(
             CompilerOptionsCodes.Rules.InvalidParameter,
+            value.token,
             name,
           );
       }
@@ -3042,9 +3026,9 @@ translator.rule(["RULES"], (option, options, acceptor) => {
           );
           break;
         default:
-          throw TranslationError.fromCode(
-            value.token,
+          throw diagnosticFromCode(
             CompilerOptionsCodes.Rules.InvalidParameter,
+            value.token,
             name,
           );
       }
@@ -3127,9 +3111,9 @@ translator.rule(
     if (["S", "E", "W"].includes(name)) {
       options.semantic = { noSemantic: name as CompilerOptions.Flag };
     } else {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Semantic.InvalidParameter,
+        value.token,
         name,
       );
     }
@@ -3147,16 +3131,16 @@ translator.rule(
       value.kind === SyntaxKind.CompilerOptionText &&
       value.value.length === 0
     ) {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Service.InvalidEmptyPlainParameter,
+        value.token,
         value.token.image,
       );
     }
     if (value.value.length > 64) {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Service.InvalidParameterLength,
+        value.token,
         value.value.length,
       );
     }
@@ -3188,9 +3172,9 @@ translator.rule(["STATIC"], (option, options) => {
   if (["SHORT", "FULL"].includes(name)) {
     options.static = name as CompilerOptions.Length;
   } else {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Static.InvalidParameter,
+      value.token,
       name,
     );
   }
@@ -3214,9 +3198,9 @@ translator.rule(["STRINGOFGRAPHIC", "CHAR", "G"], (option, options) => {
   if (["CHARACTER", "GRAPHIC"].includes(name)) {
     options.stringOfGraphic = name as CompilerOptions.StringOfGraphic;
   } else {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.StringOfGraphic.InvalidParameter,
+      value.token,
       name,
     );
   }
@@ -3242,9 +3226,9 @@ translator.rule(
     if (["S", "E", "W"].includes(name)) {
       options.syntax = { noSyntax: name as CompilerOptions.Flag };
     } else {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.Syntax.InvalidParameter,
+        value.token,
         name,
       );
     }
@@ -3256,10 +3240,10 @@ translator.rule(
   ["SYSPARM"],
   stringTranslate((options, text) => {
     if (text.value.length > 1023) {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.SysParm.InvalidParameterLength,
         text.token,
-        `SYSPARM value exceeds maximum length of 1023 characters. Received '${text.value.slice(0, 10)}...'`,
-        1,
+        `${text.value.slice(0, 10)}..`,
       );
     }
 
@@ -3341,9 +3325,9 @@ translator.rule(
           options.test.sym = false;
           break;
         default:
-          throw TranslationError.fromCode(
-            value.token,
+          throw diagnosticFromCode(
             CompilerOptionsCodes.Test.InvalidParameter,
+            value.token,
             name,
           );
       }
@@ -3374,9 +3358,9 @@ translator.rule(["UNROLL"], (option, options) => {
   if (["AUTO", "NO"].includes(name)) {
     options.unroll = name as CompilerOptions.Unroll;
   } else {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.Unroll.InvalidParameter,
+      value.token,
       name,
     );
   }
@@ -3444,9 +3428,9 @@ translator.rule(["USAGE"], (option, options, acceptor) => {
         );
         break;
       default:
-        throw TranslationError.fromCode(
-          value.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.Usage.InvalidParameter,
+          value.token,
           name,
         );
     }
@@ -3564,9 +3548,9 @@ translator.rule(["XINFO"], (option, options, acceptor) => {
         options.xInfo.xml = false;
         break;
       default:
-        throw TranslationError.fromCode(
-          value.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.XInfo.InvalidParameter,
+          value.token,
           value.value,
         );
     }
@@ -3604,9 +3588,9 @@ translator.rule(["XML"], (option, options, acceptor) => {
         );
         break;
       default:
-        throw TranslationError.fromCode(
-          value.token,
+        throw diagnosticFromCode(
           CompilerOptionsCodes.Xml.InvalidParameter,
+          value.token,
           value.name,
         );
     }
@@ -3650,9 +3634,9 @@ translator.rule(
           };
           break;
         default:
-          throw TranslationError.fromCode(
-            value.token,
+          throw diagnosticFromCode(
             CompilerOptionsCodes.XRef.InvalidParameter,
+            value.token,
             value.value,
           );
       }

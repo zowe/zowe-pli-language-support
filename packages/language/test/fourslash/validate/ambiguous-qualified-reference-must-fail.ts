@@ -24,4 +24,4 @@
 ////         3 C CHAR(8) VALUE("C2");
 //// PUT(<|1:B.C|>);
 
-verify.expectExclusiveErrorCodesAt("1", code.Severe.IBM1881I.fullCode);
+verify.expectExclusiveErrorCodesAt("1", code.Severe.IBM1881I);

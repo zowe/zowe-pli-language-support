@@ -45,5 +45,5 @@
 //// END RGT005;
 //// END RGT005;
 
-verify.expectExclusiveErrorCodesAt(1, code.Error.IBM1373I.fullCode);
+verify.expectExclusiveErrorCodesAt(1, code.Error.IBM1373I);
 verify.noDiagnostics(2);

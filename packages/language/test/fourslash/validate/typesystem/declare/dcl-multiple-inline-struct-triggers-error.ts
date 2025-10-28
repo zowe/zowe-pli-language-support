@@ -40,9 +40,5 @@ types.expectTypeAt("c", {
     },
   },
 });
-verify.expectDiagnosticsAt("a", {
-  code: code.Error.IBM1482I.fullCode,
-});
-verify.expectDiagnosticsAt("b", {
-  code: code.Error.IBM1482I.fullCode,
-});
+verify.expectDiagnosticsAt("a", code.Error.IBM1482I);
+verify.expectDiagnosticsAt("b", code.Error.IBM1482I);

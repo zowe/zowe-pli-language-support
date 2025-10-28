@@ -16,6 +16,6 @@
 ////   PUT(<|i><|i_usage:I|>);
 //// END;
 
-verify.expectExclusiveErrorCodesAt("i", code.Error.IBM1373I.fullCode);
+verify.expectExclusiveErrorCodesAt("i", code.Error.IBM1373I);
 verify.noDiagnostics("i_usage");
 linker.expectLinks();

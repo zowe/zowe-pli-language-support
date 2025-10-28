@@ -38,16 +38,16 @@
 ////*PROCESS <|d23:RULES|>(NOLAXSTG);
 ////*PROCESS <|d24:RULES|>(NOLAXSTRZ);
 ////*PROCESS <|d25:RULES|>(MULTICLOSE);
-////*PROCESS <|d25:RULES|>(NORECURSIVE);
-////*PROCESS <|d25:RULES|>(NOSELFASSIGN);
-////*PROCESS <|d25:RULES|>(NOUNSET);
-////*PROCESS <|d25:RULES|>(NOYY);
+////*PROCESS <|d26:RULES|>(NORECURSIVE);
+////*PROCESS <|d27:RULES|>(NOSELFASSIGN);
+////*PROCESS <|d28:RULES|>(NOUNSET);
+////*PROCESS <|d29:RULES|>(NOYY);
 
 verify.expectDiagnosticsAt(0, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1),
 });
 verify.expectDiagnosticsAt(
-  Array.from({ length: 24 }, (_, i) => `d${i + 1}`),
+  Array.from({ length: 28 }, (_, i) => `d${i + 1}`),
   {
     message: code.CompilerOptions.DupeOptionIssue.message("RULES"),
   },
