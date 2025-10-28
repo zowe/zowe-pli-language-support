@@ -16,7 +16,11 @@ import { SyntaxNode } from "../syntax-tree/ast";
 import { Token } from "../parser/tokens";
 import { InsertTextFormat, MarkupContent } from "vscode-languageserver-types";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { ParametricPLICode, SimplePLICode } from "../validation/pli-codes";
+import {
+  ParametricPLICode,
+  PLICode,
+  SimplePLICode,
+} from "../validation/pli-codes";
 
 export type Offset = number;
 
@@ -118,6 +122,21 @@ export interface Diagnostic {
   source?: string;
 }
 
+export function isDiagnostic(obj: any): obj is Diagnostic {
+  return (
+    obj &&
+    typeof obj === "object" &&
+    "message" in obj &&
+    typeof obj.message === "string" &&
+    "severity" in obj &&
+    typeof obj.severity === "number"
+  );
+}
+
+export function fullCode(code: PLICode): string {
+  return `${code.code}${Severity[code.severity]}`;
+}
+
 export function diagnosticFromCode(
   code: SimplePLICode,
   token: Token | null | undefined,
@@ -146,7 +165,7 @@ export function diagnosticFromCode(
       uri,
       range,
       message,
-      code: code.fullCode,
+      code: fullCode(code),
     };
   } else {
     // Parametric message, format with args
@@ -155,7 +174,7 @@ export function diagnosticFromCode(
       uri,
       range,
       message: message(...args),
-      code: code.fullCode,
+      code: fullCode(code),
     };
   }
 }

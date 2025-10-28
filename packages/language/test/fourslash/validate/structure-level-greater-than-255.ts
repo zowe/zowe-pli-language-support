@@ -18,4 +18,4 @@
 //// DCL 1 A,
 ////       <|a:256|> B;
 
-verify.expectExclusiveErrorCodesAt("a", code.Error.IBM1363I.fullCode);
+verify.expectExclusiveErrorCodesAt("a", code.Error.IBM1363I);

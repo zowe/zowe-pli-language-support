@@ -16,4 +16,4 @@
 ////    <|1:return|>;
 //// end;
 
-verify.expectExclusiveErrorCodesAt(1, code.Error.IBM2409I.fullCode);
+verify.expectExclusiveErrorCodesAt(1, code.Error.IBM2409I);

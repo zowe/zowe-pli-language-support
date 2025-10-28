@@ -16,7 +16,7 @@ import {
   CompilerOptions,
   getDefaultCompilerOptions,
 } from "../preprocessor/compiler-options/options";
-import { diagnostic, Diagnostic } from "../language-server/types";
+import { diagnostic, Diagnostic, fullCode } from "../language-server/types";
 import { PLICodes } from "../validation/pli-codes";
 import { NOT_CHARACTER } from "../utils/const";
 
@@ -550,7 +550,7 @@ export function tokenize(
           },
           uri.toString(),
         );
-        issue.code = PLICodes.Error.IBM3550I.fullCode;
+        issue.code = fullCode(PLICodes.Error.IBM3550I);
         diagnostics.push(issue);
       }
       context.index++;

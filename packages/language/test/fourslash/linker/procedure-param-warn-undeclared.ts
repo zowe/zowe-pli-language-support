@@ -20,4 +20,4 @@
 //// END PLEA;
 
 verify.noDiagnostics(1);
-verify.expectExclusiveErrorCodesAt(2, code.Error.IBM1373I.fullCode);
+verify.expectExclusiveErrorCodesAt(2, code.Error.IBM1373I);

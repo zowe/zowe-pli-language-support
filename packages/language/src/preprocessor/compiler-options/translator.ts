@@ -9,8 +9,13 @@
  *
  */
 
-import { CompilerOptionIssue, CompilerOptionsPP } from "./options";
-import { Severity, tokenToRange } from "../../language-server/types";
+import { CompilerOptionsPP } from "./options";
+import {
+  Diagnostic,
+  diagnosticFromCode,
+  isDiagnostic,
+  Severity,
+} from "../../language-server/types";
 import {
   CompilerOption,
   CompilerOptionString,
@@ -18,11 +23,7 @@ import {
   CompilerOptionValue,
   SyntaxKind,
 } from "../../syntax-tree/ast";
-import {
-  ParametricPLICode,
-  Warning as PLIWarning,
-} from "../../validation/pli-codes";
-import { Token } from "../../parser/tokens";
+import { ParametricPLICode } from "../../validation/pli-codes";
 import { CompilerOptionsCodes } from "./codes";
 
 interface TranslatorRule<T extends CompilerOptionsPP = CompilerOptionsPP> {
@@ -32,13 +33,13 @@ interface TranslatorRule<T extends CompilerOptionsPP = CompilerOptionsPP> {
   negativeTranslate?: Translate<T>;
 }
 
+type TranslationDiagnosticAcceptor = (diagnostic: Diagnostic) => void;
+
 type Translate<T extends CompilerOptionsPP> = (
   option: CompilerOption,
   options: T,
-  acceptor: TranslationErrorAcceptor,
+  acceptor: TranslationDiagnosticAcceptor,
 ) => void;
-
-type TranslationErrorAcceptor = (error: TranslationError) => void;
 
 /**
  * Tracks how a rule is applied, either positively or negatively
@@ -51,7 +52,7 @@ enum RuleAlignment {
 export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
   options: T;
   defaults: T;
-  issues: CompilerOptionIssue[] = [];
+  diagnostics: Diagnostic[] = [];
 
   constructor(defaults: T) {
     this.defaults = defaults;
@@ -97,7 +98,7 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
 
   clear() {
     this.appliedRules.clear();
-    this.issues = [];
+    this.diagnostics = [];
     this.options = { ...this.defaults };
   }
 
@@ -121,17 +122,13 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
   translate(option: CompilerOption) {
     const name = option.name.toUpperCase();
 
-    const reportError = (err: unknown) => {
-      if (err instanceof TranslationError) {
-        this.issues.push({
-          range: tokenToRange(err.token),
-          message: err.message,
-          severity: err.severity,
-        });
+    const reportError = (error: unknown) => {
+      if (isDiagnostic(error)) {
+        this.diagnostics.push(error);
       } else {
         console.error(
           "Encountered unexpected error during compiler options translation:",
-          String(err),
+          String(error),
         );
       }
     };
@@ -159,23 +156,24 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
       }
 
       try {
-        const localDiagnostics: CompilerOptionIssue[] = [];
-        const diagnosticsAcceptor: TranslationErrorAcceptor = (error) => {
-          localDiagnostics.push({
-            range: tokenToRange(error.token),
-            message: error.message,
-            severity: error.severity,
-          });
+        const localDiagnostics: Diagnostic[] = [];
+        const diagnosticsAcceptor: TranslationDiagnosticAcceptor = (
+          diagnostic: Diagnostic,
+        ) => {
+          localDiagnostics.push(diagnostic);
         };
         translate?.(option, this.options, diagnosticsAcceptor);
-        this.issues.push(...localDiagnostics); // Only add diagnostics if no exception is thrown.
+        this.diagnostics.push(...localDiagnostics); // Only add diagnostics if no exception was thrown.
       } catch (err) {
         reportError(err);
       }
     } else {
-      this.issues.push({
-        range: tokenToRange(option.token),
-        message: PLIWarning.IBM1159I.message(option.name),
+      this.diagnostics.push({
+        ...diagnosticFromCode(
+          CompilerOptionsCodes.UnknownOption,
+          option.token,
+          option.name,
+        ),
         severity: Severity.E,
       });
     }
@@ -185,42 +183,26 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
    * Adds a duplicate compiler option issue to the list of issues.
    */
   reportDupeOptIssue(option: CompilerOption, name: string): void {
-    this.issues.push({
-      range: tokenToRange(option.token),
-      message: CompilerOptionsCodes.DupeOptionIssue.message(name),
-      severity: CompilerOptionsCodes.DupeOptionIssue.severity,
-    });
+    this.diagnostics.push(
+      diagnosticFromCode(
+        CompilerOptionsCodes.DupeOptionIssue,
+        option.token,
+        name,
+      ),
+    );
   }
 
   /**
    * Adds a mutually exclusive compiler option issue to the list of issues.
    */
   reportMutexOptIssue(option: CompilerOption, name: string): void {
-    this.issues.push({
-      range: tokenToRange(option.token),
-      message: CompilerOptionsCodes.MutexOptionIssue.message(name),
-      severity: CompilerOptionsCodes.MutexOptionIssue.severity,
-    });
-  }
-}
-
-export class TranslationError {
-  token: Token;
-  message: string;
-  severity: Severity;
-
-  constructor(token: Token, message: string, severity: Severity) {
-    this.token = token;
-    this.message = message;
-    this.severity = severity;
-  }
-
-  static fromCode(
-    token: Token,
-    code: ParametricPLICode,
-    ...args: (string | number | undefined)[]
-  ) {
-    return new TranslationError(token, code.message(...args), code.severity);
+    this.diagnostics.push(
+      diagnosticFromCode(
+        CompilerOptionsCodes.MutexOptionIssue,
+        option.token,
+        name,
+      ),
+    );
   }
 }
 
@@ -246,9 +228,9 @@ export function ensureArguments(
     option.values.length < min ||
     (max !== undefined && option.values.length > max)
   ) {
-    throw TranslationError.fromCode(
-      option.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.InvalidParameterCount,
+      option.token,
       option.values.length,
       min,
       max,
@@ -282,33 +264,26 @@ export function ensureType(
 ): void {
   if (type === "option") {
     if (value.kind !== SyntaxKind.CompilerOption) {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.ExpectedOption,
         value.token,
-        CompilerOptionsCodes.ExpectedOption.message(),
-        CompilerOptionsCodes.ExpectedOption.severity,
       );
     }
   } else if (type === "plain" || type === "plainNotEmpty") {
     if (value.kind !== SyntaxKind.CompilerOptionText) {
-      throw new TranslationError(
-        value.token,
-        CompilerOptionsCodes.ExpectedPlain.message(),
-        CompilerOptionsCodes.ExpectedPlain.severity,
-      );
+      throw diagnosticFromCode(CompilerOptionsCodes.ExpectedPlain, value.token);
     }
     if (type === "plainNotEmpty" && value.value.length === 0) {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.ExpectedPlainNotEmpty,
         value.token,
-        CompilerOptionsCodes.ExpectedPlainNotEmpty.message(),
-        CompilerOptionsCodes.ExpectedPlainNotEmpty.severity,
       );
     }
   } else if (type === "string") {
     if (value.kind !== SyntaxKind.CompilerOptionString) {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.ExpectedString,
         value.token,
-        CompilerOptionsCodes.ExpectedString.message(),
-        CompilerOptionsCodes.ExpectedString.severity,
       );
     }
   } else if (type === "plainOrString") {
@@ -316,10 +291,9 @@ export function ensureType(
       value.kind !== SyntaxKind.CompilerOptionText &&
       value.kind !== SyntaxKind.CompilerOptionString
     ) {
-      throw new TranslationError(
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.ExpectedPlainOrString,
         value.token,
-        CompilerOptionsCodes.ExpectedPlainOrString.message(),
-        CompilerOptionsCodes.ExpectedPlainOrString.severity,
       );
     }
   }
@@ -332,15 +306,12 @@ export function ensureNumberValue(
 ): number {
   const num = stringToNumber(value.value);
   if (isNaN(num)) {
-    throw TranslationError.fromCode(
-      value.token,
-      CompilerOptionsCodes.ExpectedNumber,
-    );
+    throw diagnosticFromCode(CompilerOptionsCodes.ExpectedNumber, value.token);
   }
   if ((min !== undefined && num < min) || (max !== undefined && num > max)) {
-    throw TranslationError.fromCode(
-      value.token,
+    throw diagnosticFromCode(
       CompilerOptionsCodes.ExpectedNumberRange,
+      value.token,
       num,
       min,
       max,
@@ -352,7 +323,7 @@ export function ensureNumberValue(
 export function ensureArgument<T>(
   optionValue: CompilerOptionValue,
   code: ParametricPLICode,
-  args: T[],
+  args: readonly T[],
 ): (typeof args)[number] {
   let value;
   if (optionValue.kind === SyntaxKind.CompilerOptionText) {
@@ -370,17 +341,13 @@ export function ensureArgument<T>(
       return arg;
     }
   }
-  throw TranslationError.fromCode(
-    optionValue.token,
-    code,
-    optionValue.token.image,
-  );
+  throw diagnosticFromCode(code, optionValue.token, optionValue.token.image);
 }
 
 export function ensureFlag(
   optionValue: CompilerOptionValue,
   code: ParametricPLICode,
-  args: string[],
+  args: readonly string[],
 ): boolean {
   return ensureArgument(optionValue, code, args) === args[0];
 }
@@ -441,9 +408,9 @@ export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
     ensureType(value, "plain");
     value.value = value.value.toUpperCase();
     if (values.length > 0 && !values.includes(value.value)) {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.ExpectedPlainTranslate,
+        value.token,
         value.value,
         ...values,
       );
@@ -466,17 +433,16 @@ export function getCompilerOptionValueName(value: CompilerOptionValue): string {
 
 export function reportDuplicateSubOptions(
   parent: CompilerOption,
-  acceptor: TranslationErrorAcceptor,
+  acceptor: TranslationDiagnosticAcceptor,
 ) {
-  const values = parent.values;
   const seen = new Set<string>();
-  for (const value of values) {
+  for (const value of parent.values) {
     const name = getCompilerOptionValueName(value);
     if (seen.has(name)) {
       acceptor(
-        TranslationError.fromCode(
-          value.token,
+        diagnosticFromCode(
           CompilerOptionsCodes.DupeOptionIssue,
+          value.token,
           `${parent.token.image}(${value.token.image})`,
         ),
       );
@@ -488,21 +454,20 @@ export function reportDuplicateSubOptions(
 
 export function reportMutexSubOptions(
   parent: CompilerOption,
-  acceptor: TranslationErrorAcceptor,
+  acceptor: TranslationDiagnosticAcceptor,
   mutex: string[][],
 ) {
-  const values = parent.values;
   const seen = new Set<string>();
-  for (const value of values) {
+  for (const value of parent.values) {
     const name = getCompilerOptionValueName(value);
     for (const group of mutex) {
       if (group.includes(name)) {
         for (const other of group) {
           if (other !== name && seen.has(other)) {
             acceptor(
-              TranslationError.fromCode(
-                value.token,
+              diagnosticFromCode(
                 CompilerOptionsCodes.MutexOptionIssue,
+                value.token,
                 `${parent.token.image}(${value.token.image})`,
               ),
             );

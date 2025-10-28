@@ -30,4 +30,4 @@
 ////    call target();
 //// end MAINPR;
 
-verify.expectExclusiveErrorCodesAt(1, code.Error.IBM2410I.fullCode); // Has no RETURN, has RETURNS -> must have RETURN (...)
+verify.expectExclusiveErrorCodesAt(1, code.Error.IBM2410I); // Has no RETURN, has RETURNS -> must have RETURN (...)

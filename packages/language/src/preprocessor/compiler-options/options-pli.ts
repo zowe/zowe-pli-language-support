@@ -79,7 +79,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-compile
    */
-  compile?: CompilerOptions.Compile | true;
+  compile?: CompilerOptions.Compile;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-copyright
    */
@@ -563,7 +563,7 @@ export declare namespace CompilerOptions {
   }
   export type CMPat = "LE" | "V1" | "V2" | "V3";
   export interface Compile {
-    severity?: "ERROR" | "WARNING" | "SEVERE";
+    noCompile: true | "E" | "W" | "S";
   }
   export interface DD {
     sysprint?: string;
@@ -637,6 +637,7 @@ export declare namespace CompilerOptions {
     };
   }
   export interface Deprecate {
+    // TODO ssmifi: check if these should really be accumulated or be overwritten per type.
     items: DeprecateItem[];
   }
   export interface DeprecateItem {
@@ -1012,6 +1013,78 @@ const $1K = 1024;
 const $1M = 1024 * 1024;
 
 const defaultCompilerOptions: CompilerOptions = {
+  aggregate: false,
+  blank: " ",
+  brackets: ["[", "]"],
+  case: "UPPER",
+  caserules: "MIXED",
+  compile: { noCompile: "S" },
+  csect: true,
+  currency: "$",
+  deprecate: { items: [] },
+  deprecateNext: { items: [] },
+  ddsql: "",
+  decimal: {
+    checkfloat: false,
+    foflonadd: false,
+    foflonasgn: true,
+    foflondiv: false,
+    foflonmult: false,
+    forcedsign: false,
+    keepminus: false,
+    truncfloat: false,
+  },
+  default: {
+    aligned: true,
+    architecture: "IBM",
+    encoding: "EBCDIC",
+    assignable: true,
+    bin1arg: true,
+    allocator: "BYADDR",
+    connected: false,
+    desc: "LOCATOR",
+    descriptor: true,
+    dummy: {
+      aligned: true,
+    },
+    e: {
+      format: "HEXADEC",
+    },
+    evendec: true,
+    format: "HEXADEC",
+    initfill: false,
+    inline: false,
+    laxqual: false,
+    linkage: {
+      type: "OPTLINK",
+    },
+    inc: "LOWERINC",
+    native: true,
+    nativeAddr: true,
+    nullinit: {
+      type: "NULL",
+    },
+    nullsys: "NULL370",
+    nullStrAddr: true,
+    nullStrPtr: {
+      type: "NULL",
+    },
+    order: "REORDER",
+    ordinal: {
+      type: "MIN",
+    },
+    overlap: false,
+    padding: false,
+    pseudodummy: true,
+    recursive: false,
+    retcode: false,
+    returns: {
+      type: "BYADDR",
+    },
+    short: {
+      format: "HEXADEC",
+    },
+  },
   goNumber: false,
   json: {
     case: "UPPER",

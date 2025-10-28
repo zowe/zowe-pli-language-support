@@ -31,7 +31,7 @@ export function translateCompilerOptions(
 ): CompilerOptionResult {
   // TODO ssmifi: Defaults are set here. They do not need to be set individually.
   translator.clear();
-  translator.issues = [...input.issues];
+  translator.diagnostics = [...input.issues];
   const options = optionsToUpperCase(input.options);
   if (options.some((option) => option.name === "PP")) {
     // If there are PP compiler options, ignore the defaults, because the settings in PP start empty and are accumulated.
@@ -58,7 +58,7 @@ export function translateCompilerOptions(
     nestedOptions.options.forEach((option) =>
       translatorMacro.translate(option),
     );
-    translatorMacro.issues.push(...nestedOptions.issues);
+    translatorMacro.diagnostics.push(...nestedOptions.issues);
   }
 
   return {
@@ -67,7 +67,7 @@ export function translateCompilerOptions(
       macroOptions: translatorMacro.options as CompilerOptionsMacro,
     },
     tokens: input.tokens,
-    issues: [...translator.issues, ...translatorMacro.issues],
+    issues: [...translator.diagnostics, ...translatorMacro.diagnostics],
   };
 }
 

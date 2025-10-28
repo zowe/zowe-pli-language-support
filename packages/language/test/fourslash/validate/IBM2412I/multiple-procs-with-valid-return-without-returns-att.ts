@@ -30,4 +30,4 @@
 ////    call e();
 //// end MAINPR;
 
-verify.expectExclusiveErrorCodesAt(1, code.Error.IBM2412I.fullCode); // Has RETURN (...), has no RETURNS -> Needs att
+verify.expectExclusiveErrorCodesAt(1, code.Error.IBM2412I); // Has RETURN (...), has no RETURNS -> Needs att

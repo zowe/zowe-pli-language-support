@@ -9,7 +9,7 @@
  *
  */
 
-import { Diagnostic, Range, Severity } from "../../language-server/types";
+import { Diagnostic } from "../../language-server/types";
 import { Token } from "../../parser/tokens";
 import * as Pli from "./options-pli";
 import * as Macro from "./options-macro";
@@ -24,25 +24,7 @@ export interface CompilerOptions extends Pli.CompilerOptions {
 export interface CompilerOptionResult {
   options: CompilerOptions;
   tokens: Token[];
-  issues: CompilerOptionIssue[];
-}
-
-export interface CompilerOptionIssue {
-  severity: Severity;
-  message: string;
-  range: Range;
-}
-
-export function compilerOptionIssueToDiagnostics(
-  issue: CompilerOptionIssue,
-  uri: string,
-): Diagnostic {
-  return {
-    message: issue.message,
-    range: issue.range,
-    severity: issue.severity,
-    uri,
-  };
+  issues: Diagnostic[];
 }
 
 export namespace CompilerOptions {
@@ -55,6 +37,67 @@ export namespace CompilerOptions {
       NOT_CHARACTER
     ).split(""),
   );
+  export const PLI_CODEPAGE_SET = new Set([
+    "01047",
+    "01140",
+    "01141",
+    "01142",
+    "01143",
+    "01144",
+    "01025",
+    "01145",
+    "01146",
+    "01147",
+    "01148",
+    "01149",
+    "00037",
+    "01155",
+    "00273",
+    "00277",
+    "00278",
+    "00280",
+    "00284",
+    "00285",
+    "00297",
+    "00500",
+    "00871",
+    "00819",
+    "00813",
+    "00920",
+  ]);
+  export const PLI_STATEMENT_NAMES = [
+    "ALLOCATE",
+    "ASSERT",
+    "ATTACH",
+    "BEGIN",
+    "CALL",
+    "CLOSE",
+    "DELAY",
+    "DELETE",
+    "DETACH",
+    "DISPLAY",
+    "EXIT",
+    "FETCH",
+    "FLUSH",
+    "FREE",
+    "GET",
+    "GOTO",
+    "ITERATE",
+    "LEAVE",
+    "LOCATE",
+    "ON",
+    "OPEN",
+    "PUT",
+    "READ",
+    "RELEASE",
+    "RESIGNAL",
+    "REVERT",
+    "REWRITE",
+    "SIGNAL",
+    "STOP",
+    "WAIT",
+    "WRITE",
+  ] as const;
 }
 
 export function getDefaultCompilerOptions(): CompilerOptions {
