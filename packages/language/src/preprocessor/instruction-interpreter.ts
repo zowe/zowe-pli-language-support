@@ -2029,7 +2029,7 @@ async function runInclude(
  * Returns the appropriate file name or partial name for an include item.
  * Partial names refer to member includes that do not have an explicit ddname specified, but can still be resolved
  * in the context of a known process group lib that may contain the member.
- * Before checking we can't state whether a pure member name returned here is partial or not, as that depends on the libs.
+ * Before checking we can't state whether a standalone member returned here is partial or not, as that depends on the libs.
  * @returns Relevant fileName or member w/ or w/out a ddname, otherwise undefined when none are found
  */
 function getFileNameOrPartialName(item: IncludeItem): string | undefined {
@@ -2037,7 +2037,7 @@ function getFileNameOrPartialName(item: IncludeItem): string | undefined {
     // fully resolvable member w/ ddname
     return `${item.ddname}(${item.memberName})`;
   } else if (isMemberIncludeItem(item)) {
-    // pure member w/out a ddname, may be partial depending on libs
+    // standalone member w/out a ddname, may be partial depending on libs
     return item.memberName;
   } else if (item.fileName) {
     // literal file include
@@ -2088,15 +2088,16 @@ async function resolveIncludeFileUri(
 
     // construct the appropriate file name or partial name for members
     // let fileNameOrPartial: string;
-    // used to denote whether we're working with a pure member (requires special lookup handling)
     const fileNameOrPartial = getFileNameOrPartialName(item);
     if (!fileNameOrPartial) {
       // no fileName or memberName to work with, abandon resolution
       return undefined;
     }
 
-    // whether the include item is a pure (standalone) member, no ddname specified
-    const isPureMember = isMemberIncludeItem(item) && !item.ddname;
+    // whether the include item is a standalone member, no ddname specified
+    // in such cases this member may be the suffix of an a ddname entry in the libs, (ex. `A.B.C(member)`)
+    // corresponding to mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`
+    const isMemberWithoutDDName = isMemberIncludeItem(item) && !item.ddname;
 
     /**
      * Computes the URI for a lib file based on whether the path is absolute or relative
@@ -2126,7 +2127,7 @@ async function resolveIncludeFileUri(
       if (isLibsDir(lib)) {
         const libFileUri = resolveLibFileUri(lib.dir, fileNameOrPartial);
 
-        if (isPureMember) {
+        if (isMemberWithoutDDName) {
           // attempt to first resolve for any DDName that introduces this member
           // This is done to ensure resolution order of libs is maintained as members > files
           // Ex. If we have both `cpy/member.pli` and `cpy/A.B.C(member)`, with `cpy` in the libs list
@@ -2148,8 +2149,8 @@ async function resolveIncludeFileUri(
         if (match) {
           return match;
         }
-      } else if (isPureMember) {
-        // pure member, search within ddlib for a match
+      } else if (isMemberWithoutDDName) {
+        // standalone member w/out an explicit ddname, search within ddlib for a match
         const ddLibUri = resolveLibFileUri(lib.ddLib);
         const ddMemberMatch = await FileSystemProviderInstance.search({
           ddPath: ddLibUri.toString(true),
