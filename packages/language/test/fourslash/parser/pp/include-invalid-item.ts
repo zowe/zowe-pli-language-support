@@ -14,4 +14,4 @@
 // Numbers are not valid include items
 //// %INCLUDE <|123|>;
 
-verify.expectErrorCodesAt("123", code.Severe.IBM1618I.fullCode);
+verify.expectErrorCodesAt("123", code.Severe.IBM1618I);

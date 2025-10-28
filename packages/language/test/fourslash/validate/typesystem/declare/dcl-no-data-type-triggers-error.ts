@@ -14,9 +14,7 @@
 // @wrap: main
 //// DCL <|1:ANYTHING|> NORMAL;
 
-verify.expectDiagnosticsAt(1, {
-  code: code.Error.IBM1482I.fullCode,
-});
+verify.expectDiagnosticsAt(1, code.Error.IBM1482I);
 types.expectTypeAt(1, {
   type: types.dataTypes.Unknown,
 });

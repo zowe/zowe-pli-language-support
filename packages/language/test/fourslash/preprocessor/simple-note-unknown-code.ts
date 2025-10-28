@@ -16,6 +16,6 @@
 preprocessor.expectTokens("");
 verify.expectDiagnosticsAt(1, {
   severity: 4,
-  code: "IBM1941IU",
+  code: "IBM1941I",
   message: "This is unknown!",
 });

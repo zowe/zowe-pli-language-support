@@ -15,7 +15,12 @@ import {
   CompilationUnit,
 } from "../src/workspace/compilation-unit";
 import { URI } from "vscode-uri";
-import { Diagnostic, Range, Severity } from "../src/language-server/types";
+import {
+  Diagnostic,
+  fullCode,
+  Range,
+  Severity,
+} from "../src/language-server/types";
 import { parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
@@ -40,7 +45,7 @@ import { InternalCodes } from "../src/validation/internal-codes";
 import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
 import { tokenize } from "../src/parser/tokenizer";
 import { escapeRegExp } from "../src/parser/tokens";
-import { PLICode } from "../src/validation/pli-codes";
+import { isPLICode, PLICode } from "../src/validation/pli-codes";
 import { isSyntaxNode, SyntaxKind } from "../src/syntax-tree/ast";
 import { isObject } from "../src/utils/types";
 import { format } from "util";
@@ -453,14 +458,20 @@ export class TestBuilder {
    */
   expectExclusiveErrorCodesAt(
     label: string,
-    codes: string | string[],
+    codes: string | string[] | PLICode | PLICode[],
   ): TestBuilder {
     const codesArray = Array.isArray(codes) ? codes : [codes];
+    const createCode = (code: string | PLICode): string => {
+      if (typeof code === "string") {
+        return code;
+      }
+      return fullCode(code);
+    };
 
     return this.expectExclusiveDiagnosticsAt(
       label,
       codesArray.map((code) => ({
-        code,
+        code: createCode(code),
       })),
     );
   }
@@ -472,13 +483,22 @@ export class TestBuilder {
    * @param codes Error codes to expect
    * @returns This test builder
    */
-  expectErrorCodesAt(label: string, codes: string | string[]): TestBuilder {
+  expectErrorCodesAt(
+    label: string,
+    codes: string | string[] | PLICode | PLICode[],
+  ): TestBuilder {
     const codesArray = Array.isArray(codes) ? codes : [codes];
+    const createCode = (code: string | PLICode): string => {
+      if (typeof code === "string") {
+        return code;
+      }
+      return fullCode(code);
+    };
 
     return this.expectDiagnosticsAt(
       label,
       codesArray.map((code) => ({
-        code,
+        code: createCode(code),
       })),
     );
   }
@@ -524,11 +544,21 @@ export class TestBuilder {
 
   expectExclusiveDiagnosticsAt(
     label: string,
-    diagnostics: Partial<Diagnostic> | Partial<Diagnostic>[],
+    diagnostics:
+      | Partial<Diagnostic>
+      | Partial<Diagnostic>[]
+      | PLICode
+      | PLICode[],
   ): TestBuilder {
-    const expectedDiagnostics = Array.isArray(diagnostics)
+    const diagnosticsArray = Array.isArray(diagnostics)
       ? diagnostics
       : [diagnostics];
+    const expectedDiagnostics = diagnosticsArray.map((diag) => {
+      if (isPLICode(diag)) {
+        return { code: fullCode(diag) };
+      }
+      return diag;
+    });
 
     const { exactMatches, containingMatches } =
       this.getMatchingDiagnostics(label);
@@ -557,7 +587,11 @@ export class TestBuilder {
 
   expectDiagnosticsAt(
     label: Label,
-    diagnostics: Partial<Diagnostic> | Partial<Diagnostic>[],
+    diagnostics:
+      | Partial<Diagnostic>
+      | Partial<Diagnostic>[]
+      | PLICode
+      | PLICode[],
   ): TestBuilder {
     if (Array.isArray(label)) {
       for (const l of label) {
@@ -569,9 +603,15 @@ export class TestBuilder {
       label = label.toString();
     }
 
-    const expectedDiagnostics = Array.isArray(diagnostics)
+    const diagnosticsArray = Array.isArray(diagnostics)
       ? diagnostics
       : [diagnostics];
+    const expectedDiagnostics = diagnosticsArray.map((diag) => {
+      if (isPLICode(diag)) {
+        return { code: fullCode(diag) };
+      }
+      return diag;
+    });
 
     const { exactMatches, containingMatches } =
       this.getMatchingDiagnostics(label);
@@ -636,7 +676,7 @@ export class TestBuilder {
       ? diagnostics.filter((diagnostic) => {
           return (
             diagnostic.code !== undefined &&
-            errorCodes.map(({ fullCode }) => fullCode).includes(diagnostic.code)
+            errorCodes.map((code) => fullCode(code)).includes(diagnostic.code)
           );
         })
       : diagnostics;

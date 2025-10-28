@@ -18,4 +18,4 @@
 ////   END INNER;
 //// END OUTER;
 
-verify.expectExclusiveErrorCodesAt(1, code.Error.IBM2410I.fullCode);
+verify.expectExclusiveErrorCodesAt(1, code.Error.IBM2410I);

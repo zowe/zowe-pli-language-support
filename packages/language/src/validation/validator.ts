@@ -20,10 +20,6 @@ import { registerPliValidationChecks } from "./pli-validator";
 import { isMainProcedure, labelPrefixPointsToPackage } from "./utils";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
 import { LinkerErrorReporter } from "../linking/error";
-import {
-  CompilerOptionIssue,
-  compilerOptionIssueToDiagnostics,
-} from "../preprocessor/compiler-options/options";
 import { Token } from "../parser/tokens";
 import { registerPreprocessorValidationChecks } from "./pp-validator";
 
@@ -114,20 +110,20 @@ function validateSyntaxNode(
   });
 }
 
-export function compilerOptionIssuesToDiagnostics(
-  compilerOptionIssues: CompilerOptionIssue[] | undefined,
+export function filteredDiagnosticsWithUri(
+  diagnostics: Diagnostic[] | undefined,
   uri: string,
 ): Diagnostic[] {
-  if (!compilerOptionIssues) {
+  if (!diagnostics) {
     return [];
   }
-  const diagnostics: Diagnostic[] = [];
-  for (const issue of compilerOptionIssues) {
-    if (!isNaN(issue.range.start)) {
-      diagnostics.push(compilerOptionIssueToDiagnostics(issue, uri));
+  const filteredDiagnostics: Diagnostic[] = [];
+  for (const issue of diagnostics) {
+    if (issue.range && !isNaN(issue.range.start)) {
+      filteredDiagnostics.push({ ...issue, uri });
     }
   }
-  return diagnostics;
+  return filteredDiagnostics;
 }
 
 export function parserErrorsToDiagnostics(

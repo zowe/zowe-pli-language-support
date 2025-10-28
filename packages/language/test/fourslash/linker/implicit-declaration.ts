@@ -16,7 +16,7 @@
 //// PUT(<|1>A);
 //// PUT(<|1>A);
 
-verify.expectExclusiveErrorCodesAt(1, code.Error.IBM1373I.fullCode);
+verify.expectExclusiveErrorCodesAt(1, code.Error.IBM1373I);
 verify.expectDiagnosticsAt(1, {
   severity: constants.Severity.W,
 });

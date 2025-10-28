@@ -21,4 +21,4 @@
 ////   Y = 4;
 //// END;
 
-verify.expectExclusiveErrorCodesAt(1, code.Warning.IBM2615I.fullCode);
+verify.expectExclusiveErrorCodesAt(1, code.Warning.IBM2615I);

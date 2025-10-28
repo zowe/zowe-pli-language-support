@@ -17,8 +17,11 @@ import {
   TokenType,
   EOF,
 } from "chevrotain";
-import { CompilerOptionIssue } from "./options";
-import { Severity, tokenToRange } from "../../language-server/types";
+import {
+  Diagnostic,
+  Severity,
+  tokenToRange,
+} from "../../language-server/types";
 import { CstNodeKind } from "../../syntax-tree/cst";
 import {
   CompilerOption,
@@ -260,7 +263,7 @@ const parser = new CompilerOptionsParser();
 export interface AbstractCompilerOptions {
   options: CompilerOption[];
   tokens: Token[];
-  issues: CompilerOptionIssue[];
+  issues: Diagnostic[];
 }
 
 /**
@@ -284,7 +287,7 @@ export function parseAbstractCompilerOptions(
   ) as Token[];
   parser.input = tokens;
   const compilerOptions = parser.compilerOptions();
-  const issues: CompilerOptionIssue[] = [];
+  const issues: Diagnostic[] = [];
   for (const lexerError of lexerResult.errors) {
     issues.push({
       message: lexerError.message,

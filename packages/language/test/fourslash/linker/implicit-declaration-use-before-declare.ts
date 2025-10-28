@@ -15,5 +15,5 @@
 //// PUT(<|1><|2:A|>);
 //// <|1:A|> = 123;
 
-verify.expectExclusiveErrorCodesAt(2, code.Warning.IBM1085I.fullCode);
+verify.expectExclusiveErrorCodesAt(2, code.Warning.IBM1085I);
 linker.expectLinks();

@@ -25,4 +25,4 @@
 ////   /* missing OTHERWISE */
 //// END;
 
-verify.expectExclusiveErrorCodesAt(1, code.Information.IBM1059I.fullCode);
+verify.expectExclusiveErrorCodesAt(1, code.Information.IBM1059I);

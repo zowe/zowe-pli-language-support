@@ -18,4 +18,4 @@
 //// PREFIX TEST INPUT(123) <|1:OUTPUT|>(321); SUFFIX
 
 preprocessor.expectTokens("PREFIX 123 SUFFIX");
-verify.expectExclusiveErrorCodesAt("1", [code.Error.IBM3581I.fullCode]);
+verify.expectExclusiveErrorCodesAt("1", [code.Error.IBM3581I]);

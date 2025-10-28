@@ -19,4 +19,4 @@
 //// A: PROCEDURE;
 //// END A;
 
-verify.expectExclusiveErrorCodesAt("1", code.Error.IBM1306I.fullCode);
+verify.expectExclusiveErrorCodesAt("1", code.Error.IBM1306I);

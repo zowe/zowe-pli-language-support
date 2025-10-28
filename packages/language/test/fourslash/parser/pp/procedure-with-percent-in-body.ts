@@ -16,7 +16,7 @@
 //// %END;
 
 // The DCL statement uses an illegal % character, so we expect a parser error
-verify.expectErrorCodesAt("%", code.Severe.IBM3762I.fullCode);
+verify.expectErrorCodesAt("%", code.Severe.IBM3762I);
 // But the content of the procedure should still be parsed correctly
 verify.expectPPAst({
   kind: Syntax.ProcedureStatement,

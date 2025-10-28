@@ -101,13 +101,19 @@ export interface HarnessTesterInterface {
      * @param label The label to expect the error codes at.
      * @param codes The error codes to expect.
      */
-    expectExclusiveErrorCodesAt(label: Label, codes: string[] | string): void;
+    expectExclusiveErrorCodesAt(
+      label: Label,
+      codes: string[] | string | PLICode | PLICode[],
+    ): void;
     /**
      * Expect that the given label has the given error codes.
      * @param label The label to expect the error codes at.
      * @param codes The error codes to expect.
      */
-    expectErrorCodesAt(label: Label, codes: string[] | string): void;
+    expectErrorCodesAt(
+      label: Label,
+      codes: string[] | string | PLICode | PLICode[],
+    ): void;
     /**
      * Expect that the given label has the given diagnostics.
      * @param label The label to expect the diagnostics at.
@@ -115,7 +121,11 @@ export interface HarnessTesterInterface {
      */
     expectExclusiveDiagnosticsAt(
       label: Label,
-      diagnostics: Partial<Diagnostic> | Partial<Diagnostic>[],
+      diagnostics:
+        | Partial<Diagnostic>
+        | Partial<Diagnostic>[]
+        | PLICode
+        | PLICode[],
     ): void;
     /**
      * Expect that the given label has the given diagnostics.
@@ -124,7 +134,11 @@ export interface HarnessTesterInterface {
      */
     expectDiagnosticsAt(
       label: Label,
-      diagnostics: Partial<Diagnostic> | Partial<Diagnostic>[],
+      diagnostics:
+        | Partial<Diagnostic>
+        | Partial<Diagnostic>[]
+        | PLICode
+        | PLICode[],
     ): void;
     /**
      * Expect that the compilation unit has no diagnostics.

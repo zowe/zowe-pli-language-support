@@ -33,6 +33,7 @@ const HARNESS_ESCAPE_CHARACTERS = [
   ["\\n", "\n"],
   ["\\r", "\r"],
   ["\\t", "\t"],
+  ["\\$1k", "x".repeat(1024)], // escape sequence to insert 1k characters
 ];
 
 type Context = {

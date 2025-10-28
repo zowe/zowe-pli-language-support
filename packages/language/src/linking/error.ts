@@ -12,6 +12,7 @@
 import {
   diagnostic,
   diagnosticFromCode,
+  fullCode,
   Range,
   Severity,
   tokenToRange,
@@ -143,7 +144,7 @@ export class LinkerErrorReporter {
       severity: Severity.S,
       range,
       uri,
-      code: PLICodes.Severe.IBM1881I.fullCode,
+      code: fullCode(PLICodes.Severe.IBM1881I),
     });
   }
 
