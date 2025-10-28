@@ -295,7 +295,8 @@ function getNodeRepresentation(
       return getDeclaredVariableRepresentation(unit, node);
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
-    case SyntaxKind.IncludeItem:
+    case SyntaxKind.IncludeItemFile:
+    case SyntaxKind.IncludeItemMember:
       let type = "%INCLUDE";
       const ppInclude = unit.compilerOptions?.pp?.ppInclude?.value;
       if (

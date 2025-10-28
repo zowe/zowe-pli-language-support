@@ -591,9 +591,7 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
   directive.idempotent = isXInstruction(includeToken);
   let parseError = false;
   while (true) {
-    const item = ast.createIncludeItem() as
-      | ast.IncludeItemFile
-      | ast.IncludeItemMember;
+    let item: ast.IncludeItemFile | ast.IncludeItemMember | undefined = undefined;
     // collect all ID tokens that can contribute to a ddname
     const idTokens: t.Token[] = [];
     let nextIdToken: t.Token | null = null;
@@ -620,6 +618,11 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
 
     if (idTokens.length > 1) {
       // ddname which requires a parenthesized member portion
+      item = ast.createIncludeItemMember();
+      for (const idToken of idTokens) {
+        idToken.element = item;
+      }
+
       state.consume(item, CstNodeKind.IncludeItem_OpenParen, t.OpenParen);
 
       const memberToken = state.consume(
@@ -628,16 +631,19 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
         t.ID,
       );
 
-      const itemWithMember = item as ast.IncludeItemMember;
-
       state.consume(item, CstNodeKind.IncludeItem_CloseParen, t.CloseParen);
       // joint ddname
-      itemWithMember.ddname = idTokens.map((t) => t.image).join(".");
-      itemWithMember.ddnameTokens = idTokens;
+      item.ddname = idTokens.map((t) => t.image).join(".");
+      item.ddnameTokens = idTokens; // <-- TODO use these tokens to report chained diagnostics, do I already do this?
 
-      itemWithMember.memberName = memberToken?.image ?? null;
-      itemWithMember.token = memberToken;
+      item.memberName = memberToken?.image ?? null;
+      item.token = memberToken;
     } else if (idTokens.length === 1) {
+      item = ast.createIncludeItemMember();
+      for (const idToken of idTokens) {
+        idToken.element = item;
+      }
+
       // either ddname w/ member, or raw member
       const ddnameOrMember = idTokens[0].image;
 
@@ -659,20 +665,22 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
 
         state.consume(item, CstNodeKind.IncludeItem_CloseParen, t.CloseParen);
 
-        const itemWithMember = item as ast.IncludeItemMember;
+        item.ddname = ddnameOrMember;
+        item.ddnameTokens = idTokens;
 
-        itemWithMember.ddname = ddnameOrMember;
-        itemWithMember.ddnameTokens = idTokens;
-
-        itemWithMember.memberName = memberToken?.image ?? null;
-        itemWithMember.token = memberToken;
+        item.memberName = memberToken?.image ?? null;
+        item.token = memberToken;
       } else {
         // member include case
-        const itemWithMember = item as ast.IncludeItemMember;
-        itemWithMember.memberName = ddnameOrMember;
-        itemWithMember.token = nextIdToken;
+        item.memberName = ddnameOrMember;
+        item.token = nextIdToken;
       }
     } else {
+      item = ast.createIncludeItemFile();
+      for (const idToken of idTokens) {
+        idToken.element = item;
+      }
+
       // direct file include, not a member (from string)
       const stringToken = state.tryConsume(
         item,
@@ -680,10 +688,9 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
         t.STRING_TERM,
       );
       if (stringToken) {
-        const itemWithFile = item as ast.IncludeItemFile;
         const fileName = unpackCharacterValue(stringToken.image);
-        itemWithFile.fileName = fileName;
-        itemWithFile.token = stringToken;
+        item.fileName = fileName;
+        item.token = stringToken;
       } else {
         // At least one include item is required
         // If none is found, we will report an error at the end of the statement
@@ -719,7 +726,7 @@ export function includeAltStatement(
     CstNodeKind.IncludeAltDirective_INCLUDE_ALT,
     t.INCLUDE_ALT,
   );
-  const item = ast.createIncludeItem() as ast.IncludeItemFile;
+  const item = ast.createIncludeItemFile();
   const token = state.consume(item, CstNodeKind.IncludeItem_FileID, t.ID);
   const fileName = token?.image ?? null;
   item.fileName = fileName;

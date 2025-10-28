@@ -117,7 +117,8 @@ export enum SyntaxKind {
   IfStatement,
   IncludeDirective,
   IncludeAltDirective,
-  IncludeItem,
+  IncludeItemMember,
+  IncludeItemFile,
   InscanDirective,
   IndForAttribute,
   InitAcrossExpression,
@@ -373,7 +374,8 @@ export type SyntaxNode =
   | IfStatement
   | IncludeDirective
   | IncludeAltDirective
-  | IncludeItem
+  | IncludeItemMember
+  | IncludeItemFile
   | InscanDirective
   | IndForAttribute
   | InitAcrossExpression
@@ -1614,31 +1616,35 @@ export function createIncludeAltDirective(): IncludeAltDirective {
   };
 }
 
-interface IncludeItem extends AstNode {
-  kind: SyntaxKind.IncludeItem;
-
-  /**
-   * Token shared by either fileName | member
-   */
+/**
+ * Include item by file name
+ */
+// TODO break this up into it's own AST node type
+export interface IncludeItemFile extends AstNode {
+  kind: SyntaxKind.IncludeItemFile;
   token: Token | null;
 
   // Properties filled by the preprocessor
   filePath: string | null;
   relativeFilePath: string | null;
   sourceText: string | null;
-}
 
-/**
- * Include item by file name
- */
-export type IncludeItemFile = IncludeItem & {
   fileName: string | null;
 };
 
 /**
  * Include item by member name + optional ddname
  */
-export type IncludeItemMember = IncludeItem & {
+// TODO break this up into it's own AST node type
+export interface IncludeItemMember extends AstNode {
+  kind: SyntaxKind.IncludeItemMember;
+  token: Token | null;
+
+  // Properties filled by the preprocessor
+  filePath: string | null;
+  relativeFilePath: string | null;
+  sourceText: string | null;
+
   /**
    * Member name of the include, if present
    */
@@ -1659,30 +1665,52 @@ export type IncludeItemMember = IncludeItem & {
  * Type guard for an IncludeItemFile w/ fileName prop
  */
 export function isIncludeItemFile(
-  item: IncludeItem,
+  item: unknown,
 ): item is IncludeItemFile & { fileName: string } {
-  return !!(item as IncludeItemFile).fileName;
+  return typeof item === "object" &&
+    item !== null &&
+    'fileName' in item &&
+    typeof (item as any).fileName === 'string';
 }
 
 /**
  * Type guard for an IncludeItemMember w/ memberName prop
  */
 export function isIncludeItemMember(
-  item: IncludeItem,
+  item: unknown,
 ): item is IncludeItemMember & { memberName: string } {
-  return !!(item as IncludeItemMember).memberName;
+  return typeof item === "object" &&
+    item !== null &&
+    'memberName' in item &&
+    typeof (item as any).memberName === 'string';
 }
 
-export function createIncludeItem(): IncludeItem {
+export function createIncludeItemFile(): IncludeItemFile {
   return {
-    kind: SyntaxKind.IncludeItem,
+    kind: SyntaxKind.IncludeItemFile,
     container: null,
     filePath: null,
     relativeFilePath: null,
     token: null,
     sourceText: null,
+    fileName: null,
   };
 }
+
+export function createIncludeItemMember(): IncludeItemMember {
+  return {
+    kind: SyntaxKind.IncludeItemMember,
+    container: null,
+    filePath: null,
+    relativeFilePath: null,
+    token: null,
+    sourceText: null,
+    memberName: null,
+    ddname: null,
+    ddnameTokens: null,
+  };
+}
+
 export interface InscanDirective extends AstNode {
   kind: SyntaxKind.InscanDirective;
   token: Token | null;

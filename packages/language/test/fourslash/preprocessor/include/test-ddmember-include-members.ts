@@ -9,7 +9,13 @@
  *
  */
 
-// Tests including a ddname(member) by its member
+// Tests including a ddname(member) by its member (mainframe-style include)
+// This is a special case that requires looking up the member within known ddname libs
+// Ex. We have `%include m2;` and in the proc_grps.json we have `cpy2/A.B.C` in the libs
+// The preprocessor should be able to resolve m2 as a member of A.B.C from cpy2
+// The same should work if only `cpy2` is in the libs, since we resolve libs recursively
+// This mimics mainframe behavior, which sees ddnames akin to directories containing members (ex. A/B/C/m2)
+// Effectively this tests that language support for mainframe-style includes works as expected alongside regular includes
 
 /// <reference path="../../framework.ts" />
 
