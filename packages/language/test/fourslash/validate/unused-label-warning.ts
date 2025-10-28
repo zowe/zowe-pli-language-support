@@ -18,4 +18,4 @@
 //// <|1:OUTER|>: PROCEDURE;
 //// END OUTER;
 
-verify.expectExclusiveErrorCodesAt("1", code.Warning.IBM1213I.fullCode);
+verify.expectExclusiveErrorCodesAt("1", code.Warning.IBM1213I);

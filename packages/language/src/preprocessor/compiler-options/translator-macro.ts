@@ -9,6 +9,7 @@
  *
  */
 
+import { diagnosticFromCode } from "../../language-server/types";
 import { CompilerOptionsCodes } from "./codes";
 import { CompilerOptions, getDefaultCompilerOptions } from "./options-macro";
 import {
@@ -16,7 +17,6 @@ import {
   ensureArguments,
   ensureType,
   originalImage,
-  TranslationError,
   Translator,
 } from "./translator";
 
@@ -50,9 +50,9 @@ translator.rule(["DEPRECATE"], (option, options) => {
   for (const value of option.values) {
     ensureType(value, "option");
     if (value.name !== "ENTRY") {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.PPMacro.Deprecate.InvalidSubOption,
+        value.token,
         value.token.image,
       );
     }
@@ -71,9 +71,9 @@ translator.rule(["DEPRECATENEXT"], (option, options) => {
   for (const value of option.values) {
     ensureType(value, "option");
     if (value.name !== "ENTRY") {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.PPMacro.Deprecate.InvalidSubOption,
+        value.token,
         value.token.image,
       );
     }
@@ -112,9 +112,9 @@ translator.rule(
     const value = option.values[0];
     ensureType(value, "plain");
     if (value.value !== "NOPRINT") {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.PPMacro.Ignore.InvalidParameter,
+        value.token,
         originalImage(value),
       );
     }
@@ -136,9 +136,9 @@ translator.rule(
     const value = option.values[0];
     ensureType(value, "plainNotEmpty");
     if (value.value.length !== 1) {
-      throw TranslationError.fromCode(
-        value.token,
+      throw diagnosticFromCode(
         CompilerOptionsCodes.PPMacro.NamePrefix.InvalidParameterLength,
+        value.token,
         value.token.image,
       );
     }

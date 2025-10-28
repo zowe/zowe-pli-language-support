@@ -20,4 +20,4 @@
 ////   <|1:LEAVE|>;
 //// END;
 
-verify.expectExclusiveErrorCodesAt(1, code.Warning.IBM1219I.fullCode);
+verify.expectExclusiveErrorCodesAt(1, code.Warning.IBM1219I);
