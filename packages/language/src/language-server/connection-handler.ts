@@ -112,7 +112,7 @@ export function startLanguageServer(connection: Connection): void {
       }
 
       const offset = textDocument.offsetAt(position);
-      const response = hoverRequest(compilationUnit, parsedUri, offset);
+      const response = await hoverRequest(compilationUnit, parsedUri, offset);
       if (!response) {
         return null;
       }
