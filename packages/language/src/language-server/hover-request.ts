@@ -247,37 +247,21 @@ async function getIncludeItemRepresentation(
   if (!node.filePath || !node.relativeFilePath) {
     return null;
   }
-  // *** Always check that the file is resolvable now. ***
   const doc = unit.services.files.getDocument(URI.parse(node.filePath));
   if (!doc) {
-    // If the file can't be resolved now, don't show the include info.
-    // This prevents showing stale info stored on the node.
     return null;
   }
-  // const test = unit.uri;
-  // const test2 = UriUtils.normalize(UriUtils.resolvePath(test, node.relativeFilePath)); pass at the next line
-  // const test = URI.parse(node.relativeFilePath);
-  // const resolvedIncludePath = UriUtils.resolvePath(test);
-  // file:///Users/wagnerlaranjeiras/Desktop/zowe-pli-language-support-original/code_samples/plugin-example/a.pli
-  // const includeFileUri = UriUtils.normalize(resolvedIncludePath);//UriUtils.normalize(URI.file(UriUtils.resolvePath()));
   const configVersion = String(
     unit.compilerOptions?.pp?.ppInclude?.value ?? "v0",
   );
   const key = makeIncludeKey(
     UriUtils.normalize(unit.uri),
-    "file:///Users/wagnerlaranjeiras/Desktop/zowe-pli-language-support-original/code_samples/plugin-example/cpy/b.pli", //includeFileUri',
+    node.relativeFilePath,
     configVersion,
   );
-
-  console.log('[HAS]', includeCache.has(key));
-  console.log('[GET BEFORE]', includeCache.get(key));
-
   const preview = await includeCache.fetch(key, {
-    context: { unit, node } // dynamic per hover
+    context: { unit, node },
   });
-
-  console.log("[CACHE RESULT]", preview);
-
   if (!preview || !preview.partialContent) {
     return null;
   }
@@ -287,40 +271,6 @@ async function getIncludeItemRepresentation(
     node.relativeFilePath,
     preview.partialContent,
   );
-
-  // // TODO: Don't store the file content in the node itself
-  // // Instead, implement a proper caching mechanism
-  // let partialContent = node.sourceText;
-  // const fileUri = URI.parse(node.filePath);
-
-  // // *** Always check that the file is resolvable now. ***
-  // const doc = unit.services.files.getDocument(fileUri);
-  // if (!doc) {
-  //   // If the file can't be resolved now, don't show the include info.
-  //   // This prevents showing stale info stored on the node.
-  //   return null;
-  // }
-
-  // if (!partialContent) {
-  //   // load up the first 20 lines of content from the file (semi-arbitrary cutoff)
-  //   const lineCutoff = 20;
-  //   const doc = unit.services.files.getDocument(fileUri);
-  //   if (!doc) {
-  //     return null;
-  //   }
-  //   const fileContent = doc.getText({
-  //     start: { line: 0, character: 0 },
-  //     end: { line: lineCutoff + 1, character: 0 },
-  //   });
-  //   const lineCount = fileContent.matchAll(/\n/g);
-  //   partialContent =
-  //     Array.from(lineCount).length > lineCutoff
-  //       ? fileContent + "\n...\n"
-  //       : fileContent;
-  //   // cache for later requests
-  //   node.sourceText = partialContent;
-  // }
-  // return generateIncludeItemMarkup(type, node.relativeFilePath, preview.partialContent);
 }
 
 export function generateIncludeItemMarkup(

@@ -32,9 +32,12 @@ export const includeCache = new LRUCache<string, IncludePreview>({
   sizeCalculation: (v) => (v.partialContent ? v.partialContent.length : 1),
   fetchMethod: async (key, staleValue, { context }) => {
     if (!context) throw new Error("Missing context for include preview");
-    const { unit, node } = context as { unit: CompilationUnit; node: IncludeItemNode };
+    const { unit, node } = context as {
+      unit: CompilationUnit;
+      node: IncludeItemNode;
+    };
     return loadIncludePreview(unit, node);
-  }
+  },
 });
 
 export function makeIncludeKey(
@@ -44,18 +47,6 @@ export function makeIncludeKey(
 ) {
   return `${unitId}::inc::${relativePath}::cfg=${configVersion ?? "v0"}`;
 }
-
-// export async function fetchIncludePreview(
-//   key: string,
-//   fetchFn: () => Promise<IncludePreview>,
-// ) {
-//   const cached = includeCache.get(key);
-//   if (cached) return cached;
-
-//   const value = await fetchFn();
-//   includeCache.set(key, value);
-//   return value;
-// }
 
 export async function fetchIncludePreviewWithCache(
   key: string,
@@ -85,11 +76,10 @@ export async function loadIncludePreview(
   const fileUri = URI.parse(node.filePath);
   const doc = unit.services.files.getDocument(fileUri);
   if (!doc) {
-    // unresolved now
     return { fileUri: null, partialContent: null, fetchedAt: Date.now() };
   }
 
-  // read up to N lines (same logic as before)
+  // read up to N lines
   const lineCutoff = 20;
   const fileContent = doc.getText({
     start: { line: 0, character: 0 },
