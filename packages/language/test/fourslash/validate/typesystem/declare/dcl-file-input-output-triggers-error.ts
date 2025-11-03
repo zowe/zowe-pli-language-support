@@ -14,7 +14,7 @@
 // @wrap: main
 //// DCL <|1:ANYTHING|> FILE INPUT <|OUTPUT|>;
 
-verify.expectDiagnosticsAt('OUTPUT', code.Error.IBM2462I);
+verify.expectDiagnosticsAt("OUTPUT", code.Error.IBM2462I);
 types.expectTypeAt(1, {
   type: types.dataTypes.File,
   transmissionDirection: types.transmissionDirections.Input,
