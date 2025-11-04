@@ -21,8 +21,7 @@ import {
   setFileSystemProvider,
   DirEntry,
   DirEntryType,
-  isPathSearch,
-  isMemberSearchInDir,
+  isPathSearch
 } from "pli-language";
 import * as fs from "fs";
 import * as glob from "glob";
@@ -75,7 +74,7 @@ class NodeFileSystemProvider implements FileSystemProvider {
         absolute: true,
         nocase: true,
       });
-    } else if (isMemberSearchInDir(options)) {
+    } else {
       // member lookup w/ dir path
       files = await glob.glob(
         `${options.dirPath.fsPath}**/*\\(${options.member}\\)`,
@@ -85,15 +84,6 @@ class NodeFileSystemProvider implements FileSystemProvider {
           nocase: true,
         },
       );
-    } else {
-      // member lookup w/ dd path (partial lib file as entry)
-      const uri = URI.parse(options.ddPath + `(${options.member})`);
-      const path = uri.fsPath.replace(/\\/g, "/");
-      files = await glob.glob(path, {
-        nodir: true,
-        absolute: true,
-        nocase: true,
-      });
     }
 
     // return first match when present

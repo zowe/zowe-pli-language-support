@@ -15,7 +15,7 @@ import { LanguageClient } from "vscode-languageclient/browser.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Messages } from "../common/messages";
 import { searchFiles } from "../common/file-search";
-import { isMemberSearchInDir, isPathSearch, SearchOptions } from "pli-language";
+import { isPathSearch, SearchOptions } from "pli-language";
 
 let client: LanguageClient;
 
@@ -78,10 +78,8 @@ function registerFileSystemProvider(client: LanguageClient): void {
       let uri;
       if (isPathSearch(options)) {
         uri = options.path.with({ path });
-      } else if (isMemberSearchInDir(options)) {
-        uri = options.dirPath.with({ path });
       } else {
-        uri = vscode.Uri.parse(options.ddPath).with({ path });
+        uri = options.dirPath.with({ path });
       }
       const result = await vscode.workspace.fs.readDirectory(uri);
       return result.map((r) => r[0]);

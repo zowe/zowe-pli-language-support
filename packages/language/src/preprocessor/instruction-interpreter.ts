@@ -2146,8 +2146,8 @@ async function resolveIncludeFileUri(
         // standalone member w/out an explicit ddname, search within ddlib for a match
         const ddLibUri = resolveLibFileUri(lib.ddLib);
         const ddMemberMatch = await FileSystemProviderInstance.search({
-          ddPath: ddLibUri.toString(true),
-          member: fileNameOrPartial,
+          path: URI.parse(ddLibUri.toString(true) + `(${fileNameOrPartial})`),
+          extensions: [],
         });
         if (ddMemberMatch) {
           return ddMemberMatch;

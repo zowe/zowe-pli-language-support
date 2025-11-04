@@ -13,8 +13,7 @@ import { URI } from "../utils/uri";
 
 export type SearchOptions =
   | PathSearch
-  | MemberSearchInDir
-  | MemberSearchWithDDPath;
+  | MemberSearchInDir;
 
 /**
  * Search by full path with optional extensions.
@@ -44,24 +43,6 @@ interface MemberSearchInDir {
   member: string;
 }
 
-/**
- * Search by member name w/ a path up to & including the ddname.
- * Combined with the member, we can construct a complete path to search.
- * The search implementation determines how best to combine the two.
- */
-interface MemberSearchWithDDPath {
-  /**
-   * Partial path that corresponds to a common ddname
-   * Ex. entries like A.B.C(m1) & A.B.C(m2) would result in ddPath 'A.B.C'
-   */
-  ddPath: string;
-
-  /**
-   * Member we're looking for
-   */
-  member: string;
-}
-
 export function isPathSearch(obj: any): obj is PathSearch {
   return (
     obj &&
@@ -69,28 +50,6 @@ export function isPathSearch(obj: any): obj is PathSearch {
     "path" in obj &&
     "extensions" in obj &&
     Array.isArray(obj.extensions)
-  );
-}
-
-export function isMemberSearchInDir(obj: any): obj is MemberSearchInDir {
-  return (
-    obj &&
-    typeof obj === "object" &&
-    "dirPath" in obj &&
-    "member" in obj &&
-    typeof obj.member === "string"
-  );
-}
-
-export function isMemberSearchWithDDPath(
-  obj: any,
-): obj is MemberSearchWithDDPath {
-  return (
-    obj &&
-    typeof obj === "object" &&
-    "ddPath" in obj &&
-    "member" in obj &&
-    typeof obj.member === "string"
   );
 }
 
@@ -283,7 +242,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
           }
         }
       }
-    } else if (isMemberSearchInDir(options)) {
+    } else {
       // perform a search by a member w/ candidate dir path
       const memberPart = `(${options.member})`.toLowerCase();
       for (const [filePath] of this.files) {
@@ -292,15 +251,6 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
           fpl.endsWith(memberPart) &&
           fpl.startsWith(options.dirPath.toString(true).toLowerCase())
         ) {
-          return URI.parse(filePath);
-        }
-      }
-    } else {
-      // member search w/ full path
-      const memberPart = `(${options.member})`.toLowerCase();
-      const searchPath = options.ddPath.toLowerCase() + memberPart;
-      for (const [filePath] of this.files) {
-        if (filePath.toLowerCase() === searchPath) {
           return URI.parse(filePath);
         }
       }

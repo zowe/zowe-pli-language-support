@@ -10,10 +10,8 @@
  */
 
 import {
-  isMemberSearchWithDDPath,
   isPathSearch,
-  SearchOptions,
-  URI,
+  SearchOptions
 } from "pli-language";
 
 export async function searchFiles(
@@ -24,16 +22,8 @@ export async function searchFiles(
     return readDir(path).catch(() => []);
   }
 
-  if (isPathSearch(options) || isMemberSearchWithDDPath(options)) {
-    let subPath: string;
-    if (isPathSearch(options)) {
-      // get the path string without the starting / or drive letter
-      subPath = options.path.path.substring(1);
-    } else {
-      // same from ddPath + member case
-      const memberUri = URI.parse(`${options.ddPath}(${options.member}))`);
-      subPath = memberUri.path.substring(1);
-    }
+  if (isPathSearch(options)) {
+    const subPath = options.path.path.substring(1);
 
     // construct starting point, accounting for windows drive letters
     const segments = subPath.split("/");
