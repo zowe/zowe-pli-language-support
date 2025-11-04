@@ -1932,11 +1932,7 @@ async function runInclude(
     const diagnostic = diagnosticFromCode(
       PLICodes.Severe.IBM3841I,
       item.token,
-      isFileIncludeItem(item)
-        ? item.fileName
-        : item.ddname
-          ? `${item.ddname}(${item.memberName})`
-          : item.memberName,
+      getFileNameOrPartialName(item)!
     );
 
     // check to set optional diagnostic data iff we have a valid fileName/memberName to work with
@@ -1949,9 +1945,7 @@ async function runInclude(
     } else if (isMemberIncludeItem(item)) {
       // item w/ memberName & optional ddname
       diagnostic.data = {
-        unresolvedFile: item.ddname
-          ? `${item.ddname}(${item.memberName})`
-          : item.memberName,
+        unresolvedFile: getFileNameOrPartialName(item)!,
         entryUri: context.entryUri.toString(),
       };
     }
@@ -2087,7 +2081,6 @@ async function resolveIncludeFileUri(
     const computedLibs = pgroup.$computedLibs;
 
     // construct the appropriate file name or partial name for members
-    // let fileNameOrPartial: string;
     const fileNameOrPartial = getFileNameOrPartialName(item);
     if (!fileNameOrPartial) {
       // no fileName or memberName to work with, abandon resolution
