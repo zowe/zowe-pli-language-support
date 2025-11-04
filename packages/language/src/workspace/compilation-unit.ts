@@ -13,7 +13,7 @@ import { Program, SyntaxKind } from "../syntax-tree/ast.js";
 import { URI } from "../utils/uri.js";
 import { CancellationToken, Connection } from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
-import { Diagnostic, diagnosticsToLSP } from "../language-server/types.js";
+import { diagnosticsToLSP } from "../language-server/types.js";
 import {
   generateSymbolTable,
   lifecycle,
@@ -52,6 +52,7 @@ import {
   CompilerOptions,
   getDefaultCompilerOptions,
 } from "../preprocessor/compiler-options/options.js";
+import { DiagnosticsStore } from "../validation/diagnostics-store.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -75,7 +76,7 @@ export interface CompilationUnit {
   tokens: Token[];
   referencesCache: ReferencesCache;
   statementOrderCache: StatementOrderCache;
-  diagnostics: CompilationUnitDiagnostics;
+  diagnostics: DiagnosticsStore;
   scopeCaches: ScopeCacheGroups;
   requestCaches: LSRequestCache;
   instructionCache: InstructionCache;
@@ -90,30 +91,6 @@ export interface CompilationServices {
   files: FileStore;
   typeCache: TypeCache;
   inferer: TypeInferer;
-}
-
-export interface CompilationUnitDiagnostics {
-  lexer: Diagnostic[];
-  preprocessor: Diagnostic[];
-  compilerOptions: Diagnostic[];
-  parser: Diagnostic[];
-  symbolTable: Diagnostic[];
-  linking: Diagnostic[];
-  typeSystem: Diagnostic[];
-  validation: Diagnostic[];
-}
-
-export function collectDiagnostics(sourceFile: CompilationUnit): Diagnostic[] {
-  return [
-    ...sourceFile.diagnostics.lexer,
-    ...sourceFile.diagnostics.preprocessor,
-    ...sourceFile.diagnostics.compilerOptions,
-    ...sourceFile.diagnostics.parser,
-    ...sourceFile.diagnostics.symbolTable,
-    ...sourceFile.diagnostics.linking,
-    ...sourceFile.diagnostics.typeSystem,
-    ...sourceFile.diagnostics.validation,
-  ];
 }
 
 const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
@@ -176,16 +153,7 @@ export async function createCompilationUnit(
     statementOrderCache: new StatementOrderCache(),
     scopeCaches: new ScopeCacheGroups(),
     instructionCache: new InstructionCache(),
-    diagnostics: {
-      lexer: [],
-      preprocessor: [],
-      compilerOptions: [],
-      parser: [],
-      symbolTable: [],
-      linking: [],
-      validation: [],
-      typeSystem: [],
-    },
+    diagnostics: new DiagnosticsStore(),
     requestCaches: createLSRequestCaches()
       .onRevalidate("margins", ({ connection, unit }) => {
         marginIndicator(connection, unit);
@@ -315,7 +283,7 @@ export class CompilationUnitHandler {
       for (const file of unit.services.files.keys()) {
         this.compilationUnits.set(file, unit);
       }
-      const allDiagnostics = diagnosticsToLSP(unit, collectDiagnostics(unit));
+      const allDiagnostics = diagnosticsToLSP(unit, unit.diagnostics.getAll());
       for (const file of unit.services.files.keys()) {
         if (BuiltinDocuments.get(file) || !EditorDocuments.get(file)) {
           // do not report diagnostics for built-in files or files not currently open in the editor

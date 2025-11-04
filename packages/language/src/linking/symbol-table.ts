@@ -9,7 +9,6 @@
  *
  */
 
-import { Diagnostic } from "../language-server/types";
 import {
   DeclareStatement,
   DefineAliasStatement,
@@ -21,10 +20,10 @@ import {
   Reference,
   SyntaxKind,
   SyntaxNode,
+  TypeExtendingAttribute,
 } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { groupBy } from "../utils/common";
-import { ValidationBuffer } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache, StatementOrderCache } from "./resolver";
 import { getReference } from "./tokens";
@@ -37,6 +36,7 @@ import { MultiMap } from "../utils/collections";
 import { Scope, ScopeCache } from "./scope";
 import { Token } from "../parser/tokens";
 import { LinkerErrorReporter } from "./error";
+import { DiagnosticCategory } from "../validation/diagnostics-store";
 
 function nonNull<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
@@ -53,6 +53,7 @@ export class SymbolTable {
   symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
   typeSymbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
   nodeLookup: Map<SyntaxNode, QualifiedSyntaxNode> = new Map();
+  existingNodes = new Set<string>();
 
   addImplicitDeclaration(
     text: string,
@@ -172,6 +173,15 @@ export class SymbolTable {
   }
 
   addSymbolDeclaration(name: string, node: QualifiedSyntaxNode): void {
+    // The id of a qualified node is unique per path in the AST
+    // Meaning that we cannot accidentally add the same logical node twice
+    // This is required to avoid issues during reiteration of symbols
+    // Mainly for LIKE and TYPE attributes
+    const id = node.getId();
+    if (this.existingNodes.has(id)) {
+      return;
+    }
+    this.existingNodes.add(id);
     this.symbols.add(name, node);
     this.nodeLookup.set(node.node, node);
   }
@@ -321,21 +331,47 @@ function assignRedeclaredSymbols(scopeCache: ScopeCache) {
   }
 }
 
+export function reiterateSymbols(
+  unit: CompilationUnit,
+  symbols: Iterable<SyntaxNode>,
+): void {
+  const reporter = new LinkerErrorReporter(
+    unit,
+    unit.diagnostics.getAcceptor(DiagnosticCategory.SymbolTable),
+  );
+  const context: IterateSymbolTableContext = {
+    unit,
+    referencesCache: unit.referencesCache,
+    scopeCache: unit.scopeCaches.regular,
+    statementOrderCache: unit.statementOrderCache,
+    reporter,
+  };
+  for (const node of symbols) {
+    const scope = unit.scopeCaches.regular.get(node);
+    if (!scope) {
+      // Something went wrong, skip this node.
+      continue;
+    }
+    // Second iteration over the node to handle newly added symbols.
+    // The node should already be present in the scope cache.
+    // Duplicate symbols will be filtered out by the symbol table by using the existingNodes set.
+    handleNode(node, scope, context);
+  }
+}
+
 /**
  * Iterate over the PLI program creating the symbol table.
  * @param unit - The compilation unit to iterate over.
  * @returns The diagnostics of the validation.
  */
-export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
+export function iterateSymbols(unit: CompilationUnit): void {
   const { scopeCaches, referencesCache, statementOrderCache } = unit;
 
   // Set child containers for all nodes.
   recursivelySetContainer(unit.ast);
-
-  const validationBuffer = new ValidationBuffer();
   const reporter = new LinkerErrorReporter(
     unit,
-    validationBuffer.getAcceptor(),
+    unit.diagnostics.getAcceptor(DiagnosticCategory.SymbolTable),
   );
 
   const preprocessorScope = Scope.createChild(unit.rootPreprocessorScope);
@@ -362,8 +398,6 @@ export function iterateSymbols(unit: CompilationUnit): Diagnostic[] {
     statementOrderCache,
   });
   assignRedeclaredSymbols(scopeCaches.regular);
-
-  return validationBuffer.getDiagnostics();
 }
 
 export function recursivelySetContainer(node: SyntaxNode) {
@@ -403,27 +437,48 @@ type IterateSymbolTableContext = {
   statementOrderCache: StatementOrderCache;
 };
 
-const iterateSymbolTable = (
+function iterateSymbolTable(
   node: SyntaxNode,
   parentScope: Scope,
   context: IterateSymbolTableContext,
-) => {
+): void {
   const ref = getReference(node);
   if (ref) {
-    context.referencesCache.add(ref);
+    if (getPriorityReferenceElement(ref) !== null) {
+      context.referencesCache.priorityAdd(ref);
+    } else {
+      context.referencesCache.add(ref);
+    }
   }
 
   // We connect the current node to its scope for usage in the linking phase.
   context.scopeCache.add(node, parentScope);
 
+  const continueRunning = handleNode(node, parentScope, context);
+  if (continueRunning) {
+    forEachNode(node, (child) =>
+      iterateSymbolTable(child, parentScope, context),
+    );
+  }
+}
+
+/**
+ * Handle a syntax node during symbol table iteration.
+ * @returns Whether to continue iterating child nodes.
+ */
+function handleNode(
+  node: SyntaxNode,
+  parentScope: Scope,
+  context: IterateSymbolTableContext,
+): boolean {
   // This switch statement handles special cases for certain syntax nodes.
   switch (node.kind) {
     // We handle procedure and package statements separately, to properly scope the end node.
     case SyntaxKind.ProcedureStatement:
     case SyntaxKind.Package:
       handleProcedureStatement(node, parentScope, context);
-      // Early return to avoid below `forEachNode`.
-      return;
+      // handleProcedureStatement contains its own iteration logic, so we stop further processing here.
+      return false;
     // E.g. `DEFINE STRUCTURE 1 A, 2 B, 3 C;`
     case SyntaxKind.DefineStructureStatement:
       parentScope.symbolTable.addStructureDefinition(node, context.reporter);
@@ -490,6 +545,29 @@ const iterateSymbolTable = (
       context.statementOrderCache.add(node);
       break;
   }
+  return true;
+}
 
-  forEachNode(node, (child) => iterateSymbolTable(child, parentScope, context));
-};
+export function getPriorityReferenceElement(
+  reference: Reference,
+): TypeExtendingAttribute | null {
+  // Figure out whether this reference is part of a "LIKE"/"TYPE" attribute
+  let container: SyntaxNode | null = reference.owner;
+  while (container) {
+    if (
+      container.kind === SyntaxKind.LikeAttribute ||
+      container.kind === SyntaxKind.TypeAttribute
+    ) {
+      return container;
+    } else if (
+      container.kind === SyntaxKind.ReferenceItem ||
+      container.kind === SyntaxKind.MemberCall ||
+      container.kind === SyntaxKind.LocatorCall
+    ) {
+      container = container.container;
+    } else {
+      break;
+    }
+  }
+  return null;
+}

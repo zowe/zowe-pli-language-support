@@ -22,13 +22,13 @@ import { MultiMap } from "../utils/collections";
 import { getNameToken } from "./tokens";
 import { LinkerErrorReporter } from "./error";
 import { Token } from "../parser/tokens";
+import { getExtendingDeclaredItems } from "./util";
 
 type UnrolledItem = {
   kind: SyntaxKind;
   level: number | null;
   levelToken: Token | null;
   node: DeclaredVariable | WildcardItem;
-  container: SyntaxNode;
 };
 
 /**
@@ -88,7 +88,7 @@ function getDeclaredItemToken(node: SyntaxNode): Token | undefined {
  */
 function unrollFactorized(
   rolledItems: readonly DeclaredItemElement[],
-  parent: DeclaredItem | null = null,
+  visited: Set<DeclaredVariable>,
 ): UnrolledItem[] {
   const items = rolledItems.slice(); // Explicitly make a copy of the items, to use `.shift()`
   const variables: UnrolledItem[] = [];
@@ -111,13 +111,32 @@ function unrollFactorized(
    */
   for (const item of items) {
     if (item.kind === SyntaxKind.DeclaredItem) {
-      variables.push(...unrollFactorized(item.elements, item));
-    } else {
-      // All non-`DeclaredItem`s should have a parent. This is a sanity check.
-      if (parent === null) {
-        continue;
+      const extended = getExtendingDeclaredItems(item);
+      const unrolled = unrollFactorized(item.elements, visited);
+      for (const unrolledItem of unrolled) {
+        // Push the unrolled item to the results
+        variables.push(unrolledItem);
+        if (extended) {
+          // If we've already visited this node, so we have a cyclic LIKE/TYPE extension.
+          // We should not continue unrolling here to prevent infinite loops.
+          if (visited.has(extended.target)) {
+            // Do not report the error here, since this could lead to multiple reports for the same token
+            // The error will be reported in the validation phase.
+            continue;
+          }
+          variables.push(
+            ...unrollSubtree(
+              extended.extendingItems,
+              extended.target,
+              // If no level is specified on the extended item, we assume level 1.
+              item.level ?? 1,
+              // Create a copy of the visited set for each branch
+              new Set(visited),
+            ),
+          );
+        }
       }
-
+    } else {
       const [level, levelToken] = findLevel(item) ?? [null, null];
 
       variables.push({
@@ -125,12 +144,45 @@ function unrollFactorized(
         level,
         levelToken,
         node: item,
-        container: parent,
       });
     }
   }
 
   return variables;
+}
+
+/**
+ * Unrolls the subtree of a declared variable.
+ * This is used for extending variables with LIKE or TYPE attributes.
+ */
+function unrollSubtree(
+  items: DeclaredItemElement[],
+  node: DeclaredVariable,
+  level: number,
+  visited: Set<DeclaredVariable>,
+): UnrolledItem[] {
+  visited.add(node);
+  const unrolled = unrollFactorized(items, visited);
+  const result: UnrolledItem[] = [];
+  let foundLevel: number | undefined = undefined;
+  for (const item of unrolled) {
+    if (foundLevel !== undefined) {
+      if (item.level === null || item.level <= foundLevel) {
+        // We've reached the end of the subtree.
+        break;
+      }
+      // Virtually increase the level of the child item
+      // This ensures that the child item is always deeper than the parent item.
+      item.level += level - 1;
+      // Still in the subtree. Push the child item
+      result.push(item);
+    } else if (item.node === node) {
+      // We have found the starting node of the subtree.
+      // Assume level 1 if not specified
+      foundLevel = item.level ?? 1;
+    }
+  }
+  return result;
 }
 
 /**
@@ -162,7 +214,7 @@ export class DeclaredItemParser {
     items: readonly DeclaredItem[],
     private reporter: LinkerErrorReporter,
   ) {
-    this.items = unrollFactorized(items);
+    this.items = unrollFactorized(items, new Set());
   }
 
   static parse(
