@@ -38,7 +38,11 @@
 
 // @filename: main.pli
 //// %INCLUDE m1;
-//// %INCLUDE m2;
+//// %INCLUDE <|1:m2|>;
+
+verify.expectDiagnosticsAt(1, [{
+    message: code.Severe.IBM3841I.message("M2"),
+}]);
 
 preprocessor.expectTokens(`
   DECLARE LIB_VAR1 FIXED;
