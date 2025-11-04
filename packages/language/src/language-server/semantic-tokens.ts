@@ -179,23 +179,17 @@ function isProcedureType(token: Token): boolean {
   if (kind === CstNodeKind.Exports_Procedure) {
     return true;
   }
-
   return false;
 }
 
 function isProcedurePrefix(node: SyntaxNode | null | undefined): boolean {
-  if (!node) {
-    return false;
-  }
-
   if (
-    node.kind === SyntaxKind.LabelPrefix &&
+    node?.kind === SyntaxKind.LabelPrefix &&
     node.container?.kind === SyntaxKind.Statement &&
     isProcedureKind(node.container.value)
   ) {
     return true;
   }
-
   return false;
 }
 
@@ -225,10 +219,11 @@ function isEnumToken(token: Token): boolean {
 }
 
 function isEnumMemberToken(token: Token): boolean {
-  if (token.kind === CstNodeKind.OrdinalValue_Name) {
-    return true;
-  }
-  return false;
+  return token.kind === CstNodeKind.OrdinalValue_Name;
+}
+
+function isTypeToken(token: Token): boolean {
+  return token.kind === CstNodeKind.DefineAliasStatement_Name;
 }
 
 function isClassToken(token: Token): boolean {
@@ -248,8 +243,4 @@ function isFirstStructureItem(element: StructureItem): boolean {
     return container.items[0] === element;
   }
   return false;
-}
-
-function isTypeToken(token: Token): boolean {
-  return token.kind === CstNodeKind.DefineAliasStatement_Name;
 }
