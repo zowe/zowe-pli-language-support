@@ -88,13 +88,12 @@ class NodeFileSystemProvider implements FileSystemProvider {
     } else {
       // member lookup w/ dd path (partial lib file as entry)
       const uri = URI.parse(options.ddPath + `(${options.member})`);
-      const exists = await fs.promises
-        .access(uri.fsPath)
-        .then(() => true)
-        .catch(() => false);
-      if (exists) {
-        files.push(uri.path);
-      }
+      const path = uri.fsPath.replace(/\\/g, "/");
+      files = await glob.glob(path, {
+        nodir: true,
+        absolute: true,
+        nocase: true,
+      });
     }
 
     // return first match when present

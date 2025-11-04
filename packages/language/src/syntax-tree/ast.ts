@@ -1619,7 +1619,6 @@ export function createIncludeAltDirective(): IncludeAltDirective {
 /**
  * Include item by file name
  */
-// TODO break this up into it's own AST node type
 export interface IncludeItemFile extends AstNode {
   kind: SyntaxKind.IncludeItemFile;
   token: Token | null;
@@ -1635,7 +1634,6 @@ export interface IncludeItemFile extends AstNode {
 /**
  * Include item by member name + optional ddname
  */
-// TODO break this up into it's own AST node type
 export interface IncludeItemMember extends AstNode {
   kind: SyntaxKind.IncludeItemMember;
   token: Token | null;
