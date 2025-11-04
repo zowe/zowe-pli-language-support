@@ -52,6 +52,7 @@ import {
   Implications,
   TransmissionDirection,
 } from "./descriptions";
+import { evaluateExpression } from "./evaluate";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
   const obj: Partial<AttributeWitnesses> = {};
@@ -87,7 +88,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.SyntaxKind.DateAttribute:
       case ast.SyntaxKind.DefinedAttribute:
         break;
+      case ast.SyntaxKind.InitialAttribute:
+        break;
       case ast.SyntaxKind.DimensionsDataAttribute:
+        this.handleDimensionAttribute(attribute);
         break;
       case ast.SyntaxKind.EntryAttribute:
         this.addAttributeWitness(
@@ -101,7 +105,6 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.SyntaxKind.GenericAttribute:
       case ast.SyntaxKind.HandleAttribute:
       case ast.SyntaxKind.IndForAttribute:
-      case ast.SyntaxKind.InitialAttribute:
       case ast.SyntaxKind.LikeAttribute:
         break;
       case ast.SyntaxKind.PictureAttribute:
@@ -138,6 +141,25 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         assertUnreachable(attribute);
     }
   }
+  private handleDimensionAttribute(attribute: ast.DimensionsDataAttribute) {
+    attribute.dimensions?.dimensions.map((dim) => {
+      let upper = 0;
+      let lower = 0;
+      if (dim.upper) {
+        if (dim.upper.expression === null) {
+          //TODO if(dim.upper.refer)
+        } else if (typeof dim.upper.expression === "string" && dim.upper.expression === "*") {
+          //TODO requires special handling for star dimensions
+        } else {
+          const { value } = evaluateExpression(dim.upper.expression);
+          if (typeof value === "number") {
+            upper = value;
+          }
+        }
+      }
+    });
+  }
+
   handleDefaultAttribute(attribute: ast.ComputationDataAttribute) {
     const token = attribute.typeToken!;
     assertType<number>(attribute.typeToken?.tokenTypeIdx);

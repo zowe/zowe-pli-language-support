@@ -15,6 +15,11 @@ import { assertUnreachable } from "../utils/common";
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=attributes-nondata#ndatts__vari */
 
+export type Value = {
+    type: TypeDescriptions.Any,
+    value: string | number;
+};
+
 /** Makes T partial except for properties P, they are required */
 export type PartialPartial<T, P extends keyof T> = Partial<Omit<T, P>> &
   Required<Omit<T, Exclude<keyof T, P>>>;
@@ -68,12 +73,16 @@ export enum AttributeKind {
   Connection,
   /** This is a meta type that can be set by different attributes. */
   DataType,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=arrays-dimension-attribute */
+  Dimension,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-bigendian-littleendian-attributes */
   Endianess,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-record-stream-attributes */
   FileUsage,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-hexadec-ieee-attributes */
   FloatFormat,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute */
+  Initial,
   /** TODO need to find out whether LocatorKind can be split into more attribute kinds */
   LocatorKind,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-real-complex */
@@ -123,9 +132,11 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.BufferMode,
   AttributeKind.Connection,
   AttributeKind.DataType,
+  AttributeKind.Dimension,
   AttributeKind.Endianess,
   AttributeKind.FileUsage,
   AttributeKind.FloatFormat,
+  AttributeKind.Initial,
   AttributeKind.LocatorKind,
   AttributeKind.NumberMode,
   AttributeKind.OrdinalNames,
@@ -153,9 +164,11 @@ export type AttributeTypes = {
   [AttributeKind.BufferMode]: BufferMode;
   [AttributeKind.Connection]: StorageConnection;
   [AttributeKind.DataType]: DataType;
+  [AttributeKind.Dimension]: Dimension[];
   [AttributeKind.Endianess]: Endianess;
   [AttributeKind.FileUsage]: FileUsage;
   [AttributeKind.FloatFormat]: FloatFormat;
+  [AttributeKind.Initial]: Value | Value[];
   [AttributeKind.LocatorKind]: LocatorKind;
   [AttributeKind.NumberMode]: NumberMode;
   [AttributeKind.OrdinalNames]: string[];
@@ -180,6 +193,8 @@ export const CommonAttributeKinds: AttributeKind[] = [
   AttributeKind.Alignment,
   AttributeKind.Assignability,
   AttributeKind.Connection,
+  AttributeKind.Dimension,
+  AttributeKind.Initial,
   AttributeKind.Position,
   AttributeKind.Scope,
   AttributeKind.Storage,
@@ -264,6 +279,8 @@ interface BaseTypeDescriptionProps {
   assignability: Assignability;
   connection: StorageConnection;
   variable?: boolean;
+  dimension: Dimension[];
+  initial?: Value | Value[];
 }
 
 interface WithTypeDescriminator {
@@ -360,6 +377,7 @@ function createBaseTypeDescription(
     storage,
     volatility,
     position,
+    dimension,
     assignability,
     variable,
   }: Partial<BaseTypeDescriptionProps>,
@@ -382,6 +400,7 @@ function createBaseTypeDescription(
   connection ??= StorageConnection.Nonconnected;
   scope ??= { type: ScopeType.Internal };
   volatility ??= Volatility.Normal;
+  dimension ??= [];
 
   if (!storage) {
     if (scope?.type === ScopeType.Internal) {
@@ -395,6 +414,7 @@ function createBaseTypeDescription(
     alignment,
     assignability,
     connection,
+    dimension,
     position,
     scope,
     storage,
@@ -402,6 +422,11 @@ function createBaseTypeDescription(
     volatility,
   };
 }
+
+export type Dimension = ast.Wildcard<{
+  lowerBound: number;
+  upperBound: number;
+}>;
 
 //--- Area ---
 const AreaType = DataType.Area;
@@ -1145,6 +1170,8 @@ export namespace TypeDescriptions {
     [AttributeKind.FloatFormat]: FloatFormat.IEEE,
     [AttributeKind.Endianess]: Endianess.Big,
     [AttributeKind.DataType]: DataType.Area,
+    [AttributeKind.Dimension]: [],
+    [AttributeKind.Initial]: [],
     [AttributeKind.Alignment]: {
       type: AlignmentType.Aligned,
       alignment: 1,
@@ -1190,6 +1217,12 @@ export namespace TypeDescriptions {
       alignment:
         attributes[AttributeKind.Alignment]?.value ??
         DefaultValues[AttributeKind.Alignment],
+      dimension:
+        attributes[AttributeKind.Dimension]?.value ??
+        DefaultValues[AttributeKind.Dimension],
+      initial:
+        attributes[AttributeKind.Initial]?.value ??
+        DefaultValues[AttributeKind.Initial],
       scope:
         attributes[AttributeKind.Scope]?.value ??
         DefaultValues[AttributeKind.Scope],
