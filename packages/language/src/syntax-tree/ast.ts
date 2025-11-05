@@ -1799,6 +1799,7 @@ export interface InitialAttribute extends AstNode {
   procedureCall: ProcedureCall | null;
   to: boolean;
   content: InitialToContent | null;
+  token: Token | null;
 }
 export interface InitialAttributeItemStar extends AstNode {
   kind: SyntaxKind.InitialAttributeItemStar;

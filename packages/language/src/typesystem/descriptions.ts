@@ -164,11 +164,11 @@ export type AttributeTypes = {
   [AttributeKind.BufferMode]: BufferMode;
   [AttributeKind.Connection]: StorageConnection;
   [AttributeKind.DataType]: DataType;
-  [AttributeKind.Dimension]: ast.DimensionBound[];
+  [AttributeKind.Dimension]: ast.DimensionsDataAttribute|undefined;
   [AttributeKind.Endianess]: Endianess;
   [AttributeKind.FileUsage]: FileUsage;
   [AttributeKind.FloatFormat]: FloatFormat;
-  [AttributeKind.Initial]: Value | Value[];
+  [AttributeKind.Initial]: ast.InitialAttribute|undefined;
   [AttributeKind.LocatorKind]: LocatorKind;
   [AttributeKind.NumberMode]: NumberMode;
   [AttributeKind.OrdinalNames]: string[];
@@ -279,8 +279,8 @@ interface BaseTypeDescriptionProps {
   assignability: Assignability;
   connection: StorageConnection;
   variable?: boolean;
-  dimension: ast.DimensionBound[];
-  initial?: Value | Value[];
+  dimension?: ast.DimensionsDataAttribute;
+  initial?: ast.InitialAttribute;
 }
 
 interface WithTypeDescriminator {
@@ -400,7 +400,6 @@ function createBaseTypeDescription(
   connection ??= StorageConnection.Nonconnected;
   scope ??= { type: ScopeType.Internal };
   volatility ??= Volatility.Normal;
-  dimension ??= [];
 
   if (!storage) {
     if (scope?.type === ScopeType.Internal) {
@@ -1165,8 +1164,8 @@ export namespace TypeDescriptions {
     [AttributeKind.FloatFormat]: FloatFormat.IEEE,
     [AttributeKind.Endianess]: Endianess.Big,
     [AttributeKind.DataType]: DataType.Area,
-    [AttributeKind.Dimension]: [],
-    [AttributeKind.Initial]: [],
+    [AttributeKind.Dimension]: undefined,
+    [AttributeKind.Initial]: undefined,
     [AttributeKind.Alignment]: {
       type: AlignmentType.Aligned,
       alignment: 1,

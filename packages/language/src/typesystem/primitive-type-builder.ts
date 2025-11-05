@@ -88,9 +88,22 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.SyntaxKind.DefinedAttribute:
         break;
       case ast.SyntaxKind.InitialAttribute:
+        this.addAttributeWitness(
+          AttributeKind.Initial,
+          attribute,
+          attribute,
+          attribute.token!,
+        );
         break;
       case ast.SyntaxKind.DimensionsDataAttribute:
-        this.handleDimensionAttribute(attribute);
+        if(attribute.dimensions && attribute.dimensionsToken) {
+          this.addAttributeWitness(
+            AttributeKind.Dimension,
+            attribute,
+            attribute,
+            attribute.dimensionsToken,
+          );
+        }
         break;
       case ast.SyntaxKind.EntryAttribute:
         this.addAttributeWitness(
@@ -138,16 +151,6 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         break;
       default:
         assertUnreachable(attribute);
-    }
-  }
-  private handleDimensionAttribute(attribute: ast.DimensionsDataAttribute) {
-    if(attribute.dimensions && attribute.dimensionsToken) {
-      this.addAttributeWitness(
-        AttributeKind.Dimension,
-        attribute.dimensions.dimensions,
-        attribute,
-        attribute.dimensionsToken,
-      );
     }
   }
 

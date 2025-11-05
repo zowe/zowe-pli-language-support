@@ -5904,6 +5904,7 @@ export class PliParser extends AbstractParser {
       procedureCall: null,
       to: false,
       content: null,
+      token: null,
     };
   }
 
@@ -5914,6 +5915,7 @@ export class PliParser extends AbstractParser {
       {
         ALT: () => {
           this.CONSUME_ASSIGN1(tokens.INITIAL, (token) => {
+            element.token = token;
             this.tokenPayload(
               token,
               element,
