@@ -97,7 +97,7 @@ export interface HarnessTesterInterface {
 
   verify: {
     /**
-     * Expect that the given label has only the given error codes.
+     * Expect that the given label has _only_ the given error codes.
      * @param label The label to expect the error codes at.
      * @param codes The only error codes to expect.
      */
@@ -109,7 +109,7 @@ export interface HarnessTesterInterface {
      */
     expectErrorCodesAt(label: Label, codes: string[] | string): void;
     /**
-     * Expect that the given label has only the given diagnostics.
+     * Expect that the given label has _only_ the given diagnostics.
      * @param label The label to expect the diagnostics at.
      * @param diagnostics The only diagnostics to expect.
      */

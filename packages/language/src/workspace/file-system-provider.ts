@@ -53,28 +53,22 @@ export function isPathSearch(obj: any): obj is PathSearch {
   );
 }
 
-/**
- * Directory entry types, used in readDir results
- */
-export enum DirEntryType {
-  File = 1,
-  Directory = 2,
-}
 
 /**
- * Directory entry, used in readDir results
+ * File or directory stats
  */
-export interface DirEntry {
-  name: string;
-  type: DirEntryType;
+export interface Stats {
+  isFile: boolean;
+  isDirectory: boolean;
 }
 
 export interface FileSystemProvider {
   readFile(uri: URI): Promise<string | undefined>;
   /**
-   * Reads the contents of a directory. The result is an array of directory entries w/ types
+   * Reads the contents of a directory.
+   * The result is an array of file & directory names as strings
    */
-  readDir(uri: URI): Promise<DirEntry[]>;
+  readDir(uri: URI): Promise<string[]>;
   fileExists(uri: URI): Promise<boolean>;
   writeFile(uri: URI, value: string): Promise<void>;
   deleteFile(uri: URI): Promise<void>;
@@ -83,6 +77,13 @@ export interface FileSystemProvider {
    * Returns a singular URI if found, otherwise undefined.
    */
   search(options: SearchOptions): Promise<URI | undefined>;
+
+  /**
+   * Retrieve file or directory stats.
+   * @param uri Of file or directory to stat
+   * @returns Stats object
+   */
+  stat(uri: URI): Promise<Stats>;
 }
 
 /**
@@ -93,7 +94,7 @@ class _EmptyFileSystemProvider implements FileSystemProvider {
     return Promise.resolve("");
   }
 
-  readDir(_uri: URI): Promise<DirEntry[]> {
+  readDir(_uri: URI): Promise<string[]> {
     return Promise.resolve([]);
   }
 
@@ -111,6 +112,13 @@ class _EmptyFileSystemProvider implements FileSystemProvider {
 
   search(_options: SearchOptions): Promise<URI | undefined> {
     return Promise.resolve(undefined);
+  }
+
+  stat(_uri: URI): Promise<Stats> {
+    return Promise.resolve({
+      isFile: false,
+      isDirectory: false,
+    });
   }
 }
 
@@ -145,12 +153,12 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
 
   /**
    * Reads the contents of a directory in the virtualized file system.
-   * The result is an array of directory entries w/ types.
+   * The result is an array of file & directory names as strings.
    * Directories are virtual in this case, only existing if there are files with matching prefixes.
    * If no matching directory entry is found (i.e. no entries), an exception is thrown
    * If the file system is empty, an empty array is returned (assuming uninitialized)
    */
-  async readDir(uri: URI): Promise<DirEntry[]> {
+  async readDir(uri: URI): Promise<string[]> {
     if (this.files.size === 0) {
       // not populated yet
       return [];
@@ -160,23 +168,13 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
     if (!path.endsWith("/")) {
       path += "/";
     }
-    const entries: DirEntry[] = [];
+    const entries: string[] = [];
     for (const filePath of this.files.keys()) {
       if (filePath.startsWith(path)) {
         const relativePath = filePath.substring(path.length);
         const parts = relativePath.split("/").filter((p) => p.length > 0);
-        if (parts.length === 1) {
-          // file
-          entries.push({
-            name: parts[0],
-            type: DirEntryType.File,
-          });
-        } else {
-          // directory
-          entries.push({
-            name: parts[0],
-            type: DirEntryType.Directory,
-          });
+        if (parts.length > 0) {
+                    entries.push(parts[0]);
         }
       }
     }
@@ -257,6 +255,33 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
     }
 
     return undefined;
+  }
+
+  /**
+   * Retrieve file or directory stats for the virtual file system.
+   * Folders are virtual, so we check for any files that start with the given path + "/" to indicate
+   * their presence
+   * @param uri URI of file or directory to stat
+   * @returns Stats object
+   */
+  async stat(uri: URI): Promise<Stats> {
+    const path = uri.toString(true).toLowerCase();
+    const isFile = this.files.has(path);
+    let isDirectory = false;
+    if (!isFile) {
+      // check if any files start with this path + "/"
+      const dirPath = path.endsWith("/") ? path : path + "/";
+      for (const filePath of this.files.keys()) {
+        if (filePath.startsWith(dirPath)) {
+          isDirectory = true;
+          break;
+        }
+      }
+    }
+    return {
+      isFile,
+      isDirectory,
+    };
   }
 }
 

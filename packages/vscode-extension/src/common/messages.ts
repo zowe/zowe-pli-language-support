@@ -15,4 +15,5 @@ export namespace Messages {
   export const WriteFile = "fs/writeFile";
   export const FileExists = "fs/fileExists";
   export const Search = "fs/search";
+  export const Stat = "fs/stat";
 }

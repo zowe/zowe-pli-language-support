@@ -40,7 +40,7 @@
 //// %INCLUDE m1;
 //// %INCLUDE <|1:m2|>;
 
-verify.expectDiagnosticsAt(1, [{
+verify.expectExclusiveDiagnosticsAt(1, [{
     message: code.Severe.IBM3841I.message("M2"),
 }]);
 

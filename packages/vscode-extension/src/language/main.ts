@@ -19,9 +19,8 @@ import {
   SearchOptions,
   URI,
   setFileSystemProvider,
-  DirEntry,
-  DirEntryType,
-  isPathSearch
+  isPathSearch,
+  Stats
 } from "pli-language";
 import * as fs from "fs";
 import * as glob from "glob";
@@ -32,18 +31,10 @@ class NodeFileSystemProvider implements FileSystemProvider {
   }
 
   /**
-   * Reads directory contents, returning an array of directory entries
+   * Reads directory contents, returning an array of file & directory names
    */
-  async readDir(uri: URI): Promise<DirEntry[]> {
-    const results = await fs.promises.readdir(uri.fsPath, {
-      withFileTypes: true,
-    });
-    return results.map((dirent) => {
-      return {
-        name: dirent.name,
-        type: dirent.isDirectory() ? DirEntryType.Directory : DirEntryType.File,
-      };
-    });
+  async readDir(uri: URI): Promise<string[]> {
+    return fs.promises.readdir(uri.fsPath);
   }
 
   async fileExists(uri: URI): Promise<boolean> {
@@ -95,6 +86,26 @@ class NodeFileSystemProvider implements FileSystemProvider {
       return undefined;
     }
     return result;
+  }
+
+  /**
+   * Stats for file or directory
+   * @param uri URI of file or directory to stat
+   * @returns Stats object. If stat fails, returns a stats object with both isFile and isDirectory false.
+   */
+  async stat(uri: URI): Promise<Stats> {
+    try {
+      const stat = await fs.promises.stat(uri.fsPath);
+      return {
+        isFile: stat.isFile(),
+        isDirectory: stat.isDirectory(),
+      };
+    } catch {
+      return {
+        isFile: false,
+        isDirectory: false,
+      };
+    }
   }
 }
 

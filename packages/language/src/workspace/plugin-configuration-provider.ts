@@ -10,8 +10,7 @@
  */
 
 import {
-  DirEntryType,
-  FileSystemProviderInstance,
+    FileSystemProviderInstance,
 } from "./file-system-provider";
 import { URI, UriUtils } from "../utils/uri";
 import {
@@ -402,10 +401,9 @@ export class PluginConfigurationProvider {
           try {
             const entries = await FileSystemProviderInstance.readDir(libUri);
             if (entries.length) {
-              for (const dirEntry of entries) {
-                const fileName = dirEntry.name;
-                const fileType = dirEntry.type;
-                if (fileType === DirEntryType.Directory) {
+              for (const fileName of entries) {
+                const stats = await FileSystemProviderInstance.stat(UriUtils.joinPath(libUri, fileName));
+                if (stats.isDirectory) {
                   // directory to add for handling
                   libsToProcess.push(`${lib}/${fileName}`);
                   // also add to the full libs list
@@ -430,7 +428,7 @@ export class PluginConfigurationProvider {
                 await FileSystemProviderInstance.readDir(parentUri);
               const ddnamePattern = new RegExp(`^${libName}\\(`, "i");
               for (const entry of parentEntries) {
-                if (ddnamePattern.test(entry.name)) {
+                if (ddnamePattern.test(entry)) {
                   // found a ddname-style entry, add full lib & break out, only need one to confirm
                   computedLibs.add({
                     ddLib: lib,
