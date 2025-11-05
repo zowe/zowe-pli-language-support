@@ -18,6 +18,7 @@ import {
   StorageConnection,
   StringFormat,
   StringKind,
+  TransmissionDirection,
   Volatility,
 } from "../../../src/typesystem/descriptions";
 import { HarnessTesterInterface } from "../harness-interface";
@@ -48,5 +49,6 @@ export const HarnessTypeAttributes: Omit<
   storageClasses: StorageClass,
   stringFormats: StringFormat,
   stringKinds: StringKind,
+  transmissionDirections: TransmissionDirection,
   volatilities: Volatility,
 };
