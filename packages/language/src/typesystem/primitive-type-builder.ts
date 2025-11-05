@@ -99,7 +99,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         if(attribute.dimensions && attribute.dimensionsToken) {
           this.addAttributeWitness(
             AttributeKind.Dimension,
-            attribute,
+            attribute.dimensions,
             attribute,
             attribute.dimensionsToken,
           );

@@ -52,12 +52,33 @@ type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
 export type Not<T> = Omit<T, "not">;
 
+export type DimensionBound = {
+  lowerBound: number;
+  upperBound: number;
+};
+type EditComputedAttributes<T extends TypeDescriptions.Any> = Omit<T, "dimension"> & {
+  dimension: DimensionBound[] | undefined;
+};
+export type PrimitiveTypeExpectation =
+  | EditComputedAttributes<TypeDescriptions.Area>
+  | EditComputedAttributes<TypeDescriptions.Arithmetic>
+  | EditComputedAttributes<TypeDescriptions.File>
+  | EditComputedAttributes<TypeDescriptions.Format>
+  | EditComputedAttributes<TypeDescriptions.Label>
+  | EditComputedAttributes<TypeDescriptions.Locator>
+  | EditComputedAttributes<TypeDescriptions.Entry>
+  | EditComputedAttributes<TypeDescriptions.Ordinal>
+  | EditComputedAttributes<TypeDescriptions.Picture>
+  | EditComputedAttributes<TypeDescriptions.String>
+  | EditComputedAttributes<TypeDescriptions.Task>
+  ;
 export type TypeExpectation =
-  | Partial<Exclude<TypeDescriptions.Any, TypeDescriptions.Structure>>
+  | Partial<PrimitiveTypeExpectation>
+  | Partial<TypeDescriptions.Unknown>
   | {
-      type: DataType.Structure;
-      members: Record<string, TypeExpectation>;
-    };
+    type: DataType.Structure;
+    members: Record<string, TypeExpectation>;
+  };
 
 export interface HarnessTesterInterface {
   Syntax: typeof SyntaxKind;

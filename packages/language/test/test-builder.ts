@@ -49,6 +49,7 @@ import { format } from "util";
 import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
 import { TypeExpectation } from "./fourslash-harness/harness-interface";
 import { binaryTokenSearch } from "../src/utils/search";
+import { computeDimensions } from "../src/typesystem/computed-attributes";
 
 export type Label = string | number | string[] | number[];
 
@@ -1009,19 +1010,26 @@ export class TestBuilder {
         );
       }
       const actualType = this.unit.services.inferer.inferType(node, this.unit);
-      this.expectTypeWithStructure(expectedType, actualType);
+      if(actualType.type === DataType.Unknown || actualType.type === DataType.Structure || !actualType.dimension) {
+        this.expectTypeWithStructure(expectedType, actualType as any);
+      } else {
+        this.expectTypeNoStructure(expectedType, {
+          ...actualType as any,
+          dimension: computeDimensions(actualType),
+        } as TypeExpectation);
+      }
     }
   }
 
   private expectTypeWithStructure(
     expectedType: TypeExpectation,
-    actualType: TypeDescriptions.Any,
+    actualType: TypeExpectation,
   ) {
     if (expectedType.type === DataType.Structure) {
       //check: is structure?
       if (actualType.type !== DataType.Structure) {
         throw new Error(
-          `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got ${TypeDescriptions.Names[actualType.type]}`,
+          `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got ${TypeDescriptions.Names[actualType.type!]}`,
         );
       }
 
@@ -1054,7 +1062,7 @@ export class TestBuilder {
 
   private expectTypeNoStructure(
     expectedType: TypeExpectation,
-    actualType: TypeDescriptions.Any,
+    actualType: TypeExpectation,
   ) {
     for (const [key, value] of Object.entries(expectedType)) {
       if (typeof value === "object" && value !== null) {

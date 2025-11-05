@@ -164,7 +164,7 @@ export type AttributeTypes = {
   [AttributeKind.BufferMode]: BufferMode;
   [AttributeKind.Connection]: StorageConnection;
   [AttributeKind.DataType]: DataType;
-  [AttributeKind.Dimension]: ast.DimensionsDataAttribute|undefined;
+  [AttributeKind.Dimension]: ast.Dimensions|undefined;
   [AttributeKind.Endianess]: Endianess;
   [AttributeKind.FileUsage]: FileUsage;
   [AttributeKind.FloatFormat]: FloatFormat;
@@ -279,7 +279,7 @@ interface BaseTypeDescriptionProps {
   assignability: Assignability;
   connection: StorageConnection;
   variable?: boolean;
-  dimension?: ast.DimensionsDataAttribute;
+  dimension?: ast.Dimensions;
   initial?: ast.InitialAttribute;
 }
 
