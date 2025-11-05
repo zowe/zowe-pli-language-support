@@ -50,6 +50,7 @@ import {
   Precisions,
   AttributeWitness,
   Implications,
+  TransmissionDirection,
 } from "./descriptions";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
@@ -553,14 +554,22 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         break;
       }
 
+      /**
+       * File transmission direction attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-input-output-update-attributes
+       */
       case DefaultAttributeEnum.INPUT:
       case DefaultAttributeEnum.UPDATE:
       case DefaultAttributeEnum.OUTPUT: {
-        //TODO add a attribute kind for transmission direction
-        //https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-input-output-update-attributes
+        const mapTo = {
+          [DefaultAttributeEnum.INPUT]: TransmissionDirection.Input,
+          [DefaultAttributeEnum.OUTPUT]: TransmissionDirection.Output,
+          [DefaultAttributeEnum.UPDATE]: TransmissionDirection.Update,
+        };
+        const attributeValue = mapTo[typeAsEnum];
         this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.File,
+          AttributeKind.TransmissionDirection,
+          attributeValue,
           attribute,
           token,
         );
