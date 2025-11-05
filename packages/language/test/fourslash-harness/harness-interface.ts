@@ -43,6 +43,7 @@ import {
   StorageConnection,
   StringFormat,
   StringKind,
+  TransmissionDirection,
   TypeDescriptions,
   Volatility,
 } from "../../src/typesystem/descriptions";
@@ -92,6 +93,7 @@ export interface HarnessTesterInterface {
     storageClasses: typeof StorageClass;
     stringFormats: typeof StringFormat;
     stringKinds: typeof StringKind;
+    transmissionDirections: typeof TransmissionDirection;
     volatilities: typeof Volatility;
   };
 

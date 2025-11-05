@@ -103,6 +103,8 @@ export enum AttributeKind {
   StringKind,
   /** TODO belongs to StringKind, maybe refactor later */
   StringLength,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-input-output-update-attributes */
+  TransmissionDirection,
   /**
    * TODO still needs to be handled by the type builder
    * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
@@ -137,6 +139,7 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.StringFormat,
   AttributeKind.StringKind,
   AttributeKind.StringLength,
+  AttributeKind.TransmissionDirection,
   AttributeKind.Variable,
   AttributeKind.Volatility,
 ];
@@ -166,6 +169,7 @@ export type AttributeTypes = {
   [AttributeKind.StringFormat]: StringFormat;
   [AttributeKind.StringKind]: StringKind;
   [AttributeKind.StringLength]: number;
+  [AttributeKind.TransmissionDirection]: TransmissionDirection;
   [AttributeKind.Variable]: boolean;
   [AttributeKind.Volatility]: Volatility;
 };
@@ -206,6 +210,7 @@ export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
     AttributeKind.AccessMode,
     AttributeKind.BufferMode,
     AttributeKind.FileUsage,
+    AttributeKind.TransmissionDirection,
   ],
   [DataType.Format]: [...CommonAttributeKinds],
   [DataType.Label]: [...CommonAttributeKinds],
@@ -585,9 +590,16 @@ export enum FileUsage {
   Stream,
 }
 
+export enum TransmissionDirection {
+  Input,
+  Output,
+  Update,
+}
+
 interface FileTypeDescriptionProps extends BaseTypeDescriptionProps {
   accessMode: AccessMode;
   bufferMode: BufferMode;
+  transmissionDirection: TransmissionDirection;
   usage: FileUsage;
 }
 
@@ -603,6 +615,7 @@ function createFileTypeDescription({
   bufferMode = accessMode === AccessMode.Sequential
     ? BufferMode.Buffered
     : BufferMode.Unbuffered,
+  transmissionDirection = TransmissionDirection.Input,
   ...base
 }: Partial<FileTypeDescriptionProps>): FileTypeDescription {
   return {
@@ -610,6 +623,7 @@ function createFileTypeDescription({
     ...createBaseTypeDescription(FileType, base),
     accessMode,
     bufferMode,
+    transmissionDirection,
     usage,
   };
 }
@@ -1017,6 +1031,9 @@ export const Implications: Partial<Implications> = {
   [AttributeKind.StringLength]: {
     [AttributeKind.DataType]: () => DataType.String,
   },
+  [AttributeKind.TransmissionDirection]: {
+    [AttributeKind.DataType]: () => DataType.File,
+  },
   [AttributeKind.Variable]: undefined,
   [AttributeKind.Volatility]: undefined,
 };
@@ -1162,6 +1179,7 @@ export namespace TypeDescriptions {
     [AttributeKind.StringKind]: StringKind.Bit,
     [AttributeKind.StringFormat]: StringFormat.Varying,
     [AttributeKind.StringLength]: 0,
+    [AttributeKind.TransmissionDirection]: TransmissionDirection.Input,
   };
 
   export function createPrimitive(
@@ -1236,6 +1254,9 @@ export namespace TypeDescriptions {
           bufferMode:
             attributes[AttributeKind.BufferMode]?.value ??
             DefaultValues[AttributeKind.BufferMode],
+          transmissionDirection:
+            attributes[AttributeKind.TransmissionDirection]?.value ??
+            DefaultValues[AttributeKind.TransmissionDirection],
           usage:
             attributes[AttributeKind.FileUsage]?.value ??
             DefaultValues[AttributeKind.FileUsage],
