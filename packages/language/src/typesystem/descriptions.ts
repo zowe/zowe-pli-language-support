@@ -164,7 +164,7 @@ export type AttributeTypes = {
   [AttributeKind.BufferMode]: BufferMode;
   [AttributeKind.Connection]: StorageConnection;
   [AttributeKind.DataType]: DataType;
-  [AttributeKind.Dimension]: Dimension[];
+  [AttributeKind.Dimension]: ast.DimensionBound[];
   [AttributeKind.Endianess]: Endianess;
   [AttributeKind.FileUsage]: FileUsage;
   [AttributeKind.FloatFormat]: FloatFormat;
@@ -279,7 +279,7 @@ interface BaseTypeDescriptionProps {
   assignability: Assignability;
   connection: StorageConnection;
   variable?: boolean;
-  dimension: Dimension[];
+  dimension: ast.DimensionBound[];
   initial?: Value | Value[];
 }
 
@@ -422,11 +422,6 @@ function createBaseTypeDescription(
     volatility,
   };
 }
-
-export type Dimension = ast.Wildcard<{
-  lowerBound: number;
-  upperBound: number;
-}>;
 
 //--- Area ---
 const AreaType = DataType.Area;

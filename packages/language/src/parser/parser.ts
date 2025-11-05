@@ -17,6 +17,7 @@ import * as tokens from "./tokens";
 import * as ast from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { ParserMethod, tokenMatcher } from "chevrotain";
+import { Token } from "./tokens";
 
 export class PliParser extends AbstractParser {
   constructor() {
@@ -1142,7 +1143,7 @@ export class PliParser extends AbstractParser {
     let element = this.push(this.createAllocateDimension());
 
     this.SUBRULE_ASSIGN1(this.Dimensions, {
-      assign: (result) => {
+      assign: ([result]) => {
         element.dimensions = result;
       },
     });
@@ -1167,7 +1168,7 @@ export class PliParser extends AbstractParser {
     });
     this.OPTION1(() => {
       this.SUBRULE_ASSIGN1(this.Dimensions, {
-        assign: (result) => {
+        assign: ([result]) => {
           element.dimensions = result;
         },
       });
@@ -6735,6 +6736,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.DimensionsDataAttribute,
       container: null,
       dimensions: null,
+      dimensionsToken: null,
     };
   }
 
@@ -6751,8 +6753,9 @@ export class PliParser extends AbstractParser {
       });
     });
     this.SUBRULE_ASSIGN1(this.Dimensions, {
-      assign: (result) => {
-        element.dimensions = result;
+      assign: ([dimensions, token]) => {
+        element.dimensions = dimensions;
+        element.dimensionsToken = token;
       },
     });
 
@@ -6916,7 +6919,7 @@ export class PliParser extends AbstractParser {
     });
     this.OPTION1(() => {
       this.SUBRULE_ASSIGN1(this.Dimensions, {
-        assign: (result) => {
+        assign: ([result]) => {
           element.dimensions = result;
         },
       });
@@ -7288,8 +7291,10 @@ export class PliParser extends AbstractParser {
 
   Dimensions = this.RULE("Dimensions", () => {
     let element = this.push(this.createDimensions());
+    let dimensionsToken: Token = undefined!;
 
     this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
+      dimensionsToken = token;
       this.tokenPayload(token, element, CstNodeKind.Dimensions_OpenParen);
     });
     this.OPTION(() => {
@@ -7313,7 +7318,7 @@ export class PliParser extends AbstractParser {
       this.tokenPayload(token, element, CstNodeKind.Dimensions_CloseParen);
     });
 
-    return this.pop<ast.Dimensions>();
+    return [this.pop<ast.Dimensions>(), dimensionsToken] as const;
   });
   private createDimensionBound(): ast.DimensionBound {
     return {
@@ -7835,7 +7840,7 @@ export class PliParser extends AbstractParser {
     });
     this.OPTION(() => {
       this.SUBRULE_ASSIGN(this.Dimensions, {
-        assign: (result) => {
+        assign: ([result]) => {
           element.dimensions = result;
         },
       });

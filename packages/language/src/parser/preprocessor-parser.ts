@@ -1456,9 +1456,11 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
         attributes.push(dataAttribute);
       }
     } else if (state.canConsume(t.OpenParen)) {
+      const dimensionsToken = state.token!;
       const dim = dimensions(state);
       const dimensionAttribute = ast.createDimensionsDataAttribute();
       dimensionAttribute.dimensions = dim;
+      dimensionAttribute.dimensionsToken = dimensionsToken;
       attributes.push(dimensionAttribute);
     } else if (state.canConsume(t.ENTRY)) {
       // TODO: This is not the full entry attribute syntax

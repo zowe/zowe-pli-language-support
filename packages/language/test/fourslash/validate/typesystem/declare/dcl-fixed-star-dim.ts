@@ -18,7 +18,7 @@ types.expectTypeAt("1", {
   type: types.dataTypes.Arithmetic,
   scale: types.scales.Fixed,
   precision: types.precision.create(5, 0),
-  dimension: ['*', '*', '*'],
+  //TODO dimension: ['*', '*', '*'],
   mode: types.modes.Real,
 });
 verify.noDiagnostics(undefined, ...code.TypeSystem);

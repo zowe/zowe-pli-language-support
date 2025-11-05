@@ -1308,12 +1308,14 @@ export function createDimensions(): Dimensions {
 export interface DimensionsDataAttribute extends AstNode {
   kind: SyntaxKind.DimensionsDataAttribute;
   dimensions: Dimensions | null;
+  dimensionsToken: Token | null;
 }
 export function createDimensionsDataAttribute(): DimensionsDataAttribute {
   return {
     kind: SyntaxKind.DimensionsDataAttribute,
     container: null,
     dimensions: null,
+    dimensionsToken: null,
   };
 }
 export interface DisplayStatement extends AstNode {

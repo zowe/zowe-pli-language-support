@@ -52,7 +52,6 @@ import {
   Implications,
   TransmissionDirection,
 } from "./descriptions";
-import { evaluateExpression } from "./evaluate";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
   const obj: Partial<AttributeWitnesses> = {};
@@ -142,22 +141,14 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
     }
   }
   private handleDimensionAttribute(attribute: ast.DimensionsDataAttribute) {
-    attribute.dimensions?.dimensions.map((dim) => {
-      let upper = 0;
-      let lower = 0;
-      if (dim.upper) {
-        if (dim.upper.expression === null) {
-          //TODO if(dim.upper.refer)
-        } else if (typeof dim.upper.expression === "string" && dim.upper.expression === "*") {
-          //TODO requires special handling for star dimensions
-        } else {
-          const { value } = evaluateExpression(dim.upper.expression);
-          if (typeof value === "number") {
-            upper = value;
-          }
-        }
-      }
-    });
+    if(attribute.dimensions && attribute.dimensionsToken) {
+      this.addAttributeWitness(
+        AttributeKind.Dimension,
+        attribute.dimensions.dimensions,
+        attribute,
+        attribute.dimensionsToken,
+      );
+    }
   }
 
   handleDefaultAttribute(attribute: ast.ComputationDataAttribute) {
