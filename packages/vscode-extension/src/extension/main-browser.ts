@@ -74,7 +74,7 @@ function registerFileSystemProvider(client: LanguageClient): void {
     }
   });
   client.onRequest(Messages.Search, (options: SearchOptions) => {
-    return searchFiles(options, async (path) => {
+    return searchFiles({ ...options, caseSensitive: true }, async (path) => {
       let uri;
       if (isPathSearch(options)) {
         uri = options.path.with({ path });

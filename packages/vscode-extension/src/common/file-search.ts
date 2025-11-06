@@ -11,12 +11,28 @@
 
 import { isPathSearch, SearchOptions } from "pli-language";
 
+/**
+ * Searches for a file based on the provided search options & readDir function.
+ * Will perform this search in a _case-insensitive_ manner by default.
+ * @param options Search options to use, extended with a caseSensitive flag
+ * @param readDir Helper function to read directory contents
+ * @returns Matching file path if found, undefined otherwise
+ */
 export async function searchFiles(
-  options: SearchOptions,
+  options: SearchOptions & { caseSensitive?: boolean },
   readDir: (path: string) => Promise<string[]>,
 ): Promise<string | undefined> {
   function readDirSafe(path: string): Promise<string[]> {
     return readDir(path).catch(() => []);
+  }
+
+  const caseSensitive = options.caseSensitive ?? false;
+
+  /**
+   * Helper for performing case-sensitive/insensitive comparison
+   */
+  function compare(a: string, b: string): boolean {
+    return caseSensitive ? a === b : a.toLowerCase() === b.toLowerCase();
   }
 
   if (isPathSearch(options)) {
@@ -35,9 +51,7 @@ export async function searchFiles(
     for (let i = 0; i < segments.length - 1; i++) {
       const dir = await readDirSafe(start);
       const segment = segments[i];
-      const fsSegment = dir.find(
-        (d) => d.toLowerCase() === segment.toLowerCase(),
-      );
+      const fsSegment = dir.find((d) => compare(d, segment));
       if (!fsSegment) {
         return undefined;
       }
@@ -45,18 +59,17 @@ export async function searchFiles(
     }
 
     // find the last segment accounting for possible extensions
-    const lastSegment = segments[segments.length - 1].toLowerCase();
+    const lastSegment = segments[segments.length - 1];
     const dir = await readDirSafe(start);
     for (const file of dir) {
-      const fileLower = file.toLowerCase();
-      if (fileLower === lastSegment) {
+      if (compare(file, lastSegment)) {
         return start + file;
       }
       if (isPathSearch(options)) {
         for (const ext of options.extensions) {
           const fullName =
-            lastSegment + (ext.startsWith(".") ? ext : `.${ext}`).toLowerCase();
-          if (fileLower === fullName) {
+            lastSegment + (ext.startsWith(".") ? ext : `.${ext}`);
+          if (compare(file, fullName)) {
             return start + file;
           }
         }
@@ -67,6 +80,17 @@ export async function searchFiles(
     const member = `\\(${options.member}\\)`;
 
     /**
+     * Helper for performing case-sensitive/insensitive endsWith check
+     */
+    function endsWith(str: string, suffix: string): boolean {
+      if (caseSensitive) {
+        return str.endsWith(suffix);
+      } else {
+        return str.toLowerCase().endsWith(suffix.toLowerCase());
+      }
+    }
+
+    /**
      * Helper to await the recursive search
      */
     async function searchDir(currentPath: string): Promise<string | undefined> {
@@ -75,7 +99,7 @@ export async function searchFiles(
         const entryPath = currentPath.endsWith("/")
           ? currentPath + entry
           : currentPath + "/" + entry;
-        if (entry.toLowerCase().endsWith(member.toLowerCase())) {
+        if (endsWith(entry, member)) {
           return entryPath;
         }
       }
