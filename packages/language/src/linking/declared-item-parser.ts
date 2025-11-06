@@ -22,7 +22,6 @@ import { MultiMap } from "../utils/collections";
 import { getNameToken } from "./tokens";
 import { LinkerErrorReporter } from "./error";
 import { Token } from "../parser/tokens";
-import { CompilationUnit } from "../workspace/compilation-unit";
 
 type UnrolledItem = {
   kind: SyntaxKind;
@@ -160,7 +159,6 @@ export class DeclaredItemParser {
   private items: UnrolledItem[];
 
   private constructor(
-    private readonly unit: CompilationUnit,
     items: readonly DeclaredItem[],
     private reporter: LinkerErrorReporter,
   ) {
@@ -168,7 +166,6 @@ export class DeclaredItemParser {
   }
 
   static parse(
-    unit: CompilationUnit,
     items: readonly DeclaredItem[],
     reporter: LinkerErrorReporter,
   ): MultiMap<string, QualifiedSyntaxNode> {
@@ -178,7 +175,7 @@ export class DeclaredItemParser {
 
     // Use 0 as a default level to start the generation.
     // TODO: Maybe make this `null` to represent the root scope.
-    new DeclaredItemParser(unit, items, reporter).generate(null, 0, onAdd);
+    new DeclaredItemParser(items, reporter).generate(null, 0, onAdd);
 
     return buffer;
   }
@@ -254,7 +251,6 @@ export class DeclaredItemParser {
 
       // Otherwise, we can add the node to the symbol table.
       const node = QualifiedSyntaxNode.createExplicit(
-        this.unit,
         token,
         item.node,
         parent,

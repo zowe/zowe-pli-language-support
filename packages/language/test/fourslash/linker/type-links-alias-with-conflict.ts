@@ -11,8 +11,15 @@
 
 /// <reference path="../framework.ts" />
 
-//// %REPLACE <|1:HELLO|> WITH "HELLO WORLD";
-//// PUT(<|1>HELLO);
+/*
+ * We declare an alias type and a variable with the same name to test that
+ * the links do not get in conflict.
+ */
 
-verify.noDiagnostics();
+// @wrap: main
+//// DEFINE ALIAS <|t:HELLO|> BIN FIXED(31);
+//// DCL <|var:HELLO|> FIXED(31);
+//// DCL ALIASED_VAR TYPE <|t>HELLO;
+//// ALIASED_VAR = <|var>HELLO;
+
 linker.expectLinks();

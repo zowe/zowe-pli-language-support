@@ -115,7 +115,7 @@ export const CompletionKeywords = {
     [CstNodeKind.EntryAttribute_Limited0, kw("LIMITED")],
     [CstNodeKind.LikeAttribute_LIKE, kw("LIKE")],
     [CstNodeKind.TypeAttribute_TYPE, kw("TYPE")],
-    [CstNodeKind.OrdinalTypeAttribute_ORDINAL, kw("ORDINAL")],
+    [CstNodeKind.TypeAttribute_TYPE, kw("ORDINAL")],
     [CstNodeKind.GenericAttribute_GENERIC, kw("GENERIC")],
     [CstNodeKind.IndForAttribute_INDFOR, kw("INDFOR")],
   ]),

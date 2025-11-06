@@ -15,6 +15,7 @@ import {
   MemberCall,
   ProcedureParameter,
   Reference,
+  ReferenceType,
   SyntaxKind,
   SyntaxNode,
 } from "../syntax-tree/ast";
@@ -31,7 +32,6 @@ import { ValidationBuffer } from "../validation/validator";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { LinkerErrorReporter } from "./error";
 import { Scope } from "./scope";
-import { getSymbolName } from "./util";
 
 function getParentStatement(node: SyntaxNode): SyntaxNode {
   if (node.container?.kind === SyntaxKind.Statement) {
@@ -171,7 +171,7 @@ function assignQualifiedReference(
   resolved: QualifiedSyntaxNode,
 ) {
   // The names are not matching, this is a partial qualification.
-  if (getSymbolName(unit, reference.text) !== resolved.name) {
+  if (reference.text !== resolved.name) {
     if (!resolved.parent) {
       throw new Error(
         "Resolved parent is null, should not happen. There is probably a mistake in the symbol table.",
@@ -232,7 +232,11 @@ function getMatchingSymbols(
   qualifiedName: string[],
   reference: Reference,
   reporter: LinkerErrorReporter,
-): QualifiedSyntaxNode[] {
+): readonly QualifiedSyntaxNode[] {
+  if (reference.type === ReferenceType.Type) {
+    return scope.getTypeSymbols(qualifiedName);
+  }
+
   const getFullName = () => qualifiedName.toReversed().join(".");
 
   const explicitlyDeclaredSymbols = scope
