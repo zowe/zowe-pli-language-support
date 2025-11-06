@@ -127,9 +127,11 @@ describe("PL/1 Lexer", () => {
       PluginConfigurationProviderInstance.setProgramConfigs("/test", [
         programConfig,
       ]);
-      await PluginConfigurationProviderInstance.setProcessGroupConfigs([
+      const diagnostics = await PluginConfigurationProviderInstance.setProcessGroupConfigs([
         processGroupConfig,
       ]);
+
+      expect(diagnostics).toHaveLength(0);
 
       const { compilerOptions } = await lexer.tokenize(
         await createCompilationUnit(uri),

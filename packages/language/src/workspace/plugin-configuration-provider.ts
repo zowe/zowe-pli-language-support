@@ -9,18 +9,19 @@
  *
  */
 
-import {
-    FileSystemProviderInstance,
-} from "./file-system-provider";
-import { URI, UriUtils } from "../utils/uri";
+import { minimatch } from "minimatch";
+import { Diagnostic } from "vscode-languageserver-types";
+import { CompilerOptionResult } from "../preprocessor/compiler-options/options";
 import {
   AbstractCompilerOptions,
   parseAbstractCompilerOptions,
 } from "../preprocessor/compiler-options/parser";
 import { translateCompilerOptions } from "../preprocessor/compiler-options/translate";
-import { minimatch } from "minimatch";
-import { CompilerOptionResult } from "../preprocessor/compiler-options/options";
 import { isBoolean, isRecordOf, isString, isStringArray } from "../utils/types";
+import { URI, UriUtils } from "../utils/uri";
+import {
+  FileSystemProviderInstance,
+} from "./file-system-provider";
 
 /**
  * Pli options are effectively macros to set w/ the given values
@@ -237,10 +238,13 @@ export class PluginConfigurationProvider {
 
   /**
    * Initializes the plugin configuration provider with a workspace path, using any plugin configs present in the workspace.
+   * 
+   * @param workspacePath The full path to the workspace to load plugin configurations from
+   * @returns List of diagnostics encountered during loading & processing
    */
-  public async init(workspacePath: string): Promise<void> {
+  public async init(workspacePath: string): Promise<Diagnostic[]> {
     this.workspacePath = workspacePath;
-    await this.loadConfigurations();
+    return this.loadConfigurations();
   }
 
   /**
@@ -293,16 +297,20 @@ export class PluginConfigurationProvider {
 
   /**
    * Reloads plugin configurations from the existing workspace path.
+   * 
+   * @returns List of diagnostics encountered during loading & processing
    */
-  public async reloadConfigurations(): Promise<void> {
+  public async reloadConfigurations(): Promise<Diagnostic[]> {
     console.log("Reloading .pliplugin configurations...");
-    await this.loadConfigurations();
+    return this.loadConfigurations();
   }
 
   /**
    * Loads the plugin configurations from the workspace path, overwriting any existing configs.
+   * 
+   * @returns List of diagnostics encountered during loading & processing
    */
-  private async loadConfigurations(): Promise<void> {
+  private async loadConfigurations(): Promise<Diagnostic[]> {
     const workspaceUri = URI.parse(this.workspacePath);
 
     // load configs
@@ -310,9 +318,10 @@ export class PluginConfigurationProvider {
       UriUtils.joinPath(workspaceUri, ".pliplugin", "pgm_conf.json"),
     );
 
-    await this.loadProcessGroupConfig(
+    const diagnostics = await this.loadProcessGroupConfig(
       UriUtils.joinPath(workspaceUri, ".pliplugin", "proc_grps.json"),
     );
+    return diagnostics;
   }
 
   /**
@@ -354,10 +363,11 @@ export class PluginConfigurationProvider {
   /**
    * Loads the process group config from the given path, and sets it in this provider.
    * @param processGroupConfigUri URI to the process group config file
+   * @returns List of diagnostics encountered during loading & processing
    */
   private async loadProcessGroupConfig(
-    processGroupConfigUri: URI,
-  ): Promise<void> {
+    processGroupConfigUri: URI
+  ): Promise<Diagnostic[]> {
     if (await FileSystemProviderInstance.fileExists(processGroupConfigUri)) {
       const processGrpConfig = await FileSystemProviderInstance.readFile(
         processGroupConfigUri,
@@ -365,10 +375,10 @@ export class PluginConfigurationProvider {
 
       if (processGrpConfig !== undefined) {
         try {
-          await this.parseProcessGroupConfigs(processGrpConfig);
+          // process & set configs, also triggers post-processing of process groups
+          const diagnostics = await this.parseProcessGroupConfigs(processGrpConfig);
           this.postProcessProgramConfigs();
-          await this.postProcessProcessGroups();
-          return;
+          return diagnostics;
         } catch (e) {
           console.error("Failed to load process group config, skipping:", e);
         }
@@ -382,13 +392,16 @@ export class PluginConfigurationProvider {
     console.warn(
       "No process group config found, clearing existing configurations.",
     );
+    return [];
   }
 
   /**
    * Go through all process groups & expand libs recursively to ensure all libs are findable when searching
    * Populates the $computedLibs property of each process group, which is used to resolve includes
+   * @returns List of diagnostics encountered during processing
    */
-  private async postProcessProcessGroups() {
+  private async postProcessProcessGroups(): Promise<Diagnostic[]> {
+    const diagnostics: Diagnostic[] = [];
     for (const processGroup of this.processGroupConfigs.values()) {
       const computedLibs: Set<LibsEntry> = new Set();
       const libsToProcess = [...processGroup.libs];
@@ -397,7 +410,15 @@ export class PluginConfigurationProvider {
         if (lib) {
           // read all files in this lib path
           // add any contained directories to the libs list, as well as the toProcess list
-          const libUri = UriUtils.joinPath(URI.parse(this.workspacePath), lib);
+          let libUri: URI;
+          const absPathRegex = /^\/|[A-Z]:|~/i;
+          if (absPathRegex.test(lib)) {
+            // absolute path, use as-is
+            libUri = URI.file(lib);
+          } else {
+            libUri = UriUtils.joinPath(URI.parse(this.workspacePath), lib);
+          }
+
           try {
             const entries = await FileSystemProviderInstance.readDir(libUri);
             if (entries.length) {
@@ -427,18 +448,34 @@ export class PluginConfigurationProvider {
               const parentEntries =
                 await FileSystemProviderInstance.readDir(parentUri);
               const ddnamePattern = new RegExp(`^${libName}\\(`, "i");
+              let matched = false;
               for (const entry of parentEntries) {
                 if (ddnamePattern.test(entry)) {
                   // found a ddname-style entry, add full lib & break out, only need one to confirm
                   computedLibs.add({
                     ddLib: lib,
                   });
+                  matched = true;
                   break;
                 }
               }
+
+              if (!matched) {
+                // no matches found, rethrow to generate diagnostic
+                throw e;
+              }
             } catch (parentError) {
-              // parent directory also failed to read, skip this lib
-              console.warn(`Failed to resolve library entry "${lib}"`);
+              // parent directory also failed to read, skip this lib & collect diagnostic
+              diagnostics.push({
+                severity: 1, // err 
+                message: `Plugin Configuration failed to resolve library entry '${lib}'`,
+                code: "COPC01",
+                source: "PL/I",
+                range: {
+                  start: { line: 0, character: 0 },
+                  end: { line: 0, character: 1 },
+                }
+              });
             }
           }
         }
@@ -450,6 +487,7 @@ export class PluginConfigurationProvider {
         cl.filter((e) => isLibsDir(e)).map((e) => e.dir),
       );
     }
+    return diagnostics;
   }
 
   /**
@@ -537,36 +575,38 @@ export class PluginConfigurationProvider {
   /**
    * Parses & sets the process group configs of this plugin configuration provider, overwriting any existing configs.
    * @param text Raw text content of .pliplugin/proc_grps.json to parse
-   * @returns Whether parsing was successful
+   * @returns List of diagnostics encountered during loading & processing
    */
-  public async parseProcessGroupConfigs(text: string): Promise<boolean> {
+  public async parseProcessGroupConfigs(text: string): Promise<Diagnostic[]> {
     try {
       const serializedData: SerializedProcessGroup[] = JSON.parse(text).pgroups;
       const groupConfigs = serializedData.map(deserializeProcessGroup);
-      await this.setProcessGroupConfigs(groupConfigs);
+      const diagnostics = await this.setProcessGroupConfigs(groupConfigs);
       this.postProcessProgramConfigs();
-      return true;
+      return diagnostics;
     } catch {
-      return false;
+      return [];
     }
   }
 
   /**
    * Sets the process group configs of this plugin configuration provider, overwriting any existing configs.
-   * Also invalidates the saved library file patterns.
+   * Also invalidates the saved library file patterns & post-processes program configs.
    * @param processGroupConfigs List of process group configs loaded from
    *  .pliplugin/proc_grps.json (when present)
+   * @returns List of diagnostics encountered during loading & processing
    */
   public async setProcessGroupConfigs(
     processGroupConfigs: ProcessGroup[],
-  ): Promise<void> {
+  ): Promise<Diagnostic[]> {
     this.processGroupConfigs.clear();
     for (const config of processGroupConfigs) {
       this.processGroupConfigs.set(config.name, config);
     }
     this.postProcessProgramConfigs();
-    await this.postProcessProcessGroups();
+    const diagnostics = await this.postProcessProcessGroups();
     this.libFileGlobPatterns = undefined;
+    return diagnostics;
   }
 
   /**
