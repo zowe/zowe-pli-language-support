@@ -125,7 +125,9 @@ class _EmptyFileSystemProvider implements FileSystemProvider {
 export const EmptyFileSystemProvider = new _EmptyFileSystemProvider();
 
 /**
- * Virtualized file system, internally represented as a flat map of files
+ * Virtualized file system, internally represented as a flat map of files.
+ * Files & Directories are represented in a case-insensitive manner in this implementation,
+ * by opting to store all paths in lower-case form, and perform all lookups in lower-case as well.
  */
 export class VirtualFileSystemProvider implements FileSystemProvider {
   /**
@@ -171,7 +173,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
         const relativePath = filePath.substring(path.length);
         const parts = relativePath.split("/").filter((p) => p.length > 0);
         if (parts.length > 0) {
-                    entries.push(parts[0]);
+          entries.push(parts[0]);
         }
       }
     }
