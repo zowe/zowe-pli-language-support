@@ -76,7 +76,8 @@ The `proc_grps.json` file is formatted as an array of JSON elements, with one JS
 - **"name":** (string)  
     - Specify a name for the processor group.
 - (Optional) **"libs":** (array)  
-    - Specify local folders that contain include files. Specify local folders as either absolute or relative local paths.
+    - Specify local folders that contain include files. Folders can be either absolute or relative local paths.
+    - Include members by adding ddnames, such as adding `mylibs/a.b.c`, where `a.b.c(member)` is a file in the `mylibs` folder.
 - (Optional) **"include-extensions":** (array)  
     - Specify file extensions that you use for the include files in programs linked with this processor groups.
 - (Optional) **"compiler-options":** (array)  
