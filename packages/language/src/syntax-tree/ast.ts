@@ -1629,7 +1629,7 @@ export interface IncludeItemFile extends AstNode {
   sourceText: string | null;
 
   fileName: string | null;
-};
+}
 
 /**
  * Include item by member name + optional ddname
@@ -1657,7 +1657,7 @@ export interface IncludeItemMember extends AstNode {
    * Contributing tokens for ddname components
    */
   ddnameTokens: Token[] | null;
-};
+}
 
 /**
  * Type guard for an IncludeItemFile w/ fileName prop
@@ -1665,10 +1665,12 @@ export interface IncludeItemMember extends AstNode {
 export function isIncludeItemFile(
   item: unknown,
 ): item is IncludeItemFile & { fileName: string } {
-  return typeof item === "object" &&
+  return (
+    typeof item === "object" &&
     item !== null &&
-    'fileName' in item &&
-    typeof (item as any).fileName === 'string';
+    "fileName" in item &&
+    typeof (item as any).fileName === "string"
+  );
 }
 
 /**
@@ -1677,10 +1679,12 @@ export function isIncludeItemFile(
 export function isIncludeItemMember(
   item: unknown,
 ): item is IncludeItemMember & { memberName: string } {
-  return typeof item === "object" &&
+  return (
+    typeof item === "object" &&
     item !== null &&
-    'memberName' in item &&
-    typeof (item as any).memberName === 'string';
+    "memberName" in item &&
+    typeof (item as any).memberName === "string"
+  );
 }
 
 export function createIncludeItemFile(): IncludeItemFile {

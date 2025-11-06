@@ -13,12 +13,12 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { URI } from "../../src/utils/uri";
 import {
   FileSystemProviderInstance,
-    setFileSystemProvider,
-    VirtualFileSystemProvider,
+  setFileSystemProvider,
+  VirtualFileSystemProvider,
 } from "../../src/workspace/file-system-provider";
 import {
-    PluginConfigurationProviderInstance,
-    ProcessGroup,
+  PluginConfigurationProviderInstance,
+  ProcessGroup,
 } from "../../src/workspace/plugin-configuration-provider";
 
 describe("Plugin Configuration Tests", () => {
@@ -36,10 +36,7 @@ describe("Plugin Configuration Tests", () => {
   /**
    * Helper function to create a process group configuration with default values
    */
-  function createProcessGroup(
-    name: string,
-    libs: string[],
-  ): ProcessGroup {
+  function createProcessGroup(name: string, libs: string[]): ProcessGroup {
     return {
       name,
       compilerOptions: [],
@@ -49,7 +46,7 @@ describe("Plugin Configuration Tests", () => {
       includeExtensions: [".inc"],
       lspOptions: { checkMargins: false },
       pliOptions: {},
-      implicitBuiltins: new Set()
+      implicitBuiltins: new Set(),
     };
   }
 
@@ -69,14 +66,17 @@ describe("Plugin Configuration Tests", () => {
     await PluginConfigurationProviderInstance.init("file:///");
 
     // create a virtual directory to satisfy the subsequent libs check
-    await FileSystemProviderInstance.writeFile(URI.parse("file:///libs/existing/dummy.pli"), "");
+    await FileSystemProviderInstance.writeFile(
+      URI.parse("file:///libs/existing/dummy.pli"),
+      "",
+    );
 
     // set up a process group w/ a libs entry that exists
     const diagnostics =
       await PluginConfigurationProviderInstance.setProcessGroupConfigs([
         createProcessGroup("default", ["libs/existing"]),
       ]);
-    
+
     expect(diagnostics).toEqual([]);
   });
 
@@ -84,7 +84,10 @@ describe("Plugin Configuration Tests", () => {
     await PluginConfigurationProviderInstance.init("file:///");
 
     // populate the virtual file system with at least one file so it's not empty
-    await FileSystemProviderInstance.writeFile(URI.parse("file:///dummy.pli"), "");
+    await FileSystemProviderInstance.writeFile(
+      URI.parse("file:///dummy.pli"),
+      "",
+    );
 
     // set up a process group with a libs entry that does not exist
     const diagnostics =
@@ -102,8 +105,14 @@ describe("Plugin Configuration Tests", () => {
   test("Only invalid libs produce diagnostics, not valid ones", async () => {
     await PluginConfigurationProviderInstance.init("file:///");
 
-    await FileSystemProviderInstance.writeFile(URI.parse("file:///libs/existing1/p1.pli"), "");
-    await FileSystemProviderInstance.writeFile(URI.parse("file:///libs/existing2/p2.pli"), "");
+    await FileSystemProviderInstance.writeFile(
+      URI.parse("file:///libs/existing1/p1.pli"),
+      "",
+    );
+    await FileSystemProviderInstance.writeFile(
+      URI.parse("file:///libs/existing2/p2.pli"),
+      "",
+    );
 
     const diagnostics =
       await PluginConfigurationProviderInstance.setProcessGroupConfigs([
@@ -118,13 +127,13 @@ describe("Plugin Configuration Tests", () => {
 
     // expect diagnostics for the 2 invalid libs only
     expect(diagnostics).toHaveLength(2);
-    
+
     const d0 = diagnostics[0];
     expect(d0.code).toBe("COPC01");
-    expect(diagnostics.some(d => d.message.includes("invalid1"))).toBe(true);
+    expect(diagnostics.some((d) => d.message.includes("invalid1"))).toBe(true);
 
     const d1 = diagnostics[1];
     expect(d1.code).toBe("COPC01");
-    expect(diagnostics.some(d => d.message.includes("invalid2"))).toBe(true);
+    expect(diagnostics.some((d) => d.message.includes("invalid2"))).toBe(true);
   });
 });

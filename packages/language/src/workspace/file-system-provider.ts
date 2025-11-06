@@ -11,9 +11,7 @@
 
 import { URI } from "../utils/uri";
 
-export type SearchOptions =
-  | PathSearch
-  | MemberSearchInDir;
+export type SearchOptions = PathSearch | MemberSearchInDir;
 
 /**
  * Search by full path with optional extensions.
@@ -52,7 +50,6 @@ export function isPathSearch(obj: any): obj is PathSearch {
     Array.isArray(obj.extensions)
   );
 }
-
 
 /**
  * File or directory stats

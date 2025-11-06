@@ -20,7 +20,7 @@ import {
   URI,
   setFileSystemProvider,
   isPathSearch,
-  Stats
+  Stats,
 } from "pli-language";
 import * as fs from "fs";
 import * as glob from "glob";

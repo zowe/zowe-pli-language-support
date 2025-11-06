@@ -40,9 +40,11 @@
 //// %INCLUDE m1;
 //// %INCLUDE <|1:m2|>;
 
-verify.expectExclusiveDiagnosticsAt(1, [{
+verify.expectExclusiveDiagnosticsAt(1, [
+  {
     message: code.Severe.IBM3841I.message("M2"),
-}]);
+  },
+]);
 
 preprocessor.expectTokens(`
   DECLARE LIB_VAR1 FIXED;

@@ -36,7 +36,10 @@ import { renameRequest } from "./rename-request";
 import { getReferenceLocations } from "../linking/resolver";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
-import { PluginConfigurationProvider, PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import {
+  PluginConfigurationProvider,
+  PluginConfigurationProviderInstance,
+} from "../workspace/plugin-configuration-provider";
 import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { Mutex } from "../workspace/mutex";
@@ -58,14 +61,17 @@ export function startLanguageServer(connection: Connection): void {
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
     // TODO @montymxb Apr 23rd, 2025: Consider addressing multiple workspaces w/ multiple plugin configs
     for (const folder of params.workspaceFolders?.reverse() ?? []) {
-      PluginConfigurationProviderInstance.init(folder.uri).then((diagnostics) => {
-        const ws = PluginConfigurationProviderInstance.getWorkspacePath();
-        const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
-        connection.sendDiagnostics({
-          uri: wsPrefix + PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE,
-          diagnostics,
-        });
-      });
+      PluginConfigurationProviderInstance.init(folder.uri).then(
+        (diagnostics) => {
+          const ws = PluginConfigurationProviderInstance.getWorkspacePath();
+          const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
+          connection.sendDiagnostics({
+            uri:
+              wsPrefix + PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE,
+            diagnostics,
+          });
+        },
+      );
     }
 
     return {
@@ -302,14 +308,15 @@ export function startLanguageServer(connection: Connection): void {
     () => {
       Mutex.run(async () => {
         // handle changes to the .pliplugin config folder's contents
-        const diagnostics = await PluginConfigurationProviderInstance.reloadConfigurations();
+        const diagnostics =
+          await PluginConfigurationProviderInstance.reloadConfigurations();
         const ws = PluginConfigurationProviderInstance.getWorkspacePath();
         const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
         connection.sendDiagnostics({
           uri: wsPrefix + PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE,
           diagnostics,
         });
-        
+
         // reindex reachable compilation units
         await compilationUnitHandler.reindex(
           connection,

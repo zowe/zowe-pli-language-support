@@ -19,9 +19,7 @@ import {
 import { translateCompilerOptions } from "../preprocessor/compiler-options/translate";
 import { isBoolean, isRecordOf, isString, isStringArray } from "../utils/types";
 import { URI, UriUtils } from "../utils/uri";
-import {
-  FileSystemProviderInstance,
-} from "./file-system-provider";
+import { FileSystemProviderInstance } from "./file-system-provider";
 
 /**
  * Pli options are effectively macros to set w/ the given values
@@ -238,7 +236,7 @@ export class PluginConfigurationProvider {
 
   /**
    * Initializes the plugin configuration provider with a workspace path, using any plugin configs present in the workspace.
-   * 
+   *
    * @param workspacePath The full path to the workspace to load plugin configurations from
    * @returns List of diagnostics encountered during loading & processing
    */
@@ -297,7 +295,7 @@ export class PluginConfigurationProvider {
 
   /**
    * Reloads plugin configurations from the existing workspace path.
-   * 
+   *
    * @returns List of diagnostics encountered during loading & processing
    */
   public async reloadConfigurations(): Promise<Diagnostic[]> {
@@ -307,7 +305,7 @@ export class PluginConfigurationProvider {
 
   /**
    * Loads the plugin configurations from the workspace path, overwriting any existing configs.
-   * 
+   *
    * @returns List of diagnostics encountered during loading & processing
    */
   private async loadConfigurations(): Promise<Diagnostic[]> {
@@ -366,7 +364,7 @@ export class PluginConfigurationProvider {
    * @returns List of diagnostics encountered during loading & processing
    */
   private async loadProcessGroupConfig(
-    processGroupConfigUri: URI
+    processGroupConfigUri: URI,
   ): Promise<Diagnostic[]> {
     if (await FileSystemProviderInstance.fileExists(processGroupConfigUri)) {
       const processGrpConfig = await FileSystemProviderInstance.readFile(
@@ -376,7 +374,8 @@ export class PluginConfigurationProvider {
       if (processGrpConfig !== undefined) {
         try {
           // process & set configs, also triggers post-processing of process groups
-          const diagnostics = await this.parseProcessGroupConfigs(processGrpConfig);
+          const diagnostics =
+            await this.parseProcessGroupConfigs(processGrpConfig);
           this.postProcessProgramConfigs();
           return diagnostics;
         } catch (e) {
@@ -423,7 +422,9 @@ export class PluginConfigurationProvider {
             const entries = await FileSystemProviderInstance.readDir(libUri);
             if (entries.length) {
               for (const fileName of entries) {
-                const stats = await FileSystemProviderInstance.stat(UriUtils.joinPath(libUri, fileName));
+                const stats = await FileSystemProviderInstance.stat(
+                  UriUtils.joinPath(libUri, fileName),
+                );
                 if (stats.isDirectory) {
                   // directory to add for handling
                   libsToProcess.push(`${lib}/${fileName}`);
@@ -467,14 +468,14 @@ export class PluginConfigurationProvider {
             } catch (parentError) {
               // parent directory also failed to read, skip this lib & collect diagnostic
               diagnostics.push({
-                severity: 1, // err 
+                severity: 1, // err
                 message: `Plugin Configuration failed to resolve library entry '${lib}'`,
                 code: "COPC01",
                 source: "PL/I",
                 range: {
                   start: { line: 0, character: 0 },
                   end: { line: 0, character: 1 },
-                }
+                },
               });
             }
           }

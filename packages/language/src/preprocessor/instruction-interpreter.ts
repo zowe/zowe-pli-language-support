@@ -1932,7 +1932,7 @@ async function runInclude(
     const diagnostic = diagnosticFromCode(
       PLICodes.Severe.IBM3841I,
       item.token,
-      getFileNameOrPartialName(item)!
+      getFileNameOrPartialName(item)!,
     );
 
     // check to set optional diagnostic data iff we have a valid fileName/memberName to work with

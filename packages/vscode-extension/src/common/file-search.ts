@@ -9,10 +9,7 @@
  *
  */
 
-import {
-  isPathSearch,
-  SearchOptions
-} from "pli-language";
+import { isPathSearch, SearchOptions } from "pli-language";
 
 export async function searchFiles(
   options: SearchOptions,

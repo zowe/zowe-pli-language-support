@@ -127,9 +127,10 @@ describe("PL/1 Lexer", () => {
       PluginConfigurationProviderInstance.setProgramConfigs("/test", [
         programConfig,
       ]);
-      const diagnostics = await PluginConfigurationProviderInstance.setProcessGroupConfigs([
-        processGroupConfig,
-      ]);
+      const diagnostics =
+        await PluginConfigurationProviderInstance.setProcessGroupConfigs([
+          processGroupConfig,
+        ]);
 
       expect(diagnostics).toHaveLength(0);
 

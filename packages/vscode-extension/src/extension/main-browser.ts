@@ -90,7 +90,7 @@ function registerFileSystemProvider(client: LanguageClient): void {
     const stat = await vscode.workspace.fs.stat(uri);
     return {
       isFile: stat.type === vscode.FileType.File,
-      isDirectory: stat.type === vscode.FileType.Directory
+      isDirectory: stat.type === vscode.FileType.Directory,
     };
   });
   client.onRequest(Messages.WriteFile, async (uriString, value) => {

@@ -591,7 +591,8 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
   directive.idempotent = isXInstruction(includeToken);
   let parseError = false;
   while (true) {
-    let item: ast.IncludeItemFile | ast.IncludeItemMember | undefined = undefined;
+    let item: ast.IncludeItemFile | ast.IncludeItemMember | undefined =
+      undefined;
     // collect all ID tokens that can contribute to a ddname
     const idTokens: t.Token[] = [];
     let nextIdToken: t.Token | null = null;
