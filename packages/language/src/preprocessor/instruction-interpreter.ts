@@ -1911,7 +1911,11 @@ function generateSyntheticRefItem(
   context: InterpreterContext,
 ): ast.ReferenceItem {
   const refItem = ast.createReferenceItem();
-  const ref = ast.createReference<ast.NamedElement>(refItem, token, true);
+  const ref = ast.createReference<ast.NamedElement>(
+    refItem,
+    token,
+    ast.ReferenceType.Variable,
+  );
   ref.node = targetNode as ast.NamedElement;
   refItem.ref = ref;
   context.references.push(ref);

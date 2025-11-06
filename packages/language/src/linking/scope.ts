@@ -10,7 +10,6 @@
  */
 
 import { SyntaxNode } from "../syntax-tree/ast";
-import { CompilationUnit } from "../workspace/compilation-unit";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { SymbolTable } from "./symbol-table";
 
@@ -25,17 +24,33 @@ export interface GetSymbolsOptions {
  */
 export class Scope {
   private constructor(
-    private readonly unit: CompilationUnit,
     private readonly parent: Scope | null,
     public readonly symbolTable: SymbolTable,
   ) {}
 
-  static createRoot(unit: CompilationUnit) {
-    return new Scope(unit, null, new SymbolTable(unit));
+  static createRoot() {
+    return new Scope(null, new SymbolTable());
   }
 
   static createChild(parent: Scope) {
-    return new Scope(parent.unit, parent, new SymbolTable(parent.unit));
+    return new Scope(parent, new SymbolTable());
+  }
+
+  getTypeSymbols(
+    qualifiedName: readonly string[],
+    options: GetSymbolsOptions = {},
+  ): readonly QualifiedSyntaxNode[] {
+    const immediateSymbols = this.symbolTable.getTypeSymbols(qualifiedName);
+
+    if (options.searchOnlyImmediateScope) {
+      return immediateSymbols ?? [];
+    }
+
+    return (
+      immediateSymbols ??
+      this.parent?.getTypeSymbols(qualifiedName, options) ??
+      []
+    );
   }
 
   getExplicitSymbols(
@@ -50,7 +65,9 @@ export class Scope {
     }
 
     return (
-      immediateSymbols ?? this.parent?.getExplicitSymbols(qualifiedName) ?? []
+      immediateSymbols ??
+      this.parent?.getExplicitSymbols(qualifiedName, options) ??
+      []
     );
   }
 
@@ -66,7 +83,9 @@ export class Scope {
     }
 
     return (
-      immediateSymbols ?? this.parent?.getImplicitSymbols(qualifiedName) ?? []
+      immediateSymbols ??
+      this.parent?.getImplicitSymbols(qualifiedName, options) ??
+      []
     );
   }
 

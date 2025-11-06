@@ -204,7 +204,11 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.Exports_Procedure);
-      element.reference = ast.createReference(element, token);
+      element.reference = ast.createReference(
+        element,
+        token,
+        ast.ReferenceType.Variable,
+      );
     });
 
     return this.pop<ast.ExportsItem>();
@@ -2110,6 +2114,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.DefineAliasStatement,
       container: null,
       name: null,
+      nameToken: null,
       xDefine: false,
       attributes: [],
     };
@@ -2134,6 +2139,7 @@ export class PliParser extends AbstractParser {
     this.CONSUME_ASSIGN1(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.DefineAliasStatement_Name);
       element.name = token.image;
+      element.nameToken = token;
     });
     this.OPTION2(() => {
       this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
@@ -2173,6 +2179,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.DefineOrdinalStatement,
       container: null,
       name: null,
+      nameToken: null,
       ordinalValues: null,
       xDefine: false,
       attributes: [],
@@ -2200,10 +2207,14 @@ export class PliParser extends AbstractParser {
         CstNodeKind.DefineOrdinalStatement_ORDINAL,
       );
     });
-    this.SUBRULE_ASSIGN1(this.FQN, {
-      assign: (result) => {
-        element.name = result;
-      },
+    this.CONSUME_ASSIGN(tokens.ID, (token) => {
+      this.tokenPayload(
+        token,
+        element,
+        CstNodeKind.DefineOrdinalStatement_Name,
+      );
+      element.name = token.image;
+      element.nameToken = token;
     });
     this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
       this.tokenPayload(
@@ -2437,6 +2448,7 @@ export class PliParser extends AbstractParser {
       container: null,
       level: null,
       name: null,
+      nameToken: null,
       attributes: [],
     };
   }
@@ -2445,12 +2457,13 @@ export class PliParser extends AbstractParser {
     let element = this.push(this.createStructureItem());
 
     this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.SubStructure_LevelNumber);
+      this.tokenPayload(token, element, CstNodeKind.StructureItem_LevelNumber);
       element.level = token.image;
     });
     this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.SubStructure_Name);
+      this.tokenPayload(token, element, CstNodeKind.StructureItem_Name);
       element.name = token.image;
+      element.nameToken = token;
     });
     this.MANY1(() => {
       this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
@@ -6569,7 +6582,6 @@ export class PliParser extends AbstractParser {
       this.EntryAttribute,
       this.LikeAttribute,
       this.TypeAttribute,
-      this.OrdinalTypeAttribute,
       this.GenericAttribute,
       this.IndForAttribute,
     ];
@@ -6784,14 +6796,19 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.TypeAttribute,
       container: null,
       type: null,
+      typeToken: null,
     };
   }
 
   TypeAttribute = this.RULE("TypeAttribute", () => {
     let element = this.push(this.createTypeAttribute());
 
-    this.CONSUME_ASSIGN1(tokens.TYPE, (token) => {
+    // "TYPE" and "ORDINAL" are interchangeable here
+    // We need to validate that the "ORDINAL" keyword is used exclusively with ordinal types
+    // We do this in the validation phase
+    this.CONSUME_ASSIGN1(tokens.TypeOrOrdinal, (token) => {
       this.tokenPayload(token, element, CstNodeKind.TypeAttribute_TYPE);
+      element.typeToken = token;
     });
     this.OR1([
       {
@@ -6802,7 +6819,11 @@ export class PliParser extends AbstractParser {
               element,
               CstNodeKind.TypeAttribute_TypeId0,
             );
-            element.type = ast.createReference(element, token);
+            element.type = ast.createReference(
+              element,
+              token,
+              ast.ReferenceType.Type,
+            );
           });
         },
       },
@@ -6821,7 +6842,11 @@ export class PliParser extends AbstractParser {
               element,
               CstNodeKind.TypeAttribute_TypeId1,
             );
-            element.type = ast.createReference(element, token);
+            element.type = ast.createReference(
+              element,
+              token,
+              ast.ReferenceType.Type,
+            );
           });
           this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
             this.tokenPayload(
@@ -6836,76 +6861,7 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.TypeAttribute>();
   });
-  private createOrdinalTypeAttribute(): ast.OrdinalTypeAttribute {
-    return {
-      kind: ast.SyntaxKind.OrdinalTypeAttribute,
-      container: null,
-      type: null,
-      byvalue: false,
-    };
-  }
 
-  OrdinalTypeAttribute = this.RULE("OrdinalTypeAttribute", () => {
-    let element = this.push(this.createOrdinalTypeAttribute());
-
-    this.CONSUME_ASSIGN1(tokens.ORDINAL, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.OrdinalTypeAttribute_ORDINAL,
-      );
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.OrdinalTypeAttribute_TypeId0,
-            );
-            element.type = ast.createReference(element, token);
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.OrdinalTypeAttribute_OpenParen,
-            );
-          });
-          this.CONSUME_ASSIGN2(tokens.ID, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.OrdinalTypeAttribute_TypeId1,
-            );
-            element.type = ast.createReference(element, token);
-          });
-          this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.OrdinalTypeAttribute_CloseParen,
-            );
-          });
-        },
-      },
-    ]);
-    this.CONSUME_ASSIGN1(tokens.BYVALUE, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.OrdinalTypeAttribute_ByValue,
-      );
-      element.byvalue = true;
-    });
-
-    return this.pop<ast.OrdinalTypeAttribute>();
-  });
   private createReturnsAttribute(): ast.ReturnsAttribute {
     return {
       kind: ast.SyntaxKind.ReturnsAttribute,
@@ -7313,7 +7269,11 @@ export class PliParser extends AbstractParser {
               element,
               CstNodeKind.HandleAttribute_TypeId0,
             );
-            element.type = ast.createReference(element, token);
+            element.type = ast.createReference(
+              element,
+              token,
+              ast.ReferenceType.Type,
+            );
           });
         },
       },
@@ -7332,7 +7292,11 @@ export class PliParser extends AbstractParser {
               element,
               CstNodeKind.HandleAttribute_TypeId1,
             );
-            element.type = ast.createReference(element, token);
+            element.type = ast.createReference(
+              element,
+              token,
+              ast.ReferenceType.Type,
+            );
           });
           this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
             this.tokenPayload(
@@ -7873,7 +7837,11 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ProcedureParameter_Id);
-      element.ref = ast.createReference(element, token);
+      element.ref = ast.createReference(
+        element,
+        token,
+        ast.ReferenceType.Variable,
+      );
     });
 
     return this.pop<ast.ProcedureParameter>();
@@ -7892,7 +7860,11 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ReferenceItem_Ref);
-      element.ref = ast.createReference(element, token);
+      element.ref = ast.createReference(
+        element,
+        token,
+        ast.ReferenceType.Variable,
+      );
     });
     this.OPTION(() => {
       this.SUBRULE_ASSIGN(this.Dimensions, {
@@ -8114,7 +8086,11 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ProcedureCall_ProcedureRef);
-      element.procedure = ast.createReference(element, token);
+      element.procedure = ast.createReference(
+        element,
+        token,
+        ast.ReferenceType.Variable,
+      );
     });
     let i = 0;
     // Use MANY to prevent grammar ambiguity
@@ -8227,7 +8203,11 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.ID, (token) => {
       this.tokenPayload(token, element, CstNodeKind.LabelReference_LabelRef);
-      element.label = ast.createReference(element, token);
+      element.label = ast.createReference(
+        element,
+        token,
+        ast.ReferenceType.Variable,
+      );
     });
 
     return this.pop<ast.LabelReference>();
@@ -8310,6 +8290,11 @@ export class PliParser extends AbstractParser {
 
     return this.pop<ast.NumberLiteral>();
   });
+
+  // TODO: Figure out whether we really need fully qualified names.
+  // This documentation snippet seems to indicate that they are required for ordinals:
+  // https://www.ibm.com/docs/en/epfz/6.2.0?topic=ordinals-define-ordinal-statement
+  // But there are no examples or mentions what to do in case a FQN is used.
   private createFQN(): ast.FQN {
     return "";
   }

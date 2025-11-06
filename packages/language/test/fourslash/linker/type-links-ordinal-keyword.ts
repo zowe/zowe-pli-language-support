@@ -11,8 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
-//// %REPLACE <|1:HELLO|> WITH "HELLO WORLD";
-//// PUT(<|1>HELLO);
+// @wrap: main
+//// DEFINE ORDINAL <|t:HELLO|>(A, B, C);
+//// DCL MY_ORDINAL ORDINAL <|t>HELLO;
 
-verify.noDiagnostics();
 linker.expectLinks();

@@ -11,8 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
-//// %REPLACE <|1:HELLO|> WITH "HELLO WORLD";
-//// PUT(<|1>HELLO);
+// @wrap: main
+//// DEFINE STRUCTURE 1 <|t:A|>, 2 B FIXED(31);
+//// DCL MY_HANDLE HANDLE <|t>A;
 
-verify.noDiagnostics();
 linker.expectLinks();

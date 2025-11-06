@@ -705,8 +705,6 @@ export function forEachNode(
     case SyntaxKind.Options:
       node.items.forEach(action);
       break;
-    case SyntaxKind.OrdinalTypeAttribute:
-      break;
     case SyntaxKind.OrdinalValue:
       if (node.value) {
         action(node.value);
