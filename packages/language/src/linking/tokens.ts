@@ -27,6 +27,10 @@ export function isNameToken(kind: CstNodeKind | undefined): boolean {
     case CstNodeKind.DeclaredVariable_Name:
     case CstNodeKind.LabelPrefix_Name:
     case CstNodeKind.OrdinalValue_Name:
+    case CstNodeKind.ReplaceStatement_Id:
+    case CstNodeKind.DefineOrdinalStatement_Name:
+    case CstNodeKind.DefineAliasStatement_Name:
+    case CstNodeKind.StructureItem_Name:
       return true;
   }
   return false;
@@ -38,16 +42,15 @@ export function isNameToken(kind: CstNodeKind | undefined): boolean {
 export function getNameToken(node: SyntaxNode): Token | undefined {
   switch (node.kind) {
     case SyntaxKind.ProcedureParameter:
-      return node.ref?.token ?? undefined;
-    case SyntaxKind.DeclaredVariable:
-      return node.nameToken ?? undefined;
-    case SyntaxKind.LabelPrefix:
-      return node.nameToken ?? undefined;
-    case SyntaxKind.OrdinalValue:
-      return node.nameToken ?? undefined;
     case SyntaxKind.ReferenceItem:
       return node.ref?.token ?? undefined;
+    case SyntaxKind.DeclaredVariable:
+    case SyntaxKind.LabelPrefix:
+    case SyntaxKind.OrdinalValue:
     case SyntaxKind.ReplaceStatement:
+    case SyntaxKind.DefineOrdinalStatement:
+    case SyntaxKind.DefineAliasStatement:
+    case SyntaxKind.StructureItem:
       return node.nameToken ?? undefined;
   }
   return undefined;
@@ -57,8 +60,6 @@ export function isReferenceToken(kind: CstNodeKind | undefined): boolean {
   switch (kind) {
     case CstNodeKind.TypeAttribute_TypeId0:
     case CstNodeKind.TypeAttribute_TypeId1:
-    case CstNodeKind.OrdinalTypeAttribute_TypeId0:
-    case CstNodeKind.OrdinalTypeAttribute_TypeId1:
     case CstNodeKind.HandleAttribute_TypeId0:
     case CstNodeKind.HandleAttribute_TypeId1:
     case CstNodeKind.ProcedureCall_ProcedureRef:
@@ -92,8 +93,6 @@ export function getReference(node: SyntaxNode): Reference | undefined {
       return node.type ?? undefined;
     case SyntaxKind.LabelReference:
       return node.label ?? undefined;
-    case SyntaxKind.OrdinalTypeAttribute:
-      return node.type ?? undefined;
     case SyntaxKind.ProcedureCall:
       return node.procedure ?? undefined;
     case SyntaxKind.ReferenceItem:

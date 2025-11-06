@@ -9,16 +9,10 @@
  *
  */
 
-import { CompilationUnit } from "../workspace/compilation-unit";
+/// <reference path="../framework.ts" />
 
-export function getSymbolName(unit: CompilationUnit, name: string) {
-  const cse = unit.compilerOptions.case ?? "UPPER";
+// @wrap: main
+//// DEFINE ALIAS <|t:HELLO|> BIN FIXED(31);
+//// DCL ALIASED_VAR TYPE <|t>HELLO;
 
-  switch (cse) {
-    case "UPPER":
-      return name.toUpperCase();
-    case "ASIS":
-    default:
-      return name;
-  }
-}
+linker.expectLinks();

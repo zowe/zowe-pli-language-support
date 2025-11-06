@@ -103,7 +103,6 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.SyntaxKind.IndForAttribute:
       case ast.SyntaxKind.InitialAttribute:
       case ast.SyntaxKind.LikeAttribute:
-      case ast.SyntaxKind.OrdinalTypeAttribute:
         break;
       case ast.SyntaxKind.PictureAttribute:
         /**
@@ -121,12 +120,14 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         break;
       case ast.SyntaxKind.TypeAttribute:
         //TODO handle type attribute
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.Unknown,
-          attribute,
-          attribute.type!.token,
-        );
+        if (attribute.type) {
+          this.addAttributeWitness(
+            AttributeKind.DataType,
+            DataType.Unknown,
+            attribute,
+            attribute.type.token,
+          );
+        }
         break;
       case ast.SyntaxKind.ValueAttribute:
       case ast.SyntaxKind.ValueListAttribute:

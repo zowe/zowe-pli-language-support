@@ -12,6 +12,9 @@
 import { Diagnostic } from "../language-server/types";
 import {
   DeclareStatement,
+  DefineAliasStatement,
+  DefineOrdinalStatement,
+  DefineStructureStatement,
   Package,
   ProcedureParameter,
   ProcedureStatement,
@@ -33,7 +36,6 @@ import {
 import { MultiMap } from "../utils/collections";
 import { Scope, ScopeCache } from "./scope";
 import { Token } from "../parser/tokens";
-import { getSymbolName } from "./util";
 import { LinkerErrorReporter } from "./error";
 
 function nonNull<T>(value: T | null | undefined): value is T {
@@ -49,13 +51,8 @@ function nonNull<T>(value: T | null | undefined): value is T {
 
 export class SymbolTable {
   symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
+  typeSymbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
   nodeLookup: Map<SyntaxNode, QualifiedSyntaxNode> = new Map();
-
-  constructor(private readonly unit: CompilationUnit) {}
-
-  private getSymbolName(name: string) {
-    return getSymbolName(this.unit, name);
-  }
 
   addImplicitDeclaration(
     text: string,
@@ -65,7 +62,7 @@ export class SymbolTable {
   ) {
     this.addSymbolDeclaration(
       text,
-      QualifiedSyntaxNode.createImplicit(this.unit, token, node),
+      QualifiedSyntaxNode.createImplicit(token, node),
     );
   }
 
@@ -80,11 +77,7 @@ export class SymbolTable {
     declaration: DeclareStatement,
     reporter: LinkerErrorReporter,
   ): void {
-    const parsedEntries = DeclaredItemParser.parse(
-      this.unit,
-      declaration.items,
-      reporter,
-    );
+    const parsedEntries = DeclaredItemParser.parse(declaration.items, reporter);
     for (const [name, node] of parsedEntries.entries()) {
       this.addSymbolDeclaration(name, node);
     }
@@ -102,11 +95,7 @@ export class SymbolTable {
   addProcedureParameter(reference: Reference<ProcedureParameter>) {
     this.addSymbolDeclaration(
       reference.text,
-      QualifiedSyntaxNode.createExplicit(
-        this.unit,
-        reference.token,
-        reference.owner,
-      ),
+      QualifiedSyntaxNode.createExplicit(reference.token, reference.owner),
     );
   }
 
@@ -122,18 +111,72 @@ export class SymbolTable {
 
     this.addSymbolDeclaration(
       name,
-      QualifiedSyntaxNode.createExplicit(this.unit, nameToken, node),
+      QualifiedSyntaxNode.createExplicit(nameToken, node),
     );
   }
 
-  addSymbolDeclaration(name: string, node: QualifiedSyntaxNode): void {
-    this.symbols.add(this.getSymbolName(name), node);
+  addStructureDefinition(
+    node: DefineStructureStatement,
+    reporter: LinkerErrorReporter,
+  ) {
+    const firstItem = node.items[0];
+    if (!firstItem || !firstItem.name || !firstItem.nameToken) {
+      return;
+    }
+    this.addTypeDeclaration(
+      firstItem.name,
+      QualifiedSyntaxNode.createExplicit(firstItem.nameToken, firstItem),
+    );
+  }
+
+  addAliasDefinition(
+    node: DefineAliasStatement,
+    reporter: LinkerErrorReporter,
+  ) {
+    if (!node.name || !node.nameToken) {
+      return;
+    }
+    this.addTypeDeclaration(
+      node.name,
+      QualifiedSyntaxNode.createExplicit(node.nameToken, node),
+    );
+  }
+
+  addOrdinalDefinition(
+    node: DefineOrdinalStatement,
+    reporter: LinkerErrorReporter,
+  ) {
+    const { name, nameToken } = node;
+    if (name && nameToken) {
+      this.addTypeDeclaration(
+        name,
+        QualifiedSyntaxNode.createExplicit(nameToken, node),
+      );
+    }
+    if (node.ordinalValues) {
+      for (const ordinalValue of node.ordinalValues.members) {
+        const { name: ovName, nameToken: ovNameToken } = ordinalValue;
+        if (ovName && ovNameToken) {
+          this.addSymbolDeclaration(
+            ovName,
+            QualifiedSyntaxNode.createExplicit(ovNameToken, ordinalValue),
+          );
+        }
+      }
+    }
+  }
+
+  addTypeDeclaration(name: string, node: QualifiedSyntaxNode): void {
+    this.typeSymbols.add(name, node);
     this.nodeLookup.set(node.node, node);
   }
 
-  allDistinctSymbols(rawQualifiedName: string[]): QualifiedSyntaxNode[] {
-    const qualifiedName = rawQualifiedName.map(this.getSymbolName.bind(this));
+  addSymbolDeclaration(name: string, node: QualifiedSyntaxNode): void {
+    this.symbols.add(name, node);
+    this.nodeLookup.set(node.node, node);
+  }
 
+  allDistinctSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
     const map = new Map<string, QualifiedSyntaxNode[]>();
     for (const [name, symbols] of this.symbols.entriesGroupedByKey()) {
       if (qualifiedName.length > 0) {
@@ -172,15 +215,24 @@ export class SymbolTable {
     return uniqueSymbols.flat();
   }
 
-  getExplicitSymbols(
-    rawQualifiedName: readonly string[],
+  getTypeSymbols(
+    qualifiedName: readonly string[],
   ): readonly QualifiedSyntaxNode[] | undefined {
-    const qualifiedName = rawQualifiedName.map(this.getSymbolName.bind(this));
     const [name] = qualifiedName;
     if (!name) {
       return undefined;
     }
+    const symbols = this.typeSymbols.get(name);
+    return getQualifiedSymbols(qualifiedName, symbols);
+  }
 
+  getExplicitSymbols(
+    qualifiedName: readonly string[],
+  ): readonly QualifiedSyntaxNode[] | undefined {
+    const [name] = qualifiedName;
+    if (!name) {
+      return undefined;
+    }
     const symbols = this.symbols
       .get(name)
       .filter((symbol) => !symbol.isImplicit);
@@ -189,9 +241,8 @@ export class SymbolTable {
   }
 
   getImplicitSymbols(
-    rawQualifiedName: readonly string[],
+    qualifiedName: readonly string[],
   ): readonly QualifiedSyntaxNode[] | undefined {
-    const qualifiedName = rawQualifiedName.map(this.getSymbolName.bind(this));
     const [name] = qualifiedName;
     if (!name) {
       return undefined;
@@ -373,9 +424,21 @@ const iterateSymbolTable = (
       handleProcedureStatement(node, parentScope, context);
       // Early return to avoid below `forEachNode`.
       return;
+    // E.g. `DEFINE STRUCTURE 1 A, 2 B, 3 C;`
+    case SyntaxKind.DefineStructureStatement:
+      parentScope.symbolTable.addStructureDefinition(node, context.reporter);
+      break;
+    // E.g. `DEFINE ALIAS Name char(32) varying;`
+    // `DCL MyName TYPE Name;`
+    case SyntaxKind.DefineAliasStatement:
+      parentScope.symbolTable.addAliasDefinition(node, context.reporter);
+      break;
+    // E.g. `DEFINE ORDINAL SUBJECTS(MATH, LITERATURE, SCIENCE);`
+    case SyntaxKind.DefineOrdinalStatement:
+      parentScope.symbolTable.addOrdinalDefinition(node, context.reporter);
+      break;
     // E.g. `MY_PROC: PROCEDURE;`
     case SyntaxKind.LabelPrefix:
-    case SyntaxKind.OrdinalValue:
       parentScope.symbolTable.addLabelStatement(
         node,
         node.name,
