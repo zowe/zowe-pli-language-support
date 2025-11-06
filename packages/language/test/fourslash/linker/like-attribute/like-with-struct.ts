@@ -9,10 +9,16 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// DEFINE ORDINAL <|t:HELLO|>(A, B, C);
-//// DCL MY_ORDINAL ORDINAL <|t>HELLO;
+//// DEFINE STRUCT 1 A, 2 <|B|>, 3 <|C|> FIXED(31);
+//// DCL X TYPE A;
+//// DCL Y LIKE X;
+//// PUT(X.<|B>B);
+//// PUT(X.<|C>C);
+//// PUT(Y.<|B>B);
+//// PUT(Y.<|C>C);
+//// PUT(Y.<|B>B.<|C>C);
 
 linker.expectLinks();

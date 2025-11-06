@@ -9,10 +9,12 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// DEFINE STRUCTURE 1 <|t:A|>, 2 B FIXED(31);
-//// DCL MY_HANDLE HANDLE <|t>A;
+//// DCL 1 <|A|>, 2 (<|B|>, <|C|>) FIXED(31);
+//// DCL X LIKE <|A>A;
+//// PUT(X.<|B>B);
+//// PUT(X.<|C>C);
 
 linker.expectLinks();

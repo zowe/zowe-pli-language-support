@@ -9,12 +9,10 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// DCL 1 <|A|>, 2 (<|B|>, <|C|>) FIXED(31);
-//// DCL X LIKE <|A>A;
-//// PUT(X.<|B>B);
-//// PUT(X.<|C>C);
+//// DEFINE ALIAS <|t:HELLO|> BIN FIXED(31);
+//// DCL ALIASED_VAR TYPE <|t>HELLO;
 
 linker.expectLinks();

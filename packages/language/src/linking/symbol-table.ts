@@ -37,6 +37,7 @@ import { Scope, ScopeCache } from "./scope";
 import { Token } from "../parser/tokens";
 import { LinkerErrorReporter } from "./error";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
+import { getFirstStructureVariable } from "./util";
 
 function nonNull<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
@@ -120,7 +121,7 @@ export class SymbolTable {
     node: DefineStructureStatement,
     reporter: LinkerErrorReporter,
   ) {
-    const firstItem = node.items[0];
+    const firstItem = getFirstStructureVariable(node);
     if (!firstItem || !firstItem.name || !firstItem.nameToken) {
       return;
     }
@@ -354,14 +355,14 @@ export function reiterateSymbols(
     }
     // Second iteration over the node to handle newly added symbols.
     // The node should already be present in the scope cache.
-    // Duplicate symbols will be filtered out by the symbol table by using the existingNodes set.
+    // Duplicate symbols will be filtered out by the symbol table.
     handleNode(node, scope, context);
   }
 }
 
 /**
  * Iterate over the PLI program creating the symbol table.
- * @param unit - The compilation unit to iterate over.
+ * @param unit The compilation unit to iterate over.
  * @returns The diagnostics of the validation.
  */
 export function iterateSymbols(unit: CompilationUnit): void {

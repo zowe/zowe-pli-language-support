@@ -12,6 +12,7 @@
 import { Location, tokenToRange } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import {
+  getContainer,
   MemberCall,
   ProcedureParameter,
   Reference,
@@ -384,17 +385,9 @@ export function resolveReferences(unit: CompilationUnit): void {
 
 function getNodeToReprocess(reference: Reference): SyntaxNode | undefined {
   const priorityElement = getPriorityReferenceElement(reference);
-  if (priorityElement === null) {
-    return undefined;
-  }
-  let current: SyntaxNode | null = priorityElement;
-  while (current) {
-    if (current.kind === SyntaxKind.DeclareStatement) {
-      return current;
-    }
-    current = current.container;
-  }
-  return undefined;
+  return (
+    getContainer(priorityElement, SyntaxKind.DeclareStatement) ?? undefined
+  );
 }
 
 export function findTokenElementReference(

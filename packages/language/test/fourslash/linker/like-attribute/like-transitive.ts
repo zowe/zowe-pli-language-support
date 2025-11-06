@@ -9,7 +9,7 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 // @wrap: main
 //// DCL 1 <|A|>, 2 <|B|>, 3 <|C|> FIXED(31);

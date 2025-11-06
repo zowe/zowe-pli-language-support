@@ -9,13 +9,10 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// DCL <|X|> LIKE <|Y>Y;
-//// DCL <|Y|> LIKE <|X>X;
+//// DEFINE STRUCTURE 1 <|t:A|>, 2 B FIXED(31);
+//// DCL MY_STRUCT TYPE <|t>A;
 
-// 1. Expect that the links work
-// 2. This implicitly acts as test that the linker can handle cyclic references
-//    and not get stuck in an infinite loop
 linker.expectLinks();

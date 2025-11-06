@@ -13,6 +13,8 @@ import {
   DeclarationAttribute,
   DeclaredItem,
   DeclaredVariable,
+  DefineStructureStatement,
+  getContainer,
   SyntaxKind,
   TypeExtendingAttribute,
 } from "../syntax-tree/ast";
@@ -46,19 +48,40 @@ export function getExtendingDeclaredItems(
   if (attr.kind === SyntaxKind.LikeAttribute) {
     const ref = attr.reference?.element?.element?.ref?.node;
     if (ref && ref.kind === SyntaxKind.DeclaredVariable) {
-      let container = ref.container;
-      while (container) {
-        if (container.kind === SyntaxKind.DeclaredItem) {
-          container = container.container;
-        } else if (container.kind === SyntaxKind.DeclareStatement) {
-          return {
-            target: ref,
-            extendingItems: container.items,
-          };
-        } else {
-          break;
-        }
+      const declareStatement = getContainer(ref, SyntaxKind.DeclareStatement);
+      if (declareStatement) {
+        return {
+          target: ref,
+          extendingItems: declareStatement.items,
+        };
       }
+    }
+  } else if (attr.kind === SyntaxKind.TypeAttribute) {
+    const ref = attr.type?.node;
+    if (ref && ref.kind === SyntaxKind.DeclaredVariable) {
+      const defineStructureStatement = getContainer(
+        ref,
+        SyntaxKind.DefineStructureStatement,
+      );
+      if (defineStructureStatement) {
+        return {
+          target: ref,
+          extendingItems: defineStructureStatement.items,
+        };
+      }
+    }
+  }
+  return undefined;
+}
+
+export function getFirstStructureVariable(
+  statement: DefineStructureStatement,
+): DeclaredVariable | undefined {
+  let firstItem = statement.items[0];
+  if (firstItem?.kind === SyntaxKind.DeclaredItem) {
+    const firstChild = firstItem.elements[0];
+    if (firstChild?.kind === SyntaxKind.DeclaredVariable) {
+      return firstChild;
     }
   }
   return undefined;

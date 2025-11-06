@@ -9,13 +9,17 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
+
+/*
+ * We declare an alias type and a variable with the same name to test that
+ * the links do not get in conflict.
+ */
 
 // @wrap: main
-//// DCL 1 <|A|>, 2 <|B|>, 3 <|C|> FIXED(31);
-//// DCL X LIKE <|A>A;
-//// PUT(X.<|B>B);
-//// PUT(X.<|C>C);
-//// PUT(X.<|B>B.<|C>C);
+//// DEFINE ALIAS <|t:HELLO|> BIN FIXED(31);
+//// DCL <|var:HELLO|> FIXED(31);
+//// DCL ALIASED_VAR TYPE <|t>HELLO;
+//// ALIASED_VAR = <|var>HELLO;
 
 linker.expectLinks();

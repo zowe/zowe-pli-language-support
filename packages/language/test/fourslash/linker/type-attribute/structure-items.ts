@@ -9,10 +9,11 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// DEFINE STRUCTURE 1 <|t:A|>, 2 B FIXED(31);
-//// DCL MY_STRUCT TYPE <|t>A;
+//// DEFINE STRUCTURE 1 A, 2 <|b:B|> FIXED(31);
+//// DCL MY_STRUCT TYPE A;
+//// MY_STRUCT.<|b>B = 10;
 
 linker.expectLinks();
