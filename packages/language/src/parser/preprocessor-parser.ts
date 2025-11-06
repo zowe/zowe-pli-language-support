@@ -283,7 +283,11 @@ function callStatement(state: ParserState): ast.CallStatement {
   );
   statement.call = ast.createProcedureCall();
   if (nameToken) {
-    statement.call.procedure = ast.createReference(statement, nameToken);
+    statement.call.procedure = ast.createReference(
+      statement,
+      nameToken,
+      ast.ReferenceType.Variable,
+    );
   }
   state.consume(
     statement,
@@ -333,7 +337,11 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
           t.ID,
         );
         if (nameToken) {
-          parameter.ref = ast.createReference(parameter, nameToken);
+          parameter.ref = ast.createReference(
+            parameter,
+            nameToken,
+            ast.ReferenceType.Variable,
+          );
           statement.parameters.push(parameter);
         }
       } while (
@@ -576,7 +584,11 @@ function labelReference(state: ParserState): ast.LabelReference {
     CstNodeKind.LabelReference_LabelRef,
     t.ID,
   );
-  reference.label = ast.createReference(reference, label, true);
+  reference.label = ast.createReference(
+    reference,
+    label,
+    ast.ReferenceType.Variable,
+  );
   return reference;
 }
 
@@ -693,7 +705,11 @@ function endStatement(
       CstNodeKind.LabelReference_LabelRef,
       t.ID,
     );
-    label.label = ast.createReference(label, labelToken, true);
+    label.label = ast.createReference(
+      label,
+      labelToken,
+      ast.ReferenceType.Variable,
+    );
   }
   state.consume(statement, CstNodeKind.EndStatement_Semicolon, t.Semicolon);
   return statement;
@@ -1057,7 +1073,11 @@ function parseReferenceItem(
     CstNodeKind.ReferenceItem_Ref,
     t.ID,
   );
-  reference.ref = ast.createReference(reference, variable, true);
+  reference.ref = ast.createReference(
+    reference,
+    variable,
+    ast.ReferenceType.Variable,
+  );
   if (withDimensions && state.canConsume(t.OpenParen)) {
     reference.dimensions = dimensions(state);
   }

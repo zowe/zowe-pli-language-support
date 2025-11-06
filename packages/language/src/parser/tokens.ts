@@ -174,6 +174,7 @@ export const LocateType = registerCombination("LocateType");
 export const OpenOptionType = registerCombination("OpenOptionType");
 export const VX = registerCombination("VX");
 export const CharOrBinary = registerCombination("CharOrBinary");
+export const TypeOrOrdinal = registerCombination("TypeOrOrdinal");
 export const LOB = registerCombination("LOB");
 export const LOBLocator = registerCombination("LOBLocator");
 export const LOBFile = registerCombination("LOBFile");
@@ -715,6 +716,7 @@ export const VARYING = registerKeyword({
 });
 export const ORDINAL = registerKeyword({
   name: "ORDINAL",
+  categories: [TypeOrOrdinal],
 });
 export const DISPLAY = registerKeyword({
   name: "DISPLAY",
@@ -1212,6 +1214,7 @@ export const DATE = registerKeyword({
 });
 export const TYPE = registerKeyword({
   name: "TYPE",
+  categories: [TypeOrOrdinal],
 });
 export const LIKE = registerKeyword({
   name: "LIKE",

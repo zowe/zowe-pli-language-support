@@ -11,8 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
-//// %REPLACE <|1:HELLO|> WITH "HELLO WORLD";
-//// PUT(<|1>HELLO);
+// @wrap: main
+//// DEFINE ALIAS <|type:HELLO|> FIXED(31);
+//// DCL ALIASED TYPE <|type:HELLO|>;
 
-verify.noDiagnostics();
-linker.expectLinks();
+semanticTokens.expectAt("type");

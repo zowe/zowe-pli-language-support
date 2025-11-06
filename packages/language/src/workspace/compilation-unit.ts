@@ -121,9 +121,9 @@ const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
 
 function createBuiltinScopeGetter(builtinDocument: TextDocument) {
   let builtinFileScope: Scope | undefined;
-  return async (uri: URI, unit: CompilationUnit): Promise<Scope> => {
+  return async (uri: URI): Promise<Scope> => {
     if (isBuiltinFile(uri)) {
-      return Scope.createRoot(unit);
+      return Scope.createRoot();
     }
     if (!builtinFileScope) {
       const fileUri = URI.parse(builtinDocument.uri);
@@ -134,7 +134,7 @@ function createBuiltinScopeGetter(builtinDocument: TextDocument) {
 
       builtinFileScope =
         builtinUnit.scopeCaches.regular.get(builtinUnit.ast) ??
-        Scope.createRoot(builtinUnit);
+        Scope.createRoot();
     }
     return builtinFileScope;
   };
@@ -193,8 +193,8 @@ export async function createCompilationUnit(
       .onRevalidate("skippedCodeRanges", ({ connection, unit }) => {
         skippedCode(connection, unit);
       }),
-    rootScope: undefined!, // Assigned later
-    rootPreprocessorScope: undefined!, // Assigned later
+    rootScope: await getBuiltinScope(uri),
+    rootPreprocessorScope: await getRootPreprocessorScope(uri),
     get programConfig() {
       return PluginConfigurationProviderInstance.getProgramConfig(uri);
     },
@@ -207,9 +207,6 @@ export async function createCompilationUnit(
       return undefined;
     },
   };
-
-  unit.rootScope = await getBuiltinScope(uri, unit);
-  unit.rootPreprocessorScope = await getRootPreprocessorScope(uri, unit);
 
   return unit;
 }
