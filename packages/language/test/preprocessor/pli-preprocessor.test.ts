@@ -126,7 +126,7 @@ describe("Preprocessor Tests", () => {
     },
   );
 
-  // tets win absolute path resolution w/ a drive letter
+  // tests win absolute path resolution w/ a drive letter
   test.runIf(process.platform === "win32")(
     "Windows path resolution",
     async () => {
@@ -139,7 +139,7 @@ describe("Preprocessor Tests", () => {
       );
 
       // lib path should now exist, re-init to check for no diagnostics
-      const diagnostics = await init("/test/libs");
+      const diagnostics = await init("c:/test/libs");
       expect(diagnostics).toHaveLength(0);
     },
   );
