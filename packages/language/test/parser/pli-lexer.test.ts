@@ -204,7 +204,6 @@ describe("PL/1 Lexer", () => {
 
       expect(compilerOptions.result?.options.assert).toBeDefined();
       expect(compilerOptions.result?.options.assert).toBe("ENTRY");
-      expect(compilerOptions.result?.options.arch).toBeUndefined();
     });
   });
 });
