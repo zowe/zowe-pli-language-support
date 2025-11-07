@@ -391,6 +391,8 @@ export enum CstNodeKind {
   IncludeAltDirective_Semicolon,
   IncludeItem_FileString,
   IncludeItem_FileID,
+  IncludeItem_MemberID,
+  IncludeItem_Dot,
   IncludeItem_DDName,
   IncludeItem_OpenParen,
   IncludeItem_CloseParen,

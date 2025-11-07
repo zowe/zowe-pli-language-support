@@ -118,6 +118,7 @@ describe("PL/1 Lexer", () => {
         includeExtensions: [],
         libs: [],
         $computedLibs: [],
+        $computedLibsSet: new Set<string>(),
         lspOptions: { checkMargins: false },
         pliOptions: {},
       };
@@ -126,9 +127,12 @@ describe("PL/1 Lexer", () => {
       PluginConfigurationProviderInstance.setProgramConfigs("/test", [
         programConfig,
       ]);
-      await PluginConfigurationProviderInstance.setProcessGroupConfigs([
-        processGroupConfig,
-      ]);
+      const diagnostics =
+        await PluginConfigurationProviderInstance.setProcessGroupConfigs([
+          processGroupConfig,
+        ]);
+
+      expect(diagnostics).toHaveLength(0);
 
       const { compilerOptions } = await lexer.tokenize(
         await createCompilationUnit(uri),
@@ -184,6 +188,7 @@ describe("PL/1 Lexer", () => {
         includeExtensions: [],
         libs: [],
         $computedLibs: [],
+        $computedLibsSet: new Set<string>(),
         lspOptions: { checkMargins: false },
         pliOptions: {},
       };

@@ -14,7 +14,10 @@ import { Token } from "../parser/tokens";
 import { URI, UriUtils } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
-import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import {
+  isLibsDir,
+  PluginConfigurationProviderInstance,
+} from "../workspace/plugin-configuration-provider";
 import { CompilerOptionResult } from "./compiler-options/options";
 import {
   generateInstructions,
@@ -1961,17 +1964,28 @@ async function runIncludeInstruction(
   context: InterpreterContext,
 ): Promise<void> {
   for (const item of instruction.items) {
-    if (item.fileName) {
-      const filePath = await runInclude(
-        {
-          fileName: item.fileName,
-          idempotent: instruction.idempotent,
-          token: item.token,
-        },
-        context,
-      );
-      setFilePath(item, filePath, context);
+    let includeItem: IncludeItem;
+    if (ast.isIncludeItemFile(item)) {
+      includeItem = {
+        fileName: item.fileName,
+        token: item.token,
+        idempotent: instruction.idempotent,
+      };
+    } else if (ast.isIncludeItemMember(item)) {
+      includeItem = {
+        memberName: item.memberName,
+        ddname: item.ddname,
+        ddnameTokens: item.ddnameTokens,
+        token: item.token,
+        idempotent: instruction.idempotent,
+      };
+    } else {
+      // not a valid include item (neither member nor fileName is present), skip it
+      continue;
     }
+
+    const filePath = await runInclude(includeItem, context);
+    setFilePath(item, filePath, context);
   }
 }
 
@@ -2009,10 +2023,48 @@ function setFilePath(
   }
 }
 
-interface IncludeItem {
+/**
+ * Represents an include item to be processed
+ * Either by fileName or member
+ */
+type IncludeItem = FileIncludeItem | MemberIncludeItem;
+
+/**
+ * Literal file include
+ */
+interface FileIncludeItem {
   fileName: string;
   token?: Token | null;
   idempotent: boolean;
+}
+
+/**
+ * Include by member item, possibly with a ddname to further clarify
+ */
+interface MemberIncludeItem {
+  memberName: string;
+  ddname: string | null;
+  ddnameTokens: Token[] | null;
+  token?: Token | null;
+  idempotent: boolean;
+}
+
+function isFileIncludeItem(obj: any): obj is FileIncludeItem {
+  return (
+    obj &&
+    typeof obj === "object" &&
+    "fileName" in obj &&
+    typeof obj.fileName === "string"
+  );
+}
+
+function isMemberIncludeItem(obj: any): obj is MemberIncludeItem {
+  return (
+    obj &&
+    typeof obj === "object" &&
+    "memberName" in obj &&
+    typeof obj.memberName === "string"
+  );
 }
 
 async function runInclude(
@@ -2028,13 +2080,23 @@ async function runInclude(
     const diagnostic = diagnosticFromCode(
       PLICodes.Severe.IBM3841I,
       item.token,
-      item.fileName,
+      getFileNameOrPartialName(item)!,
     );
-    if (item.fileName)
+
+    // check to set optional diagnostic data iff we have a valid fileName/memberName to work with
+    if (isFileIncludeItem(item)) {
+      // item w/ valid fileName
       diagnostic.data = {
         unresolvedFile: item.fileName,
         entryUri: context.entryUri.toString(),
       };
+    } else if (isMemberIncludeItem(item)) {
+      // item w/ memberName & optional ddname
+      diagnostic.data = {
+        unresolvedFile: getFileNameOrPartialName(item)!,
+        entryUri: context.entryUri.toString(),
+      };
+    }
     context.diagnostics.push(diagnostic);
   }
 
@@ -2106,6 +2168,29 @@ async function runInclude(
 }
 
 /**
+ * Returns the appropriate file name or partial name for an include item.
+ * Partial names refer to member includes that do not have an explicit ddname specified, but can still be resolved
+ * in the context of a known process group lib that may contain the member.
+ * Before checking we can't state whether a standalone member returned here is partial or not, as that depends on the libs.
+ * @returns Relevant fileName or member w/ or w/out a ddname, otherwise undefined when none are found
+ */
+function getFileNameOrPartialName(item: IncludeItem): string | undefined {
+  if (isMemberIncludeItem(item) && item.ddname) {
+    // fully resolvable member w/ ddname
+    return `${item.ddname}(${item.memberName})`;
+  } else if (isMemberIncludeItem(item)) {
+    // standalone member w/out a ddname, may be partial depending on libs
+    return item.memberName;
+  } else if (item.fileName) {
+    // literal file include
+    return item.fileName;
+  } else {
+    // no fileName or memberName to work with
+    return undefined;
+  }
+}
+
+/**
  * Attempts to resolve the URI of an include file factoring in process group libs, relative & absolute paths
  *
  * @param item Include item to resolve a URI for
@@ -2116,7 +2201,7 @@ async function resolveIncludeFileUri(
   item: IncludeItem,
   context: InterpreterContext,
 ): Promise<URI | undefined> {
-  if (!context.entryUri || !item.fileName) {
+  if (!context.entryUri || (!isFileIncludeItem(item) && !item.memberName)) {
     return undefined;
   }
   const pgroup =
@@ -2141,31 +2226,96 @@ async function resolveIncludeFileUri(
 
   if (pgroup) {
     // lib file as either a string or a member from a known process group
-    const absPathRegex = /^(?:\/|\\|[A-Z]:)/i;
     const computedLibs = pgroup.$computedLibs;
-    for (const lib of computedLibs) {
-      let libFileUri: URI;
-      if (!absPathRegex.test(lib)) {
+
+    // construct the appropriate file name or partial name for members
+    const fileNameOrPartial = getFileNameOrPartialName(item);
+    if (!fileNameOrPartial) {
+      // no fileName or memberName to work with, abandon resolution
+      return undefined;
+    }
+
+    // whether the include item is a standalone member, no ddname specified
+    // in such cases this member may be the suffix of an a ddname entry in the libs, (ex. `A.B.C(member)`)
+    // corresponding to mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`
+    const isMemberWithoutDDName = isMemberIncludeItem(item) && !item.ddname;
+
+    /**
+     * Computes the URI for a lib file based on whether the path is absolute or relative
+     * Relative paths are combined w/ the workspace path
+     * @path Lib path from the process group
+     * @fileName Optional file name to append to the lib path (generally the include file name)
+     */
+    function resolveLibFileUri(path: string, fileName?: string): URI {
+      const absPathRegex = /^(?:\/|\\|[A-Z]:)/i;
+      if (!absPathRegex.test(path)) {
         // relative lib path, combine w/ workspace
-        libFileUri = UriUtils.joinPath(
+        return UriUtils.joinPath(
           URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
-          lib,
-          item.fileName,
+          path,
+          fileName ?? "",
         );
       } else {
         // use lib path over workspace
-        const libUri = URI.file(lib).with({
+        const libUri = URI.file(path).with({
           scheme: context.entryUri.scheme,
         });
-        libFileUri = UriUtils.joinPath(libUri, item.fileName);
+        return UriUtils.joinPath(libUri, fileName ?? "");
       }
+    }
 
-      const match = await FileSystemProviderInstance.search({
-        path: libFileUri,
-        extensions: pgroup.includeExtensions,
-      });
-      if (match) {
-        return match;
+    for (const lib of computedLibs) {
+      if (isLibsDir(lib)) {
+        const libFileUri = resolveLibFileUri(lib.dir, fileNameOrPartial);
+
+        if (isMemberWithoutDDName) {
+          // attempt to first resolve for any DDName that introduces this member
+          // This is done to ensure resolution order of libs is maintained as members > files
+          // Ex. If we have both `cpy/member.pli` and `cpy/A.B.C(member)`, with `cpy` in the libs list
+          // We want to ensure that `A.B.C(member)` is resolved first before falling back to `member.pli`
+          const memberMatch = await FileSystemProviderInstance.search({
+            dirPath: resolveLibFileUri(lib.dir),
+            member: fileNameOrPartial,
+          });
+          if (memberMatch) {
+            return memberMatch;
+          }
+        }
+
+        // perform standard search
+        const match = await FileSystemProviderInstance.search({
+          path: libFileUri,
+          extensions: pgroup.includeExtensions,
+        });
+        if (match) {
+          return match;
+        }
+      } else if (isMemberWithoutDDName) {
+        // standalone member w/out an explicit ddname, search within ddlib for a match
+        const ddLibUri = resolveLibFileUri(lib.ddLib);
+        const ddMemberMatch = await FileSystemProviderInstance.search({
+          path: URI.parse(ddLibUri.toString(true) + `(${fileNameOrPartial})`),
+          extensions: [],
+        });
+        if (ddMemberMatch) {
+          return ddMemberMatch;
+        }
+      } else if (
+        isMemberIncludeItem(item) &&
+        item.ddname &&
+        lib.ddLib.toLowerCase().endsWith(item.ddname.toLowerCase())
+      ) {
+        // member w/ ddname, search for an exact match using ddlib
+        const end = lib.ddLib.length - item.ddname.length;
+        const libPath = lib.ddLib.substring(0, end);
+        const ddLibUri = resolveLibFileUri(libPath, fileNameOrPartial);
+        const ddMemberMatch = await FileSystemProviderInstance.search({
+          path: ddLibUri,
+          extensions: [],
+        });
+        if (ddMemberMatch) {
+          return ddMemberMatch;
+        }
       }
     }
   }
