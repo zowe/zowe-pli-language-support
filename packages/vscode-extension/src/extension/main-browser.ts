@@ -15,7 +15,7 @@ import { LanguageClient } from "vscode-languageclient/browser.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Messages } from "../common/messages";
 import { searchFiles } from "../common/file-search";
-import { SearchOptions } from "pli-language";
+import { isPathSearch, SearchOptions } from "pli-language";
 
 let client: LanguageClient;
 
@@ -74,11 +74,24 @@ function registerFileSystemProvider(client: LanguageClient): void {
     }
   });
   client.onRequest(Messages.Search, (options: SearchOptions) => {
-    return searchFiles(options, async (path) => {
-      const uri = options.path.with({ path });
+    return searchFiles({ ...options, caseSensitive: true }, async (path) => {
+      let uri;
+      if (isPathSearch(options)) {
+        uri = options.path.with({ path });
+      } else {
+        uri = options.dirPath.with({ path });
+      }
       const result = await vscode.workspace.fs.readDirectory(uri);
       return result.map((r) => r[0]);
     });
+  });
+  client.onRequest(Messages.Stat, async (uriString: string) => {
+    const uri = vscode.Uri.parse(uriString);
+    const stat = await vscode.workspace.fs.stat(uri);
+    return {
+      isFile: stat.type === vscode.FileType.File,
+      isDirectory: stat.type === vscode.FileType.Directory,
+    };
   });
   client.onRequest(Messages.WriteFile, async (uriString, value) => {
     const uri = vscode.Uri.parse(uriString);

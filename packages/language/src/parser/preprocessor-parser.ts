@@ -603,17 +603,90 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
   directive.idempotent = isXInstruction(includeToken);
   let parseError = false;
   while (true) {
-    const item = ast.createIncludeItem();
-    const idToken = state.tryConsume(
-      item,
-      CstNodeKind.IncludeItem_FileID,
-      t.ID,
-    );
-    if (idToken) {
-      const fileName = idToken.image;
-      item.fileName = fileName;
-      item.token = idToken;
+    let item: ast.IncludeItemFile | ast.IncludeItemMember | undefined =
+      undefined;
+    // collect all ID tokens that can contribute to a ddname
+    const idTokens: t.Token[] = [];
+    let nextIdToken: t.Token | null = null;
+    while (
+      (nextIdToken = state.tryConsume(
+        item,
+        CstNodeKind.IncludeItem_FileID,
+        t.ID,
+      ))
+    ) {
+      idTokens.push(nextIdToken);
+      if (!state.tryConsume(item, CstNodeKind.IncludeItem_Dot, t.Dot)) {
+        break;
+      }
+    }
+
+    if (idTokens.length > 1) {
+      // ddname which requires a parenthesized member portion
+      item = ast.createIncludeItemMember();
+      for (const idToken of idTokens) {
+        idToken.element = item;
+      }
+
+      state.consume(item, CstNodeKind.IncludeItem_OpenParen, t.OpenParen);
+
+      const memberToken = state.consume(
+        item,
+        CstNodeKind.IncludeItem_MemberID,
+        t.ID,
+      );
+
+      state.consume(item, CstNodeKind.IncludeItem_CloseParen, t.CloseParen);
+      // joint ddname
+      item.ddname = idTokens.map((t) => t.image).join(".");
+      item.ddnameTokens = idTokens; // <-- TODO use these tokens to report chained diagnostics, do I already do this?
+
+      item.memberName = memberToken?.image ?? null;
+      item.token = memberToken;
+    } else if (idTokens.length === 1) {
+      item = ast.createIncludeItemMember();
+      for (const idToken of idTokens) {
+        idToken.element = item;
+      }
+
+      // either ddname w/ member, or raw member
+      const ddnameOrMember = idTokens[0].image;
+
+      // check to see if we have an opening parenthesis for a following member
+      // making this a ddname + member
+      const openParenToken = state.tryConsume(
+        item,
+        CstNodeKind.IncludeItem_OpenParen,
+        t.OpenParen,
+      );
+
+      if (openParenToken) {
+        // ddname(member) case
+        const memberToken = state.consume(
+          item,
+          CstNodeKind.IncludeItem_MemberID,
+          t.ID,
+        );
+
+        state.consume(item, CstNodeKind.IncludeItem_CloseParen, t.CloseParen);
+
+        item.ddname = ddnameOrMember;
+        item.ddnameTokens = idTokens;
+
+        item.memberName = memberToken?.image ?? null;
+        item.token = memberToken;
+      } else {
+        // member include case
+        item.memberName = ddnameOrMember;
+        item.token = nextIdToken;
+      }
     } else {
+      item = ast.createIncludeItemFile();
+      for (const idToken of idTokens) {
+        idToken.element = item;
+      }
+
+      // direct file include, not a member (from string)
       const stringToken = state.tryConsume(
         item,
         CstNodeKind.IncludeItem_FileString,
@@ -622,7 +695,6 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
       if (stringToken) {
         const fileName = unpackCharacterValue(stringToken.image);
         item.fileName = fileName;
-        item.string = true;
         item.token = stringToken;
       } else {
         // At least one include item is required
@@ -659,7 +731,7 @@ export function includeAltStatement(
     CstNodeKind.IncludeAltDirective_INCLUDE_ALT,
     t.INCLUDE_ALT,
   );
-  const item = ast.createIncludeItem();
+  const item = ast.createIncludeItemFile();
   const token = state.consume(item, CstNodeKind.IncludeItem_FileID, t.ID);
   const fileName = token?.image ?? null;
   item.fileName = fileName;

@@ -9,9 +9,10 @@
  *
  */
 
+// Tests including a ddname(member) by its member
+
 /// <reference path="../../framework.ts" />
 
-// trigger a reparsing of the config, so we can pick up the sub libs folder
 // TODO @montymxb Oct 17th, 2025: Replace with a fourslash utility to trigger config reload
 // @filename: .pliplugin/proc_grps.json
 //// {
@@ -28,12 +29,17 @@
 ////     ]
 //// }
 
-// @filename: cpy/libs/lib.pli
-//// DECLARE LIB_VAR FIXED;
+// @filename: cpy/MYLIB(m1)
+//// DECLARE LIB_VAR1 FIXED;
+
+// @filename: cpy/A.B.C(m2)
+//// DECLARE LIB_VAR2 FIXED;
 
 // @filename: main.pli
-//// %INCLUDE "lib.pli";
+//// %INCLUDE m1;
+//// %INCLUDE m2;
 
 preprocessor.expectTokens(`
-  DECLARE LIB_VAR FIXED;
+  DECLARE LIB_VAR1 FIXED;
+  DECLARE LIB_VAR2 FIXED;
 `);

@@ -9,7 +9,13 @@
  *
  */
 
-import { DirEntry, FileSystemProvider, SearchOptions, URI } from "pli-language";
+import {
+  FileSystemProvider,
+  isPathSearch,
+  SearchOptions,
+  Stats,
+  URI,
+} from "pli-language";
 import { Connection } from "vscode-languageserver";
 import { Messages } from "../common/messages";
 
@@ -34,15 +40,15 @@ export class VSCodeFileSystemProvider implements FileSystemProvider {
 
   /**
    * Submits a request to the client to read the contents of a directory.
-   * Returns an array of directory entries
+   * Returns an array of file & directory names as strings
    */
-  async readDir(uri: URI): Promise<DirEntry[]> {
+  async readDir(uri: URI): Promise<string[]> {
     const result = await this._connection.sendRequest(
       Messages.ReadDir,
       uri.toString(),
     );
     if (Array.isArray(result)) {
-      return result as DirEntry[];
+      return result as string[];
     } else {
       return [];
     }
@@ -61,11 +67,25 @@ export class VSCodeFileSystemProvider implements FileSystemProvider {
       options,
     )) as string | undefined;
     if (result) {
-      return options.path.with({ path: result });
+      if (isPathSearch(options)) {
+        return options.path.with({ path: result });
+      } else {
+        // not a path, take result as full URI
+        return URI.parse(result);
+      }
     } else {
       return undefined;
     }
   }
+
+  async stat(uri: URI): Promise<Stats> {
+    const result = await this._connection.sendRequest(
+      Messages.Stat,
+      uri.toString(),
+    );
+    return result as Stats;
+  }
+
   async writeFile(uri: URI, value: string): Promise<void> {
     const stringUri = uri.toString();
     await this._connection.sendRequest(Messages.WriteFile, {

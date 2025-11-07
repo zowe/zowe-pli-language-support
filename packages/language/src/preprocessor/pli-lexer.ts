@@ -135,7 +135,7 @@ function generateIncAfterInstruction(
   }
   // Generate a synthetic include item here
   // This allows us to perform LSP operations to jump to the included file
-  const includeItem = ast.createIncludeItem();
+  const includeItem = ast.createIncludeItemFile();
   includeItem.fileName = incAfter.process;
   includeItem.token = incAfter.token || null;
   if (incAfter.token) {
