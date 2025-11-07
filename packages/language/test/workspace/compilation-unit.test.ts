@@ -144,6 +144,7 @@ describe("Compilation Unit Tests", () => {
         compilerOptions: [],
         libs: ["cpy"],
         $computedLibs: [],
+        $computedLibsSet: new Set<string>(),
         includeExtensions: [".inc"],
         lspOptions: { checkMargins: false },
         pliOptions: {},
