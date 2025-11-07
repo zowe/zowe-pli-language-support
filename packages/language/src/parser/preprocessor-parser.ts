@@ -596,23 +596,15 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
     // collect all ID tokens that can contribute to a ddname
     const idTokens: t.Token[] = [];
     let nextIdToken: t.Token | null = null;
-    while (true) {
-      nextIdToken = state.tryConsume(
+    while (
+      (nextIdToken = state.tryConsume(
         item,
         CstNodeKind.IncludeItem_FileID,
         t.ID,
-      );
-      if (!nextIdToken) {
-        break;
-      }
+      ))
+    ) {
       idTokens.push(nextIdToken);
-
-      const dotToken = state.tryConsume(
-        item,
-        CstNodeKind.IncludeItem_Dot,
-        t.Dot,
-      );
-      if (!dotToken) {
+      if (!state.tryConsume(item, CstNodeKind.IncludeItem_Dot, t.Dot)) {
         break;
       }
     }

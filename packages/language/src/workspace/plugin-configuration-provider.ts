@@ -422,6 +422,8 @@ export class PluginConfigurationProvider {
             const entries = await FileSystemProviderInstance.readDir(libUri);
             if (entries.length) {
               for (const fileName of entries) {
+                // TODO @montymxb Nov. 7th, 2025: Handle stat checks in parallel to avoid blocking so long,
+                // see https://github.com/zowe/zowe-pli-language-support/issues/465
                 const stats = await FileSystemProviderInstance.stat(
                   UriUtils.joinPath(libUri, fileName),
                 );
