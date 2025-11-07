@@ -9,11 +9,16 @@
  *
  */
 
-export namespace Messages {
-  export const ReadDir = "fs/readDir";
-  export const ReadFile = "fs/readFile";
-  export const WriteFile = "fs/writeFile";
-  export const FileExists = "fs/fileExists";
-  export const Search = "fs/search";
-  export const Stat = "fs/stat";
-}
+// Tests including a ddname(member) directly.
+
+/// <reference path="../../framework.ts" />
+
+// @filename: cpy/MYLIB(member)
+//// DECLARE LIB_VAR FIXED;
+
+// @filename: main.pli
+//// %INCLUDE MYLIB(member);
+
+preprocessor.expectTokens(`
+  DECLARE LIB_VAR FIXED;
+`);

@@ -19,8 +19,8 @@ import {
   SearchOptions,
   URI,
   setFileSystemProvider,
-  DirEntry,
-  DirEntryType,
+  isPathSearch,
+  Stats,
 } from "pli-language";
 import * as fs from "fs";
 import * as glob from "glob";
@@ -31,18 +31,10 @@ class NodeFileSystemProvider implements FileSystemProvider {
   }
 
   /**
-   * Reads directory contents, returning an array of directory entries
+   * Reads directory contents, returning an array of file & directory names
    */
-  async readDir(uri: URI): Promise<DirEntry[]> {
-    const results = await fs.promises.readdir(uri.fsPath, {
-      withFileTypes: true,
-    });
-    return results.map((dirent) => {
-      return {
-        name: dirent.name,
-        type: dirent.isDirectory() ? DirEntryType.Directory : DirEntryType.File,
-      };
-    });
+  async readDir(uri: URI): Promise<string[]> {
+    return fs.promises.readdir(uri.fsPath);
   }
 
   async fileExists(uri: URI): Promise<boolean> {
@@ -60,20 +52,60 @@ class NodeFileSystemProvider implements FileSystemProvider {
     throw new Error("Not supported.");
   }
   async search(options: SearchOptions): Promise<URI | undefined> {
-    const GLOBAL_PATTERN = "**";
-    const path = options.path.fsPath.replace(/\\/g, "/");
-    const pattern = options.global
-      ? `${GLOBAL_PATTERN}${path}{,${options.extensions.join(",")}}`
-      : `${path}{,${options.extensions.join(",")}}`;
-    const files = await glob.glob(pattern, {
-      nodir: true,
-      absolute: true,
-      nocase: true,
-    });
-    if (!files.length) return undefined;
+    let files: string[] = [];
+    if (isPathSearch(options)) {
+      // uri lookup
+      const GLOBAL_PATTERN = "**";
+      const path = options.path.fsPath.replace(/\\/g, "/");
+      const pattern = options.global
+        ? `${GLOBAL_PATTERN}${path}{,${options.extensions.join(",")}}`
+        : `${path}{,${options.extensions.join(",")}}`;
+      files = await glob.glob(pattern, {
+        nodir: true,
+        absolute: true,
+        nocase: true,
+      });
+    } else {
+      // member lookup w/ dir path
+      files = await glob.glob(
+        `${options.dirPath.fsPath}**/*\\(${options.member}\\)`,
+        {
+          nodir: true,
+          absolute: true,
+          nocase: true,
+        },
+      );
+    }
+
+    // return first match when present
+    if (!files.length) {
+      return undefined;
+    }
     const result = URI.file(files[0]);
-    if (!result) return undefined;
+    if (!result) {
+      return undefined;
+    }
     return result;
+  }
+
+  /**
+   * Stats for file or directory
+   * @param uri URI of file or directory to stat
+   * @returns Stats object. If stat fails, returns a stats object with both isFile and isDirectory false.
+   */
+  async stat(uri: URI): Promise<Stats> {
+    try {
+      const stat = await fs.promises.stat(uri.fsPath);
+      return {
+        isFile: stat.isFile(),
+        isDirectory: stat.isDirectory(),
+      };
+    } catch {
+      return {
+        isFile: false,
+        isDirectory: false,
+      };
+    }
   }
 }
 

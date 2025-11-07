@@ -53,7 +53,7 @@ export async function quickFixResolveInclude(
     unresolvedFilePath,
     workspaceFolderUri,
   );
-  if (!parentFolder || procGrpsConfig.$computedLibs.includes(parentFolder)) {
+  if (!parentFolder || procGrpsConfig.$computedLibsSet.has(parentFolder)) {
     return undefined;
   }
 

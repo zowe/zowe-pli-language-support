@@ -69,9 +69,12 @@ export function definitionRequest(
     ];
   } else if (
     isIncludeItemToken(token.kind) &&
-    (token.element?.kind === SyntaxKind.IncludeItem ||
+    (token.element?.kind === SyntaxKind.IncludeItemFile ||
+      token.element?.kind === SyntaxKind.IncludeItemMember ||
       token.element?.kind === SyntaxKind.InscanDirective)
   ) {
+    // TODO @montymxb Nov 7th, 2025: Highlighting for members is incomplete, only gets the member & not the full ddname.
+    // see: https://github.com/zowe/zowe-pli-language-support/issues/466
     // allow jumping to the resolved file when present
     const filePath = token.element.filePath;
     if (filePath) {

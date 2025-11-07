@@ -24,11 +24,12 @@ import {
   VirtualFileSystemProvider,
 } from "../../src/workspace/file-system-provider";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
+import { Diagnostic } from "vscode-languageserver-types";
 
 /**
  * Helper to modify the program config & process group w/ a given lib for each os-specific test
  */
-async function init(libPath: string) {
+async function init(libPath: string): Promise<Diagnostic[]> {
   const programConfig: ProgramConfig = {
     program: "test.pli",
     pgroup: "testGroup",
@@ -41,6 +42,7 @@ async function init(libPath: string) {
     includeExtensions: [],
     libs: [libPath],
     $computedLibs: [],
+    $computedLibsSet: new Set<string>(),
     lspOptions: { checkMargins: false },
     pliOptions: {},
   };
@@ -49,9 +51,16 @@ async function init(libPath: string) {
   PluginConfigurationProviderInstance.setProgramConfigs("/test", [
     programConfig,
   ]);
-  await PluginConfigurationProviderInstance.setProcessGroupConfigs([
+  return await PluginConfigurationProviderInstance.setProcessGroupConfigs([
     processGroupConfig,
   ]);
+}
+
+/**
+ * Helper for writing library files to the vfs
+ */
+async function writeLibFile(path: string, content: string): Promise<void> {
+  await FileSystemProviderInstance.writeFile(URI.file(path), content);
 }
 
 /**
@@ -69,7 +78,7 @@ async function expectTokensForWorkspace(
   expectedTokens: string[],
 ): Promise<void> {
   for (const [path, content] of libFiles) {
-    await FileSystemProviderInstance.writeFile(URI.file(path), content);
+    await writeLibFile(path, content);
   }
 
   // parse the main program
@@ -110,10 +119,14 @@ describe("Preprocessor Tests", () => {
         [["/test/libs/lib.pli", ` DECLARE LIB_VAR FIXED;`]],
         ["DECLARE", "LIB_VAR", "FIXED", ";"],
       );
+
+      // lib path should now exist, re-init to check for no diagnostics
+      const diagnostics = await init("/test/libs");
+      expect(diagnostics).toHaveLength(0);
     },
   );
 
-  // tets win absolute path resolution w/ a drive letter
+  // tests win absolute path resolution w/ a drive letter
   test.runIf(process.platform === "win32")(
     "Windows path resolution",
     async () => {
@@ -124,6 +137,10 @@ describe("Preprocessor Tests", () => {
         [["C:/test/libs/lib.pli", ` DECLARE LIB_VAR FIXED;`]],
         ["DECLARE", "LIB_VAR", "FIXED", ";"],
       );
+
+      // lib path should now exist, re-init to check for no diagnostics
+      const diagnostics = await init("c:/test/libs");
+      expect(diagnostics).toHaveLength(0);
     },
   );
 });
