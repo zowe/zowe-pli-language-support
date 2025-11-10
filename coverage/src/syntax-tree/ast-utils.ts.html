@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/utils/cache.ts</title>
+    <title>Code coverage report for src/syntax-tree/ast-utils.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/utils</a> cache.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/syntax-tree</a> ast-utils.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">69.44% </span>
+                <span class="strong">96.72% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>25/36</span>
+                <span class='fraction'>59/61</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">94.73% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/7</span>
+                <span class='fraction'>18/19</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>6/7</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">69.44% </span>
+                <span class="strong">96.72% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>25/36</span>
+                <span class='fraction'>59/61</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -134,61 +134,24 @@
 <a name='L69'></a><a href='#L69'>69</a>
 <a name='L70'></a><a href='#L70'>70</a>
 <a name='L71'></a><a href='#L71'>71</a>
-<a name='L72'></a><a href='#L72'>72</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">898x</span>
-<span class="cline-any cline-yes">898x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">898x</span>
-<span class="cline-any cline-yes">898x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">898x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">898x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">898x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">898x</span>
-<span class="cline-any cline-yes">1796x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1796x</span>
-<span class="cline-any cline-yes">1796x</span>
-<span class="cline-any cline-yes">1796x</span>
-<span class="cline-any cline-yes">1796x</span>
-<span class="cline-any cline-yes">1796x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">898x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">898x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -200,11 +163,82 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">898x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">898x</span>
-<span class="cline-any cline-yes">898x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2143x</span>
+<span class="cline-any cline-yes">2143x</span>
+<span class="cline-any cline-yes">2143x</span>
+<span class="cline-any cline-yes">2853x</span>
+<span class="cline-any cline-yes">2853x</span>
+<span class="cline-any cline-yes">2811x</span>
+<span class="cline-any cline-yes">2853x</span>
+<span class="cline-any cline-yes">78x</span>
+<span class="cline-any cline-yes">78x</span>
+<span class="cline-any cline-yes">2853x</span>
+<span class="cline-any cline-yes">2065x</span>
+<span class="cline-any cline-yes">2065x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2143x</span>
+<span class="cline-any cline-yes">2143x</span>
+<span class="cline-any cline-yes">2143x</span>
+<span class="cline-any cline-yes">2143x</span>
+<span class="cline-any cline-yes">2065x</span>
+<span class="cline-any cline-yes">2065x</span>
+<span class="cline-any cline-yes">1544x</span>
+<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">1544x</span>
+<span class="cline-any cline-yes">36x</span>
+<span class="cline-any cline-yes">36x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">36x</span>
+<span class="cline-any cline-yes">51x</span>
+<span class="cline-any cline-yes">51x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -216,66 +250,83 @@
  *
  */
 &nbsp;
-import { Connection, Range, SymbolInformation } from "vscode-languageserver";
-import { CompilationUnit } from "../workspace/compilation-unit";
-import { MarginIndicatorNotificationParams } from "../language-server/margin-indicator";
+import {
+  DeclarationAttribute,
+  DeclaredItem,
+  DeclaredVariable,
+  DefineStructureStatement,
+  getContainer,
+  SyntaxKind,
+  TypeExtendingAttribute,
+} from "./ast";
 &nbsp;
-export class Cache&lt;T extends Record&lt;string, any&gt;, U&gt; {
-  private cache: Partial&lt;T&gt; = {};
-  private callbacks: Map&lt;keyof T, (param: U) =&gt; void&gt; = new Map();
-&nbsp;
-  constructor(initialCache?: Partial&lt;T&gt;) {
-    if (initialCache) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >      this.cache = initialCache;</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
-  }
-&nbsp;
-  get&lt;K extends keyof T&gt;(key: K): T[K] | undefined {
-    return this.cache[key];
-  }
-&nbsp;
-  set&lt;K extends keyof T&gt;(key: K, value: T[K]): void {
-    this.cache[key] = value;
-  }
-&nbsp;
-  onRevalidate&lt;K extends keyof T&gt;(key: K, callback: (param: U) =&gt; void): this {
-    if (!(key in this.cache)) {
-      // Make sure the key exists in the cache for the callback.
-      this.cache[key] = undefined;
+export function getTypeExtendingAttribute(
+  attributes: DeclarationAttribute[],
+): TypeExtendingAttribute | undefined {
+  for (const attr of attributes) {
+    if (
+      attr.kind === SyntaxKind.LikeAttribute ||
+      attr.kind === SyntaxKind.TypeAttribute
+    ) {
+      return attr;
     }
-    this.callbacks.set(key, callback);
-    return this;
   }
-&nbsp;
-<span class="fstat-no" title="function not covered" >  revalidateAll(param: U): void {</span>
-<span class="cstat-no" title="statement not covered" >    for (const key of Object.keys(this.cache) as (keyof T)[]) {</span>
-<span class="cstat-no" title="statement not covered" >      const callback = this.callbacks.get(key);</span>
-<span class="cstat-no" title="statement not covered" >      if (callback) {</span>
-<span class="cstat-no" title="statement not covered" >        callback(param);</span>
-<span class="cstat-no" title="statement not covered" >      } else {</span>
-<span class="cstat-no" title="statement not covered" >        this.cache[key] = undefined;</span>
-<span class="cstat-no" title="statement not covered" >      }</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
+  return undefined;
 }
 &nbsp;
-type LSRequestCaches = {
-  workspaceSymbols: SymbolInformation[];
-  margins: MarginIndicatorNotificationParams;
-  skippedCodeRanges: Range[];
-};
-&nbsp;
-export type LSRequestCache = Cache&lt;
-  LSRequestCaches,
-  { connection: Connection; unit: CompilationUnit }
-&gt;;
-&nbsp;
-export function createLSRequestCaches() {
-  return new Cache&lt;
-    LSRequestCaches,
-    { connection: Connection; unit: CompilationUnit }
-  &gt;() as LSRequestCache;
+export interface ExtendingDeclaredItems {
+  target: DeclaredVariable;
+  extendingItems: DeclaredItem[];
 }
+&nbsp;
+export function getExtendingDeclaredItems(
+  item: DeclaredItem,
+): ExtendingDeclaredItems | undefined {
+  const attr = getTypeExtendingAttribute(item.attributes);
+  if (!attr) {
+    return undefined;
+  }
+  if (attr.kind === SyntaxKind.LikeAttribute) {
+    const ref = attr.reference?.element?.element?.ref?.node;
+    if (ref &amp;&amp; ref.kind === SyntaxKind.DeclaredVariable) {
+      const declareStatement = getContainer(ref, SyntaxKind.DeclareStatement);
+      if (declareStatement) {
+        return {
+          target: ref,
+          extendingItems: declareStatement.items,
+        };
+      }
+    }
+  } else if (attr.kind === SyntaxKind.TypeAttribute) {
+    const ref = attr.type?.node;
+    if (ref &amp;&amp; ref.kind === SyntaxKind.DeclaredVariable) {
+      const defineStructureStatement = getContainer(
+        ref,
+        SyntaxKind.DefineStructureStatement,
+      );
+      if (defineStructureStatement) {
+        return {
+          target: ref,
+          extendingItems: defineStructureStatement.items,
+        };
+      }
+    }
+  }
+  return undefined;
+}
+&nbsp;
+export function getFirstStructureVariable(
+  statement: DefineStructureStatement,
+): DeclaredVariable | undefined {
+  let firstItem = statement.items[0];
+  if (firstItem?.kind === SyntaxKind.DeclaredItem) {
+    const firstChild = firstItem.elements[0];
+    if (firstChild?.kind === SyntaxKind.DeclaredVariable) {
+      return firstChild;
+    }
+<span class="branch-0 cbranch-no" title="branch not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  return undefined;</span>
+<span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
