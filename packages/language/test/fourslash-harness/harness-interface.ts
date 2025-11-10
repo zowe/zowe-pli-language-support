@@ -48,6 +48,7 @@ import {
   TypeDescriptions,
   Volatility,
 } from "../../src/typesystem/descriptions";
+import { LspCodes } from "../../src/validation/lsp-codes";
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
@@ -324,6 +325,7 @@ export interface HarnessTesterInterface {
       };
     };
     CompilerOptions: typeof CompilerOptionsCodes;
+    LspCodes: typeof LspCodes;
     TypeSystem: typeof TypeSystemCodes;
   };
 

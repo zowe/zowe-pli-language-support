@@ -117,6 +117,13 @@ export const CompilerOptionsCodes = {
       `Expected one of '${values.splice(1).join("', '")}', but received '${values[0]}'.`,
   } as ParametricPLICode,
 
+  OptionNotSupported: {
+    code: "COOP13",
+    severity: Severity.W,
+    message: (option: string) =>
+      `The compiler option '${option}' is recognized but not supported by this preprocessor.`,
+  } as ParametricPLICode,
+
   Assert: {
     InvalidParameter: {
       code: "COAS01",

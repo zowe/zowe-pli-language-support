@@ -21,7 +21,7 @@ import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
 import {
-  CodeAction,
+  CodeActionKind,
   Diagnostic,
   Location,
   TextEdit,
@@ -41,6 +41,7 @@ import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { Mutex } from "../workspace/mutex";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
+import { applySourceActions } from "./code-actions/apply-source-actions";
 import { commandCreateConfig, commandResolveInclude } from "./commands";
 import { Commands, PluginConfiguration } from "./constants";
 export { PluginConfiguration } from "./constants";
@@ -90,7 +91,12 @@ export function startLanguageServer(connection: Connection): void {
         renameProvider: true,
         definitionProvider: true,
         referencesProvider: true,
-        codeActionProvider: true,
+        codeActionProvider: {
+          codeActionKinds: [
+            CodeActionKind.QuickFix,
+            CodeActionKind.SourceFixAll,
+          ],
+        },
         executeCommandProvider: {
           commands: [Commands.RESOLVE_INCLUDE, Commands.CREATE_CONFIG],
         },
@@ -325,13 +331,24 @@ export function startLanguageServer(connection: Connection): void {
 
   connection.onCodeAction(async (params) => {
     return Mutex.read(async () => {
-      const diagnostics = params.context.diagnostics as Diagnostic[];
-      if (!diagnostics.length) return;
-      const actions: CodeAction[] | undefined =
-        await applyQuickFixes(diagnostics);
-      if (!actions) return;
+      const requestedKinds = params.context.only;
+      const isSourceActionRequest =
+        requestedKinds?.includes(CodeActionKind.SourceFixAll) ||
+        requestedKinds?.includes(CodeActionKind.Source);
 
-      return actions;
+      if (isSourceActionRequest) {
+        const sourceActions = await applySourceActions(
+          params.textDocument.uri,
+          compilationUnitHandler,
+        );
+        return sourceActions || [];
+      } else {
+        const diagnostics = params.context.diagnostics as Diagnostic[];
+        if (!diagnostics || !diagnostics.length) return [];
+
+        const actions = await applyQuickFixes(diagnostics);
+        return actions || [];
+      }
     });
   });
 
