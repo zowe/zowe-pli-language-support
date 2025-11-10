@@ -22,19 +22,25 @@ export enum DiagnosticCategory {
   Validation,
 }
 
+const MaxCategory = Math.max(
+  ...(Object.values(DiagnosticCategory).filter(
+    (v) => typeof v === "number",
+  ) as number[]),
+);
+
 export class DiagnosticsStore {
   private keys = new Set<string>();
   private diagnostics: Diagnostic[][] = [];
 
   constructor() {
-    for (let i = 0; i <= DiagnosticCategory.Validation; i++) {
+    for (let i = 0; i <= MaxCategory; i++) {
       this.diagnostics[i] = [];
     }
   }
 
   clear(): void {
     this.keys.clear();
-    for (let i = 0; i <= DiagnosticCategory.Validation; i++) {
+    for (let i = 0; i <= MaxCategory; i++) {
       this.diagnostics[i] = [];
     }
   }

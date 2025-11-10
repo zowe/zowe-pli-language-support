@@ -17,7 +17,7 @@ import {
   getContainer,
   SyntaxKind,
   TypeExtendingAttribute,
-} from "../syntax-tree/ast";
+} from "./ast";
 
 export function getTypeExtendingAttribute(
   attributes: DeclarationAttribute[],

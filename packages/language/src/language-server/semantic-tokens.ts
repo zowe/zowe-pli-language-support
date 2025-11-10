@@ -25,7 +25,7 @@ import {
 } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { Token } from "../parser/tokens";
-import { getFirstStructureVariable } from "../linking/util";
+import { getFirstStructureVariable } from "../syntax-tree/ast-utils";
 
 export const semanticTokenTypes = [
   SemanticTokenTypes.variable,

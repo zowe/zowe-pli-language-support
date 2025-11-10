@@ -37,7 +37,7 @@ import { Scope, ScopeCache } from "./scope";
 import { Token } from "../parser/tokens";
 import { LinkerErrorReporter } from "./error";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
-import { getFirstStructureVariable } from "./util";
+import { getFirstStructureVariable } from "../syntax-tree/ast-utils";
 
 function nonNull<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
@@ -351,6 +351,7 @@ export function reiterateSymbols(
     const scope = unit.scopeCaches.regular.get(node);
     if (!scope) {
       // Something went wrong, skip this node.
+      console.debug("No scope found for node during reiteration");
       continue;
     }
     // Second iteration over the node to handle newly added symbols.

@@ -22,7 +22,7 @@ import { MultiMap } from "../utils/collections";
 import { getNameToken } from "./tokens";
 import { LinkerErrorReporter } from "./error";
 import { Token } from "../parser/tokens";
-import { getExtendingDeclaredItems } from "./util";
+import { getExtendingDeclaredItems } from "../syntax-tree/ast-utils";
 
 type UnrolledItem = {
   kind: SyntaxKind;
@@ -66,6 +66,12 @@ function getDeclaredItemToken(node: SyntaxNode): Token | undefined {
 
   return getNameToken(node);
 }
+
+/**
+ * The starting index for levels in PL/I.
+ * Levels are 1-based.
+ */
+const LEVEL_START_INDEX = 1;
 
 /**
  * Unrolls factorized declarations.
@@ -129,7 +135,7 @@ function unrollFactorized(
               extended.extendingItems,
               extended.target,
               // If no level is specified on the extended item, we assume level 1.
-              item.level ?? 1,
+              item.level ?? LEVEL_START_INDEX,
               // Create a copy of the visited set for each branch
               new Set(visited),
             ),
@@ -173,13 +179,14 @@ function unrollSubtree(
       }
       // Virtually increase the level of the child item
       // This ensures that the child item is always deeper than the parent item.
-      item.level += level - 1;
+      // Subtract the LEVEL_START_INDEX since the levels are 1-based.
+      item.level += level - LEVEL_START_INDEX;
       // Still in the subtree. Push the child item
       result.push(item);
     } else if (item.node === node) {
       // We have found the starting node of the subtree.
       // Assume level 1 if not specified
-      foundLevel = item.level ?? 1;
+      foundLevel = item.level ?? LEVEL_START_INDEX;
     }
   }
   return result;
@@ -246,7 +253,7 @@ export class DeclaredItemParser {
 
     // When level is not set, we assume 1 like the PL/I compiler seems to do.
     if (level === null) {
-      return 1;
+      return LEVEL_START_INDEX;
     }
 
     // TODO: get max level from compilation unit? If e.g. compilation flags can change this.

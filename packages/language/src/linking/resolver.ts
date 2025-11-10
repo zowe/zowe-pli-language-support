@@ -98,6 +98,9 @@ export class StatementOrderCache {
 }
 
 export class ReferencesCache {
+  /**
+   * See {@link resolveReferences} for more information on priority references.
+   */
   private priorityList: Reference[] = [];
   private list: Reference[] = [];
   private reverseMap = new Map<SyntaxNode, Reference[]>();
