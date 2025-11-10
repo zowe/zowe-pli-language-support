@@ -17,6 +17,7 @@ import { BuilderDeclareItem } from "./descriptions";
 import { assertType } from "../preprocessor/util";
 import { diagnosticFromCode } from "../language-server/types";
 import { Error } from "../validation/pli-codes";
+import { DiagnosticCategory } from "../validation/diagnostics-store";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
@@ -137,7 +138,8 @@ export class DefaultTypeInferer implements TypeInferer {
       (t) => TypeDescriptions.isStructure(t),
       (t, item, isTopLevel) => {
         if (t.members && Object.keys(t.members).length === 0) {
-          compilationUnit.diagnostics.typeSystem.push(
+          compilationUnit.diagnostics.add(
+            DiagnosticCategory.TypeSystem,
             diagnosticFromCode(
               isTopLevel ? Error.IBM1482I : Error.IBM1483I,
               item.nameToken,

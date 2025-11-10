@@ -9,10 +9,12 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// DEFINE ALIAS <|t:HELLO|> BIN FIXED(31);
-//// DCL ALIASED_VAR TYPE <|t>HELLO;
+//// DEFINE STRUCTURE 1 A, 2 <|b:B|>, 3 <|c:C|> FIXED(31);
+//// DCL MY_STRUCT TYPE A;
+//// MY_STRUCT.<|b>B.<|c>C = 10;
+//// MY_STRUCT.<|c>C = 20;
 
 linker.expectLinks();

@@ -91,6 +91,24 @@ export class QualifiedSyntaxNode {
     return this.parent;
   }
 
+  getId(): string {
+    const parts: string[] = [];
+    // Ensure that implicit and explicit declarations get different IDs
+    // Some declarations (mainly parameters) are first implicitly declared
+    // and then augmented to be explicit declarations
+    if (this.isImplicit) {
+      parts.push("implicit");
+    }
+    let current: QualifiedSyntaxNode | null = this;
+    while (current) {
+      // The ID of the token uniquely identifies the node in the source code
+      // It can sometimes be undefined, still push something to avoid collisions
+      parts.push(current.token.id?.toString() || "NaN");
+      current = current.parent;
+    }
+    return parts.join("_");
+  }
+
   /**
    * By walking the qualification chain, we can determine the qualification status of the current node.
    *

@@ -916,9 +916,6 @@ export function forEachNode(
       break;
     case SyntaxKind.StringLiteral:
       break;
-    case SyntaxKind.StructureItem:
-      node.attributes.forEach(action);
-      break;
     case SyntaxKind.TypeAttribute:
       break;
     case SyntaxKind.UnaryExpression:

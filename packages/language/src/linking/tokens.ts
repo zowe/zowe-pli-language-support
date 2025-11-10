@@ -30,7 +30,6 @@ export function isNameToken(kind: CstNodeKind | undefined): boolean {
     case CstNodeKind.ReplaceStatement_Id:
     case CstNodeKind.DefineOrdinalStatement_Name:
     case CstNodeKind.DefineAliasStatement_Name:
-    case CstNodeKind.StructureItem_Name:
       return true;
   }
   return false;
@@ -50,7 +49,6 @@ export function getNameToken(node: SyntaxNode): Token | undefined {
     case SyntaxKind.ReplaceStatement:
     case SyntaxKind.DefineOrdinalStatement:
     case SyntaxKind.DefineAliasStatement:
-    case SyntaxKind.StructureItem:
       return node.nameToken ?? undefined;
   }
   return undefined;
