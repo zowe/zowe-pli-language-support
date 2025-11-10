@@ -9,7 +9,7 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 // @wrap: main
 //// DEFINE ORDINAL <|t:HELLO|>(A, B, C);

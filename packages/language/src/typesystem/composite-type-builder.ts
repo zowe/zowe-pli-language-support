@@ -4,6 +4,7 @@ import {
 } from "../parser/token-mappings";
 import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
+import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { BuilderDeclareItem, TypeDescriptions } from "./descriptions";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
@@ -44,7 +45,10 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
       builder.addAttribute(attr);
     }
     const { type, diagnostics } = builder.build();
-    compilationUnit.diagnostics.typeSystem.push(...diagnostics);
+    compilationUnit.diagnostics.addAll(
+      DiagnosticCategory.TypeSystem,
+      diagnostics,
+    );
     return type;
   }
   isCompositeDeclaredItem(declaredItem: BuilderDeclareItem): boolean {

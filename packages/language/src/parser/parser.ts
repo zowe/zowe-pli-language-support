@@ -2413,7 +2413,7 @@ export class PliParser extends AbstractParser {
         CstNodeKind.DefineStructureStatement_STRUCTURE,
       );
     });
-    this.SUBRULE_ASSIGN1(this.StructureItem, {
+    this.SUBRULE_ASSIGN1(this.DeclaredItem, {
       assign: (result) => {
         element.items.push(result);
       },
@@ -2426,7 +2426,7 @@ export class PliParser extends AbstractParser {
           CstNodeKind.DefineStructureStatement_Comma,
         );
       });
-      this.SUBRULE_ASSIGN2(this.StructureItem, {
+      this.SUBRULE_ASSIGN2(this.DeclaredItem, {
         assign: (result) => {
           element.items.push(result);
         },
@@ -2441,39 +2441,6 @@ export class PliParser extends AbstractParser {
     });
 
     return this.pop<ast.DefineStructureStatement>();
-  });
-  private createStructureItem(): ast.StructureItem {
-    return {
-      kind: ast.SyntaxKind.StructureItem,
-      container: null,
-      level: null,
-      name: null,
-      nameToken: null,
-      attributes: [],
-    };
-  }
-
-  StructureItem = this.RULE("StructureItem", () => {
-    let element = this.push(this.createStructureItem());
-
-    this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.StructureItem_LevelNumber);
-      element.level = token.image;
-    });
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.StructureItem_Name);
-      element.name = token.image;
-      element.nameToken = token;
-    });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
-        assign: (result) => {
-          element.attributes.push(result);
-        },
-      });
-    });
-
-    return this.pop<ast.StructureItem>();
   });
 
   private createDelayStatement(): ast.DelayStatement {

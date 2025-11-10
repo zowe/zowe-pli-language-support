@@ -12,7 +12,6 @@
 import { describe, expect, test } from "vitest";
 import { fullCode, Severity } from "../src/language-server/types";
 import * as PLICodes from "../src/validation/pli-codes";
-import { collectDiagnostics } from "../src/workspace/compilation-unit";
 import { assertDiagnostic, assertNoDiagnostics, parse } from "./utils";
 import { TestBuilder } from "./test-builder";
 
@@ -77,7 +76,7 @@ describe("Validating", () => {
         END MYPROG;
         `);
 
-    const diagnostics = collectDiagnostics(doc);
+    const diagnostics = doc.diagnostics.getAll();
 
     // 2 diagnostics, 1 for a bad link, 2nd for the end statement that's mismatched, 3rd for an end label not associated w/ a group
     // the third comes up just by nature of the issue there being no match anyways
@@ -203,7 +202,7 @@ describe("Validating", () => {
         code: fullCode(PLICodes.Error.IBM1231I),
         severity: Severity.E,
       });
-      const diagnostics = collectDiagnostics(doc);
+      const diagnostics = doc.diagnostics.getAll();
       expect(diagnostics.length).toBe(2);
     });
   });
@@ -215,7 +214,7 @@ describe("Validating", () => {
       define ordinal day (
         Monday
       ) prec(15) signed unsigned;`);
-      const diagnostics = collectDiagnostics(doc);
+      const diagnostics = doc.diagnostics.getAll();
       expect(diagnostics.length).not.toBe(0);
     });
 
@@ -225,7 +224,7 @@ describe("Validating", () => {
       define ordinal day (
         Monday
       ) signed prec(15);`);
-      const diagnostics = collectDiagnostics(doc);
+      const diagnostics = doc.diagnostics.getAll();
       expect(diagnostics.length).toBe(0);
     });
 
@@ -235,7 +234,7 @@ describe("Validating", () => {
       define ordinal day (
         Monday
       ) precision(15) prec(15);`);
-      const diagnostics = collectDiagnostics(doc);
+      const diagnostics = doc.diagnostics.getAll();
       expect(diagnostics.length).not.toBe(0);
     });
 
@@ -249,7 +248,7 @@ describe("Validating", () => {
       define ordinal D2 (
         Day2
       ) signed signed;`);
-      const diagnostics = collectDiagnostics(doc);
+      const diagnostics = doc.diagnostics.getAll();
       expect(diagnostics.length).toBe(0);
     });
 

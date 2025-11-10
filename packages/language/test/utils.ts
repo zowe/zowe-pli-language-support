@@ -11,7 +11,6 @@
 
 import { expect } from "vitest";
 import {
-  collectDiagnostics,
   CompilationUnit,
   createCompilationUnit,
 } from "../src/workspace/compilation-unit";
@@ -25,6 +24,7 @@ import { escapeRegExp, Token } from "../src/parser/tokens";
 import { referencesRequest } from "../src/language-server/references-request";
 import { CancellationToken } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { DiagnosticCategory } from "../src/validation/diagnostics-store";
 
 interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
@@ -45,8 +45,14 @@ export function assertNoParseErrors(
   sourceFile: CompilationUnit,
   options: AssertNoDiagnosticsOptions = {},
 ) {
-  expectNoDiagnostics(sourceFile.diagnostics.lexer, options);
-  expectNoDiagnostics(sourceFile.diagnostics.parser, options);
+  expectNoDiagnostics(
+    sourceFile.diagnostics.get(DiagnosticCategory.Lexer),
+    options,
+  );
+  expectNoDiagnostics(
+    sourceFile.diagnostics.get(DiagnosticCategory.Parser),
+    options,
+  );
 }
 
 /**
@@ -56,7 +62,10 @@ export function assertNoLinkingErrors(
   sourceFile: CompilationUnit,
   options: AssertNoDiagnosticsOptions = {},
 ) {
-  expectNoDiagnostics(sourceFile.diagnostics.linking, options);
+  expectNoDiagnostics(
+    sourceFile.diagnostics.get(DiagnosticCategory.Linking),
+    options,
+  );
 }
 
 /**
@@ -66,7 +75,10 @@ export function assertNoCompilerOptionErrors(
   sourceFile: CompilationUnit,
   options: AssertNoDiagnosticsOptions = {},
 ) {
-  expectNoDiagnostics(sourceFile.diagnostics.compilerOptions, options);
+  expectNoDiagnostics(
+    sourceFile.diagnostics.get(DiagnosticCategory.CompilerOptions),
+    options,
+  );
 }
 
 /**
@@ -76,7 +88,10 @@ export function assertNoValidationErrors(
   sourceFile: CompilationUnit,
   options: AssertNoDiagnosticsOptions = {},
 ) {
-  expectNoDiagnostics(sourceFile.diagnostics.validation, options);
+  expectNoDiagnostics(
+    sourceFile.diagnostics.get(DiagnosticCategory.Validation),
+    options,
+  );
 }
 
 /**
@@ -97,9 +112,9 @@ export function assertDiagnostic(
   diagnostic: Partial<Diagnostic>,
   { ignoreSeverity = [] }: AssertNoDiagnosticsOptions = {},
 ) {
-  const diagnostics = collectDiagnostics(sourceFile).filter(
-    (diagnostic) => !ignoreSeverity.includes(diagnostic.severity),
-  );
+  const diagnostics = sourceFile.diagnostics
+    .getAll()
+    .filter((diagnostic) => !ignoreSeverity.includes(diagnostic.severity));
   // assert that there's at least one diagnostic that matches the given partial diagnostic
   expect(diagnostics).toContainEqual(expect.objectContaining(diagnostic));
 }

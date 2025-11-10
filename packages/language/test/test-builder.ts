@@ -10,10 +10,7 @@
  */
 
 import { definitionRequest } from "../src/language-server/definition-request";
-import {
-  collectDiagnostics,
-  CompilationUnit,
-} from "../src/workspace/compilation-unit";
+import { CompilationUnit } from "../src/workspace/compilation-unit";
 import { URI } from "vscode-uri";
 import {
   Diagnostic,
@@ -221,7 +218,7 @@ export class TestBuilder {
       validate: this.options.validate,
       uri: URI.parse(firstFileUri),
     });
-    this.diagnostics = collectDiagnostics(this.unit);
+    this.diagnostics = this.unit.diagnostics.getAll();
     this.checkDiagnosticsURIs();
 
     // After the test-builder is done with its tests, reset the plugin configuration provider

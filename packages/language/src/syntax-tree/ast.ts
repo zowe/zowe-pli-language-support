@@ -204,7 +204,6 @@ export enum SyntaxKind {
   Statement,
   StopStatement,
   StringLiteral,
-  StructureItem,
   SqlAttributeStatement,
   SqlAttributeLob,
   SqlAttributeLobLocator,
@@ -235,6 +234,23 @@ export function isSyntaxNode(node: unknown): node is SyntaxNode {
     typeof node.kind === "number" &&
     typeof node.container === "object"
   );
+}
+
+export function getContainer<K extends SyntaxNode["kind"]>(
+  node: SyntaxNode | null | undefined,
+  kind: K,
+): Extract<SyntaxNode, { kind: K }> | null {
+  if (!node) {
+    return null;
+  }
+  let container = node.container;
+  while (container) {
+    if (container.kind === kind) {
+      return container as Extract<SyntaxNode, { kind: K }>;
+    }
+    container = container.container;
+  }
+  return null;
 }
 
 export enum ReferenceType {
@@ -472,7 +488,6 @@ export type SyntaxNode =
   | Statement
   | StopStatement
   | StringLiteral
-  | StructureItem
   | SqlAttributeStatement
   | SqlAttributeLob
   | SqlAttributeLobLocator
@@ -546,9 +561,13 @@ export type CommonDeclarationAttribute =
   | ValueRangeAttribute
   | GenericAttribute
   | IndForAttribute;
+/**
+ * Type extending attributes are attributes that extend the type of a variable.
+ */
+export type TypeExtendingAttribute = LikeAttribute | TypeAttribute;
 export type ScanMode = "SCAN" | "RESCAN" | "NOSCAN";
 /**
- * A list of all the possible attributes that can be used in a defaiöt exüressopm.
+ * A list of all the possible attributes that can be used in a default expression.
  * This is essentially a list of all attributes that can be used in a common declaration + the DEFAULT VALUE attribute.
  */
 export type DefaultDeclarationAttribute =
@@ -696,15 +715,12 @@ export type InitialAttributeSpecificationIteration =
   | InitialAttributeItemStar
   | InitialAttributeSpecificationIterationValue;
 export type LiteralValue = NumberLiteral | StringLiteral;
-export type NamedElement =
-  | DeclaredVariable
-  | OrdinalValue
-  | LabelPrefix
-  | StructureItem;
+export type NamedElement = DeclaredVariable | OrdinalValue | LabelPrefix;
 export type NamedType =
   | DefineAliasStatement
   | DefineOrdinalStatement
-  | StructureItem;
+  // Only if part of a define struct statement
+  | DeclaredVariable;
 export type OptionsItem =
   | CMPATOptionsItem
   | LinkageOptionsItem
@@ -1238,7 +1254,7 @@ export interface DefineOrdinalStatement extends AstNode {
 export interface DefineStructureStatement extends AstNode {
   kind: SyntaxKind.DefineStructureStatement;
   xDefine: boolean;
-  items: StructureItem[];
+  items: DeclaredItem[];
 }
 export interface DelayStatement extends AstNode {
   kind: SyntaxKind.DelayStatement;
@@ -2479,13 +2495,6 @@ export function createStringLiteral(): StringLiteral {
     container: null,
     value: null,
   };
-}
-export interface StructureItem extends AstNode {
-  kind: SyntaxKind.StructureItem;
-  level: string | null;
-  name: string | null;
-  nameToken: Token | null;
-  attributes: DeclarationAttribute[];
 }
 export interface TypeAttribute extends AstNode {
   kind: SyntaxKind.TypeAttribute;

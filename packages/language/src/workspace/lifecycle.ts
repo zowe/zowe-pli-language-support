@@ -26,6 +26,7 @@ import { assignDebugKinds } from "../utils/debug-kinds";
 import { CancellationToken } from "vscode-languageserver";
 import { interruptAndCheck } from "../utils/promises";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { DiagnosticCategory } from "../validation/diagnostics-store";
 
 export async function lifecycle(
   compilationUnit: CompilationUnit,
@@ -33,11 +34,11 @@ export async function lifecycle(
   cancellation: CancellationToken,
 ): Promise<void> {
   compilationUnit.services.files.clear();
-  compilationUnit.diagnostics.typeSystem = [];
   compilationUnit.services.typeCache.clear();
   compilationUnit.statementOrderCache.clear();
   compilationUnit.referencesCache.clear();
   compilationUnit.scopeCaches.clear();
+  compilationUnit.diagnostics.clear();
   await interruptAndCheck(cancellation);
   await tokenize(compilationUnit, document);
   parse(compilationUnit);
@@ -68,10 +69,13 @@ export async function tokenize(
   compilationUnit.preprocessorEvaluationResults = result.evaluationResults;
   compilationUnit.referencesCache.addAll(result.tokenReferences);
   const uri = compilationUnit.uri.toString();
-  compilationUnit.diagnostics.lexer = result.diagnostics;
-  compilationUnit.diagnostics.compilerOptions = filteredDiagnosticsWithUri(
-    result.compilerOptions.result?.issues,
-    uri,
+  compilationUnit.diagnostics.addAll(
+    DiagnosticCategory.Lexer,
+    result.diagnostics,
+  );
+  compilationUnit.diagnostics.addAll(
+    DiagnosticCategory.CompilerOptions,
+    filteredDiagnosticsWithUri(result.compilerOptions.result?.issues, uri),
   );
   return result;
 }
@@ -80,8 +84,9 @@ export function parse(compilationUnit: CompilationUnit): Program {
   PliParserInstance.input = compilationUnit.tokens;
   const ast = PliParserInstance.parse();
   compilationUnit.ast = ast;
-  compilationUnit.diagnostics.parser = parserErrorsToDiagnostics(
-    PliParserInstance.errors,
+  compilationUnit.diagnostics.addAll(
+    DiagnosticCategory.Parser,
+    parserErrorsToDiagnostics(PliParserInstance.errors),
   );
 
   if (process.env.NODE_ENV === "development") {
@@ -92,22 +97,16 @@ export function parse(compilationUnit: CompilationUnit): Program {
 }
 
 export function generateSymbolTable(compilationUnit: CompilationUnit) {
-  compilationUnit.diagnostics.symbolTable = iterateSymbols(compilationUnit);
+  iterateSymbols(compilationUnit);
 }
 
 export function link(compilationUnit: CompilationUnit): ReferencesCache {
-  const resolveDiagnostics = resolveReferences(compilationUnit);
-  const linkingDiagnostics = linkingErrorsToDiagnostics(
+  resolveReferences(compilationUnit);
+  linkingErrorsToDiagnostics(
     compilationUnit,
     compilationUnit.referencesCache,
     compilationUnit.scopeCaches,
   );
-
-  compilationUnit.diagnostics.linking = [
-    ...resolveDiagnostics,
-    ...linkingDiagnostics,
-  ];
-
   return compilationUnit.referencesCache;
 }
 
