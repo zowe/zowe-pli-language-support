@@ -9,9 +9,10 @@
  *
  */
 
-import { Diagnostic, Location, tokenToRange } from "../language-server/types";
+import { Location, tokenToRange } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import {
+  getContainer,
   MemberCall,
   ProcedureParameter,
   Reference,
@@ -28,10 +29,11 @@ import {
 } from "./tokens";
 import { URI } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { ValidationBuffer } from "../validation/validator";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { LinkerErrorReporter } from "./error";
 import { Scope } from "./scope";
+import { getPriorityReferenceElement, reiterateSymbols } from "./symbol-table";
+import { DiagnosticCategory } from "../validation/diagnostics-store";
 
 function getParentStatement(node: SyntaxNode): SyntaxNode {
   if (node.container?.kind === SyntaxKind.Statement) {
@@ -96,16 +98,25 @@ export class StatementOrderCache {
 }
 
 export class ReferencesCache {
+  /**
+   * See {@link resolveReferences} for more information on priority references.
+   */
+  private priorityList: Reference[] = [];
   private list: Reference[] = [];
   private reverseMap = new Map<SyntaxNode, Reference[]>();
 
   clear(): void {
+    this.priorityList = [];
     this.list = [];
     this.reverseMap.clear();
   }
 
   add(reference: Reference): void {
     this.list.push(reference);
+  }
+
+  priorityAdd(reference: Reference): void {
+    this.priorityList.push(reference);
   }
 
   addAll(references: Reference[]): void {
@@ -127,8 +138,17 @@ export class ReferencesCache {
     return this.reverseMap.get(node) || [];
   }
 
-  allReferences(): Reference[] {
+  priorityReferences(): Reference[] {
+    return this.priorityList;
+  }
+
+  normalReferences(): Reference[] {
     return this.list;
+  }
+
+  *allReferences(): Iterable<Reference> {
+    yield* this.priorityList;
+    yield* this.list;
   }
 
   allReverseReferences(): Map<SyntaxNode, Reference[]> {
@@ -333,20 +353,44 @@ function resolveReference(
   assignReference(unit, reference, symbol);
 }
 
-export function resolveReferences(unit: CompilationUnit): Diagnostic[] {
-  const validationBuffer = new ValidationBuffer();
+export function resolveReferences(unit: CompilationUnit): void {
   const reporter = new LinkerErrorReporter(
     unit,
-    validationBuffer.getAcceptor(),
+    unit.diagnostics.getAcceptor(DiagnosticCategory.Linking),
   );
 
-  for (const reference of unit.referencesCache.allReferences()) {
-    resolveReference(unit, reference, reporter);
-    // Add the reference to the reverse map so we can use it for LSP services
-    unit.referencesCache.addInverse(reference);
+  // Some references need to be resolved first for all the other references to resolve correctly.
+  // These are usually references in TYPE and LIKE attributes
+  // Since these influence the symbol table and scoping of other symbols,
+  // we need to also restart the symbol table generation.
+  const nodesToReprocess = new Set<SyntaxNode>();
+  for (const prioReference of unit.referencesCache.priorityReferences()) {
+    resolveReference(unit, prioReference, reporter);
+    unit.referencesCache.addInverse(prioReference);
+    const node = getNodeToReprocess(prioReference);
+    if (node) {
+      nodesToReprocess.add(node);
+    }
   }
 
-  return validationBuffer.getDiagnostics();
+  // Starts a second pass of symbol table generation
+  // Does not generate new symbol tables/scopes, but reuses existing ones
+  // Only processes the nodes that need to be reprocessed
+  reiterateSymbols(unit, nodesToReprocess);
+
+  // The symbol table is now completely built, we can resolve all other references.
+  for (const normalReference of unit.referencesCache.normalReferences()) {
+    resolveReference(unit, normalReference, reporter);
+    // Add the reference to the reverse map so we can use it for LSP services
+    unit.referencesCache.addInverse(normalReference);
+  }
+}
+
+function getNodeToReprocess(reference: Reference): SyntaxNode | undefined {
+  const priorityElement = getPriorityReferenceElement(reference);
+  return (
+    getContainer(priorityElement, SyntaxKind.DeclareStatement) ?? undefined
+  );
 }
 
 export function findTokenElementReference(

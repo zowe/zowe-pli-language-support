@@ -212,8 +212,6 @@ export enum CstNodeKind {
   DefineStructureStatement_STRUCTURE,
   DefineStructureStatement_Comma,
   DefineStructureStatement_Semicolon,
-  StructureItem_LevelNumber,
-  StructureItem_Name,
   DelayStatement_DELAY,
   DelayStatement_OpenParen,
   DelayStatement_CloseParen,

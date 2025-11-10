@@ -15,6 +15,17 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { SyntaxNode } from "../syntax-tree/ast";
 
 export interface Token {
+  /**
+   * The unique ID of the token.
+   * This is assigned when the token is created.
+   *
+   * The ID is required to uniquely identify objects that are built from tokens.
+   * This is mainly useful in the context of linking to identify duplicate qualified syntax nodes.
+   *
+   * Note that the ID may be `undefined` in some edge cases,
+   * such as when tokens are created during the parser recovery.
+   */
+  id: number | undefined;
   image: string;
   originalImage: string;
   startOffset: number;
@@ -35,6 +46,7 @@ export interface Token {
 class TokenImpl implements Token {
   image: string;
   originalImage: string;
+  id: number = 0;
   startOffset: number;
   startLine: number;
   startColumn: number;
@@ -51,6 +63,7 @@ class TokenImpl implements Token {
   constructor(
     image: string,
     originalImage: string,
+    id: number,
     tokenType: TokenType,
     startOffset: number,
     startLine: number,
@@ -62,6 +75,7 @@ class TokenImpl implements Token {
   ) {
     this.image = image;
     this.originalImage = originalImage;
+    this.id = id;
     this.startOffset = startOffset;
     this.startLine = startLine;
     this.startColumn = startColumn;
@@ -78,6 +92,13 @@ class TokenImpl implements Token {
   }
 }
 
+/**
+ * A simple incrementing ID generator for tokens.
+ * Theoretically, this could overflow. However, the maximum safe integer in JavaScript is 2^53 - 1.
+ * This would require a the language server to chew through that many tokens in a single session, which would likely take years.
+ */
+let nextTokenId = 1;
+
 export function createTokenInstance(
   image: string,
   originalImage: string,
@@ -93,6 +114,7 @@ export function createTokenInstance(
   return new TokenImpl(
     image,
     originalImage,
+    nextTokenId++,
     tokenType,
     startOffset,
     startLine,
