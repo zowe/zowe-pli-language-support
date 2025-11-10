@@ -36,16 +36,13 @@ import { renameRequest } from "./rename-request";
 import { getReferenceLocations } from "../linking/resolver";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
-import {
-  PluginConfigurationProvider,
-  PluginConfigurationProviderInstance,
-} from "../workspace/plugin-configuration-provider";
+import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { Mutex } from "../workspace/mutex";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
 import { commandCreateConfig, commandResolveInclude } from "./commands";
-import { Commands } from "./constants";
+import { Commands, PluginConfiguration } from "./constants";
 export { PluginConfiguration } from "./constants";
 
 /**
@@ -67,8 +64,7 @@ export function startLanguageServer(connection: Connection): void {
           const ws = PluginConfigurationProviderInstance.getWorkspacePath();
           const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
           connection.sendDiagnostics({
-            uri:
-              wsPrefix + PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE,
+            uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,
             diagnostics,
           });
         },
@@ -314,7 +310,7 @@ export function startLanguageServer(connection: Connection): void {
         const ws = PluginConfigurationProviderInstance.getWorkspacePath();
         const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
         connection.sendDiagnostics({
-          uri: wsPrefix + PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE,
+          uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,
           diagnostics,
         });
 

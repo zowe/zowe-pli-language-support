@@ -2078,12 +2078,19 @@ async function runInclude(
     if (error) {
       console.log("Failed to resolve include file:", error);
     }
-    const diagnostic = diagnosticFromCode(
-      PLICodes.Severe.IBM3841I,
-      item.token,
-      getFileNameOrPartialName(item)!,
-    );
-
+    let diagnostic: Diagnostic;
+    if (!context.unit.processGroup && !context.unit.programConfig) {
+      diagnostic = diagnosticFromCode(
+        LspCodes.IncludeResolution.MissingConfiguration,
+        item.token,
+      );
+    } else {
+      diagnostic = diagnosticFromCode(
+        PLICodes.Severe.IBM3841I,
+        item.token,
+        getFileNameOrPartialName(item)!,
+      );
+    }
     // check to set optional diagnostic data iff we have a valid fileName/memberName to work with
     if (isFileIncludeItem(item)) {
       // item w/ valid fileName
