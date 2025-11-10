@@ -10,7 +10,6 @@
  */
 
 import { describe, expect, test } from "vitest";
-import { collectDiagnostics } from "../src/workspace/compilation-unit";
 import * as tokens from "../src/parser/tokens";
 import {
   assertNoParseErrors,
@@ -375,16 +374,16 @@ describe("PL/I Parsing tests", () => {
     });
 
     // Handle as validation error
-    //         test.fails('fails with duplicate value in value list', async () => {
-    //             const doc = await parseStmts(`
-    //  dcl 1 a,
-    //     2 b fixed bin value(31),
-    //     2 d fixed bin value(31);
-    //  dcl x fixed bin valuelistfrom a;
-    // `);
-    //             expect(doc.parseResult.lexerErrors).toHaveLength(0);
-    //             expect(doc.parseResult.parserErrors).toHaveLength(0);
-    //         });
+    test("fails with duplicate value in value list", async () => {
+      const doc = await parseStmts(`
+     dcl 1 a,
+        2 b fixed bin value(31),
+        2 d fixed bin value(31);
+     dcl x fixed bin valuelistfrom a;
+    `);
+      assertNoParseErrors(doc);
+      generateAndAssertValidSymbolTable(doc);
+    });
 
     test.fails(
       "value list is too long to handle in compiler correctly",
@@ -667,7 +666,7 @@ describe("PL/I Parsing tests", () => {
         Monday
       ) signed(15);
        `);
-      const diagnostics = collectDiagnostics(doc);
+      const diagnostics = doc.diagnostics.getAll();
       expect(diagnostics).not.toHaveLength(0);
     });
 

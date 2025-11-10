@@ -24,6 +24,7 @@ import {
   VirtualFileSystemProvider,
 } from "../../src/workspace/file-system-provider";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
+import { DiagnosticCategory } from "../../src/validation/diagnostics-store";
 import { Diagnostic } from "vscode-languageserver-types";
 
 /**
@@ -88,8 +89,8 @@ async function expectTokensForWorkspace(
   });
 
   // ensure we have a clean result w/ the right tokens
-  expect(cu.diagnostics.lexer).toHaveLength(0);
-  expect(cu.diagnostics.parser).toHaveLength(0);
+  expect(cu.diagnostics.get(DiagnosticCategory.Lexer)).toHaveLength(0);
+  expect(cu.diagnostics.get(DiagnosticCategory.Parser)).toHaveLength(0);
   const tokenImgs = cu.tokens.map((t) => t.image);
   expect(tokenImgs).toEqual(expectedTokens);
 }

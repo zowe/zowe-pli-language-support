@@ -22,6 +22,7 @@ import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
 import { LinkerErrorReporter } from "../linking/error";
 import { Token } from "../parser/tokens";
 import { registerPreprocessorValidationChecks } from "./pp-validator";
+import { DiagnosticCategory } from "./diagnostics-store";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -42,31 +43,13 @@ export type ValidationChecks = Partial<{
   >[];
 }>;
 
-export class ValidationBuffer {
-  private diagnostics: Diagnostic[] = [];
-
-  getAcceptor(): ValidationAcceptor {
-    return (diagnostic: Diagnostic) => {
-      this.diagnostics.push(diagnostic);
-    };
-  }
-
-  getDiagnostics(): Diagnostic[] {
-    return this.diagnostics;
-  }
-}
-
 const ppValidations = registerPreprocessorValidationChecks();
 
 export function generatePreprocessorValidationDiagnostics(
   unit: CompilationUnit,
 ): void {
-  const validationBuffer = new ValidationBuffer();
-  const acceptor = validationBuffer.getAcceptor();
-
+  const acceptor = unit.diagnostics.getAcceptor(DiagnosticCategory.Validation);
   validateSyntaxNode(unit, unit.preprocessorAst, acceptor, ppValidations);
-
-  unit.diagnostics.preprocessor = validationBuffer.getDiagnostics();
 }
 
 const pliValidations = registerPliValidationChecks();
@@ -75,13 +58,8 @@ const pliValidations = registerPliValidationChecks();
  * Generates validation diagnostics (semantic checks) from the given AST node.
  */
 export function generatePliValidationDiagnostics(unit: CompilationUnit): void {
-  const validationBuffer = new ValidationBuffer();
-  const acceptor = validationBuffer.getAcceptor();
-
-  // iterate over all nodes and validate them
+  const acceptor = unit.diagnostics.getAcceptor(DiagnosticCategory.Validation);
   validateSyntaxNode(unit, unit.ast, acceptor, pliValidations);
-
-  unit.diagnostics.validation = validationBuffer.getDiagnostics();
 }
 
 /**
@@ -206,11 +184,10 @@ export function linkingErrorsToDiagnostics(
   unit: CompilationUnit,
   references: ReferencesCache,
   scopeCaches: ScopeCacheGroups,
-): Diagnostic[] {
-  const validationBuffer = new ValidationBuffer();
+): void {
   const reporter = new LinkerErrorReporter(
     unit,
-    validationBuffer.getAcceptor(),
+    unit.diagnostics.getAcceptor(DiagnosticCategory.Linking),
   );
 
   // @didrikmunther Only checking the regular scope for now
@@ -257,6 +234,4 @@ export function linkingErrorsToDiagnostics(
 
     reporter.reportUnreferencedSymbol(node.nameToken);
   }
-
-  return validationBuffer.getDiagnostics();
 }
