@@ -117,6 +117,15 @@ export const CompilerOptionsCodes = {
       `Expected one of '${values.splice(1).join("', '")}', but received '${values[0]}'.`,
   } as ParametricPLICode,
 
+  Assert: {
+    InvalidParameter: {
+      code: "COAS01",
+      severity: Severity.E,
+      message: (value: string) =>
+        `Expected "ENTRY" or "CONDITION", but received '${value}'.`,
+    } as ParametricPLICode,
+  },
+
   Aggregate: {
     InvalidParameter: {
       code: "COAG01",
@@ -126,12 +135,30 @@ export const CompilerOptionsCodes = {
     } as ParametricPLICode,
   },
 
-  Attribute: {
+  Attributes: {
     InvalidParameter: {
       code: "COAT01",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "FULL" or "SHORT", but received '${value}'.`,
+    } as ParametricPLICode,
+  },
+
+  BackReg: {
+    InvalidParameter: {
+      code: "COBR01",
+      severity: Severity.E,
+      message: (value: string) =>
+        `Expected "5" or "11", but received '${value}'.`,
+    } as ParametricPLICode,
+  },
+
+  BiFPrec: {
+    InvalidParameter: {
+      code: "COBP01",
+      severity: Severity.E,
+      message: (value: string) =>
+        `Expected "31" or "15", but received '${value}'.`,
     } as ParametricPLICode,
   },
 
@@ -204,6 +231,15 @@ export const CompilerOptionsCodes = {
     } as ParametricPLICode,
   },
 
+  CmPat: {
+    InvalidParameter: {
+      code: "COCM01",
+      severity: Severity.E,
+      message: (value: string) =>
+        `Expected "LE", "V1", "V2" or "V3", but received '${value}'.`,
+    } as ParametricPLICode,
+  },
+
   CodePage: {
     InvalidParameter: {
       code: "COCP01",
@@ -248,6 +284,14 @@ export const CompilerOptionsCodes = {
         `Expected a single character, but received '${value}'.`,
     } as ParametricPLICode,
     // TODO ssm: Mainframe actually reports a warning IBM1105I, and truncates to the first character.
+  },
+
+  DBRMLib: {
+    InvalidEmptyParameter: {
+      code: PLICodes.Warning.IBM1172I.code,
+      severity: Severity.E,
+      message: () => PLICodes.Warning.IBM1172I.message("DBRMLIB"),
+    } as ParametricPLICode,
   },
 
   DD: {
@@ -330,12 +374,62 @@ export const CompilerOptionsCodes = {
     } as ParametricPLICode,
   },
 
+  Exit: {
+    InvalidEmptyParameter: {
+      code: PLICodes.Warning.IBM1172I.code,
+      severity: Severity.E,
+      message: () => PLICodes.Warning.IBM1172I.message("EXIT"),
+    } as ParametricPLICode,
+    InvalidParameterLength: {
+      code: "COEX02",
+      severity: Severity.E,
+      message: (value: string) =>
+        `Expected a string exceeds 1023 character limit. Received ${value.length} characters.`,
+    } as ParametricPLICode,
+  },
+
+  Extrn: {
+    InvalidParameter: {
+      code: "COET01",
+      severity: Severity.E,
+      message: (value: string) =>
+        `Expected "FULL" or "SHORT", but received '${value}'.`,
+    } as ParametricPLICode,
+  },
+
   Flag: {
     InvalidParameter: {
       code: "COFL01",
       severity: Severity.E,
       message: (value: string) =>
         `Expected S, E, I or W, but received '${value}'.`,
+    } as ParametricPLICode,
+  },
+
+  FileRef: {
+    InvalidParameter: {
+      code: "COFR01",
+      severity: Severity.E,
+      message: (value: string) =>
+        `Expected "HASH" or "NOHASH", but received '${value}'.`,
+    } as ParametricPLICode,
+  },
+
+  Float: {
+    InvalidParameter: {
+      code: "COFL01",
+      severity: Severity.E,
+      message: (value: string) =>
+        `Expected "DFP" or "NODFP", but received '${value}'.`,
+    } as ParametricPLICode,
+  },
+
+  FloatInMath: {
+    InvalidParameter: {
+      code: "COFM01",
+      severity: Severity.E,
+      message: (value: string) =>
+        `Expected "ASIS", "LONG" or "EXTENDED", but received '${value}'.`,
     } as ParametricPLICode,
   },
 
@@ -872,7 +966,16 @@ export const CompilerOptionsCodes = {
       code: "COSP01",
       severity: Severity.E,
       message: (value: string) =>
-        `SYSPARM value exceeds maximum length of 1023 characters. Received '${value}.`,
+        `SYSPARM value exceeds maximum length of 1023 characters. Received '${value.length} characters.`,
+    } as ParametricPLICode,
+  },
+
+  System: {
+    InvalidParameter: {
+      code: "COSY02",
+      severity: Severity.E,
+      message: (value: string) =>
+        `Expected "MVS", "CICS", "IMS", "OS", or "TSO", but received '${value}'.`,
     } as ParametricPLICode,
   },
 

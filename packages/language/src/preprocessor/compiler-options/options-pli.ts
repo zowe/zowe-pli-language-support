@@ -29,7 +29,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-attributes
    */
-  attributes?: CompilerOptions.Attributes;
+  attributes?: CompilerOptions.Length | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-backreg
    */
@@ -147,7 +147,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-exit
    */
-  exit?: CompilerOptions.Exit | false;
+  exit?: string | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-exportall
    */
@@ -548,13 +548,7 @@ export interface CompilerOptions {
 
 export declare namespace CompilerOptions {
   export type Length = "SHORT" | "FULL";
-  export interface Attributes {
-    include?: boolean;
-    identifiers?: Length;
-  }
-  export interface Aggregate {
-    offsets?: "DECIMAL" | "HEXADEC";
-  }
+  export type Aggregate = "DECIMAL" | "HEXADEC";
   export type Assert = "ENTRY" | "CONDITION";
   export type Case = "UPPER" | "ASIS";
   export type CaseRules = "MIXED" | "UPPER" | "LOWER" | "START";
@@ -650,9 +644,6 @@ export declare namespace CompilerOptions {
     routcde?: string[];
     desc?: string[];
     reply?: string[];
-  }
-  export interface Exit {
-    inparm?: string;
   }
   export interface FileRef {
     hash: boolean;
@@ -1013,14 +1004,25 @@ const $1K = 1024;
 const $1M = 1024 * 1024;
 
 const defaultCompilerOptions: CompilerOptions = {
+  arch: 10,
+  assert: "ENTRY",
+  attributes: "FULL",
   aggregate: false,
+  backreg: 5,
+  bifprec: 31,
   blank: " ",
+  blkoff: true,
   brackets: ["[", "]"],
   case: "UPPER",
   caserules: "MIXED",
+  check: { storage: "NOSTORAGE" },
+  cmpat: "V2",
+  common: false,
   compile: { noCompile: "S" },
   csect: true,
   currency: "$",
+  dbcs: false,
+  dbrmlib: false,
   deprecate: { items: [] },
   deprecateNext: { items: [] },
   ddsql: "",
@@ -1034,6 +1036,7 @@ const defaultCompilerOptions: CompilerOptions = {
     keepminus: false,
     truncfloat: false,
   },
+  decomp: false,
   default: {
     aligned: true,
     architecture: "IBM",
@@ -1085,6 +1088,15 @@ const defaultCompilerOptions: CompilerOptions = {
       format: "HEXADEC",
     },
   },
+  dll: false,
+  dllInit: false,
+  exit: false,
+  extrn: "FULL",
+  exportAll: true,
+  fileRef: { hash: false },
+  float: { dfp: false },
+  floatInMath: { type: "ASIS" },
+  goff: false,
   goNumber: false,
   json: {
     case: "UPPER",
@@ -1236,8 +1248,8 @@ const defaultCompilerOptions: CompilerOptions = {
   storage: false,
   stringOfGraphic: "GRAPHIC",
   syntax: { noSyntax: "S" },
-  system: "MVS",
   sysParm: "",
+  system: "MVS",
   terminal: true,
   test: false,
   unroll: "AUTO",
