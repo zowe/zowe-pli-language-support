@@ -680,7 +680,7 @@ export class TestBuilder {
   }
 
   noDiagnosticsExcept(
-    exceptions: RegExp[] | string[],
+    exceptions: RegExp[] | string[] | PLICode[],
     label?: Label,
   ): TestBuilder {
     if (exceptions.length === 0) {
@@ -689,6 +689,10 @@ export class TestBuilder {
     if (typeof exceptions[0] === "string") {
       exceptions = (exceptions as string[]).map(
         (s) => new RegExp(escapeRegExp(s)),
+      );
+    } else if (isPLICode(exceptions[0])) {
+      exceptions = (exceptions as PLICode[]).map(
+        (code) => new RegExp(escapeRegExp(fullCode(code))),
       );
     }
     if (Array.isArray(label)) {
@@ -739,15 +743,37 @@ export class TestBuilder {
     expectedOptions: Partial<CompilerOptions>,
   ): TestBuilder {
     const actualOptions = this.unit.compilerOptions;
-    for (const [key, value] of Object.entries(expectedOptions)) {
-      // If the value is an object, only check for the options that are expected.
-      if (typeof value === "object" && value !== null) {
-        expect(actualOptions[key as keyof CompilerOptions]).toEqual(
-          expect.objectContaining(value),
-        );
+
+    const expectPartialMatch = (
+      actual: any,
+      expected: any,
+      path: string = "",
+    ): void => {
+      if (Array.isArray(expected)) {
+        expect(actual, `${path} should be an array`).toEqual(expect.any(Array));
+        expect(actual.length, `${path} array length`).toEqual(expected.length);
+
+        for (let i = 0; i < expected.length; i++) {
+          expectPartialMatch(actual[i], expected[i], `${path}[${i}]`);
+        }
+      } else if (typeof expected === "object" && expected !== null) {
+        expect(actual, `${path} should be an object`).toBeDefined();
+        expect(actual, `${path} should be an object`).not.toBeNull();
+
+        for (const [key, value] of Object.entries(expected)) {
+          expectPartialMatch(actual[key], value, `${path}.${key}`);
+        }
       } else {
-        expect(actualOptions[key as keyof CompilerOptions]).toEqual(value);
+        expect(actual, `${path} should equal ${expected}`).toEqual(expected);
       }
+    };
+
+    for (const [key, value] of Object.entries(expectedOptions)) {
+      expectPartialMatch(
+        actualOptions[key as keyof CompilerOptions],
+        value,
+        key,
+      );
     }
     return this;
   }

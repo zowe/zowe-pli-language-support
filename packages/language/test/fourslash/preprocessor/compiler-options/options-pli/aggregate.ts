@@ -35,7 +35,5 @@ verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.Aggregate.InvalidParameter.message("INVALID"),
 });
 verify.expectCompilerOptions({
-  aggregate: {
-    offsets: "HEXADEC",
-  },
+  aggregate: "HEXADEC",
 });
