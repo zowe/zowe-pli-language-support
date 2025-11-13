@@ -26,9 +26,6 @@ verify.expectDiagnosticsAt(4, {
 verify.expectDiagnosticsAt(4, {
   message: code.CompilerOptions.DupeOptionIssue.message("NOCOPYRIGHT"),
 });
-verify.expectDiagnosticsAt(4, {
-  message: code.CompilerOptions.InvalidParameterCount.message(1, 0, 0),
-});
 verify.expectDiagnosticsAt([6, 8, 10, 12], {
   message: code.CompilerOptions.MutexOptionIssue.message("COPYRIGHT"),
 });

@@ -320,11 +320,47 @@ export function ensureNumberValue(
   return num;
 }
 
-export function ensureArgument<T>(
+/**
+ * Ensures that a compiler option value matches one of the allowed arguments.
+ * Supports two modes:
+ *
+ * 1. Simple array mode: `["DECIMAL", "HEXADEC"]`
+ *    - Accepts and returns exact matches
+ *
+ * 2. Aliases mode: `[["SHORT", "S"], ["FULL", "F"]]`
+ *    - Accepts any alias in each sub-array
+ *    - Always returns the canonical form (first element of matched sub-array)
+ *    - Example: "S" input returns "SHORT", "F" input returns "FULL"
+ */
+type ExtractCanonicalForms<T> = T extends readonly (readonly [
+  infer U extends string,
+  ...(readonly string[]),
+])[]
+  ? U
+  : never;
+
+export function ensureArgument<
+  const T extends readonly (readonly [string, ...string[]])[],
+>(
+  optionValue: CompilerOptionValue,
+  code: ParametricPLICode,
+  args: T,
+): ExtractCanonicalForms<T>;
+export function ensureArgument<const T extends readonly string[]>(
+  optionValue: CompilerOptionValue,
+  code: ParametricPLICode,
+  args: T,
+): T[number];
+export function ensureArgument<T extends string>(
   optionValue: CompilerOptionValue,
   code: ParametricPLICode,
   args: readonly T[],
-): (typeof args)[number] {
+): T;
+export function ensureArgument<T>(
+  optionValue: CompilerOptionValue,
+  code: ParametricPLICode,
+  args: readonly T[] | readonly (readonly [string, ...string[]])[],
+): T | string {
   let value;
   if (optionValue.kind === SyntaxKind.CompilerOptionText) {
     value = optionValue.value;
@@ -335,13 +371,31 @@ export function ensureArgument<T>(
   } else {
     throw new Error("Compiler option value is not supported.");
   }
-  const valueUpperCase = value.toUpperCase();
-  for (const arg of args) {
-    if (valueUpperCase === arg) {
-      return arg;
+  let simpleArgs;
+  if (args.length > 0 && Array.isArray(args[0])) {
+    const aliasGroups = args as readonly (readonly [string, ...string[]])[];
+    for (const group of aliasGroups) {
+      for (const alias of group) {
+        if (value === alias) {
+          return group[0]; // Return the canonical form (first element)
+        }
+      }
+    }
+    simpleArgs = aliasGroups.flatMap((group) => group); // flatten for error reporting
+  } else {
+    simpleArgs = args as readonly T[];
+    for (const arg of simpleArgs) {
+      if (value === arg) {
+        return arg;
+      }
     }
   }
-  throw diagnosticFromCode(code, optionValue.token, optionValue.token.image);
+  throw diagnosticFromCode(
+    code,
+    optionValue.token,
+    optionValue.token.image,
+    ...simpleArgs,
+  );
 }
 
 export function ensureFlag(
@@ -398,24 +452,72 @@ export function isEmptyParameterList(option: CompilerOption): boolean {
   );
 }
 
+// If possible provide a custom code, so that the tests can be decoupled from the expected output.
+// Also supports aliases mode from ensureArgument.
+export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
+  callback: (options: T, value: CompilerOptionText) => void,
+  code: ParametricPLICode,
+  ...values: string[]
+): Translate<T>;
 export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
   callback: (options: T, value: CompilerOptionText) => void,
   ...values: string[]
+): Translate<T>;
+export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
+  callback: (options: T, value: CompilerOptionText) => void,
+  code: ParametricPLICode,
+  ...aliases: readonly [string, ...string[]][]
+): Translate<T>;
+export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
+  callback: (options: T, value: CompilerOptionText) => void,
+  possibleCode:
+    | string
+    | ParametricPLICode
+    | readonly [string, ...string[]]
+    | undefined,
+  ...valuesOrAliases: (string | readonly [string, ...string[]])[]
 ): Translate<T> {
   return (option, options) => {
     ensureArguments(option, 1, 1);
     const value = option.values[0];
-    ensureType(value, "plain");
+    ensureType(value, "plainNotEmpty");
     value.value = value.value.toUpperCase();
-    if (values.length > 0 && !values.includes(value.value)) {
-      throw diagnosticFromCode(
-        CompilerOptionsCodes.ExpectedPlainTranslate,
-        value.token,
-        value.value,
-        ...values,
-      );
+
+    const inAliasesMode =
+      Array.isArray(possibleCode) ||
+      valuesOrAliases.some((v) => Array.isArray(v));
+
+    const hasCustomCode =
+      possibleCode !== undefined &&
+      typeof possibleCode !== "string" &&
+      !Array.isArray(possibleCode);
+    const code = hasCustomCode
+      ? (possibleCode as ParametricPLICode)
+      : CompilerOptionsCodes.ExpectedPlainTranslate;
+
+    if (inAliasesMode) {
+      const aliases: [string, ...string[]][] = [];
+      if (Array.isArray(possibleCode)) {
+        aliases.push(possibleCode as [string, ...string[]]);
+      }
+      for (const item of valuesOrAliases) {
+        if (Array.isArray(item)) {
+          aliases.push(item as [string, ...string[]]);
+        }
+      }
+
+      const canonicalValue = ensureArgument(value, code, aliases);
+      value.value = canonicalValue;
+      callback(options, value);
+    } else {
+      const stringValues = hasCustomCode
+        ? (valuesOrAliases as string[])
+        : possibleCode !== undefined
+          ? [possibleCode as string, ...(valuesOrAliases as string[])]
+          : [];
+      ensureArgument(value, code, stringValues);
+      callback(options, value);
     }
-    callback(options, value);
   };
 }
 

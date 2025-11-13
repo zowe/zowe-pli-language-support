@@ -51,16 +51,14 @@ translator.rule(
     ensureArguments(option, 0, 1);
     if (option.values.length === 0) {
       // Default is DECIMAL.
-      options.aggregate = { offsets: "DECIMAL" };
+      options.aggregate = "DECIMAL";
     } else {
       ensureType(option.values[0], "plainNotEmpty");
-      options.aggregate = {
-        offsets: ensureArgument(
-          option.values[0],
-          CompilerOptionsCodes.Aggregate.InvalidParameter,
-          ["DECIMAL", "HEXADEC"],
-        ),
-      };
+      options.aggregate = ensureArgument(
+        option.values[0],
+        CompilerOptionsCodes.Aggregate.InvalidParameter,
+        ["DECIMAL", "HEXADEC"],
+      );
     }
   },
   ["NOAGGREGATE", "NAG"],
@@ -70,19 +68,13 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.arch} */
-translator.rule(
-  ["ARCH"],
-  plainTranslate(
-    (options, value) => {
-      options.arch = Number(value);
-    },
-    "10",
-    "11",
-    "12",
-    "13",
-    "14",
-  ),
-);
+translator.rule(["ARCH"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  ensureType(option.values[0], "plainNotEmpty");
+  const value = ensureNumberValue(option.values[0], 0, 14);
+  // All values between 0 and 10 are interpreted as 10.
+  options.arch = value < 11 ? 10 : value;
+});
 
 /** {@link CompilerOptions.assert} */
 translator.rule(
@@ -91,6 +83,7 @@ translator.rule(
     (options, value) => {
       options.assert = value.value as CompilerOptions.Assert;
     },
+    CompilerOptionsCodes.Assert.InvalidParameter,
     "ENTRY",
     "CONDITION",
   ),
@@ -101,50 +94,35 @@ translator.rule(
   ["ATTRIBUTES", "A"],
   (option, options) => {
     ensureArguments(option, 0, 1);
-    options.attributes = {
-      include: true,
-      identifiers: attributeIdentifiers(option),
-    };
+    if (option.values.length === 0) {
+      options.attributes = "FULL";
+    } else {
+      ensureType(option.values[0], "plainNotEmpty");
+      options.attributes = ensureArgument(
+        option.values[0],
+        CompilerOptionsCodes.Attributes.InvalidParameter,
+        [
+          ["SHORT", "S"],
+          ["FULL", "F"],
+        ],
+      );
+    }
   },
   ["NOATTRIBUTES", "NA"],
   (option, options) => {
-    ensureArguments(option, 0, 1);
-    options.attributes = {
-      include: false,
-      identifiers: attributeIdentifiers(option) ?? undefined,
-    };
+    ensureArguments(option, 0, 0);
+    options.attributes = false;
   },
 );
-
-function attributeIdentifiers(
-  option: CompilerOption,
-): "FULL" | "SHORT" | undefined {
-  const value = option.values[0];
-  if (value) {
-    ensureType(value, "plain");
-    const text = value.value.toUpperCase();
-    if (text === "F" || text === "FULL") {
-      return "FULL";
-    } else if (text === "S" || text === "SHORT") {
-      return "SHORT";
-    } else {
-      throw diagnosticFromCode(
-        CompilerOptionsCodes.Attribute.InvalidParameter,
-        value.token,
-        value.token.image,
-      );
-    }
-  }
-  return undefined;
-}
 
 /** {@link CompilerOptions.backreg} */
 translator.rule(
   ["BACKREG"],
   plainTranslate(
     (options, value) => {
-      options.backreg = Number(value);
+      options.backreg = Number(value.value);
     },
+    CompilerOptionsCodes.BackReg.InvalidParameter,
     "5",
     "11",
   ),
@@ -155,8 +133,9 @@ translator.rule(
   ["BIFPREC"],
   plainTranslate(
     (options, value) => {
-      options.bifprec = Number(value);
+      options.bifprec = Number(value.value);
     },
+    CompilerOptionsCodes.BiFPrec.InvalidParameter,
     "31",
     "15",
   ),
@@ -304,6 +283,7 @@ translator.rule(
     (options, value) => {
       options.cmpat = value.value as CompilerOptions.CMPat;
     },
+    CompilerOptionsCodes.CmPat.InvalidParameter,
     "V1",
     "V2",
     "V3",
@@ -419,8 +399,19 @@ translator.rule(
   ["DBRMLIB"],
   (option, options) => {
     ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      options.dbrmlib = false; // No param falls back to NODBRMLIB.
+      return;
+    }
     const dataSetName = option.values[0];
-    ensureType(dataSetName, "string");
+    ensureType(dataSetName, "plainOrString");
+    if (dataSetName.value.length === 0) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.DBRMLib.InvalidEmptyParameter,
+        dataSetName.token,
+        dataSetName.value,
+      );
+    }
     options.dbrmlib = dataSetName.value;
   },
   ["NODBRMLIB"],
@@ -952,18 +943,31 @@ translator.rule(
   ["EXIT"],
   (option, options) => {
     ensureArguments(option, 0, 1);
-    const value = option.values[0];
-    if (value) {
-      ensureType(value, "string");
-      options.exit = {
-        inparm: value.value,
-      };
-    } else {
-      options.exit = {};
+    if (option.values.length === 0) {
+      options.exit = false; // No param falls back to NOEXIT.
+      return;
     }
+    const inparam = option.values[0];
+    ensureType(inparam, "plainOrString");
+    if (inparam.value.length === 0) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Exit.InvalidEmptyParameter,
+        inparam.token,
+        inparam.value,
+      );
+    }
+    if (inparam.value.length > 1023) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Exit.InvalidParameterLength,
+        inparam.token,
+        inparam.value,
+      );
+    }
+    options.exit = inparam.value;
   },
   ["NOEXIT"],
-  (_, options) => {
+  (option, options) => {
+    ensureArguments(option, 0, 0);
     options.exit = false;
   },
 );
@@ -978,25 +982,33 @@ translator.rule(
     (options, value) => {
       options.extrn = value.value as CompilerOptions.Length;
     },
-    "FULL",
-    "SHORT",
+    CompilerOptionsCodes.Extrn.InvalidParameter,
+    ["FULL", "F"],
+    ["SHORT", "S"],
   ),
 );
 
 /** {@link CompilerOptions.fileRef} */
 translator.rule(
   ["FILEREF"],
-  plainTranslate(
-    (options, value) => {
-      options.fileRef = {
-        hash: value.value === "HASH",
-      };
-    },
-    "HASH",
-    "NOHASH",
-  ),
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      options.fileRef = { hash: false }; // No param falls back to NOHASH.
+      return;
+    }
+    ensureType(option.values[0], "plainNotEmpty");
+    options.fileRef = {
+      hash: ensureFlag(
+        option.values[0],
+        CompilerOptionsCodes.FileRef.InvalidParameter,
+        ["HASH", "NOHASH"],
+      ),
+    };
+  },
   ["NOFILEREF"],
-  (_, options) => {
+  (option, options) => {
+    ensureArguments(option, 0, 0);
     options.fileRef = false;
   },
 );
@@ -1029,6 +1041,7 @@ translator.rule(
         dfp: value.value === "DFP",
       };
     },
+    CompilerOptionsCodes.Float.InvalidParameter,
     "DFP",
     "NODFP",
   ),
@@ -1043,6 +1056,7 @@ translator.rule(
         type: value.value as CompilerOptions.FloatInMath["type"],
       };
     },
+    CompilerOptionsCodes.FloatInMath.InvalidParameter,
     "ASIS",
     "LONG",
     "EXTENDED",
@@ -3236,34 +3250,44 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.sysParm} */
-translator.rule(
-  ["SYSPARM"],
-  stringTranslate((options, text) => {
-    if (text.value.length > 1023) {
-      throw diagnosticFromCode(
-        CompilerOptionsCodes.SysParm.InvalidParameterLength,
-        text.token,
-        `${text.value.slice(0, 10)}..`,
-      );
-    }
+translator.rule(["SYSPARM"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  ensureType(option.values[0], "plainOrString");
+  if (
+    option.values[0].kind === SyntaxKind.CompilerOptionText &&
+    option.values[0].value.length === 0
+  ) {
+    throw diagnosticFromCode(
+      CompilerOptionsCodes.ExpectedPlainNotEmpty,
+      option.values[0].token,
+      option.values[0].value,
+    );
+  }
+  if (option.values[0].value.length > 1023) {
+    throw diagnosticFromCode(
+      CompilerOptionsCodes.SysParm.InvalidParameterLength,
+      option.values[0].token,
+      option.values[0].value,
+    );
+  }
 
-    options.sysParm = text.value;
-  }),
-);
+  options.sysParm = option.values[0].value;
+});
+
 /** {@link CompilerOptions.system} */
-translator.rule(
-  ["SYSTEM"],
-  plainTranslate(
-    (options, text) => {
-      options.system = text.value.toUpperCase() as CompilerOptions.System;
-    },
-    "MVS",
-    "CICS",
-    "IMS",
-    "OS",
-    "TSO",
-  ),
-);
+translator.rule(["SYSTEM"], (option, options) => {
+  ensureArguments(option, 1, 1);
+  ensureType(option.values[0], "plain");
+  if (option.values[0].value.length === 0) {
+    options.system = "MVS"; // No parameter defaults to MVS.
+    return;
+  }
+  options.system = ensureArgument(
+    option.values[0],
+    CompilerOptionsCodes.System.InvalidParameter,
+    ["MVS", "CICS", "IMS", "OS", "TSO"],
+  );
+});
 
 /** {@link CompilerOptions.terminal} */
 translator.flag("terminal", ["TERMINAL", "TERM"], ["NOTERMINAL", "NTERM"]);
