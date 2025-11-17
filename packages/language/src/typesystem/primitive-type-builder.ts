@@ -15,6 +15,7 @@ import {
   DefaultAttributeToEnum,
 } from "../parser/token-mappings";
 import { Token } from "../parser/tokens";
+import { ScanMode } from "../preprocessor/instructions";
 import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
@@ -51,6 +52,8 @@ import {
   AttributeWitness,
   Implications,
   TransmissionDirection,
+  ParameterPassMode,
+  ParameterPassDirection,
 } from "./descriptions";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
@@ -76,7 +79,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   private possibleDataTypes = new Set<DataType>(DataTypesArray);
   private attributeWitnesses: AttributeWitnesses =
     createEmptyAttributeWitnesses();
-  constructor(private elementName: Token) {}
+  constructor(private elementName: Token) { }
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -96,7 +99,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         );
         break;
       case ast.SyntaxKind.DimensionsDataAttribute:
-        if(attribute.dimensions && attribute.dimensionsToken) {
+        if (attribute.dimensions && attribute.dimensionsToken) {
           this.addAttributeWitness(
             AttributeKind.Dimension,
             attribute.dimensions,
@@ -165,12 +168,14 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case DefaultAttributeEnum.TASK:
       case DefaultAttributeEnum.FILE:
       case DefaultAttributeEnum.FORMAT:
+      case DefaultAttributeEnum.LABEL:
       case DefaultAttributeEnum.AREA: {
         const mapTo = {
           [DefaultAttributeEnum.AREA]: DataType.Area,
           [DefaultAttributeEnum.FILE]: DataType.File,
           [DefaultAttributeEnum.FORMAT]: DataType.Format,
           [DefaultAttributeEnum.TASK]: DataType.Task,
+          [DefaultAttributeEnum.LABEL]: DataType.Label,
         };
         const dataType = mapTo[typeAsEnum];
         this.addAttributeWitness(
@@ -593,41 +598,162 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         break;
       }
 
-      case DefaultAttributeEnum.BACKWARDS:
+      /**
+       * Procedure parameter passing attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-using-byvalue-byaddr
+       */
       case DefaultAttributeEnum.BYADDR:
-      case DefaultAttributeEnum.BYVALUE:
-      case DefaultAttributeEnum.CONDITION:
-      case DefaultAttributeEnum.CONSTANT:
-      case DefaultAttributeEnum.DIMACROSS:
-      case DefaultAttributeEnum.EVENT:
-      case DefaultAttributeEnum.EXCLUSIVE:
-      case DefaultAttributeEnum.GENERIC:
-      case DefaultAttributeEnum.HEX:
-      case DefaultAttributeEnum.INONLY:
-      case DefaultAttributeEnum.INOUT:
-      case DefaultAttributeEnum.IRREDUCIBLE:
-      case DefaultAttributeEnum.KEYED:
-      case DefaultAttributeEnum.LABEL:
-      case DefaultAttributeEnum.LIST:
-      case DefaultAttributeEnum.MEMBER:
-      case DefaultAttributeEnum.NATIVE:
-      case DefaultAttributeEnum.NOINIT:
-      case DefaultAttributeEnum.NONNATIVE:
+      case DefaultAttributeEnum.BYVALUE: {
+        const mapTo = {
+          [DefaultAttributeEnum.BYADDR]: ParameterPassMode.ByAddr,
+          [DefaultAttributeEnum.BYVALUE]: ParameterPassMode.ByValue,
+        };
+        const attributeValue = mapTo[typeAsEnum];
+        this.addAttributeWitness(
+          AttributeKind.ParameterPassMode,
+          attributeValue,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * Preprocessor scan attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=facilities-preprocessor-scan
+       */
       case DefaultAttributeEnum.NOSCAN:
-      case DefaultAttributeEnum.NULLINIT:
-      case DefaultAttributeEnum.OPTIONAL:
-      case DefaultAttributeEnum.OPTIONS:
+      case DefaultAttributeEnum.SCAN:
+      case DefaultAttributeEnum.RESCAN: {
+        const mapTo = {
+          [DefaultAttributeEnum.NOSCAN]: ScanMode.NoScan,
+          [DefaultAttributeEnum.SCAN]: ScanMode.Scan,
+          [DefaultAttributeEnum.RESCAN]: ScanMode.ReScan,
+        };
+        const attributeValue = mapTo[typeAsEnum];;
+        this.addAttributeWitness(
+          AttributeKind.ScanMode,
+          attributeValue,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+
+      /**
+       * Procedure parameter passing direction attributes
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-using-inonly-inout-outonly
+       */
+      case DefaultAttributeEnum.INONLY:
       case DefaultAttributeEnum.OUTONLY:
-      case DefaultAttributeEnum.PARAMETER:
+      case DefaultAttributeEnum.INOUT: {
+        const mapTo = {
+          [DefaultAttributeEnum.INONLY]: ParameterPassDirection.InOnly,
+          [DefaultAttributeEnum.OUTONLY]: ParameterPassDirection.OutOnly,
+          [DefaultAttributeEnum.INOUT]: ParameterPassDirection.InOut,
+        };
+        const attributeValue = mapTo[typeAsEnum];
+        this.addAttributeWitness(
+          AttributeKind.ParameterPassDirection,
+          attributeValue,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=conditions-condition-condition
+       */
+      case DefaultAttributeEnum.CONDITION: {
+        //TODO
+        break;
+      }
+
+      /**
+       * List flag attribute
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=data-list-attribute
+       */
+      case DefaultAttributeEnum.LIST: {
+        this.addAttributeWitness(
+          AttributeKind.List,
+          true,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      case DefaultAttributeEnum.OPTIONAL: {
+        this.addAttributeWitness(
+          AttributeKind.Optional,
+          true,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      /**
+       * Options attribute
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=organization-options-option-attribute
+       */
+      case DefaultAttributeEnum.OPTIONS: {
+        //TODO
+        break;
+      }
+
+      /**
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=data-generic-attribute
+       */
+      case DefaultAttributeEnum.GENERIC: {
+        //TODO
+        break;
+      }
+
+      /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-keyed-attribute */
+      case DefaultAttributeEnum.KEYED: {
+        //TODO
+        break;
+      }
+      
+      /**
+       * Parameter flag attribute
+       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-parameter-attribute
+       */
+      case DefaultAttributeEnum.PARAMETER: {
+        this.addAttributeWitness(
+          AttributeKind.Parameter,
+          true,
+          attribute,
+          token,
+        );
+        break;
+      }
+
+      case DefaultAttributeEnum.DIMACROSS: //for composite types only
+      case DefaultAttributeEnum.UNION: //for composite types only
+        break;
+      case DefaultAttributeEnum.BACKWARDS: //no documentation found
+      case DefaultAttributeEnum.CONSTANT: //no documentation found
+      case DefaultAttributeEnum.EVENT: //no documentation found
+      case DefaultAttributeEnum.EXCLUSIVE: //no documentation found
+      case DefaultAttributeEnum.HEX: //a function not an attribute
+      case DefaultAttributeEnum.IRREDUCIBLE: //no documentation found, but @see https://www.ibm.com/support/pages/apar/PI26521
+      case DefaultAttributeEnum.MEMBER: //no documentation found
+      case DefaultAttributeEnum.NATIVE: //no documentation found
+      case DefaultAttributeEnum.NOINIT: //no documentation found
+      case DefaultAttributeEnum.NONNATIVE: //no documentation found
+      case DefaultAttributeEnum.NULLINIT: //no documentation found
+      case DefaultAttributeEnum.TRANSIENT: //no documentation found
+        break;
+      
       case DefaultAttributeEnum.POSITION:
       case DefaultAttributeEnum.PRINT:
       case DefaultAttributeEnum.RANGE:
-      case DefaultAttributeEnum.RESCAN:
       case DefaultAttributeEnum.RESERVED:
-      case DefaultAttributeEnum.SCAN:
       case DefaultAttributeEnum.STRUCTURE:
-      case DefaultAttributeEnum.TRANSIENT:
-      case DefaultAttributeEnum.UNION:
       case DefaultAttributeEnum.VARIABLE:
         break;
       default:

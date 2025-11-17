@@ -10,6 +10,7 @@
  */
 
 import { Token } from "../parser/tokens";
+import { ScanMode } from "../preprocessor/instructions";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
 
@@ -83,12 +84,22 @@ export enum AttributeKind {
   FloatFormat,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute */
   Initial,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=data-list-attribute */
+  List,
   /** TODO need to find out whether LocatorKind can be split into more attribute kinds */
   LocatorKind,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-real-complex */
   NumberMode,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=data-optional-attribute */
+  Optional,
   /** TODO still needs to be handled by the type builder */
   OrdinalNames,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-parameter-attribute */
+  Parameter,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-using-inonly-inout-outonly */
+  ParameterPassDirection,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-using-byvalue-byaddr */
+  ParameterPassMode,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-picture-widepic */
   PictureKind,
   /**
@@ -102,6 +113,8 @@ export enum AttributeKind {
   Scale,
   /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=declarations-internal-external-attributes */
   Scope,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=facilities-preprocessor-scan */
+  ScanMode,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-signed-unsigned */
   Sign,
   /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-storage-classes-allocation-deallocation */
@@ -139,11 +152,16 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.Initial,
   AttributeKind.LocatorKind,
   AttributeKind.NumberMode,
+  AttributeKind.Optional,
   AttributeKind.OrdinalNames,
+  AttributeKind.Parameter,
+  AttributeKind.ParameterPassDirection,
+  AttributeKind.ParameterPassMode,
   AttributeKind.PictureKind,
   AttributeKind.Position,
   AttributeKind.Precision,
   AttributeKind.Scale,
+  AttributeKind.ScanMode,
   AttributeKind.Scope,
   AttributeKind.Sign,
   AttributeKind.Storage,
@@ -169,13 +187,19 @@ export type AttributeTypes = {
   [AttributeKind.FileUsage]: FileUsage;
   [AttributeKind.FloatFormat]: FloatFormat;
   [AttributeKind.Initial]: ast.InitialAttribute|undefined;
+  [AttributeKind.List]: boolean;
   [AttributeKind.LocatorKind]: LocatorKind;
   [AttributeKind.NumberMode]: NumberMode;
+  [AttributeKind.Optional]: boolean;
   [AttributeKind.OrdinalNames]: string[];
+  [AttributeKind.Parameter]: boolean;
+  [AttributeKind.ParameterPassDirection]: ParameterPassDirection;
+  [AttributeKind.ParameterPassMode]: ParameterPassMode|undefined;
   [AttributeKind.PictureKind]: PictureWideness;
   [AttributeKind.Position]: StoragePosition;
   [AttributeKind.Precision]: Precision;
   [AttributeKind.Scale]: ScaleMode;
+  [AttributeKind.ScanMode]: ScanMode;
   [AttributeKind.Scope]: Scope;
   [AttributeKind.Sign]: Sign;
   [AttributeKind.Storage]: StorageClass;
@@ -195,6 +219,7 @@ export const CommonAttributeKinds: AttributeKind[] = [
   AttributeKind.Connection,
   AttributeKind.Dimension,
   AttributeKind.Initial,
+  AttributeKind.ParameterPassMode,
   AttributeKind.Position,
   AttributeKind.Scope,
   AttributeKind.Storage,
@@ -272,15 +297,21 @@ export const DataTypesByAttributeKind = Object.entries(
 
 interface BaseTypeDescriptionProps {
   alignment: Alignment;
-  scope: Scope;
-  storage: StorageClass;
-  volatility: Volatility;
-  position?: StoragePosition;
   assignability: Assignability;
   connection: StorageConnection;
-  variable?: boolean;
   dimension?: ast.Dimensions;
   initial?: ast.InitialAttribute;
+  list: boolean;
+  optional: boolean;
+  parameter: boolean;
+  parameterPassDirection?: ParameterPassDirection;
+  parameterPassMode?: ParameterPassMode;
+  position?: StoragePosition;
+  scanMode?: ScanMode;
+  scope: Scope;
+  storage: StorageClass;
+  variable?: boolean;
+  volatility: Volatility;
 }
 
 interface WithTypeDescriminator {
@@ -358,6 +389,19 @@ export enum Volatility {
   Abnormal,
 }
 
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-using-byvalue-byaddr */
+export enum ParameterPassMode {
+  ByAddr,
+  ByValue,
+}
+
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-using-inonly-inout-outonly */
+export enum ParameterPassDirection {
+  InOnly,
+  OutOnly,
+  InOut,
+}
+
 /* TODO for storage attributes:
 Parameter:
 PARAMETER
@@ -380,6 +424,13 @@ function createBaseTypeDescription(
     dimension,
     assignability,
     variable,
+    scanMode,
+    list,
+    parameterPassDirection,
+    parameterPassMode,
+    initial,
+    optional,
+    parameter,
   }: Partial<BaseTypeDescriptionProps>,
 ): BaseTypeDescriptionProps {
   if (!alignment) {
@@ -396,10 +447,15 @@ function createBaseTypeDescription(
     }
   }
 
-  assignability ??= Assignability.Assignable;
-  connection ??= StorageConnection.Nonconnected;
-  scope ??= { type: ScopeType.Internal };
-  volatility ??= Volatility.Normal;
+  assignability ??= TypeDescriptions.DefaultValues[AttributeKind.Assignability];
+  connection ??= TypeDescriptions.DefaultValues[AttributeKind.Connection];
+  scope ??= TypeDescriptions.DefaultValues[AttributeKind.Scope];
+  volatility ??= TypeDescriptions.DefaultValues[AttributeKind.Volatility];
+  list ??= TypeDescriptions.DefaultValues[AttributeKind.List];
+  optional ??= TypeDescriptions.DefaultValues[AttributeKind.Optional];
+  parameter ??= TypeDescriptions.DefaultValues[AttributeKind.Parameter];
+  initial ??= TypeDescriptions.DefaultValues[AttributeKind.Initial];
+  scanMode ??= TypeDescriptions.DefaultValues[AttributeKind.ScanMode];
 
   if (!storage) {
     if (scope?.type === ScopeType.Internal) {
@@ -414,7 +470,14 @@ function createBaseTypeDescription(
     assignability,
     connection,
     dimension,
+    initial,
+    list,
+    optional,
+    parameter,
+    parameterPassDirection,
+    parameterPassMode,
     position,
+    scanMode,
     scope,
     storage,
     variable,
@@ -1089,6 +1152,60 @@ export namespace TypeDescriptions {
     | Structure;
   export type TypeDescriptionType = Any["type"];
 
+
+  //TODO check default values
+  export const DefaultValues: AttributeTypes = {
+    [AttributeKind.List]: false,
+    [AttributeKind.Optional]: false,
+    [AttributeKind.Parameter]: false,
+    [AttributeKind.FileUsage]: FileUsage.Record,
+    [AttributeKind.BufferMode]: BufferMode.Unbuffered,
+    [AttributeKind.AccessMode]: AccessMode.Sequential,
+    [AttributeKind.FloatFormat]: FloatFormat.IEEE,
+    [AttributeKind.Endianess]: Endianess.Big,
+    [AttributeKind.DataType]: DataType.Area,
+    [AttributeKind.Dimension]: undefined,
+    [AttributeKind.Initial]: undefined,
+    [AttributeKind.Alignment]: {
+      type: AlignmentType.Aligned,
+      alignment: 1,
+    },
+    [AttributeKind.Scope]: {
+      type: ScopeType.Internal,
+    },
+    [AttributeKind.Storage]: StorageClass.Automatic,
+    [AttributeKind.Volatility]: Volatility.Normal,
+    [AttributeKind.Position]: {
+      variable: null,
+      position: null,
+    },
+    [AttributeKind.Assignability]: Assignability.Assignable,
+    [AttributeKind.Connection]: StorageConnection.Connected,
+    [AttributeKind.Variable]: false,
+    [AttributeKind.Scale]: ScaleMode.Fixed,
+    [AttributeKind.ScanMode]: ScanMode.NoScan,
+    [AttributeKind.Precision]: {
+      totalDigitsCount: 5,
+      fractionalDigitsCount: 0,
+    },
+    [AttributeKind.Base]: Base.Binary,
+    [AttributeKind.Sign]: Sign.Signed,
+    [AttributeKind.NumberMode]: NumberMode.Real,
+    [AttributeKind.AreaSize]: 0,
+    [AttributeKind.LocatorKind]: {
+      type: "pointer",
+      size: 32,
+    },
+    [AttributeKind.OrdinalNames]: [],
+    [AttributeKind.ParameterPassMode]: ParameterPassMode.ByAddr,
+    [AttributeKind.ParameterPassDirection]: ParameterPassDirection.InOut,
+    [AttributeKind.PictureKind]: PictureWideness.Picture,
+    [AttributeKind.StringKind]: StringKind.Bit,
+    [AttributeKind.StringFormat]: StringFormat.Varying,
+    [AttributeKind.StringLength]: 0,
+    [AttributeKind.TransmissionDirection]: TransmissionDirection.Input,
+  };
+
   export const Structure = createStructureTypeDescription;
   export type Structure = StructureTypeDescription;
   export const isStructure = (
@@ -1156,53 +1273,6 @@ export namespace TypeDescriptions {
   ): type is StringTypeDescription =>
     isString(type) && type.kind === StringKind.Bit && type.length === 1;
 
-  //TODO check default values
-  const DefaultValues: AttributeTypes = {
-    [AttributeKind.FileUsage]: FileUsage.Record,
-    [AttributeKind.BufferMode]: BufferMode.Unbuffered,
-    [AttributeKind.AccessMode]: AccessMode.Sequential,
-    [AttributeKind.FloatFormat]: FloatFormat.IEEE,
-    [AttributeKind.Endianess]: Endianess.Big,
-    [AttributeKind.DataType]: DataType.Area,
-    [AttributeKind.Dimension]: undefined,
-    [AttributeKind.Initial]: undefined,
-    [AttributeKind.Alignment]: {
-      type: AlignmentType.Aligned,
-      alignment: 1,
-    },
-    [AttributeKind.Scope]: {
-      type: ScopeType.Internal,
-    },
-    [AttributeKind.Storage]: StorageClass.Automatic,
-    [AttributeKind.Volatility]: Volatility.Normal,
-    [AttributeKind.Position]: {
-      variable: null,
-      position: null,
-    },
-    [AttributeKind.Assignability]: Assignability.Assignable,
-    [AttributeKind.Connection]: StorageConnection.Connected,
-    [AttributeKind.Variable]: false,
-    [AttributeKind.Scale]: ScaleMode.Fixed,
-    [AttributeKind.Precision]: {
-      totalDigitsCount: 5,
-      fractionalDigitsCount: 0,
-    },
-    [AttributeKind.Base]: Base.Binary,
-    [AttributeKind.Sign]: Sign.Signed,
-    [AttributeKind.NumberMode]: NumberMode.Real,
-    [AttributeKind.AreaSize]: 0,
-    [AttributeKind.LocatorKind]: {
-      type: "pointer",
-      size: 32,
-    },
-    [AttributeKind.OrdinalNames]: [],
-    [AttributeKind.PictureKind]: PictureWideness.Picture,
-    [AttributeKind.StringKind]: StringKind.Bit,
-    [AttributeKind.StringFormat]: StringFormat.Varying,
-    [AttributeKind.StringLength]: 0,
-    [AttributeKind.TransmissionDirection]: TransmissionDirection.Input,
-  };
-
   export function createPrimitive(
     type: Exclude<DataType, DataType.Structure>,
     attributes: AttributeWitnesses,
@@ -1226,6 +1296,8 @@ export namespace TypeDescriptions {
       volatility:
         attributes[AttributeKind.Volatility]?.value ??
         DefaultValues[AttributeKind.Volatility],
+      parameterPassDirection: attributes[AttributeKind.ParameterPassDirection]?.value,
+      parameterPassMode: attributes[AttributeKind.ParameterPassMode]?.value,
       position:
         attributes[AttributeKind.Position]?.value ??
         DefaultValues[AttributeKind.Position],
@@ -1238,6 +1310,9 @@ export namespace TypeDescriptions {
       variable:
         attributes[AttributeKind.Variable]?.value ??
         DefaultValues[AttributeKind.Variable],
+      scanMode:
+        attributes[AttributeKind.ScanMode]?.value ??
+        DefaultValues[AttributeKind.ScanMode],
     };
     switch (type) {
       case DataType.Area:
