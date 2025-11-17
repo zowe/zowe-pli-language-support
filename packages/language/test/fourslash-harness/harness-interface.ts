@@ -53,8 +53,8 @@ type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 export type Not<T> = Omit<T, "not">;
 
 export type DimensionBound = {
-  lowerBound: number;
-  upperBound: number;
+  lowerBound: number|'*';
+  upperBound: number|'*';
 };
 type EditComputedAttributes<T extends TypeDescriptions.Any> = Omit<T, "dimension"> & {
   dimension: DimensionBound[] | undefined;

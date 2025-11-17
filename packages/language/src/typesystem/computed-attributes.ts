@@ -11,13 +11,12 @@ export function computeDimensions(description: TypeDescriptions.Any): Array<Dime
     const dims = description.dimension.dimensions;
     const result: Array<DimensionBound> = [];
     for(const dim of dims) {
-        function computeExpression(expr: ast.Wildcard<ast.Expression> | undefined | null, fallback: number): number {
+        function computeExpression(expr: ast.Wildcard<ast.Expression> | undefined | null, fallback: number): number|'*' {
             if (!expr) {
                 return fallback;
             }
             if (expr === '*') {
-                //TODO handle '*'
-                return fallback;
+                return '*';
             }
             const value =  evaluateExpression(expr);
             assertType<ast.SyntaxKind.NumberLiteral>(value.type);
