@@ -9,9 +9,23 @@
  *
  */
 
+import { tokenMatcher } from "chevrotain";
 import { TextDocuments } from "../language-server/text-documents";
+import {
+  diagnostic,
+  Diagnostic,
+  diagnosticFromCode,
+  Severity,
+} from "../language-server/types";
+import { preprocessorParse } from "../parser/parser-entry";
+import { preprocessorParserState } from "../parser/parser-state";
+import { tokenize } from "../parser/tokenizer";
 import { Token } from "../parser/tokens";
+import * as ast from "../syntax-tree/ast";
+import { CstNodeKind } from "../syntax-tree/cst";
 import { URI, UriUtils } from "../utils/uri";
+import { LspCodes } from "../validation/lsp-codes";
+import { PLICodes } from "../validation/pli-codes";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import {
@@ -24,17 +38,8 @@ import {
   InstructionGeneratorResult,
 } from "./instruction-generator";
 import * as inst from "./instructions";
-import * as ast from "../syntax-tree/ast";
 import { MarginsProcessor } from "./pli-margins-processor";
-import { CstNodeKind } from "../syntax-tree/cst";
-import { tokenize } from "../parser/tokenizer";
-import { preprocessorParserState } from "../parser/parser-state";
-import { preprocessorParse } from "../parser/parser-entry";
-import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import { tokenMatcher } from "chevrotain";
-import { PLICodes } from "../validation/pli-codes";
-import { LspCodes } from "../validation/lsp-codes";
 
 interface Variable {
   name: string;
@@ -2305,6 +2310,21 @@ async function resolveIncludeFileUri(
           scheme: context.entryUri.scheme,
         });
         return UriUtils.joinPath(libUri, fileName ?? "");
+      }
+    }
+
+    if (isMemberWithoutDDName && pgroup.memberNameValidation) {
+      // apply additional validation to the member name
+      const memberNameRegex = /^[A-Z][A-Z0-9@#_$]{0,7}$/i;
+      if (!memberNameRegex.test(fileNameOrPartial)) {
+        // emit a non-blocking diagnostic for invalid member names
+        context.diagnostics.push(
+          diagnostic(
+            Severity.E,
+            `(member-name-validation) Member '${fileNameOrPartial}' is invalid. Must be 1 to 8 characters long, starting with [A-Z], followed by only A-Z, 0-9, @, #, _, or $.`,
+            item.token,
+          ),
+        );
       }
     }
 

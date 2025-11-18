@@ -1,0 +1,56 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
+// Perform an include on a member w/ validation enabled in the plugin config
+
+/// <reference path="../../framework.ts" />
+
+// @filename: .pliplugin/proc_grps.json
+//// {
+////     "pgroups": [
+////         {
+////             "name": "default",
+////             "libs": [
+////                 "cpy"
+////             ],
+////             "include-extensions": [
+////                 ".pli"
+////             ],
+////             "member-name-validation": true
+////         }
+////     ]
+//// }
+
+// @filename: cpy/ddname(m12345678)
+//// // expecting to be invalid
+//// DECLARE V1 FIXED;
+
+// @filename: cpy/ddname(m1234567)
+//// // expecting to be valid
+//// DECLARE V2 FIXED;
+
+// @filename: main.pli
+//// %INCLUDE <|1:m12345678|>;
+//// %INCLUDE <|2:m1234567|>;
+
+// assert 1 diagnostic on the first include only
+verify.expectExclusiveDiagnosticsAt(1, [
+  {
+    severity: constants.Severity.E,
+  },
+]);
+verify.expectDiagnosticsAt(2, []);
+
+// still expecting the same tokens as before
+preprocessor.expectTokens(`
+  DECLARE V1 FIXED;
+  DECLARE V2 FIXED;
+`);
