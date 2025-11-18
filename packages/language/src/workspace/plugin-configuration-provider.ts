@@ -398,7 +398,8 @@ export class PluginConfigurationProvider {
   private async postProcessProcessGroups(): Promise<Diagnostic[]> {
     const diagnostics: Diagnostic[] = [];
     for (const processGroup of this.processGroupConfigs.values()) {
-      const computedLibs: Set<LibsEntry> = new Set();
+      // all computed libs for this group, dirs + ddnames
+      const computedLibsMap: Map<string, LibsEntry> = new Map();
       const libsToProcess = [...processGroup.libs];
       while (libsToProcess.length > 0) {
         const lib = libsToProcess.pop();
@@ -427,14 +428,15 @@ export class PluginConfigurationProvider {
                   // directory to add for handling
                   libsToProcess.push(`${lib}/${fileName}`);
                   // also add to the full libs list
-                  computedLibs.add({
-                    dir: `${lib}/${fileName}`,
+                  const dir = `${lib}/${fileName}`;
+                  computedLibsMap.set(`dir:${dir}`, {
+                    dir,
                   });
                 }
               }
             }
             // add the lib itself, now that we know it exists
-            computedLibs.add({
+            computedLibsMap.set(`dir:${lib}`, {
               dir: lib,
             });
           } catch (e) {
@@ -451,7 +453,7 @@ export class PluginConfigurationProvider {
               for (const entry of parentEntries) {
                 if (ddnamePattern.test(entry)) {
                   // found a ddname-style entry, add full lib & break out, only need one to confirm
-                  computedLibs.add({
+                  computedLibsMap.set(`dd:${lib}`, {
                     ddLib: lib,
                   });
                   matched = true;
@@ -479,11 +481,11 @@ export class PluginConfigurationProvider {
           }
         }
       }
-      const cl = Array.from(computedLibs);
-      processGroup.$computedLibs = cl;
+      const computedLibs = Array.from(computedLibsMap.values());
+      processGroup.$computedLibs = computedLibs;
       // build a lookup set for dir entries only
       processGroup.$computedLibsSet = new Set(
-        cl.filter((e) => isLibsDir(e)).map((e) => e.dir),
+        computedLibs.filter((e) => isLibsDir(e)).map((e) => e.dir),
       );
     }
     return diagnostics;
@@ -542,6 +544,13 @@ export class PluginConfigurationProvider {
     return [abstractOptions, translatedOptions, collectedIssues];
   }
 
+  /**
+   * Attempts to parse program configs from the given text,
+   * and sets them in this provider, overwriting any existing configs.
+   * @param workspacePath Used to build full program config keys
+   * @param text Program config text to parse
+   * @returns Whether or not parsing & setup was successful
+   */
   parseProgramConfigs(workspacePath: string, text: string): boolean {
     try {
       const serializedData: SerializedProgramConfig[] = JSON.parse(text).pgms;
@@ -556,6 +565,7 @@ export class PluginConfigurationProvider {
   /**
    * Sets the program configs of this plugin configuration provider, overwriting any existing configs.
    * The config key is set as the full path relative to the workspace.
+   * Post-processes the program configs after setting them, to ensure abstract options are built.
    * @param workspacePath The full workspace path (used as a prefix for program config keys)
    * @param programConfigs Program configs loaded from .pliplugin/pgm_conf.json (when present)
    */
@@ -569,6 +579,7 @@ export class PluginConfigurationProvider {
       const newPath = UriUtils.joinPath(workspaceUri, config.program);
       this.programConfigs.set(newPath.toString(), config);
     }
+    this.postProcessProgramConfigs();
   }
 
   /**

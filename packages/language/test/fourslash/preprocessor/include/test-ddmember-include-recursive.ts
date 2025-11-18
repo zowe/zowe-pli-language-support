@@ -13,22 +13,6 @@
 
 /// <reference path="../../framework.ts" />
 
-// TODO @montymxb Oct 17th, 2025: Replace with a fourslash utility to trigger config reload
-// @filename: .pliplugin/proc_grps.json
-//// {
-////     "pgroups": [
-////         {
-////         "name": "default",
-////         "lsp-options": {
-////             "check-margins": true
-////         },
-////         "libs": [
-////             "cpy"
-////         ]
-////         }
-////     ]
-//// }
-
 // @filename: cpy/MYLIB(m1)
 //// DECLARE LIB_VAR1 FIXED;
 

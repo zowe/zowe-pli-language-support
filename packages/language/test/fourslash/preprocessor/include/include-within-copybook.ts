@@ -11,21 +11,6 @@
 
 /// <reference path="../../framework.ts" />
 
-// @filename: .pliplugin/proc_grps.json
-//// {
-////     "pgroups": [
-////         {
-////             "name": "default",
-////             "libs": [
-////                 "cpy"
-////             ],
-////             "include-extensions": [
-////                 ".pli"
-////             ]
-////         }
-////     ]
-//// }
-
 // @filename: cpy/lib.pli
 //// DECLARE LIB_VAR FIXED;
 
