@@ -134,7 +134,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           attribute.pictureToken!,
         );
         break;
-      case ast.SyntaxKind.ReturnsAttribute:
+      case ast.SyntaxKind.ReturnsAttribute: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=organization-returns-option-attribute
         break;
       case ast.SyntaxKind.TypeAttribute:
         //TODO handle type attribute
@@ -147,10 +147,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           );
         }
         break;
-      case ast.SyntaxKind.ValueAttribute:
-      case ast.SyntaxKind.ValueListAttribute:
-      case ast.SyntaxKind.ValueListFromAttribute:
-      case ast.SyntaxKind.ValueRangeAttribute:
+      case ast.SyntaxKind.ValueAttribute: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-value-attribute
+      case ast.SyntaxKind.ValueListAttribute: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-valuelist-attribute
+      case ast.SyntaxKind.ValueListFromAttribute: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-valuelistfrom-attribute
+      case ast.SyntaxKind.ValueRangeAttribute: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-valuerange-attribute
         break;
       default:
         assertUnreachable(attribute);
@@ -747,14 +747,14 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case DefaultAttributeEnum.NONNATIVE: //no documentation found
       case DefaultAttributeEnum.NULLINIT: //no documentation found
       case DefaultAttributeEnum.TRANSIENT: //no documentation found
+      case DefaultAttributeEnum.RANGE: //no documentation found
         break;
       
-      case DefaultAttributeEnum.POSITION:
-      case DefaultAttributeEnum.PRINT:
-      case DefaultAttributeEnum.RANGE:
-      case DefaultAttributeEnum.RESERVED:
-      case DefaultAttributeEnum.STRUCTURE:
-      case DefaultAttributeEnum.VARIABLE:
+      case DefaultAttributeEnum.POSITION: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-defined-position-attributes
+      case DefaultAttributeEnum.PRINT: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=transmission-print-attribute
+      case DefaultAttributeEnum.RESERVED: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=declarations-reserved-attribute
+      case DefaultAttributeEnum.STRUCTURE: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=definitions-defining-typed-structures-unions
+      case DefaultAttributeEnum.VARIABLE: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
         break;
       default:
         assertUnreachable(typeAsEnum);
