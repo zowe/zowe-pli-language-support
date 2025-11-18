@@ -49,7 +49,6 @@ import { format } from "util";
 import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
 import { TypeExpectation } from "./fourslash-harness/harness-interface";
 import { binaryTokenSearch } from "../src/utils/search";
-import { computeDimensions } from "../src/typesystem/computed-attributes";
 
 export type Label = string | number | string[] | number[];
 
@@ -1013,10 +1012,7 @@ export class TestBuilder {
       if(actualType.type === DataType.Unknown || actualType.type === DataType.Structure || !actualType.dimension) {
         this.expectTypeWithStructure(expectedType, actualType as any);
       } else {
-        this.expectTypeNoStructure(expectedType, {
-          ...actualType as any,
-          dimension: computeDimensions(actualType),
-        } as TypeExpectation);
+        this.expectTypeNoStructure(expectedType, actualType);
       }
     }
   }
@@ -1061,14 +1057,12 @@ export class TestBuilder {
   }
 
   private expectTypeNoStructure(
-    expectedType: TypeExpectation,
-    actualType: TypeExpectation,
+    expectedType: object,
+    actualType: object,
   ) {
     for (const [key, value] of Object.entries(expectedType)) {
       if (typeof value === "object" && value !== null) {
-        expect(actualType[key as keyof typeof actualType]).toEqual(
-          expect.objectContaining(value),
-        );
+        this.expectTypeNoStructure(value, actualType[key as keyof typeof actualType]);
       } else {
         expect(actualType[key as keyof typeof actualType]).toEqual(value);
       }

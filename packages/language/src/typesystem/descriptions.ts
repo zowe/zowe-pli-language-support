@@ -173,6 +173,17 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.Volatility,
 ];
 
+export type Bound = {
+  value: number|'*'|undefined;
+  expression: ast.Wildcard<ast.Expression>|null;
+  refersTo: ast.LocatorCall|null;
+}
+
+export type DimensionBound = {
+  lowerBound: Bound;
+  upperBound: Bound;
+};
+
 export type AttributeTypes = {
   [AttributeKind.AccessMode]: AccessMode;
   [AttributeKind.Alignment]: Alignment;
@@ -182,7 +193,7 @@ export type AttributeTypes = {
   [AttributeKind.BufferMode]: BufferMode;
   [AttributeKind.Connection]: StorageConnection;
   [AttributeKind.DataType]: DataType;
-  [AttributeKind.Dimension]: ast.Dimensions|undefined;
+  [AttributeKind.Dimension]: DimensionBound[]|undefined;
   [AttributeKind.Endianess]: Endianess;
   [AttributeKind.FileUsage]: FileUsage;
   [AttributeKind.FloatFormat]: FloatFormat;
@@ -299,7 +310,7 @@ interface BaseTypeDescriptionProps {
   alignment: Alignment;
   assignability: Assignability;
   connection: StorageConnection;
-  dimension?: ast.Dimensions;
+  dimension?: DimensionBound[];
   initial?: ast.InitialAttribute;
   list: boolean;
   optional: boolean;
@@ -1151,7 +1162,6 @@ export namespace TypeDescriptions {
     | Unknown
     | Structure;
   export type TypeDescriptionType = Any["type"];
-
 
   //TODO check default values
   export const DefaultValues: AttributeTypes = {

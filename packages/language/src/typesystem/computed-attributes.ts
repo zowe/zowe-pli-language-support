@@ -1,30 +1,45 @@
-import { DimensionBound } from "../../test/fourslash-harness/harness-interface";
-import { DataType, TypeDescriptions } from "./descriptions";
+import { Bound, DimensionBound } from "./descriptions";
 import * as ast from "../syntax-tree/ast";
 import { evaluateExpression } from "./evaluate";
-import { assertType } from "../preprocessor/util";
 
-export function computeDimensions(description: TypeDescriptions.Any): Array<DimensionBound> | undefined {
-    if(description.type === DataType.Structure || description.type === DataType.Unknown || !description.dimension) {
-        return undefined;
-    }
-    const dims = description.dimension.dimensions;
+export function computeDimensions(dimension: ast.Dimensions): Array<DimensionBound> {
+    const dims = dimension.dimensions;
     const result: Array<DimensionBound> = [];
     for(const dim of dims) {
-        function computeExpression(expr: ast.Wildcard<ast.Expression> | undefined | null, fallback: number): number|'*' {
+        function computeExpression(bound: ast.Bound | undefined | null, defaultValue: number): Bound {
+            const expr = bound?.expression;
             if (!expr) {
-                return fallback;
+                return {
+                    value: defaultValue,
+                    expression: null,
+                    refersTo: null,
+                };
             }
             if (expr === '*') {
-                return '*';
+                return {
+                    value: '*',
+                    expression: expr,
+                    refersTo: null,
+                };
             }
-            const value =  evaluateExpression(expr);
-            assertType<ast.SyntaxKind.NumberLiteral>(value.type);
-            return value.value as number;
+            const value = evaluateExpression(expr);
+            if(typeof value.value === 'number') {
+                return {
+                    value: value.value,
+                    expression: expr,
+                    refersTo: null,
+                };
+            } else {
+                return {
+                    value: undefined,
+                    expression: expr,
+                    refersTo: null,
+                };
+            }
         }
         result.push({
-            lowerBound: computeExpression(dim.lower?.expression, 1),
-            upperBound: computeExpression(dim.upper?.expression, 0),
+            lowerBound: computeExpression(dim.lower, 1),
+            upperBound: computeExpression(dim.upper, 1),
         });
     }
     return result;

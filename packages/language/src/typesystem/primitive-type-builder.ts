@@ -20,6 +20,7 @@ import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
 import { Error } from "../validation/pli-codes";
+import { computeDimensions } from "./computed-attributes";
 import {
   DataType,
   DataTypesByAttributeKind,
@@ -102,7 +103,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         if (attribute.dimensions && attribute.dimensionsToken) {
           this.addAttributeWitness(
             AttributeKind.Dimension,
-            attribute.dimensions,
+            computeDimensions(attribute.dimensions),
             attribute,
             attribute.dimensionsToken,
           );

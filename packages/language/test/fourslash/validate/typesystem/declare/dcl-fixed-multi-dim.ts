@@ -19,11 +19,11 @@ types.expectTypeAt("1", {
   scale: types.scales.Fixed,
   precision: types.precision.create(5, 0),
   dimension: [{
-    lowerBound: -1,
-    upperBound: 1
+    lowerBound: { value: -1 },
+    upperBound: { value: 1 }
   }, {
-    lowerBound: 1,
-    upperBound: 5
+    lowerBound: { value: 1 },
+    upperBound: { value: 5 }
   }],
   mode: types.modes.Real,
 });

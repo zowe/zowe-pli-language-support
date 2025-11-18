@@ -28,6 +28,7 @@ import {
   Alignments,
   Assignability,
   Base,
+  Bound,
   BufferMode,
   DataType,
   Endianess,
@@ -52,12 +53,11 @@ type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
 export type Not<T> = Omit<T, "not">;
 
-export type DimensionBound = {
-  lowerBound: number|'*';
-  upperBound: number|'*';
-};
 type EditComputedAttributes<T extends TypeDescriptions.Any> = Omit<T, "dimension"> & {
-  dimension: DimensionBound[] | undefined;
+  dimension: {
+    lowerBound: Partial<Bound>;
+    upperBound: Partial<Bound>;
+  }[] | undefined;
 };
 export type PrimitiveTypeExpectation =
   | EditComputedAttributes<TypeDescriptions.Area>
