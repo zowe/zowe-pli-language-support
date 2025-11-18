@@ -1384,7 +1384,7 @@ function declaredVariable(state: ParserState): ast.DeclaredVariable {
 
 function dimensions(state: ParserState): ast.Dimensions {
   const dimensions = ast.createDimensions();
-  state.consume(dimensions, CstNodeKind.Dimensions_OpenParen, t.OpenParen);
+  dimensions.token = state.consume(dimensions, CstNodeKind.Dimensions_OpenParen, t.OpenParen);
   if (
     state.tryConsume(
       dimensions,
@@ -1456,11 +1456,9 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
         attributes.push(dataAttribute);
       }
     } else if (state.canConsume(t.OpenParen)) {
-      const dimensionsToken = state.token!;
       const dim = dimensions(state);
       const dimensionAttribute = ast.createDimensionsDataAttribute();
       dimensionAttribute.dimensions = dim;
-      dimensionAttribute.dimensionsToken = dimensionsToken;
       attributes.push(dimensionAttribute);
     } else if (state.canConsume(t.ENTRY)) {
       // TODO: This is not the full entry attribute syntax

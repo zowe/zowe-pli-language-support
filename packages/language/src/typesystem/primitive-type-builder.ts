@@ -100,12 +100,12 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         );
         break;
       case ast.SyntaxKind.DimensionsDataAttribute:
-        if (attribute.dimensions && attribute.dimensionsToken) {
+        if (attribute.dimensions && attribute.dimensions.token) {
           this.addAttributeWitness(
             AttributeKind.Dimension,
             computeDimensions(attribute.dimensions),
             attribute,
-            attribute.dimensionsToken,
+            attribute.dimensions.token!,
           );
         }
         break;

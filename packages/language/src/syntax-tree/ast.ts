@@ -1297,25 +1297,25 @@ export function createDimensionBound(): DimensionBound {
 export interface Dimensions extends AstNode {
   kind: SyntaxKind.Dimensions;
   dimensions: DimensionBound[];
+  token: Token | null;
 }
 export function createDimensions(): Dimensions {
   return {
     kind: SyntaxKind.Dimensions,
     container: null,
     dimensions: [],
+    token: null,
   };
 }
 export interface DimensionsDataAttribute extends AstNode {
   kind: SyntaxKind.DimensionsDataAttribute;
   dimensions: Dimensions | null;
-  dimensionsToken: Token | null;
 }
 export function createDimensionsDataAttribute(): DimensionsDataAttribute {
   return {
     kind: SyntaxKind.DimensionsDataAttribute,
     container: null,
     dimensions: null,
-    dimensionsToken: null,
   };
 }
 export interface DisplayStatement extends AstNode {

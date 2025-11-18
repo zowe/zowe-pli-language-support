@@ -1,4 +1,3 @@
-import { assert } from "console";
 import { Expression, SyntaxKind } from "../syntax-tree/ast";
 import { DataType, StringFormat, StringKind, TypeDescriptions, Value } from "./descriptions";
 import { assertType } from "../preprocessor/util";
