@@ -987,6 +987,9 @@ export const BINARY = registerKeyword({
     [CharOrBinary, ast.CharOrBinary.BINARY],
   ],
 });
+export const VARBINARY = registerKeyword({
+  name: "VARBINARY",
+});
 export const BIN = registerKeyword({
   name: "BIN",
   categories: [[DefaultAttribute, ast.DefaultAttribute.BINARY]],

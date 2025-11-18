@@ -521,6 +521,13 @@ function runSqlAttributeInstruction(
     context.tokens.push(...lex(LOB_LOCATOR_TYPE));
   } else if (body.kind === ast.SyntaxKind.SqlAttributeRowId) {
     context.tokens.push(...lex(ROWID_TYPE));
+  } else if (body.kind === ast.SyntaxKind.SqlAttributeBinary) {
+    const length = computeLobLength(body);
+    const varAttribute =
+      body.type === ast.SqlAttributeBinaryType.VARBINARY
+        ? "VARYING"
+        : "NONVARYING";
+    context.tokens.push(...lex(`CHAR(${length}) ${varAttribute}`));
   } else {
     // The LOB_FILE and LOB attributes require additional declarations to be inserted
     // They are always inserted after the semicolon of the procedure statement
@@ -556,7 +563,9 @@ function runSqlAttributeInstruction(
   }
 }
 
-function computeLobLength(lob: ast.SqlAttributeLob): number {
+function computeLobLength(
+  lob: ast.SqlAttributeLob | ast.SqlAttributeBinary,
+): number {
   if (lob.length !== null) {
     let givenLength = lob.length;
     switch (lob.size) {
