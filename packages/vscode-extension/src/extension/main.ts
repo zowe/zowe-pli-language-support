@@ -22,6 +22,7 @@ import { Settings } from "./settings";
 import { registerCustomDecorators } from "./decorators";
 import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
 import TelemetryReporter from "@vscode/extension-telemetry";
+import { PluginConfiguration } from "pli-language";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -84,15 +85,15 @@ function registerOnDidOpenTextDocListener(
 
     // create the .pliplugin folder and files, using the current file as the entry point
     fs.mkdirSync(plipluginPath);
-
     fs.writeFileSync(
       path.join(plipluginPath, "pgm_conf.json"),
       JSON.stringify(
         {
+          ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
           pgms: [
             {
+              ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
               program: path.relative(workspaceFolder, document.fileName),
-              pgroup: "default",
             },
           ],
         },
@@ -103,24 +104,12 @@ function registerOnDidOpenTextDocListener(
     fs.writeFileSync(
       path.join(plipluginPath, "proc_grps.json"),
       JSON.stringify(
-        {
-          pgroups: [
-            {
-              name: "default",
-              "compiler-options": [],
-              libs: ["cpy", "inc"],
-              "include-extensions": [".pli", ".pl1", ".inc"],
-              "implicit-builtins": ["SUBSTR"],
-              "lsp-options": {
-                "check-margins": true,
-              },
-            },
-          ],
-        },
+        PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
         null,
         2,
       ),
     );
+
     vscode.window.showInformationMessage(
       "'.pliplugin' folder and files created successfully.",
     );

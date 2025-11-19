@@ -34,7 +34,6 @@ import { SemanticTokenDecoder } from "../src/language-server/semantic-token-deco
 import { SemanticTokenTypes } from "vscode-languageserver-types";
 import { skippedCodeRanges } from "../src/language-server/skipped-code";
 import {
-  PluginConfigurationProvider,
   PluginConfigurationProviderInstance,
   setPluginConfigurationProvider,
 } from "../src/workspace/plugin-configuration-provider";
@@ -49,6 +48,7 @@ import { format } from "util";
 import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
 import { TypeExpectation } from "./fourslash-harness/harness-interface";
 import { binaryTokenSearch } from "../src/utils/search";
+import { PluginConfiguration } from "../src/language-server/constants";
 
 export type Label = string | number | string[] | number[];
 
@@ -267,13 +267,13 @@ export class TestBuilder {
   private async configurePluginConfigurationProvider() {
     // Check if the files contain a program config or process group.
     for (const [uri, file] of this.files) {
-      if (uri.endsWith(PluginConfigurationProvider.PROGRAM_CONFIG_FILE)) {
+      if (uri.endsWith(PluginConfiguration.PROGRAM_FILE_PATH)) {
         PluginConfigurationProviderInstance.parseProgramConfigs(
           "",
           file.output,
         );
       }
-      if (uri.endsWith(PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE)) {
+      if (uri.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)) {
         await PluginConfigurationProviderInstance.parseProcessGroupConfigs(
           file.output,
         );
