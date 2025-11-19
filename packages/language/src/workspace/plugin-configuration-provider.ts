@@ -202,10 +202,6 @@ export function isLibsDir(entry: LibsEntry): entry is LibsDirEntry {
  * processing their contents, and making those settings available to the language server.
  */
 export class PluginConfigurationProvider {
-  public static readonly PROGRAM_CONFIG_FILE = ".pliplugin/pgm_conf.json";
-  public static readonly PROCESS_GROUP_CONFIG_FILE =
-    ".pliplugin/proc_grps.json";
-
   /**
    * Prebuilt list of glob patterns for library file matching.
    */

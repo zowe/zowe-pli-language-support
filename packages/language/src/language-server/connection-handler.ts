@@ -36,15 +36,14 @@ import { renameRequest } from "./rename-request";
 import { getReferenceLocations } from "../linking/resolver";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
-import {
-  PluginConfigurationProvider,
-  PluginConfigurationProviderInstance,
-} from "../workspace/plugin-configuration-provider";
+import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { Mutex } from "../workspace/mutex";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
-import { FileSystemProviderInstance } from "../workspace/file-system-provider";
+import { commandCreateConfig, commandResolveInclude } from "./commands";
+import { Commands, PluginConfiguration } from "./constants";
+export { PluginConfiguration } from "./constants";
 
 /**
  * Notification sent to the LS when the workspace's plugin configuration changes.
@@ -55,7 +54,6 @@ export const WorkspaceDidChangePlipluginConfigNotification =
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
   compilationUnitHandler.listen(connection);
-  const APPLY_QUICK_FIXES = "pli.applyIncludeFix";
 
   connection.onInitialize(async (params) => {
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
@@ -66,8 +64,7 @@ export function startLanguageServer(connection: Connection): void {
           const ws = PluginConfigurationProviderInstance.getWorkspacePath();
           const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
           connection.sendDiagnostics({
-            uri:
-              wsPrefix + PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE,
+            uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,
             diagnostics,
           });
         },
@@ -95,7 +92,7 @@ export function startLanguageServer(connection: Connection): void {
         referencesProvider: true,
         codeActionProvider: true,
         executeCommandProvider: {
-          commands: [APPLY_QUICK_FIXES],
+          commands: [Commands.RESOLVE_INCLUDE, Commands.CREATE_CONFIG],
         },
         documentHighlightProvider: true,
         semanticTokensProvider: {
@@ -313,7 +310,7 @@ export function startLanguageServer(connection: Connection): void {
         const ws = PluginConfigurationProviderInstance.getWorkspacePath();
         const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
         connection.sendDiagnostics({
-          uri: wsPrefix + PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE,
+          uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,
           diagnostics,
         });
 
@@ -339,15 +336,13 @@ export function startLanguageServer(connection: Connection): void {
   });
 
   connection.onExecuteCommand(async (params) => {
-    if (params.command === APPLY_QUICK_FIXES) {
-      return Mutex.run(async () => {
-        const [uri, content] = params.arguments as string[];
-        try {
-          await FileSystemProviderInstance.writeFile(URI.parse(uri), content);
-        } catch (err) {
-          console.error("Failed to write proc_grps.json:", err);
-        }
-      });
+    switch (params.command) {
+      case Commands.RESOLVE_INCLUDE:
+        await commandResolveInclude(params);
+        break;
+      case Commands.CREATE_CONFIG:
+        await commandCreateConfig(params);
+        break;
     }
   });
 
