@@ -37,9 +37,13 @@
 //// // expecting to be valid
 //// DECLARE V2 FIXED;
 
+// @filename: cpy/ddname(A1@#_$)
+//// DECLARE V3 FIXED;
+
 // @filename: main.pli
 //// %INCLUDE <|1:m12345678|>;
 //// %INCLUDE <|2:m1234567|>;
+//// %INCLUDE <|3:A1@#_$|>;
 
 // assert 1 diagnostic on the first include only
 verify.expectExclusiveDiagnosticsAt(1, [
@@ -47,10 +51,14 @@ verify.expectExclusiveDiagnosticsAt(1, [
     severity: constants.Severity.E,
   },
 ]);
+// no diagnostics on the second include
 verify.expectDiagnosticsAt(2, []);
+// no diagnostics on the 3rd include
+verify.expectDiagnosticsAt(3, []);
 
 // still expecting the same tokens as before
 preprocessor.expectTokens(`
   DECLARE V1 FIXED;
   DECLARE V2 FIXED;
+  DECLARE V3 FIXED;
 `);
