@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">6.6% </span>
+                <span class="strong">7.3% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>20/303</span>
+                <span class='fraction'>22/301</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">6.6% </span>
+                <span class="strong">7.3% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>20/303</span>
+                <span class='fraction'>22/301</span>
             </div>
         
             
@@ -413,12 +413,7 @@
 <a name='L348'></a><a href='#L348'>348</a>
 <a name='L349'></a><a href='#L349'>349</a>
 <a name='L350'></a><a href='#L350'>350</a>
-<a name='L351'></a><a href='#L351'>351</a>
-<a name='L352'></a><a href='#L352'>352</a>
-<a name='L353'></a><a href='#L353'>353</a>
-<a name='L354'></a><a href='#L354'>354</a>
-<a name='L355'></a><a href='#L355'>355</a>
-<a name='L356'></a><a href='#L356'>356</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L351'></a><a href='#L351'>351</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -457,14 +452,13 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -475,12 +469,10 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -758,8 +750,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -811,15 +801,14 @@ import { renameRequest } from "./rename-request";
 import { getReferenceLocations } from "../linking/resolver";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
-import {
-  PluginConfigurationProvider,
-  PluginConfigurationProviderInstance,
-} from "../workspace/plugin-configuration-provider";
+import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { Mutex } from "../workspace/mutex";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
-import { FileSystemProviderInstance } from "../workspace/file-system-provider";
+import { commandCreateConfig, commandResolveInclude } from "./commands";
+import { Commands, PluginConfiguration } from "./constants";
+export { PluginConfiguration } from "./constants";
 &nbsp;
 /**
  * Notification sent to the LS when the workspace's plugin configuration changes.
@@ -830,7 +819,6 @@ export const WorkspaceDidChangePlipluginConfigNotification =
 export <span class="fstat-no" title="function not covered" >function startLanguageServer(connection: Connection): void {</span>
 <span class="cstat-no" title="statement not covered" >  const compilationUnitHandler = new CompilationUnitHandler();</span>
 <span class="cstat-no" title="statement not covered" >  compilationUnitHandler.listen(connection);</span>
-<span class="cstat-no" title="statement not covered" >  const APPLY_QUICK_FIXES = "pli.applyIncludeFix";</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  connection.onInitialize(async (params) =&gt; {</span>
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
@@ -841,8 +829,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >          const ws = PluginConfigurationProviderInstance.getWorkspacePath();</span>
 <span class="cstat-no" title="statement not covered" >          const wsPrefix = ws.endsWith("/") ? ws : ws + "/";</span>
 <span class="cstat-no" title="statement not covered" >          connection.sendDiagnostics({</span>
-<span class="cstat-no" title="statement not covered" >            uri:</span>
-<span class="cstat-no" title="statement not covered" >              wsPrefix + PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE,</span>
+<span class="cstat-no" title="statement not covered" >            uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,</span>
 <span class="cstat-no" title="statement not covered" >            diagnostics,</span>
 <span class="cstat-no" title="statement not covered" >          });</span>
 <span class="cstat-no" title="statement not covered" >        },</span>
@@ -870,7 +857,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >        referencesProvider: true,</span>
 <span class="cstat-no" title="statement not covered" >        codeActionProvider: true,</span>
 <span class="cstat-no" title="statement not covered" >        executeCommandProvider: {</span>
-<span class="cstat-no" title="statement not covered" >          commands: [APPLY_QUICK_FIXES],</span>
+<span class="cstat-no" title="statement not covered" >          commands: [Commands.RESOLVE_INCLUDE, Commands.CREATE_CONFIG],</span>
 <span class="cstat-no" title="statement not covered" >        },</span>
 <span class="cstat-no" title="statement not covered" >        documentHighlightProvider: true,</span>
 <span class="cstat-no" title="statement not covered" >        semanticTokensProvider: {</span>
@@ -1088,7 +1075,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >        const ws = PluginConfigurationProviderInstance.getWorkspacePath();</span>
 <span class="cstat-no" title="statement not covered" >        const wsPrefix = ws.endsWith("/") ? ws : ws + "/";</span>
 <span class="cstat-no" title="statement not covered" >        connection.sendDiagnostics({</span>
-<span class="cstat-no" title="statement not covered" >          uri: wsPrefix + PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE,</span>
+<span class="cstat-no" title="statement not covered" >          uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,</span>
 <span class="cstat-no" title="statement not covered" >          diagnostics,</span>
 <span class="cstat-no" title="statement not covered" >        });</span>
 &nbsp;
@@ -1114,15 +1101,13 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >  });</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  connection.onExecuteCommand(async (params) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (params.command === APPLY_QUICK_FIXES) {</span>
-<span class="cstat-no" title="statement not covered" >      return Mutex.run(async () =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        const [uri, content] = params.arguments as string[];</span>
-<span class="cstat-no" title="statement not covered" >        try {</span>
-<span class="cstat-no" title="statement not covered" >          await FileSystemProviderInstance.writeFile(URI.parse(uri), content);</span>
-<span class="cstat-no" title="statement not covered" >        } catch (err) {</span>
-<span class="cstat-no" title="statement not covered" >          console.error("Failed to write proc_grps.json:", err);</span>
-<span class="cstat-no" title="statement not covered" >        }</span>
-<span class="cstat-no" title="statement not covered" >      });</span>
+<span class="cstat-no" title="statement not covered" >    switch (params.command) {</span>
+<span class="cstat-no" title="statement not covered" >      case Commands.RESOLVE_INCLUDE:</span>
+<span class="cstat-no" title="statement not covered" >        await commandResolveInclude(params);</span>
+<span class="cstat-no" title="statement not covered" >        break;</span>
+<span class="cstat-no" title="statement not covered" >      case Commands.CREATE_CONFIG:</span>
+<span class="cstat-no" title="statement not covered" >        await commandCreateConfig(params);</span>
+<span class="cstat-no" title="statement not covered" >        break;</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >  });</span>
 &nbsp;
@@ -1135,7 +1120,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-13T08:01:54.401Z
+                at 2025-11-19T16:49:21.611Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
