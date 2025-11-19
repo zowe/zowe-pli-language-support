@@ -18,10 +18,14 @@ import {
   Diagnostic,
 } from "vscode-languageserver-types";
 import {
-  PluginConfigurationProvider,
   PluginConfigurationProviderInstance,
   serializeProcessGroup,
 } from "../../workspace/plugin-configuration-provider";
+
+import { Commands, PluginConfiguration } from "../constants";
+import { PLICodes } from "../../validation/pli-codes";
+import { LspCodes } from "../../validation/lsp-codes";
+import { fullCode } from "../types";
 
 export async function quickFixResolveInclude(
   diagnostic: Diagnostic,
@@ -73,17 +77,38 @@ export async function quickFixResolveInclude(
 
   const procGrpsFileUri = UriUtils.joinPath(
     workspaceFolderUri,
-    PluginConfigurationProvider.PROCESS_GROUP_CONFIG_FILE,
+    PluginConfiguration.PROCESS_GROUP_FILE_PATH,
   );
 
   const action: CodeAction = {
-    title: `Add '${parentFolder}' to INCLUDE libs`,
+    title: `Add '${parentFolder}' to INCLUDE libs.`,
     kind: CodeActionKind.QuickFix,
     diagnostics: [diagnostic],
     command: {
       title: "Apply INCLUDE fix",
-      command: "pli.applyIncludeFix",
+      command: Commands.RESOLVE_INCLUDE,
       arguments: [procGrpsFileUri.toString(), newContent],
+    },
+  };
+
+  return action;
+}
+
+export async function quickFixCreateConfig(
+  diagnostic: Diagnostic,
+): Promise<CodeAction | undefined> {
+  const entryUri = UriUtils.basename(URI.parse(diagnostic.data.entryUri));
+  if (!diagnostic.data.entryUri || !entryUri) {
+    return undefined;
+  }
+  const action: CodeAction = {
+    title: `Create a plugin configuration folder for this file.`,
+    kind: CodeActionKind.QuickFix,
+    diagnostics: [diagnostic],
+    command: {
+      title: "Create configuration folder",
+      command: Commands.CREATE_CONFIG,
+      arguments: [entryUri],
     },
   };
 
@@ -95,12 +120,25 @@ export async function applyQuickFixes(
 ): Promise<CodeAction[] | undefined> {
   const actions: CodeAction[] = [];
   // PLI CODES LIST
-  const CODE_UNRESOLVED_INCLUDE = "IBM3841IS"; // The INCLUDE file could not be found, or if found, it could not be opened.
+  const CODE_UNRESOLVED_INCLUDE = fullCode(PLICodes.Severe.IBM3841I); // The INCLUDE file could not be found, or if found, it could not be opened.
+  const CODE_MISSING_CONFIG = fullCode(
+    LspCodes.IncludeResolution.MissingConfiguration,
+  ); // "Could not resolve include directive. Plugin configuration is missing"
 
   for (const diagnostic of diagnostics) {
-    if (diagnostic.code === CODE_UNRESOLVED_INCLUDE) {
-      const action = await quickFixResolveInclude(diagnostic);
-      if (action) actions.push(action);
+    if (!diagnostic.code) {
+      return;
+    }
+    let action: CodeAction | undefined;
+    switch (diagnostic.code) {
+      case CODE_UNRESOLVED_INCLUDE:
+        action = await quickFixResolveInclude(diagnostic);
+        if (action) actions.push(action);
+        break;
+      case CODE_MISSING_CONFIG:
+        action = await quickFixCreateConfig(diagnostic);
+        if (action) actions.push(action);
+        break;
     }
   }
 
