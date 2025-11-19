@@ -7293,6 +7293,7 @@ export class PliParser extends AbstractParser {
     let element = this.push(this.createDimensions());
 
     this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
+      element.token = token;
       this.tokenPayload(token, element, CstNodeKind.Dimensions_OpenParen);
     });
     this.OPTION(() => {

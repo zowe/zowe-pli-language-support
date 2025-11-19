@@ -49,6 +49,7 @@ import { format } from "util";
 import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
 import { TypeExpectation } from "./fourslash-harness/harness-interface";
 import { binaryTokenSearch } from "../src/utils/search";
+import { assertType } from "../src/preprocessor/util";
 
 export type Label = string | number | string[] | number[];
 
@@ -1062,7 +1063,19 @@ export class TestBuilder {
   ) {
     for (const [key, value] of Object.entries(expectedType)) {
       if (typeof value === "object" && value !== null) {
-        this.expectTypeNoStructure(value, actualType[key as keyof typeof actualType]);
+        const field = (actualType as any)[key as keyof typeof actualType];
+        if (Array.isArray(value)) {
+          expect(Array.isArray(field)).toEqual(true);
+          expect(value.length).toEqual(field.length);
+          value.forEach((v, i) => {
+            this.expectTypeNoStructure(
+              v,
+              field[i],
+            );
+          });
+        } else {
+          this.expectTypeNoStructure(value, field);
+        }
       } else {
         expect(actualType[key as keyof typeof actualType]).toEqual(value);
       }

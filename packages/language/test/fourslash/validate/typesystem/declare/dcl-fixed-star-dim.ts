@@ -18,7 +18,28 @@ types.expectTypeAt("1", {
   type: types.dataTypes.Arithmetic,
   scale: types.scales.Fixed,
   precision: types.precision.create(5, 0),
-  //TODO dimension: ['*', '*', '*'],
+  dimension: [{
+    lowerBound: {
+      value: 1
+    },
+    upperBound: {
+      value: '*'
+    }
+  }, {
+    lowerBound: {
+      value: 1
+    },
+    upperBound: {
+      value: '*'
+    }
+  }, {
+    lowerBound: {
+      value: 1
+    },
+    upperBound: {
+      value: '*'
+    }
+  }],
   mode: types.modes.Real,
 });
 verify.noDiagnostics(undefined, ...code.TypeSystem);
