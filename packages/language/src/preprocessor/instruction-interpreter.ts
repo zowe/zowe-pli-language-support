@@ -2313,27 +2313,40 @@ async function resolveIncludeFileUri(
       }
     }
 
-    if (isMemberWithoutDDName && pgroup.memberNameValidation) {
+    /**
+     * Helper to check & validate member names when member name validations are enabled.
+     * Pushes diagnostics to the context when validation fails.
+     * Effectively a noop when member name validation is disabled in the process group.
+     * @param memberName Member to validate, implied to be a member of an existing ddlib entry
+     */
+    function checkToValidateMember(memberName: string): void {
+      if (!pgroup?.memberNameValidation) {
+        return;
+      }
       // apply additional validation to the member name
-      if (fileNameOrPartial.length > 8) {
+      if (memberName.length > 8) {
         // emit diagnostic for member names > 8 characters
         context.diagnostics.push(
-          diagnostic(Severity.E, `Member exceeds 8 characters.`, item.token),
+          diagnostic(Severity.E, "Member exceeds 8 characters.", item.token),
         );
       }
 
       const memberNameRegex = /^[A-Z][A-Z0-9@#_$]*$/i;
-      if (!memberNameRegex.test(fileNameOrPartial)) {
+      if (!memberNameRegex.test(memberName)) {
         // emit a diagnostic for invalid member names
         context.diagnostics.push(
           diagnostic(
             Severity.E,
-            `Member must start with a letter, followed by letters, numbers, @, #, _, or $`,
+            "Member must start with a letter, followed by letters, numbers, @, #, _, or $.",
             item.token,
           ),
         );
       }
     }
+
+    let libMatch: URI | undefined = undefined;
+    // whether a match was found for a member include
+    let needsMemberValidation = isMemberWithoutDDName;
 
     for (const lib of computedLibs) {
       if (isLibsDir(lib)) {
@@ -2344,32 +2357,34 @@ async function resolveIncludeFileUri(
           // This is done to ensure resolution order of libs is maintained as members > files
           // Ex. If we have both `cpy/member.pli` and `cpy/A.B.C(member)`, with `cpy` in the libs list
           // We want to ensure that `A.B.C(member)` is resolved first before falling back to `member.pli`
-          const memberMatch = await FileSystemProviderInstance.search({
+          libMatch = await FileSystemProviderInstance.search({
             dirPath: resolveLibFileUri(lib.dir),
             member: fileNameOrPartial,
           });
-          if (memberMatch) {
-            return memberMatch;
+          if (libMatch) {
+            break;
           }
         }
 
         // perform standard search
-        const match = await FileSystemProviderInstance.search({
+        libMatch = await FileSystemProviderInstance.search({
           path: libFileUri,
           extensions: pgroup.includeExtensions,
         });
-        if (match) {
-          return match;
+        if (libMatch) {
+          // regular file match, no member to validate
+          needsMemberValidation = false;
+          break;
         }
       } else if (isMemberWithoutDDName) {
         // standalone member w/out an explicit ddname, search within ddlib for a match
         const ddLibUri = resolveLibFileUri(lib.ddLib);
-        const ddMemberMatch = await FileSystemProviderInstance.search({
+        libMatch = await FileSystemProviderInstance.search({
           path: URI.parse(ddLibUri.toString(true) + `(${fileNameOrPartial})`),
           extensions: [],
         });
-        if (ddMemberMatch) {
-          return ddMemberMatch;
+        if (libMatch) {
+          break;
         }
       } else if (
         isMemberIncludeItem(item) &&
@@ -2380,16 +2395,23 @@ async function resolveIncludeFileUri(
         const end = lib.ddLib.length - item.ddname.length;
         const libPath = lib.ddLib.substring(0, end);
         const ddLibUri = resolveLibFileUri(libPath, fileNameOrPartial);
-        const ddMemberMatch = await FileSystemProviderInstance.search({
+        libMatch = await FileSystemProviderInstance.search({
           path: ddLibUri,
           extensions: [],
         });
-        if (ddMemberMatch) {
-          return ddMemberMatch;
+        if (libMatch) {
+          break;
         }
       }
     }
+
+    // depending on whether we matched a member, check to apply validation on the name
+    if (needsMemberValidation) {
+      checkToValidateMember(fileNameOrPartial);
+    }
+    return libMatch;
   }
+
   return undefined;
 }
 

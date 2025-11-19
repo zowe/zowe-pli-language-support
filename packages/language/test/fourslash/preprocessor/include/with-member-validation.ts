@@ -40,25 +40,51 @@
 // @filename: cpy/ddname(A1@#_$)
 //// DECLARE V3 FIXED;
 
+// @filename: cpy/__legitimatefile.pli
+//// DECLARE V4 FIXED;
+
 // @filename: main.pli
 //// %INCLUDE <|1:m12345678|>;
 //// %INCLUDE <|2:m1234567|>;
 //// %INCLUDE <|3:A1@#_$|>;
+//// // bad include
+//// %INCLUDE <|4:_A1@#|>;
+//// // legitimate file include
+//// %INCLUDE <|5:__legitimatefile|>;
 
-// assert 1 diagnostic on the first include only
+// verify 1 diagnostic on the first include only
 verify.expectExclusiveDiagnosticsAt(1, [
   {
     severity: constants.Severity.E,
+    message: "Member exceeds 8 characters.",
   },
 ]);
 // no diagnostics on the second include
-verify.expectDiagnosticsAt(2, []);
+verify.expectExclusiveDiagnosticsAt(2, []);
 // no diagnostics on the 3rd include
-verify.expectDiagnosticsAt(3, []);
+verify.expectExclusiveDiagnosticsAt(3, []);
+
+// verify 2 diagnostics on the 4th include
+// one for invalid starting char, and another for unresolved include
+verify.expectExclusiveDiagnosticsAt(4, [
+  {
+    severity: constants.Severity.E,
+    message:
+      "Member must start with a letter, followed by letters, numbers, @, #, _, or $.",
+  },
+  {
+    severity: constants.Severity.S,
+    message: "The INCLUDE file _A1@# could not be opened.",
+  },
+]);
+
+// lastly verify no diagnostics on the legitimate file include
+verify.expectExclusiveDiagnosticsAt(5, []);
 
 // still expecting the same tokens as before
 preprocessor.expectTokens(`
   DECLARE V1 FIXED;
   DECLARE V2 FIXED;
   DECLARE V3 FIXED;
+  DECLARE V4 FIXED;
 `);
