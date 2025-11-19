@@ -399,6 +399,9 @@ export class PluginConfigurationProvider {
     const diagnostics: Diagnostic[] = [];
     for (const processGroup of this.processGroupConfigs.values()) {
       // all computed libs for this group, dirs + ddnames
+      // @montymxb Using a map here to avoid duplicates over a set, since our entries are objects.
+      //  A set will compare by ref instead of value, seeing each entry as unique, and adding duplicate lib entries.
+      //  That doesn't lead to any issues, but it adds extra entries that we have to look through later on.
       const computedLibsMap: Map<string, LibsEntry> = new Map();
       const libsToProcess = [...processGroup.libs];
       while (libsToProcess.length > 0) {
