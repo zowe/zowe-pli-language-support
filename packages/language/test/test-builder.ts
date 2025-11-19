@@ -49,7 +49,6 @@ import { format } from "util";
 import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
 import { TypeExpectation } from "./fourslash-harness/harness-interface";
 import { binaryTokenSearch } from "../src/utils/search";
-import { assertType } from "../src/preprocessor/util";
 
 export type Label = string | number | string[] | number[];
 
