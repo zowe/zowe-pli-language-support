@@ -24,6 +24,7 @@ import {
 } from "pli-language";
 import * as fs from "fs";
 import * as glob from "glob";
+import { dirname } from "path";
 
 class NodeFileSystemProvider implements FileSystemProvider {
   readFile(uri: URI): Promise<string> {
@@ -46,6 +47,12 @@ class NodeFileSystemProvider implements FileSystemProvider {
     }
   }
   async writeFile(uri: URI, value: string): Promise<void> {
+    const dir = dirname(uri.fsPath);
+    try {
+      await fs.promises.mkdir(dir, { recursive: true });
+    } catch (err) {
+      console.log(`Failed to create directory "${dir}":`, err);
+    }
     await fs.promises.writeFile(uri.fsPath, value, "utf8");
   }
   async deleteFile(uri: URI): Promise<void> {
