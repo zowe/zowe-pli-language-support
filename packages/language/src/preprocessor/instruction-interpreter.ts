@@ -2315,13 +2315,20 @@ async function resolveIncludeFileUri(
 
     if (isMemberWithoutDDName && pgroup.memberNameValidation) {
       // apply additional validation to the member name
-      const memberNameRegex = /^[A-Z][A-Z0-9@#_$]{0,7}$/i;
+      if (fileNameOrPartial.length > 8) {
+        // emit diagnostic for member names > 8 characters
+        context.diagnostics.push(
+          diagnostic(Severity.E, `Member exceeds 8 characters.`, item.token),
+        );
+      }
+
+      const memberNameRegex = /^[A-Z][A-Z0-9@#_$]*$/i;
       if (!memberNameRegex.test(fileNameOrPartial)) {
-        // emit a non-blocking diagnostic for invalid member names
+        // emit a diagnostic for invalid member names
         context.diagnostics.push(
           diagnostic(
             Severity.E,
-            `(member-name-validation) Member '${fileNameOrPartial}' is invalid. Must be 1 to 8 characters long, starting with [A-Z], followed by only A-Z, 0-9, @, #, _, or $.`,
+            `Member must start with a letter, followed by letters, numbers, @, #, _, or $`,
             item.token,
           ),
         );
