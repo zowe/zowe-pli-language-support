@@ -211,8 +211,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
       const searchPath = options.path
         .toString(true)
         .toLowerCase()
-        .replace(/\\/g, "/")
-        .replace("file:///", "");
+        .replace(/\\/g, "/");
       const extensions = options.extensions ?? [];
 
       if (!options.global) {
@@ -227,13 +226,16 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
         }
       } else {
         // @wagner-laranjeiras. TODO: Optimize this matching pattern.
+        const globalSearchPath = options.path.path
+          .toLowerCase()
+          .replace(/\\/g, "/");
         for (const [filePath] of this.files) {
-          if (filePath.endsWith(searchPath)) {
+          if (filePath.endsWith(globalSearchPath)) {
             return URI.parse(filePath);
           }
           for (const ext of extensions) {
             const fullPath =
-              searchPath + (ext.startsWith(".") ? ext : `.${ext}`);
+              globalSearchPath + (ext.startsWith(".") ? ext : `.${ext}`);
             if (filePath.endsWith(fullPath)) {
               return URI.parse(filePath).with({ scheme: options.path.scheme });
             }
