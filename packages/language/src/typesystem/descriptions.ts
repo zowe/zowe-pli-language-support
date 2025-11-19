@@ -17,8 +17,8 @@ import { assertUnreachable } from "../utils/common";
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=attributes-nondata#ndatts__vari */
 
 export type Value = {
-    type: TypeDescriptions.Any,
-    value: string | number;
+  type: TypeDescriptions.Any;
+  value: string | number;
 };
 
 /** Makes T partial except for properties P, they are required */
@@ -174,10 +174,10 @@ export const AttributeKinds: AttributeKind[] = [
 ];
 
 export type Bound = {
-  value: number|'*'|undefined;
-  expression: ast.Wildcard<ast.Expression>|null;
-  refersTo: ast.LocatorCall|null;
-}
+  value: number | "*" | undefined;
+  expression: ast.Wildcard<ast.Expression> | null;
+  refersTo: ast.LocatorCall | null;
+};
 
 export type DimensionBound = {
   lowerBound: Bound;
@@ -193,11 +193,11 @@ export type AttributeTypes = {
   [AttributeKind.BufferMode]: BufferMode;
   [AttributeKind.Connection]: StorageConnection;
   [AttributeKind.DataType]: DataType;
-  [AttributeKind.Dimension]: DimensionBound[]|undefined;
+  [AttributeKind.Dimension]: DimensionBound[] | undefined;
   [AttributeKind.Endianess]: Endianess;
   [AttributeKind.FileUsage]: FileUsage;
   [AttributeKind.FloatFormat]: FloatFormat;
-  [AttributeKind.Initial]: ast.InitialAttribute|undefined;
+  [AttributeKind.Initial]: ast.InitialAttribute | undefined;
   [AttributeKind.List]: boolean;
   [AttributeKind.LocatorKind]: LocatorKind;
   [AttributeKind.NumberMode]: NumberMode;
@@ -205,7 +205,7 @@ export type AttributeTypes = {
   [AttributeKind.OrdinalNames]: string[];
   [AttributeKind.Parameter]: boolean;
   [AttributeKind.ParameterPassDirection]: ParameterPassDirection;
-  [AttributeKind.ParameterPassMode]: ParameterPassMode|undefined;
+  [AttributeKind.ParameterPassMode]: ParameterPassMode | undefined;
   [AttributeKind.PictureKind]: PictureWideness;
   [AttributeKind.Position]: StoragePosition;
   [AttributeKind.Precision]: Precision;
@@ -1306,7 +1306,8 @@ export namespace TypeDescriptions {
       volatility:
         attributes[AttributeKind.Volatility]?.value ??
         DefaultValues[AttributeKind.Volatility],
-      parameterPassDirection: attributes[AttributeKind.ParameterPassDirection]?.value,
+      parameterPassDirection:
+        attributes[AttributeKind.ParameterPassDirection]?.value,
       parameterPassMode: attributes[AttributeKind.ParameterPassMode]?.value,
       position:
         attributes[AttributeKind.Position]?.value ??

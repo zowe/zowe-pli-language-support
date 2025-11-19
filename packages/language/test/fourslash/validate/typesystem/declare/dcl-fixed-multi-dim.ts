@@ -18,13 +18,16 @@ types.expectTypeAt("1", {
   type: types.dataTypes.Arithmetic,
   scale: types.scales.Fixed,
   precision: types.precision.create(5, 0),
-  dimension: [{
-    lowerBound: { value: -1 },
-    upperBound: { value: 1 }
-  }, {
-    lowerBound: { value: 1 },
-    upperBound: { value: 5 }
-  }],
+  dimension: [
+    {
+      lowerBound: { value: -1 },
+      upperBound: { value: 1 },
+    },
+    {
+      lowerBound: { value: 1 },
+      upperBound: { value: 5 },
+    },
+  ],
   mode: types.modes.Real,
 });
 verify.noDiagnostics(undefined, ...code.TypeSystem);

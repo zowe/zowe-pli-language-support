@@ -1384,7 +1384,11 @@ function declaredVariable(state: ParserState): ast.DeclaredVariable {
 
 function dimensions(state: ParserState): ast.Dimensions {
   const dimensions = ast.createDimensions();
-  dimensions.token = state.consume(dimensions, CstNodeKind.Dimensions_OpenParen, t.OpenParen);
+  dimensions.token = state.consume(
+    dimensions,
+    CstNodeKind.Dimensions_OpenParen,
+    t.OpenParen,
+  );
   if (
     state.tryConsume(
       dimensions,

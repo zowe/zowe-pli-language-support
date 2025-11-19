@@ -80,7 +80,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   private possibleDataTypes = new Set<DataType>(DataTypesArray);
   private attributeWitnesses: AttributeWitnesses =
     createEmptyAttributeWitnesses();
-  constructor(private elementName: Token) { }
+  constructor(private elementName: Token) {}
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -631,7 +631,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           [DefaultAttributeEnum.SCAN]: ScanMode.Scan,
           [DefaultAttributeEnum.RESCAN]: ScanMode.ReScan,
         };
-        const attributeValue = mapTo[typeAsEnum];;
+        const attributeValue = mapTo[typeAsEnum];
         this.addAttributeWitness(
           AttributeKind.ScanMode,
           attributeValue,
@@ -640,7 +640,6 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         );
         break;
       }
-
 
       /**
        * Procedure parameter passing direction attributes
@@ -677,12 +676,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=data-list-attribute
        */
       case DefaultAttributeEnum.LIST: {
-        this.addAttributeWitness(
-          AttributeKind.List,
-          true,
-          attribute,
-          token,
-        );
+        this.addAttributeWitness(AttributeKind.List, true, attribute, token);
         break;
       }
 
@@ -718,7 +712,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         //TODO
         break;
       }
-      
+
       /**
        * Parameter flag attribute
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-parameter-attribute
@@ -750,7 +744,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case DefaultAttributeEnum.TRANSIENT: //no documentation found
       case DefaultAttributeEnum.RANGE: //no documentation found
         break;
-      
+
       case DefaultAttributeEnum.POSITION: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-defined-position-attributes
       case DefaultAttributeEnum.PRINT: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=transmission-print-attribute
       case DefaultAttributeEnum.RESERVED: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=declarations-reserved-attribute

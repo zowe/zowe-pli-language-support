@@ -53,11 +53,16 @@ type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
 export type Not<T> = Omit<T, "not">;
 
-type EditComputedAttributes<T extends TypeDescriptions.Any> = Omit<T, "dimension"> & {
-  dimension: {
-    lowerBound: Partial<Bound>;
-    upperBound: Partial<Bound>;
-  }[] | undefined;
+type EditComputedAttributes<T extends TypeDescriptions.Any> = Omit<
+  T,
+  "dimension"
+> & {
+  dimension:
+    | {
+        lowerBound: Partial<Bound>;
+        upperBound: Partial<Bound>;
+      }[]
+    | undefined;
 };
 export type PrimitiveTypeExpectation =
   | EditComputedAttributes<TypeDescriptions.Area>
@@ -70,15 +75,14 @@ export type PrimitiveTypeExpectation =
   | EditComputedAttributes<TypeDescriptions.Ordinal>
   | EditComputedAttributes<TypeDescriptions.Picture>
   | EditComputedAttributes<TypeDescriptions.String>
-  | EditComputedAttributes<TypeDescriptions.Task>
-  ;
+  | EditComputedAttributes<TypeDescriptions.Task>;
 export type TypeExpectation =
   | Partial<PrimitiveTypeExpectation>
   | Partial<TypeDescriptions.Unknown>
   | {
-    type: DataType.Structure;
-    members: Record<string, TypeExpectation>;
-  };
+      type: DataType.Structure;
+      members: Record<string, TypeExpectation>;
+    };
 
 export interface HarnessTesterInterface {
   Syntax: typeof SyntaxKind;

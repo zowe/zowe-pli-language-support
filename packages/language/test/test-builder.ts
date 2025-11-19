@@ -1010,7 +1010,11 @@ export class TestBuilder {
         );
       }
       const actualType = this.unit.services.inferer.inferType(node, this.unit);
-      if(actualType.type === DataType.Unknown || actualType.type === DataType.Structure || !actualType.dimension) {
+      if (
+        actualType.type === DataType.Unknown ||
+        actualType.type === DataType.Structure ||
+        !actualType.dimension
+      ) {
         this.expectTypeWithStructure(expectedType, actualType as any);
       } else {
         this.expectTypeNoStructure(expectedType, actualType);
@@ -1057,10 +1061,7 @@ export class TestBuilder {
     }
   }
 
-  private expectTypeNoStructure(
-    expectedType: object,
-    actualType: object,
-  ) {
+  private expectTypeNoStructure(expectedType: object, actualType: object) {
     for (const [key, value] of Object.entries(expectedType)) {
       if (typeof value === "object" && value !== null) {
         const field = (actualType as any)[key as keyof typeof actualType];
@@ -1068,10 +1069,7 @@ export class TestBuilder {
           expect(Array.isArray(field)).toEqual(true);
           expect(value.length).toEqual(field.length);
           value.forEach((v, i) => {
-            this.expectTypeNoStructure(
-              v,
-              field[i],
-            );
+            this.expectTypeNoStructure(v, field[i]);
           });
         } else {
           this.expectTypeNoStructure(value, field);
