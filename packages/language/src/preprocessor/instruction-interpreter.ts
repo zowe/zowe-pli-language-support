@@ -2294,7 +2294,6 @@ async function resolveIncludeFileUri(
         const match = await FileSystemProviderInstance.search({
           path: libFileUri,
           extensions: pgroup.includeExtensions,
-          global: true,
         });
         if (match) {
           return match;
