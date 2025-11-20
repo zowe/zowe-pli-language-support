@@ -111,7 +111,7 @@ export interface ProcessGroup {
   /**
    * Whether member name validation is enabled for this process group.
    * Validation constraints member names to no more than 8 chars, starting with a letter,
-   * and only containing A-Z, 0-9, @abstract, #, _, and $ (case insensitively).
+   * and only containing A-Z, 0-9, @, #, _, and $ (case insensitively).
    */
   memberNameValidation?: boolean;
 

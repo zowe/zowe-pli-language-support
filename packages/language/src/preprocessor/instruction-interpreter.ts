@@ -2344,7 +2344,7 @@ async function resolveIncludeFileUri(
       }
     }
 
-    let libMatch: URI | undefined = undefined;
+    let libMatch: URI | undefined;
     // whether a match was found for a member include
     let needsMemberValidation = isMemberWithoutDDName;
 
