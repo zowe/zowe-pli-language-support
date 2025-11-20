@@ -129,7 +129,7 @@ export function createTokenInstance(
 export const keywordMap = new Map<string, TokenType>();
 const keywords: TokenType[] = [];
 //combination name -> {mapTo: keyword name -> enum value, mapFrom: enum value -> keyword name}
-const mappings = new Map<TokenType, {
+const mappings = new Map<string, {
   mapTo: Map<string, number>;
   mapFrom: Map<number, string>;
 }>();
@@ -139,8 +139,7 @@ interface KeywordConfig {
    * The keyword name or names (aliases). The first name is the canonical name.
    */
   name: string | string[];
-  //TODO change to [TokenType, number][] after AST enum migration
-  categories?: TokenType[];
+  categories?: (TokenType|[MappableTokenType, number])[];
 }
 
 function registerKeyword(config: KeywordConfig): TokenType {
@@ -152,13 +151,13 @@ function registerKeyword(config: KeywordConfig): TokenType {
   const tokenType = createToken({
     name,
     pattern: Lexer.NA,
-    categories: [ID, ...(config.categories ?? []).map(([category]) => category)],
+    categories: [ID, ...(config.categories ?? []).map((category) => Array.isArray(category) ? category[0] : category)],
   });
   for (const alias of names) {
     keywordMap.set(alias, tokenType);
   }
-  for (const [category, enumValue] of config.categories ?? []) {
-    const mapping = mappings.get(category)!;
+  for (const [category, enumValue] of (config.categories ?? []).filter(Array.isArray) as [MappableTokenType, number][]) {
+    const mapping = mappings.get(category.name)!;
     for (const alias of names) {
       mapping.mapTo.set(alias, enumValue);
     }
@@ -175,27 +174,27 @@ export type MappableTokenType<TEnum extends number=number> = TokenType & {
   mapFromEnumLiteral(value: TEnum): string;
 };
 
-function createTokenWithParser<TEnum extends number=number>(config: ITokenConfig): MappableTokenType<TEnum> {
+function createMappableToken<TEnum extends number=number>(config: ITokenConfig): MappableTokenType<TEnum> {
   const tokenType = createToken(config);
-  mappings.set(tokenType, {
+  mappings.set(tokenType.name, {
     mapTo: new Map<string, number>(),
     mapFrom: new Map<number, string>(),
   });
   return {
     ...tokenType,
     mapToEnumLiteral(image: string): TEnum {
-      const mapping = mappings.get(tokenType)!;
+      const mapping = mappings.get(tokenType.name)!;
       return mapping.mapTo.get(image) as TEnum;
     },
     mapFromEnumLiteral(value: TEnum): string {
-      const mapsTo = mappings.get(tokenType)!;
+      const mapsTo = mappings.get(tokenType.name)!;
       return mapsTo.mapFrom.get(value)!;
     }
   };
 }
 
 function registerCombination<TEnum extends number = number>(name: string) {
-  const tokenType = createTokenWithParser<TEnum>({
+  const tokenType = createMappableToken<TEnum>({
     name,
     pattern: Lexer.NA,
   });
@@ -288,54 +287,57 @@ export const SL_COMMENT = createToken({
 // Start of keywords
 export const SUBSCRIPTRANGE = registerKeyword({
   name: "SUBSCRIPTRANGE",
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.SUBSCRIPTRANGE]],
 });
 export const NOCHARGRAPHIC = registerKeyword({
   name: "NOCHARGRAPHIC",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.NOCHARGRAPHIC]],
 });
 export const NONASSIGNABLE = registerKeyword({
   name: ["NONASSIGNABLE", "NONASGN"],
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.NONASSIGNABLE]],
 });
 export const FIXEDOVERFLOW = registerKeyword({
   name: ["FIXEDOVERFLOW", "FOFL"],
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.FIXEDOVERFLOW]],
 });
 export const UNDEFINEDFILE = registerKeyword({
   name: ["UNDEFINEDFILE", "UNDF"],
-  categories: [FileReferenceConditions],
+  categories: [[FileReferenceConditions, ast.FileReferenceConditions.UNDEFINEDFILE]],
 });
 export const VALUELISTFROM = registerKeyword({
   name: "VALUELISTFROM",
 });
 export const NODESCRIPTOR = registerKeyword({
   name: "NODESCRIPTOR",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.NODESCRIPTOR]],
 });
 export const NONCONNECTED = registerKeyword({
   name: "NONCONNECTED",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.NONCONNECTED]],
 });
 export const LITTLEENDIAN = registerKeyword({
   name: "LITTLEENDIAN",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.LITTLEENDIAN]],
 });
 export const ANYCONDITION = registerKeyword({
   name: ["ANYCONDITION", "ANYCOND"],
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.ANYCONDITION]],
 });
 export const CHARGRAPHIC = registerKeyword({
   name: "CHARGRAPHIC",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.CHARGRAPHIC]],
 });
 export const IRREDUCIBLE = registerKeyword({
   name: ["IRREDUCIBLE", "IRRED"],
-  categories: [SimpleOptions, DefaultAttribute],
+  categories: [
+    [SimpleOptions, ast.SimpleOptions.IRREDUCIBLE],
+    [DefaultAttribute, ast.DefaultAttribute.IRREDUCIBLE],
+  ],
 });
 export const DLLINTERNAL = registerKeyword({
   name: "DLLINTERNAL",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.DLLINTERNAL]],
 });
 export const UNREACHABLE = registerKeyword({
   name: "UNREACHABLE",
@@ -348,51 +350,60 @@ export const DESCRIPTORS = registerKeyword({
 });
 export const CONFORMANCE = registerKeyword({
   name: "CONFORMANCE",
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.CONFORMANCE]],
 });
 export const STRINGRANGE = registerKeyword({
   name: "STRINGRANGE",
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.STRINGRANGE]],
 });
 export const DESCRIPTOR = registerKeyword({
   name: "DESCRIPTOR",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.DESCRIPTOR]],
 });
 export const XMLCONTENT = registerKeyword({
   name: "XMLCONTENT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.XMLCONTENT]],
 });
 export const JSONIGNORE = registerKeyword({
   name: "JSONIGNORE",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.JSONIGNORE]],
 });
 export const ASSIGNABLE = registerKeyword({
   name: "ASSIGNABLE",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.ASSIGNABLE]],
 });
 export const CONTROLLED = registerKeyword({
   name: ["CONTROLLED", "CTL"],
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.CONTROLLED]],
 });
 export const NONVARYING = registerKeyword({
   name: ["NONVARYING", "NONVAR"],
-  categories: [DefaultAttribute, Varying],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.NONVARYING],
+    [Varying, ast.Varying.NONVARYING],
+  ],
 });
 export const SEQUENTIAL = registerKeyword({
   name: ["SEQUENTIAL", "SEQ"],
-  categories: [DefaultAttribute, OpenOptionType],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.SEQUENTIAL],
+    [OpenOptionType, ast.OpenOptionType.SEQUENTIAL],
+  ],
 });
 export const CONVERSION = registerKeyword({
   name: ["CONVERSION"],
-  categories: [ID, KeywordConditions],
+  categories: [
+    ID,
+    [KeywordConditions, ast.KeywordConditions.CONVERSION],
+  ],
 });
 export const STRINGSIZE = registerKeyword({
   name: "STRINGSIZE",
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.STRINGSIZE]],
 });
 export const ZERODIVIDE = registerKeyword({
   name: ["ZERODIVIDE", "ZDIV"],
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.ZERODIVIDE]],
 });
 export const INITACROSS = registerKeyword({
   name: "INITACROSS",
@@ -402,42 +413,42 @@ export const VALUERANGE = registerKeyword({
 });
 export const XMLIGNORE = registerKeyword({
   name: "XMLIGNORE",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.XMLIGNORE]],
 });
 export const JSONTRIMR = registerKeyword({
   name: "JSONTRIMR",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.JSONTRIMR]],
 });
 export const NOEXECOPS = registerKeyword({
   name: "NOEXECOPS",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.NOEXECOPS]],
 });
 export const DEACTIVATE = registerKeyword({
   name: ["DEACTIVATE", "DEACT"],
 });
 export const REDUCIBLE = registerKeyword({
   name: ["REDUCIBLE", "RED"],
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.REDUCIBLE]],
 });
 export const REENTRANT = registerKeyword({
   name: "REENTRANT",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.REENTRANT]],
 });
 export const FETCHABLE = registerKeyword({
   name: "FETCHABLE",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.FETCHABLE]],
 });
 export const FROMALIEN = registerKeyword({
   name: "FROMALIEN",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.FROMALIEN]],
 });
 export const ASSEMBLER = registerKeyword({
   name: ["ASSEMBLER", "ASM"],
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.ASSEMBLER]],
 });
 export const RECURSIVE = registerKeyword({
   name: "RECURSIVE",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.RECURSIVE]],
 });
 export const PROCEDURE = registerKeyword({
   name: ["PROCEDURE", "PROC", "XPROCEDURE", "XPROC"],
@@ -447,59 +458,64 @@ export const STATEMENT = registerKeyword({
 });
 export const CHARACTER = registerKeyword({
   name: ["CHARACTER", "CHAR"],
-  categories: [DefaultAttribute, AllocateAttributeType, CharType, CharOrBinary],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.CHARACTER],
+    [AllocateAttributeType, ast.AllocateAttributeType.CHARACTER],
+    [CharType, ast.CharType.CHARACTER],
+    [CharOrBinary, ast.CharOrBinary.CHARACTER],
+  ],
 });
 export const DIMACROSS = registerKeyword({
   name: "DIMACROSS",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.DIMACROSS]],
 });
 export const AUTOMATIC = registerKeyword({
   name: ["AUTOMATIC", "AUTO"],
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.AUTOMATIC]],
 });
 export const BACKWARDS = registerKeyword({
   name: "BACKWARDS",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.BACKWARDS]],
 });
 export const CONDITION = registerKeyword({
   name: ["CONDITION", "COND"],
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.CONDITION]],
 });
 export const CONNECTED = registerKeyword({
   name: "CONNECTED",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.CONNECTED]],
 });
 export const EXCLUSIVE = registerKeyword({
   name: "EXCLUSIVE",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.EXCLUSIVE]],
 });
 export const NONNATIVE = registerKeyword({
   name: "NONNATIVE",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.NONNATIVE]],
 });
 export const PARAMETER = registerKeyword({
   name: "PARAMETER",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.PARAMETER]],
 });
 export const PRECISION = registerKeyword({
   name: ["PRECISION", "PREC"],
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.PRECISION]],
 });
 export const STRUCTURE = registerKeyword({
   name: ["STRUCTURE", "STRUCT"],
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.STRUCTURE]],
 });
 export const TRANSIENT = registerKeyword({
   name: "TRANSIENT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.TRANSIENT]],
 });
 export const UNALIGNED = registerKeyword({
   name: ["UNALIGNED", "UNAL"],
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.UNALIGNED]],
 });
 export const BIGENDIAN = registerKeyword({
   name: "BIGENDIAN",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.BIGENDIAN]],
 });
 export const ASSERTION = registerKeyword({
   name: "ASSERTION",

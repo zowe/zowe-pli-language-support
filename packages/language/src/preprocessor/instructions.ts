@@ -267,13 +267,13 @@ export function createReferenceItemInstruction(
 export interface AssignmentInstruction {
   kind: InstructionKind.Assignment;
   refs: ReferenceItemInstruction[];
-  operator: string;
+  operator: ast.AssignmentOperator;
   value: ExpressionInstruction;
 }
 
 export function createAssignmentInstruction(
   refs: ReferenceItemInstruction[],
-  operator: string,
+  operator: ast.AssignmentOperator,
   value: ExpressionInstruction,
 ): AssignmentInstruction {
   return {

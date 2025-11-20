@@ -9,6 +9,7 @@
  *
  */
 
+import { DefaultAttribute } from "../parser/tokens";
 import { DeclaredVariable, SyntaxKind } from "../syntax-tree/ast";
 
 export function assertType<T>(value: unknown): asserts value is T {}
@@ -20,7 +21,7 @@ export function getAttributes(item: DeclaredVariable): string[] {
     const itemAttributes = container.attributes;
     for (const attr of itemAttributes) {
       if (attr.kind === SyntaxKind.ComputationDataAttribute && attr.type) {
-        attributes.push(attr.type.toUpperCase());
+        attributes.push(DefaultAttribute.mapFromEnumLiteral(attr.type));
       }
     }
     container = container.container;

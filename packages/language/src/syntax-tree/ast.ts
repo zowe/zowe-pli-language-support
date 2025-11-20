@@ -240,10 +240,12 @@ export enum KeywordConditions {
   ERROR,
   AREA,
   FINISH,
-  SIZE
+  SIZE,
+  CONVERSION,
 }
 
 export enum SimpleOptions {
+  DESCRIPTOR,
   NOCHARGRAPHIC,
   NODESCRIPTOR,
   CHARGRAPHIC,
@@ -265,10 +267,27 @@ export enum SimpleOptions {
   COBOL,
   INTER,
   MAIN,
-  RENT
+  RENT,
+  NOEXECOPS,
 }
 
 export enum DefaultAttribute {
+  BIT,
+  UNION,
+  BYADDR,
+  BYVALUE,
+  GENERIC,
+  INONLY,
+  NOINIT,
+  UCHAR,
+  CHARACTER,
+  STATIC,
+  IEEE,
+  JSONTRIMR,
+  BINARY,
+  DIRECT,
+  AREA,
+  FILE,
   NONASSIGNABLE,
   NONCONNECTED,
   LITTLEENDIAN,
@@ -348,7 +367,9 @@ export enum DefaultAttribute {
   TASK,
   LIST,
   REAL,
-  SCAN
+  SCAN,
+  XMLIGNORE,
+  FORMAT,
 }
 
 export enum FileReferenceConditions {

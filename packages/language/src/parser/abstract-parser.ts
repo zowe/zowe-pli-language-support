@@ -26,7 +26,6 @@ import {
   type SyntaxNode,
 } from "../syntax-tree/ast";
 import type { CstNodeKind } from "../syntax-tree/cst";
-import * as tokens from "./tokens";
 import { Token } from "./tokens";
 
 /**

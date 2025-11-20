@@ -17,7 +17,7 @@ import {
   isNameToken,
   isReferenceToken,
 } from "../linking/tokens";
-import { Token } from "../parser/tokens";
+import * as tokens from "../parser/tokens";
 import { getAttributes } from "../preprocessor/util";
 import {
   Bound,
@@ -43,7 +43,7 @@ type MarkupResponse = string | null;
 
 interface MarkupGeneratorContext {
   unit: CompilationUnit;
-  token: Token;
+  token: tokens.Token;
 }
 
 interface MarkupGenerator {
@@ -132,7 +132,7 @@ function extractProcedureOptions(
       const internalOptions: string[] = [];
       for (const item of option.items) {
         if (item.kind === SyntaxKind.SimpleOptionsItem && item.value) {
-          internalOptions.push(item.value);
+          internalOptions.push(tokens.SimpleOptions.mapFromEnumLiteral(item.value));
         }
       }
       if (internalOptions.length > 0) {
@@ -156,7 +156,7 @@ function extractProcedureOptions(
             attrArr.push(attr.type + decodeDimensions(attr.dimensions));
           } else {
             // just the type
-            attrArr.push(attr.type);
+            attrArr.push(tokens.DefaultAttribute.mapFromEnumLiteral(attr.type));
           }
         }
       }

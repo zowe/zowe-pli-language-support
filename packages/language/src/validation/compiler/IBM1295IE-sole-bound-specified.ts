@@ -14,7 +14,7 @@ import {
   getSyntaxNodeRange,
   Severity,
 } from "../../language-server/types";
-import { Bound, DimensionBound, SyntaxKind } from "../../syntax-tree/ast";
+import { Bound, DimensionBound, SyntaxKind, UnaryOperator } from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
 import { Error } from "../pli-codes";
 
@@ -43,7 +43,7 @@ function isBoundNegative(bound: Bound | null) {
     bound &&
     bound.expression !== "*" &&
     bound.expression?.kind === SyntaxKind.UnaryExpression &&
-    bound.expression.op === "-" &&
+    bound.expression.op === UnaryOperator.Minus &&
     bound.expression.expr &&
     bound.expression.expr.kind === SyntaxKind.Literal &&
     bound.expression.expr.value &&

@@ -398,7 +398,7 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
       returnType = "FIXED";
     }
     if (returnType) {
-      dataAttribute.type = returnType as ast.DefaultAttribute;
+      dataAttribute.type = t.DefaultAttribute.mapToEnumLiteral(returnType);
       dataAttribute.typeToken = state.last ?? null;
       returnsOption.returnAttributes.push(dataAttribute);
     }
@@ -1251,7 +1251,7 @@ function assignmentStatement(state: ParserState): ast.AssignmentStatement {
   assignment.refs.push(locatorCall(state, true));
   // TODO: add support for more assignment operators (+=, -=, etc)
   state.consume(assignment, CstNodeKind.AssignmentStatement_Operator, t.Equals);
-  assignment.operator = "=";
+  assignment.operator = ast.AssignmentOperator.Equals;
   const right = expression(state);
   assignment.expression = right;
   state.consume(
@@ -1455,7 +1455,9 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
         t.DefaultAttribute,
       );
       if (attributeToken) {
-        dataAttribute.type = attributeToken.image as ast.DefaultAttribute;
+        dataAttribute.type = t.DefaultAttribute.mapToEnumLiteral(
+          attributeToken.image,
+        );
         dataAttribute.typeToken = attributeToken;
         attributes.push(dataAttribute);
       }
@@ -1504,7 +1506,7 @@ function parseBinary(state: ParserState): ast.Expression | null {
 
     const item = primary(state);
     infixOperatorItem.items.push(item);
-    infixOperatorItem.operators.push(operator);
+    infixOperatorItem.operators.push(t.BinaryOperator.mapToEnumLiteral(operator.image));
   }
   return constructBinaryExpression(infixOperatorItem);
 }

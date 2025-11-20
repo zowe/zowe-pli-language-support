@@ -1203,40 +1203,40 @@ function evaluateBinaryExpression(
     return defaultEmptyValue;
   }
   switch (expression.operator) {
-    case "+":
+    case ast.BinaryOperator.Plus:
       return plus(left, right);
-    case "-":
+    case ast.BinaryOperator.Minus:
       return minus(left, right);
-    case "*":
+    case ast.BinaryOperator.Star:
       return multiply(left, right);
-    case "/":
+    case ast.BinaryOperator.Slash:
       return divide(left, right);
-    case "**":
+    case ast.BinaryOperator.StarStar:
       return exponentiate(left, right);
-    case "||":
+    case ast.BinaryOperator.PipePipe:
       return concat(left, right);
-    case "<":
+    case ast.BinaryOperator.LessThan:
       return lessThan(left, right);
-    case "<=":
+    case ast.BinaryOperator.LessThanEquals:
       return lessThanEquals(left, right);
-    case ">":
+    case ast.BinaryOperator.GreaterThan:
       return greaterThan(left, right);
-    case ">=":
+    case ast.BinaryOperator.GreaterThanEquals:
       return greaterThanEquals(left, right);
-    case "=":
+    case ast.BinaryOperator.Equals:
       return equals(left, right);
-    case "^=":
-    case "<>":
+    case ast.BinaryOperator.NotEquals:
+    case ast.BinaryOperator.LessThanGreaterThan:
       return notEquals(left, right);
-    case "&":
+    case ast.BinaryOperator.Ampersand:
       return and(left, right);
-    case "|":
+    case ast.BinaryOperator.Pipe:
       return or(left, right);
-    case "^":
+    case ast.BinaryOperator.Not:
       return xor(left, right);
-    case "^<":
+    case ast.BinaryOperator.NotLessThan:
       return notLessThan(left, right);
-    case "^>":
+    case ast.BinaryOperator.NotGreaterThan:
       return notGreaterThan(left, right);
   }
   return zero;
@@ -1253,11 +1253,11 @@ function evaluateUnaryExpression(
     return defaultEmptyValue;
   }
   switch (expression.operator) {
-    case "+":
+    case ast.UnaryOperator.Plus:
       return operand;
-    case "-":
+    case ast.UnaryOperator.Minus:
       return numberToValue(-valueToNumber(operand, 0));
-    case "^":
+    case ast.UnaryOperator.Not:
       return boolToValue(!valueToBool(operand));
   }
   return zero;

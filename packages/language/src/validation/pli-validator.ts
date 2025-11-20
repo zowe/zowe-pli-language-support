@@ -10,6 +10,7 @@
  */
 
 import * as AST from "../syntax-tree/ast";
+import * as tokens from "../parser/tokens";
 import { IBM1059I_select_without_otherwise } from "./compiler/IBM1059I-select-without-otherwise";
 import { IBM1219I_leave_exits_noniterative_do } from "./compiler/IBM1219I-leave-exits-noniterative-do";
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./compiler/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
@@ -77,10 +78,10 @@ export class PliValidator {
     node: AST.ReturnsOption,
     acceptor: ValidationAcceptor,
   ): void {
-    const attrSet = new Set<AST.DefaultAttribute>();
+    const attrSet = new Set<string>();
     for (const attr of node.returnAttributes) {
       if (attr.kind === AST.SyntaxKind.ComputationDataAttribute) {
-        const typ = attr.type!;
+        const typ = tokens.DefaultAttribute.mapFromEnumLiteral(attr.type!);
         attrSet.add(typ); // dupes are ok
 
         // look for a generally negated version of this attribute (there are several)

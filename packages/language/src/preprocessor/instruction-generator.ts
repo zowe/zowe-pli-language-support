@@ -414,7 +414,7 @@ function generateReplaceInstruction(
       instructions.push(
         inst.createAssignmentInstruction(
           [inst.createReferenceItemInstruction(statement.name, null, [])],
-          "=",
+          ast.AssignmentOperator.Equals,
           literal,
         ),
       );
@@ -691,7 +691,7 @@ function generateAssignmentInstruction(
   return {
     kind: inst.InstructionKind.Assignment,
     refs,
-    operator: node.operator ?? "=",
+    operator: node.operator ?? ast.AssignmentOperator.Equals,
     value,
   };
 }
