@@ -9,10 +9,10 @@
  *
  */
 
-import { createToken, Lexer, TokenType } from "chevrotain";
+import { createToken, ITokenConfig, Lexer, TokenType } from "chevrotain";
 import { URI } from "../utils/uri";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { SyntaxNode } from "../syntax-tree/ast";
+import * as ast from "../syntax-tree/ast";
 
 export interface Token {
   /**
@@ -39,7 +39,7 @@ export interface Token {
   tokenType: TokenType;
   uri: URI | undefined;
   kind: CstNodeKind | undefined;
-  element: SyntaxNode | undefined;
+  element: ast.SyntaxNode | undefined;
   immediateFollow: boolean;
 }
 
@@ -58,7 +58,7 @@ class TokenImpl implements Token {
   tokenType: TokenType;
   uri: URI | undefined;
   kind: CstNodeKind | undefined;
-  element: SyntaxNode | undefined;
+  element: ast.SyntaxNode | undefined;
   immediateFollow: boolean;
   constructor(
     image: string,
@@ -128,12 +128,18 @@ export function createTokenInstance(
 
 export const keywordMap = new Map<string, TokenType>();
 const keywords: TokenType[] = [];
+//combination name -> {mapTo: keyword name -> enum value, mapFrom: enum value -> keyword name}
+const mappings = new Map<TokenType, {
+  mapTo: Map<string, number>;
+  mapFrom: Map<number, string>;
+}>();
 
 interface KeywordConfig {
   /**
    * The keyword name or names (aliases). The first name is the canonical name.
    */
   name: string | string[];
+  //TODO change to [TokenType, number][] after AST enum migration
   categories?: TokenType[];
 }
 
@@ -146,10 +152,17 @@ function registerKeyword(config: KeywordConfig): TokenType {
   const tokenType = createToken({
     name,
     pattern: Lexer.NA,
-    categories: [ID, ...(config.categories ?? [])],
+    categories: [ID, ...(config.categories ?? []).map(([category]) => category)],
   });
   for (const alias of names) {
     keywordMap.set(alias, tokenType);
+  }
+  for (const [category, enumValue] of config.categories ?? []) {
+    const mapping = mappings.get(category)!;
+    for (const alias of names) {
+      mapping.mapTo.set(alias, enumValue);
+    }
+    mapping.mapFrom.set(enumValue, names[0]);
   }
   keywords.push(tokenType);
   return tokenType;
@@ -157,8 +170,32 @@ function registerKeyword(config: KeywordConfig): TokenType {
 
 const combinations: TokenType[] = [];
 
-function registerCombination(name: string): TokenType {
-  const tokenType = createToken({
+export type MappableTokenType<TEnum extends number=number> = TokenType & {
+  mapToEnumLiteral(image: string): TEnum;
+  mapFromEnumLiteral(value: TEnum): string;
+};
+
+function createTokenWithParser<TEnum extends number=number>(config: ITokenConfig): MappableTokenType<TEnum> {
+  const tokenType = createToken(config);
+  mappings.set(tokenType, {
+    mapTo: new Map<string, number>(),
+    mapFrom: new Map<number, string>(),
+  });
+  return {
+    ...tokenType,
+    mapToEnumLiteral(image: string): TEnum {
+      const mapping = mappings.get(tokenType)!;
+      return mapping.mapTo.get(image) as TEnum;
+    },
+    mapFromEnumLiteral(value: TEnum): string {
+      const mapsTo = mappings.get(tokenType)!;
+      return mapsTo.mapFrom.get(value)!;
+    }
+  };
+}
+
+function registerCombination<TEnum extends number = number>(name: string) {
+  const tokenType = createTokenWithParser<TEnum>({
     name,
     pattern: Lexer.NA,
   });
@@ -170,7 +207,7 @@ function registerCombination(name: string): TokenType {
 export const LinkageOption = registerCombination("LinkageOption");
 export const NoMapOption = registerCombination("NoMapOption");
 export const SimpleOptions = registerCombination("SimpleOptions");
-export const DefaultAttribute = registerCombination("DefaultAttribute");
+export const DefaultAttribute = registerCombination<ast.DefaultAttribute>("DefaultAttribute");
 export const DefaultAttributeBinaryOperator = registerCombination(
   "DefaultAttributeBinaryOperator",
 );

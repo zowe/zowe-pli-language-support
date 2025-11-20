@@ -2102,7 +2102,7 @@ export class PliParser extends AbstractParser {
       });
       this.CONSUME_ASSIGN(tokens.DefaultAttribute, (token) => {
         this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_Value);
-        element.value = token.image as ast.DefaultAttribute;
+        element.value = tokens.DefaultAttribute.mapToEnumLiteral(token.image);
       });
 
       return this.pop<ast.DefaultAttributeExpressionNot>();
@@ -6914,7 +6914,7 @@ export class PliParser extends AbstractParser {
     this.CONSUME_ASSIGN(tokens.DefaultAttribute, (token) => {
       this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_Value);
       element.typeToken = token;
-      element.type = token.image as ast.DefaultAttribute;
+      element.type = tokens.DefaultAttribute.mapToEnumLiteral(token.image);
     });
     this.OPTION1(() => {
       this.SUBRULE_ASSIGN1(this.Dimensions, {

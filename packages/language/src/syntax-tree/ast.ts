@@ -578,108 +578,111 @@ export type DefaultDeclarationAttribute =
  * This is essentially a list of all attributes that can be used in a common declaration + the VALUE attribute.
  */
 export type DeclarationAttribute = CommonDeclarationAttribute | ValueAttribute;
-export type DefaultAttribute =
-  | ScanMode
-  | "ABNORMAL"
-  | "ALIGNED"
-  | "AREA"
-  | "ASSIGNABLE"
-  | "AUTOMATIC"
-  | "BACKWARDS"
-  | "BASED"
-  | "BIGENDIAN"
-  | "BIN"
-  | "BINARY"
-  | "BIT"
-  | "BUFFERED"
-  | "BUF"
-  | "BUILTIN"
-  | "BYADDR"
-  | "BYVALUE"
-  | "CHAR"
-  | "CHARACTER"
-  | "COMPLEX"
-  | "CONDITION"
-  | "CONNECTED"
-  | "CONSTANT"
-  | "CONTROLLED"
-  | "CTL"
-  | "DEC"
-  | "DECIMAL"
-  | "DIMACROSS"
-  | "DIRECT"
-  | "EVENT"
-  | "EXCLUSIVE"
-  | "EXT"
-  | "EXTERNAL"
-  | "FILE"
-  | "FIXED"
-  | "FLOAT"
-  | "FORMAT"
-  | "GENERIC"
-  | "GRAPHIC"
-  | "HEX"
-  | "HEXADEC"
-  | "IEEE"
-  | "INONLY"
-  | "INOUT"
-  | "INPUT"
-  | "INT"
-  | "INTERNAL"
-  | "IRREDUCIBLE"
-  | "KEYED"
-  | "LABEL"
-  | "LIST"
-  | "LITTLEENDIAN"
-  | "MEMBER"
-  | "NATIVE"
-  | "NONASGN"
-  | "NONASSIGNABLE"
-  | "NONCONNECTED"
-  | "NONNATIVE"
-  | "NONVARYING"
-  | "NORMAL"
-  | "NOINIT"
-  | "NULLINIT"
-  | "OFFSET"
-  | "OPTIONAL"
-  | "OPTIONS"
-  | "OUTONLY"
-  | "OUTPUT"
-  | "PARAMETER"
-  | "POINTER"
-  | "POSITION"
-  | "PREC"
-  | "PRECISION"
-  | "PRINT"
-  | "PTR"
-  | "RANGE"
-  | "REAL"
-  | "RECORD"
-  | "RESERVED"
-  | "SEQL"
-  | "SEQUENTIAL"
-  | "SIGNED"
-  | "STATIC"
-  | "STREAM"
-  | "STRUCTURE"
-  | "TASK"
-  | "TRANSIENT"
-  | "UCHAR"
-  | "UNAL"
-  | "UNALIGNED"
-  | "UNBUF"
-  | "UNBUFFERED"
-  | "UNION"
-  | "UNSIGNED"
-  | "UPDATE"
-  | "VAR"
-  | "VARIABLE"
-  | "VARYING"
-  | "VARYING4"
-  | "VARYINGZ"
-  | "VARZ"
-  | "WIDECHAR";
+export enum DefaultAttribute {
+  SCAN,
+  RESCAN,
+  NOSCAN,
+  ABNORMAL,
+  ALIGNED,
+  AREA,
+  ASSIGNABLE,
+  AUTOMATIC,
+  BACKWARDS,
+  BASED,
+  BIGENDIAN,
+  BIN,
+  BINARY,
+  BIT,
+  BUFFERED,
+  BUF,
+  BUILTIN,
+  BYADDR,
+  BYVALUE,
+  CHAR,
+  CHARACTER,
+  COMPLEX,
+  CONDITION,
+  CONNECTED,
+  CONSTANT,
+  CONTROLLED,
+  CTL,
+  DEC,
+  DECIMAL,
+  DIMACROSS,
+  DIRECT,
+  EVENT,
+  EXCLUSIVE,
+  EXT,
+  EXTERNAL,
+  FILE,
+  FIXED,
+  FLOAT,
+  FORMAT,
+  GENERIC,
+  GRAPHIC,
+  HEX,
+  HEXADEC,
+  IEEE,
+  INONLY,
+  INOUT,
+  INPUT,
+  INT,
+  INTERNAL,
+  IRREDUCIBLE,
+  KEYED,
+  LABEL,
+  LIST,
+  LITTLEENDIAN,
+  MEMBER,
+  NATIVE,
+  NONASGN,
+  NONASSIGNABLE,
+  NONCONNECTED,
+  NONNATIVE,
+  NONVARYING,
+  NORMAL,
+  NOINIT,
+  NULLINIT,
+  OFFSET,
+  OPTIONAL,
+  OPTIONS,
+  OUTONLY,
+  OUTPUT,
+  PARAMETER,
+  POINTER,
+  POSITION,
+  PREC,
+  PRECISION,
+  PRINT,
+  PTR,
+  RANGE,
+  REAL,
+  RECORD,
+  RESERVED,
+  SEQL,
+  SEQUENTIAL,
+  SIGNED,
+  STATIC,
+  STREAM,
+  STRUCTURE,
+  TASK,
+  TRANSIENT,
+  UCHAR,
+  UNAL,
+  UNALIGNED,
+  UNBUF,
+  UNBUFFERED,
+  UNION,
+  UNSIGNED,
+  UPDATE,
+  VAR,
+  VARIABLE,
+  VARYING,
+  VARYING4,
+  VARYINGZ,
+  VARZ,
+  WIDECHAR,
+}
 export type DoType2 = DoUntil | DoWhile;
 export type EntryDescription =
   | EntryParameterDescription

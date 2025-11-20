@@ -77,10 +77,10 @@ export class PliValidator {
     node: AST.ReturnsOption,
     acceptor: ValidationAcceptor,
   ): void {
-    const attrSet = new Set<string>();
+    const attrSet = new Set<AST.DefaultAttribute>();
     for (const attr of node.returnAttributes) {
       if (attr.kind === AST.SyntaxKind.ComputationDataAttribute) {
-        const typ = attr.type!.toUpperCase();
+        const typ = attr.type!;
         attrSet.add(typ); // dupes are ok
 
         // look for a generally negated version of this attribute (there are several)
