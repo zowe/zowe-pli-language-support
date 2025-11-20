@@ -1491,15 +1491,13 @@ export const Comma = createToken({
   name: ",",
   pattern: Lexer.NA,
 });
-export const Star = createToken({
+export const Star = registerOperator({
   name: "*",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.Star]],
 });
-export const Equals = createToken({
+export const Equals = registerOperator({
   name: "=",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator, AssignmentOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.Equals], [AssignmentOperator, ast.AssignmentOperator.Equals]],
 });
 export const A = registerKeyword({
   name: "A",

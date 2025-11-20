@@ -22,7 +22,7 @@ import {
   TypeSystemCodes,
 } from "../../src/validation/internal-codes";
 import { PLICode, PLICodes } from "../../src/validation/pli-codes";
-import { SyntaxKind } from "../../src/syntax-tree/ast";
+import { DefaultAttribute, SyntaxKind } from "../../src/syntax-tree/ast";
 import {
   AccessMode,
   Alignments,
@@ -330,5 +330,6 @@ export interface HarnessTesterInterface {
   constants: {
     CompletionKeywords: typeof CompletionKeywords;
     Severity: typeof Severity;
+    DefaultAttribute: typeof DefaultAttribute;
   };
 }
