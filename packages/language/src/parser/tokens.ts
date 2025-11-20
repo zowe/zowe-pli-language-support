@@ -139,7 +139,7 @@ interface KeywordConfig {
    * The keyword name or names (aliases). The first name is the canonical name.
    */
   name: string | string[];
-  categories?: (TokenType|[MappableTokenType, number])[];
+  categories?: (TokenType | [MappableTokenType, number])[];
 }
 
 function registerKeyword(config: KeywordConfig): TokenType {
@@ -156,6 +156,17 @@ function registerKeyword(config: KeywordConfig): TokenType {
   for (const alias of names) {
     keywordMap.set(alias, tokenType);
   }
+  assignToMappings(config, names);
+  keywords.push(tokenType);
+  return tokenType;
+}
+
+interface OperatorConfig {
+  name: string;
+  categories?: (TokenType | [MappableTokenType, number])[];
+}
+
+function assignToMappings(config: KeywordConfig, names: string[]) {
   for (const [category, enumValue] of (config.categories ?? []).filter(Array.isArray) as [MappableTokenType, number][]) {
     const mapping = mappings.get(category.name)!;
     for (const alias of names) {
@@ -163,18 +174,26 @@ function registerKeyword(config: KeywordConfig): TokenType {
     }
     mapping.mapFrom.set(enumValue, names[0]);
   }
-  keywords.push(tokenType);
+}
+
+function registerOperator(config: OperatorConfig): TokenType {
+  const tokenType = createToken({
+    name: config.name,
+    pattern: Lexer.NA,
+    categories: [...(config.categories ?? []).map((category) => Array.isArray(category) ? category[0] : category)],
+  });
+  assignToMappings(config, [config.name]);
   return tokenType;
 }
 
 const combinations: TokenType[] = [];
 
-export type MappableTokenType<TEnum extends number=number> = TokenType & {
+export type MappableTokenType<TEnum extends number = number> = TokenType & {
   mapToEnumLiteral(image: string): TEnum;
   mapFromEnumLiteral(value: TEnum): string;
 };
 
-function createMappableToken<TEnum extends number=number>(config: ITokenConfig): MappableTokenType<TEnum> {
+function createMappableToken<TEnum extends number = number>(config: ITokenConfig): MappableTokenType<TEnum> {
   const tokenType = createToken(config);
   mappings.set(tokenType.name, {
     mapTo: new Map<string, number>(),
@@ -519,19 +538,19 @@ export const BIGENDIAN = registerKeyword({
 });
 export const ASSERTION = registerKeyword({
   name: "ASSERTION",
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.ASSERTION]],
 });
 export const ATTENTION = registerKeyword({
   name: "ATTENTION",
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.ATTENTION]],
 });
 export const INVALIDOP = registerKeyword({
   name: "INVALIDOP",
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.INVALIDOP]],
 });
 export const UNDERFLOW = registerKeyword({
   name: ["UNDERFLOW", "UFL"],
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.UNDERFLOW]],
 });
 export const OTHERWISE = registerKeyword({
   name: ["OTHERWISE", "OTHER"],
@@ -547,86 +566,93 @@ export const RESERVES = registerKeyword({
 });
 export const JSONNAME = registerKeyword({
   name: "JSONNAME",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.JSONNAME]],
 });
 export const JSONNULL = registerKeyword({
   name: "JSONNULL",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.JSONNULL]],
 });
 export const JSONOMIT = registerKeyword({
   name: "JSONOMIT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.JSONOMIT]],
 });
 export const NOMAPOUT = registerKeyword({
   name: "NOMAPOUT",
-  categories: [NoMapOption],
+  categories: [[NoMapOption, ast.NoMapOption.NOMAPOUT]],
 });
 export const NOINLINE = registerKeyword({
   name: "NOINLINE",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.NOINLINE]],
 });
 export const NORETURN = registerKeyword({
   name: "NORETURN",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.NORETURN]],
 });
 export const EXTERNAL = registerKeyword({
   name: ["EXTERNAL", "EXT"],
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.EXTERNAL]],
 });
 export const VARIABLE = registerKeyword({
   name: "VARIABLE",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.VARIABLE]],
 });
 export const ALLOCATE = registerKeyword({
   name: ["ALLOCATE", "ALLOC"],
 });
 export const WIDECHAR = registerKeyword({
   name: ["WIDECHAR", "WCHAR"],
-  categories: [DefaultAttribute, AllocateAttributeType, CharType],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.WIDECHAR],
+    [AllocateAttributeType, ast.AllocateAttributeType.WIDECHAR],
+    [CharType, ast.CharType.WIDECHAR]
+  ],
 });
 export const ABNORMAL = registerKeyword({
   name: "ABNORMAL",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.ABNORMAL]],
 });
 export const BUFFERED = registerKeyword({
   name: ["BUFFERED", "BUF"],
-  categories: [DefaultAttribute, OpenOptionType],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.BUFFERED], [OpenOptionType, ast.OpenOptionType.BUFFERED]],
 });
 export const UNBUFFERED = registerKeyword({
   name: ["UNBUFFERED", "UNBUF"],
-  categories: [DefaultAttribute, OpenOptionType],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.UNBUFFERED], [OpenOptionType, ast.OpenOptionType.UNBUFFERED]],
 });
 export const CONSTANT = registerKeyword({
   name: "CONSTANT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.CONSTANT]],
 });
 export const INTERNAL = registerKeyword({
   name: "INTERNAL",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.INTERNAL]],
 });
 export const OPTIONAL = registerKeyword({
   name: "OPTIONAL",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.OPTIONAL]],
 });
 export const POSITION = registerKeyword({
   name: ["POSITION", "POS"],
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.POSITION]],
 });
 export const RESERVED = registerKeyword({
   name: "RESERVED",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.RESERVED]],
 });
 export const UNSIGNED = registerKeyword({
   name: "UNSIGNED",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.UNSIGNED]],
 });
 export const VARYING4 = registerKeyword({
   name: "VARYING4",
-  categories: [DefaultAttribute, Varying],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.VARYING4],
+    [Varying, ast.Varying.VARYING4]
+  ],
 });
 export const VARYINGZ = registerKeyword({
   name: ["VARYINGZ", "VARZ"],
-  categories: [DefaultAttribute, Varying],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.VARYINGZ], [Varying, ast.Varying.VARYINGZ]],
 });
 export const DOWNTHRU = registerKeyword({
   name: "DOWNTHRU",
@@ -649,23 +675,23 @@ export const NOPRINT = registerKeyword({
 });
 export const OVERFLOW = registerKeyword({
   name: ["OVERFLOW", "OFL"],
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.OVERFLOW]],
 });
 export const TRANSMIT = registerKeyword({
   name: "TRANSMIT",
-  categories: [FileReferenceConditions],
+  categories: [[FileReferenceConditions, ast.FileReferenceConditions.TRANSMIT]],
 });
 export const LINESIZE = registerKeyword({
   name: "LINESIZE",
-  categories: [OpenOptionType],
+  categories: [[OpenOptionType, ast.OpenOptionType.LINESIZE]],
 });
 export const PAGESIZE = registerKeyword({
   name: "PAGESIZE",
-  categories: [OpenOptionType],
+  categories: [[OpenOptionType, ast.OpenOptionType.PAGESIZE]],
 });
 export const NULLINIT = registerKeyword({
   name: "NULLINIT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.NULLINIT]],
 });
 export const PROCESS = registerKeyword({
   name: "PROCESS",
@@ -675,15 +701,15 @@ export const PROCINC = registerKeyword({
 });
 export const XMLNAME = registerKeyword({
   name: "XMLNAME",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.XMLNAME]],
 });
 export const XMLATTR = registerKeyword({
   name: "XMLATTR",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.XMLATTR]],
 });
 export const XMLOMIT = registerKeyword({
   name: "XMLOMIT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.XMLOMIT]],
 });
 export const RESIGNAL = registerKeyword({
   name: "RESIGNAL",
@@ -696,57 +722,60 @@ export const EXPORTS = registerKeyword({
 });
 export const OPTIONS = registerKeyword({
   name: "OPTIONS",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.OPTIONS]],
 });
 export const LINKAGE = registerKeyword({
   name: "LINKAGE",
 });
 export const OPTLINK = registerKeyword({
   name: "OPTLINK",
-  categories: [LinkageOption],
+  categories: [[LinkageOption, ast.LinkageOption.OPTLINK]],
 });
 export const STDCALL = registerKeyword({
   name: "STDCALL",
-  categories: [LinkageOption],
+  categories: [[LinkageOption, ast.LinkageOption.STDCALL]],
 });
 export const NOMAPIN = registerKeyword({
   name: "NOMAPIN",
-  categories: [NoMapOption],
+  categories: [[NoMapOption, ast.NoMapOption.NOMAPIN]],
 });
 export const FORTRAN = registerKeyword({
   name: "FORTRAN",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.FORTRAN]],
 });
 export const BYVALUE = registerKeyword({
   name: "BYVALUE",
-  categories: [SimpleOptions, DefaultAttribute],
+  categories: [[SimpleOptions, ast.SimpleOptions.BYVALUE], [DefaultAttribute, ast.DefaultAttribute.BYVALUE]],
 });
 export const AMODE31 = registerKeyword({
   name: "AMODE31",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.AMODE31]],
 });
 export const AMODE64 = registerKeyword({
   name: "AMODE64",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.AMODE64]],
 });
 export const RETCODE = registerKeyword({
   name: "RETCODE",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.RETCODE]],
 });
 export const WINMAIN = registerKeyword({
   name: "WINMAIN",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.WINMAIN]],
 });
 export const DYNAMIC = registerKeyword({
   name: "DYNAMIC",
-  categories: [ScopeAttribute],
+  categories: [[ScopeAttribute, ast.ScopeAttribute.DYNAMIC]],
 });
 export const LIMITED = registerKeyword({
   name: "LIMITED",
 });
 export const GRAPHIC = registerKeyword({
   name: "GRAPHIC",
-  categories: [DefaultAttribute, AllocateAttributeType],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.GRAPHIC],
+    [AllocateAttributeType, ast.AllocateAttributeType.GRAPHIC]
+  ],
 });
 export const COMPARE = registerKeyword({
   name: "COMPARE",
@@ -756,42 +785,42 @@ export const DEFAULT = registerKeyword({
 });
 export const ALIGNED = registerKeyword({
   name: "ALIGNED",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.ALIGNED]],
 });
 export const BUILTIN = registerKeyword({
   name: "BUILTIN",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.BUILTIN]],
 });
 export const COMPLEX = registerKeyword({
   name: "COMPLEX",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.COMPLEX]],
 });
 export const DECIMAL = registerKeyword({
   name: ["DECIMAL", "DEC"],
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.DECIMAL]],
 });
 export const GENERIC = registerKeyword({
   name: "GENERIC",
 });
 export const HEXADEC = registerKeyword({
   name: "HEXADEC",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.HEXADEC]],
 });
 export const OUTONLY = registerKeyword({
   name: "OUTONLY",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.OUTONLY]],
 });
 export const POINTER = registerKeyword({
   name: ["POINTER", "PTR"],
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.POINTER]],
 });
 export const VARYING = registerKeyword({
   name: ["VARYING", "VAR"],
-  categories: [DefaultAttribute, Varying],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.VARYING]],
 });
 export const ORDINAL = registerKeyword({
   name: "ORDINAL",
-  categories: [TypeOrOrdinal],
+  categories: [[TypeOrOrdinal, ast.TypeOrOrdinal.ORDINAL]],
 });
 export const DISPLAY = registerKeyword({
   name: "DISPLAY",
@@ -807,23 +836,23 @@ export const ACTIVATE = registerKeyword({
 });
 export const NORESCAN = registerKeyword({
   name: "NORESCAN",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.NORESCAN]],
 });
 export const KEYFROM = registerKeyword({
   name: "KEYFROM",
-  categories: [WriteStatementType, LocateType],
+  categories: [[WriteStatementType, ast.WriteStatementType.KEYFROM], [LocateType, ast.LocateType.KEYFROM]],
 });
 export const STORAGE = registerKeyword({
   name: "STORAGE",
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.STORAGE]],
 });
 export const ENDFILE = registerKeyword({
   name: "ENDFILE",
-  categories: [FileReferenceConditions],
+  categories: [[FileReferenceConditions, ast.FileReferenceConditions.ENDFILE]],
 });
 export const ENDPAGE = registerKeyword({
   name: "ENDPAGE",
-  categories: [FileReferenceConditions],
+  categories: [[FileReferenceConditions, ast.FileReferenceConditions.ENDPAGE]],
 });
 export const QUALIFY = registerKeyword({
   name: "QUALIFY",
@@ -851,19 +880,19 @@ export const RETURNS = registerKeyword({
 });
 export const SYSTEM = registerKeyword({
   name: "SYSTEM",
-  categories: [LinkageOption],
+  categories: [[LinkageOption, ast.LinkageOption.SYSTEM]],
 });
 export const INLINE = registerKeyword({
   name: "INLINE",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.INLINE]],
 });
 export const BYADDR = registerKeyword({
   name: "BYADDR",
-  categories: [SimpleOptions, DefaultAttribute],
+  categories: [[SimpleOptions, ast.SimpleOptions.BYADDR], [DefaultAttribute, ast.DefaultAttribute.BYADDR]],
 });
 export const STATIC = registerKeyword({
   name: "STATIC",
-  categories: [DefaultAttribute, ScopeAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.STATIC], [ScopeAttribute, ast.ScopeAttribute.STATIC]],
 });
 export const ASSERT = registerKeyword({
   name: "ASSERT",
@@ -888,62 +917,65 @@ export const CANCEL = registerKeyword({
 });
 export const BINARY = registerKeyword({
   name: "BINARY",
-  categories: [DefaultAttribute, CharOrBinary],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.BINARY],
+    [CharOrBinary, ast.CharOrBinary.BINARY]
+  ],
 });
 export const BIN = registerKeyword({
   name: "BIN",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.BINARY]],
 });
 export const FORMAT = registerKeyword({
   name: "FORMAT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.FORMAT]],
 });
 export const NOINIT = registerKeyword({
   name: "NOINIT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.NOINIT]],
 });
 export const INONLY = registerKeyword({
   name: "INONLY",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.INONLY]],
 });
 export const INDFOR = registerKeyword({
   name: "INDFOR",
 });
 export const MEMBER = registerKeyword({
   name: "MEMBER",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.MEMBER]],
 });
 export const NATIVE = registerKeyword({
   name: "NATIVE",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.NATIVE]],
 });
 export const NORMAL = registerKeyword({
   name: "NORMAL",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.NORMAL]],
 });
 export const OFFSET = registerKeyword({
   name: "OFFSET",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.OFFSET]],
 });
 export const OUTPUT = registerKeyword({
   name: "OUTPUT",
-  categories: [DefaultAttribute, OpenOptionType],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.OUTPUT], [OpenOptionType, ast.OpenOptionType.OUTPUT]],
 });
 export const RECORD = registerKeyword({
   name: "RECORD",
-  categories: [DefaultAttribute, FileReferenceConditions, OpenOptionType],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.RECORD], [FileReferenceConditions, ast.FileReferenceConditions.RECORD], [OpenOptionType, ast.OpenOptionType.RECORD]],
 });
 export const SIGNED = registerKeyword({
   name: "SIGNED",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.SIGNED]],
 });
 export const STREAM = registerKeyword({
   name: "STREAM",
-  categories: [DefaultAttribute, OpenOptionType],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.STREAM], [OpenOptionType, ast.OpenOptionType.STREAM]],
 });
 export const UPDATE = registerKeyword({
   name: "UPDATE",
-  categories: [DefaultAttribute, OpenOptionType],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.UPDATE], [OpenOptionType, ast.OpenOptionType.UPDATE]],
 });
 export const DEFINE = registerKeyword({
   name: ["DEFINE", "XDEFINE"],
@@ -971,26 +1003,26 @@ export const STRING = registerKeyword({
 });
 export const NOSCAN = registerKeyword({
   name: "NOSCAN",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.NOSCAN]],
 });
 export const RESCAN = registerKeyword({
   name: "RESCAN",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.RESCAN]],
 });
 export const LOCATE = registerKeyword({
   name: "LOCATE",
 });
 export const FINISH = registerKeyword({
   name: "FINISH",
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.FINISH]],
 });
 export const DIRECT = registerKeyword({
   name: "DIRECT",
-  categories: [OpenOptionType],
+  categories: [[OpenOptionType, ast.OpenOptionType.DIRECT]],
 });
 export const IGNORE = registerKeyword({
   name: "IGNORE",
-  categories: [ReadStatementType],
+  categories: [[ReadStatementType, ast.ReadStatementType.IGNORE]],
 });
 export const REINIT = registerKeyword({
   name: "REINIT",
@@ -1009,37 +1041,37 @@ export const HANDLE = registerKeyword({
 });
 export const CDECL = registerKeyword({
   name: "CDECL",
-  categories: [LinkageOption],
+  categories: [[LinkageOption, ast.LinkageOption.CDECL]],
 });
 export const CMPAT = registerKeyword({
   name: "CMPAT",
 });
 export const NOMAP = registerKeyword({
   name: "NOMAP",
-  categories: [NoMapOption],
+  categories: [[NoMapOption, ast.NoMapOption.NOMAP]],
 });
 export const ORDER = registerKeyword({
   name: ["ORDER", "REORDER"],
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.ORDER]],
 });
 export const COBOL = registerKeyword({
   name: "COBOL",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.COBOL]],
 });
 export const INTER = registerKeyword({
   name: "INTER",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.INTER]],
 });
 export const ENTRY = registerKeyword({
   name: "ENTRY",
 });
 export const UCHAR = registerKeyword({
   name: "UCHAR",
-  categories: [DefaultAttribute, AllocateAttributeType, CharType],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.UCHAR], [AllocateAttributeType, ast.AllocateAttributeType.UCHAR], [CharType, ast.CharType.UCHAR]],
 });
 export const FALSE = registerKeyword({
   name: "FALSE",
-  categories: [Boolean],
+  categories: [[Boolean, ast.Boolean.FALSE]],
 });
 export const BEGIN = registerKeyword({
   name: "BEGIN",
@@ -1049,47 +1081,47 @@ export const CLOSE = registerKeyword({
 });
 export const RANGE = registerKeyword({
   name: "RANGE",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.RANGE]],
 });
 export const BASED = registerKeyword({
   name: "BASED",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.BASED]],
 });
 export const EVENT = registerKeyword({
   name: "EVENT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.EVENT]],
 });
 export const FIXED = registerKeyword({
   name: "FIXED",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.FIXED]],
 });
 export const FLOAT = registerKeyword({
   name: "FLOAT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.FLOAT]],
 });
 export const INOUT = registerKeyword({
   name: "INOUT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.INOUT]],
 });
 export const INPUT = registerKeyword({
   name: "INPUT",
-  categories: [DefaultAttribute, OpenOptionType],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.INPUT], [OpenOptionType, ast.OpenOptionType.INPUT]],
 });
 export const KEYED = registerKeyword({
   name: "KEYED",
-  categories: [DefaultAttribute, OpenOptionType],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.KEYED], [OpenOptionType, ast.OpenOptionType.KEYED]],
 });
 export const LABEL = registerKeyword({
   name: "LABEL",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.LABEL]],
 });
 export const PRINT = registerKeyword({
   name: "PRINT",
-  categories: [DefaultAttribute, OpenOptionType],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.PRINT], [OpenOptionType, ast.OpenOptionType.PRINT]],
 });
 export const UNION = registerKeyword({
   name: "UNION",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.UNION]],
 });
 export const ALIAS = registerKeyword({
   name: "ALIAS",
@@ -1114,7 +1146,7 @@ export const FETCH = registerKeyword({
 });
 export const TITLE = registerKeyword({
   name: "TITLE",
-  categories: [OpenOptionType],
+  categories: [[OpenOptionType, ast.OpenOptionType.TITLE]],
 });
 export const FLUSH = registerKeyword({
   name: "FLUSH",
@@ -1124,14 +1156,14 @@ export const LEAVE = registerKeyword({
 });
 export const ERROR = registerKeyword({
   name: "ERROR",
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.ERROR]],
 });
 export const PUSH = registerKeyword({
   name: "PUSH",
 });
 export const KEYTO = registerKeyword({
   name: "KEYTO",
-  categories: [ReadStatementType, WriteStatementType],
+  categories: [[ReadStatementType, ast.ReadStatementType.KEYTO], [WriteStatementType, ast.WriteStatementType.KEYTO]],
 });
 export const REVERT = registerKeyword({
   name: "REVERT",
@@ -1147,26 +1179,26 @@ export const NOTE = registerKeyword({
 });
 export const MAIN = registerKeyword({
   name: "MAIN",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.MAIN]],
 });
 export const RENT = registerKeyword({
   name: "RENT",
-  categories: [SimpleOptions],
+  categories: [[SimpleOptions, ast.SimpleOptions.RENT]],
 });
 export const AREA = registerKeyword({
   name: "AREA",
-  categories: [DefaultAttribute, AllocateAttributeType, KeywordConditions],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.AREA], [AllocateAttributeType, ast.AllocateAttributeType.AREA], [KeywordConditions, ast.KeywordConditions.AREA]],
 });
 export const TRUE = registerKeyword({
   name: "TRUE",
-  categories: [Boolean],
+  categories: [[Boolean, ast.Boolean.TRUE]],
 });
 export const TEXT = registerKeyword({
   name: "TEXT",
 });
 export const NAME = registerKeyword({
   name: "NAME",
-  categories: [FileReferenceConditions],
+  categories: [[FileReferenceConditions, ast.FileReferenceConditions.NAME]],
 });
 export const CALL = registerKeyword({
   name: "CALL",
@@ -1174,30 +1206,30 @@ export const CALL = registerKeyword({
 export const FILE = registerKeyword({
   name: "FILE",
   categories: [
-    DefaultAttribute,
-    PutAttribute,
-    ReadStatementType,
-    WriteStatementType,
-    RewriteStatementType,
-    LocateType,
-    OpenOptionType,
+    [DefaultAttribute, ast.DefaultAttribute.FILE],
+    [PutAttribute, ast.PutAttribute.FILE],
+    [ReadStatementType, ast.ReadStatementType.FILE],
+    [WriteStatementType, ast.WriteStatementType.FILE],
+    [RewriteStatementType, ast.RewriteStatementType.FILE],
+    [LocateType, ast.LocateType.FILE],
+    [OpenOptionType, ast.OpenOptionType.FILE],
   ],
 });
 export const IEEE = registerKeyword({
   name: "IEEE",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.IEEE]],
 });
 export const LIST = registerKeyword({
   name: "LIST",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.LIST]],
 });
 export const REAL = registerKeyword({
   name: "REAL",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.REAL]],
 });
 export const TASK = registerKeyword({
   name: "TASK",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.TASK]],
 });
 export const DESC = registerKeyword({
   name: "DESC",
@@ -1210,19 +1242,19 @@ export const EXIT = registerKeyword({
 });
 export const LINE = registerKeyword({
   name: "LINE",
-  categories: [PutAttribute],
+  categories: [[PutAttribute, ast.PutAttribute.LINE]],
 });
 export const PAGE = registerKeyword({
   name: "PAGE",
-  categories: [PutAttribute],
+  categories: [[PutAttribute, ast.PutAttribute.PAGE]],
 });
 export const SKIP = registerKeyword({
   name: "SKIP",
-  categories: [PutAttribute],
+  categories: [[PutAttribute, ast.PutAttribute.SKIP]],
 });
 export const SCAN = registerKeyword({
   name: "SCAN",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.SCAN]],
 });
 export const FREE = registerKeyword({
   name: "FREE",
@@ -1244,7 +1276,7 @@ export const SNAP = registerKeyword({
 });
 export const SIZE = registerKeyword({
   name: "SIZE",
-  categories: [KeywordConditions],
+  categories: [[KeywordConditions, ast.KeywordConditions.SIZE]],
 });
 export const OPEN = registerKeyword({
   name: "OPEN",
@@ -1266,11 +1298,11 @@ export const READ = registerKeyword({
 });
 export const INTO = registerKeyword({
   name: "INTO",
-  categories: [ReadStatementType],
+  categories: [[ReadStatementType, ast.ReadStatementType.INTO]],
 });
 export const FROM = registerKeyword({
   name: "FROM",
-  categories: [WriteStatementType, RewriteStatementType],
+  categories: [[WriteStatementType, ast.WriteStatementType.FROM], [RewriteStatementType, ast.RewriteStatementType.FROM]],
 });
 export const LOOP = registerKeyword({
   name: ["LOOP", "FOREVER"],
@@ -1289,53 +1321,47 @@ export const DATE = registerKeyword({
 });
 export const TYPE = registerKeyword({
   name: "TYPE",
-  categories: [TypeOrOrdinal],
+  categories: [[TypeOrOrdinal, ast.TypeOrOrdinal.TYPE]],
 });
 export const LIKE = registerKeyword({
   name: "LIKE",
 });
 export const SET = registerKeyword({
   name: "SET",
-  categories: [ReadStatementType, LocateType],
+  categories: [[ReadStatementType, ast.ReadStatementType.SET], [LocateType, ast.LocateType.SET]],
 });
 export const BIT = registerKeyword({
   name: "BIT",
-  categories: [DefaultAttribute, AllocateAttributeType],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.BIT], [AllocateAttributeType, ast.AllocateAttributeType.BIT]],
 });
-export const PipePipeEquals = createToken({
+export const PipePipeEquals = registerOperator({
   name: "||=",
-  pattern: Lexer.NA,
-  categories: [AssignmentOperator],
+  categories: [[AssignmentOperator, ast.AssignmentOperator.PipePipeEquals]],
 });
-export const StarStarEquals = createToken({
+export const StarStarEquals = registerOperator({
   name: "**=",
-  pattern: Lexer.NA,
-  categories: [AssignmentOperator],
+  categories: [[AssignmentOperator, ast.AssignmentOperator.StarStarEquals]],
 });
 export const END = registerKeyword({
   name: "END",
 });
 export const AND = registerKeyword({
   name: "AND",
-  categories: [DefaultAttributeBinaryOperator],
+  categories: [[DefaultAttributeBinaryOperator, ast.DefaultAttributeBinaryOperator.AND]],
 });
 export const NOT = registerKeyword({
   name: "NOT",
 });
-export const HEX = registerKeyword({
-  name: "HEX",
-  categories: [DefaultAttribute],
-});
 export const INT = registerKeyword({
   name: "INT",
-  categories: [DefaultAttribute],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.INT]],
 });
 export const KEY = registerKeyword({
   name: "KEY",
   categories: [
-    FileReferenceConditions,
-    ReadStatementType,
-    RewriteStatementType,
+    [FileReferenceConditions, ast.FileReferenceConditions.KEY],
+    [ReadStatementType, ast.ReadStatementType.KEY],
+    [RewriteStatementType, ast.RewriteStatementType.KEY],
   ],
 });
 export const GET = registerKeyword({
@@ -1346,15 +1372,15 @@ export const PUT = registerKeyword({
 });
 export const V1 = registerKeyword({
   name: "V1",
-  categories: [VX],
+  categories: [[VX, ast.VX.V1]],
 });
 export const V2 = registerKeyword({
   name: "V2",
-  categories: [VX],
+  categories: [[VX, ast.VX.V2]],
 });
 export const V3 = registerKeyword({
   name: "V3",
-  categories: [VX],
+  categories: [[VX, ast.VX.V3]],
 });
 export const IN = registerKeyword({
   name: "IN",
@@ -1362,49 +1388,41 @@ export const IN = registerKeyword({
 export const BY = registerKeyword({
   name: "BY",
 });
-export const PlusEquals = createToken({
+export const PlusEquals = registerOperator({
   name: "+=",
-  pattern: Lexer.NA,
-  categories: [AssignmentOperator],
+  categories: [[AssignmentOperator, ast.AssignmentOperator.PlusEquals]],
 });
-export const MinusEquals = createToken({
+export const MinusEquals = registerOperator({
   name: "-=",
-  pattern: Lexer.NA,
-  categories: [AssignmentOperator],
+  categories: [[AssignmentOperator, ast.AssignmentOperator.MinusEquals]],
 });
-export const StarEquals = createToken({
+export const StarEquals = registerOperator({
   name: "*=",
-  pattern: Lexer.NA,
-  categories: [AssignmentOperator],
+  categories: [[AssignmentOperator, ast.AssignmentOperator.StarEquals]],
 });
-export const SlashEquals = createToken({
+export const SlashEquals = registerOperator({
   name: "/=",
-  pattern: Lexer.NA,
-  categories: [AssignmentOperator],
+  categories: [[AssignmentOperator, ast.AssignmentOperator.SlashEquals]],
 });
-export const PipeEquals = createToken({
+export const PipeEquals = registerOperator({
   name: "|=",
-  pattern: Lexer.NA,
-  categories: [AssignmentOperator],
+  categories: [[AssignmentOperator, ast.AssignmentOperator.PipeEquals]],
 });
-export const AmpersandEquals = createToken({
+export const AmpersandEquals = registerOperator({
   name: "&=",
-  pattern: Lexer.NA,
-  categories: [AssignmentOperator],
+  categories: [[AssignmentOperator, ast.AssignmentOperator.AmpersandEquals]],
 });
-export const NotEquals = createToken({
+export const NotEquals = registerOperator({
   name: "^=",
-  pattern: Lexer.NA,
-  categories: [AssignmentOperator, BinaryOperator],
+  categories: [[AssignmentOperator, ast.AssignmentOperator.NotEquals]],
 });
-export const LessThanGreaterThan = createToken({
+export const LessThanGreaterThan = registerOperator({
   name: "<>",
-  pattern: Lexer.NA,
-  categories: [AssignmentOperator, BinaryOperator],
+  categories: [[AssignmentOperator, ast.AssignmentOperator.LessThanGreaterThan], [BinaryOperator, ast.BinaryOperator.LessThanGreaterThan]],
 });
 export const OR = registerKeyword({
   name: "OR",
-  categories: [DefaultAttributeBinaryOperator],
+  categories: [[DefaultAttributeBinaryOperator, ast.DefaultAttributeBinaryOperator.OR]],
 });
 export const DO = registerKeyword({
   name: "DO",
@@ -1421,35 +1439,29 @@ export const IF = registerKeyword({
 export const ON = registerKeyword({
   name: "ON",
 });
-export const NotLessThan = createToken({
+export const NotLessThan = registerOperator({
   name: "^<",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.NotLessThan]],
 });
-export const LessThanEquals = createToken({
+export const LessThanEquals = registerOperator({
   name: "<=",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.LessThanEquals]],
 });
-export const GreaterThanEquals = createToken({
+export const GreaterThanEquals = registerOperator({
   name: ">=",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.GreaterThanEquals]],
 });
-export const NotGreaterThan = createToken({
+export const NotGreaterThan = registerOperator({
   name: "^>",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.NotGreaterThan]],
 });
-export const PipePipe = createToken({
+export const PipePipe = registerOperator({
   name: "||",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.PipePipe]],
 });
-export const StarStar = createToken({
+export const StarStar = registerOperator({
   name: "**",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.StarStar]],
 });
 export const MinusGreaterThan = createToken({
   name: "->",
@@ -1506,15 +1518,15 @@ export const E = registerKeyword({
 });
 export const G = registerKeyword({
   name: "G",
-  categories: [LOBSize],
+  categories: [[LOBSize, ast.LOBSize.G]],
 });
 export const K = registerKeyword({
   name: "K",
-  categories: [LOBSize],
+  categories: [[LOBSize, ast.LOBSize.K]],
 });
 export const M = registerKeyword({
   name: "M",
-  categories: [LOBSize],
+  categories: [[LOBSize, ast.LOBSize.M]],
 });
 export const P = registerKeyword({
   name: "P",
@@ -1531,45 +1543,37 @@ export const V = registerKeyword({
 export const X = registerKeyword({
   name: "X",
 });
-export const Pipe = createToken({
+export const Pipe = registerOperator({
   name: "|",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.Pipe]],
 });
-export const Not = createToken({
+export const Not = registerOperator({
   name: "^",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator, UnaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.Not], [UnaryOperator, ast.UnaryOperator.Not]],
 });
-export const Ampersand = createToken({
+export const Ampersand = registerOperator({
   name: "&",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.Ampersand]],
 });
-export const LessThan = createToken({
+export const LessThan = registerOperator({
   name: "<",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.LessThan]],
 });
-export const GreaterThan = createToken({
+export const GreaterThan = registerOperator({
   name: ">",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.GreaterThan]],
 });
-export const Plus = createToken({
+export const Plus = registerOperator({
   name: "+",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator, UnaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.Plus], [UnaryOperator, ast.UnaryOperator.Plus]],
 });
-export const Minus = createToken({
+export const Minus = registerOperator({
   name: "-",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator, UnaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.Minus], [UnaryOperator, ast.UnaryOperator.Minus]],
 });
-export const Slash = createToken({
+export const Slash = registerOperator({
   name: "/",
-  pattern: Lexer.NA,
-  categories: [BinaryOperator],
+  categories: [[BinaryOperator, ast.BinaryOperator.Slash]],
 });
 export const Dot = createToken({
   name: ".",
@@ -1602,39 +1606,39 @@ export const OBJECT = registerKeyword({
 });
 export const BLOB = registerKeyword({
   name: "BLOB",
-  categories: [LOB],
+  categories: [[LOB, ast.LOB.BLOB]],
 });
 export const CLOB = registerKeyword({
   name: "CLOB",
-  categories: [LOB],
+  categories: [[LOB, ast.LOB.CLOB]],
 });
 export const DBCLOB = registerKeyword({
   name: "DBCLOB",
-  categories: [LOB],
+  categories: [[LOB, ast.LOB.DBCLOB]],
 });
 export const BLOB_LOCATOR = registerKeyword({
   name: "BLOB_LOCATOR",
-  categories: [LOBLocator],
+  categories: [[LOBLocator, ast.LOBLocator.BLOB_LOCATOR]],
 });
 export const CLOB_LOCATOR = registerKeyword({
   name: "CLOB_LOCATOR",
-  categories: [LOBLocator],
+  categories: [[LOBLocator, ast.LOBLocator.CLOB_LOCATOR]],
 });
 export const DBCLOB_LOCATOR = registerKeyword({
   name: "DBCLOB_LOCATOR",
-  categories: [LOBLocator],
+  categories: [[LOBLocator, ast.LOBLocator.DBCLOB_LOCATOR]],
 });
 export const BLOB_FILE = registerKeyword({
   name: "BLOB_FILE",
-  categories: [LOBFile],
+  categories: [[LOBFile, ast.LOBFile.BLOB_FILE]],
 });
 export const CLOB_FILE = registerKeyword({
   name: "CLOB_FILE",
-  categories: [LOBFile],
+  categories: [[LOBFile, ast.LOBFile.CLOB_FILE]],
 });
 export const DBCLOB_FILE = registerKeyword({
   name: "DBCLOB_FILE",
-  categories: [LOBFile],
+  categories: [[LOBFile, ast.LOBFile.DBCLOB_FILE]],
 });
 export const ROWID = registerKeyword({
   name: "ROWID",

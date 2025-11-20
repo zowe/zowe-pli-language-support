@@ -245,7 +245,11 @@ export enum KeywordConditions {
 }
 
 export enum SimpleOptions {
+  BYADDR,
   DESCRIPTOR,
+  NOINLINE,
+  INLINE,
+  NORETURN,
   NOCHARGRAPHIC,
   NODESCRIPTOR,
   CHARGRAPHIC,
@@ -272,6 +276,8 @@ export enum SimpleOptions {
 }
 
 export enum DefaultAttribute {
+  INT,
+  NORESCAN,
   BIT,
   UNION,
   BYADDR,
@@ -409,7 +415,8 @@ export enum OpenOptionType {
   DIRECT,
   TITLE,
   INPUT,
-  KEYED
+  KEYED,
+  FILE
 }
 
 export enum AllocateAttributeType {
@@ -444,7 +451,8 @@ export enum ReadStatementType {
   INTO,
   FILE,
   SET,
-  KEYTO
+  KEYTO,
+  KEY,
 }
 
 export enum WriteStatementType {

@@ -796,6 +796,8 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.DefaultAttribute.XMLIGNORE:
       case ast.DefaultAttribute.XMLNAME:
       case ast.DefaultAttribute.XMLOMIT:
+      case ast.DefaultAttribute.INT:
+      case ast.DefaultAttribute.NORESCAN:
         break;
       default:
         assertUnreachable(type);
