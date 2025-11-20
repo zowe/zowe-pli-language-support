@@ -6,7 +6,6 @@ import {
   TypeDescriptions,
   Value,
 } from "./descriptions";
-import { assertType } from "../preprocessor/util";
 
 /** helper function to evaluate constant expressions */
 export function evaluateExpression(expression: Expression): Value {
@@ -17,14 +16,14 @@ export function evaluateExpression(expression: Expression): Value {
         switch (expression.op) {
           case "+":
           case "-":
-            assertType<DataType.Arithmetic>(operand.type);
-            return {
-              type: operand.type,
-              value:
-                expression.op === "+"
-                  ? +(operand.value as number)
-                  : -(operand.value as number),
-            };
+            if (operand.type.type === DataType.Arithmetic) {
+              const value = operand.value as number;
+              return {
+                type: operand.type,
+                value: expression.op === "+" ? +value : -value,
+              };
+            }
+            break;
           case "^":
             //TODO handle bitwise not
             break;
