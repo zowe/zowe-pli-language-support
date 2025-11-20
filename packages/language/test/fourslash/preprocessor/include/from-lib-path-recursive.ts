@@ -11,23 +11,6 @@
 
 /// <reference path="../../framework.ts" />
 
-// trigger a reparsing of the config, so we can pick up the sub libs folder
-// TODO @montymxb Oct 17th, 2025: Replace with a fourslash utility to trigger config reload
-// @filename: .pliplugin/proc_grps.json
-//// {
-////     "pgroups": [
-////         {
-////         "name": "default",
-////         "lsp-options": {
-////             "check-margins": true
-////         },
-////         "libs": [
-////             "cpy"
-////         ]
-////         }
-////     ]
-//// }
-
 // @filename: cpy/libs/lib.pli
 //// DECLARE LIB_VAR FIXED;
 

@@ -264,20 +264,60 @@ export class TestBuilder {
     return testBuilder;
   }
 
+  /**
+   * Configures the plugin configuration provider based on the test files.
+   * If a file for either the program or process group configuration is found, use it.
+   * If not, provide a default configuration.
+   * Ensures we have a proper config after writing all files to the fs & before parsing,
+   * so that we can build $computedLibs correctly
+   */
   private async configurePluginConfigurationProvider() {
-    // Check if the files contain a program config or process group.
+    let hasProgramConfig = false;
+    let hasProcessGroupConfig = false;
+
+    // check if the files contain a program config or process group.
     for (const [uri, file] of this.files) {
       if (uri.endsWith(PluginConfiguration.PROGRAM_FILE_PATH)) {
-        PluginConfigurationProviderInstance.parseProgramConfigs(
-          "",
-          file.output,
-        );
+        hasProgramConfig =
+          PluginConfigurationProviderInstance.parseProgramConfigs(
+            "",
+            file.output,
+          );
       }
       if (uri.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)) {
         await PluginConfigurationProviderInstance.parseProcessGroupConfigs(
           file.output,
         );
+        hasProcessGroupConfig = true;
       }
+    }
+
+    // add program config if not present on disc
+    if (!hasProgramConfig) {
+      PluginConfigurationProviderInstance.setProgramConfigs("", [
+        {
+          program: "*.pli",
+          pgroup: "default",
+          pliOptions: {},
+        },
+      ]);
+    }
+
+    // add process group config if not present on disc
+    if (!hasProcessGroupConfig) {
+      await PluginConfigurationProviderInstance.setProcessGroupConfigs([
+        {
+          name: "default",
+          libs: ["cpy"],
+          $computedLibs: [],
+          $computedLibsSet: new Set<string>(),
+          includeExtensions: [".pli"],
+          compilerOptions: [],
+          implicitBuiltins: new Set(),
+          lspOptions: { checkMargins: false },
+          pliOptions: {},
+        },
+      ]);
     }
   }
 
