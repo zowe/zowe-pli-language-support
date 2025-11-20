@@ -11,12 +11,7 @@
 
 import { tokenMatcher } from "chevrotain";
 import { TextDocuments } from "../language-server/text-documents";
-import {
-  diagnostic,
-  Diagnostic,
-  diagnosticFromCode,
-  Severity,
-} from "../language-server/types";
+import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { preprocessorParse } from "../parser/parser-entry";
 import { preprocessorParserState } from "../parser/parser-state";
 import { tokenize } from "../parser/tokenizer";
@@ -2327,7 +2322,10 @@ async function resolveIncludeFileUri(
       if (memberName.length > 8) {
         // emit diagnostic for member names > 8 characters
         context.diagnostics.push(
-          diagnostic(Severity.E, "Member exceeds 8 characters.", item.token),
+          diagnosticFromCode(
+            LspCodes.MemberValidation.ExceedsMaxLength,
+            item.token,
+          ),
         );
       }
 
@@ -2335,11 +2333,7 @@ async function resolveIncludeFileUri(
       if (!memberNameRegex.test(memberName)) {
         // emit a diagnostic for invalid member names
         context.diagnostics.push(
-          diagnostic(
-            Severity.E,
-            "Member must start with a letter, followed by letters, numbers, @, #, _, or $.",
-            item.token,
-          ),
+          diagnosticFromCode(LspCodes.MemberValidation.InvalidName, item.token),
         );
       }
     }

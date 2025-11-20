@@ -35,4 +35,28 @@ export const LspCodes = {
         "Standalone SKIP directive is not supported by the language server.",
     },
   },
+  
+  /**
+   * Member name validation codes
+   */
+  MemberValidation: {
+    /**
+     * Member name exceeds 8 characters
+     */
+    ExceedsMaxLength: {
+      code: "LSPMV001",
+      severity: Severity.E,
+      message: "Member exceeds 8 characters.",
+    },
+
+    /**
+     * Member name contains invalid characters (when validation is enabled)
+     */
+    InvalidName: {
+      code: "LSPMV002",
+      severity: Severity.E,
+      message:
+        "Member must start with a letter, followed by letters, numbers, @, #, _, or $.",
+    }
+  },
 };
