@@ -136,4 +136,46 @@ describe("Plugin Configuration Tests", () => {
     expect(d1.code).toBe("COPC01");
     expect(diagnostics.some((d) => d.message.includes("invalid2"))).toBe(true);
   });
+
+  test("Duplicate Lib Entries are filtered from $computed props", async () => {
+    // ensure that duplicate lib & ddname entries are filtered out from computed props
+    const libs = ["lib1/dir1", "lib1/dir1", "lib2/DDNAME", "lib2/DDNAME"];
+    const uniqueLibs = Array.from(new Set(libs));
+
+    await FileSystemProviderInstance.writeFile(
+      URI.parse("file:///lib1/dir1/p1.pli"),
+      "",
+    );
+    await FileSystemProviderInstance.writeFile(
+      URI.parse("file:///lib2/DDNAME(p2)"),
+      "",
+    );
+
+    // duplicate ddnames should be filtered out in $computedLibDdnamesSet
+    await PluginConfigurationProviderInstance.setProcessGroupConfigs([
+      {
+        name: "default",
+        compilerOptions: [],
+        libs,
+        $computedLibs: [],
+        $computedLibsSet: new Set<string>(),
+        includeExtensions: [".inc"],
+        lspOptions: { checkMargins: false },
+        pliOptions: {},
+        implicitBuiltins: new Set(),
+      },
+    ]);
+
+    // ensure $computedLibs is present w/ only one of each unique entry (2)
+    const processGroup =
+      PluginConfigurationProviderInstance.getProcessGroupConfig("default");
+    expect(processGroup).toBeDefined();
+    expect(processGroup?.$computedLibs).toBeDefined();
+    expect(processGroup?.$computedLibs.length).toBe(uniqueLibs.length);
+
+    // check the generated libs set as well
+    // should be the one dir entry, not the ddname
+    expect(processGroup?.$computedLibsSet.size).toBe(1);
+    expect(processGroup?.$computedLibsSet.has("lib1/dir1")).toBe(true);
+  });
 });

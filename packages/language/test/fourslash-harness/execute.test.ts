@@ -53,30 +53,7 @@ beforeEach(async () => {
   fs = new VirtualFileSystemProvider();
   setFileSystemProvider(fs);
   resetDocumentProviders();
-
-  // Clear the plugin configuration provider and
-  // ensure the 'cpy' directory is always resolvable for includes via config
   setPluginConfigurationProvider(undefined);
-  PluginConfigurationProviderInstance.setProgramConfigs("", [
-    {
-      program: "*.pli",
-      pgroup: "default",
-      pliOptions: {},
-    },
-  ]);
-  await PluginConfigurationProviderInstance.setProcessGroupConfigs([
-    {
-      name: "default",
-      libs: ["cpy"],
-      $computedLibs: [],
-      $computedLibsSet: new Set<string>(),
-      includeExtensions: [".pli"],
-      compilerOptions: [],
-      implicitBuiltins: new Set(),
-      lspOptions: { checkMargins: false },
-      pliOptions: {},
-    },
-  ]);
 });
 
 afterEach(async () => {
