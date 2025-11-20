@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86.39% </span>
+                <span class="strong">88.43% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>127/147</span>
+                <span class='fraction'>130/147</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.83% </span>
+                <span class="strong">89.58% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>45/49</span>
+                <span class='fraction'>43/48</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86.39% </span>
+                <span class="strong">88.43% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>127/147</span>
+                <span class='fraction'>130/147</span>
             </div>
         
             
@@ -583,33 +583,33 @@
 <span class="cline-any cline-yes">59x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">59x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">53x</span>
+<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-yes">52x</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-yes">59x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">54x</span>
-<span class="cline-any cline-yes">54x</span>
-<span class="cline-any cline-yes">54x</span>
-<span class="cline-any cline-yes">54x</span>
-<span class="cline-any cline-yes">108x</span>
-<span class="cline-any cline-yes">33x</span>
-<span class="cline-any cline-yes">33x</span>
-<span class="cline-any cline-yes">75x</span>
-<span class="cline-any cline-yes">75x</span>
-<span class="cline-any cline-yes">75x</span>
-<span class="cline-any cline-yes">75x</span>
-<span class="cline-any cline-yes">16x</span>
-<span class="cline-any cline-yes">16x</span>
-<span class="cline-any cline-yes">75x</span>
-<span class="cline-any cline-yes">59x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">68x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
@@ -889,12 +889,12 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
         if (this.files.has(searchPath)) {
           return options.path;
         }
-        for (const ext of extensions) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >          const fullPath = searchPath + (ext.startsWith(".") ? ext : `.${ext}`);</span>
-<span class="cstat-no" title="statement not covered" >          if (this.files.has(fullPath)) {</span>
-<span class="cstat-no" title="statement not covered" >            return URI.parse(fullPath).with({ scheme: options.path.scheme });</span>
-<span class="cstat-no" title="statement not covered" >          }</span>
-<span class="cstat-no" title="statement not covered" >        }</span>
+        for (const ext of extensions) {
+          const fullPath = searchPath + (ext.startsWith(".") ? <span class="branch-0 cbranch-no" title="branch not covered" >ext : `.${ext}`);</span>
+          if (this.files.has(fullPath)) {
+            return URI.parse(fullPath).with({ scheme: options.path.scheme });
+          }
+        }
       } else {
         // @wagner-laranjeiras. TODO: Optimize this matching pattern.
         const globalSearchPath = options.path.path
@@ -907,9 +907,9 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
           for (const ext of extensions) {
             const fullPath =
               globalSearchPath + (ext.startsWith(".") ? <span class="branch-0 cbranch-no" title="branch not covered" >ext : `.${ext}`);</span>
-            if (filePath.endsWith(fullPath)) {
-              return URI.parse(filePath).with({ scheme: options.path.scheme });
-            }
+            if (filePath.endsWith(fullPath)) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
+<span class="cstat-no" title="statement not covered" >              return URI.parse(filePath).with({ scheme: options.path.scheme });</span>
+<span class="cstat-no" title="statement not covered" >            }</span>
           }
         }
       }
@@ -979,7 +979,7 @@ export function setFileSystemProvider(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-20T08:38:10.107Z
+                at 2025-11-20T17:57:59.017Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
