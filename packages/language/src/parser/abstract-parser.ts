@@ -19,6 +19,7 @@ import {
 } from "chevrotain";
 import { LLStarLookaheadStrategy } from "chevrotain-allstar";
 import {
+  BinaryOperator,
   Expression,
   SyntaxKind,
   type BinaryExpression,
@@ -54,7 +55,7 @@ export interface IntermediateBinaryExpression {
   /**
    * The operators in the binary expression.
    */
-  operators: Token[];
+  operators: BinaryOperator[];
 
   /**
    * Indicates that this is an infix expression.
@@ -282,13 +283,13 @@ export class AbstractParser extends EmbeddedActionsParser {
  * Builds a precedence map from precedence groups
  */
 function buildPrecendenceMap(
-  precedenceGroups: TokenType[][],
-): Map<string, number> {
-  const map = new Map<string, number>();
+  precedenceGroups: BinaryOperator[][],
+): Map<BinaryOperator, number> {
+  const map = new Map<BinaryOperator, number>();
   for (let i = 0; i < precedenceGroups.length; i++) {
     const group = precedenceGroups[i];
-    for (const token of group) {
-      map.set(token.name, i);
+    for (const op of group) {
+      map.set(op, i);
     }
   }
   return map;
@@ -296,29 +297,29 @@ function buildPrecendenceMap(
 
 const binaryPrecedence = buildPrecendenceMap([
   // Priority 1, **
-  [tokens.StarStar],
+  [BinaryOperator.StarStar],
   // Priority 2, *, /
-  [tokens.Star, tokens.Slash],
+  [BinaryOperator.Star, BinaryOperator.Slash],
   // Priority 3, +, -
-  [tokens.Plus, tokens.Minus],
+  [BinaryOperator.Plus, BinaryOperator.Minus],
   // Priority 4, ||, !!
-  [tokens.PipePipe],
+  [BinaryOperator.PipePipe],
   // Priority 5, '<', '¬<', '<=', '=', '¬=', '^=', '<>', '>=', '>', '¬>'
   [
-    tokens.LessThan,
-    tokens.NotLessThan,
-    tokens.LessThanEquals,
-    tokens.Equals,
-    tokens.NotEquals,
-    tokens.LessThanGreaterThan,
-    tokens.GreaterThanEquals,
-    tokens.GreaterThan,
-    tokens.NotGreaterThan,
+    BinaryOperator.LessThan,
+    BinaryOperator.NotLessThan,
+    BinaryOperator.LessThanEquals,
+    BinaryOperator.Equals,
+    BinaryOperator.NotEquals,
+    BinaryOperator.LessThanGreaterThan,
+    BinaryOperator.GreaterThanEquals,
+    BinaryOperator.GreaterThan,
+    BinaryOperator.NotGreaterThan,
   ],
   // Priority 6, &
-  [tokens.Ampersand],
+  [BinaryOperator.Ampersand],
   // Priority 7, |, ¬ or ^
-  [tokens.Pipe, tokens.Not],
+  [BinaryOperator.Pipe, BinaryOperator.Not],
 ]);
 
 /**
@@ -341,7 +342,7 @@ export function constructBinaryExpression(
   for (let i = 0; i < obj.operators.length; i++) {
     const operator = obj.operators[i];
     const precedenceValue =
-      binaryPrecedence.get(operator.tokenType.name) ?? Infinity;
+      binaryPrecedence.get(operator) ?? Infinity;
 
     // If we find an operator with lower precedence or equal precedence
     // (for left-to-right evaluation), update our tracking
@@ -374,18 +375,18 @@ export function constructBinaryExpression(
   const leftTree = constructBinaryExpression(leftInfix);
   const rightTree = constructBinaryExpression(rightInfix);
 
-  const operatorToken = obj.operators[lowestPrecedenceIdx];
+  const operator = obj.operators[lowestPrecedenceIdx];
 
   // Create the final binary expression
   const result: BinaryExpression = {
     kind: SyntaxKind.BinaryExpression,
     container: null,
     left: leftTree,
-    op: operatorToken.tokenType.name as BinaryExpression["op"],
+    op: operator,
     right: rightTree,
   };
 
-  operatorToken.element = result;
+  //TODO (MR) why needed?: operator.element = result;
 
   return result;
 }

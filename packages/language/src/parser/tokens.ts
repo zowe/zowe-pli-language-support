@@ -1,4 +1,4 @@
-/**
+/*
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
@@ -204,40 +204,40 @@ function registerCombination<TEnum extends number = number>(name: string) {
 }
 
 // Combination tokens (parser optimization)
-export const LinkageOption = registerCombination("LinkageOption");
-export const NoMapOption = registerCombination("NoMapOption");
-export const SimpleOptions = registerCombination("SimpleOptions");
+export const LinkageOption = registerCombination<ast.LinkageOption>("LinkageOption");
+export const NoMapOption = registerCombination<ast.NoMapOption>("NoMapOption");
+export const SimpleOptions = registerCombination<ast.SimpleOptions>("SimpleOptions");
 export const DefaultAttribute = registerCombination<ast.DefaultAttribute>("DefaultAttribute");
-export const DefaultAttributeBinaryOperator = registerCombination(
+export const DefaultAttributeBinaryOperator = registerCombination<ast.DefaultAttributeBinaryOperator>(
   "DefaultAttributeBinaryOperator",
 );
-export const BinaryOperator = registerCombination("BinaryOperator");
-export const UnaryOperator = registerCombination("UnaryOperator");
-export const ScopeAttribute = registerCombination("ScopeAttribute");
-export const AllocateAttributeType = registerCombination(
+export const BinaryOperator = registerCombination<ast.BinaryOperator>("BinaryOperator");
+export const UnaryOperator = registerCombination<ast.UnaryOperator>("UnaryOperator");
+export const ScopeAttribute = registerCombination<ast.ScopeAttribute>("ScopeAttribute");
+export const AllocateAttributeType = registerCombination<ast.AllocateAttributeType>(
   "AllocateAttributeType",
 );
-export const AssignmentOperator = registerCombination("AssignmentOperator");
-export const KeywordConditions = registerCombination("KeywordConditions");
-export const FileReferenceConditions = registerCombination(
+export const AssignmentOperator = registerCombination<ast.AssignmentOperator>("AssignmentOperator");
+export const KeywordConditions = registerCombination<ast.KeywordConditions>("KeywordConditions");
+export const FileReferenceConditions = registerCombination<ast.FileReferenceConditions>(
   "FileReferenceConditions",
 );
-export const PutAttribute = registerCombination("PutAttribute");
-export const Varying = registerCombination("Varying");
-export const Char = registerCombination("Char");
-export const ReadStatementType = registerCombination("ReadStatementType");
-export const WriteStatementType = registerCombination("WriteStatementType");
-export const RewriteStatementType = registerCombination("RewriteStatementType");
-export const Boolean = registerCombination("Boolean");
-export const LocateType = registerCombination("LocateType");
-export const OpenOptionType = registerCombination("OpenOptionType");
-export const VX = registerCombination("VX");
-export const CharOrBinary = registerCombination("CharOrBinary");
-export const TypeOrOrdinal = registerCombination("TypeOrOrdinal");
-export const LOB = registerCombination("LOB");
-export const LOBLocator = registerCombination("LOBLocator");
-export const LOBFile = registerCombination("LOBFile");
-export const LOBSize = registerCombination("LOBSize");
+export const PutAttribute = registerCombination<ast.PutAttribute>("PutAttribute");
+export const Varying = registerCombination<ast.Varying>("Varying");
+export const CharType = registerCombination<ast.CharType>("Char");
+export const ReadStatementType = registerCombination<ast.ReadStatementType>("ReadStatementType");
+export const WriteStatementType = registerCombination<ast.WriteStatementType>("WriteStatementType");
+export const RewriteStatementType = registerCombination<ast.RewriteStatementType>("RewriteStatementType");
+export const Boolean = registerCombination<ast.Boolean>("Boolean");
+export const LocateType = registerCombination<ast.LocateType>("LocateType");
+export const OpenOptionType = registerCombination<ast.OpenOptionType>("OpenOptionType");
+export const VX = registerCombination<ast.VX>("VX");
+export const CharOrBinary = registerCombination<ast.CharOrBinary>("CharOrBinary");
+export const TypeOrOrdinal = registerCombination<ast.TypeOrOrdinal>("TypeOrOrdinal");
+export const LOB = registerCombination<ast.LOB>("LOB");
+export const LOBLocator = registerCombination<ast.LOBLocator>("LOBLocator");
+export const LOBFile = registerCombination<ast.LOBFile>("LOBFile");
+export const LOBSize = registerCombination<ast.LOBSize>("LOBSize");
 
 // Custom functions
 
@@ -447,7 +447,7 @@ export const STATEMENT = registerKeyword({
 });
 export const CHARACTER = registerKeyword({
   name: ["CHARACTER", "CHAR"],
-  categories: [DefaultAttribute, AllocateAttributeType, Char, CharOrBinary],
+  categories: [DefaultAttribute, AllocateAttributeType, CharType, CharOrBinary],
 });
 export const DIMACROSS = registerKeyword({
   name: "DIMACROSS",
@@ -566,7 +566,7 @@ export const ALLOCATE = registerKeyword({
 });
 export const WIDECHAR = registerKeyword({
   name: ["WIDECHAR", "WCHAR"],
-  categories: [DefaultAttribute, AllocateAttributeType, Char],
+  categories: [DefaultAttribute, AllocateAttributeType, CharType],
 });
 export const ABNORMAL = registerKeyword({
   name: "ABNORMAL",
@@ -1019,7 +1019,7 @@ export const ENTRY = registerKeyword({
 });
 export const UCHAR = registerKeyword({
   name: "UCHAR",
-  categories: [DefaultAttribute, AllocateAttributeType, Char],
+  categories: [DefaultAttribute, AllocateAttributeType, CharType],
 });
 export const FALSE = registerKeyword({
   name: "FALSE",
