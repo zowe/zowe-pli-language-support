@@ -254,8 +254,8 @@ export const CharOrBinary = registerCombination<ast.CharOrBinary>("CharOrBinary"
 export const TypeOrOrdinal = registerCombination<ast.TypeOrOrdinal>("TypeOrOrdinal");
 export const LOB = registerCombination<ast.LOB>("LOB");
 export const LOBLocator = registerCombination<ast.LOBLocator>("LOBLocator");
-export const LOBFile = registerCombination<ast.LOBFile>("LOBFile");
-export const LOBSize = registerCombination<ast.LOBSize>("LOBSize");
+export const LOBFile = registerCombination<ast.SQLAttributeLobType>("LOBFile");
+export const LOBSize = registerCombination<ast.SQLAttributeLobSize>("LOBSize");
 
 // Custom functions
 
@@ -345,7 +345,7 @@ export const ANYCONDITION = registerKeyword({
 });
 export const CHARGRAPHIC = registerKeyword({
   name: "CHARGRAPHIC",
-  categories: [[SimpleOptions, ast.SimpleOptions.CHARGRAPHIC]],
+  categories: [[SimpleOptions, ast.SimpleOptions.CHARGRAPHIC], [DefaultAttribute, ast.DefaultAttribute.CHARGRAPHIC]],
 });
 export const IRREDUCIBLE = registerKeyword({
   name: ["IRREDUCIBLE", "IRRED"],
@@ -801,6 +801,7 @@ export const DECIMAL = registerKeyword({
 });
 export const GENERIC = registerKeyword({
   name: "GENERIC",
+  categories: [[DefaultAttribute, ast.DefaultAttribute.GENERIC]],
 });
 export const HEXADEC = registerKeyword({
   name: "HEXADEC",
@@ -816,7 +817,7 @@ export const POINTER = registerKeyword({
 });
 export const VARYING = registerKeyword({
   name: ["VARYING", "VAR"],
-  categories: [[DefaultAttribute, ast.DefaultAttribute.VARYING]],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.VARYING], [Varying, ast.Varying.VARYING]],
 });
 export const ORDINAL = registerKeyword({
   name: "ORDINAL",
@@ -1018,7 +1019,7 @@ export const FINISH = registerKeyword({
 });
 export const DIRECT = registerKeyword({
   name: "DIRECT",
-  categories: [[OpenOptionType, ast.OpenOptionType.DIRECT]],
+  categories: [[OpenOptionType, ast.OpenOptionType.DIRECT], [DefaultAttribute, ast.DefaultAttribute.DIRECT]],
 });
 export const IGNORE = registerKeyword({
   name: "IGNORE",
@@ -1414,7 +1415,7 @@ export const AmpersandEquals = registerOperator({
 });
 export const NotEquals = registerOperator({
   name: "^=",
-  categories: [[AssignmentOperator, ast.AssignmentOperator.NotEquals]],
+  categories: [[AssignmentOperator, ast.AssignmentOperator.NotEquals], [BinaryOperator, ast.BinaryOperator.NotEquals]],
 });
 export const LessThanGreaterThan = registerOperator({
   name: "<>",
@@ -1516,15 +1517,15 @@ export const E = registerKeyword({
 });
 export const G = registerKeyword({
   name: "G",
-  categories: [[LOBSize, ast.LOBSize.G]],
+  categories: [[LOBSize, ast.SQLAttributeLobSize.G]],
 });
 export const K = registerKeyword({
   name: "K",
-  categories: [[LOBSize, ast.LOBSize.K]],
+  categories: [[LOBSize, ast.SQLAttributeLobSize.K]],
 });
 export const M = registerKeyword({
   name: "M",
-  categories: [[LOBSize, ast.LOBSize.M]],
+  categories: [[LOBSize, ast.SQLAttributeLobSize.M]],
 });
 export const P = registerKeyword({
   name: "P",
@@ -1628,15 +1629,15 @@ export const DBCLOB_LOCATOR = registerKeyword({
 });
 export const BLOB_FILE = registerKeyword({
   name: "BLOB_FILE",
-  categories: [[LOBFile, ast.LOBFile.BLOB_FILE]],
+  categories: [[LOBFile, ast.SQLAttributeLobType.BLOB]],
 });
 export const CLOB_FILE = registerKeyword({
   name: "CLOB_FILE",
-  categories: [[LOBFile, ast.LOBFile.CLOB_FILE]],
+  categories: [[LOBFile, ast.SQLAttributeLobType.CLOB]],
 });
 export const DBCLOB_FILE = registerKeyword({
   name: "DBCLOB_FILE",
-  categories: [[LOBFile, ast.LOBFile.DBCLOB_FILE]],
+  categories: [[LOBFile, ast.SQLAttributeLobType.DBCLOB]],
 });
 export const ROWID = registerKeyword({
   name: "ROWID",

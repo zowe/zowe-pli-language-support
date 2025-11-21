@@ -486,18 +486,6 @@ export enum LOBLocator {
   DBCLOB_LOCATOR
 }
 
-export enum LOBFile {
-  BLOB_FILE,
-  CLOB_FILE,
-  DBCLOB_FILE
-}
-
-export enum LOBSize {
-  G,
-  K,
-  M
-}
-
 export enum VX {
   V1,
   V2,
