@@ -131,7 +131,10 @@ function extractProcedureOptions(
       // simple options
       const internalOptions: string[] = [];
       for (const item of option.items) {
-        if (item.kind === SyntaxKind.SimpleOptionsItem && item.value) {
+        if (
+          item.kind === SyntaxKind.SimpleOptionsItem &&
+          typeof item.value === "number"
+        ) {
           internalOptions.push(
             tokens.SimpleOptions.mapFromEnumLiteral(item.value),
           );

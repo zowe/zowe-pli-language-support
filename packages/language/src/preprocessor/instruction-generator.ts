@@ -854,7 +854,7 @@ function generateReferenceItemInstruction(
 function generateBinaryExpressionInstruction(
   node: ast.BinaryExpression,
 ): inst.BinaryExpressionInstruction | undefined {
-  if (!node.left || !node.right || !node.op) {
+  if (!node.left || !node.right || node.op === null) {
     return undefined; // Cannot generate instruction without both sides and operator
   }
   const left = generateExpressionInstruction(node.left);
@@ -873,7 +873,7 @@ function generateBinaryExpressionInstruction(
 function generateUnaryExpressionInstruction(
   node: ast.UnaryExpression,
 ): inst.UnaryExpressionInstruction | undefined {
-  if (!node.expr || !node.op) {
+  if (!node.expr || node.op === null) {
     return undefined;
   }
   const operand = generateExpressionInstruction(node.expr);

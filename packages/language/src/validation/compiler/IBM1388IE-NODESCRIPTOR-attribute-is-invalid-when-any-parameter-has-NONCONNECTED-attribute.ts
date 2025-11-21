@@ -30,7 +30,6 @@ export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_h
   const item = items.find(
     (i) =>
       i.kind === SyntaxKind.SimpleOptionsItem &&
-      i.value &&
       i.value === SimpleOptions.NODESCRIPTOR,
   ) as SimpleOptionsItem | undefined;
   if (item) {
