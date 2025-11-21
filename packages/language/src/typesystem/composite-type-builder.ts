@@ -1,4 +1,3 @@
-import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { CompilationUnit } from "../workspace/compilation-unit";
