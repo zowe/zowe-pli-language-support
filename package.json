@@ -33,8 +33,5 @@
     "overrides": {
       "isexe": "3.1.1"
     }
-  },
-  "dependencies": {
-    "lru-cache": "^11.2.2"
   }
 }
