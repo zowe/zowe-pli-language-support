@@ -758,6 +758,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.DefaultAttribute.INONLY:
       case ast.DefaultAttribute.INOUT:
       case ast.DefaultAttribute.IRREDUCIBLE:
+      case ast.DefaultAttribute.REDUCIBLE:
       case ast.DefaultAttribute.KEYED:
       case ast.DefaultAttribute.LABEL:
       case ast.DefaultAttribute.LIST:

@@ -479,7 +479,10 @@ export const DEACTIVATE = registerKeyword({
 });
 export const REDUCIBLE = registerKeyword({
   name: ["REDUCIBLE", "RED"],
-  categories: [[SimpleOptions, ast.SimpleOptions.REDUCIBLE]],
+  categories: [
+    [SimpleOptions, ast.SimpleOptions.REDUCIBLE],
+    [DefaultAttribute, ast.DefaultAttribute.REDUCIBLE],
+  ],
 });
 export const REENTRANT = registerKeyword({
   name: "REENTRANT",
