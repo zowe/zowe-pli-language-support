@@ -21,7 +21,7 @@ export function getFileContentPreview(
 ) {
   const partialContent = unit.services.includeCache.get(key);
   if (partialContent) {
-    return partialContent.toString();
+    return partialContent;
   }
   // load up the first (LINE_CUTOFF) lines of content from the file (semi-arbitrary cutoff)
   const fileContent = document.getText({
