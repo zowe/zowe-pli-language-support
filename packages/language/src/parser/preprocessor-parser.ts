@@ -1492,6 +1492,7 @@ function parseBinary(state: ParserState): ast.Expression | null {
     infix: true,
     items: [],
     operators: [],
+    operatorTokens: [],
   };
   infixOperatorItem.items.push(primary(state));
   while (true) {
@@ -1509,6 +1510,7 @@ function parseBinary(state: ParserState): ast.Expression | null {
     infixOperatorItem.operators.push(
       t.BinaryOperator.mapToEnumLiteral(operator.image),
     );
+    infixOperatorItem.operatorTokens.push(operator);
   }
   return constructBinaryExpression(infixOperatorItem);
 }

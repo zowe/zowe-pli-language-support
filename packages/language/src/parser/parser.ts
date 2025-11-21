@@ -7857,6 +7857,7 @@ export class PliParser extends AbstractParser {
       infix: true,
       items: [],
       operators: [],
+      operatorTokens: [],
     });
 
     this.SUBRULE_ASSIGN1(this.PrimaryExpression, {
@@ -7874,6 +7875,7 @@ export class PliParser extends AbstractParser {
         element.operators.push(
           tokens.BinaryOperator.mapToEnumLiteral(token.image),
         );
+        element.operatorTokens.push(token);
       });
       this.SUBRULE_ASSIGN2(this.PrimaryExpression, {
         assign: (result) => {

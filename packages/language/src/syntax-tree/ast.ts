@@ -1219,6 +1219,7 @@ export interface BinaryExpression extends AstNode {
   left: Expression | null;
   right: Expression | null;
   op: BinaryOperator | null;
+  opToken: Token | null;
 }
 export interface Bound extends AstNode {
   kind: SyntaxKind.Bound;

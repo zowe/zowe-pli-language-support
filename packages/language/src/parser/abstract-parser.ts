@@ -57,6 +57,11 @@ export interface IntermediateBinaryExpression {
   operators: BinaryOperator[];
 
   /**
+   * The tokens corresponding to the operators in the binary expression.
+   */
+  operatorTokens: Token[];
+
+  /**
    * Indicates that this is an infix expression.
    */
   infix: true;
@@ -362,29 +367,33 @@ export function constructBinaryExpression(
     infix: true,
     items: leftParts,
     operators: leftOperators,
+    operatorTokens: obj.operatorTokens.slice(0, lowestPrecedenceIdx),
   };
   const rightInfix: IntermediateBinaryExpression = {
     infix: true,
     items: rightParts,
     operators: rightOperators,
+    operatorTokens: obj.operatorTokens.slice(lowestPrecedenceIdx + 1),
   };
 
   // Recursively build the left and right subtrees
   const leftTree = constructBinaryExpression(leftInfix);
   const rightTree = constructBinaryExpression(rightInfix);
 
-  const operator = obj.operators[lowestPrecedenceIdx];
+  const op = obj.operators[lowestPrecedenceIdx];
+  const opToken = obj.operatorTokens[lowestPrecedenceIdx];
 
   // Create the final binary expression
   const result: BinaryExpression = {
     kind: SyntaxKind.BinaryExpression,
     container: null,
     left: leftTree,
-    op: operator,
+    op,
+    opToken,
     right: rightTree,
   };
 
-  //TODO (MR) why needed?: operator.element = result;
+  opToken.element = result;
 
   return result;
 }
