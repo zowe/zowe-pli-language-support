@@ -1496,21 +1496,21 @@ function parseBinary(state: ParserState): ast.Expression | null {
   };
   infixOperatorItem.items.push(primary(state));
   while (true) {
-    const operator = state.tryConsume(
+    const operatorToken = state.tryConsume(
       infixOperatorItem as any,
       CstNodeKind.BinaryExpression_Operator,
       t.BinaryOperator,
     );
-    if (!operator) {
+    if (!operatorToken) {
       break;
     }
 
     const item = primary(state);
     infixOperatorItem.items.push(item);
     infixOperatorItem.operators.push(
-      t.BinaryOperator.mapToEnumLiteral(operator.image),
+      t.BinaryOperator.mapToEnumLiteral(operatorToken.image),
     );
-    infixOperatorItem.operatorTokens.push(operator);
+    infixOperatorItem.operatorTokens.push(operatorToken);
   }
   return constructBinaryExpression(infixOperatorItem);
 }

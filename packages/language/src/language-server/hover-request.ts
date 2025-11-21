@@ -131,10 +131,7 @@ function extractProcedureOptions(
       // simple options
       const internalOptions: string[] = [];
       for (const item of option.items) {
-        if (
-          item.kind === SyntaxKind.SimpleOptionsItem &&
-          typeof item.value === "number"
-        ) {
+        if (item.kind === SyntaxKind.SimpleOptionsItem && item.value !== null) {
           internalOptions.push(
             tokens.SimpleOptions.mapFromEnumLiteral(item.value),
           );
@@ -157,7 +154,7 @@ function extractProcedureOptions(
       for (const attr of attrs) {
         if (
           attr.kind === SyntaxKind.ComputationDataAttribute &&
-          typeof attr.type === "number"
+          attr.type !== null
         ) {
           if (attr.dimensions) {
             // type w/ dimens, need to be decoded

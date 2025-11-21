@@ -80,7 +80,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
-        if (typeof attribute.type === "number") {
+        if (attribute !== null) {
           this.handleDefaultAttribute(attribute);
         }
         break;
@@ -934,7 +934,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       const targetKind = parseInt(targetKindString) as keyof AttributeTypes;
       const targetWitness = this.attributeWitnesses[targetKind];
       const impliedValue = implication(value);
-      if (typeof impliedValue === "undefined") {
+      if (impliedValue === undefined) {
         continue;
       }
       if (targetWitness && targetWitness.value !== impliedValue) {

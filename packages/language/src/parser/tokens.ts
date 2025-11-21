@@ -142,7 +142,7 @@ interface KeywordConfig {
    * The keyword name or names (aliases). The first name is the canonical name.
    */
   name: string | string[];
-  categories?: (TokenType | [MappableTokenType, number])[];
+  categories?: [MappableTokenType, number][];
 }
 
 function registerKeyword(config: KeywordConfig): TokenType {
@@ -156,9 +156,7 @@ function registerKeyword(config: KeywordConfig): TokenType {
     pattern: Lexer.NA,
     categories: [
       ID,
-      ...(config.categories ?? []).map((category) =>
-        Array.isArray(category) ? category[0] : category,
-      ),
+      ...(config.categories ?? []).map((category) => category[0]),
     ],
   });
   for (const alias of names) {
@@ -171,13 +169,11 @@ function registerKeyword(config: KeywordConfig): TokenType {
 
 interface OperatorConfig {
   name: string;
-  categories?: (TokenType | [MappableTokenType, number])[];
+  categories?: [MappableTokenType, number][];
 }
 
 function assignToMappings(config: KeywordConfig, names: string[]) {
-  for (const [category, enumValue] of (config.categories ?? []).filter(
-    Array.isArray,
-  ) as [MappableTokenType, number][]) {
+  for (const [category, enumValue] of config.categories ?? []) {
     const mapping = mappings.get(category.name)!;
     for (const alias of names) {
       mapping.mapTo.set(alias, enumValue);
@@ -190,11 +186,7 @@ function registerOperator(config: OperatorConfig): TokenType {
   const tokenType = createToken({
     name: config.name,
     pattern: Lexer.NA,
-    categories: [
-      ...(config.categories ?? []).map((category) =>
-        Array.isArray(category) ? category[0] : category,
-      ),
-    ],
+    categories: [...(config.categories ?? []).map((category) => category[0])],
   });
   assignToMappings(config, [config.name]);
   return tokenType;
@@ -446,7 +438,7 @@ export const SEQUENTIAL = registerKeyword({
 });
 export const CONVERSION = registerKeyword({
   name: ["CONVERSION"],
-  categories: [ID, [KeywordConditions, ast.KeywordConditions.CONVERSION]],
+  categories: [[KeywordConditions, ast.KeywordConditions.CONVERSION]],
 });
 export const STRINGSIZE = registerKeyword({
   name: "STRINGSIZE",

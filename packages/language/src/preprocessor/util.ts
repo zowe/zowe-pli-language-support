@@ -22,7 +22,7 @@ export function getAttributes(item: DeclaredVariable): string[] {
     for (const attr of itemAttributes) {
       if (
         attr.kind === SyntaxKind.ComputationDataAttribute &&
-        typeof attr.type === "number"
+        attr.type !== null
       ) {
         attributes.push(DefaultAttribute.mapFromEnumLiteral(attr.type));
       }
