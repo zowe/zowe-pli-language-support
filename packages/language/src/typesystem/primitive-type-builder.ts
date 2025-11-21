@@ -80,7 +80,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
-        if (attribute.type) {
+        if (typeof attribute.type === "number") {
           this.handleDefaultAttribute(attribute);
         }
         break;

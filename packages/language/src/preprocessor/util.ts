@@ -20,7 +20,10 @@ export function getAttributes(item: DeclaredVariable): string[] {
   while (container?.kind === SyntaxKind.DeclaredItem) {
     const itemAttributes = container.attributes;
     for (const attr of itemAttributes) {
-      if (attr.kind === SyntaxKind.ComputationDataAttribute && attr.type) {
+      if (
+        attr.kind === SyntaxKind.ComputationDataAttribute &&
+        typeof attr.type === "number"
+      ) {
         attributes.push(DefaultAttribute.mapFromEnumLiteral(attr.type));
       }
     }
