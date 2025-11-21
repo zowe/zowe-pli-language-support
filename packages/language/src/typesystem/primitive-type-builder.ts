@@ -253,9 +253,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.DefaultAttribute.DECIMAL: {
         this.addPrecision(attribute, token);
         const base =
-          type === ast.DefaultAttribute.BINARY
-            ? Base.Binary
-            : Base.Decimal;
+          type === ast.DefaultAttribute.BINARY ? Base.Binary : Base.Decimal;
         this.addAttributeWitness(AttributeKind.Base, base, attribute, token);
         break;
       }
@@ -416,9 +414,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.DefaultAttribute.UNSIGNED:
       case ast.DefaultAttribute.SIGNED: {
         const sign =
-          type === ast.DefaultAttribute.SIGNED
-            ? Sign.Signed
-            : Sign.Unsigned;
+          type === ast.DefaultAttribute.SIGNED ? Sign.Signed : Sign.Unsigned;
         this.addAttributeWitness(AttributeKind.Sign, sign, attribute, token);
         break;
       }

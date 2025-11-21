@@ -340,8 +340,7 @@ export function constructBinaryExpression(
 
   for (let i = 0; i < obj.operators.length; i++) {
     const operator = obj.operators[i];
-    const precedenceValue =
-      binaryPrecedence.get(operator) ?? Infinity;
+    const precedenceValue = binaryPrecedence.get(operator) ?? Infinity;
 
     // If we find an operator with lower precedence or equal precedence
     // (for left-to-right evaluation), update our tracking

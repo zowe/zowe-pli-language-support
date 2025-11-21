@@ -17,7 +17,8 @@
     "pretty": "prettier -w \"**/*.ts\"",
     "playground": "pnpm --dir packages/playground build",
     "playground:clean": "pnpm --dir packages/playground clean",
-    "watch": "tsc -b tsconfig.build.json --watch"
+    "watch": "tsc -b tsconfig.build.json --watch",
+    "sanity-check:token-enum-mapping": "tsx check-token-to-enum-mapping.ts"
   },
   "devDependencies": {
     "@types/node": "^18.19.113",

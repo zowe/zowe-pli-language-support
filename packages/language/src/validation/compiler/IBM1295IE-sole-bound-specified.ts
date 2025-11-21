@@ -14,7 +14,12 @@ import {
   getSyntaxNodeRange,
   Severity,
 } from "../../language-server/types";
-import { Bound, DimensionBound, SyntaxKind, UnaryOperator } from "../../syntax-tree/ast";
+import {
+  Bound,
+  DimensionBound,
+  SyntaxKind,
+  UnaryOperator,
+} from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
 import { Error } from "../pli-codes";
 

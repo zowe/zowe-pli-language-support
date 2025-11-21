@@ -1358,7 +1358,9 @@ export class PliParser extends AbstractParser {
         element,
         CstNodeKind.AssignmentStatement_Operator,
       );
-      element.operator = tokens.AssignmentOperator.mapToEnumLiteral(token.image);
+      element.operator = tokens.AssignmentOperator.mapToEnumLiteral(
+        token.image,
+      );
     });
     this.SUBRULE_ASSIGN1(this.Expression, {
       assign: (result) => {
@@ -2063,7 +2065,9 @@ export class PliParser extends AbstractParser {
           element,
           CstNodeKind.DefaultAttributeExpression_Operators,
         );
-        element.operators.push(tokens.DefaultAttributeBinaryOperator.mapToEnumLiteral(token.image));
+        element.operators.push(
+          tokens.DefaultAttributeBinaryOperator.mapToEnumLiteral(token.image),
+        );
       });
       this.SUBRULE_ASSIGN2(this.DefaultAttributeExpressionNot, {
         assign: (result) => {
@@ -4769,7 +4773,9 @@ export class PliParser extends AbstractParser {
         element,
         CstNodeKind.FileReferenceCondition_Keyword,
       );
-      element.keyword = tokens.FileReferenceConditions.mapToEnumLiteral(token.image);
+      element.keyword = tokens.FileReferenceConditions.mapToEnumLiteral(
+        token.image,
+      );
     });
     this.OPTION1(() => {
       this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
@@ -7865,7 +7871,9 @@ export class PliParser extends AbstractParser {
           element as any,
           CstNodeKind.BinaryExpression_Operator,
         );
-        element.operators.push(tokens.BinaryOperator.mapToEnumLiteral(token.image));
+        element.operators.push(
+          tokens.BinaryOperator.mapToEnumLiteral(token.image),
+        );
       });
       this.SUBRULE_ASSIGN2(this.PrimaryExpression, {
         assign: (result) => {

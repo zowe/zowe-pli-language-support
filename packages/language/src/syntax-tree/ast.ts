@@ -385,20 +385,20 @@ export enum FileReferenceConditions {
   ENDPAGE,
   NAME,
   RECORD,
-  KEY
+  KEY,
 }
 
 export enum NoMapOption {
   NOMAPOUT,
   NOMAPIN,
-  NOMAP
+  NOMAP,
 }
 
 export enum Varying {
   NONVARYING,
   VARYING4,
   VARYINGZ,
-  VARYING
+  VARYING,
 }
 
 export enum OpenOptionType {
@@ -416,7 +416,7 @@ export enum OpenOptionType {
   TITLE,
   INPUT,
   KEYED,
-  FILE
+  FILE,
 }
 
 export enum AllocateAttributeType {
@@ -425,25 +425,25 @@ export enum AllocateAttributeType {
   WIDECHAR,
   GRAPHIC,
   UCHAR,
-  BIT
+  BIT,
 }
 
 export enum CharType {
   CHARACTER,
   WIDECHAR,
-  UCHAR
+  UCHAR,
 }
 
 export enum CharOrBinary {
   CHARACTER,
-  BINARY
+  BINARY,
 }
 
 export enum PutAttribute {
   FILE,
   LINE,
   PAGE,
-  SKIP
+  SKIP,
 }
 
 export enum ReadStatementType {
@@ -465,41 +465,41 @@ export enum WriteStatementType {
 export enum RewriteStatementType {
   FROM,
   FILE,
-  KEY
+  KEY,
 }
 
 export enum LocateType {
   KEYFROM,
   FILE,
-  SET
+  SET,
 }
 
 export enum LOB {
   BLOB,
   CLOB,
-  DBCLOB
+  DBCLOB,
 }
 
 export enum LOBLocator {
   BLOB_LOCATOR,
   CLOB_LOCATOR,
-  DBCLOB_LOCATOR
+  DBCLOB_LOCATOR,
 }
 
 export enum VX {
   V1,
   V2,
-  V3
+  V3,
 }
 
 export enum TypeOrOrdinal {
   ORDINAL,
-  TYPE
+  TYPE,
 }
 
 export enum ScopeAttribute {
   DYNAMIC,
-  STATIC
+  STATIC,
 }
 
 export enum AssignmentOperator {
@@ -524,7 +524,7 @@ export enum AssignmentOperator {
   /** <> */
   LessThanGreaterThan,
   /** = */
-  Equals
+  Equals,
 }
 
 export enum BinaryOperator {
@@ -545,30 +545,30 @@ export enum BinaryOperator {
   GreaterThan,
   Plus,
   Minus,
-  Slash
+  Slash,
 }
 
 export enum UnaryOperator {
   Plus,
   Minus,
-  Not
+  Not,
 }
 
 export enum Boolean {
   FALSE,
-  TRUE
+  TRUE,
 }
 
 export enum LinkageOption {
   OPTLINK,
   STDCALL,
   SYSTEM,
-  CDECL
+  CDECL,
 }
 
 export enum DefaultAttributeBinaryOperator {
   AND,
-  OR
+  OR,
 }
 
 export interface AstNode {
@@ -2695,7 +2695,7 @@ export interface WriteStatement extends AstNode {
 }
 export interface WriteStatementOption extends AstNode {
   kind: SyntaxKind.WriteStatementOption;
-  type: WriteStatementType| null;
+  type: WriteStatementType | null;
   value: Expression | null;
 }
 

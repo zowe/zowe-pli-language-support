@@ -132,7 +132,9 @@ function extractProcedureOptions(
       const internalOptions: string[] = [];
       for (const item of option.items) {
         if (item.kind === SyntaxKind.SimpleOptionsItem && item.value) {
-          internalOptions.push(tokens.SimpleOptions.mapFromEnumLiteral(item.value));
+          internalOptions.push(
+            tokens.SimpleOptions.mapFromEnumLiteral(item.value),
+          );
         }
       }
       if (internalOptions.length > 0) {
@@ -150,10 +152,16 @@ function extractProcedureOptions(
       const attrArr: string[] = [];
       const attrs = option.returnAttributes;
       for (const attr of attrs) {
-        if (attr.kind === SyntaxKind.ComputationDataAttribute && typeof attr.type === "number") {
+        if (
+          attr.kind === SyntaxKind.ComputationDataAttribute &&
+          typeof attr.type === "number"
+        ) {
           if (attr.dimensions) {
             // type w/ dimens, need to be decoded
-            attrArr.push(tokens.DefaultAttribute.mapFromEnumLiteral(attr.type) + decodeDimensions(attr.dimensions));
+            attrArr.push(
+              tokens.DefaultAttribute.mapFromEnumLiteral(attr.type) +
+                decodeDimensions(attr.dimensions),
+            );
           } else {
             // just the type
             attrArr.push(tokens.DefaultAttribute.mapFromEnumLiteral(attr.type));
