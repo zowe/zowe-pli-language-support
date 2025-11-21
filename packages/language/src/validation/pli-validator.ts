@@ -80,8 +80,11 @@ export class PliValidator {
   ): void {
     const attrSet = new Set<string>();
     for (const attr of node.returnAttributes) {
-      if (attr.kind === AST.SyntaxKind.ComputationDataAttribute) {
-        const typ = tokens.DefaultAttribute.mapFromEnumLiteral(attr.type!);
+      if (
+        attr.kind === AST.SyntaxKind.ComputationDataAttribute &&
+        attr.type !== null
+      ) {
+        const typ = tokens.DefaultAttribute.mapFromEnumLiteral(attr.type);
         attrSet.add(typ); // dupes are ok
 
         // look for a generally negated version of this attribute (there are several)

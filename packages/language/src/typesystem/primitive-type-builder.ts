@@ -161,8 +161,11 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   }
 
   handleDefaultAttribute(attribute: ast.ComputationDataAttribute) {
-    const token = attribute.typeToken!;
-    const type = attribute.type!;
+    if (attribute.type === null || !attribute.typeToken) {
+      return;
+    }
+    const token = attribute.typeToken;
+    const type = attribute.type;
     switch (type) {
       /**
        * Data type attributes

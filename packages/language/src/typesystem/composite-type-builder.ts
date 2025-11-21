@@ -54,10 +54,12 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
       DefaultAttributeEnum.DIMACROSS,
     ];
     function isOnlyCompositeAttribute(attr: ast.DeclarationAttribute): boolean {
-      if (attr.kind === ast.SyntaxKind.ComputationDataAttribute) {
-        assertType<number>(attr.typeToken?.tokenTypeIdx);
-        const typeAsEnum = attr.type!;
-        return CompositeAttributeKinds.includes(typeAsEnum);
+      if (
+        attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
+        attr.type !== null &&
+        attr.typeToken !== null
+      ) {
+        return CompositeAttributeKinds.includes(attr.type);
       }
       return false;
     }
