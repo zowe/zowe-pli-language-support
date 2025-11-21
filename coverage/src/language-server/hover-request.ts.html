@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86.64% </span>
+                <span class="strong">86.45% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>227/262</span>
+                <span class='fraction'>217/251</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86.64% </span>
+                <span class="strong">86.45% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>227/262</span>
+                <span class='fraction'>217/251</span>
             </div>
         
             
@@ -456,23 +456,7 @@
 <a name='L391'></a><a href='#L391'>391</a>
 <a name='L392'></a><a href='#L392'>392</a>
 <a name='L393'></a><a href='#L393'>393</a>
-<a name='L394'></a><a href='#L394'>394</a>
-<a name='L395'></a><a href='#L395'>395</a>
-<a name='L396'></a><a href='#L396'>396</a>
-<a name='L397'></a><a href='#L397'>397</a>
-<a name='L398'></a><a href='#L398'>398</a>
-<a name='L399'></a><a href='#L399'>399</a>
-<a name='L400'></a><a href='#L400'>400</a>
-<a name='L401'></a><a href='#L401'>401</a>
-<a name='L402'></a><a href='#L402'>402</a>
-<a name='L403'></a><a href='#L403'>403</a>
-<a name='L404'></a><a href='#L404'>404</a>
-<a name='L405'></a><a href='#L405'>405</a>
-<a name='L406'></a><a href='#L406'>406</a>
-<a name='L407'></a><a href='#L407'>407</a>
-<a name='L408'></a><a href='#L408'>408</a>
-<a name='L409'></a><a href='#L409'>409</a>
-<a name='L410'></a><a href='#L410'>410</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L394'></a><a href='#L394'>394</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -510,6 +494,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -721,14 +706,6 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
@@ -736,16 +713,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -920,6 +888,7 @@ import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { HoverResponse, tokenToRange } from "./types";
+import { getFileContentPreview } from "./cache/include-cache";
 &nbsp;
 type MarkupResponse = string | null;
 &nbsp;
@@ -1130,31 +1099,14 @@ function getIncludeItemRepresentation(
   if (!node.filePath || !node.relativeFilePath) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
 <span class="cstat-no" title="statement not covered" >    return null;</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
-&nbsp;
-  // TODO: Don't store the file content in the node itself
-  // Instead, implement a proper caching mechanism
-  let partialContent = node.sourceText;
   const fileUri = URI.parse(node.filePath);
+  const doc = unit.services.files.getDocument(fileUri);
+  if (!doc) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
+<span class="cstat-no" title="statement not covered" >    return null;</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+  const partialContent = getFileContentPreview(unit, node.filePath, doc);
+  if (!partialContent) <span class="branch-0 cbranch-no" title="branch not covered" >return null;</span>
 &nbsp;
-  if (!partialContent) {
-    // load up the first 20 lines of content from the file (semi-arbitrary cutoff)
-    const lineCutoff = 20;
-    const doc = unit.services.files.getDocument(fileUri);
-    if (!doc) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >      return null;</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
-    const fileContent = doc.getText({
-      start: { line: 0, character: 0 },
-      end: { line: lineCutoff + 1, character: 0 },
-    });
-    const lineCount = fileContent.matchAll(/\n/g);
-    partialContent =
-      Array.from(lineCount).length &gt; <span class="branch-0 cbranch-no" title="branch not covered" >lineCutoff</span>
-<span class="cstat-no" title="statement not covered" >        ? fileContent + "\n...\n"</span>
-        : fileContent;
-    // cache for later requests
-    node.sourceText = partialContent;
-  }
   return generateIncludeItemMarkup(type, node.relativeFilePath, partialContent);
 }
 &nbsp;
@@ -1297,7 +1249,7 @@ export function hoverRequest(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-20T17:57:59.017Z
+                at 2025-11-21T11:23:01.064Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
