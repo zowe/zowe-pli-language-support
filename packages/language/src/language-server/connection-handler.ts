@@ -67,6 +67,12 @@ export function startLanguageServer(connection: Connection): void {
             uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,
             diagnostics,
           });
+          Mutex.run(async () => {
+            await compilationUnitHandler.reindex(
+              connection,
+              CancellationToken.None,
+            );
+          });
         },
       );
     }
