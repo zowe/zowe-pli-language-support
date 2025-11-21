@@ -150,10 +150,10 @@ function extractProcedureOptions(
       const attrArr: string[] = [];
       const attrs = option.returnAttributes;
       for (const attr of attrs) {
-        if (attr.kind === SyntaxKind.ComputationDataAttribute && attr.type) {
+        if (attr.kind === SyntaxKind.ComputationDataAttribute && typeof attr.type === "number") {
           if (attr.dimensions) {
             // type w/ dimens, need to be decoded
-            attrArr.push(attr.type + decodeDimensions(attr.dimensions));
+            attrArr.push(tokens.DefaultAttribute.mapFromEnumLiteral(attr.type) + decodeDimensions(attr.dimensions));
           } else {
             // just the type
             attrArr.push(tokens.DefaultAttribute.mapFromEnumLiteral(attr.type));
