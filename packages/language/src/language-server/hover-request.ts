@@ -37,6 +37,7 @@ import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { HoverResponse, tokenToRange } from "./types";
+import { getFileContentPreview } from "./cache/include-cache";
 
 type MarkupResponse = string | null;
 
@@ -247,31 +248,14 @@ function getIncludeItemRepresentation(
   if (!node.filePath || !node.relativeFilePath) {
     return null;
   }
-
-  // TODO: Don't store the file content in the node itself
-  // Instead, implement a proper caching mechanism
-  let partialContent = node.sourceText;
   const fileUri = URI.parse(node.filePath);
-
-  if (!partialContent) {
-    // load up the first 20 lines of content from the file (semi-arbitrary cutoff)
-    const lineCutoff = 20;
-    const doc = unit.services.files.getDocument(fileUri);
-    if (!doc) {
-      return null;
-    }
-    const fileContent = doc.getText({
-      start: { line: 0, character: 0 },
-      end: { line: lineCutoff + 1, character: 0 },
-    });
-    const lineCount = fileContent.matchAll(/\n/g);
-    partialContent =
-      Array.from(lineCount).length > lineCutoff
-        ? fileContent + "\n...\n"
-        : fileContent;
-    // cache for later requests
-    node.sourceText = partialContent;
+  const doc = unit.services.files.getDocument(fileUri);
+  if (!doc) {
+    return null;
   }
+  const partialContent = getFileContentPreview(unit, node.filePath, doc);
+  if (!partialContent) return null;
+
   return generateIncludeItemMarkup(type, node.relativeFilePath, partialContent);
 }
 
