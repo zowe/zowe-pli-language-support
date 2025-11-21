@@ -53,6 +53,7 @@ import {
   getDefaultCompilerOptions,
 } from "../preprocessor/compiler-options/options.js";
 import { DiagnosticsStore } from "../validation/diagnostics-store.js";
+import { LRUCache } from "lru-cache";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -90,11 +91,13 @@ export interface CompilationUnit {
 export interface CompilationServices {
   files: FileStore;
   typeCache: TypeCache;
+  includeCache: LRUCache<string, string>;
   inferer: TypeInferer;
 }
 
 const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
 const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
+const FIVE_MINUTES = 1000 * 60 * 5;
 
 function createBuiltinScopeGetter(builtinDocument: TextDocument) {
   let builtinFileScope: Scope | undefined;
@@ -129,6 +132,10 @@ export async function createCompilationUnit(
   const services: CompilationServices = {
     files: new FileStore(),
     typeCache: new DefaultTypeCache(),
+    includeCache: new LRUCache({
+      max: 500,
+      ttl: FIVE_MINUTES,
+    }),
     inferer: new DefaultTypeInferer(),
   };
   const unit: CompilationUnit = {
@@ -263,6 +270,8 @@ export class CompilationUnitHandler {
       return;
     }
     await this.process(unit, document, this.connection, cancellationToken);
+    // TODO: Wagner Laranjeiras -> includeCache based on changes of a specific file.
+    unit.services.includeCache.clear();
     unit.requestCaches.revalidateAll({ connection: this.connection, unit });
   }
 
