@@ -207,12 +207,14 @@ export class PliValidator {
   ): void {
     // get attributes
     const attrs = node.attributes;
-    const attrSet = new Set<string>();
+    const attrSet = new Set<AST.DefineOrdinalAttribute>();
     for (const attr of attrs) {
-      const lattr = attr.toLowerCase();
+      const lattr = attr;
       if (
-        (lattr === "signed" && attrSet.has("unsigned")) ||
-        (lattr === "unsigned" && attrSet.has("signed"))
+        (lattr === AST.DefineOrdinalAttribute.SIGNED &&
+          attrSet.has(AST.DefineOrdinalAttribute.UNSIGNED)) ||
+        (lattr === AST.DefineOrdinalAttribute.UNSIGNED &&
+          attrSet.has(AST.DefineOrdinalAttribute.SIGNED))
       ) {
         // TODO: Reimplement this validation and add tests
         // mutually exclusive attributes
@@ -226,7 +228,10 @@ export class PliValidator {
         //     // property: "attributes"
         //   },
         // );
-      } else if (lattr.match(/prec/) && attrSet.has("prec")) {
+      } else if (
+        lattr === AST.DefineOrdinalAttribute.PRECISION &&
+        attrSet.has(AST.DefineOrdinalAttribute.PRECISION)
+      ) {
         // TODO: Reimplement this validation and add tests
         // don't allow multiple precision attributes
         // acceptor(
@@ -241,7 +246,11 @@ export class PliValidator {
         // );
       } else {
         // add it in, normalizing precision & prec to 'prec' along the way
-        attrSet.add(lattr.match(/prec/) ? "prec" : lattr);
+        attrSet.add(
+          lattr === AST.DefineOrdinalAttribute.PRECISION
+            ? AST.DefineOrdinalAttribute.PRECISION
+            : lattr,
+        );
       }
     }
   }

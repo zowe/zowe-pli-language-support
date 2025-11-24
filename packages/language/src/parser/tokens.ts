@@ -230,6 +230,8 @@ function registerCombination<TEnum extends number = number>(name: string) {
 }
 
 // Combination tokens (parser optimization)
+export const DefineOrdinalAttribute =
+  registerCombination<ast.DefineOrdinalAttribute>("DefineOrdinalAttribute");
 export const ProcedureOrder =
   registerCombination<ast.ProcedureOrder>("ProcedureOrder");
 export const LinkageOption =
@@ -547,7 +549,10 @@ export const PARAMETER = registerKeyword({
 });
 export const PRECISION = registerKeyword({
   name: ["PRECISION", "PREC"],
-  categories: [[DefaultAttribute, ast.DefaultAttribute.PRECISION]],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.PRECISION],
+    [DefineOrdinalAttribute, ast.DefineOrdinalAttribute.PRECISION],
+  ],
 });
 export const STRUCTURE = registerKeyword({
   name: ["STRUCTURE", "STRUCT"],
@@ -676,7 +681,10 @@ export const RESERVED = registerKeyword({
 });
 export const UNSIGNED = registerKeyword({
   name: "UNSIGNED",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.UNSIGNED]],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.UNSIGNED],
+    [DefineOrdinalAttribute, ast.DefineOrdinalAttribute.UNSIGNED],
+  ],
 });
 export const VARYING4 = registerKeyword({
   name: "VARYING4",
@@ -1028,7 +1036,10 @@ export const RECORD = registerKeyword({
 });
 export const SIGNED = registerKeyword({
   name: "SIGNED",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.SIGNED]],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.SIGNED],
+    [DefineOrdinalAttribute, ast.DefineOrdinalAttribute.SIGNED],
+  ],
 });
 export const STREAM = registerKeyword({
   name: "STREAM",

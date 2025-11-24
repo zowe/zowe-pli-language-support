@@ -142,7 +142,7 @@ function extractProcedureOptions(
       }
     } else if (
       option.kind === SyntaxKind.ProcedureOrderOption &&
-      option.order
+      option.order !== null
     ) {
       optionStrings.push(
         tokens.ProcedureOrder.mapFromEnumLiteral(option.order),

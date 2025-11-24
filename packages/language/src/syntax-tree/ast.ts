@@ -903,6 +903,13 @@ export enum ScanMode {
   RESCAN,
   NOSCAN,
 }
+
+export enum DefineOrdinalAttribute {
+  SIGNED,
+  UNSIGNED,
+  PRECISION,
+}
+
 /**
  * A list of all the possible attributes that can be used in a default expression.
  * This is essentially a list of all attributes that can be used in a common declaration + the DEFAULT VALUE attribute.
@@ -1461,7 +1468,7 @@ export interface DefineOrdinalStatement extends AstNode {
   nameToken: Token | null;
   ordinalValues: OrdinalValueList | null;
   xDefine: boolean;
-  attributes: ("SIGNED" | "UNSIGNED" | "PRECISION" | "PREC")[];
+  attributes: DefineOrdinalAttribute[];
   precision: string | null;
 }
 export interface DefineStructureStatement extends AstNode {

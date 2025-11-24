@@ -626,7 +626,7 @@ export class PliParser extends AbstractParser {
         },
         {
           ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.ORDER, (token) => {
+            this.CONSUME_ASSIGN1(tokens.ProcedureOrder, (token) => {
               this.tokenPayload(
                 token,
                 element,
@@ -2251,7 +2251,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.DefineOrdinalStatement_Signed0,
               );
-              element.attributes.push(token.image as "SIGNED");
+              element.attributes.push(ast.DefineOrdinalAttribute.SIGNED);
             });
           },
         },
@@ -2264,7 +2264,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.DefineOrdinalStatement_Unsigned0,
               );
-              element.attributes.push(token.image as "UNSIGNED");
+              element.attributes.push(ast.DefineOrdinalAttribute.UNSIGNED);
             });
           },
         },
@@ -2277,7 +2277,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.DefineOrdinalStatement_PRECISION,
               );
-              element.attributes.push(token.image as "PRECISION" | "PREC");
+              element.attributes.push(ast.DefineOrdinalAttribute.PRECISION);
             });
             this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
               this.tokenPayload(
