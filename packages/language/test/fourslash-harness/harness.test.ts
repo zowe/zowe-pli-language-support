@@ -20,7 +20,7 @@ import { HarnessConstants } from "./implementation/constants";
 import { TestBuilder } from "../test-builder";
 import { generateIncludeItemMarkup } from "../../src/language-server/hover-request";
 import { SyntaxKind } from "../../src/syntax-tree/ast";
-import { HarnessTypeAttributes } from "./implementation/type-atttributes";
+import { HarnessTypeAttributes } from "./implementation/type-attributes";
 
 type HarnessImplementationListener = (method: string, ...args: any[]) => void;
 
