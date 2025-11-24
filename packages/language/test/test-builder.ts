@@ -1027,9 +1027,14 @@ export class TestBuilder {
   ) {
     if (expectedType.type === DataType.Structure) {
       //check: is structure?
+      if (!actualType.type) {
+        throw new Error(
+          `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got undefined`,
+        );
+      }
       if (actualType.type !== DataType.Structure) {
         throw new Error(
-          `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got ${TypeDescriptions.Names[actualType.type!]}`,
+          `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got ${TypeDescriptions.Names[actualType.type]}`,
         );
       }
 

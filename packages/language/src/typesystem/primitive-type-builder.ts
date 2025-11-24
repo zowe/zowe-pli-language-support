@@ -92,12 +92,14 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.SyntaxKind.DefinedAttribute:
         break;
       case ast.SyntaxKind.InitialAttribute:
-        this.addAttributeWitness(
-          AttributeKind.Initial,
-          attribute,
-          attribute,
-          attribute.token!,
-        );
+        if (attribute.token) {
+          this.addAttributeWitness(
+            AttributeKind.Initial,
+            attribute,
+            attribute,
+            attribute.token,
+          );
+        }
         break;
       case ast.SyntaxKind.DimensionsDataAttribute:
         if (attribute.dimensions && attribute.dimensions.token) {
@@ -105,17 +107,19 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
             AttributeKind.Dimension,
             computeDimensions(attribute.dimensions),
             attribute,
-            attribute.dimensions.token!,
+            attribute.dimensions.token,
           );
         }
         break;
       case ast.SyntaxKind.EntryAttribute:
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.Entry,
-          attribute,
-          attribute.entryToken!,
-        );
+        if (attribute.entryToken) {
+          this.addAttributeWitness(
+            AttributeKind.DataType,
+            DataType.Entry,
+            attribute,
+            attribute.entryToken,
+          );
+        }
         break;
       case ast.SyntaxKind.EnvironmentAttribute:
       case ast.SyntaxKind.GenericAttribute:
@@ -128,12 +132,14 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
          * Picture wideness attributes
          * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-picture-widepic
          */
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.Picture,
-          attribute,
-          attribute.pictureToken!,
-        );
+        if (attribute.pictureToken) {
+          this.addAttributeWitness(
+            AttributeKind.DataType,
+            DataType.Picture,
+            attribute,
+            attribute.pictureToken,
+          );
+        }
         break;
       case ast.SyntaxKind.ReturnsAttribute: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=organization-returns-option-attribute
         break;
@@ -159,9 +165,11 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   }
 
   handleDefaultAttribute(attribute: ast.ComputationDataAttribute) {
-    const token = attribute.typeToken!;
-    assertType<number>(attribute.typeToken?.tokenTypeIdx);
-    const typeAsEnum = DefaultAttributeToEnum[attribute.typeToken.tokenTypeIdx];
+    const token = attribute.typeToken;
+    if (!token) {
+      return;
+    }
+    const typeAsEnum = DefaultAttributeToEnum[token.tokenTypeIdx];
     switch (typeAsEnum) {
       /**
        * Data type attributes
@@ -827,7 +835,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
     token: Token,
   ) {
     if (this.attributeWitnesses[kind]) {
-      const witness = this.attributeWitnesses[kind]!;
+      const witness = this.attributeWitnesses[kind];
       if (value !== witness.value) {
         this.diagnostics.push(
           diagnosticFromCode(Error.IBM2462I, token, token.image, witness.image),
