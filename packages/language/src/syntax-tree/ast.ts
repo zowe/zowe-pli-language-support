@@ -892,7 +892,11 @@ export type CommonDeclarationAttribute =
  * Type extending attributes are attributes that extend the type of a variable.
  */
 export type TypeExtendingAttribute = LikeAttribute | TypeAttribute;
-export type ScanMode = "SCAN" | "RESCAN" | "NOSCAN";
+export enum ScanMode {
+  SCAN,
+  RESCAN,
+  NOSCAN,
+}
 /**
  * A list of all the possible attributes that can be used in a default expression.
  * This is essentially a list of all attributes that can be used in a common declaration + the DEFAULT VALUE attribute.

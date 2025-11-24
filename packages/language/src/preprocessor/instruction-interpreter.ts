@@ -40,7 +40,7 @@ interface Variable {
   name: string;
   value: Value;
   declarationNode?: ast.SyntaxNode | null;
-  mode: inst.ScanMode;
+  mode: ast.ScanMode;
   active: boolean;
 }
 
@@ -182,7 +182,7 @@ function generateVariable(
     declarationNode: instruction.node,
     mode: instruction.mode,
     // NOSCAN means the variable is not active
-    active: instruction.mode !== inst.ScanMode.NoScan,
+    active: instruction.mode !== ast.ScanMode.NOSCAN,
   };
 }
 
@@ -666,7 +666,7 @@ function runAnswerInstruction(
       const lastToken = tokens[tokens.length - 1];
       lastToken.immediateFollow = lastToken.endOffset + 1 === text.length;
     }
-    if (instruction.scanMode !== inst.ScanMode.NoScan) {
+    if (instruction.scanMode !== ast.ScanMode.NOSCAN) {
       tokens = replaceTokensInText(tokens, context);
     }
     if (breakCount > 0) {
@@ -920,7 +920,7 @@ function runDoType3Initialization(
         type: inst.DeclaredType.Fixed,
       },
       active: false,
-      mode: inst.ScanMode.Scan,
+      mode: ast.ScanMode.SCAN,
     };
     setVariable(context, loopVar);
   } else {
@@ -1069,7 +1069,7 @@ function runAssignmentInstruction(
         declarationNode: ref.reference?.owner,
         value,
         active: false, // Implicitly declared variables are inactive by default
-        mode: inst.ScanMode.Scan,
+        mode: ast.ScanMode.SCAN,
       };
       setVariable(context, variable);
     } else {
@@ -1419,7 +1419,7 @@ function runProcedure(
       name: param,
       value: arg,
       active: false,
-      mode: inst.ScanMode.NoScan,
+      mode: ast.ScanMode.NOSCAN,
       declarationNode: null,
     };
     context.symbols.variables.set(variable.name, variable);

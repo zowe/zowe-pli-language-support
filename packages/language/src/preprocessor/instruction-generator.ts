@@ -273,13 +273,10 @@ function generateAnswerInstruction(
       right: generateExpressionInstruction(node.margins.right),
     };
   }
-  const scanMode = node.scanMode
-    ? inst.ScanModeAstToInstruction[node.scanMode]
-    : undefined;
   return {
     kind: inst.InstructionKind.Answer,
     expression,
-    scanMode,
+    scanMode: node.scanMode ?? undefined,
     skip,
     skipToken: node.skipToken ?? undefined,
     column,
@@ -322,11 +319,11 @@ function generateActivateInstruction(
       continue; // Skip items without a reference
     }
     const reference = generateReferenceItemInstruction(item.reference);
-    let scanMode: inst.ScanMode = inst.ScanMode.Scan;
-    if (item.scanMode === "RESCAN") {
-      scanMode = inst.ScanMode.ReScan;
-    } else if (item.scanMode === "NOSCAN") {
-      scanMode = inst.ScanMode.NoScan;
+    let scanMode: ast.ScanMode = ast.ScanMode.SCAN;
+    if (item.scanMode === ast.ScanMode.RESCAN) {
+      scanMode = ast.ScanMode.RESCAN;
+    } else if (item.scanMode === ast.ScanMode.NOSCAN) {
+      scanMode = ast.ScanMode.NOSCAN;
     }
     instructions.push({
       kind: inst.InstructionKind.Activate,
@@ -367,11 +364,11 @@ function generateDeclareInstruction(
     if (attributes.includes("FIXED")) {
       type = inst.DeclaredType.Fixed;
     }
-    let scanMode: inst.ScanMode = inst.ScanMode.Scan;
+    let scanMode: ast.ScanMode = ast.ScanMode.SCAN;
     if (attributes.includes("RESCAN")) {
-      scanMode = inst.ScanMode.ReScan;
+      scanMode = ast.ScanMode.RESCAN;
     } else if (attributes.includes("NOSCAN")) {
-      scanMode = inst.ScanMode.NoScan;
+      scanMode = ast.ScanMode.NOSCAN;
     }
     let visibility: inst.VariableVisibility | null = null;
     if (attributes.includes("INTERNAL")) {
@@ -404,7 +401,7 @@ function generateReplaceInstruction(
         statement.name,
         undefined,
         inst.DeclaredType.Character,
-        inst.ScanMode.ReScan,
+        ast.ScanMode.RESCAN,
         null,
         statement,
       ),

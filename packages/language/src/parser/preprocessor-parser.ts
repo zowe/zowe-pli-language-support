@@ -516,9 +516,9 @@ function answerStatement(state: ParserState): ast.AnswerStatement {
     }
   }
   const scans: [CstNodeKind, TokenType, ast.ScanMode][] = [
-    [CstNodeKind.AnswerStatement_NOSCAN, t.NOSCAN, "NOSCAN"],
-    [CstNodeKind.AnswerStatement_SCAN, t.SCAN, "SCAN"],
-    [CstNodeKind.AnswerStatement_RESCAN, t.RESCAN, "RESCAN"],
+    [CstNodeKind.AnswerStatement_NOSCAN, t.NOSCAN, ast.ScanMode.NOSCAN],
+    [CstNodeKind.AnswerStatement_SCAN, t.SCAN, ast.ScanMode.SCAN],
+    [CstNodeKind.AnswerStatement_RESCAN, t.RESCAN, ast.ScanMode.RESCAN],
   ];
   for (const [cstNodeKind, tokenType, scanType] of scans) {
     if (state.tryConsume(statement, cstNodeKind, tokenType)) {
@@ -1161,15 +1161,15 @@ function tryScanMode(state: ParserState): ast.ScanMode | null {
   switch (state.token?.tokenTypeIdx) {
     case t.SCAN.tokenTypeIdx:
     case t.NORESCAN.tokenTypeIdx:
-      scanMode = "SCAN";
+      scanMode = ast.ScanMode.SCAN;
       state.index++;
       break;
     case t.RESCAN.tokenTypeIdx:
-      scanMode = "RESCAN";
+      scanMode = ast.ScanMode.RESCAN;
       state.index++;
       break;
     case t.NOSCAN.tokenTypeIdx:
-      scanMode = "NOSCAN";
+      scanMode = ast.ScanMode.NOSCAN;
       state.index++;
       break;
   }
