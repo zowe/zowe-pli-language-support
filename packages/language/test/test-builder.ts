@@ -1049,16 +1049,29 @@ export class TestBuilder {
         );
       }
       const actualType = this.unit.services.inferer.inferType(node, this.unit);
-      this.expectTypeWithStructure(expectedType, actualType);
+      if (
+        actualType.type === DataType.Unknown ||
+        actualType.type === DataType.Structure ||
+        !actualType.dimension
+      ) {
+        this.expectTypeWithStructure(expectedType, actualType as any);
+      } else {
+        this.expectTypeNoStructure(expectedType, actualType);
+      }
     }
   }
 
   private expectTypeWithStructure(
     expectedType: TypeExpectation,
-    actualType: TypeDescriptions.Any,
+    actualType: TypeExpectation,
   ) {
     if (expectedType.type === DataType.Structure) {
       //check: is structure?
+      if (!actualType.type) {
+        throw new Error(
+          `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got undefined`,
+        );
+      }
       if (actualType.type !== DataType.Structure) {
         throw new Error(
           `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got ${TypeDescriptions.Names[actualType.type]}`,
@@ -1092,15 +1105,19 @@ export class TestBuilder {
     }
   }
 
-  private expectTypeNoStructure(
-    expectedType: TypeExpectation,
-    actualType: TypeDescriptions.Any,
-  ) {
+  private expectTypeNoStructure(expectedType: object, actualType: object) {
     for (const [key, value] of Object.entries(expectedType)) {
       if (typeof value === "object" && value !== null) {
-        expect(actualType[key as keyof typeof actualType]).toEqual(
-          expect.objectContaining(value),
-        );
+        const field = (actualType as any)[key as keyof typeof actualType];
+        if (Array.isArray(value)) {
+          expect(Array.isArray(field)).toEqual(true);
+          expect(value.length).toEqual(field.length);
+          value.forEach((v, i) => {
+            this.expectTypeNoStructure(v, field[i]);
+          });
+        } else {
+          this.expectTypeNoStructure(value, field);
+        }
       } else {
         expect(actualType[key as keyof typeof actualType]).toEqual(value);
       }

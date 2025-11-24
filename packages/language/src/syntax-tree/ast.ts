@@ -1297,12 +1297,14 @@ export function createDimensionBound(): DimensionBound {
 export interface Dimensions extends AstNode {
   kind: SyntaxKind.Dimensions;
   dimensions: DimensionBound[];
+  token: Token | null;
 }
 export function createDimensions(): Dimensions {
   return {
     kind: SyntaxKind.Dimensions,
     container: null,
     dimensions: [],
+    token: null,
   };
 }
 export interface DimensionsDataAttribute extends AstNode {
@@ -1797,6 +1799,7 @@ export interface InitialAttribute extends AstNode {
   procedureCall: ProcedureCall | null;
   to: boolean;
   content: InitialToContent | null;
+  token: Token | null;
 }
 export interface InitialAttributeItemStar extends AstNode {
   kind: SyntaxKind.InitialAttributeItemStar;

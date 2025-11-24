@@ -5903,6 +5903,7 @@ export class PliParser extends AbstractParser {
       procedureCall: null,
       to: false,
       content: null,
+      token: null,
     };
   }
 
@@ -5913,6 +5914,7 @@ export class PliParser extends AbstractParser {
       {
         ALT: () => {
           this.CONSUME_ASSIGN1(tokens.INITIAL, (token) => {
+            element.token = token;
             this.tokenPayload(
               token,
               element,
@@ -6751,8 +6753,8 @@ export class PliParser extends AbstractParser {
       });
     });
     this.SUBRULE_ASSIGN1(this.Dimensions, {
-      assign: (result) => {
-        element.dimensions = result;
+      assign: (dimensions) => {
+        element.dimensions = dimensions;
       },
     });
 
@@ -7283,6 +7285,7 @@ export class PliParser extends AbstractParser {
       kind: ast.SyntaxKind.Dimensions,
       container: null,
       dimensions: [],
+      token: null,
     };
   }
 
@@ -7290,6 +7293,7 @@ export class PliParser extends AbstractParser {
     let element = this.push(this.createDimensions());
 
     this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
+      element.token = token;
       this.tokenPayload(token, element, CstNodeKind.Dimensions_OpenParen);
     });
     this.OPTION(() => {
