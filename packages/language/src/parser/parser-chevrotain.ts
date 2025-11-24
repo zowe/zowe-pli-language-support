@@ -17,8 +17,9 @@ import * as tokens from "./tokens";
 import * as ast from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { ParserMethod, tokenMatcher } from "chevrotain";
+import { Parser } from "./parser-types";
 
-export class PliParser extends AbstractParser {
+export class PliParser extends AbstractParser implements Parser<ast.Program> {
   constructor() {
     super(tokens.all);
     this.performSelfAnalysis();
@@ -8311,7 +8312,7 @@ export class PliParser extends AbstractParser {
   });
 }
 
-export const PliParserInstance = new PliParser();
+export const PliParserInstance: Parser<ast.Program> = new PliParser();
 
 const expressionTokenTypes = [
   tokens.ID,

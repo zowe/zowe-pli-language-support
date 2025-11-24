@@ -11,7 +11,6 @@
 
 import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols } from "../linking/symbol-table";
-import { PliParserInstance } from "../parser/parser";
 import { CompilationUnit } from "./compilation-unit";
 import { Program } from "../syntax-tree/ast";
 import {
@@ -26,6 +25,7 @@ import { CancellationToken } from "vscode-languageserver";
 import { interruptAndCheck } from "../utils/promises";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
+import { ParserInstance } from "../parser/parser-instance";
 
 export async function lifecycle(
   compilationUnit: CompilationUnit,
@@ -80,12 +80,12 @@ export async function tokenize(
 }
 
 export function parse(compilationUnit: CompilationUnit): Program {
-  PliParserInstance.input = compilationUnit.tokens;
-  const ast = PliParserInstance.parse();
+  ParserInstance.input = compilationUnit.tokens;
+  const ast = ParserInstance.parse();
   compilationUnit.ast = ast;
   compilationUnit.diagnostics.addAll(
     DiagnosticCategory.Parser,
-    parserErrorsToDiagnostics(PliParserInstance.errors),
+    parserErrorsToDiagnostics(ParserInstance.errors),
   );
 
   if (process.env.NODE_ENV === "development") {
