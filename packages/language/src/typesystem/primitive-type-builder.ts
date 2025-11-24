@@ -11,7 +11,6 @@
 
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { Token } from "../parser/tokens";
-import { ScanMode } from "../preprocessor/instructions";
 import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
@@ -627,9 +626,9 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.DefaultAttribute.SCAN:
       case ast.DefaultAttribute.RESCAN: {
         const mapTo = {
-          [ast.DefaultAttribute.NOSCAN]: ScanMode.NoScan,
-          [ast.DefaultAttribute.SCAN]: ScanMode.Scan,
-          [ast.DefaultAttribute.RESCAN]: ScanMode.ReScan,
+          [ast.DefaultAttribute.NOSCAN]: ast.ScanMode.NOSCAN,
+          [ast.DefaultAttribute.SCAN]: ast.ScanMode.SCAN,
+          [ast.DefaultAttribute.RESCAN]: ast.ScanMode.RESCAN,
         };
         const attributeValue = mapTo[type];
         this.addAttributeWitness(
