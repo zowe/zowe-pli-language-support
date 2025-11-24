@@ -128,11 +128,11 @@ export function createTokenInstance(
 
 export const keywordMap = new Map<string, TokenType>();
 const keywords: TokenType[] = [];
-//combination name -> {mapTo: keyword name -> enum value, mapFrom: enum value -> keyword name}
+//combination name -> {mapTo: keyword index -> enum value, mapFrom: enum value -> keyword name}
 const mappings = new Map<
   string,
   {
-    mapTo: Map<string, number>;
+    mapTo: Map<number, number>;
     mapFrom: Map<number, string>;
   }
 >();
@@ -162,7 +162,7 @@ function registerKeyword(config: KeywordConfig): TokenType {
   for (const alias of names) {
     keywordMap.set(alias, tokenType);
   }
-  assignToMappings(config, names);
+  assignToMappings(tokenType, config.categories ?? [], names);
   keywords.push(tokenType);
   return tokenType;
 }
@@ -172,12 +172,14 @@ interface OperatorConfig {
   categories?: [MappableTokenType, number][];
 }
 
-function assignToMappings(config: KeywordConfig, names: string[]) {
-  for (const [category, enumValue] of config.categories ?? []) {
+function assignToMappings(
+  tokenType: TokenType,
+  categories: [MappableTokenType, number][],
+  names: string[],
+) {
+  for (const [category, enumValue] of categories) {
     const mapping = mappings.get(category.name)!;
-    for (const alias of names) {
-      mapping.mapTo.set(alias, enumValue);
-    }
+    mapping.mapTo.set(tokenType.tokenTypeIdx!, enumValue);
     mapping.mapFrom.set(enumValue, names[0]);
   }
 }
@@ -188,14 +190,14 @@ function registerOperator(config: OperatorConfig): TokenType {
     pattern: Lexer.NA,
     categories: [...(config.categories ?? []).map((category) => category[0])],
   });
-  assignToMappings(config, [config.name]);
+  assignToMappings(tokenType, config.categories ?? [], [config.name]);
   return tokenType;
 }
 
 const combinations: TokenType[] = [];
 
 export type MappableTokenType<TEnum extends number = number> = TokenType & {
-  mapToEnumLiteral(image: string): TEnum;
+  mapToEnumLiteral(tokenIndex: number): TEnum;
   mapFromEnumLiteral(value: TEnum): string;
 };
 
@@ -204,14 +206,14 @@ function createMappableToken<TEnum extends number = number>(
 ): MappableTokenType<TEnum> {
   const tokenType = createToken(config);
   mappings.set(tokenType.name, {
-    mapTo: new Map<string, number>(),
+    mapTo: new Map<number, number>(),
     mapFrom: new Map<number, string>(),
   });
   return {
     ...tokenType,
-    mapToEnumLiteral(image: string): TEnum {
+    mapToEnumLiteral(tokenIndex: number): TEnum {
       const mapping = mappings.get(tokenType.name)!;
-      return mapping.mapTo.get(image) as TEnum;
+      return mapping.mapTo.get(tokenIndex) as TEnum;
     },
     mapFromEnumLiteral(value: TEnum): string {
       const mapsTo = mappings.get(tokenType.name)!;

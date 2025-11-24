@@ -17,7 +17,7 @@ import {
   isNameToken,
   isReferenceToken,
 } from "../linking/tokens";
-import * as tokens from "../parser/tokens";
+import * as t from "../parser/tokens";
 import { getAttributes } from "../preprocessor/util";
 import {
   Bound,
@@ -43,7 +43,7 @@ type MarkupResponse = string | null;
 
 interface MarkupGeneratorContext {
   unit: CompilationUnit;
-  token: tokens.Token;
+  token: t.Token;
 }
 
 interface MarkupGenerator {
@@ -132,9 +132,7 @@ function extractProcedureOptions(
       const internalOptions: string[] = [];
       for (const item of option.items) {
         if (item.kind === SyntaxKind.SimpleOptionsItem && item.value !== null) {
-          internalOptions.push(
-            tokens.SimpleOptions.mapFromEnumLiteral(item.value),
-          );
+          internalOptions.push(t.SimpleOptions.mapFromEnumLiteral(item.value));
         }
       }
       if (internalOptions.length > 0) {
@@ -144,9 +142,7 @@ function extractProcedureOptions(
       option.kind === SyntaxKind.ProcedureOrderOption &&
       option.order !== null
     ) {
-      optionStrings.push(
-        tokens.ProcedureOrder.mapFromEnumLiteral(option.order),
-      );
+      optionStrings.push(t.ProcedureOrder.mapFromEnumLiteral(option.order));
     } else if (option.kind === SyntaxKind.ProcedureRecursiveOption) {
       optionStrings.push("RECURSIVE");
     } else if (option.kind === SyntaxKind.ReturnsOption) {
@@ -161,12 +157,12 @@ function extractProcedureOptions(
           if (attr.dimensions) {
             // type w/ dimens, need to be decoded
             attrArr.push(
-              tokens.DefaultAttribute.mapFromEnumLiteral(attr.type) +
+              t.DefaultAttribute.mapFromEnumLiteral(attr.type) +
                 decodeDimensions(attr.dimensions),
             );
           } else {
             // just the type
-            attrArr.push(tokens.DefaultAttribute.mapFromEnumLiteral(attr.type));
+            attrArr.push(t.DefaultAttribute.mapFromEnumLiteral(attr.type));
           }
         }
       }

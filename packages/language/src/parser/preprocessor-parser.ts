@@ -378,7 +378,7 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
       CstNodeKind.ReturnsOption_OpenParen,
       t.OpenParen,
     );
-    let returnType: string | undefined = undefined;
+    let returnType: number | undefined = undefined;
     const dataAttribute = ast.createComputationDataAttribute();
     if (
       state.tryConsume(
@@ -387,7 +387,7 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
         t.CHARACTER,
       )
     ) {
-      returnType = "CHARACTER";
+      returnType = t.CHARACTER.tokenTypeIdx;
     } else if (
       state.tryConsume(
         dataAttribute,
@@ -395,9 +395,9 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
         t.FIXED,
       )
     ) {
-      returnType = "FIXED";
+      returnType = t.FIXED.tokenTypeIdx;
     }
-    if (returnType) {
+    if (returnType !== undefined) {
       dataAttribute.type = t.DefaultAttribute.mapToEnumLiteral(returnType);
       dataAttribute.typeToken = state.last ?? null;
       returnsOption.returnAttributes.push(dataAttribute);
@@ -1456,7 +1456,7 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
       );
       if (attributeToken) {
         dataAttribute.type = t.DefaultAttribute.mapToEnumLiteral(
-          attributeToken.image,
+          attributeToken.tokenTypeIdx,
         );
         dataAttribute.typeToken = attributeToken;
         attributes.push(dataAttribute);
@@ -1508,7 +1508,7 @@ function parseBinary(state: ParserState): ast.Expression | null {
     const item = primary(state);
     infixOperatorItem.items.push(item);
     infixOperatorItem.operators.push(
-      t.BinaryOperator.mapToEnumLiteral(operatorToken.image),
+      t.BinaryOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx),
     );
     infixOperatorItem.operatorTokens.push(operatorToken);
   }
