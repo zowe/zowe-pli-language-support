@@ -55,7 +55,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     const CompositeAttributeKinds: DefaultAttributeEnum[] = [
       //TODO add more composite types if needed
       DefaultAttributeEnum.UNION,
-      DefaultAttributeEnum.STRUCTURE,
+      DefaultAttributeEnum.DIMACROSS,
     ];
     function isOnlyCompositeAttribute(attr: ast.DeclarationAttribute): boolean {
       if (attr.kind === ast.SyntaxKind.ComputationDataAttribute) {
