@@ -49,8 +49,8 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
   isCompositeDeclaredItem(declaredItem: BuilderDeclareItem): boolean {
     const CompositeAttributeKinds: ast.DefaultAttribute[] = [
       //TODO add more composite types if needed
-      DefaultAttributeEnum.UNION,
-      DefaultAttributeEnum.DIMACROSS,
+      ast.DefaultAttribute.UNION,
+      ast.DefaultAttribute.DIMACROSS,
     ];
     function isOnlyCompositeAttribute(attr: ast.DeclarationAttribute): boolean {
       if (
