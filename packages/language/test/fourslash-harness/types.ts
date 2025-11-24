@@ -12,6 +12,23 @@
 export const UnnamedFile = Symbol("UnnamedFile");
 export type UnnamedFile = typeof UnnamedFile;
 
+export enum HarnessTestMode {
+  Normal = "",
+  Todo = ".todo.",
+  Skip = ".skip.",
+  Fail = ".fail.",
+}
+
+export function extractTestModeFromFileName(fileName: string): HarnessTestMode {
+  const entries = Object.values(HarnessTestMode);
+  for (const testMode of entries.filter((text) => text.includes("."))) {
+    if (fileName.includes(testMode)) {
+      return testMode;
+    }
+  }
+  return HarnessTestMode.Normal;
+}
+
 export interface HarnessFile {
   fileName: string | undefined;
   wrap: string | undefined;
