@@ -7525,7 +7525,7 @@ export class PliParser extends AbstractParser {
     this.MANY1(() => {
       this.CONSUME_ASSIGN1(tokens.LIMITED, (token) => {
         this.tokenPayload(token, element, CstNodeKind.EntryAttribute_Limited0);
-        element.limited.push(token.image as "LIMITED");
+        element.limited.push(token);
       });
     });
     this.CONSUME_ASSIGN1(tokens.ENTRY, (token) => {
@@ -7586,7 +7586,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.EntryAttribute_Variable,
               );
-              element.variable.push(token.image as "VARIABLE");
+              element.variable.push(token);
             });
           },
         },
@@ -7598,7 +7598,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.EntryAttribute_Limited1,
               );
-              element.limited.push(token.image as "LIMITED");
+              element.limited.push(token);
             });
           },
         },

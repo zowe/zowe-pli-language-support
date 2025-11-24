@@ -1652,10 +1652,10 @@ export function createEndStatement(): EndStatement {
 }
 export interface EntryAttribute extends AstNode {
   kind: SyntaxKind.EntryAttribute;
-  limited: "LIMITED"[];
+  limited: Token[];
   attributes: EntryDescription[];
   options: Options[];
-  variable: "VARIABLE"[];
+  variable: Token[];
   returns: ReturnsOption[];
   environmentName: Expression[];
   entryToken: Token | null;
