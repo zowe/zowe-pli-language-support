@@ -15,9 +15,6 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultCompositeTypeBuilder } from "./composite-type-builder";
 import { BuilderDeclareItem } from "./descriptions";
 import { assertType } from "../preprocessor/util";
-import { diagnosticFromCode } from "../language-server/types";
-import { Error } from "../validation/pli-codes";
-import { DiagnosticCategory } from "../validation/diagnostics-store";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
@@ -133,22 +130,23 @@ export class DefaultTypeInferer implements TypeInferer {
         }
       }
     }
-    this.traverseMembers(
-      topLevelMembers,
-      (t) => TypeDescriptions.isStructure(t),
-      (t, item, isTopLevel) => {
-        if (t.members && Object.keys(t.members).length === 0) {
-          compilationUnit.diagnostics.add(
-            DiagnosticCategory.TypeSystem,
-            diagnosticFromCode(
-              isTopLevel ? Error.IBM1482I : Error.IBM1483I,
-              item.nameToken,
-              item.name,
-            ),
-          );
-        }
-      },
-    );
+    // TODO: Reenable once we ensure that we don't show any false positives
+    // this.traverseMembers(
+    //   topLevelMembers,
+    //   (t) => TypeDescriptions.isStructure(t),
+    //   (t, item, isTopLevel) => {
+    //     if (t.members && Object.keys(t.members).length === 0) {
+    //       compilationUnit.diagnostics.add(
+    //         DiagnosticCategory.TypeSystem,
+    //         diagnosticFromCode(
+    //           isTopLevel ? Error.IBM1482I : Error.IBM1483I,
+    //           item.nameToken,
+    //           item.name,
+    //         ),
+    //       );
+    //     }
+    //   },
+    // );
     return topLevelMembers;
 
     function structureAddMember(

@@ -18,7 +18,7 @@ import { HarnessCodes } from "./codes";
 import { HarnessConstants } from "./constants";
 import { generateIncludeItemMarkup } from "../../../src/language-server/hover-request";
 import { PLICode } from "../../../src/validation/pli-codes";
-import { HarnessTypeAttributes } from "./type-atttributes";
+import { HarnessTypeAttributes } from "./type-attributes";
 import { SyntaxKind } from "../../../src/syntax-tree/ast";
 
 /**
