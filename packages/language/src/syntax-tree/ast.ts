@@ -268,6 +268,7 @@ export enum SimpleOptions {
   RETCODE,
   WINMAIN,
   ORDER,
+  REORDER,
   COBOL,
   INTER,
   MAIN,
@@ -570,6 +571,11 @@ export enum LinkageOption {
 export enum DefaultAttributeBinaryOperator {
   AND,
   OR,
+}
+
+export enum ProcedureOrder {
+  ORDER,
+  REORDER,
 }
 
 export interface AstNode {
@@ -2390,7 +2396,7 @@ export type ProcedureOption =
   | EnvironmentOption;
 export interface ProcedureOrderOption extends AstNode {
   kind: SyntaxKind.ProcedureOrderOption;
-  order: "ORDER" | "REORDER" | null;
+  order: ProcedureOrder | null;
 }
 export function createProcedureOrderOption(): ProcedureOrderOption {
   return {

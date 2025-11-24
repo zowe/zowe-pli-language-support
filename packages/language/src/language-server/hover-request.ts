@@ -144,7 +144,9 @@ function extractProcedureOptions(
       option.kind === SyntaxKind.ProcedureOrderOption &&
       option.order
     ) {
-      optionStrings.push(option.order);
+      optionStrings.push(
+        tokens.ProcedureOrder.mapFromEnumLiteral(option.order),
+      );
     } else if (option.kind === SyntaxKind.ProcedureRecursiveOption) {
       optionStrings.push("RECURSIVE");
     } else if (option.kind === SyntaxKind.ReturnsOption) {

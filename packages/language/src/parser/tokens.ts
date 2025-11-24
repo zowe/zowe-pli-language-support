@@ -230,6 +230,8 @@ function registerCombination<TEnum extends number = number>(name: string) {
 }
 
 // Combination tokens (parser optimization)
+export const ProcedureOrder =
+  registerCombination<ast.ProcedureOrder>("ProcedureOrder");
 export const LinkageOption =
   registerCombination<ast.LinkageOption>("LinkageOption");
 export const NoMapOption = registerCombination<ast.NoMapOption>("NoMapOption");
@@ -1119,8 +1121,18 @@ export const NOMAP = registerKeyword({
   categories: [[NoMapOption, ast.NoMapOption.NOMAP]],
 });
 export const ORDER = registerKeyword({
-  name: ["ORDER", "REORDER"],
-  categories: [[SimpleOptions, ast.SimpleOptions.ORDER]],
+  name: ["ORDER"],
+  categories: [
+    [SimpleOptions, ast.SimpleOptions.ORDER],
+    [ProcedureOrder, ast.ProcedureOrder.ORDER],
+  ],
+});
+export const REORDER = registerKeyword({
+  name: ["REORDER"],
+  categories: [
+    [SimpleOptions, ast.SimpleOptions.REORDER],
+    [ProcedureOrder, ast.ProcedureOrder.REORDER],
+  ],
 });
 export const COBOL = registerKeyword({
   name: "COBOL",

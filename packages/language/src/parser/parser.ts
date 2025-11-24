@@ -633,7 +633,7 @@ export class PliParser extends AbstractParser {
                 CstNodeKind.ProcedureStatement_Order,
               );
               const order = ast.createProcedureOrderOption();
-              order.order = token.image as "ORDER" | "REORDER";
+              order.order = tokens.ProcedureOrder.mapToEnumLiteral(token.image);
               element.options.push(order);
             });
           },
