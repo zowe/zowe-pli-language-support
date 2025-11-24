@@ -232,6 +232,7 @@ function registerCombination<TEnum extends number = number>(name: string) {
 // Combination tokens (parser optimization)
 export const DefineOrdinalAttribute =
   registerCombination<ast.DefineOrdinalAttribute>("DefineOrdinalAttribute");
+export const ScanMode = registerCombination<ast.ScanMode>("ScanMode");
 export const ProcedureOrder =
   registerCombination<ast.ProcedureOrder>("ProcedureOrder");
 export const LinkageOption =
@@ -1081,11 +1082,17 @@ export const STRING = registerKeyword({
 });
 export const NOSCAN = registerKeyword({
   name: "NOSCAN",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.NOSCAN]],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.NOSCAN],
+    [ScanMode, ast.ScanMode.NOSCAN],
+  ],
 });
 export const RESCAN = registerKeyword({
   name: "RESCAN",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.RESCAN]],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.RESCAN],
+    [ScanMode, ast.ScanMode.RESCAN],
+  ],
 });
 export const LOCATE = registerKeyword({
   name: "LOCATE",
@@ -1365,7 +1372,10 @@ export const SKIP = registerKeyword({
 });
 export const SCAN = registerKeyword({
   name: "SCAN",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.SCAN]],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.SCAN],
+    [ScanMode, ast.ScanMode.SCAN],
+  ],
 });
 export const FREE = registerKeyword({
   name: "FREE",
