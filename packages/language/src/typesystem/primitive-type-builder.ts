@@ -76,7 +76,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   private possibleDataTypes = new Set<DataType>(DataTypesArray);
   private attributeWitnesses: AttributeWitnesses =
     createEmptyAttributeWitnesses();
-  constructor(private elementName: Token) {}
+  constructor(public elementName: Token) {}
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -637,15 +637,16 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
 
   build() {
     if (this.possibleDataTypes.size !== 1) {
-      if (this.elementName) {
-        this.diagnostics.push(
-          diagnosticFromCode(
-            Error.IBM1482I,
-            this.elementName,
-            this.elementName.image,
-          ),
-        );
-      }
+      // TODO: Reenable once we ensure that we don't show any false positives
+      // if (this.elementName) {
+      //   this.diagnostics.push(
+      //     diagnosticFromCode(
+      //       Error.IBM1482I,
+      //       this.elementName,
+      //       this.elementName.image,
+      //     ),
+      //   );
+      // }
       return {
         type: TypeDescriptions.Unknown(),
         diagnostics: this.diagnostics,

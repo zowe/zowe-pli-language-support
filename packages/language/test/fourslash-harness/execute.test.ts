@@ -16,7 +16,12 @@ import { parseHarnessTestFile } from "./harness-parser";
 import { runHarnessTest } from "./harness-runner";
 import { getWrappers } from "./wrapper";
 import { setFileSystemProvider, VirtualFileSystemProvider } from "../../src";
-import { HarnessTest, UnnamedFile } from "./types";
+import {
+  extractTestModeFromFileName,
+  HarnessTest,
+  HarnessTestMode,
+  UnnamedFile,
+} from "./types";
 import {
   DEFAULT_FILE_URI,
   LocationOverride,
@@ -186,7 +191,17 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
     ? path.basename(relativePath)
     : relativePath;
 
-  test(
+  const testMode = extractTestModeFromFileName(testName);
+  let testFn: typeof test.todo = test;
+  if (testMode === HarnessTestMode.Todo) {
+    testFn = test.todo;
+  } else if (testMode === HarnessTestMode.Skip) {
+    testFn = test.skip;
+  } else if (testMode === HarnessTestMode.Fail) {
+    testFn = test.fails;
+  }
+
+  testFn(
     `${testName}`,
     {
       timeout,
