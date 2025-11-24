@@ -17,9 +17,16 @@ import {
   parseAbstractCompilerOptions,
 } from "../preprocessor/compiler-options/parser";
 import { translateCompilerOptions } from "../preprocessor/compiler-options/translate";
-import { isBoolean, isRecordOf, isString, isStringArray } from "../utils/types";
+import {
+  isBoolean,
+  isNumber,
+  isRecordOf,
+  isString,
+  isStringArray,
+} from "../utils/types";
 import { URI, UriUtils } from "../utils/uri";
 import { FileSystemProviderInstance } from "./file-system-provider";
+import { MAX_INSTRUCTION_COUNTER } from "../preprocessor/instruction-interpreter";
 
 /**
  * Pli options are effectively macros to set w/ the given values
@@ -98,6 +105,7 @@ export interface ProcessGroup {
   implicitBuiltins: Set<string>;
   lspOptions: {
     checkMargins: boolean;
+    instructionCounterLimit: number;
   };
 
   /**
@@ -121,6 +129,7 @@ export function deserializeProcessGroup(
   const libs = obj.libs || [];
   const lspOptions = obj["lsp-options"] || {};
   const checkMargins = lspOptions["check-margins"] ?? false;
+  const instructionCounterLimit = lspOptions["instruction-counter-limit"];
   return {
     name: obj.name,
     compilerOptions: isStringArray(compilerOptions) ? compilerOptions : [],
@@ -136,6 +145,9 @@ export function deserializeProcessGroup(
       : new Set(),
     lspOptions: {
       checkMargins: isBoolean(checkMargins) ? checkMargins : false,
+      instructionCounterLimit: isNumber(instructionCounterLimit)
+        ? instructionCounterLimit
+        : MAX_INSTRUCTION_COUNTER,
     },
   };
 }
@@ -171,6 +183,7 @@ interface SerializedProcessGroup {
   "implicit-builtins"?: string[];
   "lsp-options"?: {
     "check-margins"?: boolean;
+    "instruction-counter-limit"?: number;
   };
 }
 
