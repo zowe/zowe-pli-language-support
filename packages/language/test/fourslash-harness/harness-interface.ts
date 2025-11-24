@@ -28,6 +28,7 @@ import {
   Alignments,
   Assignability,
   Base,
+  Bound,
   BufferMode,
   DataType,
   Endianess,
@@ -52,8 +53,32 @@ type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
 export type Not<T> = Omit<T, "not">;
 
+type EditComputedAttributes<T extends TypeDescriptions.Any> = Omit<
+  T,
+  "dimension"
+> & {
+  dimension:
+    | {
+        lowerBound: Partial<Bound>;
+        upperBound: Partial<Bound>;
+      }[]
+    | undefined;
+};
+export type PrimitiveTypeExpectation =
+  | EditComputedAttributes<TypeDescriptions.Area>
+  | EditComputedAttributes<TypeDescriptions.Arithmetic>
+  | EditComputedAttributes<TypeDescriptions.File>
+  | EditComputedAttributes<TypeDescriptions.Format>
+  | EditComputedAttributes<TypeDescriptions.Label>
+  | EditComputedAttributes<TypeDescriptions.Locator>
+  | EditComputedAttributes<TypeDescriptions.Entry>
+  | EditComputedAttributes<TypeDescriptions.Ordinal>
+  | EditComputedAttributes<TypeDescriptions.Picture>
+  | EditComputedAttributes<TypeDescriptions.String>
+  | EditComputedAttributes<TypeDescriptions.Task>;
 export type TypeExpectation =
-  | Partial<Exclude<TypeDescriptions.Any, TypeDescriptions.Structure>>
+  | Partial<PrimitiveTypeExpectation>
+  | Partial<TypeDescriptions.Unknown>
   | {
       type: DataType.Structure;
       members: Record<string, TypeExpectation>;
