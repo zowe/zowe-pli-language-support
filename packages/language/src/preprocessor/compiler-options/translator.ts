@@ -81,17 +81,24 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
     });
   }
 
-  flag(key: keyof T, positive: string[], negative: string[]) {
+  flag(
+    key: keyof T,
+    positive: string[],
+    negative: string[],
+    callback?: (option: CompilerOption, options: T) => void,
+  ) {
     this.rules.push({
       positive,
       positiveTranslate: (option, options) => {
         ensureArguments(option, 0, 0);
         (options as any)[key] = true;
+        callback?.(option, options);
       },
       negative,
       negativeTranslate: (option, options) => {
         ensureArguments(option, 0, 0);
         (options as any)[key] = false;
+        callback?.(option, options);
       },
     });
   }

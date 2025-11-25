@@ -16,6 +16,7 @@ import {
   CodeAction,
   CodeActionKind,
   Diagnostic,
+  TextEdit,
 } from "vscode-languageserver-types";
 import {
   PluginConfigurationProviderInstance,
@@ -115,6 +116,31 @@ export async function quickFixCreateConfig(
   return action;
 }
 
+export function quickFixUppercaseText(
+  diagnostic: Diagnostic,
+): CodeAction | undefined {
+  const range = diagnostic.range;
+  if (!diagnostic.data || !diagnostic.data.text || !diagnostic.data.uri) {
+    console.error("Diagnostic data is missing for quick fix uppercase text.");
+    return undefined;
+  }
+  const text = diagnostic.data.text;
+  const uri = diagnostic.data.uri;
+
+  const action: CodeAction = {
+    title: `Convert to uppercase`,
+    kind: CodeActionKind.QuickFix,
+    diagnostics: [diagnostic],
+    edit: {
+      changes: {
+        [uri]: [TextEdit.replace(range, text.toUpperCase())],
+      },
+    },
+  };
+
+  return action;
+}
+
 export async function applyQuickFixes(
   diagnostics: Diagnostic[],
 ): Promise<CodeAction[] | undefined> {
@@ -124,6 +150,7 @@ export async function applyQuickFixes(
   const CODE_MISSING_CONFIG = fullCode(
     LspCodes.IncludeResolution.MissingConfiguration,
   ); // "Could not resolve include directive. Plugin configuration is missing"
+  const CODE_MACRO_CASE = fullCode(LspCodes.UpperCase);
 
   for (const diagnostic of diagnostics) {
     if (!diagnostic.code) {
@@ -137,6 +164,10 @@ export async function applyQuickFixes(
         break;
       case CODE_MISSING_CONFIG:
         action = await quickFixCreateConfig(diagnostic);
+        if (action) actions.push(action);
+        break;
+      case CODE_MACRO_CASE:
+        action = quickFixUppercaseText(diagnostic);
         if (action) actions.push(action);
         break;
     }

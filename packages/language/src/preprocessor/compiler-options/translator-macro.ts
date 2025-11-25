@@ -33,7 +33,7 @@ translator.rule(["CASE"], (option, options) => {
   );
 });
 
-translator.rule(["DBCS"], (option, options) => {
+translator.rule(["DBCS"], (option, options, acceptor) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   ensureType(value, "plain");
@@ -42,11 +42,18 @@ translator.rule(["DBCS"], (option, options) => {
     CompilerOptionsCodes.PPMacro.Dbcs.InvalidParameter,
     ["EXACT", "INEXACT"],
   );
+  acceptor(
+    diagnosticFromCode(
+      CompilerOptionsCodes.OptionNotSupported,
+      option.token,
+      "DBCS",
+    ),
+  );
 });
 
 translator.rule(["DEPRECATE"], (option, options) => {
   ensureArguments(option, 1);
-  options.deprecate = [];
+  options.deprecate = new Set<string>();
   for (const value of option.values) {
     ensureType(value, "option");
     if (value.name !== "ENTRY") {
@@ -60,14 +67,14 @@ translator.rule(["DEPRECATE"], (option, options) => {
     // ENTRY() is valid.
     for (const entry of value.values) {
       ensureType(entry, "plain");
-      options.deprecate.push(entry.value as string);
+      options.deprecate.add(entry.value as string);
     }
   }
 });
 
 translator.rule(["DEPRECATENEXT"], (option, options) => {
   ensureArguments(option, 1);
-  options.deprecateNext = [];
+  options.deprecateNext = new Set<string>();
   for (const value of option.values) {
     ensureType(value, "option");
     if (value.name !== "ENTRY") {
@@ -81,12 +88,18 @@ translator.rule(["DEPRECATENEXT"], (option, options) => {
     // ENTRY() is valid.
     for (const entry of value.values) {
       ensureType(entry, "plain");
-      options.deprecateNext.push(entry.value as string);
+      options.deprecateNext.add(entry.value as string);
     }
   }
 });
 
-translator.flag("eolComm", ["EOLCOMM"], ["NOEOLCOMM"]);
+translator.flag("eolComm", ["EOLCOMM"], ["NOEOLCOMM"], (option) => {
+  throw diagnosticFromCode(
+    CompilerOptionsCodes.OptionNotSupported,
+    option.token,
+    "EOLCOMM",
+  );
+});
 
 translator.rule(["FIXED"], (option, options) => {
   ensureArguments(option, 1, 1);
@@ -127,7 +140,13 @@ translator.rule(
   },
 );
 
-translator.flag("incOnly", ["INCONLY"], ["NOINCONLY"]);
+translator.flag("incOnly", ["INCONLY"], ["NOINCONLY"], (option) => {
+  throw diagnosticFromCode(
+    CompilerOptionsCodes.OptionNotSupported,
+    option.token,
+    "INCONLY",
+  );
+});
 
 translator.rule(
   ["NAMEPREFIX"],
