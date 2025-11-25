@@ -1843,7 +1843,7 @@ export interface IncludeDirective extends AstNode {
   kind: SyntaxKind.IncludeDirective;
   idempotent: boolean;
   token: Token | null;
-  items: Array<IncludeItemFile | IncludeItemMember>;
+  items: IncludeItem[];
 }
 export function createIncludeDirective(): IncludeDirective {
   return {
@@ -1861,7 +1861,7 @@ export interface IncludeAltDirective extends AstNode {
   kind: SyntaxKind.IncludeAltDirective;
   idempotent: boolean;
   token: Token | null;
-  items: Array<IncludeItemFile | IncludeItemMember>;
+  items: IncludeItem[];
 }
 export function createIncludeAltDirective(): IncludeAltDirective {
   return {
@@ -1873,17 +1873,19 @@ export function createIncludeAltDirective(): IncludeAltDirective {
   };
 }
 
+export type IncludeItem = IncludeItemFile | IncludeItemMember;
+
 /**
  * Include item by file name
  */
 export interface IncludeItemFile extends AstNode {
   kind: SyntaxKind.IncludeItemFile;
   token: Token | null;
+  range: Range | null;
 
   // Properties filled by the preprocessor
   filePath: string | null;
   relativeFilePath: string | null;
-  sourceText: string | null;
 
   fileName: string | null;
 }
@@ -1894,11 +1896,11 @@ export interface IncludeItemFile extends AstNode {
 export interface IncludeItemMember extends AstNode {
   kind: SyntaxKind.IncludeItemMember;
   token: Token | null;
+  range: Range | null;
 
   // Properties filled by the preprocessor
   filePath: string | null;
   relativeFilePath: string | null;
-  sourceText: string | null;
 
   /**
    * Member name of the include, if present
@@ -1922,12 +1924,7 @@ export interface IncludeItemMember extends AstNode {
 export function isIncludeItemFile(
   item: unknown,
 ): item is IncludeItemFile & { fileName: string } {
-  return (
-    typeof item === "object" &&
-    item !== null &&
-    "fileName" in item &&
-    typeof (item as any).fileName === "string"
-  );
+  return isObject<IncludeItemFile>(item) && typeof item.fileName === "string";
 }
 
 /**
@@ -1937,10 +1934,7 @@ export function isIncludeItemMember(
   item: unknown,
 ): item is IncludeItemMember & { memberName: string } {
   return (
-    typeof item === "object" &&
-    item !== null &&
-    "memberName" in item &&
-    typeof (item as any).memberName === "string"
+    isObject<IncludeItemMember>(item) && typeof item.memberName === "string"
   );
 }
 
@@ -1948,10 +1942,10 @@ export function createIncludeItemFile(): IncludeItemFile {
   return {
     kind: SyntaxKind.IncludeItemFile,
     container: null,
+    range: null,
     filePath: null,
     relativeFilePath: null,
     token: null,
-    sourceText: null,
     fileName: null,
   };
 }
@@ -1960,10 +1954,10 @@ export function createIncludeItemMember(): IncludeItemMember {
   return {
     kind: SyntaxKind.IncludeItemMember,
     container: null,
+    range: null,
     filePath: null,
     relativeFilePath: null,
     token: null,
-    sourceText: null,
     memberName: null,
     ddname: null,
     ddnameTokens: null,

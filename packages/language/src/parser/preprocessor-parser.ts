@@ -22,7 +22,9 @@ import { TokenType } from "chevrotain";
 import {
   diagnostic,
   diagnosticFromCode,
+  Range,
   Severity,
+  tokenToRange,
 } from "../language-server/types";
 import { PLICodes } from "../validation/pli-codes";
 
@@ -602,6 +604,7 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
   directive.token = includeToken;
   directive.idempotent = isXInstruction(includeToken);
   let parseError = false;
+  let range: Range | null = null;
   while (true) {
     let item: ast.IncludeItemFile | ast.IncludeItemMember | undefined =
       undefined;
@@ -622,6 +625,10 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
     }
 
     if (idTokens.length > 1) {
+      range = {
+        start: idTokens[0].startOffset,
+        end: NaN,
+      };
       // ddname which requires a parenthesized member portion
       item = ast.createIncludeItemMember();
       for (const idToken of idTokens) {
@@ -636,7 +643,14 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
         t.ID,
       );
 
-      state.consume(item, CstNodeKind.IncludeItem_CloseParen, t.CloseParen);
+      const endToken = state.consume(
+        item,
+        CstNodeKind.IncludeItem_CloseParen,
+        t.CloseParen,
+      );
+      if (endToken && range) {
+        range.end = endToken.endOffset + 1;
+      }
       // joint ddname
       item.ddname = idTokens.map((t) => t.image).join(".");
       item.ddnameTokens = idTokens; // <-- TODO use these tokens to report chained diagnostics, do I already do this?
@@ -645,12 +659,12 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
       item.token = memberToken;
     } else if (idTokens.length === 1) {
       item = ast.createIncludeItemMember();
-      for (const idToken of idTokens) {
-        idToken.element = item;
-      }
+      const idToken = idTokens[0];
+      idToken.element = item;
+      range = tokenToRange(idToken);
 
       // either ddname w/ member, or raw member
-      const ddnameOrMember = idTokens[0].image;
+      const ddnameOrMember = idToken.image;
 
       // check to see if we have an opening parenthesis for a following member
       // making this a ddname + member
@@ -693,6 +707,7 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
         t.STRING_TERM,
       );
       if (stringToken) {
+        range = tokenToRange(stringToken);
         const fileName = unpackCharacterValue(stringToken.image);
         item.fileName = fileName;
         item.token = stringToken;
@@ -703,6 +718,7 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
         break;
       }
     }
+    item.range = range;
     directive.items.push(item);
     // Optional comma
     state.tryConsume(directive, CstNodeKind.IncludeDirective_Comma, t.Comma);
