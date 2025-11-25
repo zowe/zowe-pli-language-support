@@ -448,6 +448,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             [this.firstAllocateStatement, this.ruleAllocateStatement],
             [this.firstAssertStatement, this.ruleAssertStatement],
             [this.firstAssignmentStatement, this.ruleAssignmentStatement],
+            [this.firstAttachStatement, this.ruleAttachStatement],
             //TODO
         ]);
     }
@@ -662,6 +663,52 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
         return element;
     }
+
+    firstAttachStatement = [tokens.ATTACH];
+    ruleAttachStatement(state: ParserState): ast.AttachStatement {
+        const element: ast.AttachStatement = {
+            kind: ast.SyntaxKind.AttachStatement,
+            container: null,
+            reference: null,
+            task: null,
+            environment: false,
+            tstack: null,
+        };
+
+        state.consume(element, CstNodeKind.AttachStatement_ATTACH, tokens.ATTACH);
+        element.reference = this.ruleLocatorCall(state);
+        state.consume(element, CstNodeKind.AttachStatement_THREAD, tokens.THREAD);
+        state.consume(element, CstNodeKind.AttachStatement_OpenParenTask, tokens.OpenParen);
+        element.task = this.ruleLocatorCall(state);
+        state.consume(element, CstNodeKind.AttachStatement_CloseParenTask, tokens.CloseParen);
+
+        // Optional ENVIRONMENT clause
+        if (state.tryConsume(element, CstNodeKind.AttachStatement_ENVIRONMENT, tokens.ENVIRONMENT)) {
+            element.environment = true;
+            state.consume(element, CstNodeKind.AttachStatement_OpenParenEnvironment, tokens.OpenParen);
+            
+            // Optional TSTACK inside ENVIRONMENT
+            if (state.tryConsume(element, CstNodeKind.AttachStatement_TSTACK, tokens.TSTACK)) {
+                state.consume(element, CstNodeKind.AttachStatement_OpenParenTStack, tokens.OpenParen);
+                element.tstack = this.ruleExpression(state);
+                state.consume(element, CstNodeKind.AttachStatement_CloseParenTStack, tokens.CloseParen);
+            }
+            
+            state.consume(element, CstNodeKind.AttachStatement_CloseParenEnvironment, tokens.CloseParen);
+        }
+
+        state.consume(element, CstNodeKind.AttachStatement_Semicolon, tokens.Semicolon);
+
+        return element;
+    }
+
+
+
+
+
+
+
+
 
 
 
