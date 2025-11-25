@@ -9,7 +9,7 @@
  *
  */
 
-import { CompilerOptionResult } from "./options";
+import { CompilerOptionResult, CompilerOptionsPP } from "./options";
 import {
   AbstractCompilerOptions,
   parseAbstractCompilerOptions,
@@ -17,14 +17,18 @@ import {
 import { CompilerOption, SyntaxKind } from "../../syntax-tree/ast";
 import { getTranslator as getTranslatorPLI } from "./translator-pli";
 import { getTranslator as getTranslatorMacro } from "./translator-macro";
+import { getTranslator as getTranslatorSQL } from "./translator-sql";
 import {
   CompilerOptions,
   CompilerOptions as CompilerOptionsPLI,
 } from "./options-pli";
 import { CompilerOptions as CompilerOptionsMacro } from "./options-macro";
+import { CompilerOptions as CompilerOptionsSQL } from "./options-sql";
+import { Translator } from "./translator";
 
 const translator = getTranslatorPLI();
 const translatorMacro = getTranslatorMacro();
+const translatorSQL = getTranslatorSQL();
 
 export function translateCompilerOptions(
   input: AbstractCompilerOptions,
@@ -43,32 +47,45 @@ export function translateCompilerOptions(
 
   // Handle nested compiler options that are not yet parsed.
   translatorMacro.clear();
-  const macroItems: CompilerOptions.PPValue[] = [
-    ...(translator.options.ppMacro ? [translator.options.ppMacro] : []),
-    ...(translator.options.pp?.items
-      .filter((item) => item.name === "MACRO" && typeof item.value === "string")
-      .map((item) => ({ value: item.value, token: item.token })) ?? []),
-  ];
-
-  for (const item of macroItems) {
-    const nestedOptions = parseAbstractCompilerOptions(
-      item.value as string,
-      (item.token?.startOffset ?? 0) + 1,
-    );
-    nestedOptions.options.forEach((option) =>
-      translatorMacro.translate(option),
-    );
-    translatorMacro.diagnostics.push(...nestedOptions.issues);
-  }
+  parseNestedOptions(translatorMacro, "MACRO", translator.options.ppMacro);
+  translatorSQL.clear();
+  parseNestedOptions(translatorSQL, "SQL", translator.options.ppSql);
 
   return {
     options: {
       ...(translator.options as CompilerOptionsPLI),
       macroOptions: translatorMacro.options as CompilerOptionsMacro,
+      sqlOptions: translatorSQL.options as CompilerOptionsSQL,
     },
     tokens: input.tokens,
-    issues: [...translator.diagnostics, ...translatorMacro.diagnostics],
+    issues: [
+      ...translator.diagnostics,
+      ...translatorMacro.diagnostics,
+      ...translatorSQL.diagnostics,
+    ],
   };
+}
+
+function parseNestedOptions<T extends CompilerOptionsPP>(
+  ppTranslator: Translator<T>,
+  ppId: string,
+  ppDirectValue: CompilerOptions.PPValue | false | undefined,
+): void {
+  const items: CompilerOptions.PPValue[] = [
+    ...(ppDirectValue ? [ppDirectValue] : []),
+    ...(translator.options.pp?.items
+      .filter((item) => item.name === ppId && typeof item.value === "string")
+      .map((item) => ({ value: item.value, token: item.token })) ?? []),
+  ];
+
+  for (const item of items) {
+    const nestedOptions = parseAbstractCompilerOptions(
+      item.value as string,
+      (item.token?.startOffset ?? 0) + 1,
+    );
+    nestedOptions.options.forEach((option) => ppTranslator.translate(option));
+    ppTranslator.diagnostics.push(...nestedOptions.issues);
+  }
 }
 
 // TODO ssmifi: remove the upper cases from the individual rules.
