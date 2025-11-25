@@ -319,6 +319,7 @@ export interface HarnessTesterInterface {
     Information: typeof PLICodes.Info;
     Error: typeof PLICodes.Error;
     Internal: typeof InternalCodes;
+    LspCodes: typeof LspCodes;
     Lexer: {
       Margins: {
         ErrorLeft: typeof PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT;
@@ -326,7 +327,6 @@ export interface HarnessTesterInterface {
       };
     };
     CompilerOptions: typeof CompilerOptionsCodes;
-    LspCodes: typeof LspCodes;
     TypeSystem: typeof TypeSystemCodes;
   };
 

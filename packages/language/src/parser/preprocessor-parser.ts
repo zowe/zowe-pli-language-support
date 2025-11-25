@@ -1183,7 +1183,11 @@ function tryScanMode(state: ParserState): ast.ScanMode | null {
  */
 function skipStatement(state: ParserState): ast.SkipDirective {
   const statement = ast.createSkipDirective();
-  state.consume(statement, CstNodeKind.SkipDirective_SKIP, t.SKIP);
+  statement.token = state.consume(
+    statement,
+    CstNodeKind.SkipDirective_SKIP,
+    t.SKIP,
+  );
   let lineCount: number = 1;
   if (
     state.tryConsume(

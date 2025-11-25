@@ -2611,6 +2611,7 @@ export interface SimpleOptionsItem extends AstNode {
 }
 export interface SkipDirective extends AstNode {
   kind: SyntaxKind.SkipDirective;
+  token: Token | null;
   lines: Expression | null;
   lineCount: number;
 }
@@ -2618,6 +2619,7 @@ export function createSkipDirective(): SkipDirective {
   return {
     kind: SyntaxKind.SkipDirective,
     container: null,
+    token: null,
     lines: null,
     lineCount: 1,
   };
