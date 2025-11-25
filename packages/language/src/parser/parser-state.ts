@@ -314,9 +314,9 @@ export class ParserState {
     return firstSet.some(t => this.canConsume(t));
   }
 
-  consumeAlternatives<T>(alternatives: [TokenType, (state: ParserState) => T][]): T {
-    for (const [tokenType, parseFunc] of alternatives) {
-      if (this.canConsume(tokenType)) {
+  consumeAlternatives<T>(alternatives: [TokenType[], (state: ParserState) => T][]): T {
+    for (const [tokenTypes, parseFunc] of alternatives) {
+      if (tokenTypes.some(t => this.canConsume(t))) {
         return parseFunc(this);
       }
     }

@@ -129,7 +129,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         state.consume(element, CstNodeKind.Exports_EXPORTS, tokens.EXPORTS);
         state.consume(element, CstNodeKind.Exports_OpenParen, tokens.OpenParen);
 
-        if(state.tryConsume(element, CstNodeKind.Exports_AllStar, tokens.Star)) {
+        if (state.tryConsume(element, CstNodeKind.Exports_AllStar, tokens.Star)) {
             element.all = true;
         } else {
             element.procedures.push(this.ruleExportsItem(state));
@@ -153,8 +153,8 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
         state.consume(element, CstNodeKind.Reserves_RESERVES, tokens.RESERVES);
         state.consume(element, CstNodeKind.Reserves_OpenParen, tokens.OpenParen);
-        
-        if(state.tryConsume(element, CstNodeKind.Reserves_AllStar, tokens.Star)) {
+
+        if (state.tryConsume(element, CstNodeKind.Reserves_AllStar, tokens.Star)) {
             element.all = true;
         } else {
             const varToken = state.consume(element, CstNodeKind.Reserves_Variables0, tokens.ID)!;
@@ -188,11 +188,11 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         return element;
     }
 
-    alternativesOptionsItem: [TokenType, (state: ParserState) => ast.OptionsItem][] = [
-        [tokens.SimpleOptions, this.ruleSimpleOptionsItem],
-        [tokens.CMPAT, this.ruleCMPATOptionsItem],
-        [tokens.NoMapOption, this.ruleNoMapOptionsItem],
-        [tokens.LINKAGE, this.ruleLinkageOptionsItem],
+    alternativesOptionsItem: [TokenType[], (state: ParserState) => ast.OptionsItem][] = [
+        [[tokens.SimpleOptions], this.ruleSimpleOptionsItem],
+        [[tokens.CMPAT], this.ruleCMPATOptionsItem],
+        [[tokens.NoMapOption], this.ruleNoMapOptionsItem],
+        [[tokens.LINKAGE], this.ruleLinkageOptionsItem],
     ];
     ruleOptionsItem(state: ParserState): ast.OptionsItem {
         return state.consumeAlternatives<ast.OptionsItem>(this.alternativesOptionsItem);
@@ -205,7 +205,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             value: null,
         };
         const token = state.consume(element, CstNodeKind.SimpleOptionsItem_Value, tokens.SimpleOptions);
-        if(token) {
+        if (token) {
             element.value = tokens.SimpleOptions.mapToEnumLiteral(token.tokenTypeIdx);
         }
         return element;
@@ -220,7 +220,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         state.consume(element, CstNodeKind.LinkageOptionsItem_Linkage, tokens.LINKAGE);
         state.consume(element, CstNodeKind.LinkageOptionsItem_OpenParen, tokens.OpenParen);
         const valueToken = state.consume(element, CstNodeKind.LinkageOptionsItem_Value, tokens.LinkageOption);
-        if(valueToken) {
+        if (valueToken) {
             element.value = tokens.LinkageOption.mapToEnumLiteral(valueToken.tokenTypeIdx);
         }
         state.consume(element, CstNodeKind.LinkageOptionsItem_CloseParen, tokens.CloseParen);
@@ -236,7 +236,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         state.consume(element, CstNodeKind.CMPATOptionsItem_CMPAT, tokens.CMPAT);
         state.consume(element, CstNodeKind.CMPATOptionsItem_OpenParen, tokens.OpenParen);
         const vxToken = state.consume(element, CstNodeKind.CMPATOptionsItem_Value, tokens.VX);
-        if(vxToken) {
+        if (vxToken) {
             element.value = tokens.VX.mapToEnumLiteral(vxToken.tokenTypeIdx);
         }
         state.consume(element, CstNodeKind.CMPATOptionsItem_CloseParen, tokens.CloseParen);
@@ -251,18 +251,18 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             type: null,
         };
         const typeToken = state.consume(element, CstNodeKind.NoMapOptionsItem_Type, tokens.NoMapOption);
-        if(typeToken) {
+        if (typeToken) {
             element.type = tokens.NoMapOption.mapToEnumLiteral(typeToken.tokenTypeIdx);
         }
 
-        if(state.tryConsume(element, CstNodeKind.NoMapOptionsItem_OpenParen, tokens.OpenParen)) {
+        if (state.tryConsume(element, CstNodeKind.NoMapOptionsItem_OpenParen, tokens.OpenParen)) {
             const idToken = state.consume(element, CstNodeKind.NoMapOptionsItem_Parameters0, tokens.ID);
-            if(idToken) {
+            if (idToken) {
                 element.parameters.push(idToken.image);
             }
             while (state.tryConsume(element, CstNodeKind.NoMapOptionsItem_Comma, tokens.Comma)) {
                 const nextIdToken = state.consume(element, CstNodeKind.NoMapOptionsItem_Parameters1, tokens.ID);
-                if(nextIdToken) {
+                if (nextIdToken) {
                     element.parameters.push(nextIdToken.image);
                 }
             }
@@ -272,15 +272,100 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         return element;
     }
 
+    firstProcedureStatement = [tokens.PROCEDURE];
+    ruleProcedureStatement(state: ParserState): ast.ProcedureStatement {
+        const element: ast.ProcedureStatement = {
+            kind: ast.SyntaxKind.ProcedureStatement,
+            container: null,
+            procToken: null,
+            end: null,
+            options: [],
+            parameters: [],
+            statements: [],
+            statement: false,
+            xProc: false,
+        };
+        const procToken = state.consume(element, CstNodeKind.ProcedureStatement_PROCEDURE, tokens.PROCEDURE);
+        element.procToken = procToken;
+        element.xProc = procToken?.image[0].toUpperCase() === "X";
+
+        if (state.tryConsume(element, CstNodeKind.ProcedureStatement_OpenParenParams, tokens.OpenParen)) {
+            element.parameters.push(this.ruleProcedureParameter(state));
+            while (state.tryConsume(element, CstNodeKind.ProcedureStatement_Comma, tokens.Comma)) {
+                element.parameters.push(this.ruleProcedureParameter(state));
+            }
+            state.consume(element, CstNodeKind.ProcedureStatement_CloseParenParams, tokens.CloseParen);
+        }
+
+        while (!state.eof && !state.canConsume(tokens.Semicolon)) {
+            if (state.canConsume(tokens.RETURNS)) {
+                element.options.push(this.ruleReturnsOption(state));
+            } else if (state.canConsumeFirst(this.firstOptions)) {
+                element.options.push(this.ruleOptions(state));
+            } else if (state.tryConsume(element, CstNodeKind.ProcedureStatement_Recursive, tokens.RECURSIVE)) {
+                element.options.push({
+                    kind: ast.SyntaxKind.ProcedureRecursiveOption,
+                    container: null,
+                })
+            } else if (state.canConsume(tokens.ProcedureOrder)) {
+                const token = state.consume(element, CstNodeKind.ProcedureStatement_Order, tokens.ProcedureOrder);
+                if (token) {
+                    const order = ast.createProcedureOrderOption();
+                    order.order = tokens.ProcedureOrder.mapToEnumLiteral(
+                        token.tokenTypeIdx,
+                    );
+                    element.options.push(order);
+                }
+            } else if (state.tryConsume(element, CstNodeKind.ProcedureStatement_EXTERNAL, tokens.EXTERNAL)) {
+                state.consume(element, CstNodeKind.ProcedureStatement_OpenParenEnv, tokens.OpenParen);
+                const option: ast.EnvironmentOption = {
+                    kind: ast.SyntaxKind.EnvironmentOption,
+                    container: null,
+                    environment: null,
+                }
+                option.environment = this.ruleExpression(state);
+                element.options.push(option);
+                state.consume(element, CstNodeKind.ProcedureStatement_CloseParenEnv, tokens.CloseParen);
+            } else if (state.canConsume(tokens.ScopeAttribute)) {
+                const scopeToken = state.consume(element, CstNodeKind.ScopeAttribute_Scope, tokens.ScopeAttribute);
+                if (scopeToken) {
+                    const scope = ast.createProcedureScopeOption();
+                    scope.scope = tokens.ScopeAttribute.mapToEnumLiteral(
+                        scopeToken.tokenTypeIdx,
+                    );
+                    element.options.push(scope);
+                }
+            } else {
+                //TODO better error message
+                throw new Error("Unexpected token in procedure statement options");
+            }
+        }
+        state.consume(element, CstNodeKind.ProcedureStatement_Semicolon0, tokens.Semicolon);
+
+        while (!state.eof && state.canConsumeFirst(this.firstStatement)) {
+            const statement = this.ruleStatement(state);
+            element.statements.push(statement);
+        }
+        state.tryConsume(element, CstNodeKind.ProcedureStatement_PROCEDURE_END, tokens.PROCEDURE);
+        element.end = this.ruleEndStatement(state);
+        state.consume(element, CstNodeKind.ProcedureStatement_Semicolon1, tokens.Semicolon);
+        return element;
+    }
 
 
+    //TODO
+    ruleProcedureParameter(state: ParserState): ast.ProcedureParameter {
+        return undefined!;
+    }
 
-//TODO
+    ruleExpression(state: ParserState): ast.Expression {
+        return undefined!;
+    }
 
-
-
-
-
+    ruleReturnsOption(state: ParserState): ast.ReturnsOption {
+        //TODO
+        return undefined!;
+    }
 
     ruleCondition(state: ParserState): ast.Condition {
         //TODO
