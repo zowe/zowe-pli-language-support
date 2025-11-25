@@ -31,6 +31,12 @@ export class FileStore {
     return this.get(uri)?.tokens;
   }
 
+  *getAllTokens(): IterableIterator<Token> {
+    for (const file of this.map.values()) {
+      yield* file.tokens;
+    }
+  }
+
   getDocument(uri: URI | string): TextDocument | undefined {
     // Builtin documents are not stored on the compilation unit
     // To respond to LSP requests, we need to return them anyway

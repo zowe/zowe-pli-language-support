@@ -10,7 +10,7 @@
  */
 
 import { Severity } from "../language-server/types";
-import { SimplePLICode } from "./pli-codes";
+import { ParametricPLICode, SimplePLICode } from "./pli-codes";
 
 export const LspCodes = {
   IncludeResolution: {
@@ -21,4 +21,10 @@ export const LspCodes = {
         "Could not resolve include directive. Plugin configuration is missing",
     } as SimplePLICode,
   },
+
+  UpperCase: {
+    code: "LSPUC001",
+    severity: Severity.W,
+    message: (token: any) => `Input text "${token}" must be uppercase.`,
+  } as ParametricPLICode,
 };

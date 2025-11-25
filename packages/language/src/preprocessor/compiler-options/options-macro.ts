@@ -12,8 +12,8 @@
 export interface CompilerOptions {
   case?: CompilerOptions.Case;
   dbcs?: CompilerOptions.Dbcs;
-  deprecate?: string[];
-  deprecateNext?: string[];
+  deprecate?: Set<string>;
+  deprecateNext?: Set<string>;
   eolComm?: boolean;
   fixed?: CompilerOptions.Fixed;
   id?: string;
@@ -41,8 +41,8 @@ export namespace CompilerOptions {
 const defaultCompilerOptions: CompilerOptions = {
   case: "ASIS",
   dbcs: "INEXACT",
-  deprecate: [],
-  deprecateNext: [],
+  deprecate: new Set(),
+  deprecateNext: new Set(),
   eolComm: true,
   fixed: "DECIMAL",
   id: "",
