@@ -17,7 +17,7 @@ import {
   isNameToken,
   isReferenceToken,
 } from "../linking/tokens";
-import { Token } from "../parser/tokens";
+import * as t from "../parser/tokens";
 import { getAttributes } from "../preprocessor/util";
 import {
   Bound,
@@ -43,7 +43,7 @@ type MarkupResponse = string | null;
 
 interface MarkupGeneratorContext {
   unit: CompilationUnit;
-  token: Token;
+  token: t.Token;
 }
 
 interface MarkupGenerator {
@@ -131,8 +131,8 @@ function extractProcedureOptions(
       // simple options
       const internalOptions: string[] = [];
       for (const item of option.items) {
-        if (item.kind === SyntaxKind.SimpleOptionsItem && item.value) {
-          internalOptions.push(item.value);
+        if (item.kind === SyntaxKind.SimpleOptionsItem && item.value !== null) {
+          internalOptions.push(t.SimpleOptions.mapFromEnumLiteral(item.value));
         }
       }
       if (internalOptions.length > 0) {
@@ -140,9 +140,9 @@ function extractProcedureOptions(
       }
     } else if (
       option.kind === SyntaxKind.ProcedureOrderOption &&
-      option.order
+      option.order !== null
     ) {
-      optionStrings.push(option.order);
+      optionStrings.push(t.ProcedureOrder.mapFromEnumLiteral(option.order));
     } else if (option.kind === SyntaxKind.ProcedureRecursiveOption) {
       optionStrings.push("RECURSIVE");
     } else if (option.kind === SyntaxKind.ReturnsOption) {
@@ -150,13 +150,19 @@ function extractProcedureOptions(
       const attrArr: string[] = [];
       const attrs = option.returnAttributes;
       for (const attr of attrs) {
-        if (attr.kind === SyntaxKind.ComputationDataAttribute && attr.type) {
+        if (
+          attr.kind === SyntaxKind.ComputationDataAttribute &&
+          attr.type !== null
+        ) {
           if (attr.dimensions) {
             // type w/ dimens, need to be decoded
-            attrArr.push(attr.type + decodeDimensions(attr.dimensions));
+            attrArr.push(
+              t.DefaultAttribute.mapFromEnumLiteral(attr.type) +
+                decodeDimensions(attr.dimensions),
+            );
           } else {
             // just the type
-            attrArr.push(attr.type);
+            attrArr.push(t.DefaultAttribute.mapFromEnumLiteral(attr.type));
           }
         }
       }

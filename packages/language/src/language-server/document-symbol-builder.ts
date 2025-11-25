@@ -15,6 +15,7 @@ import {
   DeclareStatement,
   Statement,
   SyntaxKind,
+  DefaultAttribute,
 } from "../syntax-tree/ast";
 import { Range, getSyntaxNodeRange, DocumentSymbol } from "./types";
 import { CstNodeKind } from "../syntax-tree/cst";
@@ -128,7 +129,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
       item.attributes.some(
         (a) =>
           a.kind === SyntaxKind.ComputationDataAttribute &&
-          a.type?.toString().toLowerCase() === "constant",
+          a.type === DefaultAttribute.CONSTANT,
       )
     ) {
       kind = SymbolKind.Constant;

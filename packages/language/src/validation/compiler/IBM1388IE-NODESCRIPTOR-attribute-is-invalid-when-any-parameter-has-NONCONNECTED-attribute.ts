@@ -11,11 +11,13 @@
 
 import {
   DeclareStatement,
+  DefaultAttribute,
   ProcedureStatement,
+  SimpleOptions,
   SimpleOptionsItem,
   SyntaxKind,
 } from "../../syntax-tree/ast";
-import { compareIdentifiers, normalizeIdentifier } from "../utils";
+import { normalizeIdentifier } from "../utils";
 import { ValidationAcceptor } from "../validator";
 
 export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute(
@@ -28,8 +30,7 @@ export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_h
   const item = items.find(
     (i) =>
       i.kind === SyntaxKind.SimpleOptionsItem &&
-      i.value &&
-      i.value.toUpperCase() === "NODESCRIPTOR",
+      i.value === SimpleOptions.NODESCRIPTOR,
   ) as SimpleOptionsItem | undefined;
   if (item) {
     const parameterNames = new Set(
@@ -60,7 +61,7 @@ export function IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_h
         i.attributes.some(
           (a) =>
             a.kind === SyntaxKind.ComputationDataAttribute &&
-            compareIdentifiers(a.type!, "NONCONNECTED"),
+            a.type === DefaultAttribute.NONCONNECTED,
         ),
       );
     if (nonConnectedParameters.length > 0) {

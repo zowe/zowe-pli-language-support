@@ -36,7 +36,7 @@ verify.expectPPAst({
           attributes: [
             {
               kind: Syntax.ComputationDataAttribute,
-              type: "FIXED",
+              type: constants.DefaultAttribute.FIXED,
             },
           ],
         },
