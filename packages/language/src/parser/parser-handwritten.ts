@@ -316,16 +316,8 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                     );
                     element.options.push(order);
                 }
-            } else if (state.tryConsume(element, CstNodeKind.ProcedureStatement_EXTERNAL, tokens.EXTERNAL)) {
-                state.consume(element, CstNodeKind.ProcedureStatement_OpenParenEnv, tokens.OpenParen);
-                const option: ast.EnvironmentOption = {
-                    kind: ast.SyntaxKind.EnvironmentOption,
-                    container: null,
-                    environment: null,
-                }
-                option.environment = this.ruleExpression(state);
-                element.options.push(option);
-                state.consume(element, CstNodeKind.ProcedureStatement_CloseParenEnv, tokens.CloseParen);
+            } else if (state.canConsumeFirst(this.firstEnvironmentOption)) {
+                element.options.push(this.ruleEnvironmentOption(state));
             } else if (state.canConsume(tokens.ScopeAttribute)) {
                 const scopeToken = state.consume(element, CstNodeKind.ScopeAttribute_Scope, tokens.ScopeAttribute);
                 if (scopeToken) {
@@ -352,8 +344,117 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         return element;
     }
 
+    firstLabelPrefix = [tokens.ID];
+    ruleLabelPrefix(state: ParserState): ast.LabelPrefix {
+        const element: ast.LabelPrefix = {
+            kind: ast.SyntaxKind.LabelPrefix,
+            container: null,
+            nameToken: null,
+            name: null,
+        };
+        const idToken = state.consume(element, CstNodeKind.LabelPrefix_Name, tokens.ID);
+        if (idToken) {
+            element.name = idToken.image;
+            element.nameToken = idToken;
+        }
+        state.consume(element, CstNodeKind.LabelPrefix_Colon, tokens.Colon);
+        return element;
+    }
+
+    firstEntryStatement = [tokens.ENTRY];
+    ruleEntryStatement(state: ParserState): ast.EntryStatement {
+        const element: ast.EntryStatement = {
+            kind: ast.SyntaxKind.EntryStatement,
+            container: null,
+            parameters: [],
+            variable: [],
+            limited: [],
+            returns: [],
+            options: [],
+            environmentName: [],
+        };
+
+        state.consume(element, CstNodeKind.EntryStatement_ENTRY, tokens.ENTRY);
+
+        if (state.tryConsume(element, CstNodeKind.EntryStatement_OpenParenParams, tokens.OpenParen)) {
+            if (state.canConsumeFirst(this.firstProcedureParameter)) {
+                element.parameters.push(this.ruleProcedureParameter(state));
+                while (state.tryConsume(element, CstNodeKind.EntryStatement_Comma, tokens.Comma)) {
+                    element.parameters.push(this.ruleProcedureParameter(state));
+                }
+            }
+            state.consume(element, CstNodeKind.EntryStatement_CloseParenParams, tokens.CloseParen);
+        }
+
+        // Parse optional attributes (can appear multiple times)
+        while (!state.eof && !state.canConsume(tokens.Semicolon)) {
+            if (state.canConsumeFirst(this.firstEnvironmentOption)) {
+                element.environmentName.push(this.ruleEnvironmentOption(state));
+            } else if (state.tryConsume(element, CstNodeKind.EntryStatement_Variable, tokens.VARIABLE)) {
+                element.variable.push("VARIABLE");
+            } else if (state.tryConsume(element, CstNodeKind.EntryStatement_Limited, tokens.LIMITED)) {
+                element.limited.push("LIMITED");
+            } else if (state.canConsume(tokens.RETURNS)) {
+                element.returns.push(this.ruleReturnsOption(state));
+            } else if (state.canConsumeFirst(this.firstOptions)) {
+                element.options.push(this.ruleOptions(state));
+            } else {
+                // TODO: better error message
+                throw new Error("Unexpected token in entry statement");
+            }
+        }
+
+        state.consume(element, CstNodeKind.EntryStatement_Semicolon, tokens.Semicolon);
+
+        return element;
+    }
+
+    firstEnvironmentOption = [tokens.EXTERNAL];
+    ruleEnvironmentOption(state: ParserState): ast.EnvironmentOption {
+        const element = ast.createEnvironmentOption();
+        state.consume(element, CstNodeKind.EntryStatement_EXTERNAL, tokens.EXTERNAL);
+        if (state.tryConsume(element, CstNodeKind.EntryStatement_OpenParenEnv, tokens.OpenParen)) {
+            element.environment = this.ruleExpression(state);
+            state.consume(element, CstNodeKind.EntryStatement_CloseParenEnv, tokens.CloseParen);
+        }
+        return element;
+    }
+
+    firstStatement = [tokens.ID, tokens.OpenParen];
+    ruleStatement(state: ParserState): ast.Statement {
+        const element: ast.Statement = {
+            kind: ast.SyntaxKind.Statement,
+            container: null,
+            condition: null,
+            labels: [],
+            value: null,
+        };
+
+        if (state.canConsumeFirst(this.firstConditionPrefix)) {
+            element.condition = this.ruleConditionPrefix(state);
+        }
+
+        while (state.canConsumeFirst(this.firstLabelPrefix)) {
+            element.labels.push(this.ruleLabelPrefix(state));
+        }
+
+        element.value = this.ruleUnit(state);
+
+        return element;
+    }
+
+
+
+
+
+
+
+
+
+
 
     //TODO
+    firstProcedureParameter = [tokens.ID]; //TODO check
     ruleProcedureParameter(state: ParserState): ast.ProcedureParameter {
         return undefined!;
     }
@@ -376,50 +477,11 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
 
 
-    firstStatement = [tokens.ID, tokens.OpenParen];
-    ruleStatement(state: ParserState): ast.Statement {
-        const element: ast.Statement = {
-            kind: ast.SyntaxKind.Statement,
-            container: null,
-            condition: null,
-            labels: [],
-            value: null,
-        };
-
-        if (state.canConsume(tokens.OpenParen)) {
-            element.condition = this.ruleConditionPrefix(state);
-        }
-
-        while (state.canConsume(tokens.ID)) {
-            element.labels.push(this.ruleLabelPrefix(state));
-        }
-
-        element.value = this.ruleUnit(state);
-
-        return element;
-    }
 
     ruleUnit(state: ParserState): ast.Unit {
         // TODO: Implement the actual parsing logic for Unit (OR_RULE)
         // This should dispatch to the correct statement type based on the next token
         return undefined!;
-    }
-
-    ruleLabelPrefix(state: ParserState): ast.LabelPrefix {
-        const element: ast.LabelPrefix = {
-            kind: ast.SyntaxKind.LabelPrefix,
-            container: null,
-            nameToken: null,
-            name: null,
-        };
-
-        const idToken = state.consume(element, CstNodeKind.LabelPrefix_Name, tokens.ID)!;
-        element.name = idToken.image;
-        element.nameToken = idToken;
-
-        state.consume(element, CstNodeKind.LabelPrefix_Colon, tokens.Colon);
-
-        return element;
     }
 
     ruleEndStatement(state: ParserState): ast.EndStatement {
