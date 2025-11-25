@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86.45% </span>
+                <span class="strong">86.82% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>217/251</span>
+                <span class='fraction'>224/258</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86.45% </span>
+                <span class="strong">86.82% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>217/251</span>
+                <span class='fraction'>224/258</span>
             </div>
         
             
@@ -456,7 +456,13 @@
 <a name='L391'></a><a href='#L391'>391</a>
 <a name='L392'></a><a href='#L392'>392</a>
 <a name='L393'></a><a href='#L393'>393</a>
-<a name='L394'></a><a href='#L394'>394</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L394'></a><a href='#L394'>394</a>
+<a name='L395'></a><a href='#L395'>395</a>
+<a name='L396'></a><a href='#L396'>396</a>
+<a name='L397'></a><a href='#L397'>397</a>
+<a name='L398'></a><a href='#L398'>398</a>
+<a name='L399'></a><a href='#L399'>399</a>
+<a name='L400'></a><a href='#L400'>400</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -475,7 +481,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -610,7 +616,13 @@
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -868,7 +880,7 @@ import {
   isNameToken,
   isReferenceToken,
 } from "../linking/tokens";
-import { Token } from "../parser/tokens";
+import * as t from "../parser/tokens";
 import { getAttributes } from "../preprocessor/util";
 import {
   Bound,
@@ -894,7 +906,7 @@ type MarkupResponse = string | null;
 &nbsp;
 interface MarkupGeneratorContext {
   unit: CompilationUnit;
-  token: Token;
+  token: t.Token;
 }
 &nbsp;
 interface MarkupGenerator {
@@ -982,8 +994,8 @@ function extractProcedureOptions(
       // simple options
       const internalOptions: string[] = [];
       for (const item of option.items) {
-        if (item.kind === SyntaxKind.SimpleOptionsItem &amp;&amp; item.value) {
-          internalOptions.push(item.value);
+        if (item.kind === SyntaxKind.SimpleOptionsItem &amp;&amp; item.value !== null) {
+          internalOptions.push(t.SimpleOptions.mapFromEnumLiteral(item.value));
         }
       }
       if (internalOptions.length &gt; 0) {
@@ -991,9 +1003,9 @@ function extractProcedureOptions(
       }
     } else if (
       option.kind === SyntaxKind.ProcedureOrderOption &amp;&amp;
-      option.order
+      option.order !== null
     ) {
-      optionStrings.push(option.order);
+      optionStrings.push(t.ProcedureOrder.mapFromEnumLiteral(option.order));
     } else if (option.kind === SyntaxKind.ProcedureRecursiveOption) {
       optionStrings.push("RECURSIVE");
     } else if (option.kind === SyntaxKind.ReturnsOption) {
@@ -1001,13 +1013,19 @@ function extractProcedureOptions(
       const attrArr: string[] = [];
       const attrs = option.returnAttributes;
       for (const attr of attrs) {
-        if (attr.kind === SyntaxKind.ComputationDataAttribute &amp;&amp; attr.type) {
+        if (
+          attr.kind === SyntaxKind.ComputationDataAttribute &amp;&amp;
+          attr.type !== null
+        ) {
           if (attr.dimensions) {
             // type w/ dimens, need to be decoded
-            attrArr.push(attr.type + decodeDimensions(attr.dimensions));
+            attrArr.push(
+              t.DefaultAttribute.mapFromEnumLiteral(attr.type) +
+                decodeDimensions(attr.dimensions),
+            );
           } else {
             // just the type
-            attrArr.push(attr.type);
+            attrArr.push(t.DefaultAttribute.mapFromEnumLiteral(attr.type));
           }
         }
       }
@@ -1249,7 +1267,7 @@ export function hoverRequest(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T14:57:08.254Z
+                at 2025-11-25T10:38:55.442Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -5511,7 +5511,7 @@ interface Variable {
   name: string;
   value: Value;
   declarationNode?: ast.SyntaxNode | null;
-  mode: inst.ScanMode;
+  mode: ast.ScanMode;
   active: boolean;
 }
 &nbsp;
@@ -5653,7 +5653,7 @@ function generateVariable(
     declarationNode: instruction.node,
     mode: instruction.mode,
     // NOSCAN means the variable is not active
-    active: instruction.mode !== inst.ScanMode.NoScan,
+    active: instruction.mode !== ast.ScanMode.NOSCAN,
   };
 }
 &nbsp;
@@ -6137,7 +6137,7 @@ function runAnswerInstruction(
       const lastToken = tokens[tokens.length - 1];
       lastToken.immediateFollow = lastToken.endOffset + 1 === text.length;
     }
-    if (instruction.scanMode !== inst.ScanMode.NoScan) {
+    if (instruction.scanMode !== ast.ScanMode.NOSCAN) {
       tokens = replaceTokensInText(tokens, context);
     }
     if (breakCount &gt; 0) {
@@ -6391,7 +6391,7 @@ function runDoType3Initialization(
         type: inst.DeclaredType.Fixed,
       },
       active: false,
-      mode: inst.ScanMode.Scan,
+      mode: ast.ScanMode.SCAN,
     };
     setVariable(context, loopVar);
   } else {
@@ -6540,7 +6540,7 @@ function runAssignmentInstruction(
         declarationNode: ref.reference?.owner,
         value,
         active: false, // Implicitly declared variables are inactive by default
-        mode: inst.ScanMode.Scan,
+        mode: ast.ScanMode.SCAN,
       };
       setVariable(context, variable);
     } else {
@@ -6674,40 +6674,40 @@ function evaluateBinaryExpression(
 <span class="cstat-no" title="statement not covered" >    return defaultEmptyValue;</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
   switch (expression.operator) {
-    case "+":
+    case ast.BinaryOperator.Plus:
       return plus(left, right);
-    case "-":
+    case ast.BinaryOperator.Minus:
       return minus(left, right);
-    case "*":
+    case ast.BinaryOperator.Star:
       return multiply(left, right);
-<span class="branch-0 cbranch-no" title="branch not covered" >    case "/":</span>
+<span class="branch-0 cbranch-no" title="branch not covered" >    case ast.BinaryOperator.Slash:</span>
 <span class="cstat-no" title="statement not covered" >      return divide(left, right);</span>
-<span class="branch-0 cbranch-no" title="branch not covered" >    case "**":</span>
+<span class="branch-0 cbranch-no" title="branch not covered" >    case ast.BinaryOperator.StarStar:</span>
 <span class="cstat-no" title="statement not covered" >      return exponentiate(left, right);</span>
-    case "||":
+    case ast.BinaryOperator.PipePipe:
       return concat(left, right);
-    case "&lt;":
+    case ast.BinaryOperator.LessThan:
       return lessThan(left, right);
-    case "&lt;=":
+    case ast.BinaryOperator.LessThanEquals:
       return lessThanEquals(left, right);
-    case "&gt;":
+    case ast.BinaryOperator.GreaterThan:
       return greaterThan(left, right);
-    case "&gt;=":
+    case ast.BinaryOperator.GreaterThanEquals:
       return greaterThanEquals(left, right);
-    case "=":
+    case ast.BinaryOperator.Equals:
       return equals(left, right);
-<span class="branch-0 cbranch-no" title="branch not covered" >    case "^=":</span>
-    case "&lt;&gt;":
+<span class="branch-0 cbranch-no" title="branch not covered" >    case ast.BinaryOperator.NotEquals:</span>
+    case ast.BinaryOperator.LessThanGreaterThan:
       return notEquals(left, right);
-<span class="branch-0 cbranch-no" title="branch not covered" >    case "&amp;":</span>
+<span class="branch-0 cbranch-no" title="branch not covered" >    case ast.BinaryOperator.Ampersand:</span>
 <span class="cstat-no" title="statement not covered" >      return and(left, right);</span>
-<span class="branch-0 cbranch-no" title="branch not covered" >    case "|":</span>
+<span class="branch-0 cbranch-no" title="branch not covered" >    case ast.BinaryOperator.Pipe:</span>
 <span class="cstat-no" title="statement not covered" >      return or(left, right);</span>
-<span class="branch-0 cbranch-no" title="branch not covered" >    case "^":</span>
+<span class="branch-0 cbranch-no" title="branch not covered" >    case ast.BinaryOperator.Not:</span>
 <span class="cstat-no" title="statement not covered" >      return xor(left, right);</span>
-<span class="branch-0 cbranch-no" title="branch not covered" >    case "^&lt;":</span>
+<span class="branch-0 cbranch-no" title="branch not covered" >    case ast.BinaryOperator.NotLessThan:</span>
 <span class="cstat-no" title="statement not covered" >      return notLessThan(left, right);</span>
-<span class="branch-0 cbranch-no" title="branch not covered" >    case "^&gt;":</span>
+<span class="branch-0 cbranch-no" title="branch not covered" >    case ast.BinaryOperator.NotGreaterThan:</span>
 <span class="cstat-no" title="statement not covered" >      return notGreaterThan(left, right);</span>
 <span class="branch-0 cbranch-no" title="branch not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >  return zero;</span>
@@ -6724,11 +6724,11 @@ function evaluateBinaryExpression(
 <span class="cstat-no" title="statement not covered" >    return defaultEmptyValue;</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >  switch (expression.operator) {</span>
-<span class="cstat-no" title="statement not covered" >    case "+":</span>
+<span class="cstat-no" title="statement not covered" >    case ast.UnaryOperator.Plus:</span>
 <span class="cstat-no" title="statement not covered" >      return operand;</span>
-<span class="cstat-no" title="statement not covered" >    case "-":</span>
+<span class="cstat-no" title="statement not covered" >    case ast.UnaryOperator.Minus:</span>
 <span class="cstat-no" title="statement not covered" >      return numberToValue(-valueToNumber(operand, 0));</span>
-<span class="cstat-no" title="statement not covered" >    case "^":</span>
+<span class="cstat-no" title="statement not covered" >    case ast.UnaryOperator.Not:</span>
 <span class="cstat-no" title="statement not covered" >      return boolToValue(!valueToBool(operand));</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >  return zero;</span>
@@ -6890,7 +6890,7 @@ function runProcedure(
       name: param,
       value: arg,
       active: false,
-      mode: inst.ScanMode.NoScan,
+      mode: ast.ScanMode.NOSCAN,
       declarationNode: null,
     };
     context.symbols.variables.set(variable.name, variable);
@@ -8179,7 +8179,7 @@ builtinImplementations.set("VERIFY", (_, args) =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T14:57:08.254Z
+                at 2025-11-25T10:38:55.442Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

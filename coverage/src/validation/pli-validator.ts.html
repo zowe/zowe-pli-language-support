@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">37.89% </span>
+                <span class="strong">34.25% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>36/95</span>
+                <span class='fraction'>37/108</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">37.89% </span>
+                <span class="strong">34.25% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>36/95</span>
+                <span class='fraction'>37/108</span>
             </div>
         
             
@@ -307,7 +307,20 @@
 <a name='L242'></a><a href='#L242'>242</a>
 <a name='L243'></a><a href='#L243'>243</a>
 <a name='L244'></a><a href='#L244'>244</a>
-<a name='L245'></a><a href='#L245'>245</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -318,6 +331,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -391,6 +405,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -519,6 +536,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -531,6 +550,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -546,6 +568,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -563,6 +589,7 @@
  */
 &nbsp;
 import * as AST from "../syntax-tree/ast";
+import * as tokens from "../parser/tokens";
 import { IBM1059I_select_without_otherwise } from "./compiler/IBM1059I-select-without-otherwise";
 import { IBM1219I_leave_exits_noniterative_do } from "./compiler/IBM1219I-leave-exits-noniterative-do";
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./compiler/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
@@ -632,8 +659,11 @@ export class PliValidator {
 <span class="cstat-no" title="statement not covered" >  ): void {</span>
 <span class="cstat-no" title="statement not covered" >    const attrSet = new Set&lt;string&gt;();</span>
 <span class="cstat-no" title="statement not covered" >    for (const attr of node.returnAttributes) {</span>
-<span class="cstat-no" title="statement not covered" >      if (attr.kind === AST.SyntaxKind.ComputationDataAttribute) {</span>
-<span class="cstat-no" title="statement not covered" >        const typ = attr.type!.toUpperCase();</span>
+<span class="cstat-no" title="statement not covered" >      if (</span>
+<span class="cstat-no" title="statement not covered" >        attr.kind === AST.SyntaxKind.ComputationDataAttribute &amp;&amp;</span>
+<span class="cstat-no" title="statement not covered" >        attr.type !== null</span>
+<span class="cstat-no" title="statement not covered" >      ) {</span>
+<span class="cstat-no" title="statement not covered" >        const typ = tokens.DefaultAttribute.mapFromEnumLiteral(attr.type);</span>
 <span class="cstat-no" title="statement not covered" >        attrSet.add(typ); // dupes are ok</span>
 &nbsp;
         // look for a generally negated version of this attribute (there are several)
@@ -756,12 +786,14 @@ export class PliValidator {
 <span class="cstat-no" title="statement not covered" >  ): void {</span>
     // get attributes
 <span class="cstat-no" title="statement not covered" >    const attrs = node.attributes;</span>
-<span class="cstat-no" title="statement not covered" >    const attrSet = new Set&lt;string&gt;();</span>
+<span class="cstat-no" title="statement not covered" >    const attrSet = new Set&lt;AST.DefineOrdinalAttribute&gt;();</span>
 <span class="cstat-no" title="statement not covered" >    for (const attr of attrs) {</span>
-<span class="cstat-no" title="statement not covered" >      const lattr = attr.toLowerCase();</span>
+<span class="cstat-no" title="statement not covered" >      const lattr = attr;</span>
 <span class="cstat-no" title="statement not covered" >      if (</span>
-<span class="cstat-no" title="statement not covered" >        (lattr === "signed" &amp;&amp; attrSet.has("unsigned")) ||</span>
-<span class="cstat-no" title="statement not covered" >        (lattr === "unsigned" &amp;&amp; attrSet.has("signed"))</span>
+<span class="cstat-no" title="statement not covered" >        (lattr === AST.DefineOrdinalAttribute.SIGNED &amp;&amp;</span>
+<span class="cstat-no" title="statement not covered" >          attrSet.has(AST.DefineOrdinalAttribute.UNSIGNED)) ||</span>
+<span class="cstat-no" title="statement not covered" >        (lattr === AST.DefineOrdinalAttribute.UNSIGNED &amp;&amp;</span>
+<span class="cstat-no" title="statement not covered" >          attrSet.has(AST.DefineOrdinalAttribute.SIGNED))</span>
 <span class="cstat-no" title="statement not covered" >      ) {</span>
         // TODO: Reimplement this validation and add tests
         // mutually exclusive attributes
@@ -775,7 +807,10 @@ export class PliValidator {
         //     // property: "attributes"
         //   },
         // );
-<span class="cstat-no" title="statement not covered" >      } else if (lattr.match(/prec/) &amp;&amp; attrSet.has("prec")) {</span>
+<span class="cstat-no" title="statement not covered" >      } else if (</span>
+<span class="cstat-no" title="statement not covered" >        lattr === AST.DefineOrdinalAttribute.PRECISION &amp;&amp;</span>
+<span class="cstat-no" title="statement not covered" >        attrSet.has(AST.DefineOrdinalAttribute.PRECISION)</span>
+<span class="cstat-no" title="statement not covered" >      ) {</span>
         // TODO: Reimplement this validation and add tests
         // don't allow multiple precision attributes
         // acceptor(
@@ -790,7 +825,11 @@ export class PliValidator {
         // );
 <span class="cstat-no" title="statement not covered" >      } else {</span>
         // add it in, normalizing precision &amp; prec to 'prec' along the way
-<span class="cstat-no" title="statement not covered" >        attrSet.add(lattr.match(/prec/) ? "prec" : lattr);</span>
+<span class="cstat-no" title="statement not covered" >        attrSet.add(</span>
+<span class="cstat-no" title="statement not covered" >          lattr === AST.DefineOrdinalAttribute.PRECISION</span>
+<span class="cstat-no" title="statement not covered" >            ? AST.DefineOrdinalAttribute.PRECISION</span>
+<span class="cstat-no" title="statement not covered" >            : lattr,</span>
+<span class="cstat-no" title="statement not covered" >        );</span>
 <span class="cstat-no" title="statement not covered" >      }</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
@@ -802,7 +841,7 @@ export class PliValidator {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T14:57:08.254Z
+                at 2025-11-25T10:38:55.442Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

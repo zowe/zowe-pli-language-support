@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">98.08% </span>
+                <span class="strong">98.09% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>256/261</span>
+                <span class='fraction'>258/263</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">98.08% </span>
+                <span class="strong">98.09% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>256/261</span>
+                <span class='fraction'>258/263</span>
             </div>
         
             
@@ -454,7 +454,15 @@
 <a name='L389'></a><a href='#L389'>389</a>
 <a name='L390'></a><a href='#L390'>390</a>
 <a name='L391'></a><a href='#L391'>391</a>
-<a name='L392'></a><a href='#L392'>392</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L392'></a><a href='#L392'>392</a>
+<a name='L393'></a><a href='#L393'>393</a>
+<a name='L394'></a><a href='#L394'>394</a>
+<a name='L395'></a><a href='#L395'>395</a>
+<a name='L396'></a><a href='#L396'>396</a>
+<a name='L397'></a><a href='#L397'>397</a>
+<a name='L398'></a><a href='#L398'>398</a>
+<a name='L399'></a><a href='#L399'>399</a>
+<a name='L400'></a><a href='#L400'>400</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -481,7 +489,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -797,7 +810,6 @@
 <span class="cline-any cline-yes">3662x</span>
 <span class="cline-any cline-yes">1461x</span>
 <span class="cline-any cline-yes">1461x</span>
-<span class="cline-any cline-yes">1461x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -825,14 +837,18 @@
 <span class="cline-any cline-yes">554x</span>
 <span class="cline-any cline-yes">554x</span>
 <span class="cline-any cline-yes">554x</span>
+<span class="cline-any cline-yes">554x</span>
+<span class="cline-any cline-yes">554x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">554x</span>
 <span class="cline-any cline-yes">554x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">554x</span>
+<span class="cline-any cline-yes">554x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">554x</span>
 <span class="cline-any cline-yes">554x</span>
 <span class="cline-any cline-yes">554x</span>
 <span class="cline-any cline-yes">554x</span>
@@ -866,13 +882,13 @@ import {
 } from "chevrotain";
 import { LLStarLookaheadStrategy } from "chevrotain-allstar";
 import {
+  BinaryOperator,
   Expression,
   SyntaxKind,
   type BinaryExpression,
   type SyntaxNode,
 } from "../syntax-tree/ast";
 import type { CstNodeKind } from "../syntax-tree/cst";
-import * as tokens from "./tokens";
 import { Token } from "./tokens";
 &nbsp;
 /**
@@ -901,7 +917,12 @@ export interface IntermediateBinaryExpression {
   /**
    * The operators in the binary expression.
    */
-  operators: Token[];
+  operators: BinaryOperator[];
+&nbsp;
+  /**
+   * The tokens corresponding to the operators in the binary expression.
+   */
+  operatorTokens: Token[];
 &nbsp;
   /**
    * Indicates that this is an infix expression.
@@ -1129,13 +1150,13 @@ export class AbstractParser extends EmbeddedActionsParser {
  * Builds a precedence map from precedence groups
  */
 function buildPrecendenceMap(
-  precedenceGroups: TokenType[][],
-): Map&lt;string, number&gt; {
-  const map = new Map&lt;string, number&gt;();
+  precedenceGroups: BinaryOperator[][],
+): Map&lt;BinaryOperator, number&gt; {
+  const map = new Map&lt;BinaryOperator, number&gt;();
   for (let i = 0; i &lt; precedenceGroups.length; i++) {
     const group = precedenceGroups[i];
-    for (const token of group) {
-      map.set(token.name, i);
+    for (const op of group) {
+      map.set(op, i);
     }
   }
   return map;
@@ -1143,29 +1164,29 @@ function buildPrecendenceMap(
 &nbsp;
 const binaryPrecedence = buildPrecendenceMap([
   // Priority 1, **
-  [tokens.StarStar],
+  [BinaryOperator.StarStar],
   // Priority 2, *, /
-  [tokens.Star, tokens.Slash],
+  [BinaryOperator.Star, BinaryOperator.Slash],
   // Priority 3, +, -
-  [tokens.Plus, tokens.Minus],
+  [BinaryOperator.Plus, BinaryOperator.Minus],
   // Priority 4, ||, !!
-  [tokens.PipePipe],
+  [BinaryOperator.PipePipe],
   // Priority 5, '&lt;', '¬&lt;', '&lt;=', '=', '¬=', '^=', '&lt;&gt;', '&gt;=', '&gt;', '¬&gt;'
   [
-    tokens.LessThan,
-    tokens.NotLessThan,
-    tokens.LessThanEquals,
-    tokens.Equals,
-    tokens.NotEquals,
-    tokens.LessThanGreaterThan,
-    tokens.GreaterThanEquals,
-    tokens.GreaterThan,
-    tokens.NotGreaterThan,
+    BinaryOperator.LessThan,
+    BinaryOperator.NotLessThan,
+    BinaryOperator.LessThanEquals,
+    BinaryOperator.Equals,
+    BinaryOperator.NotEquals,
+    BinaryOperator.LessThanGreaterThan,
+    BinaryOperator.GreaterThanEquals,
+    BinaryOperator.GreaterThan,
+    BinaryOperator.NotGreaterThan,
   ],
   // Priority 6, &amp;
-  [tokens.Ampersand],
+  [BinaryOperator.Ampersand],
   // Priority 7, |, ¬ or ^
-  [tokens.Pipe, tokens.Not],
+  [BinaryOperator.Pipe, BinaryOperator.Not],
 ]);
 &nbsp;
 /**
@@ -1187,8 +1208,7 @@ export function constructBinaryExpression(
 &nbsp;
   for (let i = 0; i &lt; obj.operators.length; i++) {
     const operator = obj.operators[i];
-    const precedenceValue =
-      binaryPrecedence.get(operator.tokenType.name<span class="branch-0 cbranch-no" title="branch not covered" >) ?? Infinity;</span>
+    const precedenceValue = binaryPrecedence.get(operator<span class="branch-0 cbranch-no" title="branch not covered" >) ?? Infinity;</span>
 &nbsp;
     // If we find an operator with lower precedence or equal precedence
     // (for left-to-right evaluation), update our tracking
@@ -1210,29 +1230,33 @@ export function constructBinaryExpression(
     infix: true,
     items: leftParts,
     operators: leftOperators,
+    operatorTokens: obj.operatorTokens.slice(0, lowestPrecedenceIdx),
   };
   const rightInfix: IntermediateBinaryExpression = {
     infix: true,
     items: rightParts,
     operators: rightOperators,
+    operatorTokens: obj.operatorTokens.slice(lowestPrecedenceIdx + 1),
   };
 &nbsp;
   // Recursively build the left and right subtrees
   const leftTree = constructBinaryExpression(leftInfix);
   const rightTree = constructBinaryExpression(rightInfix);
 &nbsp;
-  const operatorToken = obj.operators[lowestPrecedenceIdx];
+  const op = obj.operators[lowestPrecedenceIdx];
+  const opToken = obj.operatorTokens[lowestPrecedenceIdx];
 &nbsp;
   // Create the final binary expression
   const result: BinaryExpression = {
     kind: SyntaxKind.BinaryExpression,
     container: null,
     left: leftTree,
-    op: operatorToken.tokenType.name as BinaryExpression["op"],
+    op,
+    opToken,
     right: rightTree,
   };
 &nbsp;
-  operatorToken.element = result;
+  opToken.element = result;
 &nbsp;
   return result;
 }
@@ -1243,7 +1267,7 @@ export function constructBinaryExpression(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T14:57:08.254Z
+                at 2025-11-25T10:38:55.442Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

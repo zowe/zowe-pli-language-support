@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.44% </span>
+                <span class="strong">91.41% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>738/807</span>
+                <span class='fraction'>735/804</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">82.03% </span>
+                <span class="strong">81.95% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>169/206</span>
+                <span class='fraction'>168/205</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.44% </span>
+                <span class="strong">91.41% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>738/807</span>
+                <span class='fraction'>735/804</span>
             </div>
         
             
@@ -948,10 +948,7 @@
 <a name='L883'></a><a href='#L883'>883</a>
 <a name='L884'></a><a href='#L884'>884</a>
 <a name='L885'></a><a href='#L885'>885</a>
-<a name='L886'></a><a href='#L886'>886</a>
-<a name='L887'></a><a href='#L887'>887</a>
-<a name='L888'></a><a href='#L888'>888</a>
-<a name='L889'></a><a href='#L889'>889</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L886'></a><a href='#L886'>886</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1226,9 +1223,6 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">24x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">22x</span>
 <span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-yes">24x</span>
@@ -2114,13 +2108,10 @@ function generateAnswerInstruction(
       right: generateExpressionInstruction(node.margins.right),
     };
   }
-  const scanMode = node.scanMode
-    ? inst.ScanModeAstToInstruction[node.scanMode]
-    : undefined;
   return {
     kind: inst.InstructionKind.Answer,
     expression,
-    scanMode,
+    scanMode: node.scanMode ?? undefined,
     skip,
     skipToken: node.skipToken ?? undefined,
     column,
@@ -2163,11 +2154,11 @@ function generateActivateInstruction(
 <span class="cstat-no" title="statement not covered" >      continue; // Skip items without a reference</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
     const reference = generateReferenceItemInstruction(item.reference);
-    let scanMode: inst.ScanMode = inst.ScanMode.Scan;
-    if (item.scanMode === "RESCAN") <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >      scanMode = inst.ScanMode.ReScan;</span>
-    } else if (item.scanMode === "NOSCAN") <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >      scanMode = inst.ScanMode.NoScan;</span>
+    let scanMode: ast.ScanMode = ast.ScanMode.SCAN;
+    if (item.scanMode === ast.ScanMode.RESCAN) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
+<span class="cstat-no" title="statement not covered" >      scanMode = ast.ScanMode.RESCAN;</span>
+    } else if (item.scanMode === ast.ScanMode.NOSCAN) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
+<span class="cstat-no" title="statement not covered" >      scanMode = ast.ScanMode.NOSCAN;</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
     instructions.push({
       kind: inst.InstructionKind.Activate,
@@ -2208,11 +2199,11 @@ function generateDeclareInstruction(
     if (attributes.includes("FIXED")) {
       type = inst.DeclaredType.Fixed;
     }
-    let scanMode: inst.ScanMode = inst.ScanMode.Scan;
+    let scanMode: ast.ScanMode = ast.ScanMode.SCAN;
     if (attributes.includes("RESCAN")) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >      scanMode = inst.ScanMode.ReScan;</span>
+<span class="cstat-no" title="statement not covered" >      scanMode = ast.ScanMode.RESCAN;</span>
     } else if (attributes.includes("NOSCAN")) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >      scanMode = inst.ScanMode.NoScan;</span>
+<span class="cstat-no" title="statement not covered" >      scanMode = ast.ScanMode.NOSCAN;</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
     let visibility: inst.VariableVisibility | null = null;
     if (attributes.includes("INTERNAL")) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
@@ -2245,7 +2236,7 @@ function generateReplaceInstruction(
         statement.name,
         undefined,
         inst.DeclaredType.Character,
-        inst.ScanMode.ReScan,
+        ast.ScanMode.RESCAN,
         null,
         statement,
       ),
@@ -2255,7 +2246,7 @@ function generateReplaceInstruction(
       instructions.push(
         inst.createAssignmentInstruction(
           [inst.createReferenceItemInstruction(statement.name, null, [])],
-          "=",
+          ast.AssignmentOperator.Equals,
           literal,
         ),
       );
@@ -2532,7 +2523,7 @@ function generateAssignmentInstruction(
   return {
     kind: inst.InstructionKind.Assignment,
     refs,
-    operator: node.<span class="branch-0 cbranch-no" title="branch not covered" >operator ?? "=",</span>
+    operator: node.<span class="branch-0 cbranch-no" title="branch not covered" >operator ?? ast.AssignmentOperator.Equals,</span>
     value,
   };
 }
@@ -2695,7 +2686,7 @@ function generateReferenceItemInstruction(
 function generateBinaryExpressionInstruction(
   node: ast.BinaryExpression,
 ): inst.BinaryExpressionInstruction | undefined {
-  if (!node.left || !node.right || !node.op) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
+  if (!node.left || !node.right || node.op === null) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
 <span class="cstat-no" title="statement not covered" >    return undefined; // Cannot generate instruction without both sides and operator</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
   const left = generateExpressionInstruction(node.left);
@@ -2714,7 +2705,7 @@ function generateBinaryExpressionInstruction(
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >function generateUnaryExpressionInstruction(</span></span>
 <span class="cstat-no" title="statement not covered" >  node: ast.UnaryExpression,</span>
 <span class="cstat-no" title="statement not covered" >): inst.UnaryExpressionInstruction | undefined {</span>
-<span class="cstat-no" title="statement not covered" >  if (!node.expr || !node.op) {</span>
+<span class="cstat-no" title="statement not covered" >  if (!node.expr || node.op === null) {</span>
 <span class="cstat-no" title="statement not covered" >    return undefined;</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >  const operand = generateExpressionInstruction(node.expr);</span>
@@ -2734,7 +2725,7 @@ function generateBinaryExpressionInstruction(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T14:57:08.254Z
+                at 2025-11-25T10:38:55.442Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
