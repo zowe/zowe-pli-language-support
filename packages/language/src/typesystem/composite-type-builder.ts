@@ -1,8 +1,3 @@
-import {
-  DefaultAttributeEnum,
-  DefaultAttributeToEnum,
-} from "../parser/token-mappings";
-import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { CompilationUnit } from "../workspace/compilation-unit";
@@ -52,16 +47,18 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     return type;
   }
   isCompositeDeclaredItem(declaredItem: BuilderDeclareItem): boolean {
-    const CompositeAttributeKinds: DefaultAttributeEnum[] = [
+    const CompositeAttributeKinds: ast.DefaultAttribute[] = [
       //TODO add more composite types if needed
-      DefaultAttributeEnum.UNION,
-      DefaultAttributeEnum.DIMACROSS,
+      ast.DefaultAttribute.UNION,
+      ast.DefaultAttribute.DIMACROSS,
     ];
     function isOnlyCompositeAttribute(attr: ast.DeclarationAttribute): boolean {
-      if (attr.kind === ast.SyntaxKind.ComputationDataAttribute) {
-        assertType<number>(attr.typeToken?.tokenTypeIdx);
-        const typeAsEnum = DefaultAttributeToEnum[attr.typeToken.tokenTypeIdx];
-        return CompositeAttributeKinds.includes(typeAsEnum);
+      if (
+        attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
+        attr.type !== null &&
+        attr.typeToken !== null
+      ) {
+        return CompositeAttributeKinds.includes(attr.type);
       }
       return false;
     }

@@ -12,8 +12,10 @@
 import { HarnessTesterInterface } from "../harness-interface";
 import { CompletionKeywords } from "../../../src/language-server/completion/keywords";
 import { Severity } from "../../../src/language-server/types";
+import { DefaultAttribute } from "../../../src/syntax-tree/ast";
 
 export const HarnessConstants: HarnessTesterInterface["constants"] = {
   CompletionKeywords,
   Severity,
+  DefaultAttribute,
 };

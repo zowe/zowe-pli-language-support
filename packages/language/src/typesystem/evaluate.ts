@@ -1,4 +1,4 @@
-import { Expression, SyntaxKind } from "../syntax-tree/ast";
+import { Expression, SyntaxKind, UnaryOperator } from "../syntax-tree/ast";
 import {
   DataType,
   StringFormat,
@@ -11,20 +11,20 @@ import {
 export function evaluateExpression(expression: Expression): Value {
   switch (expression.kind) {
     case SyntaxKind.UnaryExpression: {
-      if (expression.expr && expression.op) {
+      if (expression.expr && expression.op !== null) {
         const operand = evaluateExpression(expression.expr);
         switch (expression.op) {
-          case "+":
-          case "-":
+          case UnaryOperator.Plus:
+          case UnaryOperator.Minus:
             if (operand.type.type === DataType.Arithmetic) {
               const value = operand.value as number;
               return {
                 type: operand.type,
-                value: expression.op === "+" ? +value : -value,
+                value: expression.op === UnaryOperator.Plus ? +value : -value,
               };
             }
             break;
-          case "^":
+          case UnaryOperator.Not:
             //TODO handle bitwise not
             break;
         }
