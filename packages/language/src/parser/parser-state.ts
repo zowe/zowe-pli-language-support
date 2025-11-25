@@ -10,7 +10,7 @@
  */
 
 import { tokenMatcher, TokenType } from "chevrotain";
-import { SyntaxNode } from "../syntax-tree/ast";
+import { CMPATOptionsItem, NoMapOption, NoMapOptionsItem, SimpleOptions, SimpleOptionsItem, SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import * as t from "./tokens";
 import {
@@ -308,6 +308,20 @@ export class ParserState {
       );
     }
     return this.consume(element, kind, tokenType);
+  }
+
+  canConsumeFirst(firstSet: TokenType[]): boolean {
+    return firstSet.some(t => this.canConsume(t));
+  }
+
+  consumeAlternatives<T>(alternatives: [TokenType, (state: ParserState) => T][]): T {
+    for (const [tokenType, parseFunc] of alternatives) {
+      if (this.canConsume(tokenType)) {
+        return parseFunc(this);
+      }
+    }
+    //TODO: better error message
+    throw new Error("No matching alternative found");
   }
 }
 
