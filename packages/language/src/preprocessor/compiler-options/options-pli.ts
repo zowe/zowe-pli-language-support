@@ -407,7 +407,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-ppsql
    */
-  ppSql?: string | false;
+  ppSql?: CompilerOptions.PPValue | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-pptrace
    */
