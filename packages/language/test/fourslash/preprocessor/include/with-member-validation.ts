@@ -54,10 +54,7 @@
 
 // verify 1 diagnostic on the first include only
 verify.expectExclusiveDiagnosticsAt(1, [
-  {
-    severity: constants.Severity.E,
-    message: "Member exceeds 8 characters.",
-  },
+  code.LSP.MemberValidation.ExceedsMaxLength,
 ]);
 // no diagnostics on the second include
 verify.expectExclusiveDiagnosticsAt(2, []);
@@ -67,15 +64,8 @@ verify.expectExclusiveDiagnosticsAt(3, []);
 // verify 2 diagnostics on the 4th include
 // one for invalid starting char, and another for unresolved include
 verify.expectExclusiveDiagnosticsAt(4, [
-  {
-    severity: constants.Severity.E,
-    message:
-      "Member must start with a letter, followed by letters, numbers, @, #, _, or $.",
-  },
-  {
-    severity: constants.Severity.S,
-    message: "The INCLUDE file _A1@# could not be opened.",
-  },
+  code.LSP.MemberValidation.InvalidName,
+  code.Severe.IBM3841I,
 ]);
 
 // lastly verify no diagnostics on the legitimate file include
