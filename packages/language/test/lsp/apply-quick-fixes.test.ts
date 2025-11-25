@@ -232,3 +232,72 @@ describe("applyQuickFixes", () => {
     expect(result).toHaveLength(2);
   });
 });
+
+describe("applyQuickFixes with case diagnostics", () => {
+  test("should return individual code actions for MACRO0003W diagnostics", async () => {
+    const diagnostics = [
+      {
+        code: "LSPUC001W",
+        data: { uri: "file:///test.pli", text: "hello" },
+        range: {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 5 },
+        },
+      } as Diagnostic,
+    ];
+
+    const result = await applyQuickFixes.applyQuickFixes(diagnostics);
+
+    expect(result).toHaveLength(1);
+    expect(result![0].title).toBe("Convert to uppercase");
+    expect(result![0].kind).toBe("quickfix");
+  });
+
+  test("should return individual actions for multiple MACRO0003W diagnostics", async () => {
+    const diagnostics = [
+      {
+        code: "LSPUC001W",
+        data: { uri: "file:///test.pli", text: "hello" },
+        range: {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 5 },
+        },
+      } as Diagnostic,
+      {
+        code: "LSPUC001W",
+        data: { uri: "file:///test.pli", text: "world" },
+        range: {
+          start: { line: 0, character: 6 },
+          end: { line: 0, character: 11 },
+        },
+      } as Diagnostic,
+    ];
+
+    const result = await applyQuickFixes.applyQuickFixes(diagnostics);
+
+    // Should return 2 individual actions (Fix All is now handled by source actions)
+    expect(result).toHaveLength(2);
+    expect(result![0].title).toBe("Convert to uppercase");
+    expect(result![0].kind).toBe("quickfix");
+    expect(result![0].edit?.changes?.["file:///test.pli"]).toEqual([
+      {
+        range: {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 5 },
+        },
+        newText: "HELLO",
+      },
+    ]);
+    expect(result![1].title).toBe("Convert to uppercase");
+    expect(result![1].kind).toBe("quickfix");
+    expect(result![1].edit?.changes?.["file:///test.pli"]).toEqual([
+      {
+        range: {
+          start: { line: 0, character: 6 },
+          end: { line: 0, character: 11 },
+        },
+        newText: "WORLD",
+      },
+    ]);
+  });
+});

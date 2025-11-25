@@ -12,21 +12,16 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(MACRO("DEPRECATE(<|1:LOWER|>)"));
-////*PROCESS PP(MACRO("DEPRECATE(<|2:LOWER|>())"));
-////*PROCESS PP(MACRO("DEPRECATE(ENTRY(OLD1, OLD2))"));
-////*PROCESS PP(MACRO("DEPRECATE(ENTRY(OLD3, OLD4))"));
+////*PROCESS PP(MACRO("<|1:NOEOLCOMM|>"));
+////*PROCESS PP(MACRO("<|2:INCONLY|>"));
+////*PROCESS PP(MACRO("<|3:DBCS|>(EXACT)"));
 
 verify.expectDiagnosticsAt(1, {
-  message: code.CompilerOptions.ExpectedOption.message(""),
+  message: code.CompilerOptions.OptionNotSupported.message("EOLCOMM"),
 });
 verify.expectDiagnosticsAt(2, {
-  message:
-    code.CompilerOptions.PPMacro.Deprecate.InvalidSubOption.message("LOWER"),
+  message: code.CompilerOptions.OptionNotSupported.message("INCONLY"),
 });
-
-verify.expectCompilerOptions({
-  macroOptions: {
-    deprecate: new Set(["OLD3", "OLD4"]),
-  },
+verify.expectDiagnosticsAt(3, {
+  message: code.CompilerOptions.OptionNotSupported.message("DBCS"),
 });

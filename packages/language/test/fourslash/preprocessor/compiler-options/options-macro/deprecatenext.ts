@@ -27,6 +27,6 @@ verify.expectDiagnosticsAt(2, {
 
 verify.expectCompilerOptions({
   macroOptions: {
-    deprecateNext: ["OLD3", "OLD4"],
+    deprecateNext: new Set(["OLD3", "OLD4"]),
   },
 });
